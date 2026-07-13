@@ -315,9 +315,9 @@ public class AttachmentVideoUnitService {
     /**
      * Sets the required parameters for an attachment on update
      *
-     * @param existingAttachment                   the existing attachment
-     * @param updateAttachment                     the new attachment containing updated information
-     * @param attachmentVideoUnit                  the attachment video unit to update
+     * @param existingAttachment the existing attachment
+     * @param updateAttachment the new attachment containing updated information
+     * @param attachmentVideoUnit the attachment video unit to update
      * @param clearStudentVersion whether to clear the persisted student version
      */
     private void updateAttachment(Attachment existingAttachment, Attachment updateAttachment, AttachmentVideoUnit attachmentVideoUnit, boolean clearStudentVersion) {
