@@ -17,7 +17,6 @@ import { Router } from '@angular/router';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
-import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
 import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 
@@ -30,12 +29,7 @@ describe('ResultHistoryDropdownComponent', () => {
 
     const defaultExercise: Exercise = { id: 1, type: ExerciseType.PROGRAMMING, course: { id: 1 } } as Exercise;
 
-    const createResult = (id: number, score: number, submission?: Partial<Submission>): Result => {
-        const participation: Participation = { id: 1 } as Participation;
-        const sub = { id: id, participation } as Submission;
-        Object.assign(sub, submission);
-        return { id, score, submission: sub, completionDate: undefined } as unknown as Result;
-    };
+    const createResult = (id: number, score: number): Result => ({ id, score, submission: { id }, completionDate: undefined }) as unknown as Result;
 
     beforeEach(async () => {
         mockRouter = new MockRouter();
@@ -214,7 +208,7 @@ describe('ResultHistoryDropdownComponent', () => {
 
     describe('AI feedback indicator', () => {
         it('should render an accessible indicator for Athena results', () => {
-            const result = createResult(1, 50, { participation: undefined });
+            const result = createResult(1, 50);
             result.assessmentType = AssessmentType.AUTOMATIC_ATHENA;
             fixture.componentRef.setInput('sortedHistoryResults', [result]);
             fixture.detectChanges();
@@ -228,7 +222,7 @@ describe('ResultHistoryDropdownComponent', () => {
         });
 
         it('should not render an indicator for normal automatic results', () => {
-            const result = createResult(1, 50, { participation: undefined });
+            const result = createResult(1, 50);
             result.assessmentType = AssessmentType.AUTOMATIC;
             fixture.componentRef.setInput('sortedHistoryResults', [result]);
             fixture.detectChanges();
