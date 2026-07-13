@@ -76,6 +76,14 @@ public class Feedback extends DomainObject {
     /**
      * Reference to the test case which created this feedback.
      * null if the feedback was not created by an automatic test case.
+     * <p>
+     * The {@code feedback.test_case_id} foreign key is defined with {@code ON DELETE CASCADE} at the database
+     * level (Liquibase changelog {@code 20260713120000}): when a {@link ProgrammingExerciseTestCase} is deleted,
+     * the database removes the feedback referencing it. This closes a deletion race in which the async
+     * build-result processing could persist feedback for a test case that the concurrent programming-exercise
+     * deletion cascade is removing. There is intentionally no JPA cascade here — the normal deletion path removes
+     * feedback via the participation → result → feedback cascade; the database cascade is the safety net for that
+     * concurrent re-creation.
      */
     @ManyToOne(fetch = FetchType.LAZY)
     @JsonIgnoreProperties({ "tasks", "exercise" })

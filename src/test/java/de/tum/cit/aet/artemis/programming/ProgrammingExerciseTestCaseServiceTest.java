@@ -13,10 +13,13 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
+import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.Visibility;
+import de.tum.cit.aet.artemis.assessment.repository.FeedbackRepository;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
@@ -29,6 +32,9 @@ import de.tum.cit.aet.artemis.programming.util.RepositoryExportTestUtil;
 class ProgrammingExerciseTestCaseServiceTest extends AbstractProgrammingIntegrationLocalCILocalVCTest {
 
     private static final String TEST_PREFIX = "progextestcase";
+
+    @Autowired
+    private FeedbackRepository feedbackRepository;
 
     private ProgrammingExercise programmingExercise;
 
@@ -56,6 +62,25 @@ class ProgrammingExerciseTestCaseServiceTest extends AbstractProgrammingIntegrat
     void shouldResetExamExerciseTestCases() {
         programmingExercise.setExerciseGroup(new ExerciseGroup());
         testResetTestCases(programmingExercise, Visibility.AFTER_DUE_DATE);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void shouldCascadeDeleteFeedbackWhenTestCaseIsDeleted() {
+        // A fresh, unlinked test case so deleting it exercises only the feedback -> test_case foreign key, not the
+        // task/coverage RESTRICT constraints that a seeded, task-linked test case would also hit.
+        ProgrammingExerciseTestCase testCase = testCaseRepository.save(new ProgrammingExerciseTestCase().exercise(programmingExercise).testName("cascadeTest").active(true)
+                .weight(1.).bonusMultiplier(1.).bonusPoints(0.).visibility(Visibility.ALWAYS));
+        Feedback feedback = feedbackRepository.save(new Feedback().detailText("references the test case").testCase(testCase));
+        long feedbackId = feedback.getId();
+        assertThat(feedbackRepository.findById(feedbackId)).isPresent();
+
+        // feedback.test_case_id is now ON DELETE CASCADE: deleting the test case must remove the referencing
+        // feedback rather than fail on the previous RESTRICT constraint.
+        testCaseRepository.deleteById(testCase.getId());
+
+        assertThat(testCaseRepository.findById(testCase.getId())).isEmpty();
+        assertThat(feedbackRepository.findById(feedbackId)).isEmpty();
     }
 
     private void testResetTestCases(ProgrammingExercise programmingExercise, Visibility expectedVisibility) {
