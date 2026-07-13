@@ -355,6 +355,22 @@ class AttachmentVideoUnitIntegrationTest extends AbstractSpringIntegrationIndepe
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void updateAttachmentVideoUnitCreatedViaEndpoint_withNotification_shouldNotNpe() throws Exception {
+        // Create through the REST endpoint, so the attachment is persisted the same way a user creates it (without a lecture back-reference on the attachment).
+        var createResult = request.performMvcRequest(buildCreateAttachmentVideoUnit(attachmentVideoUnit, attachment)).andExpect(status().isCreated()).andReturn();
+        var persisted = request.getObjectMapper().readValue(createResult.getResponse().getContentAsString(), AttachmentVideoUnitDTO.class);
+
+        // Update that unit and request a student notification. The attachment-change notification resolves the course via the attachment's lecture, which a unit attachment
+        // does not carry, so this must not throw a NullPointerException.
+        attachmentVideoUnit.setId(persisted.id());
+        attachment.setId(persisted.attachment().id());
+        MockMultipartHttpServletRequestBuilder updateBuilder = buildUpdateAttachmentVideoUnit(attachmentVideoUnit, attachment, null);
+        updateBuilder.contentType(MediaType.MULTIPART_FORM_DATA_VALUE).param("notificationText", "The attachment was updated");
+        request.performMvcRequest(updateBuilder).andExpect(status().isOk());
+    }
+
+    @Test
     @WithMockUser(username = TEST_PREFIX + "instructor42", roles = "INSTRUCTOR")
     void createAttachmentVideoUnit_InstructorNotInCourse_shouldReturnForbidden() throws Exception {
         request.performMvcRequest(buildCreateAttachmentVideoUnit(attachmentVideoUnit, attachment)).andExpect(status().isForbidden());

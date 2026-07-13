@@ -178,7 +178,11 @@ public class AttachmentVideoUnitResource {
                 file, keepFilename, hiddenPages, pageOrder, originalCompetencyIds);
 
         if (notificationText != null && attachment != null) {
-            groupNotificationService.notifyStudentGroupAboutAttachmentChange(savedAttachmentVideoUnit.getAttachment());
+            Attachment changedAttachment = savedAttachmentVideoUnit.getAttachment();
+            // notifyStudentGroupAboutAttachmentChange derives the course via attachment.getLecture(); a unit attachment does not carry its lecture,
+            // so set it from the (already course-loaded) unit lecture to avoid a NullPointerException.
+            changedAttachment.setLecture(savedAttachmentVideoUnit.getLecture());
+            groupNotificationService.notifyStudentGroupAboutAttachmentChange(changedAttachment);
         }
 
         searchableEntityWeaviateService.ifPresent(service -> {
