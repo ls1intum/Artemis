@@ -4,12 +4,13 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
+import java.nio.file.AtomicMoveNotSupportedException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.util.Comparator;
 import java.util.List;
 
-import org.apache.commons.io.FileUtils;
 import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.springframework.context.annotation.Conditional;
@@ -175,21 +176,49 @@ public class AttachmentService {
      * @throws IOException If there's an error handling the file
      */
     private void handleStudentVersionFile(byte[] pdfData, Attachment attachment, Long attachmentVideoUnitId) throws IOException {
-        // Delete the old student version if it exists
-        if (attachment.getStudentVersion() != null) {
-            deleteStudentVersionFile(attachment);
-        }
-
-        // Create the student version directory if it doesn't exist
         Path basePath = FilePathConverter.getAttachmentVideoUnitFileSystemPath().resolve(attachmentVideoUnitId.toString()).resolve("student");
-        Files.createDirectories(basePath);
-
         String sanitizedName = FileUtil.checkAndSanitizeFilename(attachment.getName());
         String filename = FileUtil.generateFilename(FileUtil.generateTargetFilenameBase(FilePathType.STUDENT_VERSION_SLIDES), sanitizedName + ".pdf", false);
         Path savePath = basePath.resolve(filename);
+        Path oldStudentVersionPath = attachment.getStudentVersion() == null ? null
+                : FilePathConverter.fileSystemPathForExternalUri(URI.create(attachment.getStudentVersion()), FilePathType.STUDENT_VERSION_SLIDES);
 
-        FileUtils.writeByteArrayToFile(savePath.toFile(), pdfData);
+        replaceStudentVersionFile(pdfData, savePath, oldStudentVersionPath);
 
         attachment.setStudentVersion(FilePathConverter.externalUriForFileSystemPath(savePath, FilePathType.STUDENT_VERSION_SLIDES, attachmentVideoUnitId).toString());
+    }
+
+    /**
+     * Installs a student version through a temporary file in the destination directory. The move is atomic where supported, so readers never observe a partially written PDF.
+     * An old file is only queued for deletion after the replacement was installed, and never when it is the replacement path itself.
+     *
+     * @param fileData              the complete student version contents
+     * @param savePath              the final path for the student version
+     * @param oldStudentVersionPath the previous student version path, or null if none exists
+     * @throws IOException if the file cannot be installed
+     */
+    void replaceStudentVersionFile(byte[] fileData, Path savePath, Path oldStudentVersionPath) throws IOException {
+        Path parentDirectory = savePath.getParent();
+        Files.createDirectories(parentDirectory);
+        Path temporaryPath = Files.createTempFile(parentDirectory, "." + savePath.getFileName() + ".", ".tmp");
+
+        try {
+            Files.write(temporaryPath, fileData);
+            try {
+                Files.move(temporaryPath, savePath, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
+            }
+            catch (AtomicMoveNotSupportedException ignored) {
+                Files.move(temporaryPath, savePath, StandardCopyOption.REPLACE_EXISTING);
+            }
+        }
+        finally {
+            Files.deleteIfExists(temporaryPath);
+        }
+
+        fileService.evictCacheForPath(savePath);
+        if (oldStudentVersionPath != null && !oldStudentVersionPath.toAbsolutePath().normalize().equals(savePath.toAbsolutePath().normalize())) {
+            fileService.schedulePathForDeletion(oldStudentVersionPath, 0);
+            fileService.evictCacheForPath(oldStudentVersionPath);
+        }
     }
 }

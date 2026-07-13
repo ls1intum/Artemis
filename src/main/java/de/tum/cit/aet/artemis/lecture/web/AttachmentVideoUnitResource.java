@@ -169,6 +169,7 @@ public class AttachmentVideoUnitResource {
         validateYouTubeVideoSource(attachmentVideoUnitDTO.videoSource());
         AttachmentUpdateIntent updateIntent = attachmentVideoUnitDTO.attachmentUpdateIntent();
         validateAttachmentUpdateIntent(updateIntent, file, existingAttachmentVideoUnit, attachment);
+        validateAtLeastOneVisibleSlide(updateIntent, hiddenPages, existingAttachmentVideoUnit, attachment);
 
         // Capture original competency IDs BEFORE updating links (for progress tracking)
         Set<Long> originalCompetencyIds = existingAttachmentVideoUnit.getCompetencyLinks().stream().map(CompetencyLearningObjectLink::getCompetency).map(c -> c.getId())
@@ -227,6 +228,20 @@ public class AttachmentVideoUnitResource {
             AttachmentDTO attachment) {
         boolean hasFile = file != null && !file.isEmpty();
         return existingAttachmentVideoUnit.getAttachment() == null && attachment != null && updateIntent == AttachmentUpdateIntent.NO_FILE_CHANGE && !hasFile;
+    }
+
+    private static void validateAtLeastOneVisibleSlide(AttachmentUpdateIntent updateIntent, List<HiddenPageInfoDTO> hiddenPages, AttachmentVideoUnit existingAttachmentVideoUnit,
+            Attachment attachment) {
+        if (updateIntent != AttachmentUpdateIntent.NO_FILE_CHANGE || hiddenPages == null || attachment == null || existingAttachmentVideoUnit.getAttachment() == null) {
+            return;
+        }
+
+        Set<String> hiddenSlideIds = hiddenPages.stream().map(HiddenPageInfoDTO::slideId).collect(Collectors.toSet());
+        boolean hasVisibleSlide = existingAttachmentVideoUnit.getSlides().stream().map(slide -> String.valueOf(slide.getId()))
+                .anyMatch(slideId -> !hiddenSlideIds.contains(slideId));
+        if (!hasVisibleSlide) {
+            throw new BadRequestAlertException("Cannot create a student version with no visible pages", ENTITY_NAME, "noVisiblePages");
+        }
     }
 
     /**

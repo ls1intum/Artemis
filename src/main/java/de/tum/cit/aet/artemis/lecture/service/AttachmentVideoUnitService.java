@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.lecture.service;
 
+import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -10,7 +11,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import org.apache.commons.io.FilenameUtils;
 import org.slf4j.Logger;
@@ -22,7 +22,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
 import de.tum.cit.aet.artemis.core.FilePathType;
-import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.exception.InternalServerErrorException;
 import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.core.util.FileUtil;
@@ -169,14 +169,6 @@ public class AttachmentVideoUnitService {
                     fileUpdateResult = updateAttachmentFileIfChanged(updateFile, existingAttachment, keepFilename, savedAttachmentVideoUnit.getId());
                 }
                 updateAttachment(existingAttachment, updateAttachment, savedAttachmentVideoUnit, hasUploadedFile && fileUpdateResult.fileBytesChanged());
-
-                if (isFileNeutralSlideMetadataUpdate) {
-                    var visibleSlideIds = slideRepository.findAllByAttachmentVideoUnitId(savedAttachmentVideoUnit.getId()).stream().map(slide -> String.valueOf(slide.getId()))
-                            .collect(Collectors.toSet());
-                    hiddenPages.forEach(hiddenPage -> visibleSlideIds.remove(hiddenPage.slideId()));
-                    visibleSlideIds.stream().findAny()
-                            .orElseThrow(() -> new BadRequestAlertException("Cannot create a student version with no visible pages", "attachmentVideoUnit", "noVisiblePages"));
-                }
 
                 Attachment savedAttachment = attachmentRepository.saveAndFlush(existingAttachment);
                 savedAttachmentVideoUnit.setAttachment(savedAttachment);
@@ -368,20 +360,21 @@ public class AttachmentVideoUnitService {
      */
     public void handleStudentVersionFile(MultipartFile studentVersionFile, Attachment attachment, Long attachmentVideoUnitId) {
         if (studentVersionFile != null) {
-            // Delete the old student version
-            if (attachment.getStudentVersion() != null) {
-                URI oldStudentVersionPath = URI.create(attachment.getStudentVersion());
-                Path localPath = FilePathConverter.fileSystemPathForExternalUri(oldStudentVersionPath, FilePathType.STUDENT_VERSION_SLIDES);
+            String sanitizedFilename = FileUtil.checkAndSanitizeFilename(studentVersionFile.getOriginalFilename());
+            FileUtil.validateExtension(sanitizedFilename, false);
+            String generatedFilename = FileUtil.generateFilename(FileUtil.generateTargetFilenameBase(FilePathType.STUDENT_VERSION_SLIDES), sanitizedFilename, true);
+            Path savePath = FilePathConverter.getAttachmentVideoUnitFileSystemPath().resolve(attachmentVideoUnitId.toString()).resolve("student").resolve(generatedFilename);
+            Path oldStudentVersionPath = attachment.getStudentVersion() == null ? null
+                    : FilePathConverter.fileSystemPathForExternalUri(URI.create(attachment.getStudentVersion()), FilePathType.STUDENT_VERSION_SLIDES);
 
-                fileService.schedulePathForDeletion(localPath, 0);
-                this.fileService.evictCacheForPath(localPath);
+            try {
+                attachmentService.replaceStudentVersionFile(studentVersionFile.getBytes(), savePath, oldStudentVersionPath);
+                attachment.setStudentVersion(FilePathConverter.externalUriForFileSystemPath(savePath, FilePathType.STUDENT_VERSION_SLIDES, attachmentVideoUnitId).toString());
+                attachmentRepository.save(attachment);
             }
-
-            // Update student version of attachment
-            Path basePath = FilePathConverter.getAttachmentVideoUnitFileSystemPath().resolve(attachmentVideoUnitId.toString());
-            Path savePath = FileUtil.saveFile(studentVersionFile, basePath.resolve("student"), FilePathType.STUDENT_VERSION_SLIDES, true);
-            attachment.setStudentVersion(FilePathConverter.externalUriForFileSystemPath(savePath, FilePathType.STUDENT_VERSION_SLIDES, attachmentVideoUnitId).toString());
-            attachmentRepository.save(attachment);
+            catch (IOException e) {
+                throw new InternalServerErrorException("Could not create student version file");
+            }
         }
     }
 

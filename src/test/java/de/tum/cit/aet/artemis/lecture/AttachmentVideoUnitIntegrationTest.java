@@ -791,6 +791,45 @@ class AttachmentVideoUnitIntegrationTest extends AbstractSpringIntegrationIndepe
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void allHiddenMetadataUpdateIsRejectedBeforeMutatingUnitAttachmentOrCompetencies() throws Exception {
+        attachmentVideoUnit.setCompetencyLinks(Set.of(new CompetencyLectureUnitLink(competency, attachmentVideoUnit, 1)));
+        var createResult = request.performMvcRequest(buildCreateAttachmentVideoUnit(attachmentVideoUnit, attachment)).andExpect(status().isCreated()).andReturn();
+        var persistedAttachmentVideoUnit = mapper.readValue(createResult.getResponse().getContentAsString(), AttachmentVideoUnit.class);
+        var persistedAttachment = persistedAttachmentVideoUnit.getAttachment();
+
+        await().untilAsserted(() -> assertThat(slideRepository.findAllByAttachmentVideoUnitId(persistedAttachmentVideoUnit.getId())).hasSize(SLIDE_COUNT));
+
+        String originalDescription = persistedAttachmentVideoUnit.getDescription();
+        String originalAttachmentName = persistedAttachment.getName();
+        Set<Long> originalCompetencyIds = attachmentVideoUnitRepository.findOneWithCompetencyLinksById(persistedAttachmentVideoUnit.getId()).getCompetencyLinks().stream()
+                .map(link -> link.getCompetency().getId()).collect(Collectors.toSet());
+        List<Slide> slides = slideRepository.findAllByAttachmentVideoUnitId(persistedAttachmentVideoUnit.getId());
+        String futureDate = ZonedDateTime.now().plusDays(1).format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSXXX"));
+        String hiddenPagesJson = slides.stream().map(slide -> "{\"slideId\": \"" + slide.getId() + "\", \"date\": \"" + futureDate + "\"}")
+                .collect(Collectors.joining(",", "[", "]"));
+
+        persistedAttachmentVideoUnit.setDescription("Rejected description");
+        persistedAttachmentVideoUnit.setCompetencyLinks(Set.of());
+        persistedAttachment.setName("Rejected attachment name");
+        var attachmentUnitPart = createAttachmentVideoUnitPart(persistedAttachmentVideoUnit, AttachmentUpdateIntent.NO_FILE_CHANGE);
+        var attachmentPart = new MockMultipartFile("attachment", "", MediaType.APPLICATION_JSON_VALUE, mapper.writeValueAsString(persistedAttachment).getBytes());
+        var hiddenPagesPart = new MockMultipartFile("hiddenPages", "", MediaType.APPLICATION_JSON_VALUE, hiddenPagesJson.getBytes());
+        var builder = MockMvcRequestBuilders
+                .multipart(HttpMethod.PUT, "/api/lecture/lectures/" + lecture1.getId() + "/attachment-video-units/" + persistedAttachmentVideoUnit.getId()).file(attachmentUnitPart)
+                .file(attachmentPart).file(hiddenPagesPart).contentType(MediaType.MULTIPART_FORM_DATA_VALUE);
+
+        request.performMvcRequest(builder).andExpect(status().isBadRequest()).andExpect(jsonPath("$.errorKey").value("noVisiblePages"));
+
+        AttachmentVideoUnit reloadedUnit = attachmentVideoUnitRepository.findOneWithCompetencyLinksById(persistedAttachmentVideoUnit.getId());
+        Attachment reloadedAttachment = attachmentRepository.findById(persistedAttachment.getId()).orElseThrow();
+        assertThat(reloadedUnit.getDescription()).isEqualTo(originalDescription);
+        assertThat(reloadedAttachment.getName()).isEqualTo(originalAttachmentName);
+        assertThat(reloadedUnit.getCompetencyLinks()).extracting(link -> link.getCompetency().getId()).containsExactlyInAnyOrderElementsOf(originalCompetencyIds);
+        assertThat(slideRepository.findAllByAttachmentVideoUnitId(persistedAttachmentVideoUnit.getId())).allMatch(slide -> slide.getHidden() == null);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updateAttachmentVideoUnit_asInstructor_shouldKeepOrdering() throws Exception {
         persistAttachmentVideoUnitWithLecture();
 

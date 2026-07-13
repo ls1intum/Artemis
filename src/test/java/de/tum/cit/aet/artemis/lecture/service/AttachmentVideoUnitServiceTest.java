@@ -1,7 +1,6 @@
 package de.tum.cit.aet.artemis.lecture.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
@@ -27,7 +26,6 @@ import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.web.multipart.MultipartFile;
 
 import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
-import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.course.domain.Course;
@@ -175,11 +173,6 @@ class AttachmentVideoUnitServiceTest {
         assertThat(snapshotCaptor.getValue().slideHiddenUntilBySlideNumber().get(1).toInstant()).isEqualTo(hiddenUntil.toInstant());
         assertThat(snapshotCaptor.getValue().slideHiddenUntilBySlideNumber().get(2)).isNull();
 
-        var allSlidesHidden = List.of(new HiddenPageInfoDTO("21", hiddenUntil, null), new HiddenPageInfoDTO("22", hiddenUntil, null));
-        var noFileChangeDto = AttachmentVideoUnitDTO.from(unit, AttachmentUpdateIntent.NO_FILE_CHANGE);
-        assertThatThrownBy(() -> service.updateAttachmentVideoUnit(unit, noFileChangeDto, attachment, null, false, allSlidesHidden, null, Set.of()))
-                .isInstanceOf(BadRequestAlertException.class).hasMessageContaining("no visible pages");
-        verify(slideSplitterService, never()).updateSlideMetadata(unit, allSlidesHidden);
     }
 
     @Test

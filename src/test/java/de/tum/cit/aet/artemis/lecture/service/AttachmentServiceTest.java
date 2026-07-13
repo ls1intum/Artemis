@@ -5,9 +5,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.List;
 
+import org.apache.pdfbox.Loader;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -87,7 +89,13 @@ class AttachmentServiceTest extends AbstractSpringIntegrationIndependentBatchTes
 
         attachmentService.regenerateStudentVersion(testAttachment2);
 
-        assertThat(testAttachment2.getStudentVersion()).isNotEqualTo(firstStudentVersionPath);
+        org.awaitility.Awaitility.await().during(Duration.ofSeconds(1)).atMost(Duration.ofSeconds(3)).untilAsserted(() -> {
+            assertThat(testAttachment2.getStudentVersion()).isEqualTo(firstStudentVersionPath);
+            assertThat(actualFilePath).exists();
+            try (var studentVersion = Loader.loadPDF(actualFilePath.toFile())) {
+                assertThat(studentVersion.getNumberOfPages()).isEqualTo(3);
+            }
+        });
         assertThat(testAttachment2.getVersion()).isEqualTo(originalAttachmentVersion);
     }
 
