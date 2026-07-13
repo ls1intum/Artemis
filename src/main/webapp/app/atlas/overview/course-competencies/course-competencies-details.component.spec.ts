@@ -47,7 +47,6 @@ describe('CourseCompetenciesDetails', () => {
 
     let courseCompetencyService: CourseCompetencyService;
 
-    let setCompletionSpy: ReturnType<typeof vi.spyOn>;
     let getProgressSpy: ReturnType<typeof vi.spyOn>;
 
     const parentParams = { courseId: 1 };
@@ -100,10 +99,8 @@ describe('CourseCompetenciesDetails', () => {
                 fixture = TestBed.createComponent(CourseCompetenciesDetailsComponent);
                 component = fixture.componentInstance;
                 courseCompetencyService = TestBed.inject(CourseCompetencyService);
-                const lectureUnitService = TestBed.inject(LectureUnitService);
                 const featureToggleService = TestBed.inject(FeatureToggleService);
                 vi.spyOn(featureToggleService, 'getFeatureToggleActive').mockReturnValue(of(true));
-                setCompletionSpy = vi.spyOn(lectureUnitService, 'setCompletion');
                 getProgressSpy = vi.spyOn(courseCompetencyService, 'getProgress');
             });
     });
@@ -207,11 +204,36 @@ describe('CourseCompetenciesDetails', () => {
         component.competencyId = 42;
         component.courseId.set(21);
 
-        setCompletionSpy.mockReturnValue(of(new HttpResponse({ body: null })));
+        const completeLectureUnitSpy = vi.spyOn(TestBed.inject(LectureUnitService), 'completeLectureUnit').mockImplementation((_lecture, event, onSuccess) => {
+            event.lectureUnit.completed = event.completed;
+            onSuccess?.();
+        });
         const lectureUnitCompletionEvent = { lectureUnit: { id: 1, lecture: { id: 2 }, visibleToStudents: true, completed: false }, completed: true } as LectureUnitCompletionEvent;
         component.completeLectureUnit(lectureUnitCompletionEvent);
 
-        expect(setCompletionSpy).toHaveBeenCalledOnce();
+        expect(completeLectureUnitSpy).toHaveBeenCalledOnce();
         expect(getProgressSpy).toHaveBeenCalledWith(42, 21, true);
+    });
+
+    it('should publish a fresh lecture-unit reference on completion so the card reacts', () => {
+        component.competencyId = 42;
+        component.courseId.set(21);
+
+        vi.spyOn(TestBed.inject(LectureUnitService), 'completeLectureUnit').mockImplementation((_lecture, event, onSuccess) => {
+            event.lectureUnit.completed = event.completed;
+            onSuccess?.();
+        });
+
+        const lectureUnit = Object.assign(new TextUnit(), { id: 1, completed: false });
+        const originalLink = new CompetencyLectureUnitLink(undefined, lectureUnit, 1);
+        component.competency.set({ id: 42, lectureUnitLinks: [originalLink] } as Competency);
+
+        const event = { lectureUnit: { id: 1, lecture: { id: 2 }, visibleToStudents: true, completed: false }, completed: true } as LectureUnitCompletionEvent;
+        component.completeLectureUnit(event);
+
+        const updatedUnit = component.competency()!.lectureUnitLinks![0].lectureUnit;
+        expect(updatedUnit!.completed).toBe(true);
+        // A fresh object reference (not the original) is what makes the unit card's signal input update in a zoneless app.
+        expect(updatedUnit).not.toBe(lectureUnit);
     });
 });

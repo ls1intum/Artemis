@@ -273,7 +273,9 @@
         "examWorkingTimeTooHigh": "The working time is too long. The maximum is 43200 minutes (30 days). Please adjust the start and/or end of working time.",
         "examGracePeriodTooHigh": "The grace period is too long. Please enter a value between 0 and 3600 seconds.",
         "examMaxPointsTooHigh": "The maximum points value is too high. Please enter a value between 1 and 9999.",
+        "examTitleTooLong": "The exam title is too long. Please enter at most 255 characters.",
         "examNumberOfExercisesTooHigh": "The number of exercises is too high. Please enter a value between 1 and 100.",
+        "examTextTooLong": "An exam text is too long. Please enter at most 10,000 characters.",
         "userManagement": {
             "onlySuperAdminCanManageAdmins": "You are not a super administrator and therefore not allowed to manage administrator accounts.",
             "cannotRemoveDefaultAdminRights": "You cannot remove super admin rights from the default admin user."
