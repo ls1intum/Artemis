@@ -48,6 +48,16 @@ $navbar-dark-hover-color: $white;
 $artemis-dark: #353d47;
 $link-color: $primary;
 
+// Per-exercise-type accent colors. Decorative identity only — never a state signal, so these are
+// deliberately outside the $success/$warning/$danger set. Components must reference the generated
+// --exercise-accent-* custom properties rather than carrying the values themselves.
+$exercise-accent-programming: #6366f1;
+$exercise-accent-quiz: #f59e0b;
+$exercise-accent-modeling: #0ea5e9;
+$exercise-accent-text: #10b981;
+$exercise-accent-fileupload: #ec4899;
+$exercise-accent-group: #8b5cf6;
+
 // Border
 $border-color: #dee2e6;
 

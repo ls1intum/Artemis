@@ -17,8 +17,12 @@
         </span>
     }
     <button
+        pButton
         type="button"
-        class="btn btn-outline-secondary action-more"
+        severity="secondary"
+        size="small"
+        [outlined]="true"
+        class="action-more"
         [class.d-none]="!hasOverflow()"
         (click)="toggleMenu($event)"
         [title]="'artemisApp.exerciseManagement.moreActions' | artemisTranslate"
@@ -27,7 +31,7 @@
         <fa-icon [icon]="faEllipsis" />
     </button>
     <p-popover #menu appendTo="body">
-        <div class="d-flex flex-column gap-1" style="min-width: 11rem">
+        <div class="action-menu d-flex flex-column gap-1">
             @for (action of hiddenActions(); track action.id) {
                 <ng-container [ngTemplateOutlet]="actionTpl" [ngTemplateOutletContext]="{ $implicit: action, inMenu: true }" />
             }
@@ -39,10 +43,13 @@
     @switch (action.kind) {
         @case ('delete') {
             <button
+                pButton
                 jhiDeleteButton
                 [attr.data-testid]="'exercise-action-' + action.id"
                 [renderButtonText]="false"
                 [renderButtonStyle]="false"
+                [severity]="action.severity"
+                size="small"
                 [entityTitle]="exercise().title!"
                 entitySummaryTitle="artemisApp.exercise.delete.summary.title"
                 [fetchEntitySummary]="deletionSummary()"
@@ -51,7 +58,6 @@
                 [translateValues]="deleteTranslateValues()"
                 (delete)="onDelete($event)"
                 [dialogError]="dialogError$"
-                class="btn {{ action.styleClass }}"
                 [class.text-start]="inMenu"
                 [class.w-100]="inMenu"
             >
@@ -60,9 +66,11 @@
         }
         @case ('button') {
             <button
+                pButton
                 type="button"
                 [attr.data-testid]="'exercise-action-' + action.id"
-                class="btn {{ action.styleClass }}"
+                [severity]="action.severity"
+                size="small"
                 [class.text-start]="inMenu"
                 [class.w-100]="inMenu"
                 (click)="runAction(action)"
@@ -72,9 +80,11 @@
         }
         @default {
             <a
+                pButton
                 [attr.data-testid]="'exercise-action-' + action.id"
                 [routerLink]="action.disabled ? null : action.link"
-                class="btn {{ action.styleClass }}"
+                [severity]="action.severity"
+                size="small"
                 [class.disabled]="action.disabled"
                 [class.text-start]="inMenu"
                 [class.w-100]="inMenu"

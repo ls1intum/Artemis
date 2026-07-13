@@ -44,26 +44,28 @@
         @if (selectedCount() > 0 && course()?.isAtLeastEditor) {
             <div class="d-flex align-items-center flex-wrap gap-2 mt-2">
                 <span class="text-muted small">{{ 'artemisApp.exerciseManagement.selection.count' | artemisTranslate: { count: selectedCount() } }}</span>
-                <button
-                    type="button"
-                    class="btn btn-outline-secondary btn-sm"
-                    (click)="clearSelection()"
-                    jhiTranslate="artemisApp.exerciseManagement.selection.deselectAll"
-                ></button>
+                <button pButton type="button" severity="secondary" [outlined]="true" size="small" (click)="clearSelection()">
+                    <span jhiTranslate="artemisApp.exerciseManagement.selection.deselectAll"></span>
+                </button>
                 @if (allSelectedAreProgramming()) {
-                    <button type="button" class="btn btn-warning btn-sm" (click)="editSelectedExercises()">
+                    <button pButton type="button" severity="warn" size="small" (click)="editSelectedExercises()">
                         <fa-icon [icon]="faWrench" />
                         <span jhiTranslate="entity.action.editSelected"></span>
                     </button>
                     <jhi-programming-assessment-repo-export [programmingExercises]="selectedProgrammingExercises()" />
-                    <button type="button" class="btn btn-outline-primary btn-sm" (click)="consistencyCheckSelected()">
+                    <button pButton type="button" severity="primary" [outlined]="true" size="small" (click)="consistencyCheckSelected()">
                         <fa-icon [icon]="faCheckDouble" />
                         <span jhiTranslate="artemisApp.consistencyCheck.button"></span>
                     </button>
                 }
                 @if (course()?.isAtLeastInstructor) {
                     <button
+                        pButton
+                        type="button"
+                        severity="danger"
+                        size="small"
                         jhiDeleteButton
+                        [renderButtonStyle]="false"
                         deleteQuestion="artemisApp.exerciseActions.deleteMultipleExercisesQuestion"
                         [translateValues]="{
                             courseTitle: course()?.title,
@@ -83,11 +85,11 @@
     </ng-template>
 
     @if (loaded() && cards().length === 0) {
-        <div class="alert alert-secondary" role="alert">{{ 'artemisApp.exerciseManagement.noExercisesMatch' | artemisTranslate: { search: search() } }}</div>
+        <p-message severity="secondary">{{ 'artemisApp.exerciseManagement.noExercisesMatch' | artemisTranslate: { search: search() } }}</p-message>
     }
     <div class="d-flex flex-column gap-3">
         @for (card of cards(); track card.id) {
-            <div style="min-width: 0">
+            <div class="exercise-card-host">
                 <p-panel [toggleable]="true">
                     <ng-template pTemplate="header">
                         <div class="d-flex align-items-center gap-2 w-100">

@@ -69,7 +69,13 @@
 
                                 <hr class="my-2" />
 
-                                <jhi-exercise-headers-information class="mb-2" [exercise]="exercise" [course]="course()" [studentParticipation]="exerciseParticipation(exercise)" />
+                                <jhi-exercise-headers-information
+                                    class="mb-2"
+                                    [exercise]="exercise"
+                                    [course]="course()"
+                                    [studentParticipation]="exerciseParticipation(exercise)"
+                                    [interactive]="false"
+                                />
 
                                 @if (renderedStatements().get(exercise.id!); as renderedPs) {
                                     <div class="variant-card__ps markdown-preview" [innerHTML]="renderedPs"></div>

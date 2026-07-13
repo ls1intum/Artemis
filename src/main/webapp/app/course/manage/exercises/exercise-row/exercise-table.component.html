@@ -10,12 +10,12 @@
         <ng-template pTemplate="header">
             <tr>
                 @if (showCheckbox()) {
-                    <th style="width: 2.5rem">
+                    <th class="col-icon">
                         <p-checkbox [binary]="true" [ngModel]="allSelected()" [indeterminate]="someSelected()" (ngModelChange)="selectionAllChange.emit($event)" />
                     </th>
                 }
                 @if (showDragHandle()) {
-                    <th style="width: 2.5rem"></th>
+                    <th class="col-icon"></th>
                 }
                 <th
                     class="sort-col"
@@ -146,7 +146,7 @@
                 @if (!showGroupSelector()) {
                     <td>
                         @if (row.exercise.difficulty) {
-                            <span class="badge {{ row.difficultyBadgeClass }}">{{ row.exercise.difficulty }}</span>
+                            <p-tag [severity]="row.difficultySeverity" [value]="row.exercise.difficulty" />
                         } @else {
                             <span class="text-muted fst-italic small" jhiTranslate="artemisApp.exerciseManagement.table.none"></span>
                         }
@@ -171,10 +171,10 @@
                 }
                 <td>
                     @if (row.quizStatusLabel) {
-                        <span class="badge {{ row.quizStatusClass }} small me-1">{{ row.quizStatusLabel | artemisTranslate }}</span>
+                        <p-tag class="me-1" [severity]="row.quizStatusSeverity" [value]="row.quizStatusLabel | artemisTranslate" />
                     }
                     @if (row.quizModeKey) {
-                        <span class="badge bg-light text-dark border small me-1">{{ row.quizModeKey | artemisTranslate }}</span>
+                        <p-tag class="me-1" severity="secondary" [value]="row.quizModeKey | artemisTranslate" />
                     }
                     @if (row.hasCategories) {
                         <jhi-exercise-categories [exercise]="row.exercise" />

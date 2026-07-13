@@ -5,6 +5,7 @@ import { faCircleInfo } from '@fortawesome/free-solid-svg-icons';
 import { InputTextModule } from 'primeng/inputtext';
 import { InputNumberModule } from 'primeng/inputnumber';
 import { ButtonModule } from 'primeng/button';
+import { MessageModule } from 'primeng/message';
 import { TooltipModule } from 'primeng/tooltip';
 import { DynamicDialogRef } from 'primeng/dynamicdialog';
 import dayjs from 'dayjs/esm';
@@ -23,7 +24,18 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 @Component({
     selector: 'jhi-exercise-group-edit-modal',
     templateUrl: './exercise-group-edit-modal.component.html',
-    imports: [FormsModule, InputTextModule, InputNumberModule, ButtonModule, TooltipModule, FaIconComponent, ExerciseTimelineComponent, ArtemisTranslatePipe, TranslateDirective],
+    imports: [
+        FormsModule,
+        InputTextModule,
+        InputNumberModule,
+        ButtonModule,
+        MessageModule,
+        TooltipModule,
+        FaIconComponent,
+        ExerciseTimelineComponent,
+        ArtemisTranslatePipe,
+        TranslateDirective,
+    ],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ExerciseGroupEditModalComponent {

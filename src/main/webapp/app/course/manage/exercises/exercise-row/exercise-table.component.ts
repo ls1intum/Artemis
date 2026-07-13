@@ -11,6 +11,7 @@ import { faCaretDown, faCaretUp, faSort } from '@fortawesome/free-solid-svg-icon
 import { TableModule } from 'primeng/table';
 import { SelectModule } from 'primeng/select';
 import { CheckboxModule } from 'primeng/checkbox';
+import { TagModule } from 'primeng/tag';
 import { TooltipModule } from 'primeng/tooltip';
 import { CdkDrag, CdkDragDrop, CdkDragHandle, CdkDragPreview, CdkDropList, moveItemInArray } from '@angular/cdk/drag-drop';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -22,6 +23,9 @@ import { CourseExerciseGroup, effectiveDate } from 'app/exercise/shared/entities
 import { Course } from 'app/course/shared/entities/course.model';
 import { QuizExercise, QuizMode, QuizStatus } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { ExerciseActionsComponent } from 'app/course/manage/exercises/exercise-row/exercise-actions.component';
+
+/** The severities a PrimeNG `p-tag` accepts. */
+type TagSeverity = 'success' | 'secondary' | 'info' | 'warn' | 'danger' | 'contrast';
 
 type SortColumn = 'title' | 'dueDate' | 'points' | 'difficulty';
 /** Sentinel sort state set after a manual drag-and-drop reorder: no column is sorted, rows keep their dragged order. */
@@ -51,13 +55,14 @@ interface ExerciseRow {
     releaseDate: dayjs.Dayjs | undefined;
     dueDate: dayjs.Dayjs | undefined;
     assessmentDueDate: dayjs.Dayjs | undefined;
-    difficultyBadgeClass: string;
+    difficultySeverity: TagSeverity;
     owningGroupId: number | undefined;
     isQuizNonIndividual: boolean;
     nonIndividualQuizTooltip: string | undefined;
     /** i18n key for the quiz status badge, or `undefined` when no badge should be shown. */
     quizStatusLabel: string | undefined;
-    quizStatusClass: string;
+    /** `undefined` renders the tag in the brand primary colour — see {@link ExerciseTableComponent.quizStatusSeverity}. */
+    quizStatusSeverity: TagSeverity | undefined;
     /** i18n key for the quiz mode badge, or `undefined` when the quiz has no mode. */
     quizModeKey: string | undefined;
     hasCategories: boolean;
@@ -86,6 +91,7 @@ interface SortIndicator {
         TableModule,
         SelectModule,
         CheckboxModule,
+        TagModule,
         TooltipModule,
         CdkDropList,
         CdkDrag,
@@ -193,12 +199,12 @@ export class ExerciseTableComponent {
                 releaseDate: this.effectiveReleaseDate(exercise),
                 dueDate: this.effectiveDueDate(exercise),
                 assessmentDueDate: this.effectiveAssessmentDueDate(exercise),
-                difficultyBadgeClass: this.difficultyBadgeClass(exercise),
+                difficultySeverity: this.difficultySeverity(exercise),
                 owningGroupId: this.owningGroupId(exercise),
                 isQuizNonIndividual: this.isQuizNonIndividual(exercise),
                 nonIndividualQuizTooltip: this.nonIndividualQuizTooltip(exercise),
                 quizStatusLabel,
-                quizStatusClass: quiz ? this.quizStatusClass(quiz) : '',
+                quizStatusSeverity: quiz ? this.quizStatusSeverity(quiz) : undefined,
                 quizModeKey: quiz?.quizMode ? this.quizModeKey(quiz) : undefined,
                 hasCategories,
                 showNoCategoriesPlaceholder: !hasCategories && !quiz?.quizMode && !quizStatusLabel,
@@ -353,16 +359,16 @@ export class ExerciseTableComponent {
         return effectiveDate(exercise, this.effectiveGroupFor(exercise), 'assessmentDueDate');
     }
 
-    difficultyBadgeClass(exercise: Exercise): string {
+    difficultySeverity(exercise: Exercise): TagSeverity {
         switch (exercise.difficulty) {
             case DifficultyLevel.EASY:
-                return 'bg-success';
+                return 'success';
             case DifficultyLevel.MEDIUM:
-                return 'bg-warning';
+                return 'warn';
             case DifficultyLevel.HARD:
-                return 'bg-danger';
+                return 'danger';
             default:
-                return 'bg-secondary';
+                return 'secondary';
         }
     }
 
@@ -432,18 +438,23 @@ export class ExerciseTableComponent {
         return `artemisApp.quizExercise.quizMode.${(exercise.quizMode ?? '').toLowerCase()}`;
     }
 
-    quizStatusClass(exercise: QuizExercise): string {
+    /**
+     * Practice mode returns `undefined` on purpose: `p-tag` applies a severity class only for the six named
+     * severities, so an unset severity falls back to the base tag, which the theme paints in the brand primary
+     * colour — the equivalent of the `bg-primary` badge this replaced, and distinct from the (cyan) visible state.
+     */
+    quizStatusSeverity(exercise: QuizExercise): TagSeverity | undefined {
         switch (exercise.status) {
             case QuizStatus.INVISIBLE:
-                return 'bg-secondary';
+                return 'secondary';
             case QuizStatus.VISIBLE:
-                return 'bg-info';
+                return 'info';
             case QuizStatus.ACTIVE:
-                return 'bg-success';
+                return 'success';
             case QuizStatus.OPEN_FOR_PRACTICE:
-                return 'bg-primary';
+                return undefined;
             default:
-                return 'bg-light text-dark';
+                return 'secondary';
         }
     }
 }

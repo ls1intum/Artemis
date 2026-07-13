@@ -25,10 +25,16 @@
     min-width: 0;
 }
 
+// Lets the card shrink below its content's intrinsic width so the table inside can scroll instead of
+// stretching the page (the default `min-width: auto` on a flex item would prevent that).
+.exercise-card-host {
+    min-width: 0;
+}
+
 .cdk-drag-preview {
     box-shadow:
-        0 5px 5px -3px rgba(0, 0, 0, 0.2),
-        0 8px 10px 1px rgba(0, 0, 0, 0.14);
+        0 5px 5px -3px color-mix(in srgb, var(--black) 20%, transparent),
+        0 8px 10px 1px color-mix(in srgb, var(--black) 14%, transparent);
 }
 
 .cdk-drag-placeholder {

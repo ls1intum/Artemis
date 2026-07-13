@@ -260,11 +260,11 @@ describe('ExerciseTableComponent', () => {
             expect(component.icon(saved)).toBeDefined();
         });
 
-        it('maps difficulty to a badge class', () => {
-            expect(component.difficultyBadgeClass({ difficulty: DifficultyLevel.EASY } as Exercise)).toBe('bg-success');
-            expect(component.difficultyBadgeClass({ difficulty: DifficultyLevel.MEDIUM } as Exercise)).toBe('bg-warning');
-            expect(component.difficultyBadgeClass({ difficulty: DifficultyLevel.HARD } as Exercise)).toBe('bg-danger');
-            expect(component.difficultyBadgeClass({} as Exercise)).toBe('bg-secondary');
+        it('maps difficulty to a tag severity', () => {
+            expect(component.difficultySeverity({ difficulty: DifficultyLevel.EASY } as Exercise)).toBe('success');
+            expect(component.difficultySeverity({ difficulty: DifficultyLevel.MEDIUM } as Exercise)).toBe('warn');
+            expect(component.difficultySeverity({ difficulty: DifficultyLevel.HARD } as Exercise)).toBe('danger');
+            expect(component.difficultySeverity({} as Exercise)).toBe('secondary');
         });
 
         it('flags non-individual quizzes and provides a tooltip only for them', () => {
@@ -286,11 +286,12 @@ describe('ExerciseTableComponent', () => {
             expect(component.quizStatusLabel({ status: QuizStatus.OPEN_FOR_PRACTICE } as QuizExercise)).toBe('artemisApp.quizExercise.practiceMode');
             expect(component.quizStatusLabel({} as QuizExercise)).toBeUndefined();
 
-            expect(component.quizStatusClass({ status: QuizStatus.INVISIBLE } as QuizExercise)).toBe('bg-secondary');
-            expect(component.quizStatusClass({ status: QuizStatus.VISIBLE } as QuizExercise)).toBe('bg-info');
-            expect(component.quizStatusClass({ status: QuizStatus.ACTIVE } as QuizExercise)).toBe('bg-success');
-            expect(component.quizStatusClass({ status: QuizStatus.OPEN_FOR_PRACTICE } as QuizExercise)).toBe('bg-primary');
-            expect(component.quizStatusClass({} as QuizExercise)).toBe('bg-light text-dark');
+            expect(component.quizStatusSeverity({ status: QuizStatus.INVISIBLE } as QuizExercise)).toBe('secondary');
+            expect(component.quizStatusSeverity({ status: QuizStatus.VISIBLE } as QuizExercise)).toBe('info');
+            expect(component.quizStatusSeverity({ status: QuizStatus.ACTIVE } as QuizExercise)).toBe('success');
+            // Unset severity: the tag falls back to the brand primary colour.
+            expect(component.quizStatusSeverity({ status: QuizStatus.OPEN_FOR_PRACTICE } as QuizExercise)).toBeUndefined();
+            expect(component.quizStatusSeverity({} as QuizExercise)).toBe('secondary');
         });
 
         it('builds the quiz mode translation key', () => {
@@ -343,7 +344,11 @@ describe('ExerciseTableComponent', () => {
             expect(link.textContent).toContain('Text exercise');
             expect(link.getAttribute('href')).toBe('/course-management/1/text-exercises/3');
             expect(element.querySelector('.col-points')?.textContent).toContain('5pts');
-            expect(element.querySelector('.badge.bg-success')?.textContent).toContain(DifficultyLevel.EASY);
+
+            const difficultyTag = element.querySelector('p-tag');
+            expect(difficultyTag?.textContent).toContain(DifficultyLevel.EASY);
+            // PrimeNG puts the severity class on the tag host element.
+            expect(difficultyTag?.classList).toContain('p-tag-success');
         });
 
         it('renders the effective dates of a row', () => {
@@ -354,17 +359,17 @@ describe('ExerciseTableComponent', () => {
 
         it('renders the quiz status and mode badges for a quiz row', () => {
             const element = renderRows([quiz]);
-            const badges = Array.from(element.querySelectorAll('.badge')).map((badge) => badge.textContent ?? '');
+            const tags = Array.from(element.querySelectorAll('p-tag')).map((tag) => tag.textContent ?? '');
 
-            expect(badges.some((text) => text.includes('artemisApp.quizExercise.quizStatus.visible'))).toBe(true);
-            expect(badges.some((text) => text.includes('artemisApp.quizExercise.quizMode.synchronized'))).toBe(true);
+            expect(tags.some((text) => text.includes('artemisApp.quizExercise.quizStatus.visible'))).toBe(true);
+            expect(tags.some((text) => text.includes('artemisApp.quizExercise.quizMode.synchronized'))).toBe(true);
         });
 
         it('renders the "none" placeholder only when a row has neither categories nor a quiz badge', () => {
             const bare = { id: 4, title: 'Bare', type: ExerciseType.TEXT, maxPoints: 1 } as Exercise;
             expect(renderRows([bare]).textContent).toContain('artemisApp.exerciseManagement.table.none');
             // The quiz row carries status and mode badges, so the categories cell must not fall back to the placeholder.
-            expect(renderRows([quiz]).querySelector('.badge')).not.toBeNull();
+            expect(renderRows([quiz]).querySelector('p-tag')).not.toBeNull();
         });
 
         it('disables the drag handle for a non-individual quiz', () => {

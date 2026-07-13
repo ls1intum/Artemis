@@ -12,6 +12,7 @@ import { FormsModule } from '@angular/forms';
 import { SelectButtonModule } from 'primeng/selectbutton';
 import { PanelModule } from 'primeng/panel';
 import { ButtonModule } from 'primeng/button';
+import { MessageModule } from 'primeng/message';
 import { TooltipModule } from 'primeng/tooltip';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
@@ -76,6 +77,7 @@ const VIEW_STORAGE_KEY = 'artemis.exerciseManagement.view';
         SelectButtonModule,
         PanelModule,
         ButtonModule,
+        MessageModule,
         TooltipModule,
         FaIconComponent,
         ExerciseTableComponent,
