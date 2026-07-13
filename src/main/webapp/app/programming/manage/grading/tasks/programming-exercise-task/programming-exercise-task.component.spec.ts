@@ -145,7 +145,10 @@ describe('ProgrammingExerciseTaskComponent', () => {
 
     it('should bind a pTooltip with the full task name to the task name field so it stays readable when truncated', () => {
         const longTaskName = 'testThisIsAVeryLongTaskNameThatWouldOtherwiseBeTruncatedByEllipsis()';
-        taskService.currentTasks = [{ taskName: longTaskName, testCases: [], stats: undefined }] as ProgrammingExerciseTask[];
+        taskService.currentTasks = [
+            { taskName: longTaskName, testCases: [], stats: undefined },
+            { taskName: 'Task1', testCases: [], stats: undefined },
+        ] as ProgrammingExerciseTask[];
         fixture.componentRef.setInput('task', { taskName: longTaskName, testCases: [], stats: undefined } as ProgrammingExerciseTask);
         fixture.componentRef.setInput('index', 0);
 
@@ -199,7 +202,10 @@ describe('ProgrammingExerciseTaskComponent', () => {
     });
 
     it('should bind a pTooltip with the full points text to the resulting points field', () => {
-        taskService.currentTasks = [{ taskName: 'Task1', testCases: [], stats: undefined }] as ProgrammingExerciseTask[];
+        taskService.currentTasks = [
+            { taskName: 'Task1', testCases: [], stats: undefined },
+            { taskName: 'Task2', testCases: [], stats: undefined },
+        ] as ProgrammingExerciseTask[];
         fixture.componentRef.setInput('task', {
             taskName: 'Task1',
             testCases: [],
