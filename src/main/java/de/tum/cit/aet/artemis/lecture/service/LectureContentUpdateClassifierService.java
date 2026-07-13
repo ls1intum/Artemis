@@ -27,19 +27,8 @@ public class LectureContentUpdateClassifierService {
      */
     public LectureContentUpdateKind classify(LectureContentUpdateSnapshot before, LectureContentUpdateSnapshot after, AttachmentFileUpdateResult fileUpdateResult) {
         Set<LectureContentUpdateKind> updateKinds = classifyAll(before, after, fileUpdateResult);
-        if (updateKinds.contains(LectureContentUpdateKind.DELETE)) {
-            return LectureContentUpdateKind.DELETE;
-        }
-        if (updateKinds.contains(LectureContentUpdateKind.CONTENT)) {
-            return LectureContentUpdateKind.CONTENT;
-        }
-        if (updateKinds.contains(LectureContentUpdateKind.VISIBILITY)) {
-            return LectureContentUpdateKind.VISIBILITY;
-        }
-        if (updateKinds.contains(LectureContentUpdateKind.METADATA)) {
-            return LectureContentUpdateKind.METADATA;
-        }
-        return LectureContentUpdateKind.NONE;
+        return java.util.List.of(LectureContentUpdateKind.DELETE, LectureContentUpdateKind.CONTENT, LectureContentUpdateKind.VISIBILITY, LectureContentUpdateKind.METADATA).stream()
+                .filter(updateKinds::contains).findFirst().orElse(LectureContentUpdateKind.NONE);
     }
 
     /**
@@ -56,16 +45,16 @@ public class LectureContentUpdateClassifierService {
         }
         Objects.requireNonNull(before, "before");
         var updateKinds = java.util.EnumSet.noneOf(LectureContentUpdateKind.class);
-        if (isContentUpdate(before, after, fileUpdateResult)) {
-            updateKinds.add(LectureContentUpdateKind.CONTENT);
-        }
-        if (isVisibilityUpdate(before, after)) {
-            updateKinds.add(LectureContentUpdateKind.VISIBILITY);
-        }
-        if (isMetadataUpdate(before, after)) {
-            updateKinds.add(LectureContentUpdateKind.METADATA);
-        }
+        addIfRequired(updateKinds, LectureContentUpdateKind.CONTENT, isContentUpdate(before, after, fileUpdateResult));
+        addIfRequired(updateKinds, LectureContentUpdateKind.VISIBILITY, isVisibilityUpdate(before, after));
+        addIfRequired(updateKinds, LectureContentUpdateKind.METADATA, isMetadataUpdate(before, after));
         return updateKinds;
+    }
+
+    private static void addIfRequired(Set<LectureContentUpdateKind> updateKinds, LectureContentUpdateKind updateKind, boolean required) {
+        if (required) {
+            updateKinds.add(updateKind);
+        }
     }
 
     private static boolean isContentUpdate(LectureContentUpdateSnapshot before, LectureContentUpdateSnapshot after, AttachmentFileUpdateResult fileUpdateResult) {
@@ -87,7 +76,7 @@ public class LectureContentUpdateClassifierService {
     }
 
     private static boolean representSameInstant(ZonedDateTime before, ZonedDateTime after) {
-        return before == null ? after == null : after != null && before.toInstant().equals(after.toInstant());
+        return Objects.equals(java.util.Optional.ofNullable(before).map(ZonedDateTime::toInstant), java.util.Optional.ofNullable(after).map(ZonedDateTime::toInstant));
     }
 
     private static boolean isMetadataUpdate(LectureContentUpdateSnapshot before, LectureContentUpdateSnapshot after) {
