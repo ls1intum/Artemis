@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.exam.dto;
 
+import java.time.ZonedDateTime;
 import java.util.List;
 
 import org.hibernate.Hibernate;
@@ -37,14 +38,18 @@ public record ExerciseGroupDTO(long id, @Nullable String title, @Nullable Boolea
 
     /**
      * Slim exam projection embedded in a single-group response. Carries only the fields the exam-exercise editors read
-     * off {@code exerciseGroup.exam} (the test-exam flag and the nested course used to rebuild request references).
+     * off {@code exerciseGroup.exam} (the test-exam flag, the example-solution publication date the programming-exercise
+     * editor uses to gate the "release tests with example solution" checkbox, and the nested course used to rebuild
+     * request references).
      *
-     * @param id       the id of the exam
-     * @param testExam whether the exam is a test exam
-     * @param course   the (slim) course of the exam
+     * @param id                             the id of the exam
+     * @param testExam                       whether the exam is a test exam
+     * @param exampleSolutionPublicationDate the exam's example-solution publication date (gates the programming-exercise
+     *                                           editor's "release tests with example solution" checkbox)
+     * @param course                         the (slim) course of the exam
      */
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
-    public record ExamForExerciseGroupDTO(long id, boolean testExam, @Nullable CourseForExerciseGroupDTO course) {
+    public record ExamForExerciseGroupDTO(long id, boolean testExam, @Nullable ZonedDateTime exampleSolutionPublicationDate, @Nullable CourseForExerciseGroupDTO course) {
 
         /**
          * Builds the slim exam projection from an exam entity.
@@ -54,7 +59,7 @@ public record ExerciseGroupDTO(long id, @Nullable String title, @Nullable Boolea
          */
         public static ExamForExerciseGroupDTO of(Exam exam) {
             CourseForExerciseGroupDTO courseDTO = exam.getCourse() == null ? null : CourseForExerciseGroupDTO.of(exam.getCourse());
-            return new ExamForExerciseGroupDTO(exam.getId(), exam.isTestExam(), courseDTO);
+            return new ExamForExerciseGroupDTO(exam.getId(), exam.isTestExam(), exam.getExampleSolutionPublicationDate(), courseDTO);
         }
     }
 

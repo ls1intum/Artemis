@@ -8,6 +8,8 @@ import static org.mockito.Mockito.verify;
 
 import java.net.URI;
 import java.time.Duration;
+import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -238,6 +240,27 @@ class ExerciseGroupIntegrationJenkinsLocalVCTest extends AbstractSpringIntegrati
         assertThat(result.exam().course().id()).isEqualTo(course1.getId());
         // The list-only exercises component is intentionally not populated on the single-group response.
         assertThat(result.exercises()).isNull();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void testGetExerciseGroup_carriesExamExampleSolutionPublicationDate_asEditor() throws Exception {
+        // Non-default fixture: the exam's exampleSolutionPublicationDate is explicitly SET. The programming-exercise
+        // editor reads exerciseGroup.exam.exampleSolutionPublicationDate to gate the "release tests with example
+        // solution" checkbox; dropping it under @JsonInclude(NON_EMPTY) would disable the checkbox for exam programming
+        // exercises. An unset date would serialize-omit and pass vacuously, so the date must be non-null here.
+        // Truncate to millis: PostgreSQL stores microsecond precision, so a nanosecond-precise fixture would not survive
+        // the DB round-trip and break the exact instant comparison (the field itself is carried correctly).
+        ZonedDateTime exampleSolutionPublicationDate = ZonedDateTime.now().plusDays(3).truncatedTo(ChronoUnit.MILLIS);
+        exam1.setExampleSolutionPublicationDate(exampleSolutionPublicationDate);
+        examRepository.save(exam1);
+
+        ExerciseGroupDTO result = request.get("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/exercise-groups/" + exerciseGroup1.getId(), HttpStatus.OK,
+                ExerciseGroupDTO.class);
+
+        assertThat(result.exam()).isNotNull();
+        assertThat(result.exam().exampleSolutionPublicationDate()).isNotNull();
+        assertThat(result.exam().exampleSolutionPublicationDate().toInstant()).isEqualTo(exampleSolutionPublicationDate.toInstant());
     }
 
     @Test
