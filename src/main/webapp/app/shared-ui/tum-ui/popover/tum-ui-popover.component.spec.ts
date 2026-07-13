@@ -54,4 +54,13 @@ describe('TumUiPopoverComponent', () => {
         component.open(origin);
         expect(emitSpy).not.toHaveBeenCalled();
     });
+
+    it('exposes the open panel as a modal dialog', () => {
+        component.open(origin);
+        fixture.detectChanges();
+        const panel = document.querySelector('.tum-ui-popover-panel');
+        expect(panel).not.toBeNull();
+        expect(panel?.getAttribute('role')).toBe('dialog');
+        expect(panel?.getAttribute('aria-modal')).toBe('true');
+    });
 });

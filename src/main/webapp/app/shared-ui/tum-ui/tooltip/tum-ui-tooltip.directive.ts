@@ -16,10 +16,10 @@ let nextTooltipId = 0;
 @Directive({
     selector: '[tumUiTooltip]',
     host: {
-        '(mouseenter)': 'scheduleShow()',
-        '(mouseleave)': 'scheduleHide()',
-        '(focusin)': 'scheduleShow()',
-        '(focusout)': 'scheduleHide()',
+        '(mouseenter)': 'onHoverStart()',
+        '(mouseleave)': 'onHoverEnd()',
+        '(focusin)': 'onFocusStart()',
+        '(focusout)': 'onFocusEnd()',
         '(keydown.escape)': 'hideNow()',
     },
 })
@@ -38,7 +38,41 @@ export class TumUiTooltipDirective implements OnDestroy {
     private hideTimer?: ReturnType<typeof setTimeout>;
     private readonly tooltipId = `tum-ui-tooltip-${nextTooltipId++}`;
 
-    protected scheduleShow(): void {
+    // Hover and keyboard focus are tracked independently: the tooltip stays visible as long as either
+    // trigger is active, and only hides once neither remains (e.g. mouse leaving a still-focused link
+    // must not hide the tooltip). Without this, a single deactivation event would hide it prematurely.
+    private hovered = false;
+    private focused = false;
+
+    protected onHoverStart(): void {
+        this.hovered = true;
+        this.scheduleShow();
+    }
+
+    protected onHoverEnd(): void {
+        this.hovered = false;
+        this.scheduleHideIfInactive();
+    }
+
+    protected onFocusStart(): void {
+        this.focused = true;
+        this.scheduleShow();
+    }
+
+    protected onFocusEnd(): void {
+        this.focused = false;
+        this.scheduleHideIfInactive();
+    }
+
+    /** Schedule a hide only once neither hover nor keyboard focus keeps the tooltip alive. */
+    private scheduleHideIfInactive(): void {
+        if (this.hovered || this.focused) {
+            return;
+        }
+        this.scheduleHide();
+    }
+
+    private scheduleShow(): void {
         // Clear BOTH timers: a second trigger (e.g. focusin after mouseenter) within the show delay
         // must not orphan the first pending show timer, or two overlays would be created and one leaked.
         clearTimeout(this.hideTimer);
@@ -49,7 +83,7 @@ export class TumUiTooltipDirective implements OnDestroy {
         this.showTimer = setTimeout(() => this.show(), this.showDelay());
     }
 
-    protected scheduleHide(): void {
+    private scheduleHide(): void {
         // Clear BOTH timers (mirror of scheduleShow): a re-hover/focus that arrives during the hide
         // delay must not leave an orphaned hide timer that later hides a re-shown tooltip.
         clearTimeout(this.showTimer);

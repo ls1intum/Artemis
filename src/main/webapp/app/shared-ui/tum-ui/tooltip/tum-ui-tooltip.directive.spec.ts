@@ -67,6 +67,36 @@ describe('TumUiTooltipDirective', () => {
         expect(document.querySelectorAll('.tum-ui-tooltip-bubble')).toHaveLength(1);
     });
 
+    it('stays visible when the mouse leaves but keyboard focus is still active', () => {
+        button.dispatchEvent(new MouseEvent('mouseenter'));
+        button.dispatchEvent(new Event('focusin', { bubbles: true }));
+        vi.advanceTimersByTime(1);
+        expect(bubble()).not.toBeNull();
+        // Mouse leaves, but the element remains focused: the tooltip must stay.
+        button.dispatchEvent(new MouseEvent('mouseleave'));
+        vi.advanceTimersByTime(1);
+        expect(bubble()).not.toBeNull();
+        // Focus finally leaves too: now it hides.
+        button.dispatchEvent(new Event('focusout', { bubbles: true }));
+        vi.advanceTimersByTime(1);
+        expect(bubble()).toBeNull();
+    });
+
+    it('stays visible when focus leaves but the mouse is still hovering', () => {
+        button.dispatchEvent(new Event('focusin', { bubbles: true }));
+        button.dispatchEvent(new MouseEvent('mouseenter'));
+        vi.advanceTimersByTime(1);
+        expect(bubble()).not.toBeNull();
+        // Blur, but the mouse is still over the element: the tooltip must stay.
+        button.dispatchEvent(new Event('focusout', { bubbles: true }));
+        vi.advanceTimersByTime(1);
+        expect(bubble()).not.toBeNull();
+        // Mouse finally leaves too: now it hides.
+        button.dispatchEvent(new MouseEvent('mouseleave'));
+        vi.advanceTimersByTime(1);
+        expect(bubble()).toBeNull();
+    });
+
     it('preserves a pre-existing aria-describedby token and restores it on hide', () => {
         button.setAttribute('aria-describedby', 'external-desc');
         button.dispatchEvent(new MouseEvent('mouseenter'));
