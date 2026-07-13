@@ -88,7 +88,7 @@
 .json-block {
     margin: 0.55rem 0 0;
     white-space: pre-wrap;
-    overflow-wrap: break-word;
+    overflow-wrap: anywhere;
     font-family: var(--artemis-font-family-monospace, monospace);
     font-size: 0.83rem;
 }
