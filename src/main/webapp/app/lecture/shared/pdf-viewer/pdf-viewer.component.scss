@@ -17,6 +17,7 @@ $toolbar-compact-hidden-selectors: (
 .pdf-fullscreen-overlay {
     position: fixed;
     inset: 0;
+
     // Above Artemis sticky bars (z-index of 1030)
     z-index: 1031;
     background-color: rgba(0, 0, 0, 0.35);
@@ -73,6 +74,7 @@ $toolbar-compact-hidden-selectors: (
     left: var(--pdf-fullscreen-margin);
     width: auto;
     height: auto;
+
     // One level above the dimming overlay (z-index of 1031, see above)
     z-index: 1032;
     border: 1px solid var(--card-border-color);
@@ -173,10 +175,12 @@ $toolbar-compact-hidden-selectors: (
         border-color 0.2s ease,
         box-shadow 0.2s ease,
         background-color 0.2s ease;
+
     &::placeholder {
         color: var(--toolbar-muted-text-color);
         opacity: 1;
     }
+
     &:focus {
         border-color: var(--toolbar-input-focus-color) !important;
         box-shadow: 0 0 0 1px var(--toolbar-input-focus-color) !important;
@@ -196,14 +200,17 @@ $toolbar-compact-hidden-selectors: (
     color: var(--toolbar-text-color);
     cursor: pointer;
     transition: opacity 0.2s ease;
+
     &:hover,
     &:active {
         opacity: 0.8;
     }
+
     &:disabled {
         opacity: 0.4;
         cursor: default;
     }
+
     fa-icon {
         font-size: 1rem;
     }
