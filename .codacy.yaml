@@ -51,10 +51,14 @@ engines:
       - "src/main/resources/templates/**/*"
       - "supporting_scripts/**"
       - "supporting_scripts/**/*"
-  codenarc: # Groovy linting — exercise-template Jenkins pipelines are scaffolding, not app code
+  codenarc: # Groovy linting — exercise-template Jenkins pipelines + docker Jenkins init scripts are scaffolding/infra, not app code
     exclude_paths:
       - "src/main/resources/templates/**"
       - "src/main/resources/templates/**/*"
+      # Jenkins init.groovy.d scripts (e.g. disabling the CSRF crumb issuer) are dynamic-Groovy by
+      # design; @CompileStatic / explicit-type rules are inappropriate for them.
+      - "docker/jenkins/**"
+      - "docker/jenkins/**/*"
   shellcheck: # shell linting — exercise-template build scripts are scaffolding, not app code
     exclude_paths:
       - "src/main/resources/templates/**"
