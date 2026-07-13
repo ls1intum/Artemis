@@ -113,4 +113,10 @@ class ProgrammingExerciseBuildConfigResourceIntegrationTest extends AbstractProg
     void testRejectsBlankPhaseName() throws Exception {
         request.put(buildConfigEndpoint(), configurationWith(List.of(phase("")), 0), HttpStatus.BAD_REQUEST);
     }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void testRejectsEmptyPhases() throws Exception {
+        request.put(buildConfigEndpoint(), configurationWith(List.of(), 0), HttpStatus.BAD_REQUEST);
+    }
 }

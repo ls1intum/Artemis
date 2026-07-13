@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { MockComponent } from 'ng-mocks';
 
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';

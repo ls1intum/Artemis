@@ -12,6 +12,7 @@ import { UpdatingResultComponent } from 'app/exercise/result/updating-result/upd
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
 import { BuildPlanConfigurationService } from 'app/programming/manage/services/build-plan-configuration.service';
+import { LegacyBuildPlanConverterService } from 'app/programming/shared/services/legacy-build-plan-converter.service';
 import { BuildPhase, parseBuildPlanPhases } from 'app/programming/shared/entities/build-plan-phases.model';
 import { ProgrammingExerciseBuildConfigurationComponent } from 'app/programming/manage/update/update-components/custom-build-plans/programming-exercise-build-configuration/programming-exercise-build-configuration.component';
 import { BuildPhasesEditorComponent } from 'app/programming/manage/update/update-components/custom-build-plans/build-phases-editor/build-phases-editor.component';
@@ -38,6 +39,7 @@ import { BuildPhasesEditorComponent } from 'app/programming/manage/update/update
 export class LocalCIBuildPlanEditorComponent implements OnInit {
     private programmingExerciseService = inject(ProgrammingExerciseService);
     private buildPlanConfigurationService = inject(BuildPlanConfigurationService);
+    private legacyBuildPlanConverterService = inject(LegacyBuildPlanConverterService);
     private alertService = inject(AlertService);
     private activatedRoute = inject(ActivatedRoute);
 
@@ -65,10 +67,22 @@ export class LocalCIBuildPlanEditorComponent implements OnInit {
      * Initializes the editable build plan state (phases, Docker image, timeout) from the exercise's build config.
      */
     private initEditingState(exercise: ProgrammingExercise): void {
-        const parsed = parseBuildPlanPhases(exercise.buildConfig?.buildPlanConfiguration);
-        this.phases.set(parsed?.phases ?? []);
-        this.dockerImage.set(parsed?.dockerImage ?? '');
-        this.timeout.set(exercise.buildConfig?.timeoutSeconds ?? 0);
+        const buildConfig = exercise.buildConfig;
+        this.timeout.set(buildConfig?.timeoutSeconds ?? 0);
+
+        const configJson = buildConfig?.buildPlanConfiguration;
+        const parsed = parseBuildPlanPhases(configJson);
+        if (parsed?.phases?.length) {
+            this.phases.set(parsed.phases);
+            this.dockerImage.set(parsed.dockerImage ?? '');
+            return;
+        }
+
+        // No structured phases yet: convert a legacy build script or older configuration format so an existing exercise
+        // keeps its build plan instead of opening with an empty editor (which would overwrite the script on save).
+        const converted = this.legacyBuildPlanConverterService.convertLegacyBuildPlanConfiguration(buildConfig?.buildScript, configJson);
+        this.phases.set(converted?.phases ?? []);
+        this.dockerImage.set(converted?.dockerImage ?? parsed?.dockerImage ?? '');
     }
 
     /**

@@ -66,6 +66,21 @@ describe('LocalCIBuildPlanEditorComponent', () => {
         expect(comp.loadingResults()).toBe(false);
     });
 
+    it('should convert a legacy build script when the exercise has no structured phases', () => {
+        const exercise = { id: 7, buildConfig: { buildScript: 'echo hello', timeoutSeconds: 60 } } as unknown as ProgrammingExercise;
+        activatedRoute.data = of({ exercise });
+        vi.spyOn(programmingExerciseService, 'findWithTemplateAndSolutionParticipationAndLatestResults').mockReturnValue(
+            of(new HttpResponse<ProgrammingExercise>({ body: { id: 7 } as ProgrammingExercise })),
+        );
+
+        comp.ngOnInit();
+
+        expect(comp.phases()).toHaveLength(1);
+        expect(comp.phases()[0].name).toBe('script');
+        expect(comp.phases()[0].script).toContain('echo hello');
+        expect(comp.timeout()).toBe(60);
+    });
+
     it('should submit the build plan configuration and show a success alert', () => {
         comp.programmingExercise.set({ id: 7, buildConfig: { dockerFlags: '{"network":"none"}' } } as unknown as ProgrammingExercise);
         comp.phases.set(phases);

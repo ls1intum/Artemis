@@ -30,7 +30,7 @@
             id="submit_button"
             type="button"
             class="btn btn-success navbar-btn ms-auto"
-            [disabled]="isSaving()"
+            [disabled]="isSaving() || phases().length === 0"
             (click)="submit()"
             [ngbTooltip]="'artemisApp.editor.submitDescription' | artemisTranslate"
         >
