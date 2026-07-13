@@ -4,7 +4,7 @@ import { Observable } from 'rxjs';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { HyperionExerciseGenerationApiService } from 'app/openapi/api/hyperionExerciseGenerationApi.service';
 import {
-    ExerciseAdaptationRevertResult,
+    ExerciseGenerationRevertResult,
     HyperionGenerationJobStart,
     HyperionGenerationMessage,
     HyperionGenerationRequest,
@@ -13,7 +13,7 @@ import {
 
 /**
  * Drives the agentic whole-exercise generation/adaptation run for the editor: starting a run in an explicit mode, fetching the current run status for reconnect, subscribing to the
- * live progress + file-snapshot stream, requesting cancellation, and reverting the last in-place adaptation. One endpoint and one engine back both {@code GENERATE} and {@code ADAPT}.
+ * live progress + file-snapshot stream, requesting cancellation, and reverting the last generated change. One endpoint and one engine back both {@code GENERATE} and {@code ADAPT}.
  */
 @Injectable({ providedIn: 'root' })
 export class HyperionExerciseGenerationService {
@@ -48,11 +48,11 @@ export class HyperionExerciseGenerationService {
     }
 
     /**
-     * Reverts the last in-place adaptation of the exercise, resetting its repositories back to the commit state captured at the start of that adaptation run.
+     * Reverts the latest accepted generation or adaptation, restoring the exercise state captured before that run.
      * @param exerciseId the exercise id
      */
-    revertAdaptation(exerciseId: number): Observable<ExerciseAdaptationRevertResult> {
-        return this.api.revertAdaptation(exerciseId);
+    revertExerciseGeneration(exerciseId: number): Observable<ExerciseGenerationRevertResult> {
+        return this.api.revertExerciseGeneration(exerciseId);
     }
 
     /**

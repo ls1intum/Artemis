@@ -9,13 +9,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
-/**
- * Deterministic unit tests for the sandbox-free problem-statement / {@code [task]}-binding hygiene checks. These exercise the extracted parsing and detection directly (no Docker,
- * no
- * build summaries); the end-to-end wiring — that {@link DifferentialVerificationService} folds each list into the verdict and the exact reason text — is covered by the
- * oracle-level
- * cases in {@link DifferentialVerificationServiceTest}.
- */
 class ProblemStatementBindingCheckerTest {
 
     @Test

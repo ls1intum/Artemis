@@ -228,6 +228,33 @@ public abstract class AbstractGitService {
     }
 
     /**
+     * Gets the last commit hash of a specific remote branch without relying on the repository's symbolic {@code HEAD}.
+     *
+     * @param repoUri the repository to inspect
+     * @param branch  the short branch name
+     * @return the branch head, or {@code null} when the repository or branch does not exist
+     * @throws EntityNotFoundException if querying the remote repository fails
+     */
+    @Nullable
+    public String getLastCommitHash(@Nullable LocalVCRepositoryUri repoUri, String branch) throws EntityNotFoundException {
+        if (repoUri == null || repoUri.getURI() == null) {
+            return null;
+        }
+        try {
+            log.debug("getLastCommitHash {} branch {}", repoUri, branch);
+            Ref branchRef = lsRemoteCommand().setRemote(getGitUriAsString(repoUri)).callAsMap().get(Constants.R_HEADS + branch);
+            if (branchRef == null) {
+                return null;
+            }
+            ObjectId objectId = branchRef.getObjectId();
+            return objectId != null ? objectId.getName() : null;
+        }
+        catch (GitAPIException | URISyntaxException ex) {
+            throw new EntityNotFoundException("Could not retrieve the last commit hash for branch " + branch + " of repoUri " + repoUri + " due to the following exception: " + ex);
+        }
+    }
+
+    /**
      * Retrieves the hash of the first commit in a bare Git repository whose commit message contains
      * a given search string. The method iterates commits in chronological order (oldest to newest)
      * to ensure that the earliest matching commit is returned.

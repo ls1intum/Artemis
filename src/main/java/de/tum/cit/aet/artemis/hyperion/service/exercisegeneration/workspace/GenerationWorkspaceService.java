@@ -238,7 +238,10 @@ public class GenerationWorkspaceService {
                 if (relativePath.isEmpty() || relativePath.endsWith("/")) {
                     continue;
                 }
-                byte[] content = resource.getInputStream().readAllBytes();
+                byte[] content;
+                try (var input = resource.getInputStream()) {
+                    content = input.readAllBytes();
+                }
                 if (content.length == 0 || content.length > MAX_REFERENCE_FILE_BYTES || content.length > remainingBytes[0] || BinaryContent.isBinary(content)) {
                     continue;
                 }
@@ -252,11 +255,8 @@ public class GenerationWorkspaceService {
     }
 
     /**
-     * Probes the freshly-seeded workspace once and renders a compact snapshot — a recursive listing of the {@code solution}/{@code template}/{@code tests} dirs plus the head of
-     * any
-     * build manifest found at their roots — handed to the agent on turn 0 so it does not spend turns discovering the layout. Language/toolchain-agnostic, bounded in shell and
-     * again
-     * in Java, and degrades to an empty string on any error or timeout (the agent then lists the workspace itself).
+     * Renders a bounded turn-zero snapshot of repository paths and build manifests so the agent need not spend turns discovering the seeded layout. Returns an empty string on
+     * failure so the agent can inspect the workspace itself.
      *
      * @param sandbox   the sandbox session
      * @param sessionId the session handle

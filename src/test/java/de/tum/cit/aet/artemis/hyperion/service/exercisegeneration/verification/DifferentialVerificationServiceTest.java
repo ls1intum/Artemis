@@ -1080,9 +1080,7 @@ class DifferentialVerificationServiceTest {
         }
     }
 
-    // In-loop self-check (the agent's `verify` tool): shares the same differential + gates as the post-loop verify(...) and renders agent-readable feedback (pass/fail per build,
-    // the
-    // exact parser-form names to bind, tests that wrongly pass on the template, unresolved bindings, would-be verdict).
+    // In-loop self-check (the agent's `verify` tool): shares the same differential + gates as post-loop verification and renders agent-readable feedback.
 
     @Nested
     class InLoopSelfCheck {

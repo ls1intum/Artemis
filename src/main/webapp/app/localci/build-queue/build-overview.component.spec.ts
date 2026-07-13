@@ -379,11 +379,32 @@ describe('BuildQueueComponent', () => {
         component.ngOnInit();
         expect(component.generationAgentDiscoveryFailed()).toBe(true);
 
-        const websocketService = TestBed.inject(WebsocketService) as MockWebsocketService;
+        const websocketService = TestBed.inject(WebsocketService) as unknown as MockWebsocketService;
         websocketService.emit('/topic/admin/build-agents', [{ buildAgent: { name: 'agent-1' }, maxGenerationSandboxSlots: 2 }]);
 
         expect(component.generationAgentDiscoveryFailed()).toBe(false);
         expect(component.generationJobs()).toEqual([expect.objectContaining({ jobId: 'job-agent-1', agentName: 'agent-1' })]);
+    });
+
+    it('paces automatic fleet sandbox refreshes while retaining manual refresh', async () => {
+        vi.useFakeTimers();
+        buildAgentsServiceMock.getBuildAgentSummary.mockReturnValue(of([{ buildAgent: { name: 'agent-1' }, maxGenerationSandboxSlots: 2 }]));
+        try {
+            component.ngOnInit();
+            expect(buildAgentsServiceMock.getGenerationSandboxes).toHaveBeenCalledTimes(1);
+
+            await vi.advanceTimersByTimeAsync(29_999);
+            expect(buildAgentsServiceMock.getGenerationSandboxes).toHaveBeenCalledTimes(1);
+
+            component.refreshGenerationJobs();
+            expect(buildAgentsServiceMock.getGenerationSandboxes).toHaveBeenCalledTimes(2);
+
+            await vi.advanceTimersByTimeAsync(1);
+            expect(buildAgentsServiceMock.getGenerationSandboxes).toHaveBeenCalledTimes(3);
+        } finally {
+            component.ngOnDestroy();
+            vi.useRealTimers();
+        }
     });
 
     it('should create', () => {

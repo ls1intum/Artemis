@@ -80,6 +80,8 @@ import { DatePipe } from '@angular/common';
     ],
 })
 export class BuildOverviewComponent implements OnInit, OnDestroy {
+    private static readonly GENERATION_REFRESH_INTERVAL_MS = 30_000;
+
     private route = inject(ActivatedRoute);
     private router = inject(Router);
     private websocketService = inject(WebsocketService);
@@ -396,7 +398,11 @@ export class BuildOverviewComponent implements OnInit, OnDestroy {
         if (this.generationRefreshSubscription) {
             return;
         }
-        this.generationRefreshSubscription = merge(of(0), timer(5000, 5000), this.generationRefreshRequested)
+        this.generationRefreshSubscription = merge(
+            of(0),
+            timer(BuildOverviewComponent.GENERATION_REFRESH_INTERVAL_MS, BuildOverviewComponent.GENERATION_REFRESH_INTERVAL_MS),
+            this.generationRefreshRequested,
+        )
             .pipe(exhaustMap(() => this.fetchGenerationJobs()))
             .subscribe(({ sessions, unavailableAgents }) => {
                 this.generationJobs.set(groupGenerationSandboxSessions(sessions));

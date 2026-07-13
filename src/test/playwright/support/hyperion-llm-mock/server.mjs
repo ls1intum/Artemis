@@ -54,13 +54,10 @@ function summarizeRequest(rawBody) {
     try {
         const parsed = JSON.parse(rawBody);
         const messages = Array.isArray(parsed.messages) ? parsed.messages : [];
-        const toolNames = [...(parsed.tools ?? []), ...(parsed.functions ?? [])].map((tool) => tool?.function?.name ?? tool?.name).filter((name) => typeof name === 'string');
         return {
-            model: parsed.model,
             messageCount: messages.length,
             roles: messages.map((message) => message?.role).filter(Boolean),
             promptText: messages.map((message) => (typeof message?.content === 'string' ? message.content : JSON.stringify(message?.content ?? ''))).join('\n'),
-            toolNames,
             hasWriteFileTool: rawBody.includes('write_file'),
             hasBashTool: rawBody.includes('bash'),
             hasSubmitTool: rawBody.includes('submit'),

@@ -10,11 +10,6 @@ import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
-/**
- * Deterministic tests for the content-based binary detector that keeps binaries (e.g. the Gradle wrapper JAR) out of the UTF-8 String pipeline. Detection must be by CONTENT, not
- * extension: a real {@code build.sh}/{@code run.sh} harness script is text and must NOT be classified as binary (the coarse extension list treats {@code .sh} as binary), while an
- * extensionless or wrongly-named binary must still be caught.
- */
 class BinaryContentTest {
 
     @Test

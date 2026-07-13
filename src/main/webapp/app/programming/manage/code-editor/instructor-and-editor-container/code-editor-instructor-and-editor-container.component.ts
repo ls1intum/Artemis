@@ -296,7 +296,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         this.exerciseReviewCommentService.reloadThreads();
     }
 
-    protected onHyperionAdaptationReverted(completedAt: string): void {
+    protected onHyperionGenerationReverted(completedAt: string): void {
         this.refreshAfterHyperionRepositoryChange(Date.parse(completedAt));
     }
 

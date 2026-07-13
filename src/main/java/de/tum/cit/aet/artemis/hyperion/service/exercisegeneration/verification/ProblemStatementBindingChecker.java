@@ -7,17 +7,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-/**
- * Pure (sandbox-free) problem-statement and {@code [task]}-binding hygiene checks {@link DifferentialVerificationService} applies alongside the differential build oracle. These
- * catch
- * a class of broken exercise the build oracle is blind to: the sandbox build can pass while the student-facing statement binds no tests, binds them with the wrong keyword, binds
- * names that resolve to no real test, or leaks grader internals into prose. Every check reads only the raw problem-statement text (and, for binding resolution, the flat list of
- * actual test names), never the build summaries or parsers.
- * <p>
- * A problem-statement task binding has the shape {@code [task][Some title](testA,testB)}: the parenthesised, comma-separated names bind graded tests to a student-facing checklist.
- * The gates and rejection messages live in {@link DifferentialVerificationService}, which consumes these lists; this class owns only the parsing and detection. Static and
- * side-effect-free so it is unit-testable without Docker, mirroring {@link ExerciseIntegrityGate}.
- */
+/** Parses and validates problem-statement {@code [task][title](testName)} bindings and detects grader-internal prose leaks. */
 final class ProblemStatementBindingChecker {
 
     /**
@@ -59,9 +49,7 @@ final class ProblemStatementBindingChecker {
     }
 
     /**
-     * The trimmed, non-empty test names bound by every {@code [task][Title](names)} line, in encounter order and preserving duplicates. Shared parsing for the binding-resolution
-     * and
-     * per-test differential gates so both read exactly the same names.
+     * The trimmed, non-empty test names bound by every {@code [task][Title](names)} line, in encounter order and preserving duplicates.
      */
     static List<String> boundTestNames(String problemStatement) {
         List<String> names = new ArrayList<>();

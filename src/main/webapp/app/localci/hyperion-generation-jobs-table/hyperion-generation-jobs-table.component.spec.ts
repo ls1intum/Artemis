@@ -46,4 +46,22 @@ describe('HyperionGenerationJobsTableComponent', () => {
         expect(text).toContain('Concurrency Lab');
         expect(detailLink.getAttribute('href')).toContain('/admin/hyperion-generations/job-1?agentName=agent-1');
     });
+
+    it('does not present stale timing or a broken detail link as live data', () => {
+        fixture.componentRef.setInput('jobs', [
+            {
+                ...fixture.componentInstance.jobs()[0],
+                stale: true,
+            },
+        ]);
+        fixture.detectChanges();
+
+        expect(fixture.nativeElement.querySelector('[data-testid="hyperion-generation-details"]')).toBeNull();
+        expect(fixture.nativeElement.querySelector('[data-testid="hyperion-generation-duration-unavailable"]').textContent).toContain(
+            'artemisApp.buildAgents.generationSandboxes.unavailable',
+        );
+        expect(fixture.nativeElement.querySelector('[data-testid="hyperion-generation-details-unavailable"]').textContent).toContain(
+            'artemisApp.buildAgents.generationSandboxes.liveDetailsUnavailable',
+        );
+    });
 });

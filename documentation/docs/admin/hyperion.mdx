@@ -4,8 +4,8 @@ title: Hyperion Service
 sidebar_label: Hyperion Setup
 ---
 
-import { CalloutVariant } from '../../src/components/Callout/Callout.types';
-import Callout from '../../src/components/Callout/Callout';
+import {CalloutVariant} from "../../src/components/Callout/Callout.types";
+import Callout from "../../src/components/Callout/Callout";
 
 # Hyperion Service
 
@@ -36,8 +36,8 @@ Hyperion is disabled by default. Activate it by overriding the `artemis.hyperion
 
 ```yaml
 artemis:
-    hyperion:
-        enabled: true
+  hyperion:
+    enabled: true
 ```
 
 ## Configure Spring AI
@@ -48,15 +48,15 @@ Hyperion delegates all model interactions to Spring AI. Artemis ships the single
 
 ```yaml
 spring:
-    ai:
-        model:
-            chat: openai
-        openai:
-            api-key: <openai-api-key>
-            timeout: 5m # Connection-level HTTP timeout (default 60s); reasoning models and tool-calling loops can exceed it
-            chat:
-                model: gpt-5-mini # Or another (reasonably capable) model
-                temperature: 1.0 # Required to be 1.0 for gpt-5
+  ai:
+    model:
+      chat: openai
+    openai:
+      api-key: <openai-api-key>
+      timeout: 5m # Connection-level HTTP timeout (default 60s); reasoning models and tool-calling loops can exceed it
+      chat:
+        model: gpt-5-mini # Or another (reasonably capable) model
+        temperature: 1.0 # Required to be 1.0 for gpt-5
 ```
 
 Hyperion's agent loop applies its own bounded retry handling for transient model-call failures. `spring.ai.retry.*` is not used for OpenAI chat calls in this setup.
@@ -65,17 +65,17 @@ Hyperion's agent loop applies its own bounded retry handling for transient model
 
 ```yaml
 spring:
-    ai:
-        model:
-            chat: openai
-        openai:
-            api-key: <azure-openai-api-key>
-            base-url: https://<your-resource-name>.openai.azure.com
-            microsoft-foundry: true # routes auth as an Azure api-key header; keep false/omitted for plain OpenAI or OpenAI-compatible endpoints
-            timeout: 5m # Connection-level HTTP timeout (default 60s); reasoning models and tool-calling loops can exceed it
-            chat:
-                model: <azure-deployment> # the Azure deployment name; used as the request model. gpt-5-mini deployment recommended
-                temperature: 1.0 # Required to be 1.0 for gpt-5
+  ai:
+    model:
+      chat: openai
+    openai:
+      api-key: <azure-openai-api-key>
+      base-url: https://<your-resource-name>.openai.azure.com
+      microsoft-foundry: true # routes auth as an Azure api-key header; keep false/omitted for plain OpenAI or OpenAI-compatible endpoints
+      timeout: 5m # Connection-level HTTP timeout (default 60s); reasoning models and tool-calling loops can exceed it
+      chat:
+        model: <azure-deployment> # the Azure deployment name; used as the request model. gpt-5-mini deployment recommended
+        temperature: 1.0 # Required to be 1.0 for gpt-5
 ```
 
 ### Token Usage Tracking
@@ -84,11 +84,11 @@ Artemis tracks LLM token usage and costs per request. Configure model pricing un
 
 ```yaml
 artemis:
-    llm:
-        model-costs:
-            gpt-5-mini:
-                input-cost-per-million-eur: 0.23
-                output-cost-per-million-eur: 1.84
+  llm:
+    model-costs:
+      gpt-5-mini:
+        input-cost-per-million-eur: 0.23
+        output-cost-per-million-eur: 1.84
 ```
 
 Add entries for each model you use. The key must match the model name returned by your provider (without date suffixes like `-2024-07-18`). If a model has no cost entry, costs default to zero but token counts are still recorded.
@@ -111,36 +111,32 @@ Key benefits of adding observability:
 Langfuse is a platform for observability and tracing of LLM applications and agents. It captures everything happening during an LLM interaction: inputs, outputs, tool usage, retries, latencies and costs.
 
 #### Setup Guide
-
 1. See how to create and setup a Langfuse account (See only "Get API keys") [here](https://langfuse.com/docs/observability/get-started).
 
 2. Request to join a Organization from an Edutelligence maintainer.
 
 3. You will be added to the Project as **Member**.
-
-    > ℹ️ **Note**
-    > Project Members can _use_ Langfuse and access existing API keys.
-    > Only **Project Admins** can create new API keys.
-    > If you cannot view API keys, ask the maintainer to generate them for you.
+> ℹ️ **Note**
+> Project Members can *use* Langfuse and access existing API keys.
+> Only **Project Admins** can create new API keys.
+> If you cannot view API keys, ask the maintainer to generate them for you.
 
 4. Once the Project Admin provides the **Public Key** and **Secret Key**, store them securely.
-   These keys authenticate your application when sending observability data to Langfuse.
+These keys authenticate your application when sending observability data to Langfuse.
 
 5. Identify your Langfuse host URL.
-   It appears in the Langfuse UI as: **https://\<host\>**.
+It appears in the Langfuse UI as: **https://\<host\>**.
 
 Your **OTLP HTTP ingestion endpoint** follows the standard OTLP HTTP spec and is constructed as:
 **https://\<host\>/api/public/otel/v1/traces**
-
 - `/api/public/otel` → Langfuse OTLP receiver root
 - `/v1/traces` → Standard OTLP HTTP route
-    > For more info: See how Langfuse can receive traces on the OLTP endpoint [here](https://langfuse.com/integrations/native/opentelemetry)
+> For more info: See how Langfuse can receive traces on the OLTP endpoint [here](https://langfuse.com/integrations/native/opentelemetry)
 
 6. Generate the Basic Authentication token for Langfuse.
-   Use Base64 encoding with the format: base64(public_key:secret_key)
+Use Base64 encoding with the format: base64(public_key:secret_key)
 
 Example generation command:
-
 ```bash
 echo -n "<public_key>:<secret_key>" | base64
 ```
@@ -163,30 +159,30 @@ To avoid committing secrets, prefer supplying these values via environment varia
 
 ```yaml
 management:
-    # Set true to display contextual name in @Observed on Langfuse
-    observations:
-        annotations:
-            enabled: true
-    # Configuration for exporting LLM traces to Langfuse (set to true to enable Artemis' custom exporter)
-    langfuse:
-        enabled: true
+  # Set true to display contextual name in @Observed on Langfuse
+  observations:
+    annotations:
+      enabled: true
+  # Configuration for exporting LLM traces to Langfuse (set to true to enable Artemis' custom exporter)
+  langfuse:
+    enabled: true
+  tracing:
+    sampling:
+      probability: 1.0
+  otlp:
     tracing:
-        sampling:
-            probability: 1.0
-    otlp:
-        tracing:
-            # LangFuse accepts OTLP over HTTP at the traces path only
-            # (example: https://langfuse.aet.cit.tum.de/api/public/otel/v1/traces)
-            endpoint: https://example.com
-            transport: http
-            headers:
-                # Provide "Basic <base64(public_key:secret_key)>" via env var to avoid committing secrets
-                Authorization: 'Basic <base64(public_key:secret_key)>'
-            # Important: Set export.enabled: false to disable the *default* OTLP exporter.
-            # Artemis uses its own custom exporter to send Spring AI LLM traces to Langfuse.
-            # so disabling the default exporter will NOT stop LLM trace export.
-            export:
-                enabled: false
+      # LangFuse accepts OTLP over HTTP at the traces path only
+      # (example: https://langfuse.aet.cit.tum.de/api/public/otel/v1/traces)
+      endpoint: https://example.com
+      transport: http
+      headers:
+        # Provide "Basic <base64(public_key:secret_key)>" via env var to avoid committing secrets
+        Authorization: "Basic <base64(public_key:secret_key)>"
+      # Important: Set export.enabled: false to disable the *default* OTLP exporter.
+      # Artemis uses its own custom exporter to send Spring AI LLM traces to Langfuse.
+      # so disabling the default exporter will NOT stop LLM trace export.
+      export:
+        enabled: false
 ```
 
 ## Verifying the integration
@@ -231,7 +227,7 @@ Agentic generation can run for several minutes and consume many model tokens. Co
 | ------------------------------------------------------------ | --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `artemis.hyperion.agent.max-job-duration`                    | `PT30M`   | Admission-to-cancellation deadline. Cancellation is cooperative: provider, sandbox, verification, and repository operations must also have bounded timeouts.                                                                   |
 | `artemis.hyperion.agent.max-turns`                           | `40`      | Per-attempt model-turn cap. The orchestrator can still retry verification-guided near misses (currently up to three attempts per job), but one runaway attempt is bounded.                                                     |
-| `artemis.hyperion.agent.max-tokens-per-job`                  | `1500000` | Per-job post-response token guard; the job is cancelled before the next agent turn once reached. Sized from live GPU browser E2E to leave headroom above successful Java generate/adapt runs while keeping a hard runaway cap. |
+| `artemis.hyperion.agent.max-tokens-per-job`                  | `1500000` | Per-job post-response token guard; the job is cancelled before the next agent turn once reached. Tune it with the provider context/output limits and admission reservation.                                                               |
 | `artemis.hyperion.agent.token-budget-window`                 | `PT24H`   | Rolling window for admission budgets.                                                                                                                                                                                          |
 | `artemis.hyperion.agent.in-flight-token-reservation-per-job` | `1500000` | Worst-case reservation counted against enabled rolling budgets while a job is running. Keep this aligned with `max-tokens-per-job` unless your deployment intentionally uses stricter admission reservations.                  |
 | `artemis.hyperion.agent.admission-max-tokens-per-user`       | `0`       | Rolling per-user admission limit. `0` disables the limit.                                                                                                                                                                      |

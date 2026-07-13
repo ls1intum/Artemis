@@ -10,40 +10,10 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.StaticCodeAnalysisCategory;
 import de.tum.cit.aet.artemis.programming.domain.StaticCodeAnalysisDefaultCategory;
 
-/**
- * Pure (no Spring, no IO) replica of the slice of production's static-code-analysis grading that decides whether a finding would dock the score, so the Hyperion oracle can reject
- * a
- * reference solution that production would grade below 100% because of an SCA penalty.
- * <p>
- * When an exercise has static code analysis enabled, both the sandbox {@code verify.sh} and production run the same {@code *_static.yaml} phases, so the SCA tools
- * (SpotBugs/Checkstyle/PMD, ruff/clippy/eslint/…) execute in both. But their reports carry no JUnit {@code <testcase>}, so the differential oracle (which decides only from JUnit
- * results) is blind to them while production folds an SCA penalty into the score ({@code ProgrammingExerciseGradingService.calculateTotalPenalty}). The verifier therefore collects
- * the SCA report files and parses them with the production {@code ReportParser} (so each finding carries the derived category, including SARIF/GCC via the production
- * categorizers),
- * then asks this class which of those findings production would actually penalise.
- * <p>
- * Mirrors {@code calculateTotalPenalty}: production deducts an SCA penalty iff all hold:
- * <ol>
- * <li>{@code exercise.isStaticCodeAnalysisEnabled()} is {@code TRUE},</li>
- * <li>{@code maxStaticCodeAnalysisPenalty} (default {@code 100} when {@code null}) {@code > 0}, and</li>
- * <li>a finding maps — via the {@code StaticCodeAnalysisConfigurer} default {@code (tool, category)} mappings, matched to the exercise's persisted category by name, as
- * {@code ProgrammingExerciseFeedbackCreationService.findCategoryForIssue}/{@code getCategoriesWithMappingForExercise} do — to a category whose state is {@code GRADED} and whose
- * {@code penalty > 0} (a {@code GRADED} category with penalty {@code 0} contributes {@code 0} points: {@code categoryFeedback.size() * category.getPenalty()}).</li>
- * </ol>
- * When any of these is false (SCA off, {@code maxPenalty == 0}, no graded+positive category — which includes the default Hyperion categories, all
- * {@code FEEDBACK}/{@code INACTIVE}),
- * no finding is penalising, so the gate stays silent and the oracle's accept is unchanged. It does not over-reject on non-graded findings.
- */
+/** Determines which parsed static-code-analysis findings would reduce the exercise's production score. */
 final class ScaPenaltyParity {
 
-    /**
-     * One static-code-analysis finding the verifier extracted from a collected SCA report: the producing tool name (matching a {@link StaticCodeAnalysisTool} enum constant) and
-     * the
-     * derived issue category from the production {@code ReportParser} (including SARIF/GCC categorizers). The production parser always yields a concrete category.
-     *
-     * @param tool     the producing tool name (e.g. {@code SPOTBUGS}, {@code RUFF})
-     * @param category the derived issue category (e.g. {@code STYLE}, {@code javadoc})
-     */
+    /** A finding's producing tool and parsed category. */
     record ScaFinding(String tool, String category) {
     }
 
@@ -83,18 +53,11 @@ final class ScaPenaltyParity {
         return penalising;
     }
 
-    /**
-     * Whether a single {@code (tool, category)} finding maps to a persisted category that is {@code GRADED} with a positive penalty — i.e. production would deduct points for it.
-     * Mirrors {@code findCategoryForIssue} (a persisted category matches a default category by name, and that default's {@code categoryMappings} contains
-     * {@code (tool, category)}),
-     * plus the {@code GRADED} + {@code penalty > 0} gate of {@code calculateStaticCodeAnalysisPenalty}.
-     */
     private static boolean isPenalising(String tool, String category, Set<StaticCodeAnalysisCategory> persistedCategories, List<StaticCodeAnalysisDefaultCategory> defaults) {
         for (StaticCodeAnalysisCategory persisted : persistedCategories) {
             if (persisted.getState() != CategoryState.GRADED) {
                 continue;
             }
-            // A graded category with no positive penalty deducts nothing (categoryFeedback.size() * penalty == 0), so it cannot pull the solution below 100%.
             if (persisted.getPenalty() == null || persisted.getPenalty() <= 0) {
                 continue;
             }

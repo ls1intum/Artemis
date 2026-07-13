@@ -35,10 +35,10 @@ import de.tum.cit.aet.artemis.core.exception.TooManyRequestsAlertException;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastEditorInExercise;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
-import de.tum.cit.aet.artemis.hyperion.dto.ExerciseAdaptationRevertResultDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationEventDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationJobStartDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationRequestDTO;
+import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationRevertResultDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationStatusDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.GenerationMode;
 import de.tum.cit.aet.artemis.hyperion.service.HyperionReviewCommentContextRendererService;
@@ -56,7 +56,7 @@ import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTes
 /**
  * Resource-level unit tests for {@link HyperionExerciseGenerationResource}: the non-LLM contract (202/409/404/204/400 and role gating) with the collaborators mocked. The
  * end-to-end
- * agentic behaviour is covered by the mocked-LLM and opt-in live-LLM E2E harnesses, not here.
+ * agentic behaviour is covered by the mocked-LLM E2E tests, not here.
  */
 class HyperionExerciseGenerationResourceTest {
 
@@ -202,7 +202,7 @@ class HyperionExerciseGenerationResourceTest {
     }
 
     @Test
-    void revertAdaptation_whenBaselineExists_returns200() {
+    void revertExerciseGeneration_whenBaselineExists_returns200() {
         when(programmingExerciseRepository.findWithAllParticipationsAndBuildConfigById(1L)).thenReturn(Optional.of(testExercise));
         when(userRepository.getUserWithGroupsAndAuthorities()).thenReturn(testUser);
         when(jobService.claimRevertSlot(testUser, 1L)).thenReturn("revert-slot");
@@ -210,7 +210,7 @@ class HyperionExerciseGenerationResourceTest {
         when(generationRevertService.revert(eq(testExercise), eq(testUser), any(BooleanSupplier.class)))
                 .thenReturn(Optional.of(new ExerciseGenerationRevertService.RevertResult(true, List.of(RepositoryType.SOLUTION))));
 
-        ResponseEntity<ExerciseAdaptationRevertResultDTO> response = resource.revertAdaptation(1L);
+        ResponseEntity<ExerciseGenerationRevertResultDTO> response = resource.revertExerciseGeneration(1L);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(response.getBody()).isNotNull();
@@ -222,7 +222,7 @@ class HyperionExerciseGenerationResourceTest {
     }
 
     @Test
-    void revertAdaptation_whenRevertIsPartial_returns409() {
+    void revertExerciseGeneration_whenRevertIsPartial_returns409() {
         when(programmingExerciseRepository.findWithAllParticipationsAndBuildConfigById(1L)).thenReturn(Optional.of(testExercise));
         when(userRepository.getUserWithGroupsAndAuthorities()).thenReturn(testUser);
         when(jobService.claimRevertSlot(testUser, 1L)).thenReturn("revert-slot");
@@ -230,7 +230,7 @@ class HyperionExerciseGenerationResourceTest {
         when(generationRevertService.revert(eq(testExercise), eq(testUser), any(BooleanSupplier.class)))
                 .thenReturn(Optional.of(new ExerciseGenerationRevertService.RevertResult(false, List.of(RepositoryType.SOLUTION))));
 
-        ResponseEntity<ExerciseAdaptationRevertResultDTO> response = resource.revertAdaptation(1L);
+        ResponseEntity<ExerciseGenerationRevertResultDTO> response = resource.revertExerciseGeneration(1L);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
         assertThat(response.getBody()).isNotNull();
@@ -240,26 +240,26 @@ class HyperionExerciseGenerationResourceTest {
     }
 
     @Test
-    void revertAdaptation_whenNothingToRevert_returns404() {
+    void revertExerciseGeneration_whenNothingToRevert_returns404() {
         when(programmingExerciseRepository.findWithAllParticipationsAndBuildConfigById(1L)).thenReturn(Optional.of(testExercise));
         when(userRepository.getUserWithGroupsAndAuthorities()).thenReturn(testUser);
         when(jobService.claimRevertSlot(testUser, 1L)).thenReturn("revert-slot");
         when(generationRevertService.revert(eq(testExercise), eq(testUser), any(BooleanSupplier.class))).thenReturn(Optional.empty());
 
-        ResponseEntity<ExerciseAdaptationRevertResultDTO> response = resource.revertAdaptation(1L);
+        ResponseEntity<ExerciseGenerationRevertResultDTO> response = resource.revertExerciseGeneration(1L);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
         verify(jobService).clearRevertSlot(1L, "revert-slot");
     }
 
     @Test
-    void revertAdaptation_whenMutationSlotIsAlreadyClaimed_returnsConflict() {
+    void revertExerciseGeneration_whenMutationSlotIsAlreadyClaimed_returnsConflict() {
         when(programmingExerciseRepository.findWithAllParticipationsAndBuildConfigById(1L)).thenReturn(Optional.of(testExercise));
         when(userRepository.getUserWithGroupsAndAuthorities()).thenReturn(testUser);
         when(jobService.claimRevertSlot(testUser, 1L))
                 .thenThrow(new ConflictException("Exercise generation is already running for this exercise", "hyperionExerciseGeneration", "exerciseGenerationRunning"));
 
-        assertThatExceptionOfType(ConflictException.class).isThrownBy(() -> resource.revertAdaptation(1L));
+        assertThatExceptionOfType(ConflictException.class).isThrownBy(() -> resource.revertExerciseGeneration(1L));
 
         verify(generationRevertService, never()).revert(any(), any(), any());
         verify(jobService, never()).clearRevertSlot(eq(1L), any());
@@ -524,7 +524,7 @@ class HyperionExerciseGenerationResourceTest {
         Method generate = HyperionExerciseGenerationResource.class.getMethod("generateExercise", long.class, ExerciseGenerationRequestDTO.class);
         Method status = HyperionExerciseGenerationResource.class.getMethod("getExerciseGenerationStatus", long.class);
         Method cancel = HyperionExerciseGenerationResource.class.getMethod("cancelExerciseGeneration", long.class, String.class);
-        Method revert = HyperionExerciseGenerationResource.class.getMethod("revertAdaptation", long.class);
+        Method revert = HyperionExerciseGenerationResource.class.getMethod("revertExerciseGeneration", long.class);
         Method supported = HyperionExerciseGenerationResource.class.getMethod("getSupportedGenerationLanguages");
 
         assertThat(generate.getAnnotation(EnforceAtLeastEditorInExercise.class)).isNotNull();

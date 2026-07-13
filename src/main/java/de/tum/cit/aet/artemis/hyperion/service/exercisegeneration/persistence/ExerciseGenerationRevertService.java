@@ -13,7 +13,6 @@ import java.util.function.BooleanSupplier;
 import jakarta.annotation.PostConstruct;
 
 import org.apache.commons.io.FileUtils;
-import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -43,8 +42,7 @@ public class ExerciseGenerationRevertService {
 
     private static final Logger log = LoggerFactory.getLogger(ExerciseGenerationRevertService.class);
 
-    // Keep the established map name so rolling deployments retain existing adaptation baselines.
-    private static final String BASELINE_MAP_NAME = "hyperion-exercise-adaptation-baselines";
+    private static final String BASELINE_MAP_NAME = "hyperion-exercise-generation-baselines";
 
     /** Latest-only, bounded recovery window; this intentionally is not a durable history. */
     private static final int BASELINE_TTL_SECONDS = 7 * 24 * 60 * 60;
@@ -62,7 +60,7 @@ public class ExerciseGenerationRevertService {
 
     private final String defaultBranch;
 
-    private IMap<Long, AdaptationBaseline> baselineMap;
+    private IMap<Long, ExerciseGenerationBaseline> baselineMap;
 
     public ExerciseGenerationRevertService(@Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance, GitService gitService,
             GenerationPersistenceService persistenceService, TempFileUtilService tempFileUtilService,
@@ -110,6 +108,26 @@ public class ExerciseGenerationRevertService {
      */
     public void recordBaseline(ProgrammingExercise exercise, String jobId, GenerationMode mode, Map<RepositoryType, String> preRunHeads, Map<RepositoryType, String> postRunHeads,
             String problemStatement, String title, String expectedCurrentProblemStatement, String expectedCurrentTitle) {
+        recordBaseline(exercise, jobId, mode, preRunHeads, postRunHeads, problemStatement, title, expectedCurrentProblemStatement, expectedCurrentTitle,
+                repositoryBranch(exercise));
+    }
+
+    /**
+     * Records a successful run against the exact repository branch used for persistence.
+     *
+     * @param exercise                        the persisted exercise
+     * @param jobId                           the completed job
+     * @param mode                            whether the run generated or adapted the exercise
+     * @param preRunHeads                     repository heads before persistence
+     * @param postRunHeads                    repository heads after persistence
+     * @param problemStatement                problem statement before persistence
+     * @param title                           title before persistence
+     * @param expectedCurrentProblemStatement problem statement written by the run
+     * @param expectedCurrentTitle            title written by the run
+     * @param repositoryBranch                repository branch used by the persistence operation
+     */
+    public void recordBaseline(ProgrammingExercise exercise, String jobId, GenerationMode mode, Map<RepositoryType, String> preRunHeads, Map<RepositoryType, String> postRunHeads,
+            String problemStatement, String title, String expectedCurrentProblemStatement, String expectedCurrentTitle, String repositoryBranch) {
         try {
             baselineMap.delete(exercise.getId());
             Map<RepositoryType, String> heads = new LinkedHashMap<>();
@@ -134,9 +152,8 @@ public class ExerciseGenerationRevertService {
                     expectedCurrentHeads.put(repositoryType, expectedCurrentHead);
                 }
             }
-            baselineMap.set(exercise.getId(),
-                    new AdaptationBaseline(jobId, mode, heads, expectedCurrentHeads, problemStatement, title, expectedCurrentProblemStatement, expectedCurrentTitle),
-                    BASELINE_TTL_SECONDS, TimeUnit.SECONDS);
+            baselineMap.set(exercise.getId(), new ExerciseGenerationBaseline(jobId, mode, heads, expectedCurrentHeads, problemStatement, title, expectedCurrentProblemStatement,
+                    expectedCurrentTitle, repositoryBranch), BASELINE_TTL_SECONDS, TimeUnit.SECONDS);
             log.info("Recorded revertible generation baseline for exercise {} (job {}): {} repository head(s)", exercise.getId(), jobId, heads.size());
         }
         catch (RuntimeException e) {
@@ -151,7 +168,7 @@ public class ExerciseGenerationRevertService {
      * @return the revertible job id, or empty when no baseline remains
      */
     public Optional<String> findRevertibleJobId(long exerciseId) {
-        return Optional.ofNullable(baselineMap.get(exerciseId)).map(AdaptationBaseline::jobId);
+        return Optional.ofNullable(baselineMap.get(exerciseId)).map(ExerciseGenerationBaseline::jobId);
     }
 
     /**
@@ -185,7 +202,7 @@ public class ExerciseGenerationRevertService {
      * @return the revert result, or empty when there is no retained baseline to revert to
      */
     public Optional<RevertResult> revert(ProgrammingExercise exercise, User user, BooleanSupplier stillOwnsMutationSlot) {
-        AdaptationBaseline baseline = baselineMap.get(exercise.getId());
+        ExerciseGenerationBaseline baseline = baselineMap.get(exercise.getId());
         if (baseline == null) {
             return Optional.empty();
         }
@@ -207,11 +224,11 @@ public class ExerciseGenerationRevertService {
      * @param baseline the captured pre-run baseline
      * @return which repositories were reverted and whether every captured repository was reverted successfully
      */
-    RevertResult revertToBaseline(ProgrammingExercise exercise, User user, AdaptationBaseline baseline) {
+    RevertResult revertToBaseline(ProgrammingExercise exercise, User user, ExerciseGenerationBaseline baseline) {
         return revertToBaseline(exercise, user, baseline, () -> true);
     }
 
-    RevertResult revertToBaseline(ProgrammingExercise exercise, User user, AdaptationBaseline baseline, BooleanSupplier stillOwnsMutationSlot) {
+    RevertResult revertToBaseline(ProgrammingExercise exercise, User user, ExerciseGenerationBaseline baseline, BooleanSupplier stillOwnsMutationSlot) {
         if (!metadataCanBeReverted(exercise.getProblemStatement(), baseline.expectedProblemStatement(), baseline.problemStatement())
                 || !metadataCanBeReverted(exercise.getTitle(), baseline.expectedTitle(), baseline.title()) || !persistenceService.canRestoreProblemStatementAndTitle(exercise,
                         baseline.problemStatement(), baseline.title(), baseline.expectedProblemStatement(), baseline.expectedTitle())) {
@@ -221,6 +238,7 @@ public class ExerciseGenerationRevertService {
         }
 
         List<RepositoryType> reverted = new ArrayList<>();
+        String repositoryBranch = baseline.repositoryBranch() == null || baseline.repositoryBranch().isBlank() ? defaultBranch : baseline.repositoryBranch();
         boolean fullyReverted = true;
         for (RepositoryType repositoryType : REVERT_ORDER) {
             String head = baseline.headFor(repositoryType);
@@ -238,13 +256,13 @@ public class ExerciseGenerationRevertService {
             Path temporaryCheckout = null;
             try {
                 temporaryCheckout = tempFileUtilService.createTempDirectory("hyperion-revert-");
-                repository = gitService.getOrCheckoutRepository(uri, uri, temporaryCheckout.resolve("repository"), true, defaultBranch, false);
+                repository = gitService.getOrCheckoutRepository(uri, uri, temporaryCheckout.resolve("repository"), true, repositoryBranch, false);
                 if (repository == null) {
                     throw new IllegalStateException("Could not check out the repository to revert it");
                 }
-                String currentHead = gitService.getLastCommitHash(uri);
+                String currentHead = gitService.getLastCommitHash(uri, repositoryBranch);
                 if (head.equals(currentHead)) {
-                    refreshCachedCheckout(uri);
+                    refreshCachedCheckout(uri, repositoryBranch);
                     reverted.add(repositoryType);
                     continue;
                 }
@@ -255,8 +273,8 @@ public class ExerciseGenerationRevertService {
                 if (!expectedCurrentHead.equals(currentHead)) {
                     throw new IllegalStateException("Current repository HEAD " + currentHead + " differs from the generated commit " + expectedCurrentHead);
                 }
-                gitService.resetToCommitAndForcePush(repository, head, expectedCurrentHead, defaultBranch);
-                refreshCachedCheckout(uri);
+                gitService.resetToCommitAndForcePush(repository, head, expectedCurrentHead, repositoryBranch);
+                refreshCachedCheckout(uri, repositoryBranch);
                 reverted.add(repositoryType);
                 log.info("Reverted the {} repository of exercise {} back to its pre-generated commit {}", repositoryType, exercise.getId(), head);
             }
@@ -287,12 +305,12 @@ public class ExerciseGenerationRevertService {
         return new RevertResult(fullyReverted, List.copyOf(reverted));
     }
 
-    private void refreshCachedCheckout(LocalVCRepositoryUri uri) {
+    private void refreshCachedCheckout(LocalVCRepositoryUri uri, String repositoryBranch) {
         try {
-            Repository cachedRepository = gitService.getOrCheckoutRepository(uri, false, defaultBranch, false);
+            Repository cachedRepository = gitService.getOrCheckoutRepository(uri, false, repositoryBranch, false);
             if (cachedRepository != null) {
                 gitService.fetchAll(cachedRepository);
-                gitService.reset(cachedRepository, "origin/" + defaultBranch);
+                gitService.reset(cachedRepository, "origin/" + repositoryBranch);
             }
         }
         catch (Exception e) {
@@ -301,9 +319,14 @@ public class ExerciseGenerationRevertService {
         }
     }
 
-    private static boolean metadataCanBeReverted(String currentValue, String expectedAdaptedValue, String targetBaselineValue) {
+    private String repositoryBranch(ProgrammingExercise exercise) {
+        String branch = exercise.getBuildConfig() != null ? exercise.getBuildConfig().getBranch() : null;
+        return branch == null || branch.isBlank() ? defaultBranch : branch;
+    }
+
+    private static boolean metadataCanBeReverted(String currentValue, String expectedCurrentValue, String targetBaselineValue) {
         String current = normalizeMetadata(currentValue);
-        return Objects.equals(current, normalizeMetadata(expectedAdaptedValue)) || Objects.equals(current, normalizeMetadata(targetBaselineValue));
+        return Objects.equals(current, normalizeMetadata(expectedCurrentValue)) || Objects.equals(current, normalizeMetadata(targetBaselineValue));
     }
 
     private static String normalizeMetadata(String value) {
@@ -319,10 +342,7 @@ public class ExerciseGenerationRevertService {
     public record RevertResult(boolean fullyReverted, List<RepositoryType> revertedRepositories) {
     }
 
-    /**
-     * @param jobId the retained job
-     * @param mode  its mode, or {@code null} for a baseline serialized by an older node
-     */
-    public record RevertibleRun(String jobId, @Nullable GenerationMode mode) {
+    /** The retained job whose generated changes can be reverted. */
+    public record RevertibleRun(String jobId, GenerationMode mode) {
     }
 }

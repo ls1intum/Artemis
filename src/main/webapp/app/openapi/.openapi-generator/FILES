@@ -29,7 +29,7 @@ model/createOrUpdateTutorialGroupRequest.ts
 model/createOrUpdateTutorialGroupSessionRequest.ts
 model/difficultyAssessment.ts
 model/examSeat.ts
-model/exerciseAdaptationRevertResult.ts
+model/exerciseGenerationRevertResult.ts
 model/exerciseGenerationEvent.ts
 model/exerciseGenerationFileSnapshot.ts
 model/exerciseGenerationJobStart.ts

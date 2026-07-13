@@ -15,12 +15,6 @@ import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
 import org.junit.jupiter.api.Test;
 
-/**
- * Adversarial unit test for the hardened {@link CollectedReports} reader: the {@code copyOut} tar of the verifier-owned reports directory is untrusted, so a
- * symlinked/hardlinked/non-regular/path-escaping/oversized entry must be REJECTED before any byte is parsed. A linked or escaping entry could redirect the verifier to read a file
- * outside the reports dir; an oversized entry could exhaust memory. Each shape is built by hand and fed through the reader; a regular-file archive must still pass (no
- * over-rejection).
- */
 class CollectedReportsTest {
 
     private static final String PREFIX = "solution";

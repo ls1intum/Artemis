@@ -60,8 +60,8 @@ public class HyperionProviderFailureCooldownService implements ProviderFailureCo
         try {
             CooldownState state = cooldownMap.get(key);
             Instant effectiveUntil = state != null && state.cooldownUntil().isAfter(until) ? state.cooldownUntil() : until;
-            long ttlSeconds = Math.max(1L, Duration.between(Instant.now(), effectiveUntil).toSeconds());
-            cooldownMap.set(key, new CooldownState(effectiveUntil), ttlSeconds, TimeUnit.SECONDS);
+            long ttlMillis = Math.max(1L, Duration.between(Instant.now(), effectiveUntil).toMillis());
+            cooldownMap.set(key, new CooldownState(effectiveUntil), ttlMillis, TimeUnit.MILLISECONDS);
         }
         finally {
             cooldownMap.unlock(key);

@@ -18,7 +18,7 @@ services:
             postgres:
                 condition: service_healthy
         ports:
-            - '8080:8080'
+          - "8080:8080"
         env_file:
             - ./artemis/config/postgres.env
             - ./artemis/config/playwright.env

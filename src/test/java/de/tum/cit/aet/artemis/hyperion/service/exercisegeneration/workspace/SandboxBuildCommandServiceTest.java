@@ -75,9 +75,8 @@ class SandboxBuildCommandServiceTest {
 
     @Test
     void verifyScript_escapesSingleQuotesInReportGlobs_soAQuotedCheckoutPathCannotBreakTheShell() {
-        // A report glob derived from an instructor-configured checkout path can contain a single quote. It is interpolated into a single-quoted `find -path '...'` predicate, so
-        // the
-        // quote must be escaped with the POSIX '\'' idiom (as the phase bodies already are) rather than closing the quote and injecting shell.
+        // A report glob derived from an instructor-configured checkout path can contain a single quote. Escape it with the POSIX '\'' idiom rather than letting it close the
+        // single-quoted `find -path '...'` predicate and inject shell.
         BuildPhaseDTO phase = new BuildPhaseDTO("test", "echo run", null, false, List.of("o'dir/results.xml"));
         String script = factoryWithPhases(List.of(phase)).verifyScriptContent(new ProgrammingExercise());
 

@@ -155,8 +155,19 @@ public class InteractiveSandboxService implements InteractiveSandbox {
             var response = createCommand.withName(containerName).withHostConfig(hostConfig).withEntrypoint()
                     .withCmd("sh", "-c", "mkdir -p " + WORKING_DIRECTORY + "; while [ ! -f " + STOP_SENTINEL + " ]; do sleep 0.5; done").exec();
             String containerId = response.getId();
-            try (final var startCommand = dockerClient.startContainerCmd(containerId)) {
-                startCommand.exec();
+            try {
+                try (final var startCommand = dockerClient.startContainerCmd(containerId)) {
+                    startCommand.exec();
+                }
+            }
+            catch (RuntimeException startFailure) {
+                try (final var removeCommand = dockerClient.removeContainerCmd(containerId).withForce(true)) {
+                    removeCommand.exec();
+                }
+                catch (RuntimeException cleanupFailure) {
+                    startFailure.addSuppressed(cleanupFailure);
+                }
+                throw startFailure;
             }
             markActive(containerId);
             log.info("Started interactive sandbox session {} (container {})", containerName, containerId);

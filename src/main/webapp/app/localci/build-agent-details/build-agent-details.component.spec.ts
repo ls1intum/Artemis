@@ -25,6 +25,7 @@ import { BuildAgentsService } from 'app/localci/build-agents.service';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { NO_ERRORS_SCHEMA } from '@angular/core';
+import { GenerationSandboxSession } from 'app/localci/shared/entities/generation-sandbox-session.model';
 
 describe('BuildAgentDetailsComponent', () => {
     setupTestBed({ zoneless: true });
@@ -329,11 +330,107 @@ describe('BuildAgentDetailsComponent', () => {
             .mockReturnValueOnce(throwError(() => new Error('offline')));
 
         fixture.detectChanges();
-        component['loadGenerationSandboxes']();
+        component.refreshGenerationSandboxes();
         fixture.detectChanges();
 
         expect(component.generationJobs()).toEqual([expect.objectContaining({ jobId: 'job-1', stale: true })]);
         expect(component.generationSandboxesLoadFailed()).toBe(true);
+    });
+
+    it('should refresh sandbox activity periodically', async () => {
+        vi.useFakeTimers();
+        try {
+            fixture.detectChanges();
+            await vi.advanceTimersByTimeAsync(0);
+            const initialRefreshes = mockBuildAgentsService.getGenerationSandboxes.mock.calls.length;
+
+            await vi.advanceTimersByTimeAsync(14_999);
+            expect(mockBuildAgentsService.getGenerationSandboxes).toHaveBeenCalledTimes(initialRefreshes);
+
+            await vi.advanceTimersByTimeAsync(1);
+            expect(mockBuildAgentsService.getGenerationSandboxes).toHaveBeenCalledTimes(initialRefreshes + 1);
+        } finally {
+            component.ngOnDestroy();
+            vi.useRealTimers();
+        }
+    });
+
+    it('should not overlap sandbox activity refreshes', async () => {
+        vi.useFakeTimers();
+        const pendingRefresh = new Subject<GenerationSandboxSession[]>();
+        mockBuildAgentsService.getGenerationSandboxes.mockReturnValue(pendingRefresh);
+        try {
+            fixture.detectChanges();
+            const initialRefreshes = mockBuildAgentsService.getGenerationSandboxes.mock.calls.length;
+
+            await vi.advanceTimersByTimeAsync(30_000);
+
+            expect(mockBuildAgentsService.getGenerationSandboxes).toHaveBeenCalledTimes(initialRefreshes);
+        } finally {
+            component.ngOnDestroy();
+            vi.useRealTimers();
+        }
+    });
+
+    it('should load the new agent immediately and ignore a late sandbox response from the previous route', () => {
+        const firstAgentRefresh = new Subject<GenerationSandboxSession[]>();
+        const secondAgentRefresh = new Subject<GenerationSandboxSession[]>();
+        const firstAgentUpdates = new Subject<BuildAgentInformation>();
+        const secondAgentUpdates = new Subject<BuildAgentInformation>();
+        mockWebsocketService.subscribe.mockImplementation((topic: string) => {
+            if (topic === '/topic/admin/running-jobs') {
+                return runningJobsSubject.asObservable();
+            }
+            return topic.endsWith('/agent1') ? firstAgentUpdates.asObservable() : secondAgentUpdates.asObservable();
+        });
+        mockBuildAgentsService.getGenerationSandboxes.mockImplementation((agentName: string) => (agentName === 'agent1' ? firstAgentRefresh : secondAgentRefresh));
+        mockBuildAgentsService.getBuildAgentDetails.mockImplementation((agentName: string) =>
+            of({ ...mockBuildAgent, buildAgent: { ...mockBuildAgent.buildAgent, name: agentName } }),
+        );
+
+        component.ngOnInit();
+        const firstSearchSubscription = component.searchSubscription;
+        const firstDurationInterval = component.buildDurationInterval;
+        const clearIntervalSpy = vi.spyOn(globalThis, 'clearInterval');
+        activatedRoute.setParameters({ agentName: 'agent2' });
+
+        expect(mockBuildAgentsService.getGenerationSandboxes).toHaveBeenNthCalledWith(1, 'agent1');
+        expect(mockBuildAgentsService.getGenerationSandboxes).toHaveBeenNthCalledWith(2, 'agent2');
+
+        secondAgentRefresh.next([
+            {
+                sessionId: 'agent2-session',
+                role: 'AUTHORING',
+                jobId: 'agent2-job',
+                exerciseId: 42,
+                exerciseTitle: 'Agent 2 exercise',
+                userLogin: 'instructor',
+                mode: 'GENERATE',
+                startedAt: '2026-07-12T09:00:00Z',
+                lastActivityAt: '2026-07-12T09:01:00Z',
+                reservedSlots: 2,
+            },
+        ]);
+        firstAgentRefresh.next([
+            {
+                sessionId: 'agent1-session',
+                role: 'AUTHORING',
+                jobId: 'agent1-job',
+                exerciseId: 41,
+                exerciseTitle: 'Agent 1 exercise',
+                userLogin: 'instructor',
+                mode: 'GENERATE',
+                startedAt: '2026-07-12T09:00:00Z',
+                lastActivityAt: '2026-07-12T09:01:00Z',
+                reservedSlots: 2,
+            },
+        ]);
+        firstAgentUpdates.next(mockBuildAgent);
+
+        expect(component.generationJobs()).toEqual([expect.objectContaining({ agentName: 'agent2', jobId: 'agent2-job' })]);
+        expect(component.buildAgent()?.buildAgent?.name).toBe('agent2');
+        expect(firstSearchSubscription.closed).toBe(true);
+        expect(clearIntervalSpy).toHaveBeenCalledWith(firstDurationInterval);
     });
 
     it('should present sandbox activity as active agent status', () => {
@@ -356,11 +453,13 @@ describe('BuildAgentDetailsComponent', () => {
 
         const agentUnsubscribeSpy = vi.spyOn(component.agentDetailsWebsocketSubscription!, 'unsubscribe');
         const runningUnsubscribeSpy = vi.spyOn(component.runningJobsWebsocketSubscription!, 'unsubscribe');
+        const searchUnsubscribeSpy = vi.spyOn(component.searchSubscription, 'unsubscribe');
 
         component.ngOnDestroy();
 
         expect(agentUnsubscribeSpy).toHaveBeenCalled();
         expect(runningUnsubscribeSpy).toHaveBeenCalled();
+        expect(searchUnsubscribeSpy).toHaveBeenCalled();
     });
 
     it('should cancel a build job', () => {

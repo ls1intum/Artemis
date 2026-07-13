@@ -2,7 +2,6 @@ package de.tum.cit.aet.artemis.hyperion.web;
 
 import java.time.Instant;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 
 import jakarta.validation.Valid;
@@ -31,9 +30,9 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastEditorInExercise;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionExerciseGenerationEnabled;
-import de.tum.cit.aet.artemis.hyperion.dto.ExerciseAdaptationRevertResultDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationJobStartDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationRequestDTO;
+import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationRevertResultDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationStatusDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.GenerationMode;
 import de.tum.cit.aet.artemis.hyperion.service.HyperionReviewCommentContextRendererService;
@@ -166,11 +165,11 @@ public class HyperionExerciseGenerationResource {
             ExerciseGenerationStatusDTO status = retainedStatus.get();
             return ResponseEntity.ok(new ExerciseGenerationStatusDTO(status.jobId(), status.running(), status.mode(), status.events(), status.fileSnapshots(),
                     revertibleRun.isPresent(), revertibleRun.map(ExerciseGenerationRevertService.RevertibleRun::jobId).orElse(null),
-                    revertibleRun.map(run -> Objects.requireNonNullElse(run.mode(), GenerationMode.ADAPT)).orElse(null)));
+                    revertibleRun.map(ExerciseGenerationRevertService.RevertibleRun::mode).orElse(null)));
         }
-        return revertibleRun.<ResponseEntity<ExerciseGenerationStatusDTO>>map(
-                run -> ResponseEntity.ok(new ExerciseGenerationStatusDTO(run.jobId(), false, Objects.requireNonNullElse(run.mode(), GenerationMode.ADAPT), List.of(), List.of(),
-                        true, run.jobId(), Objects.requireNonNullElse(run.mode(), GenerationMode.ADAPT))))
+        return revertibleRun
+                .<ResponseEntity<ExerciseGenerationStatusDTO>>map(
+                        run -> ResponseEntity.ok(new ExerciseGenerationStatusDTO(run.jobId(), false, run.mode(), List.of(), List.of(), true, run.jobId(), run.mode())))
                 .orElseGet(() -> ResponseEntity.noContent().build());
     }
 
@@ -192,16 +191,16 @@ public class HyperionExerciseGenerationResource {
     }
 
     /**
-     * POST programming-exercises/{exerciseId}/generate-exercise/revert-adaptation : reverts the most recent accepted generation or adaptation, resetting its
+     * POST programming-exercises/{exerciseId}/generate-exercise/revert : reverts the most recent accepted generation or adaptation, resetting its
      * template/solution/tests
-     * repositories back to the state captured before persistence. The legacy route name is retained for client compatibility.
+     * repositories back to the state captured before persistence.
      *
      * @param exerciseId the programming exercise id
      * @return 200 if a baseline was found and fully reverted; 409 if at least one repository failed to revert; 404 if there is nothing to revert
      */
-    @PostMapping("programming-exercises/{exerciseId}/generate-exercise/revert-adaptation")
+    @PostMapping("programming-exercises/{exerciseId}/generate-exercise/revert")
     @EnforceAtLeastEditorInExercise
-    public ResponseEntity<ExerciseAdaptationRevertResultDTO> revertAdaptation(@PathVariable long exerciseId) {
+    public ResponseEntity<ExerciseGenerationRevertResultDTO> revertExerciseGeneration(@PathVariable long exerciseId) {
         log.debug("REST request to revert the last accepted agentic generation run of exercise [{}]", exerciseId);
         ProgrammingExercise exercise = loadExercise(exerciseId);
         validateDraftExercise(exercise);
@@ -213,7 +212,7 @@ public class HyperionExerciseGenerationResource {
                 if (result.fullyReverted() || !result.revertedRepositories().isEmpty()) {
                     revertibleJobId.ifPresent(jobId -> jobService.discardRetainedRun(exerciseId, jobId));
                 }
-                ExerciseAdaptationRevertResultDTO body = new ExerciseAdaptationRevertResultDTO(result.fullyReverted(),
+                ExerciseGenerationRevertResultDTO body = new ExerciseGenerationRevertResultDTO(result.fullyReverted(),
                         result.revertedRepositories().stream().map(RepositoryType::getName).toList(), Instant.now());
                 return result.fullyReverted() ? ResponseEntity.ok(body) : ResponseEntity.status(HttpStatus.CONFLICT).body(body);
             }).orElseGet(() -> ResponseEntity.notFound().build());
@@ -224,9 +223,7 @@ public class HyperionExerciseGenerationResource {
     }
 
     /**
-     * For an {@link GenerationMode#ADAPT} run, folds the instructor's selected review-comment threads into the brief so the agent addresses exactly that feedback; a GENERATE run
-     * or
-     * an adapt with no selected/active threads returns the prompt unchanged.
+     * For {@link GenerationMode#ADAPT}, appends the instructor's selected active review threads to the brief. Other requests remain unchanged.
      *
      * @param basePrompt the resolved brief
      * @param exerciseId the exercise id

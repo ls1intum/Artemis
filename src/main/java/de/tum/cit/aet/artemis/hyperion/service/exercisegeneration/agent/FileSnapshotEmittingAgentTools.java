@@ -13,15 +13,8 @@ import org.springframework.ai.tool.annotation.ToolParam;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationFileSnapshotDTO;
 
 /**
- * A thin decorator around {@link SandboxAgentTools} that re-exposes the same {@code @Tool} surface but, whenever {@code write_file} or {@code edit_file} succeeds, emits a
- * whole-file {@link ExerciseGenerationFileSnapshotDTO} to the given sink for live streaming to the triggering instructor.
- * <p>
- * It never touches the tool bodies (read/bash/verify/submit are pure delegations, and the write paths emit only on success). The whole file content is already in memory:
- * {@code write_file} receives it as an argument, and {@code edit_file} reconstructs it from the last snapshot for that path (falling back to a single read only on a cache miss),
- * so
- * no extra sandbox read-back is needed on the common path.
- * <p>
- * Created per session and driven serially by the single-threaded agent loop, so the per-path cache needs no synchronisation.
+ * Decorates {@link SandboxAgentTools} with whole-file snapshots after successful writes. It reconstructs edits from a per-session cache and reads from the sandbox only on a
+ * cache miss.
  */
 public class FileSnapshotEmittingAgentTools implements TurnAware {
 
@@ -128,10 +121,7 @@ public class FileSnapshotEmittingAgentTools implements TurnAware {
     }
 
     /**
-     * Reconstructs the whole post-edit content without a sandbox read on the common path: the decorator already streamed the file's previous content, so it applies the same single
-     * replacement the inner {@code edit_file} just applied (which guaranteed {@code oldText} is present and unique). Only if it holds no cached copy (e.g. the agent created the
-     * file
-     * with {@code bash}) does it fall back to reading the file back through the delegate.
+     * Reconstructs edited content from the cached prior snapshot, falling back to a sandbox read when the agent created the file through another tool.
      */
     @Nullable
     private String reconstructEditedContent(String path, String safe, String oldText, String newText) {

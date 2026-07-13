@@ -477,10 +477,10 @@ paths:
       responses:
         '200': {description: OK}
         '404': {description: Not Found}
-  /api/hyperion/programming-exercises/{exerciseId}/generate-exercise/revert-adaptation:
+  /api/hyperion/programming-exercises/{exerciseId}/generate-exercise/revert:
     post:
       tags: [hyperion-exercise-generation]
-      operationId: revertAdaptation
+      operationId: revertExerciseGeneration
       parameters:
       - name: exerciseId
         in: path
@@ -491,12 +491,12 @@ paths:
           description: OK
           content:
             application/json:
-              schema: {$ref: '#/components/schemas/ExerciseAdaptationRevertResult'}
+              schema: {$ref: '#/components/schemas/ExerciseGenerationRevertResult'}
         '409':
           description: Conflict
           content:
             application/json:
-              schema: {$ref: '#/components/schemas/ExerciseAdaptationRevertResult'}
+              schema: {$ref: '#/components/schemas/ExerciseGenerationRevertResult'}
         '404': {description: Not Found}
   /api/quiz/courses/{courseId}/training-questions:
     post:
@@ -1473,6 +1473,10 @@ components:
           type: array
           items: {$ref: '#/components/schemas/ExerciseGenerationFileSnapshot'}
         revertAvailable: {type: boolean}
+        revertJobId: {type: string}
+        revertMode:
+          type: string
+          enum: [GENERATE, ADAPT]
     ExerciseGenerationEvent:
       type: object
       required: [type, timestamp]
@@ -1519,7 +1523,7 @@ components:
         truncated: {type: boolean}
         turn: {type: integer, format: int32}
         timestamp: {type: string, format: date-time}
-    ExerciseAdaptationRevertResult:
+    ExerciseGenerationRevertResult:
       type: object
       required: [fullyReverted, revertedRepositories, completedAt]
       properties:

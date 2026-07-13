@@ -15,6 +15,7 @@ import java.util.EnumMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
@@ -33,6 +34,7 @@ import de.tum.cit.aet.artemis.hyperion.dto.GenerationMode;
 import de.tum.cit.aet.artemis.localvc.service.GitService;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
 import de.tum.cit.aet.artemis.programming.domain.Repository;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 
@@ -124,8 +126,8 @@ class ExerciseGenerationRevertServiceTest {
         Map<RepositoryType, String> onlySolutionAndTests = new EnumMap<>(RepositoryType.class);
         onlySolutionAndTests.put(RepositoryType.SOLUTION, "sha-solution");
         onlySolutionAndTests.put(RepositoryType.TESTS, "sha-tests");
-        when(gitService.getLastCommitHash(solutionUri)).thenReturn("adapted-solution");
-        when(gitService.getLastCommitHash(testsUri)).thenReturn("adapted-tests");
+        when(gitService.getLastCommitHash(solutionUri, DEFAULT_BRANCH)).thenReturn("adapted-solution");
+        when(gitService.getLastCommitHash(testsUri, DEFAULT_BRANCH)).thenReturn("adapted-tests");
 
         revertService.recordBaseline(exercise, "job-1", GenerationMode.ADAPT, onlySolutionAndTests,
                 postRunHeads(RepositoryType.SOLUTION, "adapted-solution", RepositoryType.TESTS, "adapted-tests"), "old statement", "Old Title");
@@ -147,15 +149,7 @@ class ExerciseGenerationRevertServiceTest {
     }
 
     @Test
-    void findRevertibleRun_acceptsLegacyBaselineWithoutMode() {
-        AdaptationBaseline legacy = new AdaptationBaseline("legacy-job", null, Map.of(), Map.of(), "old statement", "Old Title", "adapted statement", "Adapted Title");
-        hazelcastInstance.<Long, AdaptationBaseline>getMap("hyperion-exercise-adaptation-baselines").set(77L, legacy);
-
-        assertThat(revertService.findRevertibleRun(77L)).contains(new ExerciseGenerationRevertService.RevertibleRun("legacy-job", null));
-    }
-
-    @Test
-    void recordBaseline_whenPostAdaptationHeadCaptureFails_recordsNoPartialBaseline() throws Exception {
+    void recordBaseline_whenPostRunHeadCaptureFails_recordsNoPartialBaseline() throws Exception {
         Map<RepositoryType, String> templateAndSolution = new EnumMap<>(RepositoryType.class);
         templateAndSolution.put(RepositoryType.TEMPLATE, "sha-template");
         templateAndSolution.put(RepositoryType.SOLUTION, "sha-solution");
@@ -179,9 +173,9 @@ class ExerciseGenerationRevertServiceTest {
 
     @Test
     void revert_resetsEveryRepositoryToItsCapturedSha_andResyncsAndConsumesTheBaseline() throws Exception {
-        when(gitService.getLastCommitHash(templateUri)).thenReturn("adapted-template");
-        when(gitService.getLastCommitHash(solutionUri)).thenReturn("adapted-solution");
-        when(gitService.getLastCommitHash(testsUri)).thenReturn("adapted-tests");
+        when(gitService.getLastCommitHash(templateUri, DEFAULT_BRANCH)).thenReturn("adapted-template");
+        when(gitService.getLastCommitHash(solutionUri, DEFAULT_BRANCH)).thenReturn("adapted-solution");
+        when(gitService.getLastCommitHash(testsUri, DEFAULT_BRANCH)).thenReturn("adapted-tests");
         revertService.recordBaseline(exercise, "job-1", GenerationMode.ADAPT, preRunHeads(), postRunHeads(), "old statement", "Old Title");
         assertThat(revertService.findRevertibleJobId(77L)).contains("job-1");
 
@@ -199,9 +193,28 @@ class ExerciseGenerationRevertServiceTest {
     }
 
     @Test
+    void revert_usesBranchCapturedWithBaseline() throws Exception {
+        AtomicReference<String> exerciseBranch = new AtomicReference<>("release");
+        ProgrammingExerciseBuildConfig buildConfig = mock(ProgrammingExerciseBuildConfig.class);
+        when(buildConfig.getBranch()).thenAnswer(invocation -> exerciseBranch.get());
+        when(exercise.getBuildConfig()).thenReturn(buildConfig);
+        Repository releaseTemplateRepo = mock(Repository.class);
+        when(gitService.getOrCheckoutRepository(eq(templateUri), eq(templateUri), any(Path.class), eq(true), eq("release"), eq(false))).thenReturn(releaseTemplateRepo);
+        when(gitService.getLastCommitHash(templateUri, "release")).thenReturn("adapted-template");
+        revertService.recordBaseline(exercise, "job-1", GenerationMode.ADAPT, Map.of(RepositoryType.TEMPLATE, "sha-template"), Map.of(RepositoryType.TEMPLATE, "adapted-template"),
+                "old statement", "Old Title");
+        exerciseBranch.set("other");
+
+        Optional<ExerciseGenerationRevertService.RevertResult> result = revertService.revert(exercise, user);
+
+        assertThat(result).hasValueSatisfying(value -> assertThat(value.fullyReverted()).isTrue());
+        verify(gitService).resetToCommitAndForcePush(releaseTemplateRepo, "sha-template", "adapted-template", "release");
+    }
+
+    @Test
     void revert_checksOutRepositoryIntoAnIsolatedTemporaryPath() throws Exception {
         Repository cachedTemplateRepo = mock(Repository.class);
-        when(gitService.getLastCommitHash(templateUri)).thenReturn("adapted-template");
+        when(gitService.getLastCommitHash(templateUri, DEFAULT_BRANCH)).thenReturn("adapted-template");
         when(gitService.getOrCheckoutRepository(templateUri, false, DEFAULT_BRANCH, false)).thenReturn(cachedTemplateRepo);
         revertService.recordBaseline(exercise, "job-1", GenerationMode.ADAPT, Map.of(RepositoryType.TEMPLATE, "sha-template"), Map.of(RepositoryType.TEMPLATE, "adapted-template"),
                 "old statement", "Old Title");
@@ -220,7 +233,7 @@ class ExerciseGenerationRevertServiceTest {
     @Test
     void revert_deletesCachedCheckoutWhenRefreshFails() throws Exception {
         Repository cachedTemplateRepo = mock(Repository.class);
-        when(gitService.getLastCommitHash(templateUri)).thenReturn("adapted-template");
+        when(gitService.getLastCommitHash(templateUri, DEFAULT_BRANCH)).thenReturn("adapted-template");
         when(gitService.getOrCheckoutRepository(templateUri, false, DEFAULT_BRANCH, false)).thenReturn(cachedTemplateRepo);
         org.mockito.Mockito.doThrow(new org.eclipse.jgit.api.errors.GitAPIException("fetch failed") {
         }).when(gitService).fetchAll(cachedTemplateRepo);
@@ -235,9 +248,9 @@ class ExerciseGenerationRevertServiceTest {
 
     @Test
     void revert_whenResyncFailsAfterRepositoryReset_reportsPartialAndKeepsBaselineForRetry() throws Exception {
-        when(gitService.getLastCommitHash(templateUri)).thenReturn("adapted-template", "sha-template");
-        when(gitService.getLastCommitHash(solutionUri)).thenReturn("adapted-solution", "sha-solution");
-        when(gitService.getLastCommitHash(testsUri)).thenReturn("adapted-tests", "sha-tests");
+        when(gitService.getLastCommitHash(templateUri, DEFAULT_BRANCH)).thenReturn("adapted-template", "sha-template");
+        when(gitService.getLastCommitHash(solutionUri, DEFAULT_BRANCH)).thenReturn("adapted-solution", "sha-solution");
+        when(gitService.getLastCommitHash(testsUri, DEFAULT_BRANCH)).thenReturn("adapted-tests", "sha-tests");
         revertService.recordBaseline(exercise, "job-1", GenerationMode.ADAPT, preRunHeads(), postRunHeads(), "old statement", "Old Title");
         when(persistenceService.resyncAfterRevert(any(), any(), any(), any(), any(), any(), any())).thenReturn(false, true);
 
@@ -253,9 +266,9 @@ class ExerciseGenerationRevertServiceTest {
 
     @Test
     void revert_whenARepositoryFails_keepsBaselineForRetry() throws Exception {
-        when(gitService.getLastCommitHash(templateUri)).thenReturn("adapted-template", "sha-template");
-        when(gitService.getLastCommitHash(solutionUri)).thenReturn("adapted-solution");
-        when(gitService.getLastCommitHash(testsUri)).thenReturn("adapted-tests", "sha-tests");
+        when(gitService.getLastCommitHash(templateUri, DEFAULT_BRANCH)).thenReturn("adapted-template", "sha-template");
+        when(gitService.getLastCommitHash(solutionUri, DEFAULT_BRANCH)).thenReturn("adapted-solution");
+        when(gitService.getLastCommitHash(testsUri, DEFAULT_BRANCH)).thenReturn("adapted-tests", "sha-tests");
         revertService.recordBaseline(exercise, "job-1", GenerationMode.ADAPT, preRunHeads(), postRunHeads(), "old statement", "Old Title");
         when(gitService.getOrCheckoutRepository(eq(solutionUri), eq(solutionUri), any(Path.class), eq(true), eq(DEFAULT_BRANCH), eq(false)))
                 .thenThrow(new IllegalStateException("checkout failed")).thenReturn(solutionRepo);
@@ -276,7 +289,7 @@ class ExerciseGenerationRevertServiceTest {
     void revert_allowsOnlyLineEndingAndOuterWhitespaceMetadataDifferences() throws Exception {
         when(exercise.getProblemStatement()).thenReturn("adapted statement\r\n");
         when(exercise.getTitle()).thenReturn(" Adapted Title ");
-        when(gitService.getLastCommitHash(templateUri)).thenReturn("adapted-template");
+        when(gitService.getLastCommitHash(templateUri, DEFAULT_BRANCH)).thenReturn("adapted-template");
         revertService.recordBaseline(exercise, "job-1", GenerationMode.ADAPT, Map.of(RepositoryType.TEMPLATE, "sha-template"), Map.of(RepositoryType.TEMPLATE, "adapted-template"),
                 "old statement", "Old Title");
 
@@ -290,7 +303,7 @@ class ExerciseGenerationRevertServiceTest {
 
     @Test
     void revert_refusesToClobberManualCommitsAfterTheAdaptation() throws Exception {
-        when(gitService.getLastCommitHash(templateUri)).thenReturn("manual-template");
+        when(gitService.getLastCommitHash(templateUri, DEFAULT_BRANCH)).thenReturn("manual-template");
         revertService.recordBaseline(exercise, "job-1", GenerationMode.ADAPT, Map.of(RepositoryType.TEMPLATE, "sha-template"), Map.of(RepositoryType.TEMPLATE, "adapted-template"),
                 "old statement", "Old Title");
 
@@ -311,7 +324,7 @@ class ExerciseGenerationRevertServiceTest {
     void revert_refusesToClobberManualProblemStatementEditsAfterTheAdaptation() throws Exception {
         when(exercise.getProblemStatement()).thenReturn("adapted statement", "manual statement");
         when(exercise.getTitle()).thenReturn("Adapted Title", "Adapted Title");
-        when(gitService.getLastCommitHash(templateUri)).thenReturn("adapted-template");
+        when(gitService.getLastCommitHash(templateUri, DEFAULT_BRANCH)).thenReturn("adapted-template");
         revertService.recordBaseline(exercise, "job-1", GenerationMode.ADAPT, Map.of(RepositoryType.TEMPLATE, "sha-template"), Map.of(RepositoryType.TEMPLATE, "adapted-template"),
                 "old statement", "Old Title");
 
@@ -327,7 +340,7 @@ class ExerciseGenerationRevertServiceTest {
     @Test
     void revert_refusesBeforeRepositoryResetWhenPersistedMetadataChanged() throws Exception {
         when(persistenceService.canRestoreProblemStatementAndTitle(any(), any(), any(), any(), any())).thenReturn(false);
-        when(gitService.getLastCommitHash(templateUri)).thenReturn("adapted-template");
+        when(gitService.getLastCommitHash(templateUri, DEFAULT_BRANCH)).thenReturn("adapted-template");
         revertService.recordBaseline(exercise, "job-1", GenerationMode.ADAPT, Map.of(RepositoryType.TEMPLATE, "sha-template"), Map.of(RepositoryType.TEMPLATE, "adapted-template"),
                 "old statement", "Old Title");
 
@@ -359,7 +372,7 @@ class ExerciseGenerationRevertServiceTest {
 
     @Test
     void revert_whenOwnershipIsLostAfterOneReset_returnsPartialAndKeepsBaseline() throws Exception {
-        when(gitService.getLastCommitHash(templateUri)).thenReturn("adapted-template");
+        when(gitService.getLastCommitHash(templateUri, DEFAULT_BRANCH)).thenReturn("adapted-template");
         revertService.recordBaseline(exercise, "job-1", GenerationMode.GENERATE, Map.of(RepositoryType.TEMPLATE, "sha-template", RepositoryType.SOLUTION, "sha-solution"),
                 Map.of(RepositoryType.TEMPLATE, "adapted-template", RepositoryType.SOLUTION, "adapted-solution"), "old statement", "Old Title");
         AtomicInteger ownershipChecks = new AtomicInteger();

@@ -45,19 +45,8 @@ import de.tum.cit.aet.artemis.programming.dto.StaticCodeAnalysisReportDTO;
 import de.tum.cit.aet.artemis.programming.repository.StaticCodeAnalysisCategoryRepository;
 
 /**
- * Decides whether a generated exercise is correct, independently of what the agent reports, by running the {@code verify.sh} recipe in the sandbox once against the solution and
- * once
- * against the template and applying the differential oracle: the solution must compile and pass all tests; the template must compile, run the same tests, and fail every gradable
- * one
- * (build/compile/configure gate tests are exempt — they only check that the code compiles, which the same-signature placeholder template does by design, so they legitimately pass
- * on both); at least one test must exist.
- * <p>
- * The verdict is parsed with production code, not in the shell: the pristine {@code verify.sh} collects build-fresh reports into a fixed, verifier-owned directory that this
- * service
- * {@code copyOut}s, validates via the hardened {@link CollectedReports} reader, and parses with the same parsers LocalCI uses ({@link TestResultXmlParser} for JUnit,
- * {@link ReportParser} for SCA). Authenticity needs no nonce: the agent cannot reach the re-seeded pristine script or write the verifier-owned reports dir, and a forged
- * always-pass
- * report would also make the template pass, tripping {@code checkTemplateFails}.
+ * Independently verifies generated exercises by building solution and template from a pristine script and parsing verifier-owned reports with the normal LocalCI parsers. The
+ * solution must pass; the template must compile, run the same tests, and fail every gradable test.
  */
 @Lazy
 @Service

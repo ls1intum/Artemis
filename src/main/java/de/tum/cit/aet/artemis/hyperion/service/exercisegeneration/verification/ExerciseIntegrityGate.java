@@ -22,8 +22,8 @@ import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.workspace.Gene
  * while production fails because CI lays the tree out differently or because dependencies/plugins/scripts changed. We snapshot those files at seed time and reject any
  * post-generation harness change, modulo only the CI checkout-placeholder substitution the pipeline applies (so an agent that does not touch the harness is not penalized).</li>
  * <li><b>Solution leak.</b> The template repository ships to students. A reference-solution implementation copied into a non-graded template path hands students the answer while
- * the
- * build still passes. The residue strip is the primary defence; this gate is the backstop, rejecting such a copy without flagging shared interfaces/headers or git config that are
+ * the build still passes. The residue strip is the primary defence; this gate is the backstop, rejecting such a copy without flagging shared interfaces/headers or git config that
+ * are
  * legitimately identical between template and solution (a graded-path copy that makes the template pass is left to the differential oracle).</li>
  * </ul>
  * The gates are static and side-effect-free so they are unit-testable without Docker, and so the residue-strip half can be reused by {@link GenerationWorkspaceService} on
@@ -38,9 +38,7 @@ public final class ExerciseIntegrityGate {
     private static final Set<String> CI_CHECKOUT_DIRECTORY_NAMES = Set.of("assignment", "solution", "template", "tests");
 
     /**
-     * Exact basenames of build/harness/manifest files in the tests repository, graded verbatim in production so the agent must not change them (it edits only the test source
-     * files,
-     * which are not in this set). Matched case-insensitively.
+     * Exact basenames of build/harness/manifest files in the tests repository, graded verbatim in production so the agent must not change them. Matched case-insensitively.
      */
     private static final Set<String> HARNESS_FILE_NAMES = Set.of("pom.xml", "build.gradle", "build.gradle.kts", "settings.gradle", "settings.gradle.kts", "gradle.properties",
             "package.json", "package-lock.json", "pnpm-lock.yaml", "yarn.lock", "tsconfig.json", "jest.config.js", "jest.config.ts", "cargo.toml", "cargo.lock", "cabal.project",
@@ -76,9 +74,7 @@ public final class ExerciseIntegrityGate {
     }
 
     /**
-     * Strips orphan residue files (those whose first path component is a CI checkout directory name) from a TEMPLATE or SOLUTION repository's produced file map. Preserves order
-     * and
-     * leaves every canonical-root file untouched.
+     * Strips paths that re-enter a CI checkout directory from a TEMPLATE or SOLUTION file map while preserving canonical-root files and order.
      *
      * @param files the produced files keyed by repository-relative path
      * @return the same map without orphan residue files
@@ -127,12 +123,7 @@ public final class ExerciseIntegrityGate {
     }
 
     /**
-     * Whether a harness line is build-layout-relevant: it defines where the build looks for the submission/solution/template source. Only these lines are tracked, so creation-time
-     * non-layout placeholders the pipeline does not substitute ({@code ${packageName}}, …) never count as tampering. A line qualifies if it references a CI directory placeholder,
-     * or
-     * is a recognized source-path directive ({@code hs-source-dirs}, {@code ProjectReference Include=}, {@code workspaces}/{@code path}, {@code sourceDirectory}, …) pointing at a
-     * CI
-     * checkout directory.
+     * Whether a harness line controls the source checkout layout, either through a CI directory placeholder or a recognized source-path directive.
      *
      * @param line the raw harness line
      * @return {@code true} if the line defines build layout
@@ -166,11 +157,7 @@ public final class ExerciseIntegrityGate {
     /**
      * Detects harness tampering (see class javadoc): seeded build/harness/manifest files must stay byte-equivalent after line-ending and CI checkout-placeholder normalization.
      * <p>
-     * The gate fails open on an empty seed snapshot (a harness-free language, or a best-effort snapshot that read nothing). But for a language whose tests repository always ships
-     * a
-     * build harness (Java: {@code pom.xml}/{@code build.gradle}) an empty snapshot is not "no harness to protect" — it means the snapshot capture failed, which would silently
-     * disable the whole harness-immutability gate and let a tampered harness through. When {@code requireNonEmptySnapshot} is set we therefore reject on an empty snapshot rather
-     * than skipping the gate.
+     * An empty snapshot normally disables the gate for harness-free languages. When {@code requireNonEmptySnapshot} is set, it instead indicates a failed capture and is rejected.
      *
      * @param seedTestsFiles          the tests-repo files snapshotted at seed time (repository-relative)
      * @param producedTestsFiles      the tests-repo files read back after generation (repository-relative)
@@ -209,12 +196,7 @@ public final class ExerciseIntegrityGate {
     }
 
     /**
-     * The adapt total-wipe (zero-retention) gate: an adapt run must refine the existing exercise, not replace it wholesale. If the exercise already had at least one graded test
-     * and
-     * the produced tests retain none of those graded test names, the run rebuilt the graded coverage from scratch under the guise of an adapt — a destructive rewrite the
-     * differential oracle cannot see (the regenerated exercise is internally consistent: its own solution passes and its own template fails). Only that total wipe is rejected;
-     * every
-     * partial edit (renaming, adding, or removing some tests while keeping at least one graded name) is a legitimate adapt and passes untouched.
+     * Rejects an adaptation that retains none of the exercise's existing graded test names. Partial test changes remain allowed.
      * <p>
      * Fails open on an empty baseline (generate, or a never-graded exercise). Names are trimmed but otherwise kept exact, matching Artemis task-binding semantics. Post-loop only:
      * the baseline graded names come from the authoritative pre-adapt persisted state the agent loop does not have mid-session, so this gate lives alongside
@@ -273,16 +255,9 @@ public final class ExerciseIntegrityGate {
     private static final Pattern HASKELL_IMPORT = Pattern.compile("^import\\s+(?:qualified\\s+)?([\\w.]+)");
 
     /**
-     * Detects a Haskell test harness that compares the submission against itself — a tautology the differential oracle is blind to (the template still errors, so the
-     * solution-passes/template-fails invariant holds) yet which scores any submission 100%. Under the cabal mixin layout the tests rename the reference module
-     * ({@code solution (Exercise as Solution)}) and reach the student code via an {@code Interface} indirection; the bug is {@code import qualified Exercise as Sol}, where the
-     * bare
-     * {@code Exercise} module is the submission, so every assertion becomes {@code submission == submission}.
+     * Detects a Haskell test harness that imports the submission as its reference and therefore compares the submission against itself.
      * <p>
-     * Haskell-only and contract-gated: fires only when a cabal declares the {@code solution (Exercise as <Ref>)} mixin plus an {@code Interface} indirection, and rejects only on
-     * the
-     * unambiguous fingerprint (bare {@code Exercise} import present and no renamed-reference import). Every other shape fails open — a false reject (burning the retry budget) is
-     * worse than the gap.
+     * Applies only to the cabal reference-mixin layout and rejects the unambiguous fingerprint: a bare {@code Exercise} import without a renamed-reference import.
      *
      * @param producedTestsFiles the read-back tests repository (repository-relative path -> content)
      * @return a single actionable reason when the self-comparison fingerprint is unambiguous, otherwise an empty list (gate passes)

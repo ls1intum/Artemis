@@ -69,6 +69,8 @@ import { HyperionGenerationJobsTableComponent } from 'app/localci/hyperion-gener
     ],
 })
 export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
+    private static readonly GENERATION_SANDBOX_REFRESH_INTERVAL_MS = 15_000;
+
     private readonly websocketService = inject(WebsocketService);
     private readonly buildAgentsService = inject(BuildAgentsService);
     private readonly route = inject(ActivatedRoute);
@@ -109,6 +111,7 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
     runningJobsSubscription?: Subscription;
 
     generationSandboxesSubscription?: Subscription;
+    private generationSandboxesRefreshInterval?: ReturnType<typeof setInterval>;
 
     readonly generationSandboxes = signal<GenerationSandboxSession[]>([]);
     readonly generationSandboxesLoading = signal(false);
@@ -194,6 +197,17 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
     ngOnInit() {
         // Subscribe to route query params to get the agent name and initialize data loading
         this.routeParamsSubscription = this.route.queryParams.subscribe((params) => {
+            this.agentDetailsWebsocketSubscription?.unsubscribe();
+            this.runningJobsWebsocketSubscription?.unsubscribe();
+            this.agentDetailsSubscription?.unsubscribe();
+            this.runningJobsSubscription?.unsubscribe();
+            this.searchSubscription?.unsubscribe();
+            this.generationSandboxesSubscription?.unsubscribe();
+            this.generationSandboxesSubscription = undefined;
+            clearInterval(this.buildDurationInterval);
+            this.generationSandboxes.set([]);
+            this.generationSandboxesLoading.set(false);
+            this.generationSandboxesLoadFailed.set(false);
             this.agentName.set(params['agentName']);
             // Construct the WebSocket channel by combining base topic with agent name
             this.agentDetailsWebsocketChannel = this.agentUpdatesChannel + '/' + this.agentName();
@@ -201,6 +215,7 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
                 this.runningBuildJobs.set(this.updateBuildJobDuration(this.runningBuildJobs()));
             }, 1000); // 1 second
             this.loadAgentData();
+            this.generationSandboxesRefreshInterval ??= setInterval(() => this.refreshGenerationSandboxes(), BuildAgentDetailsComponent.GENERATION_SANDBOX_REFRESH_INTERVAL_MS);
             this.initWebsocketSubscription();
             // Set up debounced search for finished build jobs to avoid excessive API calls
             this.searchSubscription = this.finishedJobsSearchTrigger
@@ -231,6 +246,10 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
         this.agentDetailsSubscription?.unsubscribe();
         this.runningJobsSubscription?.unsubscribe();
         this.generationSandboxesSubscription?.unsubscribe();
+        this.searchSubscription?.unsubscribe();
+        if (this.generationSandboxesRefreshInterval) {
+            clearInterval(this.generationSandboxesRefreshInterval);
+        }
         clearInterval(this.buildDurationInterval);
         this.routeParamsSubscription?.unsubscribe();
     }
@@ -247,7 +266,7 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
             .subscribe<BuildAgentInformation>(this.agentDetailsWebsocketChannel)
             .subscribe((buildAgent: BuildAgentInformation) => {
                 this.updateBuildAgent(buildAgent);
-                this.loadGenerationSandboxes();
+                this.refreshGenerationSandboxes();
             });
 
         // Subscribe to all running jobs and filter to only show jobs for this agent
@@ -280,7 +299,7 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
         } else {
             this.loadRunningJobs();
             this.loadAgentDetails();
-            this.loadGenerationSandboxes();
+            this.refreshGenerationSandboxes();
         }
     }
 
@@ -322,20 +341,20 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
                 // Now load running jobs and agent details with the resolved name
                 this.loadRunningJobs();
                 this.loadAgentDetails();
-                this.loadGenerationSandboxes();
+                this.refreshGenerationSandboxes();
             },
             error: () => {
                 // If we can't get the agent list, just try with the original address
                 this.loadRunningJobs();
                 this.loadAgentDetails();
-                this.loadGenerationSandboxes();
+                this.refreshGenerationSandboxes();
             },
         });
     }
 
-    private loadGenerationSandboxes() {
+    refreshGenerationSandboxes(): void {
         const agentName = this.agentName();
-        if (!agentName) {
+        if (!agentName || this.generationSandboxesLoading()) {
             return;
         }
         this.generationSandboxesSubscription?.unsubscribe();

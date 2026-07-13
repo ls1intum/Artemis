@@ -73,10 +73,7 @@ public record ExerciseGenerationFileSnapshotDTO(@Schema(description = "Constant 
     public static ExerciseGenerationFileSnapshotDTO of(String path, String action, String fullContent, int turn) {
         byte[] fullBytes = fullContent.getBytes(StandardCharsets.UTF_8);
         boolean truncated = fullBytes.length > MAX_CONTENT_BYTES;
-        // Cut on a UTF-8 CODE-POINT boundary at or below the byte cap. Slicing at a fixed byte offset can split a multi-byte code point; decoding that head with the default
-        // REPLACE
-        // action would substitute a 3-byte U+FFFD for the 1-2 lost bytes, pushing the re-encoded content BACK OVER the byte cap and injecting a character absent from the original.
-        // Backing off to the last complete code point keeps the streamed content a valid, faithful prefix strictly within MAX_CONTENT_BYTES.
+        // Keep truncated content on a UTF-8 code-point boundary so it remains a faithful prefix and stays within the byte cap.
         String content = truncated ? new String(fullBytes, 0, codePointBoundaryAtOrBelow(fullBytes, MAX_CONTENT_BYTES), StandardCharsets.UTF_8) : fullContent;
         return new ExerciseGenerationFileSnapshotDTO(TYPE, path, repositoryBucket(path), action, content, sha256Hex(fullBytes), fullBytes.length, truncated, turn, Instant.now());
     }

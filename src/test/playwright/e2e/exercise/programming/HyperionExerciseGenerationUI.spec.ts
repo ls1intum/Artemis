@@ -43,11 +43,9 @@ type BuildAgentSlots = {
 };
 
 type LlmMockRequestSummary = {
-    model?: string;
     messageCount?: number;
     roles?: string[];
     promptText?: string;
-    toolNames?: string[];
     hasWriteFileTool?: boolean;
     hasBashTool?: boolean;
     hasSubmitTool?: boolean;
@@ -653,7 +651,7 @@ async function revertAcceptedAdaptationFromUi(page: Page, exerciseId: number) {
     await expect(page.getByTestId('hyperion-generation-revert')).toBeVisible({ timeout: 60_000 });
     let revertRequests = 0;
     const countRevertRequest = (request: Request) => {
-        if (request.method() === 'POST' && request.url().includes(`/api/hyperion/programming-exercises/${exerciseId}/generate-exercise/revert-adaptation`)) {
+        if (request.method() === 'POST' && request.url().includes(`/api/hyperion/programming-exercises/${exerciseId}/generate-exercise/revert`)) {
             revertRequests++;
         }
     };
@@ -668,7 +666,7 @@ async function revertAcceptedAdaptationFromUi(page: Page, exerciseId: number) {
     page.off('request', countRevertRequest);
 
     const revertResponsePromise = page.waitForResponse(
-        (response) => response.request().method() === 'POST' && response.url().includes(`/api/hyperion/programming-exercises/${exerciseId}/generate-exercise/revert-adaptation`),
+        (response) => response.request().method() === 'POST' && response.url().includes(`/api/hyperion/programming-exercises/${exerciseId}/generate-exercise/revert`),
         { timeout: 120_000 },
     );
     await page.getByTestId('hyperion-generation-revert').click();

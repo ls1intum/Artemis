@@ -16,7 +16,7 @@ import { AdminTitleBarActionsDirective } from 'app/admin/shared/admin-title-bar-
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
-import { Subscription } from 'rxjs';
+import { Subscription, finalize } from 'rxjs';
 import { ArtemisDurationFromSecondsPipe } from 'app/foundation/pipes/artemis-duration-from-seconds.pipe';
 
 @Component({
@@ -67,6 +67,7 @@ export class HyperionGenerationDetailComponent implements OnInit, OnDestroy {
     private durationInterval?: ReturnType<typeof setInterval>;
     private refreshInterval?: ReturnType<typeof setInterval>;
     private loadSubscription?: Subscription;
+    private loadInProgress = false;
     private initialLoadResolved = false;
     private readonly backToAgent = viewChild<ElementRef<HTMLAnchorElement>>('backToAgent');
 
@@ -88,9 +89,7 @@ export class HyperionGenerationDetailComponent implements OnInit, OnDestroy {
 
     ngOnDestroy(): void {
         this.focusTerminalState.destroy();
-        if (this.durationInterval) {
-            clearInterval(this.durationInterval);
-        }
+        this.stopDurationClock();
         if (this.refreshInterval) {
             clearInterval(this.refreshInterval);
         }
@@ -98,40 +97,48 @@ export class HyperionGenerationDetailComponent implements OnInit, OnDestroy {
     }
 
     load(showLoading = true): void {
-        this.loadSubscription?.unsubscribe();
+        if (this.loadInProgress) {
+            return;
+        }
+        this.loadInProgress = true;
         this.loading.set(showLoading);
         this.loadFailed.set(false);
         this.backgroundRefreshFailed.set(false);
         if (showLoading) {
             this.notFound.set(false);
         }
-        this.loadSubscription = this.buildAgentsService.getGenerationSandboxes(this.agentName).subscribe({
-            next: (sessions) => {
-                const job = groupGenerationSandboxSessions(sessions).find((candidate) => candidate.jobId === this.jobId);
-                if (job) {
-                    this.job.set({ ...job, agentName: this.agentName });
-                    this.notFound.set(false);
-                    this.initialLoadResolved = true;
-                } else if (!this.initialLoadResolved) {
-                    this.notFound.set(true);
-                } else if (this.cancellationRequested()) {
-                    this.released.set(true);
-                    this.stopRefresh();
-                } else {
-                    this.naturallyEnded.set(true);
-                    this.stopRefresh();
-                }
-                this.loading.set(false);
-            },
-            error: () => {
-                if (this.job()) {
-                    this.backgroundRefreshFailed.set(true);
-                } else {
-                    this.loadFailed.set(true);
-                }
-                this.loading.set(false);
-            },
-        });
+        this.loadSubscription = this.buildAgentsService
+            .getGenerationSandboxes(this.agentName)
+            .pipe(finalize(() => (this.loadInProgress = false)))
+            .subscribe({
+                next: (sessions) => {
+                    const job = groupGenerationSandboxSessions(sessions).find((candidate) => candidate.jobId === this.jobId);
+                    if (job) {
+                        this.job.set({ ...job, agentName: this.agentName });
+                        this.notFound.set(false);
+                        this.initialLoadResolved = true;
+                    } else if (!this.initialLoadResolved) {
+                        this.notFound.set(true);
+                    } else if (this.cancellationRequested()) {
+                        this.released.set(true);
+                        this.stopDurationClock();
+                        this.stopRefresh();
+                    } else {
+                        this.naturallyEnded.set(true);
+                        this.stopDurationClock();
+                        this.stopRefresh();
+                    }
+                    this.loading.set(false);
+                },
+                error: () => {
+                    if (this.job()) {
+                        this.backgroundRefreshFailed.set(true);
+                    } else {
+                        this.loadFailed.set(true);
+                    }
+                    this.loading.set(false);
+                },
+            });
     }
 
     confirmCancel(): void {
@@ -193,6 +200,13 @@ export class HyperionGenerationDetailComponent implements OnInit, OnDestroy {
         if (this.refreshInterval) {
             clearInterval(this.refreshInterval);
             this.refreshInterval = undefined;
+        }
+    }
+
+    private stopDurationClock(): void {
+        if (this.durationInterval) {
+            clearInterval(this.durationInterval);
+            this.durationInterval = undefined;
         }
     }
 }

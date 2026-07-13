@@ -166,12 +166,8 @@ public final class WorkspaceArchive {
     /**
      * Reads the regular text files from a tar archive, returning their UTF-8 content keyed by path with the given prefix removed.
      * <p>
-     * Binary files are excluded. A binary entry (a NUL byte or non-UTF-8 content in its leading window — e.g. the {@code gradle/wrapper/gradle-wrapper.jar} a Java
-     * PLAIN_GRADLE / GRADLE_GRADLE exercise ships) cannot survive a lossless round-trip through a UTF-8 {@code String}: decoding it substitutes {@code U+FFFD} for every invalid
-     * byte
-     * sequence, and a downstream re-encode would write that mangled content back and break the build. The agent never edits these scaffolded binaries, so the persist step
-     * preserves
-     * them byte-exact from the scaffold (and the orphan-sweep never deletes them) — they must therefore not enter the produced text map here.
+     * Binary files are excluded because a UTF-8 {@code String} round-trip would corrupt them. Persistence preserves scaffolded binaries byte-for-byte instead of placing them in
+     * the produced text map.
      *
      * @param tar           the archive to read (closed by the caller)
      * @param prefixToStrip a leading path segment to drop from each entry name (Docker prefixes copied-out entries with the source directory name); may be empty

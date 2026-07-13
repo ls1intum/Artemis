@@ -258,11 +258,7 @@ public class GenerationOrchestrationService {
                     destroyQuietly(sandbox, sessionId);
                     return GenerationOutcome.cancelled(cancelledResult(loopResult));
                 }
-                // The sole-acceptance verification runs in a FRESH sandbox session against the exact produced tree, so no agent-spawned background process or file planted during
-                // the
-                // in-session loop can overwrite the pristine verify.sh or forge a report between seed and copyOut. The in-loop self-check (the agent's `verify` tool) stays
-                // in-session
-                // and advisory; only WHERE this authoritative verify runs changed — the differential logic is unchanged.
+                // Run acceptance verification in a fresh sandbox so work left by the agent cannot alter verify.sh or forge reports. The in-loop check remains advisory.
                 verification = verifyInFreshSession(exercise, sandbox, sessionId, verificationRequest, jobId, placeholderReplacements, sessionSpec);
                 emit(progress, verification.report());
                 if (cancelled.getAsBoolean()) {

@@ -5,10 +5,10 @@ import static org.mockito.Mockito.doReturn;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Map;
 import java.util.Objects;
 
 import org.apache.commons.io.FileUtils;
+import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,26 +31,12 @@ import de.tum.cit.aet.artemis.localci.service.LocalCIResultProcessingService;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationLocalCILocalVCTestBase;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
-import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.Repository;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseCreationUpdateService;
 
-/**
- * Shared base for the deterministic mocked-LLM Hyperion end-to-end tests (the GENERATE and ADAPT modes). It extends
- * {@link AbstractProgrammingIntegrationLocalCILocalVCTestBase} (which supports a container-backed Docker client) and re-points the build agent at the Testcontainers-discovered
- * Docker host in an {@code @BeforeEach}. Only the LLM is faked (the scripted {@code azureOpenAiChatModel}); the interactive sandbox that runs the agent's {@code bash}/{@code
- * verify.sh}, the two pristine Maven/Ares builds the differential oracle grades, and the acceptance verdict are all authentic.
- * <p>
- * The switch closes and re-opens the build agent services against the real Docker host, stubs {@code getDockerClient()}/{@code isDockerAvailable()}, normalises the image
- * architecture, and resets the queue-processing state. It also overrides the Java build image back to its real production image, because the shared test {@code application.yml}
- * points every image at a placeholder and the sandbox creates its container directly from the image without pulling. Everything is restored in {@code @AfterEach} because the
- * Spring context is cached and shared.
- */
+/** Shared setup for deterministic mocked-model generation and adaptation tests that run the sandbox, builds, and verifier against Docker. */
 abstract class AbstractHyperionMockedLlmEndToEndTest extends AbstractProgrammingIntegrationLocalCILocalVCTestBase {
-
-    /** The production Java build/execution image the sandbox container and the differential oracle both run on (matches {@code HyperionMockedLlmE2eSupport}'s Java entry). */
-    private static final String JAVA_BUILD_IMAGE = "ls1tum/artemis-maven-template:java17-25";
 
     @Autowired
     protected GenerationOrchestrationService orchestrator;
@@ -79,13 +65,13 @@ abstract class AbstractHyperionMockedLlmEndToEndTest extends AbstractProgramming
 
     private String originalImageArchitecture;
 
-    private Map<ProgrammingLanguage, String> replacedBuildImages;
+    @Nullable
+    private String replacedJavaBuildImage;
 
     @BeforeEach
     void switchToRealDockerClientAndOverrideBuildImage() {
-        // Point the Java build image at the real production Maven/Ares image so the sandbox build and the differential oracle run on the real toolchain. Restored in @AfterEach
-        // because the Spring context is cached and shared across tests.
-        replacedBuildImages = HyperionMockedLlmE2eSupport.useProductionBuildImages(programmingLanguageConfiguration, ProgrammingLanguage.JAVA);
+        // The shared test profile uses a placeholder image; this test needs the Java image used by the sandbox and verifier.
+        replacedJavaBuildImage = HyperionMockedLlmE2eSupport.useProductionJavaBuildImage(programmingLanguageConfiguration);
 
         initializeLazyLocalCIServices();
         TransportConfig dockerTransportConfig = Objects.requireNonNull(HyperionMockedLlmE2eSupport.discoverDockerTransportConfig());
@@ -111,7 +97,7 @@ abstract class AbstractHyperionMockedLlmEndToEndTest extends AbstractProgramming
         sharedQueueProcessingService.updateBuildAgentInformation();
 
         // The interactive sandbox creates its container directly from this image and never pulls it, so ensure it is present locally before any test body runs.
-        ensureDockerImageAvailable(JAVA_BUILD_IMAGE);
+        ensureDockerImageAvailable(HyperionMockedLlmE2eSupport.JAVA_BUILD_IMAGE);
     }
 
     @AfterEach
@@ -130,9 +116,9 @@ abstract class AbstractHyperionMockedLlmEndToEndTest extends AbstractProgramming
             ReflectionTestUtils.setField(buildAgentDockerService, "imageArchitecture", originalImageArchitecture);
             originalImageArchitecture = null;
         }
-        if (replacedBuildImages != null) {
-            HyperionMockedLlmE2eSupport.restoreBuildImages(programmingLanguageConfiguration, replacedBuildImages);
-            replacedBuildImages = null;
+        if (replacedJavaBuildImage != null) {
+            HyperionMockedLlmE2eSupport.restoreJavaBuildImage(programmingLanguageConfiguration, replacedJavaBuildImage);
+            replacedJavaBuildImage = null;
         }
     }
 

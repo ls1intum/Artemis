@@ -49,6 +49,19 @@ class ProgrammingExerciseFeedbackCreationServiceTest {
     }
 
     @Test
+    void verifiesTestsCommitWithoutLoadingBranchMetadata() {
+        Harness harness = harness("current-tests-commit");
+        when(harness.buildResult().assignmentRepoBranchName()).thenThrow(new AssertionError("assignment branch must not be loaded"));
+        when(harness.exercise().getBuildConfig()).thenThrow(new AssertionError("build config must not be loaded"));
+        when(harness.gitService().getLastCommitHash(harness.testsUri())).thenReturn("current-tests-commit");
+
+        harness.service().extractTestCasesFromResultAndBroadcastUpdates(harness.buildResult(), harness.exercise());
+
+        verify(harness.gitService()).getLastCommitHash(harness.testsUri());
+        verify(harness.service()).generateTestCasesFromBuildResult(harness.buildResult(), harness.exercise());
+    }
+
+    @Test
     void acceptsLegacyResultWithoutTestsCommit() {
         Harness harness = harness((String) null);
 

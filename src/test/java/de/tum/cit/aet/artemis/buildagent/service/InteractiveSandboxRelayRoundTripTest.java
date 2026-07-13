@@ -51,22 +51,9 @@ import de.tum.cit.aet.artemis.buildagent.dto.SandboxSessionContext;
 import de.tum.cit.aet.artemis.buildagent.dto.SandboxSessionSpec;
 import de.tum.cit.aet.artemis.localci.exception.LocalCIException;
 import de.tum.cit.aet.artemis.localci.service.DistributedDataAccessService;
-import de.tum.cit.aet.artemis.localci.service.distributed.api.topic.DistributedTopic;
 import de.tum.cit.aet.artemis.localci.service.distributed.local.LocalMap;
 import de.tum.cit.aet.artemis.localci.service.distributed.local.LocalTopic;
 
-/**
- * Round-trip test for the multi-node interactive-sandbox relay: it wires a {@link RemoteInteractiveSandboxClient} (core node) to an {@link InteractiveSandboxRelayHandler} (build
- * agent) through the in-JVM {@link LocalTopic} implementation of the {@link DistributedTopic} abstraction, with the agent's local {@link InteractiveSandboxService} mocked so no
- * Docker is needed.
- * <p>
- * It proves the contract the orchestrator relies on: createSession encodes affinity into the handle, exec returns the agent's stdout/exit, copy-in/copy-out round-trip the tar
- * bytes, destroy is idempotent, an oversize copy-in payload is rejected before it reaches the wire, and a request for a different agent short name is ignored by the handler. It
- * also
- * pins the correctness-critical relay invariants: the Docker work runs off the topic-listener thread (worker-pool handoff), an oversize copy-out archive is rejected as a
- * relay-limit
- * failure, and the per-agent session semaphore refuses at capacity and releases a permit exactly once per owned session (so a redundant DESTROY cannot over-release capacity).
- */
 class InteractiveSandboxRelayRoundTripTest {
 
     private static final String AGENT_SHORT_NAME = "agent-1";
@@ -149,7 +136,6 @@ class InteractiveSandboxRelayRoundTripTest {
 
         String handle = client.createSession(sessionSpec());
 
-        // The handle pins the owning agent so every later op routes back to the same agent without any shared lookup state.
         assertThat(handle).isEqualTo(AGENT_SHORT_NAME + "::" + CONTAINER_ID);
     }
 
@@ -162,9 +148,6 @@ class InteractiveSandboxRelayRoundTripTest {
 
     @Test
     void createSession_failsOverToTheNextAgentWhenTheFirstIsUnreachable() {
-        // Two candidate agents, both hosting-enabled and equally idle, but only AGENT_SHORT_NAME has a live handler. The first (listed first, so tried first) never answers and
-        // times
-        // out; the client must fail over to the second and place the session there rather than surfacing the timeout as a failure.
         ReflectionTestUtils.setField(client, "controlOpTimeout", Duration.ofMillis(300));
         when(clientAccess.getBuildAgentInformation()).thenReturn(List.of(idleAgent("dead-agent-0", 0, 4), idleAgent(AGENT_SHORT_NAME, 0, 4)));
         when(localSandbox.createSession(any())).thenReturn(CONTAINER_ID);
@@ -176,9 +159,6 @@ class InteractiveSandboxRelayRoundTripTest {
 
     @Test
     void createSession_throwsWhenNoAgentIsConfiguredToHostSessions() {
-        // Every agent has generation hosting disabled (max slots 0): none is a candidate, so placement fails fast with an actionable message instead of broadcasting a request
-        // no
-        // agent will ever answer.
         when(clientAccess.getBuildAgentInformation())
                 .thenReturn(List.of(new BuildAgentInformation(new BuildAgentDTO("no-gen", "127.0.0.1:5701", "no-gen"), 4, 0, List.of(), BuildAgentStatus.IDLE, "", null, 0, 0, 0)));
 
@@ -278,8 +258,6 @@ class InteractiveSandboxRelayRoundTripTest {
 
     @Test
     void malformedSessionHandle_failsClosedWithoutPublishing() {
-        // A handle without the "<agentShortName>::" prefix carries no routing target, so the client must fail closed before publishing any request rather than broadcasting an
-        // unroutable operation.
         assertThatExceptionOfType(LocalCIException.class).isThrownBy(() -> client.exec("no-separator-handle", Duration.ofSeconds(1), "echo", "x"))
                 .withMessageContaining("Malformed");
 
@@ -363,7 +341,6 @@ class InteractiveSandboxRelayRoundTripTest {
 
     @Test
     void requestForDifferentAgent_isIgnoredByHandler() {
-        // A request that targets another agent must be dropped by the self-filter without touching this agent's local sandbox.
         SandboxOpRequest foreignRequest = SandboxOpRequest.destroy("corr-foreign", "some-other-agent", CONTAINER_ID);
         requestsTopic.publish(foreignRequest);
 
@@ -373,7 +350,6 @@ class InteractiveSandboxRelayRoundTripTest {
     @Test
     void duplicateCorrelationId_isHandledOnlyOnce() {
         createOwnedHandle();
-        // A redelivered broadcast carries the same correlation id; the handler's idempotency guard must perform the operation exactly once.
         SandboxOpRequest request = SandboxOpRequest.destroy("corr-dup", AGENT_SHORT_NAME, CONTAINER_ID);
         requestsTopic.publish(request);
         requestsTopic.publish(request);
@@ -383,9 +359,6 @@ class InteractiveSandboxRelayRoundTripTest {
 
     @Test
     void execRunsOffTheTopicListenerThread() {
-        // The single most safety-relevant relay invariant: Docker work must never run on the topic-listener (distributed event) thread. With the synchronous LocalTopic, the
-        // listener
-        // runs on the publishing caller thread, so capturing the thread the local exec runs on and asserting it differs (and is a named relay worker) directly proves the handoff.
         AtomicReference<Thread> execThread = new AtomicReference<>();
         when(localSandbox.exec(eq(CONTAINER_ID), any(), eq("echo"), eq("x"))).thenAnswer(invocation -> {
             execThread.set(Thread.currentThread());
@@ -401,8 +374,6 @@ class InteractiveSandboxRelayRoundTripTest {
 
     @Test
     void oversizeCopyOutArchive_isRejectedAsRelayLimit() {
-        // The handler repacks the local copy-out stream and must fail closed when the repacked archive exceeds MAX_PAYLOAD_BYTES, so an oversized extraction cannot overwhelm the
-        // messaging layer. The failure must surface to the caller as a relay-limit error, never as silently truncated bytes.
         byte[] oversizeTar = tarWithEntryOfSize("big.bin", RemoteInteractiveSandboxClient.MAX_PAYLOAD_BYTES + 1);
         when(localSandbox.copyOut(eq(CONTAINER_ID), eq("/workspace/out"))).thenReturn(new TarArchiveInputStream(new ByteArrayInputStream(oversizeTar)));
 
@@ -423,8 +394,6 @@ class InteractiveSandboxRelayRoundTripTest {
     void secondCreate_atCapacity_isRefused() {
         try (RelayHarness harness = newHarness(2)) {
             when(harness.localSandbox().createSession(any())).thenReturn(CONTAINER_ID);
-            // The first generation loop reserves both its authoring and verification sandbox slots; the second must be refused with a capacity failure rather than self-starving
-            // later.
             harness.client().createSession(sessionSpec());
 
             assertThatExceptionOfType(LocalCIException.class).isThrownBy(() -> harness.client().createSession(sessionSpec()))
@@ -436,14 +405,12 @@ class InteractiveSandboxRelayRoundTripTest {
     void pausedAgent_refusesNewSession() {
         when(queueProcessingService.isPaused()).thenReturn(true);
 
-        // A paused (draining) agent must refuse a new session so pausing sheds generation load too, not just new CI build jobs — and it must not start a container.
         assertThatExceptionOfType(LocalCIException.class).isThrownBy(() -> client.createSession(sessionSpec())).withMessageContaining("paused");
         verify(localSandbox, never()).createSession(any());
     }
 
     @Test
     void generationHostingDisabled_whenCapIsZero_doesNotEvenSubscribe() {
-        // Opt-in placement: an agent with the cap at 0 never hosts a sandbox, so it must not subscribe to the request topic or allocate a worker pool.
         InteractiveSandboxRelayHandler disabled = new InteractiveSandboxRelayHandler(applicationContext(localSandbox), mock(DistributedDataAccessService.class),
                 queueProcessingService, mock(BuildAgentInformationService.class));
         ReflectionTestUtils.setField(disabled, "buildAgentShortName", AGENT_SHORT_NAME);
@@ -479,8 +446,6 @@ class InteractiveSandboxRelayRoundTripTest {
             when(harness.localSandbox().createSession(any())).thenReturn(CONTAINER_ID);
             String handle = harness.client().createSession(sessionSpec());
 
-            // Two DESTROYs for the same owned session, each a distinct correlation id (so the idempotency dedup does NOT swallow the second): the permit is released exactly once,
-            // gated by ownedSandboxSlotPermits.remove. If the second destroy wrongly released permits again, both creates below would succeed.
             harness.client().destroySession(handle);
             harness.client().destroySession(handle);
 
@@ -518,9 +483,6 @@ class InteractiveSandboxRelayRoundTripTest {
 
     @Test
     void createSession_failsOverToTheNextAgent_whenTheFirstDeclinesAtCapacity() {
-        // Two agents both ADVERTISE generation headroom (the info map is momentarily stale), but the first is actually at its permit cap when the CREATE lands. The client must
-        // fail
-        // over to the second agent and succeed there, not surface the first's capacity refusal or hang until the control-op timeout.
         LocalTopic<SandboxOpRequest> requests = new LocalTopic<>();
         LocalTopic<SandboxOpResponse> responses = new LocalTopic<>();
         LocalMap<String, byte[]> payloads = new LocalMap<>();
@@ -554,9 +516,6 @@ class InteractiveSandboxRelayRoundTripTest {
 
     @Test
     void createSession_failsOverToTheNextAgent_whenTheFirstHitsATransientDockerError() {
-        // agent-1's Docker throws a transient/agent-local error (a 5xx daemon hiccup) when the container is created; another healthy agent may well succeed, so the handler tags
-        // the
-        // failure retryable and the client fails over to agent-2 and places the session there — rather than aborting the whole (expensive) generation on one agent's blip.
         LocalTopic<SandboxOpRequest> requests = new LocalTopic<>();
         LocalTopic<SandboxOpResponse> responses = new LocalTopic<>();
         LocalMap<String, byte[]> payloads = new LocalMap<>();
@@ -578,9 +537,6 @@ class InteractiveSandboxRelayRoundTripTest {
         try {
             String handle = failoverClient.createSession(sessionSpec());
             assertThat(handle).isEqualTo("agent-2::container-2");
-            // agent-1 really attempted the create (unlike the capacity-decline case, where the guard short-circuits before createSession) — this proves a transient runtime
-            // failure,
-            // not just a pre-create refusal, drives the failover.
             verify(sandbox1).createSession(any());
         }
         finally {
@@ -592,9 +548,6 @@ class InteractiveSandboxRelayRoundTripTest {
 
     @Test
     void createSession_failsFast_whenTheFirstHitsADeterministicDockerError() {
-        // agent-1's Docker rejects the create with a deterministic 4xx (a missing image, 404) — the same spec would fail identically on every candidate, so the client must surface
-        // it
-        // immediately rather than storm agent-2 with a retry doomed to fail the same way.
         LocalTopic<SandboxOpRequest> requests = new LocalTopic<>();
         LocalTopic<SandboxOpResponse> responses = new LocalTopic<>();
         LocalMap<String, byte[]> payloads = new LocalMap<>();
@@ -615,7 +568,6 @@ class InteractiveSandboxRelayRoundTripTest {
         try {
             assertThatExceptionOfType(LocalCIException.class).isThrownBy(() -> failoverClient.createSession(new SandboxSessionSpec("bogus-image", null, sessionContext())))
                     .withMessageContaining("no such image");
-            // The deterministic failure aborted the create on the first agent; agent-2 was never asked to try the doomed spec.
             verify(sandbox2, never()).createSession(any());
         }
         finally {
@@ -625,7 +577,6 @@ class InteractiveSandboxRelayRoundTripTest {
         }
     }
 
-    /** A relay handler on caller-provided SHARED in-JVM topics, so a test can run several agents against one topic pair (e.g. to exercise create failover across agents). */
     private static InteractiveSandboxRelayHandler sharedHandler(String shortName, int maxSessions, LocalTopic<SandboxOpRequest> requests, LocalTopic<SandboxOpResponse> responses,
             LocalMap<String, byte[]> payloads, InteractiveSandboxService sandbox) {
         DistributedDataAccessService access = mock(DistributedDataAccessService.class);
@@ -640,10 +591,6 @@ class InteractiveSandboxRelayRoundTripTest {
         return handler;
     }
 
-    /**
-     * An isolated client+handler pair over its own in-JVM topics, so a test can exercise a specific session-capacity cap without the shared agent registered in {@link #setUp()}
-     * also answering (both would self-filter on the same short name and race to respond).
-     */
     private record RelayHarness(RemoteInteractiveSandboxClient client, InteractiveSandboxRelayHandler handler, InteractiveSandboxService localSandbox) implements AutoCloseable {
 
         @Override

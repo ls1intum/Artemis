@@ -1808,7 +1808,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Adapt with feedback'
         const beginExpectedUpdateSpy = vi.spyOn((comp as any).fileSyncService, 'beginExpectedRepositoryUpdate');
         vi.spyOn(TestBed.inject(ProgrammingExerciseService), 'findWithTemplateAndSolutionParticipationAndResults').mockReturnValue(of({ body: createMockExercise() } as any));
 
-        (comp as any).onHyperionAdaptationReverted('2026-07-10T20:01:00Z');
+        (comp as any).onHyperionGenerationReverted('2026-07-10T20:01:00Z');
 
         expect(beginExpectedUpdateSpy).toHaveBeenCalledExactlyOnceWith(Date.parse('2026-07-10T20:01:00Z'));
         expect(actions.executeRefresh).toHaveBeenCalledExactlyOnceWith(expect.any(Function));

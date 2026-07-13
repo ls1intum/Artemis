@@ -16,8 +16,8 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 import { AlertService } from 'app/foundation/service/alert.service';
 import { HyperionExerciseGenerationService } from 'app/hyperion/exercise-generation/hyperion-exercise-generation.service';
 import {
-    ExerciseAdaptationRevertResult,
     ExerciseGenerationFileSnapshot,
+    ExerciseGenerationRevertResult,
     HyperionGenerationCompletionStatus,
     HyperionGenerationEvent,
     HyperionGenerationMessage,
@@ -29,7 +29,6 @@ import {
 
 const REPO_ORDER: HyperionSnapshotRepo[] = ['solution', 'template', 'tests', 'other'];
 const TERMINAL_EVENT_TYPES = new Set<HyperionGenerationEvent['type']>(['DONE', 'CANCELLED', 'ERROR']);
-const LEGACY_TOOL_PROGRESS_PATTERN = /^Turn \d+:/;
 const MAX_RETAINED_EVENTS = 50;
 const MAX_STATUS_LOAD_ATTEMPTS = 3;
 const STATUS_REQUEST_TIMEOUT_MS = 5_000;
@@ -81,7 +80,7 @@ export class HyperionGenerationActivityComponent implements OnDestroy {
     readonly refreshingEditor = input(false);
     readonly editorRefreshFailed = input(false);
     readonly editorRefreshRequested = output<void>();
-    readonly adaptationReverted = output<string>();
+    readonly generationReverted = output<string>();
     readonly generationCompleted = output<HyperionGenerationCompletedEvent>();
     readonly snapshotSelected = output<ExerciseGenerationFileSnapshot>();
     readonly reviewRequested = output<HyperionReviewRequestedEvent>();
@@ -151,7 +150,7 @@ export class HyperionGenerationActivityComponent implements OnDestroy {
 
     readonly recentEvents = computed(() =>
         this.events()
-            .filter((event) => event.message && !LEGACY_TOOL_PROGRESS_PATTERN.test(event.message))
+            .filter((event) => event.message)
             .slice(-8)
             .reverse(),
     );
@@ -344,7 +343,7 @@ export class HyperionGenerationActivityComponent implements OnDestroy {
         }
         this.reverting.set(true);
         this.service
-            .revertAdaptation(id)
+            .revertExerciseGeneration(id)
             .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe({
                 next: (result) => {
@@ -405,8 +404,11 @@ export class HyperionGenerationActivityComponent implements OnDestroy {
             .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe({
                 next: () => this.scheduleCancellationStatusRefresh(id, job),
-                error: () => {
+                error: (error) => {
                     this.cancelRequested.set(false);
+                    if (!(error instanceof HttpErrorResponse) || error.status !== 404) {
+                        this.alertService.error('artemisApp.hyperion.generationActivity.cancelFailed');
+                    }
                     this.loadStatus(id, job);
                 },
             });
@@ -460,9 +462,9 @@ export class HyperionGenerationActivityComponent implements OnDestroy {
                     const wasActivelyObserved = sameJob && this.running();
                     this.jobId.set(status.jobId);
                     this.mode.set(status.mode ?? this.mode());
-                    this.revertAvailable.set(status.revertAvailable ?? false);
+                    this.revertAvailable.set(status.revertAvailable);
                     this.revertJobId.set(status.revertJobId);
-                    this.revertMode.set(status.revertMode ?? (status.revertAvailable ? 'ADAPT' : undefined));
+                    this.revertMode.set(status.revertMode);
                     const events = this.mergeEvents(sameJob ? this.events() : [], status.events ?? []);
                     this.events.set(events);
                     const fileSnapshots = status.fileSnapshots ?? [];
@@ -567,10 +569,10 @@ export class HyperionGenerationActivityComponent implements OnDestroy {
                 next: (response) => {
                     const status = response.body ?? undefined;
                     if (this.exerciseId() === exerciseId && this.jobId() === jobId && status?.jobId === jobId) {
-                        const available = status.revertAvailable ?? false;
+                        const available = status.revertAvailable;
                         this.revertAvailable.set(available);
                         this.revertJobId.set(status.revertJobId);
-                        this.revertMode.set(status.revertMode ?? (available ? 'ADAPT' : undefined));
+                        this.revertMode.set(status.revertMode);
                         if (!available && retry) {
                             this.scheduleRevertAvailabilityRefresh(exerciseId, jobId);
                         }
@@ -637,16 +639,14 @@ export class HyperionGenerationActivityComponent implements OnDestroy {
             completionStatus: event.completionStatus,
             liveExerciseChanged: event.liveExerciseChanged,
         };
-        if (event.timestamp) {
-            completedEvent.completedAt = event.timestamp;
-        }
+        completedEvent.completedAt = event.timestamp;
         this.generationCompleted.emit(completedEvent);
     }
 
     private mergeEvents(current: HyperionGenerationEvent[], retained: HyperionGenerationEvent[]): HyperionGenerationEvent[] {
         const byKey = new Map<string, HyperionGenerationEvent>();
         for (const event of [...retained, ...current]) {
-            byKey.set(`${event.type}|${event.timestamp ?? ''}|${event.completionStatus ?? ''}|${event.message ?? ''}`, event);
+            byKey.set(`${event.type}|${event.timestamp}|${event.completionStatus ?? ''}|${event.message ?? ''}`, event);
         }
         return [...byKey.values()].slice(-MAX_RETAINED_EVENTS);
     }
@@ -673,7 +673,7 @@ export class HyperionGenerationActivityComponent implements OnDestroy {
         return second;
     }
 
-    private handleRevertResult(result: ExerciseAdaptationRevertResult): void {
+    private handleRevertResult(result: ExerciseGenerationRevertResult): void {
         if (!result.fullyReverted) {
             const repositories = result.revertedRepositories.join(', ') || '-';
             this.revertPartialRepositories.set(repositories);
@@ -696,7 +696,7 @@ export class HyperionGenerationActivityComponent implements OnDestroy {
         this.liveExerciseChanged.set(undefined);
         this.events.set([]);
         this.clearSnapshots();
-        this.adaptationReverted.emit(result.completedAt);
+        this.generationReverted.emit(result.completedAt);
         this.alertService.success(
             this.effectiveRevertMode() === 'GENERATE'
                 ? 'artemisApp.hyperion.generationActivity.undoGenerationSuccess'
@@ -704,13 +704,13 @@ export class HyperionGenerationActivityComponent implements OnDestroy {
         );
     }
 
-    private isRevertResult(value: unknown): value is ExerciseAdaptationRevertResult {
+    private isRevertResult(value: unknown): value is ExerciseGenerationRevertResult {
         return (
             typeof value === 'object' &&
             value !== null &&
-            typeof (value as ExerciseAdaptationRevertResult).fullyReverted === 'boolean' &&
-            Array.isArray((value as ExerciseAdaptationRevertResult).revertedRepositories) &&
-            typeof (value as ExerciseAdaptationRevertResult).completedAt === 'string'
+            typeof (value as ExerciseGenerationRevertResult).fullyReverted === 'boolean' &&
+            Array.isArray((value as ExerciseGenerationRevertResult).revertedRepositories) &&
+            typeof (value as ExerciseGenerationRevertResult).completedAt === 'string'
         );
     }
 

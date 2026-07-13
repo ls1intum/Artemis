@@ -484,7 +484,7 @@
                         [refreshingEditor]="generationRefreshPending()"
                         [editorRefreshFailed]="generationRefreshFailed()"
                         (editorRefreshRequested)="retryHyperionRefresh()"
-                        (adaptationReverted)="onHyperionAdaptationReverted($event)"
+                        (generationReverted)="onHyperionGenerationReverted($event)"
                         (generationCompleted)="onHyperionGenerationCompleted($event)"
                         (reviewRequested)="onHyperionReviewRequested($event)"
                         (snapshotSelected)="onHyperionSnapshotSelected($event)"

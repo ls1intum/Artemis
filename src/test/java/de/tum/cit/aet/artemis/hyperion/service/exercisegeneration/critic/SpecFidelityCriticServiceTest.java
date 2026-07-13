@@ -26,13 +26,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 
-/**
- * Adversarial unit tests for the spec-fidelity / coverage critic. The critic talks to the model through the shared {@link ChatClient}; the tests wrap a mocked {@link ChatModel} in
- * a real {@code ChatClient} (mirroring the sibling Hyperion service tests) so the fluent plumbing is exercised end-to-end without a GPU. They pin the three defect classes the
- * differential oracle is blind to (uncovered brief requirement, fully-covered brief, grader-mechanics leak), and — crucially — the critic's two non-negotiable safety properties:
- * it
- * degrades gracefully on any model failure, and it produces structured, capped, defensively-parsed findings that can never explode.
- */
 class SpecFidelityCriticServiceTest {
 
     private final ObjectMapper objectMapper = new ObjectMapper();

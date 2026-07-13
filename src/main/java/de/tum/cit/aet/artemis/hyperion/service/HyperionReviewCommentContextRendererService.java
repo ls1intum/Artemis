@@ -226,10 +226,8 @@ public class HyperionReviewCommentContextRendererService {
     }
 
     /**
-     * Renders the explicitly selected review threads for a whole-exercise ADAPT run into a prompt-ready instruction block, across all repositories (template/solution/tests), so
-     * the
-     * agent addresses exactly the feedback the instructor chose regardless of which repository each thread targets. Only active (not resolved, not outdated) threads among the
-     * selected ids are included, capped by {@link #MAX_SELECTED_FEEDBACK_THREADS} and the global comment budget.
+     * Renders selected active review threads across all exercise repositories into an ADAPT instruction block, bounded by {@link #MAX_SELECTED_FEEDBACK_THREADS} and the global
+     * comment budget.
      *
      * @param exerciseId the exercise id
      * @param threadIds  the explicitly selected review-thread ids

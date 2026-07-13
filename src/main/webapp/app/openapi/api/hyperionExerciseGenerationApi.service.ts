@@ -15,7 +15,7 @@ import { HttpClient,
         }       from '@angular/common/http';
 import { Observable }                                        from 'rxjs';
 // @ts-ignore
-import { ExerciseAdaptationRevertResult } from '../model/exerciseAdaptationRevertResult';
+import { ExerciseGenerationRevertResult } from '../model/exerciseGenerationRevertResult';
 // @ts-ignore
 import { ExerciseGenerationJobStart } from '../model/exerciseGenerationJobStart';
 // @ts-ignore
@@ -273,18 +273,18 @@ export class HyperionExerciseGenerationApiService extends BaseService {
     }
 
     /**
-     * @endpoint post /api/hyperion/programming-exercises/{exerciseId}/generate-exercise/revert-adaptation
+     * @endpoint post /api/hyperion/programming-exercises/{exerciseId}/generate-exercise/revert
      * @param exerciseId
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
      * @param reportProgress flag to report request and response progress.
      * @param options additional options
      */
-    public revertAdaptation(exerciseId: number, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<ExerciseAdaptationRevertResult>;
-    public revertAdaptation(exerciseId: number, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<ExerciseAdaptationRevertResult>>;
-    public revertAdaptation(exerciseId: number, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<ExerciseAdaptationRevertResult>>;
-    public revertAdaptation(exerciseId: number, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
+    public revertExerciseGeneration(exerciseId: number, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<ExerciseGenerationRevertResult>;
+    public revertExerciseGeneration(exerciseId: number, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<ExerciseGenerationRevertResult>>;
+    public revertExerciseGeneration(exerciseId: number, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<ExerciseGenerationRevertResult>>;
+    public revertExerciseGeneration(exerciseId: number, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
         if (exerciseId === null || exerciseId === undefined) {
-            throw new Error('Required parameter exerciseId was null or undefined when calling revertAdaptation.');
+            throw new Error('Required parameter exerciseId was null or undefined when calling revertExerciseGeneration.');
         }
 
         let localVarHeaders = this.defaultHeaders;
@@ -312,9 +312,9 @@ export class HyperionExerciseGenerationApiService extends BaseService {
             }
         }
 
-        let localVarPath = `/api/hyperion/programming-exercises/${this.configuration.encodeParam({name: "exerciseId", value: exerciseId, in: "path", style: "simple", explode: false, dataType: "number", dataFormat: "int64"})}/generate-exercise/revert-adaptation`;
+        let localVarPath = `/api/hyperion/programming-exercises/${this.configuration.encodeParam({name: "exerciseId", value: exerciseId, in: "path", style: "simple", explode: false, dataType: "number", dataFormat: "int64"})}/generate-exercise/revert`;
         const { basePath, withCredentials } = this.configuration;
-        return this.httpClient.request<ExerciseAdaptationRevertResult>('post', `${basePath}${localVarPath}`,
+        return this.httpClient.request<ExerciseGenerationRevertResult>('post', `${basePath}${localVarPath}`,
             {
                 context: localVarHttpContext,
                 responseType: <any>responseType_,

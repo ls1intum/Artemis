@@ -1,4 +1,4 @@
-import { ExerciseAdaptationRevertResult as GeneratedRevertResult } from 'app/openapi/model/exerciseAdaptationRevertResult';
+import { ExerciseGenerationRevertResult as GeneratedRevertResult } from 'app/openapi/model/exerciseGenerationRevertResult';
 import { ExerciseGenerationEvent as GeneratedEvent } from 'app/openapi/model/exerciseGenerationEvent';
 import { ExerciseGenerationFileSnapshot as GeneratedFileSnapshot } from 'app/openapi/model/exerciseGenerationFileSnapshot';
 import { ExerciseGenerationJobStart as GeneratedJobStart } from 'app/openapi/model/exerciseGenerationJobStart';
@@ -13,9 +13,7 @@ export type HyperionSnapshotAction = GeneratedFileSnapshot['action'];
 export type HyperionGenerationMode = NonNullable<GeneratedRequest['mode']>;
 
 export type HyperionGenerationVerdict = GeneratedVerdict;
-
-// Retained events from an older node may omit timestamps during a rolling deployment.
-export type HyperionGenerationEvent = Omit<GeneratedEvent, 'timestamp'> & { timestamp?: string };
+export type HyperionGenerationEvent = GeneratedEvent;
 export type ExerciseGenerationFileSnapshot = GeneratedFileSnapshot;
 export type HyperionGenerationMessage = HyperionGenerationEvent | ExerciseGenerationFileSnapshot;
 
@@ -23,13 +21,11 @@ export function isFileSnapshot(message: HyperionGenerationMessage): message is E
     return message.type === 'FILE_SNAPSHOT';
 }
 
-export type HyperionGenerationStatus = Omit<GeneratedStatus, 'events' | 'fileSnapshots' | 'revertAvailable'> & {
+export type HyperionGenerationStatus = Omit<GeneratedStatus, 'events' | 'fileSnapshots'> & {
     events: HyperionGenerationEvent[];
     fileSnapshots: ExerciseGenerationFileSnapshot[];
-    // Optional while older nodes remain in a rolling deployment.
-    revertAvailable?: boolean;
 };
 
-export type ExerciseAdaptationRevertResult = GeneratedRevertResult;
+export type ExerciseGenerationRevertResult = GeneratedRevertResult;
 export type HyperionGenerationRequest = GeneratedRequest;
 export type HyperionGenerationJobStart = GeneratedJobStart;

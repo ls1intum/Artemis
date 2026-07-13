@@ -1,10 +1,7 @@
 package de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent;
 
 /**
- * The shared LLM-facing {@code @Tool}/{@code @ToolParam} description strings used by {@link SandboxAgentTools} and its streaming decorator {@link FileSnapshotEmittingAgentTools},
- * which expose an identical tool surface to the model (the decorator only adds snapshot emission). Referencing these compile-time constants from both classes' annotations keeps
- * the
- * two tool contracts from diverging.
+ * Shared LLM-facing tool descriptions used by {@link SandboxAgentTools} and {@link FileSnapshotEmittingAgentTools} so their tool contracts remain identical.
  */
 final class AgentToolDescriptions {
 

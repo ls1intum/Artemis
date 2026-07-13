@@ -55,9 +55,9 @@ describe('HyperionExerciseGenerationService', () => {
         request.flush(null);
     });
 
-    it('reverts the last adaptation', () => {
-        service.revertAdaptation(42).subscribe((result) => expect(result.fullyReverted).toBe(true));
-        const request = httpMock.expectOne('http://localhost:8080/api/hyperion/programming-exercises/42/generate-exercise/revert-adaptation');
+    it('reverts the last generated change', () => {
+        service.revertExerciseGeneration(42).subscribe((result) => expect(result.fullyReverted).toBe(true));
+        const request = httpMock.expectOne('http://localhost:8080/api/hyperion/programming-exercises/42/generate-exercise/revert');
         expect(request.request.method).toBe('POST');
         request.flush({ fullyReverted: true, revertedRepositories: ['exercise', 'solution', 'tests'], completedAt: '2026-07-10T20:00:00Z' });
     });

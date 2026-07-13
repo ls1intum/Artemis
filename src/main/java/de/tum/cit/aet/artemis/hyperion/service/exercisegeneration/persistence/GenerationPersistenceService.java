@@ -16,6 +16,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BooleanSupplier;
+import java.util.stream.Stream;
 
 import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
@@ -145,8 +146,8 @@ public class GenerationPersistenceService {
         }
     }
 
-    public record PersistResult(Map<RepositoryType, String> prePersistHeads, Map<RepositoryType, String> postPersistHeads, String persistedProblemStatement,
-            String persistedTitle) {
+    public record PersistResult(Map<RepositoryType, String> prePersistHeads, Map<RepositoryType, String> postPersistHeads, String persistedProblemStatement, String persistedTitle,
+            String repositoryBranch) {
     }
 
     /**
@@ -175,17 +176,18 @@ public class GenerationPersistenceService {
      */
     public RecoveryPersistResult persistRecoveryDraft(ProgrammingExercise exercise, User user, GenerationOutcome outcome, String jobId, BooleanSupplier stillOwnsMutationSlot) {
         String draftBranch = RECOVERY_DRAFT_BRANCH_PREFIX + jobId;
+        String repositoryBranch = repositoryBranch(exercise);
         Set<RepositoryType> savedRepositories = EnumSet.noneOf(RepositoryType.class);
         assertStillOwnsMutationSlot(stillOwnsMutationSlot);
-        if (commitDraftToIsolatedBranch(exercise, user, RepositoryType.TEMPLATE, outcome.producedFiles(RepositoryType.TEMPLATE), draftBranch)) {
+        if (commitDraftToIsolatedBranch(exercise, user, RepositoryType.TEMPLATE, outcome.producedFiles(RepositoryType.TEMPLATE), repositoryBranch, draftBranch)) {
             savedRepositories.add(RepositoryType.TEMPLATE);
         }
         assertStillOwnsMutationSlot(stillOwnsMutationSlot);
-        if (commitDraftToIsolatedBranch(exercise, user, RepositoryType.SOLUTION, outcome.producedFiles(RepositoryType.SOLUTION), draftBranch)) {
+        if (commitDraftToIsolatedBranch(exercise, user, RepositoryType.SOLUTION, outcome.producedFiles(RepositoryType.SOLUTION), repositoryBranch, draftBranch)) {
             savedRepositories.add(RepositoryType.SOLUTION);
         }
         assertStillOwnsMutationSlot(stillOwnsMutationSlot);
-        if (commitDraftToIsolatedBranch(exercise, user, RepositoryType.TESTS, outcome.producedFiles(RepositoryType.TESTS), draftBranch)) {
+        if (commitDraftToIsolatedBranch(exercise, user, RepositoryType.TESTS, outcome.producedFiles(RepositoryType.TESTS), repositoryBranch, draftBranch)) {
             savedRepositories.add(RepositoryType.TESTS);
         }
         if (savedRepositories.isEmpty()) {
@@ -205,7 +207,8 @@ public class GenerationPersistenceService {
      * @param producedFiles  the files to commit (the sandbox-final tree)
      * @param draftBranch    the isolated branch to push the draft to
      */
-    private boolean commitDraftToIsolatedBranch(ProgrammingExercise exercise, User user, RepositoryType repositoryType, Map<String, String> producedFiles, String draftBranch) {
+    private boolean commitDraftToIsolatedBranch(ProgrammingExercise exercise, User user, RepositoryType repositoryType, Map<String, String> producedFiles, String repositoryBranch,
+            String draftBranch) {
         if (producedFiles == null || producedFiles.isEmpty()) {
             return false;
         }
@@ -217,7 +220,7 @@ public class GenerationPersistenceService {
         Path temporaryCheckout = null;
         try {
             temporaryCheckout = tempFileUtilService.createTempDirectory("hyperion-persist-");
-            repository = gitService.getOrCheckoutRepository(uri, uri, temporaryCheckout.resolve("repository"), true, defaultBranch, false);
+            repository = gitService.getOrCheckoutRepository(uri, uri, temporaryCheckout.resolve("repository"), true, repositoryBranch, false);
             if (repository == null) {
                 throw new IllegalStateException("Could not check out the " + repositoryType + " repository");
             }
@@ -308,6 +311,7 @@ public class GenerationPersistenceService {
 
     private PersistResult persistWithCommitMessage(ProgrammingExercise exercise, User user, GenerationOutcome outcome, String expectedProblemStatement, String expectedTitle,
             String commitMessage, BooleanSupplier stillOwnsMutationSlot) {
+        String repositoryBranch = repositoryBranch(exercise);
         // Capture each repository's pre-persist HEAD before writing it, so a later failure can revert the already-committed repositories to a consistent pre-generation state.
         Map<RepositoryType, String> prePersistHashes = new EnumMap<>(RepositoryType.class);
         Map<RepositoryType, String> postPersistHashes = new EnumMap<>(RepositoryType.class);
@@ -332,7 +336,7 @@ public class GenerationPersistenceService {
             for (RepositoryType repositoryType : PERSIST_ORDER) {
                 assertStillOwnsMutationSlot(stillOwnsMutationSlot);
                 String commitHash = commitRepository(exercise, user, repositoryType, outcome.producedFiles(repositoryType), outcome.seedRepositoryHeads().get(repositoryType),
-                        commitMessage, prePersistHashes, postPersistHashes);
+                        repositoryBranch, commitMessage, prePersistHashes, postPersistHashes);
                 if (commitHash != null) {
                     committed.add(repositoryType);
                     if (repositoryType == RepositoryType.TESTS) {
@@ -340,11 +344,11 @@ public class GenerationPersistenceService {
                     }
                 }
             }
-            assertRepositoryHeadsStillMatch(exercise, outcome.seedRepositoryHeads(), postPersistHashes);
+            assertRepositoryHeadsStillMatch(exercise, repositoryBranch, outcome.seedRepositoryHeads(), postPersistHashes);
         }
         catch (RuntimeException e) {
             // Compensation: revert the already-committed repositories to their captured pre-persist commit so no publishable half-generated tree survives on the default branch.
-            boolean fullyReverted = compensate(exercise, committed, prePersistHashes, postPersistHashes);
+            boolean fullyReverted = compensate(exercise, repositoryBranch, committed, prePersistHashes, postPersistHashes);
             String state = fullyReverted ? "the already-committed repositories were reverted to their previous state"
                     : "compensation could not fully revert every repository (" + committed + "); manual review is required before using the exercise";
             throw new GenerationIncompleteException("Saving the generated exercise failed after committing " + committed
@@ -364,7 +368,7 @@ public class GenerationPersistenceService {
                 programmingExerciseTaskService.updateTasksFromProblemStatement(exercise);
             }
             catch (RuntimeException e) {
-                boolean fullyReverted = compensate(exercise, committed, prePersistHashes, postPersistHashes);
+                boolean fullyReverted = compensate(exercise, repositoryBranch, committed, prePersistHashes, postPersistHashes);
                 boolean metadataRestored = true;
                 if (problemStatementChanged) {
                     metadataRestored = restoreProblemStatementIfUnchanged(exercise, originalProblemStatement, originalTitle, persistedProblemStatement, persistedTitle);
@@ -384,14 +388,14 @@ public class GenerationPersistenceService {
         AtomicReference<MetadataSnapshot> persistedMetadata = new AtomicReference<>();
         Runnable finalizationGuard = () -> {
             assertStillOwnsMutationSlot(stillOwnsMutationSlot);
-            assertRepositoryHeadsStillMatch(exercise, outcome.seedRepositoryHeads(), postPersistHashes);
+            assertRepositoryHeadsStillMatch(exercise, repositoryBranch, outcome.seedRepositoryHeads(), postPersistHashes);
             persistedMetadata.set(assertMetadataMatches(exercise, expectedFinalProblemStatement, expectedFinalTitle));
         };
         try {
             syncTestCasesAndRecordVersion(exercise, user, testsCommitHash, true, finalizationGuard);
         }
         catch (RuntimeException e) {
-            boolean fullyReverted = compensate(exercise, committed, prePersistHashes, postPersistHashes);
+            boolean fullyReverted = compensate(exercise, repositoryBranch, committed, prePersistHashes, postPersistHashes);
             boolean metadataRestored = true;
             if (problemStatementChanged) {
                 metadataRestored = restoreProblemStatementIfUnchanged(exercise, originalProblemStatement, originalTitle, persistedProblemStatement, persistedTitle);
@@ -406,7 +410,7 @@ public class GenerationPersistenceService {
         log.info("Persisted generated exercise {} after test-case synchronisation completed", exercise.getId());
         prePersistHashes.keySet().retainAll(postPersistHashes.keySet());
         MetadataSnapshot metadata = persistedMetadata.get();
-        return new PersistResult(nonNullCopy(prePersistHashes), nonNullCopy(postPersistHashes), metadata.problemStatement(), metadata.title());
+        return new PersistResult(nonNullCopy(prePersistHashes), nonNullCopy(postPersistHashes), metadata.problemStatement(), metadata.title(), repositoryBranch);
     }
 
     private static Map<RepositoryType, String> nonNullCopy(Map<RepositoryType, String> source) {
@@ -419,11 +423,17 @@ public class GenerationPersistenceService {
         return Map.copyOf(copy);
     }
 
-    private void assertRepositoryHeadsStillMatch(ProgrammingExercise exercise, Map<RepositoryType, String> seedHeads, Map<RepositoryType, String> postPersistHeads) {
+    private String repositoryBranch(ProgrammingExercise exercise) {
+        String branch = exercise.getBuildConfig() != null ? exercise.getBuildConfig().getBranch() : null;
+        return branch == null || branch.isBlank() ? defaultBranch : branch;
+    }
+
+    private void assertRepositoryHeadsStillMatch(ProgrammingExercise exercise, String repositoryBranch, Map<RepositoryType, String> seedHeads,
+            Map<RepositoryType, String> postPersistHeads) {
         for (RepositoryType repositoryType : PERSIST_ORDER) {
             String expectedHead = postPersistHeads.getOrDefault(repositoryType, seedHeads.get(repositoryType));
             LocalVCRepositoryUri uri = exercise.getRepositoryURI(repositoryType);
-            if (expectedHead != null && (uri == null || !expectedHead.equals(gitService.getLastCommitHash(uri)))) {
+            if (expectedHead != null && (uri == null || !expectedHead.equals(gitService.getLastCommitHash(uri, repositoryBranch)))) {
                 throw new IllegalStateException(
                         "The " + repositoryType + " repository changed while Hyperion was saving the generated exercise; refusing to finalize a stale repository set");
             }
@@ -630,19 +640,15 @@ public class GenerationPersistenceService {
     }
 
     /**
-     * Compensating action for a failed multi-repository persist: force-resets each already-committed repository back to the pre-persist commit captured in
-     * {@code prePersistHashes},
-     * in reverse commit order. Best-effort per repository: a single revert failure is logged and does not stop the others, but makes the overall result "not fully reverted" so the
-     * caller can flag the exercise for manual review. A repository with no captured pre-persist hash (e.g. a brand-new empty repository with no prior commit) cannot be reverted
-     * and
-     * counts as not-fully-reverted.
+     * Force-resets committed repositories in reverse order after a failed multi-repository persist. Failures do not stop later compensation but make the result incomplete; a
+     * repository without a captured prior commit cannot be reverted.
      *
      * @param exercise         the exercise whose repositories are compensated
      * @param committed        the repositories that were successfully committed and must be reverted
      * @param prePersistHashes the pre-persist commit hash captured per repository before it was written
      * @return {@code true} if every committed repository was reverted; {@code false} if any could not be
      */
-    private boolean compensate(ProgrammingExercise exercise, List<RepositoryType> committed, Map<RepositoryType, String> prePersistHashes,
+    private boolean compensate(ProgrammingExercise exercise, String repositoryBranch, List<RepositoryType> committed, Map<RepositoryType, String> prePersistHashes,
             Map<RepositoryType, String> postPersistHashes) {
         boolean fullyReverted = true;
         for (int i = committed.size() - 1; i >= 0; i--) {
@@ -658,11 +664,11 @@ public class GenerationPersistenceService {
             Repository repository = null;
             try {
                 temporaryCheckout = tempFileUtilService.createTempDirectory("hyperion-compensate-");
-                repository = gitService.getOrCheckoutRepository(uri, uri, temporaryCheckout.resolve("repository"), true, defaultBranch, false);
+                repository = gitService.getOrCheckoutRepository(uri, uri, temporaryCheckout.resolve("repository"), true, repositoryBranch, false);
                 if (repository == null) {
                     throw new IllegalStateException("Could not check out the repository to revert it");
                 }
-                String currentHash = gitService.getLastCommitHash(uri);
+                String currentHash = gitService.getLastCommitHash(uri, repositoryBranch);
                 String postHash = postPersistHashes.get(repositoryType);
                 if (preHash.equals(currentHash)) {
                     continue;
@@ -679,7 +685,7 @@ public class GenerationPersistenceService {
                             exercise.getId(), currentHash, postHash);
                     continue;
                 }
-                gitService.resetToCommitAndForcePush(repository, preHash, postHash, defaultBranch);
+                gitService.resetToCommitAndForcePush(repository, preHash, postHash, repositoryBranch);
                 log.info("Reverted the {} repository of exercise {} back to its pre-generation commit {} during persist compensation", repositoryType, exercise.getId(), preHash);
             }
             catch (Exception e) {
@@ -710,20 +716,20 @@ public class GenerationPersistenceService {
      * @return the new commit hash, or {@code null} when there was nothing to commit
      */
     private String commitRepository(ProgrammingExercise exercise, User user, RepositoryType repositoryType, Map<String, String> producedFiles, String seedHead,
-            String commitMessage, Map<RepositoryType, String> prePersistHashes, Map<RepositoryType, String> postPersistHashes) {
+            String repositoryBranch, String commitMessage, Map<RepositoryType, String> prePersistHashes, Map<RepositoryType, String> postPersistHashes) {
         if (producedFiles == null || producedFiles.isEmpty()) {
             return null;
         }
         LocalVCRepositoryUri uri = exercise.getRepositoryURI(repositoryType);
         if (uri == null) {
-            return null;
+            throw new IllegalStateException("The " + repositoryType + " repository is unavailable; its generated files cannot be saved");
         }
         Repository repository = null;
         Path temporaryCheckout = null;
         String prePersistHead = null;
         try {
             temporaryCheckout = tempFileUtilService.createTempDirectory("hyperion-persist-");
-            repository = gitService.getOrCheckoutRepository(uri, uri, temporaryCheckout.resolve("repository"), true, defaultBranch, false);
+            repository = gitService.getOrCheckoutRepository(uri, uri, temporaryCheckout.resolve("repository"), true, repositoryBranch, false);
             if (repository == null) {
                 throw new IllegalStateException("Could not check out the " + repositoryType + " repository");
             }
@@ -740,7 +746,7 @@ public class GenerationPersistenceService {
             }
             gitService.stageAllChanges(repository);
             String postHash = gitService.commitStagedChanges(repository, commitMessage, user);
-            gitService.pushCommitWithLease(repository, postHash, defaultBranch, prePersistHead);
+            gitService.pushCommitWithLease(repository, postHash, repositoryBranch, prePersistHead);
             if (postHash != null) {
                 postPersistHashes.put(repositoryType, postHash);
             }
@@ -749,7 +755,7 @@ public class GenerationPersistenceService {
         catch (Exception e) {
             boolean manualReviewRequired = false;
             if (repository != null) {
-                manualReviewRequired = reconcileAmbiguousCommitFailure(exercise, repositoryType, uri, repository, prePersistHead, e);
+                manualReviewRequired = reconcileAmbiguousCommitFailure(exercise, repositoryType, uri, repository, repositoryBranch, prePersistHead, e);
                 try {
                     gitService.resetToOriginHead(repository);
                 }
@@ -771,7 +777,7 @@ public class GenerationPersistenceService {
     }
 
     private boolean reconcileAmbiguousCommitFailure(ProgrammingExercise exercise, RepositoryType repositoryType, LocalVCRepositoryUri uri, Repository repository,
-            String prePersistHead, Exception commitFailure) {
+            String repositoryBranch, String prePersistHead, Exception commitFailure) {
         if (prePersistHead == null) {
             return false;
         }
@@ -780,7 +786,7 @@ public class GenerationPersistenceService {
             if (localHead == null || prePersistHead.equals(localHead)) {
                 return false;
             }
-            String remoteHead = gitService.getLastCommitHash(uri);
+            String remoteHead = gitService.getLastCommitHash(uri, repositoryBranch);
             if (!localHead.equals(remoteHead)) {
                 if (!prePersistHead.equals(remoteHead)) {
                     IllegalStateException ambiguousFailure = new IllegalStateException("The remote branch advanced after the failed Hyperion commit; manual review is required");
@@ -791,7 +797,7 @@ public class GenerationPersistenceService {
                 }
                 return false;
             }
-            gitService.resetToCommitAndForcePush(repository, prePersistHead, localHead, defaultBranch);
+            gitService.resetToCommitAndForcePush(repository, prePersistHead, localHead, repositoryBranch);
             log.info("Reverted the {} repository of exercise {} after its commit was pushed but reported as failed", repositoryType, exercise.getId());
             return false;
         }
@@ -822,7 +828,15 @@ public class GenerationPersistenceService {
      */
     private void mirrorProducedFilesIntoWorkingCopy(ProgrammingExercise exercise, Repository repository, RepositoryType repositoryType, Map<String, String> producedFiles)
             throws IOException {
-        Map<String, String> persistableFiles = persistableProducedFiles(producedFiles);
+        Map<String, String> safeProducedFiles = new LinkedHashMap<>();
+        for (Map.Entry<String, String> entry : producedFiles.entrySet()) {
+            String safePath = safeRepositoryPath(repository, entry.getKey());
+            if (safeProducedFiles.putIfAbsent(safePath, entry.getValue()) != null) {
+                throw new IllegalArgumentException("Multiple produced paths resolve to " + safePath);
+            }
+        }
+        assertNoSymbolicLinks(repository);
+        Map<String, String> persistableFiles = persistableProducedFiles(safeProducedFiles);
         deleteOrphanedFiles(repository, repositoryType, persistableFiles.keySet());
         for (Map.Entry<String, String> entry : persistableFiles.entrySet()) {
             String path = entry.getKey();
@@ -836,6 +850,42 @@ public class GenerationPersistenceService {
                 throw new IOException("Could not restore executable mode for " + path);
             }
         }
+    }
+
+    private static void assertNoSymbolicLinks(Repository repository) throws IOException {
+        Path repositoryRoot = repository.getLocalPath();
+        if (repositoryRoot == null) {
+            throw new IllegalStateException("The repository working tree is unavailable");
+        }
+        Path gitMetadata = repositoryRoot.resolve(".git").normalize();
+        try (Stream<Path> paths = Files.find(repositoryRoot, Integer.MAX_VALUE, (path, attributes) -> !path.startsWith(gitMetadata) && attributes.isSymbolicLink())) {
+            Optional<Path> symbolicLink = paths.findFirst();
+            if (symbolicLink.isPresent()) {
+                throw new IllegalArgumentException("The repository contains a symbolic link outside Git metadata: " + repositoryRoot.relativize(symbolicLink.get()));
+            }
+        }
+    }
+
+    private static String safeRepositoryPath(Repository repository, String path) {
+        if (path == null || path.isBlank()) {
+            throw new IllegalArgumentException("A produced file path must not be blank");
+        }
+        String portablePath = path.replace('\\', '/');
+        Path relativePath = Path.of(portablePath).normalize();
+        boolean windowsAbsolutePath = portablePath.length() >= 3 && Character.isLetter(portablePath.charAt(0)) && portablePath.charAt(1) == ':' && portablePath.charAt(2) == '/';
+        if (relativePath.isAbsolute() || windowsAbsolutePath || relativePath.startsWith("..") || relativePath.toString().isBlank() || ".".equals(relativePath.toString())) {
+            throw new IllegalArgumentException("Produced path is outside the repository: " + path);
+        }
+        Path repositoryRoot = repository.getLocalPath();
+        if (repositoryRoot != null) {
+            Path normalizedRoot = repositoryRoot.toAbsolutePath().normalize();
+            Path target = normalizedRoot.resolve(relativePath).normalize();
+            if (!target.startsWith(normalizedRoot)) {
+                throw new IllegalArgumentException("Produced path is outside the repository: " + path);
+            }
+            relativePath = normalizedRoot.relativize(target);
+        }
+        return relativePath.toString().replace('\\', '/');
     }
 
     private static Map<String, String> persistableProducedFiles(Map<String, String> producedFiles) {

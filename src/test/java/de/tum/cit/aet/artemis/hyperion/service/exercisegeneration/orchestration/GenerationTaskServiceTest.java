@@ -45,12 +45,6 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
 
-/**
- * Unit test for {@link GenerationTaskService}'s terminal-state contract (the class javadoc's guarantee): every path ends in exactly one distinct terminal event — {@code SUCCESS}
- * (verified and saved), {@code NEEDS_REVIEW} (best-effort draft saved with review comments), {@code PARTIAL} (save incomplete), or {@code CANCELLED}/{@code ERROR} — and the
- * {@link GenerationOutcome} is always closed so the sandbox is destroyed on every path. Collaborators are mocked; the outcome holds the mock orchestrator so closing it is
- * observable as a {@code destroyQuietly} call.
- */
 class GenerationTaskServiceTest {
 
     private static final long EXERCISE_ID = 55L;
@@ -116,7 +110,7 @@ class GenerationTaskServiceTest {
         when(jobService.tokenUsageSink(any(), any(), any())).thenReturn(response -> {
         });
         when(persistenceService.persist(any(), any(), any(), any(), any(), anyString(), any()))
-                .thenReturn(new GenerationPersistenceService.PersistResult(Map.of(), Map.of(), exercise.getProblemStatement(), exercise.getTitle()));
+                .thenReturn(new GenerationPersistenceService.PersistResult(Map.of(), Map.of(), exercise.getProblemStatement(), exercise.getTitle(), "main"));
     }
 
     /** Builds a run-completing outcome that holds the mock orchestrator + sandbox, so try-with-resources close() is observable as a destroyQuietly call. */
@@ -180,14 +174,14 @@ class GenerationTaskServiceTest {
     @Test
     void acceptedRun_persistsExactlyOnceAndDestroysTheSandbox() {
         when(persistenceService.persist(any(), any(), any(), any(), any(), anyString(), any()))
-                .thenReturn(new GenerationPersistenceService.PersistResult(Map.of(), Map.of(), exercise.getProblemStatement(), exercise.getTitle()));
+                .thenReturn(new GenerationPersistenceService.PersistResult(Map.of(), Map.of(), exercise.getProblemStatement(), exercise.getTitle(), "main"));
         run(GenerationMode.GENERATE, outcomeWith(AgentLoopResult.Status.COMPLETED, new VerificationResult(true, true, true, 3, List.of())));
 
         verify(jobService).enterNonCancellablePhase(EXERCISE_ID, JOB_ID);
         var order = Mockito.inOrder(orchestrator, persistenceService);
         order.verify(orchestrator).destroyQuietly(sandbox, SESSION_ID);
         order.verify(persistenceService).persist(eq(exercise), eq(user), any(GenerationOutcome.class), any(), any(), eq(JOB_ID), any());
-        verify(generationRevertService).recordBaseline(eq(exercise), eq(JOB_ID), eq(GenerationMode.GENERATE), any(), any(), any(), any(), any(), any());
+        verify(generationRevertService).recordBaseline(eq(exercise), eq(JOB_ID), eq(GenerationMode.GENERATE), any(), any(), any(), any(), any(), any(), eq("main"));
         verify(jobService).clearJob(EXERCISE_ID, JOB_ID);
         List<ExerciseGenerationEventDTO> events = sentEvents();
         assertThat(events.stream().map(ExerciseGenerationEventDTO::type)).startsWith(ExerciseGenerationEventDTO.Type.STARTED).endsWith(ExerciseGenerationEventDTO.Type.DONE);
@@ -206,7 +200,7 @@ class GenerationTaskServiceTest {
         exercise.setProblemStatement("Manual edit while Hyperion was running");
         exercise.setTitle("Manual title edit while Hyperion was running");
         when(persistenceService.persist(any(), any(), any(), any(), any(), anyString(), any())).thenReturn(new GenerationPersistenceService.PersistResult(
-                Map.of(RepositoryType.SOLUTION, "head-sha"), Map.of(RepositoryType.SOLUTION, "post-head-sha"), "Persisted statement", "Persisted title"));
+                Map.of(RepositoryType.SOLUTION, "head-sha"), Map.of(RepositoryType.SOLUTION, "post-head-sha"), "Persisted statement", "Persisted title", "release"));
         when(orchestrator.generate(any(), any(), any(), any(), any(), any(), any(), any(), any()))
                 .thenReturn(outcomeWith(AgentLoopResult.Status.COMPLETED, new VerificationResult(true, true, true, 3, List.of())));
 
@@ -214,7 +208,7 @@ class GenerationTaskServiceTest {
 
         verify(persistenceService).persist(eq(exercise), eq(user), any(GenerationOutcome.class), eq("Original problem statement"), eq("Original title"), eq(JOB_ID), any());
         verify(generationRevertService).recordBaseline(eq(exercise), eq(JOB_ID), eq(GenerationMode.ADAPT), any(), any(), eq("Original problem statement"), eq("Original title"),
-                eq("Persisted statement"), eq("Persisted title"));
+                eq("Persisted statement"), eq("Persisted title"), eq("release"));
         assertThat(sentEvents().getLast().message()).contains("adapted and saved").doesNotContain("generated and saved");
     }
 
@@ -252,7 +246,7 @@ class GenerationTaskServiceTest {
 
         when(programmingExerciseRepository.findWithAllParticipationsAndBuildConfigById(EXERCISE_ID)).thenReturn(Optional.of(exercise), Optional.of(exerciseToPersist));
         when(persistenceService.persist(any(), any(), any(), any(), any(), anyString(), any())).thenReturn(new GenerationPersistenceService.PersistResult(
-                Map.of(RepositoryType.SOLUTION, "head-sha"), Map.of(RepositoryType.SOLUTION, "post-head-sha"), "Exact persisted statement", "Exact persisted title"));
+                Map.of(RepositoryType.SOLUTION, "head-sha"), Map.of(RepositoryType.SOLUTION, "post-head-sha"), "Exact persisted statement", "Exact persisted title", "release"));
         when(orchestrator.generate(any(), any(), any(), any(), any(), any(), any(), any(), any()))
                 .thenReturn(outcomeWith(AgentLoopResult.Status.COMPLETED, new VerificationResult(true, true, true, 3, List.of())));
 
@@ -260,7 +254,7 @@ class GenerationTaskServiceTest {
 
         verify(persistenceService).persist(eq(exerciseToPersist), eq(user), any(GenerationOutcome.class), any(), any(), eq(JOB_ID), any());
         verify(generationRevertService).recordBaseline(eq(exerciseToPersist), eq(JOB_ID), eq(GenerationMode.ADAPT), any(), any(), eq(exercise.getProblemStatement()),
-                eq(exercise.getTitle()), eq("Exact persisted statement"), eq("Exact persisted title"));
+                eq(exercise.getTitle()), eq("Exact persisted statement"), eq("Exact persisted title"), eq("release"));
         verify(recoveryService).surfaceAdvisoryFindings(eq(exerciseToPersist), eq(user), any());
     }
 
@@ -268,12 +262,12 @@ class GenerationTaskServiceTest {
     void acceptedRun_doesNotReportFailureAfterPersistenceSucceeded() {
         when(programmingExerciseRepository.findWithAllParticipationsAndBuildConfigById(EXERCISE_ID)).thenReturn(Optional.of(exercise), Optional.of(exercise));
         when(persistenceService.persist(any(), any(), any(), any(), any(), anyString(), any()))
-                .thenReturn(new GenerationPersistenceService.PersistResult(Map.of(), Map.of(), exercise.getProblemStatement(), exercise.getTitle()));
+                .thenReturn(new GenerationPersistenceService.PersistResult(Map.of(), Map.of(), exercise.getProblemStatement(), exercise.getTitle(), "main"));
 
         run(GenerationMode.ADAPT, outcomeWith(AgentLoopResult.Status.COMPLETED, new VerificationResult(true, true, true, 3, List.of())));
 
         verify(generationRevertService).recordBaseline(eq(exercise), eq(JOB_ID), eq(GenerationMode.ADAPT), any(), any(), any(), any(), eq(exercise.getProblemStatement()),
-                eq(exercise.getTitle()));
+                eq(exercise.getTitle()), eq("main"));
         assertThat(sentEvents().getLast().type()).isEqualTo(ExerciseGenerationEventDTO.Type.DONE);
     }
 

@@ -204,7 +204,7 @@ public class GenerationJobService {
         String key = key(exercise.getId());
         Instant startedAt = Instant.now();
         Instant deadlineAt = deadlineAt(startedAt);
-        JobInfo newJob = new JobInfo(jobId, user.getLogin(), exercise.getId(), startedAt, deadlineAt, localNodeId, startedAt, Boolean.TRUE, budgetReservationId);
+        JobInfo newJob = new JobInfo(jobId, user.getLogin(), exercise.getId(), startedAt, deadlineAt, localNodeId, startedAt, true, budgetReservationId);
         claimSlot(key, newJob, "Exercise generation is already running for this exercise", "exerciseGenerationRunning");
         // Fresh transcript and snapshot store for this run. Keep the previous replay state until the async event is accepted; if publishing fails synchronously, rollback restores
         // the prior terminal replay instead of leaving the status endpoint empty.
@@ -496,7 +496,7 @@ public class GenerationJobService {
         jobMap.lock(key);
         try {
             JobInfo job = jobMap.get(key);
-            if (job == null || !job.jobId().equals(jobId) || !job.cancellableOrDefault()) {
+            if (job == null || !job.jobId().equals(jobId) || !job.cancellable()) {
                 return false;
             }
             JobTranscript transcript = transcriptMap.get(key);
@@ -525,7 +525,7 @@ public class GenerationJobService {
         jobMap.lock(key);
         try {
             JobInfo job = jobMap.get(key);
-            if (job == null || !job.jobId().equals(jobId) || !job.cancellableOrDefault()) {
+            if (job == null || !job.jobId().equals(jobId) || !job.cancellable()) {
                 return false;
             }
             cancellationMap.set(jobId, Boolean.TRUE, JOB_TTL_SECONDS, TimeUnit.SECONDS);
@@ -582,7 +582,7 @@ public class GenerationJobService {
             if (isCancelled(jobId)) {
                 return false;
             }
-            jobMap.set(key, job.withHeartbeat(Instant.now()).withCancellable(Boolean.FALSE), JOB_TTL_SECONDS, TimeUnit.SECONDS);
+            jobMap.set(key, job.withHeartbeat(Instant.now()).withCancellable(false), JOB_TTL_SECONDS, TimeUnit.SECONDS);
         }
         finally {
             jobMap.unlock(key);
@@ -670,7 +670,7 @@ public class GenerationJobService {
     public String claimRevertSlot(User user, long exerciseId) {
         String token = REVERT_JOB_PREFIX + UUID.randomUUID();
         Instant startedAt = Instant.now();
-        JobInfo newJob = new JobInfo(token, user.getLogin(), exerciseId, startedAt, null, localNodeId, startedAt, Boolean.FALSE, null);
+        JobInfo newJob = new JobInfo(token, user.getLogin(), exerciseId, startedAt, null, localNodeId, startedAt, false, null);
         claimSlot(key(exerciseId), newJob, "Exercise generation is already running for this exercise; wait for it to finish before reverting an adaptation.",
                 "exerciseGenerationRunning");
         return token;
@@ -808,7 +808,7 @@ public class GenerationJobService {
     }
 
     private boolean shouldClearAsStaleOrExpired(JobInfo job, @Nullable Instant staleBefore, Instant now) {
-        boolean cancellable = job.cancellableOrDefault();
+        boolean cancellable = job.cancellable();
         boolean stale = cancellable && staleBefore != null && !job.lastHeartbeatOrStartedAt().isAfter(staleBefore);
         boolean expired = cancellable && job.deadlineAt() != null && !job.deadlineAt().isAfter(now);
         return stale || expired;
@@ -880,18 +880,10 @@ public class GenerationJobService {
      * Metadata for an active whole-exercise generation job (claimed slot owner and claim time).
      */
     public record JobInfo(String jobId, String userLogin, long exerciseId, Instant startedAt, @Nullable Instant deadlineAt, @Nullable String ownerNodeId,
-            @Nullable Instant lastHeartbeatAt, @Nullable Boolean cancellable, @Nullable String budgetReservationId) implements Serializable {
+            @Nullable Instant lastHeartbeatAt, boolean cancellable, @Nullable String budgetReservationId) implements Serializable {
 
         @Serial
         private static final long serialVersionUID = 1L;
-
-        /**
-         * Old in-flight jobs from a rolling deployment do not have the new field in their serialized value. Treat that missing field as cancellable: a generation job that has not
-         * explicitly crossed the cutoff must remain cancellable during the rollout.
-         */
-        boolean cancellableOrDefault() {
-            return cancellable == null || cancellable;
-        }
 
         Instant lastHeartbeatOrStartedAt() {
             return lastHeartbeatAt == null ? startedAt : lastHeartbeatAt;
@@ -901,7 +893,7 @@ public class GenerationJobService {
             return new JobInfo(jobId, userLogin, exerciseId, startedAt, deadlineAt, ownerNodeId, heartbeatAt, cancellable, budgetReservationId);
         }
 
-        JobInfo withCancellable(Boolean newCancellable) {
+        JobInfo withCancellable(boolean newCancellable) {
             return new JobInfo(jobId, userLogin, exerciseId, startedAt, deadlineAt, ownerNodeId, lastHeartbeatAt, newCancellable, budgetReservationId);
         }
     }

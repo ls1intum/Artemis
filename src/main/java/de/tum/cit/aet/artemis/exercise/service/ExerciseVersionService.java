@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.exercise.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
+import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.List;
@@ -265,7 +266,7 @@ public class ExerciseVersionService {
         ProgrammingExerciseSnapshotDTO newProgrammingData = newSnapshot.programmingData();
         ProgrammingExerciseSnapshotDTO previousProgrammingData = previousSnapshot.programmingData();
         Set<ExerciseEditorSyncTarget> changedRepositoryTargets = EnumSet.noneOf(ExerciseEditorSyncTarget.class);
-        Long changedAuxiliaryRepositoryId = null;
+        List<Long> changedAuxiliaryRepositoryIds = new ArrayList<>();
 
         if (newProgrammingData != null && previousProgrammingData != null) {
             if (participationCommitChanged(previousProgrammingData.templateParticipation(), newProgrammingData.templateParticipation())) {
@@ -283,8 +284,7 @@ public class ExerciseVersionService {
             for (ProgrammingExerciseSnapshotDTO.AuxiliaryRepositorySnapshotDTO auxiliary : Optional.ofNullable(newProgrammingData.auxiliaryRepositories()).orElseGet(List::of)) {
                 String previousCommitId = previousAuxiliaries.get(auxiliary.id());
                 if (!Objects.equals(previousCommitId, auxiliary.commitId())) {
-                    changedRepositoryTargets.add(ExerciseEditorSyncTarget.AUXILIARY_REPOSITORY);
-                    changedAuxiliaryRepositoryId = auxiliary.id();
+                    changedAuxiliaryRepositoryIds.add(auxiliary.id());
                 }
             }
         }
@@ -295,8 +295,10 @@ public class ExerciseVersionService {
             // For repository commits, send a new commit alert so clients can notify users to refresh.
             // For problem statement changes, changes are broadcasted via client-to-client
             // messages.
-            Long auxiliaryRepositoryId = target == ExerciseEditorSyncTarget.AUXILIARY_REPOSITORY ? changedAuxiliaryRepositoryId : null;
-            exerciseEditorSyncService.broadcastNewCommitAlert(exerciseId, target, auxiliaryRepositoryId);
+            exerciseEditorSyncService.broadcastNewCommitAlert(exerciseId, target, null);
+        }
+        for (Long auxiliaryRepositoryId : changedAuxiliaryRepositoryIds) {
+            exerciseEditorSyncService.broadcastNewCommitAlert(exerciseId, ExerciseEditorSyncTarget.AUXILIARY_REPOSITORY, auxiliaryRepositoryId);
         }
         if (!changedFields.isEmpty()) {
             exerciseEditorSyncService.broadcastNewExerciseVersionAlert(exerciseId, newExerciseVersionId, author, changedFields);

@@ -92,6 +92,9 @@ describe('HyperionGenerationDetailComponent', () => {
         expect(service.getGenerationSandboxes).toHaveBeenCalledTimes(2);
         expect(fixture.componentInstance.naturallyEnded()).toBe(true);
         expect(fixture.componentInstance.job()?.jobId).toBe('job-1');
+        const terminalDuration = fixture.componentInstance.elapsedSeconds(sessions[0].startedAt);
+        await vi.advanceTimersByTimeAsync(10_000);
+        expect(fixture.componentInstance.elapsedSeconds(sessions[0].startedAt)).toBe(terminalDuration);
         fixture.componentInstance.ngOnDestroy();
         vi.useRealTimers();
     });
@@ -126,6 +129,23 @@ describe('HyperionGenerationDetailComponent', () => {
 
         expect(fixture.componentInstance.backgroundRefreshFailed()).toBe(true);
         expect(fixture.componentInstance.job()?.jobId).toBe('job-1');
+    });
+
+    it('does not overlap slow background refreshes', async () => {
+        vi.useFakeTimers();
+        const pending = new Subject<typeof sessions>();
+        service.getGenerationSandboxes.mockReturnValue(pending);
+        fixture.componentInstance.ngOnInit();
+
+        await vi.advanceTimersByTimeAsync(15_000);
+
+        expect(service.getGenerationSandboxes).toHaveBeenCalledTimes(1);
+        pending.next(sessions);
+        pending.complete();
+        await vi.advanceTimersByTimeAsync(5_000);
+        expect(service.getGenerationSandboxes.mock.calls.length).toBeGreaterThan(1);
+        fixture.componentInstance.ngOnDestroy();
+        vi.useRealTimers();
     });
 
     it('renders localized mode, responsive sessions, and a useful container identifier', () => {

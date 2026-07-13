@@ -42,18 +42,8 @@ import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 
 /**
- * Runs an agentic whole-exercise generation/adaptation session asynchronously and streams progress to the instructor over the existing Hyperion websocket topic.
- * <p>
- * It owns the end-to-end flow: drive the {@link GenerationOrchestrationService}; when the verifier accepts, hand off to {@link GenerationPersistenceService} to persist a
- * clean, verified exercise; and when it does not accept but the run produced usable work, hand off to {@link GenerationRecoveryService} to persist changed repository files and
- * surface
- * every verification finding as review comments so a near-miss is recoverable instead of discarded.
- * <p>
- * Every terminal state emits a clear, distinct event: {@code SUCCESS} (verified and saved), {@code NEEDS_REVIEW} (repository draft saved with review comments to resolve),
- * {@code PARTIAL}
- * (saving did not complete and any partial repository state needs manual review), plus cancellation and error. A recovered draft is never
- * presented as a verified exercise: only the {@code SUCCESS} path is clean; {@code NEEDS_REVIEW} always carries the gaps the instructor must fix. The {@link GenerationOutcome} is
- * always closed here so the sandbox container is destroyed on every path.
+ * Runs generation or adaptation asynchronously, streams progress, persists accepted output, and isolates recoverable rejected output for review. Every path closes the
+ * {@link GenerationOutcome} so its sandbox is destroyed.
  */
 @Service
 @Lazy
@@ -191,7 +181,8 @@ public class GenerationTaskService {
                                 GenerationPersistenceService.PersistResult persistResult = persistenceService.persist(exerciseToPersist, user, outcome, originalProblemStatement,
                                         originalTitle, jobId, () -> jobService.isOwnedActiveJob(exerciseId, jobId));
                                 generationRevertService.recordBaseline(exerciseToPersist, jobId, event.mode(), persistResult.prePersistHeads(), persistResult.postPersistHeads(),
-                                        originalProblemStatement, originalTitle, persistResult.persistedProblemStatement(), persistResult.persistedTitle());
+                                        originalProblemStatement, originalTitle, persistResult.persistedProblemStatement(), persistResult.persistedTitle(),
+                                        persistResult.repositoryBranch());
                                 int advisoryCount = recoveryService.surfaceAdvisoryFindings(exerciseToPersist, user, outcome.specFidelityReport());
                                 String advisory = advisoryCount == 1 ? " 1 review note was added for your attention."
                                         : advisoryCount > 1 ? " " + advisoryCount + " review notes were added for your attention." : "";

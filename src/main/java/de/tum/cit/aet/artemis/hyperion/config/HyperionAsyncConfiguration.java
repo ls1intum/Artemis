@@ -57,9 +57,7 @@ public class HyperionAsyncConfiguration {
         executor.setQueueCapacity(0);
         executor.setAllowCoreThreadTimeOut(true);
         executor.setThreadNamePrefix("hyperion-gen-");
-        // On saturation, abort (throw RejectedExecutionException) rather than run on the caller: the submit path is the HTTP request thread, and CallerRunsPolicy would block it
-        // for
-        // the full multi-minute generation. Aborting lets the REST layer map the rejection to 429/Conflict and shed load.
+        // On saturation, abort rather than block the request thread for the full generation. The REST layer maps the rejection to a conflict response.
         executor.setRejectedExecutionHandler(new ThreadPoolExecutor.AbortPolicy());
         executor.initialize();
         return executor;

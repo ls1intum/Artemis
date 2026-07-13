@@ -40,6 +40,8 @@ class InteractiveSandboxServiceHostConfigTest {
 
     private CreateContainerCmd createContainerCmd;
 
+    private StartContainerCmd startContainerCmd;
+
     private final ArgumentCaptor<HostConfig> hostConfigCaptor = ArgumentCaptor.forClass(HostConfig.class);
 
     @BeforeEach
@@ -49,7 +51,7 @@ class InteractiveSandboxServiceHostConfigTest {
         createContainerCmd = mock(CreateContainerCmd.class);
         CreateContainerResponse response = new CreateContainerResponse();
         response.setId("container-1");
-        StartContainerCmd startContainerCmd = mock(StartContainerCmd.class);
+        startContainerCmd = mock(StartContainerCmd.class);
 
         doReturn(true).when(buildAgentConfiguration).isDockerAvailable();
         doReturn(dockerClient).when(buildAgentConfiguration).getDockerClient();
@@ -83,6 +85,20 @@ class InteractiveSandboxServiceHostConfigTest {
 
         assertThatExceptionOfType(LocalCIException.class).isThrownBy(() -> service.createSession(new SandboxSessionSpec("image", new DockerRunConfig(List.of(), "host", 0, 0, 0))))
                 .withMessageContaining("only allow Docker network mode 'none'");
+    }
+
+    @Test
+    void createSession_removesContainerWhenStartFails() {
+        RemoveContainerCmd removeContainerCmd = mock(RemoveContainerCmd.class);
+        when(dockerClient.removeContainerCmd("container-1")).thenReturn(removeContainerCmd);
+        when(removeContainerCmd.withForce(true)).thenReturn(removeContainerCmd);
+        doThrow(new RuntimeException("start failed")).when(startContainerCmd).exec();
+        InteractiveSandboxService service = new InteractiveSandboxService(buildAgentConfiguration);
+
+        assertThatExceptionOfType(RuntimeException.class).isThrownBy(() -> service.createSession(new SandboxSessionSpec("image", null))).withMessage("start failed");
+
+        verify(removeContainerCmd).withForce(true);
+        verify(removeContainerCmd).exec();
     }
 
     @Test

@@ -90,7 +90,13 @@
                     <p class="text-muted-color" jhiTranslate="artemisApp.buildAgents.generationSandboxes.loading"></p>
                 }
                 @if (generationSandboxesLoadFailed()) {
-                    <p-message severity="error" class="block" jhiTranslate="artemisApp.buildAgents.generationSandboxes.loadFailed" />
+                    <p-message severity="warn" class="mb-3 block">
+                        <span jhiTranslate="artemisApp.buildAgents.generationSandboxes.loadFailed"></span>
+                        <p-button size="small" severity="secondary" [outlined]="true" (onClick)="refreshGenerationSandboxes()">
+                            <fa-icon [icon]="faSync" />
+                            <span jhiTranslate="metrics.refresh.button"></span>
+                        </p-button>
+                    </p-message>
                 }
                 @if (generationJobs().length) {
                     <jhi-hyperion-generation-jobs-table [jobs]="generationJobs()" />

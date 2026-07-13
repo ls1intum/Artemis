@@ -8,6 +8,7 @@ import static org.mockito.Mockito.when;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -20,9 +21,11 @@ import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
 import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.Test;
+import org.springframework.core.io.Resource;
 
 import de.tum.cit.aet.artemis.buildagent.service.InteractiveSandbox;
 import de.tum.cit.aet.artemis.core.config.ProgrammingLanguageConfiguration;
+import de.tum.cit.aet.artemis.core.service.ResourceLoaderService;
 import de.tum.cit.aet.artemis.core.service.TempFileUtilService;
 import de.tum.cit.aet.artemis.hyperion.dto.GenerationMode;
 import de.tum.cit.aet.artemis.localvc.service.GitService;
@@ -106,6 +109,25 @@ class GenerationWorkspaceServiceTest {
 
         assertThat(spec.image()).isEqualTo("java-image");
         assertThat(spec.runConfig().network()).isEqualTo("none");
+    }
+
+    @Test
+    void readReferenceSample_closesResourceStreams() throws Exception {
+        ResourceLoaderService resourceLoaderService = mock(ResourceLoaderService.class);
+        Resource resource = mock(Resource.class);
+        TrackingInputStream input = new TrackingInputStream("class Example {}".getBytes(StandardCharsets.UTF_8));
+        when(resource.getURI()).thenReturn(java.net.URI.create("file:/templates/java/test/Example.java"));
+        when(resource.getInputStream()).thenReturn(input);
+        when(resourceLoaderService.getFileResources(any(Path.class))).thenAnswer(invocation -> {
+            Path path = invocation.getArgument(0);
+            return path.endsWith("test") ? new Resource[] { resource } : new Resource[0];
+        });
+        ProgrammingExercise exercise = new ProgrammingExercise();
+        exercise.setProgrammingLanguage(ProgrammingLanguage.JAVA);
+        GenerationWorkspaceService service = new GenerationWorkspaceService(mock(), mock(), mock(), resourceLoaderService, tempFileUtilService());
+
+        assertThat(service.readReferenceSample(exercise)).containsEntry("reference/test/Example.java", "class Example {}");
+        assertThat(input.closed).isTrue();
     }
 
     @Test
@@ -197,6 +219,21 @@ class GenerationWorkspaceServiceTest {
         }
         catch (Exception e) {
             throw new IllegalStateException(e);
+        }
+    }
+
+    private static final class TrackingInputStream extends ByteArrayInputStream {
+
+        private boolean closed;
+
+        private TrackingInputStream(byte[] content) {
+            super(content);
+        }
+
+        @Override
+        public void close() throws IOException {
+            closed = true;
+            super.close();
         }
     }
 }

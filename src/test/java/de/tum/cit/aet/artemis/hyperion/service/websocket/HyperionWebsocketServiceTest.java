@@ -18,10 +18,6 @@ import org.mockito.ArgumentCaptor;
 
 import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
 
-/**
- * Unit test for {@link HyperionWebsocketService}: it must namespace every payload under {@code /topic/hyperion/<suffix>} and never let a delivery failure escape into the
- * generation loop that calls it — websocket delivery is best-effort UX, so a failed send must be swallowed (logged) rather than aborting the run or masking the terminal event.
- */
 class HyperionWebsocketServiceTest {
 
     private WebsocketMessagingService messagingService;

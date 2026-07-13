@@ -27,6 +27,10 @@ import org.springframework.ai.chat.prompt.Prompt;
  */
 class AgentLoopCompactionTest {
 
+    private static AgentLoopRunner newTestRunner(List<ChatModel> chatModels, int contextWindowTokens) {
+        return new AgentLoopRunner(chatModels, contextWindowTokens, java.time.Duration.ofMinutes(5), new TestProviderFailureCooldown());
+    }
+
     private static AssistantMessage assistantToolCall(String id, String name, String arguments) {
         return AssistantMessage.builder().content("").toolCalls(List.of(new AssistantMessage.ToolCall(id, "function", name, arguments))).build();
     }
@@ -103,7 +107,7 @@ class AgentLoopCompactionTest {
 
     @Test
     void findCutIndex_landsOnATurnStartNeverAToolResult() {
-        AgentLoopRunner runner = new AgentLoopRunner(List.of(mock(ChatModel.class)), 128_000);
+        AgentLoopRunner runner = newTestRunner(List.of(mock(ChatModel.class)), 128_000);
         // 12 turns whose results tokenize to ~3k tokens each comfortably exceed the 20k-token keep-recent target, so a cut is taken.
         List<Message> conversation = conversationWithTurns(12, 24_000);
         int cut = runner.findCutIndex(conversation, 2);
@@ -116,7 +120,7 @@ class AgentLoopCompactionTest {
     @Test
     void findCutIndex_pushesForwardUntilTheKeptTailFitsTheBudget() {
         // A deliberately tiny window (20k tokens => ~3.6k budget after the 16k reserve) forces most turns into the summary so the kept tail fits.
-        AgentLoopRunner runner = new AgentLoopRunner(List.of(mock(ChatModel.class)), 20_000);
+        AgentLoopRunner runner = newTestRunner(List.of(mock(ChatModel.class)), 20_000);
         List<Message> conversation = conversationWithTurns(20, 9_000);
         int cut = runner.findCutIndex(conversation, 2);
         long budget = 20_000L - 16_384L;
@@ -132,7 +136,7 @@ class AgentLoopCompactionTest {
     void findCutIndex_whenEvenTheLastTurnDoesNotFit_dropsTheWholeTail() {
         // A tiny window whose budget (window - 16384) is below even one turn's tokens: the push-forward loop advances the cut all the way to the end, so nothing is kept verbatim
         // (the conversation becomes summary-only). The runner logs a warning for this edge; here we pin the behaviour.
-        AgentLoopRunner runner = new AgentLoopRunner(List.of(mock(ChatModel.class)), 16_500);
+        AgentLoopRunner runner = newTestRunner(List.of(mock(ChatModel.class)), 16_500);
         List<Message> conversation = conversationWithTurns(6, 9_000);
         int cut = runner.findCutIndex(conversation, 2);
         assertThat(cut).isEqualTo(conversation.size());
@@ -142,7 +146,7 @@ class AgentLoopCompactionTest {
     void compact_summarizesOldTurnsKeepsRecentVerbatimAndStaysPaired() {
         ChatModel chatModel = mock(ChatModel.class);
         when(chatModel.call(any(Prompt.class))).thenReturn(textResponse("## Goal\nBuild a bubble-sort exercise.\n## Next steps\nFinish the tests."));
-        AgentLoopRunner runner = new AgentLoopRunner(List.of(chatModel), 128_000);
+        AgentLoopRunner runner = newTestRunner(List.of(chatModel), 128_000);
 
         List<Message> conversation = conversationWithTurns(12, 24_000);
         List<Message> compacted = runner.compact(conversation, null);
@@ -164,7 +168,7 @@ class AgentLoopCompactionTest {
     void compact_onSummarizerFailure_dropsOldTurnsBehindAMarkerWithoutThrowing() {
         ChatModel chatModel = mock(ChatModel.class);
         when(chatModel.call(any(Prompt.class))).thenThrow(new RuntimeException("summarizer 500"));
-        AgentLoopRunner runner = new AgentLoopRunner(List.of(chatModel), 128_000);
+        AgentLoopRunner runner = newTestRunner(List.of(chatModel), 128_000);
 
         List<Message> conversation = conversationWithTurns(12, 24_000);
         List<Message> compacted = runner.compact(conversation, null);
@@ -176,7 +180,7 @@ class AgentLoopCompactionTest {
 
     @Test
     void compact_shortConversation_isReturnedUnchanged() {
-        AgentLoopRunner runner = new AgentLoopRunner(List.of(mock(ChatModel.class)), 128_000);
+        AgentLoopRunner runner = newTestRunner(List.of(mock(ChatModel.class)), 128_000);
         List<Message> conversation = conversationWithTurns(1, 50); // tiny: nothing older than the recent tail to summarize
         assertThat(runner.compact(conversation, null)).isSameAs(conversation);
     }

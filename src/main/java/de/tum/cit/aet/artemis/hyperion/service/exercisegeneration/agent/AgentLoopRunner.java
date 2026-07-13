@@ -144,14 +144,6 @@ public class AgentLoopRunner {
      * @param chatModels          all available chat models (may be empty if no AI provider is configured)
      * @param contextWindowTokens the model's usable context window in tokens (override per deployment)
      */
-    AgentLoopRunner(Collection<ChatModel> chatModels, int contextWindowTokens) {
-        this(chatModels, contextWindowTokens, Duration.ofMinutes(5));
-    }
-
-    AgentLoopRunner(Collection<ChatModel> chatModels, int contextWindowTokens, Duration providerHardFailureCooldown) {
-        this(chatModels, contextWindowTokens, providerHardFailureCooldown, new InMemoryProviderFailureCooldown());
-    }
-
     public AgentLoopRunner(Collection<ChatModel> chatModels, int contextWindowTokens, Duration providerHardFailureCooldown, ProviderFailureCooldown providerFailureCooldown) {
         this.chatModel = chatModels.isEmpty() ? null : new HarmonyScrubbingChatModel(chatModels.iterator().next());
         this.toolCallingManager = ToolCallingManager.builder().build();
@@ -610,10 +602,6 @@ public class AgentLoopRunner {
             }
         }
         return messages.toString().toLowerCase(Locale.ROOT);
-    }
-
-    static void clearProviderFailureCooldownForTests() {
-        InMemoryProviderFailureCooldown.clearForTests();
     }
 
     private static boolean isTransientStatus(int status) {

@@ -3,14 +3,8 @@ package de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification;
 import java.util.List;
 
 /**
- * The in-loop self-check report the agent's {@code verify} tool returns: the same differential analysis (two pristine builds parsed with the production parsers, then the
- * actionable
- * acceptance gates) the post-loop {@link DifferentialVerificationService#verify} acceptance decision uses, rendered as compact, structured, agent-readable feedback.
- * <p>
- * This is feedback, not a verdict. The post-loop {@code verify(...)} remains the sole acceptance truth; this report exists so the agent can see — every time it asks — what that
- * verdict will conclude (which tests pass/fail on the solution and template, the parser-form names to bind {@code [task]}s to, and which gates it is currently failing) instead of
- * misreading raw exit codes and bare {@code grep name=} output. It runs only the gates that depend on the live sandbox builds; the sandbox-free integrity gates (harness
- * immutability, solution leak) stay post-loop-only.
+ * Structured feedback returned by the agent's in-loop {@code verify} tool. The independent post-loop verification remains the acceptance authority and additionally applies
+ * sandbox-free integrity gates.
  *
  * @param solutionTests          the number of tests the solution ran (parser form, {@code <skipped>} excluded as production grades)
  * @param solutionPassed         whether the solution compiled, ran at least one test, and passed every test

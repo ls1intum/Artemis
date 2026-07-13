@@ -44,10 +44,6 @@ import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationStatusDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.GenerationMode;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 
-/**
- * Unit test for {@link GenerationJobService}'s single-flight, transcript-cap, privacy-ownership and cancel-hook invariants against a real isolated embedded Hazelcast
- * instance, so it also exercises the same {@code Serializable} default serialization the distributed map uses in production.
- */
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class GenerationJobServiceTest {
 
@@ -99,7 +95,6 @@ class GenerationJobServiceTest {
         User owner = user("owner");
 
         assertThat(jobService.startJob(owner, exercise, "do it", GenerationMode.GENERATE)).isNotBlank();
-        // Single-flight: a second start while the first slot is still claimed must be rejected.
         assertThatExceptionOfType(ConflictException.class).isThrownBy(() -> jobService.startJob(owner, exercise, "again", GenerationMode.GENERATE));
     }
 
@@ -158,10 +153,8 @@ class GenerationJobServiceTest {
         List<ExerciseGenerationEventDTO> events = jobService.getStatus(owner, exercise).orElseThrow().events();
 
         assertThat(events).hasSize(500);
-        // The STARTED head[0] is preserved (the mutation remove(1)->remove(0) would drop it).
         assertThat(events.getFirst().type()).isEqualTo(ExerciseGenerationEventDTO.Type.STARTED);
         assertThat(events.getFirst().message()).isEqualTo("STARTED-HEAD");
-        // The oldest PROGRESS lines were dropped from the front of the remainder; the survivors are the most recent 499, still in order.
         assertThat(events.get(1).message()).isEqualTo("p" + (overflow - 499));
         assertThat(events.getLast().message()).isEqualTo("p" + (overflow - 1));
     }
@@ -172,7 +165,6 @@ class GenerationJobServiceTest {
         User owner = user("owner");
         jobService.startJob(owner, exercise, "fix it", GenerationMode.ADAPT);
 
-        // A reconnecting client must recover the run intent from the status alone (it drives the header label and the revert button).
         assertThat(jobService.getStatus(owner, exercise).orElseThrow().mode()).isEqualTo(GenerationMode.ADAPT);
     }
 
@@ -279,7 +271,6 @@ class GenerationJobServiceTest {
         jobService.startJob(user("instructorA"), exercise, "go", GenerationMode.GENERATE);
 
         assertThat(jobService.getStatus(user("instructorA"), exercise)).isPresent();
-        // A different instructor must NOT see another instructor's transcript (privacy boundary).
         assertThat(jobService.getStatus(user("instructorB"), exercise)).isEmpty();
     }
 
@@ -293,7 +284,6 @@ class GenerationJobServiceTest {
         assertThat(hookRuns.get()).isEqualTo(1);
         assertThat(jobService.isCancelled(jobId)).isTrue();
 
-        // A second cancellation for the same (still-claimed) job must not run the hook again — it was removed after the first run.
         assertThat(jobService.requestCancellation(11L, jobId, user("owner"))).isTrue();
         assertThat(hookRuns.get()).isEqualTo(1);
     }
@@ -320,11 +310,9 @@ class GenerationJobServiceTest {
         AtomicInteger hookRuns = new AtomicInteger(0);
         jobService.registerCancelHook(jobId, hookRuns::incrementAndGet);
 
-        // A different editor of the same course must NOT be able to cancel the owner's run by the (observable) jobId — symmetric to the getStatus owner boundary.
         assertThat(jobService.requestCancellation(12L, jobId, user("notOwner"))).isFalse();
         assertThat(hookRuns.get()).isZero();
         assertThat(jobService.isCancelled(jobId)).isFalse();
-        // The owner can still cancel.
         assertThat(jobService.requestCancellation(12L, jobId, user("owner"))).isTrue();
         assertThat(jobService.isCancelled(jobId)).isTrue();
     }
@@ -355,18 +343,6 @@ class GenerationJobServiceTest {
         assertThat(jobService.requestSystemCancellation(exerciseId, jobId)).isFalse();
         assertThat(jobService.isCancelled(jobId)).isFalse();
         assertThat(hookRuns).hasValue(0);
-    }
-
-    @Test
-    void requestCancellation_treatsMissingCancellableFlagAsCancellableDuringRollingDeploy() {
-        long exerciseId = 113L;
-        String jobId = jobService.startJob(user("owner"), exercise(exerciseId), "go", GenerationMode.GENERATE);
-        @SuppressWarnings("unchecked")
-        IMap<String, GenerationJobService.JobInfo> jobMap = (IMap<String, GenerationJobService.JobInfo>) ReflectionTestUtils.getField(jobService, "jobMap");
-        jobMap.set(String.valueOf(exerciseId), new GenerationJobService.JobInfo(jobId, "owner", exerciseId, Instant.now(), null, null, null, null, null));
-
-        assertThat(jobService.requestCancellation(exerciseId, jobId, user("owner"))).isTrue();
-        assertThat(jobService.isCancelled(jobId)).isTrue();
     }
 
     @Test
@@ -439,7 +415,7 @@ class GenerationJobServiceTest {
         IMap<String, GenerationJobService.JobInfo> jobMap = (IMap<String, GenerationJobService.JobInfo>) ReflectionTestUtils.getField(jobService, "jobMap");
         String localNodeId = (String) ReflectionTestUtils.getField(jobService, "localNodeId");
         jobMap.set(String.valueOf(exerciseId), new GenerationJobService.JobInfo(jobId, "owner", exerciseId, Instant.now().minus(Duration.ofMinutes(10)), null, localNodeId,
-                Instant.now().minus(Duration.ofMinutes(10)), Boolean.TRUE, null));
+                Instant.now().minus(Duration.ofMinutes(10)), true, null));
         GenerationJobService shortTimeoutService = new GenerationJobService(hazelcastInstance, event -> {
         }, mock(LLMTokenUsageService.class), Duration.ofMinutes(1), Duration.ofMinutes(30));
         shortTimeoutService.init();
@@ -521,7 +497,7 @@ class GenerationJobServiceTest {
     }
 
     @Test
-    void expiredDeadline_doesNotReclaimNonCancellablePersistenceSlot() throws InterruptedException {
+    void expiredDeadline_doesNotReclaimNonCancellablePersistenceSlot() {
         long exerciseId = 128L;
         ProgrammingExercise exercise = exercise(exerciseId);
         User owner = user("owner");
@@ -530,7 +506,7 @@ class GenerationJobServiceTest {
         shortDeadlineService.init();
         String jobId = shortDeadlineService.startJob(owner, exercise, "old", GenerationMode.GENERATE);
         assertThat(shortDeadlineService.enterNonCancellablePhase(exerciseId, jobId)).isTrue();
-        Thread.sleep(10);
+        forceJobDeadline(shortDeadlineService, exerciseId, Instant.now().minusSeconds(1));
 
         shortDeadlineService.clearStaleJobs();
 
@@ -580,8 +556,13 @@ class GenerationJobServiceTest {
                 heartbeatAt, existing.cancellable(), existing.budgetReservationId()));
     }
 
-    // --- File-snapshot store: per-file keying so a write is O(1), never a re-serialization of the whole retained set
-    // --------------------------------------------------------------
+    private static void forceJobDeadline(GenerationJobService service, long exerciseId, Instant deadlineAt) {
+        @SuppressWarnings("unchecked")
+        IMap<String, GenerationJobService.JobInfo> jobMap = (IMap<String, GenerationJobService.JobInfo>) ReflectionTestUtils.getField(service, "jobMap");
+        GenerationJobService.JobInfo existing = jobMap.get(String.valueOf(exerciseId));
+        jobMap.set(String.valueOf(exerciseId), new GenerationJobService.JobInfo(existing.jobId(), existing.userLogin(), exerciseId, existing.startedAt(), deadlineAt,
+                existing.ownerNodeId(), existing.lastHeartbeatAt(), existing.cancellable(), existing.budgetReservationId()));
+    }
 
     private static ExerciseGenerationFileSnapshotDTO snapshot(String path, String content) {
         return ExerciseGenerationFileSnapshotDTO.of(path, ExerciseGenerationFileSnapshotDTO.ACTION_CREATE, content, 1);
@@ -608,10 +589,6 @@ class GenerationJobServiceTest {
         return perFileSnapshotMap();
     }
 
-    /**
-     * Each write targets exactly ONE distributed-map key (that file's own key), never re-serializing the other retained files: 150 distinct-file writes leave 150 independent
-     * per-file entries, and a repeat write to one file updates only that file's key. This is the structural fix for the former O(n^2) whole-set rewrite.
-     */
     @Test
     void recordSnapshot_keysEachFileSeparately_soAWriteTouchesOneKeyNotTheWholeSet() {
         long exerciseId = 501L;
@@ -628,10 +605,8 @@ class GenerationJobServiceTest {
         for (int i = 0; i < fileCount; i++) {
             jobService.recordSnapshot(exerciseId, jobId, snapshot("solution/File" + i + ".java", "body " + i));
         }
-        // Each distinct file occupies its own entry — the whole set is NOT a single re-serialized value.
         assertThat((Map<String, ExerciseGenerationFileSnapshotDTO>) perFileMap).hasSize(fileCount);
 
-        // Every write produced exactly one ADD event, each on that file's own distinct key (proving a write touches ONE key, not the whole set).
         String[] expectedKeys = new String[fileCount];
         for (int i = 0; i < fileCount; i++) {
             expectedKeys[i] = GenerationJobService.fileKey(exerciseId, jobId, "solution/File" + i + ".java");
@@ -639,12 +614,10 @@ class GenerationJobServiceTest {
         await().atMost(Duration.ofSeconds(10)).untilAsserted(() -> assertThat(addedKeys).hasSize(fileCount));
         assertThat(addedKeys).doesNotHaveDuplicates().containsExactlyInAnyOrder(expectedKeys);
 
-        // Re-writing one existing file updates ONLY that file's key (latest-per-file), leaving every other key untouched — again a single-key write.
         jobService.recordSnapshot(exerciseId, jobId, snapshot("solution/File0.java", "rewritten"));
         await().atMost(Duration.ofSeconds(10)).untilAsserted(() -> assertThat(updatedKeys).containsExactly(GenerationJobService.fileKey(exerciseId, jobId, "solution/File0.java")));
         assertThat(perFileMap.size()).as("a repeat write does not add a new key").isEqualTo(fileCount);
 
-        // The replay view carries the latest content per file in write order.
         List<ExerciseGenerationFileSnapshotDTO> replay = jobService.getStatus(owner, exercise(exerciseId)).orElseThrow().fileSnapshots();
         assertThat(replay).hasSize(fileCount);
         assertThat(replay.getFirst().path()).isEqualTo("solution/File0.java");
@@ -652,7 +625,6 @@ class GenerationJobServiceTest {
         assertThat(replay).extracting(ExerciseGenerationFileSnapshotDTO::path).endsWith("solution/File" + (fileCount - 1) + ".java");
     }
 
-    /** Beyond the 300-file cap the eldest file is evicted (its per-file key removed too) and the replay stays bounded and in write order. */
     @Test
     void recordSnapshot_beyondCap_evictsEldestKeepingWriteOrderAndBoundedKeys() {
         long exerciseId = 502L;
@@ -664,18 +636,15 @@ class GenerationJobServiceTest {
             jobService.recordSnapshot(exerciseId, jobId, snapshot("tests/File" + i + ".java", "body " + i));
         }
 
-        // The per-file store is bounded to the cap; the eldest 50 files (and their keys) were evicted.
         assertThat((Map<String, ExerciseGenerationFileSnapshotDTO>) perFileSnapshotMap()).hasSize(GenerationJobService.MAX_RETAINED_SNAPSHOT_FILES);
         assertThat(perFileEntries()).doesNotContainKey(GenerationJobService.fileKey(exerciseId, jobId, "tests/File0.java"));
 
         List<ExerciseGenerationFileSnapshotDTO> replay = jobService.getStatus(owner, exercise(exerciseId)).orElseThrow().fileSnapshots();
         assertThat(replay).hasSize(GenerationJobService.MAX_RETAINED_SNAPSHOT_FILES);
-        // The survivors are the most-recent 300 in write order (files 50..349).
         assertThat(replay.getFirst().path()).isEqualTo("tests/File50.java");
         assertThat(replay.getLast().path()).isEqualTo("tests/File" + (total - 1) + ".java");
     }
 
-    /** clearJob keeps terminal replay snapshots briefly, so a client that missed the terminal websocket event can still rehydrate the preview from status. */
     @Test
     void clearJob_retainsPerFileSnapshotsForTerminalReplayWindow() {
         long exerciseId = 503L;
@@ -693,10 +662,6 @@ class GenerationJobServiceTest {
                 .containsExactly("solution/A.java", "template/B.java");
     }
 
-    /**
-     * A new run for the same exercise wipes a previous run's lingering retained snapshots (a crashed run whose slot TTL'd out but whose index/keys lingered), so it never inherits
-     * stale files. Simulated by seeding a lingering index+key directly, since the single-flight guard forbids starting a second run while the first slot is still claimed.
-     */
     @Test
     void startJob_forANewRun_clearsAPreviousRunsLingeringRetainedSnapshots() {
         long exerciseId = 504L;
@@ -709,13 +674,11 @@ class GenerationJobServiceTest {
         assertThat(perFileEntries()).as("the new run starts from a clean snapshot store")
                 .doesNotContainKey(GenerationJobService.fileKey(exerciseId, "crashed-job", "solution/Stale.java"));
         assertThat(jobService.getStatus(owner, exercise(exerciseId)).orElseThrow().fileSnapshots()).isEmpty();
-        // The new run's own writes are retained under its job.
         jobService.recordSnapshot(exerciseId, secondJob, snapshot("solution/Fresh.java", "new"));
         assertThat(jobService.getStatus(owner, exercise(exerciseId)).orElseThrow().fileSnapshots()).extracting(ExerciseGenerationFileSnapshotDTO::path)
                 .containsExactly("solution/Fresh.java");
     }
 
-    /** A snapshot recorded for a stale/superseded job id is dropped (its index guard rejects it), leaving no per-file key. */
     @Test
     void recordSnapshot_forAStaleJobId_isDropped() {
         long exerciseId = 505L;
@@ -745,9 +708,6 @@ class GenerationJobServiceTest {
 
     @Test
     void startJob_whenExecutorRejectsPublish_releasesSlotAndReportsBusy_notWedged() {
-        // The generation executor uses AbortPolicy, so on saturation publishEvent throws TaskRejectedException (a RejectedExecutionException) synchronously back through startJob.
-        // Reproduce that with a publisher that rejects while `reject` is set, then reuse the same exercise to prove the single-flight slot was rolled back (not wedged for the
-        // TTL).
         AtomicBoolean reject = new AtomicBoolean(true);
         AtomicInteger publishAttempts = new AtomicInteger(0);
         ApplicationEventPublisher rejectingPublisher = event -> {
@@ -762,16 +722,12 @@ class GenerationJobServiceTest {
         ProgrammingExercise exercise = exercise(77L);
         User owner = user("owner");
 
-        // (a) The rejection surfaces as a distinct busy/capacity error (not the single-flight "already running" conflict), so the REST layer returns a clear failure.
         assertThatExceptionOfType(ConflictException.class).isThrownBy(() -> service.startJob(owner, exercise, "go", GenerationMode.GENERATE))
                 .satisfies(exception -> assertThat(exception.getErrorKey()).isEqualTo("exerciseGenerationCapacityExceeded")).withMessageContaining("busy");
         assertThat(publishAttempts.get()).isEqualTo(1);
 
-        // (c) No stale transcript/snapshot leaked from the failed claim — the owner sees nothing retained.
         assertThat(service.getStatus(owner, exercise)).isEmpty();
 
-        // (b) The slot was released: a subsequent start for the SAME exercise succeeds instead of hitting the single-flight guard (which is what a wedged, un-rolled-back slot
-        // would do).
         reject.set(false);
         String jobId = service.startJob(owner, exercise, "retry", GenerationMode.GENERATE);
         assertThat(jobId).isNotBlank();
@@ -834,15 +790,14 @@ class GenerationJobServiceTest {
         long exerciseId = 80L;
         String key = String.valueOf(exerciseId);
         Instant now = Instant.now();
-        GenerationJobService.JobInfo failedJob = new GenerationJobService.JobInfo("failed", "owner", exerciseId, now, null, "node-a", now, Boolean.TRUE, null);
+        GenerationJobService.JobInfo failedJob = new GenerationJobService.JobInfo("failed", "owner", exerciseId, now, null, "node-a", now, true, null);
         GenerationJobService.JobTranscript failedTranscript = new GenerationJobService.JobTranscript("failed", "owner", exerciseId, GenerationMode.GENERATE,
                 new CopyOnWriteArrayList<>(), false);
         GenerationJobService.JobFileSnapshotIndex failedIndex = new GenerationJobService.JobFileSnapshotIndex("failed", "owner", List.of("solution/Failed.java"));
         GenerationJobService.JobTranscript previousTranscript = new GenerationJobService.JobTranscript("previous", "owner", exerciseId, GenerationMode.GENERATE,
                 new CopyOnWriteArrayList<>(), true);
         GenerationJobService.JobFileSnapshotIndex previousIndex = new GenerationJobService.JobFileSnapshotIndex("previous", "owner", List.of("solution/Previous.java"));
-        GenerationJobService.JobInfo newerJob = new GenerationJobService.JobInfo("newer", "owner", exerciseId, now.plusMillis(1), null, "node-a", now.plusMillis(1), Boolean.TRUE,
-                null);
+        GenerationJobService.JobInfo newerJob = new GenerationJobService.JobInfo("newer", "owner", exerciseId, now.plusMillis(1), null, "node-a", now.plusMillis(1), true, null);
         GenerationJobService.JobTranscript newerTranscript = new GenerationJobService.JobTranscript("newer", "owner", exerciseId, GenerationMode.ADAPT,
                 new CopyOnWriteArrayList<>(), false);
         GenerationJobService.JobFileSnapshotIndex newerIndex = new GenerationJobService.JobFileSnapshotIndex("newer", "owner", List.of("solution/Newer.java"));

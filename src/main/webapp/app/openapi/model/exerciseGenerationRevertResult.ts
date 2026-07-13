@@ -9,12 +9,12 @@
  */
 
 
-export interface ExerciseAdaptationRevertResult {
+export interface ExerciseGenerationRevertResult {
     fullyReverted: boolean;
-    revertedRepositories: Array<ExerciseAdaptationRevertResult.RevertedRepositoriesEnum>;
+    revertedRepositories: Array<ExerciseGenerationRevertResult.RevertedRepositoriesEnum>;
     completedAt: string;
 }
-export namespace ExerciseAdaptationRevertResult {
+export namespace ExerciseGenerationRevertResult {
     export const RevertedRepositoriesEnum = {
         Exercise: 'exercise',
         Solution: 'solution',

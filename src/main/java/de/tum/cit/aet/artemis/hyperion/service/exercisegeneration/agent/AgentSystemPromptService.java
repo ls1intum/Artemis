@@ -19,12 +19,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 /**
  * Builds the system prompt for the exercise-generation agent.
  * <p>
- * The prompt encodes the correctness contract the verifier enforces (solution passes, template compiles but fails, tests run identically against both) and the two things an LLM
- * cannot infer from a cleared scaffold: <em>where</em> sources go (the Artemis test project mounts the assignment next to the tests, not under {@code src/main/java}) and
- * <em>how</em>
- * to self-check ({@code verify.sh}, the recipe the grader also runs). For Java exercises it adds the Ares conventions, whose absence (Ares refuses an unannotated test class) is
- * the
- * most common reason a generated exercise fails to build.
+ * Encodes the verifier contract, repository layout, self-check workflow, and language-specific conventions that the model cannot infer from an empty scaffold.
  */
 @Lazy
 @Service
@@ -47,9 +42,7 @@ public class AgentSystemPromptService {
 
     /**
      * Builds the system prompt, branching only its top framing on the run intent: {@link GenerationMode#GENERATE} authors the exercise from the plan, while
-     * {@link GenerationMode#ADAPT} tells the agent the sandbox is already seeded with the current working exercise and it must apply the requested feedback while preserving what
-     * the
-     * feedback leaves untouched. The contract, quality, layout, and self-check sections are identical for both.
+     * {@link GenerationMode#ADAPT} tells the agent to apply requested feedback to the seeded exercise while preserving unaffected content. The remaining guidance is shared.
      *
      * @param exercise the exercise being generated or adapted
      * @param mode     the explicit run intent (generate a fresh exercise vs. adapt the existing one)
@@ -143,9 +136,7 @@ public class AgentSystemPromptService {
     }
 
     /**
-     * Prepended in {@link GenerationMode#ADAPT}: the sandbox is seeded with the current working exercise, so the run is a targeted revision. It tells the agent to apply exactly
-     * the
-     * requested feedback and preserve everything else, so an adaptation never silently rewrites unrelated parts of a working exercise. The contract below still governs.
+     * Prepended in {@link GenerationMode#ADAPT} to require a targeted revision of the seeded exercise while preserving unrelated work.
      */
     private static final String ADAPT_MODE_FRAMING = """
             ADAPT MODE: revise the existing seeded exercise. Apply the user's feedback with the smallest coherent change, preserve requirements and artifacts where the feedback is silent,

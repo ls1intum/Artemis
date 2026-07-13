@@ -17,6 +17,7 @@ import static org.mockito.Mockito.when;
 
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.util.Map;
@@ -28,6 +29,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InOrder;
 import org.mockito.Mockito;
@@ -43,6 +45,7 @@ import de.tum.cit.aet.artemis.localvc.service.GitService;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.programming.domain.FileType;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
@@ -56,6 +59,9 @@ import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTes
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
 
 class GenerationPersistenceServiceTest {
+
+    @TempDir
+    private Path temporaryDirectory;
 
     private GitService gitService;
 
@@ -162,17 +168,24 @@ class GenerationPersistenceServiceTest {
 
     private Repository repository;
 
+    private void stubRepositoryWorkingTree(Repository repository) throws Exception {
+        Path repositoryDirectory = temporaryDirectory.resolve("repository");
+        FileUtils.forceMkdir(repositoryDirectory.toFile());
+        when(repository.getLocalPath()).thenReturn(repositoryDirectory);
+    }
+
     private void stubSuccessfulCheckoutAndCommits() throws Exception {
         repository = mock(Repository.class);
+        stubRepositoryWorkingTree(repository);
         when(gitService.getOrCheckoutRepository(any(LocalVCRepositoryUri.class), any(LocalVCRepositoryUri.class), any(Path.class), eq(true), eq("main"), eq(false)))
                 .thenReturn(repository);
         when(gitService.getFileByName(any(), any())).thenReturn(Optional.empty());
         when(repositoryService.getFiles(any())).thenReturn(Map.of());
         when(gitService.getLocalHeadHash(repository)).thenReturn("pre-template", "pre-solution", "pre-tests");
         when(gitService.commitStagedChanges(any(), anyString(), any())).thenReturn("hash-template", "hash-solution", "hash-tests");
-        when(gitService.getLastCommitHash(templateUri)).thenReturn("hash-template");
-        when(gitService.getLastCommitHash(solutionUri)).thenReturn("hash-solution");
-        when(gitService.getLastCommitHash(testsUri)).thenReturn("hash-tests");
+        when(gitService.getLastCommitHash(templateUri, "main")).thenReturn("hash-template");
+        when(gitService.getLastCommitHash(solutionUri, "main")).thenReturn("hash-solution");
+        when(gitService.getLastCommitHash(testsUri, "main")).thenReturn("hash-tests");
     }
 
     @Test
@@ -211,12 +224,42 @@ class GenerationPersistenceServiceTest {
     }
 
     @Test
+    void persist_usesExerciseRepositoryBranch() throws Exception {
+        String exerciseBranch = "release";
+        ProgrammingExerciseBuildConfig buildConfig = mock(ProgrammingExerciseBuildConfig.class);
+        when(buildConfig.getBranch()).thenReturn(exerciseBranch);
+        when(exercise.getBuildConfig()).thenReturn(buildConfig);
+        repository = mock(Repository.class);
+        stubRepositoryWorkingTree(repository);
+        when(gitService.getOrCheckoutRepository(any(LocalVCRepositoryUri.class), any(LocalVCRepositoryUri.class), any(Path.class), eq(true), eq(exerciseBranch), eq(false)))
+                .thenReturn(repository);
+        when(gitService.getFileByName(any(), any())).thenReturn(Optional.empty());
+        when(repositoryService.getFiles(any())).thenReturn(Map.of());
+        when(gitService.getLocalHeadHash(repository)).thenReturn("pre-template", "pre-solution", "pre-tests");
+        when(gitService.commitStagedChanges(any(), anyString(), any())).thenReturn("hash-template", "hash-solution", "hash-tests");
+        when(gitService.getLastCommitHash(templateUri, exerciseBranch)).thenReturn("hash-template");
+        when(gitService.getLastCommitHash(solutionUri, exerciseBranch)).thenReturn("hash-solution");
+        when(gitService.getLastCommitHash(testsUri, exerciseBranch)).thenReturn("hash-tests");
+        when(participationService.retrieveSolutionParticipation(exercise)).thenReturn(mock(ProgrammingExerciseParticipation.class));
+
+        GenerationPersistenceService.PersistResult result = service.persist(exercise, user,
+                outcomeWith(Map.of("Template.java", "t"), Map.of("Solution.java", "s"), Map.of("Test.java", "x"), ""));
+
+        assertThat(result.repositoryBranch()).isEqualTo(exerciseBranch);
+        verify(gitService, times(3)).getOrCheckoutRepository(any(LocalVCRepositoryUri.class), any(LocalVCRepositoryUri.class), any(Path.class), eq(true), eq(exerciseBranch),
+                eq(false));
+        verify(gitService).pushCommitWithLease(repository, "hash-template", exerciseBranch, "pre-template");
+        verify(gitService).pushCommitWithLease(repository, "hash-solution", exerciseBranch, "pre-solution");
+        verify(gitService).pushCommitWithLease(repository, "hash-tests", exerciseBranch, "pre-tests");
+    }
+
+    @Test
     void persist_omitsUnchangedRepositoriesFromTheRevertHeads() throws Exception {
         stubSuccessfulCheckoutAndCommits();
         when(gitService.isWorkingCopyClean(repository)).thenReturn(true, false, false);
-        when(gitService.getLastCommitHash(templateUri)).thenReturn("pre-template");
-        when(gitService.getLastCommitHash(solutionUri)).thenReturn("hash-template");
-        when(gitService.getLastCommitHash(testsUri)).thenReturn("hash-solution");
+        when(gitService.getLastCommitHash(templateUri, "main")).thenReturn("pre-template");
+        when(gitService.getLastCommitHash(solutionUri, "main")).thenReturn("hash-template");
+        when(gitService.getLastCommitHash(testsUri, "main")).thenReturn("hash-solution");
         ProgrammingExerciseParticipation solutionParticipation = mock(ProgrammingExerciseParticipation.class);
         when(participationService.retrieveSolutionParticipation(exercise)).thenReturn(solutionParticipation);
         GenerationOutcome outcome = outcomeWith(Map.of("Template.java", "t"), Map.of("Solution.java", "s"), Map.of("Test.java", "x"), "");
@@ -244,9 +287,9 @@ class GenerationPersistenceServiceTest {
     @Test
     void persist_detectsRepositoryDivergenceBeforeMetadataFinalizationWithoutOverwritingIt() throws Exception {
         stubSuccessfulCheckoutAndCommits();
-        when(gitService.getLastCommitHash(templateUri)).thenReturn("concurrent-instructor-head");
-        when(gitService.getLastCommitHash(solutionUri)).thenReturn("hash-solution");
-        when(gitService.getLastCommitHash(testsUri)).thenReturn("hash-tests");
+        when(gitService.getLastCommitHash(templateUri, "main")).thenReturn("concurrent-instructor-head");
+        when(gitService.getLastCommitHash(solutionUri, "main")).thenReturn("hash-solution");
+        when(gitService.getLastCommitHash(testsUri, "main")).thenReturn("hash-tests");
 
         GenerationOutcome outcome = outcomeWith(Map.of("Template.java", "t"), Map.of("Solution.java", "s"), Map.of("Test.java", "x"), "");
 
@@ -263,7 +306,7 @@ class GenerationPersistenceServiceTest {
     void persist_rechecksRepositoryHeadsAfterTestCaseSyncBeforeCreatingVersion() throws Exception {
         stubSuccessfulCheckoutAndCommits();
         when(participationService.retrieveSolutionParticipation(exercise)).thenReturn(mock(ProgrammingExerciseParticipation.class));
-        when(gitService.getLastCommitHash(templateUri)).thenReturn("hash-template", "hash-template", "concurrent-instructor-head");
+        when(gitService.getLastCommitHash(templateUri, "main")).thenReturn("hash-template", "hash-template", "concurrent-instructor-head");
 
         GenerationOutcome outcome = outcomeWith(Map.of("Template.java", "t"), Map.of("Solution.java", "s"), Map.of("Test.java", "x"), "");
 
@@ -846,6 +889,7 @@ class GenerationPersistenceServiceTest {
     @Test
     void persist_propagatesMidSequenceCommitFailure_andDoesNotCreateVersion() throws Exception {
         Repository repository = mock(Repository.class);
+        stubRepositoryWorkingTree(repository);
         when(gitService.getOrCheckoutRepository(any(LocalVCRepositoryUri.class), any(LocalVCRepositoryUri.class), any(Path.class), eq(true), eq("main"), eq(false)))
                 .thenReturn(repository);
         when(gitService.getFileByName(any(), any())).thenReturn(Optional.empty());
@@ -853,7 +897,7 @@ class GenerationPersistenceServiceTest {
         when(gitService.getLocalHeadHash(repository)).thenReturn("template-pre", "solution-pre", "solution-post");
         when(gitService.commitStagedChanges(any(), anyString(), any())).thenReturn("template-post", "solution-post");
         Mockito.doNothing().doThrow(new org.eclipse.jgit.api.errors.NoHeadException("boom")).when(gitService).pushCommitWithLease(any(), anyString(), anyString(), anyString());
-        when(gitService.getLastCommitHash(solutionUri)).thenReturn("solution-pre");
+        when(gitService.getLastCommitHash(solutionUri, "main")).thenReturn("solution-pre");
 
         GenerationOutcome outcome = outcomeWith(Map.of("Template.java", "t"), Map.of("Solution.java", "s"), Map.of("Test.java", "x"), "");
 
@@ -865,13 +909,14 @@ class GenerationPersistenceServiceTest {
     @Test
     void persist_revertsCommitWhenPushSucceededButCommitCallReportedFailure() throws Exception {
         Repository repository = mock(Repository.class);
+        stubRepositoryWorkingTree(repository);
         when(gitService.getOrCheckoutRepository(any(LocalVCRepositoryUri.class), any(LocalVCRepositoryUri.class), any(Path.class), eq(true), eq("main"), eq(false)))
                 .thenReturn(repository);
         when(gitService.getFileByName(any(), any())).thenReturn(Optional.empty());
         when(repositoryService.getFiles(any())).thenReturn(Map.of());
         when(gitService.getLocalHeadHash(repository)).thenReturn("template-before", "template-after");
         when(gitService.commitStagedChanges(any(), anyString(), any())).thenReturn("template-after");
-        when(gitService.getLastCommitHash(templateUri)).thenReturn("template-after");
+        when(gitService.getLastCommitHash(templateUri, "main")).thenReturn("template-after");
         Mockito.doThrow(new org.eclipse.jgit.api.errors.NoHeadException("push result was lost")).when(gitService).pushCommitWithLease(any(), anyString(), anyString(), anyString());
 
         GenerationOutcome outcome = outcomeWith(Map.of("Template.java", "t"), Map.of("Solution.java", "s"), Map.of("Test.java", "x"), "");
@@ -884,13 +929,14 @@ class GenerationPersistenceServiceTest {
     @Test
     void persist_surfacesManualReviewWhenRemoteAdvancedAfterAmbiguousCommitFailure() throws Exception {
         Repository repository = mock(Repository.class);
+        stubRepositoryWorkingTree(repository);
         when(gitService.getOrCheckoutRepository(any(LocalVCRepositoryUri.class), any(LocalVCRepositoryUri.class), any(Path.class), eq(true), eq("main"), eq(false)))
                 .thenReturn(repository);
         when(gitService.getFileByName(any(), any())).thenReturn(Optional.empty());
         when(repositoryService.getFiles(any())).thenReturn(Map.of());
         when(gitService.getLocalHeadHash(repository)).thenReturn("template-before", "template-after");
         when(gitService.commitStagedChanges(any(), anyString(), any())).thenReturn("template-after");
-        when(gitService.getLastCommitHash(templateUri)).thenReturn("manual-after");
+        when(gitService.getLastCommitHash(templateUri, "main")).thenReturn("manual-after");
         Mockito.doThrow(new org.eclipse.jgit.api.errors.NoHeadException("push result was lost")).when(gitService).pushCommitWithLease(any(), anyString(), anyString(), anyString());
 
         GenerationOutcome outcome = outcomeWith(Map.of("Template.java", "t"), Map.of("Solution.java", "s"), Map.of("Test.java", "x"), "");
@@ -902,15 +948,16 @@ class GenerationPersistenceServiceTest {
     @Test
     void persist_compensatesAlreadyCommittedReposInReverseOrder_whenLaterRepositoryFails() throws Exception {
         Repository repository = mock(Repository.class);
+        stubRepositoryWorkingTree(repository);
         when(gitService.getOrCheckoutRepository(any(LocalVCRepositoryUri.class), any(LocalVCRepositoryUri.class), any(Path.class), eq(true), eq("main"), eq(false)))
                 .thenReturn(repository);
         when(gitService.getFileByName(any(), any())).thenReturn(Optional.empty());
         when(repositoryService.getFiles(any())).thenReturn(Map.of());
         when(gitService.getLocalHeadHash(repository)).thenReturn("tmpl-pre", "sol-pre", "tests-pre", "tests-post");
         when(gitService.commitStagedChanges(any(), anyString(), any())).thenReturn("tmpl-post", "sol-post", "tests-post");
-        when(gitService.getLastCommitHash(templateUri)).thenReturn("tmpl-post");
-        when(gitService.getLastCommitHash(solutionUri)).thenReturn("sol-post");
-        when(gitService.getLastCommitHash(testsUri)).thenReturn("tests-pre");
+        when(gitService.getLastCommitHash(templateUri, "main")).thenReturn("tmpl-post");
+        when(gitService.getLastCommitHash(solutionUri, "main")).thenReturn("sol-post");
+        when(gitService.getLastCommitHash(testsUri, "main")).thenReturn("tests-pre");
         Mockito.doNothing().doNothing().doThrow(new org.eclipse.jgit.api.errors.NoHeadException("tests boom")).when(gitService).pushCommitWithLease(any(), anyString(), anyString(),
                 anyString());
 
@@ -924,6 +971,30 @@ class GenerationPersistenceServiceTest {
         verify(gitService, never()).resetToCommitAndForcePush(any(), eq("tests-pre"), any(), any());
         verify(exerciseVersionService, never()).createExerciseVersionOrThrow(any(), any());
         verify(continuousIntegrationTriggerService, never()).triggerBuild(any(), anyString(), any());
+    }
+
+    @Test
+    void persist_compensatesOnExerciseRepositoryBranch() throws Exception {
+        String exerciseBranch = "release";
+        ProgrammingExerciseBuildConfig buildConfig = mock(ProgrammingExerciseBuildConfig.class);
+        when(buildConfig.getBranch()).thenReturn(exerciseBranch);
+        when(exercise.getBuildConfig()).thenReturn(buildConfig);
+        Repository repository = mock(Repository.class);
+        stubRepositoryWorkingTree(repository);
+        when(gitService.getOrCheckoutRepository(any(LocalVCRepositoryUri.class), any(LocalVCRepositoryUri.class), any(Path.class), eq(true), eq(exerciseBranch), eq(false)))
+                .thenReturn(repository);
+        when(gitService.getFileByName(any(), any())).thenReturn(Optional.empty());
+        when(repositoryService.getFiles(any())).thenReturn(Map.of());
+        when(gitService.getLocalHeadHash(repository)).thenReturn("template-pre", "solution-pre", "solution-post");
+        when(gitService.commitStagedChanges(any(), anyString(), any())).thenReturn("template-post", "solution-post");
+        when(gitService.getLastCommitHash(solutionUri, exerciseBranch)).thenReturn("solution-pre");
+        when(gitService.getLastCommitHash(templateUri, exerciseBranch)).thenReturn("template-post");
+        Mockito.doNothing().doThrow(new org.eclipse.jgit.api.errors.NoHeadException("boom")).when(gitService).pushCommitWithLease(any(), anyString(), anyString(), anyString());
+
+        GenerationOutcome outcome = outcomeWith(Map.of("Template.java", "t"), Map.of("Solution.java", "s"), Map.of(), "");
+
+        assertThatThrownBy(() -> service.persist(exercise, user, outcome)).isInstanceOf(GenerationIncompleteException.class);
+        verify(gitService).resetToCommitAndForcePush(repository, "template-pre", "template-post", exerciseBranch);
     }
 
     private final String jobId = "job-42";
@@ -949,6 +1020,22 @@ class GenerationPersistenceServiceTest {
         verify(continuousIntegrationTriggerService, never()).triggerBuild(any(), anyString(), any());
         verify(exerciseVersionService, never()).createExerciseVersionOrThrow(any(), any());
         verify(programmingExerciseRepository, never()).updateProblemStatementAndTitleIfUnchanged(anyLong(), any(), any(), any(), any());
+    }
+
+    @Test
+    void persistRecoveryDraft_checksOutExerciseRepositoryBranch() throws Exception {
+        String exerciseBranch = "release";
+        ProgrammingExerciseBuildConfig buildConfig = mock(ProgrammingExerciseBuildConfig.class);
+        when(buildConfig.getBranch()).thenReturn(exerciseBranch);
+        when(exercise.getBuildConfig()).thenReturn(buildConfig);
+        Repository repository = mock(Repository.class);
+        stubRepositoryWorkingTree(repository);
+        when(gitService.getOrCheckoutRepository(eq(templateUri), eq(templateUri), any(Path.class), eq(true), eq(exerciseBranch), eq(false))).thenReturn(repository);
+        when(repositoryService.getFiles(repository)).thenReturn(Map.of());
+
+        service.persistRecoveryDraft(exercise, user, outcomeWith(Map.of("Template.java", "t"), Map.of(), Map.of(), ""), jobId);
+
+        verify(gitService).commitToIsolatedBranchAndPush(repository, "hyperion-draft/" + jobId, "Hyperion generation draft (needs review; NOT applied to the live exercise)", user);
     }
 
     @Test
@@ -986,6 +1073,44 @@ class GenerationPersistenceServiceTest {
                 .hasMessageContaining("exercise repository is unavailable");
 
         verify(gitService, never()).commitToIsolatedBranchAndPush(any(), any(), any(), any());
+    }
+
+    @Test
+    void persist_whenProducedFilesHaveNoRepository_failsInsteadOfSilentlyDroppingThem() {
+        when(exercise.getRepositoryURI(RepositoryType.TEMPLATE)).thenReturn(null);
+        GenerationOutcome outcome = outcomeWith(Map.of("Template.java", "t"), Map.of(), Map.of(), "");
+
+        assertThatThrownBy(() -> service.persist(exercise, user, outcome)).isInstanceOf(GenerationIncompleteException.class)
+                .hasMessageContaining("exercise repository is unavailable");
+
+        verify(exerciseVersionService, never()).createExerciseVersionOrThrow(any(), any());
+    }
+
+    @Test
+    void persistRecoveryDraft_rejectsProducedPathThroughRepositorySymlink() throws Exception {
+        stubSuccessfulCheckoutAndCommits();
+        Path repositoryDirectory = repository.getLocalPath();
+        Path outsideDirectory = Files.createDirectory(temporaryDirectory.resolve("outside"));
+        Files.createSymbolicLink(repositoryDirectory.resolve("linked"), outsideDirectory);
+        GenerationOutcome outcome = outcomeWith(Map.of("linked/escaped.txt", "malicious"), Map.of(), Map.of(), "");
+
+        assertThatThrownBy(() -> service.persistRecoveryDraft(exercise, user, outcome, jobId)).isInstanceOf(IllegalStateException.class)
+                .hasRootCauseInstanceOf(IllegalArgumentException.class).hasMessageContaining("symbolic link");
+
+        assertThat(outsideDirectory.resolve("escaped.txt")).doesNotExist();
+        verify(repositoryService, never()).createFile(eq(repository), eq("linked/escaped.txt"), any());
+    }
+
+    @Test
+    void persistRecoveryDraft_rejectsProducedPathOutsideRepository() throws Exception {
+        stubSuccessfulCheckoutAndCommits();
+        when(repository.getLocalPath()).thenReturn(Path.of("build/tmp/hyperion-persistence-test/repository"));
+        GenerationOutcome outcome = outcomeWith(Map.of("../outside.txt", "malicious"), Map.of(), Map.of(), "");
+
+        assertThatThrownBy(() -> service.persistRecoveryDraft(exercise, user, outcome, jobId)).isInstanceOf(IllegalStateException.class)
+                .hasRootCauseInstanceOf(IllegalArgumentException.class).hasMessageContaining("outside the repository");
+
+        verify(repositoryService, never()).createFile(eq(repository), eq("../outside.txt"), any());
     }
 
     @Test

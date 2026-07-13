@@ -48,20 +48,34 @@
                     </td>
                 }
                 <td>{{ job.startedAt | artemisDate: 'short' : true }}</td>
-                <td>{{ elapsedSeconds(job.startedAt) | artemisDurationFromSeconds }}</td>
+                <td>
+                    @if (job.stale) {
+                        <span data-testid="hyperion-generation-duration-unavailable" jhiTranslate="artemisApp.buildAgents.generationSandboxes.unavailable"></span>
+                    } @else {
+                        {{ elapsedSeconds(job.startedAt) | artemisDurationFromSeconds }}
+                    }
+                </td>
                 <td [title]="job.lastActivityAt | artemisDate: 'long' : true">
                     {{ elapsedSeconds(job.lastActivityAt) | artemisDurationFromSeconds }}
                     <span jhiTranslate="artemisApp.buildAgents.generationSandboxes.ago"></span>
                 </td>
                 <td>{{ job.reservedSlots }}</td>
                 <td>
-                    <a
-                        data-testid="hyperion-generation-details"
-                        [routerLink]="['/admin/hyperion-generations', job.jobId]"
-                        [queryParams]="{ agentName: job.agentName }"
-                        [attr.aria-label]="('artemisApp.buildAgents.generationSandboxes.viewDetails' | artemisTranslate) + ' ' + job.exerciseId"
-                        jhiTranslate="artemisApp.buildAgents.generationSandboxes.details"
-                    ></a>
+                    @if (job.stale) {
+                        <span
+                            class="text-muted-color"
+                            data-testid="hyperion-generation-details-unavailable"
+                            jhiTranslate="artemisApp.buildAgents.generationSandboxes.liveDetailsUnavailable"
+                        ></span>
+                    } @else {
+                        <a
+                            data-testid="hyperion-generation-details"
+                            [routerLink]="['/admin/hyperion-generations', job.jobId]"
+                            [queryParams]="{ agentName: job.agentName }"
+                            [attr.aria-label]="('artemisApp.buildAgents.generationSandboxes.viewDetails' | artemisTranslate) + ' ' + job.exerciseId"
+                            jhiTranslate="artemisApp.buildAgents.generationSandboxes.details"
+                        ></a>
+                    }
                 </td>
             </tr>
         </ng-template>

@@ -45,22 +45,7 @@ import de.tum.cit.aet.artemis.localci.exception.LocalCIException;
 import de.tum.cit.aet.artemis.localci.service.DistributedDataAccessService;
 import de.tum.cit.aet.artemis.localci.service.distributed.api.topic.DistributedTopic;
 
-/**
- * Build-agent-side endpoint of the interactive-sandbox relay: it performs, on the local Docker host, the operations a core node requests over the
- * {@code hyperion-sandbox-requests} topic and publishes the result on {@code hyperion-sandbox-responses}.
- * <p>
- * It self-filters on this agent's short name like the build-job cancel / pause / resume listeners: every agent receives every broadcast request, but only the agent named in
- * {@link SandboxOpRequest#targetAgentShortName()} acts on it. The work itself ({@code docker exec}, image pull, archive copy) never runs on the topic-listener thread — that thread
- * only hands the request to a small worker pool, so no heavy work runs on the distributed event thread.
- * <p>
- * Handling is idempotent per correlation id: a redelivered broadcast is dropped rather than performed twice. Hosting is opt-in per agent:
- * {@code max-generation-sandbox-slots}
- * defaults to {@code 0} (the agent hosts nothing and does not even subscribe), a paused agent refuses new sandboxes, and a per-agent semaphore caps reserved slots — so generation
- * never silently competes with CI or exam builds on an agent an operator did not deliberately opt in. The permit is released on {@code DESTROY}.
- *
- * @see RemoteInteractiveSandboxClient the core-node client whose requests this handler serves
- * @see InteractiveSandboxService the local implementation that actually performs each operation
- */
+/** Relays distributed interactive-sandbox operations to this build agent. */
 @Lazy(false)
 @Component
 @Profile(PROFILE_BUILDAGENT)
@@ -68,73 +53,39 @@ public class InteractiveSandboxRelayHandler {
 
     private static final Logger log = LoggerFactory.getLogger(InteractiveSandboxRelayHandler.class);
 
-    /**
-     * Stable fragment embedded in the CREATE failure message when this agent declines because it is out of generation sandbox slots. The core client matches on it to fail a create
-     * over to
-     * another candidate agent rather than surface the refusal, so keep it in sync between the message here and {@link RemoteInteractiveSandboxClient}.
-     */
     static final String CAPACITY_REFUSAL_MARKER = "is at its generation sandbox slot capacity";
 
-    /**
-     * Stable fragment embedded in the CREATE failure message when this agent declines because it is paused/draining. The core client matches on it to fail a create over to another
-     * candidate agent, so keep it in sync between the message here and {@link RemoteInteractiveSandboxClient}.
-     */
     static final String DRAINING_REFUSAL_MARKER = "is paused and is not accepting new generation sandboxes";
 
-    /**
-     * Stable fragment embedded in the CREATE failure message when this agent's create failed for a transient, agent-local reason (Docker daemon overload, an image-pull network
-     * blip,
-     * this agent's Docker momentarily unavailable) rather than a deterministic one (bad image reference, malformed spec). The core client matches on it to fail such a create over
-     * to
-     * another candidate agent — exactly like a capacity/draining decline — instead of surfacing it as fatal, so keep it in sync between the message here and
-     * {@link RemoteInteractiveSandboxClient}. Deterministic failures stay untagged so they surface fast rather than storming every candidate with a retry that fails identically.
-     */
     static final String RETRYABLE_REFUSAL_MARKER = "encountered a transient error creating a generation sandbox";
 
     private final ApplicationContext applicationContext;
 
     private final DistributedDataAccessService distributedDataAccessService;
 
-    /** Consulted so a paused/draining agent sheds generation load too: pausing a build agent stops it accepting new sandboxes, not just new CI build jobs. */
     private final SharedQueueProcessingService sharedQueueProcessingService;
 
-    /** Triggered on sandbox create/destroy so the broadcast agent info reflects the slot count promptly, not only on the next CI-driven refresh. */
     private final BuildAgentInformationService buildAgentInformationService;
 
     @Value("${artemis.continuous-integration.build-agent.short-name}")
     private String buildAgentShortName;
 
-    /**
-     * Maximum number of generation sandbox slots this agent will reserve, on top of its CI build jobs. A sandbox is a long-lived, CI-sized container, so hosting one adds real
-     * CPU/memory/Docker load that the build-job scheduler does not account for. It therefore defaults to {@code 0}: an agent hosts generation only when an operator explicitly opts
-     * it in, so enabling Hyperion never silently adds load to exam-critical build agents. Set a positive value on spare agents; {@code 0} means this agent never hosts a relayed
-     * sandbox (the relay listener is not even registered).
-     */
+    /** Generation hosting is opt-in; zero disables the relay listener. */
     @Value("${artemis.continuous-integration.build-agent.max-generation-sandbox-slots:0}")
     private int maxGenerationSandboxSlots;
 
-    /**
-     * Caps reserved generation sandbox slots: acquired on CREATE, released on DESTROY. If a CREATE succeeds but its response is lost in transit, the core client never learns the
-     * container id and can never issue DESTROY; the {@link InteractiveSandboxReaperService} reaps the orphaned container and calls back into {@link #releaseIfOwned(String)} to
-     * reclaim the held permit, so repeated orphaning cannot slowly starve the agent of slot capacity between restarts.
-     */
+    /** Permits are reclaimed on destroy or by orphan reaping. */
     private Semaphore sandboxSlotPermits;
 
-    /** Bound on {@link #handledCorrelationIds}: far more than any realistic in-flight + recently-completed redelivery window, yet bounded on a long-lived agent. */
     private static final int MAX_REMEMBERED_CORRELATION_IDS = 10_000;
 
-    /**
-     * Bounded FIFO set of handled correlation ids for at-most-once handling; single-use ids (the client mints a fresh UUID per call and never retries one) make oldest-entry
-     * eviction safe. Guarded by its own monitor.
-     */
+    /** Guarded FIFO used for at-most-once request handling. */
     private final LinkedHashSet<String> handledCorrelationIds = new LinkedHashSet<>();
 
-    /** Container ids this agent owns mapped to the number of generation sandbox slots DESTROY must release exactly once. */
     private final Map<String, Integer> ownedSandboxSlotPermits = new ConcurrentHashMap<>();
 
     private final Map<String, ActiveSession> activeSessions = new ConcurrentHashMap<>();
 
-    /** Verification sandbox container ids mapped to the authoring sandbox whose reserved slot they temporarily consume. */
     private final Map<String, String> verificationSandboxOwners = new ConcurrentHashMap<>();
 
     private DistributedTopic<SandboxOpRequest> requestsTopic;
@@ -154,7 +105,7 @@ public class InteractiveSandboxRelayHandler {
     }
 
     /**
-     * Subscribes to the request topic and starts the worker pool. The listener thread only filters and hands off; all Docker work happens on the worker pool.
+     * Starts relay hosting when this agent has configured capacity.
      */
     @PostConstruct
     public void registerRequestListener() {
@@ -186,18 +137,16 @@ public class InteractiveSandboxRelayHandler {
         this.requestsTopic = distributedDataAccessService.getHyperionSandboxRequestsTopic();
         this.responsesTopic = distributedDataAccessService.getHyperionSandboxResponsesTopic();
         this.requestListenerId = requestsTopic.addMessageListener(request -> {
-            // Self-filter: ignore every request that does not target this agent, exactly like the pause/resume/cancel listeners.
             if (!buildAgentShortName.equals(request.targetAgentShortName())) {
                 return;
             }
-            // Never do Docker work on the topic-listener (distributed event) thread: hand off to the worker pool.
             workerExecutor.submit(() -> handle(request));
         });
         log.info("InteractiveSandboxRelayHandler initialized for build agent '{}' (max generation sandbox slots: {})", buildAgentShortName, maxGenerationSandboxSlots);
     }
 
     /**
-     * Removes the request listener and stops the worker pool on shutdown, so a redeployed agent does not leave a dangling subscription.
+     * Stops the relay listener and workers.
      */
     @PreDestroy
     public void shutdown() {
@@ -209,11 +158,6 @@ public class InteractiveSandboxRelayHandler {
         }
     }
 
-    /**
-     * Performs one relayed operation on the local Docker host and publishes its response. Runs on a worker thread, never on the listener thread.
-     *
-     * @param request the operation to perform (already confirmed to target this agent)
-     */
     private void handle(SandboxOpRequest request) {
         // Idempotency: the first delivery for a correlation id wins; any redelivery is dropped without re-running the operation or re-publishing a response.
         // Invariant: correlation ids are single-use; a failed op is never retried under the same id, so marking handled before doing the work is safe.
@@ -238,12 +182,6 @@ public class InteractiveSandboxRelayHandler {
         }
     }
 
-    /**
-     * Records a correlation id as handled, returning {@code true} only on its first appearance.
-     *
-     * @param correlationId the correlation id of the request being handled
-     * @return {@code true} if this is the first delivery for the id (caller should proceed), {@code false} if it was already handled (caller should drop it)
-     */
     private boolean markHandled(String correlationId) {
         synchronized (handledCorrelationIds) {
             if (!handledCorrelationIds.add(correlationId)) {
@@ -262,13 +200,10 @@ public class InteractiveSandboxRelayHandler {
         if (request.sessionSpec() == null || request.sessionSpec().context() == null) {
             return SandboxOpResponse.failure(request.correlationId(), "Generation sandbox CREATE requires an observability context.");
         }
-        // Drain guard: a paused agent (manual drain or auto-paused after failures) must not take on a new long-lived session, mirroring how pause stops new CI build jobs.
-        // In-flight
-        // sessions keep running (EXEC/COPY/DESTROY stay ungated) so an active generation can finish and tear down cleanly.
+        // Pausing blocks new sessions but leaves existing session operations available for orderly teardown.
         if (sharedQueueProcessingService.isPaused()) {
             return SandboxOpResponse.failure(request.correlationId(), "Build agent '" + buildAgentShortName + "' " + DRAINING_REFUSAL_MARKER + ".");
         }
-        // Capacity guard: refuse rather than silently starve CI when this agent is already at its sandbox-slot cap.
         int permitsToAcquire = request.createPermits();
         if (permitsToAcquire < 0) {
             return SandboxOpResponse.failure(request.correlationId(), "CREATE requested a negative generation sandbox slot count.");
@@ -306,16 +241,12 @@ public class InteractiveSandboxRelayHandler {
             return SandboxOpResponse.created(request.correlationId(), containerId);
         }
         catch (RuntimeException e) {
-            // Classify the failure so the core client can decide whether to fail over. A transient, agent-local Docker error (daemon overload, image-pull network blip, Docker down
-            // on this agent) may well succeed on another healthy agent, so tag it with RETRYABLE_REFUSAL_MARKER to fail it over like a capacity decline. A deterministic error (bad
-            // image reference, malformed spec) recurs identically on every agent, so leave it untagged and let the client surface it fast rather than storm every candidate.
             if (isTransientDockerFailure(e)) {
                 return SandboxOpResponse.failure(request.correlationId(), "Build agent '" + buildAgentShortName + "' " + RETRYABLE_REFUSAL_MARKER + ": " + e.getMessage());
             }
             return SandboxOpResponse.failure(request.correlationId(), e.getMessage());
         }
         finally {
-            // Release the permit if the container never came up, so a failed create does not leak capacity.
             if (!created) {
                 sandboxSlotPermits.release(permitsToAcquire);
             }
@@ -330,16 +261,7 @@ public class InteractiveSandboxRelayHandler {
         return reservedPermits != null && reservedPermits > 1;
     }
 
-    /**
-     * Whether a CREATE failure is transient/agent-local (worth failing over to another agent) rather than deterministic (recurs identically on every agent). A Docker 4xx anywhere
-     * in
-     * the cause chain — a missing image (404), a malformed spec (400), an auth failure (401/403) — is deterministic; anything else (a 5xx daemon error, a connection failure, or
-     * this
-     * agent's Docker being unavailable) is agent-local and may succeed elsewhere, so the caller tags it retryable.
-     *
-     * @param failure the exception thrown by the local create
-     * @return {@code true} if the failure should be tagged retryable so the core client fails it over; {@code false} if it is deterministic and should surface fast
-     */
+    /** Returns whether a create failure may succeed on another agent; Docker 4xx failures are deterministic. */
     private static boolean isTransientDockerFailure(Throwable failure) {
         for (Throwable current = failure; current != null; current = current.getCause()) {
             if (current instanceof DockerException dockerException && dockerException.getHttpStatus() >= 400 && dockerException.getHttpStatus() < 500) {
@@ -360,9 +282,7 @@ public class InteractiveSandboxRelayHandler {
 
     private SandboxOpResponse handleCopyIn(SandboxOpRequest request) {
         requireOwnedSession(request.sessionId());
-        // The tar payload rides the keyed staging map, not the broadcast request itself, so only this (target) agent transfers the bytes. This worker is the sole reader and
-        // removes
-        // the entry on consumption; the client re-removes it defensively if we never got here.
+        // Keyed staging avoids broadcasting the payload; this worker consumes the entry and the client cleans up abandoned entries.
         byte[] payload = distributedDataAccessService.getHyperionSandboxPayloads().remove(request.correlationId());
         if (payload == null) {
             return SandboxOpResponse.failure(request.correlationId(),
@@ -392,15 +312,7 @@ public class InteractiveSandboxRelayHandler {
         }
     }
 
-    /**
-     * Re-serializes the entries of a {@link TarArchiveInputStream} into a fresh tar byte array for transport. The local {@code copyOut} hands back a decoding
-     * {@link TarArchiveInputStream} rather than the raw Docker bytes, so the relay rebuilds an equivalent archive the core-node client can re-wrap and read as in the co-located
-     * case. Fails closed if the repacked archive exceeds {@link RemoteInteractiveSandboxClient#MAX_PAYLOAD_BYTES}.
-     *
-     * @param source the decoded tar stream from the local sandbox
-     * @return the repacked tar bytes
-     * @throws IOException if reading or repacking fails, or the archive exceeds the relay payload limit
-     */
+    /** Re-packs a decoded tar stream for bounded transport through the relay. */
     private static byte[] repackTar(TarArchiveInputStream source) throws IOException {
         try (BoundedByteArrayOutputStream out = new BoundedByteArrayOutputStream(RemoteInteractiveSandboxClient.MAX_PAYLOAD_BYTES);
                 TarArchiveOutputStream tar = new TarArchiveOutputStream(out)) {
@@ -518,18 +430,8 @@ public class InteractiveSandboxRelayHandler {
         }
     }
 
-    /**
-     * Reconciles the session permit for a container the {@link InteractiveSandboxReaperService} force-removed out from under this handler. An orphaned container — a CREATE whose
-     * response was lost in transit (so the core client never learned the id and can never DESTROY it), a create that succeeded after the client already failed over, or a lost
-     * DESTROY — otherwise keeps its permit held until this agent restarts, so repeated orphaning would monotonically deplete {@link #sandboxSlotPermits} until the agent refuses
-     * all
-     * new sandboxes. This releases the sandbox's recorded permits if and only if this handler currently owns it, gated on the {@link #ownedSandboxSlotPermits} removal — identical
-     * semantics to the DESTROY release path, so a foreign or already-reclaimed container reconciles nothing and repeated calls never over-release.
-     *
-     * @param containerId the container id of the reaped session (as this agent understands it)
-     */
+    /** Idempotently releases permits for an owned sandbox removed by the orphan reaper. */
     void releaseIfOwned(String containerId) {
-        // Release the generation sandbox slots exactly once per owned sandbox, gated by the ownedSandboxSlotPermits removal, exactly as handleDestroy does.
         releaseOwnedPermits(containerId);
     }
 
@@ -554,11 +456,7 @@ public class InteractiveSandboxRelayHandler {
         }
     }
 
-    /**
-     * Publishes the current slot load to the seam bean and refreshes the broadcast agent info so admins see the change on the build-agent page promptly. Refreshes without
-     * touching the consecutive-failure bookkeeping: a sandbox create/destroy is unrelated to build-job outcomes, so it must not reset the displayed failure count (which
-     * {@link BuildAgentInformationService#updateLocalBuildAgentInformation(boolean)} would).
-     */
+    /** Refreshes advertised slot load without resetting build-job failure counters. */
     private void publishSessionState() {
         int usedPermits = ownedSandboxSlotPermits.values().stream().mapToInt(Integer::intValue).sum();
         buildAgentInformationService.updateGenerationSandboxSlotState(usedPermits, maxGenerationSandboxSlots);

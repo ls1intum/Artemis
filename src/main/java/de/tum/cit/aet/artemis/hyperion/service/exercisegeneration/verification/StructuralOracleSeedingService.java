@@ -190,7 +190,10 @@ public class StructuralOracleSeedingService {
     }
 
     private String structuralClassContent(String className, String packageName) throws IOException {
-        String content = new String(new ClassPathResource(STRUCTURAL_RESOURCE_DIR + className).getInputStream().readAllBytes(), StandardCharsets.UTF_8);
+        String content;
+        try (var input = new ClassPathResource(STRUCTURAL_RESOURCE_DIR + className).getInputStream()) {
+            content = new String(input.readAllBytes(), StandardCharsets.UTF_8);
+        }
         if (packageName.isEmpty()) {
             // Default package: drop the package declaration line entirely.
             return content.replaceFirst("(?m)^\\s*package\\s+" + Pattern.quote(PACKAGE_PLACEHOLDER) + "\\s*;\\s*\\n", "");
