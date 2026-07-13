@@ -35,6 +35,7 @@
                         <jhi-course-title-bar [pageTitle]="pageTitle()" [isExamStarted]="isExamStarted()" />
                     }
 
+                    <!-- cdkScrollable registers the container with the CDK ScrollDispatcher so drag-and-drop auto-scrolls it (#13187) -->
                     <div
                         class="course-body-container"
                         [ngClass]="{
@@ -42,6 +43,7 @@
                             'mx-2': !isExamStarted(),
                         }"
                         [class.no-header-bar-height]="!hasSidebar() && !showCourseTitleBar()"
+                        cdkScrollable
                     >
                         @if (!hasSidebar()) {
                             <ng-container class="d-flex ms-auto" #controlsViewContainer />
