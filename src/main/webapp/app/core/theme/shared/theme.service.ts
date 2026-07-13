@@ -131,29 +131,28 @@ export class ThemeService {
 
     /**
      * Prints the current page.
-     * Disables any theme override before doing that to ensure that we print in default theme.
-     * Resets the theme afterward if needed
+     * Excludes any theme override from print output to ensure that we print in the default (light) theme,
+     * without visually changing the on-screen theme.
      */
     public async print(): Promise<void> {
-        return new Promise<void>((resolve) => {
-            const overrideTag = document.getElementById(THEME_OVERRIDE_ID) as HTMLLinkElement | null;
-            if (overrideTag) {
-                overrideTag.rel = 'none-tmp';
-            }
-            setTimeout(() => {
-                const notificationSidebarDisplayAttribute = this.hideNotificationSidebar();
+        const overrideTag = document.getElementById(THEME_OVERRIDE_ID) as HTMLLinkElement | null;
+        const previousMedia = overrideTag?.media;
+        if (overrideTag) {
+            // Exclude the dark theme from print output only; the screen still shows dark mode.
+            overrideTag.media = 'not print';
+        }
 
-                window.print();
+        const notificationSidebarDisplayAttribute = this.hideNotificationSidebar();
 
-                this.showNotificationSidebar(notificationSidebarDisplayAttribute);
-            }, 250);
-            setTimeout(() => {
-                if (overrideTag) {
-                    overrideTag.rel = 'stylesheet';
-                }
-                resolve();
-            }, 500);
-        });
+        // window.print() blocks the main thread until the dialog is closed,
+        // so all cleanup below runs immediately after the user dismisses it.
+        window.print();
+
+        this.showNotificationSidebar(notificationSidebarDisplayAttribute);
+
+        if (overrideTag) {
+            overrideTag.media = previousMedia ?? '';
+        }
     }
 
     /**

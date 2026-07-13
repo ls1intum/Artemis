@@ -169,26 +169,26 @@ describe('ThemeService', () => {
     });
 
     it('does print correctly', async () => {
-        vi.useFakeTimers();
         const initialDisplayClass = 'someDisplayClass';
 
         const winSpy = vi.spyOn(window, 'print').mockImplementation(() => {});
-        const returnedElement = { rel: 'stylesheet', style: { display: initialDisplayClass }, remove: vi.fn() };
+        const returnedElement = { media: '', style: { display: initialDisplayClass }, remove: vi.fn() };
         const docSpy = vi.spyOn(document, 'getElementById').mockReturnValue(returnedElement as unknown as HTMLElement);
 
-        service.print();
-        TestBed.tick();
+        // Track media attribute changes during print
+        let mediaAtPrintTime: string | undefined;
+        winSpy.mockImplementation(() => {
+            mediaAtPrintTime = returnedElement.media;
+        });
 
-        expect(docSpy).toHaveBeenCalledTimes(2);
+        await service.print();
+
         expect(docSpy).toHaveBeenCalledWith(THEME_OVERRIDE_ID);
-        expect(returnedElement.rel).toBe('none-tmp');
-        await vi.advanceTimersByTimeAsync(250);
-        expect(docSpy).toHaveBeenCalledWith('notification-sidebar');
-        expect(docSpy).toHaveBeenCalledTimes(4); // 1x for theme override, 2x for notification sidebar (changing style to display: none and back to initial value)
+        // During printing, the dark theme should be excluded from print output
+        expect(mediaAtPrintTime).toBe('not print');
+        // After printing, the media attribute should be restored
+        expect(returnedElement.media).toBe('');
         expect(winSpy).toHaveBeenCalledOnce();
-        await vi.advanceTimersByTimeAsync(250);
-        expect(returnedElement.rel).toBe('stylesheet');
         expect(returnedElement.style.display).toBe(initialDisplayClass);
-        vi.useRealTimers();
     });
 });
