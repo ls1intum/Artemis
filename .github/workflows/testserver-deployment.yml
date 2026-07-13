@@ -129,6 +129,11 @@ jobs:
   conditional-build:
     if: ${{ needs.determine-build-context.outputs.pr_number == '' && needs.determine-build-context.outputs.is_main_or_develop == 'false' }}
     needs: determine-build-context
+    # The reusable workflow checks out and pushes the image to GHCR via GITHUB_TOKEN; a called
+    # workflow cannot elevate beyond its caller, so grant packages: write here (matches ci-build.yml).
+    permissions:
+      contents: read
+      packages: write
     uses: ls1intum/.github/.github/workflows/build-and-push-docker-image.yml@v1.2.0
     with:
       ref: ${{ github.event.inputs.branch_name }}
