@@ -287,7 +287,7 @@ rm -rf "$REPORT_DIR"/monocart-report*/
 # With a --filter argument we need to override the default playwright command the
 # artemis-playwright container would run. Mirror the pattern used by
 # .ci/E2E-tests/execute-locally.sh.
-OVERRIDE_ARGS=""
+OVERRIDE_ARGS=()
 if [ -n "$TEST_FILTER" ]; then
     cat > docker/playwright-local-override.yml << EOF
 # AUTO-GENERATED — DO NOT COMMIT
@@ -304,7 +304,7 @@ services:
             PLAYWRIGHT_JUNIT_OUTPUT_NAME=test-reports/results.xml pnpm exec playwright test e2e --grep "${TEST_FILTER}" --reporter=list,junit,monocart-reporter
             '
 EOF
-    OVERRIDE_ARGS="-f docker/playwright-local-override.yml"
+    OVERRIDE_ARGS=(-f docker/playwright-local-override.yml)
 fi
 
 cleanup() {
@@ -315,9 +315,9 @@ trap cleanup EXIT
 TEST_START=$(date +%s)
 set +e
 if [ "$DEBUG" = true ]; then
-    docker compose "${COMPOSE_ARGS[@]}" $OVERRIDE_ARGS up --exit-code-from artemis-playwright artemis-playwright
+    docker compose "${COMPOSE_ARGS[@]}" "${OVERRIDE_ARGS[@]}" up --exit-code-from artemis-playwright artemis-playwright
 else
-    docker compose "${COMPOSE_ARGS[@]}" $OVERRIDE_ARGS up --attach artemis-playwright --exit-code-from artemis-playwright artemis-playwright
+    docker compose "${COMPOSE_ARGS[@]}" "${OVERRIDE_ARGS[@]}" up --attach artemis-playwright --exit-code-from artemis-playwright artemis-playwright
 fi
 TEST_EXIT=$?
 set -e

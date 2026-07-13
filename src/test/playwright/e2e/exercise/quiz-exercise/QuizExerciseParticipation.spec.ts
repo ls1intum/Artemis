@@ -461,6 +461,69 @@ test.describe('Quiz Exercise Participation', { tag: '@fast' }, () => {
             expect(mapping.dragItem?.id, 'persisted mapping must reference a real dragItem id').toEqual(expect.any(Number));
             expect(mapping.dropLocation?.id, 'persisted mapping must reference a real dropLocation id').toEqual(expect.any(Number));
         });
+
+        /**
+         * Regression test for https://github.com/ls1intum/Artemis/issues/13187: on small screens the drag items are
+         * rendered below the exercise, so students must be able to scroll upwards while dragging an item. Holding a
+         * dragged item near the top edge of the scroll container must auto-scroll it (CDK auto-scroll requires the
+         * container to be registered as cdkScrollable).
+         */
+        test('View auto-scrolls when student drags an item to the top of the scroll container', async ({ login, page }) => {
+            await login(studentOne, `/courses/${course.id}/exercises/${quizExercise.id}`);
+            await page.setViewportSize({ width: 800, height: 600 });
+            const dragItem = page.locator('#drag-item-0');
+            await dragItem.waitFor({ state: 'visible' });
+            await dragItem.scrollIntoViewIfNeeded();
+            // Find the scroll container hosting the quiz and record its scroll state and position.
+            const before = await page.evaluate(() => {
+                let el = document.getElementById('drag-item-0')?.parentElement;
+                while (el) {
+                    const style = getComputedStyle(el);
+                    if (el.scrollHeight > el.clientHeight && ['auto', 'scroll'].includes(style.overflowY)) {
+                        break;
+                    }
+                    el = el.parentElement;
+                }
+                if (!el) {
+                    return undefined;
+                }
+                el.setAttribute('data-e2e-scroll-container', 'true');
+                const rect = el.getBoundingClientRect();
+                return { scrollTop: el.scrollTop, top: rect.top, left: rect.left, width: rect.width };
+            });
+            if (!before) {
+                throw new Error('the drag item must be inside a scrollable container');
+            }
+            expect(before.scrollTop, 'precondition: the container must be scrolled down so it can scroll up during the drag').toBeGreaterThan(0);
+
+            const box = await dragItem.boundingBox();
+            if (!box) {
+                throw new Error('the drag item must be visible and have a bounding box');
+            }
+            await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+            await page.mouse.down();
+            // Drag the item to the top edge of the scroll container and hold it there, jiggling the pointer
+            // so drag-move events keep firing until the auto-scroll has moved the container upwards.
+            const holdX = before.left + before.width / 2;
+            const holdY = before.top + 5;
+            await page.mouse.move(holdX, holdY, { steps: 10 });
+            const getScrollTop = () =>
+                page.evaluate(() => {
+                    const container = document.querySelector('[data-e2e-scroll-container]');
+                    if (!container) {
+                        throw new Error('scroll container marker not found');
+                    }
+                    return container.scrollTop;
+                });
+            let scrollTopWhileDragging = before.scrollTop;
+            for (let i = 0; i < 30 && scrollTopWhileDragging >= before.scrollTop; i++) {
+                await page.mouse.move(holdX + (i % 2), holdY);
+                await page.waitForTimeout(100);
+                scrollTopWhileDragging = await getScrollTop();
+            }
+            await page.mouse.up();
+            expect(scrollTopWhileDragging, 'holding a dragged item at the top edge must scroll the container upwards').toBeLessThan(before.scrollTop);
+        });
     });
 
     // Seed courses are persistent — no cleanup needed
