@@ -327,7 +327,10 @@ public class ExamImportService {
         // addExercisesToExerciseGroup path also backfills these fields (via copyProgrammingExerciseInformationForExamImport),
         // but it runs after this precheck, so the fallback must happen here as well. The merge keeps source-first +
         // non-null-override semantics, so an explicit non-null client override still wins.
-        backfillOmittedProgrammingBasisOverridesFromSource(programmingExercises);
+        int numberOfExercisesWithoutSource = backfillOmittedProgrammingBasisOverridesFromSource(programmingExercises);
+        if (numberOfExercisesWithoutSource > 0) {
+            throw new ExamConfigurationException(exerciseGroups, numberOfExercisesWithoutSource, "sourceExerciseUnavailable");
+        }
 
         // check for duplicated titles
         boolean duplicatedTitles = checkForAndRemoveDuplicatedTitlesAndShortNames(programmingExercises, true);
@@ -359,16 +362,26 @@ public class ExamImportService {
      * fields that were omitted, so an explicit client override still wins.
      *
      * @param programmingExercises the programming exercise skeletons to backfill in place (each carries its source id)
+     * @return the number of skeletons that needed a backfill but whose source id is missing or no longer resolves to a
+     *         programming exercise; the caller must fail the precheck for these (a null short name would NPE further
+     *         down, turning a stale import request into a 5xx instead of a controlled configuration error)
      */
-    private void backfillOmittedProgrammingBasisOverridesFromSource(List<Exercise> programmingExercises) {
+    private int backfillOmittedProgrammingBasisOverridesFromSource(List<Exercise> programmingExercises) {
+        int numberOfExercisesWithoutSource = 0;
         for (Exercise exercise : programmingExercises) {
             boolean allOverridesPresent = exercise.getTitle() != null && exercise.getShortName() != null && exercise.getMaxPoints() != null && exercise.getBonusPoints() != null;
-            Long sourceExerciseId = exercise.getId();
-            if (allOverridesPresent || sourceExerciseId == null) {
+            if (allOverridesPresent) {
                 continue;
             }
-            programmingExerciseRepository.findById(sourceExerciseId).ifPresent(source -> backfillOmittedBasisOverridesFromSource(exercise, source));
+            Long sourceExerciseId = exercise.getId();
+            var source = sourceExerciseId == null ? Optional.<ProgrammingExercise>empty() : programmingExerciseRepository.findById(sourceExerciseId);
+            if (source.isEmpty()) {
+                numberOfExercisesWithoutSource++;
+                continue;
+            }
+            backfillOmittedBasisOverridesFromSource(exercise, source.get());
         }
+        return numberOfExercisesWithoutSource;
     }
 
     /**

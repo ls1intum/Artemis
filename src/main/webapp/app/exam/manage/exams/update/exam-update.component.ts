@@ -377,6 +377,9 @@ export class ExamUpdateComponent implements OnInit, OnDestroy {
             this.exam.exerciseGroups = httpErrorResponse.error.params.exerciseGroups!;
             this.examExerciseImportComponent().updateMapsAfterRejectedImportDueToDuplicatedShortNameOrTitle();
             this.alertService.error('artemisApp.examManagement.exerciseGroup.importModal.' + errorKey);
+        } else if (errorKey === 'sourceExerciseUnavailable') {
+            const numberOfInvalidProgrammingExercises = httpErrorResponse.error.numberOfInvalidProgrammingExercises;
+            this.alertService.error('artemisApp.examManagement.exerciseGroup.importModal.sourceExerciseUnavailable', { number: numberOfInvalidProgrammingExercises });
         } else {
             if (httpErrorResponse.error && httpErrorResponse.error.title) {
                 this.alertService.addErrorAlert(httpErrorResponse.error.title, httpErrorResponse.error.message, httpErrorResponse.error.params);

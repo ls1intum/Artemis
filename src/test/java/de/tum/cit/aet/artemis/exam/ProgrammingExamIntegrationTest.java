@@ -9,6 +9,7 @@ import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.time.ZonedDateTime;
@@ -38,6 +39,7 @@ import de.tum.cit.aet.artemis.exam.test_repository.ExamTestRepository;
 import de.tum.cit.aet.artemis.exam.util.ExamFactory;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
+import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
@@ -268,6 +270,33 @@ class ProgrammingExamIntegrationTest extends AbstractSpringIntegrationJenkinsLoc
         assertThat(importedProgrammingExercise.getShortName()).isEqualTo(sourceExercise.getShortName());
         assertThat(importedProgrammingExercise.getTitle()).isEqualTo(sourceExercise.getTitle());
         assertThat(importedProgrammingExercise.isExamExercise()).isTrue();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testImportExamWithSingleProgrammingExercise_omittedShortNameWithUnavailableSourceFailsControlled() throws Exception {
+        // Counterpart to the backfill fence above: when the overrides are omitted AND the source exercise no longer
+        // exists (deleted between selection and import, or a stale cached request), the backfill cannot fill the short
+        // name. The precheck must fail with a controlled 400 configuration error instead of letting the VCS/CI precheck
+        // NPE on the null short name (a 5xx that aborts the whole import without telling the user what is wrong).
+        Course sourceCourse = courseUtilService.addEmptyCourse();
+        Exam sourceExam = examUtilService.addExamWithExerciseGroup(sourceCourse, true);
+
+        ExamImportDTO base = ExamImportDTO.of(sourceExam, course1.getId());
+        ExerciseGroupImportDTO sourceGroupDTO = base.exerciseGroups().getFirst();
+        // omitted overrides + a source id that does not resolve to a programming exercise
+        ExerciseImportDTO staleExercise = new ExerciseImportDTO(999999L, ExerciseType.PROGRAMMING, null, null, null, null);
+        ExerciseGroupImportDTO groupDTO = new ExerciseGroupImportDTO(sourceGroupDTO.title(), sourceGroupDTO.isMandatory(), List.of(staleExercise));
+        ExamImportDTO importDTO = new ExamImportDTO(base.title(), base.testExam(), base.examWithAttendanceCheck(), base.visibleDate(), base.startDate(), base.endDate(),
+                base.publishResultsDate(), base.examStudentReviewStart(), base.examStudentReviewEnd(), base.gracePeriod(), base.workingTime(), base.startText(), base.endText(),
+                base.confirmationStartText(), base.confirmationEndText(), base.examMaxPoints(), base.randomizeExerciseOrder(), base.numberOfExercisesInExam(),
+                base.numberOfCorrectionRoundsInExam(), base.examiner(), base.moduleNumber(), base.courseName(), base.exampleSolutionPublicationDate(), base.channelName(),
+                base.courseId(), List.of(groupDTO));
+
+        request.performMvcRequest(
+                post("/api/exam/courses/" + course1.getId() + "/exam-import").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(importDTO)))
+                .andExpect(status().isBadRequest()).andExpect(jsonPath("$.errorKey").value("sourceExerciseUnavailable"))
+                .andExpect(jsonPath("$.numberOfInvalidProgrammingExercises").value(1));
     }
 
     @Test

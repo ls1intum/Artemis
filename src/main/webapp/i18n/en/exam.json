@@ -714,6 +714,7 @@
                     "exerciseTitleTooltip": "The title of an exercise can be changed before the import. Further changes are possible after the import",
                     "shortNameTooltip": "The shortname of a programming task must be unique. The short name of the exercise can NOT be edited after creating the exercise! The short name must begin with a letter, must not contain any special characters and must be at least 3 characters long",
                     "invalidKey": "The chosen short name and title of {{ number }} programming exercise(s) already exists. Please insert a new short name and title for the corresponding programming exercise(s)",
+                    "sourceExerciseUnavailable": "The source of {{ number }} programming exercise(s) is no longer available. Please remove the affected exercise(s) from the import selection and try again",
                     "duplicatedProgrammingExerciseShortName": "Multiple programming exercises in the exam have the same short name. Please choose a different short name!",
                     "duplicatedProgrammingExerciseTitle": "Multiple programming exercises in the exam have the same title. Please choose a different title!",
                     "invalidExerciseConfiguration": "Some titles or short names are missing, invalid, or already in use. Please correct the fields marked in red below before importing.",

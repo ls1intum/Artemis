@@ -714,6 +714,7 @@
                     "exerciseTitleTooltip": "Der Titel der Aufgabe kann vor dem Import angepasst werden. Weitere Änderungen an der Aufgabe sind nach dem Import möglich",
                     "shortNameTooltip": "Der Kurzname einer Programmieraufgabe muss einzigartig sein. Der Kurzname der Aufgabe kann NICHT im Nachhinein bearbeitet werden! Der Kurzname muss mit einem Buchstaben beginnen, darf keine speziellen Zeichen enthalten und muss mindestens 3 Zeichen lang sein!",
                     "invalidKey": "Der eingegebene Kurzname und Titel von {{ number }} Programmieraufgabe(n) existiert bereits. Wähle für die betreffende(n) Aufgabe(n) bitte einen anderen Kurznamen und Titel",
+                    "sourceExerciseUnavailable": "Die Quelle von {{ number }} Programmieraufgabe(n) ist nicht mehr verfügbar. Bitte entferne die betroffene(n) Aufgabe(n) aus der Import-Auswahl und versuche es erneut",
                     "duplicatedProgrammingExerciseShortName": "Mehrere Programmieraufgaben in der Klausur besitzen denselben Kurznamen. Wähle für die betreffende(n) Aufgabe(n) bitte einen anderen Kurznamen",
                     "duplicatedProgrammingExerciseTitle": "Mehrere Programmieraufgaben in der Klausur besitzen denselben Titel. Wähle für die betreffende(n) Aufgabe(n) bitte einen anderen Titel",
                     "invalidExerciseConfiguration": "Einige Titel oder Kurznamen fehlen, sind ungültig oder bereits vergeben. Bitte korrigiere die unten rot markierten Felder vor dem Import.",
