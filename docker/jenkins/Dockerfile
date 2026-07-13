@@ -26,7 +26,7 @@ RUN add-apt-repository \
    stable"
 # hadolint ignore=DL3008
 RUN apt-get update -y \
-    && apt-get -y install --no-install-recommends docker-ce && rm -rf /var/apt/cache/*
+    && apt-get -y install --no-install-recommends docker-ce && rm -rf /var/lib/apt/lists/*
 RUN usermod -aG docker jenkins
 
 USER jenkins
