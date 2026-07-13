@@ -37,11 +37,10 @@
                             <fa-icon
                                 data-testid="ai-feedback-indicator"
                                 [icon]="faRobot"
-                                class="shrink-0"
+                                class="flex-shrink-0"
                                 role="img"
-                                tabindex="0"
-                                [attr.aria-label]="'artemisApp.result.aiTooltip' | artemisTranslate"
-                                [pTooltip]="'artemisApp.result.aiTooltip' | artemisTranslate"
+                                [attr.aria-label]="'artemisApp.result.resultString.automaticAIFeedbackSuccessfulTooltip' | artemisTranslate"
+                                [pTooltip]="'artemisApp.result.resultString.automaticAIFeedbackSuccessfulTooltip' | artemisTranslate"
                             />
                         }
                         <span class="fw-bold text-truncate" style="font-size: 12px" [class]="getResultColorClass(result)">{{ getResultFeedbackMessage(result) }}</span>
