@@ -26,6 +26,10 @@ export class TumUiButtonComponent {
     readonly disabled = input(false);
     readonly icon = input<IconProp | undefined>(undefined);
     readonly type = input<'button' | 'submit'>('button');
+    // Accessible name forwarded to the inner native <button>. Required for icon-only buttons, where the
+    // visible glyph carries no text: an aria-label placed on the <tum-ui-button> host would sit on the
+    // wrong element and leave the actual button unnamed for assistive tech.
+    readonly ariaLabel = input<string | undefined>(undefined);
 
     readonly clicked = output<MouseEvent>();
 

@@ -63,4 +63,16 @@ describe('TumUiPopoverComponent', () => {
         expect(panel?.getAttribute('role')).toBe('dialog');
         expect(panel?.getAttribute('aria-modal')).toBe('true');
     });
+
+    it('renders a kit-owned backdrop and closes on backdrop click', () => {
+        component.open(origin);
+        fixture.detectChanges();
+        // The backdrop carries the kit class whose global CSS (.tum-ui-overlay-backdrop) gives it a
+        // full-viewport, pointer-capturing surface — without it the click below never reaches the
+        // browser (verified visually / in e2e). Here we assert the class + the backdropClick → close wiring.
+        const backdrop = document.querySelector('.tum-ui-overlay-backdrop');
+        expect(backdrop).not.toBeNull();
+        backdrop!.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+        expect(component.isOpen()).toBe(false);
+    });
 });

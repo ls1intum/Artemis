@@ -34,6 +34,19 @@ $success: $green;
 $info: $cyan;
 $warning: $yellow;
 $danger: $red;
+
+// WCAG AA accessible state tones for the tum-aet-ui kit (see the light theme for the full contract).
+// Dark theme: `*-dark` solid fills stay dark enough for WHITE text; `*-strong` foreground tones are
+// LIGHT so they read on the dark surfaces. Every pairing is verified ≥ 4.5:1 in the contrast spec.
+$primary-strong: #7cb0e0;
+$danger-dark: #a52a1e;
+$danger-strong: #ff8a80;
+$success-dark: #08795b;
+$success-strong: #2dd4aa;
+$info-dark: #106577;
+$info-strong: #4dc7db;
+$warning-dark: #8a5a06;
+$warning-strong: #ffca4d;
 $light: $gray-500;
 $dark: $gray-800;
 

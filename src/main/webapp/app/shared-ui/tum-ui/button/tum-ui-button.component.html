@@ -1,4 +1,4 @@
-<button [type]="type()" [class]="buttonClasses()" [disabled]="disabled()" (click)="onClick($event)">
+<button [type]="type()" [class]="buttonClasses()" [disabled]="disabled()" [attr.aria-label]="ariaLabel()" (click)="onClick($event)">
     @if (icon(); as buttonIcon) {
         <fa-icon [icon]="buttonIcon" />
     }

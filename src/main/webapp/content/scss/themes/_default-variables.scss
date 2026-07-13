@@ -34,6 +34,21 @@ $success: $green;
 $info: $cyan;
 $warning: $yellow;
 $danger: $red;
+
+// WCAG AA accessible state tones for the tum-aet-ui kit (auto-emitted as `--<name>` CSS custom
+// properties by generate-css-vars). `*-dark`: a fill dark enough for WHITE text (solid buttons),
+// dark in both themes. `*-strong`: the accessible on-surface TEXT tone (outlined/text buttons and
+// tags) — a dark shade on light surfaces here, a light shade in the dark theme. Every pairing is
+// verified ≥ 4.5:1; see shared-ui/tum-ui/tum-ui-state-contrast.spec.ts.
+$primary-strong: $primary-dark;
+$danger-dark: #b02a37;
+$danger-strong: $danger-dark;
+$success-dark: #157347;
+$success-strong: $success-dark;
+$info-dark: #0e7490;
+$info-strong: $info-dark;
+$warning-dark: #856404;
+$warning-strong: $warning-dark;
 $light: $gray-100;
 $dark: $gray-900;
 

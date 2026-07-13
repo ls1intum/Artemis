@@ -54,7 +54,10 @@ export class TumUiOverlayService {
             positionStrategy: this.positionStrategy(origin, placement),
             scrollStrategy: this.overlay.scrollStrategies.reposition(),
             hasBackdrop,
-            backdropClass: 'cdk-overlay-transparent-backdrop',
+            // The kit owns the backdrop's structural CSS (.tum-ui-overlay-backdrop in global.scss): Artemis
+            // does not import the CDK overlay-prebuilt stylesheet, so the stock `cdk-overlay-transparent-backdrop`
+            // class alone has no size and never intercepts outside clicks (backdropClick() would not fire).
+            backdropClass: 'tum-ui-overlay-backdrop',
         });
     }
 }

@@ -49,6 +49,24 @@
     --color-state-success: var(--success);
     --color-state-warning: var(--warning);
     --color-state-info: var(--info);
+
+    /*
+     * WCAG AA accessible companions to the state/primary tokens (tum-aet-ui kit). `-solid`: a fill dark
+     * enough for white text (solid buttons). `-strong`: the accessible on-surface text tone (outlined/text
+     * buttons, tags) — theme-aware (dark shade on light, light shade on dark). Both resolve from per-theme
+     * `--<name>-dark` / `--<name>-strong` custom properties, so `bg-state-danger-solid` / `text-state-danger-strong`
+     * stay dark-mode-correct. Ratios verified in shared-ui/tum-ui/tum-ui-state-contrast.spec.ts.
+     */
+    --color-primary-solid: var(--primary-dark);
+    --color-primary-strong: var(--primary-strong);
+    --color-state-danger-solid: var(--danger-dark);
+    --color-state-danger-strong: var(--danger-strong);
+    --color-state-success-solid: var(--success-dark);
+    --color-state-success-strong: var(--success-strong);
+    --color-state-warning-solid: var(--warning-dark);
+    --color-state-warning-strong: var(--warning-strong);
+    --color-state-info-solid: var(--info-dark);
+    --color-state-info-strong: var(--info-strong);
 }
 
 /*

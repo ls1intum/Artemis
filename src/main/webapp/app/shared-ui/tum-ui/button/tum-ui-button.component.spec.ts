@@ -35,7 +35,9 @@ describe('TumUiButtonComponent', () => {
     it('renders a native button with the default solid-primary classes', () => {
         const className = nativeButton().className;
         expect(className).toContain('tum-ui-btn');
-        expect(className).toContain('bg-primary');
+        // Solid fills use the WCAG-safe `-solid` tone, not the raw brand color.
+        expect(className).toContain('bg-primary-solid');
+        expect(className).toContain('text-surface-0');
         expect(className).toContain('text-base');
     });
 
@@ -46,7 +48,8 @@ describe('TumUiButtonComponent', () => {
         fixture.detectChanges();
         const className = nativeButton().className;
         expect(className).toContain('bg-transparent');
-        expect(className).toContain('text-state-danger');
+        // Outlined/text foregrounds use the accessible `-strong` tone.
+        expect(className).toContain('text-state-danger-strong');
         expect(className).toContain('border-state-danger');
         expect(className).toContain('text-sm');
     });
@@ -77,5 +80,18 @@ describe('TumUiButtonComponent', () => {
         fixture.componentRef.setInput('icon', faCheck);
         fixture.detectChanges();
         expect(fixture.debugElement.query(By.css('fa-icon'))).toBeTruthy();
+    });
+
+    it('forwards ariaLabel to the inner native button so icon-only buttons are named', () => {
+        // Icon-only button: the glyph carries no text, so the accessible name must come from aria-label
+        // on the actual <button> element (not the host).
+        fixture.componentRef.setInput('icon', faCheck);
+        fixture.componentRef.setInput('ariaLabel', 'Confirm');
+        fixture.detectChanges();
+        expect(nativeButton().getAttribute('aria-label')).toBe('Confirm');
+    });
+
+    it('leaves aria-label unset when no accessible name is provided', () => {
+        expect(nativeButton().hasAttribute('aria-label')).toBe(false);
     });
 });
