@@ -491,6 +491,14 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
 
         if (this.attachmentVideoUnit() && !this.hasPdfContentChanges()) {
             if (this.hiddenPagesChanged()) {
+                const hiddenSlideIds = new Set(Object.keys(this.hiddenPages()));
+                if (this.pageOrder().length > 0 && this.pageOrder().every((page) => hiddenSlideIds.has(page.slideId))) {
+                    this.isSaving.set(false);
+                    this.alertService.error('artemisApp.attachment.pdfPreview.attachmentUpdateError', {
+                        error: 'Cannot create a student version with no visible pages',
+                    });
+                    return;
+                }
                 try {
                     await this.updateAttachmentVideoUnitWithoutFile(this.getHiddenPages());
                     this.finishSaving();

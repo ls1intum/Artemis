@@ -298,6 +298,23 @@ describe('PdfPreviewComponent', () => {
         expect(alertService.success).toHaveBeenCalled();
     });
 
+    it('should reject hidden-page-only saves when every page is hidden', async () => {
+        await loadOriginal(2);
+        component.attachmentVideoUnit.set({ id: 9, lecture: { id: 4 }, attachment: { id: 11, version: 1 } } as any);
+        component.pageOrder().forEach((page) => component.hidePages({ slideId: page.slideId, date: dayjs().add(1, 'day'), exerciseId: undefined }));
+        const applyOperationsSpy = vi.spyOn(component, 'applyOperations');
+
+        await component.updateAttachmentWithFile();
+
+        expect(applyOperationsSpy).not.toHaveBeenCalled();
+        expect(attachmentVideoUnitService.update).not.toHaveBeenCalled();
+        expect(attachmentVideoUnitService.updateStudentVersion).not.toHaveBeenCalled();
+        expect(alertService.error).toHaveBeenCalledWith('artemisApp.attachment.pdfPreview.attachmentUpdateError', {
+            error: 'Cannot create a student version with no visible pages',
+        });
+        expect(component.isSaving()).toBe(false);
+    });
+
     it('should clear hidden pages without uploading PDF files', async () => {
         await loadOriginal(2);
         const hiddenDate = dayjs().add(1, 'day');
