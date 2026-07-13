@@ -91,8 +91,8 @@ public class PyrisLectureUnitSyncService {
         List<PyrisSlideVisibilityDTO> slideVisibility = slides.stream().sorted(Comparator.comparingInt(Slide::getSlideNumber))
                 .map(slide -> new PyrisSlideVisibilityDTO(slide.getSlideNumber(), slide.getHidden())).toList();
 
-        return new PyrisLectureUnitVisibilityWebhookDTO(attachmentVideoUnit.getId(), lecture.getId(), course.getId(), artemisBaseUrl,
-                attachmentVideoUnit.resolveReleaseDate(), slideVisibility);
+        return new PyrisLectureUnitVisibilityWebhookDTO(attachmentVideoUnit.getId(), lecture.getId(), course.getId(), artemisBaseUrl, attachmentVideoUnit.resolveReleaseDate(),
+                slideVisibility);
     }
 
     private ResolvedVideo resolveVideoUrl(String videoSource) {
