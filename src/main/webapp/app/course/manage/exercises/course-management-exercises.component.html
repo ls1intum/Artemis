@@ -43,7 +43,7 @@
              cannot select rows) never see it. -->
         @if (selectedCount() > 0 && course()?.isAtLeastEditor) {
             <div class="d-flex align-items-center flex-wrap gap-2 mt-2">
-                <span class="text-muted small">{{ 'artemisApp.exerciseManagement.selection.count' | artemisTranslate: { count: selectedCount() } }}</span>
+                <span class="text-muted small" jhiTranslate="artemisApp.exerciseManagement.selection.count" [translateValues]="{ count: selectedCount() }"></span>
                 <button pButton type="button" severity="secondary" [outlined]="true" size="small" (click)="clearSelection()">
                     <span jhiTranslate="artemisApp.exerciseManagement.selection.deselectAll"></span>
                 </button>
@@ -85,7 +85,9 @@
     </ng-template>
 
     @if (loaded() && cards().length === 0) {
-        <p-message severity="secondary">{{ 'artemisApp.exerciseManagement.noExercisesMatch' | artemisTranslate: { search: search() } }}</p-message>
+        <p-message severity="secondary">
+            <span jhiTranslate="artemisApp.exerciseManagement.noExercisesMatch" [translateValues]="{ search: search() }"></span>
+        </p-message>
     }
     <div class="d-flex flex-column gap-3">
         @for (card of cards(); track card.id) {

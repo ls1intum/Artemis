@@ -231,10 +231,10 @@ export class ExerciseTableComponent {
      * actions), so the column falls back to the narrow default and the ellipsis can collapse fully.
      */
     private readonly maxQuizActionsMinWidth = signal(0);
-    /** CSS value for the actions-column floor, or null when no quiz buttons are present (so the SCSS default applies). */
+    /** CSS value for the actions-column floor, or undefined when no quiz buttons are present (so the SCSS default applies). */
     readonly actionsMinWidthVar = computed(() => {
         const width = this.maxQuizActionsMinWidth();
-        return width > 0 ? `${width}px` : null;
+        return width > 0 ? `${width}px` : undefined;
     });
 
     onQuizActionsMinWidth(width: number): void {

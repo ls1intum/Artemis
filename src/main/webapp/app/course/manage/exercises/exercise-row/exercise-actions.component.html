@@ -61,7 +61,7 @@
                 [class.text-start]="inMenu"
                 [class.w-100]="inMenu"
             >
-                <fa-icon [icon]="action.icon" /><span class="ms-1">{{ action.labelKey | artemisTranslate }}</span>
+                <fa-icon [icon]="action.icon" /><span class="ms-1" [jhiTranslate]="action.labelKey"></span>
             </button>
         }
         @case ('button') {
@@ -75,27 +75,27 @@
                 [class.w-100]="inMenu"
                 (click)="runAction(action)"
             >
-                <fa-icon [icon]="action.icon" /><span class="ms-1">{{ action.labelKey | artemisTranslate }}</span>
+                <fa-icon [icon]="action.icon" /><span class="ms-1" [jhiTranslate]="action.labelKey"></span>
             </button>
         }
         @default {
             <a
                 pButton
                 [attr.data-testid]="'exercise-action-' + action.id"
-                [routerLink]="action.disabled ? null : action.link"
+                [routerLink]="action.disabled ? undefined : action.link"
                 [severity]="action.severity"
                 size="small"
                 [class.disabled]="action.disabled"
                 [class.text-start]="inMenu"
                 [class.w-100]="inMenu"
-                [attr.aria-disabled]="action.disabled || null"
-                [attr.tabindex]="action.disabled ? -1 : null"
-                [style.pointer-events]="action.disabled ? 'auto' : null"
+                [attr.aria-disabled]="action.disabled || undefined"
+                [attr.tabindex]="action.disabled ? -1 : undefined"
+                [style.pointer-events]="action.disabled ? 'auto' : undefined"
                 [pTooltip]="action.disabledTooltip ? (action.disabledTooltip | artemisTranslate) : ''"
                 tooltipPosition="top"
                 (click)="closeMenuIfOpen(inMenu)"
             >
-                <fa-icon [icon]="action.icon" /><span class="ms-1">{{ action.labelKey | artemisTranslate }}</span>
+                <fa-icon [icon]="action.icon" /><span class="ms-1" [jhiTranslate]="action.labelKey"></span>
             </a>
         }
     }

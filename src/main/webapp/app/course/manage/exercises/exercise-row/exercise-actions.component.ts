@@ -41,6 +41,7 @@ import { ButtonModule } from 'primeng/button';
 import { Popover, PopoverModule } from 'primeng/popover';
 import { TooltipModule } from 'primeng/tooltip';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
 import { Exercise, ExerciseMode, ExerciseType, getExerciseUrlSegment } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { QuizExercise, QuizMode, QuizStatus } from 'app/quiz/shared/entities/quiz-exercise.model';
@@ -104,6 +105,7 @@ function widthOf(element: HTMLElement): number {
         PopoverModule,
         TooltipModule,
         ArtemisTranslatePipe,
+        TranslateDirective,
         DeleteButtonDirective,
         QuizExerciseLifecycleButtonsComponent,
     ],

@@ -171,7 +171,7 @@ describe('ExerciseTableComponent', () => {
 
     describe('quiz actions column width', () => {
         it('keeps the largest reported width as the column floor', () => {
-            expect(component.actionsMinWidthVar()).toBeNull();
+            expect(component.actionsMinWidthVar()).toBeUndefined();
 
             component.onQuizActionsMinWidth(120);
             expect(component.actionsMinWidthVar()).toBe('120px');
