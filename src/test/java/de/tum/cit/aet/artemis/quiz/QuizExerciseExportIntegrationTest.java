@@ -8,6 +8,8 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+import jakarta.persistence.EntityManager;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -53,6 +55,9 @@ class QuizExerciseExportIntegrationTest extends AbstractSpringIntegrationIndepen
 
     @Autowired
     private ObjectMapper objectMapper;
+
+    @Autowired
+    private EntityManager entityManager;
 
     @TempDir
     private Path exportDirectory;
@@ -107,7 +112,7 @@ class QuizExerciseExportIntegrationTest extends AbstractSpringIntegrationIndepen
         assertThat(Files.readString(multipleChoiceAnswers)).contains("Multiple Choice Question:", "selected answer");
         assertThat(Files.readString(shortAnswerAnswers)).contains("Short Answer Question:", "IS", "LONG");
 
-        quizExerciseTestRepository.flushAndClearPersistenceContext();
+        entityManager.clear();
         QuizExercise reloadedQuiz = quizExerciseTestRepository.findByIdWithQuestionsAndStatisticsElseThrow(quizExercise.getId());
         assertThat(reloadedQuiz.getCourseViaExerciseGroupOrCourseMember()).isNotNull();
         assertThat(((ShortAnswerQuestion) reloadedQuiz.getQuizQuestions().get(2)).getSolutions()).isNotEmpty();

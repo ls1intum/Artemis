@@ -11,7 +11,7 @@ import de.tum.cit.aet.artemis.quiz.repository.QuizExerciseRepository;
 @Lazy
 @Repository
 @Primary
-public interface QuizExerciseTestRepository extends QuizExerciseRepository, QuizExerciseTestRepositoryCustom {
+public interface QuizExerciseTestRepository extends QuizExerciseRepository {
 
     /**
      * Get one quiz exercise by id and eagerly load questions and statistics

@@ -9,6 +9,8 @@ import java.util.Locale;
 import java.util.Set;
 import java.util.UUID;
 
+import jakarta.persistence.EntityManager;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -89,6 +91,9 @@ class QuizPersistenceBenchmarkTest extends AbstractQuizExerciseIntegrationTest {
     }
 
     @Autowired
+    private EntityManager entityManager;
+
+    @Autowired
     private ObjectMapper objectMapper;
 
     @Autowired
@@ -151,7 +156,7 @@ class QuizPersistenceBenchmarkTest extends AbstractQuizExerciseIntegrationTest {
     }
 
     private Measurement measureScenario(BenchmarkScenario scenario) throws Exception {
-        quizExerciseTestRepository.flushAndClearPersistenceContext();
+        flushAndClearPersistenceContext();
         queryInterceptor.startQueryCapture();
         long startNanos = System.nanoTime();
         MvcResult result;
@@ -164,7 +169,7 @@ class QuizPersistenceBenchmarkTest extends AbstractQuizExerciseIntegrationTest {
 
             assertThat(result.getResponse().getStatus()).isEqualTo(scenario.expectedStatus().value());
             Long targetQuizId = scenario.verifier().verifyAndResolveTargetQuiz(result);
-            quizExerciseTestRepository.flushAndClearPersistenceContext();
+            entityManager.clear();
             QuizExercise persistedQuiz = quizExerciseTestRepository.findByIdWithQuestionsAndStatisticsAndCompetenciesAndBatchesAndGradingCriteriaElseThrow(targetQuizId);
             long persistedDefinitionBytes = objectMapper.writeValueAsBytes(QuizExerciseCreateDTO.of(persistedQuiz)).length;
             return Measurement.of(elapsedNanos, scenario.requestBytes(), result.getResponse().getContentAsByteArray().length, persistedDefinitionBytes, capturedQueries);
@@ -418,6 +423,11 @@ class QuizPersistenceBenchmarkTest extends AbstractQuizExerciseIntegrationTest {
         }
         question.setText(questionText.toString());
         return question;
+    }
+
+    private void flushAndClearPersistenceContext() {
+        quizExerciseTestRepository.flush();
+        entityManager.clear();
     }
 
     private static long countWriteStatements(List<String> queries) {
