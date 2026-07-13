@@ -29,16 +29,21 @@ env:
   # The single CI entry point that publishes the Artemis.war artifact (via ci-build.yml).
   build_workflow_name: ci.yml
 
+permissions:
+  contents: read
+  actions: read
+
 jobs:
   check-build-status:
     runs-on: [self-hosted, artemis-prod-deployment]
     outputs:
       build_workflow_run_id: ${{ steps.set_build_workflow_id.outputs.workflow_id }}
+    env:
+      BRANCH_NAME: ${{ github.event.inputs.branch_name }}
+      COMMIT_SHA: ${{ github.event.inputs.commit_sha }}
     steps:
       - name: Print inputs
         env:
-          BRANCH_NAME: ${{ github.event.inputs.branch_name }}
-          COMMIT_SHA: ${{ github.event.inputs.commit_sha }}
           ENVIRONMENT_NAME: ${{ github.event.inputs.environment_name }}
           TRIGGERED_BY: ${{ github.event.inputs.triggered_by }}
         run: |
@@ -159,10 +164,40 @@ jobs:
           run-id: ${{ env.WORKFLOW_RUN_ID  }}
 
       - name: Deploy Artemis
+        env:
+          ANSIBLE_PLAYBOOK_PATH: ${{ vars.ANSIBLE_PLAYBOOK_PATH }}
         run: |
           WAR_FILE=$(ls -1 /tmp/artifact/*.war | head -n 1)
 
-          ansible-playbook ${{ vars.ANSIBLE_PLAYBOOK_PATH }} -e artemis_version="$WAR_FILE" -e ansible_user="${{ vars.DEPLOYMENT_USER }}"
+          ansible-playbook "$ANSIBLE_PLAYBOOK_PATH" -e artemis_version="$WAR_FILE" -e ansible_user="$DEPLOYMENT_USER"
+
+      # The ansible role itself already waits for node 1 individually (management/info, up to
+      # 10 minutes) before restarting the other nodes, so ansible-playbook failing already
+      # catches a node that never comes back up. This check is complementary, not redundant:
+      # it goes through the real public/load-balanced URL (all nodes, through nginx) rather than
+      # a single node's actuator endpoint, and /management/health runs deeper checks (DB, disk
+      # space, etc.) than /management/info's static build metadata.
+      - name: Verify deployment health
+        run: |
+          for tool in curl jq; do
+            if ! command -v "$tool" > /dev/null; then
+              echo "::error::'$tool' is required for the deployment health check but is not installed on this runner."
+              exit 1
+            fi
+          done
+
+          attempts=0
+          max_attempts=30
+          until curl --fail --silent --show-error --max-time 10 "$HEALTH_CHECK_URL" | jq -e '.status == "UP"' > /dev/null; do
+            attempts=$((attempts + 1))
+            if [ "$attempts" -ge "$max_attempts" ]; then
+              echo "::error::$HEALTH_CHECK_URL did not report healthy after $max_attempts attempts (~5-10 minutes, depending on how quickly each attempt fails) following deployment."
+              exit 1
+            fi
+            echo "Waiting for $HEALTH_CHECK_URL to report healthy (attempt $attempts/$max_attempts)..."
+            sleep 10
+          done
+          echo "Deployment health check passed: $HEALTH_CHECK_URL reports UP."
 
       - name: Cleanup
         if: always()

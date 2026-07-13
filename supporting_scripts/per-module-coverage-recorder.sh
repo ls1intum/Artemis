@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 MODULES=("assessment" "athena" "atlas" "buildagent" "communication" "core" "exam" "exercise" "fileupload" "hyperion" "iris"
     "lecture" "lti" "modeling" "plagiarism" "programming" "quiz" "text" "tutorialgroup")
 
