@@ -24,6 +24,7 @@ import {
     mockClientMessage,
     mockClientMessageWithMemories,
     mockServerMessage,
+    mockServerMessage2,
     mockServerMessageWithMemories,
     mockServerSessionHttpResponse,
     mockServerSessionHttpResponseWithEmptyConversation,
@@ -39,7 +40,6 @@ import { IrisJsonMessageContent, IrisMessageContentType, IrisTextMessageContent,
 import dayjs from 'dayjs/esm';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { IrisSessionDTO } from 'app/iris/shared/entities/iris-session-dto.model';
-import { IrisThinkingBubbleComponent } from 'app/iris/overview/base-chatbot/iris-thinking-bubble/iris-thinking-bubble.component';
 import { IrisActivityItem, IrisActivityKind, IrisActivityState, IrisRunState } from 'app/iris/shared/entities/iris-activity.model';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
@@ -107,7 +107,6 @@ describe('IrisBaseChatbotComponent', () => {
                 MockComponent(IrisLogoComponent),
                 MockComponent(ButtonComponent),
                 MockComponent(ContextSelectionComponent),
-                MockComponent(IrisThinkingBubbleComponent),
             ],
             providers: [
                 LocalStorageService,
@@ -290,6 +289,33 @@ describe('IrisBaseChatbotComponent', () => {
         expect(fixture.nativeElement.querySelector('.fa-copy')).toBeTruthy();
         expect(fixture.nativeElement.querySelector('.fa-thumbs-up')).toBeFalsy();
         expect(fixture.nativeElement.querySelector('.fa-thumbs-down')).toBeFalsy();
+    });
+
+    it('should render the copy/rate toolbox only under the last assistant message', () => {
+        chatService.messages.next([mockServerMessage, mockUserMessageWithContent('follow-up question'), mockServerMessage2]);
+        fixture.detectChanges();
+
+        // Two assistant messages in the conversation, but only one toolbox (under the last one)
+        const toolboxes = fixture.nativeElement.querySelectorAll('.rate-message-buttons');
+        expect(toolboxes).toHaveLength(1);
+
+        const lastAssistant = fixture.nativeElement.querySelector(`[data-message-id="${mockServerMessage2.id}"]`);
+        expect(lastAssistant.querySelector('.rate-message-buttons')).toBeTruthy();
+        const firstAssistant = fixture.nativeElement.querySelector(`[data-message-id="${mockServerMessage.id}"]`);
+        expect(firstAssistant.querySelector('.rate-message-buttons')).toBeFalsy();
+    });
+
+    it('should hide the copy/rate toolbox while a new response is being generated', () => {
+        chatService.messages.next([mockUserMessageWithContent('question'), mockServerMessage]);
+        fixture.detectChanges();
+        // Toolbox is present once the previous answer is final
+        expect(fixture.nativeElement.querySelector('.rate-message-buttons')).toBeTruthy();
+
+        // A new response starts streaming: the run is RUNNING again → toolbox disappears
+        chatService.runInfo.next({ runId: 'run-next', state: IrisRunState.RUNNING });
+        fixture.detectChanges();
+        expect(component.awaitingAnswer()).toBe(true);
+        expect(fixture.nativeElement.querySelector('.rate-message-buttons')).toBeFalsy();
     });
 
     it('should not rate intermediate assistant messages defensively', async () => {
@@ -660,14 +686,15 @@ describe('IrisBaseChatbotComponent', () => {
             },
         ];
 
-        it('should render the persisted trail expanded by default, still collapsible', () => {
+        it('should render the persisted trail collapsed by default, still expandable', () => {
             const instantSpy = vi.spyOn(component['translateService'], 'instant');
             chatService.messages.next([{ ...mockServerMessage, activities: persistedActivities } as IrisAssistantMessage]);
             fixture.detectChanges();
 
             const trail = fixture.nativeElement.querySelector('details.activity-trail') as HTMLDetailsElement;
             expect(trail).toBeTruthy();
-            expect(trail.open).toBe(true);
+            // Collapsed by default: the tool history no longer stays open after the run finishes.
+            expect(trail.open).toBe(false);
             // The summary is translated: MockTranslateService echoes the key, so assert the key is rendered with the count/duration params.
             expect(instantSpy).toHaveBeenCalledWith('artemisApp.iris.activities.trailSummary', { count: 2, duration: '4.0' });
             expect(trail.querySelector('summary')?.textContent?.trim()).toBe('artemisApp.iris.activities.trailSummary');
@@ -2111,7 +2138,7 @@ describe('IrisBaseChatbotComponent', () => {
     describe('thinking bubble visibility', () => {
         const mockMessages = [mockClientMessage, mockServerMessage];
 
-        it('should show the static thinking bubble while awaiting an answer without a running activity or draft', () => {
+        it('should show the spinning donut thinking indicator while awaiting an answer without a running activity or draft', () => {
             vi.spyOn(chatService, 'currentMessages').mockReturnValue(of(mockMessages));
 
             fixture = TestBed.createComponent(IrisBaseChatbotComponent);
@@ -2121,7 +2148,7 @@ describe('IrisBaseChatbotComponent', () => {
             fixture.detectChanges();
 
             expect(component.shouldShowThinkingBubble()).toBe(true);
-            const thinkingBubble = fixture.debugElement.query(By.css('jhi-iris-thinking-bubble'));
+            const thinkingBubble = fixture.debugElement.query(By.css('.thinking-indicator'));
             expect(thinkingBubble).toBeTruthy();
         });
 
@@ -2136,7 +2163,7 @@ describe('IrisBaseChatbotComponent', () => {
             fixture.detectChanges();
 
             expect(component.shouldShowThinkingBubble()).toBe(false);
-            const thinkingBubble = fixture.debugElement.query(By.css('jhi-iris-thinking-bubble'));
+            const thinkingBubble = fixture.debugElement.query(By.css('.thinking-indicator'));
             expect(thinkingBubble).toBeFalsy();
         });
 
@@ -2151,7 +2178,7 @@ describe('IrisBaseChatbotComponent', () => {
             fixture.detectChanges();
 
             expect(component.shouldShowThinkingBubble()).toBe(false);
-            const thinkingBubble = fixture.debugElement.query(By.css('jhi-iris-thinking-bubble'));
+            const thinkingBubble = fixture.debugElement.query(By.css('.thinking-indicator'));
             expect(thinkingBubble).toBeFalsy();
         });
 
@@ -2165,7 +2192,7 @@ describe('IrisBaseChatbotComponent', () => {
             fixture.detectChanges();
 
             expect(component.shouldShowThinkingBubble()).toBe(false);
-            const thinkingBubble = fixture.debugElement.query(By.css('jhi-iris-thinking-bubble'));
+            const thinkingBubble = fixture.debugElement.query(By.css('.thinking-indicator'));
             expect(thinkingBubble).toBeFalsy();
         });
     });

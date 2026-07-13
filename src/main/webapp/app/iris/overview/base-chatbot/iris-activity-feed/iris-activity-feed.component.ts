@@ -13,6 +13,8 @@ interface IrisActivityViewItem extends IrisActivityItem {
     stateClass: string;
     icon: typeof faCircleNotch;
     spin: boolean;
+    /** Accessible label (name + duration) exposed on the stepper node via aria-label. */
+    tooltip: string;
 }
 
 export function prettifyActivityName(name: string): string {
@@ -39,14 +41,19 @@ export class IrisActivityFeedComponent {
 
     protected readonly viewItems = computed<IrisActivityViewItem[]>(() => {
         this.currentLocale();
-        return this.activities().map((activity) => ({
-            ...activity,
-            label: this.translateActivityName(activity.name),
-            durationLabel: this.formatDuration(activity),
-            stateClass: activity.state.toLowerCase(),
-            icon: this.iconFor(activity.state),
-            spin: activity.state === IrisActivityState.RUNNING,
-        }));
+        return this.activities().map((activity) => {
+            const label = this.translateActivityName(activity.name);
+            const durationLabel = this.formatDuration(activity);
+            return {
+                ...activity,
+                label,
+                durationLabel,
+                stateClass: activity.state.toLowerCase(),
+                icon: this.iconFor(activity.state),
+                spin: activity.state === IrisActivityState.RUNNING,
+                tooltip: durationLabel ? `${label} · ${durationLabel}` : label,
+            };
+        });
     });
 
     protected readonly feedAriaLabel = computed(() => {

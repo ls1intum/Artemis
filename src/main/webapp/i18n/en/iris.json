@@ -256,7 +256,7 @@
             "activities": {
                 "liveLabel": "Current Iris activity",
                 "trailLabel": "Iris activity trail",
-                "trailSummary": "Tools used: {{ count }} · {{ duration }}s",
+                "trailSummary": "Thought process: {{ count }} · {{ duration }}s",
                 "lecture_content_retrieval": "Reading lecture",
                 "faq_content_retrieval": "Reading FAQs",
                 "get_course_details": "Looking up course info",

@@ -50,7 +50,7 @@ describe('IrisActivityFeedComponent', () => {
         vi.restoreAllMocks();
     });
 
-    it('should render running, finished, and failed activity chips with text content', async () => {
+    it('should render running, finished, and failed activity steps with node icons and labels', async () => {
         fixture.componentRef.setInput('activities', [
             activity(IrisActivityState.RUNNING, 'act-running'),
             activity(IrisActivityState.FINISHED, 'act-finished'),
@@ -59,12 +59,30 @@ describe('IrisActivityFeedComponent', () => {
         fixture.detectChanges();
         await fixture.whenStable();
 
-        expect(fixture.debugElement.queryAll(By.css('.activity-chip'))).toHaveLength(3);
-        expect(fixture.debugElement.query(By.css('.activity-chip.running fa-icon'))).toBeTruthy();
-        expect(fixture.debugElement.query(By.css('.activity-chip.finished fa-icon'))).toBeTruthy();
-        expect(fixture.debugElement.query(By.css('.activity-chip.failed fa-icon'))).toBeTruthy();
+        expect(fixture.debugElement.queryAll(By.css('.stepper-step'))).toHaveLength(3);
+        expect(fixture.debugElement.query(By.css('.stepper-step.running .stepper-node fa-icon'))).toBeTruthy();
+        expect(fixture.debugElement.query(By.css('.stepper-step.finished .stepper-node fa-icon'))).toBeTruthy();
+        expect(fixture.debugElement.query(By.css('.stepper-step.failed .stepper-node fa-icon'))).toBeTruthy();
+        // Each node has a persistent label shown below it
+        expect(fixture.debugElement.query(By.css('.stepper-label'))).toBeTruthy();
         expect(fixture.nativeElement.textContent).toContain('Lecture search');
         expect(fixture.nativeElement.textContent).toContain('3.1s');
+    });
+
+    it('should draw a connector between steps but not after the last one', () => {
+        fixture.componentRef.setInput('activities', [activity(IrisActivityState.FINISHED, 'act-1'), activity(IrisActivityState.RUNNING, 'act-2')]);
+        fixture.detectChanges();
+
+        // Two steps → exactly one connector
+        expect(fixture.debugElement.queryAll(By.css('.stepper-connector'))).toHaveLength(1);
+    });
+
+    it('should expose the activity label as an aria-label on the node for accessibility', () => {
+        fixture.componentRef.setInput('activities', [activity(IrisActivityState.FINISHED, 'act-1')]);
+        fixture.detectChanges();
+
+        const node = fixture.debugElement.query(By.css('.stepper-node')).nativeElement as HTMLElement;
+        expect(node.getAttribute('aria-label')).toContain('Lecture search');
     });
 
     it('should prettify missing activity translations instead of rendering raw keys', () => {
@@ -81,7 +99,7 @@ describe('IrisActivityFeedComponent', () => {
         fixture.componentRef.setInput('mode', 'trail');
         fixture.detectChanges();
 
-        const feed = fixture.debugElement.query(By.css('.iris-activity-feed'));
+        const feed = fixture.debugElement.query(By.css('.iris-activity-stepper'));
         expect(feed.nativeElement.classList).toContain('mode-trail');
         expect(feed.nativeElement.getAttribute('aria-label')).toBe('artemisApp.iris.activities.trailLabel');
 
@@ -91,20 +109,20 @@ describe('IrisActivityFeedComponent', () => {
         expect(feed.nativeElement.classList).toContain('mode-live');
     });
 
-    it('should hide the duration badge for sub-100ms tool runs', () => {
+    it('should hide the duration for sub-100ms tool runs', () => {
         fixture.componentRef.setInput('activities', [
             { id: 'act-1', kind: IrisActivityKind.TOOL, name: 'get_course_details', state: IrisActivityState.FINISHED, durationMillis: 40 },
         ]);
         fixture.detectChanges();
 
-        expect(fixture.nativeElement.querySelector('.activity-duration')).toBeNull();
+        expect(fixture.nativeElement.querySelector('.stepper-label-duration')).toBeNull();
     });
 
     it('should render nothing when there are no activities', () => {
         fixture.componentRef.setInput('activities', []);
         fixture.detectChanges();
 
-        expect(fixture.debugElement.query(By.css('.iris-activity-feed'))).toBeFalsy();
+        expect(fixture.debugElement.query(By.css('.iris-activity-stepper'))).toBeFalsy();
         expect(fixture.nativeElement.textContent.trim()).toBe('');
     });
 });

@@ -83,7 +83,6 @@ import { CourseSidebarToggleButtonComponent } from 'app/course/shared/course-sid
 import { LLMSelectionModalService } from 'app/logos/llm-selection-popup.service';
 import { LLMSelectionDecision, LLM_MODAL_DISMISSED } from 'app/account/user/shared/dto/updateLLMSelectionDecision.dto';
 import { ChatStatusBarComponent } from 'app/iris/overview/base-chatbot/chat-status-bar/chat-status-bar.component';
-import { IrisThinkingBubbleComponent } from 'app/iris/overview/base-chatbot/iris-thinking-bubble/iris-thinking-bubble.component';
 import { IrisActivityFeedComponent } from 'app/iris/overview/base-chatbot/iris-activity-feed/iris-activity-feed.component';
 import { AboutIrisModalComponent } from 'app/iris/overview/about-iris-modal/about-iris-modal.component';
 import { IrisOnboardingService } from 'app/iris/overview/iris-onboarding-modal/iris-onboarding.service';
@@ -145,7 +144,6 @@ const LIVE_DRAFT_CATCH_UP_MS = 400;
         IrisMcqQuestionComponent,
         IrisMcqCarouselComponent,
         IrisChatMemoriesIndicatorComponent,
-        IrisThinkingBubbleComponent,
         IrisActivityFeedComponent,
         ConfirmDialogModule,
         MenuModule,
@@ -930,6 +928,26 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
 
     protected canRateMessage(message: IrisMessage): message is IrisAssistantMessage {
         return message.sender === IrisSender.LLM && message.final !== false;
+    }
+
+    /** Index of the last assistant (LLM) message in the conversation, or -1 if there is none. */
+    protected readonly lastAssistantMessageIndex = computed(() => {
+        const messages = this.messages();
+        for (let i = messages.length - 1; i >= 0; i--) {
+            if (messages[i].sender === IrisSender.LLM) {
+                return i;
+            }
+        }
+        return -1;
+    });
+
+    /**
+     * The copy/rate toolbox is only rendered under the final assistant message of the conversation,
+     * and never while a new response is being generated (so it disappears between an answer and the
+     * next incoming one, and reappears once that response has finished).
+     */
+    protected isLastAssistantMessage(index: number): boolean {
+        return index === this.lastAssistantMessageIndex() && !this.awaitingAnswer();
     }
 
     onMcqAnswerChanged(message: IrisMessage, event: { selectedIndex: number | undefined; submitted: boolean }): void {

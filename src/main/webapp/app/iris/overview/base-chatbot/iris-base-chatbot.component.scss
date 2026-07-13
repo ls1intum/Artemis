@@ -359,6 +359,21 @@ jhi-iris-mcq-question {
     font-size: 0.75rem;
 }
 
+// Initial "thinking" state, shown before the assistant starts streaming its draft.
+// Uses the same spinning donut as the streaming indicator so there is a single,
+// consistent thinking animation across the whole run.
+.thinking-indicator {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--iris-label-color);
+    font-size: 0.875rem;
+}
+
+.thinking-indicator-text {
+    line-height: 1.2;
+}
+
 .bubble-right {
     --_d: 100%;
 
