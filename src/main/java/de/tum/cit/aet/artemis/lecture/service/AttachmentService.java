@@ -4,10 +4,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
-import java.nio.file.AtomicMoveNotSupportedException;
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
 import java.util.Comparator;
 import java.util.List;
 
@@ -22,6 +19,7 @@ import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.InternalServerErrorException;
 import de.tum.cit.aet.artemis.core.service.FileService;
+import de.tum.cit.aet.artemis.core.service.TempFileUtilService;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.core.util.FileUtil;
 import de.tum.cit.aet.artemis.lecture.config.LectureEnabled;
@@ -42,10 +40,13 @@ public class AttachmentService {
 
     private final FileService fileService;
 
-    public AttachmentService(AttachmentRepository attachmentRepository, SlideRepository slideRepository, FileService fileService) {
+    private final TempFileUtilService tempFileUtilService;
+
+    public AttachmentService(AttachmentRepository attachmentRepository, SlideRepository slideRepository, FileService fileService, TempFileUtilService tempFileUtilService) {
         this.attachmentRepository = attachmentRepository;
         this.slideRepository = slideRepository;
         this.fileService = fileService;
+        this.tempFileUtilService = tempFileUtilService;
     }
 
     /**
@@ -198,22 +199,7 @@ public class AttachmentService {
      * @throws IOException if the file cannot be installed
      */
     void replaceStudentVersionFile(byte[] fileData, Path savePath, Path oldStudentVersionPath) throws IOException {
-        Path parentDirectory = savePath.getParent();
-        Files.createDirectories(parentDirectory);
-        Path temporaryPath = Files.createTempFile(parentDirectory, "." + savePath.getFileName() + ".", ".tmp");
-
-        try {
-            Files.write(temporaryPath, fileData);
-            try {
-                Files.move(temporaryPath, savePath, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
-            }
-            catch (AtomicMoveNotSupportedException ignored) {
-                Files.move(temporaryPath, savePath, StandardCopyOption.REPLACE_EXISTING);
-            }
-        }
-        finally {
-            Files.deleteIfExists(temporaryPath);
-        }
+        tempFileUtilService.replaceFileAtomically(savePath, fileData);
 
         fileService.evictCacheForPath(savePath);
         if (oldStudentVersionPath != null && !oldStudentVersionPath.toAbsolutePath().normalize().equals(savePath.toAbsolutePath().normalize())) {

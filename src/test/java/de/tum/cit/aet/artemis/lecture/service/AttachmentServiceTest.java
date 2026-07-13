@@ -77,8 +77,13 @@ class AttachmentServiceTest extends AbstractSpringIntegrationIndependentBatchTes
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor", roles = "INSTRUCTOR")
-    void testRegenerateStudentVersion_withHiddenSlides() {
+    void testRegenerateStudentVersion_withHiddenSlides() throws Exception {
         Integer originalAttachmentVersion = testAttachment2.getVersion();
+        Path sourceFilePath = FilePathConverter.fileSystemPathForExternalUri(URI.create(testAttachment2.getLink()), FilePathType.ATTACHMENT_UNIT);
+        int expectedPageCount;
+        try (var sourceDocument = Loader.loadPDF(sourceFilePath.toFile())) {
+            expectedPageCount = sourceDocument.getNumberOfPages() - 2;
+        }
 
         attachmentService.regenerateStudentVersion(testAttachment2);
         String firstStudentVersionPath = testAttachment2.getStudentVersion();
@@ -93,7 +98,7 @@ class AttachmentServiceTest extends AbstractSpringIntegrationIndependentBatchTes
             assertThat(testAttachment2.getStudentVersion()).isEqualTo(firstStudentVersionPath);
             assertThat(actualFilePath).exists();
             try (var studentVersion = Loader.loadPDF(actualFilePath.toFile())) {
-                assertThat(studentVersion.getNumberOfPages()).isEqualTo(3);
+                assertThat(studentVersion.getNumberOfPages()).isEqualTo(expectedPageCount);
             }
         });
         assertThat(testAttachment2.getVersion()).isEqualTo(originalAttachmentVersion);

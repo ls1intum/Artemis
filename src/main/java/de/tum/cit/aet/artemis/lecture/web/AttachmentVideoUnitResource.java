@@ -236,7 +236,7 @@ public class AttachmentVideoUnitResource {
             return;
         }
 
-        Set<String> hiddenSlideIds = hiddenPages.stream().map(HiddenPageInfoDTO::slideId).collect(Collectors.toSet());
+        Set<String> hiddenSlideIds = hiddenPages.stream().filter(hiddenPage -> hiddenPage.date() != null).map(HiddenPageInfoDTO::slideId).collect(Collectors.toSet());
         boolean hasVisibleSlide = existingAttachmentVideoUnit.getSlides().stream().map(slide -> String.valueOf(slide.getId()))
                 .anyMatch(slideId -> !hiddenSlideIds.contains(slideId));
         if (!hasVisibleSlide) {

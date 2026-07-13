@@ -3,9 +3,12 @@ package de.tum.cit.aet.artemis.core.service;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.io.IOException;
+import java.nio.file.AtomicMoveNotSupportedException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 
+import org.apache.commons.io.FileUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
@@ -107,6 +110,32 @@ public class TempFileUtilService {
     public Path createTempFile(Path parent, String prefix, String suffix) throws IOException {
         Files.createDirectories(parent);
         return Files.createTempFile(parent, prefix, suffix);
+    }
+
+    /**
+     * Replaces a file through a temporary file in the target directory. The final move is atomic where the file system supports it, so readers never observe partially written
+     * contents.
+     *
+     * @param targetPath the file to create or replace
+     * @param fileData   the complete replacement contents
+     * @return the target path
+     * @throws IOException if the replacement cannot be installed
+     */
+    public Path replaceFileAtomically(Path targetPath, byte[] fileData) throws IOException {
+        Path temporaryPath = createTempFile(targetPath.getParent(), "." + targetPath.getFileName() + ".", ".tmp");
+        try {
+            FileUtils.writeByteArrayToFile(temporaryPath.toFile(), fileData);
+            try {
+                temporaryPath.getFileSystem().provider().move(temporaryPath, targetPath, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
+            }
+            catch (AtomicMoveNotSupportedException ignored) {
+                temporaryPath.getFileSystem().provider().move(temporaryPath, targetPath, StandardCopyOption.REPLACE_EXISTING);
+            }
+            return targetPath;
+        }
+        finally {
+            Files.deleteIfExists(temporaryPath);
+        }
     }
 
     /**
