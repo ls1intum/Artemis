@@ -123,20 +123,6 @@ class IrisLectureUnitSyncEventListenerTest {
     }
 
     @Test
-    void dirtyEventDeletesSyncStateWhenAttachmentVideoUnitIsMissing() {
-        var state = syncState();
-        state.setMetadataHash("metadata-hash");
-        when(syncStateRepository.findByLectureUnitId(LECTURE_UNIT_ID)).thenReturn(Optional.of(state));
-        when(attachmentVideoUnitRepository.findWithLectureAndCourseAndAttachmentById(LECTURE_UNIT_ID)).thenReturn(Optional.empty());
-
-        listener.handleMetadataDirty(new IrisLectureUnitSyncService.IrisLectureUnitMetadataDirtyEvent(LECTURE_UNIT_ID));
-
-        verify(syncStateRepository).delete(state);
-        verify(syncStateRepository, never()).updateWithLectureUnitLock(anyLong(), any());
-        verifyNoInteractions(syncDispatchService);
-    }
-
-    @Test
     void metadataSyncPreservesConcurrentStateAcrossSuccessAndFailure() {
         enableStateTransitions();
         var unit = new AttachmentVideoUnit();
@@ -168,6 +154,16 @@ class IrisLectureUnitSyncEventListenerTest {
         assertThat(concurrentlyCleanedState.getStatus()).isEqualTo(IrisLectureUnitSyncState.STATUS_CLEAN);
         assertThat(concurrentlyCleanedState.getRetryCount()).isZero();
         assertThat(concurrentlyCleanedState.getNextRetryAt()).isNull();
+
+        var retryState = syncState();
+        retryState.setMetadataHash("retry-hash");
+        retryState.setRetryCount(5);
+        when(syncStateRepository.findByLectureUnitId(LECTURE_UNIT_ID)).thenReturn(Optional.of(retryState));
+        ZonedDateTime before = ZonedDateTime.now();
+
+        listener.handleMetadataDirty(new IrisLectureUnitSyncService.IrisLectureUnitMetadataDirtyEvent(LECTURE_UNIT_ID));
+
+        assertThat(retryState.getNextRetryAt().toInstant()).isBetween(before.plusMinutes(60).toInstant(), ZonedDateTime.now().plusMinutes(60).toInstant());
     }
 
     @Test
@@ -176,33 +172,22 @@ class IrisLectureUnitSyncEventListenerTest {
         unit.setId(LECTURE_UNIT_ID);
         var state = syncState();
         state.setMetadataHash("metadata-hash");
-        when(syncStateRepository.findByLectureUnitId(LECTURE_UNIT_ID)).thenThrow(new IllegalStateException("database unavailable")).thenReturn(Optional.of(state));
+        when(syncStateRepository.findByLectureUnitId(LECTURE_UNIT_ID)).thenReturn(Optional.of(state)).thenThrow(new IllegalStateException("database unavailable"))
+                .thenReturn(Optional.of(state));
+        when(attachmentVideoUnitRepository.findWithLectureAndCourseAndAttachmentById(LECTURE_UNIT_ID)).thenReturn(Optional.empty(), Optional.of(unit));
+
+        listener.handleMetadataDirty(new IrisLectureUnitSyncService.IrisLectureUnitMetadataDirtyEvent(LECTURE_UNIT_ID));
+
+        verify(syncStateRepository).delete(state);
+        verify(syncStateRepository, never()).updateWithLectureUnitLock(anyLong(), any());
+        verifyNoInteractions(syncDispatchService);
 
         assertThatCode(() -> listener.handleMetadataDirty(new IrisLectureUnitSyncService.IrisLectureUnitMetadataDirtyEvent(LECTURE_UNIT_ID))).doesNotThrowAnyException();
         verifyNoInteractions(syncDispatchService);
 
-        when(attachmentVideoUnitRepository.findWithLectureAndCourseAndAttachmentById(LECTURE_UNIT_ID)).thenReturn(Optional.of(unit));
         doThrow(new IllegalStateException("database unavailable")).when(syncStateRepository).updateWithLectureUnitLock(anyLong(), any());
 
         assertThatCode(() -> listener.handleMetadataDirty(new IrisLectureUnitSyncService.IrisLectureUnitMetadataDirtyEvent(LECTURE_UNIT_ID))).doesNotThrowAnyException();
-    }
-
-    @Test
-    void retryDelayReachesConfiguredMaximum() {
-        enableStateTransitions();
-        var unit = new AttachmentVideoUnit();
-        unit.setId(LECTURE_UNIT_ID);
-        var state = syncState();
-        state.setMetadataHash("metadata-hash");
-        state.setRetryCount(5);
-        when(attachmentVideoUnitRepository.findWithLectureAndCourseAndAttachmentById(LECTURE_UNIT_ID)).thenReturn(Optional.of(unit));
-        when(syncStateRepository.findByLectureUnitId(LECTURE_UNIT_ID)).thenReturn(Optional.of(state));
-        doThrow(new IllegalStateException("Pyris unavailable")).when(syncDispatchService).triggerSyncForUpdateKind(unit, LectureContentUpdateKind.METADATA);
-
-        ZonedDateTime before = ZonedDateTime.now();
-        listener.handleMetadataDirty(new IrisLectureUnitSyncService.IrisLectureUnitMetadataDirtyEvent(LECTURE_UNIT_ID));
-
-        assertThat(state.getNextRetryAt().toInstant()).isBetween(before.plusMinutes(60).toInstant(), ZonedDateTime.now().plusMinutes(60).toInstant());
     }
 
     private static IrisLectureUnitSyncState syncState() {

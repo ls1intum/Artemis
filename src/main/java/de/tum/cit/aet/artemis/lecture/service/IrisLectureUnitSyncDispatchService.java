@@ -82,8 +82,7 @@ public class IrisLectureUnitSyncDispatchService {
 
     private static Map<Integer, ZonedDateTime> toSlideHiddenUntilBySlideNumber(List<Slide> slides) {
         var slideHiddenUntilBySlideNumber = new LinkedHashMap<Integer, ZonedDateTime>();
-        slides.stream().sorted(Comparator.comparingInt(Slide::getSlideNumber))
-                .forEach(slide -> slideHiddenUntilBySlideNumber.put(slide.getSlideNumber(), slide.getHidden()));
+        slides.stream().sorted(Comparator.comparingInt(Slide::getSlideNumber)).forEach(slide -> slideHiddenUntilBySlideNumber.put(slide.getSlideNumber(), slide.getHidden()));
         return slideHiddenUntilBySlideNumber;
     }
 }

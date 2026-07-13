@@ -106,8 +106,8 @@ public class IrisLectureUnitSyncEventListener {
         }
         catch (Exception e) {
             try {
-                syncStateRepository.updateWithLectureUnitLock(state.getLectureUnitId(), currentState -> Optional.of(currentState)
-                        .filter(candidate -> isDirtyForUpdateKind(candidate, updateKind)).ifPresent(candidate -> markRetry(candidate, e)));
+                syncStateRepository.updateWithLectureUnitLock(state.getLectureUnitId(),
+                        currentState -> Optional.of(currentState).filter(candidate -> isDirtyForUpdateKind(candidate, updateKind)).ifPresent(candidate -> markRetry(candidate, e)));
             }
             catch (Exception persistenceException) {
                 log.warn("Could not persist retry state for Iris lecture unit sync {}", state.getLectureUnitId(), persistenceException);
