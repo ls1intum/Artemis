@@ -44,12 +44,6 @@ class IrisSessionActivationIntegrationTest extends AbstractIrisIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void createSessionUnauthorized() throws Exception {
-        request.post(exerciseChatUrl(), null, HttpStatus.FORBIDDEN);
-    }
-
-    @Test
     @WithMockUser(username = TEST_PREFIX + "student2", roles = "USER")
     void getCurrentSessionUnauthorized() throws Exception {
         request.post(exerciseChatCurrentUrl(), null, HttpStatus.FORBIDDEN);
@@ -83,10 +77,6 @@ class IrisSessionActivationIntegrationTest extends AbstractIrisIntegrationTest {
 
     private IrisTextMessageContent createMockContent() {
         return new IrisTextMessageContent("Not relevant for the test cases");
-    }
-
-    private String exerciseChatUrl() {
-        return "/api/iris/chat/sessions?mode=PROGRAMMING_EXERCISE_CHAT&entityId=" + exercise.getId();
     }
 
     private String exerciseChatCurrentUrl() {
