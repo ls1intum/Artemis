@@ -77,7 +77,10 @@ COMPOSE_FILE="docker/playwright-E2E-tests-multi-node-fast.yml"
 
 # Per-node port allocation. Indexes match node1/node2/node3 below.
 HTTP_PORTS=(8080 8081 8082)
+# HZ_PORTS/SSH_PORTS document the per-node port scheme for reference; not referenced directly (SC2034).
+# shellcheck disable=SC2034
 HZ_PORTS=(5701 5702)            # node-3 has no Hazelcast bind port (client)
+# shellcheck disable=SC2034
 SSH_PORTS=(7921 7922)            # node-3 has no Git SSH
 
 # All host ports the script claims; freed during preflight + --stop.
