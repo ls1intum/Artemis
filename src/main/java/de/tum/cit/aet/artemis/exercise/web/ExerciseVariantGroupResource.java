@@ -4,12 +4,8 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.time.ZonedDateTime;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import java.util.function.BiConsumer;
-import java.util.function.Function;
 
 import jakarta.validation.Valid;
 
@@ -42,9 +38,7 @@ import de.tum.cit.aet.artemis.exercise.dto.ExerciseVariantGroupDTO;
 import de.tum.cit.aet.artemis.exercise.dto.UpdateExerciseVariantGroupDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseVariantGroupRepository;
-import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
-import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseTimelineUpdateDTO;
-import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseCreationUpdateService;
+import de.tum.cit.aet.artemis.exercise.service.ExerciseVariantGroupService;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.domain.QuizMode;
 
@@ -75,14 +69,14 @@ public class ExerciseVariantGroupResource {
 
     private final ExerciseRepository exerciseRepository;
 
-    private final ProgrammingExerciseCreationUpdateService programmingExerciseCreationUpdateService;
+    private final ExerciseVariantGroupService exerciseVariantGroupService;
 
     public ExerciseVariantGroupResource(CourseRepository courseRepository, ExerciseVariantGroupRepository exerciseVariantGroupRepository, ExerciseRepository exerciseRepository,
-            ProgrammingExerciseCreationUpdateService programmingExerciseCreationUpdateService) {
+            ExerciseVariantGroupService exerciseVariantGroupService) {
         this.courseRepository = courseRepository;
         this.exerciseVariantGroupRepository = exerciseVariantGroupRepository;
         this.exerciseRepository = exerciseRepository;
-        this.programmingExerciseCreationUpdateService = programmingExerciseCreationUpdateService;
+        this.exerciseVariantGroupService = exerciseVariantGroupService;
     }
 
     /**
@@ -131,27 +125,7 @@ public class ExerciseVariantGroupResource {
         ExerciseVariantGroup group = exerciseVariantGroupRepository.findByIdAndCourseIdElseThrow(groupId, courseId);
         updateDTO.applyTo(group);
         group.validateDates();
-        // Apply the group timeline to every member and validate the result BEFORE persisting anything: a timeline valid
-        // at group level can still be rejected by a member (the group's example-solution-date rule is looser), so a bad
-        // request must fail with 400 without mutating the stored group or exercise dates.
-        List<Exercise> nonProgrammingExercises = new ArrayList<>();
-        List<ProgrammingExercise> programmingExercises = new ArrayList<>();
-        group.getExercises().forEach(exercise -> {
-            applyGroupTimeline(group, exercise);
-            validateDatesIfPossible(exercise);
-            if (exercise instanceof ProgrammingExercise programmingExercise) {
-                programmingExercises.add(programmingExercise);
-            }
-            else {
-                nonProgrammingExercises.add(exercise);
-            }
-        });
-        // All members validated: persist the group and the member updates, keeping every member's dates in sync.
-        exerciseVariantGroupRepository.save(group);
-        exerciseRepository.saveAll(nonProgrammingExercises);
-        // Programming timeline changes recompute the build-and-test date and reschedule build/test operations, so they go
-        // through the dedicated update flow (which reloads and saves the exercise itself) rather than a plain saveAll.
-        programmingExercises.forEach(programmingExercise -> updateProgrammingExerciseTimeline(programmingExercise, group));
+        exerciseVariantGroupService.saveWithTimelineAppliedToMembers(group);
         // Build the response from the loaded entity (its exercises were fetched); save()'s re-merged return value has a
         // lazy exercises collection that cannot initialize once the session closes (open-in-view is off).
         return ResponseEntity.ok(new ExerciseVariantGroupDTO(group));
@@ -240,120 +214,7 @@ public class ExerciseVariantGroupResource {
             // other variants, so only individual-mode quizzes (which already support per-student dates) may join a group.
             throw new BadRequestAlertException("Only individual-mode quizzes can be added to an exercise group", ENTITY_NAME, "quizNotIndividual");
         }
-        if (group != null) {
-            // Let a brand-new, empty group adopt a timeline from its first exercise instead of forcing every
-            // date to null until someone edits the group directly.
-            adoptMissingDatesFromExercise(group, exercise);
-        }
-        exercise.setExerciseVariantGroup(group);
-        if (group != null && exercise instanceof ProgrammingExercise programmingExercise) {
-            // Persist the membership change, then route the timeline through the programming update flow so the
-            // build-and-test date is recomputed and the scheduled build/test operations are refreshed (a plain save
-            // would leave the old tasks scheduled).
-            exerciseRepository.save(programmingExercise);
-            updateProgrammingExerciseTimeline(programmingExercise, group);
-            return ResponseEntity.ok().build();
-        }
-        if (group != null) {
-            // Joining a group means adopting the group's shared timeline (even unset dates), so the variant's dates stay
-            // consistent with its siblings. Removing an exercise (group == null) leaves its current dates untouched.
-            applyGroupTimeline(group, exercise);
-        }
-        validateDatesIfPossible(exercise);
-        exerciseRepository.save(exercise);
+        exerciseVariantGroupService.assignToGroup(exercise, group);
         return ResponseEntity.ok().build();
-    }
-
-    /**
-     * Applies the group's shared timeline to a programming member exercise through
-     * {@link ProgrammingExerciseCreationUpdateService#updateTimeline}, which recomputes the build-and-test date,
-     * validates the resulting dates, and reschedules the build/test operations. A plain repository save would persist
-     * the new dates but leave the old build tasks scheduled. The exercise's current assessment type is preserved.
-     *
-     * @param programmingExercise the programming member whose timeline should adopt the group's
-     * @param group               the group providing the shared timeline
-     */
-    private void updateProgrammingExerciseTimeline(ProgrammingExercise programmingExercise, ExerciseVariantGroup group) {
-        ProgrammingExerciseTimelineUpdateDTO timelineUpdate = new ProgrammingExerciseTimelineUpdateDTO(programmingExercise.getId(), group.getReleaseDate(), group.getStartDate(),
-                group.getDueDate(), programmingExercise.getAssessmentType(), group.getAssessmentDueDate(), group.getExampleSolutionPublicationDate(),
-                group.getBuildAndTestStudentSubmissionsAfterDueDate());
-        programmingExerciseCreationUpdateService.updateTimeline(timelineUpdate, null);
-    }
-
-    /**
-     * If the group has no members yet, adopts the joining exercise's dates for whichever shared timeline fields the
-     * group doesn't already define. Persists the group if anything changed. Groups that already have members keep
-     * their existing timeline untouched: only a brand-new, empty group adopts a sensible starting timeline.
-     *
-     * @param group    the group the exercise is joining (its current members must already be loaded)
-     * @param exercise the exercise joining the group, whose dates are used as the source to adopt from
-     */
-    private void adoptMissingDatesFromExercise(ExerciseVariantGroup group, Exercise exercise) {
-        if (!group.getExercises().isEmpty()) {
-            return;
-        }
-        boolean changed = false;
-        changed |= adoptMissingDate(group, exercise, Exercise::getReleaseDate, ExerciseVariantGroup::getReleaseDate, ExerciseVariantGroup::setReleaseDate);
-        changed |= adoptMissingDate(group, exercise, Exercise::getStartDate, ExerciseVariantGroup::getStartDate, ExerciseVariantGroup::setStartDate);
-        changed |= adoptMissingDate(group, exercise, Exercise::getDueDate, ExerciseVariantGroup::getDueDate, ExerciseVariantGroup::setDueDate);
-        changed |= adoptMissingDate(group, exercise, Exercise::getAssessmentDueDate, ExerciseVariantGroup::getAssessmentDueDate, ExerciseVariantGroup::setAssessmentDueDate);
-        changed |= adoptMissingDate(group, exercise, Exercise::getExampleSolutionPublicationDate, ExerciseVariantGroup::getExampleSolutionPublicationDate,
-                ExerciseVariantGroup::setExampleSolutionPublicationDate);
-        if (exercise instanceof ProgrammingExercise programmingExercise) {
-            // Not a base Exercise field, so it needs the ProgrammingExercise-only getter/setter pair.
-            changed |= adoptMissingDate(group, programmingExercise, ProgrammingExercise::getBuildAndTestStudentSubmissionsAfterDueDate,
-                    ExerciseVariantGroup::getBuildAndTestStudentSubmissionsAfterDueDate, ExerciseVariantGroup::setBuildAndTestStudentSubmissionsAfterDueDate);
-        }
-        if (changed) {
-            exerciseVariantGroupRepository.save(group);
-        }
-    }
-
-    /**
-     * Adopts the exercise's value for one field onto the group, but only if the group doesn't already define that
-     * field and the resulting group timeline stays internally consistent (see {@link ExerciseVariantGroup#areDatesValid()}).
-     * This guards against an exercise with stale/inconsistent leftover dates corrupting an otherwise valid group.
-     */
-    private <T extends Exercise> boolean adoptMissingDate(ExerciseVariantGroup group, T exercise, Function<T, ZonedDateTime> exerciseGetter,
-            Function<ExerciseVariantGroup, ZonedDateTime> groupGetter, BiConsumer<ExerciseVariantGroup, ZonedDateTime> groupSetter) {
-        ZonedDateTime exerciseDate = exerciseGetter.apply(exercise);
-        if (exerciseDate != null && groupGetter.apply(group) == null) {
-            groupSetter.accept(group, exerciseDate);
-            if (group.areDatesValid()) {
-                return true;
-            }
-            groupSetter.accept(group, null);
-        }
-        return false;
-    }
-
-    /**
-     * Validates the exercise's dates via {@link Exercise#validateBaseDates()} rather than the polymorphic
-     * {@link Exercise#validateDates()}: for a {@link QuizExercise} the latter also iterates the lazy {@code quizBatches}
-     * collection, which is not initialized here and would throw {@code LazyInitializationException}. Only individual-mode
-     * quizzes can be group members, so the skipped batch check is irrelevant for group timelines.
-     *
-     * @param exercise the exercise whose (already updated) dates should be validated
-     */
-    private void validateDatesIfPossible(Exercise exercise) {
-        exercise.validateBaseDates();
-    }
-
-    /**
-     * Overwrites the exercise's timeline fields with the group's, including unset (null) dates, so that all variants in a
-     * group share one timeline.
-     *
-     * @param group    the group providing the shared timeline
-     * @param exercise the member exercise to update in place (not persisted here)
-     */
-    private void applyGroupTimeline(ExerciseVariantGroup group, Exercise exercise) {
-        exercise.setReleaseDate(group.getReleaseDate());
-        exercise.setStartDate(group.getStartDate());
-        exercise.setDueDate(group.getDueDate());
-        exercise.setAssessmentDueDate(group.getAssessmentDueDate());
-        exercise.setExampleSolutionPublicationDate(group.getExampleSolutionPublicationDate());
-        if (exercise instanceof ProgrammingExercise programmingExercise) {
-            programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(group.getBuildAndTestStudentSubmissionsAfterDueDate());
-        }
     }
 }
