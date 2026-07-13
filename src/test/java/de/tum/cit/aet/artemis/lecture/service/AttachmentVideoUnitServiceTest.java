@@ -12,6 +12,7 @@ import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -110,6 +111,7 @@ class AttachmentVideoUnitServiceTest {
         when(uploadedFile.getOriginalFilename()).thenReturn("lecture.pdf");
         when(attachmentFileHashService.sha256(uploadedFile)).thenReturn(new AttachmentFileHashService.FileHash("SHA-256", HASH));
         when(attachmentRepository.saveAndFlush(attachment)).thenReturn(attachment);
+        when(slideSplitterService.splitAttachmentVideoUnitIntoSingleSlides(any(AttachmentVideoUnit.class))).thenReturn(CompletableFuture.completedFuture(null));
 
         service.updateAttachmentVideoUnit(unit, dto, attachment, uploadedFile, false, null, null, Set.of());
 

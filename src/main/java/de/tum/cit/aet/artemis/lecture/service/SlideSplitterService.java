@@ -12,6 +12,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 import javax.imageio.ImageIO;
@@ -68,9 +69,10 @@ public class SlideSplitterService {
      * Splits an AttachmentVideoUnit file into single slides and saves them as PNG files asynchronously.
      *
      * @param attachmentVideoUnit The attachmentVideoUnit to which the slides belong.
+     * @return a future that completes after slide splitting finishes
      */
     @Async
-    public void splitAttachmentVideoUnitIntoSingleSlides(AttachmentVideoUnit attachmentVideoUnit) {
+    public CompletableFuture<Void> splitAttachmentVideoUnitIntoSingleSlides(AttachmentVideoUnit attachmentVideoUnit) {
         Path attachmentPath = FilePathConverter.fileSystemPathForExternalUri(URI.create(attachmentVideoUnit.getAttachment().getLink()), FilePathType.ATTACHMENT_UNIT);
         File file = attachmentPath.toFile();
         try (PDDocument document = Loader.loadPDF(file)) {
@@ -81,6 +83,7 @@ public class SlideSplitterService {
             log.error("Error while splitting AttachmentVideoUnit {} into single slides", attachmentVideoUnit.getId(), e);
             throw new InternalServerErrorException("Could not split AttachmentVideoUnit into single slides: " + e.getMessage());
         }
+        return CompletableFuture.completedFuture(null);
     }
 
     /**
