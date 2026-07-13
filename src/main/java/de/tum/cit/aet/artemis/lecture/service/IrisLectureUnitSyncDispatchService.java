@@ -66,7 +66,7 @@ public class IrisLectureUnitSyncDispatchService {
                     .orElseGet(() -> slideRepository.findAllByAttachmentVideoUnitId(attachmentVideoUnit.getId()));
             api.updateLectureUnitVisibilityInPyris(attachmentVideoUnit, slides);
             var snapshot = new LectureContentUpdateSnapshot(attachmentVideoUnit.getId(), null, null, null, null, null, null, null,
-                    LectureContentUpdateSnapshot.resolveReleaseDate(attachmentVideoUnit), toSlideHiddenUntilBySlideNumber(slides));
+                    attachmentVideoUnit.resolveReleaseDate(), toSlideHiddenUntilBySlideNumber(slides));
             return IrisLectureUnitSyncService.visibilityHash(snapshot);
         }).orElse(null);
     }

@@ -17,7 +17,6 @@ import de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.Slide;
-import de.tum.cit.aet.artemis.lecture.service.LectureContentUpdateSnapshot;
 import de.tum.cit.aet.artemis.videosource.service.ResolvedVideo;
 import de.tum.cit.aet.artemis.videosource.service.VideoSourceResolverService;
 
@@ -93,7 +92,7 @@ public class PyrisLectureUnitSyncService {
                 .map(slide -> new PyrisSlideVisibilityDTO(slide.getSlideNumber(), slide.getHidden())).toList();
 
         return new PyrisLectureUnitVisibilityWebhookDTO(attachmentVideoUnit.getId(), lecture.getId(), course.getId(), artemisBaseUrl,
-                LectureContentUpdateSnapshot.resolveReleaseDate(attachmentVideoUnit), slideVisibility);
+                attachmentVideoUnit.resolveReleaseDate(), slideVisibility);
     }
 
     private ResolvedVideo resolveVideoUrl(String videoSource) {

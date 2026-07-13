@@ -225,7 +225,7 @@ public class AttachmentVideoUnitService {
 
         return new LectureContentUpdateSnapshot(unit.getId(), unit.getName(), lecture != null ? lecture.getTitle() : null, course != null ? course.getTitle() : null,
                 course != null ? course.getDescription() : null, attachment != null ? attachment.getVersion() : null, attachment != null ? attachment.getLink() : null,
-                unit.getVideoSource(), LectureContentUpdateSnapshot.resolveReleaseDate(unit),
+                unit.getVideoSource(), unit.resolveReleaseDate(),
                 projectedSlideHiddenUntilBySlideNumber != null ? projectedSlideHiddenUntilBySlideNumber : buildSlideHiddenUntilBySlideNumber(unit.getId()));
     }
 
