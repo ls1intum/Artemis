@@ -79,4 +79,44 @@ describe('TumUiDatePickerComponent', () => {
         fixture.detectChanges();
         expect(document.querySelector('tum-ui-calendar')).toBeNull();
     });
+
+    it('rejects trailing garbage on blur', () => {
+        input().value = '13.06.2026 08:30 and more';
+        input().dispatchEvent(new Event('blur'));
+        expect(component.isValid()).toBe(false);
+    });
+
+    it('sets the value to undefined when the input is emptied', () => {
+        fixture.componentRef.setInput('value', dayjs('2026-06-13T08:30'));
+        fixture.detectChanges();
+        input().value = '';
+        input().dispatchEvent(new Event('input'));
+        expect(component.value()).toBeUndefined();
+    });
+
+    it('updates the time-of-day via the time field', () => {
+        fixture.componentRef.setInput('value', dayjs('2026-06-13T08:30'));
+        fixture.detectChanges();
+        fixture.debugElement.query(By.css('[data-testid="tum-ui-date-picker-trigger"]')).nativeElement.click();
+        fixture.detectChanges();
+        const timeInput = document.querySelector('[data-testid="tum-ui-date-picker-time"]') as HTMLInputElement;
+        timeInput.value = '10:45';
+        timeInput.dispatchEvent(new Event('input'));
+        expect(component.value()?.format('HH:mm')).toBe('10:45');
+    });
+
+    it('selects a day from the calendar overlay', () => {
+        fixture.debugElement.query(By.css('[data-testid="tum-ui-date-picker-trigger"]')).nativeElement.click();
+        fixture.detectChanges();
+        (document.querySelector('td[role="gridcell"] button') as HTMLElement).click();
+        expect(component.value()).toBeDefined();
+    });
+
+    it('does not open when disabled', () => {
+        fixture.componentRef.setInput('disabled', true);
+        fixture.detectChanges();
+        fixture.debugElement.query(By.css('[data-testid="tum-ui-date-picker-trigger"]')).nativeElement.click();
+        fixture.detectChanges();
+        expect(document.querySelector('tum-ui-calendar')).toBeNull();
+    });
 });

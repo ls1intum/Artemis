@@ -59,4 +59,37 @@ describe('TumUiCalendarComponent', () => {
         buttons[1].dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter' }));
         expect(spy).toHaveBeenCalledOnce();
     });
+
+    it('navigates the grid with ArrowDown/Up/Left/Home/End', () => {
+        const buttons = dayButtons();
+        buttons[10].dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown' }));
+        expect(document.activeElement).toBe(buttons[17]);
+        buttons[17].dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowLeft' }));
+        expect(document.activeElement).toBe(buttons[16]);
+        buttons[16].dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowUp' }));
+        expect(document.activeElement).toBe(buttons[9]);
+        buttons[9].dispatchEvent(new KeyboardEvent('keydown', { key: 'Home' }));
+        expect(document.activeElement).toBe(buttons[7]);
+        buttons[7].dispatchEvent(new KeyboardEvent('keydown', { key: 'End' }));
+        expect(document.activeElement).toBe(buttons[13]);
+    });
+
+    it('changes the month via PageUp/PageDown and the previous button', () => {
+        const spy = vi.spyOn(component.monthChange, 'emit');
+        const buttons = dayButtons();
+        buttons[0].dispatchEvent(new KeyboardEvent('keydown', { key: 'PageDown' }));
+        buttons[0].dispatchEvent(new KeyboardEvent('keydown', { key: 'PageUp' }));
+        fixture.debugElement.query(By.css('[data-testid="calendar-previous"]')).nativeElement.click();
+        expect(spy).toHaveBeenCalledTimes(3);
+    });
+
+    it('mutes days from adjacent months', () => {
+        expect(dayButtons().some((button) => button.classList.contains('text-surface-400'))).toBe(true);
+    });
+
+    it('rings today when the active month contains it', () => {
+        fixture.componentRef.setInput('activeMonth', dayjs().startOf('month'));
+        fixture.detectChanges();
+        expect(dayButtons().some((button) => button.classList.contains('ring-primary'))).toBe(true);
+    });
 });
