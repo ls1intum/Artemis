@@ -194,7 +194,7 @@ public class Exam extends DomainObject {
 
     public void setExamMode(ExamMode examMode) {
         this.examMode = examMode == null ? ExamMode.REAL : examMode;
-        this.testExam = examMode != ExamMode.REAL;
+        this.testExam = this.examMode != ExamMode.REAL;
     }
 
     public boolean isExamWithAttendanceCheck() {
