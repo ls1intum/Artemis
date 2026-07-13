@@ -204,22 +204,6 @@ const test = baseTest.extend<
             // which would block test interactions. See addE2EInitScript for details.
             await addE2EInitScript(page);
 
-            // Enlarge Chrome's per-renderer network resource buffer (default ~10 MB) so response bodies are
-            // not evicted before a test reads them. Under Angular 22 + parallel E2E load, cold-context JS-chunk
-            // re-fetches (large responses) churn the default buffer fast enough to drop the small API response
-            // bodies, causing intermittent "Network.getResponseBody: No data found for resource" on
-            // page.waitForResponse(...).json(). maxTotalBufferSize/maxResourceBufferSize are renderer-level, so
-            // enlarging them here keeps those bodies retrievable. Best-effort.
-            try {
-                const cdpSession = await page.context().newCDPSession(page);
-                await cdpSession.send('Network.enable', {
-                    maxTotalBufferSize: 256 * 1024 * 1024,
-                    maxResourceBufferSize: 128 * 1024 * 1024,
-                });
-            } catch {
-                // Ignore — if the CDP command is unavailable the eager-buffer handler below still helps.
-            }
-
             // Eagerly buffer API response bodies as they arrive. Playwright caches a response body the
             // first time it is read, so a later `response.json()` in a test returns that cached copy instead
             // of issuing a fresh CDP `Network.getResponseBody` call. Under the Angular 22 runtime + parallel
