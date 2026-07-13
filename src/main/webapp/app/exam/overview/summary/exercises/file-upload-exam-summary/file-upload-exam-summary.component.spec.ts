@@ -68,4 +68,22 @@ describe('FileUploadExamSummaryComponent', () => {
         const fileUploadSubmissionComponent = fixture.debugElement.query(By.directive(FileUploadSubmissionComponent))?.componentInstance;
         expect(fileUploadSubmissionComponent).not.toBeTruthy();
     });
+
+    it('should pass submission with filePath to child component which populates filePathUrl', async () => {
+        const exercise = { id: 1234, studentParticipations: [{ id: 1 }] } as FileUploadExercise;
+        const submission = new FileUploadSubmission();
+        submission.submitted = true;
+        submission.filePath = 'file-upload-exercises/123/submissions/456/test.pdf';
+        submission.filePathUrl = undefined;
+
+        fixture.componentRef.setInput('submission', submission);
+        fixture.componentRef.setInput('exercise', exercise);
+        fixture.componentRef.setInput('isAfterResultsArePublished', false);
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        const childComponent = fixture.debugElement.query(By.directive(FileUploadSubmissionComponent))?.componentInstance as FileUploadSubmissionComponent;
+        expect(childComponent).toBeTruthy();
+        expect(childComponent.submission()?.filePathUrl).toBe('api/core/files/file-upload-exercises/123/submissions/456/test.pdf');
+    });
 });

@@ -44,6 +44,11 @@ env:
 #     • anything else → build the branch on-the-fly
 #  3. Deploy the resolved Docker image to the requested environment
 # ------------------------------------------------------------------------------
+permissions:
+  contents: read
+  actions: read
+  pull-requests: read
+
 jobs:
   # Log the inputs for debugging
   log-inputs:
@@ -124,6 +129,11 @@ jobs:
   conditional-build:
     if: ${{ needs.determine-build-context.outputs.pr_number == '' && needs.determine-build-context.outputs.is_main_or_develop == 'false' }}
     needs: determine-build-context
+    # The reusable workflow checks out and pushes the image to GHCR via GITHUB_TOKEN; a called
+    # workflow cannot elevate beyond its caller, so grant packages: write here (matches ci-build.yml).
+    permissions:
+      contents: read
+      packages: write
     uses: ls1intum/.github/.github/workflows/build-and-push-docker-image.yml@v1.2.0
     with:
       ref: ${{ github.event.inputs.branch_name }}
@@ -221,6 +231,19 @@ jobs:
     needs: [ determine-build-context, conditional-build, check-existing-build-for-pull-request, check-existing-build-for-branch, check-database-migration-approval ]
     # Run if either the conditional-build or check-existing-build job was successful
     # Use always() since one of the jobs will always skip
+    #
+    # check-database-migration-approval only runs when a PR exists (its own if: is
+    # pr_number != ''; it needs a PR to check approval against). It is otherwise skipped,
+    # which includes BOTH already-reviewed develop/main deploys AND the conditional-build path
+    # (an arbitrary branch with no PR, documented above as a supported "build on the fly" case).
+    # Tightening this to only accept the develop/main skip (requiring is_main_or_develop=='true')
+    # was tried and reverted: since conditional-build's own gate is
+    # `pr_number == '' && is_main_or_develop == 'false'`, that combination can never be true for
+    # a conditional-build deploy, permanently blocking that entire supported path rather than
+    # just closing the intended gap. Properly closing it would mean teaching
+    # supporting_scripts/database_approval_check to work without a PR number, which is out of
+    # scope here; deploying an unreviewed migration via a PR-less branch to a test server remains
+    # an accepted risk for now (test servers are restricted to accredited developers).
     if: always() && (needs.conditional-build.result == 'success' || needs.check-existing-build-for-pull-request.result == 'success' || needs.check-existing-build-for-branch.result == 'success') && (needs.check-database-migration-approval.result == 'success' || needs.check-database-migration-approval.result == 'skipped')
     name: Deploy to Test-Server
     runs-on: [self-hosted, artemis-test-deployment]
