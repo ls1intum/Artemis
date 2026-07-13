@@ -105,11 +105,12 @@ class PyrisLectureUnitSyncServiceTest {
     }
 
     @Test
-    void updateLectureUnitVisibilityInPyrisSendsSortedLightweightVisibility() {
+    void updateLectureUnitVisibilityInPyrisSendsSortedLightweightVisibilityUsingAttachmentReleaseDateFallback() {
         AttachmentVideoUnit unit = attachmentVideoUnit();
         ZonedDateTime releaseDate = ZonedDateTime.parse("2026-07-02T10:15:30+02:00[Europe/Berlin]");
         ZonedDateTime hiddenUntil = ZonedDateTime.parse("2026-07-03T10:15:30+02:00[Europe/Berlin]");
-        unit.setReleaseDate(releaseDate);
+        unit.setReleaseDate(null);
+        unit.getAttachment().setReleaseDate(releaseDate);
         when(irisSettingsService.isEnabledForCourse(unit.getLecture().getCourse())).thenReturn(true);
 
         String token = service.updateLectureUnitVisibilityInPyris(unit, List.of(slide(3, null), slide(1, hiddenUntil), slide(2, null)));

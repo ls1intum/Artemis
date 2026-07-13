@@ -50,7 +50,7 @@ public class IrisLectureUnitSyncService {
      */
     public void markVisibilityDirtyAfterCommit(LectureContentUpdateSnapshot snapshot) {
         repository.markDirty(snapshot.lectureUnitId(), null, visibilityHash(snapshot), ZonedDateTime.now());
-        publishAfterCommit(new IrisLectureUnitVisibilityDirtyEvent(snapshot.lectureUnitId()));
+        publishAfterCommit(new IrisLectureUnitVisibilityDirtyEvent(snapshot.lectureUnitId(), snapshot.slideHiddenUntilBySlideNumber()));
     }
 
     private void publishAfterCommit(Object event) {
@@ -78,7 +78,7 @@ public class IrisLectureUnitSyncService {
         return HexFormat.of().formatHex(digest.digest());
     }
 
-    private static String visibilityHash(LectureContentUpdateSnapshot snapshot) {
+    static String visibilityHash(LectureContentUpdateSnapshot snapshot) {
         MessageDigest digest = createMessageDigest();
 
         appendField(digest, "lectureUnitId", snapshot.lectureUnitId());
@@ -124,6 +124,6 @@ public class IrisLectureUnitSyncService {
     public record IrisLectureUnitMetadataDirtyEvent(Long lectureUnitId) {
     }
 
-    public record IrisLectureUnitVisibilityDirtyEvent(Long lectureUnitId) {
+    public record IrisLectureUnitVisibilityDirtyEvent(Long lectureUnitId, Map<Integer, ZonedDateTime> slideHiddenUntilBySlideNumber) {
     }
 }

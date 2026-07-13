@@ -13,6 +13,8 @@ import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import java.time.ZonedDateTime;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -64,12 +66,14 @@ class IrisLectureUnitSyncEventListenerTest {
         unit.setId(LECTURE_UNIT_ID);
         var state = syncState();
         state.setVisibilityHash("visibility-hash");
+        var projectedVisibility = Map.of(1, ZonedDateTime.parse("2026-07-03T10:15:30Z"));
         when(attachmentVideoUnitRepository.findWithLectureAndCourseAndAttachmentById(LECTURE_UNIT_ID)).thenReturn(Optional.of(unit));
         when(syncStateRepository.findByLectureUnitId(LECTURE_UNIT_ID)).thenReturn(Optional.of(state));
+        when(syncDispatchService.triggerSyncForUpdateKind(unit, LectureContentUpdateKind.VISIBILITY, projectedVisibility)).thenReturn("visibility-hash");
 
-        listener.handleVisibilityDirty(new IrisLectureUnitSyncService.IrisLectureUnitVisibilityDirtyEvent(LECTURE_UNIT_ID));
+        listener.handleVisibilityDirty(new IrisLectureUnitSyncService.IrisLectureUnitVisibilityDirtyEvent(LECTURE_UNIT_ID, projectedVisibility));
 
-        verify(syncDispatchService).triggerSyncForUpdateKind(unit, LectureContentUpdateKind.VISIBILITY);
+        verify(syncDispatchService).triggerSyncForUpdateKind(unit, LectureContentUpdateKind.VISIBILITY, projectedVisibility);
         verify(syncStateRepository).updateWithLectureUnitLock(eq(LECTURE_UNIT_ID), any());
         assertThat(state.getLastSyncedVisibilityHash()).isEqualTo("visibility-hash");
         assertThat(state.getStatus()).isEqualTo(IrisLectureUnitSyncState.STATUS_CLEAN);
@@ -96,6 +100,26 @@ class IrisLectureUnitSyncEventListenerTest {
         assertThat(state.getLastSyncedVisibilityHash()).isNull();
         assertThat(state.getStatus()).isEqualTo(IrisLectureUnitSyncState.STATUS_DIRTY);
         assertThat(state.getNextRetryAt().toInstant()).isEqualTo(nextRetryAt.toInstant());
+    }
+
+    @Test
+    void visibilityRetryKeepsProjectedHashDirtyWhilePersistedSlidesAreStale() {
+        enableStateTransitions();
+        var unit = new AttachmentVideoUnit();
+        unit.setId(LECTURE_UNIT_ID);
+        var state = syncState();
+        state.setVisibilityHash("projected-visibility-hash");
+        when(syncStateRepository.findTop50ByStatusInAndNextRetryAtLessThanEqualOrderByNextRetryAtAsc(any(), any())).thenReturn(List.of(state));
+        when(attachmentVideoUnitRepository.findWithLectureAndCourseAndAttachmentById(LECTURE_UNIT_ID)).thenReturn(Optional.of(unit));
+        when(syncStateRepository.findByLectureUnitId(LECTURE_UNIT_ID)).thenReturn(Optional.of(state));
+        when(syncDispatchService.triggerSyncForUpdateKind(unit, LectureContentUpdateKind.VISIBILITY)).thenReturn("persisted-slide-hash");
+
+        listener.retryDirtyStates();
+
+        assertThat(state.getLastSyncedVisibilityHash()).isEqualTo("persisted-slide-hash");
+        assertThat(state.getVisibilityHash()).isEqualTo("projected-visibility-hash");
+        assertThat(state.getStatus()).isEqualTo(IrisLectureUnitSyncState.STATUS_DIRTY);
+        assertThat(state.getNextRetryAt()).isNotNull();
     }
 
     @Test

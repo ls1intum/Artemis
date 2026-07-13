@@ -5,6 +5,7 @@ import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -50,7 +51,7 @@ public class IrisLectureUnitSyncEventListener {
 
     @EventListener
     public void handleVisibilityDirty(IrisLectureUnitSyncService.IrisLectureUnitVisibilityDirtyEvent event) {
-        synchronize(event.lectureUnitId(), LectureContentUpdateKind.VISIBILITY);
+        synchronize(event.lectureUnitId(), LectureContentUpdateKind.VISIBILITY, event.slideHiddenUntilBySlideNumber());
     }
 
     /**
@@ -72,10 +73,18 @@ public class IrisLectureUnitSyncEventListener {
     }
 
     private void synchronize(Long lectureUnitId, LectureContentUpdateKind updateKind) {
-        syncStateRepository.findByLectureUnitId(lectureUnitId).ifPresent(state -> synchronize(state, updateKind));
+        synchronize(lectureUnitId, updateKind, null);
+    }
+
+    private void synchronize(Long lectureUnitId, LectureContentUpdateKind updateKind, Map<Integer, ZonedDateTime> projectedSlideHiddenUntilBySlideNumber) {
+        syncStateRepository.findByLectureUnitId(lectureUnitId).ifPresent(state -> synchronize(state, updateKind, projectedSlideHiddenUntilBySlideNumber));
     }
 
     private void synchronize(IrisLectureUnitSyncState state, LectureContentUpdateKind updateKind) {
+        synchronize(state, updateKind, null);
+    }
+
+    private void synchronize(IrisLectureUnitSyncState state, LectureContentUpdateKind updateKind, Map<Integer, ZonedDateTime> projectedSlideHiddenUntilBySlideNumber) {
         try {
             AttachmentVideoUnit unit = attachmentVideoUnitRepository.findWithLectureAndCourseAndAttachmentById(state.getLectureUnitId()).orElse(null);
             if (unit == null) {
@@ -84,8 +93,10 @@ public class IrisLectureUnitSyncEventListener {
                 return;
             }
 
-            String dispatchedHash = getCurrentHash(state, updateKind);
-            syncDispatchService.triggerSyncForUpdateKind(unit, updateKind);
+            String dispatchedVisibilityHash = Optional.ofNullable(projectedSlideHiddenUntilBySlideNumber)
+                    .map(projectedVisibility -> syncDispatchService.triggerSyncForUpdateKind(unit, updateKind, projectedVisibility))
+                    .orElseGet(() -> syncDispatchService.triggerSyncForUpdateKind(unit, updateKind));
+            String dispatchedHash = getDispatchedHash(state, updateKind, dispatchedVisibilityHash);
             syncStateRepository.updateWithLectureUnitLock(state.getLectureUnitId(), currentState -> markSynced(currentState, updateKind, dispatchedHash));
         }
         catch (Exception e) {
@@ -98,11 +109,11 @@ public class IrisLectureUnitSyncEventListener {
         }
     }
 
-    private static String getCurrentHash(IrisLectureUnitSyncState state, LectureContentUpdateKind updateKind) {
-        Map<LectureContentUpdateKind, String> currentHashes = new EnumMap<>(LectureContentUpdateKind.class);
-        currentHashes.put(LectureContentUpdateKind.METADATA, state.getMetadataHash());
-        currentHashes.put(LectureContentUpdateKind.VISIBILITY, state.getVisibilityHash());
-        return currentHashes.get(updateKind);
+    private static String getDispatchedHash(IrisLectureUnitSyncState state, LectureContentUpdateKind updateKind, String dispatchedVisibilityHash) {
+        Map<LectureContentUpdateKind, String> dispatchedHashes = new EnumMap<>(LectureContentUpdateKind.class);
+        dispatchedHashes.put(LectureContentUpdateKind.METADATA, state.getMetadataHash());
+        dispatchedHashes.put(LectureContentUpdateKind.VISIBILITY, dispatchedVisibilityHash);
+        return dispatchedHashes.get(updateKind);
     }
 
     private static void markSynced(IrisLectureUnitSyncState state, LectureContentUpdateKind updateKind, String dispatchedHash) {

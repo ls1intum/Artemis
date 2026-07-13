@@ -225,7 +225,7 @@ public class AttachmentVideoUnitService {
 
         return new LectureContentUpdateSnapshot(unit.getId(), unit.getName(), lecture != null ? lecture.getTitle() : null, course != null ? course.getTitle() : null,
                 course != null ? course.getDescription() : null, attachment != null ? attachment.getVersion() : null, attachment != null ? attachment.getLink() : null,
-                unit.getVideoSource(), resolveReleaseDate(unit, attachment),
+                unit.getVideoSource(), LectureContentUpdateSnapshot.resolveReleaseDate(unit),
                 projectedSlideHiddenUntilBySlideNumber != null ? projectedSlideHiddenUntilBySlideNumber : buildSlideHiddenUntilBySlideNumber(unit.getId()));
     }
 
@@ -245,13 +245,6 @@ public class AttachmentVideoUnitService {
         slideRepository.findAllByAttachmentVideoUnitId(attachmentVideoUnitId).stream().sorted(Comparator.comparingInt(Slide::getSlideNumber))
                 .forEach(slide -> slideHiddenUntilBySlideNumber.put(slide.getSlideNumber(), slide.getHidden()));
         return slideHiddenUntilBySlideNumber;
-    }
-
-    private static ZonedDateTime resolveReleaseDate(AttachmentVideoUnit unit, Attachment attachment) {
-        if (unit.getReleaseDate() != null) {
-            return unit.getReleaseDate();
-        }
-        return attachment != null ? attachment.getReleaseDate() : null;
     }
 
     private AttachmentFileUpdateResult updateAttachmentFileIfChanged(MultipartFile uploadedFile, Attachment existingAttachment, boolean keepFilename, Long attachmentVideoUnitId) {

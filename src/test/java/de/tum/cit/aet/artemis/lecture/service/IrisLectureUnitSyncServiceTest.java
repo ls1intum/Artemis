@@ -93,8 +93,10 @@ class IrisLectureUnitSyncServiceTest {
 
         var eventCaptor = ArgumentCaptor.forClass(Object.class);
         verify(eventPublisher).publishEvent(eventCaptor.capture());
-        assertThat(eventCaptor.getValue()).isInstanceOf(IrisLectureUnitSyncService.IrisLectureUnitVisibilityDirtyEvent.class).extracting("lectureUnitId")
-                .isEqualTo(LECTURE_UNIT_ID);
+        assertThat(eventCaptor.getValue()).isInstanceOfSatisfying(IrisLectureUnitSyncService.IrisLectureUnitVisibilityDirtyEvent.class, event -> {
+            assertThat(event.lectureUnitId()).isEqualTo(LECTURE_UNIT_ID);
+            assertThat(event.slideHiddenUntilBySlideNumber()).isEqualTo(snapshot.slideHiddenUntilBySlideNumber());
+        });
     }
 
     @Test
