@@ -39,7 +39,7 @@
                             [attr.aria-label]="pointsAriaLabel()"
                             [disabled]="readOnly() || !!feedback()?.gradingInstruction"
                         />
-                        <div class="unified-feedback-toolbar">
+                        <div class="unified-feedback-toolbar" (click)="$event.stopPropagation()">
                             @if (feedback()?.gradingInstruction) {
                                 <jhi-grading-instruction-link-icon [feedback]="feedback()!" />
                             }

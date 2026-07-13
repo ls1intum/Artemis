@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, ElementRef, computed, inject, input, model, output, viewChild } from '@angular/core';
+import { Component, ElementRef, computed, effect, inject, input, model, output, viewChild } from '@angular/core';
 import { NgClass } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TooltipModule } from 'primeng/tooltip';
@@ -42,9 +42,18 @@ interface FeedbackTypeConfig {
         AssessmentCorrectionRoundBadgeComponent,
     ],
 })
-export class UnifiedFeedbackComponent implements AfterViewInit {
+export class UnifiedFeedbackComponent {
     private artemisTranslatePipe = inject(ArtemisTranslatePipe);
     private localeConversionService = inject(LocaleConversionService);
+
+    constructor() {
+        effect(() => {
+            this.feedbackDetail();
+            if (this.editable()) {
+                this.autogrowDetailTextarea();
+            }
+        });
+    }
 
     feedbackContent = input<string>('');
     points = input<number>(0);
@@ -214,12 +223,6 @@ export class UnifiedFeedbackComponent implements AfterViewInit {
 
     onDetailInput(): void {
         this.autogrowDetailTextarea();
-    }
-
-    ngAfterViewInit(): void {
-        if (this.editable()) {
-            this.autogrowDetailTextarea();
-        }
     }
 
     private autogrowDetailTextarea(): void {

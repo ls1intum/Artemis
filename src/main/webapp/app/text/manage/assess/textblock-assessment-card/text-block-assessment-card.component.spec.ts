@@ -126,6 +126,18 @@ describe('TextblockAssessmentCardComponent', () => {
         expect(component.didDelete.emit).not.toHaveBeenCalled();
     });
 
+    it('should delete feedback when the dismiss icon is clicked via a real DOM click (regression: click must not bubble into select())', () => {
+        component.textBlockRef().initFeedback();
+        fixture.changeDetectorRef.detectChanges();
+
+        const dismissIcon = fixture.debugElement.nativeElement.querySelector('#dismiss-icon') as HTMLButtonElement;
+        expect(dismissIcon).toBeTruthy();
+        dismissIcon.click();
+        fixture.changeDetectorRef.detectChanges();
+
+        expect(component.textBlockRef().feedback).toBeUndefined();
+    });
+
     it('should send assessment event when selecting automatic text block', () => {
         fixture.componentRef.setInput('selected', false);
         component.textBlockRef().feedback = {
