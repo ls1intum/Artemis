@@ -2192,6 +2192,119 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
         deleteExamWithInstructor(exam1);
     }
 
+    /**
+     * Wire-contract guard for the SUMMARY path's exercise-level quiz questions once results are published.
+     * <p>
+     * After the publish-results date the quiz summary UI ({@code quiz-exam-summary}, rendered with
+     * {@code showResult = resultsPublished}) reads the correct answers off the exercise-level quiz questions to show
+     * which options were right/wrong. The pre-DTO wire stopped masking quizzes after the publish date, so it carried
+     * these solutions; the DTO projection must do the same or the published student sees no right/wrong on the quiz
+     * summary. This pins that the published {@code /summary} wire carries the multiple-choice {@code isCorrect} /
+     * {@code explanation}, the drag-and-drop {@code correctMappings} and the short-answer {@code correctMappings} on the
+     * exercise-level questions — the exact fields the summary UI needs. Uses a genuinely answered, published quiz
+     * fixture, since a prior wire dump using a non-published / answer-less fixture is exactly how this regressed.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testSummaryWireServesQuizSolutionsAfterPublishResults() throws Exception {
+        StudentExam studentExam = createStudentExamWithResultsAndAssessments(true, 1);
+
+        userUtilService.changeUser(studentExam.getUser().getLogin());
+        JsonNode summaryWire = request.get("/api/exam/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/" + studentExam.getId() + "/summary", HttpStatus.OK,
+                JsonNode.class);
+
+        boolean sawQuiz = false;
+        for (JsonNode exercise : summaryWire.get("exercises")) {
+            JsonNode questions = exercise.get("quizQuestions");
+            if (questions == null) {
+                continue;
+            }
+            sawQuiz = true;
+            assertThat(questions).hasSize(3);
+            for (JsonNode question : questions) {
+                switch (question.get("type").asText()) {
+                    case "multiple-choice" -> {
+                        assertThat(question.hasNonNull("explanation")).as("published summary MC question must carry its explanation").isTrue();
+                        JsonNode options = question.get("answerOptions");
+                        assertThat(options).as("published summary MC question keeps its answer options").isNotNull();
+                        long correctOptions = 0;
+                        boolean sawOptionExplanation = false;
+                        for (JsonNode option : options) {
+                            if (option.path("isCorrect").asBoolean(false)) {
+                                correctOptions++;
+                            }
+                            sawOptionExplanation |= option.hasNonNull("explanation");
+                        }
+                        assertThat(correctOptions).as("published summary MC wire must reveal the correct answer option via isCorrect").isGreaterThanOrEqualTo(1);
+                        assertThat(sawOptionExplanation).as("published summary MC options must carry their explanation").isTrue();
+                    }
+                    case "drag-and-drop" -> assertThat(question.path("correctMappings").isEmpty()).as("published summary DnD wire must carry correctMappings").isFalse();
+                    case "short-answer" -> assertThat(question.path("correctMappings").isEmpty()).as("published summary SA wire must carry correctMappings").isFalse();
+                    default -> {
+                    }
+                }
+            }
+        }
+        assertThat(sawQuiz).as("published summary wire exposed a quiz exercise to check").isTrue();
+        deleteExamWithInstructor(exam1);
+    }
+
+    /**
+     * Security-sensitive counterpart to {@link #testSummaryWireServesQuizSolutionsAfterPublishResults()}: before the
+     * publish-results date the {@code /summary} endpoint is reachable (it only requires the student exam to be
+     * submitted), and the exercise-level quiz questions must stay solution-hidden exactly as during conduction. This
+     * pins that the not-yet-published summary wire leaks neither the multiple-choice {@code isCorrect} /
+     * {@code explanation} nor the drag-and-drop / short-answer {@code correctMappings} / {@code solutions}, so making
+     * the summary publish-aware never regresses the pre-publish masking.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testSummaryWireMasksQuizSolutionsBeforePublishResults() throws Exception {
+        StudentExam studentExam = prepareStudentExamsForConduction(false, true, 1).getFirst();
+        StudentExam studentExamWithSubmissions = addExamExerciseSubmissionsForUser(exam2, studentExam.getUser().getLogin(), studentExam);
+
+        // move to a point where the individual student exam has ended but is still in the grace period, so the student can submit
+        exam2.setStartDate(ZonedDateTime.now().minusMinutes(3));
+        exam2.setEndDate(ZonedDateTime.now().minusMinutes(1));
+        exam2 = examRepository.save(exam2);
+
+        // submit as the student (addExamExerciseSubmissionsForUser already switched to the student user); results are NOT published
+        request.postWithoutResponseBody("/api/exam/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/submit", studentExamWithSubmissions, HttpStatus.OK);
+
+        JsonNode summaryWire = request.get("/api/exam/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/" + studentExamWithSubmissions.getId() + "/summary",
+                HttpStatus.OK, JsonNode.class);
+
+        boolean sawQuiz = false;
+        for (JsonNode exercise : summaryWire.get("exercises")) {
+            JsonNode questions = exercise.get("quizQuestions");
+            if (questions == null) {
+                continue;
+            }
+            sawQuiz = true;
+            assertThat(questions).hasSize(3);
+            for (JsonNode question : questions) {
+                assertThat(question.has("explanation")).as("unpublished summary quiz question must not leak explanation").isFalse();
+                switch (question.get("type").asText()) {
+                    case "multiple-choice" -> {
+                        for (JsonNode option : question.get("answerOptions")) {
+                            assertThat(option.has("isCorrect")).as("unpublished summary MC option must not leak isCorrect").isFalse();
+                            assertThat(option.has("explanation")).as("unpublished summary MC option must not leak explanation").isFalse();
+                        }
+                    }
+                    case "drag-and-drop" -> assertThat(question.path("correctMappings").isEmpty()).as("unpublished summary DnD must not leak correctMappings").isTrue();
+                    case "short-answer" -> {
+                        assertThat(question.path("correctMappings").isEmpty()).as("unpublished summary SA must not leak correctMappings").isTrue();
+                        assertThat(question.path("solutions").isEmpty()).as("unpublished summary SA must not leak solutions").isTrue();
+                    }
+                    default -> {
+                    }
+                }
+            }
+        }
+        assertThat(sawQuiz).as("unpublished summary wire exposed a quiz exercise to mask-check").isTrue();
+        deleteExamWithInstructor(exam1);
+    }
+
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGradedStudentExamSummaryWithoutGradingScaleAsStudentAfterPublishResults() throws Exception {

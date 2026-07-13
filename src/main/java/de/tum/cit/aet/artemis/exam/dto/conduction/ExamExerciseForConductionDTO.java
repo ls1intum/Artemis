@@ -22,13 +22,26 @@ public record ExamExerciseForConductionDTO(@JsonUnwrapped ExamExerciseBaseForCon
         @Nullable @JsonUnwrapped FileUploadExerciseForConductionDTO fileUploadExercise) {
 
     /**
-     * Converts an Exercise into an ExamExerciseForConductionDTO, dispatching on the concrete exercise type for the
-     * per-type fields.
+     * Converts an Exercise into an ExamExerciseForConductionDTO with the solution-hidden quiz projection (conduction /
+     * pre-publish summary).
      *
      * @param exercise the exercise to convert
      * @return the converted DTO, or null if the exercise is null
      */
     public static ExamExerciseForConductionDTO of(Exercise exercise) {
+        return of(exercise, false);
+    }
+
+    /**
+     * Converts an Exercise into an ExamExerciseForConductionDTO, dispatching on the concrete exercise type for the
+     * per-type fields.
+     *
+     * @param exercise             the exercise to convert
+     * @param includeQuizSolutions whether a quiz exercise's questions should carry their full solutions ({@code true}
+     *                                 only once the student exam's results are published, decided by the summary caller)
+     * @return the converted DTO, or null if the exercise is null
+     */
+    public static ExamExerciseForConductionDTO of(Exercise exercise, boolean includeQuizSolutions) {
         if (exercise == null) {
             return null;
         }
@@ -37,7 +50,7 @@ public record ExamExerciseForConductionDTO(@JsonUnwrapped ExamExerciseBaseForCon
         ModelingExerciseForConductionDTO modelingExercise = null;
         FileUploadExerciseForConductionDTO fileUploadExercise = null;
         switch (exercise) {
-            case QuizExercise quiz -> quizExercise = QuizExerciseForConductionDTO.of(quiz);
+            case QuizExercise quiz -> quizExercise = QuizExerciseForConductionDTO.of(quiz, includeQuizSolutions);
             case ProgrammingExercise programming -> programmingExercise = ProgrammingExerciseForConductionDTO.of(programming);
             case ModelingExercise modeling -> modelingExercise = ModelingExerciseForConductionDTO.of(modeling);
             case FileUploadExercise fileUpload -> fileUploadExercise = FileUploadExerciseForConductionDTO.of(fileUpload);

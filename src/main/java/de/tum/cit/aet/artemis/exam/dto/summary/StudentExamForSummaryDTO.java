@@ -18,11 +18,16 @@ import de.tum.cit.aet.artemis.exam.dto.conduction.ExamSessionForConductionDTO;
  * ({@code .../student-exams/{id}/summary}), shown to a student after they have submitted their exam.
  * <p>
  * The summary wire is byte-compatible with the conduction wire for the student-facing masked graph the endpoint used
- * to return directly, so it reuses the conduction leaf projections verbatim ({@link ExamExerciseForConductionDTO} for
- * the exercises with their masked/assessed participations, submissions and results; {@link UserNameDTO} for the
- * student; {@link ExamSessionForConductionDTO} for the — for the summary always empty — sessions). The only shape that
- * genuinely differs from conduction is the nested exam, which additionally carries {@code publishResultsDate}
- * ({@link ExamForSummaryDTO}) because the summary client reads it to gate result / example-solution visibility.
+ * to return directly, so it reuses the conduction leaf projections ({@link ExamExerciseForConductionDTO} for the
+ * exercises with their masked/assessed participations, submissions and results; {@link UserNameDTO} for the student;
+ * {@link ExamSessionForConductionDTO} for the — for the summary always empty — sessions). Two shapes differ from
+ * conduction: the nested exam additionally carries {@code publishResultsDate} ({@link ExamForSummaryDTO}) because the
+ * summary client reads it to gate result / example-solution visibility; and, once the student exam's results are
+ * published ({@link StudentExam#areResultsPublishedYet}), the exercise-level quiz questions are projected <em>with</em>
+ * their solutions (mirroring the pre-DTO wire, which stopped masking quizzes after the publish date) so the post-publish
+ * quiz summary UI can show which answers were correct. That publish flag is threaded through
+ * {@link ExamExerciseForConductionDTO#of(de.tum.cit.aet.artemis.exercise.domain.Exercise, boolean)} down to the
+ * quiz-question projection; before publish the quiz questions stay solution-hidden exactly as in conduction.
  * <p>
  * As with conduction, the {@code fetchParticipationsSubmissionsAndResultsForExam} masking runs on the entity before
  * this factory, so the factory only copies fields and re-adds nothing that was stripped; the (unchanged) client keeps
@@ -47,9 +52,13 @@ public record StudentExamForSummaryDTO(long id, Integer workingTime, Boolean sta
         var entitySessions = studentExam.getExamSessions();
         List<ExamSessionForConductionDTO> examSessions = (entitySessions == null || !Hibernate.isInitialized(entitySessions)) ? null
                 : entitySessions.stream().map(ExamSessionForConductionDTO::of).toList();
+        // Once results are published, the summary must serve the full quiz questions (isCorrect, explanation, correct
+        // drag-and-drop / short-answer mappings) so the post-publish quiz summary UI can show right/wrong; before publish
+        // (the summary is reachable after submission but before the publish date) the questions stay solution-hidden.
+        boolean includeQuizSolutions = studentExam.areResultsPublishedYet();
         var entityExercises = studentExam.getExercises();
         List<ExamExerciseForConductionDTO> exercises = (entityExercises == null || !Hibernate.isInitialized(entityExercises)) ? null
-                : entityExercises.stream().map(ExamExerciseForConductionDTO::of).toList();
+                : entityExercises.stream().map(exercise -> ExamExerciseForConductionDTO.of(exercise, includeQuizSolutions)).toList();
         return new StudentExamForSummaryDTO(studentExam.getId(), studentExam.getWorkingTime(), studentExam.isStarted(), studentExam.getStartedDate(), studentExam.isSubmitted(),
                 studentExam.getSubmissionDate(), studentExam.isTestRun(), studentExam.isEnded(), studentExam.isFinished(), studentExam.getCreatedDate(),
                 UserNameDTO.of(studentExam.getUser()), ExamForSummaryDTO.of(studentExam.getExam()), examSessions, exercises);
