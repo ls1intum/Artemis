@@ -115,21 +115,20 @@ public class IrisChatSessionResource {
     }
 
     /**
-     * POST api/iris/chat/sessions: Create a new Iris chat session.
+     * POST api/iris/chat/sessions: Create a new (empty) course chat session ("New Chat").
      * <p>
      * Authorization is enforced per mode in {@link IrisChatSessionService}: the entity referenced by {@code entityId}
      * is loaded based on {@code mode}, and the corresponding role check (exercise / lecture / course) is performed there.
      *
-     * @param mode     the chat mode (e.g. COURSE_CHAT, PROGRAMMING_EXERCISE_CHAT)
-     * @param entityId exerciseId for exercise modes, lectureId for LECTURE_CHAT, courseId for COURSE_CHAT
-     * @return the newly created session
+     * @param courseId the course the new session belongs to
+     * @return the newly created course session
      */
     @PostMapping("sessions")
     @EnforceAtLeastStudent
     @AllowedTools(ToolTokenType.SCORPIO)
-    public ResponseEntity<IrisChatSessionResponseDTO> createSession(@RequestParam IrisChatMode mode, @RequestParam long entityId) throws URISyntaxException {
+    public ResponseEntity<IrisChatSessionResponseDTO> createCourseSession(@RequestParam long courseId) throws URISyntaxException {
         var user = userRepository.getUserWithGroupsAndAuthorities();
-        var session = irisChatSessionService.createSession(mode, entityId, user);
+        var session = irisChatSessionService.findOrCreateEmptySession(courseId, user);
         var uriString = "/api/iris/chat/courses/" + session.getCourseId() + "/sessions/" + session.getId();
         return ResponseEntity.created(new URI(uriString)).body(IrisChatSessionResponseDTO.of(session));
     }
