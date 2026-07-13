@@ -118,8 +118,6 @@ describe('ResultHistoryDropdownComponent', () => {
             const participation: Participation = { id: 1, type: 'student' } as unknown as Participation;
             const programmingSub = { buildFailed: true, participation } as unknown as ProgrammingSubmission;
             const result = { id: 1, score: 0, submission: programmingSub } as unknown as Result;
-            fixture.componentRef.setInput('sortedHistoryResults', [result]);
-            fixture.detectChanges();
 
             expect(component.getResultFeedbackMessage(result)).toBe('artemisApp.result.progressString.buildFailed');
         });
@@ -199,8 +197,6 @@ describe('ResultHistoryDropdownComponent', () => {
             const participation: Participation = { id: 1, type: 'student' } as unknown as Participation;
             const programmingSub = { buildFailed: true, participation } as unknown as ProgrammingSubmission;
             const result = { id: 1, score: 100, submission: programmingSub } as unknown as Result;
-            fixture.componentRef.setInput('sortedHistoryResults', [result]);
-            fixture.detectChanges();
 
             expect(component.getResultFeedbackMessage(result)).toBe('artemisApp.result.progressString.buildFailed');
         });
