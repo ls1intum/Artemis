@@ -109,6 +109,7 @@ export class TumUiTooltipDirective implements OnDestroy {
         this.contentRef = this.overlayRef.attach(new ComponentPortal(TumUiTooltipContentComponent));
         this.contentRef.setInput('text', this.content());
         this.contentRef.setInput('id', this.tooltipId);
+        this.contentRef.setInput('placement', this.placement());
         this.addDescribedBy();
     }
 

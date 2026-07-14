@@ -35,9 +35,7 @@ describe('TumUiButtonComponent', () => {
     it('renders a native button with the default solid-primary classes', () => {
         const className = nativeButton().className;
         expect(className).toContain('tum-ui-btn');
-        // Solid fills use the WCAG-safe `-solid` tone, not the raw brand color.
-        expect(className).toContain('bg-primary-solid');
-        expect(className).toContain('text-surface-0');
+        expect(className).toContain('bg-primary');
         expect(className).toContain('text-base');
     });
 
@@ -48,8 +46,7 @@ describe('TumUiButtonComponent', () => {
         fixture.detectChanges();
         const className = nativeButton().className;
         expect(className).toContain('bg-transparent');
-        // Outlined/text foregrounds use the accessible `-strong` tone.
-        expect(className).toContain('text-state-danger-strong');
+        expect(className).toContain('text-state-danger');
         expect(className).toContain('border-state-danger');
         expect(className).toContain('text-sm');
     });

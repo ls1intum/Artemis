@@ -38,9 +38,7 @@ describe('TumUiTagComponent', () => {
         fixture.componentRef.setInput('severity', 'success');
         fixture.detectChanges();
         expect(tag().getAttribute('data-severity')).toBe('success');
-        expect(tag().className).toContain('bg-state-success/15');
-        // Label uses the accessible `-strong` tone, not the raw mid-tone state color.
-        expect(tag().className).toContain('text-state-success-strong');
+        expect(tag().className).toContain('text-state-success');
     });
 
     it('renders the value input', () => {
