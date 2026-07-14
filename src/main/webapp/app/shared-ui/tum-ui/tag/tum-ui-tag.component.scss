@@ -5,8 +5,8 @@
 // indistinguishable from the p-tags they replace. Secondary/contrast stay on the surface ramp (in the
 // component's class map). Keep in sync with the Artemis PrimeNG theme if the primitive ramps change.
 @mixin tag-state($var) {
-    background: color-mix(in srgb, var($var) 20%, white);
-    color: color-mix(in srgb, var($var) 60%, black);
+    background: color-mix(in srgb, var($var) 20%, var(--white));
+    color: color-mix(in srgb, var($var) 60%, var(--black));
 }
 
 :host span[data-severity='success'] {
@@ -28,7 +28,7 @@
 // Dark theme: translucent tint + light label (matches p-tag dark, e.g. success #66d7ba on --success/16%).
 @mixin tag-state-dark($var) {
     background: color-mix(in srgb, var($var) 16%, transparent);
-    color: color-mix(in srgb, var($var) 60%, white);
+    color: color-mix(in srgb, var($var) 60%, var(--white));
 }
 
 :host-context(html[prime-ng-use-dark-theme='true']) {

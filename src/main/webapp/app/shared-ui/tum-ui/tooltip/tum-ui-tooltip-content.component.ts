@@ -4,8 +4,8 @@ import { TumUiOverlayPlacement } from 'app/shared-ui/tum-ui/overlay/tum-ui-overl
 /**
  * The tooltip bubble rendered inside the CDK overlay by {@link TumUiTooltipDirective}: a small dark
  * surface with a directional caret, styled with Artemis token utilities. The caret sits on the edge
- * facing the trigger, driven by the {@link placement} the directive requested for the overlay
- * (top / bottom / left / right).
+ * facing the trigger; the directive keeps {@link placement} in sync with the overlay's actually-applied
+ * position, so it stays correct even when CDK flips the overlay to the opposite side at a viewport edge.
  */
 @Component({
     selector: 'tum-ui-tooltip-content',

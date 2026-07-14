@@ -46,6 +46,19 @@ export class TumUiOverlayService {
     }
 
     /**
+     * Derive the placement (which side of the origin the overlay actually sits on) from a resolved CDK
+     * connection pair. Callers subscribe to {@link FlexibleConnectedPositionStrategy.positionChanges} and
+     * use this to keep a directional caret/arrow pointing at the anchor after CDK flips near a viewport edge.
+     */
+    placementFromPosition(pos: ConnectedPosition): TumUiOverlayPlacement {
+        // left/right positions keep the overlay vertically centered; top/bottom keep it horizontally centered.
+        if (pos.overlayY === 'center') {
+            return pos.overlayX === 'end' ? 'left' : 'right';
+        }
+        return pos.overlayY === 'bottom' ? 'top' : 'bottom';
+    }
+
+    /**
      * Create an overlay anchored to `origin` that repositions on scroll. The caller attaches a
      * portal and is responsible for disposing the returned ref.
      */

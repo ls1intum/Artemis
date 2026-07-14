@@ -1,6 +1,7 @@
 import { ComponentRef, Directive, ElementRef, OnDestroy, inject, input } from '@angular/core';
 import { ComponentPortal } from '@angular/cdk/portal';
-import { OverlayRef } from '@angular/cdk/overlay';
+import { FlexibleConnectedPositionStrategy, OverlayRef } from '@angular/cdk/overlay';
+import { Subscription } from 'rxjs';
 import { TumUiOverlayPlacement, TumUiOverlayService } from 'app/shared-ui/tum-ui/overlay/tum-ui-overlay.service';
 import { TumUiTooltipContentComponent } from 'app/shared-ui/tum-ui/tooltip/tum-ui-tooltip-content.component';
 
@@ -34,6 +35,7 @@ export class TumUiTooltipDirective implements OnDestroy {
 
     private overlayRef?: OverlayRef;
     private contentRef?: ComponentRef<TumUiTooltipContentComponent>;
+    private positionSub?: Subscription;
     private showTimer?: ReturnType<typeof setTimeout>;
     private hideTimer?: ReturnType<typeof setTimeout>;
     private readonly tooltipId = `tum-ui-tooltip-${nextTooltipId++}`;
@@ -95,6 +97,8 @@ export class TumUiTooltipDirective implements OnDestroy {
         clearTimeout(this.showTimer);
         clearTimeout(this.hideTimer);
         this.removeDescribedBy();
+        this.positionSub?.unsubscribe();
+        this.positionSub = undefined;
         this.overlayRef?.dispose();
         this.overlayRef = undefined;
         this.contentRef = undefined;
@@ -110,6 +114,10 @@ export class TumUiTooltipDirective implements OnDestroy {
         this.contentRef.setInput('text', this.content());
         this.contentRef.setInput('id', this.tooltipId);
         this.contentRef.setInput('placement', this.placement());
+        // Keep the caret pointing at the anchor even when CDK flips the overlay to the opposite side at a
+        // viewport edge: update the caret from the actually-applied connection pair on every reposition.
+        const strategy = this.overlayRef.getConfig().positionStrategy as FlexibleConnectedPositionStrategy;
+        this.positionSub = strategy.positionChanges.subscribe((change) => this.contentRef?.setInput('placement', this.overlayService.placementFromPosition(change.connectionPair)));
         this.addDescribedBy();
     }
 
