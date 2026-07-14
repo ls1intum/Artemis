@@ -42,6 +42,8 @@ public final class WorkspaceArchive {
 
     private static final int MAX_ARCHIVE_ENTRIES = 10_000;
 
+    private static final Path ARCHIVE_ROOT = Path.of("/workspace-archive");
+
     /** Leaves room for tar headers below the relay's 32 MiB payload limit. */
     static final long MAX_FILE_BYTES = WORKSPACE_CONTENT_LIMIT_BYTES;
 
@@ -208,13 +210,18 @@ public final class WorkspaceArchive {
             if (!normalizedPrefix.isEmpty()) {
                 name = name.substring(normalizedPrefix.length());
             }
-            // No path escape: the produced map is keyed by this path and later written into a git repo, so an absolute or ..-traversing path must never reach the commit.
-            if (name.startsWith("/") || name.equals("..") || name.startsWith("../") || name.endsWith("/..") || name.contains("/../")) {
+            Path resolvedPath = ARCHIVE_ROOT.resolve(name).normalize();
+            if (!resolvedPath.startsWith(ARCHIVE_ROOT)) {
                 throw new RejectedWorkspaceEntryException("Refusing a workspace entry whose path escapes the archive root: " + entry.getName());
             }
             if (name.contains("\\")) {
                 throw new RejectedWorkspaceEntryException("Refusing a workspace entry with a non-portable repository path: " + entry.getName());
             }
+            String canonicalName = ARCHIVE_ROOT.relativize(resolvedPath).toString().replace('\\', '/');
+            if (!canonicalName.equals(name)) {
+                throw new RejectedWorkspaceEntryException("Refusing a workspace entry with a non-canonical path: " + entry.getName());
+            }
+            name = canonicalName;
             if (name.equals(".git") || name.startsWith(".git/") || name.endsWith("/.git") || name.contains("/.git/")) {
                 throw new RejectedWorkspaceEntryException("Refusing workspace Git metadata: " + entry.getName());
             }

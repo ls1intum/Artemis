@@ -170,6 +170,13 @@ class WorkspaceArchiveTest {
     }
 
     @Test
+    void readTar_rejectsNonCanonicalPathAliases() throws Exception {
+        try (TarArchiveInputStream tar = new TarArchiveInputStream(packTar(Map.of("solution/src/./Main.java", "class Main {}".getBytes(StandardCharsets.UTF_8))))) {
+            assertThatExceptionOfType(WorkspaceArchive.RejectedWorkspaceEntryException.class).isThrownBy(() -> WorkspaceArchive.readTar(tar, "solution"));
+        }
+    }
+
+    @Test
     void readTar_rejectsBackslashesThatPersistenceWouldNormalize() throws Exception {
         try (TarArchiveInputStream tar = new TarArchiveInputStream(packTar(Map.of("solution/src\\Main.java", "class Main {}".getBytes(StandardCharsets.UTF_8))))) {
             assertThatExceptionOfType(WorkspaceArchive.RejectedWorkspaceEntryException.class).isThrownBy(() -> WorkspaceArchive.readTar(tar, "solution"));
