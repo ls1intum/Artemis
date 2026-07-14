@@ -12,10 +12,10 @@ import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
 import de.tum.cit.aet.artemis.hyperion.dto.VariantGenerationRequestDTO;
 
 /**
- * The distributed job record for one variant-generation run (plan Sections 2.2 and 2.7.1).
- * Lives in a Hazelcast map owned by {@link ExerciseVariantJobService} — mutable-by-replacement: the job
- * service reads the entry, mutates it, and puts it back so updates are visible cluster-wide (this is what
- * makes background generation, reconnect, and the navbar job tray possible, Section 5.4).
+ * The distributed job record for one variant-generation run. Lives in a Hazelcast map owned by
+ * {@link ExerciseVariantJobService} — mutable-by-replacement: the job service reads the entry, mutates it, and
+ * puts it back so updates are visible cluster-wide (this is what makes background generation, reconnect, and
+ * the navbar job tray possible).
  *
  * NOTE: mutation MUST always go through {@link ExerciseVariantJobService} (single writer) so websocket
  * events and map state stay consistent.
@@ -40,18 +40,18 @@ public class VariantJob implements Serializable {
 
     private VariantJobPhase phase;
 
-    /** The phase the job was in when it failed — tray label "failed in VERIFYING" (plan Section 5.4). */
+    /** The phase the job was in when it failed — tray label "failed in VERIFYING". */
     private VariantJobPhase failedInPhase;
 
     /**
      * The failure description published with the FAILED event — persisted so the tray's "show summary"
-     * modal can still explain why the job failed after the live event is gone (plan Section 5.4).
+     * modal can still explain why the job failed after the live event is gone.
      */
     private String failureDetail;
 
     /**
      * AI-generated, instructor-facing failure summary: what state the exercise is in and which next steps
-     * fix or retry the generation (todo-d follow-up). Best-effort — null when the summary call itself failed.
+     * fix or retry the generation. Best-effort — null when the summary call itself failed.
      */
     private String instructorSummary;
 
@@ -69,7 +69,7 @@ public class VariantJob implements Serializable {
 
     private Long variantExerciseId;
 
-    /** The planned/provisioned variant title — the tray/modal "source → variant" display (todo-c). */
+    /** The planned/provisioned variant title — the tray/modal "source → variant" display. */
     private String variantExerciseTitle;
 
     private VariantGenerationRequestDTO request;
@@ -78,11 +78,12 @@ public class VariantJob implements Serializable {
 
     private Instant finishedAt;
 
-    /** Accumulated LLM tokens across planning + agent rounds (budget enforcement + thesis telemetry, plan Section 7). */
+    /** Accumulated LLM tokens across planning + agent rounds (budget enforcement + telemetry). */
     private long totalTokensUsed;
 
-    // TODO (Sonnet): Add a staleness mechanism so that after a server restart mid-job the `active` endpoint can
-    // report FAILED-stale instead of a forever-running job (plan Section 6, "Server restart mid-job" row).
+    // TODO (Sonnet): Add a staleness mechanism (e.g. a heartbeat timestamp) so that after a server restart mid-job
+    // the tray/list can mark a non-terminal job FAILED-stale instead of showing it as forever-running until the
+    // Hazelcast TTL expires. Full resume is future work.
 
     public String getJobId() {
         return jobId;

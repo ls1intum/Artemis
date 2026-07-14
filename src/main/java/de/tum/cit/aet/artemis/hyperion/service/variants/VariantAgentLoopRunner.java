@@ -24,10 +24,10 @@ import de.tum.cit.aet.artemis.hyperion.config.HyperionEnabled;
 import de.tum.cit.aet.artemis.hyperion.service.HyperionPromptTemplateService;
 
 /**
- * The single reusable Spring AI tool-calling agent loop used by the TRANSFORMING and REPAIRING phases
- * (plan Section 2.5, "Hybrid agentic core"). Written once, exercise-type-agnostic; parameterized only by
- * the type's toolset, the ChangePlan (system-prompt contract), and iteration/token budgets. ALL quality
- * investment (loop robustness, budget handling, transcript logging) lands here and benefits every type.
+ * The single reusable Spring AI tool-calling agent loop used by the TRANSFORMING and REPAIRING phases.
+ * Written once, exercise-type-agnostic; parameterized only by the type's toolset, the ChangePlan
+ * (system-prompt contract), and iteration/token budgets. ALL quality investment (loop robustness, budget
+ * handling, transcript logging) lands here and benefits every type.
  *
  * One call of {@link #runLoop} is ONE outer round: Spring AI executes the internal tool-call loop within
  * the single ChatClient call; the pipeline owns the outer transform → verify → repair iteration.
@@ -39,7 +39,7 @@ public class VariantAgentLoopRunner {
 
     private static final Logger log = LoggerFactory.getLogger(VariantAgentLoopRunner.class);
 
-    /** Pipeline id for token-usage traces of TRANSFORMING/REPAIRING rounds (plan Section 7 telemetry). */
+    /** Pipeline id for token-usage traces of TRANSFORMING/REPAIRING rounds. */
     static final String TRANSFORM_PIPELINE_ID = "exercise-variant-transform";
 
     /**
@@ -67,7 +67,7 @@ public class VariantAgentLoopRunner {
     }
 
     /**
-     * Budgets for one agent run (plan Section 2.5: iteration budget ≈ 3–5 verify cycles + token budget).
+     * Budgets for one agent run: iteration budget (≈ 3–5 verify cycles) + token budget.
      *
      * @param maxVerifyAttempts outer verify-cycle budget (enforced by the pipeline, carried here for prompt context)
      * @param tokenBudget       total token budget for the whole TRANSFORMING/REPAIRING sequence
@@ -79,16 +79,16 @@ public class VariantAgentLoopRunner {
      * Result of one agent round.
      *
      * @param finishSummary   the model's final text output for the round — becomes the TRANSFORMING/REPAIRING
-     *                            step output summary (plan Section 2.4)
+     *                            step output summary
      * @param touchedTestRepo programming only: whether the round edited the test repository — forces
-     *                            re-verification of BOTH builds (plan Section 3, build-dependency constraint)
-     * @param tokensUsed      tokens consumed in this round (telemetry, plan Section 7)
+     *                            re-verification of BOTH builds (build-dependency constraint)
+     * @param tokensUsed      tokens consumed in this round (telemetry)
      */
     public record AgentResult(String finishSummary, boolean touchedTestRepo, long tokensUsed) implements Serializable {
     }
 
     /**
-     * Runs ONE agent round with the type's toolset (plan Section 2.5, Spring AI implementation note).
+     * Runs ONE agent round with the type's toolset.
      *
      * @param plan           the ChangePlan contract, rendered into the system prompt
      * @param toolset        the per-round toolset (from {@code VariantToolsetFactory.createTools}); tools observe
@@ -97,8 +97,7 @@ public class VariantAgentLoopRunner {
      * @param budgets        iteration/token budgets
      * @param job            the running job (cancellation flag, telemetry attribution)
      * @param repairFeedback null on the first round; the previous round's VerificationReport on repair rounds —
-     *                           injected verbatim as the repair signal ("closed-loop repair on real signals",
-     *                           plan Section 7)
+     *                           injected verbatim as the repair signal (closed-loop repair on real signals)
      * @param promptTemplate resource path of the type's transform system prompt
      * @return the round result
      */
@@ -136,7 +135,7 @@ public class VariantAgentLoopRunner {
      * the same toolset; edits already made persist in the variant, and the fresh round reads the current state.
      *
      * Spring AI executes the tool-call loop internally within this single call; tool implementations log the
-     * per-call transcript (plan Section 2.5, point 5) and observe the cancel flag between calls.
+     * per-call transcript and observe the cancel flag between calls.
      * tools(Object...) is the unified non-deprecated API in Spring AI 2.0 and accepts ToolCallback instances.
      */
     private ChatResponse callAgent(VariantJob job, String systemPrompt, String userMessage, List<ToolCallback> tools) {
@@ -163,8 +162,7 @@ public class VariantAgentLoopRunner {
      * Reads the total token count from the response metadata; 0 when the provider reported no usage.
      * NOTE: with the internal Spring AI tool-execution loop, the returned metadata reflects the final call of the
      * round — a lower bound, not the exact sum over all internal tool-call iterations. Good enough for budget
-     * enforcement and the thesis telemetry (plan Section 7); exact per-iteration accounting would require
-     * disabling internal tool execution.
+     * enforcement and telemetry; exact per-iteration accounting would require disabling internal tool execution.
      */
     private static long extractTotalTokens(@Nullable ChatResponse chatResponse) {
         if (chatResponse == null || chatResponse.getMetadata() == null || chatResponse.getMetadata().getUsage() == null) {
@@ -188,7 +186,7 @@ public class VariantAgentLoopRunner {
     }
 
     private String repairUserMessage(VerificationReport report) {
-        String findings = report.findings().stream().map(finding -> "[" + finding.gate() + "] " + finding.message()).collect(Collectors.joining("\n"));
+        String findings = report.toAgentFeedback();
         return "Verification failed with the following findings. Fix exactly these issues using your tools, keeping all invariants intact, "
                 + "then call finish with a short summary. Be efficient: you have a limited tool-call budget for this round — "
                 + "fix each finding once, validate once, then call finish.\n\nFindings:\n" + findings;

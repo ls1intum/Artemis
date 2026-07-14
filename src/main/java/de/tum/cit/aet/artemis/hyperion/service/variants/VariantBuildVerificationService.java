@@ -34,12 +34,12 @@ import de.tum.cit.aet.artemis.programming.repository.TemplateProgrammingExercise
  * Build-verification helper for exercise-variant generation: polls the build result for a commit and
  * evaluates whether the repository-type-specific target was reached (solution must pass 100%, template must
  * fail with tests present, tests build must be successful) — exactly the deterministic gate the variant
- * verifier needs (variants plan Section 2.6, step 1).
+ * verifier needs.
  *
  * NOTE: this deliberately MIRRORS the private polling logic in {@code HyperionCodeGenerationExecutionService}
- * instead of extracting it (deviation from the plan's Section 3 refactor note): the codegen service is
- * actively developed by other students and must not be modified. Keep the target-result semantics here in
- * sync with {@code hasReachedTargetResult} there if they ever change.
+ * instead of extracting it: the codegen service is actively developed by other students and must not be
+ * modified. Keep the target-result semantics here in sync with {@code hasReachedTargetResult} there if they
+ * ever change.
  */
 @Service
 @Lazy
@@ -127,8 +127,8 @@ public class VariantBuildVerificationService {
      * @param commitHash     the commit the build was triggered for (log context only)
      * @param repositoryType which repository the build belongs to (TESTS builds use the solution participation)
      * @param notBefore      only results completed after this instant are accepted — pass the trigger time,
-     *                           otherwise a stale pre-trigger result would be returned immediately (variants plan
-     *                           Section 3, build-dependency constraint)
+     *                           otherwise a stale pre-trigger result would be returned immediately
+     *                           (build-dependency constraint)
      * @return the outcome; {@link BuildResultState#SUCCESS} iff the target result was reached
      * @throws InterruptedException when the polling thread is interrupted
      */
@@ -220,8 +220,8 @@ public class VariantBuildVerificationService {
 
     /**
      * Renders a build result as the structured failure description fed back into the agent loop: build logs
-     * (compiler output) plus a per-test PASSED/FAILED summary with assertion messages ("closed-loop repair on real
-     * signals", variants plan Sections 2.5 and 7).
+     * (compiler output) plus a per-test PASSED/FAILED summary with assertion messages (closed-loop repair on real
+     * signals).
      *
      * @param result the build result, or {@code null} when the build produced none
      * @return a human-readable description safe to inject into a prompt

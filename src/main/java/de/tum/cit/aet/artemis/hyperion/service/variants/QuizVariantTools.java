@@ -30,17 +30,17 @@ import de.tum.cit.aet.artemis.quiz.repository.QuizExerciseRepository;
 import de.tum.cit.aet.artemis.quiz.service.QuizExerciseService;
 
 /**
- * The quiz-exercise toolset for one agent round (plan Section 2.5 toolset table + Section 4 TRANSFORMING row).
- * One instance is created per round by {@link QuizVariantAdapters#createTools}; it is NOT a Spring bean.
+ * The quiz-exercise toolset for one agent round. One instance is created per round by
+ * {@link QuizVariantAdapters#createTools}; it is NOT a Spring bean.
  *
  * Questions are exchanged as the domain's own polymorphic JSON (the same format the quiz editor REST API
  * uses, discriminated by {@code "type": "multiple-choice" | "drag-and-drop" | "short-answer"}), so edits are
  * schema-checked simply by deserializing into the domain model. Validation errors are returned TO THE MODEL
- * as the tool result (plan Section 6 row 2). DnD background/item images are carried over unchanged — image
- * paths must not be added or altered (plan Section 1, non-goals).
+ * as the tool result. DnD background/item images are carried over unchanged — image paths must not be added
+ * or altered.
  *
  * Cancellation: once the cancel flag is set, every tool short-circuits with an instruction to stop; the
- * pipeline performs the actual abort at the next round boundary (plan Section 5.2).
+ * pipeline performs the actual abort at the next round boundary.
  */
 class QuizVariantTools implements VariantToolset {
 
@@ -141,7 +141,7 @@ class QuizVariantTools implements VariantToolset {
                 updated = objectMapper.readValue(questionJson, QuizQuestion.class);
             }
             catch (Exception parseError) {
-                // Schema violations go back to the model as the tool result (plan Section 6, row 2).
+                // Schema violations go back to the model as the tool result.
                 return "Error: the question JSON is invalid: " + parseError.getMessage() + " Use exactly the format getQuestions returns, including the \"type\" field.";
             }
             if (!existing.getClass().equals(updated.getClass())) {
@@ -212,7 +212,7 @@ class QuizVariantTools implements VariantToolset {
 
     /**
      * Renders the same per-question validity report the verifier uses, so the agent can self-check with
-     * exactly the signal it will be gated on (plan Section 4, TRANSFORMING/VERIFYING rows).
+     * exactly the signal it will be gated on.
      */
     static String renderValidationReport(QuizExercise quiz) {
         StringBuilder report = new StringBuilder();
@@ -232,8 +232,8 @@ class QuizVariantTools implements VariantToolset {
     }
 
     /**
-     * Enforces the image non-goal (plan Section 1): DnD background and drag-item picture paths must be exactly
-     * the carried-over ones — no additions, removals, or changes.
+     * Enforces the image non-goal: DnD background and drag-item picture paths must be exactly the carried-over
+     * ones — no additions, removals, or changes.
      */
     private static String checkImagesUnchanged(QuizQuestion existing, QuizQuestion updated) {
         if (!(existing instanceof DragAndDropQuestion existingDnd) || !(updated instanceof DragAndDropQuestion updatedDnd)) {

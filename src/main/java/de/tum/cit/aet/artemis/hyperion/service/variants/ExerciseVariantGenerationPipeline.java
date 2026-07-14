@@ -28,9 +28,9 @@ import de.tum.cit.aet.artemis.hyperion.config.HyperionEnabled;
 import de.tum.cit.aet.artemis.hyperion.service.HyperionPromptTemplateService;
 
 /**
- * Drives one variant job through the explicit phase state machine (plan Sections 2.1, 2.2, 2.7.2).
+ * Drives one variant job through the explicit phase state machine.
  * Type-agnostic: everything type-specific is resolved via {@link VariantTypeRegistry} into the five
- * capability adapters (Section 2.3).
+ * capability adapters.
  */
 @Service
 @Lazy
@@ -39,26 +39,26 @@ public class ExerciseVariantGenerationPipeline {
 
     private static final Logger log = LoggerFactory.getLogger(ExerciseVariantGenerationPipeline.class);
 
-    /** Verify-iteration budget: 1 initial transform + up to (N-1) repair rounds (plan Section 2.5, ≈3–5). */
+    /** Verify-iteration budget: 1 initial transform + up to (N-1) repair rounds (≈3–5). */
     private static final int MAX_VERIFY_ATTEMPTS = 3;
 
-    /** Re-prompts for malformed planner output before FAILED (plan Section 6, row 2). */
+    /** Re-prompts for malformed planner output before FAILED. */
     private static final int MAX_PLANNING_RETRIES = 2;
 
-    /** Token budget for the TRANSFORMING/REPAIRING sequence, tracked via LLMTokenUsageService (plan Sections 2.5 and 7). */
+    /** Token budget for the TRANSFORMING/REPAIRING sequence, tracked via LLMTokenUsageService. */
     private static final long TOKEN_BUDGET = 500_000;
 
-    /** Pipeline id for token-usage traces of the PLANNING call (plan Section 7 telemetry). */
+    /** Pipeline id for token-usage traces of the PLANNING call. */
     private static final String PLAN_PIPELINE_ID = "exercise-variant-plan";
 
-    /** Pipeline id for token-usage traces of the failure-summary call (todo-d follow-up). */
+    /** Pipeline id for token-usage traces of the failure-summary call. */
     private static final String FAILURE_SUMMARY_PIPELINE_ID = "exercise-variant-failure-summary";
 
-    /** Internal control-flow signal for cooperative cancellation (plan Section 5.2). */
+    /** Internal control-flow signal for cooperative cancellation. */
     private static class JobCancelledException extends RuntimeException {
     }
 
-    /** Internal signal for hard phase failures that should end the job as FAILED (plan Section 6). */
+    /** Internal signal for hard phase failures that should end the job as FAILED. */
     private static class PhaseFailedException extends RuntimeException {
 
         PhaseFailedException(String message, Throwable cause) {
@@ -104,7 +104,7 @@ public class ExerciseVariantGenerationPipeline {
     }
 
     /**
-     * Runs the whole pipeline for one job (state diagram in plan Section 2.7.2). Called only from
+     * Runs the whole pipeline for one job Called only from
      * {@code ExerciseVariantTaskService.runJobAsync} (@Async). All terminal transitions
      * (COMPLETED / DRAFT_WITH_WARNINGS / FAILED / CANCELLED) happen in here.
      *
@@ -147,7 +147,7 @@ public class ExerciseVariantGenerationPipeline {
             VerificationReport report = transformAndVerify(job, adapters, variant, plan);
 
             // --- FINALIZING --------------------------------------------------------------------------------
-            // Cannot be cancelled from here on (plan Section 5.2) — the last cancel window closed above.
+            // Cannot be cancelled from here on — the last cancel window closed above.
             jobService.updatePhase(jobId, VariantJobPhase.FINALIZING);
             List<String> warnings = new ArrayList<>();
             if (!report.passed()) {
@@ -157,7 +157,7 @@ public class ExerciseVariantGenerationPipeline {
                 adapters.finalizeVariant(variant, job);
             }
             catch (Exception e) {
-                // From FINALIZING on, the generated variant is never discarded (plan Sections 1 and 6: the job is
+                // From FINALIZING on, the generated variant is never discarded (the job is
                 // not even cancellable anymore). A placement failure (e.g. the target group was deleted mid-job)
                 // downgrades the result to a flagged draft instead of deleting verified LLM work.
                 log.warn("Finalizing variant generation job {} failed; keeping the variant as a draft", jobId, e);
@@ -173,7 +173,7 @@ public class ExerciseVariantGenerationPipeline {
             log.info("Variant generation job {} cancelled (exercise {})", jobId, job.getSourceExerciseId());
         }
         catch (PhaseFailedException failure) {
-            // Hard-failure policy (plan Section 6): delete any half-created exercise, then FAILED. The
+            // Hard-failure policy: delete any half-created exercise, then FAILED. The
             // instructor summary is generated BEFORE the terminal transition so the FAILED event's detail
             // fetch already sees it (the modal loads the job detail as soon as the event arrives).
             cleanupProvisionedVariant(variant, jobId);
@@ -184,9 +184,9 @@ public class ExerciseVariantGenerationPipeline {
     }
 
     /**
-     * The bounded transform → verify → repair loop (plan Sections 2.5 and 2.7.2). Returns the last
+     * The bounded transform → verify → repair loop. Returns the last
      * verification report; a non-passing report after budget exhaustion leads to DRAFT_WITH_WARNINGS —
-     * the variant is kept as a flagged draft, never silently deleted (plan Sections 1 and 2.6).
+     * the variant is kept as a flagged draft, never silently deleted.
      */
     private VerificationReport transformAndVerify(VariantJob job, VariantTypeAdapters adapters, Exercise variant, ChangePlan plan) {
         String jobId = job.getJobId();
@@ -202,7 +202,7 @@ public class ExerciseVariantGenerationPipeline {
             jobService.recordAttempt(jobId, attempt, MAX_VERIFY_ATTEMPTS, attempt == 1 ? "Applying the change plan" : "Repairing verification findings");
 
             VariantToolset toolset = adapters.createTools(variant, job);
-            // Repair rounds receive the previous round's findings as the closed-loop repair signal (plan Section 2.5).
+            // Repair rounds receive the previous round's findings as the closed-loop repair signal.
             VerificationReport repairFeedback = report;
             VariantAgentLoopRunner.AgentResult agentResult = runPhase(agentPhase, () -> agentLoopRunner.runLoop(plan, toolset, budgets, job, repairFeedback, transformTemplate));
             tokensUsed += agentResult.tokensUsed();
@@ -221,12 +221,12 @@ public class ExerciseVariantGenerationPipeline {
             if (report.passed()) {
                 return report;
             }
-            // Token budget for the TRANSFORMING/REPAIRING sequence (plan Sections 2.5 and 6): when exhausted with
-            // red gates, stop repairing — the job ends as DRAFT_WITH_WARNINGS with the budget noted (Section 2.6).
+            // Token budget for the TRANSFORMING/REPAIRING sequence: when exhausted with
+            // red gates, stop repairing — the job ends as DRAFT_WITH_WARNINGS with the budget noted.
             if (tokensUsed > TOKEN_BUDGET && attempt < MAX_VERIFY_ATTEMPTS) {
                 log.info("Variant generation job {} exhausted the token budget ({} > {}) after attempt {}/{}", jobId, tokensUsed, TOKEN_BUDGET, attempt, MAX_VERIFY_ATTEMPTS);
                 List<VerificationReport.VerificationFinding> findings = new ArrayList<>(report.findings());
-                findings.add(new VerificationReport.VerificationFinding("TOKEN_BUDGET",
+                findings.add(new VerificationReport.VerificationFinding(VerificationReport.VerificationGate.TOKEN_BUDGET,
                         "The token budget was exhausted before all findings could be repaired (" + tokensUsed + " tokens used)."));
                 return new VerificationReport(false, List.copyOf(findings));
             }
@@ -235,8 +235,8 @@ public class ExerciseVariantGenerationPipeline {
     }
 
     /**
-     * PLANNING: one structured LLM call producing the {@link ChangePlan} (plan Section 2.4), with the
-     * malformed-output policy of plan Section 6 row 2: the conversion error is fed back to the model, at most
+     * PLANNING: one structured LLM call producing the {@link ChangePlan}, with the
+     * malformed-output policy: the conversion error is fed back to the model, at most
      * {@value MAX_PLANNING_RETRIES} re-prompts, then the job fails.
      */
     private ChangePlan planChanges(VariantJob job, String sourceContext) {
@@ -270,7 +270,7 @@ public class ExerciseVariantGenerationPipeline {
     }
 
     /**
-     * One best-effort LLM call producing the instructor-facing failure summary (todo-d follow-up): what
+     * One best-effort LLM call producing the instructor-facing failure summary: what
      * state the exercise landed in (source untouched, clone deleted) and how to fix or retry. Grounded in
      * the recorded step outputs and the change plan. Never fails the failure handling — returns null when
      * the chat client is missing or the call itself errors.
@@ -370,7 +370,7 @@ public class ExerciseVariantGenerationPipeline {
 
     /**
      * Cooperative cancellation check — called at every phase boundary; the agent loop additionally checks
-     * between tool rounds (plan Section 5.2: never mid-LLM-call or mid-build).
+     * between tool rounds (never mid-LLM-call or mid-build).
      */
     private void checkCancelled(String jobId) {
         if (jobService.isCancelRequested(jobId)) {
@@ -380,7 +380,7 @@ public class ExerciseVariantGenerationPipeline {
 
     /**
      * Deletes a provisioned half-exercise via the existing deletion service — repos and build plans are
-     * cleaned up on the same path as regular exercise deletion (plan Section 6, hard-failure and cancel rows).
+     * cleaned up on the same path as regular exercise deletion (hard-failure and cancel paths).
      */
     private void cleanupProvisionedVariant(@Nullable Exercise variant, String jobId) {
         if (variant == null || variant.getId() == null) {
@@ -428,9 +428,7 @@ public class ExerciseVariantGenerationPipeline {
         if (report.passed()) {
             return "All verification gates passed.";
         }
-        StringBuilder builder = new StringBuilder();
-        report.findings().forEach(finding -> builder.append("[").append(finding.gate()).append("] ").append(finding.message()).append('\n'));
-        return truncate(builder.toString());
+        return truncate(report.toAgentFeedback());
     }
 
     /**

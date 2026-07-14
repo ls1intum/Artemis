@@ -37,8 +37,8 @@ import de.tum.cit.aet.artemis.quiz.service.QuizExerciseImportService;
 import de.tum.cit.aet.artemis.quiz.service.QuizExerciseService;
 
 /**
- * Capability adapters for quiz-exercise variants (plan Sections 2.7.1 and 4, Student B focus).
- * Simpler than programming — no repos, no CI; validation is synchronous and cheap, so agent iterations are fast.
+ * Capability adapters for quiz-exercise variants. Simpler than programming — no repos, no CI; validation is
+ * synchronous and cheap, so agent iterations are fast.
  */
 @Service
 @Lazy
@@ -47,7 +47,7 @@ public class QuizVariantAdapters implements VariantTypeAdapters {
 
     private static final Logger log = LoggerFactory.getLogger(QuizVariantAdapters.class);
 
-    /** Pipeline id for token-usage traces of the critique soft gate (plan Section 7 telemetry). */
+    /** Pipeline id for token-usage traces of the critique soft gate. */
     private static final String CRITIQUE_PIPELINE_ID = "exercise-variant-critique";
 
     private final QuizExerciseRepository quizExerciseRepository;
@@ -94,7 +94,7 @@ public class QuizVariantAdapters implements VariantTypeAdapters {
     @Override
     public String renderContext(Exercise source) {
         // Serialize the quiz in the editor's own JSON format (questions, options, mappings, scoring types) —
-        // deterministic and identical to what the updateQuestion tool exchanges (plan Section 4, ANALYZING row).
+        // deterministic and identical to what the updateQuestion tool exchanges.
         // Image binaries are never included; DnD questions reference their images by file path only.
         QuizExercise quiz = quizExerciseRepository.findByIdWithQuestionsElseThrow(source.getId());
         StringBuilder context = new StringBuilder();
@@ -122,7 +122,7 @@ public class QuizVariantAdapters implements VariantTypeAdapters {
             throw new IllegalStateException("Cannot provision a variant without a change plan");
         }
         // Same eager graph as the REST import path — the import service deep-copies questions (incl. DnD images
-        // via copyDragItemFile), mappings, and batches from this instance (plan Section 4, PROVISIONING row).
+        // via copyDragItemFile), mappings, and batches from this instance.
         QuizExercise original = quizExerciseRepository.findWithEagerQuestionsAndStatisticsAndCompetenciesAndBatchesAndGradingCriteriaById(source.getId())
                 .orElseThrow(() -> new EntityNotFoundException("QuizExercise", source.getId()));
         // The detached instance doubles as the "imported exercise carrying the new values": only the fields the
@@ -170,23 +170,25 @@ public class QuizVariantAdapters implements VariantTypeAdapters {
         QuizExercise quiz = quizExerciseRepository.findByIdWithQuestionsElseThrow(variant.getId());
         List<VerificationReport.VerificationFinding> findings = new ArrayList<>();
 
-        // Gate 2 (plan Section 2.6): structural validity — every question valid (correct mappings, ≥1 correct MC
+        // Gate 2: structural validity — every question valid (correct mappings, ≥1 correct MC
         // option, valid SA spots/solutions), quiz-level title/duration/question checks.
         List<QuizQuestion> questions = quiz.getQuizQuestions();
         for (int i = 0; i < questions.size(); i++) {
             QuizQuestion question = questions.get(i);
             if (question == null) {
                 // Gap in the @OrderColumn list — a question row lost its exercise FK. Must be a finding, not an NPE.
-                findings.add(new VerificationReport.VerificationFinding("QUIZ_VALIDITY", "Question " + i + " is missing — the question list has a gap at this position."));
+                findings.add(new VerificationReport.VerificationFinding(VerificationReport.VerificationGate.QUIZ_VALIDITY,
+                        "Question " + i + " is missing — the question list has a gap at this position."));
                 continue;
             }
             if (!question.isValid()) {
-                findings.add(new VerificationReport.VerificationFinding("QUIZ_VALIDITY", "Question " + i + " (" + question.getClass().getSimpleName() + ", \"" + question.getTitle()
-                        + "\") is invalid. " + QuizVariantTools.renderValidationReport(quiz)));
+                findings.add(new VerificationReport.VerificationFinding(VerificationReport.VerificationGate.QUIZ_VALIDITY, "Question " + i + " ("
+                        + question.getClass().getSimpleName() + ", \"" + question.getTitle() + "\") is invalid. " + QuizVariantTools.renderValidationReport(quiz)));
             }
         }
         if (findings.isEmpty() && !quiz.isValid()) {
-            findings.add(new VerificationReport.VerificationFinding("QUIZ_VALIDITY", "The quiz is invalid at the exercise level (title, duration, or question list)."));
+            findings.add(new VerificationReport.VerificationFinding(VerificationReport.VerificationGate.QUIZ_VALIDITY,
+                    "The quiz is invalid at the exercise level (title, duration, or question list)."));
         }
 
         // DnD file references must resolve (images are carried over by the import, so all paths must exist).
@@ -194,10 +196,10 @@ public class QuizVariantAdapters implements VariantTypeAdapters {
             quizExerciseService.validateQuizExerciseFiles(quiz, List.of());
         }
         catch (Exception e) {
-            findings.add(new VerificationReport.VerificationFinding("QUIZ_FILES", "Drag-and-drop file validation failed: " + e.getMessage()));
+            findings.add(new VerificationReport.VerificationFinding(VerificationReport.VerificationGate.QUIZ_FILES, "Drag-and-drop file validation failed: " + e.getMessage()));
         }
 
-        // Soft gate (plan Sections 2.6 step 3 and 4, VERIFYING row): LLM self-critique against the ChangePlan —
+        // Soft gate: LLM self-critique against the ChangePlan —
         // plan faithfulness, invariants, distractor plausibility. Runs ONLY when the deterministic gates above
         // passed (they are authoritative); critique errors never fail verification on their own.
         if (findings.isEmpty()) {
@@ -226,7 +228,7 @@ public class QuizVariantAdapters implements VariantTypeAdapters {
                 return List.of();
             }
             return report.findings().stream().filter(finding -> finding != null && !finding.isBlank())
-                    .map(finding -> new VerificationReport.VerificationFinding("QUIZ_CRITIQUE", finding)).toList();
+                    .map(finding -> new VerificationReport.VerificationFinding(VerificationReport.VerificationGate.QUIZ_CRITIQUE, finding)).toList();
         }
         catch (Exception e) {
             // The soft gate must never block a structurally valid variant on infrastructure/parsing errors.
@@ -235,7 +237,7 @@ public class QuizVariantAdapters implements VariantTypeAdapters {
         }
     }
 
-    /** Token accounting for the critique pass (plan Section 7 telemetry) — same wiring as the pipeline's calls. */
+    /** Token accounting for the critique pass — same wiring as the pipeline's calls. */
     private void trackCritiqueTokenUsage(QuizExercise quiz, VariantJob job, ChatResponse chatResponse) {
         Long userId = userRepository.findOneByLogin(job.getInitiatorLogin()).map(User::getId).orElse(null);
         llmTokenUsageService.trackChatResponseTokenUsage(chatResponse, LLMServiceType.HYPERION, CRITIQUE_PIPELINE_ID,
@@ -257,7 +259,7 @@ public class QuizVariantAdapters implements VariantTypeAdapters {
 
     @Override
     public void finalizeVariant(Exercise variant, VariantJob job) {
-        // Same shared placement logic as programming (plan Section 4, FINALIZING row: "same as programming").
+        // Same shared placement logic as programming.
         variantPlacementService.place(variant, job.getSourceExerciseId(), job.getRequest());
     }
 }

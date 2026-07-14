@@ -15,9 +15,9 @@ import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionEnabled;
 
 /**
- * Resolves the capability-adapter bundle for an exercise type (plan Section 2.3) — the standard Spring
- * idiom: inject the list of all {@link VariantTypeAdapters} beans, index by supported type. Adding a new
- * exercise type (plan Section 8) means adding one bean; nothing here changes.
+ * Resolves the capability-adapter bundle for an exercise type — the standard Spring idiom: inject the list of
+ * all {@link VariantTypeAdapters} beans, index by supported type. Adding a new exercise type means adding one
+ * bean; nothing here changes.
  */
 @Service
 @Lazy
@@ -61,7 +61,7 @@ public class VariantTypeRegistry {
      *
      * @param exerciseType the source exercise's type
      * @return the adapter bundle
-     * @throws BadRequestAlertException for unsupported types (translatable key, plan Section 5.1)
+     * @throws BadRequestAlertException for unsupported types (translatable key)
      */
     public VariantTypeAdapters resolve(ExerciseType exerciseType) {
         VariantTypeAdapters adapters = adaptersByType.get(exerciseType);

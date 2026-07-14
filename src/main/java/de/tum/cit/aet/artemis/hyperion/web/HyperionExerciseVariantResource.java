@@ -36,8 +36,8 @@ import de.tum.cit.aet.artemis.hyperion.service.variants.VariantJob;
 import de.tum.cit.aet.artemis.hyperion.service.variants.VariantTypeRegistry;
 
 /**
- * REST controller for AI exercise-variant generation — ONE endpoint set for all exercise types
- * (plan Section 5.1); the exercise type is read from the source exercise server-side and the
+ * REST controller for AI exercise-variant generation — ONE endpoint set for all exercise types;
+ * the exercise type is read from the source exercise server-side and the
  * {@link VariantTypeRegistry} resolves the adapters.
  */
 @Conditional(HyperionEnabled.class)
@@ -70,7 +70,7 @@ public class HyperionExerciseVariantResource {
     }
 
     /**
-     * POST exercises/{exerciseId}/generate-variant : start a variant-generation job (plan Section 5.1).
+     * POST exercises/{exerciseId}/generate-variant : start a variant-generation job.
      * Several jobs may run for the same exercise simultaneously — an instructor generating three variants
      * must not have to wait for each one to finish.
      *
@@ -92,8 +92,8 @@ public class HyperionExerciseVariantResource {
     }
 
     /**
-     * GET variant-jobs : the current user's jobs (running + retained-finished) for the navbar tray
-     * (plan Sections 5.1 and 5.4). Per-user scoping is enforced in the service.
+     * GET variant-jobs : the current user's jobs (running + retained-finished) for the navbar tray.
+     * Per-user scoping is enforced in the service.
      *
      * @return 200 with the job list
      */
@@ -106,7 +106,7 @@ public class HyperionExerciseVariantResource {
 
     /**
      * GET variant-jobs/{jobId} : full job detail incl. per-phase step outputs for reopening the modal in
-     * monitor mode (plan Sections 5.1 and 5.4). Unknown, expired, and foreign jobs are all 404 so job ids
+     * monitor mode. Unknown, expired, and foreign jobs are all 404 so job ids
      * cannot be probed.
      *
      * @param jobId the job id
@@ -120,7 +120,7 @@ public class HyperionExerciseVariantResource {
     }
 
     /**
-     * DELETE variant-jobs/{jobId} : cooperative cancel (plan Section 5.2) — sets the distributed flag; the
+     * DELETE variant-jobs/{jobId} : cooperative cancel — sets the distributed flag; the
      * pipeline observes it at the next phase/agent-round boundary and cleans up the provisioned clone.
      *
      * @param jobId the job id
@@ -150,7 +150,7 @@ public class HyperionExerciseVariantResource {
             throw new BadRequestAlertException("A placement choice is required", ENTITY_NAME, "missingPlacement");
         }
         if (exercise.isExamExercise()) {
-            // Exam exercises have exactly one placement: the source's exam exercise group (plan Section 5.5).
+            // Exam exercises have exactly one placement: the source's exam exercise group.
             if (placement.type() != VariantPlacementDTO.PlacementType.SAME_EXAM_GROUP) {
                 throw new BadRequestAlertException("Exam variants are always placed in the source's exam exercise group", ENTITY_NAME, "invalidExamPlacement");
             }

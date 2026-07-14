@@ -11,13 +11,13 @@ import de.tum.cit.aet.artemis.hyperion.service.variants.VariantJobPhase;
 
 /**
  * Full job view for reopening the generation modal in monitor mode,
- * GET /api/hyperion/variant-jobs/{jobId} (plan Sections 5.1, 5.4: "modal = full inspection").
+ * GET /api/hyperion/variant-jobs/{jobId} (the modal shows the full inspection view).
  *
  * @param job         the summary view
- * @param stepOutputs per-phase outputs backing the expandable step panels (plan Section 2.4): rendered plan,
+ * @param stepOutputs per-phase outputs backing the expandable step panels: rendered plan,
  *                        provisioned exercise id, per-attempt transform summaries and diffs-of-record,
  *                        verification reports
- * @param request     the original generation request — the modal's "what is being adapted" chips (todo-c)
+ * @param request     the original generation request — the modal's "what is being adapted" chips
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record VariantJobDetailDTO(VariantJobDTO job, Map<VariantJobPhase, StepOutputDTO> stepOutputs, VariantGenerationRequestDTO request) implements Serializable {

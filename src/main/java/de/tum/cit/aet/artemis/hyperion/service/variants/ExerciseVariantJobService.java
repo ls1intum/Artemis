@@ -27,11 +27,11 @@ import de.tum.cit.aet.artemis.hyperion.dto.VariantGenerationRequestDTO;
 import de.tum.cit.aet.artemis.hyperion.service.websocket.HyperionWebsocketService;
 
 /**
- * Hazelcast-backed job store for variant generation — mirrors {@code HyperionCodeGenerationJobService}
- * (plan Section 5.2), generalized: the job record is a rich {@link VariantJob} (phase, ChangePlan, step
- * outputs) and finished jobs are RETAINED under TTL for the navbar tray instead of being removed
- * (Section 5.2, "Job retention for the tray"). There is deliberately NO per-exercise dedup: instructors
- * may generate several variants of the same exercise simultaneously; each POST creates an independent job.
+ * Hazelcast-backed job store for variant generation — mirrors {@code HyperionCodeGenerationJobService},
+ * generalized: the job record is a rich {@link VariantJob} (phase, ChangePlan, step outputs) and finished
+ * jobs are RETAINED under TTL for the navbar tray instead of being removed. There is deliberately NO
+ * per-exercise dedup: instructors may generate several variants of the same exercise simultaneously; each
+ * POST creates an independent job.
  *
  * This service is the single writer to job records AND the single publisher of the per-job websocket
  * topic, so map state and client-visible events cannot diverge.
@@ -47,7 +47,7 @@ public class ExerciseVariantJobService {
 
     private static final String TOPIC_SUFFIX_PREFIX = "variant-generation/jobs/";
 
-    // Finished jobs stay listable/deep-linkable in the tray for a day (plan Section 5.2).
+    // Finished jobs stay listable/deep-linkable in the tray for a day.
     private static final int JOB_TTL_SECONDS = 24 * 3600;
 
     private final HazelcastInstance hazelcastInstance;
@@ -72,7 +72,7 @@ public class ExerciseVariantJobService {
     }
 
     /**
-     * Creates the job record (plan Sections 5.1/5.2). Several jobs may run for the same exercise at the
+     * Creates the job record. Several jobs may run for the same exercise at the
      * same time — parallel variant generation is an explicit requirement, so there is no dedup here.
      *
      * @param user     initiating user
@@ -86,7 +86,7 @@ public class ExerciseVariantJobService {
         job.setJobId(jobId);
         job.setSourceExerciseId(exercise.getId());
         try {
-            // Resolved via the exam's course for exam exercises; the tray deep link needs it (plan Section 5.4).
+            // Resolved via the exam's course for exam exercises; the tray deep link needs it.
             job.setCourseId(exercise.getCourseViaExerciseGroupOrCourseMember() != null ? exercise.getCourseViaExerciseGroupOrCourseMember().getId() : null);
         }
         catch (RuntimeException ignored) {
@@ -103,7 +103,7 @@ public class ExerciseVariantJobService {
     }
 
     /**
-     * Returns ALL jobs (running + retained-finished) of the user for the navbar tray (plan Section 5.4):
+     * Returns ALL jobs (running + retained-finished) of the user for the navbar tray:
      * running first, then finished by finish time descending.
      *
      * @param login the user's login
@@ -116,7 +116,7 @@ public class ExerciseVariantJobService {
     }
 
     /**
-     * Returns the job by id if it belongs to the user — backs GET /variant-jobs/{jobId} (plan Section 5.4).
+     * Returns the job by id if it belongs to the user — backs GET /variant-jobs/{jobId}.
      * Foreign and unknown jobs are indistinguishable (both empty) so job ids cannot be probed.
      *
      * @param jobId the job id
@@ -132,7 +132,7 @@ public class ExerciseVariantJobService {
     }
 
     /**
-     * Cooperative cancel (plan Section 5.2): flips the distributed {@code cancelRequested} flag; the pipeline
+     * Cooperative cancel: flips the distributed {@code cancelRequested} flag; the pipeline
      * observes it at phase transitions / between agent rounds and performs the cleanup, regardless of which
      * node runs the job.
      *
@@ -150,7 +150,7 @@ public class ExerciseVariantJobService {
 
     /**
      * Reads the distributed cancel flag — called by the pipeline at every phase boundary and between agent
-     * rounds (plan Section 5.2).
+     * rounds.
      *
      * @param jobId the job id
      * @return true when cancellation was requested
@@ -161,7 +161,7 @@ public class ExerciseVariantJobService {
     }
 
     // --- Single-writer mutation API used by the pipeline; each method updates the record and publishes the
-    // --- matching websocket event (plan Section 5.2).
+    // --- matching websocket event.
 
     /**
      * Transitions the job to a new phase and publishes PHASE_CHANGED.
@@ -175,7 +175,7 @@ public class ExerciseVariantJobService {
     }
 
     /**
-     * Records a repair attempt and publishes ATTEMPT (rendered as "attempt 2/3", plan Section 5.2).
+     * Records a repair attempt and publishes ATTEMPT (rendered as "attempt 2/3").
      *
      * @param jobId       the job id
      * @param attempt     current attempt (1-based)
@@ -191,7 +191,7 @@ public class ExerciseVariantJobService {
     }
 
     /**
-     * Publishes a PROGRESS sub-label without changing job state ("Validating quiz questions", plan Section 5.2).
+     * Publishes a PROGRESS sub-label without changing job state ("Validating quiz questions").
      *
      * @param jobId  the job id
      * @param detail the progress detail
@@ -204,7 +204,7 @@ public class ExerciseVariantJobService {
     }
 
     /**
-     * Stores a phase's step output on the job and publishes STEP_OUTPUT (expandable panels, plan Section 2.4).
+     * Stores a phase's step output on the job and publishes STEP_OUTPUT (expandable panels).
      *
      * @param jobId  the job id
      * @param phase  the phase the output belongs to
@@ -225,14 +225,14 @@ public class ExerciseVariantJobService {
     public void recordChangePlan(String jobId, ChangePlan plan) {
         mutate(jobId, mutableJob -> {
             mutableJob.setChangePlan(plan);
-            // The planned title doubles as the "source → variant" display in the tray/modal (todo-c) — it is
-            // known long before the exercise is provisioned.
+            // The planned title doubles as the "source → variant" display in the tray/modal — it is known long
+            // before the exercise is provisioned.
             mutableJob.setVariantExerciseTitle(plan.variantTitle());
         });
     }
 
     /**
-     * Accumulates LLM token usage on the job (budget enforcement + thesis telemetry, plan Section 7).
+     * Accumulates LLM token usage on the job (budget enforcement + telemetry).
      * No event — token totals are read from the job record.
      *
      * @param jobId  the job id
@@ -257,7 +257,7 @@ public class ExerciseVariantJobService {
 
     /**
      * Terminal transition to COMPLETED or DRAFT_WITH_WARNINGS; publishes DONE with the variant exercise id
-     * and any warnings (plan Section 5.2).
+     * and any warnings.
      *
      * @param jobId             the job id
      * @param variantExerciseId the created exercise
@@ -278,7 +278,7 @@ public class ExerciseVariantJobService {
 
     /**
      * Terminal transition to FAILED; publishes FAILED with the failure detail. The phase the job failed in
-     * is preserved on the job record so the tray can label the entry "Failed (VERIFYING)" (plan Section 5.4).
+     * is preserved on the job record so the tray can label the entry "Failed (VERIFYING)".
      *
      * @param jobId  the job id
      * @param detail failure description including the phase
@@ -290,7 +290,7 @@ public class ExerciseVariantJobService {
     /**
      * Terminal transition to FAILED with an optional AI-generated instructor summary (state of the exercise
      * plus next steps). Also clears the variant exercise id — the hard-failure policy deletes the provisioned
-     * clone before failing (plan Section 6), so a deep link would point at a deleted exercise.
+     * clone before failing, so a deep link would point at a deleted exercise.
      *
      * @param jobId             the job id
      * @param detail            failure description including the phase
@@ -309,15 +309,14 @@ public class ExerciseVariantJobService {
     }
 
     /**
-     * Terminal transition to CANCELLED (after the pipeline finished the clone cleanup); publishes CANCELLED
-     * (plan Section 5.2).
+     * Terminal transition to CANCELLED (after the pipeline finished the clone cleanup); publishes CANCELLED.
      *
      * @param jobId the job id
      */
     public void markCancelled(String jobId) {
         VariantJob job = mutate(jobId, mutableJob -> {
             mutableJob.setPhase(VariantJobPhase.CANCELLED);
-            mutableJob.setVariantExerciseId(null); // clone was deleted — no deep link (plan Section 5.4)
+            mutableJob.setVariantExerciseId(null); // clone was deleted — no deep link
             mutableJob.setFinishedAt(Instant.now());
         });
         publish(job, VariantGenerationEventDTO.cancelled());

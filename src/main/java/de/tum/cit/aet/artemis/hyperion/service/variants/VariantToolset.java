@@ -7,10 +7,10 @@ import jakarta.annotation.Nullable;
 import org.springframework.ai.tool.ToolCallback;
 
 /**
- * One agent round's toolset plus the per-round state the pipeline needs back after the round
- * (plan Sections 2.5 and 3): the agent's own finish summary and — for programming — whether the round
- * touched the test repository (build-dependency constraint, Section 3). Created per round by
- * {@link VariantToolsetFactory#createTools}; instances are stateful and must not be reused across rounds.
+ * One agent round's toolset plus the per-round state the pipeline needs back after the round: the agent's own
+ * finish summary and — for programming — whether the round touched the test repository (build-dependency
+ * constraint). Created per round by {@link VariantToolsetFactory#createTools}; instances are stateful and must
+ * not be reused across rounds.
  */
 public interface VariantToolset {
 
@@ -27,7 +27,7 @@ public interface VariantToolset {
 
     /**
      * @return true when the round edited (or rebuilt) the test repository — prior green build evidence is
-     *         invalid then and both builds must be re-verified (plan Section 3)
+     *         invalid then and both builds must be re-verified
      */
     default boolean touchedTestRepo() {
         return false;

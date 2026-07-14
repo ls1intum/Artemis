@@ -3,9 +3,9 @@ package de.tum.cit.aet.artemis.hyperion.service.variants;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 
 /**
- * Capability interface: builds the type-specific toolset the agent loop uses during TRANSFORMING/REPAIRING
- * (plan Sections 2.3 and 2.5). The returned {@link VariantToolset} is stateful per round: besides the Spring AI
- * tool callbacks it carries back the agent's finish summary and the touched-test-repo flag.
+ * Capability interface: builds the type-specific toolset the agent loop uses during TRANSFORMING/REPAIRING.
+ * The returned {@link VariantToolset} is stateful per round: besides the Spring AI tool callbacks it carries
+ * back the agent's finish summary and the touched-test-repo flag.
  */
 public interface VariantToolsetFactory {
 

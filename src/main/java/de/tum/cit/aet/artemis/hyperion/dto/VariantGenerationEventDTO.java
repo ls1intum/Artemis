@@ -9,16 +9,16 @@ import de.tum.cit.aet.artemis.hyperion.service.variants.VariantJobPhase;
 
 /**
  * Websocket event published on "/user/topic/hyperion/variant-generation/jobs/{jobId}" via
- * HyperionWebsocketService (plan Section 5.2). Events are fire-and-forget; the Hazelcast job record is
- * authoritative and the client re-syncs from REST on reconnect (Section 5.4, "State handling").
+ * HyperionWebsocketService. Events are fire-and-forget; the Hazelcast job record is
+ * authoritative and the client re-syncs from REST on reconnect.
  *
  * @param type              event kind
  * @param phase             current phase (steps in the wizard are derived from VariantJobPhase — single source
- *                              of truth via the OpenAPI client, Section 5.2)
+ *                              of truth via the OpenAPI client)
  * @param attempt           repair attempt counter, e.g. "Building solution repository — attempt 2/3"
  * @param maxAttempts       attempt budget
  * @param detail            type-specific sub-label ("Validating quiz questions") or failure detail
- * @param variantExerciseId set on DONE — the client fetches the created exercise (Section 5.3, point 2)
+ * @param variantExerciseId set on DONE — the client fetches the created exercise
  * @param warnings          set on DONE when the terminal state is DRAFT_WITH_WARNINGS
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
@@ -26,15 +26,15 @@ public record VariantGenerationEventDTO(Type type, VariantJobPhase phase, Intege
         implements Serializable {
 
     /**
-     * Event kinds per plan Section 5.2. STEP_OUTPUT carries the freshly recorded step output so open modals
-     * can populate the expandable panel without a REST round-trip (Section 2.4).
+     * Event kinds. STEP_OUTPUT carries the freshly recorded step output so open modals
+     * can populate the expandable panel without a REST round-trip.
      */
     public enum Type {
         PHASE_CHANGED, PROGRESS, ATTEMPT, STEP_OUTPUT, DONE, FAILED, CANCELLED
     }
 
     // TODO (Sonnet): STEP_OUTPUT currently carries only the summary in `detail`; open modals fetch the full panel
-    // body from the job-detail endpoint. If live panel bodies are wanted (plan Section 2.4), add a nullable
+    // body from the job-detail endpoint. If live panel bodies are wanted, add a nullable
     // StepOutputDTO component here and keep it truncated server-side.
 
     /**

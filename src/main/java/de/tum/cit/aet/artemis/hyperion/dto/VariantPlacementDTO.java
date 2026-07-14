@@ -9,8 +9,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import de.tum.cit.aet.artemis.exercise.dto.CreateExerciseVariantGroupDTO;
 
 /**
- * Placement choice for the generated variant (plan Section 5.1) — applied server-side in FINALIZING;
- * the client only refreshes (Section 5.3, point 4).
+ * Placement choice for the generated variant — applied server-side in FINALIZING; the client only refreshes.
  *
  * @param type            the placement kind
  * @param existingGroupId required iff type == EXISTING_GROUP
@@ -27,7 +26,7 @@ public record VariantPlacementDTO(PlacementType type, @Nullable Long existingGro
 
     /**
      * EXISTING_GROUP(groupId) | NEW_GROUP(fields) | STANDALONE | SAME_EXAM_GROUP (implicit/forced for exam
-     * exercises — the wizard skips the placement step, plan Section 5.5).
+     * exercises — the wizard skips the placement step).
      */
     public enum PlacementType {
         EXISTING_GROUP, NEW_GROUP, STANDALONE, SAME_EXAM_GROUP

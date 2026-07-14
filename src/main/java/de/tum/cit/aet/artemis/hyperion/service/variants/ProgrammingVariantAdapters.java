@@ -45,8 +45,8 @@ import de.tum.cit.aet.artemis.programming.service.ProgrammingSubmissionService;
 import de.tum.cit.aet.artemis.programming.service.RepositoryService;
 
 /**
- * Capability adapters for programming-exercise variants (plan Sections 2.7.1 and 3, Student A focus).
- * Thin wrappers around existing, battle-tested services — very little new logic (Section 2.3).
+ * Capability adapters for programming-exercise variants. Thin wrappers around existing, battle-tested
+ * services — very little new logic.
  */
 @Service
 @Lazy
@@ -55,7 +55,7 @@ public class ProgrammingVariantAdapters implements VariantTypeAdapters {
 
     private static final Logger log = LoggerFactory.getLogger(ProgrammingVariantAdapters.class);
 
-    /** Suffix-retry budget for short-name/project-key collisions (plan Section 6, row 1). */
+    /** Suffix-retry budget for short-name/project-key collisions. */
     private static final int MAX_NAME_ATTEMPTS = 10;
 
     private final HyperionProgrammingExerciseContextRendererService contextRendererService;
@@ -126,7 +126,7 @@ public class ProgrammingVariantAdapters implements VariantTypeAdapters {
     @Override
     public String renderContext(Exercise source) {
         // Reload with participations so the renderer can resolve the repository URIs (the pipeline only holds a
-        // plain findById copy). No new rendering logic — plan Section 3, ANALYZING row.
+        // plain findById copy). No new rendering logic.
         ProgrammingExercise exercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(source.getId());
         return contextRendererService.renderContext(exercise);
     }
@@ -193,13 +193,15 @@ public class ProgrammingVariantAdapters implements VariantTypeAdapters {
         ProgrammingExercise exercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(variant.getId());
         List<VerificationReport.VerificationFinding> findings = new ArrayList<>();
 
-        // Gate 1 (plan Section 2.6 step 1): fresh builds for BOTH repositories — solution must pass 100%, template
-        // must fail with tests present. Builds are always re-triggered with a freshness bound so a test-repo change
-        // can never smuggle a stale green result past the gate (Section 3, build-dependency constraint).
-        verifyBuild(exercise, RepositoryType.SOLUTION, "SOLUTION_BUILD", "The solution repository build must compile and pass 100% of tests.", findings);
-        verifyBuild(exercise, RepositoryType.TEMPLATE, "TEMPLATE_BUILD", "The template repository build must execute at least one test and score 0%.", findings);
+        // Gate 1: fresh builds for BOTH repositories — solution must pass 100%, template must fail with tests
+        // present. Builds are always re-triggered with a freshness bound so a test-repo change can never smuggle
+        // a stale green result past the gate (build-dependency constraint).
+        verifyBuild(exercise, RepositoryType.SOLUTION, VerificationReport.VerificationGate.SOLUTION_BUILD, "The solution repository build must compile and pass 100% of tests.",
+                findings);
+        verifyBuild(exercise, RepositoryType.TEMPLATE, VerificationReport.VerificationGate.TEMPLATE_BUILD,
+                "The template repository build must execute at least one test and score 0%.", findings);
 
-        // Gate 3 (Section 2.6 step 3): semantic consistency between problem statement and artifacts — only worth
+        // Gate 3: semantic consistency between problem statement and artifacts — only worth
         // its LLM cost once the deterministic gates are green.
         if (findings.isEmpty()) {
             checkConsistency(exercise, findings);
@@ -215,7 +217,7 @@ public class ProgrammingVariantAdapters implements VariantTypeAdapters {
         // never called updateProblemStatement.
         ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(variant.getId());
         programmingExerciseTaskService.updateTasksFromProblemStatement(exercise);
-        // What remains is the shared placement logic (plan Sections 3 FINALIZING row and 5.5).
+        // What remains is the shared placement logic.
         variantPlacementService.place(variant, job.getSourceExerciseId(), job.getRequest());
     }
 
@@ -223,7 +225,7 @@ public class ProgrammingVariantAdapters implements VariantTypeAdapters {
      * Builds the unsaved variant skeleton the import service fills in: generic fields + programming-specific fields
      * copied from the original (same field set as the exam-import precedent in {@code ExamImportService}), title and
      * problem statement from the {@link ChangePlan}, difficulty from the request when a difficulty change was asked
-     * for. Exam variants go into the source's exam exercise group (SAME_EXAM_GROUP, plan Section 5.5).
+     * for. Exam variants go into the source's exam exercise group (SAME_EXAM_GROUP).
      */
     private ProgrammingExercise buildVariantSkeleton(ProgrammingExercise original, ChangePlan plan, VariantGenerationRequestDTO request) {
         ProgrammingExercise newExercise = new ProgrammingExercise();
@@ -266,7 +268,7 @@ public class ProgrammingVariantAdapters implements VariantTypeAdapters {
     /**
      * Derives the short name deterministically from the planner-generated title and resolves VCS/CI project
      * collisions with a suffix retry (-V2, -V3, ...), re-running the existence pre-check each time — never via the
-     * LLM (plan Section 6, row 1).
+     * LLM.
      */
     private void applyUniqueShortNameAndTitle(ProgrammingExercise newExercise, ProgrammingExercise original, String variantTitle) {
         Course course = original.getCourseViaExerciseGroupOrCourseMember();
@@ -320,7 +322,8 @@ public class ProgrammingVariantAdapters implements VariantTypeAdapters {
         return shortName.length() > 25 ? shortName.substring(0, 25) : shortName;
     }
 
-    private void verifyBuild(ProgrammingExercise exercise, RepositoryType repositoryType, String gate, String target, List<VerificationReport.VerificationFinding> findings) {
+    private void verifyBuild(ProgrammingExercise exercise, RepositoryType repositoryType, VerificationReport.VerificationGate gate, String target,
+            List<VerificationReport.VerificationFinding> findings) {
         try {
             LocalVCRepositoryUri repositoryUri = exercise.getRepositoryURI(repositoryType);
             if (repositoryUri == null) {
@@ -345,7 +348,7 @@ public class ProgrammingVariantAdapters implements VariantTypeAdapters {
                 case SUCCESS -> log.debug("Verification build for {} of exercise {} reached its target", repositoryType, exercise.getId());
                 case FAILED ->
                     findings.add(new VerificationReport.VerificationFinding(gate, target + " Current result: " + buildVerificationService.describeBuildResult(outcome.result())));
-                // Distinct detail for CI timeouts (plan Section 6, "CI timeout" row).
+                // Distinct detail for CI timeouts.
                 case TIMED_OUT -> findings.add(new VerificationReport.VerificationFinding(gate,
                         "The " + repositoryType + " build result did not arrive within the timeout (BuildResultState.TIMED_OUT). " + target));
                 case PARTICIPATION_NOT_FOUND, CI_TRIGGER_FAILED ->
@@ -360,8 +363,8 @@ public class ProgrammingVariantAdapters implements VariantTypeAdapters {
 
     /**
      * Gate 3: semantic consistency between the problem statement and the repositories (incl. "test names referenced
-     * in the problem statement exist in the test repo" — the check the ChangePlan invariants call out, plan
-     * Sections 2.4/2.6). Best-effort: an unavailable checker must not fail an otherwise green variant.
+     * in the problem statement exist in the test repo" — the check the ChangePlan invariants call out).
+     * Best-effort: an unavailable checker must not fail an otherwise green variant.
      */
     private void checkConsistency(ProgrammingExercise exercise, List<VerificationReport.VerificationFinding> findings) {
         try {
@@ -375,7 +378,7 @@ public class ProgrammingVariantAdapters implements VariantTypeAdapters {
                 }
                 String message = "[" + issue.severity() + "] " + issue.category() + ": " + issue.description()
                         + (issue.suggestedFix() != null && !issue.suggestedFix().isBlank() ? " Suggested fix: " + issue.suggestedFix() : "");
-                findings.add(new VerificationReport.VerificationFinding("CONSISTENCY", message));
+                findings.add(new VerificationReport.VerificationFinding(VerificationReport.VerificationGate.CONSISTENCY, message));
             }
         }
         catch (RuntimeException e) {

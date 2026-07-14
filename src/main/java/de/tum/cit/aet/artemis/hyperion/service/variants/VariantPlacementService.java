@@ -21,10 +21,9 @@ import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.domain.QuizMode;
 
 /**
- * Shared FINALIZING placement logic for all exercise types (plan Sections 3/4 FINALIZING rows, 5.5 and 8:
- * "Finalizer: shared implementation already works"). Places the generated variant per the wizard's placement
- * choice by delegating to the same {@link ExerciseVariantGroupService} the variant-group REST endpoints use —
- * reuse, not duplication.
+ * Shared FINALIZING placement logic for all exercise types. Places the generated variant per the wizard's
+ * placement choice by delegating to the same {@link ExerciseVariantGroupService} the variant-group REST
+ * endpoints use — reuse, not duplication.
  */
 @Service
 @Lazy
@@ -50,7 +49,7 @@ public class VariantPlacementService {
      * Applies the requested placement to the (already persisted) variant exercise.
      * <ul>
      * <li>Exam variants are already placed: the provisioner imports them into the source's exam exercise group
-     * (SAME_EXAM_GROUP, plan Section 5.5), so nothing happens here.</li>
+     * (SAME_EXAM_GROUP), so nothing happens here.</li>
      * <li>STANDALONE (or no placement) leaves the variant ungrouped.</li>
      * <li>EXISTING_GROUP assigns the variant to the given group of the variant's course.</li>
      * <li>NEW_GROUP first creates the group in the variant's course, then assigns the variant to it.</li>

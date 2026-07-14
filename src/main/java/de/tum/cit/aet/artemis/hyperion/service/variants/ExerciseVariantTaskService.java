@@ -12,9 +12,9 @@ import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionEnabled;
 
 /**
- * Async dispatch for variant jobs — mirrors {@code HyperionCodeGenerationTaskService} (plan Section 5.2).
- * The @Async boundary is what makes the wizard closable: the job never depends on the client connection;
- * the Hazelcast job record is the source of truth (Section 5.4, "Closable wizard").
+ * Async dispatch for variant jobs — mirrors {@code HyperionCodeGenerationTaskService}. The @Async boundary is
+ * what makes the wizard closable: the job never depends on the client connection; the Hazelcast job record is
+ * the source of truth.
  */
 @Service
 @Lazy
@@ -36,7 +36,7 @@ public class ExerciseVariantTaskService {
      * Runs the pipeline for the job on an async executor. The pipeline handles its own terminal transitions
      * (COMPLETED / DRAFT_WITH_WARNINGS / FAILED / CANCELLED incl. clone cleanup); this method is only the
      * last-resort safety net for unhandled errors, so no job can end up running forever — the tray must
-     * always be able to show a terminal state, including failures (plan Section 5.4).
+     * always be able to show a terminal state, including failures.
      *
      * @param job the claimed job
      */

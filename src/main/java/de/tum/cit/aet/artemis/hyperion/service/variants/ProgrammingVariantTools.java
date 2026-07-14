@@ -37,18 +37,17 @@ import de.tum.cit.aet.artemis.programming.service.ProgrammingSubmissionService;
 import de.tum.cit.aet.artemis.programming.service.RepositoryService;
 
 /**
- * The programming-exercise toolset for one agent round (plan Section 2.5 toolset table + Section 3
- * TRANSFORMING/VERIFYING rows). One instance is created per round by
+ * The programming-exercise toolset for one agent round. One instance is created per round by
  * {@link ProgrammingVariantAdapters#createTools}; it is NOT a Spring bean — it carries per-round state
  * (checked-out repositories, last build outcomes, the touched-test-repo flag).
  *
  * All tools operate ONLY on the variant's repositories (never the source). Diff-style edits of existing files
- * ("transform, don't regenerate") are the main consistency lever (plan Section 7). Validation errors (file not
- * found, ambiguous search text, unsafe path) are returned TO THE MODEL as the tool result (plan Section 6 row 2).
+ * ("transform, don't regenerate") are the main consistency lever. Validation errors (file not found, ambiguous
+ * search text, unsafe path) are returned TO THE MODEL as the tool result.
  *
  * Cancellation: once the cancel flag is set, every tool short-circuits with an instruction to stop, so the
  * round converges quickly without doing further work; the pipeline performs the actual abort and cleanup at the
- * next round boundary (plan Section 5.2 — cancellation is cooperative and never interrupts a running LLM call).
+ * next round boundary (cancellation is cooperative and never interrupts a running LLM call).
  */
 class ProgrammingVariantTools implements VariantToolset {
 
@@ -430,7 +429,7 @@ class ProgrammingVariantTools implements VariantToolset {
             }
             // Freshness bound: only accept a result produced by THIS trigger. Without it, rebuilding an unchanged
             // solution/template commit after a test-repo edit would instantly return the stale pre-change result
-            // and mislead the agent (plan Section 3, build-dependency constraint).
+            // and mislead the agent (build-dependency constraint).
             BuildResultOutcome outcome = buildVerificationService.waitForBuildResult(exercise, commitHash, repositoryType, triggeredAt);
             String description = describeOutcome(repositoryType, outcome);
             lastBuildResults.put(repositoryType, description);
@@ -472,7 +471,7 @@ class ProgrammingVariantTools implements VariantToolset {
      *
      * Short-circuit instead of throwing: Spring AI returns tool exceptions to the model as ordinary tool
      * results anyway, so an exception cannot abort the round — an explicit stop instruction converges the
-     * round fastest. The pipeline performs the actual abort at the next round boundary (plan Section 5.2).
+     * round fastest. The pipeline performs the actual abort at the next round boundary.
      * The budget exists because Spring AI's internal tool loop has no iteration cap and a model that keeps
      * re-reading and re-reasoning would loop indefinitely.
      */
@@ -517,8 +516,8 @@ class ProgrammingVariantTools implements VariantToolset {
 
     private void markTouched(RepositoryType repositoryType) {
         if (repositoryType == RepositoryType.TESTS) {
-            // A test-repo change invalidates every previously green build result (plan Section 3, build-dependency
-            // constraint); the verifier re-runs both builds with a freshness bound, so nothing stale is reused.
+            // A test-repo change invalidates every previously green build result (build-dependency constraint);
+            // the verifier re-runs both builds with a freshness bound, so nothing stale is reused.
             touchedTestRepo = true;
         }
     }
