@@ -4,7 +4,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { DATE_TIME_PICKER_FORMAT, Exercise, ExerciseType, ProgrammingExerciseAssessmentType, ProgrammingLanguage, TIME_FORMAT } from './constants';
 import * as fs from 'fs';
 import { dirname } from 'path';
-import { Browser, Locator, Page, Response, expect } from '@playwright/test';
+import { Browser, BrowserContext, Locator, Page, Request, Response, expect } from '@playwright/test';
 import { Course } from 'app/course/shared/entities/course.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { ExamAPIRequests } from './requests/ExamAPIRequests';
@@ -41,14 +41,75 @@ function isResponseBodyEvicted(error: unknown): boolean {
 }
 
 /**
+ * Node-held bodies of non-GET /api responses, captured by {@link installApiResponseCapture}.
+ * Keyed by the Request instance — the same object `readResponseJson` sees via `response.request()`,
+ * so lookups are exact and entries are garbage-collected with their Request. Node memory is immune
+ * to Chromium's DevTools buffer eviction, making this the only reliable source for non-GET
+ * create/update/delete bodies, which must never be replayed read-side (side effects).
+ */
+const capturedApiResponseBodies = new WeakMap<Request, Buffer>();
+
+/**
+ * Capture non-GET /api response bodies at the network layer for a whole browser context:
+ * `route.fetch()` performs the request from Node, we keep the body in Node memory for
+ * {@link readResponseJson}, and fulfill the page with the same response. This only works because
+ * `serviceWorkers: 'block'` (playwright.config.ts) keeps the Angular service worker from handling
+ * /api fetches — Playwright routing never sees service-worker-handled requests, which is what
+ * defeated an earlier page-scoped version of this capture.
+ *
+ * Scope guards: GETs are never intercepted (SSE — GET text/event-stream, e.g. Iris — must not be
+ * fetched from Node, and GET evictions are recoverable read-side by replay), and multipart uploads
+ * are skipped (re-issuing a file upload from Node is riskier than the eviction it guards against).
+ *
+ * Error semantics matter here: `route.continue()` is only safe while the request has NOT been
+ * dispatched. Once `route.fetch()` has sent the request to the server, any failure afterwards must
+ * abort the routed request — continuing would dispatch it a second time and duplicate a
+ * non-idempotent side effect (e.g. create a second entity).
+ */
+export async function installApiResponseCapture(context: BrowserContext): Promise<void> {
+    await context.route(
+        (url) => url.pathname.includes('/api/'),
+        async (route) => {
+            const request = route.request();
+            const requestContentType = request.headers()['content-type'] ?? '';
+            if (request.method() === 'GET' || requestContentType.includes('multipart/form-data')) {
+                await route.continue();
+                return;
+            }
+            let apiResponse;
+            try {
+                // maxRedirects: 0 — fulfill the page with the raw response (including any 3xx) so the
+                // browser handles redirects itself; Node must not transparently follow a non-GET redirect.
+                apiResponse = await route.fetch({ maxRedirects: 0 });
+            } catch {
+                // fetch() failed to produce a response (e.g. teardown mid-flight). The browser re-issuing
+                // the request is the same risk profile as no interception at all, so fall back to that.
+                await route.continue().catch(() => {});
+                return;
+            }
+            try {
+                capturedApiResponseBodies.set(request, await apiResponse.body());
+                await route.fulfill({ response: apiResponse });
+            } catch {
+                // The server has already executed the request via route.fetch(); continue() would dispatch
+                // it a second time. Abort so the page sees a network error instead of a duplicated action.
+                await route.abort('failed').catch(() => {});
+            }
+        },
+    );
+}
+
+/**
  * Read a Playwright {@link Response} body as JSON, resilient to Chrome's CDP
  * "Network.getResponseBody: No data found for resource" failure.
  *
- * The dominant source of that failure was the Angular service worker serving /api responses
- * (Chromium frequently cannot return bodies of SW-served responses); it is fixed at the root by
- * `serviceWorkers: 'block'` in playwright.config.ts. What remains is the rare genuine eviction of a
- * just-arrived body from Chrome's bounded per-renderer network buffer under parallel E2E load. This
- * helper hardens the common `await response.json()` pattern against that residual case:
+ * Two mechanisms feed this (see {@link installApiResponseCapture} and baseFixtures):
+ * `serviceWorkers: 'block'` removes the service-worker-served responses whose bodies CDP frequently
+ * cannot return at all, and the network-layer capture holds every non-GET /api body in Node memory.
+ * What remains is the rare genuine eviction of a just-arrived body from Chrome's bounded
+ * per-renderer network buffer under parallel E2E load. This helper hardens the common
+ * `await response.json()` pattern:
+ *   0. use the Node-held captured body when present — immune to CDP eviction;
  *   1. read the body as JSON (fast path — the eager response-event read in baseFixtures usually
  *      already memoized the buffer in Node);
  *   2. on an eviction error, re-read the raw body once — catches a transient (non-eviction) CDP hiccup;
@@ -57,14 +118,16 @@ function isResponseBodyEvicted(error: unknown): boolean {
  *      the side effect, e.g. create a second entity);
  *   4. otherwise throw a clear, retryable error so Playwright's test-level retry can absorb it.
  *
- * Note: a truly evicted **non-GET** body cannot be recovered read-side (step 4); this helper turns that
- * into a clean, retryable failure so Playwright's test-level retry absorbs the rare case. Earlier attempts
- * to suppress the eviction itself (an enlarged CDP network buffer, eager response-body retention, a
- * `page.route` + `route.fetch()` Node-held capture) were reverted: the first two OOM-crashed Chromium
- * under parallel CI load, and the route capture was bypassed by the service worker while risking
- * re-dispatch of non-idempotent requests from its error fallback. Do not reintroduce them.
+ * Historical note: an enlarged CDP network buffer and whole-run body retention were both reverted
+ * (they OOM-crashed Chromium under parallel CI load) — do not reintroduce those. A page-scoped
+ * route capture was also once removed because the service worker bypassed it; the context-scoped
+ * capture above works only in combination with `serviceWorkers: 'block'`.
  */
 export async function readResponseJson<T = any>(response: Response): Promise<T> {
+    const capturedBody = capturedApiResponseBodies.get(response.request());
+    if (capturedBody) {
+        return JSON.parse(capturedBody.toString('utf-8')) as T;
+    }
     try {
         return (await response.json()) as T;
     } catch (error) {
@@ -450,6 +513,7 @@ export async function newBrowserPage(browser: Browser) {
     // serviceWorkers: 'block' mirrors the global `use` option in playwright.config.ts — manually created
     // contexts do not inherit it, and an SW-controlled page would reintroduce the getResponseBody flake.
     const context = await browser.newContext({ ignoreHTTPSErrors: true, serviceWorkers: 'block' });
+    await installApiResponseCapture(context);
     const page = await context.newPage();
     await addE2EInitScript(page);
     return page;

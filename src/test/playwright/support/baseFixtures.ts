@@ -3,7 +3,7 @@ import { addCoverageReport } from 'monocart-reporter';
 import fs from 'fs';
 import path from 'path';
 import { SEED_COURSES } from './seedData';
-import { addE2EInitScript } from './utils';
+import { addE2EInitScript, installApiResponseCapture } from './utils';
 
 /**
  * Lazy-loaded Angular routes that e2e tests commonly hit. Pre-warming these on each
@@ -123,21 +123,24 @@ const test = baseTest.extend<
             // which would block test interactions. See addE2EInitScript for details.
             await addE2EInitScript(page);
 
+            // Node-held capture of non-GET /api response bodies for the whole context (covers popups too).
+            // Works because serviceWorkers: 'block' keeps the Angular SW from handling /api fetches — with
+            // the SW allowed, routing never saw these requests and an earlier page-scoped capture was
+            // silently ineffective. See installApiResponseCapture for scope guards and error semantics.
+            await installApiResponseCapture(page.context());
+
             // Eagerly read (and thereby memoize) each successful JSON /api response body the moment it
             // arrives, so a test's later deferred `response.json()` reads from Playwright's in-Node cache
-            // instead of issuing a second CDP `Network.getResponseBody`. The dominant source of the
-            // `getResponseBody: No data found for resource` failures was the Angular service worker
-            // serving /api responses (Chromium often cannot return bodies for SW-served responses); that
-            // is fixed at the root by `serviceWorkers: 'block'` in playwright.config.ts. This listener
-            // remains as defense-in-depth against genuine buffer eviction: `waitForResponse()` and this
-            // listener receive the SAME Response instance, and `Response.internalBody()` memoizes the buffer
-            // on first read, so pulling it here at the `response` event closes the arrival-to-read gap to ~0
-            // — without touching the ~49 call sites.
+            // instead of issuing a second CDP `Network.getResponseBody`. Two layers precede this one:
+            // `serviceWorkers: 'block'` removes the SW-served responses whose bodies CDP frequently cannot
+            // return at all, and the capture route above holds every non-GET /api body in Node memory.
+            // This listener narrows the remaining exposure — genuine buffer eviction of GET bodies under
+            // parallel CI load: `waitForResponse()` and this listener receive the SAME Response instance,
+            // and `Response.internalBody()` memoizes the buffer on first read, so pulling it here at the
+            // `response` event closes the arrival-to-read gap to ~0 — without touching the ~49 call sites.
             //
-            // This is passive: reading a body never alters the response the page received, so (unlike
-            // `page.route` interception) it cannot change app behaviour, add latency, or re-issue requests.
-            // (An earlier `page.route` + `route.fetch()` capture of non-GET bodies was removed: the SW
-            // bypassed it entirely, and its error fallback could re-dispatch a non-idempotent request.)
+            // This is passive: reading a body never alters the response the page received, so it cannot
+            // change app behaviour, add latency, or re-issue requests.
             // Scope guards, all required:
             //  - `/api/` only + `application/json`: the bodies tests actually read; also excludes binary
             //    downloads/exports (needless memory) and `text/event-stream` (Iris SSE) — calling `body()`
