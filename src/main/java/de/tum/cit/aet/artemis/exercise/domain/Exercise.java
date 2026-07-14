@@ -143,7 +143,7 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
     @ManyToOne
     private ExerciseGroup exerciseGroup;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "exercise_variant_group_id")
     @JsonIgnoreProperties("exercises")
     private ExerciseVariantGroup exerciseVariantGroup;

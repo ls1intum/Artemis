@@ -21,6 +21,7 @@ import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseVariantGroup;
 import de.tum.cit.aet.artemis.exercise.dto.CreateExerciseVariantGroupDTO;
+import de.tum.cit.aet.artemis.exercise.dto.ExerciseDetailsDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseVariantGroupAssignmentDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseVariantGroupDTO;
 import de.tum.cit.aet.artemis.exercise.dto.UpdateExerciseVariantGroupDTO;
@@ -29,9 +30,11 @@ import de.tum.cit.aet.artemis.exercise.repository.ExerciseVariantGroupRepository
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.domain.QuizMode;
+import de.tum.cit.aet.artemis.quiz.dto.exercise.QuizExerciseWithQuestionsDTO;
 import de.tum.cit.aet.artemis.quiz.util.QuizExerciseFactory;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentBatchTest;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
+import de.tum.cit.aet.artemis.text.dto.TextExerciseResponseDTO;
 import de.tum.cit.aet.artemis.text.util.TextExerciseFactory;
 import de.tum.cit.aet.artemis.text.util.TextExerciseUtilService;
 
@@ -362,6 +365,82 @@ class ExerciseVariantGroupIntegrationTest extends AbstractSpringIntegrationIndep
         request.put(assignUrl, new ExerciseVariantGroupAssignmentDTO(created.id()), HttpStatus.BAD_REQUEST);
 
         assertThat(exerciseRepository.findByIdElseThrow(examExercise.getId()).getExerciseVariantGroup()).isNull();
+    }
+
+    /**
+     * {@code exerciseVariantGroup} is a LAZY {@code @ManyToOne}, and Jackson (Hibernate7Module with
+     * WRITE_MISSING_ENTITIES_AS_NULL) serializes an unloaded proxy as {@code null} rather than throwing. A read path that
+     * forgets to fetch the association therefore fails *silently* — the group simply disappears from the response. These
+     * tests assert on the serialized HTTP response for that reason: a repository call would hand back a proxy and pass
+     * even when the JSON the client receives is null.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void testExerciseEndpointSerializesVariantGroup() throws Exception {
+        ExerciseVariantGroupDTO created = createGroupAsEditor();
+        assignToGroup(exercise.getId(), created.id());
+
+        Exercise loaded = request.get("/api/exercise/exercises/" + exercise.getId(), HttpStatus.OK, Exercise.class);
+
+        assertThat(loaded.getExerciseVariantGroup()).isNotNull();
+        assertThat(loaded.getExerciseVariantGroup().getMaxPoints()).isEqualTo(100.0);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void testExerciseDetailsEndpointSerializesVariantGroup() throws Exception {
+        createGroupAsEditorFor(exercise.getId());
+
+        ExerciseDetailsDTO details = request.get("/api/exercise/exercises/" + exercise.getId() + "/details", HttpStatus.OK, ExerciseDetailsDTO.class);
+
+        assertThat(details.exercise().getExerciseVariantGroup()).isNotNull();
+        assertThat(details.exercise().getExerciseVariantGroup().getMaxPoints()).isEqualTo(100.0);
+    }
+
+    /**
+     * The quiz edit page is served as a DTO that *reads* the association ({@code QuizExerciseWithoutQuestionsDTO} maps
+     * title/maxPoints/dates off it), so an unfetched proxy would not merely serialize as null here — it would trigger a
+     * proxy initialization outside the session.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void testQuizExerciseEndpointSerializesVariantGroup() throws Exception {
+        ExerciseVariantGroupDTO created = createGroupAsEditor();
+        QuizExercise quiz = addQuizToCourse(QuizMode.INDIVIDUAL);
+        assignToGroup(quiz.getId(), created.id());
+
+        QuizExerciseWithQuestionsDTO loaded = request.get("/api/quiz/quiz-exercises/" + quiz.getId(), HttpStatus.OK, QuizExerciseWithQuestionsDTO.class);
+
+        assertThat(loaded.quizExerciseWithoutQuestionsDTO().exerciseVariantGroup()).isNotNull();
+        assertThat(loaded.quizExerciseWithoutQuestionsDTO().exerciseVariantGroup().maxPoints()).isEqualTo(100.0);
+    }
+
+    /**
+     * The text exercise edit page is served as a DTO. Unlike the programming/modeling/file-upload pages (which serialize
+     * the entity and therefore carry the association for free), a DTO only exposes the fields it declares — so the group
+     * has to be mapped explicitly, or the edit form's locked-timeline pickers never see it.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void testTextExerciseEndpointSerializesVariantGroup() throws Exception {
+        createGroupAsEditorFor(exercise.getId());
+
+        TextExerciseResponseDTO loaded = request.get("/api/text/text-exercises/" + exercise.getId(), HttpStatus.OK, TextExerciseResponseDTO.class);
+
+        assertThat(loaded.exerciseVariantGroup()).isNotNull();
+        assertThat(loaded.exerciseVariantGroup().maxPoints()).isEqualTo(100.0);
+        assertThat(loaded.exerciseVariantGroup().title()).isEqualTo("Loop variants");
+    }
+
+    /** Creates a group and assigns the given exercise to it, returning the created group. */
+    private ExerciseVariantGroupDTO createGroupAsEditorFor(long exerciseId) throws Exception {
+        ExerciseVariantGroupDTO created = createGroupAsEditor();
+        assignToGroup(exerciseId, created.id());
+        return created;
+    }
+
+    private void assignToGroup(long exerciseId, Long groupId) throws Exception {
+        request.put("/api/exercise/courses/" + course.getId() + "/exercises/" + exerciseId + "/variant-group", new ExerciseVariantGroupAssignmentDTO(groupId), HttpStatus.OK);
     }
 
     /** Adds a quiz exercise with the given mode to the test course (separately from the released text exercise). */

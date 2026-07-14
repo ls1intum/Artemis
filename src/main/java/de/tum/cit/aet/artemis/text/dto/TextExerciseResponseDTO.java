@@ -19,7 +19,9 @@ import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exercise.domain.DifficultyLevel;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
+import de.tum.cit.aet.artemis.exercise.domain.ExerciseVariantGroup;
 import de.tum.cit.aet.artemis.exercise.domain.IncludedInOverallScore;
+import de.tum.cit.aet.artemis.exercise.dto.ExerciseVariantGroupReferenceDTO;
 import de.tum.cit.aet.artemis.exercise.dto.TeamAssignmentConfigDTO;
 import de.tum.cit.aet.artemis.lecture.dto.CompetencyLinkDTO;
 import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismDetectionConfigDTO;
@@ -38,7 +40,8 @@ public record TextExerciseResponseDTO(Long id, String title, String shortName, S
         String feedbackSuggestionModule, boolean allowComplaintsForAutomaticAssessments, boolean allowFeedbackRequests, Long courseId, Double courseAccuracyOfScores,
         CourseForQuizExerciseDTO course, Long exerciseGroupId, Long examId, ZonedDateTime examPublishResultsDate, TeamAssignmentConfigDTO teamAssignmentConfig,
         Set<GradingCriterionDTO> gradingCriteria, Set<CompetencyLinkDTO> competencyLinks, PlagiarismDetectionConfigDTO plagiarismDetectionConfig,
-        boolean gradingInstructionFeedbackUsed, Set<ExampleSubmissionDTO> exampleSubmissions, Boolean teamMode, TextExerciseExamGroupDTO exerciseGroup) implements Serializable {
+        boolean gradingInstructionFeedbackUsed, Set<ExampleSubmissionDTO> exampleSubmissions, Boolean teamMode, TextExerciseExamGroupDTO exerciseGroup,
+        ExerciseVariantGroupReferenceDTO exerciseVariantGroup) implements Serializable {
 
     /**
      * Creates a {@link TextExerciseResponseDTO} from the given {@link TextExercise}.
@@ -114,6 +117,14 @@ public record TextExerciseResponseDTO(Long id, String title, String shortName, S
                 ? exercise.getExampleSubmissions().stream().map(ExampleSubmissionDTO::of).collect(Collectors.toSet())
                 : null;
 
+        // The exercise edit form renders its timeline as read-only "locked to group" pickers when the exercise belongs to a
+        // variant group, so the group reference has to travel with the exercise. Two separate guards: most exercises simply
+        // have no group (null), and the association is LAZY, so a read path that does not fetch it hands back an
+        // uninitialized proxy — map that to null rather than initializing it outside the session.
+        ExerciseVariantGroup variantGroup = exercise.getExerciseVariantGroup();
+        ExerciseVariantGroupReferenceDTO exerciseVariantGroupDTO = variantGroup != null && Hibernate.isInitialized(variantGroup) ? ExerciseVariantGroupReferenceDTO.of(variantGroup)
+                : null;
+
         return new TextExerciseResponseDTO(exercise.getId(), exercise.getTitle(), exercise.getShortName(), exercise.getType(), exercise.getExerciseType(), exercise.getDifficulty(),
                 exercise.getMode(), exercise.getMaxPoints(), exercise.getBonusPoints(), exercise.getIncludedInOverallScore(), exercise.getReleaseDate(), exercise.getStartDate(),
                 exercise.getDueDate(), exercise.getAssessmentDueDate(), exercise.getExampleSolutionPublicationDate(), exercise.getAssessmentType(),
@@ -121,6 +132,6 @@ public record TextExerciseResponseDTO(Long id, String title, String shortName, S
                 exercise.getGradingInstructions(), exercise.getCategories(), exercise.getChannelName(), exercise.getFeedbackSuggestionModule(),
                 exercise.getAllowComplaintsForAutomaticAssessments(), exercise.getAllowFeedbackRequests(), courseId, courseAccuracyOfScores, course, exerciseGroupId, examId,
                 examPublishResultsDate, teamAssignmentConfigDTO, gradingCriterionDTOs, competencyLinkDTOs, plagiarismDetectionConfigDTO,
-                exercise.isGradingInstructionFeedbackUsed(), exampleSubmissionDTOs, exercise.getMode() == ExerciseMode.TEAM, exerciseGroup);
+                exercise.isGradingInstructionFeedbackUsed(), exampleSubmissionDTOs, exercise.getMode() == ExerciseMode.TEAM, exerciseGroup, exerciseVariantGroupDTO);
     }
 }
