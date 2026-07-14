@@ -1373,11 +1373,9 @@ public class HazelcastConfiguration {
         config.getMapConfigs().put("atlas-content-change-accumulator",
                 new MapConfig().setBackupCount(artemisProperties.getCache().getHazelcast().getBackupCount()).setTimeToLiveSeconds(48 * 60 * 60));
         config.getMapConfigs().put("iris-dashboard-schedule-state", new MapConfig().setBackupCount(artemisProperties.getCache().getHazelcast().getBackupCount()));
-        // Hyperion multi-node relay copy payloads (up to 32MB tar blobs) staged off the request/response topics. The sender removes each entry in a finally block after the copy op
-        // (bounded by the 5min control-op timeout), so this TTL only reclaims an entry orphaned by a core-node crash between the put and that remove. backupCount 0: these are
-        // large
-        // single-reader transients, not worth replicating. 15min comfortably exceeds the longest copy op so it never evicts a live transfer.
-        config.getMapConfigs().put("hyperion-sandbox-payloads", new MapConfig().setBackupCount(0).setTimeToLiveSeconds(15 * 60));
+        // Hyperion multi-node relay copy payloads (up to 32MB tar blobs) staged off the request/response topics. One synchronous backup keeps an in-flight handoff readable if its
+        // partition owner dies. The sender normally removes each entry; the TTL reclaims entries orphaned by a core-node crash.
+        config.getMapConfigs().put("hyperion-sandbox-payloads", new MapConfig().setBackupCount(1).setTimeToLiveSeconds(15 * 60));
     }
 
     /**

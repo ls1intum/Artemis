@@ -220,7 +220,7 @@ class AgentSystemPromptServiceTest {
 
         assertThat(prompt).contains("THE CONTRACT", "ARTEMIS TASK BINDINGS", "GROUNDED WORKFLOW", "SAFE TOOL USE")
                 .contains("[task][Short human title](exactTestNameA,exactTestNameB)", "throw new UnsupportedOperationException", "tests/pom.xml", "Call `verify` early")
-                .contains("raw build and debugging commands").doesNotContain("Use bash only for inspection and safe file removal");
+                .contains("Use `verify` for builds", "Never run repository Gradle/Maven directly", "Build manifests, wrappers").doesNotContain("raw build and debugging commands");
     }
 
     @Test

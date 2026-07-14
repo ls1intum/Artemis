@@ -16,6 +16,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ScheduledFuture;
+import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -417,6 +418,25 @@ class GenerationTaskServiceTest {
         assertThat(terminal.type()).isEqualTo(ExerciseGenerationEventDTO.Type.CANCELLED);
         assertThat(terminal.message()).contains("time limit");
         verify(jobService).requestSystemCancellation(EXERCISE_ID, JOB_ID);
+    }
+
+    @Test
+    void deadlineExceededDuringPersistence_closesTheMutationGuard() {
+        ArgumentCaptor<Runnable> deadline = ArgumentCaptor.forClass(Runnable.class);
+        when(orchestrator.generate(any(), any(), any(), any(), any(), any(), any(), any(), any())).thenAnswer((Answer<GenerationOutcome>) invocation -> {
+            verify(taskScheduler).schedule(deadline.capture(), any(java.time.Instant.class));
+            deadline.getValue().run();
+            return outcomeWith(AgentLoopResult.Status.COMPLETED, new VerificationResult(true, true, true, 3, List.of()));
+        });
+        when(persistenceService.persist(any(), any(), any(), any(), any(), anyString(), any())).thenAnswer(invocation -> {
+            BooleanSupplier mutationGuard = invocation.getArgument(6);
+            assertThat(mutationGuard.getAsBoolean()).isFalse();
+            throw new GenerationIncompleteException("deadline closed the mutation guard", new IllegalStateException());
+        });
+
+        taskService.runAsync(new GenerationStartedEvent(JOB_ID, user, exercise, "make it", GenerationMode.GENERATE));
+
+        assertThat(sentEvents().getLast().completionStatus()).isEqualTo(ExerciseGenerationEventDTO.CompletionStatus.PARTIAL);
     }
 
     @Test

@@ -12,6 +12,8 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import java.io.IOException;
+import java.time.Duration;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -384,6 +386,36 @@ class BuildAgentIntegrationTest extends AbstractArtemisBuildAgentTest {
             return resultQueueItem != null && resultQueueItem.buildJobQueueItem().id().equals(queueItem.id())
                     && resultQueueItem.buildJobQueueItem().status() == BuildStatus.SUCCESSFUL;
         });
+    }
+
+    @Test
+    void testResumeDuringPauseGracePeriodDoesNotStopTheReopenedExecutor() throws InterruptedException {
+        CountDownLatch buildStarted = new CountDownLatch(1);
+        CountDownLatch finishBuild = new CountDownLatch(1);
+        CountDownLatch stalePauseCall = new CountDownLatch(1);
+        StartContainerCmd startContainerCmd = mock(StartContainerCmd.class);
+        when(dockerClient.startContainerCmd(anyString())).thenReturn(startContainerCmd);
+        doAnswer(invocation -> {
+            buildStarted.countDown();
+            finishBuild.await(30, TimeUnit.SECONDS);
+            return null;
+        }).when(startContainerCmd).exec();
+        doAnswer(invocation -> {
+            stalePauseCall.countDown();
+            return null;
+        }).when(buildAgentConfiguration).pauseBuildJobs();
+
+        buildJobQueue.add(createBaseBuildJobQueueItemForTrigger());
+        assertThat(buildStarted.await(30, TimeUnit.SECONDS)).isTrue();
+        CompletableFuture<Void> pause = CompletableFuture.runAsync(() -> pauseBuildAgentTopic.publish(buildAgentShortName));
+        await().atMost(30, TimeUnit.SECONDS).until(sharedQueueProcessingService::isPaused);
+        resumeBuildAgentTopic.publish(buildAgentShortName);
+        await().atMost(30, TimeUnit.SECONDS).until(() -> !sharedQueueProcessingService.isPaused());
+
+        finishBuild.countDown();
+        assertThat(pause).succeedsWithin(Duration.ofSeconds(30));
+
+        assertThat(stalePauseCall.getCount()).isEqualTo(1);
     }
 
     @Test

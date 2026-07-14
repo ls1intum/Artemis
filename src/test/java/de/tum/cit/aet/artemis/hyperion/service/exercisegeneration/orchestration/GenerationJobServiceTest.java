@@ -10,6 +10,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Callable;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.ExecutorService;
@@ -96,6 +97,33 @@ class GenerationJobServiceTest {
 
         assertThat(jobService.startJob(owner, exercise, "do it", GenerationMode.GENERATE)).isNotBlank();
         assertThatExceptionOfType(ConflictException.class).isThrownBy(() -> jobService.startJob(owner, exercise, "again", GenerationMode.GENERATE));
+    }
+
+    @Test
+    void startJob_simultaneousStartsForSameExercise_admitsExactlyOne() throws Exception {
+        ProgrammingExercise exercise = exercise(420L);
+        ExecutorService executor = Executors.newFixedThreadPool(2);
+        CyclicBarrier startTogether = new CyclicBarrier(2);
+        try {
+            Callable<Boolean> attempt = () -> {
+                startTogether.await();
+                try {
+                    jobService.startJob(user("owner"), exercise, "go", GenerationMode.GENERATE);
+                    return true;
+                }
+                catch (ConflictException ignored) {
+                    return false;
+                }
+            };
+
+            Future<Boolean> first = executor.submit(attempt);
+            Future<Boolean> second = executor.submit(attempt);
+
+            assertThat(List.of(first.get(5, TimeUnit.SECONDS), second.get(5, TimeUnit.SECONDS))).containsExactlyInAnyOrder(true, false);
+        }
+        finally {
+            executor.shutdownNow();
+        }
     }
 
     @Test

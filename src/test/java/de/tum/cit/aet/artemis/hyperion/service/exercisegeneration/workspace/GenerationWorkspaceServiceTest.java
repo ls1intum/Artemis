@@ -6,6 +6,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.io.ByteArrayInputStream;
@@ -25,6 +26,7 @@ import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.Test;
 import org.springframework.core.io.Resource;
 
+import de.tum.cit.aet.artemis.buildagent.dto.SandboxExecResult;
 import de.tum.cit.aet.artemis.buildagent.service.InteractiveSandbox;
 import de.tum.cit.aet.artemis.core.config.ProgrammingLanguageConfiguration;
 import de.tum.cit.aet.artemis.core.service.ResourceLoaderService;
@@ -209,6 +211,18 @@ class GenerationWorkspaceServiceTest {
                 Map.of(RepositoryType.SOLUTION, Map.of("gradlew", "#!/bin/sh\n", "src/Main.java", "class Main {}"), RepositoryType.TESTS,
                         Map.of("test/MainTest.java", "class MainTest {}")),
                 Map.of(RepositoryType.SOLUTION, new GenerationWorkspaceService.RepositorySeedMetadata(Map.of(), Set.of("gradlew"))));
+    }
+
+    @Test
+    void cleanTransientBuildOutputs_removesOnlyKnownBuildDirectoriesFromSeededRepositories() {
+        InteractiveSandbox sandbox = mock(InteractiveSandbox.class);
+        when(sandbox.exec(eq("session"), any(), eq("sh"), eq("-c"), any())).thenReturn(new SandboxExecResult(0, "", "", false));
+        GenerationWorkspaceService service = new GenerationWorkspaceService(mock(), mock(), mock(), mock(), tempFileUtilService());
+
+        service.cleanTransientBuildOutputs(sandbox, "session");
+
+        verify(sandbox).exec(eq("session"), any(), eq("sh"), eq("-c"), eq("rm -rf -- /workspace/solution/.gradle /workspace/solution/build /workspace/solution/target "
+                + "/workspace/template/.gradle /workspace/template/build /workspace/template/target /workspace/tests/.gradle /workspace/tests/build /workspace/tests/target"));
     }
 
     private static TarArchiveInputStream tar(Map<String, String> files) {

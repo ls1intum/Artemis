@@ -44,16 +44,20 @@ public class HyperionAsyncConfiguration {
     }
 
     /**
+     * @param maxConcurrentJobsPerNode node-local generation concurrency; excess starts fail fast instead of waiting in memory
      * @return the bounded executor that runs {@code GenerationTaskService.runAsync}. Per-exercise single-flight already bounds duplicate work; this bounds total
      *         concurrent generations on a node and keeps them off the shared task executor.
      */
     @Bean(name = "hyperionGenerationExecutor")
-    public Executor hyperionGenerationExecutor() {
+    public Executor hyperionGenerationExecutor(@Value("${artemis.hyperion.generation.max-concurrent-jobs-per-core-node:2}") int maxConcurrentJobsPerNode) {
+        if (maxConcurrentJobsPerNode < 1) {
+            throw new IllegalArgumentException("artemis.hyperion.generation.max-concurrent-jobs-per-core-node must be at least 1");
+        }
         ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
         // Keep generation admission honest: these jobs are long-lived and already hold a per-exercise slot, so do not accept a deep in-memory backlog that can wait far longer
         // than the configured generation deadline before it even starts.
-        executor.setCorePoolSize(2);
-        executor.setMaxPoolSize(2);
+        executor.setCorePoolSize(maxConcurrentJobsPerNode);
+        executor.setMaxPoolSize(maxConcurrentJobsPerNode);
         executor.setQueueCapacity(0);
         executor.setAllowCoreThreadTimeOut(true);
         executor.setThreadNamePrefix("hyperion-gen-");

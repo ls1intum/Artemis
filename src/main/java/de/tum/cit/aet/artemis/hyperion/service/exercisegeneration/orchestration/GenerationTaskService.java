@@ -82,7 +82,7 @@ public class GenerationTaskService {
             HyperionWebsocketService websocket, GenerationJobService jobService, ProgrammingExerciseRepository programmingExerciseRepository,
             HyperionGenerationBudgetService generationBudgetService, ExerciseGenerationRevertService generationRevertService,
             @Qualifier("taskScheduler") TaskScheduler taskScheduler, @Value("${artemis.hyperion.agent.max-job-duration:PT30M}") Duration maxJobDuration,
-            @Value("${artemis.hyperion.agent.max-tokens-per-job:1500000}") long maxTokensPerJob,
+            @Value("${artemis.hyperion.agent.max-tokens-per-job:3000000}") long maxTokensPerJob,
             @Value("${artemis.hyperion.agent.owner-heartbeat-interval:PT15S}") Duration ownerHeartbeatInterval) {
         this.orchestrator = orchestrator;
         this.persistenceService = persistenceService;
@@ -179,7 +179,7 @@ public class GenerationTaskService {
                                 String originalProblemStatement = event.expectedProblemStatement();
                                 String originalTitle = event.expectedTitle();
                                 GenerationPersistenceService.PersistResult persistResult = persistenceService.persist(exerciseToPersist, user, outcome, originalProblemStatement,
-                                        originalTitle, jobId, () -> jobService.isOwnedActiveJob(exerciseId, jobId));
+                                        originalTitle, jobId, () -> !deadlineExceeded.get() && !heartbeatLost.get() && jobService.isOwnedActiveJob(exerciseId, jobId));
                                 generationRevertService.recordBaseline(exerciseToPersist, jobId, event.mode(), persistResult.prePersistHeads(), persistResult.postPersistHeads(),
                                         originalProblemStatement, originalTitle, persistResult.persistedProblemStatement(), persistResult.persistedTitle(),
                                         persistResult.repositoryBranch());

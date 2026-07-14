@@ -220,6 +220,7 @@ public class GenerationOrchestrationService {
                 }
 
                 emit(progress, "Checking the exercise builds and grades (attempt " + attempt + " of " + MAX_GENERATION_ATTEMPTS + ")");
+                workspace.cleanTransientBuildOutputs(sandbox, sessionId);
                 // Read the produced repos back for the sandbox-free integrity gates (harness immutability vs the seed snapshot, solution-leak across template/solution). The
                 // extraction-failed flag lets the verifier fail closed on a read-back error, distinct from an empty repo.
                 GenerationWorkspaceService.RepositoryExtraction producedTests = workspace.extractRepository(sandbox, sessionId, RepositoryType.TESTS,

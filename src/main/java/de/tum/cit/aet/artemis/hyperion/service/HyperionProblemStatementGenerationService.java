@@ -46,6 +46,8 @@ public class HyperionProblemStatementGenerationService {
             Keep it student-facing and behavioral. Use only these headings: title, Introduction, Required Behaviors, Boundary Cases, Worked Examples, and Instructor Decisions Before Final Generation.
             Do not include task markers, test names, grader internals, UML, optional extras, benchmarks, student test-suite work, or any checklist item about tests unless the instructor explicitly requested them.
             Do not include optional/removable side features, resource-limit discussions, thread-safety/concurrency requirements, or examples that say both conflict and no conflict.
+            Do not invent files, standard input, command-line interfaces, CSV, JSON, databases, or web interfaces unless the instructor requested them. Do not add submission or
+            deliverable sections, code-comment requirements, style advice, or specific library/framework/type choices unless the instructor requested them as a learning objective.
             If the instructor asked to avoid exact names, do not use the words API, operation, method, class, unit test, tests, test suite, optional, benchmark, UML, repository, grader, or hidden. Remove every API heading, operation table, method-like operation name, exact class name, and Java code example; use neutral prose or input/output tables instead.
             """;
 

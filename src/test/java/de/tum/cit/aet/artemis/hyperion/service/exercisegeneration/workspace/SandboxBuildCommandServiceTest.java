@@ -158,6 +158,34 @@ class SandboxBuildCommandServiceTest {
     }
 
     @Test
+    void verifyScript_removesTeamscalePluginOnlyFromTheDisposableOfflineBuildCopy() {
+        String script = new SandboxBuildCommandService(Optional.empty(), Optional.empty()).verifyScriptContent(new ProgrammingExercise());
+
+        assertThat(script).contains("for build_file in \"$TEST_DEST/build.gradle\" \"$TEST_DEST/build.gradle.kts\"").contains("grep -vF \"id 'com.teamscale' version\"")
+                .contains("grep -vF 'id(\"com.teamscale\") version'");
+    }
+
+    @EnabledOnOs({ LINUX, MAC })
+    @Test
+    void verifyScript_removesTeamscalePluginDeclarationsButKeepsOtherGradlePlugins(@TempDir Path tempDir) throws Exception {
+        Path testsDir = Files.createDirectories(tempDir.resolve("tests"));
+        Path groovyBuild = testsDir.resolve("build.gradle");
+        Path kotlinBuild = testsDir.resolve("build.gradle.kts");
+        VerifyScriptTestHarness.writeString(groovyBuild, "plugins {\n    id 'java'\n    id 'com.teamscale' version '34.2.1'\n}\n");
+        VerifyScriptTestHarness.writeString(kotlinBuild, "plugins {\n    java\n    id(\"com.teamscale\") version \"34.2.1\"\n}\n");
+
+        String fullScript = VerifyScriptTestHarness.verifyScript();
+        String removal = VerifyScriptTestHarness.slice(fullScript, "for build_file in", "done");
+        Path scriptFile = tempDir.resolve("remove-teamscale.sh");
+        VerifyScriptTestHarness.writeString(scriptFile, "TEST_DEST='" + testsDir + "'\n" + removal + "\n");
+
+        VerifyScriptTestHarness.runSh(scriptFile);
+
+        assertThat(Files.readString(groovyBuild)).contains("id 'java'").doesNotContain("com.teamscale");
+        assertThat(Files.readString(kotlinBuild)).contains("java").doesNotContain("com.teamscale");
+    }
+
+    @Test
     void verifyScript_materializesSiblingSolution_andSubstitutesRealLayout_forSolutionCheckoutLanguages() {
         // Haskell's harness references ${solutionWorkingDirectory}. When checkoutSolutionRepository is set, real CI materializes a sibling solution/ and substitutes the
         // placeholder

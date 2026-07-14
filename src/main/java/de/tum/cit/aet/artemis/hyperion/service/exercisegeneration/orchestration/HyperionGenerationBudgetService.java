@@ -70,7 +70,7 @@ public class HyperionGenerationBudgetService {
             @Value("${artemis.hyperion.agent.admission-max-tokens-per-user:0}") long maxTokensPerUser,
             @Value("${artemis.hyperion.agent.admission-max-tokens-per-course:0}") long maxTokensPerCourse,
             @Value("${artemis.hyperion.agent.admission-max-tokens-global:0}") long maxTokensGlobal,
-            @Value("${artemis.hyperion.agent.in-flight-token-reservation-per-job:1500000}") long reservedTokensPerJob,
+            @Value("${artemis.hyperion.agent.in-flight-token-reservation-per-job:3000000}") long reservedTokensPerJob,
             @Value("${artemis.hyperion.agent.max-job-duration:PT30M}") Duration maxJobDuration) {
         this.tokenUsageTraceRepository = tokenUsageTraceRepository;
         this.hazelcastInstance = hazelcastInstance;

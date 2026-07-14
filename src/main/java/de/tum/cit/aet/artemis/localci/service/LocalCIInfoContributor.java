@@ -57,7 +57,7 @@ public class LocalCIInfoContributor implements InfoContributor {
             String value = defaultDockerFlags.get(i + 1);
 
             switch (flag) {
-                case "--cpus" -> builder.withDetail(Constants.DOCKER_FLAG_CPUS, Long.parseLong(value.replaceAll("[^0-9]", "")));
+                case "--cpus" -> builder.withDetail(Constants.DOCKER_FLAG_CPUS, Double.parseDouble(value.replace("\"", "").trim()));
                 case "--memory" -> builder.withDetail(Constants.DOCKER_FLAG_MEMORY_MB, parseMemoryStringToMB(value));
                 case "--memory-swap" -> builder.withDetail(Constants.DOCKER_FLAG_MEMORY_SWAP_MB, parseMemoryStringToMB(value));
             }

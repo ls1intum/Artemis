@@ -12,6 +12,29 @@ const solutionMarkerPath = 'solution/hyperion-e2e-solution-marker.txt';
 const templateMarkerPath = 'template/hyperion-e2e-template-marker.txt';
 const testsMarkerPath = 'tests/hyperion-e2e-tests-marker.txt';
 const criticPromptMarker = 'meticulous QA reviewer for programming-exercise test suites';
+const draftPromptMarker = 'expert technical writing assistant for programming exercise problem statements';
+const draftProblemStatement = `# Temperature Alert Classification
+
+## Introduction
+
+Create a small Java program that classifies temperature readings. The exercise focuses on precise boundary handling and predictable validation behavior.
+
+## Required Behaviors
+
+- Classify readings below 0 as \`FREEZING\`, readings from 0 through 25 as \`NORMAL\`, and readings above 25 as \`HOT\`.
+- Preserve the input order when classifying multiple readings.
+- Reject a collection containing a missing reading. If validation fails, produce no partial result.
+
+## Boundary Cases
+
+- An empty collection produces an empty result.
+- The exact boundary values 0 and 25 are classified as \`NORMAL\`.
+
+## Worked Examples
+
+- \`[-1, 0, 26]\` produces \`[FREEZING, NORMAL, HOT]\`.
+- \`[]\` produces \`[]\`.
+`;
 const correctedSeedProblemStatement = `In this exercise, we want to implement sorting algorithms and choose them based on runtime specific variables.
 
 ### Part 1: Sorting
@@ -135,6 +158,10 @@ const server = http.createServer((req, res) => {
             requests.push(summarizeRequest(body));
             if (body.includes(failMarker)) {
                 jsonResponse(res, 400, { error: { message: 'Hyperion E2E requested LLM failure' } });
+                return;
+            }
+            if (body.includes(draftPromptMarker)) {
+                jsonResponse(res, 200, textResponse(requestNumber, draftProblemStatement));
                 return;
             }
             if (body.includes(criticPromptMarker)) {

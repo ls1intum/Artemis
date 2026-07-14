@@ -6,7 +6,7 @@ import { Commands } from '../../../support/commands';
 import { admin, instructor, UserCredentials } from '../../../support/users';
 import { SEED_COURSES } from '../../../support/seedData';
 import { ExerciseMode, ProgrammingLanguage } from '../../../support/constants';
-import { generateUUID, newBrowserPage } from '../../../support/utils';
+import { fillDateTimePicker, generateUUID, newBrowserPage } from '../../../support/utils';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import javaProgrammingExerciseTemplate from '../../../fixtures/exercise/programming/java/template.json';
 
@@ -65,6 +65,7 @@ const verifierSafeJavaProblemStatement = javaProgrammingExerciseTemplate.problem
 
 test.describe('Hyperion exercise generation browser UI', { tag: '@slow' }, () => {
     test.skip(process.env.HYPERION_LLM_MODE !== 'mock', 'Mocked Hyperion UI tests require HYPERION_LLM_MODE=mock.');
+    // The suite deliberately validates a one-slot agent and a shared provider request counter.
     test.describe.configure({ mode: 'serial' });
     test.use({ serviceWorkers: 'block' });
 
@@ -91,7 +92,17 @@ test.describe('Hyperion exercise generation browser UI', { tag: '@slow' }, () =>
 
     test.afterEach('Cancel job and delete programming exercise', async ({ login, page, exerciseAPIRequests }) => {
         if (exercise?.id && runningJobId) {
-            await page.request.delete(`api/hyperion/programming-exercises/${exercise.id}/generate-exercise/jobs/${runningJobId}`).catch(() => undefined);
+            const cancelResponse = await page.request.delete(`api/hyperion/programming-exercises/${exercise.id}/generate-exercise/jobs/${runningJobId}`);
+            expect([200, 404]).toContain(cancelResponse.status());
+            await expect
+                .poll(
+                    async () => {
+                        const statusResponse = await page.request.get(`api/hyperion/programming-exercises/${exercise!.id}/generate-exercise/status`);
+                        return statusResponse.status() === 204 || !((await statusResponse.json()) as GenerationStatus).running;
+                    },
+                    { timeout: 60_000 },
+                )
+                .toBe(true);
             runningJobId = undefined;
         }
         if (exercise?.id) {
@@ -99,6 +110,53 @@ test.describe('Hyperion exercise generation browser UI', { tag: '@slow' }, () =>
             await exerciseAPIRequests.deleteProgrammingExercise(exercise.id);
             exercise = undefined;
         }
+    });
+
+    test('drafts a problem statement and starts generation from the programming exercise form', async ({ page, login, exerciseAPIRequests, programmingExerciseCreation }) => {
+        test.setTimeout(180_000);
+        await exerciseAPIRequests.deleteProgrammingExercise(exercise!.id!);
+        exercise = undefined;
+
+        await login(instructor, `/course-management/${course.id}/programming-exercises/new`);
+        await programmingExerciseCreation.waitForFormToLoad();
+        await programmingExerciseCreation.changeEditMode();
+        await programmingExerciseCreation.setProgrammingLanguage(ProgrammingLanguage.JAVA);
+        await programmingExerciseCreation.setPackageName('de.tum.cit.aet.temperature');
+        await programmingExerciseCreation.setTitle(`hyperion-form-${generateUUID()}`);
+        await programmingExerciseCreation.setShortName(`hyperionform${generateUUID()}`);
+        await programmingExerciseCreation.setPoints(10);
+        await page.locator('#field_bonusPoints').fill('0');
+        await fillDateTimePicker(page.getByLabel('Release Date', { exact: true }), dayjs().add(2, 'days'));
+        await programmingExerciseCreation.setDueDate(dayjs().add(3, 'days'));
+
+        await page.locator('#userPrompt').fill('Classify temperatures with clear boundaries and all-or-nothing validation. Do not prescribe class or method names.');
+        const draftResponsePromise = page.waitForResponse(
+            (response) => response.request().method() === 'POST' && response.url().includes(`/api/hyperion/courses/${course.id}/problem-statements/generate`),
+        );
+        await page.getByRole('button', { name: 'Generate Draft Problem Statement' }).click();
+        const draftResponse = await draftResponsePromise;
+        expect(draftResponse.ok()).toBeTruthy();
+        const draft = (await draftResponse.json()) as { draftProblemStatement?: string };
+        expect(draft.draftProblemStatement).toContain('# Temperature Alert Classification');
+        await expect(page.getByText('Problem statement has been successfully generated.')).toBeVisible();
+
+        const setupResponsePromise = page.waitForResponse(
+            (response) => response.request().method() === 'POST' && response.url().includes('/api/programming/programming-exercises/setup?emptyRepositories=true'),
+        );
+        const startResponsePromise = page.waitForResponse(
+            (response) => response.request().method() === 'POST' && /\/api\/hyperion\/programming-exercises\/\d+\/generate-exercise$/.test(response.url()),
+        );
+        await page.locator('#generate-with-ai').click();
+        const setupResponse = await setupResponsePromise;
+        expect(setupResponse.ok()).toBeTruthy();
+        exercise = (await setupResponse.json()) as ProgrammingExercise;
+        expect(exercise.id).toBeDefined();
+        await expect(page).toHaveURL(new RegExp(`/programming-exercises/${exercise.id}/code-editor/TEMPLATE/`));
+        const startResponse = await startResponsePromise;
+        expect(startResponse.status()).toBe(202);
+        runningJobId = ((await startResponse.json()) as { jobId: string }).jobId;
+        await expectRunningGenerationStatus(page, exercise.id!, runningJobId, 'GENERATE');
+        await expect(page.getByTestId('hyperion-generation-persistence-state')).toContainText('Agent working copy — not saved');
     });
 
     test('starts generation through the real Hyperion workflow, exposes admin slot usage, and cancels the running job', async ({ browser, page, login }) => {
@@ -191,7 +249,7 @@ test.describe('Hyperion exercise generation browser UI', { tag: '@slow' }, () =>
         await expect(page.getByTestId('hyperion-generation-persistence-state')).toContainText('Agent working copy — not saved');
         await expectRunningGenerationStatus(page, exercise!.id!, jobId, 'ADAPT');
         await expectHyperionLlmMockRequestsIncreased(page, initialLlmRequests);
-        await expectLlmMockSawPrompt(page, 'Make the edge-case requirements explicit and keep the tests deterministic.');
+        await expectLlmMockSawPrompt(page, 'Make the edge-case requirements explicit and keep the tests deterministic.', initialLlmRequests);
 
         await cancelRunningJobFromUi(page, exercise!.id!, jobId);
         runningJobId = undefined;
@@ -201,6 +259,7 @@ test.describe('Hyperion exercise generation browser UI', { tag: '@slow' }, () =>
         test.setTimeout(300_000);
         const initialLlmRequests = await getHyperionLlmMockRequestCount(page);
         await openEditor(page, login, exercise!);
+        const initialProblemStatement = await getExerciseProblemStatement(page, exercise!.id!);
 
         await page.getByTestId('hyperion-ai-menu').click();
         await page.getByTestId('hyperion-adapt-with-feedback').click();
@@ -233,11 +292,11 @@ test.describe('Hyperion exercise generation browser UI', { tag: '@slow' }, () =>
         await openPersistedChangedFileInNativeEditor(page, solutionMarkerPath, solutionMarkerText);
         await expectExerciseProblemStatement(page, exercise!.id!, correctedSeedStatementMarker);
         await expectAdaptationRepositoryMarkers(page, exercise!.id!, true);
-        await expectLlmMockSawPrompt(page, 'HYPERION_E2E_SUBMIT_SEEDED_EXERCISE');
+        await expectLlmMockSawPrompt(page, 'HYPERION_E2E_SUBMIT_SEEDED_EXERCISE', initialLlmRequests);
         await expectAdminGenerationSandboxSlots(browser, '0 / 1');
 
         await revertAcceptedAdaptationFromUi(page, exercise!.id!);
-        await expectExerciseProblemStatement(page, exercise!.id!, 'testUseMergeSortForBigList');
+        await expect.poll(() => getExerciseProblemStatement(page, exercise!.id!), { timeout: 60_000 }).toBe(initialProblemStatement);
         await expectAdaptationRepositoryMarkers(page, exercise!.id!, false);
         runningJobId = undefined;
     });
@@ -388,12 +447,12 @@ async function selectTabWithKeyboard(currentTab: Locator, targetTab: Locator, ar
 async function expectSnapshotNavigationDisabled(page: Page, fileName: string) {
     const activity = page.getByTestId('hyperion-generation-activity');
     const fileRow = activity.getByTestId('hyperion-generation-file-static').filter({ hasText: fileName });
-    if (!(await fileRow.isVisible())) {
-        const detailsToggle = activity.getByTestId('hyperion-generation-details-toggle');
-        if (await detailsToggle.isVisible()) {
-            await detailsToggle.click();
-        }
+    const detailsToggle = activity.getByTestId('hyperion-generation-details-toggle');
+    await expect(detailsToggle).toHaveAttribute('aria-expanded', /true|false/);
+    if ((await detailsToggle.getAttribute('aria-expanded')) === 'false') {
+        await detailsToggle.click();
     }
+    await expect(detailsToggle).toHaveAttribute('aria-expanded', 'true');
     await expect(fileRow).toBeVisible();
     await expect(activity.getByRole('button', { name: fileName })).toHaveCount(0);
 }
@@ -401,9 +460,12 @@ async function expectSnapshotNavigationDisabled(page: Page, fileName: string) {
 async function openPersistedChangedFileInNativeEditor(page: Page, fileName: string, expectedContent: string) {
     const activity = page.getByTestId('hyperion-generation-activity');
     const fileButton = activity.getByRole('button', { name: fileName });
-    if (!(await fileButton.isVisible())) {
-        await activity.getByTestId('hyperion-generation-details-toggle').click();
+    const detailsToggle = activity.getByTestId('hyperion-generation-details-toggle');
+    await expect(detailsToggle).toHaveAttribute('aria-expanded', /true|false/);
+    if ((await detailsToggle.getAttribute('aria-expanded')) === 'false') {
+        await detailsToggle.click();
     }
+    await expect(detailsToggle).toHaveAttribute('aria-expanded', 'true');
     await expect(fileButton).toBeEnabled();
     await fileButton.click();
     await expect(page).toHaveURL(/\/code-editor\/SOLUTION\//);
@@ -567,10 +629,10 @@ async function getHyperionLlmMockRequests(page: Page): Promise<LlmMockRequestSum
     return body.requests!;
 }
 
-async function expectLlmMockSawPrompt(page: Page, expectedPromptSnippet: string) {
+async function expectLlmMockSawPrompt(page: Page, expectedPromptSnippet: string, firstRequestIndex: number) {
     await expect
         .poll(async () => {
-            const requests = await getHyperionLlmMockRequests(page);
+            const requests = (await getHyperionLlmMockRequests(page)).slice(firstRequestIndex);
             const matching = requests.find((request) => request.promptText?.includes(expectedPromptSnippet));
             return matching
                 ? {
@@ -605,6 +667,13 @@ async function expectExerciseProblemStatement(page: Page, exerciseId: number, ex
             { timeout: 60_000 },
         )
         .toBeTruthy();
+}
+
+async function getExerciseProblemStatement(page: Page, exerciseId: number): Promise<string> {
+    const response = await page.request.get(`api/programming/programming-exercises/${exerciseId}`);
+    expect(response.ok()).toBeTruthy();
+    const exercise = (await response.json()) as { problemStatement?: string };
+    return exercise.problemStatement ?? '';
 }
 
 async function expectAdaptationRepositoryMarkers(page: Page, exerciseId: number, shouldExist: boolean) {
@@ -724,6 +793,7 @@ async function cancelRunningJobFromAdminDetails(browser: Browser, agentName: str
         await confirmationDialog.getByRole('button', { name: 'Cancel generation', exact: true }).click();
         expect((await cancelResponsePromise).ok()).toBeTruthy();
         await expect(adminPage.getByText('Generation cancelled and sandbox released.', { exact: true })).toBeVisible({ timeout: 60_000 });
+        await expect(generationRow).toBeHidden({ timeout: 60_000 });
     } finally {
         await adminPage.context().close();
     }

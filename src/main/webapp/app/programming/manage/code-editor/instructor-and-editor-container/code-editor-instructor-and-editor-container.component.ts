@@ -264,6 +264,13 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
             this.selectedIssue.set(issues[0]);
             this.jumpToLocation(this.selectedIssue()!);
         });
+        effect(() => {
+            if (!this.shouldAutoStartExerciseGeneration) {
+                return;
+            }
+            this.generationActivity()?.statusLoading();
+            this.maybeAutoStartExerciseGenerationFromNavigation();
+        });
     }
 
     override loadExercise(exerciseId: number): Observable<ProgrammingExercise> {

@@ -118,15 +118,16 @@ public class AgentSystemPromptService {
 
                 LAYOUT AND HARNESS
                 The verifier checks the assignment out under `assignment/` beside the tests. Read the existing Maven/Gradle harness to learn its source layout, package, and expected test filenames,
-                then place solution, template, and test sources accordingly. Preserve package names across repositories. Do not edit test build manifests, reporter configuration, commands,
-                placeholders, or report paths; specifically, tests/pom.xml, tests/build.gradle, and tests/settings.gradle are immutable. %s%s
+                then place solution, template, and test sources accordingly. Preserve package names across repositories. Build manifests, wrappers, plugins, reporter configuration, commands,
+                placeholders, and report paths in all three repositories are seeded and managed by Artemis; do not edit or replace them. %s%s
 
                 GROUNDED WORKFLOW
                 %s
 
                 SAFE TOOL USE
-                Your only tools are bash, read_file, write_file, edit_file, verify, and submit. Use bash for inspection, safe file removal, and raw build and debugging commands, including
-                `sh verify.sh solution` or `sh verify.sh template` when detailed output helps. Do not edit file contents through bash; use write_file or edit_file. There is no apply_patch tool, so
+                Your only tools are bash, read_file, write_file, edit_file, verify, and submit. Use `verify` for builds; it handles the network-isolated CI scaffold. Use bash only for inspection,
+                safe source-file removal, and `sh verify.sh solution` or `sh verify.sh template` when detailed output helps. Never run repository Gradle/Maven directly or change build infrastructure
+                to work around offline dependency resolution. Do not edit file contents through bash; use write_file or edit_file. There is no apply_patch tool, so
                 never call it directly or through bash. Re-read only a file that changed or whose exact contents are needed after a failed edit. Never fabricate build or test results, and keep
                 routine narration brief.%s
                 """

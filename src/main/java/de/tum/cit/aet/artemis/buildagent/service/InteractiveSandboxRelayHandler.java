@@ -8,18 +8,24 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.Iterator;
-import java.util.LinkedHashSet;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.Semaphore;
+import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
@@ -56,6 +62,8 @@ public class InteractiveSandboxRelayHandler {
 
     static final String DRAINING_REFUSAL_MARKER = "is paused and is not accepting new generation sandboxes";
 
+    static final String OVERLOAD_REFUSAL_MARKER = "is overloaded and cannot accept another sandbox request";
+
     private final ApplicationContext applicationContext;
 
     private final DistributedDataAccessService distributedDataAccessService;
@@ -74,10 +82,19 @@ public class InteractiveSandboxRelayHandler {
     /** Permits are reclaimed on destroy or by orphan reaping. */
     private Semaphore sandboxSlotPermits;
 
-    private static final int MAX_REMEMBERED_CORRELATION_IDS = 10_000;
+    static final int MAX_REMEMBERED_CORRELATION_IDS = 10_000;
 
-    /** Guarded FIFO used for at-most-once request handling. */
-    private final LinkedHashSet<String> handledCorrelationIds = new LinkedHashSet<>();
+    private final Object requestDeduplicationLock = new Object();
+
+    /** In-flight ids are never evicted; doing so could repeat a side effect when a retry arrives. */
+    private final Map<String, Long> inFlightCorrelationIds = new HashMap<>();
+
+    /** Terminal responses retained with their correlation ids so a retried request can recover a lost response without repeating the side effect. */
+    private final Map<String, CachedResponse> completedResponses = new LinkedHashMap<>();
+
+    private static final long REQUEST_DEADLINE_GRACE_MILLIS = Duration.ofMinutes(1).toMillis();
+
+    private static final long UNDATED_REQUEST_RETENTION_MILLIS = Duration.ofMinutes(5).toMillis();
 
     private final Set<String> ownedSessionIds = ConcurrentHashMap.newKeySet();
 
@@ -90,6 +107,10 @@ public class InteractiveSandboxRelayHandler {
     private UUID requestListenerId;
 
     private ExecutorService workerExecutor;
+
+    private final AtomicBoolean shuttingDown = new AtomicBoolean();
+
+    private final ReentrantReadWriteLock lifecycleLock = new ReentrantReadWriteLock(true);
 
     public InteractiveSandboxRelayHandler(ApplicationContext applicationContext, DistributedDataAccessService distributedDataAccessService,
             SharedQueueProcessingService sharedQueueProcessingService, BuildAgentInformationService buildAgentInformationService) {
@@ -110,9 +131,12 @@ public class InteractiveSandboxRelayHandler {
             return;
         }
         this.sandboxSlotPermits = new Semaphore(maxGenerationSandboxSlots);
-        this.workerExecutor = Executors.newFixedThreadPool(maxGenerationSandboxSlots + 1, namedDaemonThreadFactory());
+        int workerCount = maxGenerationSandboxSlots + 1;
+        ExecutorService executor = new ThreadPoolExecutor(workerCount, workerCount, 0L, TimeUnit.MILLISECONDS, new SynchronousQueue<>(), namedDaemonThreadFactory(),
+                new ThreadPoolExecutor.AbortPolicy());
+        this.workerExecutor = executor;
         try {
-            int removedPreviousSessions = interactiveSandboxService().removeSessionsFromPreviousProcess();
+            int removedPreviousSessions = interactiveSandboxService().removeSessionsForCurrentAgent();
             if (removedPreviousSessions > 0) {
                 log.info("Removed {} leftover interactive sandbox session(s) before advertising generation capacity on build agent '{}'.", removedPreviousSessions,
                         buildAgentShortName);
@@ -135,7 +159,32 @@ public class InteractiveSandboxRelayHandler {
             if (!buildAgentShortName.equals(request.targetAgentShortName())) {
                 return;
             }
-            workerExecutor.submit(() -> handle(request));
+            if (shuttingDown.get()) {
+                publishResponse(SandboxOpResponse.failure(request.correlationId(), "Build agent '" + buildAgentShortName + "' " + DRAINING_REFUSAL_MARKER + "."));
+                return;
+            }
+            RequestClaim claim = claimRequest(request);
+            if (claim.completedResponse() != null) {
+                publishResponse(claim.completedResponse());
+                return;
+            }
+            if (!claim.accepted()) {
+                log.debug("Ignoring retried sandbox request {} ({}) while the original operation is still running", request.correlationId(), request.op());
+                return;
+            }
+            try {
+                executor.submit(() -> handle(request));
+            }
+            catch (RejectedExecutionException ignored) {
+                boolean draining = shuttingDown.get();
+                if (!draining) {
+                    log.warn("Interactive sandbox relay rejected request {} because its bounded worker queue is full", request.correlationId());
+                }
+                String refusal = draining ? DRAINING_REFUSAL_MARKER : OVERLOAD_REFUSAL_MARKER;
+                SandboxOpResponse response = SandboxOpResponse.failure(request.correlationId(), "Build agent '" + buildAgentShortName + "' " + refusal + ".");
+                rememberCompletedResponse(response);
+                publishResponse(response);
+            }
         });
         log.info("InteractiveSandboxRelayHandler initialized for build agent '{}' (max generation sandbox slots: {})", buildAgentShortName, maxGenerationSandboxSlots);
     }
@@ -145,92 +194,188 @@ public class InteractiveSandboxRelayHandler {
      */
     @PreDestroy
     public void shutdown() {
+        if (!shuttingDown.compareAndSet(false, true)) {
+            return;
+        }
         if (requestListenerId != null && requestsTopic != null) {
             requestsTopic.removeMessageListener(requestListenerId);
+            requestListenerId = null;
         }
-        if (workerExecutor != null) {
-            workerExecutor.shutdownNow();
+        ExecutorService executor = workerExecutor;
+        if (executor != null) {
+            executor.shutdown();
+            try {
+                if (!executor.awaitTermination(30, TimeUnit.SECONDS)) {
+                    executor.shutdownNow();
+                }
+                if (!executor.awaitTermination(5, TimeUnit.SECONDS)) {
+                    log.warn("Interactive sandbox relay workers did not stop on build agent '{}'; leaving session cleanup to startup reconciliation.", buildAgentShortName);
+                    return;
+                }
+            }
+            catch (InterruptedException e) {
+                executor.shutdownNow();
+                Thread.currentThread().interrupt();
+                log.warn("Interrupted while stopping interactive sandbox relay workers on build agent '{}'; leaving session cleanup to startup reconciliation.",
+                        buildAgentShortName);
+                return;
+            }
+            workerExecutor = null;
+        }
+        Lock cleanupLock = lifecycleLock.writeLock();
+        cleanupLock.lock();
+        try {
+            try {
+                interactiveSandboxService().removeSessionsForCurrentAgent();
+            }
+            catch (RuntimeException e) {
+                log.warn("Could not remove all sandbox sessions while shutting down build agent '{}': {}", buildAgentShortName, e.getMessage());
+                return;
+            }
+            ownedSessionIds.clear();
+            activeSessions.clear();
+        }
+        finally {
+            cleanupLock.unlock();
         }
     }
 
     private void handle(SandboxOpRequest request) {
-        // Idempotency: the first delivery for a correlation id wins; any redelivery is dropped without re-running the operation or re-publishing a response.
-        // Invariant: correlation ids are single-use; a failed op is never retried under the same id, so marking handled before doing the work is safe.
-        if (!markHandled(request.correlationId())) {
-            log.debug("Dropping duplicate sandbox request {} ({})", request.correlationId(), request.op());
-            return;
-        }
+        Lock operationLock = lifecycleLock.readLock();
+        operationLock.lock();
+        SandboxOpResponse response;
         try {
-            SandboxOpResponse response = switch (request.op()) {
-                case CREATE -> handleCreate(request);
-                case EXEC -> handleExec(request);
-                case COPY_IN -> handleCopyIn(request);
-                case COPY_OUT -> handleCopyOut(request);
-                case LIST -> handleList(request);
-                case DESTROY -> handleDestroy(request);
-            };
-            responsesTopic.publish(response);
+            if (shuttingDown.get()) {
+                response = SandboxOpResponse.failure(request.correlationId(), "Build agent '" + buildAgentShortName + "' " + DRAINING_REFUSAL_MARKER + ".");
+            }
+            else {
+                response = switch (request.op()) {
+                    case CREATE -> handleCreate(request);
+                    case EXEC -> handleExec(request);
+                    case COPY_IN -> handleCopyIn(request);
+                    case COPY_OUT -> handleCopyOut(request);
+                    case LIST -> handleList(request);
+                    case DESTROY -> handleDestroy(request);
+                };
+            }
         }
         catch (Exception e) {
             log.warn("Interactive sandbox relay operation {} ({}) failed on agent '{}': {}", request.op(), request.correlationId(), buildAgentShortName, e.getMessage());
-            responsesTopic.publish(SandboxOpResponse.failure(request.correlationId(), e.getMessage()));
+            response = SandboxOpResponse.failure(request.correlationId(), e.getMessage());
+        }
+        finally {
+            operationLock.unlock();
+        }
+        rememberCompletedResponse(response);
+        publishResponse(response);
+    }
+
+    RequestClaim claimRequest(SandboxOpRequest request) {
+        synchronized (requestDeduplicationLock) {
+            long now = System.currentTimeMillis();
+            completedResponses.values().removeIf(cached -> cached.expiresAtEpochMillis() < now);
+            CachedResponse completedResponse = completedResponses.get(request.correlationId());
+            if (completedResponse != null) {
+                return new RequestClaim(false, completedResponse.response());
+            }
+            long requestDeadline = request.deadlineEpochMillis() > 0 ? request.deadlineEpochMillis() : now + UNDATED_REQUEST_RETENTION_MILLIS;
+            if (requestDeadline < now) {
+                return new RequestClaim(false, SandboxOpResponse.failure(request.correlationId(), "Interactive sandbox request deadline expired before execution."));
+            }
+            if (inFlightCorrelationIds.containsKey(request.correlationId())) {
+                return new RequestClaim(false, null);
+            }
+            if (completedResponses.size() >= MAX_REMEMBERED_CORRELATION_IDS) {
+                return new RequestClaim(false, SandboxOpResponse.failure(request.correlationId(), "Build agent '" + buildAgentShortName + "' " + OVERLOAD_REFUSAL_MARKER + "."));
+            }
+            inFlightCorrelationIds.put(request.correlationId(), requestDeadline + REQUEST_DEADLINE_GRACE_MILLIS);
+            return new RequestClaim(true, null);
         }
     }
 
-    private boolean markHandled(String correlationId) {
-        synchronized (handledCorrelationIds) {
-            if (!handledCorrelationIds.add(correlationId)) {
-                return false;
+    void rememberCompletedResponse(SandboxOpResponse response) {
+        synchronized (requestDeduplicationLock) {
+            Long expiresAt = inFlightCorrelationIds.remove(response.correlationId());
+            if (expiresAt == null) {
+                return;
             }
-            Iterator<String> iterator = handledCorrelationIds.iterator();
-            while (handledCorrelationIds.size() > MAX_REMEMBERED_CORRELATION_IDS && iterator.hasNext()) {
-                iterator.next();
-                iterator.remove();
-            }
-            return true;
+            completedResponses.put(response.correlationId(), new CachedResponse(response, expiresAt));
         }
+    }
+
+    private void publishResponse(SandboxOpResponse response) {
+        try {
+            responsesTopic.publish(response);
+        }
+        catch (RuntimeException e) {
+            log.warn("Could not publish terminal response for interactive sandbox request {}; a retry can recover the cached result", response.correlationId(), e);
+        }
+    }
+
+    record RequestClaim(boolean accepted, SandboxOpResponse completedResponse) {
+    }
+
+    private record CachedResponse(SandboxOpResponse response, long expiresAtEpochMillis) {
     }
 
     private SandboxOpResponse handleCreate(SandboxOpRequest request) {
         if (request.sessionSpec() == null || request.sessionSpec().context() == null) {
             return SandboxOpResponse.failure(request.correlationId(), "Generation sandbox CREATE requires an observability context.");
         }
-        // Pausing blocks new sessions but leaves existing session operations available for orderly teardown.
-        if (sharedQueueProcessingService.isPaused()) {
+        if (!sharedQueueProcessingService.tryAcquireGenerationAdmission()) {
             return SandboxOpResponse.failure(request.correlationId(), "Build agent '" + buildAgentShortName + "' " + DRAINING_REFUSAL_MARKER + ".");
         }
-        if (!sandboxSlotPermits.tryAcquire()) {
-            return SandboxOpResponse.failure(request.correlationId(),
-                    "Build agent '" + buildAgentShortName + "' " + CAPACITY_REFUSAL_MARKER + " (" + maxGenerationSandboxSlots + ").");
-        }
-        boolean created = false;
         try {
-            String containerId = interactiveSandboxService().createSession(request.sessionSpec());
-            ownedSessionIds.add(containerId);
-            registerSession(containerId, request.sessionSpec().context());
-            created = true;
+            if (!sandboxSlotPermits.tryAcquire()) {
+                return SandboxOpResponse.failure(request.correlationId(),
+                        "Build agent '" + buildAgentShortName + "' " + CAPACITY_REFUSAL_MARKER + " (" + maxGenerationSandboxSlots + ").");
+            }
+            boolean created = false;
             try {
-                publishSessionState();
+                String containerId = interactiveSandboxService().createSession(request.sessionSpec());
+                ownedSessionIds.add(containerId);
+                registerSession(containerId, request.sessionSpec().context());
+                created = true;
+                try {
+                    publishSessionState();
+                }
+                catch (RuntimeException e) {
+                    // The container already exists. Returning a retryable CREATE failure could place the same job on another agent, so observability refresh is best-effort here.
+                    log.warn("Could not publish generation sandbox slot state after creating session {}: {}", containerId, e.getMessage());
+                }
+                return SandboxOpResponse.created(request.correlationId(), containerId);
             }
             catch (RuntimeException e) {
-                // The container already exists. Returning a retryable CREATE failure could place the same job on another agent, so observability refresh is best-effort here.
-                log.warn("Could not publish generation sandbox slot state after creating session {}: {}", containerId, e.getMessage());
+                return SandboxOpResponse.failure(request.correlationId(), e.getMessage());
             }
-            return SandboxOpResponse.created(request.correlationId(), containerId);
-        }
-        catch (RuntimeException e) {
-            return SandboxOpResponse.failure(request.correlationId(), e.getMessage());
+            finally {
+                if (!created) {
+                    sandboxSlotPermits.release();
+                }
+            }
         }
         finally {
-            if (!created) {
-                sandboxSlotPermits.release();
-            }
+            sharedQueueProcessingService.releaseGenerationAdmission();
         }
     }
 
     private SandboxOpResponse handleExec(SandboxOpRequest request) {
         requireOwnedSession(request.sessionId());
-        SandboxExecResult result = interactiveSandboxService().exec(request.sessionId(), Duration.ofSeconds(request.timeoutSeconds()), request.command());
+        SandboxExecResult result;
+        try {
+            result = interactiveSandboxService().exec(request.sessionId(), Duration.ofSeconds(request.timeoutSeconds()), request.command());
+        }
+        catch (RuntimeException e) {
+            try {
+                if (!interactiveSandboxService().sessionExists(request.sessionId())) {
+                    releaseOwnedPermit(request.sessionId());
+                }
+            }
+            catch (RuntimeException reconciliationFailure) {
+                e.addSuppressed(reconciliationFailure);
+            }
+            throw e;
+        }
         if (result.timedOut()) {
             releaseOwnedPermit(request.sessionId());
         }
@@ -239,8 +384,8 @@ public class InteractiveSandboxRelayHandler {
 
     private SandboxOpResponse handleCopyIn(SandboxOpRequest request) {
         requireOwnedSession(request.sessionId());
-        // Keyed staging avoids broadcasting the payload; this worker consumes the entry and the client cleans up abandoned entries.
-        byte[] payload = distributedDataAccessService.getHyperionSandboxPayloads().remove(request.correlationId());
+        // Keep the staged payload until the caller receives a terminal response, so a retried request can recover after a lost response without losing the input.
+        byte[] payload = distributedDataAccessService.getHyperionSandboxPayloads().get(request.correlationId());
         if (payload == null) {
             return SandboxOpResponse.failure(request.correlationId(),
                     "Copy-in payload for correlation id " + request.correlationId() + " was not staged (already consumed or evicted).");
@@ -397,11 +542,20 @@ public class InteractiveSandboxRelayHandler {
         releaseOwnedPermit(containerId);
     }
 
+    Set<String> ownedSessionIdsSnapshot() {
+        return Set.copyOf(ownedSessionIds);
+    }
+
     private void releaseOwnedPermit(String containerId) {
         if (ownedSessionIds.remove(containerId)) {
             activeSessions.remove(containerId);
             sandboxSlotPermits.release();
-            publishSessionState();
+            try {
+                publishSessionState();
+            }
+            catch (RuntimeException e) {
+                log.warn("Could not publish generation sandbox slot state after releasing session {}: {}", containerId, e.getMessage());
+            }
         }
     }
 

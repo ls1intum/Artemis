@@ -57,6 +57,8 @@ import { ConfirmationService } from 'primeng/api';
 import dayjs from 'dayjs/esm';
 import { ProgrammingExerciseParticipationService } from 'app/programming/manage/services/programming-exercise-participation.service';
 
+const AUTO_START_EXERCISE_GENERATION_STATE = 'autoStartExerciseGeneration';
+
 type ComponentInternalsOverrides = {
     codeEditorContainer: Signal<any>;
     editableInstructions: Signal<any>;
@@ -1335,6 +1337,33 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Adapt with feedback'
         expect(generationService.generate).toHaveBeenCalledExactlyOnceWith(42, { mode: 'GENERATE' });
         expect(attachToJob).toHaveBeenCalledExactlyOnceWith('job-adapt-1', 'GENERATE');
         expect(openEditorBottomPanel).toHaveBeenCalledOnce();
+    });
+
+    it('auto-starts creation generation after the activity status finishes loading', async () => {
+        fixture.destroy();
+        window.history.replaceState({ [AUTO_START_EXERCISE_GENERATION_STATE]: true }, '');
+        fixture = TestBed.createComponent(CodeEditorInstructorAndEditorContainerComponent);
+        comp = fixture.componentInstance;
+        comp.exercise = createMockExercise({
+            problemStatement: 'Implement the specified behavior and cover all required edge cases.',
+            programmingLanguage: ProgrammingLanguage.JAVA,
+            projectType: ProjectType.PLAIN_GRADLE,
+            isAtLeastEditor: true,
+            releaseDate: dayjs().add(1, 'day'),
+        });
+        setCodeEditorContainer(comp, createDefaultContainerStub());
+        const activity = signal<any | undefined>(undefined);
+        (comp as any).generationActivity = activity;
+
+        fixture.detectChanges();
+        expect(generationService.generate).not.toHaveBeenCalled();
+
+        activity.set({ attachToJob, running: () => false, statusLoading: () => false, statusLoadFailed: () => false });
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        expect(generationService.generate).toHaveBeenCalledExactlyOnceWith(42, { mode: 'GENERATE' });
+        window.history.replaceState({}, '');
     });
 
     it.each(['', '   ', 'x'.repeat(39), `  ${'x'.repeat(39)}  `])('blocks manual generation when the meaningful specification is %j', (problemStatement) => {

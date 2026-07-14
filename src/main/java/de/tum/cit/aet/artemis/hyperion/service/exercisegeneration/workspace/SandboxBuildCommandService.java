@@ -166,6 +166,13 @@ public class SandboxBuildCommandService {
                 mkdir -p "$ASSIGNMENT_DEST"
                 cp -a "$WORKSPACE/$ASSIGNMENT/." "$ASSIGNMENT_DEST"/ 2>/dev/null || true
                 @@SOLUTION_COPY@@
+                # The standard Gradle tests scaffold applies the Teamscale coverage-upload plugin. LocalCI resolves it with network access, while generation sandboxes are
+                # intentionally network-isolated. Remove only that plugin declaration from this disposable build-tree copy; the immutable tests repository and all test sources
+                # remain unchanged, and Hyperion does not use Teamscale coverage uploads for its differential verdict.
+                for build_file in "$TEST_DEST/build.gradle" "$TEST_DEST/build.gradle.kts"; do
+                    [ -f "$build_file" ] || continue
+                    grep -vF "id 'com.teamscale' version" "$build_file" | grep -vF 'id("com.teamscale") version' > "$build_file.hyp" && mv "$build_file.hyp" "$build_file"
+                done
                 # Substitute the CI directory placeholders inside the COPIED test harness, exactly as production exercise-creation does, so a seeded harness resolves against THIS build
                 # tree without the agent editing it. Assignment, solution, and test directories use the exercise's real CI checkout layout. Build-tree copy only — the seeded
                 # source files are untouched.

@@ -36,8 +36,8 @@ services:
             chmod 777 /root &&
             chmod +x ./run-tests.sh &&
             if env | grep -qx HYPERION_LLM_MODE=mock; then
-              mkdir -p ./test-reports &&
-              HYPERION_LLM_MOCK_PORT=1234 node ./support/hyperion-llm-mock/server.mjs > ./test-reports/hyperion-llm-mock.log 2>&1 &
+              chmod +x ./support/hyperion-llm-mock/start.sh &&
+              HYPERION_LLM_MOCK_PORT=1234 ./support/hyperion-llm-mock/start.sh
             fi &&
             corepack enable &&
             pnpm install --frozen-lockfile &&

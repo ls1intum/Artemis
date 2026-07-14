@@ -123,6 +123,27 @@ class SandboxAgentToolsTest {
         assertThat(sandbox.execCount).isZero();
     }
 
+    @Test
+    void writeFile_rejectsWorkspaceBuildInfrastructureOutsideTheExerciseRepositories() {
+        RecordingSandbox sandbox = new RecordingSandbox();
+        SandboxAgentTools tools = new SandboxAgentTools(sandbox, "s");
+
+        String result = tools.writeFile("buildSrc/build.gradle", "plugins { id 'java' }");
+
+        assertThat(result).contains("Workspace build infrastructure is managed by Artemis");
+        assertThat(sandbox.execCount).isZero();
+    }
+
+    @Test
+    void writeFile_rejectsSeededBuildInfrastructureInsideExerciseRepositories() {
+        RecordingSandbox sandbox = new RecordingSandbox();
+        SandboxAgentTools tools = new SandboxAgentTools(sandbox, "s");
+
+        assertThat(tools.writeFile("solution/build.gradle", "plugins { id 'java' }")).contains("build infrastructure is seeded and managed by Artemis");
+        assertThat(tools.writeFile("template/buildSrc/src/main/java/FakePlugin.java", "class FakePlugin {}")).contains("build infrastructure is seeded and managed by Artemis");
+        assertThat(sandbox.execCount).isZero();
+    }
+
     /** Records the exec script and returns a scripted result, to test the bash spill wrapper and output composition without Docker. */
     private static final class ScriptedSandbox implements InteractiveSandbox {
 
@@ -297,11 +318,12 @@ class SandboxAgentToolsTest {
     }
 
     @Test
-    void mutatesImmutableTestsHarness_flagsOnlyLikelyWrites() {
-        assertThat(SandboxAgentTools.mutatesImmutableTestsHarness("cat > tests/pom.xml")).isTrue();
-        assertThat(SandboxAgentTools.mutatesImmutableTestsHarness("sed -i 's/a/b/' tests/package.json")).isTrue();
-        assertThat(SandboxAgentTools.mutatesImmutableTestsHarness("cat tests/pom.xml")).isFalse();
-        assertThat(SandboxAgentTools.mutatesImmutableTestsHarness("cat > tests/test/de/test/CalculatorTest.java")).isFalse();
+    void mutatesManagedBuildInfrastructure_flagsOnlyLikelyWrites() {
+        assertThat(SandboxAgentTools.mutatesManagedBuildInfrastructure("cat > tests/pom.xml")).isTrue();
+        assertThat(SandboxAgentTools.mutatesManagedBuildInfrastructure("cat > solution/build.gradle")).isTrue();
+        assertThat(SandboxAgentTools.mutatesManagedBuildInfrastructure("sed -i 's/a/b/' tests/package.json")).isTrue();
+        assertThat(SandboxAgentTools.mutatesManagedBuildInfrastructure("cat tests/pom.xml")).isFalse();
+        assertThat(SandboxAgentTools.mutatesManagedBuildInfrastructure("cat > tests/test/de/test/CalculatorTest.java")).isFalse();
     }
 
     @Test

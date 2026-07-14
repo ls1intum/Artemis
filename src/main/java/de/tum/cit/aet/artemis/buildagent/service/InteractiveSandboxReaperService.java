@@ -6,6 +6,8 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import jakarta.annotation.PostConstruct;
 
@@ -97,10 +99,12 @@ public class InteractiveSandboxReaperService {
         long now = Instant.now().getEpochSecond();
         long idleThreshold = sandboxContainerExpiryMinutes * 60L;
 
-        List<Container> orphanedSandboxContainers;
+        Set<String> ownedSessionsBeforeListing = relayHandler.ownedSessionIdsSnapshot();
+        List<Container> currentAgentContainers;
         try {
-            orphanedSandboxContainers = dockerClient.listContainersCmd().withShowAll(true).exec().stream().filter(interactiveSandboxService()::isOwnSandboxContainer)
-                    .filter(container -> (now - lastActivityEpochSecond(container)) > idleThreshold).toList();
+            String namePrefix = interactiveSandboxService().containerNamePrefix();
+            currentAgentContainers = dockerClient.listContainersCmd().withShowAll(true).exec().stream()
+                    .filter(container -> InteractiveSandboxService.hasSandboxContainerName(container, namePrefix)).toList();
         }
         catch (Exception ex) {
             if (DockerUtil.isDockerNotAvailable(ex)) {
@@ -111,21 +115,38 @@ public class InteractiveSandboxReaperService {
             return;
         }
 
+        reconcileMissingOwnedSessions(ownedSessionsBeforeListing, currentAgentContainers);
+        List<Container> orphanedSandboxContainers = currentAgentContainers.stream().filter(container -> (now - lastActivityEpochSecond(container)) > idleThreshold).toList();
         if (orphanedSandboxContainers.isEmpty()) {
             return;
         }
         log.info("Found {} orphaned interactive sandbox containers", orphanedSandboxContainers.size());
         for (Container container : orphanedSandboxContainers) {
-            try (final var removeCommand = dockerClient.removeContainerCmd(container.getId()).withForce(true)) {
-                removeCommand.exec();
-                interactiveSandboxService().forgetActivity(container.getId());
-                // Reclaim the relay session permit if this container was an orphaned relay session, so repeated orphaning cannot slowly starve the agent of generation capacity.
-                relayHandler.releaseIfOwned(container.getId());
+            try {
+                if (interactiveSandboxService().reapSessionIfInactive(container.getId(), container.getCreated(), idleThreshold)) {
+                    relayHandler.releaseIfOwned(container.getId());
+                }
             }
             catch (Exception ex) {
                 log.warn("Failed to reap orphaned interactive sandbox container {}: {}", container.getId(), ex.getMessage());
             }
         }
+    }
+
+    private void reconcileMissingOwnedSessions(Set<String> ownedSessionsBeforeListing, List<Container> currentAgentContainers) {
+        Set<String> listedContainerIds = currentAgentContainers.stream().map(Container::getId).collect(Collectors.toSet());
+        ownedSessionsBeforeListing.stream().filter(sessionId -> !listedContainerIds.contains(sessionId)).forEach(sessionId -> {
+            try {
+                if (!interactiveSandboxService().sessionExists(sessionId)) {
+                    interactiveSandboxService().forgetActivity(sessionId);
+                    relayHandler.releaseIfOwned(sessionId);
+                    log.warn("Released the generation sandbox slot for externally removed session {}", sessionId);
+                }
+            }
+            catch (RuntimeException ex) {
+                log.warn("Could not reconcile missing interactive sandbox session {}: {}", sessionId, ex.getMessage());
+            }
+        });
     }
 
     private InteractiveSandboxService interactiveSandboxService() {
@@ -134,7 +155,7 @@ public class InteractiveSandboxReaperService {
 
     /**
      * The epoch-second of a container's last recorded activity, falling back to its creation time when this process has no activity record for it (e.g. a container left behind
-     * by a previous agent process). Reading the lock-free registry keeps the sweep cheap.
+     * by a previous agent process). Reading the in-process registry keeps the sweep cheap.
      */
     private long lastActivityEpochSecond(Container container) {
         Optional<Instant> lastActivity = interactiveSandboxService().lastActivity(container.getId());

@@ -66,7 +66,7 @@ class InteractiveSandboxServiceHostConfigTest {
     }
 
     @Test
-    void createSession_appliesRequestedNetworkModeAndSandboxHardening() {
+    void createSession_enforcesNoNetworkAndSandboxHardening() {
         InteractiveSandboxService service = new InteractiveSandboxService(buildAgentConfiguration);
 
         service.createSession(new SandboxSessionSpec("image", new DockerRunConfig(List.of(), "none", 0, 0, 0)));
@@ -75,8 +75,18 @@ class InteractiveSandboxServiceHostConfigTest {
         HostConfig hostConfig = hostConfigCaptor.getValue();
         assertThat(hostConfig.getNetworkMode()).isEqualTo("none");
         assertThat(hostConfig.getSecurityOpts()).containsExactly("no-new-privileges");
-        assertThat(hostConfig.getCapDrop()).contains(Capability.NET_RAW);
+        assertThat(hostConfig.getCapDrop()).containsExactly(Capability.ALL);
         assertThat(hostConfig.getAutoRemove()).isFalse();
+    }
+
+    @Test
+    void createSession_defaultsToNoNetworkWhenRunConfigIsAbsent() {
+        InteractiveSandboxService service = new InteractiveSandboxService(buildAgentConfiguration);
+
+        service.createSession(new SandboxSessionSpec("image", null));
+
+        verify(createContainerCmd).withHostConfig(hostConfigCaptor.capture());
+        assertThat(hostConfigCaptor.getValue().getNetworkMode()).isEqualTo("none");
     }
 
     @Test
@@ -102,13 +112,14 @@ class InteractiveSandboxServiceHostConfigTest {
     }
 
     @Test
-    void removeSessionsFromPreviousProcess_removesOnlyThisAgentsSandboxContainers() {
+    void removeSessionsForCurrentAgentRemovesOnlyThisAgentsSandboxContainers() {
         Container ownSandboxContainer = mock(Container.class);
         doReturn("own-sandbox-id").when(ownSandboxContainer).getId();
-        doReturn(new String[] { "/" + InteractiveSandboxService.SANDBOX_CONTAINER_PREFIX + "agent-a-old" }).when(ownSandboxContainer).getNames();
+        doReturn(new String[] { "/" + InteractiveSandboxService.SANDBOX_CONTAINER_PREFIX + "agent-7e916dbb-838e-4fac-852d-3854762812eb" }).when(ownSandboxContainer).getNames();
         Container otherAgentSandboxContainer = mock(Container.class);
         doReturn("other-sandbox-id").when(otherAgentSandboxContainer).getId();
-        doReturn(new String[] { "/" + InteractiveSandboxService.SANDBOX_CONTAINER_PREFIX + "agent-b-old" }).when(otherAgentSandboxContainer).getNames();
+        doReturn(new String[] { "/" + InteractiveSandboxService.SANDBOX_CONTAINER_PREFIX + "agent-a-67eb8e66-3163-4f3d-b65f-8f47e129fe41" }).when(otherAgentSandboxContainer)
+                .getNames();
         Container otherContainer = mock(Container.class);
         doReturn("other-id").when(otherContainer).getId();
         doReturn(new String[] { "/local-ci-build" }).when(otherContainer).getNames();
@@ -120,9 +131,9 @@ class InteractiveSandboxServiceHostConfigTest {
         when(dockerClient.removeContainerCmd("own-sandbox-id")).thenReturn(removeContainerCmd);
         when(removeContainerCmd.withForce(true)).thenReturn(removeContainerCmd);
         InteractiveSandboxService service = new InteractiveSandboxService(buildAgentConfiguration);
-        ReflectionTestUtils.setField(service, "buildAgentShortName", "agent-a");
+        ReflectionTestUtils.setField(service, "buildAgentShortName", "agent");
 
-        int removed = service.removeSessionsFromPreviousProcess();
+        int removed = service.removeSessionsForCurrentAgent();
 
         assertThat(removed).isOne();
         verify(dockerClient).removeContainerCmd("own-sandbox-id");

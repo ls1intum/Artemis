@@ -20,6 +20,7 @@ import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
@@ -156,6 +157,8 @@ public class SharedQueueProcessingService {
      */
     private final ReentrantLock agentStateTransitionLock = new ReentrantLock();
 
+    private final ReentrantReadWriteLock generationAdmissionLock = new ReentrantReadWriteLock(true);
+
     private UUID listenerId;
 
     /** UUID of the pause build agent message listener. Stored to allow removal on reconnection. */
@@ -202,7 +205,32 @@ public class SharedQueueProcessingService {
      * @param paused true to pause the build agent, false to resume
      */
     public void setPauseState(boolean paused) {
-        isPaused.set(paused);
+        setPaused(paused);
+    }
+
+    boolean tryAcquireGenerationAdmission() {
+        var readLock = generationAdmissionLock.readLock();
+        readLock.lock();
+        if (isPaused.get()) {
+            readLock.unlock();
+            return false;
+        }
+        return true;
+    }
+
+    void releaseGenerationAdmission() {
+        generationAdmissionLock.readLock().unlock();
+    }
+
+    private void setPaused(boolean paused) {
+        var writeLock = generationAdmissionLock.writeLock();
+        writeLock.lock();
+        try {
+            isPaused.set(paused);
+        }
+        finally {
+            writeLock.unlock();
+        }
     }
 
     /**
@@ -980,8 +1008,8 @@ public class SharedQueueProcessingService {
      * <li>After releasing the state-transition lock, waits for all running jobs to finish
      * for at most {@link #pauseGracePeriodSeconds} seconds. If they do not finish in time,
      * {@link #handleTimeoutAndCancelRunningJobs()} is invoked to enforce cancellation.</li>
-     * <li>Finally, closes the local build-agent services
-     * (e.g. executors, Docker client) via {@link #buildAgentConfiguration#closeBuildAgentServices()}.</li>
+     * <li>Finally, rechecks the paused state under the transition lock and stops the normal build-job executor. Docker remains available so active Hyperion generation sessions
+     * can drain.</li>
      * </ol>
      *
      * <h3>Concurrency and locking semantics</h3>
@@ -1015,7 +1043,7 @@ public class SharedQueueProcessingService {
             log.info("Pausing build agent with address {}", distributedDataAccessService.getLocalMemberAddress());
 
             // Mark the agent as paused so all subsequent logic and status updates are consistent.
-            isPaused.set(true);
+            setPaused(true);
 
             // Stop accepting / scheduling new work before we update the distributed state.
             // Note: We only remove the queue listener and scheduled task, NOT the pause/resume
@@ -1060,8 +1088,16 @@ public class SharedQueueProcessingService {
             }
         }
 
-        // After handling all running jobs, close the underlying services of the build agent.
-        buildAgentConfiguration.closeBuildAgentServices();
+        agentStateTransitionLock.lock();
+        try {
+            if (isPaused.get()) {
+                // Keep Docker available for active Hyperion sessions while normal build-job intake is paused.
+                buildAgentConfiguration.pauseBuildJobs();
+            }
+        }
+        finally {
+            agentStateTransitionLock.unlock();
+        }
     }
 
     private void handleTimeoutAndCancelRunningJobs() {
@@ -1127,11 +1163,11 @@ public class SharedQueueProcessingService {
 
             log.info("Resuming build agent with address {}", distributedDataAccessService.getLocalMemberAddress());
 
-            // Mark the agent as running again and enable result processing.
-            isPaused.set(false);
-
             // Re-open the underlying services (executors, Docker client, etc.) required to run jobs.
             buildAgentConfiguration.openBuildAgentServices();
+
+            // Mark the agent as running only after its executor is ready.
+            setPaused(false);
 
             // Reset the consecutive failure counter so that previous failures do not penalize new runs.
             consecutiveBuildJobFailures.set(0);

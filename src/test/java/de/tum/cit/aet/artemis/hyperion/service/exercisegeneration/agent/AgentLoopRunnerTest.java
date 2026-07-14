@@ -138,12 +138,14 @@ class AgentLoopRunnerTest {
         runner.setModelCallRetryTimingForTests(0L, 0L); // no real backoff waits in the test
         SandboxAgentTools tools = new SandboxAgentTools(new FakeSandbox(), "fake-session");
         List<String> steps = new ArrayList<>();
+        List<ChatResponse> recorded = new ArrayList<>();
 
-        AgentLoopResult result = runner.run("system", "do it", tools, 10, () -> false, null, steps::add);
+        AgentLoopResult result = runner.run("system", "do it", tools, 10, () -> false, recorded::add, steps::add);
 
         assertThat(result.status()).isEqualTo(AgentLoopResult.Status.COMPLETED);
         assertThat(result.finalMessage()).isEqualTo("DONE");
         verify(chatModel, times(3)).call(any(Prompt.class)); // 2 transient failures + 1 success
+        assertThat(recorded).hasSize(1);
         assertThat(steps).contains("The AI service is temporarily unavailable. Retrying.").noneMatch(step -> step.contains("read timed out"));
     }
 
@@ -157,10 +159,12 @@ class AgentLoopRunnerTest {
         runner.setModelCallRetryTimingForTests(0L, 0L);
         SandboxAgentTools tools = new SandboxAgentTools(new FakeSandbox(), "fake-session");
         List<String> steps = new ArrayList<>();
+        List<ChatResponse> recorded = new ArrayList<>();
 
-        AgentLoopResult result = runner.run("system", "do it", tools, 10, () -> false, null, steps::add);
+        AgentLoopResult result = runner.run("system", "do it", tools, 10, () -> false, recorded::add, steps::add);
 
         assertThat(result.status()).isEqualTo(AgentLoopResult.Status.ERROR);
+        assertThat(recorded).isEmpty();
         verify(chatModel, times(1)).call(any(Prompt.class)); // fail fast: a deterministic 4xx is never retried
         assertThat(steps).contains("The AI service could not complete the request.");
     }
@@ -288,12 +292,14 @@ class AgentLoopRunnerTest {
         runner.setModelCallRetryTimingForTests(0L, 0L);
         SandboxAgentTools tools = new SandboxAgentTools(new FakeSandbox(), "fake-session");
         List<String> steps = new ArrayList<>();
+        List<ChatResponse> recorded = new ArrayList<>();
 
-        AgentLoopResult result = runner.run("system", "do it", tools, 10, () -> false, null, steps::add);
+        AgentLoopResult result = runner.run("system", "do it", tools, 10, () -> false, recorded::add, steps::add);
 
         assertThat(result.status()).isEqualTo(AgentLoopResult.Status.COMPLETED);
         assertThat(result.finalMessage()).isEqualTo("DONE");
         verify(chatModel, times(2)).call(any(Prompt.class)); // empty sample re-drawn once, second is usable
+        assertThat(recorded).hasSize(2); // every billable provider response is accounted, including the discarded empty sample
         assertThat(steps).contains("Model returned an empty response; retrying.");
     }
 

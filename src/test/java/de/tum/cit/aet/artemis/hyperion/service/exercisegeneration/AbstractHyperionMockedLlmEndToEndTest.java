@@ -6,6 +6,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.commons.io.FileUtils;
 import org.jspecify.annotations.Nullable;
@@ -13,6 +14,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
+import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.testcontainers.dockerclient.TransportConfig;
 import org.testcontainers.images.RemoteDockerImage;
@@ -36,6 +38,7 @@ import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseCreationUpdateService;
 
 /** Shared setup for deterministic mocked-model generation and adaptation tests that run the sandbox, builds, and verifier against Docker. */
+@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
 abstract class AbstractHyperionMockedLlmEndToEndTest extends AbstractProgrammingIntegrationLocalCILocalVCTestBase {
 
     @Autowired
@@ -92,6 +95,7 @@ abstract class AbstractHyperionMockedLlmEndToEndTest extends AbstractProgramming
         sharedQueueProcessingService.resetInitializedState();
         sharedQueueProcessingService.setPauseState(false);
         sharedQueueProcessingService.init();
+        ((AtomicBoolean) Objects.requireNonNull(ReflectionTestUtils.getField(interactiveSandboxRelayHandler, "shuttingDown"))).set(false);
         ReflectionTestUtils.setField(interactiveSandboxRelayHandler, "maxGenerationSandboxSlots", 1);
         interactiveSandboxRelayHandler.registerRequestListener();
         sharedQueueProcessingService.updateBuildAgentInformation();

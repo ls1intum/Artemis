@@ -102,6 +102,8 @@ class HyperionProblemStatementGenerationServiceTest {
         assertThat(promptText).contains("Do not include Artemis task bindings or raw task markers");
         assertThat(promptText).contains("Do not invent test method names");
         assertThat(promptText).contains("Do not prescribe a solution architecture unless the instructor explicitly asked for one");
+        assertThat(promptText).contains("Do not invent delivery mechanisms");
+        assertThat(promptText).contains("Do not add submission or deliverable sections");
     }
 
     @Test
@@ -269,6 +271,46 @@ class HyperionProblemStatementGenerationServiceTest {
         course.setDescription("Test Description");
 
         assertThatThrownBy(() -> hyperionProblemStatementGenerationService.generateProblemStatement(course, "Create a scheduler exercise"))
+                .isInstanceOf(InternalServerErrorAlertException.class).hasMessageContaining("generation-only artifacts");
+    }
+
+    @Test
+    void generateProblemStatement_rejectsAnUnrequestedDeliverableAndDeliveryMechanism() {
+        String artifactDraft = """
+                # Library Checkout
+
+                Students summarize checkout events.
+
+                ## Deliverable Expectations
+                Print a JSON-like summary.
+                """;
+        when(chatModel.call(any(Prompt.class))).thenAnswer(_ -> new ChatResponse(List.of(new Generation(new AssistantMessage(artifactDraft)))));
+
+        var course = new Course();
+        course.setTitle("Test Course");
+        course.setDescription("Test Description");
+
+        assertThatThrownBy(() -> hyperionProblemStatementGenerationService.generateProblemStatement(course, "Create a compact library exercise"))
+                .isInstanceOf(InternalServerErrorAlertException.class).hasMessageContaining("generation-only artifacts");
+    }
+
+    @Test
+    void generateProblemStatement_doesNotTreatANegatedOptionalRequestAsPermission() {
+        String artifactDraft = """
+                # Library Checkout
+
+                Students summarize checkout events.
+
+                ## Submission checklist (optional)
+                - [ ] Handle empty input.
+                """;
+        when(chatModel.call(any(Prompt.class))).thenAnswer(_ -> new ChatResponse(List.of(new Generation(new AssistantMessage(artifactDraft)))));
+
+        var course = new Course();
+        course.setTitle("Test Course");
+        course.setDescription("Test Description");
+
+        assertThatThrownBy(() -> hyperionProblemStatementGenerationService.generateProblemStatement(course, "Do not include an optional submission checklist"))
                 .isInstanceOf(InternalServerErrorAlertException.class).hasMessageContaining("generation-only artifacts");
     }
 

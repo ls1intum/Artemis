@@ -239,6 +239,9 @@ public class ExerciseGenerationRevertService {
 
         List<RepositoryType> reverted = new ArrayList<>();
         String repositoryBranch = baseline.repositoryBranch() == null || baseline.repositoryBranch().isBlank() ? defaultBranch : baseline.repositoryBranch();
+        GenerationPersistenceService.TestsBuildSignal testsBuildSignal = baseline.headFor(RepositoryType.TESTS) == null ? null
+                : persistenceService.prepareTestsBuildSignal(exercise, baseline.headFor(RepositoryType.TESTS));
+        boolean testsRefUpdated = false;
         boolean fullyReverted = true;
         for (RepositoryType repositoryType : REVERT_ORDER) {
             String head = baseline.headFor(repositoryType);
@@ -274,6 +277,9 @@ public class ExerciseGenerationRevertService {
                     throw new IllegalStateException("Current repository HEAD " + currentHead + " differs from the generated commit " + expectedCurrentHead);
                 }
                 gitService.resetToCommitAndForcePush(repository, head, expectedCurrentHead, repositoryBranch);
+                if (repositoryType == RepositoryType.TESTS) {
+                    testsRefUpdated = true;
+                }
                 refreshCachedCheckout(uri, repositoryBranch);
                 reverted.add(repositoryType);
                 log.info("Reverted the {} repository of exercise {} back to its pre-generated commit {}", repositoryType, exercise.getId(), head);
@@ -281,6 +287,7 @@ public class ExerciseGenerationRevertService {
             catch (Exception e) {
                 fullyReverted = false;
                 log.error("Failed to revert the {} repository of exercise {} back to {}; the exercise may be inconsistent", repositoryType, exercise.getId(), head, e);
+                break;
             }
             finally {
                 if (repository != null) {
@@ -297,10 +304,18 @@ public class ExerciseGenerationRevertService {
                         exercise.getId());
                 return new RevertResult(false, List.copyOf(reverted));
             }
-            // Re-sync grading to the reverted tests (best-effort); the tests HEAD is the captured baseline commit we just reset to. A partial revert deliberately skips this so
-            // test-case/build metadata cannot be refreshed against only part of a mixed repository state.
-            fullyReverted = persistenceService.resyncAfterRevert(exercise, user, baseline.headFor(RepositoryType.TESTS), baseline.problemStatement(), baseline.title(),
-                    baseline.expectedProblemStatement(), baseline.expectedTitle());
+            // Re-sync grading to the reverted tests. On failure, the loop stops before TESTS so its post-receive hook cannot build a mixed repository state.
+            try {
+                if (testsBuildSignal != null && !testsRefUpdated) {
+                    testsBuildSignal = persistenceService.triggerTestsBuild(exercise, testsBuildSignal);
+                }
+                fullyReverted = persistenceService.resyncAfterRevertWithSignal(exercise, user, testsBuildSignal, baseline.problemStatement(), baseline.title(),
+                        baseline.expectedProblemStatement(), baseline.expectedTitle());
+            }
+            catch (RuntimeException e) {
+                log.error("Failed to trigger the grading re-sync after reverting exercise {}; retaining the baseline for retry", exercise.getId(), e);
+                fullyReverted = false;
+            }
         }
         return new RevertResult(fullyReverted, List.copyOf(reverted));
     }

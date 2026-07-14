@@ -97,6 +97,10 @@ final class HyperionUtils {
     private static final List<ConditionalDraftArtifact> CONDITIONAL_DRAFT_ARTIFACTS = List.of(
             new ConditionalDraftArtifact(Pattern.compile("(?:^\\s*#{1,6}\\s*(?:optional challenges?|extra credit)\\b|\\*\\*\\(Optional\\)|\\bif you choose to expose\\b)",
                     Pattern.CASE_INSENSITIVE | Pattern.MULTILINE), Pattern.compile("\\b(?:optional|challenge|extra credit)\\b", Pattern.CASE_INSENSITIVE)),
+            new ConditionalDraftArtifact(Pattern.compile("^\\s*#{1,6}[^\\n]*\\(optional\\)\\s*$", Pattern.CASE_INSENSITIVE | Pattern.MULTILINE),
+                    Pattern.compile("\\boptional\\b", Pattern.CASE_INSENSITIVE)),
+            new ConditionalDraftArtifact(Pattern.compile("^\\s*#{1,6}\\s*(?:submission|deliverable)\\b", Pattern.CASE_INSENSITIVE | Pattern.MULTILINE),
+                    Pattern.compile("\\b(?:submission|deliverable)\\b", Pattern.CASE_INSENSITIVE)),
             new ConditionalDraftArtifact(
                     Pattern.compile("\\b(?:performance benchmark|benchmarking task|throughput benchmark|resource exhaustion|upper limit|maximum recurrence limit|"
                             + "thread-safe|thread safety|concurrent use)\\b", Pattern.CASE_INSENSITIVE),
@@ -105,7 +109,12 @@ final class HyperionUtils {
                     Pattern.compile("\\b(?:provided test suite|test suite|students?\\s+(?:must|should|need to|are required to)\\s+(?:write|create|provide)\\s+unit tests?)\\b",
                             Pattern.CASE_INSENSITIVE),
                     Pattern.compile("\\b(?:unit tests?|testing|test suite)\\b", Pattern.CASE_INSENSITIVE)),
-            new ConditionalDraftArtifact(Pattern.compile("\\bJSON export\\b", Pattern.CASE_INSENSITIVE), Pattern.compile("\\bJSON\\b", Pattern.CASE_INSENSITIVE)));
+            new ConditionalDraftArtifact(Pattern.compile("\\bJSON(?:-like)?\\b", Pattern.CASE_INSENSITIVE), Pattern.compile("\\bJSON\\b", Pattern.CASE_INSENSITIVE)),
+            new ConditionalDraftArtifact(Pattern.compile("\\b(?:standard input|command[- ]line|CSV|database|web interface|printed (?:lines|output))\\b", Pattern.CASE_INSENSITIVE),
+                    Pattern.compile("\\b(?:standard input|command[- ]line|CSV|database|web interface|printed (?:lines|output))\\b", Pattern.CASE_INSENSITIVE)));
+
+    private static final Pattern NEGATED_ARTIFACT_REQUEST = Pattern.compile("\\b(?:do\\s+not|don't|avoid|without|exclude|omit|never|no)\\b[^.!?;\\n]{0,100}$",
+            Pattern.CASE_INSENSITIVE);
 
     private static final Pattern PUBLIC_API_DETAILS = Pattern.compile("(?:^\\s*#{1,6}\\s*(?:public|required) API\\b|\\|\\s*Method\\s*\\|\\s*Purpose|"
             + "\\b(?:public\\s+)?(?:boolean|int|long|double|String|void|List<[^>]+>|Map<[^>]+>)\\s+[a-zA-Z_]\\w*\\s*\\()", Pattern.CASE_INSENSITIVE | Pattern.MULTILINE);
@@ -237,7 +246,7 @@ final class HyperionUtils {
             findings.add("forbidden draft artifact");
         }
         if (CONDITIONAL_DRAFT_ARTIFACTS.stream()
-                .anyMatch(artifact -> artifact.contentPattern().matcher(problemStatement).find() && !artifact.requestPattern().matcher(sanitizedPrompt).find())) {
+                .anyMatch(artifact -> artifact.contentPattern().matcher(problemStatement).find() && !explicitlyRequestsArtifact(sanitizedPrompt, artifact))) {
             findings.add("unrequested draft artifact");
         }
         boolean apiAvoidanceRequested = API_AVOIDANCE_REQUEST.matcher(sanitizedPrompt).find();
@@ -251,6 +260,17 @@ final class HyperionUtils {
             throw new InternalServerErrorAlertException("Generated problem statement contains generation-only artifacts: " + String.join(", ", findings), "ProblemStatement",
                     errorKeyPrefix + ".generatedProblemStatementContainsArtifacts");
         }
+    }
+
+    private static boolean explicitlyRequestsArtifact(String prompt, ConditionalDraftArtifact artifact) {
+        var matcher = artifact.requestPattern().matcher(prompt);
+        while (matcher.find()) {
+            String prefix = prompt.substring(Math.max(0, matcher.start() - 100), matcher.start());
+            if (!NEGATED_ARTIFACT_REQUEST.matcher(prefix).find()) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**

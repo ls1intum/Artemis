@@ -90,13 +90,15 @@ artemis:
     conversion-service-url: http://localhost:8080
   hyperion:
     enabled: false  # Enable the Hyperion service on startup. Requires Spring AI (configured below).
+    generation:
+      max-concurrent-jobs-per-core-node: 2 # Core-node worker cap with no waiting queue. Size together with provider limits and generation sandbox slots across build agents.
     agent:
       context-window-tokens: 128000
       max-turns: 40
       max-job-duration: PT30M # Admission-to-cooperative-cancellation deadline; keep provider/sandbox/repository timeouts bounded too.
-      max-tokens-per-job: 1500000 # Post-response per-job spend guard; keep provider max-output/context limits aligned so one call cannot overshoot materially.
+      max-tokens-per-job: 3000000 # Post-response per-job spend guard; keep provider max-output/context limits aligned so one call cannot overshoot materially.
       token-budget-window: PT24H
-      in-flight-token-reservation-per-job: 1500000 # Worst-case tokens reserved against enabled rolling budgets while a job runs; TTL is crash-only fallback (max-job-duration + 5m).
+      in-flight-token-reservation-per-job: 3000000 # Worst-case tokens reserved against enabled rolling budgets while a job runs; TTL is crash-only fallback (max-job-duration + 5m).
       admission-max-tokens-per-user: 0 # 0 disables this rolling user budget; when enabled, admission checks persisted usage + in-flight reservations.
       admission-max-tokens-per-course: 0 # 0 disables this rolling course budget; when enabled, admission checks persisted usage + in-flight reservations.
       admission-max-tokens-global: 0 # 0 disables this rolling global budget; when enabled, admission checks persisted usage + in-flight reservations.

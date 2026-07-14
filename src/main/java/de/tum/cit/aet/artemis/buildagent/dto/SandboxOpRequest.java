@@ -2,12 +2,14 @@ package de.tum.cit.aet.artemis.buildagent.dto;
 
 import java.io.Serial;
 import java.io.Serializable;
+import java.time.Duration;
+import java.time.Instant;
 
 /**
  * A single interactive-sandbox operation a core node asks a specific remote build agent to perform on the warm container it owns. Requests are broadcast over the
  * {@code hyperion-sandbox-requests} {@link de.tum.cit.aet.artemis.localci.service.distributed.api.topic.DistributedTopic} (build agents commonly run as Hazelcast clients, so a
  * member-targeted RPC is not available) and self-filtered by {@link #targetAgentShortName}; the {@link #correlationId} ties the eventual {@link SandboxOpResponse} back to the
- * blocked caller and makes handling idempotent under redelivery.
+ * blocked caller. The handler retains a bounded terminal-response cache so retries with the same correlation id replay the result instead of repeating the side effect.
  *
  * @param correlationId        unique id correlating this request with its {@link SandboxOpResponse}; also the idempotency key on the handler
  * @param targetAgentShortName the short name of the build agent that owns the session and must handle this request (all other agents ignore it)
@@ -16,21 +18,22 @@ import java.io.Serializable;
  * @param command              the command and its arguments for {@link SandboxOp#EXEC}; {@code null} otherwise
  * @param timeoutSeconds       the per-operation timeout in seconds, applied to the exec inside the container (and used to derive the relay wait budget on the caller)
  * @param workspacePath        the absolute container path for {@link SandboxOp#COPY_IN} (destination) and {@link SandboxOp#COPY_OUT} (source); {@code null} otherwise
+ * @param deadlineEpochMillis  wall-clock deadline after which a delayed request must not execute
  */
 public record SandboxOpRequest(String correlationId, String targetAgentShortName, SandboxOp op, String sessionId, SandboxSessionSpec sessionSpec, String[] command,
-        long timeoutSeconds, String workspacePath) implements Serializable {
+        long timeoutSeconds, String workspacePath, long deadlineEpochMillis) implements Serializable {
 
     @Serial
     private static final long serialVersionUID = 1L;
 
     /** A {@link SandboxOp#CREATE} request: only the session spec is carried. */
     public static SandboxOpRequest create(String correlationId, String targetAgentShortName, SandboxSessionSpec sessionSpec) {
-        return new SandboxOpRequest(correlationId, targetAgentShortName, SandboxOp.CREATE, null, sessionSpec, null, 0L, null);
+        return new SandboxOpRequest(correlationId, targetAgentShortName, SandboxOp.CREATE, null, sessionSpec, null, 0L, null, 0L);
     }
 
     /** An {@link SandboxOp#EXEC} request against an existing session, with the command and its per-op timeout. */
     public static SandboxOpRequest exec(String correlationId, String targetAgentShortName, String sessionId, String[] command, long timeoutSeconds) {
-        return new SandboxOpRequest(correlationId, targetAgentShortName, SandboxOp.EXEC, sessionId, null, command, timeoutSeconds, null);
+        return new SandboxOpRequest(correlationId, targetAgentShortName, SandboxOp.EXEC, sessionId, null, command, timeoutSeconds, null, 0L);
     }
 
     /**
@@ -38,20 +41,25 @@ public record SandboxOpRequest(String correlationId, String targetAgentShortName
      * request itself, so only the target agent transfers them.
      */
     public static SandboxOpRequest copyIn(String correlationId, String targetAgentShortName, String sessionId, String workspacePath) {
-        return new SandboxOpRequest(correlationId, targetAgentShortName, SandboxOp.COPY_IN, sessionId, null, null, 0L, workspacePath);
+        return new SandboxOpRequest(correlationId, targetAgentShortName, SandboxOp.COPY_IN, sessionId, null, null, 0L, workspacePath, 0L);
     }
 
     /** A {@link SandboxOp#COPY_OUT} request reading {@code workspacePath} out of the session as a tar archive. */
     public static SandboxOpRequest copyOut(String correlationId, String targetAgentShortName, String sessionId, String workspacePath) {
-        return new SandboxOpRequest(correlationId, targetAgentShortName, SandboxOp.COPY_OUT, sessionId, null, null, 0L, workspacePath);
+        return new SandboxOpRequest(correlationId, targetAgentShortName, SandboxOp.COPY_OUT, sessionId, null, null, 0L, workspacePath, 0L);
     }
 
     /** A {@link SandboxOp#DESTROY} request tearing down an existing session. */
     public static SandboxOpRequest destroy(String correlationId, String targetAgentShortName, String sessionId) {
-        return new SandboxOpRequest(correlationId, targetAgentShortName, SandboxOp.DESTROY, sessionId, null, null, 0L, null);
+        return new SandboxOpRequest(correlationId, targetAgentShortName, SandboxOp.DESTROY, sessionId, null, null, 0L, null, 0L);
     }
 
     public static SandboxOpRequest list(String correlationId, String targetAgentShortName) {
-        return new SandboxOpRequest(correlationId, targetAgentShortName, SandboxOp.LIST, null, null, null, 0L, null);
+        return new SandboxOpRequest(correlationId, targetAgentShortName, SandboxOp.LIST, null, null, null, 0L, null, 0L);
+    }
+
+    public SandboxOpRequest withDeadline(Duration budget) {
+        return new SandboxOpRequest(correlationId, targetAgentShortName, op, sessionId, sessionSpec, command, timeoutSeconds, workspacePath,
+                Instant.now().plus(budget).toEpochMilli());
     }
 }

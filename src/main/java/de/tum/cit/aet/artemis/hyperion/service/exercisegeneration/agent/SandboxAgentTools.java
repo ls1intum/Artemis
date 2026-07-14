@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.Base64;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -120,7 +121,10 @@ public class SandboxAgentTools {
         if (safe == null) {
             return invalidPathError(path);
         }
-        if (isImmutableTestsHarnessPath(safe)) {
+        if (!isWritableGenerationPath(safe)) {
+            return "ERROR: write only problem-statement.md or files inside solution/, template/, or tests/. Workspace build infrastructure is managed by Artemis.";
+        }
+        if (isManagedBuildInfrastructurePath(safe)) {
             return immutableHarnessError(safe);
         }
         // base64-encode the content so arbitrary source (quotes, newlines) is written verbatim; the path is allowlisted above so it cannot break the shell.
@@ -187,7 +191,7 @@ public class SandboxAgentTools {
         if (isApplyPatchInvocation(command)) {
             return "exit=2\napply_patch is NOT available. Use write_file (new file / full rewrite) or edit_file (exact unique snippet) instead.";
         }
-        if (mutatesImmutableTestsHarness(command)) {
+        if (mutatesManagedBuildInfrastructure(command)) {
             return "exit=2\nDo not modify tests-repository build/harness files such as tests/pom.xml. They are seeded by Artemis and graded verbatim; edit only test source files under tests/test/ instead.";
         }
         int sequence = bashSequence++;
@@ -299,18 +303,29 @@ public class SandboxAgentTools {
         return MANGLED_ARRAY.matcher(command.strip()).matches();
     }
 
-    private static boolean isImmutableTestsHarnessPath(String safe) {
-        return safe.startsWith("tests/") && ExerciseIntegrityGate.isHarnessFile(safe.substring("tests/".length()));
+    private static boolean isManagedBuildInfrastructurePath(String safe) {
+        for (String repository : List.of("solution/", "template/", "tests/")) {
+            if (safe.startsWith(repository)) {
+                String repositoryPath = safe.substring(repository.length());
+                return repositoryPath.startsWith("buildSrc/") || repositoryPath.startsWith("gradle/") || ExerciseIntegrityGate.isHarnessFile(repositoryPath);
+            }
+        }
+        return false;
+    }
+
+    private static boolean isWritableGenerationPath(String safe) {
+        return safe.equals("problem-statement.md") || safe.startsWith("solution/") || safe.startsWith("template/") || safe.startsWith("tests/");
     }
 
     private static String immutableHarnessError(String safe) {
-        return "ERROR: do not modify " + safe + ". Tests-repository build/harness files are seeded by Artemis and graded verbatim; edit only test source files under tests/test/.";
+        return "ERROR: do not modify " + safe + ". Repository build infrastructure is seeded and managed by Artemis; edit only the problem statement and exercise source files.";
     }
 
-    static boolean mutatesImmutableTestsHarness(String command) {
+    static boolean mutatesManagedBuildInfrastructure(String command) {
         String lower = command.toLowerCase();
-        if (!lower.matches("(?s).*tests/(pom\\.xml|build\\.gradle|build\\.gradle\\.kts|settings\\.gradle|settings\\.gradle\\.kts|gradle\\.properties|package\\.json|"
-                + "package-lock\\.json|pnpm-lock\\.yaml|yarn\\.lock|tsconfig\\.json|cargo\\.toml|cargo\\.lock|.*\\.cabal).*")) {
+        if (!lower.matches(
+                "(?s).*(?:tests|solution|template)/(buildsrc/.*|gradle/.*|pom\\.xml|build\\.gradle|build\\.gradle\\.kts|settings\\.gradle|settings\\.gradle\\.kts|gradle\\.properties|package\\.json|"
+                        + "package-lock\\.json|pnpm-lock\\.yaml|yarn\\.lock|tsconfig\\.json|cargo\\.toml|cargo\\.lock|.*\\.cabal).*")) {
             return false;
         }
         return lower.contains(">") || lower.contains("sed -i") || lower.contains("perl -pi") || lower.contains(" tee ") || lower.startsWith("tee ") || lower.contains(" rm ")

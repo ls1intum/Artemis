@@ -54,7 +54,7 @@ import de.tum.cit.aet.artemis.programming.service.ProgrammingSubmissionService;
 import de.tum.cit.aet.artemis.programming.service.RepositoryService;
 
 /**
- * Persists a verified-complete generated exercise through Artemis's normal pipeline (commit repositories, trigger the canonical tests build for test-case sync, update the problem
+ * Persists a verified-complete generated exercise through Artemis's normal pipeline (commit repositories, wait for the tests push to trigger test-case sync, update the problem
  * statement, record an exercise version), the same path a manual instructor edit uses. Runs only after the differential oracle has accepted the exercise.
  * <p>
  * The three repositories (template, solution, tests) cannot commit inside a single database/git transaction, so a broad {@code @Transactional} would not make the multi-repository
@@ -307,6 +307,7 @@ public class GenerationPersistenceService {
         Map<RepositoryType, String> postPersistHashes = new EnumMap<>(RepositoryType.class);
         List<RepositoryType> committed = new ArrayList<>();
         String testsCommitHash = null;
+        TestsBuildSignal testsBuildSignal = null;
         String producedProblemStatement = outcome.producedProblemStatement();
         String originalProblemStatement = expectedProblemStatement;
         String originalTitle = expectedTitle;
@@ -325,12 +326,17 @@ public class GenerationPersistenceService {
             assertMetadataUnchangedSinceJobStart(exercise, originalProblemStatement, originalTitle);
             for (RepositoryType repositoryType : PERSIST_ORDER) {
                 assertStillOwnsMutationSlot(stillOwnsMutationSlot);
-                String commitHash = commitRepository(exercise, user, repositoryType, outcome.producedFiles(repositoryType), outcome.seedRepositoryHeads().get(repositoryType),
-                        repositoryBranch, commitMessage, prePersistHashes, postPersistHashes);
+                Map<String, String> producedFiles = outcome.producedFiles(repositoryType);
+                if (repositoryType == RepositoryType.TESTS && producedFiles != null && !producedFiles.isEmpty()) {
+                    testsBuildSignal = prepareTestsBuildSignal(exercise, null);
+                }
+                String commitHash = commitRepository(exercise, user, repositoryType, producedFiles, outcome.seedRepositoryHeads().get(repositoryType), repositoryBranch,
+                        commitMessage, prePersistHashes, postPersistHashes);
                 if (commitHash != null) {
                     committed.add(repositoryType);
                     if (repositoryType == RepositoryType.TESTS) {
                         testsCommitHash = commitHash;
+                        testsBuildSignal = testsBuildSignal.withTestsCommitHash(commitHash);
                     }
                 }
             }
@@ -338,7 +344,7 @@ public class GenerationPersistenceService {
         }
         catch (RuntimeException e) {
             // Compensation: revert the already-committed repositories to their captured pre-persist commit so no publishable half-generated tree survives on the default branch.
-            boolean fullyReverted = compensate(exercise, repositoryBranch, committed, prePersistHashes, postPersistHashes);
+            boolean fullyReverted = compensateAndResyncBaseline(exercise, user, repositoryBranch, committed, prePersistHashes, postPersistHashes);
             String state = fullyReverted ? "the already-committed repositories were reverted to their previous state"
                     : "compensation could not fully revert every repository (" + committed + "); manual review is required before using the exercise";
             throw new GenerationIncompleteException("Saving the generated exercise failed after committing " + committed
@@ -358,7 +364,7 @@ public class GenerationPersistenceService {
                 programmingExerciseTaskService.updateTasksFromProblemStatement(exercise);
             }
             catch (RuntimeException e) {
-                boolean fullyReverted = compensate(exercise, repositoryBranch, committed, prePersistHashes, postPersistHashes);
+                boolean fullyReverted = compensateAndResyncBaseline(exercise, user, repositoryBranch, committed, prePersistHashes, postPersistHashes);
                 boolean metadataRestored = true;
                 if (problemStatementChanged) {
                     metadataRestored = restoreProblemStatementIfUnchanged(exercise, originalProblemStatement, originalTitle, persistedProblemStatement, persistedTitle);
@@ -371,8 +377,7 @@ public class GenerationPersistenceService {
             }
         }
 
-        // Trigger the canonical CI build for the tests (drives test-case sync + task binding asynchronously) and record the exercise version — only reached once every repository
-        // committed.
+        // Internal LocalVC pushes bypass the HTTP/SSH post-receive hook, so finalization explicitly triggers the canonical tests build before waiting for test-case sync.
         String expectedFinalProblemStatement = shouldSaveProblemStatement ? producedProblemStatement.trim() : originalProblemStatement;
         String expectedFinalTitle = shouldSaveProblemStatement ? targetTitle : originalTitle;
         AtomicReference<MetadataSnapshot> persistedMetadata = new AtomicReference<>();
@@ -382,16 +387,15 @@ public class GenerationPersistenceService {
             persistedMetadata.set(assertMetadataMatches(exercise, expectedFinalProblemStatement, expectedFinalTitle));
         };
         try {
-            syncTestCasesAndRecordVersion(exercise, user, testsCommitHash, true, finalizationGuard);
+            syncTestCasesAndRecordVersion(exercise, user, testsCommitHash != null ? testsBuildSignal : null, true, finalizationGuard);
         }
         catch (RuntimeException e) {
-            boolean fullyReverted = compensate(exercise, repositoryBranch, committed, prePersistHashes, postPersistHashes);
+            boolean fullyReverted = compensateAndResyncBaseline(exercise, user, repositoryBranch, committed, prePersistHashes, postPersistHashes);
             boolean metadataRestored = true;
             if (problemStatementChanged) {
                 metadataRestored = restoreProblemStatementIfUnchanged(exercise, originalProblemStatement, originalTitle, persistedProblemStatement, persistedTitle);
             }
-            boolean baselineResynced = fullyReverted && resyncBaselineTestsAfterCompensation(exercise, user, prePersistHashes.get(RepositoryType.TESTS));
-            boolean fullyRestored = fullyReverted && metadataRestored && baselineResynced;
+            boolean fullyRestored = fullyReverted && metadataRestored;
             String state = fullyRestored ? "the Hyperion changes were reverted without overwriting concurrent metadata"
                     : "compensation could not fully restore the repositories and metadata; manual review is required before using the exercise";
             throw new GenerationIncompleteException("Saving the generated exercise failed while recording the exercise version after committing " + committed
@@ -401,6 +405,24 @@ public class GenerationPersistenceService {
         prePersistHashes.keySet().retainAll(postPersistHashes.keySet());
         MetadataSnapshot metadata = persistedMetadata.get();
         return new PersistResult(nonNullCopy(prePersistHashes), nonNullCopy(postPersistHashes), metadata.problemStatement(), metadata.title(), repositoryBranch);
+    }
+
+    private boolean compensateAndResyncBaseline(ProgrammingExercise exercise, User user, String repositoryBranch, List<RepositoryType> committed,
+            Map<RepositoryType, String> prePersistHashes, Map<RepositoryType, String> postPersistHashes) {
+        boolean testsCommitted = committed.contains(RepositoryType.TESTS);
+        TestsBuildSignal compensationSignal = null;
+        boolean signalPrepared = true;
+        if (testsCommitted) {
+            try {
+                compensationSignal = prepareTestsBuildSignal(exercise, prePersistHashes.get(RepositoryType.TESTS));
+            }
+            catch (RuntimeException e) {
+                signalPrepared = false;
+                log.error("Could not capture the baseline test-build signal before compensating exercise {}; grading must be reviewed manually", exercise.getId(), e);
+            }
+        }
+        boolean repositoriesReverted = compensate(exercise, repositoryBranch, committed, prePersistHashes, postPersistHashes);
+        return repositoriesReverted && (!testsCommitted || (signalPrepared && resyncBaselineTestsAfterCompensation(exercise, user, compensationSignal)));
     }
 
     private static Map<RepositoryType, String> nonNullCopy(Map<RepositoryType, String> source) {
@@ -453,11 +475,17 @@ public class GenerationPersistenceService {
      */
     public boolean resyncAfterRevert(ProgrammingExercise exercise, User user, String testsCommitHash, String problemStatement, String title, String expectedProblemStatement,
             String expectedTitle) {
+        return resyncAfterRevertWithSignal(exercise, user, testsCommitHash == null ? null : prepareTestsBuildSignal(exercise, testsCommitHash), problemStatement, title,
+                expectedProblemStatement, expectedTitle);
+    }
+
+    boolean resyncAfterRevertWithSignal(ProgrammingExercise exercise, User user, TestsBuildSignal testsBuildSignal, String problemStatement, String title,
+            String expectedProblemStatement, String expectedTitle) {
         if (!restoreProblemStatementIfUnchanged(exercise, problemStatement, title, expectedProblemStatement, expectedTitle)) {
             return false;
         }
         try {
-            syncTestCasesAndRecordVersion(exercise, user, testsCommitHash, false);
+            syncTestCasesAndRecordVersion(exercise, user, testsBuildSignal, true);
             log.info("Re-synchronised exercise {} after reverting an adaptation", exercise.getId());
             return true;
         }
@@ -472,16 +500,17 @@ public class GenerationPersistenceService {
         return currentMetadataMatchingExpectedOrTarget(exercise, expectedProblemStatement, expectedTitle, problemStatement, title).isPresent();
     }
 
-    private void syncTestCasesAndRecordVersion(ProgrammingExercise exercise, User user, String testsCommitHash, boolean failOnFinalizationFailure) {
-        syncTestCasesAndRecordVersion(exercise, user, testsCommitHash, failOnFinalizationFailure, () -> {
+    private void syncTestCasesAndRecordVersion(ProgrammingExercise exercise, User user, TestsBuildSignal testsBuildSignal, boolean failOnFinalizationFailure) {
+        syncTestCasesAndRecordVersion(exercise, user, testsBuildSignal, failOnFinalizationFailure, () -> {
         });
     }
 
-    private void syncTestCasesAndRecordVersion(ProgrammingExercise exercise, User user, String testsCommitHash, boolean failOnFinalizationFailure, Runnable finalizationGuard) {
+    private void syncTestCasesAndRecordVersion(ProgrammingExercise exercise, User user, TestsBuildSignal testsBuildSignal, boolean failOnFinalizationFailure,
+            Runnable finalizationGuard) {
         finalizationGuard.run();
-        if (testsCommitHash != null) {
-            TestsBuildSignal signal = triggerTestsBuild(exercise, testsCommitHash);
-            zeroWeightBuildGateTestCases(exercise.getId(), signal, failOnFinalizationFailure);
+        if (testsBuildSignal != null) {
+            triggerTestsBuild(exercise, testsBuildSignal);
+            zeroWeightBuildGateTestCases(exercise.getId(), testsBuildSignal, failOnFinalizationFailure);
         }
         finalizationGuard.run();
         try {
@@ -495,9 +524,9 @@ public class GenerationPersistenceService {
         }
     }
 
-    private boolean resyncBaselineTestsAfterCompensation(ProgrammingExercise exercise, User user, String testsCommitHash) {
+    private boolean resyncBaselineTestsAfterCompensation(ProgrammingExercise exercise, User user, TestsBuildSignal testsBuildSignal) {
         try {
-            syncTestCasesAndRecordVersion(exercise, user, testsCommitHash, true);
+            syncTestCasesAndRecordVersion(exercise, user, testsBuildSignal, true);
             return true;
         }
         catch (RuntimeException e) {
@@ -861,25 +890,31 @@ public class GenerationPersistenceService {
         }
     }
 
-    private record TestsBuildSignal(long solutionParticipationId, String testsCommitHash, Long baselineLatestResultId) {
+    record TestsBuildSignal(long solutionParticipationId, String testsCommitHash, Long baselineLatestResultId) {
+
+        TestsBuildSignal withTestsCommitHash(String testsCommitHash) {
+            return new TestsBuildSignal(solutionParticipationId, testsCommitHash, baselineLatestResultId);
+        }
     }
 
-    private TestsBuildSignal triggerTestsBuild(ProgrammingExercise exercise, String commitHash) {
+    TestsBuildSignal prepareTestsBuildSignal(ProgrammingExercise exercise, String commitHash) {
+        ProgrammingExerciseParticipation solutionParticipation = participationService.retrieveSolutionParticipation(exercise);
+        long solutionParticipationId = solutionParticipation.getId();
+        Long baselineLatestResultId = resultRepository.findFirstBySubmissionParticipationIdOrderByCompletionDateDesc(solutionParticipationId).map(Result::getId).orElse(null);
+        return new TestsBuildSignal(solutionParticipationId, commitHash, baselineLatestResultId);
+    }
+
+    TestsBuildSignal triggerTestsBuild(ProgrammingExercise exercise, TestsBuildSignal signal) {
         try {
             ProgrammingExerciseParticipation solutionParticipation = participationService.retrieveSolutionParticipation(exercise);
-            long solutionParticipationId = solutionParticipation.getId();
-            // Capture the latest result BEFORE triggering so the wait keys on a strictly newer result than any pre-existing (e.g. exercise-setup) build, not on the case count.
-            Long baselineLatestResultId = resultRepository.findFirstBySubmissionParticipationIdOrderByCompletionDateDesc(solutionParticipationId).map(Result::getId).orElse(null);
-            programmingSubmissionService.createSolutionParticipationSubmissionWithTypeTest(exercise.getId(), commitHash);
-            continuousIntegrationTriggerService.triggerBuild(solutionParticipation, commitHash, RepositoryType.TESTS);
-            return new TestsBuildSignal(solutionParticipationId, commitHash, baselineLatestResultId);
+            programmingSubmissionService.createSolutionParticipationSubmissionWithTypeTest(exercise.getId(), signal.testsCommitHash());
+            continuousIntegrationTriggerService.triggerBuild(solutionParticipation, signal.testsCommitHash(), RepositoryType.TESTS);
+            return signal;
         }
         catch (ContinuousIntegrationException e) {
-            log.warn("Failed to trigger the test-case-syncing build for exercise {}: {}", exercise.getId(), e.getMessage());
             throw new IllegalStateException("Failed to trigger the test-case-syncing build for exercise " + exercise.getId() + ": " + e.getMessage(), e);
         }
         catch (RuntimeException e) {
-            log.warn("Unexpected error triggering the test-case-syncing build for exercise {}: {}", exercise.getId(), e.getMessage());
             throw new IllegalStateException("Unexpected error triggering the test-case-syncing build for exercise " + exercise.getId() + ": " + e.getMessage(), e);
         }
     }

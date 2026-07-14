@@ -19,6 +19,9 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
@@ -63,9 +66,14 @@ public class RemoteInteractiveSandboxClient implements InteractiveSandbox {
     /** Bounds control operations that have no inner execution timeout. */
     private static final Duration CONTROL_OP_TIMEOUT = Duration.ofMinutes(5);
 
+    /** Re-publish interval for the same idempotency key, recovering a request or response dropped by the distributed topic without repeating the operation. */
+    private static final Duration RELAY_RETRY_INTERVAL = Duration.ofSeconds(5);
+
     private static final Duration OBSERVABILITY_OP_TIMEOUT = Duration.ofSeconds(10);
 
     private Duration controlOpTimeout = CONTROL_OP_TIMEOUT;
+
+    private Duration relayRetryInterval = RELAY_RETRY_INTERVAL;
 
     private final DistributedDataAccessService distributedDataAccessService;
 
@@ -75,6 +83,10 @@ public class RemoteInteractiveSandboxClient implements InteractiveSandbox {
     private DistributedTopic<SandboxOpResponse> responsesTopic;
 
     private UUID responseListenerId;
+
+    private final AtomicBoolean shuttingDown = new AtomicBoolean();
+
+    private final ReentrantReadWriteLock lifecycleLock = new ReentrantReadWriteLock(true);
 
     public RemoteInteractiveSandboxClient(DistributedDataAccessService distributedDataAccessService) {
         this.distributedDataAccessService = distributedDataAccessService;
@@ -100,11 +112,21 @@ public class RemoteInteractiveSandboxClient implements InteractiveSandbox {
      */
     @PreDestroy
     public void removeResponseListener() {
-        if (responseListenerId != null && responsesTopic != null) {
-            responsesTopic.removeMessageListener(responseListenerId);
+        Lock shutdownLock = lifecycleLock.writeLock();
+        shutdownLock.lock();
+        try {
+            if (!shuttingDown.compareAndSet(false, true)) {
+                return;
+            }
+            if (responseListenerId != null && responsesTopic != null) {
+                responsesTopic.removeMessageListener(responseListenerId);
+            }
+            pendingOperations.forEach((correlationId, future) -> future.completeExceptionally(new LocalCIException("Remote interactive sandbox client is shutting down.")));
+            pendingOperations.clear();
         }
-        pendingOperations.forEach((correlationId, future) -> future.completeExceptionally(new LocalCIException("Remote interactive sandbox client is shutting down.")));
-        pendingOperations.clear();
+        finally {
+            shutdownLock.unlock();
+        }
     }
 
     @Override
@@ -116,7 +138,7 @@ public class RemoteInteractiveSandboxClient implements InteractiveSandbox {
         }
         List<String> declines = new ArrayList<>();
         for (String targetAgent : candidates) {
-            SandboxOpRequest request = SandboxOpRequest.create(newCorrelationId(), targetAgent, spec);
+            SandboxOpRequest request = SandboxOpRequest.create(newCorrelationId(), targetAgent, spec).withDeadline(controlOpTimeout);
             CreateAttempt attempt = attemptCreate(request);
             if (attempt.containerId() != null) {
                 return targetAgent + SESSION_HANDLE_SEPARATOR + attempt.containerId();
@@ -140,11 +162,9 @@ public class RemoteInteractiveSandboxClient implements InteractiveSandbox {
 
     /** Attempts one create and distinguishes agent-local declines from deterministic failures. */
     private CreateAttempt attemptCreate(SandboxOpRequest request) {
-        CompletableFuture<SandboxOpResponse> future = new CompletableFuture<>();
-        pendingOperations.put(request.correlationId(), future);
         try {
-            distributedDataAccessService.getHyperionSandboxRequestsTopic().publish(request);
-            SandboxOpResponse response = future.get(controlOpTimeout.toMillis(), TimeUnit.MILLISECONDS);
+            CompletableFuture<SandboxOpResponse> future = registerAndPublish(request);
+            SandboxOpResponse response = awaitResponse(request, future, controlOpTimeout);
             if (response.success()) {
                 return CreateAttempt.success(response.sessionId());
             }
@@ -155,9 +175,10 @@ public class RemoteInteractiveSandboxClient implements InteractiveSandbox {
             throw new LocalCIException("Remote sandbox operation CREATE on agent " + request.targetAgentShortName() + " failed: " + errorMessage);
         }
         catch (TimeoutException e) {
-            // The request may have reached the agent even though its response did not. Failing over could then create a second container for the same job.
+            // The same correlation id was retried, but the request may still have reached the agent without a recoverable response. Trying another agent could create a second
+            // container for the same job.
             throw new LocalCIException("Remote sandbox operation CREATE on agent " + request.targetAgentShortName() + " timed out after " + controlOpTimeout.toMillis()
-                    + "ms; placement outcome is unknown, so the request was not retried on another agent.", e);
+                    + "ms; placement outcome is unknown, so no other agent was tried.", e);
         }
         catch (ExecutionException e) {
             throw new LocalCIException("Remote sandbox operation CREATE on agent " + request.targetAgentShortName() + " failed", e.getCause());
@@ -179,7 +200,8 @@ public class RemoteInteractiveSandboxClient implements InteractiveSandbox {
 
     /** Returns whether the client should try the next candidate agent. */
     private static boolean isFailoverDecline(String errorMessage) {
-        return errorMessage.contains(InteractiveSandboxRelayHandler.CAPACITY_REFUSAL_MARKER) || errorMessage.contains(InteractiveSandboxRelayHandler.DRAINING_REFUSAL_MARKER);
+        return errorMessage.contains(InteractiveSandboxRelayHandler.CAPACITY_REFUSAL_MARKER) || errorMessage.contains(InteractiveSandboxRelayHandler.DRAINING_REFUSAL_MARKER)
+                || errorMessage.contains(InteractiveSandboxRelayHandler.OVERLOAD_REFUSAL_MARKER);
     }
 
     @Override
@@ -205,7 +227,7 @@ public class RemoteInteractiveSandboxClient implements InteractiveSandbox {
             relay(request, controlOpTimeout);
         }
         finally {
-            // The target worker removes the entry on consumption; this reclaims it if the agent never consumed it (dropped duplicate, dead agent, timeout).
+            // Keep the payload available while the same correlation id may be retried, then reclaim it after a terminal response or timeout.
             distributedDataAccessService.getHyperionSandboxPayloads().remove(correlationId);
         }
     }
@@ -255,11 +277,10 @@ public class RemoteInteractiveSandboxClient implements InteractiveSandbox {
 
     /** Relays one operation and translates failed or late responses to {@link LocalCIException}. */
     private SandboxOpResponse relay(SandboxOpRequest request, Duration budget) {
-        CompletableFuture<SandboxOpResponse> future = new CompletableFuture<>();
-        pendingOperations.put(request.correlationId(), future);
+        request = request.withDeadline(budget);
         try {
-            distributedDataAccessService.getHyperionSandboxRequestsTopic().publish(request);
-            SandboxOpResponse response = future.get(budget.toMillis(), TimeUnit.MILLISECONDS);
+            CompletableFuture<SandboxOpResponse> future = registerAndPublish(request);
+            SandboxOpResponse response = awaitResponse(request, future, budget);
             if (!response.success()) {
                 throw new LocalCIException("Remote sandbox operation " + request.op() + " failed on agent " + request.targetAgentShortName() + ": " + response.errorMessage());
             }
@@ -284,6 +305,63 @@ public class RemoteInteractiveSandboxClient implements InteractiveSandbox {
         }
         finally {
             pendingOperations.remove(request.correlationId());
+        }
+    }
+
+    private CompletableFuture<SandboxOpResponse> registerAndPublish(SandboxOpRequest request) {
+        Lock operationLock = lifecycleLock.readLock();
+        operationLock.lock();
+        try {
+            if (shuttingDown.get()) {
+                throw new LocalCIException("Remote interactive sandbox client is shutting down.");
+            }
+            CompletableFuture<SandboxOpResponse> future = new CompletableFuture<>();
+            pendingOperations.put(request.correlationId(), future);
+            try {
+                distributedDataAccessService.getHyperionSandboxRequestsTopic().publish(request);
+                return future;
+            }
+            catch (RuntimeException e) {
+                pendingOperations.remove(request.correlationId(), future);
+                throw e;
+            }
+        }
+        finally {
+            operationLock.unlock();
+        }
+    }
+
+    private SandboxOpResponse awaitResponse(SandboxOpRequest request, CompletableFuture<SandboxOpResponse> future, Duration budget)
+            throws InterruptedException, ExecutionException, TimeoutException {
+        long deadline = System.nanoTime() + budget.toNanos();
+        while (true) {
+            long remainingNanos = deadline - System.nanoTime();
+            if (remainingNanos <= 0) {
+                throw new TimeoutException();
+            }
+            try {
+                return future.get(Math.min(remainingNanos, relayRetryInterval.toNanos()), TimeUnit.NANOSECONDS);
+            }
+            catch (TimeoutException e) {
+                if (System.nanoTime() >= deadline) {
+                    throw e;
+                }
+                publishRetry(request);
+            }
+        }
+    }
+
+    private void publishRetry(SandboxOpRequest request) {
+        Lock operationLock = lifecycleLock.readLock();
+        operationLock.lock();
+        try {
+            if (shuttingDown.get()) {
+                throw new LocalCIException("Remote interactive sandbox client is shutting down.");
+            }
+            distributedDataAccessService.getHyperionSandboxRequestsTopic().publish(request);
+        }
+        finally {
+            operationLock.unlock();
         }
     }
 

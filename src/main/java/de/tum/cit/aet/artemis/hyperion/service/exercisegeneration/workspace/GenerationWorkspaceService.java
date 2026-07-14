@@ -64,6 +64,8 @@ public class GenerationWorkspaceService {
 
     private static final Duration LAYOUT_PROBE_TIMEOUT = Duration.ofSeconds(30);
 
+    private static final Duration BUILD_OUTPUT_CLEANUP_TIMEOUT = Duration.ofSeconds(30);
+
     /** Upper bound on the turn-0 layout observation so a deeply nested tree cannot blow up the prompt. */
     private static final int LAYOUT_PROBE_MAX_CHARS = 6_000;
 
@@ -387,6 +389,21 @@ public class GenerationWorkspaceService {
         filesByRepository.forEach((repositoryType, files) -> files.forEach((path, content) -> workspaceFiles.put(directoryFor(repositoryType) + "/" + path, content)));
         repositoryMetadata.forEach((repositoryType, metadata) -> metadata.executableFiles().forEach(path -> executableFiles.add(directoryFor(repositoryType) + "/" + path)));
         sandbox.copyIn(sessionId, WORKSPACE, WorkspaceArchive.buildWorkspaceTarStream(workspaceFiles, Map.of(), executableFiles));
+    }
+
+    /**
+     * Removes disposable build outputs that raw debugging commands may have left inside the seeded repositories before canonical extraction.
+     *
+     * @param sandbox   the sandbox session
+     * @param sessionId the session handle
+     */
+    public void cleanTransientBuildOutputs(InteractiveSandbox sandbox, String sessionId) {
+        String command = "rm -rf -- " + WORKSPACE + "/solution/.gradle " + WORKSPACE + "/solution/build " + WORKSPACE + "/solution/target " + WORKSPACE + "/template/.gradle "
+                + WORKSPACE + "/template/build " + WORKSPACE + "/template/target " + WORKSPACE + "/tests/.gradle " + WORKSPACE + "/tests/build " + WORKSPACE + "/tests/target";
+        SandboxExecResult result = sandbox.exec(sessionId, BUILD_OUTPUT_CLEANUP_TIMEOUT, "sh", "-c", command);
+        if (!result.isSuccess()) {
+            throw new IllegalStateException("Could not remove transient sandbox build outputs: " + result.combinedOutput());
+        }
     }
 
     /**

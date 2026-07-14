@@ -355,8 +355,8 @@ public class DistributedDataAccessService {
      * kept off the broadcast request/response topics on purpose: a topic message is delivered to and deserialized by every subscribed member, so routing a 32 MB blob through a
      * topic would fan it out to every subscribed node on the distributed event threads. Staging it here instead means only the one node that owns the correlation id ever fetches
      * the payload — the
-     * sender writes the entry, the single recipient reads and removes it, and the sender defensively removes it again if the recipient never consumed it (dropped duplicate, dead
-     * agent, timeout). The map is initialized lazily the first time this method is called if it is still null.
+     * sender writes the entry, the recipient reads it without consuming it so retries remain possible, and the sender removes it after the terminal response or timeout. The map
+     * is initialized lazily the first time this method is called if it is still null.
      *
      * @return the distributed map staging interactive-sandbox copy payloads by correlation id
      */

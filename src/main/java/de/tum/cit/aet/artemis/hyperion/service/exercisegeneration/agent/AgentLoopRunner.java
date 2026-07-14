@@ -231,7 +231,7 @@ public class AgentLoopRunner {
             }
 
             messagesAtLastCall = conversation.size();
-            ChatResponse response = callModelWithRetries(prompt, turn, cancelled, stepListener);
+            ChatResponse response = callModelWithRetries(prompt, turn, cancelled, usageSink, stepListener);
             if (response == null) {
                 if (cancelled.getAsBoolean()) {
                     return new AgentLoopResult(AgentLoopResult.Status.CANCELLED, turn, lastAssistantText);
@@ -240,7 +240,6 @@ public class AgentLoopRunner {
             }
             // Strip leaked harmony control tokens from tool names before dispatch (see normalizeToolNames).
             response = normalizeToolNames(response);
-            emitUsage(usageSink, response);
             lastPromptTokens = promptTokensOf(response);
             if (cancelled.getAsBoolean()) {
                 emit(stepListener, "Cancelling generation…");
@@ -432,7 +431,8 @@ public class AgentLoopRunner {
      * exhausted only on empty responses, so the loop can complete instead of falsely erroring. The caller turns a {@code null} into an ERROR outcome.
      */
     @Nullable
-    private ChatResponse callModelWithRetries(Prompt prompt, int turn, BooleanSupplier cancelled, @Nullable Consumer<String> stepListener) {
+    private ChatResponse callModelWithRetries(Prompt prompt, int turn, BooleanSupplier cancelled, @Nullable Consumer<ChatResponse> usageSink,
+            @Nullable Consumer<String> stepListener) {
         RuntimeException lastError = null;
         ChatResponse lastEmptyResponse = null;
         String providerFailureKey = configuredModel() != null ? configuredModel() : "default";
@@ -447,6 +447,7 @@ public class AgentLoopRunner {
             }
             try {
                 ChatResponse response = chatModel.call(prompt);
+                emitUsage(usageSink, response);
                 if (!isEmptyResponse(response)) {
                     return response;
                 }

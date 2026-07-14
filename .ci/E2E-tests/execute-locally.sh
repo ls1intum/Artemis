@@ -102,6 +102,10 @@ services:
             corepack enable &&
             pnpm install --frozen-lockfile &&
             pnpm run playwright:setup &&
+            if env | grep -qx HYPERION_LLM_MODE=mock; then
+              chmod +x ./support/hyperion-llm-mock/start.sh &&
+              HYPERION_LLM_MOCK_PORT=1234 ./support/hyperion-llm-mock/start.sh
+            fi &&
             PLAYWRIGHT_JUNIT_OUTPUT_NAME=test-reports/results.xml pnpm exec playwright test e2e --grep "${TEST_FILTER}" --reporter=list,junit,monocart-reporter
             '
 EOF

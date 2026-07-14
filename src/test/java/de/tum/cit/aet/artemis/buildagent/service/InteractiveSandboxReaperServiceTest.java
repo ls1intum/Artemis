@@ -1,18 +1,28 @@
 package de.tum.cit.aet.artemis.buildagent.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.io.ByteArrayInputStream;
+import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.List;
 import java.util.Set;
+import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Semaphore;
+import java.util.concurrent.TimeUnit;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -21,8 +31,11 @@ import org.springframework.scheduling.TaskScheduler;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import com.github.dockerjava.api.DockerClient;
+import com.github.dockerjava.api.command.CopyArchiveToContainerCmd;
+import com.github.dockerjava.api.command.InspectContainerCmd;
 import com.github.dockerjava.api.command.ListContainersCmd;
 import com.github.dockerjava.api.command.RemoveContainerCmd;
+import com.github.dockerjava.api.exception.NotFoundException;
 import com.github.dockerjava.api.model.Container;
 
 import de.tum.cit.aet.artemis.buildagent.BuildAgentConfiguration;
@@ -30,7 +43,7 @@ import de.tum.cit.aet.artemis.localci.service.DistributedDataAccessService;
 
 /**
  * Unit tests for the inactivity-based reaping contract: a long-lived but active session must survive, while a genuinely idle or orphaned container must be collected. Uses a real
- * {@link InteractiveSandboxService} so the reaper reads the same lock-free activity registry the exec path writes.
+ * {@link InteractiveSandboxService} so the reaper reads the same activity registry the exec path writes.
  */
 class InteractiveSandboxReaperServiceTest {
 
@@ -79,7 +92,8 @@ class InteractiveSandboxReaperServiceTest {
     private Container sandboxContainer(String id, String shortName, long createdEpochSecond) {
         Container container = mock(Container.class);
         doReturn(id).when(container).getId();
-        doReturn(new String[] { "/" + InteractiveSandboxService.SANDBOX_CONTAINER_PREFIX + "agent-" + shortName }).when(container).getNames();
+        String suffix = UUID.nameUUIDFromBytes(shortName.getBytes(StandardCharsets.UTF_8)).toString();
+        doReturn(new String[] { "/" + InteractiveSandboxService.SANDBOX_CONTAINER_PREFIX + "agent-" + suffix }).when(container).getNames();
         doReturn(createdEpochSecond).when(container).getCreated();
         return container;
     }
@@ -106,6 +120,84 @@ class InteractiveSandboxReaperServiceTest {
         reaperService.reapOrphanedSessions();
 
         verify(dockerClient, never()).removeContainerCmd(anyString());
+    }
+
+    @Test
+    void shouldRecheckActivityBeforeRemovingASelectedContainer() {
+        long createdLongAgo = Instant.now().getEpochSecond() - OLDER_THAN_EXPIRY_SECONDS;
+        Container container = sandboxContainer("became-active", "active", createdLongAgo);
+        doAnswer(invocation -> {
+            interactiveSandboxService.markActive("became-active");
+            return createdLongAgo;
+        }).when(container).getCreated();
+        givenContainers(container);
+
+        reaperService.reapOrphanedSessions();
+
+        verify(dockerClient, never()).removeContainerCmd("became-active");
+    }
+
+    @Test
+    void shouldNotStartAnOperationWhileReapingTheSameContainer() throws Exception {
+        Container container = sandboxContainer("orphan-id", "orphan", Instant.now().getEpochSecond() - OLDER_THAN_EXPIRY_SECONDS);
+        givenContainers(container);
+        CountDownLatch removalStarted = new CountDownLatch(1);
+        CountDownLatch allowRemoval = new CountDownLatch(1);
+        RemoveContainerCmd removeCommand = dockerClient.removeContainerCmd("orphan-id");
+        doAnswer(invocation -> {
+            removalStarted.countDown();
+            assertThat(allowRemoval.await(5, TimeUnit.SECONDS)).isTrue();
+            return null;
+        }).when(removeCommand).exec();
+
+        CountDownLatch copyStarted = new CountDownLatch(1);
+        CopyArchiveToContainerCmd copyCommand = mock(CopyArchiveToContainerCmd.class);
+        when(dockerClient.copyArchiveToContainerCmd("orphan-id")).thenReturn(copyCommand);
+        when(copyCommand.withTarInputStream(any())).thenReturn(copyCommand);
+        when(copyCommand.withRemotePath("/workspace")).thenReturn(copyCommand);
+        doAnswer(invocation -> {
+            copyStarted.countDown();
+            return null;
+        }).when(copyCommand).exec();
+
+        CompletableFuture<Void> reaping = CompletableFuture.runAsync(reaperService::reapOrphanedSessions);
+        assertThat(removalStarted.await(5, TimeUnit.SECONDS)).isTrue();
+        CompletableFuture<Void> copying = CompletableFuture.runAsync(() -> interactiveSandboxService.copyIn("orphan-id", "/workspace", new ByteArrayInputStream(new byte[0])));
+
+        assertThat(copyStarted.await(200, TimeUnit.MILLISECONDS)).isFalse();
+        allowRemoval.countDown();
+        reaping.get(5, TimeUnit.SECONDS);
+        assertThatThrownBy(copying::join).hasRootCauseInstanceOf(de.tum.cit.aet.artemis.localci.exception.LocalCIException.class);
+        verify(copyCommand, never()).exec();
+        assertThat(interactiveSandboxService.lastActivity("orphan-id")).isEmpty();
+    }
+
+    @Test
+    void shouldNotReapAContainerWithAnOperationInFlight() throws Exception {
+        Container container = sandboxContainer("active-id", "active", Instant.now().getEpochSecond() - OLDER_THAN_EXPIRY_SECONDS);
+        givenContainers(container);
+        interactiveSandboxService.markActive("active-id");
+
+        CountDownLatch copyStarted = new CountDownLatch(1);
+        CountDownLatch allowCopy = new CountDownLatch(1);
+        CopyArchiveToContainerCmd copyCommand = mock(CopyArchiveToContainerCmd.class);
+        when(dockerClient.copyArchiveToContainerCmd("active-id")).thenReturn(copyCommand);
+        when(copyCommand.withTarInputStream(any())).thenReturn(copyCommand);
+        when(copyCommand.withRemotePath("/workspace")).thenReturn(copyCommand);
+        doAnswer(invocation -> {
+            copyStarted.countDown();
+            assertThat(allowCopy.await(5, TimeUnit.SECONDS)).isTrue();
+            return null;
+        }).when(copyCommand).exec();
+
+        CompletableFuture<Void> copying = CompletableFuture.runAsync(() -> interactiveSandboxService.copyIn("active-id", "/workspace", new ByteArrayInputStream(new byte[0])));
+        assertThat(copyStarted.await(5, TimeUnit.SECONDS)).isTrue();
+
+        reaperService.reapOrphanedSessions();
+
+        verify(dockerClient, never()).removeContainerCmd("active-id");
+        allowCopy.countDown();
+        copying.get(5, TimeUnit.SECONDS);
     }
 
     @Test
@@ -164,7 +256,7 @@ class InteractiveSandboxReaperServiceTest {
         Container ownOrphan = sandboxContainer("own-id", "agent-own", createdLongAgo);
         Container otherAgentOrphan = mock(Container.class);
         doReturn("other-agent-id").when(otherAgentOrphan).getId();
-        doReturn(new String[] { "/" + InteractiveSandboxService.SANDBOX_CONTAINER_PREFIX + "other-agent-orphan" }).when(otherAgentOrphan).getNames();
+        doReturn(new String[] { "/" + InteractiveSandboxService.SANDBOX_CONTAINER_PREFIX + "other-agent-67eb8e66-3163-4f3d-b65f-8f47e129fe41" }).when(otherAgentOrphan).getNames();
         doReturn(createdLongAgo).when(otherAgentOrphan).getCreated();
         givenContainers(ownOrphan, otherAgentOrphan);
 
@@ -193,6 +285,22 @@ class InteractiveSandboxReaperServiceTest {
     }
 
     @Test
+    void shouldReleaseTheRelayPermitWhenTheOrphanIsAlreadyAbsent() {
+        long createdLongAgo = Instant.now().getEpochSecond() - OLDER_THAN_EXPIRY_SECONDS;
+        Container orphanContainer = sandboxContainer("orphan-id", "orphan", createdLongAgo);
+        givenContainers(orphanContainer);
+        RemoveContainerCmd removeContainerCmd = dockerClient.removeContainerCmd("orphan-id");
+        doThrow(new NotFoundException("already removed")).when(removeContainerCmd).exec();
+        ownedSessionIds().add("orphan-id");
+        sandboxSlotPermits().acquireUninterruptibly();
+
+        reaperService.reapOrphanedSessions();
+
+        assertThat(sandboxSlotPermits().availablePermits()).isOne();
+        assertThat(ownedSessionIds()).doesNotContain("orphan-id");
+    }
+
+    @Test
     void shouldNotReleaseAPermitWhenReapingAContainerItDoesNotOwn() {
         long createdLongAgo = Instant.now().getEpochSecond() - OLDER_THAN_EXPIRY_SECONDS;
         Container orphanContainer = sandboxContainer("orphan-id", "orphan", createdLongAgo);
@@ -208,5 +316,20 @@ class InteractiveSandboxReaperServiceTest {
         verify(dockerClient, times(2)).removeContainerCmd("orphan-id");
         assertThat(sandboxSlotPermits().availablePermits()).isZero();
         assertThat(ownedSessionIds()).containsOnly("other-live-session");
+    }
+
+    @Test
+    void shouldReleaseThePermitWhenAnOwnedContainerWasRemovedExternally() {
+        givenContainers();
+        ownedSessionIds().add("missing-id");
+        sandboxSlotPermits().acquireUninterruptibly();
+        InspectContainerCmd inspectContainerCmd = mock(InspectContainerCmd.class);
+        when(dockerClient.inspectContainerCmd("missing-id")).thenReturn(inspectContainerCmd);
+        doThrow(new NotFoundException("externally removed")).when(inspectContainerCmd).exec();
+
+        reaperService.reapOrphanedSessions();
+
+        assertThat(sandboxSlotPermits().availablePermits()).isOne();
+        assertThat(ownedSessionIds()).doesNotContain("missing-id");
     }
 }
