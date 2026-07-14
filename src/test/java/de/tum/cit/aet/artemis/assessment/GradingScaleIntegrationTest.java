@@ -414,6 +414,47 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationIndependentBa
     }
 
     /**
+     * A course max points value exactly at the allowed limit must be accepted.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testSaveGradingScaleForCourseAcceptsCourseMaxPointsAtLimit() throws Exception {
+        gradeSteps = gradingScaleUtilService.generateGradeStepSet(courseGradingScale, true);
+        courseGradingScale.setGradeSteps(gradeSteps);
+
+        GradingScaleUpdateDTO dto = toDTO(courseGradingScale, course.getPresentationScore(), 9999, null);
+        request.post("/api/assessment/courses/" + course.getId() + "/grading-scale", dto, HttpStatus.CREATED);
+    }
+
+    /**
+     * An exam max points value exactly at the allowed limit must be accepted through the grading scale path.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testSaveGradingScaleForExamAcceptsExamMaxPointsAtLimit() throws Exception {
+        exam.setExamMaxPoints(null);
+        examRepository.save(exam);
+        gradeSteps = gradingScaleUtilService.generateGradeStepSet(examGradingScale, true);
+        examGradingScale.setGradeSteps(gradeSteps);
+
+        GradingScaleUpdateDTO dto = toDTO(examGradingScale, null, null, 9999);
+        request.post("/api/assessment/courses/" + course.getId() + "/exams/" + exam.getId() + "/grading-scale", dto, HttpStatus.CREATED);
+    }
+
+    /**
+     * A negative course max points value must be rejected.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testSaveGradingScaleForCourseRejectsNegativeCourseMaxPoints() throws Exception {
+        gradeSteps = gradingScaleUtilService.generateGradeStepSet(courseGradingScale, true);
+        courseGradingScale.setGradeSteps(gradeSteps);
+
+        GradingScaleUpdateDTO dto = toDTO(courseGradingScale, course.getPresentationScore(), -1, null);
+        request.post("/api/assessment/courses/" + course.getId() + "/grading-scale", dto, HttpStatus.BAD_REQUEST);
+    }
+
+    /**
      * A course max points value above the allowed limit must also be rejected on the update path.
      */
     @Test

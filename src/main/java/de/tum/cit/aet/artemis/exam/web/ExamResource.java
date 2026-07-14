@@ -536,9 +536,10 @@ public class ExamResource {
             throw new BadRequestAlertException("The grace period is too long. Maximum allowed is 3600 seconds.", ENTITY_NAME, "examGracePeriodTooHigh");
         }
 
-        // Max points: max 9999
-        if (exam.getExamMaxPoints() > 9999) {
-            throw new BadRequestAlertException("The maximum points value is too high. Maximum allowed is 9999.", ENTITY_NAME, "examMaxPointsTooHigh");
+        // Max points: max MAX_GRADING_POINTS
+        if (exam.getExamMaxPoints() > Constants.MAX_GRADING_POINTS) {
+            throw new BadRequestAlertException("The maximum points value is too high. Maximum allowed is " + Constants.MAX_GRADING_POINTS + ".", ENTITY_NAME,
+                    "examMaxPointsTooHigh");
         }
 
         // Number of exercises: max 100

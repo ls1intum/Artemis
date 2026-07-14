@@ -88,6 +88,9 @@ public final class Constants {
     // Must be consistent with the exam.title varchar(255) database column.
     public static final int EXAM_TITLE_MAX_LENGTH = 255;
 
+    // Upper bound for configurable point values in a course or exam grading configuration (max points, presentation score).
+    public static final int MAX_GRADING_POINTS = 9999;
+
     public static final String FILE_ENDING_REGEX = "^[a-zA-Z0-9]{1,5}";
 
     public static final Pattern FILE_ENDING_PATTERN = Pattern.compile(FILE_ENDING_REGEX);

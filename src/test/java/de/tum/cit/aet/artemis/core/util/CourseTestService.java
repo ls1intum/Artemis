@@ -487,6 +487,64 @@ public class CourseTestService {
     }
 
     // Test
+    public void testCreateCourseWithTooHighMaxPoints() throws Exception {
+        Course course = CourseFactory.generateCourse(null, null, null, new HashSet<>());
+        course.setMaxPoints(10000);
+        testCreateCourseWithNegativeValue(course);
+    }
+
+    // Test
+    public void testCreateCourseWithNegativeMaxPoints() throws Exception {
+        Course course = CourseFactory.generateCourse(null, null, null, new HashSet<>());
+        course.setMaxPoints(-1);
+        testCreateCourseWithNegativeValue(course);
+    }
+
+    // Test
+    public void testCreateCourseWithTooHighPresentationScore() throws Exception {
+        Course course = CourseFactory.generateCourse(null, null, null, new HashSet<>());
+        course.setPresentationScore(10000);
+        testCreateCourseWithNegativeValue(course);
+    }
+
+    // Test
+    public void testCreateCourseWithNegativePresentationScore() throws Exception {
+        Course course = CourseFactory.generateCourse(null, null, null, new HashSet<>());
+        course.setPresentationScore(-1);
+        testCreateCourseWithNegativeValue(course);
+    }
+
+    // Test
+    public void testUpdateCourseWithTooHighMaxPoints() throws Exception {
+        Course course = CourseFactory.generateCourse(null, null, null, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
+        course = courseRepo.save(course);
+        course.setStartDate(ZonedDateTime.now().minusDays(5));
+        course.setEndDate(ZonedDateTime.now().plusDays(5));
+        course.setMaxPoints(10000);
+        request.performMvcRequest(buildUpdateCourse(course.getId(), course)).andExpect(status().isBadRequest());
+    }
+
+    // Test
+    public void testUpdateCourseWithMaxPointsAtLimit() throws Exception {
+        Course course = CourseFactory.generateCourse(null, null, null, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
+        course = courseRepo.save(course);
+        course.setStartDate(ZonedDateTime.now().minusDays(5));
+        course.setEndDate(ZonedDateTime.now().plusDays(5));
+        course.setMaxPoints(9999);
+        request.performMvcRequest(buildUpdateCourse(course.getId(), course)).andExpect(status().isOk());
+    }
+
+    // Test
+    public void testUpdateCourseWithPresentationScoreAtLimit() throws Exception {
+        Course course = CourseFactory.generateCourse(null, null, null, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
+        course = courseRepo.save(course);
+        course.setStartDate(ZonedDateTime.now().minusDays(5));
+        course.setEndDate(ZonedDateTime.now().plusDays(5));
+        course.setPresentationScore(9999);
+        request.performMvcRequest(buildUpdateCourse(course.getId(), course)).andExpect(status().isOk());
+    }
+
+    // Test
     public void testCreateCourseWithModifiedMaxComplainTimeDaysAndMaxComplains() throws Exception {
         Course course = CourseFactory.generateCourse(null, null, null, new HashSet<>());
 

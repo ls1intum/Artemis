@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.assessment.dto;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.MAX_GRADING_POINTS;
+
 import java.util.HashSet;
 import java.util.Set;
 
@@ -36,9 +38,9 @@ import de.tum.cit.aet.artemis.assessment.domain.GradingScale;
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record GradingScaleUpdateDTO(@NotNull GradeType gradeType, @Nullable BonusStrategy bonusStrategy, @Nullable @Size(max = 100) String plagiarismGrade,
-        @Nullable @Size(max = 100) String noParticipationGrade, @Nullable @Min(1) @Max(9999) Integer presentationsNumber, @Nullable Double presentationsWeight,
-        @Nullable Set<GradeStepDTO> gradeSteps, @Nullable @Min(0) @Max(9999) Integer courseMaxPoints, @Nullable @Min(0) @Max(9999) Integer coursePresentationScore,
-        @Nullable @Min(0) @Max(9999) Integer examMaxPoints) {
+        @Nullable @Size(max = 100) String noParticipationGrade, @Nullable @Min(1) @Max(MAX_GRADING_POINTS) Integer presentationsNumber, @Nullable Double presentationsWeight,
+        @Nullable Set<GradeStepDTO> gradeSteps, @Nullable @Min(0) @Max(MAX_GRADING_POINTS) Integer courseMaxPoints,
+        @Nullable @Min(0) @Max(MAX_GRADING_POINTS) Integer coursePresentationScore, @Nullable @Min(0) @Max(MAX_GRADING_POINTS) Integer examMaxPoints) {
 
     /**
      * Returns the grade steps, defaulting to an empty set if null.
