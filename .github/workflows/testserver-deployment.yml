@@ -33,22 +33,9 @@ permissions: {}
 env:
   IMAGE_NAME: ghcr.io/ls1intum/artemis
 
-# ------------------------------------------------------------------------------
-#  Deployment to a Test Server
-#
-#  Trigger             : workflow_dispatch                 (GitHub UI / API / Helios)
-#  Required parameters : branch_name, environment_name
-#  Optional            : commit_sha (pin an exact commit), triggered_by
-#
-#  Flow
-#  ────
-#  1. determine-build-context — resolve the exact commit to deploy (honoring commit_sha),
-#     whether a PR exists, and the immutable deploy tag `sha-<commit>`.
-#  2a. verify-image-build      — PR / develop / main: the image must already exist in GHCR
-#      (registry is the source of truth; no per-run artifact lookup).
-#  2b. conditional-build       — branch without a PR: build the image now, tagged sha-<commit>.
-#  3. deploy                   — pull and deploy exactly `sha-<commit>` — the verified image.
-# ------------------------------------------------------------------------------
+# The registry is the source of truth: resolve the commit to deploy, verify its immutable
+# `sha-<commit>` image exists in GHCR (or build it on the fly for a branch with no PR), then
+# deploy that exact tag.
 jobs:
   determine-build-context:
     name: Determine Build Context
@@ -119,10 +106,8 @@ jobs:
             fi
           fi
 
-          # Output-boundary guard: head_sha (resolved from the PR, the branch tip, or commit_sha)
-          # becomes the deploy tag sha-<commit> and, on the needs_build path, is pushed and deployed
-          # with no further check (verify-image-build is skipped there). Assert it is a full commit
-          # SHA before it turns into a side effect. This validates the *resolved* value, not the input.
+          # head_sha becomes the deploy tag and, on the needs_build path, is deployed with no other
+          # check (verify is skipped there), so ensure the resolved value is a real commit SHA.
           if [[ ! "$head_sha" =~ ^[0-9a-f]{40}$ ]]; then
             echo "::error::Could not resolve a full 40-char commit SHA for '$BRANCH_NAME'."
             exit 1
@@ -153,9 +138,8 @@ jobs:
       docker-file: ./docker/artemis/Dockerfile
       tags: ${{ needs.determine-build-context.outputs.tag }}
 
-  # PR / develop / main: the image for this exact commit must already exist in the registry.
-  # The registry (immutable sha-<commit> tag) is the source of truth — no per-run artifact lookup,
-  # so a superseded/cancelled CI run for the same commit can no longer cause a false negative.
+  # PR / develop / main: the exact commit's `sha-<commit>` image must already exist in the registry.
+  # Checking the registry (not a per-run artifact) is immune to run ordering and artifact expiry.
   verify-image-build:
     name: Verify Deployable Image
     if: ${{ needs.determine-build-context.outputs.needs_build == 'false' }}
@@ -166,11 +150,10 @@ jobs:
       contents: read
       packages: read
     steps:
-      # Check out (only) the verification action from the workflow's own ref. Helios dispatches this
-      # workflow from the branch being deployed, so github.ref is where this action lives — and is the
-      # same trusted ref that already defines every job here. This is a build-correctness gate ("was an
-      # image built for this commit?"), not a security boundary against the deployer, so it needs no
-      # fixed-ref pin; pinning to the default branch would also break any branch that adds/edits it.
+      # Check out only the verify action, from the workflow's own ref (Helios dispatches this workflow
+      # from the branch being deployed). It is a build-correctness gate, not a trust boundary against
+      # the deployer, so it needs no pinned ref — and a pin to the default branch would break any
+      # branch that adds or edits the action.
       - uses: actions/checkout@v6
         with:
           sparse-checkout: .github/actions/verify-image-build
@@ -214,7 +197,6 @@ jobs:
             exit 1
           }
 
-  # Deploy the verified/built image to the test-server.
   deploy:
     name: Deploy to Test-Server
     needs:
@@ -222,16 +204,12 @@ jobs:
       - conditional-build
       - verify-image-build
       - check-database-migration-approval
-    # Deploy once the image is ready (verified in the registry OR just built) and the migration
-    # gate passed or did not apply. `!cancelled()` (not `always()`) so a user Cancel truly stops
-    # the deploy instead of letting a queued deploy fire after cancellation.
+    # Deploy once the image is ready (verified or just built) and the migration gate passed or did
+    # not apply. `!cancelled()` (not `always()`) so a Cancel truly stops a queued deploy.
     #
-    # check-database-migration-approval only runs when a PR exists (its if: is pr_number != '') — it
-    # needs a PR to check approval against. Accepting its "skipped" result therefore also lets the
-    # PR-less conditional-build path (an arbitrary branch built on the fly) deploy without a migration
-    # check. Closing that gap would require the approval check to work without a PR number, which is
-    # out of scope here; deploying an unreviewed migration via a PR-less branch to a test server
-    # remains an accepted risk (test servers are restricted to accredited developers).
+    # The migration check runs only when a PR exists (it needs a PR to check against), so accepting
+    # its "skipped" result also lets the PR-less conditional-build path deploy without it — an
+    # accepted risk (test servers are limited to accredited developers); a PR-less check is out of scope.
     if: >-
       !cancelled()
       && (needs.conditional-build.result == 'success' || needs.verify-image-build.result == 'success')
@@ -248,11 +226,9 @@ jobs:
       GATEWAY_HOST: "gateway2.aet.cit.tum.de:2010"
       GATEWAY_HOST_PUBLIC_KEY: "[gateway2.aet.cit.tum.de]:2010 ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKtTLiKRILjKZ+Qg4ReWKsG7mLDXkzHfeY5nalSQUNQ4"
     steps:
-      # Check out the deploy CLI from the workflow's own ref (a proper checkout, replacing the old
-      # wget of the script from a mutable URL). Helios dispatches this workflow from the branch being
-      # deployed, so github.ref already sources every job here and is where the CLI lives. Test-server
-      # deploys are restricted to accredited developers, so branch-sourced deploy code is within the
-      # accepted trust model.
+      # Check out the deploy CLI from the workflow's own ref — a proper checkout, replacing the old
+      # wget of the script from a mutable URL. Helios dispatches this workflow from the branch being
+      # deployed, and test-server deploys are limited to accredited developers.
       - name: Check out deploy CLI
         uses: actions/checkout@v6
         with:

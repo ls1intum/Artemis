@@ -55,9 +55,8 @@ jobs:
           echo "Environment: $ENVIRONMENT_NAME"
           echo "Triggered by: $TRIGGERED_BY"
 
-      # Check out (only) the resolver action from the workflow's own ref. Helios dispatches this
-      # workflow from the branch being deployed, so github.ref is where the action lives and is the
-      # same ref that already defines this workflow. Run-resolution is a build-correctness helper.
+      # Check out only the resolver action, from the workflow's own ref (Helios dispatches this
+      # workflow from the branch being deployed). Run-resolution is a build-correctness helper.
       - name: Check out resolver action
         uses: actions/checkout@v6
         with:
