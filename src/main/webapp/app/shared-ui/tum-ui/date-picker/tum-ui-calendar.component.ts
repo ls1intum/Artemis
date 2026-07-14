@@ -58,14 +58,17 @@ export class TumUiCalendarComponent {
 
     /** Full class list for a day cell: exactly one text color per state so no two color utilities collide. */
     protected dayButtonClasses(day: dayjs.Dayjs): string {
-        const base = 'h-8 w-8 rounded-full hover:bg-surface-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary dark:hover:bg-surface-700';
+        // `appearance-none border-0` + an explicit bg per state resets the native grey button-face (Artemis
+        // ships no Tailwind preflight), so day cells render as clean circles rather than 3D grey boxes.
+        const base =
+            'appearance-none border-0 h-8 w-8 rounded-full hover:bg-surface-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary dark:hover:bg-surface-700';
         let color: string;
         if (this.isSelected(day)) {
             color = 'bg-primary text-surface-0';
         } else if (this.isOtherMonth(day)) {
-            color = 'text-surface-400';
+            color = 'bg-transparent text-surface-400';
         } else {
-            color = 'text-surface-900 dark:text-surface-0';
+            color = 'bg-transparent text-surface-900 dark:text-surface-0';
         }
         const today = this.isToday(day) && !this.isSelected(day) ? 'ring-1 ring-primary' : '';
         return `${base} ${color} ${today}`.trim();

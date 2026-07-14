@@ -2,7 +2,7 @@
     <div class="mb-2 flex items-center justify-between">
         <button
             type="button"
-            class="rounded p-1 text-surface-700 hover:bg-surface-100 dark:text-surface-0 dark:hover:bg-surface-700"
+            class="appearance-none rounded border-0 bg-transparent p-1 text-surface-700 hover:bg-surface-100 dark:text-surface-0 dark:hover:bg-surface-700"
             (click)="previousMonth()"
             [attr.aria-label]="activeMonth().subtract(1, 'month').format('MMMM YYYY')"
             data-testid="calendar-previous"
@@ -12,7 +12,7 @@
         <span class="font-semibold text-surface-900 dark:text-surface-0" aria-live="polite" data-testid="calendar-month-label">{{ monthLabel() }}</span>
         <button
             type="button"
-            class="rounded p-1 text-surface-700 hover:bg-surface-100 dark:text-surface-0 dark:hover:bg-surface-700"
+            class="appearance-none rounded border-0 bg-transparent p-1 text-surface-700 hover:bg-surface-100 dark:text-surface-0 dark:hover:bg-surface-700"
             (click)="nextMonth()"
             [attr.aria-label]="activeMonth().add(1, 'month').format('MMMM YYYY')"
             data-testid="calendar-next"

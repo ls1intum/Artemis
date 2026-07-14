@@ -23,7 +23,7 @@
         @if (showClear() && !disabled()) {
             <button
                 type="button"
-                class="absolute right-9 text-muted-color hover:text-surface-900 dark:hover:text-surface-0"
+                class="absolute right-9 appearance-none border-0 bg-transparent p-0 text-muted-color hover:text-surface-900 dark:hover:text-surface-0"
                 (click)="clear()"
                 [attr.aria-label]="'global.datePicker.clear' | artemisTranslate"
                 data-testid="tum-ui-date-picker-clear"
@@ -33,7 +33,7 @@
         }
         <button
             type="button"
-            class="absolute right-2 text-muted-color hover:text-primary"
+            class="absolute right-2 appearance-none border-0 bg-transparent p-0 text-muted-color hover:text-primary"
             [disabled]="disabled()"
             (click)="toggle()"
             [attr.aria-label]="'global.datePicker.open' | artemisTranslate"
