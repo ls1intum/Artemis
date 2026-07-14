@@ -207,9 +207,9 @@ export class ExerciseHeadersInformationComponent {
         // While the quiz participation component hasn't mounted yet, quizLiveHeaderInfo is still undefined; skip the
         // due-date fallback for that brief window too, otherwise the due date flashes before being replaced once the
         // quiz-specific box resolves (the exercise's own due date is known immediately, the quiz box lags behind it).
-        const quizRemainingTimeItem = this.getQuizRemainingTimeItem();
-        if (quizRemainingTimeItem) {
-            items.push(quizRemainingTimeItem);
+        const quizTimeItem = this.getQuizTimeItem();
+        if (quizTimeItem) {
+            items.push(quizTimeItem);
         } else if (!(this.exercise().type === ExerciseType.QUIZ && this.quizLiveHeaderInfo() === undefined)) {
             const dueDateItem = this.getDueDateItem();
             if (dueDateItem) {
@@ -415,7 +415,7 @@ export class ExerciseHeadersInformationComponent {
         };
     }
 
-    getQuizRemainingTimeItem(): InformationBox | undefined {
+    getQuizTimeItem(): InformationBox | undefined {
         const info = this.quizLiveHeaderInfo();
         if (info?.showRemainingTime) {
             return {
