@@ -4,6 +4,10 @@ on:
   issues:
     types: [assigned, unassigned, labeled]
 
+permissions:
+  contents: read
+  issues: write
+
 jobs:
   check-labels:
     runs-on: ubuntu-latest
