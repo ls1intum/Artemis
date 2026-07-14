@@ -75,4 +75,4 @@ placement, z-order, and pointer capture are verified visually and in Playwright.
 3. Use only semantic tokens; add new tokens in the theme variable files + `tailwind.css` if needed.
 4. Cover behavior, semantics, and (for colored surfaces) contrast.
 
-See the full guide: **[UI Kit guidelines](../../../../../documentation/docs/developer/guidelines/tum-ui-kit.mdx)**.
+See the full guide: **[UI Kit guidelines](../../../../../../documentation/docs/developer/guidelines/tum-ui-kit.mdx)**.
