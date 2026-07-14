@@ -447,10 +447,25 @@ class InteractiveSandboxRelayRoundTripTest {
             when(harness.localSandbox().createSession(any())).thenReturn(CONTAINER_ID);
             String handle = harness.client().createSession(sessionSpec());
             doThrow(new LocalCIException("remove failed")).when(harness.localSandbox()).destroySession(CONTAINER_ID);
+            when(harness.localSandbox().sessionExists(CONTAINER_ID)).thenReturn(true);
 
             assertThatExceptionOfType(LocalCIException.class).isThrownBy(() -> harness.client().destroySession(handle)).withMessageContaining("remove failed");
             assertThatExceptionOfType(LocalCIException.class).isThrownBy(() -> harness.client().createSession(sessionSpec()))
                     .withMessageContaining("generation sandbox slot capacity");
+        }
+    }
+
+    @Test
+    void ambiguousDestroy_releasesThePermitWhenTheContainerIsAlreadyAbsent() {
+        try (RelayHarness harness = newHarness(1)) {
+            when(harness.localSandbox().createSession(any())).thenReturn(CONTAINER_ID);
+            String handle = harness.client().createSession(sessionSpec());
+            doThrow(new LocalCIException("Docker response lost")).when(harness.localSandbox()).destroySession(CONTAINER_ID);
+            when(harness.localSandbox().sessionExists(CONTAINER_ID)).thenReturn(false);
+
+            harness.client().destroySession(handle);
+
+            assertThat(harness.client().createSession(sessionSpec())).isEqualTo(AGENT_SHORT_NAME + "::" + CONTAINER_ID);
         }
     }
 

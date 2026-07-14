@@ -785,7 +785,7 @@ public class GenerationPersistenceService {
             }
         }
         assertNoSymbolicLinks(repository);
-        Map<String, String> persistableFiles = persistableProducedFiles(safeProducedFiles);
+        Map<String, String> persistableFiles = safeProducedFiles;
         deleteOrphanedFiles(repository, repositoryType, persistableFiles.keySet());
         for (Map.Entry<String, String> entry : persistableFiles.entrySet()) {
             String path = entry.getKey();
@@ -835,24 +835,6 @@ public class GenerationPersistenceService {
             relativePath = normalizedRoot.relativize(target);
         }
         return relativePath.toString().replace('\\', '/');
-    }
-
-    private static Map<String, String> persistableProducedFiles(Map<String, String> producedFiles) {
-        Map<String, String> persistableFiles = new LinkedHashMap<>();
-        for (Map.Entry<String, String> entry : producedFiles.entrySet()) {
-            if (!"problem-statement.md".equals(normalizeRepositoryPath(entry.getKey()))) {
-                persistableFiles.put(entry.getKey(), entry.getValue());
-            }
-        }
-        return persistableFiles;
-    }
-
-    private static String normalizeRepositoryPath(String path) {
-        String normalized = path.replace('\\', '/');
-        while (normalized.startsWith("./")) {
-            normalized = normalized.substring(2);
-        }
-        return normalized;
     }
 
     private void deleteOrphanedFiles(Repository repository, RepositoryType repositoryType, Set<String> producedPaths) {

@@ -95,6 +95,18 @@ public class InteractiveSandboxService implements InteractiveSandbox {
         return Optional.ofNullable(lastActivityByContainerId.get(containerId));
     }
 
+    /** Returns whether Docker still knows the session container. */
+    boolean sessionExists(String containerId) {
+        DockerClient dockerClient = buildAgentConfiguration.getDockerClient();
+        try (final var inspectCommand = dockerClient.inspectContainerCmd(containerId)) {
+            inspectCommand.exec();
+            return true;
+        }
+        catch (NotFoundException e) {
+            return false;
+        }
+    }
+
     /** Drops the activity entry for a session that has been (or is about to be) removed, bounding the registry to sessions still alive on this agent. */
     void forgetActivity(String containerId) {
         lastActivityByContainerId.remove(containerId);

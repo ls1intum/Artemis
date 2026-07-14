@@ -782,7 +782,7 @@ class GenerationPersistenceServiceTest {
     }
 
     @Test
-    void persist_doesNotCommitWorkspaceProblemStatementFile() throws Exception {
+    void persist_keepsARepositoryFileNamedProblemStatementDistinctFromExerciseMetadata() throws Exception {
         stubSuccessfulCheckoutAndCommits();
         when(participationService.retrieveSolutionParticipation(exercise)).thenReturn(mock(ProgrammingExerciseParticipation.class));
         when(repositoryService.getFiles(repository)).thenReturn(Map.of("problem-statement.md", FileType.FILE));
@@ -792,8 +792,7 @@ class GenerationPersistenceServiceTest {
 
         service.persist(exercise, user, outcomeWith(Map.of(), Map.of(), Map.of("problem-statement.md", "stale duplicate", "Test.java", "x"), "new statement"));
 
-        verify(repositoryService).deleteFile(repository, "problem-statement.md");
-        verify(repositoryService, never()).createFile(eq(repository), eq("problem-statement.md"), any());
+        verify(repositoryService).createFile(eq(repository), eq("problem-statement.md"), any());
         verify(programmingExerciseRepository).updateProblemStatementAndTitleIfUnchanged(1L, "new statement", null, "old statement", null);
     }
 

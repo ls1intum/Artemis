@@ -356,7 +356,16 @@ public class InteractiveSandboxRelayHandler {
         if (!ownsSession(request.sessionId())) {
             return SandboxOpResponse.ok(request.correlationId(), request.sessionId());
         }
-        interactiveSandboxService().destroySession(request.sessionId());
+        try {
+            interactiveSandboxService().destroySession(request.sessionId());
+        }
+        catch (RuntimeException destroyFailure) {
+            // A lost Docker response can report failure after the daemon removed the container. Reconcile before retaining the only permit indefinitely.
+            if (interactiveSandboxService().sessionExists(request.sessionId())) {
+                throw destroyFailure;
+            }
+            log.info("Sandbox session {} was already absent after an ambiguous destroy failure; releasing its slot.", request.sessionId());
+        }
         releaseOwnedPermit(request.sessionId());
         return SandboxOpResponse.ok(request.correlationId(), request.sessionId());
     }

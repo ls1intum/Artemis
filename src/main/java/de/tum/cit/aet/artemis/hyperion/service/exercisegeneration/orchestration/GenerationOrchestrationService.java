@@ -235,7 +235,8 @@ public class GenerationOrchestrationService {
                 producedFilesByType.put(RepositoryType.TESTS, producedTests.files());
                 producedFilesByType.put(RepositoryType.TEMPLATE, producedTemplate.files());
                 producedFilesByType.put(RepositoryType.SOLUTION, producedSolution.files());
-                producedProblemStatement = workspace.extractProblemStatement(sandbox, sessionId);
+                // Persistence trims the statement before saving. Canonicalize it before verification so both stages consume the same value.
+                producedProblemStatement = workspace.extractProblemStatement(sandbox, sessionId).trim();
                 Set<String> extractionFailed = new LinkedHashSet<>();
                 addIfExtractionFailed(extractionFailed, producedTests, RepositoryType.TESTS);
                 addIfExtractionFailed(extractionFailed, producedTemplate, RepositoryType.TEMPLATE);

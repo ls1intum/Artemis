@@ -372,7 +372,14 @@ public class GenerationWorkspaceService {
     public record RepositoryExtraction(Map<String, String> files, boolean extractionFailed) {
     }
 
-    /** Overwrites repository text files with the canonical bytes that verification and persistence must share. */
+    /**
+     * Overwrites repository text files with the canonical bytes that verification and persistence must share.
+     *
+     * @param sandbox            the sandbox session
+     * @param sessionId          the session handle
+     * @param filesByRepository  the canonical repository text files
+     * @param repositoryMetadata seeded file metadata used to preserve executable modes
+     */
     public void materializeRepositoryFiles(InteractiveSandbox sandbox, String sessionId, Map<RepositoryType, Map<String, String>> filesByRepository,
             Map<RepositoryType, RepositorySeedMetadata> repositoryMetadata) {
         Map<String, String> workspaceFiles = new LinkedHashMap<>();

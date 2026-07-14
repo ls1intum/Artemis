@@ -488,7 +488,7 @@ class GenerationOrchestrationServiceTest {
                 .thenReturn(new GenerationWorkspaceService.RepositoryExtraction(Map.of("template/M.java", "m"), false));
         when(workspace.extractRepository(sandbox, SESSION_ID, RepositoryType.SOLUTION, GenerationWorkspaceService.RepositorySeedMetadata.EMPTY))
                 .thenReturn(new GenerationWorkspaceService.RepositoryExtraction(Map.of("solution/S.java", "s"), false));
-        when(workspace.extractProblemStatement(sandbox, SESSION_ID)).thenReturn("# Title\n\nStatement");
+        when(workspace.extractProblemStatement(sandbox, SESSION_ID)).thenReturn("  # Title\n\nStatement  \n");
 
         try (GenerationOutcome outcome = generate(() -> false)) {
             assertThat(outcome.isAccepted()).isTrue();
@@ -502,5 +502,8 @@ class GenerationOrchestrationServiceTest {
         verify(workspace, times(1)).extractRepository(sandbox, SESSION_ID, RepositoryType.TEMPLATE, GenerationWorkspaceService.RepositorySeedMetadata.EMPTY);
         verify(workspace, times(1)).extractRepository(sandbox, SESSION_ID, RepositoryType.SOLUTION, GenerationWorkspaceService.RepositorySeedMetadata.EMPTY);
         verify(workspace, never()).extractRepositoryFiles(any(), anyString(), any());
+        ArgumentCaptor<VerificationRequest> request = ArgumentCaptor.forClass(VerificationRequest.class);
+        verify(verifier).verify(eq(sandbox), eq(SESSION_ID), eq(exercise), request.capture());
+        assertThat(request.getValue().producedProblemStatement()).isEqualTo("# Title\n\nStatement");
     }
 }
