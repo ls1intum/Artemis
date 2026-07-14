@@ -38,7 +38,7 @@ export class MarkdownDirective {
     readonly markdownContentBeforeReference = input<boolean>(true);
 
     protected readonly renderedHtml = signal<SafeHtml>('');
-    private renderToken = 0;
+    private renderGeneration = 0;
 
     constructor() {
         effect(() => {
@@ -50,9 +50,9 @@ export class MarkdownDirective {
             const posting = this.markdownPosting();
             const contentBeforeReference = this.markdownContentBeforeReference();
 
-            // Bump the token first so that an in-flight render from a previous value is discarded even when
+            // Bump the generation counter first so that an in-flight render from a previous value is discarded even when
             // the content is cleared while that render is still pending.
-            const token = ++this.renderToken;
+            const generation = ++this.renderGeneration;
             if (!text) {
                 this.renderedHtml.set('');
                 return;
@@ -64,13 +64,13 @@ export class MarkdownDirective {
             htmlPromise
                 .then((html) => {
                     // Ignore a render whose inputs were superseded before the lazy chunk/conversion resolved.
-                    if (token === this.renderToken) {
+                    if (generation === this.renderGeneration) {
                         this.renderedHtml.set(this.sanitizer.bypassSecurityTrustHtml(html));
                     }
                 })
                 .catch(() => {
                     // The lazy chunk failed to load or rendering threw — clear rather than leak an unhandled rejection.
-                    if (token === this.renderToken) {
+                    if (generation === this.renderGeneration) {
                         this.renderedHtml.set('');
                     }
                 });
