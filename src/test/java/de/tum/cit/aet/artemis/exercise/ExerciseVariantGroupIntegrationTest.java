@@ -469,6 +469,56 @@ class ExerciseVariantGroupIntegrationTest extends AbstractSpringIntegrationIndep
         assertVariantGroupPresent(loaded);
     }
 
+    /**
+     * A student starting a grouped quiz must not blow up. The quiz DTO maps the variant group, and this endpoint loads the
+     * quiz without fetching it — so reading the group off the resulting proxy after the session closed threw
+     * {@code LazyInitializationException} and returned a 500. The group is instructor-facing and irrelevant to a student
+     * taking the quiz, so the DTO maps it to null here rather than the endpoint paying for a join it does not need.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testStartParticipationOnGroupedQuizDoesNotFail() throws Exception {
+        QuizExercise quiz = quizInGroup();
+
+        // Status only: the response DTO is polymorphic and has no Jackson creator. The point is that this used to be a 500.
+        request.postWithoutResponseBody("/api/quiz/quiz-exercises/" + quiz.getId() + "/start-participation", null, HttpStatus.OK);
+    }
+
+    /**
+     * The scores management view caps a group's variants at the group's maxPoints, which it can only do if every member
+     * carries its group — quizzes included. The other course-with-exercises test uses a text exercise; a quiz is a
+     * different entity subclass and is worth asserting separately.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void testCourseWithExercisesSerializesVariantGroupForQuiz() throws Exception {
+        QuizExercise quiz = quizInGroup();
+
+        Course loaded = request.get("/api/course/courses/" + course.getId() + "/with-exercises", HttpStatus.OK, Course.class);
+        Exercise loadedQuiz = loaded.getExercises().stream().filter(candidate -> candidate.getId().equals(quiz.getId())).findFirst().orElseThrow();
+
+        assertVariantGroupPresent(loadedQuiz);
+    }
+
+    /**
+     * Adds an individual-mode quiz to the course and puts it in a group. Built through the repositories rather than the
+     * REST endpoints, because the student-facing test below runs as a student, who may not create groups.
+     */
+    private QuizExercise quizInGroup() {
+        // Released in the past, so a student is actually allowed to start it.
+        ZonedDateTime release = ZonedDateTime.now().minusDays(1).truncatedTo(ChronoUnit.MILLIS);
+        ZonedDateTime due = ZonedDateTime.now().plusDays(7).truncatedTo(ChronoUnit.MILLIS);
+        QuizExercise quiz = QuizExerciseFactory.generateQuizExercise(release, due, QuizMode.INDIVIDUAL, course);
+        QuizExerciseFactory.addQuestionsToQuizExercise(quiz);
+        course.addExercises(quiz);
+
+        ExerciseVariantGroup group = new ExerciseVariantGroup();
+        group.setTitle("Loop variants");
+        group.setMaxPoints(100.0);
+        quiz.setExerciseVariantGroup(exerciseVariantGroupRepository.save(group));
+        return exerciseRepository.save(quiz);
+    }
+
     /** The association is LAZY, so an unfetched read path serializes it as null rather than throwing — assert it is really there. */
     private static void assertVariantGroupPresent(Exercise loaded) {
         assertThat(loaded.getExerciseVariantGroup()).isNotNull();

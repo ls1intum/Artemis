@@ -19,7 +19,6 @@ import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exercise.domain.DifficultyLevel;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
-import de.tum.cit.aet.artemis.exercise.domain.ExerciseVariantGroup;
 import de.tum.cit.aet.artemis.exercise.domain.IncludedInOverallScore;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseVariantGroupReferenceDTO;
 import de.tum.cit.aet.artemis.exercise.dto.TeamAssignmentConfigDTO;
@@ -118,12 +117,8 @@ public record TextExerciseResponseDTO(Long id, String title, String shortName, S
                 : null;
 
         // The exercise edit form renders its timeline as read-only "locked to group" pickers when the exercise belongs to a
-        // variant group, so the group reference has to travel with the exercise. Two separate guards: most exercises simply
-        // have no group (null), and the association is LAZY, so a read path that does not fetch it hands back an
-        // uninitialized proxy — map that to null rather than initializing it outside the session.
-        ExerciseVariantGroup variantGroup = exercise.getExerciseVariantGroup();
-        ExerciseVariantGroupReferenceDTO exerciseVariantGroupDTO = variantGroup != null && Hibernate.isInitialized(variantGroup) ? ExerciseVariantGroupReferenceDTO.of(variantGroup)
-                : null;
+        // variant group, so the group reference has to travel with the exercise.
+        ExerciseVariantGroupReferenceDTO exerciseVariantGroupDTO = ExerciseVariantGroupReferenceDTO.ofNullable(exercise.getExerciseVariantGroup());
 
         return new TextExerciseResponseDTO(exercise.getId(), exercise.getTitle(), exercise.getShortName(), exercise.getType(), exercise.getExerciseType(), exercise.getDifficulty(),
                 exercise.getMode(), exercise.getMaxPoints(), exercise.getBonusPoints(), exercise.getIncludedInOverallScore(), exercise.getReleaseDate(), exercise.getStartDate(),
