@@ -83,6 +83,7 @@ jhi-posting-thread {
 
 .channel-content {
     @include dynamic-content-height(--header-height, --channel-header-height, --channel-search-height, --spacing);
+
     display: flex;
     flex-direction: column;
     justify-content: space-between;
