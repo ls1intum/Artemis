@@ -1,6 +1,20 @@
 <div class="flex flex-col gap-1">
-    @if (!hideLabelName() && labelName()) {
-        <label [attr.for]="inputId()" class="font-semibold text-surface-900 dark:text-surface-0">{{ labelName()! | artemisTranslate }}</label>
+    @if ((!hideLabelName() && labelName()) || shouldDisplayTimeZoneWarning()) {
+        <div class="flex items-center gap-1">
+            @if (!hideLabelName() && labelName()) {
+                <label [attr.for]="inputId()" class="font-semibold text-surface-900 dark:text-surface-0">{{ labelName()! | artemisTranslate }}</label>
+            }
+            @if (shouldDisplayTimeZoneWarning()) {
+                <fa-stack
+                    class="icon-full-size"
+                    [tumUiTooltip]="'entity.timeZoneWarning' | artemisTranslate: { timeZone: currentTimeZone }"
+                    data-testid="tum-ui-date-picker-tz-warning"
+                >
+                    <fa-icon [icon]="faGlobe" stackItemSize="1x" class="text-muted-color" />
+                    <fa-icon [icon]="faClock" stackItemSize="1x" transform="shrink-6 down-5 right-5" class="text-muted-color" />
+                </fa-stack>
+            }
+        </div>
     }
 
     <div #triggerWrapper class="relative flex items-center">

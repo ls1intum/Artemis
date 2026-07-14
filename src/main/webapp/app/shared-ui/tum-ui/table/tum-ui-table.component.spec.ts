@@ -82,6 +82,17 @@ describe('TumUiTableComponent', () => {
         expect(headerCells()[0].getAttribute('aria-sort')).toBe('descending');
     });
 
+    it('resets the native button look on the sort trigger (no grey UA button-face without Tailwind preflight)', async () => {
+        fixture.detectChanges();
+        await fixture.whenStable();
+        const sortButton: HTMLButtonElement = headerCells()[0].querySelector('button')!;
+        expect(sortButton.className).toContain('appearance-none');
+        expect(sortButton.className).toContain('border-0');
+        expect(sortButton.className).toContain('bg-transparent');
+        // Must stay semibold like the non-sortable headers (the UA button font-shorthand would otherwise reset it).
+        expect(sortButton.className).toContain('font-semibold');
+    });
+
     it('does not render a sort button for a non-sortable column', async () => {
         fixture.detectChanges();
         await fixture.whenStable();

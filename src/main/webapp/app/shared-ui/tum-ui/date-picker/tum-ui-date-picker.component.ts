@@ -18,12 +18,13 @@ import { OverlayRef } from '@angular/cdk/overlay';
 import { TemplatePortal } from '@angular/cdk/portal';
 import type { FormValueControl } from '@angular/forms/signals';
 import dayjs from 'dayjs/esm';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faCalendar, faXmark } from '@fortawesome/free-solid-svg-icons';
+import { FaIconComponent, FaStackComponent, FaStackItemSizeDirective } from '@fortawesome/angular-fontawesome';
+import { faCalendar, faClock, faGlobe, faXmark } from '@fortawesome/free-solid-svg-icons';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TumUiButtonComponent } from 'app/shared-ui/tum-ui/button/tum-ui-button.component';
 import { TumUiOverlayService } from 'app/shared-ui/tum-ui/overlay/tum-ui-overlay.service';
+import { TumUiTooltipDirective } from 'app/shared-ui/tum-ui/tooltip/tum-ui-tooltip.directive';
 import { TumUiCalendarComponent } from 'app/shared-ui/tum-ui/date-picker/tum-ui-calendar.component';
 import { DISPLAY_REGEX, TIME_REGEX, combineDateAndTime, formatDisplay, parseDisplay, valuesEqual } from 'app/shared-ui/tum-ui/date-picker/tum-ui-date-picker.util';
 
@@ -39,7 +40,17 @@ import { DISPLAY_REGEX, TIME_REGEX, combineDateAndTime, formatDisplay, parseDisp
     selector: 'tum-ui-date-picker',
     templateUrl: './tum-ui-date-picker.component.html',
     styleUrl: './tum-ui-date-picker.component.scss',
-    imports: [A11yModule, FaIconComponent, TumUiButtonComponent, TumUiCalendarComponent, TranslateDirective, ArtemisTranslatePipe],
+    imports: [
+        A11yModule,
+        FaIconComponent,
+        FaStackComponent,
+        FaStackItemSizeDirective,
+        TumUiButtonComponent,
+        TumUiCalendarComponent,
+        TumUiTooltipDirective,
+        TranslateDirective,
+        ArtemisTranslatePipe,
+    ],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TumUiDatePickerComponent implements FormValueControl<dayjs.Dayjs | undefined> {
@@ -68,6 +79,13 @@ export class TumUiDatePickerComponent implements FormValueControl<dayjs.Dayjs | 
 
     protected readonly faCalendar = faCalendar;
     protected readonly faXmark = faXmark;
+    protected readonly faGlobe = faGlobe;
+    protected readonly faClock = faClock;
+
+    /** The viewer's local IANA time zone, shown in the timezone-warning tooltip (mirrors the legacy picker). */
+    protected get currentTimeZone(): string {
+        return Intl.DateTimeFormat().resolvedOptions().timeZone;
+    }
 
     // Reset to true whenever `value()` changes from the outside (or via a commit), so a stale error border
     // does not linger over a freshly-supplied valid date. Stays false while the user types unparseable text
@@ -143,7 +161,9 @@ export class TumUiDatePickerComponent implements FormValueControl<dayjs.Dayjs | 
             return;
         }
         const [hour, minute] = trimmed.split(':').map(Number);
-        const base = this.value() ?? this.activeMonth().startOf('day');
+        // With no value yet, base the date on today — NOT activeMonth (always month-start), which would
+        // silently commit the 1st of the current month. Mirrors onDaySelect's `dayjs()` fallback.
+        const base = this.value() ?? dayjs().startOf('day');
         this.commit(base.hour(hour).minute(minute).second(0).millisecond(0));
     }
 

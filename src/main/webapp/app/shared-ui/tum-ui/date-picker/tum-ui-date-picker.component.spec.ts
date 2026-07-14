@@ -155,6 +155,27 @@ describe('TumUiDatePickerComponent', () => {
         expect(document.querySelector('tum-ui-calendar')).toBeNull();
     });
 
+    it('bases the date on today, not the 1st of the month, when the time is set on an empty picker', () => {
+        // Regression: with no value yet, editing the time must not silently commit the 1st of the current
+        // month (activeMonth is always month-start). It should fall back to today, like a day selection.
+        expect(component.value()).toBeUndefined();
+        fixture.debugElement.query(By.css('[data-testid="tum-ui-date-picker-trigger"]')).nativeElement.click();
+        fixture.detectChanges();
+        const timeInput = document.querySelector('[data-testid="tum-ui-date-picker-time"]') as HTMLInputElement;
+        timeInput.value = '10:45';
+        timeInput.dispatchEvent(new Event('input'));
+        expect(component.value()?.format('YYYY-MM-DD')).toBe(dayjs().format('YYYY-MM-DD'));
+        expect(component.value()?.format('HH:mm')).toBe('10:45');
+    });
+
+    it('renders the timezone warning by default and hides it when disabled', () => {
+        // The input defaults to true and must actually render a warning (it is a real, read input, not a stub).
+        expect(fixture.debugElement.query(By.css('[data-testid="tum-ui-date-picker-tz-warning"]'))).not.toBeNull();
+        fixture.componentRef.setInput('shouldDisplayTimeZoneWarning', false);
+        fixture.detectChanges();
+        expect(fixture.debugElement.query(By.css('[data-testid="tum-ui-date-picker-tz-warning"]'))).toBeNull();
+    });
+
     describe('two-way [(value)] binding', () => {
         function hostInput(host: ComponentFixture<TwoWayHostComponent>): HTMLInputElement {
             return host.debugElement.query(By.css('[data-testid="tum-ui-date-picker-input"]')).nativeElement;

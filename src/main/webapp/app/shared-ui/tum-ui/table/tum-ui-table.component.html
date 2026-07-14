@@ -33,7 +33,11 @@
                     class="border-b border-surface bg-surface-0 px-3 py-2 text-left font-semibold text-surface-700 dark:bg-surface-900 dark:text-surface-0"
                 >
                     @if (col.sort && col.field) {
-                        <button type="button" class="inline-flex items-center gap-1 hover:text-primary" (click)="onSortClick(col)">
+                        <button
+                            type="button"
+                            class="inline-flex cursor-pointer appearance-none items-center gap-1 border-0 bg-transparent p-0 font-semibold text-surface-700 hover:text-primary dark:text-surface-0"
+                            (click)="onSortClick(col)"
+                        >
                             @if (col.headerKey) {
                                 <span [jhiTranslate]="col.headerKey"></span>
                             } @else {
