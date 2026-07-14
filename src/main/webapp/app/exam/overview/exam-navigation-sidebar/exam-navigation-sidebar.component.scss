@@ -8,6 +8,7 @@ $exam-sidebar-margin: 62px;
 .scrollable-item-content {
     --management-header-height: #{$management-header-height};
     --exam-sidebar-margin: #{$exam-sidebar-margin};
+
     height: calc(100vh - var(--exam-sidebar-margin) - var(--exam-height-offset));
     overflow-y: auto;
 

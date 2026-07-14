@@ -10,16 +10,20 @@
             opacity: 0.6;
             cursor: not-allowed !important;
         }
+
         tr th {
             white-space: nowrap !important;
             padding: 8px 16px !important;
         }
+
         tr td {
             padding: 8px 16px !important;
         }
+
         tr:last-child td {
             border-bottom: none !important;
         }
+
         .p-datatable-header {
             jhi-search-filter .p-iconfield {
                 display: flex;
@@ -33,15 +37,17 @@
                     left: auto;
                 }
             }
-            padding: 0 0 12px 0 !important;
+
+            padding: 0 0 12px !important;
             border-bottom: none;
         }
+
         .p-paginator {
             padding-bottom: 0 !important;
             justify-content: center !important;
             border-color: var(--p-datatable-header-border-color);
             border-style: solid;
-            border-width: 1px 0 0 0;
+            border-width: 1px 0 0;
 
             // Reduce nav button size (Aura default: 2.5rem × 2.5rem)
             --p-paginator-padding: 0.5rem 0;
