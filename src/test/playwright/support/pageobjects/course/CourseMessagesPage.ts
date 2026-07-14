@@ -405,7 +405,7 @@ export class CourseMessagesPage {
         await saveButton.click({ timeout: 10000 });
         const response = await responsePromise;
         expect(response.status()).toBe(201);
-        return response.json();
+        return readResponseJson(response);
     }
 
     /**
@@ -758,7 +758,7 @@ export class CourseMessagesPage {
         const responsePromise = this.page.waitForResponse((resp) => resp.url().includes('/answer-messages') && resp.request().method() === 'POST');
         await threadSidebar.locator('jhi-message-reply-inline-input #save').click();
         const response = await responsePromise;
-        return response.json();
+        return readResponseJson(response);
     }
 
     /**

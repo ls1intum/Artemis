@@ -3,7 +3,7 @@ import { addCoverageReport } from 'monocart-reporter';
 import fs from 'fs';
 import path from 'path';
 import { SEED_COURSES } from './seedData';
-import { addE2EInitScript } from './utils';
+import { addE2EInitScript, storeCapturedApiResponseBody } from './utils';
 
 /**
  * Lazy-loaded Angular routes that e2e tests commonly hit. Pre-warming these on each
@@ -150,6 +150,31 @@ const test = baseTest.extend<
                     void response.body().catch(() => {});
                 }
             });
+
+            // Node-held capture of non-GET /api response bodies: route.fetch() performs the request from
+            // Node and holds the body in Node memory (immune to Chromium buffer eviction); we store it keyed
+            // by the request for readResponseJson and fulfill the page with the same response. Non-GET only,
+            // so SSE (GET text/event-stream, e.g. Iris) is never intercepted; multipart uploads are skipped
+            // (risky to re-issue from Node). Any interception error falls back to continue() so no endpoint is
+            // worse off. GET evictions are handled read-side by readResponseJson's replay.
+            await page.route(
+                (url) => url.pathname.includes('/api/'),
+                async (route) => {
+                    const request = route.request();
+                    const requestContentType = request.headers()['content-type'] ?? '';
+                    if (request.method() === 'GET' || requestContentType.includes('multipart/form-data')) {
+                        await route.continue();
+                        return;
+                    }
+                    try {
+                        const apiResponse = await route.fetch();
+                        storeCapturedApiResponseBody(page, request, await apiResponse.body());
+                        await route.fulfill({ response: apiResponse });
+                    } catch {
+                        await route.continue().catch(() => {});
+                    }
+                },
+            );
 
             const coverageEnabled = process.env.PLAYWRIGHT_COVERAGE !== 'off';
 
