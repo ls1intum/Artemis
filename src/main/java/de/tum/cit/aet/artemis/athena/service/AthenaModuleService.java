@@ -1,7 +1,5 @@
 package de.tum.cit.aet.artemis.athena.service;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
@@ -22,16 +20,14 @@ public class AthenaModuleService {
     @Value("${artemis.athena.url}")
     private String athenaUrl;
 
-    @Value("${artemis.athena.modules.text}")
+    @Value("${artemis.athena.modules.text:module_text_llm}")
     private String textModule;
 
-    @Value("${artemis.athena.modules.programming}")
+    @Value("${artemis.athena.modules.programming:module_programming_llm}")
     private String programmingModule;
 
-    @Value("${artemis.athena.modules.modeling}")
+    @Value("${artemis.athena.modules.modeling:module_modeling_llm}")
     private String modelingModule;
-
-    private static final Logger log = LoggerFactory.getLogger(AthenaModuleService.class);
 
     /**
      * Get the URL for the Athena module for the given exercise type.
