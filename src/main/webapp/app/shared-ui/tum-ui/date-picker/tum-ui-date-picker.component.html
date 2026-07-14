@@ -15,7 +15,7 @@
             [attr.aria-expanded]="isOpen() ? 'true' : 'false'"
             (input)="onInput($any($event.target).value)"
             (blur)="onBlur($any($event.target).value)"
-            class="w-full rounded-md border bg-surface-0 py-2 pl-3 pr-16 text-surface-900 dark:bg-surface-800 dark:text-surface-0"
+            class="w-full rounded-md border bg-surface-0 py-2 pl-3 pr-17 text-surface-900 dark:bg-surface-800 dark:text-surface-0"
             [class.border-surface]="!showErrorBorder()"
             [class.border-state-danger]="showErrorBorder()"
             data-testid="tum-ui-date-picker-input"
