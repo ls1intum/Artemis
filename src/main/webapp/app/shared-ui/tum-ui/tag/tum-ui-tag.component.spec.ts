@@ -34,11 +34,10 @@ describe('TumUiTagComponent', () => {
         expect(tag().className).toContain('rounded-md');
     });
 
-    it('applies the success tint classes', () => {
+    it('exposes the severity via data-severity (drives the p-tag-matched colors in the stylesheet)', () => {
         fixture.componentRef.setInput('severity', 'success');
         fixture.detectChanges();
         expect(tag().getAttribute('data-severity')).toBe('success');
-        expect(tag().className).toContain('text-state-success');
     });
 
     it('renders the value input', () => {

@@ -1,0 +1,50 @@
+// State-severity colors matched pixel-for-pixel to PrimeNG's p-tag (Aura): a solid tint over white for
+// the background and a dark label in light mode, and a translucent tint with a light label in dark mode.
+// This reproduces the `--p-<color>-100` / `--p-<color>-700` formula (`color-mix` over the same semantic
+// `--success` / `--info` / `--warning` / `--danger` custom properties) so the migrated tags are
+// indistinguishable from the p-tags they replace. Secondary/contrast stay on the surface ramp (in the
+// component's class map). Keep in sync with the Artemis PrimeNG theme if the primitive ramps change.
+@mixin tag-state($var) {
+    background: color-mix(in srgb, var($var) 20%, white);
+    color: color-mix(in srgb, var($var) 60%, black);
+}
+
+:host span[data-severity='success'] {
+    @include tag-state(--success);
+}
+
+:host span[data-severity='info'] {
+    @include tag-state(--info);
+}
+
+:host span[data-severity='warn'] {
+    @include tag-state(--warning);
+}
+
+:host span[data-severity='danger'] {
+    @include tag-state(--danger);
+}
+
+// Dark theme: translucent tint + light label (matches p-tag dark, e.g. success #66d7ba on --success/16%).
+@mixin tag-state-dark($var) {
+    background: color-mix(in srgb, var($var) 16%, transparent);
+    color: color-mix(in srgb, var($var) 60%, white);
+}
+
+:host-context(html[prime-ng-use-dark-theme='true']) {
+    span[data-severity='success'] {
+        @include tag-state-dark(--success);
+    }
+
+    span[data-severity='info'] {
+        @include tag-state-dark(--info);
+    }
+
+    span[data-severity='warn'] {
+        @include tag-state-dark(--warning);
+    }
+
+    span[data-severity='danger'] {
+        @include tag-state-dark(--danger);
+    }
+}

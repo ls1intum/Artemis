@@ -13,16 +13,18 @@ const TAG_BASE = 'inline-flex items-center gap-1 px-2 py-1 text-sm font-bold';
 
 const TAG_SEVERITY: Record<TumUiTagSeverity, string> = {
     secondary: 'bg-surface-200 text-surface-700 dark:bg-surface-700 dark:text-surface-200',
-    success: 'bg-state-success/15 text-state-success',
-    info: 'bg-state-info/15 text-state-info',
-    warn: 'bg-state-warning/15 text-state-warning',
-    danger: 'bg-state-danger/15 text-state-danger',
+    // State severities are colored in the component stylesheet (by data-severity) to match p-tag exactly.
+    success: '',
+    info: '',
+    warn: '',
+    danger: '',
     contrast: 'bg-surface-900 text-surface-0 dark:bg-surface-0 dark:text-surface-900',
 };
 
 @Component({
     selector: 'tum-ui-tag',
     templateUrl: './tum-ui-tag.component.html',
+    styleUrl: './tum-ui-tag.component.scss',
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TumUiTagComponent {

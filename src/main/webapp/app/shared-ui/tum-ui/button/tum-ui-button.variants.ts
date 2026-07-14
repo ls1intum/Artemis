@@ -20,7 +20,7 @@ export interface TumUiButtonVariantOptions {
 // `appearance-none` resets the native button look: Artemis imports only Tailwind utilities (no preflight),
 // so a bare <button> otherwise keeps the grey UA button-face and outset border.
 const BASE =
-    'tum-ui-btn inline-flex appearance-none items-center justify-center gap-2 rounded-md border font-medium transition-colors focus-visible:outline-none disabled:opacity-60 disabled:pointer-events-none';
+    'tum-ui-btn inline-flex appearance-none items-center justify-center gap-2 rounded-md border font-normal transition-colors focus-visible:outline-none disabled:opacity-60 disabled:pointer-events-none';
 
 const SOLID: Record<TumUiButtonSeverity, string> = {
     primary: 'bg-primary text-surface-0 border-primary hover:brightness-95',
@@ -34,7 +34,7 @@ const SOLID: Record<TumUiButtonSeverity, string> = {
 
 const OUTLINED: Record<TumUiButtonSeverity, string> = {
     primary: 'bg-transparent text-primary border-primary hover:bg-primary/10',
-    secondary: 'bg-transparent text-surface-700 border-surface hover:bg-surface-100 dark:text-surface-0 dark:hover:bg-surface-800',
+    secondary: 'bg-transparent text-muted-color border-surface hover:bg-surface-100 dark:hover:bg-surface-800',
     success: 'bg-transparent text-state-success border-state-success hover:bg-state-success/10',
     info: 'bg-transparent text-state-info border-state-info hover:bg-state-info/10',
     warn: 'bg-transparent text-state-warning border-state-warning hover:bg-state-warning/10',
@@ -44,7 +44,7 @@ const OUTLINED: Record<TumUiButtonSeverity, string> = {
 
 const TEXT: Record<TumUiButtonSeverity, string> = {
     primary: 'bg-transparent text-primary border-transparent hover:bg-surface-100 dark:hover:bg-surface-800',
-    secondary: 'bg-transparent text-surface-700 border-transparent hover:bg-surface-100 dark:text-surface-0 dark:hover:bg-surface-800',
+    secondary: 'bg-transparent text-muted-color border-transparent hover:bg-surface-100 dark:hover:bg-surface-800',
     success: 'bg-transparent text-state-success border-transparent hover:bg-state-success/10',
     info: 'bg-transparent text-state-info border-transparent hover:bg-state-info/10',
     warn: 'bg-transparent text-state-warning border-transparent hover:bg-state-warning/10',
