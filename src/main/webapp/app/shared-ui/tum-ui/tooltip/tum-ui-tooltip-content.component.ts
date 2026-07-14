@@ -13,7 +13,7 @@ import { TumUiOverlayPlacement } from 'app/shared-ui/tum-ui/overlay/tum-ui-overl
     host: {
         role: 'tooltip',
         '[attr.id]': 'id()',
-        class: 'tum-ui-tooltip-bubble relative inline-block max-w-xs rounded-md bg-surface-900 px-2 py-1 text-sm text-surface-0 shadow-md dark:bg-surface-700',
+        class: 'tum-ui-tooltip-bubble relative inline-block max-w-[12.5rem] rounded-md bg-surface-700 px-[0.75rem] py-[0.5rem] text-sm text-surface-0 shadow-md',
     },
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -23,8 +23,9 @@ export class TumUiTooltipContentComponent {
     readonly placement = input<TumUiOverlayPlacement>('top');
 
     // A rotated square sharing the bubble background; positioned on the edge facing the trigger so half of
-    // it sticks out as a caret. Keep the background in sync with the host bubble background above.
-    private static readonly ARROW_BASE = 'absolute h-2 w-2 rotate-45 bg-surface-900 dark:bg-surface-700';
+    // it sticks out as a caret. Keep the background in sync with the host bubble background above (surface-700,
+    // matching PrimeNG's --p-tooltip-background in both themes).
+    private static readonly ARROW_BASE = 'absolute h-2 w-2 rotate-45 bg-surface-700';
 
     protected readonly arrowClasses = computed(() => {
         const position =
