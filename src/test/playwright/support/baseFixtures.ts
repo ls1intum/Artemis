@@ -3,7 +3,7 @@ import { addCoverageReport } from 'monocart-reporter';
 import fs from 'fs';
 import path from 'path';
 import { SEED_COURSES } from './seedData';
-import { addE2EInitScript, storeCapturedApiResponseBody } from './utils';
+import { addE2EInitScript } from './utils';
 
 /**
  * Lazy-loaded Angular routes that e2e tests commonly hit. Pre-warming these on each
@@ -67,7 +67,9 @@ async function prewarmChunks(browser: Browser): Promise<void> {
         return;
     }
 
-    const ctx = await browser.newContext({ ignoreHTTPSErrors: true });
+    // serviceWorkers: 'block' mirrors the global `use` option (manually created contexts don't inherit
+    // it) so the warm-up populates the same HTTP/disk caches the SW-free test contexts read from.
+    const ctx = await browser.newContext({ ignoreHTTPSErrors: true, serviceWorkers: 'block' });
     try {
         const url = new URL(baseURL);
         await ctx.addCookies([
@@ -123,17 +125,19 @@ const test = baseTest.extend<
 
             // Eagerly read (and thereby memoize) each successful JSON /api response body the moment it
             // arrives, so a test's later deferred `response.json()` reads from Playwright's in-Node cache
-            // instead of issuing a second CDP `Network.getResponseBody`. Under the Angular 22 runtime the
-            // browser churns enough response traffic that Chromium's bounded per-session network buffer
-            // rotates a small JSON body out during the (often multi-second) gap between the response
-            // arriving and the test reading it — surfacing as `getResponseBody: No data found for
-            // resource`, a load-driven flake that Angular 21 did not trigger. `waitForResponse()` and this
+            // instead of issuing a second CDP `Network.getResponseBody`. The dominant source of the
+            // `getResponseBody: No data found for resource` failures was the Angular service worker
+            // serving /api responses (Chromium often cannot return bodies for SW-served responses); that
+            // is fixed at the root by `serviceWorkers: 'block'` in playwright.config.ts. This listener
+            // remains as defense-in-depth against genuine buffer eviction: `waitForResponse()` and this
             // listener receive the SAME Response instance, and `Response.internalBody()` memoizes the buffer
-            // on first read, so pulling it here at the `response` event closes that gap to ~0 and makes every
-            // later `.json()`/`.body()` on that response eviction-proof — without touching the ~49 call sites.
+            // on first read, so pulling it here at the `response` event closes the arrival-to-read gap to ~0
+            // — without touching the ~49 call sites.
             //
             // This is passive: reading a body never alters the response the page received, so (unlike
             // `page.route` interception) it cannot change app behaviour, add latency, or re-issue requests.
+            // (An earlier `page.route` + `route.fetch()` capture of non-GET bodies was removed: the SW
+            // bypassed it entirely, and its error fallback could re-dispatch a non-idempotent request.)
             // Scope guards, all required:
             //  - `/api/` only + `application/json`: the bodies tests actually read; also excludes binary
             //    downloads/exports (needless memory) and `text/event-stream` (Iris SSE) — calling `body()`
@@ -150,31 +154,6 @@ const test = baseTest.extend<
                     void response.body().catch(() => {});
                 }
             });
-
-            // Node-held capture of non-GET /api response bodies: route.fetch() performs the request from
-            // Node and holds the body in Node memory (immune to Chromium buffer eviction); we store it keyed
-            // by the request for readResponseJson and fulfill the page with the same response. Non-GET only,
-            // so SSE (GET text/event-stream, e.g. Iris) is never intercepted; multipart uploads are skipped
-            // (risky to re-issue from Node). Any interception error falls back to continue() so no endpoint is
-            // worse off. GET evictions are handled read-side by readResponseJson's replay.
-            await page.route(
-                (url) => url.pathname.includes('/api/'),
-                async (route) => {
-                    const request = route.request();
-                    const requestContentType = request.headers()['content-type'] ?? '';
-                    if (request.method() === 'GET' || requestContentType.includes('multipart/form-data')) {
-                        await route.continue();
-                        return;
-                    }
-                    try {
-                        const apiResponse = await route.fetch();
-                        storeCapturedApiResponseBody(page, request, await apiResponse.body());
-                        await route.fulfill({ response: apiResponse });
-                    } catch {
-                        await route.continue().catch(() => {});
-                    }
-                },
-            );
 
             const coverageEnabled = process.env.PLAYWRIGHT_COVERAGE !== 'off';
 
