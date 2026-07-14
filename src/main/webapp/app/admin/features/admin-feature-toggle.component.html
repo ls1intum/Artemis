@@ -13,20 +13,6 @@
         <tum-ui-button severity="secondary" size="small" [outlined]="true" (clicked)="scrollToSection('runtime-toggles')" data-testid="nav-runtime-toggles">
             {{ 'artemisApp.features.dynamicToggles.shortTitle' | artemisTranslate }}
         </tum-ui-button>
-
-        <!-- Popover showcase (tum-aet-ui kit, CDK overlay): a help popover explaining runtime toggles. -->
-        <button
-            type="button"
-            [tumUiPopoverTrigger]="featuresHelpPopover"
-            class="inline-flex items-center rounded-md px-2 py-1 text-muted-color hover:bg-surface-100 dark:hover:bg-surface-800"
-            [attr.aria-label]="'artemisApp.features.title' | artemisTranslate"
-            data-testid="features-help-trigger"
-        >
-            <fa-icon [icon]="faCircleInfo" />
-        </button>
-        <tum-ui-popover #featuresHelpPopover placement="bottom" [ariaLabel]="'artemisApp.features.dynamicToggles.title' | artemisTranslate">
-            <p class="m-0 max-w-xs text-sm" jhiTranslate="artemisApp.features.dynamicToggles.description"></p>
-        </tum-ui-popover>
     </div>
 
     <!-- Section 1: Profile-Based Features -->
