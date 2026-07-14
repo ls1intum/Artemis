@@ -1,37 +1,73 @@
-<div class="flex flex-wrap items-center justify-between gap-4 py-2 text-sm text-muted-color" data-testid="tum-ui-paginator">
-    <div class="flex items-center gap-1">
-        <tum-ui-button severity="secondary" [text]="true" size="small" [disabled]="disabled() || isFirst()" (clicked)="goToFirst()" data-testid="paginator-first">
-            <fa-icon [icon]="faAnglesLeft" />
-            <span class="sr-only" jhiTranslate="global.paginator.first"></span>
-        </tum-ui-button>
-        <tum-ui-button severity="secondary" [text]="true" size="small" [disabled]="disabled() || isFirst()" (clicked)="goToPrevious()" data-testid="paginator-previous">
-            <fa-icon [icon]="faAngleLeft" />
-            <span class="sr-only" jhiTranslate="global.paginator.previous"></span>
-        </tum-ui-button>
-        <tum-ui-button severity="secondary" [text]="true" size="small" [disabled]="disabled() || isLast()" (clicked)="goToNext()" data-testid="paginator-next">
-            <fa-icon [icon]="faAngleRight" />
-            <span class="sr-only" jhiTranslate="global.paginator.next"></span>
-        </tum-ui-button>
-        <tum-ui-button severity="secondary" [text]="true" size="small" [disabled]="disabled() || isLast()" (clicked)="goToLast()" data-testid="paginator-last">
-            <fa-icon [icon]="faAnglesRight" />
-            <span class="sr-only" jhiTranslate="global.paginator.last"></span>
-        </tum-ui-button>
-    </div>
+<div class="flex flex-wrap items-center justify-center gap-1 border-t border-surface-200 pt-2 text-sm text-muted-color dark:border-surface-800" data-testid="tum-ui-paginator">
+    <span class="px-2" data-testid="paginator-report">
+        {{ 'global.item-count' | artemisTranslate: { first: rangeBegin(), second: rangeEnd(), total: totalRecords() } }}
+    </span>
 
-    <span data-testid="paginator-report">{{ 'global.item-count' | artemisTranslate: { first: rangeBegin(), second: rangeEnd(), total: totalRecords() } }}</span>
+    <button
+        type="button"
+        [class]="navButtonClasses"
+        [disabled]="disabled() || isFirst()"
+        (click)="goToFirst()"
+        [attr.aria-label]="'global.paginator.first' | artemisTranslate"
+        data-testid="paginator-first"
+    >
+        <fa-icon [icon]="faAnglesLeft" />
+    </button>
+    <button
+        type="button"
+        [class]="navButtonClasses"
+        [disabled]="disabled() || isFirst()"
+        (click)="goToPrevious()"
+        [attr.aria-label]="'global.paginator.previous' | artemisTranslate"
+        data-testid="paginator-previous"
+    >
+        <fa-icon [icon]="faAngleLeft" />
+    </button>
 
-    <label class="flex items-center gap-2">
-        <span jhiTranslate="global.paginator.rowsPerPage"></span>
-        <select
-            class="rounded-md border border-surface bg-surface-0 px-2 py-1 text-surface-900 dark:bg-surface-800 dark:text-surface-0"
-            [value]="pageSize()"
+    @for (p of visiblePages(); track p) {
+        <button
+            type="button"
+            [class]="p === page() ? selectedPageClasses : navButtonClasses"
             [disabled]="disabled()"
-            (change)="onPageSizeChange($any($event.target).value)"
-            data-testid="paginator-page-size"
+            (click)="goToPage(p)"
+            [attr.aria-current]="p === page() ? 'page' : null"
+            data-testid="paginator-page"
         >
-            @for (option of pageSizeOptions(); track option) {
-                <option [value]="option">{{ option }}</option>
-            }
-        </select>
-    </label>
+            {{ p + 1 }}
+        </button>
+    }
+
+    <button
+        type="button"
+        [class]="navButtonClasses"
+        [disabled]="disabled() || isLast()"
+        (click)="goToNext()"
+        [attr.aria-label]="'global.paginator.next' | artemisTranslate"
+        data-testid="paginator-next"
+    >
+        <fa-icon [icon]="faAngleRight" />
+    </button>
+    <button
+        type="button"
+        [class]="navButtonClasses"
+        [disabled]="disabled() || isLast()"
+        (click)="goToLast()"
+        [attr.aria-label]="'global.paginator.last' | artemisTranslate"
+        data-testid="paginator-last"
+    >
+        <fa-icon [icon]="faAnglesRight" />
+    </button>
+
+    <select
+        class="ml-1 cursor-pointer rounded-md border border-surface-300 bg-surface-0 px-2.5 py-1.5 text-sm text-surface-900 dark:border-surface-600 dark:bg-surface-950 dark:text-surface-0"
+        [disabled]="disabled()"
+        (change)="onPageSizeChange($any($event.target).value)"
+        [attr.aria-label]="'global.paginator.rowsPerPage' | artemisTranslate"
+        data-testid="paginator-page-size"
+    >
+        @for (option of pageSizeOptions(); track option) {
+            <!-- [selected] (not [value] on the select) so the current size sticks even though options render after binding. -->
+            <option [value]="option" [selected]="option === pageSize()">{{ option }}</option>
+        }
+    </select>
 </div>

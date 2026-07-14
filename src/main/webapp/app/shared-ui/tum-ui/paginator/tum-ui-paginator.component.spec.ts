@@ -35,7 +35,7 @@ describe('TumUiPaginatorComponent', () => {
     }
 
     function navButton(testid: string): HTMLButtonElement {
-        return fixture.debugElement.query(By.css(`[data-testid="${testid}"] button`)).nativeElement;
+        return fixture.debugElement.query(By.css(`[data-testid="${testid}"]`)).nativeElement;
     }
 
     it('disables first/previous on the first page', () => {
@@ -78,5 +78,21 @@ describe('TumUiPaginatorComponent', () => {
     it('renders the current-page report element', () => {
         setInputs(130, 0);
         expect(fixture.debugElement.query(By.css('[data-testid="paginator-report"]'))).toBeTruthy();
+    });
+
+    it('renders windowed page-number buttons (max 5) and marks the current page', () => {
+        setInputs(500, 4, 50); // 10 pages, current index 4
+        const pageButtons = fixture.debugElement.queryAll(By.css('[data-testid="paginator-page"]'));
+        expect(pageButtons.length).toBe(5); // PAGE_LINK_SIZE window
+        const current = pageButtons.find((b) => b.nativeElement.getAttribute('aria-current') === 'page');
+        expect(current?.nativeElement.textContent.trim()).toBe('5'); // page index 4 -> label 5
+    });
+
+    it('emits pageChange when a page-number button is clicked', () => {
+        const spy = vi.spyOn(component.pageChange, 'emit');
+        setInputs(500, 4, 50);
+        const pageButtons = fixture.debugElement.queryAll(By.css('[data-testid="paginator-page"]'));
+        pageButtons[0].nativeElement.click(); // first visible page (index 2 for a window centered on 4)
+        expect(spy).toHaveBeenCalledWith(2);
     });
 });

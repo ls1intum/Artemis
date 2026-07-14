@@ -2,9 +2,8 @@ import { NgTemplateOutlet } from '@angular/common';
 import { CdkTable, CdkTableModule } from '@angular/cdk/table';
 import { ChangeDetectionStrategy, Component, DestroyRef, TemplateRef, afterNextRender, computed, effect, inject, input, output, signal, viewChild } from '@angular/core';
 import { get } from 'lodash-es';
-import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faMagnifyingGlass, faSort, faSortDown, faSortUp } from '@fortawesome/free-solid-svg-icons';
+import { faMagnifyingGlass } from '@fortawesome/free-solid-svg-icons';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TumUiPaginatorComponent } from 'app/shared-ui/tum-ui/paginator/tum-ui-paginator.component';
@@ -48,7 +47,6 @@ export class TumUiTableComponent<T> {
     readonly lazyLoad = output<TumUiTableLazyEvent>();
 
     protected readonly ACTIONS_COLUMN = ACTIONS_COLUMN;
-    protected readonly faSort = faSort;
     protected readonly faMagnifyingGlass = faMagnifyingGlass;
 
     private readonly destroyRef = inject(DestroyRef);
@@ -70,8 +68,9 @@ export class TumUiTableComponent<T> {
 
     protected readonly tableClasses = computed(() => {
         const base = 'w-full border-collapse text-sm';
-        // Arbitrary-variant zebra striping expressed as a literal so Tailwind generates it (@source scans .ts).
-        return this.striped() ? `${base} [&_tbody_tr:nth-child(even)]:bg-surface-50 dark:[&_tbody_tr:nth-child(even)]:bg-surface-800` : base;
+        // Zebra striping matched to PrimeNG's p-table: ODD rows tinted (surface-50 light / surface-950 dark),
+        // even rows transparent. Expressed as a literal arbitrary variant so Tailwind generates it (@source scans .ts).
+        return this.striped() ? `${base} [&_tbody_tr:nth-child(odd)]:bg-surface-50 dark:[&_tbody_tr:nth-child(odd)]:bg-surface-950` : base;
     });
 
     constructor() {
@@ -111,12 +110,13 @@ export class TumUiTableComponent<T> {
         return sort.order === 1 ? 'ascending' : 'descending';
     }
 
-    protected sortIconFor(col: ColumnDef<T>): IconProp {
+    /** Current sort direction for a column, driving the inline sort-icon SVG (matches PrimeNG's p-sortIcon). */
+    protected sortDirection(col: ColumnDef<T>): 'none' | 'asc' | 'desc' {
         const sort = this.sortState();
         if (!sort || sort.field !== col.field) {
-            return faSort;
+            return 'none';
         }
-        return sort.order === 1 ? faSortUp : faSortDown;
+        return sort.order === 1 ? 'asc' : 'desc';
     }
 
     protected onSortClick(col: ColumnDef<T>): void {

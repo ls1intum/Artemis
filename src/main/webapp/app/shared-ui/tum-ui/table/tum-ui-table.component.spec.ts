@@ -135,7 +135,7 @@ describe('TumUiTableComponent', () => {
         fixture.detectChanges();
         await fixture.whenStable();
         const spy = vi.spyOn(component.lazyLoad, 'emit');
-        const next: HTMLButtonElement = fixture.debugElement.query(By.css('[data-testid="paginator-next"] button')).nativeElement;
+        const next: HTMLButtonElement = fixture.debugElement.query(By.css('[data-testid="paginator-next"]')).nativeElement;
         next.click();
         fixture.detectChanges();
         expect(spy).toHaveBeenLastCalledWith(expect.objectContaining({ first: 50, rows: 50 }));
