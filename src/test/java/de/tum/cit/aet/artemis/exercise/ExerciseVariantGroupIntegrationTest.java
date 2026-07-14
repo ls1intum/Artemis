@@ -28,6 +28,12 @@ import de.tum.cit.aet.artemis.exercise.dto.UpdateExerciseVariantGroupDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseTestRepository;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseVariantGroupRepository;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
+import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
+import de.tum.cit.aet.artemis.fileupload.util.FileUploadExerciseUtilService;
+import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
+import de.tum.cit.aet.artemis.modeling.util.ModelingExerciseUtilService;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.domain.QuizMode;
 import de.tum.cit.aet.artemis.quiz.dto.exercise.QuizExerciseWithQuestionsDTO;
@@ -59,6 +65,15 @@ class ExerciseVariantGroupIntegrationTest extends AbstractSpringIntegrationIndep
 
     @Autowired
     private ExerciseTestRepository exerciseRepository;
+
+    @Autowired
+    private ProgrammingExerciseUtilService programmingExerciseUtilService;
+
+    @Autowired
+    private ModelingExerciseUtilService modelingExerciseUtilService;
+
+    @Autowired
+    private FileUploadExerciseUtilService fileUploadExerciseUtilService;
 
     private Course course;
 
@@ -413,6 +428,52 @@ class ExerciseVariantGroupIntegrationTest extends AbstractSpringIntegrationIndep
 
         assertThat(loaded.quizExerciseWithoutQuestionsDTO().exerciseVariantGroup()).isNotNull();
         assertThat(loaded.quizExerciseWithoutQuestionsDTO().exerciseVariantGroup().maxPoints()).isEqualTo(100.0);
+    }
+
+    /**
+     * The programming/modeling/file-upload edit pages serialize the exercise entity, so they carry the association only if
+     * their query fetches it. Each of these pages renders the timeline as read-only "locked to group" pickers, which is
+     * driven entirely by the group travelling with the exercise.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void testProgrammingExerciseEndpointSerializesVariantGroup() throws Exception {
+        ProgrammingExercise programmingExercise = programmingExerciseUtilService.addProgrammingExerciseToCourse(course);
+        createGroupAsEditorFor(programmingExercise.getId());
+
+        ProgrammingExercise loaded = request.get("/api/programming/programming-exercises/" + programmingExercise.getId(), HttpStatus.OK, ProgrammingExercise.class);
+
+        assertVariantGroupPresent(loaded);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void testModelingExerciseEndpointSerializesVariantGroup() throws Exception {
+        ModelingExercise modelingExercise = modelingExerciseUtilService.addModelingExerciseToCourse(course);
+        createGroupAsEditorFor(modelingExercise.getId());
+
+        ModelingExercise loaded = request.get("/api/modeling/modeling-exercises/" + modelingExercise.getId(), HttpStatus.OK, ModelingExercise.class);
+
+        assertVariantGroupPresent(loaded);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void testFileUploadExerciseEndpointSerializesVariantGroup() throws Exception {
+        ZonedDateTime now = ZonedDateTime.now();
+        FileUploadExercise fileUploadExercise = fileUploadExerciseUtilService.addFileUploadExercise(course, now.minusDays(1), now, now.plusDays(7), now.plusDays(14));
+        createGroupAsEditorFor(fileUploadExercise.getId());
+
+        FileUploadExercise loaded = request.get("/api/fileupload/file-upload-exercises/" + fileUploadExercise.getId(), HttpStatus.OK, FileUploadExercise.class);
+
+        assertVariantGroupPresent(loaded);
+    }
+
+    /** The association is LAZY, so an unfetched read path serializes it as null rather than throwing — assert it is really there. */
+    private static void assertVariantGroupPresent(Exercise loaded) {
+        assertThat(loaded.getExerciseVariantGroup()).isNotNull();
+        assertThat(loaded.getExerciseVariantGroup().getMaxPoints()).isEqualTo(100.0);
+        assertThat(loaded.getExerciseVariantGroup().getTitle()).isEqualTo("Loop variants");
     }
 
     /**
