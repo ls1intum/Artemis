@@ -27,12 +27,6 @@ import { TumUiOverlayService } from 'app/shared-ui/tum-ui/overlay/tum-ui-overlay
 import { TumUiCalendarComponent } from 'app/shared-ui/tum-ui/date-picker/tum-ui-calendar.component';
 import { DISPLAY_REGEX, TIME_REGEX, combineDateAndTime, formatDisplay, parseDisplay, valuesEqual } from 'app/shared-ui/tum-ui/date-picker/tum-ui-date-picker.util';
 
-export enum TumUiDatePickerType {
-    CALENDAR,
-    TIMER,
-    DEFAULT,
-}
-
 /**
  * Owned date+time picker on Angular CDK overlay + a hand-built dayjs calendar, part of the tum-aet-ui kit.
  *
@@ -71,7 +65,6 @@ export class TumUiDatePickerComponent implements FormValueControl<dayjs.Dayjs | 
     readonly inputId = input('date-input-field');
     readonly labelName = input<string>();
     readonly baseZIndex = input(1060);
-    readonly pickerType = input<TumUiDatePickerType>(TumUiDatePickerType.DEFAULT);
 
     protected readonly faCalendar = faCalendar;
     protected readonly faXmark = faXmark;

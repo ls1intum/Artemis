@@ -21,7 +21,6 @@
                     <tum-ui-date-picker
                         #deleteFromPicker
                         [inputId]="'deleteFromDate-' + operation.name"
-                        [pickerType]="TumUiDatePickerType.DEFAULT"
                         [value]="operation.deleteFrom"
                         (valueChange)="onDeleteFromChange(operation, deleteFromPicker.hasValidInput() ? deleteFromPicker.value() : undefined)"
                         [error]="!operation.datesValid()"
@@ -38,7 +37,6 @@
                     <tum-ui-date-picker
                         #deleteToPicker
                         [inputId]="'deleteToDate-' + operation.name"
-                        [pickerType]="TumUiDatePickerType.DEFAULT"
                         [value]="operation.deleteTo"
                         (valueChange)="onDeleteToChange(operation, deleteToPicker.hasValidInput() ? deleteToPicker.value() : undefined)"
                         [error]="!operation.datesValid()"

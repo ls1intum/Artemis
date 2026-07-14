@@ -1,9 +1,17 @@
+// Full-height min-h-0 flex column so `scrollHeight="flex"` works: the search box and paginator stay at
+// their natural size while the scroll wrapper (`flex-1 min-h-0` in the template) consumes the remaining
+// space and becomes the bounded viewport the sticky header scrolls within. `height: 100%` fills a bounded
+// flex/height parent; it resolves to auto (content height) in a plain block parent, so non-flex use is safe.
 :host {
-    display: block;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    min-height: 0;
 }
 
-// CdkTable renders the native <table>/<thead>/<tbody>; make the sticky header opaque so scrolled
-// rows do not show through. Colors come from the token utilities on the header row in the template.
+// CdkTable renders the native <table>/<thead>/<tbody>. The sticky header is made opaque via the
+// bg-surface token utilities on the header CELLS in the template (a background on the <tr> would not
+// travel with the sticky <th> cells).
 .cdk-table {
     width: 100%;
 }

@@ -16,7 +16,7 @@ import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-title.directive';
 import { TableModule } from 'primeng/table';
 import { ButtonModule } from 'primeng/button';
-import { TumUiDatePickerComponent, TumUiDatePickerType } from 'app/shared-ui/tum-ui/date-picker/tum-ui-date-picker.component';
+import { TumUiDatePickerComponent } from 'app/shared-ui/tum-ui/date-picker/tum-ui-date-picker.component';
 
 /**
  * Admin component for managing data cleanup operations.
@@ -44,7 +44,6 @@ export class CleanupServiceComponent implements OnInit {
     private readonly dataCleanupService = inject(DataCleanupService);
 
     protected readonly faTrash = faTrash;
-    protected readonly TumUiDatePickerType = TumUiDatePickerType;
 
     /** Whether the cleanup operation modal is visible */
     showCleanupModal = signal<boolean>(false);
