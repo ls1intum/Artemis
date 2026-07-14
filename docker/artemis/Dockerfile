@@ -85,6 +85,9 @@ COPY ./build/libs/*.war Artemis.war
 #-----------------------------------------------------------------------------------------------------------------------
 # war file stage (decides whether an external .war file will be used or the Docker built .war file)
 #-----------------------------------------------------------------------------------------------------------------------
+# WAR_FILE_STAGE resolves to a build stage defined above (builder / external_builder), not an
+# external image, so there is no version tag to pin (DL3006 is a false positive here).
+# hadolint ignore=DL3006
 FROM ${WAR_FILE_STAGE} AS war_file
 
 #-----------------------------------------------------------------------------------------------------------------------
