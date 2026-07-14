@@ -44,7 +44,7 @@ final class VerifyScriptTestHarness {
     }
 
     static String runSh(Path scriptFile) throws IOException, InterruptedException {
-        Process process = new ProcessBuilder("sh", scriptFile.toString()).redirectErrorStream(true).start();
+        Process process = new ProcessBuilder("sh").redirectInput(scriptFile.toFile()).redirectErrorStream(true).start();
         String output = new String(process.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
         if (!process.waitFor(30, TimeUnit.SECONDS)) {
             process.destroyForcibly();

@@ -37,8 +37,8 @@ public class TestResultXmlParser {
 
     private static XmlMapper createXmlMapper() {
         XMLInputFactory inputFactory = XMLInputFactory.newFactory();
-        setXmlInputFactoryProperty(inputFactory, XMLInputFactory.SUPPORT_DTD, false);
-        setXmlInputFactoryProperty(inputFactory, XMLInputFactory.IS_SUPPORTING_EXTERNAL_ENTITIES, false);
+        inputFactory.setProperty(XMLInputFactory.SUPPORT_DTD, false);
+        inputFactory.setProperty(XMLInputFactory.IS_SUPPORTING_EXTERNAL_ENTITIES, false);
         setXmlInputFactoryProperty(inputFactory, XMLConstants.ACCESS_EXTERNAL_DTD, "");
         setXmlInputFactoryProperty(inputFactory, XMLConstants.ACCESS_EXTERNAL_SCHEMA, "");
         return XmlMapper.builder(new XmlFactory(inputFactory)).build();

@@ -224,7 +224,7 @@ class GenerationRecoveryServiceTest {
     /** A hostile reason (control chars, RTL, emoji, very long) survives trimmed and a null reason is dropped, so a malformed verifier reason cannot crash thread mapping. */
     @Test
     void toFindings_hostileAndNullReasons_doNotCrash_andSurviveSanely() {
-        String hostile = "  ‮gap‬ 💩  \t  ";
+        String hostile = "  \u202Egap\u202C 💩  \t  ";
         VerificationResult verification = new VerificationResult(false, false, true, 1, Arrays.asList(null, hostile, ""));
         GenerationOutcome outcome = outcome(verification, null);
 

@@ -252,7 +252,7 @@ export class HyperionGenerationActivityComponent implements OnDestroy {
     private cancellationStatusChecks = 0;
     private statusLoadAttempts = 0;
     private loadedExerciseId?: number;
-    private loadToken = 0;
+    private loadSequence = 0;
     private liveMessageVersion = 0;
     private destroyed = false;
     private readonly emittedTerminalJobs = new Set<string>();
@@ -273,7 +273,7 @@ export class HyperionGenerationActivityComponent implements OnDestroy {
 
     ngOnDestroy(): void {
         this.destroyed = true;
-        this.loadToken++;
+        this.loadSequence++;
         this.streamSubscription?.unsubscribe();
         this.statusSubscription?.unsubscribe();
         this.clearStreamLossRefresh();
@@ -428,7 +428,7 @@ export class HyperionGenerationActivityComponent implements OnDestroy {
         if (this.destroyed) {
             return;
         }
-        const token = ++this.loadToken;
+        const sequence = ++this.loadSequence;
         const liveMessageVersion = this.liveMessageVersion;
         this.statusLoading.set(true);
         this.statusSubscription?.unsubscribe();
@@ -437,7 +437,7 @@ export class HyperionGenerationActivityComponent implements OnDestroy {
             .pipe(timeout(STATUS_REQUEST_TIMEOUT_MS), takeUntilDestroyed(this.destroyRef))
             .subscribe({
                 next: (response) => {
-                    if (token !== this.loadToken) {
+                    if (sequence !== this.loadSequence) {
                         return;
                     }
                     this.statusLoading.set(false);
@@ -497,7 +497,7 @@ export class HyperionGenerationActivityComponent implements OnDestroy {
                     }
                 },
                 error: (error: unknown) => {
-                    if (token === this.loadToken && liveMessageVersion === this.liveMessageVersion) {
+                    if (sequence === this.loadSequence && liveMessageVersion === this.liveMessageVersion) {
                         this.statusLoadAttempts++;
                         if (this.isRetryableStatusError(error) && this.statusLoadAttempts < MAX_STATUS_LOAD_ATTEMPTS) {
                             this.refreshStatusAfterStreamLoss(1_000 * 2 ** (this.statusLoadAttempts - 1));
@@ -766,7 +766,7 @@ export class HyperionGenerationActivityComponent implements OnDestroy {
     }
 
     private reset(): void {
-        this.loadToken++;
+        this.loadSequence++;
         this.streamSubscription?.unsubscribe();
         this.streamSubscription = undefined;
         this.statusSubscription?.unsubscribe();
