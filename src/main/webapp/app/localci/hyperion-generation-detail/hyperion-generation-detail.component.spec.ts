@@ -17,10 +17,9 @@ describe('HyperionGenerationDetailComponent', () => {
         getGenerationSandboxes: vi.fn(),
         cancelGeneration: vi.fn(),
     };
-    const sessions = [
+    const jobs = [
         {
-            sessionId: 'authoring-session',
-            role: 'AUTHORING',
+            sessionId: 'agent-1::0123456789abcdef0123456789abcdef',
             jobId: 'job-1',
             exerciseId: 42,
             exerciseTitle: 'Concurrency Lab',
@@ -29,13 +28,12 @@ describe('HyperionGenerationDetailComponent', () => {
             mode: 'GENERATE',
             startedAt: '2026-07-12T09:00:00Z',
             lastActivityAt: '2026-07-12T09:01:00Z',
-            reservedSlots: 2,
         },
     ];
 
     beforeEach(() => {
         vi.clearAllMocks();
-        service.getGenerationSandboxes.mockReturnValue(of(sessions));
+        service.getGenerationSandboxes.mockReturnValue(of(jobs));
         service.cancelGeneration.mockReturnValue(of(undefined));
         TestBed.configureTestingModule({
             imports: [HyperionGenerationDetailComponent],
@@ -56,11 +54,11 @@ describe('HyperionGenerationDetailComponent', () => {
         fixture = TestBed.createComponent(HyperionGenerationDetailComponent);
     });
 
-    it('loads the operational generation and its sessions', () => {
+    it('loads the operational generation as its single sandbox job', () => {
         fixture.componentInstance.ngOnInit();
 
         expect(service.getGenerationSandboxes).toHaveBeenCalledWith('agent-1');
-        expect(fixture.componentInstance.job()).toEqual(expect.objectContaining({ jobId: 'job-1', exerciseId: 42, reservedSlots: 2 }));
+        expect(fixture.componentInstance.job()).toEqual(expect.objectContaining({ jobId: 'job-1', exerciseId: 42, sessionId: jobs[0].sessionId }));
         expect(fixture.componentInstance.notFound()).toBe(false);
     });
 
@@ -83,7 +81,7 @@ describe('HyperionGenerationDetailComponent', () => {
 
     it('preserves the last-known job when a generation naturally ends', async () => {
         vi.useFakeTimers();
-        service.getGenerationSandboxes.mockReturnValueOnce(of(sessions)).mockReturnValueOnce(of([]));
+        service.getGenerationSandboxes.mockReturnValueOnce(of(jobs)).mockReturnValueOnce(of([]));
         fixture.detectChanges();
         expect(service.getGenerationSandboxes).toHaveBeenCalledTimes(1);
 
@@ -92,9 +90,9 @@ describe('HyperionGenerationDetailComponent', () => {
         expect(service.getGenerationSandboxes).toHaveBeenCalledTimes(2);
         expect(fixture.componentInstance.naturallyEnded()).toBe(true);
         expect(fixture.componentInstance.job()?.jobId).toBe('job-1');
-        const terminalDuration = fixture.componentInstance.elapsedSeconds(sessions[0].startedAt);
+        const terminalDuration = fixture.componentInstance.elapsedSeconds(jobs[0].startedAt);
         await vi.advanceTimersByTimeAsync(10_000);
-        expect(fixture.componentInstance.elapsedSeconds(sessions[0].startedAt)).toBe(terminalDuration);
+        expect(fixture.componentInstance.elapsedSeconds(jobs[0].startedAt)).toBe(terminalDuration);
         fixture.componentInstance.ngOnDestroy();
         vi.useRealTimers();
     });
@@ -122,7 +120,7 @@ describe('HyperionGenerationDetailComponent', () => {
     });
 
     it('keeps last-known data when a background refresh fails', () => {
-        service.getGenerationSandboxes.mockReturnValueOnce(of(sessions)).mockReturnValueOnce(throwError(() => new Error('offline')));
+        service.getGenerationSandboxes.mockReturnValueOnce(of(jobs)).mockReturnValueOnce(throwError(() => new Error('offline')));
         fixture.componentInstance.ngOnInit();
 
         fixture.componentInstance.load(false);
@@ -133,14 +131,14 @@ describe('HyperionGenerationDetailComponent', () => {
 
     it('does not overlap slow background refreshes', async () => {
         vi.useFakeTimers();
-        const pending = new Subject<typeof sessions>();
+        const pending = new Subject<typeof jobs>();
         service.getGenerationSandboxes.mockReturnValue(pending);
         fixture.componentInstance.ngOnInit();
 
         await vi.advanceTimersByTimeAsync(15_000);
 
         expect(service.getGenerationSandboxes).toHaveBeenCalledTimes(1);
-        pending.next(sessions);
+        pending.next(jobs);
         pending.complete();
         await vi.advanceTimersByTimeAsync(5_000);
         expect(service.getGenerationSandboxes.mock.calls.length).toBeGreaterThan(1);
@@ -148,17 +146,15 @@ describe('HyperionGenerationDetailComponent', () => {
         vi.useRealTimers();
     });
 
-    it('renders localized mode, responsive sessions, and a useful container identifier', () => {
-        service.getGenerationSandboxes.mockReturnValue(of([{ ...sessions[0], sessionId: 'agent-1::0123456789abcdef0123456789abcdef' }]));
-
+    it('renders localized metadata and the single full container identifier directly', () => {
         fixture.detectChanges();
 
         expect(fixture.nativeElement.textContent).toContain('artemisApp.buildAgents.generationSandboxes.generate');
         expect(fixture.nativeElement.textContent).not.toContain('GENERATE');
         expect(fixture.nativeElement.textContent).toContain('Concurrency Lab');
-        expect(fixture.nativeElement.querySelector('[data-testid="hyperion-sessions-scroll"]')).not.toBeNull();
-        expect(fixture.nativeElement.querySelector('summary code').textContent).toContain('0123456789ab…');
-        expect(fixture.nativeElement.querySelector('code[aria-label="0123456789abcdef0123456789abcdef"]').textContent).toContain('0123456789abcdef0123456789abcdef');
+        expect(fixture.nativeElement.querySelector('[data-testid="hyperion-container-id"]').textContent).toContain('0123456789abcdef0123456789abcdef');
+        expect(fixture.nativeElement.querySelector('[data-testid="hyperion-sessions-scroll"]')).toBeNull();
+        expect(fixture.nativeElement.querySelector('p-table')).toBeNull();
     });
 
     it('moves focus to the stable back link when the job becomes terminal', () => {
@@ -172,12 +168,13 @@ describe('HyperionGenerationDetailComponent', () => {
 
     it('does not steal focus when a background refresh observes natural completion', () => {
         fixture.detectChanges();
-        const sessionToggle: HTMLElement = fixture.nativeElement.querySelector('summary');
-        sessionToggle.focus();
+        const containerId: HTMLElement = fixture.nativeElement.querySelector('[data-testid="hyperion-container-id"]');
+        containerId.tabIndex = 0;
+        containerId.focus();
 
         fixture.componentInstance.naturallyEnded.set(true);
         fixture.detectChanges();
 
-        expect(document.activeElement).toBe(sessionToggle);
+        expect(document.activeElement).toBe(containerId);
     });
 });

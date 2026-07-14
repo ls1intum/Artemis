@@ -92,7 +92,7 @@ abstract class AbstractHyperionMockedLlmEndToEndTest extends AbstractProgramming
         sharedQueueProcessingService.resetInitializedState();
         sharedQueueProcessingService.setPauseState(false);
         sharedQueueProcessingService.init();
-        ReflectionTestUtils.setField(interactiveSandboxRelayHandler, "maxGenerationSandboxSlots", 2);
+        ReflectionTestUtils.setField(interactiveSandboxRelayHandler, "maxGenerationSandboxSlots", 1);
         interactiveSandboxRelayHandler.registerRequestListener();
         sharedQueueProcessingService.updateBuildAgentInformation();
 

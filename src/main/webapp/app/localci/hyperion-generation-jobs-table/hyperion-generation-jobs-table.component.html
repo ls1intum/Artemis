@@ -5,7 +5,7 @@
     tabindex="0"
     [attr.aria-label]="'artemisApp.buildAgents.activeHyperionGenerations' | artemisTranslate"
 >
-    <p-table [value]="jobs()" size="small" [stripedRows]="true" styleClass="min-w-[64rem]">
+    <p-table [value]="jobs()" size="small" [stripedRows]="true" styleClass="min-w-[56rem]">
         <ng-template #header>
             <tr>
                 <th scope="col" jhiTranslate="artemisApp.buildAgents.generationSandboxes.status"></th>
@@ -18,7 +18,6 @@
                 <th scope="col" jhiTranslate="artemisApp.buildAgents.generationSandboxes.started"></th>
                 <th scope="col" jhiTranslate="artemisApp.buildAgents.generationSandboxes.duration"></th>
                 <th scope="col" jhiTranslate="artemisApp.buildAgents.generationSandboxes.lastSandboxActivity"></th>
-                <th scope="col" jhiTranslate="artemisApp.buildAgents.generationSandboxes.slots"></th>
                 <th scope="col" jhiTranslate="artemisApp.buildQueue.actions"></th>
             </tr>
         </ng-template>
@@ -59,7 +58,6 @@
                     {{ elapsedSeconds(job.lastActivityAt) | artemisDurationFromSeconds }}
                     <span jhiTranslate="artemisApp.buildAgents.generationSandboxes.ago"></span>
                 </td>
-                <td>{{ job.reservedSlots }}</td>
                 <td>
                     @if (job.stale) {
                         <span

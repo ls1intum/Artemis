@@ -33,7 +33,7 @@ import { PageChangeEvent, PaginationConfig, SliceNavigatorComponent } from 'app/
 import { RunningJobsTableComponent } from 'app/localci/build-queue/tables/running-jobs-table/running-jobs-table.component';
 import { FinishedJobsTableComponent } from 'app/localci/build-queue/tables/finished-jobs-table/finished-jobs-table.component';
 import { extractHost, looksLikeAddress } from 'app/localci/shared/build-agent-address.utils';
-import { GenerationSandboxSession, groupGenerationSandboxSessions } from 'app/localci/shared/entities/generation-sandbox-session.model';
+import { GenerationSandboxJob } from 'app/localci/shared/entities/generation-sandbox-job.model';
 import { HyperionGenerationJobsTableComponent } from 'app/localci/hyperion-generation-jobs-table/hyperion-generation-jobs-table.component';
 
 /**
@@ -113,10 +113,10 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
     generationSandboxesSubscription?: Subscription;
     private generationSandboxesRefreshInterval?: ReturnType<typeof setInterval>;
 
-    readonly generationSandboxes = signal<GenerationSandboxSession[]>([]);
+    readonly generationSandboxes = signal<GenerationSandboxJob[]>([]);
     readonly generationSandboxesLoading = signal(false);
     readonly generationSandboxesLoadFailed = signal(false);
-    readonly generationJobs = computed(() => groupGenerationSandboxSessions(this.generationSandboxes()));
+    readonly generationJobs = computed(() => this.generationSandboxes().toSorted((left, right) => Date.parse(right.startedAt) - Date.parse(left.startedAt)));
 
     readonly effectiveStatus = computed(() => {
         const agent = this.buildAgent();

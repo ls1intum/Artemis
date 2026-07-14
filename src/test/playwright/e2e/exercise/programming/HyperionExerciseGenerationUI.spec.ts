@@ -123,12 +123,12 @@ test.describe('Hyperion exercise generation browser UI', { tag: '@slow' }, () =>
         await expectHyperionLlmMockRequestsIncreased(page, initialLlmRequests);
         const requestsAfterFirstStart = await getHyperionLlmMockRequestCount(page);
         await expectDuplicateGenerationStartRejectedWithoutNewLlmRequest(page, exercise!.id!, jobId, requestsAfterFirstStart);
-        const generationBuildAgent = await expectAdminGenerationSandboxSlots(browser, '2 / 2');
+        const generationBuildAgent = await expectAdminGenerationSandboxSlots(browser, '1 / 1');
 
         await cancelRunningJobFromAdminDetails(browser, generationBuildAgent.name, exercise!.id!, jobId);
         await expectCancelledGeneration(page, exercise!.id!, jobId);
         await expectCancelRejected(page, exercise!.id!, jobId);
-        await expectAdminGenerationSandboxSlots(browser, '0 / 2', generationBuildAgent.address);
+        await expectAdminGenerationSandboxSlots(browser, '0 / 1', generationBuildAgent.address);
         runningJobId = undefined;
     });
 
@@ -187,7 +187,7 @@ test.describe('Hyperion exercise generation browser UI', { tag: '@slow' }, () =>
             mode: 'ADAPT',
             prompt: 'Make the edge-case requirements explicit and keep the tests deterministic.',
         });
-        await expect(page.getByTestId('hyperion-generation-activity')).toContainText('Adaptation activity');
+        await expect(page.getByTestId('hyperion-generation-activity')).toHaveAccessibleName('Adaptation activity');
         await expect(page.getByTestId('hyperion-generation-persistence-state')).toContainText('Agent working copy — not saved');
         await expectRunningGenerationStatus(page, exercise!.id!, jobId, 'ADAPT');
         await expectHyperionLlmMockRequestsIncreased(page, initialLlmRequests);
@@ -234,7 +234,7 @@ test.describe('Hyperion exercise generation browser UI', { tag: '@slow' }, () =>
         await expectExerciseProblemStatement(page, exercise!.id!, correctedSeedStatementMarker);
         await expectAdaptationRepositoryMarkers(page, exercise!.id!, true);
         await expectLlmMockSawPrompt(page, 'HYPERION_E2E_SUBMIT_SEEDED_EXERCISE');
-        await expectAdminGenerationSandboxSlots(browser, '0 / 2');
+        await expectAdminGenerationSandboxSlots(browser, '0 / 1');
 
         await revertAcceptedAdaptationFromUi(page, exercise!.id!);
         await expectExerciseProblemStatement(page, exercise!.id!, 'testUseMergeSortForBigList');
@@ -299,7 +299,7 @@ test.describe('Hyperion exercise generation browser UI', { tag: '@slow' }, () =>
         await expect(page.getByTestId('hyperion-ai-menu')).toBeEnabled();
         await expectHyperionLlmMockRequestsIncreased(page, initialLlmRequests);
         await expectTerminalGenerationStatus(page, exercise!.id!, jobId, 'ERROR');
-        await expectAdminGenerationSandboxSlots(browser, '0 / 2');
+        await expectAdminGenerationSandboxSlots(browser, '0 / 1');
         runningJobId = undefined;
     });
 });
@@ -712,12 +712,7 @@ async function cancelRunningJobFromAdminDetails(browser: Browser, agentName: str
         await expect(generationRow).toContainText(agentName, { timeout: 60_000 });
         await generationRow.getByTestId('hyperion-generation-details').click();
         await expect(adminPage.getByTestId('admin-body').getByText(jobId, { exact: true })).toBeVisible({ timeout: 60_000 });
-        await expect(adminPage.getByRole('heading', { name: 'Sandbox sessions' })).toBeVisible();
-        await expect(adminPage.getByText('Authoring', { exact: true })).toBeVisible();
-        const sessionsRegion = adminPage.getByTestId('hyperion-sessions-scroll');
-        await sessionsRegion.focus();
-        await expect(sessionsRegion).toBeFocused();
-        expect(await adminPage.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth)).toBe(true);
+        await expect(adminPage.getByTestId('hyperion-container-id')).toHaveCount(1);
         await adminPage.setViewportSize({ width: 1440, height: 1100 });
 
         const cancelResponsePromise = adminPage.waitForResponse(
@@ -728,7 +723,7 @@ async function cancelRunningJobFromAdminDetails(browser: Browser, agentName: str
         const confirmationDialog = adminPage.getByRole('alertdialog', { name: 'Cancel Hyperion generation' });
         await confirmationDialog.getByRole('button', { name: 'Cancel generation', exact: true }).click();
         expect((await cancelResponsePromise).ok()).toBeTruthy();
-        await expect(adminPage.getByText('Generation cancelled and sandbox capacity released.', { exact: true })).toBeVisible({ timeout: 60_000 });
+        await expect(adminPage.getByText('Generation cancelled and sandbox released.', { exact: true })).toBeVisible({ timeout: 60_000 });
     } finally {
         await adminPage.context().close();
     }

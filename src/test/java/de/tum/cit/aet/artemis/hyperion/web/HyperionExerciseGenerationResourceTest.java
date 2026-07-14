@@ -95,7 +95,7 @@ class HyperionExerciseGenerationResourceTest {
         MockitoAnnotations.openMocks(this);
         resource = new HyperionExerciseGenerationResource(userRepository, programmingExerciseRepository, jobService, agentSystemPromptService, reviewCommentContextRenderer,
                 generationRevertService, sandboxClient, generationBudgetService);
-        when(sandboxClient.hasAvailableGenerationSandboxSlots(2)).thenReturn(true);
+        when(sandboxClient.hasAvailableGenerationSandboxSlot()).thenReturn(true);
         when(generationBudgetService.reserveGenerationBudget(any(), any())).thenReturn(HyperionGenerationBudgetService.BudgetReservation.none());
 
         testUser = new User();
@@ -126,11 +126,11 @@ class HyperionExerciseGenerationResourceTest {
     }
 
     @Test
-    void generateExercise_withoutTwoFreeSandboxSlots_returnsServiceUnavailableBeforeClaimingJob() {
+    void generateExercise_withoutAFreeSandboxSlot_returnsServiceUnavailableBeforeClaimingJob() {
         ExerciseGenerationRequestDTO request = new ExerciseGenerationRequestDTO(GenerationMode.GENERATE, "Build a bubble sort exercise.", null);
         when(programmingExerciseRepository.findWithAllParticipationsAndBuildConfigById(1L)).thenReturn(Optional.of(testExercise));
         when(agentSystemPromptService.isGenerationSupported(testExercise)).thenReturn(true);
-        when(sandboxClient.hasAvailableGenerationSandboxSlots(2)).thenReturn(false);
+        when(sandboxClient.hasAvailableGenerationSandboxSlot()).thenReturn(false);
 
         assertThatExceptionOfType(ServiceUnavailableAlertException.class).isThrownBy(() -> resource.generateExercise(1L, request));
 
@@ -305,7 +305,7 @@ class HyperionExerciseGenerationResourceTest {
 
         assertThatExceptionOfType(ConflictException.class).isThrownBy(() -> resource.generateExercise(1L, request));
 
-        verify(sandboxClient, never()).hasAvailableGenerationSandboxSlots(2);
+        verify(sandboxClient, never()).hasAvailableGenerationSandboxSlot();
         verify(generationBudgetService, never()).reserveGenerationBudget(any(), any());
         verify(jobService, never()).startJob(any(), any(), any(), any(), any());
     }

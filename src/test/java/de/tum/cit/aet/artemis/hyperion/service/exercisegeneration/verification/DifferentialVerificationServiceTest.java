@@ -258,8 +258,20 @@ class DifferentialVerificationServiceTest {
         PathDispatchingSandbox sandbox = new PathDispatchingSandbox(resultWithFails(0, names, List.of()), resultWithFails(1, names, names), PROBLEM_STATEMENT_WITH_TASK);
         VerificationResult result = verifyGenerate(newVerifier(), sandbox, new ProgrammingExercise());
         assertThat(result.accepted()).isTrue();
+        assertThat(sandbox.execCommands).filteredOn(c -> c.equals("sh -c rm -rf /opt/hyperion && mkdir -p /opt/hyperion")).hasSize(2);
         assertThat(sandbox.execCommands).anyMatch(c -> c.contains(SandboxBuildCommandService.PRISTINE_VERIFY_PATH + " solution"));
         assertThat(sandbox.execCommands).noneMatch(c -> c.contains("/workspace/verify.sh"));
+    }
+
+    @Test
+    void shouldEvaluateTheCapturedProblemStatementThatWillBePersisted() {
+        List<String> names = List.of("sortsUnsortedArray", "sortsArrayWithDuplicates");
+        PathDispatchingSandbox sandbox = new PathDispatchingSandbox(resultWithFails(0, names, List.of()), resultWithFails(1, names, names), "No task bindings");
+
+        VerificationResult result = newVerifier().verify(sandbox, "s", new ProgrammingExercise(),
+                new VerificationRequest(Map.of(), Map.of(), Map.of(), Map.of(), Set.of(), Set.of(), Set.of(), PROBLEM_STATEMENT_WITH_TASK));
+
+        assertThat(result.accepted()).isTrue();
     }
 
     @Test

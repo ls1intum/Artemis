@@ -111,8 +111,8 @@ public class HyperionExerciseGenerationResource {
                     + exercise.getProjectType() + "': the verifier does not support this configuration.", ENTITY_NAME, "unsupportedGenerationLanguage");
         }
         jobService.rejectIfActiveJobCannotBeReclaimed(exerciseId);
-        if (!sandboxClient.hasAvailableGenerationSandboxSlots(2)) {
-            throw new ServiceUnavailableAlertException("No Hyperion generation build agent currently has the two free sandbox slots required to start a run.", ENTITY_NAME,
+        if (!sandboxClient.hasAvailableGenerationSandboxSlot()) {
+            throw new ServiceUnavailableAlertException("No Hyperion generation build agent currently has a free sandbox slot to start a run.", ENTITY_NAME,
                     "generationCapacityUnavailable");
         }
         User user = userRepository.getUserWithGroupsAndAuthorities();

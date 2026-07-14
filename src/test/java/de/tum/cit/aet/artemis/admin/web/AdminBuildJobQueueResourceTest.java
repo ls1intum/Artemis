@@ -31,8 +31,8 @@ class AdminBuildJobQueueResourceTest {
         RemoteInteractiveSandboxClient sandboxClient = mock(RemoteInteractiveSandboxClient.class);
         GenerationJobService jobService = mock(GenerationJobService.class);
         BuildAgentInformation agent = new BuildAgentInformation(new BuildAgentDTO("agent-1", "address", "Agent 1"), 4, 0, List.of(), BuildAgentStatus.IDLE, null, null, 0, 2, 2);
-        GenerationSandboxSessionDTO session = new GenerationSandboxSessionDTO("agent-1::container", GenerationSandboxSessionDTO.Role.AUTHORING, "job-1", 12L, "Sorting exercise",
-                3L, "instructor", "GENERATE", Instant.EPOCH, Instant.EPOCH, 2);
+        GenerationSandboxSessionDTO session = new GenerationSandboxSessionDTO("agent-1::container", "job-1", 12L, "Sorting exercise", 3L, "instructor", "GENERATE", Instant.EPOCH,
+                Instant.EPOCH);
         when(dataAccess.getBuildAgentInformation()).thenReturn(List.of(agent));
         when(sandboxClient.listSessions("agent-1")).thenReturn(List.of(session));
         AdminBuildJobQueueResource resource = resource(dataAccess, sandboxClient, jobService);

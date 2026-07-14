@@ -11,6 +11,7 @@ const correctedSeedStatementMarker = 'Use merge sort for big lists';
 const solutionMarkerPath = 'solution/hyperion-e2e-solution-marker.txt';
 const templateMarkerPath = 'template/hyperion-e2e-template-marker.txt';
 const testsMarkerPath = 'tests/hyperion-e2e-tests-marker.txt';
+const criticPromptMarker = 'meticulous QA reviewer for programming-exercise test suites';
 const correctedSeedProblemStatement = `In this exercise, we want to implement sorting algorithms and choose them based on runtime specific variables.
 
 ### Part 1: Sorting
@@ -102,6 +103,17 @@ function toolCallResponse(requestNumber, toolName, args) {
     };
 }
 
+function textResponse(requestNumber, content) {
+    return {
+        id: `chatcmpl-hyperion-e2e-${requestNumber}`,
+        object: 'chat.completion',
+        created: Math.floor(Date.now() / 1000),
+        model: 'hyperion-e2e-mock',
+        choices: [{ index: 0, message: { role: 'assistant', content }, finish_reason: 'stop' }],
+        usage: { prompt_tokens: 1, completion_tokens: 1, total_tokens: 2 },
+    };
+}
+
 const server = http.createServer((req, res) => {
     if (req.method === 'GET' && req.url === '/health') {
         jsonResponse(res, 200, { ok: true, requestCount });
@@ -123,6 +135,10 @@ const server = http.createServer((req, res) => {
             requests.push(summarizeRequest(body));
             if (body.includes(failMarker)) {
                 jsonResponse(res, 400, { error: { message: 'Hyperion E2E requested LLM failure' } });
+                return;
+            }
+            if (body.includes(criticPromptMarker)) {
+                jsonResponse(res, 200, textResponse(requestNumber, '{"uncovered":[],"missingExamples":[],"invented":[],"unrequestedChanges":[]}'));
                 return;
             }
             if (body.includes(writeSnapshotMarker) && !body.includes('HyperionPreview.java')) {

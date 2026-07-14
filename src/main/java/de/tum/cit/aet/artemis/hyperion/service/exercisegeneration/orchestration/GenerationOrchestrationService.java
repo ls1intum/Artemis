@@ -1,9 +1,5 @@
 package de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.EnumMap;
@@ -18,9 +14,6 @@ import java.util.function.Consumer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
-import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
-import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
 import org.eclipse.jgit.diff.DiffAlgorithm;
 import org.eclipse.jgit.diff.Edit;
 import org.eclipse.jgit.diff.RawText;
@@ -54,7 +47,6 @@ import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.D
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.StructuralOracleSeedingService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.VerificationRequest;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.VerificationResult;
-import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.workspace.BinaryContent;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.workspace.GenerationWorkspaceService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
@@ -78,13 +70,9 @@ public class GenerationOrchestrationService {
 
     private static final long VERIFY_WORKSPACE_MAX_TOTAL_BYTES = 30L * 1024 * 1024;
 
-    private static final int VERIFY_WORKSPACE_MAX_ARCHIVE_BYTES = 32 * 1024 * 1024;
-
     private static final int MAX_ADAPTATION_CHANGE_CHARS = 24_000;
 
     private static final String CHANGE_SUMMARY_TRUNCATED = "\n... [change summary truncated]\n";
-
-    private static final int VERIFY_WORKSPACE_MAX_ENTRIES = 10_000;
 
     /**
      * Hard cap on agent turns per attempt ({@code artemis.hyperion.agent.max-turns}); generous so slow multi-file languages finish in one attempt, still bounded against runaways.
@@ -252,14 +240,17 @@ public class GenerationOrchestrationService {
                 addIfExtractionFailed(extractionFailed, producedTests, RepositoryType.TESTS);
                 addIfExtractionFailed(extractionFailed, producedTemplate, RepositoryType.TEMPLATE);
                 addIfExtractionFailed(extractionFailed, producedSolution, RepositoryType.SOLUTION);
+                if (extractionFailed.isEmpty()) {
+                    workspace.materializeRepositoryFiles(sandbox, sessionId, producedFilesByType, workspaceSeed.repositoryMetadata());
+                }
                 VerificationRequest verificationRequest = new VerificationRequest(testsSeedSnapshot, producedTests.files(), producedTemplate.files(), producedSolution.files(),
-                        extractionFailed, seededStructuralTestNames, baselineGradedTestNames);
+                        extractionFailed, seededStructuralTestNames, baselineGradedTestNames, producedProblemStatement);
                 if (cancelled.getAsBoolean()) {
                     destroyQuietly(sandbox, sessionId);
                     return GenerationOutcome.cancelled(cancelledResult(loopResult));
                 }
-                // Run acceptance verification in a fresh sandbox so work left by the agent cannot alter verify.sh or forge reports. The in-loop check remains advisory.
-                verification = verifyInFreshSession(exercise, sandbox, sessionId, verificationRequest, jobId, placeholderReplacements, sessionSpec);
+                // The authoritative pass re-seeds its pristine script, discards old reports, and builds from fresh temporary directories before parsing the result independently.
+                verification = verifier.verify(sandbox, sessionId, exercise, verificationRequest);
                 emit(progress, verification.report());
                 if (cancelled.getAsBoolean()) {
                     destroyQuietly(sandbox, sessionId);
@@ -488,122 +479,6 @@ public class GenerationOrchestrationService {
         return course == null ? null : course.getId();
     }
 
-    /**
-     * Runs the authoritative differential verification in a fresh sandbox session so it cannot be tampered with by anything the agent loop left behind in the in-session container.
-     * Creates a clean container, copies the exact produced {@code /workspace} tree into it, runs the pristine differential there, and always destroys it in the {@code finally} —
-     * so
-     * no agent-spawned process or planted file can follow the verdict. The differential logic itself is unchanged (same {@link DifferentialVerificationService#verify}).
-     *
-     * @param exercise      the exercise being verified (selects the container image and the per-language build recipe)
-     * @param sandbox       the sandbox instance (one per node; the fresh session is a new container on it)
-     * @param loopSessionId the agent-loop session whose produced {@code /workspace} tree is copied into the fresh session
-     * @param request       the produced artifacts and integrity-gate inputs to decide on
-     * @return the acceptance verdict from the fresh, untamperable session
-     */
-    private VerificationResult verifyInFreshSession(ProgrammingExercise exercise, InteractiveSandbox sandbox, String loopSessionId, VerificationRequest request, String jobId,
-            Map<String, String> placeholderReplacements, SandboxSessionSpec sessionSpec) {
-        String verifySessionId = null;
-        try {
-            verifySessionId = sandbox.createVerificationSession(sessionSpec, loopSessionId);
-            String activeVerifySessionId = verifySessionId;
-            jobService.registerCancelHook(jobId, () -> {
-                destroyQuietly(sandbox, loopSessionId);
-                destroyQuietly(sandbox, activeVerifySessionId);
-            });
-            copyWorkspaceInto(sandbox, loopSessionId, verifySessionId, placeholderReplacements);
-            return verifier.verify(sandbox, verifySessionId, exercise, request);
-        }
-        finally {
-            // The fresh verification session is never returned to the caller, so it is torn down here on every path.
-            destroyQuietly(sandbox, verifySessionId);
-        }
-    }
-
-    /** Copies the regular-file {@code /workspace} tree into the fresh verification session. */
-    private static void copyWorkspaceInto(InteractiveSandbox sandbox, String fromSessionId, String toSessionId, Map<String, String> placeholderReplacements) {
-        byte[] repacked;
-        try (TarArchiveInputStream tar = sandbox.copyOut(fromSessionId, GenerationWorkspaceService.WORKSPACE)) {
-            // copyOut prefixes entries with "workspace/", so copying the repacked archive in at "/" restores them under /workspace.
-            repacked = repackTar(tar, placeholderReplacements);
-        }
-        catch (IOException e) {
-            throw new UncheckedIOException("Could not copy the produced workspace into the fresh verification session", e);
-        }
-        sandbox.copyIn(toSessionId, "/", new ByteArrayInputStream(repacked));
-    }
-
-    /**
-     * Repacks the copied-out workspace into a fresh archive for {@code copyIn}. The stream is untrusted: reject path escapes, links, special entries, and oversized content before
-     * materializing bytes for the verification sandbox.
-     */
-    static byte[] repackTar(TarArchiveInputStream in, Map<String, String> placeholderReplacements) throws IOException {
-        ByteArrayOutputStream out = new ByteArrayOutputStream();
-        long[] totalBytes = { 0 };
-        int entries = 0;
-        try (TarArchiveOutputStream tar = new TarArchiveOutputStream(out)) {
-            tar.setLongFileMode(TarArchiveOutputStream.LONGFILE_POSIX);
-            TarArchiveEntry entry;
-            while ((entry = in.getNextEntry()) != null) {
-                if (++entries > VERIFY_WORKSPACE_MAX_ENTRIES) {
-                    throw new IOException("Refusing workspace archive with too many entries");
-                }
-                String name = verifiedWorkspaceEntryName(entry);
-                if (!isPersistableWorkspaceEntry(name)) {
-                    continue;
-                }
-                if (entry.isDirectory()) {
-                    TarArchiveEntry directory = new TarArchiveEntry(name.endsWith("/") ? name : name + "/");
-                    directory.setMode(entry.getMode());
-                    tar.putArchiveEntry(directory);
-                    tar.closeArchiveEntry();
-                    continue;
-                }
-                if (!entry.isFile() || entry.isSymbolicLink() || entry.isLink() || entry.isFIFO() || entry.isCharacterDevice() || entry.isBlockDevice()) {
-                    throw new IOException("Refusing non-regular workspace entry in verifier copy: " + entry.getName());
-                }
-                byte[] content = readBoundedEntry(in, entry.getSize(), totalBytes);
-                int originalLength = content.length;
-                if (!name.equals("workspace/problem-statement.md") && !BinaryContent.isBinary(content)) {
-                    String normalized = replacePlaceholders(new String(content, StandardCharsets.UTF_8), placeholderReplacements);
-                    content = normalized.getBytes(StandardCharsets.UTF_8);
-                    totalBytes[0] += content.length - originalLength;
-                    if (totalBytes[0] > VERIFY_WORKSPACE_MAX_TOTAL_BYTES) {
-                        throw new IOException("Refusing oversized normalized workspace archive in verifier copy");
-                    }
-                }
-                TarArchiveEntry copy = new TarArchiveEntry(name);
-                copy.setMode(entry.getMode());
-                copy.setSize(content.length);
-                tar.putArchiveEntry(copy);
-                tar.write(content);
-                tar.closeArchiveEntry();
-                if (out.size() > VERIFY_WORKSPACE_MAX_ARCHIVE_BYTES) {
-                    throw new IOException("Refusing oversized workspace archive in verifier copy");
-                }
-            }
-        }
-        if (out.size() > VERIFY_WORKSPACE_MAX_ARCHIVE_BYTES) {
-            throw new IOException("Refusing oversized workspace archive in verifier copy");
-        }
-        return out.toByteArray();
-    }
-
-    private static String verifiedWorkspaceEntryName(TarArchiveEntry entry) throws IOException {
-        String name = entry.getName();
-        while (name.startsWith("./")) {
-            name = name.substring(2);
-        }
-        if (name.startsWith("/") || name.equals("..") || name.startsWith("../") || name.endsWith("/..") || name.contains("/../") || !name.startsWith("workspace/")) {
-            throw new IOException("Refusing workspace entry outside /workspace in verifier copy: " + entry.getName());
-        }
-        return name;
-    }
-
-    private static boolean isPersistableWorkspaceEntry(String name) {
-        return name.equals("workspace/problem-statement.md") || name.equals("workspace/solution") || name.startsWith("workspace/solution/") || name.equals("workspace/template")
-                || name.startsWith("workspace/template/") || name.equals("workspace/tests") || name.startsWith("workspace/tests/");
-    }
-
     private static GenerationWorkspaceService.RepositoryExtraction replacePlaceholders(GenerationWorkspaceService.RepositoryExtraction extraction,
             Map<String, String> replacements) {
         return new GenerationWorkspaceService.RepositoryExtraction(replacePlaceholders(extraction.files(), replacements), extraction.extractionFailed());
@@ -667,25 +542,6 @@ public class GenerationOrchestrationService {
 
     private static String stripLeadingSlash(String path) {
         return path.startsWith("/") ? path.substring(1) : path;
-    }
-
-    private static byte[] readBoundedEntry(TarArchiveInputStream in, long declaredSize, long[] totalBytes) throws IOException {
-        if (declaredSize > VERIFY_WORKSPACE_MAX_FILE_BYTES) {
-            throw new IOException("Refusing oversized workspace entry in verifier copy: " + declaredSize + " bytes");
-        }
-        ByteArrayOutputStream content = new ByteArrayOutputStream(declaredSize > 0 && declaredSize <= Integer.MAX_VALUE ? (int) declaredSize : 8192);
-        byte[] buffer = new byte[8192];
-        long entryBytes = 0;
-        int read;
-        while ((read = in.read(buffer)) != -1) {
-            entryBytes += read;
-            totalBytes[0] += read;
-            if (entryBytes > VERIFY_WORKSPACE_MAX_FILE_BYTES || totalBytes[0] > VERIFY_WORKSPACE_MAX_TOTAL_BYTES) {
-                throw new IOException("Refusing oversized workspace archive in verifier copy");
-            }
-            content.write(buffer, 0, read);
-        }
-        return content.toByteArray();
     }
 
     GenerationWorkspaceService workspace() {

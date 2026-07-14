@@ -12,6 +12,7 @@ import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
@@ -34,8 +35,6 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
-import com.github.dockerjava.api.exception.DockerException;
-
 import de.tum.cit.aet.artemis.buildagent.dto.GenerationSandboxSessionDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.SandboxExecResult;
 import de.tum.cit.aet.artemis.buildagent.dto.SandboxOpRequest;
@@ -56,8 +55,6 @@ public class InteractiveSandboxRelayHandler {
     static final String CAPACITY_REFUSAL_MARKER = "is at its generation sandbox slot capacity";
 
     static final String DRAINING_REFUSAL_MARKER = "is paused and is not accepting new generation sandboxes";
-
-    static final String RETRYABLE_REFUSAL_MARKER = "encountered a transient error creating a generation sandbox";
 
     private final ApplicationContext applicationContext;
 
@@ -82,11 +79,9 @@ public class InteractiveSandboxRelayHandler {
     /** Guarded FIFO used for at-most-once request handling. */
     private final LinkedHashSet<String> handledCorrelationIds = new LinkedHashSet<>();
 
-    private final Map<String, Integer> ownedSandboxSlotPermits = new ConcurrentHashMap<>();
+    private final Set<String> ownedSessionIds = ConcurrentHashMap.newKeySet();
 
     private final Map<String, ActiveSession> activeSessions = new ConcurrentHashMap<>();
-
-    private final Map<String, String> verificationSandboxOwners = new ConcurrentHashMap<>();
 
     private DistributedTopic<SandboxOpRequest> requestsTopic;
 
@@ -204,78 +199,40 @@ public class InteractiveSandboxRelayHandler {
         if (sharedQueueProcessingService.isPaused()) {
             return SandboxOpResponse.failure(request.correlationId(), "Build agent '" + buildAgentShortName + "' " + DRAINING_REFUSAL_MARKER + ".");
         }
-        int permitsToAcquire = request.createPermits();
-        if (permitsToAcquire < 0) {
-            return SandboxOpResponse.failure(request.correlationId(), "CREATE requested a negative generation sandbox slot count.");
-        }
-        if (!sandboxSlotPermits.tryAcquire(permitsToAcquire)) {
+        if (!sandboxSlotPermits.tryAcquire()) {
             return SandboxOpResponse.failure(request.correlationId(),
                     "Build agent '" + buildAgentShortName + "' " + CAPACITY_REFUSAL_MARKER + " (" + maxGenerationSandboxSlots + ").");
         }
         boolean created = false;
         try {
-            String containerId;
-            if (permitsToAcquire == 0) {
-                synchronized (ownedSandboxSlotPermits) {
-                    if (!hasReservedVerificationSlot(request.sessionId())) {
-                        return SandboxOpResponse.failure(request.correlationId(),
-                                "Verification sandbox CREATE must reference an owned authoring sandbox with a reserved verification slot.");
-                    }
-                    containerId = interactiveSandboxService().createSession(request.sessionSpec());
-                    ownedSandboxSlotPermits.computeIfPresent(request.sessionId(), (ignored, permits) -> permits - 1);
-                    ownedSandboxSlotPermits.put(containerId, 1);
-                    verificationSandboxOwners.put(containerId, request.sessionId());
-                    activeSessions.computeIfPresent(request.sessionId(), (ignored, session) -> session.withReservedSlots(1));
-                    registerSession(containerId, request.sessionSpec().context(), GenerationSandboxSessionDTO.Role.VERIFICATION, 1);
-                }
-            }
-            else {
-                containerId = interactiveSandboxService().createSession(request.sessionSpec());
-                synchronized (ownedSandboxSlotPermits) {
-                    ownedSandboxSlotPermits.put(containerId, permitsToAcquire);
-                    registerSession(containerId, request.sessionSpec().context(), GenerationSandboxSessionDTO.Role.AUTHORING, permitsToAcquire);
-                }
-            }
+            String containerId = interactiveSandboxService().createSession(request.sessionSpec());
+            ownedSessionIds.add(containerId);
+            registerSession(containerId, request.sessionSpec().context());
             created = true;
-            publishSessionState();
+            try {
+                publishSessionState();
+            }
+            catch (RuntimeException e) {
+                // The container already exists. Returning a retryable CREATE failure could place the same job on another agent, so observability refresh is best-effort here.
+                log.warn("Could not publish generation sandbox slot state after creating session {}: {}", containerId, e.getMessage());
+            }
             return SandboxOpResponse.created(request.correlationId(), containerId);
         }
         catch (RuntimeException e) {
-            if (isTransientDockerFailure(e)) {
-                return SandboxOpResponse.failure(request.correlationId(), "Build agent '" + buildAgentShortName + "' " + RETRYABLE_REFUSAL_MARKER + ": " + e.getMessage());
-            }
             return SandboxOpResponse.failure(request.correlationId(), e.getMessage());
         }
         finally {
             if (!created) {
-                sandboxSlotPermits.release(permitsToAcquire);
+                sandboxSlotPermits.release();
             }
         }
-    }
-
-    private boolean hasReservedVerificationSlot(String authoringSessionId) {
-        if (authoringSessionId == null || authoringSessionId.isBlank()) {
-            return false;
-        }
-        Integer reservedPermits = ownedSandboxSlotPermits.get(authoringSessionId);
-        return reservedPermits != null && reservedPermits > 1;
-    }
-
-    /** Returns whether a create failure may succeed on another agent; Docker 4xx failures are deterministic. */
-    private static boolean isTransientDockerFailure(Throwable failure) {
-        for (Throwable current = failure; current != null; current = current.getCause()) {
-            if (current instanceof DockerException dockerException && dockerException.getHttpStatus() >= 400 && dockerException.getHttpStatus() < 500) {
-                return false;
-            }
-        }
-        return true;
     }
 
     private SandboxOpResponse handleExec(SandboxOpRequest request) {
         requireOwnedSession(request.sessionId());
         SandboxExecResult result = interactiveSandboxService().exec(request.sessionId(), Duration.ofSeconds(request.timeoutSeconds()), request.command());
         if (result.timedOut()) {
-            releaseOwnedPermits(request.sessionId());
+            releaseOwnedPermit(request.sessionId());
         }
         return SandboxOpResponse.exec(request.correlationId(), request.sessionId(), result);
     }
@@ -395,26 +352,24 @@ public class InteractiveSandboxRelayHandler {
         }
     }
 
-    private SandboxOpResponse handleDestroy(SandboxOpRequest request) {
+    private synchronized SandboxOpResponse handleDestroy(SandboxOpRequest request) {
         if (!ownsSession(request.sessionId())) {
             return SandboxOpResponse.ok(request.correlationId(), request.sessionId());
         }
         interactiveSandboxService().destroySession(request.sessionId());
-        releaseOwnedPermits(request.sessionId());
+        releaseOwnedPermit(request.sessionId());
         return SandboxOpResponse.ok(request.correlationId(), request.sessionId());
     }
 
     private SandboxOpResponse handleList(SandboxOpRequest request) {
-        List<GenerationSandboxSessionDTO> sessions;
-        synchronized (ownedSandboxSlotPermits) {
-            sessions = activeSessions.entrySet().stream().map(entry -> entry.getValue().toDto(entry.getKey(), interactiveSandboxService().lastActivity(entry.getKey()))).toList();
-        }
+        List<GenerationSandboxSessionDTO> sessions = activeSessions.entrySet().stream()
+                .map(entry -> entry.getValue().toDto(entry.getKey(), interactiveSandboxService().lastActivity(entry.getKey()))).toList();
         return SandboxOpResponse.sessions(request.correlationId(), sessions);
     }
 
-    private void registerSession(String containerId, SandboxSessionContext context, GenerationSandboxSessionDTO.Role role, int reservedSlots) {
+    private void registerSession(String containerId, SandboxSessionContext context) {
         if (context != null) {
-            activeSessions.put(containerId, new ActiveSession(context, role, Instant.now(), reservedSlots));
+            activeSessions.put(containerId, new ActiveSession(context, Instant.now()));
         }
     }
 
@@ -425,41 +380,25 @@ public class InteractiveSandboxRelayHandler {
     }
 
     private boolean ownsSession(String sessionId) {
-        synchronized (ownedSandboxSlotPermits) {
-            return ownedSandboxSlotPermits.containsKey(sessionId);
-        }
+        return ownedSessionIds.contains(sessionId);
     }
 
     /** Idempotently releases permits for an owned sandbox removed by the orphan reaper. */
     void releaseIfOwned(String containerId) {
-        releaseOwnedPermits(containerId);
+        releaseOwnedPermit(containerId);
     }
 
-    private void releaseOwnedPermits(String containerId) {
-        Integer permits;
-        boolean restoredToAuthoringReservation = false;
-        synchronized (ownedSandboxSlotPermits) {
-            permits = ownedSandboxSlotPermits.remove(containerId);
+    private void releaseOwnedPermit(String containerId) {
+        if (ownedSessionIds.remove(containerId)) {
             activeSessions.remove(containerId);
-            String authoringSessionId = verificationSandboxOwners.remove(containerId);
-            if (permits != null && authoringSessionId != null && ownedSandboxSlotPermits.containsKey(authoringSessionId)) {
-                ownedSandboxSlotPermits.computeIfPresent(authoringSessionId, (ignored, authoringPermits) -> authoringPermits + permits);
-                activeSessions.computeIfPresent(authoringSessionId, (ignored, session) -> session.withReservedSlots(session.reservedSlots() + permits));
-                restoredToAuthoringReservation = true;
-            }
-        }
-        if (permits != null) {
-            if (!restoredToAuthoringReservation) {
-                sandboxSlotPermits.release(permits);
-            }
+            sandboxSlotPermits.release();
             publishSessionState();
         }
     }
 
     /** Refreshes advertised slot load without resetting build-job failure counters. */
     private void publishSessionState() {
-        int usedPermits = ownedSandboxSlotPermits.values().stream().mapToInt(Integer::intValue).sum();
-        buildAgentInformationService.updateGenerationSandboxSlotState(usedPermits, maxGenerationSandboxSlots);
+        buildAgentInformationService.updateGenerationSandboxSlotState(ownedSessionIds.size(), maxGenerationSandboxSlots);
         buildAgentInformationService.refreshLocalBuildAgentInformationPreservingFailures(sharedQueueProcessingService.isPaused());
     }
 
@@ -476,15 +415,11 @@ public class InteractiveSandboxRelayHandler {
         };
     }
 
-    private record ActiveSession(SandboxSessionContext context, GenerationSandboxSessionDTO.Role role, Instant startedAt, int reservedSlots) {
-
-        ActiveSession withReservedSlots(int newReservedSlots) {
-            return new ActiveSession(context, role, startedAt, newReservedSlots);
-        }
+    private record ActiveSession(SandboxSessionContext context, Instant startedAt) {
 
         GenerationSandboxSessionDTO toDto(String containerId, java.util.Optional<Instant> lastActivity) {
-            return new GenerationSandboxSessionDTO(containerId, role, context.jobId(), context.exerciseId(), context.exerciseTitle(), context.courseId(), context.userLogin(),
-                    context.mode(), startedAt, lastActivity.orElse(startedAt), reservedSlots);
+            return new GenerationSandboxSessionDTO(containerId, context.jobId(), context.exerciseId(), context.exerciseTitle(), context.courseId(), context.userLogin(),
+                    context.mode(), startedAt, lastActivity.orElse(startedAt));
         }
     }
 }

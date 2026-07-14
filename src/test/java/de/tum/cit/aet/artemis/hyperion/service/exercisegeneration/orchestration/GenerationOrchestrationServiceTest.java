@@ -15,11 +15,6 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.UncheckedIOException;
-import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -27,9 +22,6 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BooleanSupplier;
 
-import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
-import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
-import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -88,8 +80,6 @@ class GenerationOrchestrationServiceTest {
 
     private static final String SESSION_ID = "session-abc";
 
-    private static final String VERIFY_SESSION_ID = "verify-session-xyz";
-
     @BeforeEach
     void setUp() {
         sandbox = mock(InteractiveSandbox.class);
@@ -102,8 +92,6 @@ class GenerationOrchestrationServiceTest {
         jobService = mock(GenerationJobService.class);
 
         when(sandbox.createSession(any())).thenReturn(SESSION_ID);
-        when(sandbox.createVerificationSession(any(), anyString())).thenReturn(VERIFY_SESSION_ID);
-        when(sandbox.copyOut(anyString(), anyString())).thenAnswer(invocation -> emptyTar());
         when(systemPromptService.build(any(), any())).thenReturn("SYSTEM_PROMPT");
         when(workspace.extractRepository(any(), anyString(), any(), any())).thenReturn(new GenerationWorkspaceService.RepositoryExtraction(Map.of(), false));
         when(workspace.extractProblemStatement(any(), anyString())).thenReturn("PROBLEM STATEMENT");
@@ -445,47 +433,8 @@ class GenerationOrchestrationServiceTest {
         assertThat(prepended).isEqualTo("=== INITIAL WORKSPACE (seeded; you do not need to re-list it) ===\nLAYOUT\n=== END INITIAL WORKSPACE ===\n\nBRIEF");
     }
 
-    private static TarArchiveInputStream emptyTar() {
-        ByteArrayOutputStream out = new ByteArrayOutputStream();
-        try (TarArchiveOutputStream tar = new TarArchiveOutputStream(out)) {
-            tar.finish();
-        }
-        catch (IOException e) {
-            throw new UncheckedIOException(e);
-        }
-        return new TarArchiveInputStream(new ByteArrayInputStream(out.toByteArray()));
-    }
-
     @Test
-    void verifierCopy_containsOnlyNormalizedPersistableRepositories() throws Exception {
-        ByteArrayOutputStream source = new ByteArrayOutputStream();
-        try (TarArchiveOutputStream tar = new TarArchiveOutputStream(source)) {
-            for (String name : List.of("workspace/reference/Reference.java", "workspace/problem-statement.md", "workspace/rogue.txt", "workspace/solution/Solution.java")) {
-                String value = name.endsWith("Solution.java") ? "${placeholder}" : name.equals("workspace/problem-statement.md") ? "${placeholder} statement" : name;
-                byte[] content = value.getBytes(StandardCharsets.UTF_8);
-                TarArchiveEntry entry = new TarArchiveEntry(name);
-                entry.setSize(content.length);
-                tar.putArchiveEntry(entry);
-                tar.write(content);
-                tar.closeArchiveEntry();
-            }
-        }
-
-        byte[] repacked;
-        try (TarArchiveInputStream tar = new TarArchiveInputStream(new ByteArrayInputStream(source.toByteArray()))) {
-            repacked = GenerationOrchestrationService.repackTar(tar, Map.of("${placeholder}", "normalized"));
-        }
-        try (TarArchiveInputStream tar = new TarArchiveInputStream(new ByteArrayInputStream(repacked))) {
-            assertThat(tar.getNextEntry().getName()).isEqualTo("workspace/problem-statement.md");
-            assertThat(new String(tar.readAllBytes(), StandardCharsets.UTF_8)).isEqualTo("${placeholder} statement");
-            assertThat(tar.getNextEntry().getName()).isEqualTo("workspace/solution/Solution.java");
-            assertThat(new String(tar.readAllBytes(), StandardCharsets.UTF_8)).isEqualTo("normalized");
-            assertThat(tar.getNextEntry()).isNull();
-        }
-    }
-
-    @Test
-    void authoritativeVerify_runsInAFreshSession_copiesTheWorkspaceIn_andAlwaysDestroysIt() {
+    void authoritativeVerify_runsInTheGenerationSession() {
         when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(completed());
         when(verifier.verify(any(), anyString(), any(), any(VerificationRequest.class))).thenReturn(accepted());
 
@@ -493,12 +442,9 @@ class GenerationOrchestrationServiceTest {
             assertThat(outcome.isAccepted()).isTrue();
         }
 
-        verify(verifier).verify(eq(sandbox), eq(VERIFY_SESSION_ID), eq(exercise), any(VerificationRequest.class));
-        verify(verifier, never()).verify(eq(sandbox), eq(SESSION_ID), any(), any(VerificationRequest.class));
-        verify(sandbox).copyOut(SESSION_ID, GenerationWorkspaceService.WORKSPACE);
-        verify(sandbox).copyIn(eq(VERIFY_SESSION_ID), eq("/"), any());
-        verify(sandbox).createVerificationSession(any(), eq(SESSION_ID));
-        verify(sandbox).destroySession(VERIFY_SESSION_ID);
+        verify(verifier).verify(eq(sandbox), eq(SESSION_ID), eq(exercise), any(VerificationRequest.class));
+        verify(workspace).materializeRepositoryFiles(eq(sandbox), eq(SESSION_ID), any(), any());
+        verify(sandbox, times(1)).createSession(any());
     }
 
     @Test
@@ -515,12 +461,11 @@ class GenerationOrchestrationServiceTest {
         assertThat(outcome.loopResult().status()).isEqualTo(AgentLoopResult.Status.CANCELLED);
         assertThat(outcome.isAccepted()).isFalse();
         verify(specFidelityCritic, never()).critique(any(), any(), any(), any());
-        verify(sandbox, atLeastOnce()).destroySession(VERIFY_SESSION_ID);
         verify(sandbox, atLeastOnce()).destroySession(SESSION_ID);
     }
 
     @Test
-    void budgetExhaustedLoop_stillRunsAuthoritativeFreshSessionVerify_andDestroysTheFreshSession() {
+    void budgetExhaustedLoop_stillRunsAuthoritativeVerificationInTheGenerationSession() {
         when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any()))
                 .thenReturn(new AgentLoopResult(AgentLoopResult.Status.BUDGET_EXHAUSTED, 100, "ran out of turns"));
         when(verifier.verify(any(), anyString(), any(), any(VerificationRequest.class))).thenReturn(rejected("template passed a graded test"));
@@ -530,8 +475,7 @@ class GenerationOrchestrationServiceTest {
             assertThat(outcome.isAccepted()).as("a rejected budget-exhausted run is not accepted").isFalse();
         }
 
-        verify(verifier, atLeastOnce()).verify(eq(sandbox), eq(VERIFY_SESSION_ID), any(), any(VerificationRequest.class));
-        verify(sandbox, atLeastOnce()).destroySession(VERIFY_SESSION_ID);
+        verify(verifier, atLeastOnce()).verify(eq(sandbox), eq(SESSION_ID), any(), any(VerificationRequest.class));
     }
 
     @Test

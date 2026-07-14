@@ -73,10 +73,14 @@ public final class WorkspaceArchive {
      * @return a stream over the resulting tar archive
      */
     public static InputStream buildWorkspaceTarStream(Map<String, String> textFiles, Map<String, Path> directoryTrees) {
-        return new ByteArrayInputStream(build(textFiles, directoryTrees));
+        return buildWorkspaceTarStream(textFiles, directoryTrees, Set.of());
     }
 
-    private static byte[] build(Map<String, String> textFiles, Map<String, Path> directoryTrees) {
+    static InputStream buildWorkspaceTarStream(Map<String, String> textFiles, Map<String, Path> directoryTrees, Set<String> executableTextFiles) {
+        return new ByteArrayInputStream(build(textFiles, directoryTrees, executableTextFiles));
+    }
+
+    private static byte[] build(Map<String, String> textFiles, Map<String, Path> directoryTrees, Set<String> executableTextFiles) {
         BoundedByteArrayOutputStream out = new BoundedByteArrayOutputStream(MAX_ARCHIVE_BYTES);
         try (TarArchiveOutputStream tar = new TarArchiveOutputStream(out)) {
             tar.setLongFileMode(TarArchiveOutputStream.LONGFILE_POSIX);
@@ -86,7 +90,7 @@ public final class WorkspaceArchive {
                 incrementEntryCount(entryCount);
                 byte[] content = entry.getValue().getBytes(StandardCharsets.UTF_8);
                 total = addToSeedTotal(total, content.length, entry.getKey());
-                writeFileEntry(tar, entry.getKey(), content, MODE_FILE);
+                writeFileEntry(tar, entry.getKey(), content, executableTextFiles.contains(entry.getKey()) ? MODE_EXECUTABLE : MODE_FILE);
             }
             for (Map.Entry<String, Path> tree : directoryTrees.entrySet()) {
                 total = appendDirectory(tar, tree.getValue(), tree.getKey(), total, entryCount);
@@ -207,6 +211,9 @@ public final class WorkspaceArchive {
             // No path escape: the produced map is keyed by this path and later written into a git repo, so an absolute or ..-traversing path must never reach the commit.
             if (name.startsWith("/") || name.equals("..") || name.startsWith("../") || name.endsWith("/..") || name.contains("/../")) {
                 throw new RejectedWorkspaceEntryException("Refusing a workspace entry whose path escapes the archive root: " + entry.getName());
+            }
+            if (name.contains("\\")) {
+                throw new RejectedWorkspaceEntryException("Refusing a workspace entry with a non-portable repository path: " + entry.getName());
             }
             if (name.equals(".git") || name.startsWith(".git/") || name.endsWith("/.git") || name.contains("/.git/")) {
                 throw new RejectedWorkspaceEntryException("Refusing workspace Git metadata: " + entry.getName());

@@ -27,18 +27,6 @@ public interface InteractiveSandbox {
     String createSession(SandboxSessionSpec spec);
 
     /**
-     * Creates a fresh verification session for an already-running generation loop. Implementations with remote placement can use the loop handle to keep the verifier on the same
-     * agent while reserving loop capacity up front; local implementations can just create another local session.
-     *
-     * @param spec          the container image, resource limits and seed inputs for the session
-     * @param loopSessionId the already-running agent-loop session handle
-     * @return an opaque session handle used by every subsequent operation
-     */
-    default String createVerificationSession(SandboxSessionSpec spec, String loopSessionId) {
-        return createSession(spec);
-    }
-
-    /**
      * Runs a command inside the session container; it is executed without a shell unless the caller passes {@code sh -c ...}, and stdout/stderr are truncated to a bounded size so
      * large build logs cannot overflow the agent's context window.
      *

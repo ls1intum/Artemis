@@ -24,7 +24,10 @@ import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Semaphore;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
@@ -43,7 +46,6 @@ import com.github.dockerjava.api.exception.NotFoundException;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentInformation;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentStatus;
-import de.tum.cit.aet.artemis.buildagent.dto.GenerationSandboxSessionDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.SandboxExecResult;
 import de.tum.cit.aet.artemis.buildagent.dto.SandboxOpRequest;
 import de.tum.cit.aet.artemis.buildagent.dto.SandboxOpResponse;
@@ -147,14 +149,13 @@ class InteractiveSandboxRelayRoundTripTest {
     }
 
     @Test
-    void createSession_failsOverToTheNextAgentWhenTheFirstIsUnreachable() {
+    void createSession_doesNotFailOverAfterAnAmbiguousTimeout() {
         ReflectionTestUtils.setField(client, "controlOpTimeout", Duration.ofMillis(300));
         when(clientAccess.getBuildAgentInformation()).thenReturn(List.of(idleAgent("dead-agent-0", 0, 4), idleAgent(AGENT_SHORT_NAME, 0, 4)));
         when(localSandbox.createSession(any())).thenReturn(CONTAINER_ID);
 
-        String handle = client.createSession(sessionSpec());
-
-        assertThat(handle).isEqualTo(AGENT_SHORT_NAME + "::" + CONTAINER_ID);
+        assertThatExceptionOfType(LocalCIException.class).isThrownBy(() -> client.createSession(sessionSpec())).withMessageContaining("timed out");
+        verify(localSandbox, never()).createSession(any());
     }
 
     @Test
@@ -163,28 +164,17 @@ class InteractiveSandboxRelayRoundTripTest {
                 .thenReturn(List.of(new BuildAgentInformation(new BuildAgentDTO("no-gen", "127.0.0.1:5701", "no-gen"), 4, 0, List.of(), BuildAgentStatus.IDLE, "", null, 0, 0, 0)));
 
         assertThatExceptionOfType(LocalCIException.class).isThrownBy(() -> client.createSession(sessionSpec()))
-                .withMessageContaining("No build agent has two free Hyperion generation sandbox slots");
+                .withMessageContaining("No build agent has a free Hyperion generation sandbox slot");
     }
 
     @Test
-    void createSessionRequiresTwoFreeSlotsForAuthoringAndVerificationSandboxes() {
+    void createSessionRequiresOneFreeSlot() {
         when(clientAccess.getBuildAgentInformation()).thenReturn(List
                 .of(new BuildAgentInformation(new BuildAgentDTO(AGENT_SHORT_NAME, "127.0.0.1:5701", AGENT_SHORT_NAME), 4, 0, List.of(), BuildAgentStatus.IDLE, "", null, 0, 1, 2)));
+        when(localSandbox.createSession(any())).thenReturn(CONTAINER_ID);
 
-        assertThatExceptionOfType(LocalCIException.class).isThrownBy(() -> client.createSession(sessionSpec())).withMessageContaining("two free Hyperion generation sandbox slots");
-        verify(localSandbox, never()).createSession(any());
-    }
-
-    @Test
-    void createVerificationSession_usesTheLoopAgentReservedSlot() {
-        when(localSandbox.createSession(any())).thenReturn("loop-container", "verify-container");
-
-        String loopHandle = client.createSession(sessionSpec());
-        String verifyHandle = client.createVerificationSession(sessionSpec(), loopHandle);
-
-        assertThat(loopHandle).isEqualTo(AGENT_SHORT_NAME + "::loop-container");
-        assertThat(verifyHandle).isEqualTo(AGENT_SHORT_NAME + "::verify-container");
-        verify(localSandbox, times(2)).createSession(any());
+        assertThat(client.createSession(sessionSpec())).isEqualTo(AGENT_SHORT_NAME + "::" + CONTAINER_ID);
+        verify(localSandbox).createSession(any());
     }
 
     @Test
@@ -192,14 +182,13 @@ class InteractiveSandboxRelayRoundTripTest {
         Instant lastActivity = Instant.parse("2026-07-12T10:15:30Z");
         SandboxSessionContext context = new SandboxSessionContext("job-42", 123L, "Sorting exercise", 7L, "instructor", "GENERATE");
         SandboxSessionSpec spec = new SandboxSessionSpec("some-image", null, context);
-        when(localSandbox.createSession(any())).thenReturn("loop-container", "verify-container");
+        when(localSandbox.createSession(any())).thenReturn("generation-container");
         when(localSandbox.lastActivity(anyString())).thenReturn(java.util.Optional.of(lastActivity));
 
-        String loopHandle = client.createSession(spec);
+        String sessionHandle = client.createSession(spec);
 
         assertThat(client.listSessions(AGENT_SHORT_NAME)).singleElement().satisfies(session -> {
-            assertThat(session.sessionId()).isEqualTo(loopHandle);
-            assertThat(session.role()).isEqualTo(GenerationSandboxSessionDTO.Role.AUTHORING);
+            assertThat(session.sessionId()).isEqualTo(sessionHandle);
             assertThat(session.jobId()).isEqualTo("job-42");
             assertThat(session.exerciseId()).isEqualTo(123L);
             assertThat(session.exerciseTitle()).isEqualTo("Sorting exercise");
@@ -208,52 +197,10 @@ class InteractiveSandboxRelayRoundTripTest {
             assertThat(session.mode()).isEqualTo("GENERATE");
             assertThat(session.startedAt()).isNotNull();
             assertThat(session.lastActivityAt()).isEqualTo(lastActivity);
-            assertThat(session.reservedSlots()).isEqualTo(2);
         });
 
-        String verifyHandle = client.createVerificationSession(spec, loopHandle);
-        assertThat(client.listSessions(AGENT_SHORT_NAME))
-                .extracting(GenerationSandboxSessionDTO::sessionId, GenerationSandboxSessionDTO::role, GenerationSandboxSessionDTO::reservedSlots)
-                .containsExactlyInAnyOrder(org.assertj.core.groups.Tuple.tuple(loopHandle, GenerationSandboxSessionDTO.Role.AUTHORING, 1),
-                        org.assertj.core.groups.Tuple.tuple(verifyHandle, GenerationSandboxSessionDTO.Role.VERIFICATION, 1));
-
-        client.destroySession(verifyHandle);
-        client.destroySession(loopHandle);
+        client.destroySession(sessionHandle);
         assertThat(client.listSessions(AGENT_SHORT_NAME)).isEmpty();
-    }
-
-    @Test
-    void createVerificationSession_requiresAnOwnedAuthoringSandboxReservation() {
-        assertThatExceptionOfType(LocalCIException.class).isThrownBy(() -> client.createVerificationSession(sessionSpec(), AGENT_SHORT_NAME + "::missing-loop-container"))
-                .withMessageContaining("owned authoring sandbox");
-
-        verify(localSandbox, never()).createSession(any());
-    }
-
-    @Test
-    void createVerificationSession_consumesTheReservedVerificationSlotOnlyOnce() {
-        when(localSandbox.createSession(any())).thenReturn("loop-container", "verify-container", "duplicate-verify-container");
-
-        String loopHandle = client.createSession(sessionSpec());
-        String verifyHandle = client.createVerificationSession(sessionSpec(), loopHandle);
-
-        assertThat(verifyHandle).isEqualTo(AGENT_SHORT_NAME + "::verify-container");
-        assertThatExceptionOfType(LocalCIException.class).isThrownBy(() -> client.createVerificationSession(sessionSpec(), loopHandle))
-                .withMessageContaining("owned authoring sandbox");
-        verify(localSandbox, times(2)).createSession(any());
-    }
-
-    @Test
-    void createVerificationSession_canReuseTheReservedSlotAfterDestroyingThePreviousVerifier() {
-        when(localSandbox.createSession(any())).thenReturn("loop-container", "verify-container-1", "verify-container-2");
-
-        String loopHandle = client.createSession(sessionSpec());
-        String firstVerifyHandle = client.createVerificationSession(sessionSpec(), loopHandle);
-        client.destroySession(firstVerifyHandle);
-        String secondVerifyHandle = client.createVerificationSession(sessionSpec(), loopHandle);
-
-        assertThat(secondVerifyHandle).isEqualTo(AGENT_SHORT_NAME + "::verify-container-2");
-        verify(localSandbox, times(3)).createSession(any());
     }
 
     @Test
@@ -391,11 +338,24 @@ class InteractiveSandboxRelayRoundTripTest {
     }
 
     @Test
-    void secondCreate_atCapacity_isRefused() {
+    void thirdCreate_atCapacity_isRefused() {
         try (RelayHarness harness = newHarness(2)) {
-            when(harness.localSandbox().createSession(any())).thenReturn(CONTAINER_ID);
-            harness.client().createSession(sessionSpec());
+            when(harness.localSandbox().createSession(any())).thenReturn(CONTAINER_ID, CONTAINER_ID + "-2");
+            assertThat(harness.client().createSession(sessionSpec())).isEqualTo(AGENT_SHORT_NAME + "::" + CONTAINER_ID);
+            assertThat(harness.client().createSession(sessionSpec())).isEqualTo(AGENT_SHORT_NAME + "::" + CONTAINER_ID + "-2");
 
+            assertThatExceptionOfType(LocalCIException.class).isThrownBy(() -> harness.client().createSession(sessionSpec()))
+                    .withMessageContaining("generation sandbox slot capacity");
+        }
+    }
+
+    @Test
+    void createSucceedsWhenPublishingTheUpdatedSlotStateFails() {
+        try (RelayHarness harness = newHarness(1)) {
+            when(harness.localSandbox().createSession(any())).thenReturn(CONTAINER_ID);
+            doThrow(new LocalCIException("state store unavailable")).when(harness.informationService()).updateGenerationSandboxSlotState(1, 1);
+
+            assertThat(harness.client().createSession(sessionSpec())).isEqualTo(AGENT_SHORT_NAME + "::" + CONTAINER_ID);
             assertThatExceptionOfType(LocalCIException.class).isThrownBy(() -> harness.client().createSession(sessionSpec()))
                     .withMessageContaining("generation sandbox slot capacity");
         }
@@ -442,7 +402,7 @@ class InteractiveSandboxRelayRoundTripTest {
 
     @Test
     void redundantDestroy_releasesPermitExactlyOnce() {
-        try (RelayHarness harness = newHarness(2)) {
+        try (RelayHarness harness = newHarness(1)) {
             when(harness.localSandbox().createSession(any())).thenReturn(CONTAINER_ID);
             String handle = harness.client().createSession(sessionSpec());
 
@@ -457,8 +417,33 @@ class InteractiveSandboxRelayRoundTripTest {
     }
 
     @Test
+    void concurrentDestroy_removesTheContainerExactlyOnce() throws Exception {
+        try (RelayHarness harness = newHarness(1)) {
+            when(harness.localSandbox().createSession(any())).thenReturn(CONTAINER_ID);
+            String handle = harness.client().createSession(sessionSpec());
+            CountDownLatch destroyStarted = new CountDownLatch(1);
+            CountDownLatch finishDestroy = new CountDownLatch(1);
+            doAnswer(invocation -> {
+                destroyStarted.countDown();
+                finishDestroy.await(5, TimeUnit.SECONDS);
+                return null;
+            }).when(harness.localSandbox()).destroySession(CONTAINER_ID);
+
+            CompletableFuture<Void> first = CompletableFuture.runAsync(() -> harness.client().destroySession(handle));
+            assertThat(destroyStarted.await(2, TimeUnit.SECONDS)).isTrue();
+            CompletableFuture<Void> second = CompletableFuture.runAsync(() -> harness.client().destroySession(handle));
+
+            assertThat(second).failsWithin(Duration.ofMillis(200)).withThrowableThat().isInstanceOf(java.util.concurrent.TimeoutException.class);
+            finishDestroy.countDown();
+            first.get(2, TimeUnit.SECONDS);
+            second.get(2, TimeUnit.SECONDS);
+            verify(harness.localSandbox(), times(1)).destroySession(CONTAINER_ID);
+        }
+    }
+
+    @Test
     void failedDestroy_keepsTheSandboxPermitReserved() {
-        try (RelayHarness harness = newHarness(2)) {
+        try (RelayHarness harness = newHarness(1)) {
             when(harness.localSandbox().createSession(any())).thenReturn(CONTAINER_ID);
             String handle = harness.client().createSession(sessionSpec());
             doThrow(new LocalCIException("remove failed")).when(harness.localSandbox()).destroySession(CONTAINER_ID);
@@ -471,7 +456,7 @@ class InteractiveSandboxRelayRoundTripTest {
 
     @Test
     void timedOutExec_releasesThePermitForTheContainerDestroyedByTheService() {
-        try (RelayHarness harness = newHarness(2)) {
+        try (RelayHarness harness = newHarness(1)) {
             when(harness.localSandbox().createSession(any())).thenReturn(CONTAINER_ID);
             when(harness.localSandbox().exec(eq(CONTAINER_ID), any(), any(String[].class))).thenReturn(new SandboxExecResult(-1, "", "", true));
             String handle = harness.client().createSession(sessionSpec());
@@ -496,7 +481,7 @@ class InteractiveSandboxRelayRoundTripTest {
 
         InteractiveSandboxService sandbox1 = mock(InteractiveSandboxService.class);
         InteractiveSandboxRelayHandler handler1 = sharedHandler("agent-1", 2, requests, responses, payloads, sandbox1);
-        // Drain agent-1's loop+verifier permits so its CREATE handler declines with the capacity marker (as if a concurrent run already holds them).
+        // Drain both job permits so agent-1 declines with the capacity marker (as if two concurrent runs already hold them).
         ((Semaphore) ReflectionTestUtils.getField(handler1, "sandboxSlotPermits")).acquireUninterruptibly(2);
         InteractiveSandboxService sandbox2 = mock(InteractiveSandboxService.class);
         when(sandbox2.createSession(any())).thenReturn("container-2");
@@ -515,7 +500,7 @@ class InteractiveSandboxRelayRoundTripTest {
     }
 
     @Test
-    void createSession_failsOverToTheNextAgent_whenTheFirstHitsATransientDockerError() {
+    void createSession_doesNotFailOverWhenTheFirstAgentReportsACreateFailure() {
         LocalTopic<SandboxOpRequest> requests = new LocalTopic<>();
         LocalTopic<SandboxOpResponse> responses = new LocalTopic<>();
         LocalMap<String, byte[]> payloads = new LocalMap<>();
@@ -535,9 +520,9 @@ class InteractiveSandboxRelayRoundTripTest {
         InteractiveSandboxRelayHandler handler2 = sharedHandler("agent-2", 2, requests, responses, payloads, sandbox2);
 
         try {
-            String handle = failoverClient.createSession(sessionSpec());
-            assertThat(handle).isEqualTo("agent-2::container-2");
+            assertThatExceptionOfType(LocalCIException.class).isThrownBy(() -> failoverClient.createSession(sessionSpec())).withMessageContaining("momentarily overloaded");
             verify(sandbox1).createSession(any());
+            verify(sandbox2, never()).createSession(any());
         }
         finally {
             handler1.shutdown();
@@ -591,7 +576,8 @@ class InteractiveSandboxRelayRoundTripTest {
         return handler;
     }
 
-    private record RelayHarness(RemoteInteractiveSandboxClient client, InteractiveSandboxRelayHandler handler, InteractiveSandboxService localSandbox) implements AutoCloseable {
+    private record RelayHarness(RemoteInteractiveSandboxClient client, InteractiveSandboxRelayHandler handler, InteractiveSandboxService localSandbox,
+            BuildAgentInformationService informationService) implements AutoCloseable {
 
         @Override
         public void close() {
@@ -614,15 +600,16 @@ class InteractiveSandboxRelayRoundTripTest {
         when(handlerAccess.getHyperionSandboxResponsesTopic()).thenReturn(responses);
 
         InteractiveSandboxService localSandbox = mock(InteractiveSandboxService.class);
+        BuildAgentInformationService informationService = mock(BuildAgentInformationService.class);
         RemoteInteractiveSandboxClient client = new RemoteInteractiveSandboxClient(clientAccess);
         client.registerResponseListener();
 
         InteractiveSandboxRelayHandler handler = new InteractiveSandboxRelayHandler(applicationContext(localSandbox), handlerAccess, mock(SharedQueueProcessingService.class),
-                mock(BuildAgentInformationService.class));
+                informationService);
         ReflectionTestUtils.setField(handler, "buildAgentShortName", AGENT_SHORT_NAME);
         ReflectionTestUtils.setField(handler, "maxGenerationSandboxSlots", maxGenerationSandboxSlots);
         handler.registerRequestListener();
-        return new RelayHarness(client, handler, localSandbox);
+        return new RelayHarness(client, handler, localSandbox, informationService);
     }
 
     private static SandboxSessionSpec sessionSpec() {

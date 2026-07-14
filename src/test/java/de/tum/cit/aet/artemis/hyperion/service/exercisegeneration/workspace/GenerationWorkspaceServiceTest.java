@@ -3,6 +3,8 @@ package de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.workspace;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -187,6 +189,26 @@ class GenerationWorkspaceServiceTest {
                 GenerationWorkspaceService.RepositorySeedMetadata.EMPTY);
 
         assertThat(extraction.extractionFailed()).isTrue();
+    }
+
+    @Test
+    void materializeRepositoryFiles_writesTheCanonicalFilesBackToTheWorkspace() {
+        InteractiveSandbox sandbox = mock(InteractiveSandbox.class);
+        Map<String, String> expected = Map.of("solution/gradlew", "#!/bin/sh\n", "solution/src/Main.java", "class Main {}", "tests/test/MainTest.java", "class MainTest {}");
+        doAnswer(invocation -> {
+            try (TarArchiveInputStream tar = new TarArchiveInputStream(invocation.getArgument(2))) {
+                WorkspaceArchive.ArchiveContents contents = WorkspaceArchive.readTarContents(tar, "");
+                assertThat(contents.textFiles()).containsExactlyInAnyOrderEntriesOf(expected);
+                assertThat(contents.executableFiles()).containsExactly("solution/gradlew");
+            }
+            return null;
+        }).when(sandbox).copyIn(eq("session"), eq("/workspace"), any());
+        GenerationWorkspaceService service = new GenerationWorkspaceService(mock(), mock(), mock(), mock(), tempFileUtilService());
+
+        service.materializeRepositoryFiles(sandbox, "session",
+                Map.of(RepositoryType.SOLUTION, Map.of("gradlew", "#!/bin/sh\n", "src/Main.java", "class Main {}"), RepositoryType.TESTS,
+                        Map.of("test/MainTest.java", "class MainTest {}")),
+                Map.of(RepositoryType.SOLUTION, new GenerationWorkspaceService.RepositorySeedMetadata(Map.of(), Set.of("gradlew"))));
     }
 
     private static TarArchiveInputStream tar(Map<String, String> files) {

@@ -6,11 +6,10 @@ import { ConfirmationService } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { MessageModule } from 'primeng/message';
-import { TableModule } from 'primeng/table';
 import { TagModule } from 'primeng/tag';
 import { TranslateService } from '@ngx-translate/core';
 import { BuildAgentsService } from 'app/localci/build-agents.service';
-import { GenerationSandboxJob, groupGenerationSandboxSessions } from 'app/localci/shared/entities/generation-sandbox-session.model';
+import { GenerationSandboxJob } from 'app/localci/shared/entities/generation-sandbox-job.model';
 import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-title.directive';
 import { AdminTitleBarActionsDirective } from 'app/admin/shared/admin-title-bar-actions.directive';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -29,7 +28,6 @@ import { ArtemisDurationFromSecondsPipe } from 'app/foundation/pipes/artemis-dur
         ButtonModule,
         ConfirmDialogModule,
         MessageModule,
-        TableModule,
         TagModule,
         AdminTitleBarTitleDirective,
         AdminTitleBarActionsDirective,
@@ -111,8 +109,8 @@ export class HyperionGenerationDetailComponent implements OnInit, OnDestroy {
             .getGenerationSandboxes(this.agentName)
             .pipe(finalize(() => (this.loadInProgress = false)))
             .subscribe({
-                next: (sessions) => {
-                    const job = groupGenerationSandboxSessions(sessions).find((candidate) => candidate.jobId === this.jobId);
+                next: (jobs) => {
+                    const job = jobs.find((candidate) => candidate.jobId === this.jobId);
                     if (job) {
                         this.job.set({ ...job, agentName: this.agentName });
                         this.notFound.set(false);
@@ -151,7 +149,6 @@ export class HyperionGenerationDetailComponent implements OnInit, OnDestroy {
             message: this.translateService.instant('artemisApp.buildAgents.generationSandboxes.cancelQuestion', {
                 exerciseId: job.exerciseId,
                 userLogin: job.userLogin,
-                sessionCount: job.sessions.length,
             }),
             icon: 'pi pi-exclamation-triangle',
             acceptLabel: this.translateService.instant('artemisApp.buildAgents.generationSandboxes.confirmCancel'),
@@ -165,11 +162,6 @@ export class HyperionGenerationDetailComponent implements OnInit, OnDestroy {
 
     elapsedSeconds(timestamp: string): number {
         return Math.max(0, Math.floor((this.now() - Date.parse(timestamp)) / 1000));
-    }
-
-    shortSessionId(sessionId: string): string {
-        const containerId = this.containerId(sessionId);
-        return containerId.length > 16 ? `${containerId.slice(0, 12)}…` : containerId;
     }
 
     containerId(sessionId: string): string {

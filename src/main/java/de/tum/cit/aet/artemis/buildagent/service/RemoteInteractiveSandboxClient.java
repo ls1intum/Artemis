@@ -109,15 +109,14 @@ public class RemoteInteractiveSandboxClient implements InteractiveSandbox {
 
     @Override
     public String createSession(SandboxSessionSpec spec) {
-        List<String> candidates = selectCandidateAgents(2);
+        List<String> candidates = selectCandidateAgents();
         if (candidates.isEmpty()) {
-            throw new LocalCIException(
-                    "No build agent has two free Hyperion generation sandbox slots. A successful generation run temporarily needs an authoring sandbox and a verification sandbox, "
-                            + "so set artemis.continuous-integration.build-agent.max-generation-sandbox-slots accordingly on spare agents.");
+            throw new LocalCIException("No build agent has a free Hyperion generation sandbox slot. Set "
+                    + "artemis.continuous-integration.build-agent.max-generation-sandbox-slots accordingly on spare agents.");
         }
         List<String> declines = new ArrayList<>();
         for (String targetAgent : candidates) {
-            SandboxOpRequest request = SandboxOpRequest.create(newCorrelationId(), targetAgent, spec, 2);
+            SandboxOpRequest request = SandboxOpRequest.create(newCorrelationId(), targetAgent, spec);
             CreateAttempt attempt = attemptCreate(request);
             if (attempt.containerId() != null) {
                 return targetAgent + SESSION_HANDLE_SEPARATOR + attempt.containerId();
@@ -126,17 +125,6 @@ public class RemoteInteractiveSandboxClient implements InteractiveSandbox {
         }
         throw new LocalCIException("Could not place an interactive sandbox session on any of the " + candidates.size()
                 + " candidate build agent(s); all declined or were unreachable: " + String.join(", ", declines) + ".");
-    }
-
-    @Override
-    public String createVerificationSession(SandboxSessionSpec spec, String loopSessionId) {
-        String targetAgent = agentOf(loopSessionId);
-        SandboxOpRequest request = SandboxOpRequest.createVerification(newCorrelationId(), targetAgent, spec, containerOf(loopSessionId));
-        CreateAttempt attempt = attemptCreate(request);
-        if (attempt.containerId() == null) {
-            throw new LocalCIException("Could not place the verification sandbox on agent " + targetAgent + " next to the authoring sandbox: " + attempt.declineReason());
-        }
-        return targetAgent + SESSION_HANDLE_SEPARATOR + attempt.containerId();
     }
 
     private record CreateAttempt(String containerId, String declineReason) {
@@ -167,7 +155,9 @@ public class RemoteInteractiveSandboxClient implements InteractiveSandbox {
             throw new LocalCIException("Remote sandbox operation CREATE on agent " + request.targetAgentShortName() + " failed: " + errorMessage);
         }
         catch (TimeoutException e) {
-            return CreateAttempt.declined("unreachable, timed out after " + controlOpTimeout.toSeconds() + "s");
+            // The request may have reached the agent even though its response did not. Failing over could then create a second container for the same job.
+            throw new LocalCIException("Remote sandbox operation CREATE on agent " + request.targetAgentShortName() + " timed out after " + controlOpTimeout.toMillis()
+                    + "ms; placement outcome is unknown, so the request was not retried on another agent.", e);
         }
         catch (ExecutionException e) {
             throw new LocalCIException("Remote sandbox operation CREATE on agent " + request.targetAgentShortName() + " failed", e.getCause());
@@ -189,8 +179,7 @@ public class RemoteInteractiveSandboxClient implements InteractiveSandbox {
 
     /** Returns whether the client should try the next candidate agent. */
     private static boolean isFailoverDecline(String errorMessage) {
-        return errorMessage.contains(InteractiveSandboxRelayHandler.CAPACITY_REFUSAL_MARKER) || errorMessage.contains(InteractiveSandboxRelayHandler.DRAINING_REFUSAL_MARKER)
-                || errorMessage.contains(InteractiveSandboxRelayHandler.RETRYABLE_REFUSAL_MARKER);
+        return errorMessage.contains(InteractiveSandboxRelayHandler.CAPACITY_REFUSAL_MARKER) || errorMessage.contains(InteractiveSandboxRelayHandler.DRAINING_REFUSAL_MARKER);
     }
 
     @Override
@@ -298,16 +287,16 @@ public class RemoteInteractiveSandboxClient implements InteractiveSandbox {
         }
     }
 
-    /** Selects hosting agents with enough free generation slots, least loaded first. */
-    private List<String> selectCandidateAgents(int requiredFreeSlots) {
+    /** Selects hosting agents with a free generation slot, least loaded first. */
+    private List<String> selectCandidateAgents() {
         List<BuildAgentInformation> agents = distributedDataAccessService.getBuildAgentInformation();
         return agents.stream().filter(agent -> agent.status() == BuildAgentStatus.ACTIVE || agent.status() == BuildAgentStatus.IDLE)
-                .filter(agent -> agent.maxGenerationSandboxSlots() > 0 && agent.maxGenerationSandboxSlots() - agent.reservedGenerationSandboxSlots() >= requiredFreeSlots)
+                .filter(agent -> agent.maxGenerationSandboxSlots() > agent.reservedGenerationSandboxSlots())
                 .sorted(Comparator.comparingInt(BuildAgentInformation::reservedGenerationSandboxSlots)).map(agent -> agent.buildAgent().name()).toList();
     }
 
-    public boolean hasAvailableGenerationSandboxSlots(int requiredFreeSlots) {
-        return !selectCandidateAgents(requiredFreeSlots).isEmpty();
+    public boolean hasAvailableGenerationSandboxSlot() {
+        return !selectCandidateAgents().isEmpty();
     }
 
     private static String newCorrelationId() {

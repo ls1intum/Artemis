@@ -25,7 +25,7 @@ import { BuildAgentsService } from 'app/localci/build-agents.service';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { NO_ERRORS_SCHEMA } from '@angular/core';
-import { GenerationSandboxSession } from 'app/localci/shared/entities/generation-sandbox-session.model';
+import { GenerationSandboxJob } from 'app/localci/shared/entities/generation-sandbox-job.model';
 
 describe('BuildAgentDetailsComponent', () => {
     setupTestBed({ zoneless: true });
@@ -259,33 +259,20 @@ describe('BuildAgentDetailsComponent', () => {
         expect(mockBuildQueueService.getFinishedBuildJobs).toHaveBeenCalledWith(request, filterOptionsEmpty);
     });
 
-    it('should group active sandbox sessions by generation job', () => {
+    it('should expose each active generation as its single sandbox job', () => {
         mockBuildAgentsService.getBuildAgentDetails.mockReturnValue(of(mockBuildAgent));
         mockBuildAgentsService.getGenerationSandboxes.mockReturnValue(
             of([
                 {
-                    sessionId: 'authoring',
-                    role: 'AUTHORING',
+                    sessionId: 'agent1::container-1',
                     jobId: 'job-1',
                     exerciseId: 42,
+                    exerciseTitle: 'Concurrency Lab',
                     courseId: 7,
                     userLogin: 'instructor',
                     mode: 'GENERATE',
                     startedAt: '2026-07-12T09:00:00Z',
                     lastActivityAt: '2026-07-12T09:01:00Z',
-                    reservedSlots: 1,
-                },
-                {
-                    sessionId: 'verification',
-                    role: 'VERIFICATION',
-                    jobId: 'job-1',
-                    exerciseId: 42,
-                    courseId: 7,
-                    userLogin: 'instructor',
-                    mode: 'GENERATE',
-                    startedAt: '2026-07-12T09:00:00Z',
-                    lastActivityAt: '2026-07-12T09:02:00Z',
-                    reservedSlots: 1,
                 },
             ]),
         );
@@ -294,7 +281,7 @@ describe('BuildAgentDetailsComponent', () => {
 
         expect(mockBuildAgentsService.getGenerationSandboxes).toHaveBeenCalledWith('agent1');
         expect(component.generationJobs()).toEqual([
-            expect.objectContaining({ jobId: 'job-1', exerciseId: 42, reservedSlots: 2, lastActivityAt: '2026-07-12T09:02:00Z', agentName: 'agent1' }),
+            expect.objectContaining({ jobId: 'job-1', sessionId: 'agent1::container-1', exerciseId: 42, lastActivityAt: '2026-07-12T09:01:00Z', agentName: 'agent1' }),
         ]);
     });
 
@@ -315,7 +302,6 @@ describe('BuildAgentDetailsComponent', () => {
                 of([
                     {
                         sessionId: 'authoring',
-                        role: 'AUTHORING',
                         jobId: 'job-1',
                         exerciseId: 42,
                         exerciseTitle: 'Concurrency Lab',
@@ -323,7 +309,6 @@ describe('BuildAgentDetailsComponent', () => {
                         mode: 'GENERATE',
                         startedAt: '2026-07-12T09:00:00Z',
                         lastActivityAt: '2026-07-12T09:01:00Z',
-                        reservedSlots: 2,
                     },
                 ]),
             )
@@ -357,7 +342,7 @@ describe('BuildAgentDetailsComponent', () => {
 
     it('should not overlap sandbox activity refreshes', async () => {
         vi.useFakeTimers();
-        const pendingRefresh = new Subject<GenerationSandboxSession[]>();
+        const pendingRefresh = new Subject<GenerationSandboxJob[]>();
         mockBuildAgentsService.getGenerationSandboxes.mockReturnValue(pendingRefresh);
         try {
             fixture.detectChanges();
@@ -373,8 +358,8 @@ describe('BuildAgentDetailsComponent', () => {
     });
 
     it('should load the new agent immediately and ignore a late sandbox response from the previous route', () => {
-        const firstAgentRefresh = new Subject<GenerationSandboxSession[]>();
-        const secondAgentRefresh = new Subject<GenerationSandboxSession[]>();
+        const firstAgentRefresh = new Subject<GenerationSandboxJob[]>();
+        const secondAgentRefresh = new Subject<GenerationSandboxJob[]>();
         const firstAgentUpdates = new Subject<BuildAgentInformation>();
         const secondAgentUpdates = new Subject<BuildAgentInformation>();
         mockWebsocketService.subscribe.mockImplementation((topic: string) => {
@@ -400,7 +385,6 @@ describe('BuildAgentDetailsComponent', () => {
         secondAgentRefresh.next([
             {
                 sessionId: 'agent2-session',
-                role: 'AUTHORING',
                 jobId: 'agent2-job',
                 exerciseId: 42,
                 exerciseTitle: 'Agent 2 exercise',
@@ -408,13 +392,11 @@ describe('BuildAgentDetailsComponent', () => {
                 mode: 'GENERATE',
                 startedAt: '2026-07-12T09:00:00Z',
                 lastActivityAt: '2026-07-12T09:01:00Z',
-                reservedSlots: 2,
             },
         ]);
         firstAgentRefresh.next([
             {
                 sessionId: 'agent1-session',
-                role: 'AUTHORING',
                 jobId: 'agent1-job',
                 exerciseId: 41,
                 exerciseTitle: 'Agent 1 exercise',
@@ -422,7 +404,6 @@ describe('BuildAgentDetailsComponent', () => {
                 mode: 'GENERATE',
                 startedAt: '2026-07-12T09:00:00Z',
                 lastActivityAt: '2026-07-12T09:01:00Z',
-                reservedSlots: 2,
             },
         ]);
         firstAgentUpdates.next(mockBuildAgent);

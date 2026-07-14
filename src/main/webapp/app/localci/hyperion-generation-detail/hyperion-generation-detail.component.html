@@ -110,11 +110,13 @@
                 <dd>
                     <a [routerLink]="['/admin/build-agents/details']" [queryParams]="{ agentName }">{{ agentName }}</a>
                 </dd>
-                <dt jhiTranslate="artemisApp.buildAgents.generationSandboxes.slots"></dt>
-                <dd>{{ generation.reservedSlots }}</dd>
                 <dt jhiTranslate="artemisApp.buildAgents.generationSandboxes.jobId"></dt>
                 <dd class="min-w-0">
                     <code class="select-all break-all">{{ generation.jobId }}</code>
+                </dd>
+                <dt jhiTranslate="artemisApp.buildAgents.generationSandboxes.containerId"></dt>
+                <dd class="min-w-0">
+                    <code data-testid="hyperion-container-id" class="select-all break-all">{{ containerId(generation.sessionId) }}</code>
                 </dd>
             </dl>
         </div>
@@ -134,60 +136,5 @@
                 <span class="text-muted-color">({{ generation.lastActivityAt | artemisDate: 'long' : true }})</span>
             </dd>
         </dl>
-    </section>
-
-    <section aria-labelledby="hyperion-sandbox-sessions-heading">
-        <h3 id="hyperion-sandbox-sessions-heading" class="flex items-center gap-2 text-lg">
-            <span jhiTranslate="artemisApp.buildAgents.generationSandboxes.sessions"></span>
-            <p-tag severity="info" [value]="generation.sessions.length.toString()" />
-        </h3>
-        <div
-            class="overflow-x-auto rounded focus:outline-2 focus:outline-offset-2 focus:outline-primary"
-            data-testid="hyperion-sessions-scroll"
-            role="region"
-            tabindex="0"
-            [attr.aria-label]="'artemisApp.buildAgents.generationSandboxes.sessions' | artemisTranslate"
-        >
-            <p-table [value]="generation.sessions" size="small" [stripedRows]="true" styleClass="min-w-[48rem]">
-                <ng-template #header>
-                    <tr>
-                        <th scope="col" jhiTranslate="artemisApp.buildAgents.generationSandboxes.role"></th>
-                        <th scope="col" jhiTranslate="artemisApp.buildAgents.generationSandboxes.sessionId"></th>
-                        <th scope="col" jhiTranslate="artemisApp.buildAgents.generationSandboxes.started"></th>
-                        <th scope="col" jhiTranslate="artemisApp.buildAgents.generationSandboxes.lastSandboxActivity"></th>
-                        <th scope="col" jhiTranslate="artemisApp.buildAgents.generationSandboxes.slots"></th>
-                    </tr>
-                </ng-template>
-                <ng-template #body let-session>
-                    <tr>
-                        <td>
-                            <p-tag
-                                severity="secondary"
-                                [value]="
-                                    (session.role === 'VERIFICATION'
-                                        ? 'artemisApp.buildAgents.generationSandboxes.verification'
-                                        : 'artemisApp.buildAgents.generationSandboxes.authoring'
-                                    ) | artemisTranslate
-                                "
-                            />
-                        </td>
-                        <td>
-                            <details>
-                                <summary class="cursor-pointer" [attr.aria-label]="'artemisApp.buildAgents.generationSandboxes.showFullId' | artemisTranslate">
-                                    <code>{{ shortSessionId(session.sessionId) }}</code>
-                                </summary>
-                                <code class="select-all break-all" [attr.aria-label]="containerId(session.sessionId)">{{ containerId(session.sessionId) }}</code>
-                            </details>
-                        </td>
-                        <td>{{ session.startedAt | artemisDate: 'short' : true }}</td>
-                        <td [title]="session.lastActivityAt | artemisDate: 'long' : true">
-                            {{ elapsedSeconds(session.lastActivityAt) | artemisDurationFromSeconds }}
-                            <span jhiTranslate="artemisApp.buildAgents.generationSandboxes.ago"></span>
-                        </td>
-                        <td>{{ session.reservedSlots }}</td>
-                    </tr>
-                </ng-template>
-            </p-table>
-        </div>
     </section>
 }

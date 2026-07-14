@@ -157,7 +157,7 @@ describe('BuildAgentSummaryComponent', () => {
         expect(mockWebsocketService.subscribe).toHaveBeenCalledWith('/topic/admin/build-agents');
     });
 
-    it('should render the active/max generation sandbox slot count per agent', () => {
+    it('should render the active and maximum generation sandbox slot count per agent', () => {
         mockBuildAgentsService.getBuildAgentSummary.mockReturnValue(of(mockBuildAgents));
         component.ngOnInit();
         fixture.detectChanges();

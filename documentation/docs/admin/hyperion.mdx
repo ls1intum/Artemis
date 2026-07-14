@@ -193,7 +193,7 @@ management:
 
 ## Build-agent placement (multi-node)
 
-Agentic exercise generation runs the agent's work inside a **hardened, CI-sized Docker sandbox on a LocalCI build agent** — the same hosts that run student and exam builds. A Hyperion sandbox is long-lived (several minutes) and consumes real CPU, memory, and Docker resources for its whole duration.
+Agentic exercise generation runs inside a **hardened, CI-sized Docker sandbox on a LocalCI build agent** — the same hosts that run student and exam builds. Each generation job uses exactly one slot and one sandbox container for its entire run, including verification. Jobs can run for several minutes and consume CPU, memory, and Docker resources throughout.
 
 To keep generation from ever competing with exam builds by accident, **hosting is opt-in per build agent and off by default**:
 
@@ -201,7 +201,7 @@ To keep generation from ever competing with exam builds by accident, **hosting i
 artemis:
     continuous-integration:
         build-agent:
-            # 0 = this agent never hosts a generation sandbox (default). A successful run temporarily needs two free slots.
+            # Maximum concurrent generation jobs on this agent. Each job uses one slot and one container; 0 disables hosting (default).
             max-generation-sandbox-slots: 0
             # Keep true on normal CI agents. Set false only on dedicated Hyperion sandbox hosts that should not run student/exam builds.
             run-build-jobs: true
@@ -209,14 +209,13 @@ artemis:
 
 <Callout variant={CalloutVariant.warning}>
     Leave <code>max-generation-sandbox-slots</code> at <strong>0</strong> on every exam-critical build agent. Enable it only on spare agents you are comfortable dedicating to
-    generation. A successful generation run temporarily needs two free sandbox slots (authoring sandbox + verification sandbox), so size the setting as roughly{' '}
-    <code>2 × desired concurrent runs</code>. On a single-node integrated deployment (core + build agent on one host), the co-located node still uses the relay and this capacity
-    setting.
+    generation. Set it to the maximum number of generation jobs that may run concurrently on that agent: each job reserves one slot and runs one container. On a single-node
+    integrated deployment (core + build agent on one host), the co-located node still uses the relay and this capacity setting.
 </Callout>
 
 Additional controls:
 
-- **Pausing a build agent** (from the LocalCI build-agent admin page) now also stops it accepting **new** Hyperion sandboxes, so you can drain an agent before maintenance or an exam. In-flight sessions finish and tear down cleanly.
+- **Pausing a build agent** (from the LocalCI build-agent admin page) stops it accepting **new** Hyperion generation jobs, so you can drain it before maintenance or an exam. In-flight jobs finish and their containers are removed cleanly.
 - Orphaned sandbox containers are reaped automatically after `generation-sandbox-idle-timeout-minutes` (default 90).
 
 ## Generation admission controls

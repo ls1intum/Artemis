@@ -47,9 +47,9 @@ public class SandboxBuildCommandService {
     /**
      * Verifier-owned directory OUTSIDE {@code /workspace} where the verifier re-seeds a pristine {@code verify.sh} per run and that script collects the reports. The
      * {@code read_file}/{@code write_file}/{@code edit_file} tools are path-allowlisted to {@code /workspace}, but the {@code bash} tool is not, so an agent COULD write here — the
-     * non-forgeability guarantee is therefore wipe-on-run, not path isolation: every authoritative build re-seeds the script and {@code rm -rf}s {@link #REPORTS_DIR} into a fresh
-     * {@code mktemp} build dir, then only counts reports {@code -newer} than a build-start marker, so any statically planted script or report is overwritten/ignored before
-     * grading.
+     * protection is therefore wipe-on-invocation, not path isolation: the authoritative pass re-seeds the script before each assignment build and {@code rm -rf}s
+     * {@link #REPORTS_DIR} into a fresh {@code mktemp} build dir, then only counts reports {@code -newer} than a build-start marker. Statically planted scripts and reports are
+     * overwritten or ignored before grading.
      */
     public static final String PRISTINE_VERIFY_DIR = "/opt/hyperion";
 

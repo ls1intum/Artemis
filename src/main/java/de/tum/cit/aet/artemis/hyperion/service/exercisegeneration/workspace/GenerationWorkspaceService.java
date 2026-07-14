@@ -372,6 +372,16 @@ public class GenerationWorkspaceService {
     public record RepositoryExtraction(Map<String, String> files, boolean extractionFailed) {
     }
 
+    /** Overwrites repository text files with the canonical bytes that verification and persistence must share. */
+    public void materializeRepositoryFiles(InteractiveSandbox sandbox, String sessionId, Map<RepositoryType, Map<String, String>> filesByRepository,
+            Map<RepositoryType, RepositorySeedMetadata> repositoryMetadata) {
+        Map<String, String> workspaceFiles = new LinkedHashMap<>();
+        Set<String> executableFiles = new LinkedHashSet<>();
+        filesByRepository.forEach((repositoryType, files) -> files.forEach((path, content) -> workspaceFiles.put(directoryFor(repositoryType) + "/" + path, content)));
+        repositoryMetadata.forEach((repositoryType, metadata) -> metadata.executableFiles().forEach(path -> executableFiles.add(directoryFor(repositoryType) + "/" + path)));
+        sandbox.copyIn(sessionId, WORKSPACE, WorkspaceArchive.buildWorkspaceTarStream(workspaceFiles, Map.of(), executableFiles));
+    }
+
     /**
      * The {@link RepositoryExtraction#files()} of {@link #extractRepository}, dropping the extraction-failed flag.
      *

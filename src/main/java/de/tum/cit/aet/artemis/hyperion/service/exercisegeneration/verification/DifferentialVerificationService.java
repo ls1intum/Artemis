@@ -19,6 +19,7 @@ import java.util.stream.Collectors;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -142,9 +143,8 @@ public class DifferentialVerificationService {
     /**
      * Runs the differential verification and the sandbox-free integrity gates (harness immutability and solution-leak); the exercise is accepted only when both pass.
      * <p>
-     * Non-forgeable: the verifier re-seeds a pristine {@code verify.sh} to a verifier-owned path outside {@code /workspace} the agent cannot reach, and that copy deletes any
-     * pre-existing report XML and counts only reports written during the build. The integrity gates fail open on genuinely-empty inputs but fail closed when a repo seeded
-     * non-empty
+     * The authoritative pass wipes and re-seeds the verifier control directory, deletes pre-existing report XML, builds in fresh temporary directories, and counts only reports
+     * written during the build. The integrity gates fail open on genuinely-empty inputs but fail closed when a repo seeded non-empty
      * extracts empty at verify time (via {@code extractionFailedRepositories}), so a flaky read-back cannot silently disable a gate.
      *
      * @param sandbox   the open sandbox session the pristine builds run in
@@ -156,7 +156,7 @@ public class DifferentialVerificationService {
     public VerificationResult verify(InteractiveSandbox sandbox, String sessionId, ProgrammingExercise exercise, VerificationRequest request) {
         // The sandbox-dependent differential is computed by the same method the in-loop self-check uses, so the agent's `verify` tool and this acceptance decision cannot diverge.
         // This call layers the sandbox-free integrity gates and the final verdict on top of that shared analysis.
-        DifferentialAnalysis analysis = runDifferential(sandbox, sessionId, exercise, request.seededStructuralTestNames());
+        DifferentialAnalysis analysis = runDifferential(sandbox, sessionId, exercise, request.seededStructuralTestNames(), request.producedProblemStatement());
         BuildSummary solution = analysis.solution();
         BuildSummary template = analysis.template();
         List<String> reasons = new ArrayList<>(analysis.actionableReasons());
@@ -212,7 +212,7 @@ public class DifferentialVerificationService {
      */
     public AgentVerifyReport selfCheck(InteractiveSandbox sandbox, String sessionId, ProgrammingExercise exercise) {
         // No authoritative seeded set: the agent cannot bind to structural tests seeded after it submits. The name-shape exemption still applies.
-        DifferentialAnalysis analysis = runDifferential(sandbox, sessionId, exercise, Set.of());
+        DifferentialAnalysis analysis = runDifferential(sandbox, sessionId, exercise, Set.of(), null);
         BuildSummary solution = analysis.solution();
         BuildSummary template = analysis.template();
 
@@ -253,7 +253,8 @@ public class DifferentialVerificationService {
      *
      * @param seededStructuralTestNames the authoritative seeded structural test names exempt from binding resolution (empty for the self-check)
      */
-    private DifferentialAnalysis runDifferential(InteractiveSandbox sandbox, String sessionId, ProgrammingExercise exercise, Set<String> seededStructuralTestNames) {
+    private DifferentialAnalysis runDifferential(InteractiveSandbox sandbox, String sessionId, ProgrammingExercise exercise, Set<String> seededStructuralTestNames,
+            @Nullable String producedProblemStatement) {
         List<String> reasons = new ArrayList<>();
 
         // Re-seed and invoke a pristine verify.sh outside /workspace, so any edit to the agent's own copy is irrelevant. It collects build-fresh reports into a verifier-owned dir
@@ -261,6 +262,7 @@ public class DifferentialVerificationService {
         seedPristineVerifyScript(sandbox, sessionId, exercise);
         BuildSummary solution = runPristineBuild(sandbox, sessionId, sandboxBuildCommandService.pristineSolutionBuildCommand(),
                 GenerationWorkspaceService.directoryFor(RepositoryType.SOLUTION));
+        seedPristineVerifyScript(sandbox, sessionId, exercise);
         BuildSummary template = runPristineBuild(sandbox, sessionId, sandboxBuildCommandService.pristineTemplateBuildCommand(),
                 GenerationWorkspaceService.directoryFor(RepositoryType.TEMPLATE));
 
@@ -270,7 +272,7 @@ public class DifferentialVerificationService {
         boolean templateFailed = checkTemplateFails(solution, template, reasons);
 
         // The exercise must bind its tests to the problem statement via [task][title](testNames), else the student sees no task checklist.
-        String problemStatement = readProblemStatement(sandbox, sessionId);
+        String problemStatement = producedProblemStatement != null ? producedProblemStatement : readProblemStatement(sandbox, sessionId);
         boolean problemStatementHasTasks = ProblemStatementBindingChecker.hasTaskBindings(problemStatement);
         if (!problemStatementHasTasks) {
             reasons.add("The problem statement has no Artemis task bindings. Add at least one line of the form [task][Title](testName) binding the graded tests to tasks so they "
@@ -539,13 +541,17 @@ public class DifferentialVerificationService {
     }
 
     /**
-     * Renders a fresh pristine {@code verify.sh} into the verifier-owned directory outside {@code /workspace} the agent tools cannot reach, so an agent edit to its own copy is
-     * irrelevant.
+     * Recreates the verifier control directory and renders a fresh {@code verify.sh}. This discards any files left by the agent or an earlier in-loop verification before the
+     * authoritative pass.
      */
     private void seedPristineVerifyScript(InteractiveSandbox sandbox, String sessionId, ProgrammingExercise exercise) {
         String script = sandboxBuildCommandService.verifyScriptContent(exercise);
         // Docker's copy-to-container requires the destination directory to already exist.
-        sandbox.exec(sessionId, READ_TIMEOUT, "mkdir", "-p", SandboxBuildCommandService.PRISTINE_VERIFY_DIR);
+        SandboxExecResult preparation = sandbox.exec(sessionId, READ_TIMEOUT, "sh", "-c",
+                "rm -rf " + SandboxBuildCommandService.PRISTINE_VERIFY_DIR + " && mkdir -p " + SandboxBuildCommandService.PRISTINE_VERIFY_DIR);
+        if (!preparation.isSuccess()) {
+            throw new IllegalStateException("Could not prepare the verifier workspace: " + preparation.combinedOutput());
+        }
         sandbox.copyIn(sessionId, SandboxBuildCommandService.PRISTINE_VERIFY_DIR, singleFileTar(SandboxBuildCommandService.VERIFY_SCRIPT_NAME, script));
     }
 

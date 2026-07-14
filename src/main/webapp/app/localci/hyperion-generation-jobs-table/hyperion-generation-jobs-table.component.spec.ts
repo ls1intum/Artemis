@@ -27,9 +27,8 @@ describe('HyperionGenerationJobsTableComponent', () => {
                 mode: 'GENERATE',
                 startedAt: '2026-07-12T09:00:00Z',
                 lastActivityAt: '2026-07-12T09:01:00Z',
-                reservedSlots: 2,
+                sessionId: 'agent-1::container-1',
                 agentName: 'agent-1',
-                sessions: [],
             },
         ]);
         fixture.componentRef.setInput('showAgent', true);
@@ -44,6 +43,7 @@ describe('HyperionGenerationJobsTableComponent', () => {
         expect(text).not.toContain('GENERATE');
         expect(text).toContain('agent-1');
         expect(text).toContain('Concurrency Lab');
+        expect(text).not.toContain('artemisApp.buildAgents.generationSandboxes.slots');
         expect(detailLink.getAttribute('href')).toContain('/admin/hyperion-generations/job-1?agentName=agent-1');
     });
 

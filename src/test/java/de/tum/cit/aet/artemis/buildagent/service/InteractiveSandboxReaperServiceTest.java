@@ -11,7 +11,7 @@ import static org.mockito.Mockito.when;
 
 import java.time.Instant;
 import java.util.List;
-import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.Semaphore;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -61,8 +61,8 @@ class InteractiveSandboxReaperServiceTest {
         relayHandler = new InteractiveSandboxRelayHandler(applicationContext, mock(DistributedDataAccessService.class), mock(SharedQueueProcessingService.class),
                 mock(BuildAgentInformationService.class));
         ReflectionTestUtils.setField(relayHandler, "buildAgentShortName", "agent");
-        ReflectionTestUtils.setField(relayHandler, "maxGenerationSandboxSlots", 2);
-        ReflectionTestUtils.setField(relayHandler, "sandboxSlotPermits", new Semaphore(2));
+        ReflectionTestUtils.setField(relayHandler, "maxGenerationSandboxSlots", 1);
+        ReflectionTestUtils.setField(relayHandler, "sandboxSlotPermits", new Semaphore(1));
         reaperService = new InteractiveSandboxReaperService(buildAgentConfiguration, applicationContext, relayHandler, mock(TaskScheduler.class));
         ReflectionTestUtils.setField(reaperService, "sandboxContainerExpiryMinutes", (int) EXPIRY_MINUTES);
     }
@@ -72,8 +72,8 @@ class InteractiveSandboxReaperServiceTest {
     }
 
     @SuppressWarnings("unchecked")
-    private Map<String, Integer> ownedSandboxSlotPermits() {
-        return (Map<String, Integer>) ReflectionTestUtils.getField(relayHandler, "ownedSandboxSlotPermits");
+    private Set<String> ownedSessionIds() {
+        return (Set<String>) ReflectionTestUtils.getField(relayHandler, "ownedSessionIds");
     }
 
     private Container sandboxContainer(String id, String shortName, long createdEpochSecond) {
@@ -180,16 +180,16 @@ class InteractiveSandboxReaperServiceTest {
         Container orphanContainer = sandboxContainer("orphan-id", "orphan", createdLongAgo);
         givenContainers(orphanContainer);
         // A relay session this agent still owns because its CREATE response (or DESTROY) was lost: the permit is held and the container is orphaned.
-        ownedSandboxSlotPermits().put("orphan-id", 1);
+        ownedSessionIds().add("orphan-id");
         sandboxSlotPermits().acquireUninterruptibly();
-        assertThat(sandboxSlotPermits().availablePermits()).isEqualTo(1);
+        assertThat(sandboxSlotPermits().availablePermits()).isZero();
 
         reaperService.reapOrphanedSessions();
 
         verify(dockerClient).removeContainerCmd("orphan-id");
         // Exactly one permit is reclaimed and the session is no longer tracked, so repeated orphaning cannot starve the agent of generation capacity.
-        assertThat(sandboxSlotPermits().availablePermits()).isEqualTo(2);
-        assertThat(ownedSandboxSlotPermits()).doesNotContainKey("orphan-id");
+        assertThat(sandboxSlotPermits().availablePermits()).isOne();
+        assertThat(ownedSessionIds()).doesNotContain("orphan-id");
     }
 
     @Test
@@ -198,15 +198,15 @@ class InteractiveSandboxReaperServiceTest {
         Container orphanContainer = sandboxContainer("orphan-id", "orphan", createdLongAgo);
         givenContainers(orphanContainer);
         // A permit held by a DIFFERENT live session; the reaped container is not one this handler owns, so reconciliation must release nothing — and stay idempotent across sweeps.
-        ownedSandboxSlotPermits().put("other-live-session", 1);
+        ownedSessionIds().add("other-live-session");
         sandboxSlotPermits().acquireUninterruptibly();
-        assertThat(sandboxSlotPermits().availablePermits()).isEqualTo(1);
+        assertThat(sandboxSlotPermits().availablePermits()).isZero();
 
         reaperService.reapOrphanedSessions();
         reaperService.reapOrphanedSessions();
 
         verify(dockerClient, times(2)).removeContainerCmd("orphan-id");
-        assertThat(sandboxSlotPermits().availablePermits()).isEqualTo(1);
-        assertThat(ownedSandboxSlotPermits()).containsOnlyKeys("other-live-session");
+        assertThat(sandboxSlotPermits().availablePermits()).isZero();
+        assertThat(ownedSessionIds()).containsOnly("other-live-session");
     }
 }

@@ -41,7 +41,7 @@ import com.openai.errors.OpenAIServiceException;
 /**
  * Drives the Spring AI tool-calling loop for agentic exercise generation: repeatedly calls the model, executes the requested tools, and feeds the results back until the model
  * stops, the turn budget is reached, cancellation is requested, or an error occurs. A manual loop is required because Spring AI's automatic tool execution has no iteration cap and
- * no per-step hook, so it cannot enforce the safety budget or produce the transcript. Artifact correctness is decided separately by the out-of-band verifier.
+ * no per-step hook, so it cannot enforce the safety budget or produce the transcript. Artifact correctness is decided separately by the authoritative verifier.
  */
 public class AgentLoopRunner {
 
@@ -50,7 +50,7 @@ public class AgentLoopRunner {
     /** After this many consecutive tool-execution failures the model is considered stuck and the loop ends with an error. */
     private static final int MAX_CONSECUTIVE_TOOL_FAILURES = 5;
 
-    /** The tool the agent calls to declare the exercise complete; calling it ends the loop and hands off to the out-of-band verifier. */
+    /** The tool the agent calls to declare the exercise complete; calling it ends the loop and hands off to the authoritative verifier. */
     private static final String SUBMIT_TOOL_NAME = "submit";
 
     private static final int MAX_PROGRESS_PATH_CHARS = 160;
@@ -296,7 +296,7 @@ public class AgentLoopRunner {
             }
 
             if (submitRequested) {
-                // End the loop so the out-of-band verifier (which does not trust the agent) decides acceptance.
+                // End the loop so the authoritative verifier (which does not trust the agent) decides acceptance.
                 emit(stepListener, "Submitting the exercise for verification.");
                 return new AgentLoopResult(AgentLoopResult.Status.COMPLETED, turn, lastAssistantText);
             }

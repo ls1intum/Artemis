@@ -335,7 +335,6 @@ describe('BuildQueueComponent', () => {
             of([
                 {
                     sessionId: `session-${agentName}`,
-                    role: 'AUTHORING',
                     jobId: `job-${agentName}`,
                     exerciseId: agentName === 'agent-1' ? 42 : 43,
                     exerciseTitle: 'Concurrency Lab',
@@ -343,7 +342,6 @@ describe('BuildQueueComponent', () => {
                     mode: 'GENERATE',
                     startedAt: '2026-07-12T09:00:00Z',
                     lastActivityAt: '2026-07-12T09:01:00Z',
-                    reservedSlots: 2,
                 },
             ]),
         );
@@ -363,7 +361,6 @@ describe('BuildQueueComponent', () => {
             of([
                 {
                     sessionId: 'session-agent-1',
-                    role: 'AUTHORING',
                     jobId: 'job-agent-1',
                     exerciseId: 42,
                     exerciseTitle: 'Concurrency Lab',
@@ -371,7 +368,6 @@ describe('BuildQueueComponent', () => {
                     mode: 'GENERATE',
                     startedAt: '2026-07-12T09:00:00Z',
                     lastActivityAt: '2026-07-12T09:01:00Z',
-                    reservedSlots: 2,
                 },
             ]),
         );

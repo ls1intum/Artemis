@@ -125,10 +125,9 @@ artemis:
             # Name of the build agent. Only lowercase letters, numbers and hyphens are allowed. ([a-z0-9-]+)
             short-name: "artemis-build-agent-1"
             display-name: "Artemis Build Agent 1"
-            # Hyperion exercise generation hosts CI-sized Docker sandboxes on build agents (relayed from core nodes).
-            # This caps how many generation sandbox slots THIS agent provides. It defaults to 0 (opt-in): enabling Hyperion never adds generation load
-            # to exam-critical agents. A successful run temporarily needs two free slots (authoring sandbox + verification sandbox), so size agents
-            # as roughly 2 * desired concurrent runs; 0 = never host generation sandboxes.
+            # Maximum concurrent Hyperion generation jobs on this agent (relayed from core nodes).
+            # Each job reserves exactly one slot and runs one CI-sized Docker container for its entire run. Defaults to 0 (opt-in),
+            # so enabling Hyperion does not add generation load to exam-critical agents; 0 = never host generation jobs.
             max-generation-sandbox-slots: 0
             # Set false only on dedicated Hyperion sandbox hosts so the agent advertises zero normal build capacity and does not consume CI build jobs.
             run-build-jobs: true

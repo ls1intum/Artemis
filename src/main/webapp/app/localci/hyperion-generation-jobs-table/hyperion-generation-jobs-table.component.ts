@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, OnDestroy, input, signal } from '@a
 import { RouterLink } from '@angular/router';
 import { TableModule } from 'primeng/table';
 import { TagModule } from 'primeng/tag';
-import { GenerationSandboxJob } from 'app/localci/shared/entities/generation-sandbox-session.model';
+import { GenerationSandboxJob } from 'app/localci/shared/entities/generation-sandbox-job.model';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';

@@ -3,6 +3,8 @@ package de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification;
 import java.util.Map;
 import java.util.Set;
 
+import org.jspecify.annotations.Nullable;
+
 /**
  * The produced artifacts and integrity-gate inputs the post-loop {@link DifferentialVerificationService#verify} decides on, bundled so the "what to verify" travels as one value
  * next to the "where to run it" ({@code sandbox}, {@code sessionId}, {@code exercise}) the verifier keeps as separate arguments.
@@ -20,7 +22,16 @@ import java.util.Set;
  *                                         name-shape exemption)
  * @param baselineGradedTestNames      the pre-adapt baseline for the adapt total-wipe gate (see {@link ExerciseIntegrityGate#adaptWipedGradedTestsReasons}); empty for generate
  *                                         leaves the gate inert (fail-open)
+ * @param producedProblemStatement     problem statement captured with the produced repository files; {@code null} only for tests and legacy internal callers that still read it
+ *                                         from the sandbox
  */
 public record VerificationRequest(Map<String, String> seedTestsFiles, Map<String, String> producedTestsFiles, Map<String, String> producedTemplateFiles,
-        Map<String, String> producedSolutionFiles, Set<String> extractionFailedRepositories, Set<String> seededStructuralTestNames, Set<String> baselineGradedTestNames) {
+        Map<String, String> producedSolutionFiles, Set<String> extractionFailedRepositories, Set<String> seededStructuralTestNames, Set<String> baselineGradedTestNames,
+        @Nullable String producedProblemStatement) {
+
+    public VerificationRequest(Map<String, String> seedTestsFiles, Map<String, String> producedTestsFiles, Map<String, String> producedTemplateFiles,
+            Map<String, String> producedSolutionFiles, Set<String> extractionFailedRepositories, Set<String> seededStructuralTestNames, Set<String> baselineGradedTestNames) {
+        this(seedTestsFiles, producedTestsFiles, producedTemplateFiles, producedSolutionFiles, extractionFailedRepositories, seededStructuralTestNames, baselineGradedTestNames,
+                null);
+    }
 }

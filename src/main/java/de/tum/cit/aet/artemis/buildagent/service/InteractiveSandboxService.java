@@ -101,8 +101,8 @@ public class InteractiveSandboxService implements InteractiveSandbox {
     }
 
     /**
-     * Removes sandbox containers that predate this JVM before the relay advertises fresh capacity. A restarted build agent cannot reconstruct the in-memory two-slot reservation
-     * state for old loop/verifier containers, and any core-side session handle died with the old process anyway, so fail closed by deleting leftovers before accepting new work.
+     * Removes sandbox containers that predate this JVM before the relay advertises fresh capacity. A restarted build agent cannot reconstruct ownership of old containers, and any
+     * core-side session handle died with the old process anyway, so fail closed by deleting leftovers before accepting new work.
      *
      * @return the number of leftover containers removed
      */

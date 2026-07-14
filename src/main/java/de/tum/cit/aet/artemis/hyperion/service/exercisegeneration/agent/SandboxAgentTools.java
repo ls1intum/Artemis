@@ -20,9 +20,8 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 /**
  * The read/write/edit/bash/verify tools the exercise-generation agent calls, bound to one sandbox session. Created per session (holds the session id), so not a Spring bean.
  * <p>
- * The agent has a full shell safely because correctness is never judged from what these tools report — that is the out-of-band verifier's job. The {@code verify} tool runs the
- * same differential as the post-loop acceptance verifier (two pristine builds parsed with the production parsers) and returns structured feedback, but it is advisory only; the
- * post-loop verifier decides acceptance.
+ * The agent has a full shell safely because correctness is never judged from what these tools report. The {@code verify} tool runs the same differential as the authoritative
+ * post-loop verifier (two fresh builds parsed with the production parsers) and returns structured feedback, but it is advisory only; the post-loop verifier decides acceptance.
  */
 public class SandboxAgentTools {
 

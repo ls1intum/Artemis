@@ -35,7 +35,7 @@ import { BuildAgentInformation, BuildAgentStatus } from 'app/localci/shared/enti
 import { RunningJobsTableComponent } from './tables/running-jobs-table/running-jobs-table.component';
 import { QueuedJobsTableComponent } from './tables/queued-jobs-table/queued-jobs-table.component';
 import { FinishedJobsTableComponent } from './tables/finished-jobs-table/finished-jobs-table.component';
-import { GenerationSandboxJob, GenerationSandboxSession, groupGenerationSandboxSessions } from 'app/localci/shared/entities/generation-sandbox-session.model';
+import { GenerationSandboxJob } from 'app/localci/shared/entities/generation-sandbox-job.model';
 import { HyperionGenerationJobsTableComponent } from 'app/localci/hyperion-generation-jobs-table/hyperion-generation-jobs-table.component';
 import { MessageModule } from 'primeng/message';
 import { DatePipe } from '@angular/common';
@@ -176,7 +176,7 @@ export class BuildOverviewComponent implements OnInit, OnDestroy {
     readonly generationLastRefreshed = signal<Date | undefined>(undefined);
     private readonly generationRefreshRequested = new Subject<void>();
     private generationRefreshSubscription?: Subscription;
-    private readonly generationSessionsByAgent = new Map<string, GenerationSandboxSession[]>();
+    private readonly generationJobsByAgent = new Map<string, GenerationSandboxJob[]>();
 
     /** Configuration for the pagination component */
     paginationConfig: PaginationConfig = {
@@ -404,28 +404,28 @@ export class BuildOverviewComponent implements OnInit, OnDestroy {
             this.generationRefreshRequested,
         )
             .pipe(exhaustMap(() => this.fetchGenerationJobs()))
-            .subscribe(({ sessions, unavailableAgents }) => {
-                this.generationJobs.set(groupGenerationSandboxSessions(sessions));
+            .subscribe(({ jobs, unavailableAgents }) => {
+                this.generationJobs.set(jobs.toSorted((left, right) => Date.parse(right.startedAt) - Date.parse(left.startedAt)));
                 this.unavailableGenerationAgents.set(unavailableAgents);
                 this.generationJobsLoading.set(false);
                 this.generationLastRefreshed.set(new Date());
             });
     }
 
-    private fetchGenerationJobs(): Observable<{ sessions: GenerationSandboxSession[]; unavailableAgents: number }> {
+    private fetchGenerationJobs(): Observable<{ jobs: GenerationSandboxJob[]; unavailableAgents: number }> {
         const agents = this.buildAgents().flatMap((agent) => {
             const name = agent.buildAgent?.name;
             return name && (agent.maxGenerationSandboxSlots ?? 0) > 0 ? [name] : [];
         });
         if (!agents.length) {
-            return of({ sessions: [], unavailableAgents: 0 });
+            return of({ jobs: [], unavailableAgents: 0 });
         }
         this.generationJobsLoading.set(true);
         return forkJoin(
             agents.map((agentName) =>
                 this.buildAgentsService.getGenerationSandboxes(agentName).pipe(
-                    map((sessions) => ({ agentName, sessions: sessions.map((session) => ({ ...session, agentName })), unavailable: false })),
-                    catchError(() => of({ agentName, sessions: [] as GenerationSandboxSession[], unavailable: true })),
+                    map((jobs) => ({ agentName, jobs: jobs.map((job) => ({ ...job, agentName })), unavailable: false })),
+                    catchError(() => of({ agentName, jobs: [] as GenerationSandboxJob[], unavailable: true })),
                 ),
             ),
         ).pipe(
@@ -433,18 +433,16 @@ export class BuildOverviewComponent implements OnInit, OnDestroy {
                 const unavailableAgents = new Set(results.filter((result) => result.unavailable).map((result) => result.agentName));
                 for (const result of results) {
                     if (!result.unavailable) {
-                        this.generationSessionsByAgent.set(result.agentName, result.sessions);
+                        this.generationJobsByAgent.set(result.agentName, result.jobs);
                     }
                 }
-                for (const knownAgent of this.generationSessionsByAgent.keys()) {
+                for (const knownAgent of this.generationJobsByAgent.keys()) {
                     if (!agents.includes(knownAgent)) {
-                        this.generationSessionsByAgent.delete(knownAgent);
+                        this.generationJobsByAgent.delete(knownAgent);
                     }
                 }
                 return {
-                    sessions: [...this.generationSessionsByAgent.entries()].flatMap(([agentName, sessions]) =>
-                        sessions.map((session) => ({ ...session, stale: unavailableAgents.has(agentName) })),
-                    ),
+                    jobs: [...this.generationJobsByAgent.entries()].flatMap(([agentName, jobs]) => jobs.map((job) => ({ ...job, stale: unavailableAgents.has(agentName) }))),
                     unavailableAgents: unavailableAgents.size,
                 };
             }),
