@@ -55,12 +55,12 @@ jobs:
           echo "Environment: $ENVIRONMENT_NAME"
           echo "Triggered by: $TRIGGERED_BY"
 
-      # Only the resolver action is needed, pinned to the default branch (not `github.ref`, which
-      # the dispatcher controls) so the run-resolution logic can't come from the commit being deployed.
+      # Check out (only) the resolver action from the workflow's own ref. Helios dispatches this
+      # workflow from the branch being deployed, so github.ref is where the action lives and is the
+      # same ref that already defines this workflow. Run-resolution is a build-correctness helper.
       - name: Check out resolver action
         uses: actions/checkout@v6
         with:
-          ref: ${{ github.event.repository.default_branch }}
           sparse-checkout: .github/actions/resolve-artifact-run
           sparse-checkout-cone-mode: false
 

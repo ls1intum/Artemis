@@ -166,11 +166,13 @@ jobs:
       contents: read
       packages: read
     steps:
-      # Check out (only) the verification action, pinned to the default branch — not `github.ref`
-      # (the dispatch ref a caller controls), so the commit under deployment can't tamper with the gate.
+      # Check out (only) the verification action from the workflow's own ref. Helios dispatches this
+      # workflow from the branch being deployed, so github.ref is where this action lives — and is the
+      # same trusted ref that already defines every job here. This is a build-correctness gate ("was an
+      # image built for this commit?"), not a security boundary against the deployer, so it needs no
+      # fixed-ref pin; pinning to the default branch would also break any branch that adds/edits it.
       - uses: actions/checkout@v6
         with:
-          ref: ${{ github.event.repository.default_branch }}
           sparse-checkout: .github/actions/verify-image-build
           sparse-checkout-cone-mode: false
       - uses: ./.github/actions/verify-image-build
@@ -246,13 +248,14 @@ jobs:
       GATEWAY_HOST: "gateway2.aet.cit.tum.de:2010"
       GATEWAY_HOST_PUBLIC_KEY: "[gateway2.aet.cit.tum.de]:2010 ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKtTLiKRILjKZ+Qg4ReWKsG7mLDXkzHfeY5nalSQUNQ4"
     steps:
-      # Use the deploy CLI pinned to the default branch (not `github.ref`, which the dispatcher
-      # controls, and not fetched from a mutable branch ref) so the code that runs the deploy can
-      # never come from the commit under deployment.
+      # Check out the deploy CLI from the workflow's own ref (a proper checkout, replacing the old
+      # wget of the script from a mutable URL). Helios dispatches this workflow from the branch being
+      # deployed, so github.ref already sources every job here and is where the CLI lives. Test-server
+      # deploys are restricted to accredited developers, so branch-sourced deploy code is within the
+      # accepted trust model.
       - name: Check out deploy CLI
         uses: actions/checkout@v6
         with:
-          ref: ${{ github.event.repository.default_branch }}
           sparse-checkout: artemis-server-cli
           sparse-checkout-cone-mode: false
 
