@@ -41,6 +41,7 @@ import de.tum.cit.aet.artemis.course.config.CourseLegacyRestPaths;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.dto.CourseUpdateDTO;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
+import de.tum.cit.aet.artemis.course.service.CourseValidator;
 import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.CourseSearchableEntityDTO;
 import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityWeaviateService;
 import de.tum.cit.aet.artemis.lti.api.LtiApi;
@@ -175,14 +176,14 @@ public class CourseUpdateResource {
         courseUpdateDTO.applyTo(existingCourse);
         existingCourse.setId(courseId); // Ensure the ID is correct
 
-        existingCourse.validateEnrollmentConfirmationMessage();
-        existingCourse.validateComplaintsAndRequestMoreFeedbackConfig();
-        existingCourse.validateOnlineCourseAndEnrollmentEnabled();
-        existingCourse.validateShortName();
-        existingCourse.validateAccuracyOfScores();
-        existingCourse.validateStartAndEndDate();
-        existingCourse.validateEnrollmentStartAndEndDate();
-        existingCourse.validateUnenrollmentEndDate();
+        CourseValidator.validateEnrollmentConfirmationMessage(existingCourse);
+        CourseValidator.validateComplaintsAndRequestMoreFeedbackConfig(existingCourse);
+        CourseValidator.validateOnlineCourseAndEnrollmentEnabled(existingCourse);
+        CourseValidator.validateShortName(existingCourse);
+        CourseValidator.validateAccuracyOfScores(existingCourse);
+        CourseValidator.validateStartAndEndDate(existingCourse);
+        CourseValidator.validateEnrollmentStartAndEndDate(existingCourse);
+        CourseValidator.validateUnenrollmentEndDate(existingCourse);
         if (file != null) {
             Path basePath = FilePathConverter.getCourseIconFilePath();
             Path savePath = FileUtil.saveFile(file, basePath, FilePathType.COURSE_ICON, false);
