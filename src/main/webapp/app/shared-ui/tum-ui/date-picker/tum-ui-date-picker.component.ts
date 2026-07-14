@@ -10,7 +10,6 @@ import {
     input,
     linkedSignal,
     model,
-    output,
     signal,
     viewChild,
 } from '@angular/core';
@@ -54,7 +53,14 @@ export class TumUiDatePickerComponent implements FormValueControl<dayjs.Dayjs | 
     private readonly viewContainerRef = inject(ViewContainerRef);
     private readonly destroyRef = inject(DestroyRef);
 
-    /** Signal Forms FormValueControl contract member; also serves the `[value]` input and `value()` accessor. */
+    /**
+     * Signal Forms FormValueControl contract member; also serves the `[value]` input, the `value()` accessor,
+     * and the change notification. `model()` auto-creates the `valueChange` output that consumers bind with
+     * `(valueChange)` and that powers two-way `[(value)]`, so we deliberately do NOT declare a second
+     * `valueChange` output (that would shadow the model's and silently break two-way binding). It fires only
+     * when the value actually changes (commit / clear / empty) — never on a keepInvalid keystroke, so an
+     * invalid edit does not round-trip through a consumer and wipe the typed text.
+     */
     readonly value = model<dayjs.Dayjs | undefined>(undefined);
 
     readonly error = input(false);
@@ -67,12 +73,16 @@ export class TumUiDatePickerComponent implements FormValueControl<dayjs.Dayjs | 
     readonly baseZIndex = input(1060);
     readonly pickerType = input<TumUiDatePickerType>(TumUiDatePickerType.DEFAULT);
 
-    readonly valueChange = output<void>();
-
     protected readonly faCalendar = faCalendar;
     protected readonly faXmark = faXmark;
 
-    private readonly isInputValid = signal(true);
+    // Reset to true whenever `value()` changes from the outside (or via a commit), so a stale error border
+    // does not linger over a freshly-supplied valid date. Stays false while the user types unparseable text
+    // (value() unchanged), which is exactly the keepInvalid window.
+    private readonly isInputValid = linkedSignal(() => {
+        this.value();
+        return true;
+    });
     protected readonly isOpen = signal(false);
     protected readonly activeMonth = signal(dayjs().startOf('month'));
     protected readonly timeText = signal('');
@@ -84,7 +94,6 @@ export class TumUiDatePickerComponent implements FormValueControl<dayjs.Dayjs | 
     private readonly panel = viewChild.required('panel', { read: TemplateRef });
     private readonly triggerWrapper = viewChild.required<ElementRef<HTMLElement>>('triggerWrapper');
     private overlayRef?: OverlayRef;
-    private needsParentSync = false;
 
     protected readonly showErrorBorder = computed(() => this.error() || !this.isInputValid());
     protected readonly showClear = computed(() => !!this.inputText());
@@ -114,17 +123,17 @@ export class TumUiDatePickerComponent implements FormValueControl<dayjs.Dayjs | 
         if (parsed) {
             this.commit(parsed);
         } else if (!raw.trim()) {
-            this.isInputValid.set(true);
-            this.needsParentSync = false;
+            // Emptied: clear the value; the model's valueChange fires and the linkedSignal re-validates.
             if (this.value() !== undefined) {
                 this.value.set(undefined);
-                this.emit();
+            } else {
+                this.isInputValid.set(true);
             }
         } else {
-            // keepInvalid: preserve the typed text (already set above), flag invalid, leave value() untouched.
+            // keepInvalid: preserve the typed text (set above), flag invalid, leave value() untouched.
+            // Intentionally NO notification: value() is unchanged, so a consumer never round-trips undefined
+            // back into [value] and wipes the text while the user is still editing.
             this.isInputValid.set(false);
-            this.needsParentSync = true;
-            this.emit();
         }
     }
 
@@ -132,8 +141,6 @@ export class TumUiDatePickerComponent implements FormValueControl<dayjs.Dayjs | 
         const trimmed = raw.trim();
         if (trimmed && !DISPLAY_REGEX.test(trimmed)) {
             this.isInputValid.set(false);
-            this.needsParentSync = true;
-            this.emit();
         }
     }
 
@@ -153,10 +160,13 @@ export class TumUiDatePickerComponent implements FormValueControl<dayjs.Dayjs | 
     }
 
     protected clear(): void {
+        // Clear both the display text and the value. Setting inputText explicitly covers the case where the
+        // field held unparseable text while value() was already undefined (so value.set is a no-op).
         this.isInputValid.set(true);
-        this.needsParentSync = false;
-        this.value.set(undefined);
-        this.emit();
+        this.inputText.set('');
+        if (this.value() !== undefined) {
+            this.value.set(undefined);
+        }
     }
 
     protected toggle(): void {
@@ -196,19 +206,15 @@ export class TumUiDatePickerComponent implements FormValueControl<dayjs.Dayjs | 
     }
 
     private commit(next: dayjs.Dayjs): void {
-        if (!this.needsParentSync && valuesEqual(this.value(), next)) {
-            this.isInputValid.set(true);
+        this.isInputValid.set(true);
+        if (valuesEqual(this.value(), next)) {
+            // No value change (e.g. re-typing the current value after an invalid edit): nothing to notify.
+            // Normalize the display text in case it still held the raw/invalid characters.
+            this.inputText.set(formatDisplay(next));
             return;
         }
-        this.needsParentSync = false;
-        this.isInputValid.set(true);
         this.activeMonth.set(next.startOf('month'));
         this.timeText.set(next.format('HH:mm'));
         this.value.set(next);
-        this.emit();
-    }
-
-    private emit(): void {
-        this.valueChange.emit();
     }
 }

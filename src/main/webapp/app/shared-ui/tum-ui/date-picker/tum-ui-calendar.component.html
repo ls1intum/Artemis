@@ -36,12 +36,7 @@
                             <button
                                 #dayButton
                                 type="button"
-                                class="h-8 w-8 rounded-full text-surface-900 hover:bg-surface-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary dark:text-surface-0 dark:hover:bg-surface-700"
-                                [class.bg-primary]="isSelected(day)"
-                                [class.text-surface-0]="isSelected(day)"
-                                [class.text-surface-400]="isOtherMonth(day) && !isSelected(day)"
-                                [class.ring-1]="isToday(day) && !isSelected(day)"
-                                [class.ring-primary]="isToday(day) && !isSelected(day)"
+                                [class]="dayButtonClasses(day)"
                                 [attr.tabindex]="focusedIndex() === w * 7 + d ? 0 : -1"
                                 [attr.aria-label]="day.format('DD.MM.YYYY')"
                                 (click)="selectDay(day)"

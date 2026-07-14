@@ -30,7 +30,7 @@
                     scope="col"
                     [style.width]="col.width"
                     [attr.aria-sort]="ariaSortFor(col)"
-                    class="border-b border-surface px-3 py-2 text-left font-semibold text-surface-700 dark:text-surface-0"
+                    class="border-b border-surface bg-surface-0 px-3 py-2 text-left font-semibold text-surface-700 dark:bg-surface-900 dark:text-surface-0"
                 >
                     @if (col.sort && col.field) {
                         <button type="button" class="inline-flex items-center gap-1 hover:text-primary" (click)="onSortClick(col)">
@@ -59,7 +59,7 @@
 
         @if (rowActions(); as actions) {
             <ng-container [cdkColumnDef]="ACTIONS_COLUMN">
-                <th cdk-header-cell *cdkHeaderCellDef class="border-b border-surface px-3 py-2"></th>
+                <th cdk-header-cell *cdkHeaderCellDef class="border-b border-surface bg-surface-0 px-3 py-2 dark:bg-surface-900"></th>
                 <td cdk-cell *cdkCellDef="let row" class="border-b border-surface px-3 py-2 text-right">
                     <ng-container [ngTemplateOutlet]="actions" [ngTemplateOutletContext]="{ $implicit: row }" />
                 </td>
@@ -88,6 +88,7 @@
     [page]="currentPage()"
     [pageSize]="effectivePageSize()"
     [pageSizeOptions]="pageSizeOptions()"
+    [disabled]="loading()"
     (pageChange)="onPageChange($event)"
     (pageSizeChange)="onPageSizeChange($event)"
 />

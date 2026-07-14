@@ -92,4 +92,28 @@ describe('TumUiCalendarComponent', () => {
         fixture.detectChanges();
         expect(dayButtons().some((button) => button.classList.contains('ring-primary'))).toBe(true);
     });
+
+    it('applies exactly one text color per state (selected wins over the base color)', () => {
+        fixture.componentRef.setInput('selected', dayjs('2026-06-15'));
+        fixture.detectChanges();
+        const selected = dayButtons().find((b) => b.textContent?.trim() === '15')!;
+        expect(selected.classList).toContain('bg-primary');
+        expect(selected.classList).toContain('text-surface-0');
+        // the base color must NOT co-exist on the selected cell (would collide in the cascade)
+        expect(selected.classList).not.toContain('text-surface-900');
+        // an other-month cell is dimmed and not also the base color
+        const other = dayButtons().find((b) => b.classList.contains('text-surface-400'))!;
+        expect(other.classList).not.toContain('text-surface-900');
+    });
+
+    it('restores roving focus to the grid after a keyboard month change (PageDown)', () => {
+        const buttons = dayButtons();
+        buttons[10].focus();
+        buttons[10].dispatchEvent(new KeyboardEvent('keydown', { key: 'PageDown' }));
+        // simulate the parent applying the emitted next month
+        fixture.componentRef.setInput('activeMonth', dayjs('2026-07-01'));
+        fixture.detectChanges();
+        expect(document.activeElement?.tagName).toBe('BUTTON');
+        expect(document.activeElement).not.toBe(document.body);
+    });
 });

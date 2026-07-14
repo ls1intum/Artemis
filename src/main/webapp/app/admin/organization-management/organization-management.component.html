@@ -40,7 +40,8 @@
             data-testid="edit-organization-btn"
         >
             <fa-icon [icon]="faPencil" />
-            <span class="hidden md:inline" jhiTranslate="entity.action.edit"></span>
+            <!-- sr-only below md keeps the label in the accessibility tree so the icon-only button stays named -->
+            <span class="sr-only md:not-sr-only" jhiTranslate="entity.action.edit"></span>
         </button>
         <button
             pButton

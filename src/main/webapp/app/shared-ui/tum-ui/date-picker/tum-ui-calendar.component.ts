@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, ElementRef, computed, effect, input, output, signal, viewChildren } from '@angular/core';
+import { ChangeDetectionStrategy, Component, ElementRef, afterRenderEffect, computed, effect, input, output, signal, viewChildren } from '@angular/core';
 import dayjs from 'dayjs/esm';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faChevronLeft, faChevronRight } from '@fortawesome/free-solid-svg-icons';
@@ -32,6 +32,9 @@ export class TumUiCalendarComponent {
     protected readonly focusedIndex = signal(0);
     private readonly today = dayjs();
     private readonly dayButtons = viewChildren<ElementRef<HTMLButtonElement>>('dayButton');
+    // Set when a month change was initiated from the keyboard (PageUp/PageDown), so we can restore DOM
+    // focus to the roving cell after the grid re-renders. Mouse-driven prev/next must NOT steal focus.
+    private restoreFocusAfterRender = false;
 
     constructor() {
         // Reset roving focus to the selected day (or the 1st of the month) whenever the grid changes.
@@ -41,6 +44,31 @@ export class TumUiCalendarComponent {
             const index = days.findIndex((day) => day.isSame(target, 'day'));
             this.focusedIndex.set(index >= 0 ? index : 0);
         });
+        // A keyboard month change destroys the focused <button> (tracked by day.valueOf()), dropping focus
+        // to <body> and breaking arrow-key navigation. After the new grid renders, move focus back to the
+        // roving cell — but only when the change came from the keyboard.
+        afterRenderEffect(() => {
+            this.flatDays();
+            if (this.restoreFocusAfterRender) {
+                this.restoreFocusAfterRender = false;
+                this.dayButtons()[this.focusedIndex()]?.nativeElement.focus();
+            }
+        });
+    }
+
+    /** Full class list for a day cell: exactly one text color per state so no two color utilities collide. */
+    protected dayButtonClasses(day: dayjs.Dayjs): string {
+        const base = 'h-8 w-8 rounded-full hover:bg-surface-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary dark:hover:bg-surface-700';
+        let color: string;
+        if (this.isSelected(day)) {
+            color = 'bg-primary text-surface-0';
+        } else if (this.isOtherMonth(day)) {
+            color = 'text-surface-400';
+        } else {
+            color = 'text-surface-900 dark:text-surface-0';
+        }
+        const today = this.isToday(day) && !this.isSelected(day) ? 'ring-1 ring-primary' : '';
+        return `${base} ${color} ${today}`.trim();
     }
 
     protected isSelected(day: dayjs.Dayjs): boolean {
@@ -102,10 +130,12 @@ export class TumUiCalendarComponent {
                 break;
             case 'PageUp':
                 event.preventDefault();
+                this.restoreFocusAfterRender = true;
                 this.previousMonth();
                 break;
             case 'PageDown':
                 event.preventDefault();
+                this.restoreFocusAfterRender = true;
                 this.nextMonth();
                 break;
         }
