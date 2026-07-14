@@ -106,6 +106,27 @@ class HyperionProblemStatementGenerationServiceTest {
         assertThat(promptText).contains("typically 300–700 words");
         assertThat(promptText).contains("Do not invent delivery mechanisms");
         assertThat(promptText).contains("Do not add submission or deliverable sections");
+        assertThat(promptText).doesNotContain("instructor-decisions section", "Instructor Decisions Before Final Generation");
+    }
+
+    @Test
+    void generateProblemStatement_rejectsAuthoringProcessSections() {
+        String artifactDraft = """
+                # Library Checkout
+
+                Students summarize checkout events.
+
+                ## Instructor Decisions (if needed)
+                Confirm whether fees should use cents or decimal dollars.
+                """;
+        when(chatModel.call(any(Prompt.class))).thenAnswer(_ -> new ChatResponse(List.of(new Generation(new AssistantMessage(artifactDraft)))));
+
+        var course = new Course();
+        course.setTitle("Test Course");
+        course.setDescription("Test Description");
+
+        assertThatThrownBy(() -> hyperionProblemStatementGenerationService.generateProblemStatement(course, "Create a compact library exercise"))
+                .isInstanceOf(InternalServerErrorAlertException.class).hasMessageContaining("generation-only artifacts");
     }
 
     @Test
@@ -251,6 +272,23 @@ class HyperionProblemStatementGenerationServiceTest {
         course.setDescription("Test Description");
 
         assertThatThrownBy(() -> hyperionProblemStatementGenerationService.generateProblemStatement(course, "Create a scheduler exercise"))
+                .isInstanceOf(InternalServerErrorAlertException.class).hasMessageContaining("generation-only artifacts");
+    }
+
+    @Test
+    void generateProblemStatement_rejectsUnrequestedUnitTestPromises() {
+        String artifactDraft = """
+                # Rover
+
+                Implementations that follow these rules will pass a suite of deterministic unit tests.
+                """;
+        when(chatModel.call(any(Prompt.class))).thenAnswer(_ -> new ChatResponse(List.of(new Generation(new AssistantMessage(artifactDraft)))));
+
+        var course = new Course();
+        course.setTitle("Test Course");
+        course.setDescription("Test Description");
+
+        assertThatThrownBy(() -> hyperionProblemStatementGenerationService.generateProblemStatement(course, "Create a rover exercise"))
                 .isInstanceOf(InternalServerErrorAlertException.class).hasMessageContaining("generation-only artifacts");
     }
 

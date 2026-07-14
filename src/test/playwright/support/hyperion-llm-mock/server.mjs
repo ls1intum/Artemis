@@ -165,7 +165,7 @@ const server = http.createServer((req, res) => {
                 return;
             }
             if (body.includes(criticPromptMarker)) {
-                jsonResponse(res, 200, textResponse(requestNumber, '{"uncovered":[],"missingExamples":[],"invented":[],"unrequestedChanges":[]}'));
+                jsonResponse(res, 200, textResponse(requestNumber, '{"uncovered":[],"missingExamples":[],"invented":[],"unrequestedChanges":[],"missingRequestedChanges":[]}'));
                 return;
             }
             if (body.includes(writeSnapshotMarker) && !body.includes('HyperionPreview.java')) {

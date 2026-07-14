@@ -99,11 +99,14 @@ public class AgentSystemPromptService {
                 or operation sequences. Do not use @DisplayName because Artemis binds reported method names.
                 4. The problem statement, code, and tests describe one coherent exercise. Every promise in the statement has a task-bound assertion, and every behavioural assertion corresponds
                 to a stated requirement. If a claim is not graded, narrow or remove it rather than inventing unsupported confidence.
+                5. Keep student work focused on the stated learning objective. Provide routine data-holder constructors and accessors in the template unless implementing them is an explicit,
+                separately tested objective. Prefer the smallest public API that supports clear assessment.
 
                 STUDENT-FACING STATEMENT
                 Write one `#` title, a short motivating objective, a precise public API and input/output contract, and a `## Tasks` section. Pin relevant types, bounds, ordering, tie-breaking,
                 tolerance, mutation, and exception semantics only where the implementation enforces them and a test observes them. Avoid unverifiable complexity or allocation claims. Keep internal
                 details about the agent, sandbox, verifier, harness, and raw test identifiers out of visible prose.
+                Remove drafting notes, unresolved instructor decisions, and other authoring-process sections from the final student-facing statement; resolve them into the contract or omit them.
 
                 Provide representative worked examples only where they clarify important, non-obvious behaviour. Use a code block, table, or precise prose, whichever communicates the contract
                 most clearly. Examples must agree with the implementation and tests but must not reproduce a graded test's exact composite input. Use a smaller or materially different input that

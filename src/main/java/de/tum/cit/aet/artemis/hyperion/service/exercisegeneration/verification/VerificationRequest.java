@@ -11,7 +11,9 @@ import org.jspecify.annotations.Nullable;
  * <p>
  * These are exactly the sandbox-free inputs the in-loop self-check cannot supply: the read-back repository files and the seed snapshot the agent loop lacks mid-session.
  *
- * @param seedTestsFiles               tests-repo files snapshotted at seed time; enables the harness-immutability gate
+ * @param seedTestsFiles               tests-repo files snapshotted at seed time; enables the harness-immutability and generated-source-layout gates
+ * @param seedTemplateFiles            template-repo files snapshotted at seed time; unchanged legacy files remain valid during adaptation
+ * @param seedSolutionFiles            solution-repo files snapshotted at seed time; unchanged legacy files remain valid during adaptation
  * @param producedTestsFiles           tests-repo files read back after generation; compared against the seed snapshot for the harness-immutability gate
  * @param producedTemplateFiles        template-repo files read back after generation; enables the solution-leak gate
  * @param producedSolutionFiles        solution-repo files read back after generation; the leak gate flags solution bodies that surfaced in the template
@@ -25,13 +27,27 @@ import org.jspecify.annotations.Nullable;
  * @param producedProblemStatement     problem statement captured with the produced repository files; {@code null} only for tests and legacy internal callers that still read it
  *                                         from the sandbox
  */
-public record VerificationRequest(Map<String, String> seedTestsFiles, Map<String, String> producedTestsFiles, Map<String, String> producedTemplateFiles,
-        Map<String, String> producedSolutionFiles, Set<String> extractionFailedRepositories, Set<String> seededStructuralTestNames, Set<String> baselineGradedTestNames,
-        @Nullable String producedProblemStatement) {
+public record VerificationRequest(Map<String, String> seedTestsFiles, Map<String, String> seedTemplateFiles, Map<String, String> seedSolutionFiles,
+        Map<String, String> producedTestsFiles, Map<String, String> producedTemplateFiles, Map<String, String> producedSolutionFiles, Set<String> extractionFailedRepositories,
+        Set<String> seededStructuralTestNames, Set<String> baselineGradedTestNames, @Nullable String producedProblemStatement) {
+
+    public VerificationRequest(Map<String, String> seedTestsFiles, Map<String, String> seedTemplateFiles, Map<String, String> seedSolutionFiles,
+            Map<String, String> producedTestsFiles, Map<String, String> producedTemplateFiles, Map<String, String> producedSolutionFiles, Set<String> extractionFailedRepositories,
+            Set<String> seededStructuralTestNames, Set<String> baselineGradedTestNames) {
+        this(seedTestsFiles, seedTemplateFiles, seedSolutionFiles, producedTestsFiles, producedTemplateFiles, producedSolutionFiles, extractionFailedRepositories,
+                seededStructuralTestNames, baselineGradedTestNames, null);
+    }
 
     public VerificationRequest(Map<String, String> seedTestsFiles, Map<String, String> producedTestsFiles, Map<String, String> producedTemplateFiles,
             Map<String, String> producedSolutionFiles, Set<String> extractionFailedRepositories, Set<String> seededStructuralTestNames, Set<String> baselineGradedTestNames) {
-        this(seedTestsFiles, producedTestsFiles, producedTemplateFiles, producedSolutionFiles, extractionFailedRepositories, seededStructuralTestNames, baselineGradedTestNames,
-                null);
+        this(seedTestsFiles, Map.of(), Map.of(), producedTestsFiles, producedTemplateFiles, producedSolutionFiles, extractionFailedRepositories, seededStructuralTestNames,
+                baselineGradedTestNames, null);
+    }
+
+    public VerificationRequest(Map<String, String> seedTestsFiles, Map<String, String> producedTestsFiles, Map<String, String> producedTemplateFiles,
+            Map<String, String> producedSolutionFiles, Set<String> extractionFailedRepositories, Set<String> seededStructuralTestNames, Set<String> baselineGradedTestNames,
+            @Nullable String producedProblemStatement) {
+        this(seedTestsFiles, Map.of(), Map.of(), producedTestsFiles, producedTemplateFiles, producedSolutionFiles, extractionFailedRepositories, seededStructuralTestNames,
+                baselineGradedTestNames, producedProblemStatement);
     }
 }

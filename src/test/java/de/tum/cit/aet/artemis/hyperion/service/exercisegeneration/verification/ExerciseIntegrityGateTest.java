@@ -325,6 +325,65 @@ class ExerciseIntegrityGateTest {
     }
 
     @Test
+    void javaAresConvention_rejectsPackageLocalAresLookalikesAndOversizedTimeouts() {
+        String test = """
+                package de.test;
+
+                import org.junit.jupiter.api.Test;
+
+                @interface Public {}
+                @interface WhitelistPath { String value(); }
+                @interface BlacklistPath { String value(); }
+                @interface StrictTimeout { int value(); }
+
+                @Public
+                @WhitelistPath("target")
+                @BlacklistPath("target/test-classes")
+                @StrictTimeout(86400)
+                class CalculatorTest {
+
+                    @Test
+                    void addsNumbers() {
+                    }
+                }
+                """;
+
+        var reasons = ExerciseIntegrityGate.javaAresConventionReasons(map("pom.xml", aresPom(), "test/de/test/CalculatorTest.java", test));
+
+        assertThat(reasons).anyMatch(reason -> reason.contains("trusted Ares annotations"));
+        assertThat(reasons).anyMatch(reason -> reason.contains("@StrictTimeout(1)"));
+    }
+
+    @Test
+    void javaAresConvention_rejectsImportedAnnotationsShadowedByLocalTypes() {
+        String test = """
+                package de.test;
+
+                import de.tum.in.test.api.BlacklistPath;
+                import de.tum.in.test.api.StrictTimeout;
+                import de.tum.in.test.api.WhitelistPath;
+                import de.tum.in.test.api.jupiter.Public;
+                import org.junit.jupiter.api.Test;
+
+                @Public
+                @WhitelistPath("target")
+                @BlacklistPath("target/test-classes")
+                class CalculatorTest {
+
+                    @interface StrictTimeout { int value(); }
+
+                    @Test
+                    @StrictTimeout(1)
+                    void addsNumbers() {
+                    }
+                }
+                """;
+
+        assertThat(ExerciseIntegrityGate.javaAresConventionReasons(map("pom.xml", aresPom(), "test/de/test/CalculatorTest.java", test)))
+                .anyMatch(reason -> reason.contains("@StrictTimeout(1)"));
+    }
+
+    @Test
     void javaAresConvention_rejectsCommentSpoofedMavenHarnessAndTrustedPackageSources() {
         String pom = """
                 <project>
@@ -367,7 +426,82 @@ class ExerciseIntegrityGateTest {
 
         assertThat(reasons).anyMatch(reason -> reason.contains("artemis-java-test-sandbox"));
         assertThat(reasons).anyMatch(reason -> reason.contains("enforcer plugin"));
-        assertThat(reasons).anyMatch(reason -> reason.contains("trusted framework packages"));
+    }
+
+    @Test
+    void javaGeneratedSourceLayout_rejectsChangedFilesOutsideTheExercisePackage() {
+        String packageName = "de.tum.cit.aet.exercise";
+        Map<String, String> producedTests = map("build.gradle", "seed", "test/de/tum/cit/aet/exercise/ExerciseTest.java", "package de.tum.cit.aet.exercise;",
+                "test/net/bytebuddy/ByteBuddy.java", "package net.bytebuddy;", "buildSrc/src/main/java/FakePlugin.java", "class FakePlugin {}");
+        Map<String, String> producedTemplate = map("src/de/tum/cit/aet/exercise/Exercise.java", "package de.tum.cit.aet.exercise;", "src/de/tum/in/ase/test/Public.java",
+                "package de.tum.in.ase.test;");
+
+        var reasons = ExerciseIntegrityGate.javaGeneratedSourceLayoutReasons(packageName, Map.of("build.gradle", "seed"), Map.of(), Map.of(), producedTests, producedTemplate,
+                Map.of("src/de/tum/cit/aet/exercise/Exercise.java", "package de.tum.cit.aet.exercise;"));
+
+        assertThat(reasons).singleElement()
+                .satisfies(reason -> assertThat(reason).contains("canonical source roots").contains("ByteBuddy.java").contains("FakePlugin.java").contains("Public.java"));
+    }
+
+    @Test
+    void javaGeneratedSourceLayout_acceptsPackageScopedChangesAndUnchangedLegacyFiles() {
+        String packageName = "de.tum.cit.aet.exercise";
+        Map<String, String> seedTests = map("build.gradle", "seed", "test/legacy/LegacyTest.java", "package legacy;");
+        Map<String, String> producedTests = map("build.gradle", "seed", "test/legacy/LegacyTest.java", "package legacy;", "test/de/tum/cit/aet/exercise/ExerciseTest.java",
+                "package de.tum.cit.aet.exercise;", "test/de/tum/cit/aet/exercise/test.json", "[]");
+        Map<String, String> seedTemplate = Map.of("src/legacy/Legacy.java", "package legacy;");
+        Map<String, String> producedTemplate = map("src/legacy/Legacy.java", "package legacy;", "src/de/tum/cit/aet/exercise/Exercise.java", "package de.tum.cit.aet.exercise;");
+
+        assertThat(ExerciseIntegrityGate.javaGeneratedSourceLayoutReasons(packageName, seedTests, seedTemplate, Map.of(), producedTests, producedTemplate,
+                Map.of("src/de/tum/cit/aet/exercise/Exercise.java", "package de.tum.cit.aet.exercise;"))).isEmpty();
+    }
+
+    @Test
+    void javaGeneratedSourceLayout_rejectsChangedSourceWhoseDeclaredPackageDoesNotMatchItsPath() {
+        String packageName = "de.tum.cit.aet.exercise";
+        Map<String, String> producedTests = Map.of("test/de/tum/cit/aet/exercise/FakeAres.java", "package de.tum.in.test.api; public @interface Public {}");
+
+        var reasons = ExerciseIntegrityGate.javaGeneratedSourceLayoutReasons(packageName, Map.of(), Map.of(), Map.of(), producedTests, Map.of(), Map.of());
+
+        assertThat(reasons).singleElement().satisfies(reason -> assertThat(reason).contains("canonical source roots").contains("FakeAres.java"));
+    }
+
+    @Test
+    void javaGeneratedSourceLayout_rejectsObfuscatedPackageDeclarations() {
+        String packageName = "de.tum.cit.aet.exercise";
+        Map<String, String> producedTemplate = map("src/de/tum/cit/aet/exercise/Commented.java", "package/* hidden */net.bytebuddy; class Commented {}",
+                "src/de/tum/cit/aet/exercise/Unicode.java", "package de.tum.cit.aet.exercis" + "\\u0065; class Unicode {}");
+
+        var reasons = ExerciseIntegrityGate.javaGeneratedSourceLayoutReasons(packageName, Map.of(), Map.of(), Map.of(), Map.of(), producedTemplate, Map.of());
+
+        assertThat(reasons).singleElement().satisfies(reason -> assertThat(reason).contains("Commented.java").contains("Unicode.java"));
+    }
+
+    @Test
+    void javaGeneratedSourceLayout_rejectsUnicodeTranslationBeforeFakePackageInTextBlock() {
+        String source = "\\u0070ackage de.tum.in.test.api; public class FakeAres { String value = \"\"\"\npackage de.tum.cit.aet.exercise;\n\"\"\"; }";
+
+        var reasons = ExerciseIntegrityGate.javaGeneratedSourceLayoutReasons("de.tum.cit.aet.exercise", Map.of(), Map.of(), Map.of(),
+                Map.of("test/de/tum/cit/aet/exercise/FakeAres.java", source), Map.of(), Map.of());
+
+        assertThat(reasons).singleElement().satisfies(reason -> assertThat(reason).contains("FakeAres.java"));
+    }
+
+    @Test
+    void javaGeneratedSourceLayout_acceptsUnicodeEscapesAfterThePackageDeclaration() {
+        Map<String, String> producedSolution = Map.of("src/de/tum/cit/aet/exercise/UnicodeExercise.java",
+                "package de.tum.cit.aet.exercise; class UnicodeExercise { String check = \"" + "\\u2713" + "\"; }");
+
+        assertThat(ExerciseIntegrityGate.javaGeneratedSourceLayoutReasons("de.tum.cit.aet.exercise", Map.of(), Map.of(), Map.of(), Map.of(), Map.of(), producedSolution)).isEmpty();
+    }
+
+    @Test
+    void javaGeneratedSourceLayout_acceptsConventionalPackageDeclarationWithComments() {
+        String packageName = "de.tum.cit.aet.exercise";
+        Map<String, String> producedSolution = Map.of("src/de/tum/cit/aet/exercise/internal/Helper.java",
+                "/* copyright */ package/* separator */ de.tum.cit.aet.exercise.internal; class Helper {}");
+
+        assertThat(ExerciseIntegrityGate.javaGeneratedSourceLayoutReasons(packageName, Map.of(), Map.of(), Map.of(), Map.of(), Map.of(), producedSolution)).isEmpty();
     }
 
     // --- Adapt total-wipe (zero-retention) gate ---

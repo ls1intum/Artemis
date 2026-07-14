@@ -118,6 +118,27 @@ class DifferentialVerificationServiceTest {
 
     private static final String PROBLEM_STATEMENT_WITH_TASK = "# Sort\n[task][Sort an array](sortsUnsortedArray,sortsArrayWithDuplicates)\n";
 
+    private static String aresPom() {
+        return """
+                <project>
+                    <dependencies>
+                        <dependency>
+                            <groupId>de.tum.in.ase</groupId>
+                            <artifactId>artemis-java-test-sandbox</artifactId>
+                        </dependency>
+                    </dependencies>
+                    <build><plugins><plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-enforcer-plugin</artifactId>
+                        <configuration><rules><requireFilesDontExist><files>
+                            <file>${project.build.outputDirectory}/de/tum/in/test/api/</file>
+                            <file>${project.build.outputDirectory}/org/junit/</file>
+                        </files></requireFilesDontExist></rules></configuration>
+                    </plugin></plugins></build>
+                </project>
+                """;
+    }
+
     /** Serves the solution/template report tars on {@code copyOut} (routed by the reports-dir path) and the build exit code/timeout on {@code exec}. */
     private static final class ScriptedSandbox implements InteractiveSandbox {
 
@@ -435,6 +456,37 @@ class DifferentialVerificationServiceTest {
         assertThat(result.accepted()).isFalse();
         assertThat(result.reasons()).anyMatch(r -> r.contains("artemis-java-test-sandbox"));
         assertThat(result.reasons()).anyMatch(r -> r.contains("@StrictTimeout"));
+    }
+
+    @Test
+    void integrityGates_rejectJavaSourcesWhosePackageDoesNotMatchTheirPath() {
+        ProgrammingExercise exercise = new ProgrammingExercise();
+        exercise.setProgrammingLanguage(ProgrammingLanguage.JAVA);
+        exercise.setPackageName("de.test");
+        String pom = aresPom();
+        String test = """
+                package de.test;
+                import org.junit.jupiter.api.Test;
+                import de.tum.in.test.api.BlacklistPath;
+                import de.tum.in.test.api.StrictTimeout;
+                import de.tum.in.test.api.WhitelistPath;
+                import de.tum.in.test.api.jupiter.Public;
+                @Public @WhitelistPath("target") @BlacklistPath("target/test-classes")
+                class SortTest {
+                    @Test @StrictTimeout(1) void sortsUnsortedArray() {}
+                    @Test @StrictTimeout(1) void sortsArrayWithDuplicates() {}
+                }
+                """;
+        Map<String, String> tests = Map.of("pom.xml", pom, "test/de/test/SortTest.java", test, "test/de/test/FakeAres.java",
+                "package de.tum.in.test.api; public @interface Public {}");
+        Map<String, String> template = Map.of("src/de/test/Exercise.java", "package de.test; class Exercise {}");
+        Map<String, String> solution = Map.of("src/de/test/Exercise.java", "package de.test; class Exercise {}");
+
+        VerificationResult result = newVerifier().verify(new ScriptedSandbox(result(2, 0, 0, 0), result(2, 2, 0, 1), PROBLEM_STATEMENT_WITH_TASK), "s", exercise,
+                new VerificationRequest(Map.of("pom.xml", pom), tests, template, solution, Set.of(), Set.of(), Set.of()));
+
+        assertThat(result.accepted()).isFalse();
+        assertThat(result.reasons()).anyMatch(reason -> reason.contains("canonical source roots") && reason.contains("FakeAres.java"));
     }
 
     @Test

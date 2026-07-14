@@ -245,7 +245,8 @@ public class GenerationOrchestrationService {
                 if (extractionFailed.isEmpty()) {
                     workspace.materializeRepositoryFiles(sandbox, sessionId, producedFilesByType, workspaceSeed.repositoryMetadata());
                 }
-                VerificationRequest verificationRequest = new VerificationRequest(testsSeedSnapshot, producedTests.files(), producedTemplate.files(), producedSolution.files(),
+                VerificationRequest verificationRequest = new VerificationRequest(testsSeedSnapshot, baselineRepositoryFiles.getOrDefault(RepositoryType.TEMPLATE, Map.of()),
+                        baselineRepositoryFiles.getOrDefault(RepositoryType.SOLUTION, Map.of()), producedTests.files(), producedTemplate.files(), producedSolution.files(),
                         extractionFailed, seededStructuralTestNames, baselineGradedTestNames, producedProblemStatement);
                 if (cancelled.getAsBoolean()) {
                     destroyQuietly(sandbox, sessionId);

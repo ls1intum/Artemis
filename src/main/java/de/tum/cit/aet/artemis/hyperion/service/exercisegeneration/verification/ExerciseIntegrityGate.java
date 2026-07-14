@@ -48,6 +48,8 @@ public final class ExerciseIntegrityGate {
     /** Filename suffixes that always denote a build/harness/manifest file regardless of basename. Matched case-insensitively. */
     private static final List<String> HARNESS_FILE_SUFFIXES = List.of(".cabal", ".csproj", ".fsproj", ".vbproj", ".sln");
 
+    private static final Pattern JAVA_PACKAGE_DECLARATION = Pattern.compile("^\\s*package\\s+([A-Za-z_$][\\w$]*(?:\\.[A-Za-z_$][\\w$]*)*)\\s*;");
+
     private ExerciseIntegrityGate() {
     }
 
@@ -348,12 +350,6 @@ public final class ExerciseIntegrityGate {
             reasons.add("Java tests repository must not contain generated build output such as target/ or build/ files; remove "
                     + sampleNames(new LinkedHashSet<>(generatedBuildOutput)) + ".");
         }
-        List<String> trustedPackageSources = producedTestsFiles.keySet().stream().filter(ExerciseIntegrityGate::isTrustedJavaPackageSourcePath).toList();
-        if (!trustedPackageSources.isEmpty()) {
-            reasons.add("Java tests must not define sources in trusted framework packages such as de.tum.in.test.api or org.junit; remove "
-                    + sampleNames(new LinkedHashSet<>(trustedPackageSources)) + ".");
-        }
-
         String pom = producedTestsFiles.get("pom.xml");
         String gradle = firstNonNull(producedTestsFiles.get("build.gradle"), producedTestsFiles.get("build.gradle.kts"));
         if (pom != null) {
@@ -396,22 +392,77 @@ public final class ExerciseIntegrityGate {
             }
         }
         if (!missingClassAnnotations.isEmpty()) {
-            reasons.add("Java test classes must use Ares annotations @Public, @WhitelistPath(\"target\"), and @BlacklistPath(\"target/test-classes\"); missing in "
-                    + sampleNames(new LinkedHashSet<>(missingClassAnnotations)) + ".");
+            reasons.add("Java test classes must use the trusted Ares annotations @Public (de.tum.in.test.api.jupiter.Public), @WhitelistPath(\"target\"), and "
+                    + "@BlacklistPath(\"target/test-classes\"); missing or shadowed in " + sampleNames(new LinkedHashSet<>(missingClassAnnotations)) + ".");
         }
         if (!missingTimeouts.isEmpty()) {
-            reasons.add("Every Java @Test method must carry @StrictTimeout(...) so an infinite loop cannot hang grading; missing in "
-                    + sampleNames(new LinkedHashSet<>(missingTimeouts)) + ".");
+            reasons.add("Every Java @Test method must carry the trusted de.tum.in.test.api.StrictTimeout as @StrictTimeout(1) so an infinite loop cannot hang grading; missing, "
+                    + "shadowed, or set to another value in " + sampleNames(new LinkedHashSet<>(missingTimeouts)) + ".");
         }
         return reasons;
     }
 
-    private static boolean isJavaTestSourcePath(String path) {
-        return path.endsWith(".java") && (path.startsWith("test/") || path.startsWith("structural/test/") || path.startsWith("behavior/test/"));
+    /**
+     * Allows Java generation to change only exercise-package-scoped source artifacts. Files that already existed at seed time may remain unchanged, preserving legacy adaptation;
+     * newly added or modified files cannot impersonate dependencies, alter repository infrastructure, or escape the exercise package.
+     */
+    static List<String> javaGeneratedSourceLayoutReasons(String packageName, Map<String, String> seedTestsFiles, Map<String, String> seedTemplateFiles,
+            Map<String, String> seedSolutionFiles, Map<String, String> producedTestsFiles, Map<String, String> producedTemplateFiles, Map<String, String> producedSolutionFiles) {
+        boolean repositoriesChanged = !safeFiles(seedTestsFiles).equals(safeFiles(producedTestsFiles)) || !safeFiles(seedTemplateFiles).equals(safeFiles(producedTemplateFiles))
+                || !safeFiles(seedSolutionFiles).equals(safeFiles(producedSolutionFiles));
+        if (!repositoriesChanged) {
+            return List.of();
+        }
+        if (packageName == null || packageName.isBlank()) {
+            return List.of("Java exercise generation requires a package name before generated source files can be verified.");
+        }
+        String packagePath = packageName.replace('.', '/');
+        Set<String> invalidChanges = new LinkedHashSet<>();
+        collectInvalidGeneratedChanges(invalidChanges, "tests/", seedTestsFiles, producedTestsFiles,
+                List.of("test/" + packagePath + "/", "behavior/test/" + packagePath + "/", "structural/test/" + packagePath + "/"),
+                List.of("test/", "behavior/test/", "structural/test/"), true);
+        collectInvalidGeneratedChanges(invalidChanges, "template/", seedTemplateFiles, producedTemplateFiles, List.of("src/" + packagePath + "/"), List.of("src/"), false);
+        collectInvalidGeneratedChanges(invalidChanges, "solution/", seedSolutionFiles, producedSolutionFiles, List.of("src/" + packagePath + "/"), List.of("src/"), false);
+        if (invalidChanges.isEmpty()) {
+            return List.of();
+        }
+        return List.of("Generated Java files must stay inside the exercise package's canonical source roots; remove or restore " + sampleNames(invalidChanges) + ".");
     }
 
-    private static boolean isTrustedJavaPackageSourcePath(String path) {
-        return isJavaTestSourcePath(path) && (path.contains("/de/tum/in/test/api/") || path.contains("/org/junit/"));
+    private static void collectInvalidGeneratedChanges(Set<String> target, String repository, Map<String, String> seedFiles, Map<String, String> producedFiles,
+            List<String> allowedPrefixes, List<String> sourceRoots, boolean allowStructuralOracle) {
+        Map<String, String> safeSeed = safeFiles(seedFiles);
+        Map<String, String> safeProduced = safeFiles(producedFiles);
+        Set<String> paths = new LinkedHashSet<>(safeSeed.keySet());
+        paths.addAll(safeProduced.keySet());
+        paths.stream().filter(path -> !java.util.Objects.equals(safeSeed.get(path), safeProduced.get(path))).filter(path -> {
+            boolean inSourceRoot = allowedPrefixes.stream().anyMatch(path::startsWith);
+            boolean allowedFile = path.endsWith(".java") || allowStructuralOracle && path.endsWith("/test.json");
+            boolean packageMatchesPath = !path.endsWith(".java") || !safeProduced.containsKey(path) || declaresPackageMatchingPath(path, safeProduced.get(path), sourceRoots);
+            return !inSourceRoot || !allowedFile || !packageMatchesPath;
+        }).map(repository::concat).forEach(target::add);
+    }
+
+    private static boolean declaresPackageMatchingPath(String path, String content, List<String> sourceRoots) {
+        String sourceRoot = sourceRoots.stream().filter(path::startsWith).findFirst().orElse(null);
+        int filenameSeparator = path.lastIndexOf('/');
+        if (sourceRoot == null || filenameSeparator < sourceRoot.length() || content == null) {
+            return false;
+        }
+        Matcher matcher = JAVA_PACKAGE_DECLARATION.matcher(stripJavaComments(content));
+        if (!matcher.find() || Pattern.compile("\\\\u+").matcher(content.substring(0, matcher.end())).find()) {
+            return false;
+        }
+        String expectedPackage = path.substring(sourceRoot.length(), filenameSeparator).replace('/', '.');
+        return matcher.group(1).equals(expectedPackage);
+    }
+
+    private static Map<String, String> safeFiles(Map<String, String> files) {
+        return files == null ? Map.of() : files;
+    }
+
+    private static boolean isJavaTestSourcePath(String path) {
+        return path.endsWith(".java") && (path.startsWith("test/") || path.startsWith("structural/test/") || path.startsWith("behavior/test/"));
     }
 
     private static String firstNonNull(String first, String second) {
@@ -462,6 +513,16 @@ public final class ExerciseIntegrityGate {
 
     private static JavaTestAnnotationSummary javaTestAnnotationSummary(String content) {
         String withoutComments = stripJavaComments(content);
+        Set<String> imports = new HashSet<>();
+        Matcher importMatcher = Pattern.compile("(?m)^\\s*import\\s+([\\w.]+)\\s*;").matcher(withoutComments);
+        while (importMatcher.find()) {
+            imports.add(importMatcher.group(1));
+        }
+        Matcher localTypeMatcher = Pattern.compile("\\b(?:class|interface|enum|record|@interface)\\s+([A-Za-z_$][\\w$]*)").matcher(withoutComments);
+        while (localTypeMatcher.find()) {
+            String localType = localTypeMatcher.group(1);
+            imports.removeIf(importedType -> importedType.endsWith("." + localType));
+        }
         String[] lines = withoutComments.split("\\R", -1);
         List<JavaClassAnnotation> classes = new ArrayList<>();
         boolean hasTestMethods = false;
@@ -498,10 +559,10 @@ public final class ExerciseIntegrityGate {
             else if (JAVA_METHOD_DECLARATION.matcher(declaration).find() && hasJUnitTestAnnotation(annotationBlock)) {
                 hasTestMethods = true;
                 String classAnnotations = enclosingClassAnnotations(classes, declarationLine);
-                if (!hasAresClassAnnotations(classAnnotations)) {
+                if (!hasAresClassAnnotations(classAnnotations, imports)) {
                     missingClassAnnotations = true;
                 }
-                if (!hasAnnotation(annotationBlock, "StrictTimeout") && !hasAnnotation(classAnnotations, "StrictTimeout")) {
+                if (!hasStrictTimeout(annotationBlock, imports) && !hasStrictTimeout(classAnnotations, imports)) {
                     missingTimeouts = true;
                 }
             }
@@ -547,9 +608,21 @@ public final class ExerciseIntegrityGate {
         return annotations;
     }
 
-    private static boolean hasAresClassAnnotations(String annotations) {
-        return hasAnnotation(annotations, "Public") && Pattern.compile("@(?:[\\w.]+\\.)?WhitelistPath\\s*\\(\\s*\"target\"\\s*\\)").matcher(annotations).find()
-                && Pattern.compile("@(?:[\\w.]+\\.)?BlacklistPath\\s*\\(\\s*\"target/test-classes\"\\s*\\)").matcher(annotations).find();
+    private static boolean hasAresClassAnnotations(String annotations, Set<String> imports) {
+        return hasTrustedAnnotation(annotations, imports, "de.tum.in.test.api.jupiter.Public", "Public", null)
+                && hasTrustedAnnotation(annotations, imports, "de.tum.in.test.api.WhitelistPath", "WhitelistPath", "\"target\"")
+                && hasTrustedAnnotation(annotations, imports, "de.tum.in.test.api.BlacklistPath", "BlacklistPath", "\"target/test-classes\"");
+    }
+
+    private static boolean hasStrictTimeout(String annotations, Set<String> imports) {
+        return hasTrustedAnnotation(annotations, imports, "de.tum.in.test.api.StrictTimeout", "StrictTimeout", "1");
+    }
+
+    private static boolean hasTrustedAnnotation(String annotations, Set<String> imports, String qualifiedName, String simpleName, String argument) {
+        String suffix = argument == null ? "\\b" : "\\s*\\(\\s*" + Pattern.quote(argument) + "\\s*\\)";
+        boolean fullyQualified = Pattern.compile("@" + Pattern.quote(qualifiedName) + suffix).matcher(annotations).find();
+        boolean imported = imports.contains(qualifiedName) && Pattern.compile("@" + Pattern.quote(simpleName) + suffix).matcher(annotations).find();
+        return fullyQualified || imported;
     }
 
     private static boolean hasJUnitTestAnnotation(String annotations) {

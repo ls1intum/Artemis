@@ -285,7 +285,12 @@ test.describe('Hyperion exercise generation browser UI', { tag: '@slow' }, () =>
         const hyperionTab = page.getByRole('tab', { name: 'AI activity' });
         await selectTabWithKeyboard(buildOutputTab, hyperionTab, 'ArrowRight');
         await expect(activity).toContainText('The exercise was adapted and saved', { timeout: 60_000 });
-        await expect(page.getByTestId('hyperion-generation-verdict')).toBeVisible();
+        const verdict = page.getByTestId('hyperion-generation-verdict');
+        await expect(verdict).toContainText('Build and grading consistency checks passed');
+        await expect(verdict).toContainText('Instructor review required');
+        await expect(verdict).toContainText('Reference solution passes');
+        await expect(verdict).toContainText('Template fails tests as expected');
+        await expect(verdict).toContainText('13 tests');
         await expect(page.getByTestId('hyperion-generation-cancel')).toBeHidden();
         await expect(page.getByTestId('hyperion-ai-menu')).toBeEnabled();
         await expectHyperionLlmMockRequestsIncreased(page, initialLlmRequests);
@@ -781,7 +786,7 @@ async function cancelRunningJobFromAdminDetails(browser: Browser, agentName: str
         await expect(generationRow).toContainText(agentName, { timeout: 60_000 });
         await generationRow.getByTestId('hyperion-generation-details').click();
         await expect(adminPage.getByTestId('admin-body').getByText(jobId, { exact: true })).toBeVisible({ timeout: 60_000 });
-        await expect(adminPage.getByTestId('hyperion-container-id')).toHaveCount(1);
+        await expect(adminPage.getByTestId('hyperion-container-id')).toHaveText(/\S+/);
         await adminPage.setViewportSize({ width: 1440, height: 1100 });
 
         const cancelResponsePromise = adminPage.waitForResponse(
@@ -793,7 +798,15 @@ async function cancelRunningJobFromAdminDetails(browser: Browser, agentName: str
         await confirmationDialog.getByRole('button', { name: 'Cancel generation', exact: true }).click();
         expect((await cancelResponsePromise).ok()).toBeTruthy();
         await expect(adminPage.getByText('Generation cancelled and sandbox released.', { exact: true })).toBeVisible({ timeout: 60_000 });
-        await expect(generationRow).toBeHidden({ timeout: 60_000 });
+        await adminPage.goto('/admin/build-overview');
+        const refreshedGenerationSection = adminPage.locator('#active-hyperion-generations');
+        await expect(refreshedGenerationSection).toBeVisible({ timeout: 60_000 });
+        const refreshResponsePromise = adminPage.waitForResponse((response) => response.request().method() === 'GET' && response.url().includes('/generation-sandboxes'), {
+            timeout: 60_000,
+        });
+        await refreshedGenerationSection.getByRole('button', { name: 'Refresh' }).click();
+        expect((await refreshResponsePromise).ok()).toBeTruthy();
+        await expect(refreshedGenerationSection.getByRole('row').filter({ hasText: exerciseId.toString() })).toHaveCount(0, { timeout: 60_000 });
     } finally {
         await adminPage.context().close();
     }

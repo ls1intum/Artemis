@@ -179,6 +179,12 @@ public class DifferentialVerificationService {
                 : List.of();
         boolean javaAresConventionsHold = javaAresConventionReasons.isEmpty();
         reasons.addAll(javaAresConventionReasons);
+        List<String> javaSourceLayoutReasons = exercise.getProgrammingLanguage() == ProgrammingLanguage.JAVA
+                ? ExerciseIntegrityGate.javaGeneratedSourceLayoutReasons(exercise.getPackageName(), request.seedTestsFiles(), request.seedTemplateFiles(),
+                        request.seedSolutionFiles(), request.producedTestsFiles(), request.producedTemplateFiles(), request.producedSolutionFiles())
+                : List.of();
+        boolean javaSourceLayoutIntact = javaSourceLayoutReasons.isEmpty();
+        reasons.addAll(javaSourceLayoutReasons);
 
         boolean extractionSound = checkExtractionSound(request.extractionFailedRepositories(), reasons);
 
@@ -188,12 +194,14 @@ public class DifferentialVerificationService {
         boolean noAdaptWipe = adaptWipeReasons.isEmpty();
         reasons.addAll(adaptWipeReasons);
 
-        boolean accepted = analysis.actionableGatesPass() && harnessIntact && noSolutionLeak && noSelfComparison && javaAresConventionsHold && extractionSound && noAdaptWipe;
+        boolean accepted = analysis.actionableGatesPass() && harnessIntact && noSolutionLeak && noSelfComparison && javaAresConventionsHold && javaSourceLayoutIntact
+                && extractionSound && noAdaptWipe;
         if (!accepted) {
             log.info(
                     "Differential verification failed: solution[{}], template[{}], actionableGatesPass={}, harnessIntact={}, noSolutionLeak={}, noSelfComparison={}, "
-                            + "javaAresConventionsHold={}, extractionSound={}, noAdaptWipe={}",
-                    solution, template, analysis.actionableGatesPass(), harnessIntact, noSolutionLeak, noSelfComparison, javaAresConventionsHold, extractionSound, noAdaptWipe);
+                            + "javaAresConventionsHold={}, javaSourceLayoutIntact={}, extractionSound={}, noAdaptWipe={}",
+                    solution, template, analysis.actionableGatesPass(), harnessIntact, noSolutionLeak, noSelfComparison, javaAresConventionsHold, javaSourceLayoutIntact,
+                    extractionSound, noAdaptWipe);
         }
         return new VerificationResult(accepted, analysis.solutionPassed(), analysis.templateFailed(), solution.tests(), reasons);
     }

@@ -263,7 +263,8 @@ class AgentSystemPromptServiceTest {
             ProgrammingExercise exercise = exerciseWith(ProgrammingLanguage.JAVA, "");
             exercise.setProjectType(projectType);
             assertThat(LanguageGenerationProfile.isSupported(exercise)).as("%s", projectType).isTrue();
-            assertThat(LanguageGenerationProfile.guidanceFor(exercise)).contains("@Public").contains("@StrictTimeout");
+            assertThat(LanguageGenerationProfile.guidanceFor(exercise)).contains("de.tum.in.test.api.StrictTimeout").contains("de.tum.in.test.api.jupiter.Public")
+                    .contains("@StrictTimeout(1)").doesNotContain("de.tum.in.ase.test").doesNotContain("extends AresTest");
         }
     }
 

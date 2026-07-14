@@ -92,6 +92,7 @@ final class HyperionUtils {
             Pattern.compile("\\b(?:verifier|test runner|hidden tests)\\b", Pattern.CASE_INSENSITIVE),
             Pattern.compile("\\btest(?:Class|Methods|Attributes|Constructors)\\[[^\\]]+]", Pattern.CASE_INSENSITIVE),
             Pattern.compile("\\btest[A-Z][A-Za-z0-9_]*\\s*\\(", Pattern.CASE_INSENSITIVE), Pattern.compile("adjust accordingly in tests", Pattern.CASE_INSENSITIVE),
+            Pattern.compile("^\\s*#{1,6}\\s*(?:instructor decisions?|open questions?|authoring notes?|drafting notes?)\\b", Pattern.CASE_INSENSITIVE | Pattern.MULTILINE),
             Pattern.compile("\\bconflict\\b[^\\n]{0,160}\\bdo\\s+\\*?\\*?not\\*?\\*?\\s+overlap\\b[^\\n]{0,160}\\bno conflict\\b", Pattern.CASE_INSENSITIVE));
 
     private static final List<ConditionalDraftArtifact> CONDITIONAL_DRAFT_ARTIFACTS = List.of(
@@ -105,10 +106,9 @@ final class HyperionUtils {
                     Pattern.compile("\\b(?:performance benchmark|benchmarking task|throughput benchmark|resource exhaustion|upper limit|maximum recurrence limit|"
                             + "thread-safe|thread safety|concurrent use)\\b", Pattern.CASE_INSENSITIVE),
                     Pattern.compile("\\b(?:performance|benchmark|throughput|time complexity|resource|limit|thread|concurren)\\b", Pattern.CASE_INSENSITIVE)),
-            new ConditionalDraftArtifact(
-                    Pattern.compile("\\b(?:provided test suite|test suite|students?\\s+(?:must|should|need to|are required to)\\s+(?:write|create|provide)\\s+unit tests?)\\b",
-                            Pattern.CASE_INSENSITIVE),
-                    Pattern.compile("\\b(?:unit tests?|testing|test suite)\\b", Pattern.CASE_INSENSITIVE)),
+            new ConditionalDraftArtifact(Pattern.compile(
+                    "\\b(?:provided test suite|test suite|unit tests?|students?\\s+(?:must|should|need to|are required to)\\s+(?:write|create|provide)\\s+unit tests?)\\b",
+                    Pattern.CASE_INSENSITIVE), Pattern.compile("\\b(?:unit tests?|testing|test suite)\\b", Pattern.CASE_INSENSITIVE)),
             new ConditionalDraftArtifact(Pattern.compile("\\bJSON(?:-like)?\\b", Pattern.CASE_INSENSITIVE), Pattern.compile("\\bJSON\\b", Pattern.CASE_INSENSITIVE)),
             new ConditionalDraftArtifact(Pattern.compile("\\b(?:standard input|command[- ]line|CSV|database|web interface|printed (?:lines|output))\\b", Pattern.CASE_INSENSITIVE),
                     Pattern.compile("\\b(?:standard input|command[- ]line|CSV|database|web interface|printed (?:lines|output))\\b", Pattern.CASE_INSENSITIVE)));
