@@ -38,10 +38,10 @@ apps in the fleet mirror the same concepts with their own primitive stack.
 - **Signal APIs only** — `input()` / `input.required()`, `output()`, `model()`, `computed()`,
   `viewChild()`, `inject()`. No legacy decorators. See [Client Development](/developer/guidelines/client-development).
 - **Standalone + `ChangeDetectionStrategy.OnPush`**, zoneless-safe.
-- **Token-only styling** — only semantic Tailwind tokens (see [Design tokens](#design-tokens--accessibility)).
+- **Token-only styling** — only semantic Tailwind tokens (see [Design tokens](#design-tokens)).
   Never raw palette colors, `--p-*` primitives, or Bootstrap classes.
-- **Accessibility is part of the contract** — correct roles and `aria-*`, keyboard support, focus
-  management, and WCAG AA (>= 4.5:1) text contrast, all verified in tests.
+- **Accessibility is part of the contract** — correct roles and `aria-*`, keyboard support, and focus
+  management, all verified in tests.
 - **Only `@angular/cdk`** as a runtime UI dependency. No PrimeNG / Bootstrap / ng-bootstrap imports.
 
 ## Architecture
@@ -70,27 +70,26 @@ Instead of adding a `class-variance-authority` dependency, each component with v
 tiny local map in a `*.variants.ts` file that returns Tailwind class strings. This keeps styling
 declarative, testable, and dependency-free.
 
-## Design tokens & accessibility
+## Design tokens
 
-Colors use semantic tokens only (see also [Client Theming](/developer/guidelines/client-theming)). The
-kit adds two accessible companion tones on top of the brand state colors, defined per theme in
-`content/scss/themes/_default-variables.scss` and `_dark-variables.scss`, auto-emitted as CSS custom
-properties, and exposed to Tailwind in `tailwind.css`:
+Colors use semantic tokens only (see also [Client Theming](/developer/guidelines/client-theming)). The kit
+uses the same tokens Artemis' PrimeNG theme exposes, so the components render like the widgets they replace:
 
-| Token                                                                              | Meaning                                                                                         | Used by                                                |
-| ---------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- | ------------------------------------------------------ |
-| `--color-state-*` (`state-danger`, `state-success`, `state-warning`, `state-info`) | The brand state color.                                                                          | Tints (`bg-state-success/15`), borders.                |
-| `--color-*-solid` (`primary-solid`, `state-danger-solid`, …)                       | A fill dark enough for **white** text. Dark in both themes.                                     | Solid buttons (`bg-…-solid` + `text-surface-0`).       |
-| `--color-*-strong` (`primary-strong`, `state-danger-strong`, …)                    | The accessible **on-surface text** tone. A dark shade on light surfaces, a light shade on dark. | Outlined / text buttons, tag labels (`text-…-strong`). |
+| Token                                                                              | Meaning                | Used by                                                                                    |
+| ---------------------------------------------------------------------------------- | ---------------------- | ------------------------------------------------------------------------------------------ |
+| `bg-primary` / `text-primary`                                                      | The brand color.       | Solid primary buttons (`bg-primary` + `text-surface-0`); outlined / text primary.          |
+| `--color-state-*` (`state-danger`, `state-success`, `state-warning`, `state-info`) | The status colors.     | Solid state buttons; tag tints (`bg-state-success/15`) with a `text-state-*` label; borders. |
+| `bg-surface-*` / `text-surface-*` / `text-muted-color`                             | The neutral surface ramp. | Secondary / contrast variants, backgrounds, muted text.                                    |
 
-<Callout variant={CalloutVariant.warning}>
-    **WCAG AA is enforced by a test.** The raw brand state colors (for example `#28a745` success) do not reach 4.5:1 against white as text or behind white text, which is why solid
-    buttons and tag labels use the `-solid` / `-strong` tones. `shared-ui/tum-ui/tum-ui-state-contrast.spec.ts` recomputes the rendered contrast (replicating the sRGB `color-mix`)
-    and fails if any severity / variant / theme pairing drops below 4.5:1. If you add or change a tone, keep that spec in sync.
+Dark mode is automatic: `--danger` / `--success` / … resolve to their per-theme values, so a single class
+such as `text-state-danger` is correct in both themes without a `dark:` variant.
+
+<Callout variant={CalloutVariant.info}>
+    The migration is intentionally **appearance-neutral**: a tum-ui component must render identically to the
+    PrimeNG component it replaces, so use the Aura tokens above rather than introducing new shades. (Improving
+    color contrast to WCAG AA is a separate, app-wide effort on the underlying PrimeNG theme, not something the
+    kit should diverge on.)
 </Callout>
-
-Dark mode is automatic: the tokens resolve to their per-theme values, so a single class such as
-`text-state-danger-strong` is correct in both themes without a `dark:` variant.
 
 ## Components
 
@@ -124,8 +123,8 @@ A native `<button>` with severity / size variants.
 
 ### Tag — `tum-ui-tag`
 
-A presentational status pill (no behavior). Colored severities use a tinted background with the
-accessible `-strong` label tone; `secondary` / `contrast` use the surface ramp.
+A presentational status pill (no behavior). Colored severities use a tinted background (`bg-state-*/15`)
+with a `text-state-*` label; `secondary` / `contrast` use the surface ramp.
 
 | Input      | Type                                                                     | Default                             |
 | ---------- | ------------------------------------------------------------------------ | ----------------------------------- |
@@ -282,7 +281,6 @@ Use Vitest with `setupTestBed({ zoneless: true })`, colocated with the component
 - Overlay geometry, z-order, and real pointer interception are **not** headless-verifiable (jsdom does
   not apply CSS). Assert the wiring (backdrop class present, `backdropClick()` closes) and verify the
   visual behavior manually or in Playwright.
-- For colored surfaces, add or extend the **contrast regression** in `tum-ui-state-contrast.spec.ts`.
 - The strict spec compile (`tsc -p tsconfig.spec.json`) enforces member visibility, so specs must use
   public members. Run it before pushing.
 

@@ -24,12 +24,12 @@ still being migrated.
 - **Angular 21 signal APIs only**: `input()` / `input.required()`, `output()`, `model()`,
   `computed()`, `viewChild()`, `inject()`. No legacy decorators.
 - **Standalone + `OnPush`**, zoneless-safe.
-- **Token-only styling**: semantic Tailwind tokens (`bg-primary`, `text-surface-*`,
-  `text-muted-color`, `bg/text/border-state-*`, and the accessible `*-solid` / `*-strong` tones). Never
-  raw Tailwind palette colors, `--p-*` primitives, or Bootstrap classes. Dark mode comes for free
-  because the tokens resolve per theme.
-- **Accessibility is part of the contract**: real semantics (`role`, `aria-*`), keyboard support,
-  focus management, and WCAG AA (>= 4.5:1) text contrast, verified in tests.
+- **Token-only styling**: the same semantic Tailwind tokens Artemis' PrimeNG theme uses (`bg-primary`,
+  `text-surface-*`, `text-muted-color`, `bg/text/border-state-*`), so the components render like the
+  widgets they replace. Never raw Tailwind palette colors, `--p-*` primitives, or Bootstrap classes.
+  Dark mode comes for free because the tokens resolve per theme.
+- **Accessibility is part of the contract**: real semantics (`role`, `aria-*`), keyboard support, and
+  focus management, verified in tests.
 - **No PrimeNG / Bootstrap / ng-bootstrap** imports. The only runtime UI dependency is `@angular/cdk`.
 
 ## Components
@@ -50,17 +50,16 @@ Each component lives in its own folder with a colocated `*.spec.ts`. Variant cla
 
 ## Styling tokens
 
-Contrast-critical tones are defined per theme in `content/scss/themes/_default-variables.scss` (light)
-and `_dark-variables.scss` (dark), auto-emitted as CSS custom properties, and exposed to Tailwind in
-`tailwind.css`:
+The components use the same semantic tokens Artemis' PrimeNG theme uses, so they render like the widgets
+they replace:
 
-- `--color-state-*` = the brand state color (`bg-state-success/15` tints, borders).
-- `--color-*-solid` = a fill dark enough for white text (solid buttons), dark in both themes.
-- `--color-*-strong` = the accessible on-surface text tone (outlined / text buttons, tag labels);
-  a dark shade on light surfaces, a light shade on dark.
+- `bg-primary` / `text-primary` — the brand color (solid buttons fill it with `text-surface-0`).
+- `bg/text/border-state-*` (`danger`, `success`, `warning`, `info`) — status colors; e.g. a tag uses a
+  `bg-state-success/15` tint with a `text-state-success` label.
+- `bg-surface-*` / `text-surface-*` / `text-muted-color` — the neutral surface ramp.
 
-Every foreground/background pairing is asserted at >= 4.5:1 in both themes by
-[`tum-ui-state-contrast.spec.ts`](./tum-ui-state-contrast.spec.ts).
+The `--danger` / `--success` / … custom properties differ per theme, so a single class is correct in
+both light and dark without a `dark:` variant.
 
 ## Testing
 
