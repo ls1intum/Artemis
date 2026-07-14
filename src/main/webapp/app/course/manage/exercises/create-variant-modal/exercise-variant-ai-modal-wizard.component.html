@@ -66,7 +66,7 @@
             <!-- Difficulty adaptation is hidden for exam exercises: variants are distributed one-per-student, so a
                  differing difficulty would be unfair — every student must get an equally hard exercise. -->
             @if (!isExamExercise()) {
-                <div class="option-card" [class.option-card--selected]="changeDifficulty()" (click)="toggleDifficulty()">
+                <div class="option-card" [class.option-card--selected]="changeDifficulty()" (click)="toggleDifficulty()" data-testid="variant-option-difficulty">
                     @if (changeDifficulty()) {
                         <span class="option-card__check"><fa-icon [icon]="faCheck" /></span>
                     }

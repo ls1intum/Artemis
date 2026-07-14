@@ -80,7 +80,7 @@ describe('ExerciseVariantGenerationService', () => {
         expect(service.jobs()[0].maxAttempts).toBe(3);
     });
 
-    it('DONE with warnings stores the terminal phase, variantExerciseId, and unsubscribes from the topic', () => {
+    it('DONE with warnings stores the terminal phase, variantExerciseId, and unsubscribes from the topic', async () => {
         apiMock.generateVariant.mockReturnValue(of({ jobId: 'job-1' }));
         service.startGeneration(42, {}).subscribe();
 
@@ -90,6 +90,8 @@ describe('ExerciseVariantGenerationService', () => {
         expect(service.jobs()[0].variantExerciseId).toBe(4711);
         expect(service.jobs()[0].warnings).toEqual(['FINALIZING: placement failed']);
         expect(service.runningJobs()).toHaveLength(0);
+        // Detach is deferred to a microtask so the terminal event reaches every subscriber first — flush it.
+        await Promise.resolve();
         expect(websocketMock.unsubscribeFromJob).toHaveBeenCalledWith('job-1');
     });
 
@@ -107,7 +109,7 @@ describe('ExerciseVariantGenerationService', () => {
         expect(websocketMock.subscribeToJob).not.toHaveBeenCalledWith('done-1');
     });
 
-    it('cancelJob issues the DELETE and the entry transitions to CANCELLED on the CANCELLED event', () => {
+    it('cancelJob issues the DELETE and the entry transitions to CANCELLED on the CANCELLED event', async () => {
         apiMock.generateVariant.mockReturnValue(of({ jobId: 'job-1' }));
         apiMock.cancelJob.mockReturnValue(of(undefined));
         service.startGeneration(42, {}).subscribe();
@@ -119,6 +121,8 @@ describe('ExerciseVariantGenerationService', () => {
 
         eventSubjects.get('job-1')!.next({ type: 'CANCELLED', phase: 'CANCELLED' });
         expect(service.jobs()[0].phase).toBe('CANCELLED');
+        // Detach is deferred to a microtask so the terminal event reaches every subscriber first — flush it.
+        await Promise.resolve();
         expect(websocketMock.unsubscribeFromJob).toHaveBeenCalledWith('job-1');
     });
 
