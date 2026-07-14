@@ -64,6 +64,38 @@ $purple: #8b5cf6;
     &--attention {
         border-color: rgba(var(--bs-warning-rgb), 0.5);
     }
+
+    // Purple accent like the modal's flow card (variant-flow-card__arrow / __title--target).
+    &__arrow {
+        font-size: 0.7rem;
+        color: $purple;
+    }
+
+    &__target-title {
+        color: $purple;
+    }
+}
+
+// Allows the flexed title span to shrink so text-truncate works (utility not in Bootstrap).
+.min-width-0 {
+    min-width: 0;
+}
+
+// Same look as the modal's "what is being adapted" chips (exercise-variant-ai-modal-wizard.component.scss).
+.info-chip {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.15rem 0.55rem;
+    border-radius: 999px;
+    font-size: 0.7rem;
+    font-weight: 500;
+    background: var(--bs-secondary-bg);
+    color: var(--bs-secondary-color);
+    // Narrow tray: a long domain/custom text must truncate instead of blowing up the card width.
+    max-width: 100%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 // ── Per-entry step-dot timeline (mirrors the wizard's step indicator, todo-d) ──

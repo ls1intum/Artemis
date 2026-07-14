@@ -63,19 +63,23 @@
         <p class="text-muted small mb-3">Select one or more aspects you'd like the AI to change.</p>
 
         <div class="option-cards mb-4">
-            <div class="option-card" [class.option-card--selected]="changeDifficulty()" (click)="toggleDifficulty()">
-                @if (changeDifficulty()) {
-                    <span class="option-card__check"><fa-icon [icon]="faCheck" /></span>
-                }
-                <div class="option-card__icon"><fa-icon [icon]="faGaugeHigh" /></div>
-                <h6>Difficulty</h6>
-                <p>Change how hard the exercise is</p>
-                <span class="option-card__cta">
+            <!-- Difficulty adaptation is hidden for exam exercises: variants are distributed one-per-student, so a
+                 differing difficulty would be unfair — every student must get an equally hard exercise. -->
+            @if (!isExamExercise()) {
+                <div class="option-card" [class.option-card--selected]="changeDifficulty()" (click)="toggleDifficulty()">
                     @if (changeDifficulty()) {
-                        ✓ Selected
+                        <span class="option-card__check"><fa-icon [icon]="faCheck" /></span>
                     }
-                </span>
-            </div>
+                    <div class="option-card__icon"><fa-icon [icon]="faGaugeHigh" /></div>
+                    <h6>Difficulty</h6>
+                    <p>Change how hard the exercise is</p>
+                    <span class="option-card__cta">
+                        @if (changeDifficulty()) {
+                            ✓ Selected
+                        }
+                    </span>
+                </div>
+            }
             <div class="option-card" [class.option-card--selected]="changeDomain()" (click)="toggleDomain()">
                 @if (changeDomain()) {
                     <span class="option-card__check"><fa-icon [icon]="faCheck" /></span>
@@ -277,8 +281,7 @@
                 <fa-icon [icon]="faRobot" class="generating-icon" />
                 <div class="generating-ring"></div>
             </div>
-            <h6 class="fw-semibold mb-1">{{ 'artemisApp.exerciseVariantGeneration.wizard.generatingTitle' | artemisTranslate }}</h6>
-            <p class="text-muted small mb-4">{{ 'artemisApp.exerciseVariantGeneration.wizard.backgroundHint' | artemisTranslate }}</p>
+            <h6 class="fw-semibold mb-4">{{ 'artemisApp.exerciseVariantGeneration.wizard.generatingTitle' | artemisTranslate }}</h6>
             <ol class="generation-steps">
                 @for (phase of generationPhases; track phase; let i = $index) {
                     <li
@@ -321,12 +324,20 @@
                     </li>
                 }
             </ol>
+            <div class="alert alert-info mt-3 mb-0 small" data-testid="variant-wizard-background-hint">
+                <fa-icon [icon]="faInfoCircle" class="me-1" />
+                <span>{{ 'artemisApp.exerciseVariantGeneration.wizard.backgroundHint' | artemisTranslate }}</span>
+            </div>
             @if (isRunning()) {
-                <div class="d-flex justify-content-end mt-3">
+                <div class="d-flex justify-content-end gap-2 mt-3">
                     <p-button severity="danger" [outlined]="true" size="small" (onClick)="cancelGeneration($event)" data-testid="variant-wizard-cancel">
                         <fa-icon [icon]="faBan" class="me-1" />
                         {{ 'artemisApp.exerciseVariantGeneration.tray.cancel' | artemisTranslate }}
                     </p-button>
+                    <button type="button" class="btn btn-sm btn-ai-generate" (click)="onClose(false)" data-testid="variant-wizard-run-in-background">
+                        <fa-icon [icon]="faWandMagicSparkles" class="me-1" />
+                        {{ 'artemisApp.exerciseVariantGeneration.wizard.runInBackground' | artemisTranslate }}
+                    </button>
                 </div>
             }
         </div>

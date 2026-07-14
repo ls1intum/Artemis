@@ -169,23 +169,13 @@ export class ExerciseActionsComponent {
         return showVisible || showStart || showBatches || showEnd;
     });
 
-    /** Regular actions in original display order: Teams → Participations → Scores → type-specific → Edit → Delete. */
+    /** Regular actions in display order: Teams → Participations → Scores → type-specific → Create Variant with AI → Edit → Delete. */
     readonly mainActions = computed<ActionItem[]>(() => {
         const ex = this.exercise();
         const cid = this.courseId();
         const seg = getExerciseUrlSegment(ex.type);
         const items: ActionItem[] = [];
 
-        if (ex.isAtLeastEditor) {
-            items.push({
-                id: 'create-variant-ai',
-                labelKey: 'artemisApp.exerciseManagement.action.createVariantWithAi',
-                icon: faRobot,
-                styleClass: 'btn-warning',
-                kind: 'button',
-                onClick: () => this.aiVariantModalVisible.set(true),
-            });
-        }
         if (ex.mode === ExerciseMode.TEAM) {
             items.push({
                 id: 'teams',
@@ -257,6 +247,18 @@ export class ExerciseActionsComponent {
                 styleClass: 'btn-success',
                 kind: 'link',
                 link: ['/course-management', cid, seg, ex.id!, 'example-submissions'],
+            });
+        }
+        // The AI variant button sits between the info/success-colored buttons above and the warning-colored
+        // edit buttons below, matching its own warning color (todo-e).
+        if (ex.isAtLeastEditor) {
+            items.push({
+                id: 'create-variant-ai',
+                labelKey: 'artemisApp.exerciseManagement.action.createVariantWithAi',
+                icon: faRobot,
+                styleClass: 'btn-warning',
+                kind: 'button',
+                onClick: () => this.aiVariantModalVisible.set(true),
             });
         }
         // Editing (in-editor and the plain edit form) requires editor rights. Tutors can reach this page but must not

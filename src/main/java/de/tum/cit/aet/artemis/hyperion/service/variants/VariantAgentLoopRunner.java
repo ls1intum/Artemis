@@ -42,6 +42,13 @@ public class VariantAgentLoopRunner {
     /** Pipeline id for token-usage traces of TRANSFORMING/REPAIRING rounds (plan Section 7 telemetry). */
     static final String TRANSFORM_PIPELINE_ID = "exercise-variant-transform";
 
+    /**
+     * Message of the {@link IllegalStateException} Spring AI's DefaultToolCallingManager throws when the model
+     * requests a tool that is not registered (a hallucinated tool name). Unlike errors inside an existing tool —
+     * which are fed back to the model as the tool result — this aborts the whole ChatClient call.
+     */
+    private static final String UNKNOWN_TOOL_MESSAGE = "No ToolCallback found for tool name";
+
     private final HyperionPromptTemplateService templateService;
 
     private final LLMTokenUsageService llmTokenUsageService;
@@ -100,16 +107,19 @@ public class VariantAgentLoopRunner {
             throw new IllegalStateException("AI chat client is not configured");
         }
         List<ToolCallback> tools = toolset.toolCallbacks();
-        String systemPrompt = templateService.render(promptTemplate, Map.of("changePlan", renderPlanContract(plan)));
+        // The tool catalog is rendered from the actual ToolCallbacks, so a tool added to a toolset is
+        // automatically part of the prompt's "these are the ONLY tools" contract — no manual prompt upkeep.
+        String systemPrompt = templateService.render(promptTemplate, Map.of("changePlan", renderPlanContract(plan), "availableTools", renderToolCatalog(tools)));
         String userMessage = repairFeedback == null ? initialUserMessage(plan) : repairUserMessage(repairFeedback);
 
         log.debug("Starting agent round for job {} with {} tools (repair: {})", job.getJobId(), tools.size(), repairFeedback != null);
-        // Spring AI executes the tool-call loop internally within this single call; tool implementations log
-        // the per-call transcript (plan Section 2.5, point 5) and observe the cancel flag between calls.
-        // tools(Object...) is the unified non-deprecated API in Spring AI 2.0 and accepts ToolCallback instances.
-        ChatResponse chatResponse = chatClient.prompt().system(systemPrompt).user(userMessage).tools(tools.toArray()).call().chatResponse();
+        ChatResponse chatResponse = callAgent(job, systemPrompt, userMessage, tools);
         String content = LLMTokenUsageService.extractResponseText(chatResponse);
         log.debug("Agent round finished for job {}: {}", job.getJobId(), content);
+        // Round boundary: persist whatever the round left unpersisted (e.g. repo edits without a final runBuild)
+        // BEFORE reading the round state — verification must judge the round's actual work, and a flush of the
+        // test repository must set the touched-test-repo flag.
+        toolset.flushPendingChanges();
 
         Long userId = userRepository.findOneByLogin(job.getInitiatorLogin()).map(User::getId).orElse(null);
         llmTokenUsageService.trackChatResponseTokenUsage(chatResponse, LLMServiceType.HYPERION, TRANSFORM_PIPELINE_ID,
@@ -117,6 +127,36 @@ public class VariantAgentLoopRunner {
 
         String finishSummary = toolset.finishSummary() != null ? toolset.finishSummary() : content;
         return new AgentResult(finishSummary, toolset.touchedTestRepo(), extractTotalTokens(chatResponse));
+    }
+
+    /**
+     * One ChatClient call with a single retry when the model hallucinates a tool name: Spring AI's internal tool
+     * loop aborts the whole call (see {@link #UNKNOWN_TOOL_MESSAGE}) instead of feeding an error back to the model,
+     * so without the retry one stochastic hallucination fails the entire round. The retry restarts the round with
+     * the same toolset; edits already made persist in the variant, and the fresh round reads the current state.
+     *
+     * Spring AI executes the tool-call loop internally within this single call; tool implementations log the
+     * per-call transcript (plan Section 2.5, point 5) and observe the cancel flag between calls.
+     * tools(Object...) is the unified non-deprecated API in Spring AI 2.0 and accepts ToolCallback instances.
+     */
+    private ChatResponse callAgent(VariantJob job, String systemPrompt, String userMessage, List<ToolCallback> tools) {
+        try {
+            return chatClient.prompt().system(systemPrompt).user(userMessage).tools(tools.toArray()).call().chatResponse();
+        }
+        catch (IllegalStateException e) {
+            if (e.getMessage() == null || !e.getMessage().contains(UNKNOWN_TOOL_MESSAGE)) {
+                throw e;
+            }
+            log.warn("Agent round for job {} aborted by a hallucinated tool call ({}); retrying the round once", job.getJobId(), e.getMessage());
+            return chatClient.prompt().system(systemPrompt).user(userMessage).tools(tools.toArray()).call().chatResponse();
+        }
+    }
+
+    /**
+     * Renders the comma-separated names of the round's tools for the system prompt's tool contract.
+     */
+    private static String renderToolCatalog(List<ToolCallback> tools) {
+        return tools.stream().map(tool -> tool.getToolDefinition().name()).collect(Collectors.joining(", "));
     }
 
     /**

@@ -13,6 +13,7 @@
                 "monitorTitle": "KI-Variantengenerierung",
                 "generatingTitle": "Deine Variante wird generiert…",
                 "backgroundHint": "Du kannst dieses Fenster schließen — die Generierung läuft im Hintergrund weiter und das Ergebnis ist hier, wenn du zurückkommst.",
+                "runInBackground": "Im Hintergrund ausführen",
                 "startFailed": "Der Generierungsjob konnte nicht gestartet werden. Bitte versuche es erneut.",
                 "failedTitle": "Variantengenerierung fehlgeschlagen",
                 "failedInPhase": "Fehlgeschlagen während:",

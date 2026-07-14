@@ -1,10 +1,10 @@
-import { ChangeDetectionStrategy, Component, computed, effect, input, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, input, output, signal } from '@angular/core';
 import { Exercise, ExerciseType, getIcon, getIconTooltip } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { CourseManagementOverviewExerciseStatisticsDTO } from 'app/course/manage/overview/course-management-overview-exercise-statistics-dto.model';
 import { Course } from 'app/course/shared/entities/course.model';
 import { roundValueSpecifiedByCourseSettings } from 'app/foundation/util/utils';
-import { faBook, faExclamationTriangle, faFileSignature, faTable, faTimes, faUsers, faWrench } from '@fortawesome/free-solid-svg-icons';
+import { faBook, faExclamationTriangle, faFileSignature, faRobot, faTable, faTimes, faUsers, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { faCalendarAlt } from '@fortawesome/free-regular-svg-icons';
 import { RouterLink } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -16,6 +16,7 @@ import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ArtemisTimeAgoPipe } from 'app/foundation/pipes/artemis-time-ago.pipe';
 import { ExerciseCategoriesComponent } from 'app/exercise/exercise-categories/exercise-categories.component';
+import { ExerciseVariantAiModalWizardComponent } from 'app/course/manage/exercises/create-variant-modal/exercise-variant-ai-modal-wizard.component';
 
 export enum ExerciseRowType {
     FUTURE = 'future',
@@ -40,6 +41,7 @@ export enum ExerciseRowType {
         ArtemisDatePipe,
         ArtemisTranslatePipe,
         ArtemisTimeAgoPipe,
+        ExerciseVariantAiModalWizardComponent,
     ],
 })
 export class CourseManagementExerciseRowComponent {
@@ -47,6 +49,12 @@ export class CourseManagementExerciseRowComponent {
     readonly details = input.required<Exercise>();
     readonly statistic = input<CourseManagementOverviewExerciseStatisticsDTO>();
     readonly rowType = input.required<ExerciseRowType>();
+
+    /** A generated AI variant was confirmed in the wizard — the host may want to refresh the exercise list. */
+    readonly variantAdded = output<Exercise>();
+
+    /** Controls the AI variant generation wizard/modal opened via the "Create Variant with AI" action. */
+    readonly aiVariantModalVisible = signal(false);
 
     // Expose enums to the template
     readonly exerciseType = ExerciseType;
@@ -84,6 +92,7 @@ export class CourseManagementExerciseRowComponent {
     readonly faTable = faTable;
     readonly faExclamationTriangle = faExclamationTriangle;
     readonly faFileSignature = faFileSignature;
+    readonly faRobot = faRobot;
 
     constructor() {
         // Effect to process statistic changes

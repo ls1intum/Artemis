@@ -13,6 +13,7 @@
                 "monitorTitle": "AI variant generation",
                 "generatingTitle": "Generating your variant…",
                 "backgroundHint": "You can close this window — generation continues in the background and the result will be here when you come back.",
+                "runInBackground": "Run in Background",
                 "startFailed": "The generation job could not be started. Please try again.",
                 "failedTitle": "Variant generation failed",
                 "failedInPhase": "Failed during:",

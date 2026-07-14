@@ -149,7 +149,11 @@ public class QuizVariantAdapters implements VariantTypeAdapters {
         try {
             QuizExercise variant = quizExerciseImportService.importQuizExercise(original, original, null);
             log.debug("Provisioned quiz variant {} from source {}", variant.getId(), source.getId());
-            return variant;
+            // Return a copy WITHOUT the initialized question graph: the import result still carries the deep-copied
+            // SOURCE questions, quizQuestions cascades ALL with orphanRemoval, and the pipeline saves this instance
+            // again at FINALIZING (group placement) — which silently overwrote every question the agent had already
+            // re-themed and saved during TRANSFORMING back to the source content.
+            return quizExerciseRepository.findByIdElseThrow(variant.getId());
         }
         catch (Exception e) {
             throw new RuntimeException("Importing the quiz variant clone failed: " + e.getMessage(), e);
@@ -252,8 +256,8 @@ public class QuizVariantAdapters implements VariantTypeAdapters {
     }
 
     @Override
-    public void finalizeVariant(Exercise variant, VariantGenerationRequestDTO request) {
+    public void finalizeVariant(Exercise variant, VariantJob job) {
         // Same shared placement logic as programming (plan Section 4, FINALIZING row: "same as programming").
-        variantPlacementService.place(variant, request);
+        variantPlacementService.place(variant, job.getSourceExerciseId(), job.getRequest());
     }
 }

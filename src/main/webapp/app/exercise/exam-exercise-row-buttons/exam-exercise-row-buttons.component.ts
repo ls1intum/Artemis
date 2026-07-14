@@ -13,7 +13,20 @@ import { Exam } from 'app/exam/shared/entities/exam.model';
 import dayjs from 'dayjs/esm';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { EventManager } from 'app/foundation/service/event-manager.service';
-import { faBook, faExclamationTriangle, faEye, faFileExport, faFileSignature, faPencilAlt, faSignal, faTable, faTrash, faUsers, faWrench } from '@fortawesome/free-solid-svg-icons';
+import {
+    faBook,
+    faExclamationTriangle,
+    faEye,
+    faFileExport,
+    faFileSignature,
+    faPencilAlt,
+    faRobot,
+    faSignal,
+    faTable,
+    faTrash,
+    faUsers,
+    faWrench,
+} from '@fortawesome/free-solid-svg-icons';
 import { faListAlt } from '@fortawesome/free-regular-svg-icons';
 import { PROFILE_LOCALCI } from 'app/app.constants';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
@@ -25,11 +38,12 @@ import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/del
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
+import { ExerciseVariantAiModalWizardComponent } from 'app/course/manage/exercises/create-variant-modal/exercise-variant-ai-modal-wizard.component';
 
 @Component({
     selector: 'jhi-exam-exercise-row-buttons',
     templateUrl: './exam-exercise-row-buttons.component.html',
-    imports: [RouterLink, FaIconComponent, TranslateDirective, NgbTooltip, DeleteButtonDirective, ArtemisTranslatePipe],
+    imports: [RouterLink, FaIconComponent, TranslateDirective, NgbTooltip, DeleteButtonDirective, ArtemisTranslatePipe, ExerciseVariantAiModalWizardComponent],
 })
 export class ExamExerciseRowButtonsComponent implements OnInit {
     private textExerciseService = inject(TextExerciseService);
@@ -64,6 +78,10 @@ export class ExamExerciseRowButtonsComponent implements OnInit {
     faFileExport = faFileExport;
     faFileSignature = faFileSignature;
     farListAlt = faListAlt;
+    faRobot = faRobot;
+
+    /** Controls the AI variant generation wizard/modal opened via the "Create Variant with AI" action. */
+    readonly aiVariantModalVisible = signal(false);
 
     readonly localCIEnabled = signal(true);
 

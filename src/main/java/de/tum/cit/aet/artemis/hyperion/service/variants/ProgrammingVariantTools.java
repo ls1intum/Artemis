@@ -62,6 +62,10 @@ class ProgrammingVariantTools implements VariantToolset {
 
     private static final int MAX_FILE_CONTENT_LENGTH = 100_000;
 
+    private static final int MAX_SEARCH_RESULTS = 50;
+
+    private static final int MAX_SEARCH_LINE_LENGTH = 300;
+
     /** Per-round tool-call budget (see {@link #stopNotice()}); higher than the quiz budget — repo work needs more calls. */
     private static final int TOOL_CALL_BUDGET = 60;
 
@@ -142,6 +146,25 @@ class ProgrammingVariantTools implements VariantToolset {
         return finishSummary;
     }
 
+    @Override
+    public void flushPendingChanges() {
+        for (Map.Entry<RepositoryType, Repository> entry : checkouts.entrySet()) {
+            try {
+                if (gitService.isWorkingCopyClean(entry.getValue())) {
+                    continue;
+                }
+                log.info("Committing uncommitted {} repository changes left by the agent round for exercise {}", entry.getKey(), exercise.getId());
+                repositoryService.commitChanges(entry.getValue(), user);
+                markTouched(entry.getKey());
+            }
+            catch (GitAPIException e) {
+                // Losing the commit means losing the round's work while verification would pass on the stale
+                // pushed state — fail the round loudly instead.
+                throw new IllegalStateException("Could not persist pending " + entry.getKey() + " repository changes after the agent round: " + e.getMessage(), e);
+            }
+        }
+    }
+
     @Tool(description = "List all files in one of the variant exercise's repositories. Valid repositories: TEMPLATE, SOLUTION, TESTS.")
     public String listFiles(@ToolParam(description = "the repository to list: TEMPLATE, SOLUTION, or TESTS") String repository) {
         String stop = stopNotice();
@@ -186,6 +209,55 @@ class ProgrammingVariantTools implements VariantToolset {
         }
         catch (Exception e) {
             return "Error: could not access the " + repositoryType + " repository: " + e.getMessage();
+        }
+    }
+
+    @Tool(description = "Search for a text snippet across all files of one of the variant exercise's repositories (TEMPLATE, SOLUTION, or TESTS). "
+            + "Returns matching lines as 'path:lineNumber: line'. Use this to locate code before editing instead of reading files one by one.")
+    public String searchFiles(@ToolParam(description = "the repository to search: TEMPLATE, SOLUTION, or TESTS") String repository,
+            @ToolParam(description = "the exact text to search for (case-sensitive single-line substring, not a regex)") String searchText) {
+        String stop = stopNotice();
+        if (stop != null) {
+            return stop;
+        }
+        RepositoryType repositoryType = parseRepositoryType(repository);
+        if (repositoryType == null) {
+            return invalidRepositoryMessage(repository);
+        }
+        if (searchText == null || searchText.isBlank()) {
+            return "Error: the search text must not be empty.";
+        }
+        try {
+            Repository checkout = checkout(repositoryType);
+            List<String> paths = repositoryService.getFiles(checkout).entrySet().stream().filter(entry -> entry.getValue() == FileType.FILE).map(Map.Entry::getKey).sorted()
+                    .toList();
+            StringBuilder matches = new StringBuilder();
+            int matchCount = 0;
+            for (String path : paths) {
+                String content;
+                try {
+                    content = new String(repositoryService.getFile(checkout, path), StandardCharsets.UTF_8);
+                }
+                catch (IOException e) {
+                    continue;
+                }
+                String[] lines = content.split("\n", -1);
+                for (int lineIndex = 0; lineIndex < lines.length; lineIndex++) {
+                    if (!lines[lineIndex].contains(searchText)) {
+                        continue;
+                    }
+                    if (matchCount == MAX_SEARCH_RESULTS) {
+                        matches.append("[more matches omitted — make the search text more specific]");
+                        return matches.toString();
+                    }
+                    matchCount++;
+                    matches.append(path).append(':').append(lineIndex + 1).append(": ").append(truncateLine(lines[lineIndex].strip())).append('\n');
+                }
+            }
+            return matchCount == 0 ? "No matches for the search text in the " + repositoryType + " repository." : matches.toString();
+        }
+        catch (Exception e) {
+            return "Error: could not search the " + repositoryType + " repository: " + e.getMessage();
         }
     }
 
@@ -270,6 +342,39 @@ class ProgrammingVariantTools implements VariantToolset {
         }
     }
 
+    @Tool(description = "Delete an existing file in one of the variant's repositories. Only use this for files the plan removes "
+            + "(e.g. a test class dropped when making the exercise easier). Paths are restricted to src/ (TEMPLATE, SOLUTION) or test/ (TESTS).")
+    public String deleteFile(@ToolParam(description = "the repository: TEMPLATE, SOLUTION, or TESTS") String repository,
+            @ToolParam(description = "the file path relative to the repository root") String path) {
+        String stop = stopNotice();
+        if (stop != null) {
+            return stop;
+        }
+        RepositoryType repositoryType = parseRepositoryType(repository);
+        if (repositoryType == null) {
+            return invalidRepositoryMessage(repository);
+        }
+        // Same whitelist as writeFile/applyEdit: deletions outside the source root could remove build/config files.
+        String normalizedPath = normalizeWritablePath(path, repositoryType);
+        if (normalizedPath == null) {
+            String prefix = repositoryType == RepositoryType.TESTS ? TEST_PATH_PREFIX : SOURCE_PATH_PREFIX;
+            return "Error: '" + path + "' is not a deletable path for the " + repositoryType + " repository. Paths must be relative, must not contain '..' or hidden "
+                    + "segments, and must start with '" + prefix + "'.";
+        }
+        try {
+            Repository checkout = checkout(repositoryType);
+            if (gitService.getFileByName(checkout, normalizedPath).isEmpty()) {
+                return "Error: file '" + path + "' does not exist in the " + repositoryType + " repository. Use listFiles to see the existing file paths.";
+            }
+            repositoryService.deleteFile(checkout, normalizedPath);
+            markTouched(repositoryType);
+            return "Deleted '" + normalizedPath + "' in the " + repositoryType + " repository. Remember to run runBuild to verify your changes.";
+        }
+        catch (Exception e) {
+            return "Error: could not delete '" + normalizedPath + "' in the " + repositoryType + " repository: " + e.getMessage();
+        }
+    }
+
     @Tool(description = "Replace the variant exercise's problem statement (Markdown). Call this LAST, after the final test names are settled, "
             + "so every test referenced in the tasks actually exists in the test repository.")
     public String updateProblemStatement(@ToolParam(description = "the full new problem statement in Artemis Markdown") String problemStatement) {
@@ -282,11 +387,11 @@ class ProgrammingVariantTools implements VariantToolset {
         }
         try {
             ProgrammingExercise persisted = programmingExerciseRepository.findByIdElseThrow(exercise.getId());
-            persisted.setProblemStatement(problemStatement);
+            persisted.setProblemStatement(ProgrammingVariantAdapters.stripPlantUmlCodeFences(problemStatement));
             programmingExerciseRepository.save(persisted);
             // Keep the task/test-case mapping in sync, exactly like the regular problem-statement update endpoint.
             programmingExerciseTaskService.updateTasksFromProblemStatement(persisted);
-            exercise.setProblemStatement(problemStatement);
+            exercise.setProblemStatement(persisted.getProblemStatement());
             return "Problem statement updated.";
         }
         catch (Exception e) {
@@ -397,6 +502,10 @@ class ProgrammingVariantTools implements VariantToolset {
         }
         checkouts.put(repositoryType, repository);
         return repository;
+    }
+
+    private static String truncateLine(String line) {
+        return line.length() > MAX_SEARCH_LINE_LENGTH ? line.substring(0, MAX_SEARCH_LINE_LENGTH) + " [truncated]" : line;
     }
 
     private void writeFileContent(Repository repository, String path, String content) throws IOException {

@@ -32,4 +32,15 @@ public interface VariantToolset {
     default boolean touchedTestRepo() {
         return false;
     }
+
+    /**
+     * Persists any work the round left unpersisted, called by the loop runner at the end of every round
+     * (after the model's final response, before the round result is reported). For programming this
+     * commits and pushes uncommitted working-tree edits: only runBuild commits during the round, so a round
+     * that ends without a final runBuild would otherwise silently drop its edits — and verification, which
+     * builds the last PUSHED commit, would trivially pass on the unchanged provision commit. Default: no-op
+     * for toolsets whose tools persist immediately (quiz).
+     */
+    default void flushPendingChanges() {
+    }
 }

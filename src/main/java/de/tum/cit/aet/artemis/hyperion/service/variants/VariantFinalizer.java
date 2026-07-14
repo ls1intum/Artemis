@@ -1,7 +1,6 @@
 package de.tum.cit.aet.artemis.hyperion.service.variants;
 
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
-import de.tum.cit.aet.artemis.hyperion.dto.VariantGenerationRequestDTO;
 
 /**
  * Capability interface: FINALIZING phase — persist final state and place the variant per the wizard's
@@ -32,7 +31,8 @@ public interface VariantFinalizer {
      * take the cleanup path instead (Section 6).
      *
      * @param variant the verified (or draft-with-warnings) variant
-     * @param request the original wizard request carrying the placement choice
+     * @param job     the running job — carries the wizard request (placement choice) and the source exercise id
+     *                    (a NEW_GROUP placement pulls the source into the created group as well)
      */
-    void finalizeVariant(Exercise variant, VariantGenerationRequestDTO request);
+    void finalizeVariant(Exercise variant, VariantJob job);
 }

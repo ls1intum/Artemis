@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, effect, inject, signal, u
 import { Router } from '@angular/router';
 import { AccountService } from 'app/core/auth/account.service';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faCheck, faCircleCheck, faExclamation, faSpinner, faTriangleExclamation, faWandMagicSparkles } from '@fortawesome/free-solid-svg-icons';
+import { faArrowRight, faCheck, faCircleCheck, faExclamation, faSpinner, faTriangleExclamation, faWandMagicSparkles } from '@fortawesome/free-solid-svg-icons';
 import { ConfirmationService } from 'primeng/api';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ButtonModule } from 'primeng/button';
@@ -14,6 +14,7 @@ import { ExerciseVariantGenerationService } from 'app/hyperion/services/exercise
 import { isTerminalVariantPhase } from 'app/hyperion/services/exercise-variant-websocket.service';
 import { VariantJob } from 'app/openapi/model/variantJob';
 import { ExerciseVariantAiModalWizardComponent } from 'app/course/manage/exercises/create-variant-modal/exercise-variant-ai-modal-wizard.component';
+import { adaptationChips } from 'app/course/manage/exercises/create-variant-modal/exercise-variant-ai-modal.utils';
 
 /** Pipeline phases in execution order — drives the tray's per-entry step-dot timeline (plan Section 5.2). */
 const RUNNING_PHASE_ORDER = ['ANALYZING', 'PLANNING', 'PROVISIONING', 'TRANSFORMING', 'VERIFYING', 'REPAIRING', 'FINALIZING'] as const;
@@ -63,6 +64,7 @@ export class VariantGenerationTrayComponent {
     });
 
     protected readonly faWandMagicSparkles = faWandMagicSparkles;
+    protected readonly faArrowRight = faArrowRight;
     protected readonly faSpinner = faSpinner;
     protected readonly faCheck = faCheck;
     protected readonly faExclamation = faExclamation;
@@ -70,6 +72,8 @@ export class VariantGenerationTrayComponent {
     protected readonly faTriangleExclamation = faTriangleExclamation;
     protected readonly isTerminalVariantPhase = isTerminalVariantPhase;
     protected readonly runningPhases = RUNNING_PHASE_ORDER;
+    /** "What is being adapted" chips per card — same helper the generation modal uses. */
+    protected readonly adaptationChips = adaptationChips;
 
     /** Login of the user whose jobs are currently loaded — guards against redundant re-syncs. */
     private loadedForLogin?: string;
@@ -93,6 +97,11 @@ export class VariantGenerationTrayComponent {
                 }
             });
         });
+    }
+
+    /** REST re-sync on tray open (plan Section 5.4, "State handling") — events don't carry title/request updates. */
+    refreshJobs(): void {
+        this.variantGenerationService.loadJobs().subscribe({ error: () => {} });
     }
 
     /** Index of the job's phase in the running order — done/active/pending classes of the step dots. */
@@ -143,6 +152,6 @@ export class VariantGenerationTrayComponent {
             return;
         }
         const typeSegment = `${exercise.type ?? 'programming'}-exercises`;
-        this.router.navigate(['/course-management', courseId, typeSegment, exercise.id, 'edit']);
+        void this.router.navigate(['/course-management', courseId, typeSegment, exercise.id, 'edit']);
     }
 }

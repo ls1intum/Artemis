@@ -165,6 +165,16 @@
                         ><fa-icon [icon]="faTable"
                     /></a>
                 }
+                @if (course().isAtLeastEditor) {
+                    <button
+                        type="button"
+                        class="btn btn-warning me-1 mb-1"
+                        [ngbTooltip]="'artemisApp.exerciseManagement.action.createVariantWithAi' | artemisTranslate"
+                        (click)="aiVariantModalVisible.set(true)"
+                    >
+                        <fa-icon [icon]="faRobot" />
+                    </button>
+                }
                 @if (course().isAtLeastEditor && details().type === exerciseType.PROGRAMMING) {
                     <a
                         [routerLink]="['/course-management', course().id, 'programming-exercises', details().id, 'grading', 'test-cases']"
@@ -177,3 +187,11 @@
         </div>
     </div>
 </div>
+
+<jhi-exercise-variant-ai-modal-wizard
+    [visible]="aiVariantModalVisible()"
+    (visibleChange)="aiVariantModalVisible.set($event)"
+    [sourceExercise]="details()"
+    [courseId]="course().id"
+    (variantAdded)="variantAdded.emit($event)"
+/>

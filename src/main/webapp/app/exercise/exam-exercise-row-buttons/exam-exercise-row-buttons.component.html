@@ -41,6 +41,12 @@
             <span class="d-none d-md-inline" jhiTranslate="entity.action.scores"></span>
         </a>
     }
+    @if (courseValue.isAtLeastEditor) {
+        <button type="button" class="btn btn-warning btn-sm me-1" (click)="aiVariantModalVisible.set(true)">
+            <fa-icon [icon]="faRobot" />
+            <span class="d-none d-md-inline" jhiTranslate="artemisApp.exerciseManagement.action.createVariantWithAi"></span>
+        </button>
+    }
     @if (courseValue.isAtLeastEditor && exerciseValue.type === exerciseType.PROGRAMMING) {
         <a
             [routerLink]="[
@@ -260,3 +266,11 @@
         </button>
     }
 </div>
+
+<jhi-exercise-variant-ai-modal-wizard
+    [visible]="aiVariantModalVisible()"
+    (visibleChange)="aiVariantModalVisible.set($event)"
+    [sourceExercise]="exerciseValue"
+    [courseId]="courseValue.id"
+    [examExercise]="true"
+/>

@@ -8,7 +8,6 @@
         @if (currAccount() && !isExamActive() && !isExamStarted() && globalSearchEnabled()) {
             <jhi-global-search-navbar />
         }
-        <jhi-variant-generation-tray />
         @if (!currAccount() && languages && languages.length > 1) {
             <div ngbDropdown class="dropdown pointer" display="dynamic">
                 <a class="nav-link dropdown-toggle" ngbDropdownToggle id="languagesnavBarDropdown">
@@ -162,6 +161,9 @@
     </div>
     <div class="navbar-collapse collapse" id="navbarResponsive" [ngbCollapse]="isNavbarCollapsed()">
         <ul class="navbar-nav ms-auto" [class.vertical]="isNavbarNavVertical()">
+            <li class="nav-item d-flex align-items-center">
+                <jhi-variant-generation-tray />
+            </li>
             @if (currentCourse(); as course) {
                 @if (course.id && !isExamActive() && !isExamStarted()) {
                     <li class="nav-item d-flex align-items-center">

@@ -6,6 +6,11 @@ do not make any change the plan does not require:
 
 {{changePlan}}
 
+Tooling:
+You have EXACTLY these tools: {{availableTools}}.
+This list is complete — no other tool exists (no generic search, shell, or web access). Never emit a call to a
+tool that is not in this list; use the closest listed tool instead.
+
 Core contract:
 - Use getQuestions to read the current state and updateQuestion(index, questionJson) to write. questionJson must
   be the FULL question in the same JSON format getQuestions returns (discriminated by "type"); schema or validity

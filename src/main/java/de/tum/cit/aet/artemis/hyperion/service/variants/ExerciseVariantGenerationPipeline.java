@@ -154,7 +154,7 @@ public class ExerciseVariantGenerationPipeline {
                 report.findings().forEach(finding -> warnings.add(finding.gate() + ": " + summarizeFindingForWarning(finding.message())));
             }
             try {
-                adapters.finalizeVariant(variant, job.getRequest());
+                adapters.finalizeVariant(variant, job);
             }
             catch (Exception e) {
                 // From FINALIZING on, the generated variant is never discarded (plan Sections 1 and 6: the job is

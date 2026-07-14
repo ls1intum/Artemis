@@ -112,34 +112,27 @@ public class VariantBuildVerificationService {
     }
 
     /**
-     * Polls for the build result of the given commit and evaluates it against the repository-type target.
+     * Polls for the participation's latest build result completed after {@code notBefore} and evaluates it
+     * against the repository-type target.
+     *
+     * The poll deliberately matches by PARTICIPATION + freshness, not by the built commit's hash: once a
+     * TEST-type submission exists for the current tests commit, Artemis attaches every subsequent
+     * template/solution build result to THAT submission (the grading service matches per-submission-type commit
+     * hashes) and never creates a submission carrying the built commit's hash — a hash-based poll then times out
+     * forever while green results accumulate (observed live on exercise 54). Freshness identifies our build:
+     * builds per participation are strictly sequential within one variant job (tool calls and verify gates run
+     * one after another), and parallel jobs operate on distinct exercise clones with distinct participations.
      *
      * @param exercise       the exercise whose participation is polled
-     * @param commitHash     the commit the build was triggered for
+     * @param commitHash     the commit the build was triggered for (log context only)
      * @param repositoryType which repository the build belongs to (TESTS builds use the solution participation)
+     * @param notBefore      only results completed after this instant are accepted — pass the trigger time,
+     *                           otherwise a stale pre-trigger result would be returned immediately (variants plan
+     *                           Section 3, build-dependency constraint)
      * @return the outcome; {@link BuildResultState#SUCCESS} iff the target result was reached
      * @throws InterruptedException when the polling thread is interrupted
      */
-    public BuildResultOutcome waitForBuildResult(ProgrammingExercise exercise, String commitHash, RepositoryType repositoryType) throws InterruptedException {
-        return waitForBuildResult(exercise, commitHash, repositoryType, null);
-    }
-
-    /**
-     * Polls for the build result of the given commit and evaluates it against the repository-type target, optionally
-     * requiring a result produced after a given instant. The {@code notBefore} filter matters when re-verifying a
-     * commit that already has an older result (e.g. the test repository changed but the solution/template commit did
-     * not): without it, the poll would immediately return the stale pre-change result (variants plan Section 3,
-     * build-dependency constraint).
-     *
-     * @param exercise       the exercise whose participation is polled
-     * @param commitHash     the commit the build was triggered for
-     * @param repositoryType which repository the build belongs to (TESTS builds use the solution participation)
-     * @param notBefore      when non-null, only results completed after this instant are accepted
-     * @return the outcome; {@link BuildResultState#SUCCESS} iff the target result was reached
-     * @throws InterruptedException when the polling thread is interrupted
-     */
-    public BuildResultOutcome waitForBuildResult(ProgrammingExercise exercise, String commitHash, RepositoryType repositoryType, @Nullable Instant notBefore)
-            throws InterruptedException {
+    public BuildResultOutcome waitForBuildResult(ProgrammingExercise exercise, String commitHash, RepositoryType repositoryType, Instant notBefore) throws InterruptedException {
         long startTime = System.currentTimeMillis();
         ProgrammingExerciseParticipation participation = switch (repositoryType) {
             case TEMPLATE -> templateProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(exercise.getId()).orElse(null);
@@ -155,16 +148,10 @@ public class VariantBuildVerificationService {
         int pollCount = 0;
         while (System.currentTimeMillis() - startTime < TIMEOUT) {
             try {
-                ProgrammingSubmission submission = programmingSubmissionRepository
-                        .findFirstByParticipationIdAndCommitHashOrderByIdDescWithFeedbacksAndTeamStudents(participation.getId(), commitHash);
-
-                if (submission != null) {
-                    Optional<Result> result = resultRepository.findLatestResultWithFeedbacksAndTestcasesForSubmission(submission.getId());
-
-                    if (result.isPresent() && isFreshEnough(result.get(), notBefore)) {
-                        log.debug("Found build result for commit {} after {} polls ({}ms)", commitHash, pollCount, System.currentTimeMillis() - startTime);
-                        return new BuildResultOutcome(result.get(), hasReachedTargetResult(repositoryType, result.get()) ? BuildResultState.SUCCESS : BuildResultState.FAILED);
-                    }
+                Optional<Result> result = resultRepository.findFirstWithSubmissionAndFeedbacksAndTestCasesByParticipationIdOrderByCompletionDateDesc(participation.getId());
+                if (result.isPresent() && isFreshEnough(result.get(), notBefore)) {
+                    log.debug("Found build result for commit {} after {} polls ({}ms)", commitHash, pollCount, System.currentTimeMillis() - startTime);
+                    return new BuildResultOutcome(result.get(), hasReachedTargetResult(repositoryType, result.get()) ? BuildResultState.SUCCESS : BuildResultState.FAILED);
                 }
 
                 pollCount++;

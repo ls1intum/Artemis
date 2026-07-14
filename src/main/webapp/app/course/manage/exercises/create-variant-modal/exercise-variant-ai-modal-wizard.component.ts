@@ -14,6 +14,7 @@ import {
     faEarthAmericas,
     faGaugeHigh,
     faGears,
+    faInfoCircle,
     faLayerGroup,
     faPenToSquare,
     faRobot,
@@ -38,7 +39,7 @@ import { VariantGenerationEvent, VariantJobPhase, isTerminalVariantPhase } from 
 import { VariantGenerationRequest } from 'app/openapi/model/variantGenerationRequest';
 import { VariantPlacement } from 'app/openapi/model/variantPlacement';
 import { StepOutput } from 'app/openapi/model/stepOutput';
-import { PlacementChoice, difficultyBadgeClass, difficultyLabel, durationDays } from './exercise-variant-ai-modal.utils';
+import { PlacementChoice, adaptationChips, difficultyBadgeClass, difficultyLabel, durationDays } from './exercise-variant-ai-modal.utils';
 
 type WizardStep = 1 | 2 | 3 | 4 | 5;
 
@@ -86,6 +87,14 @@ export class ExerciseVariantAiModalWizardComponent implements OnDestroy {
     /** Required for the wizard flow (steps 1–3); may be absent in monitor mode (tray host has no exercise). */
     readonly sourceExercise = input<Exercise | undefined>(undefined);
     readonly courseId = input<number | undefined>(undefined);
+    /**
+     * Set by exam hosts (the exam exercise-group management row): the source is an exam exercise, so placement is
+     * forced to the source's exam exercise group (SAME_EXAM_GROUP, no placement step) and difficulty adaptation is
+     * disallowed — a variant with a different difficulty would be unfair across the students who each receive one.
+     * A populated `sourceExercise().exerciseGroup` also flags this, but exam rows pass only the group id, not the
+     * nested group object, so the explicit input is the reliable signal.
+     */
+    readonly examExercise = input<boolean>(false);
     /** Monitor mode (plan Section 5.4): the tray reopens this modal for a running/finished job — skips steps 1–3. */
     readonly monitorJobId = input<string | undefined>(undefined);
 
@@ -146,7 +155,7 @@ export class ExerciseVariantAiModalWizardComponent implements OnDestroy {
     readonly sourceGroup = signal<ExerciseVariantGroupDTO | undefined>(undefined);
 
     /** Exam exercises skip the placement step entirely — SAME_EXAM_GROUP is forced (plan Section 5.5). */
-    readonly isExamExercise = computed(() => !!this.sourceExercise()?.exerciseGroup);
+    readonly isExamExercise = computed(() => this.examExercise() || !!this.sourceExercise()?.exerciseGroup);
 
     readonly availableDifficulties = computed<Array<{ value: DifficultyLevel; label: string }>>(() => {
         const current = this.sourceExercise()?.difficulty;
@@ -185,20 +194,14 @@ export class ExerciseVariantAiModalWizardComponent implements OnDestroy {
     /** "What is being adapted" chips (todo-c): the fetched request wins; a fresh wizard run uses the form state. */
     readonly adaptations = computed<string[]>(() => {
         const request = this.monitorRequest();
-        const items: string[] = [];
-        const difficulty = request ? request.targetDifficulty : this.changeDifficulty() ? this.targetDifficulty() : undefined;
-        const domain = request ? request.domainText : this.changeDomain() ? this.domainText().trim() : undefined;
-        const instructions = request ? request.additionalInstructions : this.changeCustom() ? this.additionalInstructions().trim() : undefined;
-        if (difficulty) {
-            items.push(`Difficulty → ${difficultyLabel(difficulty as DifficultyLevel)}`);
+        if (request) {
+            return adaptationChips(request);
         }
-        if (domain) {
-            items.push(`Domain: ${domain}`);
-        }
-        if (instructions) {
-            items.push(instructions.length > 80 ? `Custom: ${instructions.slice(0, 80)}…` : `Custom: ${instructions}`);
-        }
-        return items;
+        return adaptationChips({
+            targetDifficulty: this.changeDifficulty() ? this.targetDifficulty() : undefined,
+            domainText: this.changeDomain() ? this.domainText().trim() : undefined,
+            additionalInstructions: this.changeCustom() ? this.additionalInstructions().trim() : undefined,
+        });
     });
 
     /**
@@ -214,6 +217,7 @@ export class ExerciseVariantAiModalWizardComponent implements OnDestroy {
     readonly wizardSteps = WIZARD_STEPS;
 
     protected readonly faRobot = faRobot;
+    protected readonly faInfoCircle = faInfoCircle;
     protected readonly faWandMagicSparkles = faWandMagicSparkles;
     protected readonly faCheck = faCheck;
     protected readonly faBan = faBan;
@@ -338,7 +342,8 @@ export class ExerciseVariantAiModalWizardComponent implements OnDestroy {
         const sourceExercise = this.sourceExercise();
         if (!sourceExercise?.id) return;
         const request: VariantGenerationRequest = {
-            targetDifficulty: this.changeDifficulty() ? this.targetDifficulty() : undefined,
+            // Never adapt difficulty for exam exercises (unfair across per-student variants); the option is hidden.
+            targetDifficulty: this.changeDifficulty() && !this.isExamExercise() ? this.targetDifficulty() : undefined,
             domainText: this.changeDomain() && this.domainText().trim() ? this.domainText().trim() : undefined,
             additionalInstructions: this.changeCustom() && this.additionalInstructions().trim() ? this.additionalInstructions().trim() : undefined,
             placement: this.buildPlacement(),

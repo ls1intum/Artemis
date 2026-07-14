@@ -42,7 +42,7 @@ export class ExerciseVariantGenerationService {
         return this.api.generateVariant(exerciseId, request).pipe(
             map((response) => response.jobId!),
             tap((jobId) => {
-                this.upsertJob({ jobId, sourceExerciseId: exerciseId, sourceExerciseTitle, phase: 'ANALYZING' });
+                this.upsertJob({ jobId, sourceExerciseId: exerciseId, sourceExerciseTitle, request, phase: 'ANALYZING' });
                 this.attachToJob(jobId);
             }),
         );
@@ -117,7 +117,11 @@ export class ExerciseVariantGenerationService {
             }),
         );
         if (event.type === 'DONE' || event.type === 'FAILED' || event.type === 'CANCELLED') {
-            this.detachFromJob(jobId);
+            // Deferred: this handler is the FIRST subscriber on the shared per-job subject, and detaching
+            // completes that subject — done synchronously it stops later subscribers (the wizard modal) before
+            // the subject's next() loop delivers this terminal event to them, freezing the modal in the last
+            // live phase. A microtask runs after all subscribers received the event.
+            window.queueMicrotask(() => this.detachFromJob(jobId));
         }
     }
 

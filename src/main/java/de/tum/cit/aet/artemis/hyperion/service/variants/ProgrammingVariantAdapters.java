@@ -4,6 +4,8 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,6 +32,7 @@ import de.tum.cit.aet.artemis.localvc.service.GitService;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.exception.ContinuousIntegrationException;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
@@ -151,7 +154,25 @@ public class ProgrammingVariantAdapters implements VariantTypeAdapters {
         ProgrammingExercise newExercise = buildVariantSkeleton(original, plan, request);
         applyUniqueShortNameAndTitle(newExercise, original, plan.variantTitle());
         try {
-            return programmingExerciseImportService.importProgrammingExercise(original, newExercise, false, false, false);
+            ProgrammingExercise imported = programmingExerciseImportService.importProgrammingExercise(original, newExercise, false, false, false);
+            // The import service unconditionally resets the problem statement to the ORIGINAL's (its REST flow
+            // forbids editing the statement while importing) — re-apply the plan's statement afterwards, or the
+            // skeleton's value from buildVariantSkeleton is silently lost and the variant keeps the source text.
+            imported.setProblemStatement(stripPlantUmlCodeFences(plan.problemStatement()));
+            // The planner writes its statement against the SOURCE context, so any <testid> markers it copied
+            // reference the source's test case ids — remap them to the variant's test cases (matched by test
+            // name, both sides straight from the import) like the import flow itself does.
+            Map<String, Long> variantTestIdByName = imported.getTestCases().stream()
+                    .collect(Collectors.toMap(ProgrammingExerciseTestCase::getTestName, ProgrammingExerciseTestCase::getId, (first, second) -> first));
+            Map<Long, Long> newTestCaseIdByOldId = original.getTestCases().stream().filter(testCase -> variantTestIdByName.containsKey(testCase.getTestName()))
+                    .collect(Collectors.toMap(ProgrammingExerciseTestCase::getId, testCase -> variantTestIdByName.get(testCase.getTestName()), (first, second) -> first));
+            programmingExerciseTaskService.updateTestIds(imported, newTestCaseIdByOldId);
+            imported = programmingExerciseRepository.save(imported);
+            programmingExerciseTaskService.updateTasksFromProblemStatement(imported);
+            // Return a copy WITHOUT an initialized task collection: task rows change again after provisioning
+            // (agent problem-statement updates, the final FINALIZING re-sync), and saving this instance later
+            // (group placement) with a stale initialized orphanRemoval collection fails with EntityNotFound.
+            return programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(imported.getId());
         }
         catch (Exception e) {
             throw new RuntimeException("Importing the variant clone failed: " + e.getMessage(), e);
@@ -187,11 +208,15 @@ public class ProgrammingVariantAdapters implements VariantTypeAdapters {
     }
 
     @Override
-    public void finalizeVariant(Exercise variant, VariantGenerationRequestDTO request) {
-        // The problem statement is already persisted (set from the ChangePlan at provisioning, possibly refined via
-        // the updateProblemStatement tool); what remains is the shared placement logic (plan Sections 3 FINALIZING
-        // row and 5.5).
-        variantPlacementService.place(variant, request);
+    public void finalizeVariant(Exercise variant, VariantJob job) {
+        // Final task→test wiring (deterministic, no LLM): tests ADDED during transformation only exist as
+        // test-case rows once their first build result was processed, so the provision-time sync could not
+        // resolve them yet — re-run the sync on the final statement. Also covers rounds that changed tests but
+        // never called updateProblemStatement.
+        ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(variant.getId());
+        programmingExerciseTaskService.updateTasksFromProblemStatement(exercise);
+        // What remains is the shared placement logic (plan Sections 3 FINALIZING row and 5.5).
+        variantPlacementService.place(variant, job.getSourceExerciseId(), job.getRequest());
     }
 
     /**
@@ -258,6 +283,18 @@ public class ProgrammingVariantAdapters implements VariantTypeAdapters {
         }
         throw new IllegalStateException(
                 "Could not find a free short name for the variant after " + MAX_NAME_ATTEMPTS + " attempts (base: " + baseShortName + "). Please clean up stale projects.");
+    }
+
+    /**
+     * Unwraps PlantUML blocks the LLM wrapped in Markdown code fences (```plantuml ... ```): Artemis replaces
+     * bare {@code @startuml ... @enduml} blocks with a diagram placeholder BEFORE Markdown parsing, so a fenced
+     * block renders the raw placeholder div as literal code text instead of the diagram.
+     */
+    static String stripPlantUmlCodeFences(String problemStatement) {
+        if (problemStatement == null) {
+            return null;
+        }
+        return problemStatement.replaceAll("(?m)^[ \\t]*```[\\w-]*[ \\t]*\\n(\\s*@startuml)", "$1").replaceAll("(?m)(@enduml)\\s*\\n[ \\t]*```[ \\t]*$", "$1");
     }
 
     /** PascalCases the alphanumeric words of the title into a valid exercise short name (starts with a letter, ≥3 chars). */

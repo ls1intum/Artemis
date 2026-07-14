@@ -9,7 +9,10 @@
  */
 
 
-export interface VariantJob { 
+import { VariantGenerationRequest } from './variantGenerationRequest';
+
+
+export interface VariantJob {
     jobId?: string;
     sourceExerciseId?: number;
     courseId?: number;
@@ -23,6 +26,7 @@ export interface VariantJob {
     maxAttempts?: number;
     variantExerciseId?: number;
     variantExerciseTitle?: string;
+    request?: VariantGenerationRequest;
     warnings?: Array<string>;
     totalTokensUsed?: number;
     startedAt?: string;
