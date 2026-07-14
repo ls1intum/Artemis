@@ -19,6 +19,8 @@ import { MockMetisService } from 'test/helpers/mocks/service/mock-metis-service.
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { Posting, PostingType } from 'app/communication/shared/entities/posting.model';
 import { AnswerPost } from 'app/communication/shared/entities/answer-post.model';
+import { Post } from 'app/communication/shared/entities/post.model';
+import { Conversation } from 'app/communication/shared/entities/conversation/conversation.model';
 import { PostingHeaderComponent } from 'app/communication/posting-header/posting-header.component';
 import dayjs from 'dayjs/esm';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
@@ -363,6 +365,23 @@ describe('AnswerPostComponent', () => {
         expect(component.isVerifying()).toBe(false);
         expect(component.isEditingIrisReply()).toBe(false);
         expect(component.posting()!.verified).toBe(true);
+    });
+
+    it('should preserve the parent post context after approval so later actions route to the messaging API', () => {
+        // the posting carries a full parent post including its conversation
+        const parentWithConversation = { id: 42, conversation: { id: 7 } as Conversation } as Post;
+        const answerPost = Object.assign(new AnswerPost(), { ...metisResolvingAnswerPostUser1, id: 1, post: parentWithConversation });
+        // the server verify response drops the parent conversation (AnswerMessageDTO -> ParentPostDTO carries only the id)
+        const verifiedResponse = Object.assign(new AnswerPost(), { ...answerPost, verified: true, post: { id: 42 } as Post });
+        component.posting.set(answerPost);
+        vi.spyOn(metisService, 'verifyAnswerPost').mockReturnValue(of(verifiedResponse));
+
+        component.approveAnswer();
+
+        expect(component.posting()!.verified).toBe(true);
+        // the full parent post (incl. conversation) is retained, so getResourceEndpoint keeps routing edit/delete to the messaging endpoint
+        expect(component.posting()!.post?.conversation).toBeDefined();
+        expect(component.posting()!.post?.conversation?.id).toBe(7);
     });
 
     it('should pass trimmed content to verifyAnswerPost when content is provided', () => {

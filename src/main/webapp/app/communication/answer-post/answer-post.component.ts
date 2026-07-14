@@ -202,7 +202,11 @@ export class AnswerPostComponent extends PostingDirective<AnswerPost> implements
         this.isVerifying.set(true);
         this.metisService.verifyAnswerPost(posting, content?.trim() || undefined).subscribe({
             next: (verified) => {
-                this.posting.set(Object.assign(new AnswerPost(), verified));
+                // The verify response's parent carries only its id (AnswerMessageDTO -> ParentPostDTO), so replacing the
+                // posting wholesale would drop post.conversation and make AnswerPostService.getResourceEndpoint route a
+                // later edit/delete to the plagiarism API. Preserve the existing full parent post (incl. conversation).
+                const merged = Object.assign(new AnswerPost(), verified, { post: posting.post });
+                this.posting.set(merged);
                 this.isEditingIrisReply.set(false);
                 this.isVerifying.set(false);
             },
