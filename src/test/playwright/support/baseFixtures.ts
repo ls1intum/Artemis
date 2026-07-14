@@ -121,6 +121,36 @@ const test = baseTest.extend<
             // which would block test interactions. See addE2EInitScript for details.
             await addE2EInitScript(page);
 
+            // Eagerly read (and thereby memoize) each successful JSON /api response body the moment it
+            // arrives, so a test's later deferred `response.json()` reads from Playwright's in-Node cache
+            // instead of issuing a second CDP `Network.getResponseBody`. Under the Angular 22 runtime the
+            // browser churns enough response traffic that Chromium's bounded per-session network buffer
+            // rotates a small JSON body out during the (often multi-second) gap between the response
+            // arriving and the test reading it — surfacing as `getResponseBody: No data found for
+            // resource`, a load-driven flake that Angular 21 did not trigger. `waitForResponse()` and this
+            // listener receive the SAME Response instance, and `Response.internalBody()` memoizes the buffer
+            // on first read, so pulling it here at the `response` event closes that gap to ~0 and makes every
+            // later `.json()`/`.body()` on that response eviction-proof — without touching the ~49 call sites.
+            //
+            // This is passive: reading a body never alters the response the page received, so (unlike
+            // `page.route` interception) it cannot change app behaviour, add latency, or re-issue requests.
+            // Scope guards, all required:
+            //  - `/api/` only + `application/json`: the bodies tests actually read; also excludes binary
+            //    downloads/exports (needless memory) and `text/event-stream` (Iris SSE) — calling `body()`
+            //    on a never-finishing stream would leak a pending read.
+            //  - status < 300: `body()` throws "unavailable for redirect responses" on 3xx.
+            // Memory stays bounded because Artemis uses a fresh context/page per test, so the memoized
+            // KB-scale JSON buffers are released at context teardown (this is NOT the reverted amplifier,
+            // which retained every body for the whole run and inflated a per-page CDP buffer).
+            page.on('response', (response) => {
+                const contentType = response.headers()['content-type'] ?? '';
+                if (response.request().url().includes('/api/') && response.status() < 300 && contentType.includes('application/json')) {
+                    // Fire-and-forget: a lost race here is caught (no unhandled rejection) and, for GETs,
+                    // still recoverable read-side via readResponseJson's fresh-request replay.
+                    void response.body().catch(() => {});
+                }
+            });
+
             const coverageEnabled = process.env.PLAYWRIGHT_COVERAGE !== 'off';
 
             if (coverageEnabled) {
