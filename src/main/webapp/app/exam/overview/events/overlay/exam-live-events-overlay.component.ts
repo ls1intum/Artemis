@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
+import { Component, Injector, OnDestroy, OnInit, effect, inject, signal } from '@angular/core';
 import { faCheck } from '@fortawesome/free-solid-svg-icons';
 import { ExamLiveEventComponent } from 'app/exam/shared/events/exam-live-event.component';
 import { Subscription } from 'rxjs';
@@ -26,6 +26,7 @@ export class ExamLiveEventsOverlayComponent implements OnInit, OnDestroy {
     private dialogRef = inject(DynamicDialogRef);
     private dialogConfig = inject(DynamicDialogConfig);
     private examExerciseUpdateService = inject(ExamExerciseUpdateService);
+    private injector = inject(Injector);
 
     private allLiveEventsSubscription?: Subscription;
     private newLiveEventsSubscription?: Subscription;
@@ -48,7 +49,10 @@ export class ExamLiveEventsOverlayComponent implements OnInit, OnDestroy {
     ngOnInit(): void {
         const data = this.dialogConfig?.data;
         if (data?.examStartDate) {
-            this.examStartDate.set(data.examStartDate);
+            const getter = data.examStartDate as () => dayjs.Dayjs | undefined;
+            this.examStartDate.set(getter());
+            // Re-evaluate whenever the source signal changes so a postponed start date is reflected live.
+            effect(() => this.examStartDate.set(getter()), { injector: this.injector });
         }
 
         this.allLiveEventsSubscription = this.liveEventsService.observeAllEvents(USER_DISPLAY_RELEVANT_EVENTS_REOPEN).subscribe((events: ExamLiveEvent[]) => {
@@ -59,7 +63,8 @@ export class ExamLiveEventsOverlayComponent implements OnInit, OnDestroy {
             }
         });
 
-        this.newLiveEventsSubscription = this.liveEventsService.observeNewEventsAsUser(USER_DISPLAY_RELEVANT_EVENTS, this.examStartDate()!).subscribe((event: ExamLiveEvent) => {
+        // Pass the signal itself (not a snapshot) so the pre-start filter honours a live start-date change.
+        this.newLiveEventsSubscription = this.liveEventsService.observeNewEventsAsUser(USER_DISPLAY_RELEVANT_EVENTS, this.examStartDate).subscribe((event: ExamLiveEvent) => {
             this.unacknowledgedEvents.update((events) => [event, ...events]);
             this.updateEventsToDisplay();
         });
