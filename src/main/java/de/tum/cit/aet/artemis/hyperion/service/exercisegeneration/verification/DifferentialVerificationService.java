@@ -533,9 +533,10 @@ public class DifferentialVerificationService {
     private static boolean checkExtractionSound(Set<String> extractionFailedRepositories, List<String> reasons) {
         boolean extractionSound = extractionFailedRepositories == null || extractionFailedRepositories.isEmpty();
         if (!extractionSound) {
-            reasons.add("The generated files for these repositories could not be read back for verification: " + extractionFailedRepositories
-                    + ". The integrity checks (harness immutability, solution leak) cannot run on missing files, so the exercise cannot be verified. This is usually a transient "
-                    + "read-back error; retry the generation.");
+            reasons.add("The generated files for these repositories could not be safely extracted for integrity verification: " + extractionFailedRepositories
+                    + ". The harness-immutability and solution-leak checks cannot run on an incomplete or unrepresentable tree, so the exercise cannot be verified. This can be "
+                    + "caused by a temporary copy-out failure, generated binary or mode changes, or repository-layout residue. Retry once; if it persists, inspect the generated "
+                    + "workspace and build outputs.");
         }
         return extractionSound;
     }

@@ -398,8 +398,10 @@ public class GenerationWorkspaceService {
      * @param sessionId the session handle
      */
     public void cleanTransientBuildOutputs(InteractiveSandbox sandbox, String sessionId) {
-        String command = "rm -rf -- " + WORKSPACE + "/solution/.gradle " + WORKSPACE + "/solution/build " + WORKSPACE + "/solution/target " + WORKSPACE + "/template/.gradle "
-                + WORKSPACE + "/template/build " + WORKSPACE + "/template/target " + WORKSPACE + "/tests/.gradle " + WORKSPACE + "/tests/build " + WORKSPACE + "/tests/target";
+        String command = "rm -rf -- " + WORKSPACE + "/solution/.gradle " + WORKSPACE + "/solution/build " + WORKSPACE + "/solution/target " + WORKSPACE
+                + "/solution/buildSrc/.gradle " + WORKSPACE + "/solution/buildSrc/build " + WORKSPACE + "/template/.gradle " + WORKSPACE + "/template/build " + WORKSPACE
+                + "/template/target " + WORKSPACE + "/template/buildSrc/.gradle " + WORKSPACE + "/template/buildSrc/build " + WORKSPACE + "/tests/.gradle " + WORKSPACE
+                + "/tests/build " + WORKSPACE + "/tests/target " + WORKSPACE + "/tests/buildSrc/.gradle " + WORKSPACE + "/tests/buildSrc/build";
         SandboxExecResult result = sandbox.exec(sessionId, BUILD_OUTPUT_CLEANUP_TIMEOUT, "sh", "-c", command);
         if (!result.isSuccess()) {
             throw new IllegalStateException("Could not remove transient sandbox build outputs: " + result.combinedOutput());

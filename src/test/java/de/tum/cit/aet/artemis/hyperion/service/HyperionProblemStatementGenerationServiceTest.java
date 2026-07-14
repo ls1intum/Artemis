@@ -102,6 +102,8 @@ class HyperionProblemStatementGenerationServiceTest {
         assertThat(promptText).contains("Do not include Artemis task bindings or raw task markers");
         assertThat(promptText).contains("Do not invent test method names");
         assertThat(promptText).contains("Do not prescribe a solution architecture unless the instructor explicitly asked for one");
+        assertThat(promptText).contains("Do not include an implementation-guidance or implementation-strategy section");
+        assertThat(promptText).contains("typically 300–700 words");
         assertThat(promptText).contains("Do not invent delivery mechanisms");
         assertThat(promptText).contains("Do not add submission or deliverable sections");
     }

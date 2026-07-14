@@ -15,6 +15,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -24,6 +25,8 @@ import java.util.function.BooleanSupplier;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InOrder;
 
@@ -267,23 +270,34 @@ class GenerationOrchestrationServiceTest {
         return new SpecFidelityReport(List.of(new SpecFidelityReport.Finding(SpecFidelityReport.Kind.UNCOVERED_REQUIREMENT, requirement, "no test covers it")));
     }
 
-    @Test
-    void acceptedWithCriticFindings_getsPolishRetryButNeverFlipsVerdict() {
-        when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(completed(), completed());
-        when(verifier.verify(any(), anyString(), any(), any(VerificationRequest.class))).thenReturn(accepted(), accepted());
-        when(specFidelityCritic.critique(any(), any(), any(), any())).thenReturn(reportWith("CJK characters"), SpecFidelityReport.empty());
+    @ParameterizedTest
+    @EnumSource(SpecFidelityReport.Kind.class)
+    void acceptedVerification_isBlockedOnlyByBlockingFindings(SpecFidelityReport.Kind kind) {
+        Set<SpecFidelityReport.Kind> expectedBlockingKinds = EnumSet.of(SpecFidelityReport.Kind.UNREQUESTED_ADAPTATION_CHANGE,
+                SpecFidelityReport.Kind.REQUESTED_ADAPTATION_CHANGE_MISSING, SpecFidelityReport.Kind.ADAPTATION_SCOPE_REVIEW_UNAVAILABLE);
+        SpecFidelityReport report = new SpecFidelityReport(List.of(new SpecFidelityReport.Finding(kind, "requirement", "detail")));
+        GenerationOutcome outcome = new GenerationOutcome(completed(), accepted(), null, null, null, Map.of(), "", report, Map.of());
 
-        ArgumentCaptor<String> promptCaptor = ArgumentCaptor.forClass(String.class);
-        try (GenerationOutcome outcome = generate(() -> false)) {
-            assertThat(outcome.isAccepted()).as("an oracle-accepted exercise stays accepted regardless of critic findings").isTrue();
-            assertThat(outcome.specFidelityReport().hasFindings()).as("the final polished attempt's advisory report rides along on the outcome").isFalse();
-        }
-        verify(agentLoopRunner, times(2)).run(anyString(), promptCaptor.capture(), any(), anyInt(), any(), any(), any());
-        assertThat(promptCaptor.getAllValues().get(1)).contains("passed differential verification").contains("quality gaps").contains("CJK characters");
+        boolean expectedBlocking = expectedBlockingKinds.contains(kind);
+        assertThat(report.hasBlockingFindings()).isEqualTo(expectedBlocking);
+        assertThat(outcome.isAccepted()).isEqualTo(!expectedBlocking);
     }
 
     @Test
-    void acceptedAdaptationWithOnlyAdvisoryFindingsRequiresReviewDraft() {
+    void acceptedWithAdvisoryFindings_doesNotSpendRetryOrFlipVerdict() {
+        when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(completed());
+        when(verifier.verify(any(), anyString(), any(), any(VerificationRequest.class))).thenReturn(accepted());
+        when(specFidelityCritic.critique(any(), any(), any(), any())).thenReturn(reportWith("CJK characters"));
+
+        try (GenerationOutcome outcome = generate(() -> false)) {
+            assertThat(outcome.isAccepted()).as("an oracle-accepted exercise stays accepted with advisory findings").isTrue();
+            assertThat(outcome.specFidelityReport().hasFindings()).isTrue();
+        }
+        verify(agentLoopRunner).run(anyString(), anyString(), any(), anyInt(), any(), any(), any());
+    }
+
+    @Test
+    void acceptedAdaptationWithOnlyAdvisoryFindings_staysAccepted() {
         when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(completed());
         when(verifier.verify(any(), anyString(), any(), any(VerificationRequest.class))).thenReturn(accepted());
         when(specFidelityCritic.critiqueAdaptation(any(), any(), any(), any(), any())).thenReturn(reportWith("add assertion messages"));
@@ -291,7 +305,7 @@ class GenerationOrchestrationServiceTest {
         try (GenerationOutcome outcome = service.generate(exercise, user, "Change remove only and preserve everything else", "job", GenerationMode.ADAPT, () -> false, null, null,
                 response -> {
                 })) {
-            assertThat(outcome.isAccepted()).isFalse();
+            assertThat(outcome.isAccepted()).isTrue();
             assertThat(outcome.specFidelityReport().hasFindings()).isTrue();
         }
         verify(agentLoopRunner).run(anyString(), anyString(), any(), anyInt(), any(), any(), any());
@@ -311,22 +325,44 @@ class GenerationOrchestrationServiceTest {
             assertThat(outcome.isAccepted()).as("unresolved adaptation scope drift must go to the isolated review draft, never live persistence").isFalse();
             assertThat(outcome.specFidelityReport().hasBlockingFindings()).isTrue();
         }
+        verify(agentLoopRunner, times(MAX_GENERATION_ATTEMPTS)).run(anyString(), anyString(), any(), anyInt(), any(), any(), any());
     }
 
     @Test
-    void unchangedAdaptationStillRequiresTheFailClosedScopeReview() {
+    void acceptedAdaptationWithCorrectableScopeFinding_retriesAndAcceptsTheRepair() {
+        String feedback = "Reject zero quantities and preserve this full instructor context: " + "context ".repeat(40);
+        SpecFidelityReport missingChange = new SpecFidelityReport(List.of(new SpecFidelityReport.Finding(SpecFidelityReport.Kind.REQUESTED_ADAPTATION_CHANGE_MISSING,
+                "reject zero quantities", "The candidate does not add the requested validation.")));
+        when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(completed(), completed());
+        when(verifier.verify(any(), anyString(), any(), any(VerificationRequest.class))).thenReturn(accepted(), accepted());
+        when(specFidelityCritic.critiqueAdaptation(any(), any(), any(), any(), any())).thenReturn(missingChange, SpecFidelityReport.empty());
+
+        ArgumentCaptor<String> promptCaptor = ArgumentCaptor.forClass(String.class);
+        try (GenerationOutcome outcome = service.generate(exercise, user, feedback, "job", GenerationMode.ADAPT, () -> false, null, null, response -> {
+        })) {
+            assertThat(outcome.isAccepted()).isTrue();
+        }
+
+        verify(agentLoopRunner, times(2)).run(anyString(), promptCaptor.capture(), any(), anyInt(), any(), any(), any());
+        assertThat(promptCaptor.getAllValues().get(1)).contains("Requested adaptation change missing or incomplete", "reject zero quantities", feedback);
+    }
+
+    @Test
+    void unchangedAdaptationIsRejectedAsMissingTheRequestedChange() {
         when(exercise.getProblemStatement()).thenReturn("PROBLEM STATEMENT");
         when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(completed());
         when(verifier.verify(any(), anyString(), any(), any(VerificationRequest.class))).thenReturn(accepted());
-        when(specFidelityCritic.critiqueAdaptation(any(), any(), any(), any(), any()))
-                .thenReturn(SpecFidelityReport.adaptationScopeUnavailable("The adaptation scope reviewer is unavailable."));
+        when(specFidelityCritic.critiqueAdaptation(any(), any(), any(), any(), any())).thenReturn(new SpecFidelityReport(
+                List.of(new SpecFidelityReport.Finding(SpecFidelityReport.Kind.REQUESTED_ADAPTATION_CHANGE_MISSING, "Change one method only", "The candidate is unchanged."))));
 
         try (GenerationOutcome outcome = service.generate(exercise, user, "Change one method only", JOB_ID, GenerationMode.ADAPT, () -> false, null, null, null)) {
             assertThat(outcome.isAccepted()).isFalse();
-            assertThat(outcome.specFidelityReport().hasBlockingFindings()).isTrue();
+            assertThat(outcome.specFidelityReport().findings()).singleElement()
+                    .satisfies(finding -> assertThat(finding.kind()).isEqualTo(SpecFidelityReport.Kind.REQUESTED_ADAPTATION_CHANGE_MISSING));
         }
 
-        verify(specFidelityCritic, atLeastOnce()).critiqueAdaptation(eq("Change one method only"), eq("PROBLEM STATEMENT"), any(), eq(""), any());
+        verify(specFidelityCritic, times(MAX_GENERATION_ATTEMPTS)).critiqueAdaptation(eq("Change one method only"), eq("PROBLEM STATEMENT"), any(), eq(""), any());
+        verify(agentLoopRunner, times(MAX_GENERATION_ATTEMPTS)).run(anyString(), anyString(), any(), anyInt(), any(), any(), any());
         verify(specFidelityCritic, never()).critique(any(), any(), any(), any());
     }
 
@@ -358,7 +394,7 @@ class GenerationOrchestrationServiceTest {
         verify(agentLoopRunner, times(2)).run(anyString(), promptCaptor.capture(), any(), anyInt(), any(), any(), any());
         String retryPrompt = promptCaptor.getAllValues().get(1);
         assertThat(retryPrompt).as("the retry prompt still carries the hard rejection").contains("rejected by the differential verifier").contains("template passed a test");
-        assertThat(retryPrompt).as("and also the advisory spec-fidelity gap").contains("did NOT cause rejection").contains("emoji").contains("Add a test");
+        assertThat(retryPrompt).as("and also the advisory spec-fidelity gap").contains("optional quality improvements").contains("emoji").contains("Add a test");
     }
 
     @Test
@@ -431,6 +467,13 @@ class GenerationOrchestrationServiceTest {
 
         String prepended = GenerationOrchestrationService.prependWorkspaceLayout("LAYOUT", "BRIEF");
         assertThat(prepended).isEqualTo("=== INITIAL WORKSPACE (seeded; you do not need to re-list it) ===\nLAYOUT\n=== END INITIAL WORKSPACE ===\n\nBRIEF");
+    }
+
+    @Test
+    void nullAndEmptyProblemStatements_doNotCreateAHeaderOnlyAdaptationChange() {
+        String changes = GenerationOrchestrationService.renderAdaptationChanges(null, "", Map.of(), Map.of());
+
+        assertThat(changes).isEmpty();
     }
 
     @Test

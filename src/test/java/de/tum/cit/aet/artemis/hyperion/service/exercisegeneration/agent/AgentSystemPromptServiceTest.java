@@ -224,6 +224,14 @@ class AgentSystemPromptServiceTest {
     }
 
     @Test
+    void build_requestsRepresentativeExamplesWithoutMandatingFencedFormatting() {
+        String prompt = systemPromptService.build(exerciseWith(ProgrammingLanguage.JAVA, ""));
+
+        assertThat(prompt).contains("representative worked examples only where they clarify important, non-obvious behaviour").contains("code block, table, or precise prose")
+                .doesNotContain("Provide small fenced worked examples");
+    }
+
+    @Test
     void javaBlackboxIsUnsupportedBecauseTheVerifierDoesNotRunDejagnu() {
         ProgrammingExercise blackbox = exerciseWith(ProgrammingLanguage.JAVA, "");
         blackbox.setProjectType(ProjectType.MAVEN_BLACKBOX);

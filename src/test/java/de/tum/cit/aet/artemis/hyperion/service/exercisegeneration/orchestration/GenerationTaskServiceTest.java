@@ -219,27 +219,18 @@ class GenerationTaskServiceTest {
 
     @Test
     void acceptedRun_describesAdvisoryReviewNotesInPlainLanguage() {
-        when(recoveryService.surfaceAdvisoryFindings(any(), any(), any())).thenReturn(1);
-
-        run(GenerationMode.GENERATE, outcomeWith(AgentLoopResult.Status.COMPLETED, new VerificationResult(true, true, true, 3, List.of())));
-
-        assertThat(sentEvents().getLast().message()).contains("1 review note was added").doesNotContain("spec-fidelity").doesNotContain("note(s)");
-    }
-
-    @Test
-    void verifiedRunWithQualityFindings_isSavedAsReviewDraftInsteadOfLiveExercise() {
         SpecFidelityReport report = new SpecFidelityReport(List
                 .of(new SpecFidelityReport.Finding(SpecFidelityReport.Kind.UNCOVERED_REQUIREMENT, "obstacle edge case", "The generated tests do not cover obstacle edge cases.")));
-        when(recoveryService.recover(any(), any(), any(), anyString(), any())).thenReturn(
-                new GenerationRecoveryService.RecoveryResult(1, "hyperion-draft/job-1", Set.of(RepositoryType.TEMPLATE, RepositoryType.SOLUTION, RepositoryType.TESTS)));
+        when(recoveryService.surfaceAdvisoryFindings(any(), any(), any())).thenReturn(1);
 
         run(GenerationMode.GENERATE, outcomeWith(AgentLoopResult.Status.COMPLETED, new VerificationResult(true, true, true, 3, List.of()), report));
 
-        assertThat(sentEvents().getLast().completionStatus()).isEqualTo(ExerciseGenerationEventDTO.CompletionStatus.NEEDS_REVIEW);
-        assertThat(sentEvents().getLast().liveExerciseChanged()).isFalse();
-        assertThat(sentEvents().getLast().message()).contains("quality review found unresolved exercise-quality gaps");
-        verify(persistenceService, never()).persist(any(), any(), any(), any(), any(), anyString(), any());
-        verify(recoveryService).recover(any(), any(), any(), anyString(), any());
+        assertThat(sentEvents().getLast().completionStatus()).isEqualTo(ExerciseGenerationEventDTO.CompletionStatus.SUCCESS);
+        assertThat(sentEvents().getLast().liveExerciseChanged()).isTrue();
+        assertThat(sentEvents().getLast().message()).contains("1 review note was added").doesNotContain("spec-fidelity").doesNotContain("note(s)");
+        verify(persistenceService).persist(any(), any(), any(), any(), any(), anyString(), any());
+        verify(recoveryService).surfaceAdvisoryFindings(eq(exercise), eq(user), eq(report));
+        verify(recoveryService, never()).recover(any(), any(), any(), anyString(), any());
     }
 
     @Test
@@ -390,6 +381,37 @@ class GenerationTaskServiceTest {
         ExerciseGenerationEventDTO terminal = sentEvents().getLast();
         assertThat(terminal.completionStatus()).isEqualTo(ExerciseGenerationEventDTO.CompletionStatus.NEEDS_REVIEW);
         assertThat(terminal.liveExerciseChanged()).isFalse();
+    }
+
+    @Test
+    void verifiedAdaptationWithBlockingScopeFinding_savesReviewDraftWithoutLiveMutation() {
+        SpecFidelityReport report = new SpecFidelityReport(List.of(new SpecFidelityReport.Finding(SpecFidelityReport.Kind.UNREQUESTED_ADAPTATION_CHANGE,
+                "solution removed displayName", "The feedback required preserving displayName.")));
+        when(recoveryService.recover(any(), any(), any(), anyString(), any()))
+                .thenReturn(new GenerationRecoveryService.RecoveryResult(1, "hyperion-draft/job", Set.of(RepositoryType.SOLUTION)));
+
+        run(GenerationMode.ADAPT, outcomeWith(AgentLoopResult.Status.COMPLETED, new VerificationResult(true, true, true, 3, List.of()), report));
+
+        ExerciseGenerationEventDTO terminal = sentEvents().getLast();
+        assertThat(terminal.completionStatus()).isEqualTo(ExerciseGenerationEventDTO.CompletionStatus.NEEDS_REVIEW);
+        assertThat(terminal.verdict().accepted()).isTrue();
+        assertThat(terminal.liveExerciseChanged()).isFalse();
+        verify(persistenceService, never()).persist(any(), any(), any(), any(), any(), anyString(), any());
+        verify(recoveryService).recover(any(), any(), any(), anyString(), any());
+    }
+
+    @Test
+    void rejectedAdaptationWithScopeFinding_reportsVerificationFailureAsPrimaryReason() {
+        SpecFidelityReport report = new SpecFidelityReport(
+                List.of(new SpecFidelityReport.Finding(SpecFidelityReport.Kind.UNREQUESTED_ADAPTATION_CHANGE, "solution added reset()", "The feedback did not request reset().")));
+        when(recoveryService.recover(any(), any(), any(), anyString(), any()))
+                .thenReturn(new GenerationRecoveryService.RecoveryResult(1, "hyperion-draft/job", Set.of(RepositoryType.SOLUTION)));
+
+        run(GenerationMode.ADAPT, outcomeWith(AgentLoopResult.Status.COMPLETED, new VerificationResult(false, false, true, 3, List.of("solution failed")), report));
+
+        ExerciseGenerationEventDTO terminal = sentEvents().getLast();
+        assertThat(terminal.message()).contains("did not pass verification", "solution failed", "adaptation-scope review also found")
+                .doesNotContain("Build and grading checks passed");
     }
 
     @Test

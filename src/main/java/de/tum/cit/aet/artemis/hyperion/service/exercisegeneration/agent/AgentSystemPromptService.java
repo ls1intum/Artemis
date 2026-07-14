@@ -105,9 +105,10 @@ public class AgentSystemPromptService {
                 tolerance, mutation, and exception semantics only where the implementation enforces them and a test observes them. Avoid unverifiable complexity or allocation claims. Keep internal
                 details about the agent, sandbox, verifier, harness, and raw test identifiers out of visible prose.
 
-                Provide small fenced worked examples beside the relevant tasks. Examples must agree with the implementation and tests, including important boundary or error behaviour, but must
-                not reproduce a graded test's exact composite input. Use a smaller or materially different input that teaches the rule without revealing the oracle. Use a precise API block for a
-                multi-type design; add UML only when it materially clarifies that design. Keep authored prose and source text in plain ASCII except when non-ASCII data is intrinsic to the exercise.
+                Provide representative worked examples only where they clarify important, non-obvious behaviour. Use a code block, table, or precise prose, whichever communicates the contract
+                most clearly. Examples must agree with the implementation and tests but must not reproduce a graded test's exact composite input. Use a smaller or materially different input that
+                teaches the rule without revealing the oracle. Use a precise API block for a multi-type design; add UML only when it materially clarifies that design. Keep authored prose and source
+                text in plain ASCII except when non-ASCII data is intrinsic to the exercise.
 
                 ARTEMIS TASK BINDINGS
                 Use one line per student-facing requirement:

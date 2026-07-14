@@ -97,16 +97,33 @@ class SpecFidelityCriticServiceTest {
         assertThat(prompt.getValue().getOptions()).isInstanceOf(OpenAiChatOptions.class);
     }
 
-    /** An error/edge behaviour described only in prose (no concrete fenced example) is reported as a MISSING_WORKED_EXAMPLE finding. */
+    /** An important, non-obvious behaviour that remains ambiguous without an example is reported as a MISSING_WORKED_EXAMPLE finding. */
     @Test
     void missingWorkedExample_isFlagged() {
         SpecFidelityCriticService critic = criticReturning(jsonResponse(
-                "{\"uncovered\":[],\"missingExamples\":[{\"behaviour\":\"pop on empty throws\",\"reason\":\"only a prose 'would throw' sentence, no fenced trace\"}]}"));
+                "{\"uncovered\":[],\"missingExamples\":[{\"behaviour\":\"rollback after a failed checkout\",\"reason\":\"the interaction between undoing the charge and preserving queue position is difficult to apply without a trace\"}]}"));
 
-        SpecFidelityReport report = critic.critique(UNICODE_BRIEF, "Implement a stack; pop on an empty stack must throw.", List.of("test_pop_empty_throws"));
+        SpecFidelityReport report = critic.critique(UNICODE_BRIEF,
+                "If checkout fails after charging the member, undo the charge and preserve the member's original queue position.", List.of("failedCheckoutRollsBackAtomically"));
 
         assertThat(report.findings()).hasSize(1).allMatch(finding -> finding.kind() == SpecFidelityReport.Kind.MISSING_WORKED_EXAMPLE);
-        assertThat(report.findings()).extracting(SpecFidelityReport.Finding::requirement).containsExactly("pop on empty throws");
+        assertThat(report.findings()).extracting(SpecFidelityReport.Finding::requirement).containsExactly("rollback after a failed checkout");
+    }
+
+    @Test
+    void criticPrompt_acceptsConcreteExamplesInTablesOrProseAndDoesNotDemandOnePerEdgeCase() {
+        ChatModel chatModel = mock(ChatModel.class);
+        when(chatModel.call(any(Prompt.class))).thenReturn(jsonResponse("{\"uncovered\":[],\"missingExamples\":[]}"));
+        when(chatModel.getOptions()).thenReturn(ChatOptions.builder().build());
+        SpecFidelityCriticService critic = new SpecFidelityCriticService(ChatClient.create(chatModel), objectMapper);
+
+        critic.critique(UNICODE_BRIEF, "A clean problem statement.", List.of("test_x"));
+
+        ArgumentCaptor<Prompt> prompt = ArgumentCaptor.forClass(Prompt.class);
+        verify(chatModel).call(prompt.capture());
+        assertThat(prompt.getValue().getInstructions().getFirst().getText()).contains("table row or precise prose").contains("Do NOT demand one example for every")
+                .contains("additions, deletions, or rewrites").contains("already explicit contract").contains("materially improve understanding").contains("requested delta")
+                .doesNotContain("a hand-authored exercise pins every error/edge behaviour");
     }
 
     /** A requirement the produced statement imposes that the brief never asked for is reported as an INVENTED_REQUIREMENT (scope-drift) finding. */
@@ -125,7 +142,7 @@ class SpecFidelityCriticServiceTest {
     void adaptationDiff_exposesUnrequestedDeletionAsBlockingFinding() {
         ChatModel chatModel = mock(ChatModel.class);
         when(chatModel.call(any(Prompt.class))).thenReturn(jsonResponse(
-                "{\"uncovered\":[],\"missingExamples\":[],\"invented\":[],\"unrequestedChanges\":[{\"change\":\"solution/src/Inventory.java removed displayName(String)\",\"reason\":\"the feedback explicitly preserves it\"}]}"));
+                "{\"uncovered\":[],\"missingExamples\":[],\"invented\":[],\"unrequestedChanges\":[{\"change\":\"solution/src/Inventory.java removed displayName(String)\",\"reason\":\"the feedback explicitly preserves it\"}],\"missingRequestedChanges\":[]}"));
         when(chatModel.getOptions()).thenReturn(ChatOptions.builder().build());
         SpecFidelityCriticService critic = new SpecFidelityCriticService(ChatClient.create(chatModel), objectMapper);
 
@@ -214,16 +231,16 @@ class SpecFidelityCriticServiceTest {
     }
 
     @Test
-    void shortAdaptationFeedback_stillRunsScopeReview() {
+    void adaptationWithNoChanges_blocksWithoutTrustingTheReviewer() {
         ChatModel chatModel = mock(ChatModel.class);
-        when(chatModel.call(any(Prompt.class))).thenReturn(jsonResponse("{\"unrequestedChanges\":[]}"));
         when(chatModel.getOptions()).thenReturn(ChatOptions.builder().build());
         SpecFidelityCriticService critic = new SpecFidelityCriticService(ChatClient.create(chatModel), objectMapper);
 
-        SpecFidelityReport report = critic.critiqueAdaptation("Change remove(0).", "# Inventory", List.of("test_x"), "- old\n+ new", null);
+        SpecFidelityReport report = critic.critiqueAdaptation("Change remove(0).", "# Inventory", List.of("test_x"), "", null);
 
-        assertThat(report.hasBlockingFindings()).isFalse();
-        verify(chatModel).call(any(Prompt.class));
+        assertThat(report.findings()).singleElement().satisfies(finding -> assertThat(finding.kind()).isEqualTo(SpecFidelityReport.Kind.REQUESTED_ADAPTATION_CHANGE_MISSING));
+        assertThat(report.hasBlockingFindings()).isTrue();
+        verify(chatModel, never()).call(any(Prompt.class));
     }
 
     @Test
@@ -233,6 +250,35 @@ class SpecFidelityCriticServiceTest {
         SpecFidelityReport report = critic.critiqueAdaptation("Change remove(0).", "# Inventory", List.of("test_x"), "- old\n+ new", null);
 
         assertThat(report.findings()).singleElement().satisfies(finding -> assertThat(finding.kind()).isEqualTo(SpecFidelityReport.Kind.ADAPTATION_SCOPE_REVIEW_UNAVAILABLE));
+        assertThat(report.hasBlockingFindings()).isTrue();
+    }
+
+    @Test
+    void adaptationDiff_exposesUnrequestedAdditionAsBlockingFinding() {
+        SpecFidelityCriticService critic = criticReturning(jsonResponse(
+                "{\"uncovered\":[],\"missingExamples\":[],\"invented\":[],\"unrequestedChanges\":[{\"change\":\"solution/src/Inventory.java added reset()\",\"reason\":\"the feedback only requests changing remove()\"}],\"missingRequestedChanges\":[]}"));
+
+        SpecFidelityReport report = critic.critiqueAdaptation("Change only remove().", "# Inventory", List.of("removeRejectsZero"),
+                "--- solution/src/Inventory.java\n+ void reset()\n", null);
+
+        assertThat(report.findings()).singleElement().satisfies(finding -> {
+            assertThat(finding.kind()).isEqualTo(SpecFidelityReport.Kind.UNREQUESTED_ADAPTATION_CHANGE);
+            assertThat(finding.requirement()).contains("added reset()");
+        });
+        assertThat(report.hasBlockingFindings()).isTrue();
+    }
+
+    @Test
+    void adaptationResponseMapsMissingRequestedChangeToBlockingFinding() {
+        SpecFidelityCriticService critic = criticReturning(jsonResponse(
+                "{\"uncovered\":[],\"missingExamples\":[],\"invented\":[],\"unrequestedChanges\":[],\"missingRequestedChanges\":[{\"requirement\":\"reject zero quantities\",\"reason\":\"no validation was added\"}]}"));
+
+        SpecFidelityReport report = critic.critiqueAdaptation("Reject zero quantities.", "# Inventory", List.of("test_x"), "(no changes)", null);
+
+        assertThat(report.findings()).singleElement().satisfies(finding -> {
+            assertThat(finding.kind()).isEqualTo(SpecFidelityReport.Kind.REQUESTED_ADAPTATION_CHANGE_MISSING);
+            assertThat(finding.requirement()).isEqualTo("reject zero quantities");
+        });
         assertThat(report.hasBlockingFindings()).isTrue();
     }
 
@@ -252,6 +298,25 @@ class SpecFidelityCriticServiceTest {
         SpecFidelityReport report = critic.critiqueAdaptation("Change remove(0).", "# Inventory", List.of("test_x"), "- old\n+ new", null);
 
         assertThat(report.hasBlockingFindings()).isTrue();
+    }
+
+    @Test
+    void malformedAdaptationScopeEntry_blocksLivePersistence() {
+        SpecFidelityCriticService critic = criticReturning(jsonResponse("{\"unrequestedChanges\":[{\"reason\":\"missing change\"}],\"missingRequestedChanges\":[]}"));
+
+        SpecFidelityReport report = critic.critiqueAdaptation("Change remove(0).", "# Inventory", List.of("test_x"), "- old\n+ new", null);
+
+        assertThat(report.findings()).singleElement().satisfies(finding -> assertThat(finding.kind()).isEqualTo(SpecFidelityReport.Kind.ADAPTATION_SCOPE_REVIEW_UNAVAILABLE));
+    }
+
+    @Test
+    void generationIgnoresAdaptationOnlyFields() {
+        SpecFidelityCriticService critic = criticReturning(jsonResponse(
+                "{\"uncovered\":[],\"missingExamples\":[],\"invented\":[],\"unrequestedChanges\":[{\"change\":\"solution added reset()\",\"reason\":\"not requested\"}],\"missingRequestedChanges\":[{\"requirement\":\"change remove()\",\"reason\":\"missing\"}]}"));
+
+        SpecFidelityReport report = critic.critique(UNICODE_BRIEF, "# Inventory", List.of("test_x"));
+
+        assertThat(report.hasFindings()).isFalse();
     }
 
     /** A degenerate response with far too many entries is capped, so a critic finding list can never flood the retry prompt or review panel. */
@@ -276,7 +341,7 @@ class SpecFidelityCriticServiceTest {
         for (int i = 0; i < 20; i++) {
             body.append(i == 0 ? "" : ",").append("{\"requirement\":\"req").append(i).append("\",\"reason\":\"r\"}");
         }
-        body.append("],\"unrequestedChanges\":[{\"change\":\"solution removed displayName\",\"reason\":\"explicitly preserved\"}]}");
+        body.append("],\"unrequestedChanges\":[{\"change\":\"solution removed displayName\",\"reason\":\"explicitly preserved\"}],\"missingRequestedChanges\":[]}");
         SpecFidelityCriticService critic = criticReturning(jsonResponse(body.toString()));
 
         SpecFidelityReport report = critic.critiqueAdaptation(UNICODE_BRIEF, "Clean statement.", List.of("test_x"), "- displayName", null);
@@ -297,7 +362,7 @@ class SpecFidelityCriticServiceTest {
         assertThat(report.findings().get(0).requirement()).isEqualTo("CJK");
     }
 
-    /** The retry-prompt rendering folds both finding kinds into actionable, advisory-framed instructions, and is empty for an empty report. */
+    /** Retry rendering distinguishes advisory generation findings from blocking adaptation-scope findings and is empty for an empty report. */
     @Test
     void renderForRetryPrompt_foldsFindingsAndIsEmptyWhenNone() {
         // renderForRetryPrompt is model-free, so a critic without a ChatClient suffices.
@@ -305,10 +370,11 @@ class SpecFidelityCriticServiceTest {
         assertThat(critic.renderForRetryPrompt(SpecFidelityReport.empty())).isEmpty();
 
         SpecFidelityReport report = new SpecFidelityReport(List.of(new SpecFidelityReport.Finding(SpecFidelityReport.Kind.UNCOVERED_REQUIREMENT, "CJK", "no CJK test"),
+                new SpecFidelityReport.Finding(SpecFidelityReport.Kind.UNREQUESTED_ADAPTATION_CHANGE, "solution/Queue.java added clear()", "The feedback did not request it."),
                 new SpecFidelityReport.Finding(SpecFidelityReport.Kind.MECHANICS_LEAK, "make the tests fail", "leak")));
         String rendered = critic.renderForRetryPrompt(report);
-        assertThat(rendered).contains("did NOT cause rejection").contains("No test covers this requirement").contains("CJK").contains("grader-mechanics phrasing")
-                .contains("make the tests fail");
+        assertThat(rendered).contains("must fix before saving", "Optional quality improvements", "Unrequested adaptation change", "solution/Queue.java added clear()")
+                .contains("No test covers this requirement", "CJK", "grader-mechanics phrasing", "make the tests fail");
     }
 
     // --- detectMessagelessAssertions (deterministic, model-free) ---

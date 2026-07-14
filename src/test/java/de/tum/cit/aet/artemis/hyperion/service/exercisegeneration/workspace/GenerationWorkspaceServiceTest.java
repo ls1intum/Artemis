@@ -222,7 +222,9 @@ class GenerationWorkspaceServiceTest {
         service.cleanTransientBuildOutputs(sandbox, "session");
 
         verify(sandbox).exec(eq("session"), any(), eq("sh"), eq("-c"), eq("rm -rf -- /workspace/solution/.gradle /workspace/solution/build /workspace/solution/target "
-                + "/workspace/template/.gradle /workspace/template/build /workspace/template/target /workspace/tests/.gradle /workspace/tests/build /workspace/tests/target"));
+                + "/workspace/solution/buildSrc/.gradle /workspace/solution/buildSrc/build /workspace/template/.gradle /workspace/template/build /workspace/template/target "
+                + "/workspace/template/buildSrc/.gradle /workspace/template/buildSrc/build /workspace/tests/.gradle /workspace/tests/build /workspace/tests/target "
+                + "/workspace/tests/buildSrc/.gradle /workspace/tests/buildSrc/build"));
     }
 
     private static TarArchiveInputStream tar(Map<String, String> files) {

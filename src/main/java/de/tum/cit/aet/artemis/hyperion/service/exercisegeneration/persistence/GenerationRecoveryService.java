@@ -165,14 +165,16 @@ public class GenerationRecoveryService {
         for (SpecFidelityReport.Finding finding : report.findings()) {
             String title = switch (finding.kind()) {
                 case MECHANICS_LEAK -> "Grader-mechanics phrasing in the student-facing problem statement: \"" + finding.requirement() + "\"";
-                case MISSING_WORKED_EXAMPLE -> "Error/edge behaviour without a concrete worked example: \"" + finding.requirement() + "\"";
+                case MISSING_WORKED_EXAMPLE -> "Important behaviour may benefit from a concrete worked example: \"" + finding.requirement() + "\"";
                 case INVENTED_REQUIREMENT -> "Requirement not asked for by the brief (confirm or remove): \"" + finding.requirement() + "\"";
                 case UNREQUESTED_ADAPTATION_CHANGE -> "Adaptation changed content outside the requested scope: \"" + finding.requirement() + "\"";
+                case REQUESTED_ADAPTATION_CHANGE_MISSING -> "Requested adaptation change is missing or incomplete: \"" + finding.requirement() + "\"";
                 case ADAPTATION_SCOPE_REVIEW_UNAVAILABLE -> "Adaptation scope could not be verified automatically";
                 case UNCOVERED_REQUIREMENT -> "Possible coverage gap against the brief: \"" + finding.requirement() + "\"";
                 case MISSING_FAILURE_MESSAGE -> "Graded tests give no failure message, so a failing student sees only \"expected X but was Y\": " + finding.requirement();
             };
             Severity severity = finding.kind() == SpecFidelityReport.Kind.UNREQUESTED_ADAPTATION_CHANGE
+                    || finding.kind() == SpecFidelityReport.Kind.REQUESTED_ADAPTATION_CHANGE_MISSING
                     || finding.kind() == SpecFidelityReport.Kind.ADAPTATION_SCOPE_REVIEW_UNAVAILABLE ? Severity.HIGH : Severity.MEDIUM;
             findings.add(finding(severity, title, finding.detail()));
         }

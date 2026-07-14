@@ -11,8 +11,8 @@ import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.D
  * bindings resolve) but never whether it implements the instructor's brief. This report carries the gaps between the brief and the produced tests (see {@link Kind} for the finding
  * categories).
  * <p>
- * Coverage findings remain advisory. Unrequested adaptation changes and unavailable adaptation-scope verdicts block direct live persistence and are saved for manual review
- * instead.
+ * Coverage findings remain advisory. Missing or unrequested adaptation changes and unavailable adaptation-scope verdicts block direct live persistence and are saved for manual
+ * review instead.
  *
  * @param findings the spec-fidelity or adaptation-scope findings
  */
@@ -24,14 +24,14 @@ public record SpecFidelityReport(List<Finding> findings) {
         UNCOVERED_REQUIREMENT,
         /** A grader-mechanics phrase ("make the tests fail", "NotImplementedError in the template") that leaked into the student-facing problem statement. */
         MECHANICS_LEAK,
-        /**
-         * A [task] that names an error/edge behaviour but whose statement gives no concrete fenced call→result worked-example trace for it (a hand-authored exercise always does).
-         */
+        /** An important, non-obvious behaviour whose contract needs a concrete input-to-outcome example to be clear. */
         MISSING_WORKED_EXAMPLE,
         /** A requirement/constraint the produced problem statement imposes that the instructor's brief never asked for (scope drift the instructor should confirm). */
         INVENTED_REQUIREMENT,
-        /** An adaptation changed or removed existing content that its feedback did not request changing. */
+        /** An adaptation added, changed, or removed content that its feedback did not request changing. */
         UNREQUESTED_ADAPTATION_CHANGE,
+        /** An adaptation omitted all or part of a change explicitly requested by its feedback. */
+        REQUESTED_ADAPTATION_CHANGE_MISSING,
         /** The adaptation-scope review could not produce a trustworthy verdict. */
         ADAPTATION_SCOPE_REVIEW_UNAVAILABLE,
         /**
@@ -49,6 +49,10 @@ public record SpecFidelityReport(List<Finding> findings) {
      * @param detail      a short human-readable explanation of why this is a gap and what to do about it
      */
     public record Finding(Kind kind, String requirement, String detail) {
+
+        public boolean isBlocking() {
+            return kind == Kind.UNREQUESTED_ADAPTATION_CHANGE || kind == Kind.REQUESTED_ADAPTATION_CHANGE_MISSING || kind == Kind.ADAPTATION_SCOPE_REVIEW_UNAVAILABLE;
+        }
     }
 
     /** @return an empty report (no findings), used when the critic is skipped or finds nothing. */
@@ -58,7 +62,7 @@ public record SpecFidelityReport(List<Finding> findings) {
 
     public static SpecFidelityReport adaptationScopeUnavailable(String detail) {
         return new SpecFidelityReport(List.of(new Finding(Kind.ADAPTATION_SCOPE_REVIEW_UNAVAILABLE, "Adaptation scope could not be verified",
-                detail + " The generated files were kept in an isolated review draft instead of changing the live exercise.")));
+                detail + " Keep the generated files out of the live exercise until their scope can be reviewed.")));
     }
 
     public boolean hasFindings() {
@@ -66,6 +70,6 @@ public record SpecFidelityReport(List<Finding> findings) {
     }
 
     public boolean hasBlockingFindings() {
-        return findings.stream().anyMatch(finding -> finding.kind() == Kind.UNREQUESTED_ADAPTATION_CHANGE || finding.kind() == Kind.ADAPTATION_SCOPE_REVIEW_UNAVAILABLE);
+        return findings.stream().anyMatch(Finding::isBlocking);
     }
 }

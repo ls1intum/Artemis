@@ -258,6 +258,18 @@ class GenerationRecoveryServiceTest {
                 .satisfies(finding -> assertThat(finding.severity()).isEqualTo(Severity.MEDIUM));
     }
 
+    @Test
+    void specFidelityFindings_mapsMissingRequestedAdaptationAsHighSeverity() {
+        SpecFidelityReport report = new SpecFidelityReport(
+                List.of(new SpecFidelityReport.Finding(SpecFidelityReport.Kind.REQUESTED_ADAPTATION_CHANGE_MISSING, "reject zero quantities", "No validation was added.")));
+
+        assertThat(GenerationRecoveryService.specFidelityFindings(report)).singleElement().satisfies(finding -> {
+            assertThat(finding.severity()).isEqualTo(Severity.HIGH);
+            assertThat(finding.description()).contains("missing or incomplete", "reject zero quantities");
+            assertThat(finding.suggestedFix()).isEqualTo("No validation was added.");
+        });
+    }
+
     /** On the accepted path, {@code surfaceAdvisoryFindings} attaches advisory threads, returns the count, and notifies editors without changing acceptance. */
     @Test
     void surfaceAdvisoryFindings_attachesThreadsWithoutAffectingAcceptance() {

@@ -191,7 +191,7 @@ public class GenerationOrchestrationService {
             // them for the integrity gates). Overwritten each attempt so the outcome carries the last (accepted or exhausted) attempt's tree.
             Map<RepositoryType, Map<String, String>> producedFilesByType = new EnumMap<>(RepositoryType.class);
             String producedProblemStatement = "";
-            // Recomputed each attempt; the final attempt's report rides the outcome. Advisory only.
+            // Recomputed each attempt; the final attempt's report rides the outcome.
             SpecFidelityReport specFidelityReport = SpecFidelityReport.empty();
             for (int attempt = 1; attempt <= MAX_GENERATION_ATTEMPTS; attempt++) {
                 loopResult = agentLoopRunner.run(systemPrompt, currentPrompt, tools, maxTurns, cancelled, effectiveUsageSink, progress);
@@ -259,7 +259,7 @@ public class GenerationOrchestrationService {
                     return GenerationOutcome.cancelled(cancelledResult(loopResult));
                 }
 
-                // Advisory critic against this attempt's artifacts; never touches `verification`. Shares the run's usage sink so the critic's LLM call is counted, not dropped.
+                // The critic never changes the verifier verdict. Its generation-quality findings are advisory; unresolved adaptation-scope findings block live persistence.
                 @Nullable
                 String adaptationChanges = mode == GenerationMode.ADAPT
                         ? renderAdaptationChanges(baselineProblemStatement, producedProblemStatement, baselineRepositoryFiles, producedFilesByType)
@@ -271,19 +271,22 @@ public class GenerationOrchestrationService {
                     return GenerationOutcome.cancelled(cancelledResult(loopResult));
                 }
 
-                boolean acceptedWithoutRequiredRetry = verification.accepted()
-                        && (!specFidelityReport.hasFindings() || mode == GenerationMode.ADAPT && !specFidelityReport.hasBlockingFindings());
-                if (acceptedWithoutRequiredRetry || attempt == MAX_GENERATION_ATTEMPTS) {
+                if (verification.accepted() && !specFidelityReport.hasBlockingFindings()) {
+                    break;
+                }
+                if (attempt == MAX_GENERATION_ATTEMPTS) {
                     break;
                 }
                 if (verification.accepted()) {
-                    emit(progress,
-                            mode == GenerationMode.ADAPT
-                                    ? "Verification accepted the exercise, but the adaptation-scope review found unrequested changes; asking the agent to restore them."
-                                    : "Verification accepted the exercise, but the spec-fidelity review found quality gaps; asking the agent to polish the exercise.");
+                    boolean scopeReviewUnavailable = specFidelityReport.findings().stream()
+                            .anyMatch(finding -> finding.kind() == SpecFidelityReport.Kind.ADAPTATION_SCOPE_REVIEW_UNAVAILABLE);
+                    if (scopeReviewUnavailable) {
+                        break;
+                    }
+                    emit(progress, "Verification accepted the exercise, but the adaptation-scope review found missing or unrequested changes; asking the agent to correct them.");
                     currentPrompt = "Your previous attempt passed differential verification, but the review found changes that must be corrected. Keep the accepted behaviour intact, "
-                            + "fix only these quality gaps, re-run `sh verify.sh solution` and `sh verify.sh template`, then call submit again."
-                            + specFidelityCritic.renderForRetryPrompt(specFidelityReport);
+                            + "fix only these adaptation-scope violations, re-run `sh verify.sh solution` and `sh verify.sh template`, then call submit again.\n\n"
+                            + "The requested adaptation is:\n" + userPrompt + specFidelityCritic.renderForRetryPrompt(specFidelityReport);
                     continue;
                 }
                 emit(progress, "Verification rejected the exercise; asking the agent to fix the issues and try again.");
@@ -350,7 +353,10 @@ public class GenerationOrchestrationService {
                 report = new SpecFidelityReport(combined);
             }
             if (report.hasFindings()) {
-                emit(progress, "Spec-fidelity review found " + report.findings().size() + " gap(s) against the brief; unresolved adaptation scope changes require manual review.");
+                emit(progress,
+                        report.hasBlockingFindings()
+                                ? "The review found " + report.findings().size() + " gap(s), including adaptation-scope changes that require review if unresolved."
+                                : "The review found " + report.findings().size() + " advisory exercise-quality gap(s).");
             }
             return report;
         }
@@ -378,7 +384,7 @@ public class GenerationOrchestrationService {
     }
 
     private static void appendChangedFile(StringBuilder changes, String path, @Nullable String before, @Nullable String after) {
-        if (changes.length() >= MAX_ADAPTATION_CHANGE_CHARS || java.util.Objects.equals(before, after)) {
+        if (changes.length() >= MAX_ADAPTATION_CHANGE_CHARS || java.util.Objects.equals(before == null ? "" : before, after == null ? "" : after)) {
             return;
         }
         appendCapped(changes, "\n--- " + path + "\n");

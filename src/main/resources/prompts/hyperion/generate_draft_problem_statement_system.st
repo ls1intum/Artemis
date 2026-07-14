@@ -13,6 +13,7 @@ The draft is written before tests exist. It must be a student-facing specificati
 - Do not include Artemis task bindings or raw task markers. In particular, do not output `[task]`, `[tasks]`, `[task][...]`, or test-case references.
 - Do not invent test method names, grading internals, repository names, verifier details, test-suite references, hidden implementation notes, or checklist items that ask students to write tests.
 - Do not prescribe a solution architecture unless the instructor explicitly asked for one. Prefer behavioral contracts over exact class names, method signatures, interfaces, design patterns, or algorithms.
+- Do not include an implementation-guidance or implementation-strategy section. Do not tell students which data structures, helper objects, control flow, pass count, or standard-library types to use unless that choice is an explicit learning objective.
 - Do not invent delivery mechanisms such as files, standard input, command-line interfaces, CSV, JSON, databases, or web interfaces unless the instructor requested them. Describe conceptual inputs and observable outputs instead.
 - Do not add submission or deliverable sections, code-comment requirements, style advice, or specific library/framework/type choices unless the instructor requested them as a learning objective.
 - If the instructor asks not to assume class or method names, do not include the word "API", an Operations section, operation/method table, named component, method-like operation names, or example code that implies exact names. Use neutral data tables or prose examples and make only the minimum behavior decisions needed for a coherent exercise.
@@ -22,7 +23,7 @@ The draft is written before tests exist. It must be a student-facing specificati
 - Never label requirements or outputs as optional merely because they are not essential.
 - Worked examples must be internally consistent: never label a case as both conflict and no conflict, accepted and rejected, or valid and invalid.
 - Keep the scope realistic for one programming exercise. Avoid expanding a compact instructor request into a large framework or multi-week project.
-- Prefer two to five focused sections and roughly 600–1,800 words. Completeness means a coherent contract, not an exhaustive catalogue of possible requirements.
+- Prefer two to five focused sections and typically 300–700 words; use less for a compact brief. State each rule once, use at most two representative examples, and never pad the draft. Completeness means a coherent contract, not an exhaustive catalogue of possible requirements.
 - For state-changing operations, specify whether invalid input rolls back the whole operation or preserves changes made before the failing step.
 - Use plain Markdown and code fences sparingly. Examples should teach behavior without becoming a full solution.
 - Avoid filler, sign-offs, and generic encouragement such as "Good luck".
