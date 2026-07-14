@@ -17,6 +17,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.hibernate.Hibernate;
@@ -34,6 +35,7 @@ import org.springframework.stereotype.Service;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
+import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
@@ -827,14 +829,38 @@ public class StudentExamService {
     }
 
     /**
+     * Starts all the exercises only for a specific list of student exams.
+     *
+     * @param examId         exam to which the student exams belong
+     * @param studentExamIds the ids of student exams for which to start exercises
+     * @return a future that will yield the number of generated participations
+     */
+    public CompletableFuture<Integer> startExercisesForStudentExams(Long examId, List<Long> studentExamIds) {
+        return this.startExercises(examId, studentExamIds);
+    }
+
+    /**
      * Starts all the exercises of all the student exams of an exam
      *
      * @param examId exam to which the student exams belong
      * @return a future that will yield the number of generated participations
      */
     public CompletableFuture<Integer> startExercises(Long examId) {
+        return this.startExercises(examId, null);
+    }
+
+    private CompletableFuture<Integer> startExercises(Long examId, List<Long> studentExamIds) {
         var exam = examRepository.findWithStudentExamsExercisesById(examId).orElseThrow(() -> new EntityNotFoundException("Exam", examId));
-        var studentExams = exam.getStudentExams();
+
+        Set<StudentExam> studentExams;
+        if (studentExamIds == null) {
+            studentExams = exam.getStudentExams();
+        }
+        else {
+            var studentExamsInExam = exam.getStudentExams().stream().collect(Collectors.toMap(DomainObject::getId, Function.identity()));
+            studentExams = studentExamIds.stream().map(studentExamsInExam::get).filter(Objects::nonNull).collect(Collectors.toSet());
+        }
+
         List<StudentParticipation> generatedParticipations = Collections.synchronizedList(new ArrayList<>());
 
         this.invalidateExerciseStartStatus(examId);
