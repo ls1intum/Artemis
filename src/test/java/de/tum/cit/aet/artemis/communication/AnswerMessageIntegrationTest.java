@@ -29,6 +29,9 @@ import org.springframework.util.LinkedMultiValueMap;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.communication.domain.AnswerPost;
 import de.tum.cit.aet.artemis.communication.domain.Post;
+import de.tum.cit.aet.artemis.communication.domain.PostingType;
+import de.tum.cit.aet.artemis.communication.domain.SavedPost;
+import de.tum.cit.aet.artemis.communication.domain.SavedPostStatus;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.dto.AnswerMessageDTO;
 import de.tum.cit.aet.artemis.communication.dto.AnswerPostResponseDTO;
@@ -36,10 +39,12 @@ import de.tum.cit.aet.artemis.communication.dto.CreateAnswerPostDTO;
 import de.tum.cit.aet.artemis.communication.dto.ParentPostDTO;
 import de.tum.cit.aet.artemis.communication.dto.PostBroadcastDTO;
 import de.tum.cit.aet.artemis.communication.dto.PostResponseDTO;
+import de.tum.cit.aet.artemis.communication.dto.PostingDTO;
 import de.tum.cit.aet.artemis.communication.dto.UpdatePostingDTO;
 import de.tum.cit.aet.artemis.communication.dto.VerifyAnswerMessageDTO;
 import de.tum.cit.aet.artemis.communication.repository.AnswerPostRepository;
 import de.tum.cit.aet.artemis.communication.repository.ConversationMessageRepository;
+import de.tum.cit.aet.artemis.communication.repository.SavedPostRepository;
 import de.tum.cit.aet.artemis.communication.util.ConversationUtilService;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.domain.CourseInformationSharingConfiguration;
@@ -64,6 +69,9 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationIndependentT
 
     @Autowired
     private ConversationMessageRepository conversationMessageRepository;
+
+    @Autowired
+    private SavedPostRepository savedPostRepository;
 
     @Autowired
     private LectureUtilService lectureUtilService;
@@ -805,6 +813,112 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationIndependentT
         verify(websocketMessagingService, never()).sendMessage(argThat((String topic) -> topic != null && topic.contains("/courses/")), any());
     }
 
+    // Regression: a pending (unverified) Iris reply must not leak to students through any alternate lookup path.
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldNotExposeUnverifiedIrisReplyThroughSourcePostsToStudent() throws Exception {
+        User irisBot = userUtilService.createAndSaveUser(User.IRIS_BOT_LOGIN);
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        Channel channel = conversationUtilService.createCourseWideChannel(course, "iris-source-student");
+        Post parent = conversationUtilService.addMessageToConversation(TEST_PREFIX + "student1", channel);
+
+        AnswerPost normalAnswer = saveAnswerPost(TEST_PREFIX + "student2", parent);
+        AnswerPost pendingIris = createUnverifiedIrisReply(parent, irisBot);
+
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("postIds", parent.getId().toString());
+
+        List<PostResponseDTO> posts = request.getList("/api/communication/courses/" + courseId + "/messages-source-posts", HttpStatus.OK, PostResponseDTO.class, params);
+
+        assertThat(posts).hasSize(1);
+        var answerIds = posts.getFirst().answers().stream().map(AnswerPostResponseDTO::id).toList();
+        // the student sees the normal answer but never the pending Iris reply
+        assertThat(answerIds).contains(normalAnswer.getId()).doesNotContain(pendingIris.getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void shouldExposeUnverifiedIrisReplyThroughSourcePostsToTutor() throws Exception {
+        User irisBot = userUtilService.createAndSaveUser(User.IRIS_BOT_LOGIN);
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        Channel channel = conversationUtilService.createCourseWideChannel(course, "iris-source-tutor");
+        Post parent = conversationUtilService.addMessageToConversation(TEST_PREFIX + "student1", channel);
+        AnswerPost pendingIris = createUnverifiedIrisReply(parent, irisBot);
+
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("postIds", parent.getId().toString());
+
+        List<PostResponseDTO> posts = request.getList("/api/communication/courses/" + courseId + "/messages-source-posts", HttpStatus.OK, PostResponseDTO.class, params);
+
+        assertThat(posts).hasSize(1);
+        // the reviewing tutor must still receive the pending reply so the review controls stay live
+        assertThat(posts.getFirst().answers().stream().map(AnswerPostResponseDTO::id)).contains(pendingIris.getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldNotExposeUnverifiedIrisReplyThroughSavedPostsToStudent() throws Exception {
+        User irisBot = userUtilService.createAndSaveUser(User.IRIS_BOT_LOGIN);
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        Channel channel = conversationUtilService.createCourseWideChannel(course, "iris-saved-student");
+        Post parent = conversationUtilService.addMessageToConversation(TEST_PREFIX + "student1", channel);
+        AnswerPost pendingIris = createUnverifiedIrisReply(parent, irisBot);
+
+        // the student bookmarks the pending Iris reply by its (guessed) id and re-reads it via saved-posts
+        savedPostRepository.save(new SavedPost(student1, pendingIris.getId(), PostingType.ANSWER, SavedPostStatus.IN_PROGRESS, null));
+
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("courseId", courseId.toString());
+        params.add("status", SavedPostStatus.IN_PROGRESS.toString().toLowerCase());
+
+        List<PostingDTO> saved = request.getList("/api/communication/saved-posts", HttpStatus.OK, PostingDTO.class, params);
+
+        assertThat(saved.stream().map(PostingDTO::id)).doesNotContain(pendingIris.getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void shouldExposeUnverifiedIrisReplyThroughSavedPostsToTutor() throws Exception {
+        User irisBot = userUtilService.createAndSaveUser(User.IRIS_BOT_LOGIN);
+        User tutor1 = userUtilService.getUserByLogin(TEST_PREFIX + "tutor1");
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        Channel channel = conversationUtilService.createCourseWideChannel(course, "iris-saved-tutor");
+        Post parent = conversationUtilService.addMessageToConversation(TEST_PREFIX + "student1", channel);
+        AnswerPost pendingIris = createUnverifiedIrisReply(parent, irisBot);
+
+        savedPostRepository.save(new SavedPost(tutor1, pendingIris.getId(), PostingType.ANSWER, SavedPostStatus.IN_PROGRESS, null));
+
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("courseId", courseId.toString());
+        params.add("status", SavedPostStatus.IN_PROGRESS.toString().toLowerCase());
+
+        List<PostingDTO> saved = request.getList("/api/communication/saved-posts", HttpStatus.OK, PostingDTO.class, params);
+
+        assertThat(saved.stream().map(PostingDTO::id)).contains(pendingIris.getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void studentOwningParentCannotMutateUnverifiedIrisReply() throws Exception {
+        User irisBot = userUtilService.createAndSaveUser(User.IRIS_BOT_LOGIN);
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        Channel channel = conversationUtilService.createCourseWideChannel(course, "iris-update-guard");
+        // student1 authors the parent post, which would otherwise let them pass mayMarkAnswerMessageAsResolvingElseThrow
+        Post parent = conversationUtilService.addMessageToConversation(TEST_PREFIX + "student1", channel);
+        AnswerPost pendingIris = createUnverifiedIrisReply(parent, irisBot);
+
+        UpdatePostingDTO tamper = new UpdatePostingDTO(pendingIris.getId(), "student tampered content", null, true);
+        request.putWithResponseBody("/api/communication/courses/" + courseId + "/answer-messages/" + pendingIris.getId(), tamper, AnswerPostResponseDTO.class,
+                HttpStatus.FORBIDDEN);
+
+        // the pending reply is left untouched: neither its content nor its verification state changed
+        AnswerPost reloaded = answerPostRepository.findById(pendingIris.getId()).orElseThrow();
+        assertThat(reloaded.getContent()).isEqualTo(pendingIris.getContent());
+        assertThat(reloaded.isVerified()).isFalse();
+        assertThat(reloaded.doesResolvePost()).isFalse();
+    }
+
     // GET answer-messages-source-posts (forwarded-message source previews must not leak answer posts the caller cannot access)
 
     @Test
@@ -943,6 +1057,20 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationIndependentT
         answerPost.setPost(post);
         post.addAnswerPost(answerPost);
         return answerPost;
+    }
+
+    /**
+     * Persists an unverified Iris-generated reply (author is the Iris bot, verified = false) on the given parent post.
+     * Such a reply must stay invisible to and immutable for students until a tutor verifies it.
+     */
+    private AnswerPost createUnverifiedIrisReply(Post parent, User irisBot) {
+        AnswerPost pendingIris = new AnswerPost();
+        pendingIris.setContent("A pending Iris answer that students must not see.");
+        pendingIris.setAuthor(irisBot);
+        pendingIris.setVerified(false);
+        pendingIris.setCreationDate(ZonedDateTime.now());
+        pendingIris.setPost(parent);
+        return answerPostRepository.save(pendingIris);
     }
 
     private void checkCreatedAnswerPost(AnswerPost expectedAnswerPost, AnswerPostResponseDTO createdAnswerPost) {

@@ -180,6 +180,26 @@ public abstract class PostingService {
     }
 
     /**
+     * Central visibility rule for pending (unverified) Iris replies: students must never see them. Strips every
+     * unverified Iris reply from the in-memory answers of the given posts unless the requesting user is at least a
+     * tutor in the course. Callers must apply this before projecting posts to a REST/websocket response on any
+     * lookup path that a student can reach (paginated messages, source posts, saved posts, forwarded messages, ...).
+     *
+     * @param posts    the posts whose answers are filtered in place
+     * @param courseId the course used for the tutor role check
+     */
+    public void hidePendingIrisRepliesFromStudents(Collection<Post> posts, Long courseId) {
+        if (authorizationCheckService.isAtLeastTeachingAssistantInCourse(courseId)) {
+            return;
+        }
+        posts.forEach(post -> {
+            if (post.getAnswers() != null) {
+                post.getAnswers().removeIf(AnswerPost::isUnverifiedIrisReply);
+            }
+        });
+    }
+
+    /**
      * Broadcasts a post that carries at least one unverified Iris reply. The full post (pending reply
      * included) goes to tutors so the review controls stay live, while everyone else receives a copy
      * with the pending Iris replies stripped. Both payloads are addressed to each recipient's personal

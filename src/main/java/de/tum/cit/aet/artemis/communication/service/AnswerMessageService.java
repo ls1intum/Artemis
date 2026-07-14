@@ -217,6 +217,14 @@ public class AnswerMessageService extends PostingService {
         Conversation conversation = conversationService.getConversationById(existingAnswerMessage.getPost().getConversation().getId());
         ensureConversationBelongsToCourseElseThrow(conversation, courseId);
         var course = preCheckUserAndCourseForMessaging(user, courseId);
+
+        // A pending (unverified) Iris reply is invisible to students and must also be immutable for them: block any
+        // non-tutor (e.g. the author of the parent post, who would otherwise pass mayMarkAnswerMessageAsResolvingElseThrow)
+        // from editing the content or toggling the resolve flag before a tutor verifies or rejects the reply.
+        if (existingAnswerMessage.isUnverifiedIrisReply() && !authorizationCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
+            throw new AccessForbiddenException("Answer Post", existingAnswerMessage.getId());
+        }
+
         parseUserMentions(course, answerMessage.content());
         // only the content of the message can be updated
         existingAnswerMessage.setContent(answerMessage.content());

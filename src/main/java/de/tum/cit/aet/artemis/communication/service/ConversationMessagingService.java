@@ -300,10 +300,8 @@ public class ConversationMessagingService extends PostingService {
         Page<Post> conversationPosts = conversationMessageRepository.findMessages(postContextFilter, pageable, requestingUser.getId());
         setAuthorRoleOfPostings(conversationPosts.getContent(), courseId);
 
-        if (!requesterIsAtLeastTutor) {
-            // students must never see unverified Iris replies, even if a previous fetch included them in the in-memory answers
-            conversationPosts.getContent().forEach(post -> post.getAnswers().removeIf(answer -> answer.isUnverifiedIrisReply()));
-        }
+        // students must never see unverified Iris replies, even if a previous fetch included them in the in-memory answers
+        hidePendingIrisRepliesFromStudents(conversationPosts.getContent(), courseId);
 
         // This check is needed to avoid resetting the unread count when searching
         if (postContextFilter.searchText() == null && postContextFilter.conversationIds().length == 1) {
