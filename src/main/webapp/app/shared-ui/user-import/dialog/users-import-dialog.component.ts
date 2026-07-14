@@ -240,7 +240,7 @@ export class UsersImportDialogComponent implements OnDestroy {
      * @param user The user to be checked
      */
     wasRejectedStaff(user: StudentDTO): boolean {
-        if (this.hasImported() || this.rejectedStaffUsers?.length === 0) {
+        if (!this.hasImported() || this.rejectedStaffUsers?.length === 0) {
             return false;
         }
 
