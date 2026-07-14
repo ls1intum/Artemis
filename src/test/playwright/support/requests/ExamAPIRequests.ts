@@ -1,7 +1,7 @@
 import { Course } from 'app/course/shared/entities/course.model';
 import dayjs from 'dayjs';
 import { Exam } from 'app/exam/shared/entities/exam.model';
-import { dayjsToString, generateUUID, titleLowercase } from '../utils';
+import { dayjsToString, generateUUID, sanitizeTitleForChannel } from '../utils';
 import examTemplate from '../../fixtures/exam/template.json';
 import { Page } from '@playwright/test';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -91,7 +91,7 @@ export class ExamAPIRequests {
             examStudentReviewEnd,
             publishResultsDate,
             gracePeriod,
-            channelName: titleLowercase(title),
+            channelName: sanitizeTitleForChannel(title),
         } as Exam;
 
         if (testExam) {

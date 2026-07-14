@@ -169,12 +169,14 @@ export function getExercise(page: Page, exerciseId: number) {
 }
 
 /**
- * Converts a title to lowercase and replaces spaces with hyphens.
- * @param title - The title to be converted to lowercase with hyphens.
- * @returns The converted title in lowercase with hyphens.
+ * Converts a title into a channel name: lowercase, all spaces replaced with hyphens, and truncated to 20 chars
+ * (the same limit the client enforces on manual channel-name input, and well within the server's 31-char cap in
+ * ChannelService.CHANNEL_NAME_REGEX even once callers prepend a prefix like `exercise-`).
+ * @param title - The title to be converted.
+ * @returns The converted title, safe to use in a channel name.
  */
-export function titleLowercase(title: string) {
-    return title.replace(' ', '-').toLowerCase();
+export function sanitizeTitleForChannel(title: string) {
+    return title.replace(/\s+/g, '-').toLowerCase().slice(0, 20).replace(/-+$/g, '');
 }
 
 /**

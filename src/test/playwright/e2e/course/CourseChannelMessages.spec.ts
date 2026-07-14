@@ -1,7 +1,7 @@
 import { expect } from '@playwright/test';
 import { test } from '../../support/fixtures';
 import { admin, instructor, studentOne } from '../../support/users';
-import { generateUUID, titleLowercase } from '../../support/utils';
+import { generateUUID, sanitizeTitleForChannel } from '../../support/utils';
 import { Channel } from 'app/communication/shared/entities/conversation/channel.model';
 import { Post } from 'app/communication/shared/entities/post.model';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
@@ -123,7 +123,7 @@ test.describe('Channel messages', { tag: '@fast' }, () => {
             await examAPIRequests.createExam({ course: { id: writeCourse.id } as any, title: examTitle });
             await login(instructor, `/courses/${writeCourse.id}/communication`);
             await courseMessages.browseChannelsButton();
-            await courseMessages.checkChannelsExists(titleLowercase(examTitle));
+            await courseMessages.checkChannelsExists(sanitizeTitleForChannel(examTitle));
         });
     });
 
