@@ -2,10 +2,10 @@ import { ChangeDetectionStrategy, Component, computed, input } from '@angular/co
 import { TumUiOverlayPlacement } from 'app/shared-ui/tum-ui/overlay/tum-ui-overlay.service';
 
 /**
- * The tooltip bubble rendered inside the CDK overlay by {@link TumUiTooltipDirective}.
- * A small dark surface bubble with a directional caret pointing at the trigger, matching the PrimeNG
- * tooltip look via Artemis token utilities. The caret follows the actually-applied placement (the
- * directive updates {@link placement} when the overlay flips), so it always points at the anchor.
+ * The tooltip bubble rendered inside the CDK overlay by {@link TumUiTooltipDirective}: a small dark
+ * surface with a directional caret, styled with Artemis token utilities. The caret sits on the edge
+ * facing the trigger, driven by the {@link placement} the directive requested for the overlay
+ * (top / bottom / left / right).
  */
 @Component({
     selector: 'tum-ui-tooltip-content',
