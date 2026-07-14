@@ -2550,6 +2550,11 @@ describe('IrisBaseChatbotComponent', () => {
                 fixture.detectChanges();
             });
 
+            // Restore real timers even if an assertion throws before a test's own vi.useRealTimers() runs
+            afterEach(() => {
+                vi.useRealTimers();
+            });
+
             it('should detect exercise mode', () => {
                 expect(component.isExerciseOrLectureMode()).toBeTruthy();
             });
