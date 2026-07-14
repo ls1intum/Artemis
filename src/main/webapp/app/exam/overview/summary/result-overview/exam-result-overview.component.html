@@ -87,7 +87,7 @@
                             </th>
                             <th class="text-center">
                                 @if (studentExamWithGrade().studentResult.overallScoreAchieved !== undefined) {
-                                    <span [class]="hasPassed() ? 'text-success' : 'text-danger'"> {{ overallAchievedPercentageRoundedByCourseSettings() }} % </span>
+                                    <span [class]="overallScoreTextColorClass()"> {{ overallAchievedPercentageRoundedByCourseSettings() }} % </span>
                                 } @else {
                                     <jhi-no-data />
                                 }

@@ -11,6 +11,7 @@ import { GradeType } from 'app/assessment/shared/entities/grading-scale.model';
 import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
 import { ModelingSubmission } from 'app/modeling/shared/entities/modeling-submission.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
+import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
@@ -518,6 +519,34 @@ describe('ExamResultSummaryComponent', () => {
             const scoreAsPercentage = component.getAchievedPercentageByExerciseId(textExercise.id);
 
             expect(scoreAsPercentage).toBeUndefined();
+        });
+    });
+
+    describe('getTextColorAndIconClassByExercise', () => {
+        function exerciseWithStaleResult(exerciseId: number, staleScore: number): TextExercise {
+            const staleResult = { id: exerciseId, score: staleScore, rated: true, completionDate: dayjs().subtract(1, 'hour') } as Result;
+            const submission = { id: exerciseId, results: [staleResult] } as TextSubmission;
+            const participation = { id: exerciseId, submissions: [submission] } as StudentParticipation;
+            return { id: exerciseId, type: ExerciseType.TEXT, studentParticipations: [participation], exerciseGroup } as TextExercise;
+        }
+
+        it('should color the percentage based on the authoritative exam score, not the stale participation result', () => {
+            // Participation result still holds the pre-complaint (failing) score, while the exam grade info
+            // reflects the accepted complaint with full points.
+            const exercise = exerciseWithStaleResult(42, 20);
+            const studentResult = {
+                exerciseGroupIdToExerciseResult: { [exercise.id!]: { exerciseId: exercise.id, achievedScore: 100 } as ExerciseResult },
+            } as StudentResult;
+            component.studentExamGradeInfoDTO.set({ ...gradeInfo, studentResult });
+
+            expect(component.getTextColorAndIconClassByExercise(exercise).textColorClass).toBe('text-state-success');
+        });
+
+        it('should fall back to the participation result color when there is no authoritative exam score', () => {
+            const exercise = exerciseWithStaleResult(43, 20);
+            component.studentExamGradeInfoDTO.set({ ...gradeInfo, studentResult: { exerciseGroupIdToExerciseResult: {} } as StudentResult });
+
+            expect(component.getTextColorAndIconClassByExercise(exercise).textColorClass).toBe('text-state-danger');
         });
     });
 
