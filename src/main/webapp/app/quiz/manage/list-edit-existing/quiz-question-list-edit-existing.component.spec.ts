@@ -495,6 +495,8 @@ describe('QuizQuestionListEditExistingComponent', () => {
             expect(onQuestionsAddedSpy).toHaveBeenCalledOnce();
             expect(onFilesAddedSpy).toHaveBeenCalledOnce();
             expect(getFileMock).toHaveBeenCalledTimes(3);
+            expect(getFileMock).toHaveBeenNthCalledWith(2, 'drag-and-drop/questions/3/drag-items/14/item1.jpg', undefined);
+            expect(getFileMock).toHaveBeenNthCalledWith(3, 'drag-and-drop/questions/3/drag-items/15/item2.jpg', undefined);
         });
 
         it('should correctly differentiate between JSON and ZIP files', async () => {
