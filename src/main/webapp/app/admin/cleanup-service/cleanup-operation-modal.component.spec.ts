@@ -290,9 +290,16 @@ describe('CleanupOperationModalComponent', () => {
             component.visible.set(true);
             fixture.detectChanges();
 
+            // Closing cannot cancel deletion after the server has started it. Keep the execution guard across the
+            // reopen so the newly displayed operation cannot submit a second destructive request concurrently.
+            expect(component.operationExecuting()).toBe(true);
+            component.executeCleanupOperation();
+            expect(dataCleanupService.deleteNonRatedResults).not.toHaveBeenCalled();
+
             execution.next(new HttpResponse({ body: { executionDate: dayjs(), jobType: 'deleteOrphans' } }));
             execution.complete();
 
+            expect(component.operationExecuting()).toBe(false);
             expect(component.operationExecuted()).toBe(false);
             expect(component.counts()).toEqual(mockNonRatedCounts);
         });

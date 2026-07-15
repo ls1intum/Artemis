@@ -1,5 +1,6 @@
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { ChangeDetectionStrategy, Component, computed, effect, inject, input, model, signal, untracked } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, computed, effect, inject, input, model, signal, untracked } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CleanupOperation } from 'app/admin/cleanup-service/cleanup-operation.model';
 import { CleanupCount, DataCleanupService } from 'app/admin/cleanup-service/data-cleanup.service';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -45,10 +46,8 @@ export class CleanupOperationModalComponent {
     /** The in-flight count request, so it can be superseded/cancelled to avoid stale, out-of-order responses. */
     private countSubscription?: Subscription;
 
-    /** The in-flight cleanup request, so reopening the persistent modal cannot apply a stale completion to another operation. */
-    private executionSubscription?: Subscription;
-
     private readonly dataCleanupService = inject(DataCleanupService);
+    private readonly destroyRef = inject(DestroyRef);
 
     protected readonly faTimes = faTimes;
     protected readonly faTrash = faTrash;
@@ -67,8 +66,6 @@ export class CleanupOperationModalComponent {
                     // Reset per-open state so reopening the modal for a different operation does not flash the
                     // previous run's result icons/counts (operationExecuted is only ever set true, and counts
                     // refresh asynchronously): start clean, then fetch this operation's counts.
-                    this.executionSubscription?.unsubscribe();
-                    this.operationExecuting.set(false);
                     this.operationExecuted.set(false);
                     this.dialogError.set(undefined);
                     this.counts.set({ totalCount: 0 });
@@ -79,8 +76,6 @@ export class CleanupOperationModalComponent {
                 // in-flight count request on close: otherwise a late response could overwrite the counts of the
                 // next operation opened here.
                 this.countSubscription?.unsubscribe();
-                this.executionSubscription?.unsubscribe();
-                this.operationExecuting.set(false);
             }
         });
     }
@@ -141,7 +136,14 @@ export class CleanupOperationModalComponent {
                 this.operationExecuting.set(false);
                 throw new Error(`Unsupported operation: ${operation.name}`);
         }
-        this.executionSubscription = executionRequest.pipe(finalize(() => this.operationExecuting.set(false))).subscribe(operationHandler);
+        // Keep the request pending when the dialog closes. Unsubscribing cannot stop server-side deletion once it has
+        // started, and clearing the guard would allow a second destructive request after an immediate reopen.
+        executionRequest
+            .pipe(
+                takeUntilDestroyed(this.destroyRef),
+                finalize(() => this.operationExecuting.set(false)),
+            )
+            .subscribe(operationHandler);
     }
 
     /**
