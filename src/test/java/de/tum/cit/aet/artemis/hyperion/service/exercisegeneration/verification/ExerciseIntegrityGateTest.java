@@ -176,6 +176,40 @@ class ExerciseIntegrityGateTest {
     }
 
     @Test
+    void javaAresConvention_adaptationChecksOnlyNewOrModifiedTestSources() {
+        String legacyTest = """
+                package de.test;
+                import org.junit.jupiter.api.Test;
+                class LegacyTest {
+                    @Test
+                    void existingBehaviour() {}
+                }
+                """;
+        String generatedTest = """
+                package de.test;
+                import org.junit.jupiter.api.Test;
+                import de.tum.in.test.api.BlacklistPath;
+                import de.tum.in.test.api.StrictTimeout;
+                import de.tum.in.test.api.WhitelistPath;
+                import de.tum.in.test.api.jupiter.Public;
+                @Public @WhitelistPath("target") @BlacklistPath("target/test-classes")
+                class GeneratedTest {
+                    @Test
+                    @StrictTimeout(1)
+                    void adaptedBehaviour() {}
+                }
+                """;
+        Map<String, String> seed = map("pom.xml", aresPom(), "test/de/test/LegacyTest.java", legacyTest);
+        Map<String, String> adapted = map("pom.xml", aresPom(), "test/de/test/LegacyTest.java", legacyTest, "test/de/test/GeneratedTest.java", generatedTest);
+
+        assertThat(ExerciseIntegrityGate.javaAresConventionReasons(seed, adapted, true)).isEmpty();
+
+        adapted = map("pom.xml", aresPom(), "test/de/test/LegacyTest.java", legacyTest, "test/de/test/GeneratedTest.java", generatedTest.replace("@StrictTimeout(1)\n", ""));
+        assertThat(ExerciseIntegrityGate.javaAresConventionReasons(seed, adapted, true)).anyMatch(reason -> reason.contains("GeneratedTest.java"))
+                .noneMatch(reason -> reason.contains("LegacyTest.java"));
+    }
+
+    @Test
     void javaAresConvention_rejectsPlainJunitTestsThatBypassArtemisSandbox() {
         String pom = """
                 <project>
@@ -441,6 +475,17 @@ class ExerciseIntegrityGateTest {
 
         assertThat(reasons).singleElement()
                 .satisfies(reason -> assertThat(reason).contains("canonical source roots").contains("ByteBuddy.java").contains("FakePlugin.java").contains("Public.java"));
+    }
+
+    @Test
+    void javaGeneratedSourceLayout_explainsTheExactPackageAlignedTestPath() {
+        String packageName = "de.tum.cit.aet.hyperion";
+        Map<String, String> producedTests = Map.of("test/LibrarySummaryTest.java", "package de.tum.cit.aet.hyperion;");
+
+        var reasons = ExerciseIntegrityGate.javaGeneratedSourceLayoutReasons(packageName, Map.of(), Map.of(), Map.of(), producedTests, Map.of(), Map.of());
+
+        assertThat(reasons).singleElement().satisfies(reason -> assertThat(reason).contains("tests/test/de/tum/cit/aet/hyperion/")
+                .contains("tests/behavior/test/de/tum/cit/aet/hyperion/").contains("tests/structural/test/de/tum/cit/aet/hyperion/").contains("not tests/src/test/java/"));
     }
 
     @Test

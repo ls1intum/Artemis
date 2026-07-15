@@ -54,7 +54,7 @@ public final class GenerationOutcome implements AutoCloseable {
     private final String capturedProblemStatement;
 
     /**
-     * Spec-fidelity findings. Advisory quality findings are surfaced after persistence; only blocking adaptation-scope findings prevent direct persistence.
+     * Full-artifact review findings. Blocking contract-risk findings prevent direct persistence; presentation findings are surfaced as advisory notes.
      */
     private final SpecFidelityReport specFidelityReport;
 
@@ -104,7 +104,7 @@ public final class GenerationOutcome implements AutoCloseable {
     }
 
     /**
-     * @return {@code true} when verification accepted the exercise and no blocking adaptation-scope finding remains
+     * @return {@code true} when mechanical verification accepted the exercise and no blocking full-artifact review finding remains
      */
     public boolean isAccepted() {
         return verification != null && verification.accepted() && !specFidelityReport.hasBlockingFindings();

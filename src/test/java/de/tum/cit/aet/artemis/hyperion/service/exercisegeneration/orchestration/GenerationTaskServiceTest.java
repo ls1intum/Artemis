@@ -219,8 +219,8 @@ class GenerationTaskServiceTest {
 
     @Test
     void acceptedRun_describesAdvisoryReviewNotesInPlainLanguage() {
-        SpecFidelityReport report = new SpecFidelityReport(List
-                .of(new SpecFidelityReport.Finding(SpecFidelityReport.Kind.UNCOVERED_REQUIREMENT, "obstacle edge case", "The generated tests do not cover obstacle edge cases.")));
+        SpecFidelityReport report = new SpecFidelityReport(List.of(new SpecFidelityReport.Finding(SpecFidelityReport.Kind.MISSING_WORKED_EXAMPLE, "rollback interaction",
+                "A worked example would clarify how rollback preserves the previous state.")));
         when(recoveryService.surfaceAdvisoryFindings(any(), any(), any())).thenReturn(1);
 
         run(GenerationMode.GENERATE, outcomeWith(AgentLoopResult.Status.COMPLETED, new VerificationResult(true, true, true, 3, List.of()), report));
@@ -410,7 +410,7 @@ class GenerationTaskServiceTest {
         run(GenerationMode.ADAPT, outcomeWith(AgentLoopResult.Status.COMPLETED, new VerificationResult(false, false, true, 3, List.of("solution failed")), report));
 
         ExerciseGenerationEventDTO terminal = sentEvents().getLast();
-        assertThat(terminal.message()).contains("did not pass verification", "solution failed", "adaptation-scope review also found")
+        assertThat(terminal.message()).contains("did not pass verification", "solution failed", "exercise-quality review also found")
                 .doesNotContain("Build and grading checks passed");
     }
 

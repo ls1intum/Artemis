@@ -175,7 +175,7 @@ public class DifferentialVerificationService {
         boolean noSelfComparison = selfComparisonReasons.isEmpty();
         reasons.addAll(selfComparisonReasons);
         List<String> javaAresConventionReasons = exercise.getProgrammingLanguage() == ProgrammingLanguage.JAVA
-                ? ExerciseIntegrityGate.javaAresConventionReasons(request.producedTestsFiles())
+                ? ExerciseIntegrityGate.javaAresConventionReasons(request.seedTestsFiles(), request.producedTestsFiles(), request.adaptation())
                 : List.of();
         boolean javaAresConventionsHold = javaAresConventionReasons.isEmpty();
         reasons.addAll(javaAresConventionReasons);
@@ -219,6 +219,20 @@ public class DifferentialVerificationService {
      * @return the agent-readable differential report (per-test pass/fail on solution and template, parser-form names, wrongly-passing template tests, unresolved bindings)
      */
     public AgentVerifyReport selfCheck(InteractiveSandbox sandbox, String sessionId, ProgrammingExercise exercise) {
+        return selfCheck(sandbox, sessionId, exercise, Map.of(), false);
+    }
+
+    /**
+     * Runs the agent-visible verification while preserving untouched legacy tests during adaptation.
+     *
+     * @param sandbox        the open sandbox session
+     * @param sessionId      the sandbox session id
+     * @param exercise       the exercise being checked
+     * @param seedTestsFiles the tests repository snapshot taken before generation
+     * @param adaptation     whether the current job adapts an existing exercise
+     * @return the agent-readable differential report
+     */
+    public AgentVerifyReport selfCheck(InteractiveSandbox sandbox, String sessionId, ProgrammingExercise exercise, Map<String, String> seedTestsFiles, boolean adaptation) {
         // No authoritative seeded set: the agent cannot bind to structural tests seeded after it submits. The name-shape exemption still applies.
         DifferentialAnalysis analysis = runDifferential(sandbox, sessionId, exercise, Set.of(), null);
         BuildSummary solution = analysis.solution();
@@ -234,7 +248,7 @@ public class DifferentialVerificationService {
             Map<String, String> testsRepositoryFiles = readTestsRepositoryFiles(sandbox, sessionId);
             List<String> javaAresConventionReasons = testsRepositoryFiles.isEmpty()
                     ? List.of("Could not inspect the tests repository for Java/Ares conventions; run verify again after ensuring /workspace/tests is readable.")
-                    : ExerciseIntegrityGate.javaAresConventionReasons(testsRepositoryFiles);
+                    : ExerciseIntegrityGate.javaAresConventionReasons(seedTestsFiles, testsRepositoryFiles, adaptation);
             javaAresConventionsHold = javaAresConventionReasons.isEmpty();
             reasons.addAll(javaAresConventionReasons);
         }

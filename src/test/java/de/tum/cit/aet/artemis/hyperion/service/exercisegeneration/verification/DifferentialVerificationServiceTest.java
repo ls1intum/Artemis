@@ -459,6 +459,41 @@ class DifferentialVerificationServiceTest {
     }
 
     @Test
+    void integrityGates_adaptationPreservesUntouchedLegacyTestsButChecksNewTests() {
+        ProgrammingExercise exercise = new ProgrammingExercise();
+        exercise.setProgrammingLanguage(ProgrammingLanguage.JAVA);
+        exercise.setPackageName("de.test");
+        String legacyTest = """
+                package de.test;
+                import org.junit.jupiter.api.Test;
+                class LegacyTest {
+                    @Test void existingBehaviour() {}
+                }
+                """;
+        String generatedTest = """
+                package de.test;
+                import org.junit.jupiter.api.Test;
+                import de.tum.in.test.api.BlacklistPath;
+                import de.tum.in.test.api.StrictTimeout;
+                import de.tum.in.test.api.WhitelistPath;
+                import de.tum.in.test.api.jupiter.Public;
+                @Public @WhitelistPath("target") @BlacklistPath("target/test-classes")
+                class GeneratedTest {
+                    @Test @StrictTimeout(1) void adaptedBehaviour() {}
+                }
+                """;
+        Map<String, String> seedTests = Map.of("pom.xml", aresPom(), "test/de/test/LegacyTest.java", legacyTest);
+        Map<String, String> producedTests = Map.of("pom.xml", aresPom(), "test/de/test/LegacyTest.java", legacyTest, "test/de/test/GeneratedTest.java", generatedTest);
+        VerificationRequest request = new VerificationRequest(seedTests, Map.of(), Map.of(), producedTests, Map.of(), Map.of(), Set.of(), Set.of(), Set.of(),
+                PROBLEM_STATEMENT_WITH_TASK, true);
+
+        VerificationResult result = newVerifier().verify(new ScriptedSandbox(result(2, 0, 0, 0), result(2, 2, 0, 1), PROBLEM_STATEMENT_WITH_TASK), "s", exercise, request);
+
+        assertThat(result.accepted()).isTrue();
+        assertThat(result.reasons()).noneMatch(reason -> reason.contains("LegacyTest.java"));
+    }
+
+    @Test
     void integrityGates_rejectJavaSourcesWhosePackageDoesNotMatchTheirPath() {
         ProgrammingExercise exercise = new ProgrammingExercise();
         exercise.setProgrammingLanguage(ProgrammingLanguage.JAVA);
@@ -984,7 +1019,7 @@ class DifferentialVerificationServiceTest {
             var verifier = new DifferentialVerificationService(sandboxBuildCommandService(), Optional.of(repo));
             // A Java exercise always ships a harness, so the F2 fail-closed gate requires a non-empty seed snapshot; supply an unchanged (seed == produced) pom.xml with no
             // build-layout directives, which the harness-immutability gate treats as intact. This isolates the SCA-parity gate under test.
-            var harness = Map.of("pom.xml", "<project><groupId>x</groupId><artifactId>x</artifactId><version>1</version></project>\n");
+            var harness = Map.of("pom.xml", aresPom());
             return verifier.verify(new ScriptedSandbox(solution, template, PROBLEM_STATEMENT_WITH_TASK), "s", exercise,
                     new VerificationRequest(harness, harness, Map.of(), Map.of(), Set.of(), Set.of(), Set.of()));
         }
@@ -1016,7 +1051,7 @@ class DifferentialVerificationServiceTest {
             exercise.setStaticCodeAnalysisEnabled(true);
             exercise.setMaxStaticCodeAnalysisPenalty(50);
             // newVerifier() has no SCA repository (the build-agent-only configuration). Supply an unchanged Java harness so the F2 fail-closed snapshot gate passes.
-            var harness = Map.of("pom.xml", "<project><groupId>x</groupId><artifactId>x</artifactId><version>1</version></project>\n");
+            var harness = Map.of("pom.xml", aresPom());
             VerificationResult result = newVerifier().verify(
                     new ScriptedSandbox(solutionWithScaReports(Map.of("spotbugsXml.xml", SPOTBUGS_STYLE)), failingTemplate(), PROBLEM_STATEMENT_WITH_TASK), "s", exercise,
                     new VerificationRequest(harness, harness, Map.of(), Map.of(), Set.of(), Set.of(), Set.of()));

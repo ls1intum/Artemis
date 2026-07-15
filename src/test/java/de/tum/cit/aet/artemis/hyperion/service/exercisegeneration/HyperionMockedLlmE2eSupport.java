@@ -127,6 +127,15 @@ final class HyperionMockedLlmE2eSupport {
         return new ChatResponse(List.of(new Generation(new AssistantMessage(content))));
     }
 
+    static ChatResponse cleanQualityReview() {
+        return text("{\"exampleChecks\":[{\"claim\":\"the example result\",\"computedOutcome\":\"the example result\",\"consistent\":true,\"reason\":\"the outcomes agree\"}],"
+                + "\"apiChecks\":[{\"symbol\":\"the public API\",\"discoverable\":true,\"reason\":\"the statement and starter expose it\"}],"
+                + "\"templateChecks\":[{\"test\":\"the task groups\",\"targetReached\":true,\"reason\":\"the starter reaches their targets\"}],"
+                + "\"mutantChecks\":[{\"mutant\":\"a contract-breaking implementation\",\"killed\":true,\"reason\":\"an executable assertion rejects it\"}],"
+                + "\"uncovered\":[],\"contradictions\":[],\"hiddenRequirements\":[],\"weakOracle\":[],\"templateGaps\":[],\"missingExamples\":[],\"invented\":[],"
+                + "\"unrequestedChanges\":[],\"missingRequestedChanges\":[]}");
+    }
+
     static ChatResponse writeFile(String path, String content) {
         return toolCall("write_file", "{\"path\":\"" + jsonEscape(path) + "\",\"content\":\"" + jsonEscape(content) + "\"}");
     }

@@ -46,18 +46,24 @@ type LlmMockRequestSummary = {
     messageCount?: number;
     roles?: string[];
     promptText?: string;
-    hasWriteFileTool?: boolean;
-    hasBashTool?: boolean;
-    hasSubmitTool?: boolean;
+    toolNames?: string[];
+    executedToolNames?: string[];
 };
 
-const correctedSeedStatementMarker = 'Use merge sort for big lists';
-const solutionMarkerPath = 'hyperion-e2e-solution-marker.txt';
-const templateMarkerPath = 'hyperion-e2e-template-marker.txt';
-const testsMarkerPath = 'hyperion-e2e-tests-marker.txt';
-const solutionMarkerText = 'hyperion-e2e-solution-marker';
-const templateMarkerText = 'hyperion-e2e-template-marker';
-const testsMarkerText = 'hyperion-e2e-tests-marker';
+const correctedSeedStatementMarker = 'more than 5 dates';
+const policyPath = 'src/de/test/Policy.java';
+const policyThresholdBeforeAdaptation = 'DATES_SIZE_THRESHOLD = 10';
+const policyThresholdAfterAdaptation = 'DATES_SIZE_THRESHOLD = 5';
+const sortingTestPath = 'test/de/test/SortingExampleBehaviorTest.java';
+const sortingTestBeforeAdaptation = 'for (int i = 0; i < 11; i++)';
+const sortingTestAfterAdaptation = 'for (int i = 0; i < 6; i++)';
+const sortingTestMessageBeforeAdaptation = 'more than 10 dates';
+const sortingTestMessageAfterAdaptation = 'more than 5 dates';
+const boundaryTestBeforeAdaptation = 'for (int i = 0; i < 3; i++)';
+const boundaryTestAfterAdaptation = 'for (int i = 0; i < 5; i++)';
+const boundaryTestMessageBeforeAdaptation = 'less or equal than 10 dates';
+const boundaryTestMessageAfterAdaptation = 'less or equal than 5 dates';
+const criticPromptMarker = 'reviewer for a generated programming exercise';
 
 const verifierSafeJavaProblemStatement = javaProgrammingExerciseTemplate.problemStatement
     .replace('(testClass[MergeSort],testUseMergeSortForBigList)', '(testUseMergeSortForBigList)')
@@ -260,10 +266,11 @@ test.describe('Hyperion exercise generation browser UI', { tag: '@slow' }, () =>
         const initialLlmRequests = await getHyperionLlmMockRequestCount(page);
         await openEditor(page, login, exercise!);
         const initialProblemStatement = await getExerciseProblemStatement(page, exercise!.id!);
+        const initialTemplateFiles = await getRepositoryFiles(page, `api/programming/programming-exercises/${exercise!.id}/template-files-content?omitBinaries=true`);
 
         await page.getByTestId('hyperion-ai-menu').click();
         await page.getByTestId('hyperion-adapt-with-feedback').click();
-        await page.getByLabel('Additional instructions').fill('HYPERION_E2E_SUBMIT_SEEDED_EXERCISE: fix task bindings in the seeded Java exercise and submit it.');
+        await page.getByLabel('Additional instructions').fill('HYPERION_E2E_SUBMIT_SEEDED_EXERCISE: use merge sort for lists with more than 5 dates and update the matching test.');
 
         const startResponsePromise = waitForGenerationStart(page, exercise!.id!);
         await page.getByRole('button', { name: 'Adapt exercise', exact: true }).click();
@@ -272,10 +279,11 @@ test.describe('Hyperion exercise generation browser UI', { tag: '@slow' }, () =>
 
         expect(request).toEqual({
             mode: 'ADAPT',
-            prompt: 'HYPERION_E2E_SUBMIT_SEEDED_EXERCISE: fix task bindings in the seeded Java exercise and submit it.',
+            prompt: 'HYPERION_E2E_SUBMIT_SEEDED_EXERCISE: use merge sort for lists with more than 5 dates and update the matching test.',
         });
         const activity = page.getByTestId('hyperion-generation-activity');
         await expect(activity).toContainText('Checking the exercise builds and grades', { timeout: 180_000 });
+        await expect(activity).toContainText('full-artifact review found contract issues', { timeout: 180_000 });
         const buildOutputTab = page.getByRole('tab', { name: 'Build Output' });
         await selectTabWithKeyboard(page.getByRole('tab', { name: 'AI activity' }), buildOutputTab, 'ArrowLeft');
         await expectSuccessfulGenerationStatus(page, exercise!.id!, jobId, 'ADAPT');
@@ -294,15 +302,19 @@ test.describe('Hyperion exercise generation browser UI', { tag: '@slow' }, () =>
         await expect(page.getByTestId('hyperion-generation-cancel')).toBeHidden();
         await expect(page.getByTestId('hyperion-ai-menu')).toBeEnabled();
         await expectHyperionLlmMockRequestsIncreased(page, initialLlmRequests);
-        await openPersistedChangedFileInNativeEditor(page, solutionMarkerPath, solutionMarkerText);
+        await openPersistedChangedFileInNativeEditor(page, policyPath, policyThresholdAfterAdaptation);
         await expectExerciseProblemStatement(page, exercise!.id!, correctedSeedStatementMarker);
-        await expectAdaptationRepositoryMarkers(page, exercise!.id!, true);
+        await expectExerciseProblemStatement(page, exercise!.id!, 'less or equal 5 dates');
+        await expectSemanticAdaptation(page, exercise!.id!, true, initialTemplateFiles);
         await expectLlmMockSawPrompt(page, 'HYPERION_E2E_SUBMIT_SEEDED_EXERCISE', initialLlmRequests);
+        await expectLlmMockCriticRequests(page, initialLlmRequests, 'HYPERION_E2E_SUBMIT_SEEDED_EXERCISE', 4);
+        await expectLlmMockAcknowledgedTools(page, initialLlmRequests, ['write_file', 'edit_file']);
+        await expectLlmMockResponseTool(page, initialLlmRequests, 'submit');
         await expectAdminGenerationSandboxSlots(browser, '0 / 1');
 
         await revertAcceptedAdaptationFromUi(page, exercise!.id!);
         await expect.poll(() => getExerciseProblemStatement(page, exercise!.id!), { timeout: 60_000 }).toBe(initialProblemStatement);
-        await expectAdaptationRepositoryMarkers(page, exercise!.id!, false);
+        await expectSemanticAdaptation(page, exercise!.id!, false, initialTemplateFiles);
         runningJobId = undefined;
     });
 
@@ -583,7 +595,7 @@ async function expectSuccessfulGenerationStatus(page: Page, exerciseId: number, 
                     revertAvailable: status.revertAvailable,
                 };
             },
-            { timeout: 60_000 },
+            { timeout: 180_000 },
         )
         .toEqual({
             jobId,
@@ -644,13 +656,52 @@ async function expectLlmMockSawPrompt(page: Page, expectedPromptSnippet: string,
                       hasPrompt: true,
                       hasMessages: (matching.messageCount ?? 0) > 0,
                       hasUserRole: matching.roles?.includes('user') ?? false,
-                      hasWriteFileTool: matching.hasWriteFileTool,
-                      hasBashTool: matching.hasBashTool,
-                      hasSubmitTool: matching.hasSubmitTool,
+                      hasWriteFileTool: matching.toolNames?.includes('write_file') ?? false,
+                      hasEditFileTool: matching.toolNames?.includes('edit_file') ?? false,
+                      hasDeleteFileTool: matching.toolNames?.includes('delete_file') ?? false,
+                      hasBashTool: matching.toolNames?.includes('bash') ?? false,
+                      hasSubmitTool: matching.toolNames?.includes('submit') ?? false,
                   }
                 : { hasPrompt: false };
         })
-        .toEqual({ hasPrompt: true, hasMessages: true, hasUserRole: true, hasWriteFileTool: true, hasBashTool: true, hasSubmitTool: true });
+        .toEqual({
+            hasPrompt: true,
+            hasMessages: true,
+            hasUserRole: true,
+            hasWriteFileTool: true,
+            hasEditFileTool: true,
+            hasDeleteFileTool: true,
+            hasBashTool: true,
+            hasSubmitTool: true,
+        });
+}
+
+async function expectLlmMockCriticRequests(page: Page, firstRequestIndex: number, runMarker: string, expectedCount: number) {
+    await expect
+        .poll(
+            async () =>
+                (await getHyperionLlmMockRequests(page))
+                    .slice(firstRequestIndex)
+                    .filter((request) => request.promptText?.includes(runMarker) && request.promptText.includes(criticPromptMarker)).length,
+        )
+        .toBe(expectedCount);
+}
+
+async function expectLlmMockAcknowledgedTools(page: Page, firstRequestIndex: number, expectedTools: string[]) {
+    await expect
+        .poll(async () => [new Set((await getHyperionLlmMockRequests(page)).slice(firstRequestIndex).flatMap((request) => request.acknowledgedToolNames ?? []))])
+        .toEqual([new Set(expectedTools)]);
+}
+
+async function expectLlmMockResponseTool(page: Page, firstRequestIndex: number, expectedTool: string) {
+    await expect
+        .poll(async () =>
+            (await getHyperionLlmMockRequests(page))
+                .slice(firstRequestIndex)
+                .map((request) => request.responseToolName)
+                .filter(Boolean),
+        )
+        .toContain(expectedTool);
 }
 
 async function expectEditorActionsLockedDuringGeneration(page: Page) {
@@ -681,36 +732,86 @@ async function getExerciseProblemStatement(page: Page, exerciseId: number): Prom
     return exercise.problemStatement ?? '';
 }
 
-async function expectAdaptationRepositoryMarkers(page: Page, exerciseId: number, shouldExist: boolean) {
+async function expectSemanticAdaptation(page: Page, exerciseId: number, adapted: boolean, initialTemplateFiles: Record<string, string>) {
+    const expectedPolicyThreshold = adapted ? policyThresholdAfterAdaptation : policyThresholdBeforeAdaptation;
+    const stalePolicyThreshold = adapted ? policyThresholdBeforeAdaptation : policyThresholdAfterAdaptation;
+    const expectedTestLoop = adapted ? sortingTestAfterAdaptation : sortingTestBeforeAdaptation;
+    const staleTestLoop = adapted ? sortingTestBeforeAdaptation : sortingTestAfterAdaptation;
+    const expectedTestMessage = adapted ? sortingTestMessageAfterAdaptation : sortingTestMessageBeforeAdaptation;
+    const staleTestMessage = adapted ? sortingTestMessageBeforeAdaptation : sortingTestMessageAfterAdaptation;
+    const expectedBoundaryLoop = adapted ? boundaryTestAfterAdaptation : boundaryTestBeforeAdaptation;
+    const staleBoundaryLoop = adapted ? boundaryTestBeforeAdaptation : boundaryTestAfterAdaptation;
+    const expectedBoundaryMessage = adapted ? boundaryTestMessageAfterAdaptation : boundaryTestMessageBeforeAdaptation;
+    const staleBoundaryMessage = adapted ? boundaryTestMessageBeforeAdaptation : boundaryTestMessageAfterAdaptation;
     await expect
         .poll(
             async () => ({
-                solution: await repositoryFileContains(
+                solutionUpdated: await repositoryFileContains(
                     page,
                     `api/programming/programming-exercises/${exerciseId}/solution-files-content?omitBinaries=true`,
-                    solutionMarkerPath,
-                    solutionMarkerText,
+                    policyPath,
+                    expectedPolicyThreshold,
                 ),
-                template: await repositoryFileContains(
+                solutionStale: await repositoryFileContains(
                     page,
-                    `api/programming/programming-exercises/${exerciseId}/template-files-content?omitBinaries=true`,
-                    templateMarkerPath,
-                    templateMarkerText,
+                    `api/programming/programming-exercises/${exerciseId}/solution-files-content?omitBinaries=true`,
+                    policyPath,
+                    stalePolicyThreshold,
                 ),
-                tests: await testRepositoryFileContains(page, exerciseId, testsMarkerPath, testsMarkerText),
+                templateUnchanged: repositoryFilesEqual(
+                    await getRepositoryFiles(page, `api/programming/programming-exercises/${exerciseId}/template-files-content?omitBinaries=true`),
+                    initialTemplateFiles,
+                ),
+                testLoopUpdated: await testRepositoryFileContains(page, exerciseId, sortingTestPath, expectedTestLoop),
+                testLoopStale: await testRepositoryFileContains(page, exerciseId, sortingTestPath, staleTestLoop),
+                testMessageUpdated: await testRepositoryFileContains(page, exerciseId, sortingTestPath, expectedTestMessage),
+                testMessageStale: await testRepositoryFileContains(page, exerciseId, sortingTestPath, staleTestMessage),
+                boundaryLoopUpdated: await testRepositoryFileContains(page, exerciseId, sortingTestPath, expectedBoundaryLoop),
+                boundaryLoopStale: await testRepositoryFileContains(page, exerciseId, sortingTestPath, staleBoundaryLoop),
+                boundaryMessageUpdated: await testRepositoryFileContains(page, exerciseId, sortingTestPath, expectedBoundaryMessage),
+                boundaryMessageStale: await testRepositoryFileContains(page, exerciseId, sortingTestPath, staleBoundaryMessage),
             }),
             { timeout: 90_000 },
         )
-        .toEqual({ solution: shouldExist, template: shouldExist, tests: shouldExist });
+        .toEqual({
+            solutionUpdated: true,
+            solutionStale: false,
+            templateUnchanged: true,
+            testLoopUpdated: true,
+            testLoopStale: false,
+            testMessageUpdated: true,
+            testMessageStale: false,
+            boundaryLoopUpdated: true,
+            boundaryLoopStale: false,
+            boundaryMessageUpdated: true,
+            boundaryMessageStale: false,
+        });
 }
 
 async function repositoryFileContains(page: Page, endpoint: string, path: string, expectedContent: string): Promise<boolean> {
+    return (await getRepositoryFileContent(page, endpoint, path)).includes(expectedContent);
+}
+
+async function getRepositoryFileContent(page: Page, endpoint: string, path: string): Promise<string> {
+    const files = await getRepositoryFiles(page, endpoint);
+    if (!(path in files)) {
+        throw new Error(`Repository response did not contain ${path}`);
+    }
+    return files[path];
+}
+
+async function getRepositoryFiles(page: Page, endpoint: string): Promise<Record<string, string>> {
     const response = await page.request.get(endpoint);
     if (!response.ok()) {
-        return false;
+        throw new Error(`Could not read repository files: HTTP ${response.status()}`);
     }
-    const files = (await response.json()) as Record<string, string>;
-    return files[path]?.includes(expectedContent) ?? false;
+    return (await response.json()) as Record<string, string>;
+}
+
+function repositoryFilesEqual(actual: Record<string, string>, expected: Record<string, string>): boolean {
+    const actualPaths = Object.keys(actual).sort();
+    const expectedPaths = Object.keys(expected).sort();
+    return actualPaths.length === expectedPaths.length && actualPaths.every((path, index) => path === expectedPaths[index] && actual[path] === expected[path]);
 }
 
 async function testRepositoryFileContains(page: Page, exerciseId: number, path: string, expectedContent: string): Promise<boolean> {

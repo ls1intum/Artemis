@@ -129,7 +129,7 @@ public class AgentSystemPromptService {
                 %s
 
                 SAFE TOOL USE
-                Your only tools are bash, read_file, write_file, edit_file, verify, and submit. Use `verify` for builds; it handles the network-isolated CI scaffold. Use bash only for inspection,
+                Your only tools are bash, read_file, write_file, edit_file, delete_file, verify, and submit. Use `delete_file` to remove a generated file that is misplaced or no longer needed. Use `verify` for builds; it handles the network-isolated CI scaffold. Use bash only for inspection,
                 safe source-file removal, and `sh verify.sh solution` or `sh verify.sh template` when detailed output helps. Never run repository Gradle/Maven directly or change build infrastructure
                 to work around offline dependency resolution. Do not edit file contents through bash; use write_file or edit_file. There is no apply_patch tool, so
                 never call it directly or through bash. Re-read only a file that changed or whose exact contents are needed after a failed edit. Never fabricate build or test results, and keep

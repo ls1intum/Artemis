@@ -89,7 +89,7 @@ public class AgentLoopRunner {
      * Fallback per-turn completion cap (max_tokens) for the main agent call, bounding a single tool-calling step's cost/latency. A deployment that sets
      * {@code spring.ai.openai.chat.options.max-tokens} overrides it (see {@link #configuredTurnMaxTokens()}).
      */
-    private static final int TURN_MAX_OUTPUT_TOKENS = 2_500;
+    private static final int TURN_MAX_OUTPUT_TOKENS = 4_096;
 
     /** Prefix marking the synthetic compaction-summary message, so a later compaction recognizes and folds it into the next summary. */
     private static final String SUMMARY_SENTINEL = "[SESSION SUMMARY — earlier steps were compacted to fit the context window. The workspace files on disk are the source of truth; re-read any file you need.]";
@@ -283,9 +283,8 @@ public class AgentLoopRunner {
                 conversation.add(failedTurn);
                 // Must answer every requested call id, or the chat-completions tool-pairing contract is violated; per-call errors also tell the model which call failed.
                 List<ToolResponseMessage.ToolResponse> errorResponses = failedTurn.getToolCalls().stream()
-                        .map(toolCall -> new ToolResponseMessage.ToolResponse(toolCall.id(), toolCall.name(),
-                                "ERROR: this tool call could not be executed: " + e.getMessage()
-                                        + ". Only use the available tools (read_file, write_file, edit_file, bash, verify, submit) with valid JSON arguments, then continue."))
+                        .map(toolCall -> new ToolResponseMessage.ToolResponse(toolCall.id(), toolCall.name(), "ERROR: this tool call could not be executed: " + e.getMessage()
+                                + ". Only use the available tools (read_file, write_file, edit_file, delete_file, bash, verify, submit) with valid JSON arguments, then continue."))
                         .toList();
                 // The catch is only reachable when this turn had tool calls (the no-tool-calls path returns above), so errorResponses always covers at least one call id.
                 conversation.add(ToolResponseMessage.builder().responses(errorResponses).build());

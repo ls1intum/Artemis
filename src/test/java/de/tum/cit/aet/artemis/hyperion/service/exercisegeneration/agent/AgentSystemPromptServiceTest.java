@@ -264,7 +264,8 @@ class AgentSystemPromptServiceTest {
             exercise.setProjectType(projectType);
             assertThat(LanguageGenerationProfile.isSupported(exercise)).as("%s", projectType).isTrue();
             assertThat(LanguageGenerationProfile.guidanceFor(exercise)).contains("de.tum.in.test.api.StrictTimeout").contains("de.tum.in.test.api.jupiter.Public")
-                    .contains("@StrictTimeout(1)").doesNotContain("de.tum.in.ase.test").doesNotContain("extends AresTest");
+                    .contains("@StrictTimeout(1)").contains("tests/test/<package path>").contains("Never put a package-declared test directly in tests/test/")
+                    .doesNotContain("de.tum.in.ase.test").doesNotContain("extends AresTest");
         }
     }
 

@@ -173,7 +173,7 @@ public class GenerationOrchestrationService {
             String systemPrompt = systemPromptService.build(exercise, mode);
             // The agent's `verify` tool runs the same differential as the post-loop gate so it sees the verdict in-loop (pass/fail tests, exact [task] names); the post-loop
             // verify(...) below stays the acceptance decision.
-            SandboxAgentTools baseTools = new SandboxAgentTools(sandbox, sessionId, verifier, exercise);
+            SandboxAgentTools baseTools = new SandboxAgentTools(sandbox, sessionId, verifier, exercise, testsSeedSnapshot, mode == GenerationMode.ADAPT);
             // Wrap the tools in the snapshot-emitting decorator when a sink is supplied, so each successful write streams the whole file to the instructor's editor. The decorator
             // re-exposes the same @Tool surface (the model sees the same tools) and only adds emission.
             Object tools = fileSnapshotSink != null ? new FileSnapshotEmittingAgentTools(baseTools, fileSnapshotSink) : baseTools;
@@ -247,7 +247,7 @@ public class GenerationOrchestrationService {
                 }
                 VerificationRequest verificationRequest = new VerificationRequest(testsSeedSnapshot, baselineRepositoryFiles.getOrDefault(RepositoryType.TEMPLATE, Map.of()),
                         baselineRepositoryFiles.getOrDefault(RepositoryType.SOLUTION, Map.of()), producedTests.files(), producedTemplate.files(), producedSolution.files(),
-                        extractionFailed, seededStructuralTestNames, baselineGradedTestNames, producedProblemStatement);
+                        extractionFailed, seededStructuralTestNames, baselineGradedTestNames, producedProblemStatement, mode == GenerationMode.ADAPT);
                 if (cancelled.getAsBoolean()) {
                     destroyQuietly(sandbox, sessionId);
                     return GenerationOutcome.cancelled(cancelledResult(loopResult));
@@ -260,16 +260,22 @@ public class GenerationOrchestrationService {
                     return GenerationOutcome.cancelled(cancelledResult(loopResult));
                 }
 
-                // The critic never changes the verifier verdict. Its generation-quality findings are advisory; unresolved adaptation-scope findings block live persistence.
-                @Nullable
-                String adaptationChanges = mode == GenerationMode.ADAPT
-                        ? renderAdaptationChanges(baselineProblemStatement, producedProblemStatement, baselineRepositoryFiles, producedFilesByType)
-                        : null;
-                specFidelityReport = runSpecFidelityCritic(userPrompt, producedProblemStatement, exercise.getProgrammingLanguage(), producedTests.files(), adaptationChanges,
-                        effectiveUsageSink, progress);
-                if (cancelled.getAsBoolean()) {
-                    destroyQuietly(sandbox, sessionId);
-                    return GenerationOutcome.cancelled(cancelledResult(loopResult));
+                // Run the expensive semantic review only after the deterministic mechanical gate passes. Reviewing a candidate that cannot build or grade wastes provider quota and
+                // produces findings against artifacts the next attempt must replace anyway.
+                if (verification.accepted()) {
+                    @Nullable
+                    String adaptationChanges = mode == GenerationMode.ADAPT
+                            ? renderAdaptationChanges(baselineProblemStatement, producedProblemStatement, baselineRepositoryFiles, producedFilesByType)
+                            : null;
+                    specFidelityReport = runSpecFidelityCritic(userPrompt, producedProblemStatement, exercise.getProgrammingLanguage(), producedFilesByType, adaptationChanges,
+                            effectiveUsageSink, progress);
+                    if (cancelled.getAsBoolean()) {
+                        destroyQuietly(sandbox, sessionId);
+                        return GenerationOutcome.cancelled(cancelledResult(loopResult));
+                    }
+                }
+                else {
+                    specFidelityReport = SpecFidelityReport.empty();
                 }
 
                 if (verification.accepted() && !specFidelityReport.hasBlockingFindings()) {
@@ -279,15 +285,17 @@ public class GenerationOrchestrationService {
                     break;
                 }
                 if (verification.accepted()) {
-                    boolean scopeReviewUnavailable = specFidelityReport.findings().stream()
-                            .anyMatch(finding -> finding.kind() == SpecFidelityReport.Kind.ADAPTATION_SCOPE_REVIEW_UNAVAILABLE);
-                    if (scopeReviewUnavailable) {
+                    boolean reviewUnavailable = specFidelityReport.findings().stream()
+                            .anyMatch(finding -> finding.kind() == SpecFidelityReport.Kind.ADAPTATION_SCOPE_REVIEW_UNAVAILABLE
+                                    || finding.kind() == SpecFidelityReport.Kind.QUALITY_REVIEW_UNAVAILABLE);
+                    if (reviewUnavailable) {
                         break;
                     }
-                    emit(progress, "Verification accepted the exercise, but the adaptation-scope review found missing or unrequested changes; asking the agent to correct them.");
-                    currentPrompt = "Your previous attempt passed differential verification, but the review found changes that must be corrected. Keep the accepted behaviour intact, "
-                            + "fix only these adaptation-scope violations, re-run `sh verify.sh solution` and `sh verify.sh template`, then call submit again.\n\n"
-                            + "The requested adaptation is:\n" + userPrompt + specFidelityCritic.renderForRetryPrompt(specFidelityReport);
+                    emit(progress, "Mechanical verification passed, but the full-artifact review found contract issues; asking the agent to correct them.");
+                    String scopeGuidance = mode == GenerationMode.ADAPT ? " Preserve all content outside the requested adaptation." : "";
+                    currentPrompt = "Your previous attempt passed mechanical verification, but the automated full-artifact review found acceptance blockers." + scopeGuidance
+                            + " Make the smallest coherent changes across the statement, solution, template, and tests; re-run `sh verify.sh solution` and `sh verify.sh template`, then "
+                            + "call submit again.\n\nThe instructor instruction is:\n" + userPrompt + specFidelityCritic.renderForRetryPrompt(specFidelityReport);
                     continue;
                 }
                 emit(progress, "Verification rejected the exercise; asking the agent to fix the issues and try again.");
@@ -328,26 +336,26 @@ public class GenerationOrchestrationService {
     /**
      * Reviews spec fidelity and adaptation scope without allowing reviewer failures to escape the orchestration boundary.
      *
-     * @param brief            the instructor brief for this run
-     * @param problemStatement the produced student-facing problem statement
-     * @param language         the exercise language (may be {@code null})
-     * @param producedTests    the produced tests-repo files (path to content), used to derive the test identifiers
-     * @param progress         the progress sink for a short transcript line
+     * @param brief             the instructor brief for this run
+     * @param problemStatement  the produced student-facing problem statement
+     * @param language          the exercise language (may be {@code null})
+     * @param producedArtifacts the mechanically verified solution, template, and tests repositories
+     * @param progress          the progress sink for a short transcript line
      * @return the report (possibly empty); never {@code null}
      */
-    private SpecFidelityReport runSpecFidelityCritic(String brief, String problemStatement, @Nullable ProgrammingLanguage language, Map<String, String> producedTests,
-            @Nullable String adaptationChanges, Consumer<ChatResponse> usageSink, Consumer<String> progress) {
+    private SpecFidelityReport runSpecFidelityCritic(String brief, String problemStatement, @Nullable ProgrammingLanguage language,
+            Map<RepositoryType, Map<String, String>> producedArtifacts, @Nullable String adaptationChanges, Consumer<ChatResponse> usageSink, Consumer<String> progress) {
         try {
             List<String> testNames = extractTaskBoundTestNames(problemStatement);
-            SpecFidelityReport report = adaptationChanges == null ? specFidelityCritic.critique(brief, problemStatement, testNames, usageSink)
-                    : specFidelityCritic.critiqueAdaptation(brief, problemStatement, testNames, adaptationChanges, usageSink);
+            SpecFidelityReport report = adaptationChanges == null ? specFidelityCritic.critique(brief, problemStatement, testNames, producedArtifacts, usageSink)
+                    : specFidelityCritic.critiqueAdaptation(brief, problemStatement, testNames, adaptationChanges, producedArtifacts, usageSink);
             if (adaptationChanges != null && adaptationChanges.contains(CHANGE_SUMMARY_TRUNCATED)) {
                 List<SpecFidelityReport.Finding> combined = new ArrayList<>(report.findings());
                 combined.addAll(SpecFidelityReport.adaptationScopeUnavailable("The bounded change summary was truncated, so not every changed line could be reviewed.").findings());
                 report = new SpecFidelityReport(List.copyOf(combined));
             }
             // Messageless assertions remain advisory and share the same retry/review channel.
-            List<SpecFidelityReport.Finding> messageless = specFidelityCritic.detectMessagelessAssertions(language, producedTests);
+            List<SpecFidelityReport.Finding> messageless = specFidelityCritic.detectMessagelessAssertions(language, producedArtifacts.getOrDefault(RepositoryType.TESTS, Map.of()));
             if (!messageless.isEmpty()) {
                 List<SpecFidelityReport.Finding> combined = new ArrayList<>(report.findings());
                 combined.addAll(messageless);
@@ -356,14 +364,14 @@ public class GenerationOrchestrationService {
             if (report.hasFindings()) {
                 emit(progress,
                         report.hasBlockingFindings()
-                                ? "The review found " + report.findings().size() + " gap(s), including adaptation-scope changes that require review if unresolved."
+                                ? "The review found " + report.findings().size() + " blocking exercise-quality gap(s) that must be resolved before live persistence."
                                 : "The review found " + report.findings().size() + " advisory exercise-quality gap(s).");
             }
             return report;
         }
         catch (RuntimeException e) {
             log.warn("Spec-fidelity critic could not run for exercise: {}", e.getMessage());
-            return adaptationChanges == null ? SpecFidelityReport.empty()
+            return adaptationChanges == null ? SpecFidelityReport.qualityReviewUnavailable("The full-artifact reviewer failed before it could assess the candidate.")
                     : SpecFidelityReport.adaptationScopeUnavailable("The adaptation-scope reviewer failed before it could assess every changed line.");
         }
     }

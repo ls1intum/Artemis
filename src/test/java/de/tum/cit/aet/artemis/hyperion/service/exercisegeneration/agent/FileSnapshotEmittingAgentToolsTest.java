@@ -162,6 +162,19 @@ class FileSnapshotEmittingAgentToolsTest {
     }
 
     @Test
+    void deleteFile_onSuccess_replacesAnyRetainedContentWithAnEmptySnapshot() {
+        when(delegate.writeFile(anyString(), anyString())).thenReturn(WRITE_OK);
+        when(delegate.deleteFile("solution/A.java")).thenReturn("Deleted solution/A.java");
+        tools.writeFile("solution/A.java", "class A {}");
+
+        assertThat(tools.deleteFile("solution/A.java")).isEqualTo("Deleted solution/A.java");
+
+        assertThat(emitted).hasSize(2);
+        assertThat(emitted.getLast().action()).isEqualTo(ExerciseGenerationFileSnapshotDTO.ACTION_EDIT);
+        assertThat(emitted.getLast().content()).isEmpty();
+    }
+
+    @Test
     void write_swallowsSinkFailure_soStreamingNeverDisturbsTheRun() {
         FileSnapshotEmittingAgentTools throwingSink = new FileSnapshotEmittingAgentTools(delegate, snapshot -> {
             throw new RuntimeException("sink exploded");

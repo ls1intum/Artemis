@@ -4,6 +4,7 @@ import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.Base64;
 import java.util.List;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -19,7 +20,7 @@ import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.E
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 
 /**
- * The read/write/edit/bash/verify tools the exercise-generation agent calls, bound to one sandbox session. Created per session (holds the session id), so not a Spring bean.
+ * The file, shell, and verification tools the exercise-generation agent calls, bound to one sandbox session. Created per session (holds the session id), so not a Spring bean.
  * <p>
  * The agent has a full shell safely because correctness is never judged from what these tools report. The {@code verify} tool runs the same differential as the authoritative
  * post-loop verifier (two fresh builds parsed with the production parsers) and returns structured feedback, but it is advisory only; the post-loop verifier decides acceptance.
@@ -65,6 +66,11 @@ public class SandboxAgentTools {
     @Nullable
     private final ProgrammingExercise exercise;
 
+    /** Seeded test files let the in-loop verifier distinguish untouched legacy tests from files authored or changed in this run. */
+    private final Map<String, String> seedTestsFiles;
+
+    private final boolean adaptation;
+
     /** Per-command spill-file counter; unsynchronized is safe — the agent loop calls the tools serially within a session and each session has its own instance and container. */
     private int bashSequence = 0;
 
@@ -75,10 +81,17 @@ public class SandboxAgentTools {
      * @param exercise  the exercise whose {@code verify.sh}/SCA config the {@code verify} tool's differential uses
      */
     public SandboxAgentTools(InteractiveSandbox sandbox, String sessionId, DifferentialVerificationService verifier, ProgrammingExercise exercise) {
+        this(sandbox, sessionId, verifier, exercise, Map.of(), false);
+    }
+
+    public SandboxAgentTools(InteractiveSandbox sandbox, String sessionId, DifferentialVerificationService verifier, ProgrammingExercise exercise,
+            Map<String, String> seedTestsFiles, boolean adaptation) {
         this.sandbox = sandbox;
         this.sessionId = sessionId;
         this.verifier = verifier;
         this.exercise = exercise;
+        this.seedTestsFiles = Map.copyOf(seedTestsFiles);
+        this.adaptation = adaptation;
     }
 
     /**
@@ -88,7 +101,7 @@ public class SandboxAgentTools {
      * @param sessionId the session handle
      */
     SandboxAgentTools(InteractiveSandbox sandbox, String sessionId) {
-        this(sandbox, sessionId, null, null);
+        this(sandbox, sessionId, null, null, Map.of(), false);
     }
 
     /**
@@ -170,6 +183,28 @@ public class SandboxAgentTools {
     }
 
     /**
+     * Deletes one generated file without exposing unrestricted filesystem deletion to the model.
+     *
+     * @param path the workspace-relative file path to delete
+     * @return a confirmation, or an actionable error message
+     */
+    @Tool(name = "delete_file", description = AgentToolDescriptions.DELETE_FILE)
+    public String deleteFile(@ToolParam(description = AgentToolDescriptions.DELETE_FILE_PATH) String path) {
+        String safe = workspaceRelativePath(path);
+        if (safe == null) {
+            return invalidPathError(path);
+        }
+        if (!isWritableGenerationPath(safe)) {
+            return "ERROR: delete only problem-statement.md or files inside solution/, template/, or tests/. Workspace build infrastructure is managed by Artemis.";
+        }
+        if (isManagedBuildInfrastructurePath(safe)) {
+            return immutableHarnessError(safe);
+        }
+        SandboxExecResult result = sandbox.exec(sessionId, FILE_OP_TIMEOUT, "rm", "-f", "--", WORKSPACE + "/" + safe);
+        return result.isSuccess() ? "Deleted " + safe : "ERROR: could not delete '" + safe + "': " + result.combinedOutput();
+    }
+
+    /**
      * Runs a shell command in the workspace root.
      *
      * @param command the shell command to run, as a single string
@@ -192,7 +227,7 @@ public class SandboxAgentTools {
             return "exit=2\napply_patch is NOT available. Use write_file (new file / full rewrite) or edit_file (exact unique snippet) instead.";
         }
         if (mutatesManagedBuildInfrastructure(command)) {
-            return "exit=2\nDo not modify tests-repository build/harness files such as tests/pom.xml. They are seeded by Artemis and graded verbatim; edit only test source files under tests/test/ instead.";
+            return "exit=2\nDo not modify tests-repository build/harness files such as tests/pom.xml. They are seeded by Artemis and graded verbatim; edit only test source files under tests/test/<package path>/ instead.";
         }
         int sequence = bashSequence++;
         String logPath = SPILL_DIR + "/bash-" + sequence + ".log";
@@ -253,7 +288,7 @@ public class SandboxAgentTools {
         if (verifier == null || exercise == null) {
             return "ERROR: the verify tool is unavailable in this session. Fall back to `sh verify.sh solution` and `sh verify.sh template` via bash.";
         }
-        AgentVerifyReport report = verifier.selfCheck(sandbox, sessionId, exercise);
+        AgentVerifyReport report = verifier.selfCheck(sandbox, sessionId, exercise, seedTestsFiles, adaptation);
         return report.toObservation();
     }
 

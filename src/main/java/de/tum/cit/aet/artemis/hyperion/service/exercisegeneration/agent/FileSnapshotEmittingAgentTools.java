@@ -13,8 +13,8 @@ import org.springframework.ai.tool.annotation.ToolParam;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationFileSnapshotDTO;
 
 /**
- * Decorates {@link SandboxAgentTools} with whole-file snapshots after successful writes. It reconstructs edits from a per-session cache and reads from the sandbox only on a
- * cache miss.
+ * Decorates {@link SandboxAgentTools} with whole-file snapshots after successful file changes. It reconstructs edits from a per-session cache and reads from the sandbox only on a
+ * cache miss. A deletion emits empty content so retained previews do not replay stale source.
  */
 public class FileSnapshotEmittingAgentTools implements TurnAware {
 
@@ -22,6 +22,8 @@ public class FileSnapshotEmittingAgentTools implements TurnAware {
 
     /** A successful {@code write_file}/{@code edit_file} result starts with this marker (see {@link SandboxAgentTools#writeFile}); an error starts with {@code ERROR}. */
     private static final String WRITE_SUCCESS_PREFIX = "Wrote ";
+
+    private static final String DELETE_SUCCESS_PREFIX = "Deleted ";
 
     /**
      * A failed delegate read is reported as an {@code "ERROR: ..."} sentinel (see {@link SandboxAgentTools#readFile}); such a string must never be cached or streamed as content.
@@ -100,6 +102,24 @@ public class FileSnapshotEmittingAgentTools implements TurnAware {
                 if (content != null) {
                     emit(safe, ExerciseGenerationFileSnapshotDTO.ACTION_EDIT, content);
                 }
+            }
+        }
+        return result;
+    }
+
+    /**
+     * Delegates deletion and clears any retained preview for the path.
+     *
+     * @param path the workspace-relative file to delete
+     * @return the delegate's confirmation or error
+     */
+    @Tool(name = "delete_file", description = AgentToolDescriptions.DELETE_FILE)
+    public String deleteFile(@ToolParam(description = AgentToolDescriptions.DELETE_FILE_PATH) String path) {
+        String result = delegate.deleteFile(path);
+        if (result != null && result.startsWith(DELETE_SUCCESS_PREFIX)) {
+            String safe = SandboxAgentTools.workspaceRelativePath(path);
+            if (safe != null) {
+                emit(safe, ExerciseGenerationFileSnapshotDTO.ACTION_EDIT, "");
             }
         }
         return result;

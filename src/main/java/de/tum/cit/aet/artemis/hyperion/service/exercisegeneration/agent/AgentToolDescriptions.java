@@ -26,6 +26,10 @@ final class AgentToolDescriptions {
 
     static final String EDIT_FILE_NEW_TEXT = "the replacement text";
 
+    static final String DELETE_FILE = "Delete one generated workspace file. Use this when a file was created at the wrong path or is no longer part of the exercise. The path is workspace-relative; directories and Artemis-managed build infrastructure cannot be deleted.";
+
+    static final String DELETE_FILE_PATH = "workspace-relative path to delete";
+
     static final String BASH = "Run a shell command in the workspace, e.g. {\"command\":\"ls -R\"}. Send the command as a single string (NOT a JSON array). Returns its exit code plus combined stdout/stderr. Use it to run 'sh verify.sh solution' / 'sh verify.sh template', inspect the project, and debug. Long output is truncated to the LAST 10000 characters (build failures and the verify.sh HYPERION_COLLECTED line are at the end); the COMPLETE output is saved in the sandbox to /tmp/hyperion/bash-<n>.log, so read earlier parts with sed/grep/head/tail on that file. After a verify.sh run the test reports are collected under /opt/hyperion/reports/<solution|template>/ — grep them for exact test names and pass/fail. Prefer grep/sed here over re-reading whole files.";
 
     static final String BASH_COMMAND = "the shell command to run, as ONE string (not a JSON array), e.g. 'sh verify.sh solution', 'ls -R', or 'grep -n sort tests/test/sorting/SortTest.java'";

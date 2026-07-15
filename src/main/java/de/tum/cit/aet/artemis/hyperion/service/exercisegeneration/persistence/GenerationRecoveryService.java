@@ -172,10 +172,13 @@ public class GenerationRecoveryService {
                 case ADAPTATION_SCOPE_REVIEW_UNAVAILABLE -> "Adaptation scope could not be verified automatically";
                 case UNCOVERED_REQUIREMENT -> "Possible coverage gap against the brief: \"" + finding.requirement() + "\"";
                 case MISSING_FAILURE_MESSAGE -> "Graded tests give no failure message, so a failing student sees only \"expected X but was Y\": " + finding.requirement();
+                case CONTRACT_CONTRADICTION -> "Generated artifacts contradict the student-facing contract: \"" + finding.requirement() + "\"";
+                case HIDDEN_GRADED_REQUIREMENT -> "Graded requirement is not discoverable by students: \"" + finding.requirement() + "\"";
+                case WEAK_TEST_ORACLE -> "Generated tests allow a plausible incorrect implementation: \"" + finding.requirement() + "\"";
+                case TEMPLATE_QUALITY_GAP -> "Starter code prevents meaningful incremental work: \"" + finding.requirement() + "\"";
+                case QUALITY_REVIEW_UNAVAILABLE -> "Generated exercise quality could not be reviewed automatically";
             };
-            Severity severity = finding.kind() == SpecFidelityReport.Kind.UNREQUESTED_ADAPTATION_CHANGE
-                    || finding.kind() == SpecFidelityReport.Kind.REQUESTED_ADAPTATION_CHANGE_MISSING
-                    || finding.kind() == SpecFidelityReport.Kind.ADAPTATION_SCOPE_REVIEW_UNAVAILABLE ? Severity.HIGH : Severity.MEDIUM;
+            Severity severity = finding.isBlocking() ? Severity.HIGH : Severity.MEDIUM;
             findings.add(finding(severity, title, finding.detail()));
         }
         return findings;

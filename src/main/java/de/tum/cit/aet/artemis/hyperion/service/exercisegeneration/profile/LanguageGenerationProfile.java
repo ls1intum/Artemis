@@ -55,6 +55,8 @@ public final class LanguageGenerationProfile {
                 - solution/src/<package path>/*
                 - template/src/<package path>/* (identical signatures, placeholder bodies)
                 - tests/test/<package path>/* (the test sources directory is `test`, NOT `src/test/java`)
+                The directory below each source root MUST match the Java package declaration exactly. Never put a package-declared test directly in tests/test/ and never create
+                tests/src/test/java/.
                 The test project uses JUnit 5 and Ares (de.tum.in.ase:artemis-java-test-sandbox). Import de.tum.in.test.api.jupiter.Public,
                 de.tum.in.test.api.WhitelistPath, de.tum.in.test.api.BlacklistPath, and de.tum.in.test.api.StrictTimeout. Every test class MUST carry @Public,
                 @WhitelistPath("target"), and

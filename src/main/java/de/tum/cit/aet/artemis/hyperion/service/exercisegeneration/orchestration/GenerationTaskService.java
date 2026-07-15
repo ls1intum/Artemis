@@ -246,20 +246,17 @@ public class GenerationTaskService {
      */
     private void recoverOrReportPartial(ProgrammingExercise exercise, User user, long exerciseId, String jobId, GenerationOutcome outcome, ExerciseGenerationVerdictDTO verdict,
             GenerationProgressEmitter emitter) {
-        boolean scopeBlocked = outcome.specFidelityReport().hasBlockingFindings();
+        boolean reviewBlocked = outcome.specFidelityReport().hasBlockingFindings();
         boolean verificationAccepted = outcome.verification() != null && outcome.verification().accepted();
-        String scopeReason = outcome.specFidelityReport().findings().stream()
-                .filter(finding -> finding.kind() == SpecFidelityReport.Kind.UNREQUESTED_ADAPTATION_CHANGE
-                        || finding.kind() == SpecFidelityReport.Kind.REQUESTED_ADAPTATION_CHANGE_MISSING
-                        || finding.kind() == SpecFidelityReport.Kind.ADAPTATION_SCOPE_REVIEW_UNAVAILABLE)
-                .map(SpecFidelityReport.Finding::detail).collect(Collectors.joining(" "));
+        String reviewReason = outcome.specFidelityReport().findings().stream().filter(SpecFidelityReport.Finding::isBlocking).map(SpecFidelityReport.Finding::detail)
+                .collect(Collectors.joining(" "));
         String verificationReason = outcome.verification() != null ? outcome.verification().report() : "The exercise could not be completed within the budget.";
-        String reason = verificationAccepted && scopeBlocked ? scopeReason : verificationReason + (scopeBlocked ? " Additionally, " + scopeReason : "");
+        String reason = verificationAccepted && reviewBlocked ? reviewReason : verificationReason + (reviewBlocked ? " Additionally, " + reviewReason : "");
         try {
             emitter.progress(
-                    verificationAccepted && scopeBlocked ? "Build and grading checks passed, but the adaptation-scope review requires manual review. Saving an isolated draft."
+                    verificationAccepted && reviewBlocked ? "Build and grading checks passed, but the exercise-quality review requires manual review. Saving an isolated draft."
                             : "Verification did not pass. Saving the best-effort draft and recording what to review."
-                                    + (scopeBlocked ? " The adaptation-scope review also found an issue." : ""));
+                                    + (reviewBlocked ? " The exercise-quality review also found an issue." : ""));
             GenerationRecoveryService.RecoveryResult result = recoveryService.recover(exercise, user, outcome, jobId, () -> jobService.isOwnedActiveJob(exerciseId, jobId));
             int issueCount = result.reviewThreadCount();
             // Rejected drafts are isolated from the live exercise, regardless of whether this was a new generation or an adaptation. The instructor can inspect the draft branch
@@ -270,10 +267,10 @@ public class GenerationTaskService {
             // recover only throws when persist itself failed, so reaching here means the repository draft is saved: always NEEDS_REVIEW. issueCount < 0 means a degraded save
             // (review comments
             // could not be attached), which the message states explicitly.
-            String outcomeSummary = verificationAccepted && scopeBlocked
-                    ? "Build and grading checks passed, but the adaptation-scope review found missing or unrequested changes, or could not verify the change scope."
+            String outcomeSummary = verificationAccepted && reviewBlocked
+                    ? "Build and grading checks passed, but the exercise-quality review found an unresolved contract issue or could not produce a complete verdict."
                     : "The generated draft did not pass verification."
-                            + (scopeBlocked ? " The adaptation-scope review also found missing or unrequested changes, or could not verify the change scope." : "");
+                            + (reviewBlocked ? " The exercise-quality review also found an unresolved contract issue or could not produce a complete verdict." : "");
             String message = issueCount < 0
                     ? outcomeSummary + " The review notes could not be attached automatically — open the exercise and review it manually before grading." + placement + " " + reason
                     : outcomeSummary + " " + issueCount + " issue(s) to review were added to the exercise." + placement + " " + reason;

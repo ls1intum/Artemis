@@ -211,8 +211,8 @@ class HyperionAdaptMockedEndToEndTest extends AbstractHyperionMockedLlmEndToEndT
                 HyperionMockedLlmE2eSupport.writeFile("template/src/de/test/Calculator.java", ADAPTED_TEMPLATE_CALCULATOR),
                 HyperionMockedLlmE2eSupport.writeFile("tests/test/de/test/SubtractCalculatorTest.java", ADDED_SUBTRACT_TEST),
                 HyperionMockedLlmE2eSupport.writeFile("problem-statement.md", ADAPTED_PROBLEM_STATEMENT), HyperionMockedLlmE2eSupport.verify(),
-                HyperionMockedLlmE2eSupport.submit("Added subtraction with positive and negative-result tests"),
-                HyperionMockedLlmE2eSupport.text("{\"uncovered\":[],\"missingExamples\":[],\"invented\":[],\"unrequestedChanges\":[],\"missingRequestedChanges\":[]}"));
+                HyperionMockedLlmE2eSupport.submit("Added subtraction with positive and negative-result tests"), HyperionMockedLlmE2eSupport.cleanQualityReview(),
+                HyperionMockedLlmE2eSupport.cleanQualityReview());
 
         try (GenerationOutcome outcome = orchestrator.generate(exercise, instructor(), "Also require subtraction with positive and negative results.", "mock-adapt",
                 GenerationMode.ADAPT, () -> false, line -> log.info("[mock-adapt] {}", line), null, null)) {

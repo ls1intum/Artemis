@@ -239,9 +239,9 @@ class GenerationRecoveryServiceTest {
 
     // --- Advisory spec-fidelity surfacing -----------------------------------------------------------------------------------------------------------------------------------
 
-    /** On the recovery path, advisory spec-fidelity findings ride along as MEDIUM comments next to the HIGH verification gaps. */
+    /** On the recovery path, blocking spec-fidelity findings remain HIGH next to the mechanical verification gaps. */
     @Test
-    void toFindings_includesAdvisorySpecFidelityGaps() {
+    void toFindings_includesBlockingSpecFidelityGaps() {
         VerificationResult verification = new VerificationResult(false, false, true, 2, List.of("gap one"));
         GenerationOutcome outcome = outcome(verification, "");
         when(outcome.specFidelityReport())
@@ -250,12 +250,12 @@ class GenerationRecoveryServiceTest {
 
         List<ConsistencyIssueDTO> findings = GenerationRecoveryService.toFindings(outcome);
 
-        // 1 hard verification gap (HIGH) + 2 advisory spec-fidelity gaps (MEDIUM).
+        // 1 mechanical gap + 2 blocking spec-fidelity gaps.
         assertThat(findings).hasSize(3);
         assertThat(findings).anyMatch(finding -> finding.description().contains("CJK characters"));
         assertThat(findings).anyMatch(finding -> finding.description().contains("make the tests fail"));
         assertThat(findings).filteredOn(finding -> finding.description().contains("CJK characters")).singleElement()
-                .satisfies(finding -> assertThat(finding.severity()).isEqualTo(Severity.MEDIUM));
+                .satisfies(finding -> assertThat(finding.severity()).isEqualTo(Severity.HIGH));
     }
 
     @Test

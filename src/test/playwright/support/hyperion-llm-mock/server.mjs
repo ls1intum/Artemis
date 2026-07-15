@@ -7,11 +7,14 @@ const requests = [];
 const failMarker = 'HYPERION_E2E_FAIL_LLM';
 const writeSnapshotMarker = 'HYPERION_E2E_WRITE_SNAPSHOT';
 const submitSeedMarker = 'HYPERION_E2E_SUBMIT_SEEDED_EXERCISE';
-const correctedSeedStatementMarker = 'Use merge sort for big lists';
-const solutionMarkerPath = 'solution/hyperion-e2e-solution-marker.txt';
-const templateMarkerPath = 'template/hyperion-e2e-template-marker.txt';
-const testsMarkerPath = 'tests/hyperion-e2e-tests-marker.txt';
-const criticPromptMarker = 'meticulous QA reviewer for programming-exercise test suites';
+const correctedSeedStatementMarker = 'more than 5 dates';
+const adaptedPolicyMarker = 'DATES_SIZE_THRESHOLD = 5';
+const adaptedTestLoopMarker = 'for (int i = 0; i < 6; i++)';
+const adaptedTestMessageMarker = 'The sort algorithm of Context was not MergeSort for a list with more than 5 dates.';
+const adaptedBoundaryTestLoopMarker = 'for (int i = 0; i < 5; i++)';
+const adaptedBoundaryTestMessageMarker = 'The sort algorithm of Context was not BubbleSort for a list with less or equal than 5 dates.';
+const criticPromptMarker = 'reviewer for a generated programming exercise';
+const oracleReviewPromptMarker = 'test-oracle reviewer for a generated programming exercise';
 const draftPromptMarker = 'expert technical writing assistant for programming exercise problem statements';
 const draftProblemStatement = `# Temperature Alert Classification
 
@@ -66,10 +69,10 @@ Create and implement a \`Context\` class following the below class diagram.
 Create and implement a \`Policy\` class following the below class diagram with a simple configuration mechanism:
 
     1. [task][Use merge sort for big lists](testUseMergeSortForBigList)
-    Select \`MergeSort\` when the List has more than 10 dates.
+    Select \`MergeSort\` when the List has more than 5 dates.
 
     2. [task][Use bubble sort for small lists](testUseBubbleSortForSmallList)
-    Select \`BubbleSort\` when the List has less or equal 10 dates.
+    Select \`BubbleSort\` when the List has less or equal 5 dates.
 
 4. Complete the \`Client\` class which demonstrates switching between two strategies at runtime.
 `;
@@ -78,17 +81,59 @@ function summarizeRequest(rawBody) {
     try {
         const parsed = JSON.parse(rawBody);
         const messages = Array.isArray(parsed.messages) ? parsed.messages : [];
+        const toolNames = Array.isArray(parsed.tools) ? parsed.tools.map((tool) => tool?.function?.name).filter(Boolean) : [];
+        const calledTools = new Map(
+            messages
+                .flatMap((message) => message?.tool_calls ?? [])
+                .map((toolCall) => [toolCall?.id, toolCall?.function?.name])
+                .filter(([id, name]) => id && name),
+        );
+        const acknowledgedToolNames = messages
+            .filter((message) => message?.role === 'tool' && calledTools.has(message?.tool_call_id))
+            .map((message) => calledTools.get(message.tool_call_id));
         return {
             messageCount: messages.length,
             roles: messages.map((message) => message?.role).filter(Boolean),
             promptText: messages.map((message) => (typeof message?.content === 'string' ? message.content : JSON.stringify(message?.content ?? ''))).join('\n'),
-            hasWriteFileTool: rawBody.includes('write_file'),
-            hasBashTool: rawBody.includes('bash'),
-            hasSubmitTool: rawBody.includes('submit'),
+            toolNames,
+            acknowledgedToolNames,
         };
     } catch (error) {
         return { parseError: String(error), rawBodyPrefix: rawBody.slice(0, 500) };
     }
+}
+
+function hasToolCall(rawBody, toolName, expectedArguments) {
+    try {
+        const messages = JSON.parse(rawBody).messages;
+        return (
+            Array.isArray(messages) &&
+            messages.some((message) =>
+                message?.tool_calls?.some((toolCall) => {
+                    if (toolCall?.function?.name !== toolName || typeof toolCall.function.arguments !== 'string') {
+                        return false;
+                    }
+                    try {
+                        return expectedArguments(JSON.parse(toolCall.function.arguments));
+                    } catch {
+                        return false;
+                    }
+                }),
+            )
+        );
+    } catch {
+        return false;
+    }
+}
+
+function currentCandidateContains(rawBody, expectedContent) {
+    const artifactsStart = rawBody.indexOf('MECHANICALLY VERIFIED CANDIDATE ARTIFACTS:');
+    if (artifactsStart < 0) {
+        return false;
+    }
+    const adaptationChangesStart = rawBody.indexOf('ADAPTATION CHANGES (baseline to candidate):', artifactsStart);
+    const artifactsEnd = adaptationChangesStart < 0 ? rawBody.length : adaptationChangesStart;
+    return rawBody.slice(artifactsStart, artifactsEnd).includes(expectedContent);
 }
 
 function jsonResponse(res, status, body) {
@@ -155,7 +200,8 @@ const server = http.createServer((req, res) => {
             requestCount++;
             const requestNumber = requestCount;
             const body = Buffer.concat(chunks).toString('utf8');
-            requests.push(summarizeRequest(body));
+            const requestSummary = summarizeRequest(body);
+            requests.push(requestSummary);
             if (body.includes(failMarker)) {
                 jsonResponse(res, 400, { error: { message: 'Hyperion E2E requested LLM failure' } });
                 return;
@@ -165,7 +211,19 @@ const server = http.createServer((req, res) => {
                 return;
             }
             if (body.includes(criticPromptMarker)) {
-                jsonResponse(res, 200, textResponse(requestNumber, '{"uncovered":[],"missingExamples":[],"invented":[],"unrequestedChanges":[],"missingRequestedChanges":[]}'));
+                const weakThresholdOracle = body.includes(submitSeedMarker) && currentCandidateContains(body, 'for (int i = 0; i < 3; i++)');
+                const oracleReview = body.includes(oracleReviewPromptMarker);
+                const audit = oracleReview
+                    ? `"exampleChecks":[],"apiChecks":[],"templateChecks":[],"mutantChecks":[{"mutant":"a threshold of 4","killed":${!weakThresholdOracle},"reason":"the boundary tests must distinguish sizes 5 and 6"}]`
+                    : '"exampleChecks":[],"apiChecks":[{"symbol":"seeded public API","discoverable":true,"reason":"the statement and starter expose it"}],"templateChecks":[{"test":"seeded task groups","targetReached":true,"reason":"the existing starter reaches each target"}],"mutantChecks":[]';
+                jsonResponse(
+                    res,
+                    200,
+                    textResponse(
+                        requestNumber,
+                        `{${audit},"uncovered":[],"contradictions":[],"hiddenRequirements":[],"weakOracle":[],"templateGaps":[],"missingExamples":[],"invented":[],"unrequestedChanges":[],"missingRequestedChanges":[]}`,
+                    ),
+                );
                 return;
             }
             if (body.includes(writeSnapshotMarker) && !body.includes('HyperionPreview.java')) {
@@ -179,44 +237,92 @@ const server = http.createServer((req, res) => {
                 );
                 return;
             }
-            if (body.includes(submitSeedMarker) && !body.includes(correctedSeedStatementMarker)) {
+            if (
+                body.includes(submitSeedMarker) &&
+                body.includes('threshold of 4') &&
+                !hasToolCall(body, 'edit_file', (args) => args.path === 'tests/test/de/test/SortingExampleBehaviorTest.java' && args.newText === adaptedBoundaryTestLoopMarker)
+            ) {
+                jsonResponse(
+                    res,
+                    200,
+                    toolCallResponse(requestNumber, 'edit_file', {
+                        path: 'tests/test/de/test/SortingExampleBehaviorTest.java',
+                        oldText: 'for (int i = 0; i < 3; i++)',
+                        newText: adaptedBoundaryTestLoopMarker,
+                    }),
+                );
+                return;
+            }
+            if (
+                body.includes(submitSeedMarker) &&
+                body.includes('threshold of 4') &&
+                !hasToolCall(body, 'edit_file', (args) => args.path === 'tests/test/de/test/SortingExampleBehaviorTest.java' && args.newText === adaptedBoundaryTestMessageMarker)
+            ) {
+                jsonResponse(
+                    res,
+                    200,
+                    toolCallResponse(requestNumber, 'edit_file', {
+                        path: 'tests/test/de/test/SortingExampleBehaviorTest.java',
+                        oldText: 'The sort algorithm of Context was not BubbleSort for a list with less or equal than 10 dates.',
+                        newText: adaptedBoundaryTestMessageMarker,
+                    }),
+                );
+                return;
+            }
+            if (
+                body.includes(submitSeedMarker) &&
+                !hasToolCall(body, 'write_file', (args) => args.path === 'problem-statement.md' && args.content?.includes(correctedSeedStatementMarker))
+            ) {
                 jsonResponse(res, 200, toolCallResponse(requestNumber, 'write_file', { path: 'problem-statement.md', content: correctedSeedProblemStatement }));
                 return;
             }
-            if (body.includes(submitSeedMarker) && !body.includes(solutionMarkerPath)) {
+            if (
+                body.includes(submitSeedMarker) &&
+                !hasToolCall(body, 'edit_file', (args) => args.path === 'solution/src/de/test/Policy.java' && args.newText === adaptedPolicyMarker)
+            ) {
                 jsonResponse(
                     res,
                     200,
-                    toolCallResponse(requestNumber, 'write_file', {
-                        path: solutionMarkerPath,
-                        content: 'hyperion-e2e-solution-marker\n',
+                    toolCallResponse(requestNumber, 'edit_file', {
+                        path: 'solution/src/de/test/Policy.java',
+                        oldText: 'DATES_SIZE_THRESHOLD = 10',
+                        newText: adaptedPolicyMarker,
                     }),
                 );
                 return;
             }
-            if (body.includes(submitSeedMarker) && !body.includes(templateMarkerPath)) {
+            if (
+                body.includes(submitSeedMarker) &&
+                !hasToolCall(body, 'edit_file', (args) => args.path === 'tests/test/de/test/SortingExampleBehaviorTest.java' && args.newText === adaptedTestLoopMarker)
+            ) {
                 jsonResponse(
                     res,
                     200,
-                    toolCallResponse(requestNumber, 'write_file', {
-                        path: templateMarkerPath,
-                        content: 'hyperion-e2e-template-marker\n',
+                    toolCallResponse(requestNumber, 'edit_file', {
+                        path: 'tests/test/de/test/SortingExampleBehaviorTest.java',
+                        oldText: 'for (int i = 0; i < 11; i++)',
+                        newText: adaptedTestLoopMarker,
                     }),
                 );
                 return;
             }
-            if (body.includes(submitSeedMarker) && !body.includes(testsMarkerPath)) {
+            if (
+                body.includes(submitSeedMarker) &&
+                !hasToolCall(body, 'edit_file', (args) => args.path === 'tests/test/de/test/SortingExampleBehaviorTest.java' && args.newText === adaptedTestMessageMarker)
+            ) {
                 jsonResponse(
                     res,
                     200,
-                    toolCallResponse(requestNumber, 'write_file', {
-                        path: testsMarkerPath,
-                        content: 'hyperion-e2e-tests-marker\n',
+                    toolCallResponse(requestNumber, 'edit_file', {
+                        path: 'tests/test/de/test/SortingExampleBehaviorTest.java',
+                        oldText: 'The sort algorithm of Context was not MergeSort for a list with more than 10 dates.',
+                        newText: adaptedTestMessageMarker,
                     }),
                 );
                 return;
             }
             if (body.includes(submitSeedMarker)) {
+                requestSummary.responseToolName = 'submit';
                 jsonResponse(res, 200, toolCallResponse(requestNumber, 'submit', { summary: 'Submitted the seeded Java exercise for deterministic E2E verification.' }));
                 return;
             }

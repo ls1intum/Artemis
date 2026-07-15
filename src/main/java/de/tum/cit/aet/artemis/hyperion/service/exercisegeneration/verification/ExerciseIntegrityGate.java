@@ -336,13 +336,20 @@ public final class ExerciseIntegrityGate {
      * @return actionable rejection reasons when Java tests do not follow the Artemis/Ares conventions
      */
     static List<String> javaAresConventionReasons(Map<String, String> producedTestsFiles) {
+        return javaAresConventionReasons(Map.of(), producedTestsFiles, false);
+    }
+
+    /**
+     * Applies Ares conventions to every generated test source, while allowing an adaptation to preserve untouched legacy tests. Build-harness protections are always checked on
+     * the complete produced repository. A touched legacy test is generated output for this run and must meet the current conventions.
+     */
+    static List<String> javaAresConventionReasons(Map<String, String> seedTestsFiles, Map<String, String> producedTestsFiles, boolean preserveUnchangedLegacyTests) {
         if (producedTestsFiles == null || producedTestsFiles.isEmpty()) {
             return List.of();
         }
-        List<Map.Entry<String, String>> javaTests = producedTestsFiles.entrySet().stream().filter(entry -> isJavaTestSourcePath(entry.getKey())).toList();
-        if (javaTests.isEmpty()) {
-            return List.of();
-        }
+        Map<String, String> seed = safeFiles(seedTestsFiles);
+        List<Map.Entry<String, String>> javaTests = producedTestsFiles.entrySet().stream().filter(entry -> isJavaTestSourcePath(entry.getKey()))
+                .filter(entry -> !preserveUnchangedLegacyTests || !java.util.Objects.equals(seed.get(entry.getKey()), entry.getValue())).toList();
 
         List<String> reasons = new ArrayList<>();
         List<String> generatedBuildOutput = producedTestsFiles.keySet().stream().filter(path -> path.startsWith("target/") || path.startsWith("build/")).toList();
@@ -426,7 +433,12 @@ public final class ExerciseIntegrityGate {
         if (invalidChanges.isEmpty()) {
             return List.of();
         }
-        return List.of("Generated Java files must stay inside the exercise package's canonical source roots; remove or restore " + sampleNames(invalidChanges) + ".");
+        String testPackageRoot = "tests/test/" + packagePath + "/";
+        String behaviorTestPackageRoot = "tests/behavior/test/" + packagePath + "/";
+        String structuralTestPackageRoot = "tests/structural/test/" + packagePath + "/";
+        return List.of("Generated Java files must stay inside the exercise package's canonical source roots. Use solution/src/" + packagePath + "/, template/src/" + packagePath
+                + "/, and " + testPackageRoot + " (or " + behaviorTestPackageRoot + " / " + structuralTestPackageRoot + "), not tests/src/test/java/. Move, remove, or restore "
+                + sampleNames(invalidChanges) + ".");
     }
 
     private static void collectInvalidGeneratedChanges(Set<String> target, String repository, Map<String, String> seedFiles, Map<String, String> producedFiles,

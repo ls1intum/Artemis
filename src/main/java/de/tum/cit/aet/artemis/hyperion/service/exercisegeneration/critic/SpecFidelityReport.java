@@ -11,8 +11,7 @@ import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.D
  * bindings resolve) but never whether it implements the instructor's brief. This report carries the gaps between the brief and the produced tests (see {@link Kind} for the finding
  * categories).
  * <p>
- * Coverage findings remain advisory. Missing or unrequested adaptation changes and unavailable adaptation-scope verdicts block direct live persistence and are saved for manual
- * review instead.
+ * Contract-risk findings block direct live persistence. Presentation findings remain advisory.
  *
  * @param findings the spec-fidelity or adaptation-scope findings
  */
@@ -32,13 +31,23 @@ public record SpecFidelityReport(List<Finding> findings) {
         UNREQUESTED_ADAPTATION_CHANGE,
         /** An adaptation omitted all or part of a change explicitly requested by its feedback. */
         REQUESTED_ADAPTATION_CHANGE_MISSING,
-        /** The adaptation-scope review could not produce a trustworthy verdict. */
+        /** The adaptation-scope review could not produce a complete verdict. */
         ADAPTATION_SCOPE_REVIEW_UNAVAILABLE,
         /**
          * A graded test file whose assertions carry no human-readable failure message, so a failing student sees only "expected X but was Y" with no hint at which behaviour broke
          * (the gold-standard Artemis test pairs every check with a descriptive message). Deterministic, advisory.
          */
-        MISSING_FAILURE_MESSAGE
+        MISSING_FAILURE_MESSAGE,
+        /** The statement, reference solution, tests, template, or worked examples make incompatible claims about observable behaviour. */
+        CONTRACT_CONTRADICTION,
+        /** A graded assertion or required public symbol is not discoverable from the student-facing statement and template. */
+        HIDDEN_GRADED_REQUIREMENT,
+        /** Plausible contract-breaking implementations are not distinguished by the generated assertions. */
+        WEAK_TEST_ORACLE,
+        /** The starter code prevents meaningful incremental work or task-specific feedback. */
+        TEMPLATE_QUALITY_GAP,
+        /** The automated full-artifact quality review could not produce a complete verdict. */
+        QUALITY_REVIEW_UNAVAILABLE
     }
 
     /**
@@ -51,7 +60,12 @@ public record SpecFidelityReport(List<Finding> findings) {
     public record Finding(Kind kind, String requirement, String detail) {
 
         public boolean isBlocking() {
-            return kind == Kind.UNREQUESTED_ADAPTATION_CHANGE || kind == Kind.REQUESTED_ADAPTATION_CHANGE_MISSING || kind == Kind.ADAPTATION_SCOPE_REVIEW_UNAVAILABLE;
+            return switch (kind) {
+                case UNCOVERED_REQUIREMENT, MECHANICS_LEAK, UNREQUESTED_ADAPTATION_CHANGE, REQUESTED_ADAPTATION_CHANGE_MISSING, ADAPTATION_SCOPE_REVIEW_UNAVAILABLE,
+                        CONTRACT_CONTRADICTION, HIDDEN_GRADED_REQUIREMENT, WEAK_TEST_ORACLE, TEMPLATE_QUALITY_GAP, QUALITY_REVIEW_UNAVAILABLE ->
+                    true;
+                case MISSING_WORKED_EXAMPLE, INVENTED_REQUIREMENT, MISSING_FAILURE_MESSAGE -> false;
+            };
         }
     }
 
@@ -63,6 +77,11 @@ public record SpecFidelityReport(List<Finding> findings) {
     public static SpecFidelityReport adaptationScopeUnavailable(String detail) {
         return new SpecFidelityReport(List.of(new Finding(Kind.ADAPTATION_SCOPE_REVIEW_UNAVAILABLE, "Adaptation scope could not be verified",
                 detail + " Keep the generated files out of the live exercise until their scope can be reviewed.")));
+    }
+
+    public static SpecFidelityReport qualityReviewUnavailable(String detail) {
+        return new SpecFidelityReport(List.of(new Finding(Kind.QUALITY_REVIEW_UNAVAILABLE, "Exercise quality could not be verified",
+                detail + " Keep the generated files out of the live exercise until the full artifact set can be reviewed.")));
     }
 
     public boolean hasFindings() {

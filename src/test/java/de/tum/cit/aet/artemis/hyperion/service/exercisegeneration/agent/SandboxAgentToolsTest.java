@@ -144,6 +144,17 @@ class SandboxAgentToolsTest {
         assertThat(sandbox.execCount).isZero();
     }
 
+    @Test
+    void deleteFile_removesOnlyGeneratedWorkspaceFiles() {
+        RecordingSandbox sandbox = new RecordingSandbox();
+        SandboxAgentTools tools = new SandboxAgentTools(sandbox, "s");
+
+        assertThat(tools.deleteFile("solution/src/main/java/Wrong.java")).isEqualTo("Deleted solution/src/main/java/Wrong.java");
+        assertThat(tools.deleteFile("../secret")).startsWith("ERROR: invalid path");
+        assertThat(tools.deleteFile("tests/pom.xml")).startsWith("ERROR: do not modify tests/pom.xml");
+        assertThat(sandbox.execCount).isOne();
+    }
+
     /** Records the exec script and returns a scripted result, to test the bash spill wrapper and output composition without Docker. */
     private static final class ScriptedSandbox implements InteractiveSandbox {
 
@@ -333,7 +344,7 @@ class SandboxAgentToolsTest {
         ProgrammingExercise exercise = new ProgrammingExercise();
         DifferentialVerificationService verifier = mock(DifferentialVerificationService.class);
         AgentVerifyReport report = new AgentVerifyReport(2, true, List.of(), 2, true, true, List.of(), List.of("t_a", "t_b"), List.of(), List.of(), true, List.of());
-        when(verifier.selfCheck(eq(sandbox), eq("s"), eq(exercise))).thenReturn(report);
+        when(verifier.selfCheck(eq(sandbox), eq("s"), eq(exercise), eq(Map.of()), eq(false))).thenReturn(report);
 
         String out = new SandboxAgentTools(sandbox, "s", verifier, exercise).verify();
         assertThat(out).isEqualTo(report.toObservation());

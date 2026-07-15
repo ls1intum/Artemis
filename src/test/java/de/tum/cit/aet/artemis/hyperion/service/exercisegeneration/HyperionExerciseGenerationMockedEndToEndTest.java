@@ -149,7 +149,9 @@ class HyperionExerciseGenerationMockedEndToEndTest extends AbstractHyperionMocke
                 void incrementsUntilMaximum() {
                     BoundedCounter counter = new BoundedCounter(2);
                     counter.increment();
+                    assertEquals(1, counter.getValue(), "increment must increase the value by exactly one.");
                     counter.increment();
+                    assertEquals(2, counter.getValue(), "increment must reach the configured maximum one step at a time.");
                     counter.increment();
                     assertEquals(2, counter.getValue(), "increment must clamp the value at the configured maximum.");
                 }
@@ -158,6 +160,12 @@ class HyperionExerciseGenerationMockedEndToEndTest extends AbstractHyperionMocke
                 @StrictTimeout(1)
                 void decrementNeverDropsBelowZero() {
                     BoundedCounter counter = new BoundedCounter(3);
+                    counter.increment();
+                    counter.increment();
+                    counter.decrement();
+                    assertEquals(1, counter.getValue(), "decrement must reduce a positive value by exactly one.");
+                    counter.decrement();
+                    assertEquals(0, counter.getValue(), "decrement must reach zero one step at a time.");
                     counter.decrement();
                     assertEquals(0, counter.getValue(), "decrement must keep the value at zero when the counter is already empty.");
                 }
@@ -189,8 +197,8 @@ class HyperionExerciseGenerationMockedEndToEndTest extends AbstractHyperionMocke
         ProgrammingExercise exercise = scaffoldEmptyJavaExercise("HGMOK");
         when(azureOpenAiChatModel.call(any(Prompt.class))).thenReturn(HyperionMockedLlmE2eSupport.writeFile(PROBLEM_STATEMENT_PATH, PROBLEM_STATEMENT),
                 HyperionMockedLlmE2eSupport.writeFile(SOLUTION_PATH, SOLUTION_BOUNDED_COUNTER), HyperionMockedLlmE2eSupport.writeFile(TEMPLATE_PATH, TEMPLATE_BOUNDED_COUNTER),
-                HyperionMockedLlmE2eSupport.writeFile(TEST_PATH, BOUNDED_COUNTER_TEST), HyperionMockedLlmE2eSupport.verify(),
-                HyperionMockedLlmE2eSupport.submit("Bounded counter"));
+                HyperionMockedLlmE2eSupport.writeFile(TEST_PATH, BOUNDED_COUNTER_TEST), HyperionMockedLlmE2eSupport.verify(), HyperionMockedLlmE2eSupport.submit("Bounded counter"),
+                HyperionMockedLlmE2eSupport.cleanQualityReview(), HyperionMockedLlmE2eSupport.cleanQualityReview());
 
         try (GenerationOutcome outcome = orchestrator.generate(exercise, instructor(), "Create a bounded counter exercise.", "mock-generate-valid", GenerationMode.GENERATE,
                 () -> false, line -> log.info("[mock-generate] {}", line), null, null)) {
