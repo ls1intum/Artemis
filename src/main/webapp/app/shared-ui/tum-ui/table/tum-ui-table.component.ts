@@ -1,6 +1,6 @@
 import { NgTemplateOutlet } from '@angular/common';
 import { CdkTable, CdkTableModule } from '@angular/cdk/table';
-import { ChangeDetectionStrategy, Component, DestroyRef, TemplateRef, afterNextRender, computed, effect, inject, input, output, signal, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, TemplateRef, afterNextRender, computed, effect, inject, input, output, signal, untracked, viewChild } from '@angular/core';
 import { get } from 'lodash-es';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faMagnifyingGlass } from '@fortawesome/free-solid-svg-icons';
@@ -32,7 +32,7 @@ export class TumUiTableComponent<T> {
     readonly rows = input.required<T[]>();
     readonly totalRecords = input(0);
     readonly loading = input(false);
-    readonly rowActions = input<TemplateRef<{ $implicit: T }> | null>(null);
+    readonly rowActions = input<TemplateRef<{ $implicit: T }> | undefined>(undefined);
     readonly striped = input(false);
     readonly scrollable = input(false);
     readonly scrollHeight = input<string | undefined>(undefined);
@@ -86,6 +86,21 @@ export class TumUiTableComponent<T> {
         effect(() => {
             this.displayedColumns();
             this.cdkTable()?.renderRows();
+        });
+        // Clamp the page when totalRecords shrinks below the current page (e.g. after deleting the last row of
+        // the last page, the consumer reloads the same — now out-of-range — page). Re-emit for the last valid
+        // page so the grid never strands on an empty out-of-range page. Matches PrimeNG's paginator auto-clamp
+        // and converges in one step (the corrected page is in range, so it does not re-fire).
+        effect(() => {
+            const total = this.totalRecords();
+            const rows = this.effectivePageSize();
+            const lastPage = total > 0 ? Math.ceil(total / rows) - 1 : 0;
+            if (this.page() > lastPage) {
+                untracked(() => {
+                    this.page.set(lastPage);
+                    this.emitLazyLoad();
+                });
+            }
         });
         this.destroyRef.onDestroy(() => clearTimeout(this.searchTimer));
     }
@@ -157,7 +172,7 @@ export class TumUiTableComponent<T> {
             rows,
             sortField: sort?.field,
             sortOrder: sort?.order,
-            globalFilter: this.searchTerm() || undefined,
+            globalFilter: this.searchTerm().trim() || undefined,
         });
     }
 }

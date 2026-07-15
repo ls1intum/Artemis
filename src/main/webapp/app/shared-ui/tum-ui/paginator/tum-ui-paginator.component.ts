@@ -64,25 +64,25 @@ export class TumUiPaginatorComponent {
     }
 
     protected goToFirst(): void {
-        if (!this.isFirst()) {
+        if (!this.disabled() && !this.isFirst()) {
             this.pageChange.emit(0);
         }
     }
 
     protected goToPrevious(): void {
-        if (!this.isFirst()) {
+        if (!this.disabled() && !this.isFirst()) {
             this.pageChange.emit(this.page() - 1);
         }
     }
 
     protected goToNext(): void {
-        if (!this.isLast()) {
+        if (!this.disabled() && !this.isLast()) {
             this.pageChange.emit(this.page() + 1);
         }
     }
 
     protected goToLast(): void {
-        if (!this.isLast()) {
+        if (!this.disabled() && !this.isLast()) {
             this.pageChange.emit(this.totalPages() - 1);
         }
     }

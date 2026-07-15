@@ -158,6 +158,9 @@ export class TumUiDatePickerComponent implements FormValueControl<dayjs.Dayjs | 
     protected onTimeChange(raw: string): void {
         const trimmed = raw.trim();
         if (!TIME_REGEX.test(trimmed)) {
+            // Invalid or cleared time (the native time field emits '' when cleared): re-sync the field to the
+            // committed value so the time sub-field and the main text input never silently disagree.
+            this.timeText.set(this.value()?.format('HH:mm') ?? '');
             return;
         }
         const [hour, minute] = trimmed.split(':').map(Number);

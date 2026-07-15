@@ -16,32 +16,23 @@
 // and the `border-b` width utility is not reliably emitted for this component, so the separators would not
 // render. The values mirror PrimeNG's p-table exactly — a strong header rule (surface-700 light / surface-0
 // dark) over lighter row separators (surface-200 light / surface-800 dark).
-// NB: CdkTable injects the <thead>/<tbody> wrappers itself, so they carry no Angular encapsulation
-// attribute and `thead`/`tbody` selectors would not match. The <th>/<td> cells come from this component's
-// template, so target them directly.
+// Only the border WIDTH/STYLE lives here; the border COLOR comes from `border-surface-*` token utilities on
+// the cells in the template (theme-aware, no --p-* primitive in scss). The Tailwind `border-b` WIDTH utility
+// is not reliably emitted for this component without Preflight, so the 1px is set here instead.
+// NB: CdkTable injects the <thead>/<tbody> wrappers itself, so they carry no Angular encapsulation attribute
+// and `thead`/`tbody` selectors would not match — the <th>/<td> cells come from this component's template, so
+// target them directly.
 .cdk-table {
     width: 100%;
 
-    th {
-        border-bottom: 1px solid var(--p-surface-700);
-    }
-
+    th,
     td {
-        border-bottom: 1px solid var(--p-surface-200);
+        border-bottom-width: 1px;
+        border-bottom-style: solid;
     }
 
     // The last body row drops its bottom border so it does not double up with the paginator's top border.
     tr:last-child td {
-        border-bottom: 0;
-    }
-}
-
-:host-context(html[prime-ng-use-dark-theme='true']) .cdk-table {
-    th {
-        border-bottom-color: var(--p-surface-0);
-    }
-
-    td {
-        border-bottom-color: var(--p-surface-800);
+        border-bottom-width: 0;
     }
 }

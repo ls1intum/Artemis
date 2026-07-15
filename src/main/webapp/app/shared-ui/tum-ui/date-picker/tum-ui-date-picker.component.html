@@ -19,6 +19,7 @@
 
     <div #triggerWrapper class="relative flex items-center">
         <input
+            #dateInput
             [id]="inputId()"
             type="text"
             [value]="inputText()"
@@ -27,8 +28,8 @@
             [attr.aria-invalid]="showErrorBorder()"
             aria-haspopup="dialog"
             [attr.aria-expanded]="isOpen() ? 'true' : 'false'"
-            (input)="onInput($any($event.target).value)"
-            (blur)="onBlur($any($event.target).value)"
+            (input)="onInput(dateInput.value)"
+            (blur)="onBlur(dateInput.value)"
             class="w-full rounded-md border bg-surface-0 py-2 pl-3 pr-17 text-surface-900 dark:bg-surface-800 dark:text-surface-0"
             [class.border-surface]="!showErrorBorder()"
             [class.border-state-danger]="showErrorBorder()"
@@ -75,9 +76,10 @@
             <label class="flex items-center gap-2 text-sm text-surface-900 dark:text-surface-0">
                 <span jhiTranslate="global.datePicker.time"></span>
                 <input
+                    #timeInput
                     type="time"
                     [value]="timeText()"
-                    (input)="onTimeChange($any($event.target).value)"
+                    (input)="onTimeChange(timeInput.value)"
                     class="rounded-md border border-surface bg-surface-0 px-2 py-1 text-surface-900 dark:bg-surface-800 dark:text-surface-0"
                     data-testid="tum-ui-date-picker-time"
                 />

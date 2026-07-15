@@ -140,4 +140,19 @@ describe('TumUiTableComponent', () => {
         fixture.detectChanges();
         expect(spy).toHaveBeenLastCalledWith(expect.objectContaining({ first: 50, rows: 50 }));
     });
+
+    it('clamps to the last valid page and re-emits when totalRecords shrinks below the current page', async () => {
+        fixture.componentRef.setInput('totalRecords', 130); // 3 pages of 50
+        fixture.detectChanges();
+        await fixture.whenStable();
+        // Move to the last page (index 2).
+        fixture.debugElement.query(By.css('[data-testid="paginator-last"]')).nativeElement.click();
+        fixture.detectChanges();
+        const spy = vi.spyOn(component.lazyLoad, 'emit');
+        // Rows shrink so page 2 no longer exists (30 records -> 1 page): the table must clamp to page 0 and re-emit.
+        fixture.componentRef.setInput('totalRecords', 30);
+        fixture.detectChanges();
+        await fixture.whenStable();
+        expect(spy).toHaveBeenLastCalledWith(expect.objectContaining({ first: 0, rows: 50 }));
+    });
 });

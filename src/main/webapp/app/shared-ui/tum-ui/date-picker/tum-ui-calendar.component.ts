@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, ElementRef, afterRenderEffect, computed, effect, input, output, signal, viewChildren } from '@angular/core';
+import { ChangeDetectionStrategy, Component, ElementRef, afterRenderEffect, computed, input, linkedSignal, output, viewChildren } from '@angular/core';
 import dayjs from 'dayjs/esm';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faChevronLeft, faChevronRight } from '@fortawesome/free-solid-svg-icons';
@@ -29,7 +29,14 @@ export class TumUiCalendarComponent {
     protected readonly weekdayLabels = computed(() => this.weeks()[0].map((day) => day.format('dd')));
     protected readonly monthLabel = computed(() => this.activeMonth().format('MMMM YYYY'));
 
-    protected readonly focusedIndex = signal(0);
+    // Roving-tabindex focus. Derived from the grid + selection (resets when the month/selection changes) but
+    // also writable imperatively from onKeydown — linkedSignal covers both without writing a signal in an effect.
+    protected readonly focusedIndex = linkedSignal(() => {
+        const days = this.flatDays();
+        const target = this.selected() ?? this.activeMonth().startOf('month');
+        const index = days.findIndex((day) => day.isSame(target, 'day'));
+        return index >= 0 ? index : 0;
+    });
     private readonly today = dayjs();
     private readonly dayButtons = viewChildren<ElementRef<HTMLButtonElement>>('dayButton');
     // Set when a month change was initiated from the keyboard (PageUp/PageDown), so we can restore DOM
@@ -37,13 +44,6 @@ export class TumUiCalendarComponent {
     private restoreFocusAfterRender = false;
 
     constructor() {
-        // Reset roving focus to the selected day (or the 1st of the month) whenever the grid changes.
-        effect(() => {
-            const days = this.flatDays();
-            const target = this.selected() ?? this.activeMonth().startOf('month');
-            const index = days.findIndex((day) => day.isSame(target, 'day'));
-            this.focusedIndex.set(index >= 0 ? index : 0);
-        });
         // A keyboard month change destroys the focused <button> (tracked by day.valueOf()), dropping focus
         // to <body> and breaking arrow-key navigation. After the new grid renders, move focus back to the
         // roving cell — but only when the change came from the keyboard.

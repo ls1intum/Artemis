@@ -110,14 +110,20 @@ export class TumUiTooltipDirective implements OnDestroy {
             return;
         }
         this.overlayRef = this.overlayService.createConnectedOverlay(this.elementRef, this.placement());
+        // Subscribe to positionChanges BEFORE attach(): CDK applies (and may flip) the position synchronously
+        // during attach, so subscribing afterwards would miss that first emission and seed the caret to the
+        // requested side rather than the applied one near a viewport edge. We capture the applied placement
+        // here and seed the content with it right after attach; later repositions (scroll/resize) update it live.
+        const strategy = this.overlayRef.getConfig().positionStrategy as FlexibleConnectedPositionStrategy;
+        let appliedPlacement = this.placement();
+        this.positionSub = strategy.positionChanges.subscribe((change) => {
+            appliedPlacement = this.overlayService.placementFromPosition(change.connectionPair);
+            this.contentRef?.setInput('placement', appliedPlacement);
+        });
         this.contentRef = this.overlayRef.attach(new ComponentPortal(TumUiTooltipContentComponent));
         this.contentRef.setInput('text', this.content());
         this.contentRef.setInput('id', this.tooltipId);
-        this.contentRef.setInput('placement', this.placement());
-        // Keep the caret pointing at the anchor even when CDK flips the overlay to the opposite side at a
-        // viewport edge: update the caret from the actually-applied connection pair on every reposition.
-        const strategy = this.overlayRef.getConfig().positionStrategy as FlexibleConnectedPositionStrategy;
-        this.positionSub = strategy.positionChanges.subscribe((change) => this.contentRef?.setInput('placement', this.overlayService.placementFromPosition(change.connectionPair)));
+        this.contentRef.setInput('placement', appliedPlacement);
         this.addDescribedBy();
     }
 

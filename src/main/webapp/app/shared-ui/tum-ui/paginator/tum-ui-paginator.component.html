@@ -59,9 +59,10 @@
     </button>
 
     <select
+        #sizeSelect
         class="ml-1 cursor-pointer rounded-md border border-surface-300 bg-surface-0 px-2.5 py-1.5 text-sm text-surface-900 dark:border-surface-600 dark:bg-surface-950 dark:text-surface-0"
         [disabled]="disabled()"
-        (change)="onPageSizeChange($any($event.target).value)"
+        (change)="onPageSizeChange(sizeSelect.value)"
         [attr.aria-label]="'global.paginator.rowsPerPage' | artemisTranslate"
         data-testid="paginator-page-size"
     >

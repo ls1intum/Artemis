@@ -116,13 +116,13 @@ export class CleanupServiceComponent implements OnInit {
         operation.datesValid.set(datesValid);
     }
 
-    onDeleteFromChange(operation: CleanupOperation, value: dayjs.Dayjs | Date | null | undefined): void {
-        operation.deleteFrom = value ? dayjs(value) : undefined;
+    onDeleteFromChange(operation: CleanupOperation, value: dayjs.Dayjs | undefined): void {
+        operation.deleteFrom = value;
         this.validateDates(operation);
     }
 
-    onDeleteToChange(operation: CleanupOperation, value: dayjs.Dayjs | Date | null | undefined): void {
-        operation.deleteTo = value ? dayjs(value) : undefined;
+    onDeleteToChange(operation: CleanupOperation, value: dayjs.Dayjs | undefined): void {
+        operation.deleteTo = value;
         this.validateDates(operation);
     }
 
