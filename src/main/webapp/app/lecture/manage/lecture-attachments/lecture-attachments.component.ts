@@ -232,10 +232,10 @@ export class LectureAttachmentsComponent implements OnDestroy {
         return item.id;
     }
 
-    downloadAttachment(downloadName: string, downloadUrl: string): void {
+    downloadAttachment(downloadName: string, downloadUrl: string, version?: number): void {
         if (!this.isDownloadingAttachmentLink()) {
             this.isDownloadingAttachmentLink.set(downloadUrl);
-            this.fileService.downloadFileByAttachmentName(downloadUrl, downloadName);
+            this.fileService.downloadFileByAttachmentName(downloadUrl, downloadName, version);
             this.isDownloadingAttachmentLink.set(undefined);
         }
     }

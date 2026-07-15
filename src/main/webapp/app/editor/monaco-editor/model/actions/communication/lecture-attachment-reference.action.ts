@@ -52,7 +52,7 @@ export class LectureAttachmentReferenceAction extends TextEditorAction {
                     .map((lecture) => {
                         const attachmentsWithFileUrls = cloneDeep(lecture.attachments)?.map((attachment) => {
                             if (attachment.link && attachment.name) {
-                                attachment.link = this.fileService.createAttachmentFileUrl(attachment.link, attachment.name, false);
+                                attachment.link = this.fileService.createAttachmentFileUrl(attachment.link, attachment.name, false, attachment.version);
                                 attachment.linkUrl = addPublicFilePrefix(attachment.link);
                             }
 

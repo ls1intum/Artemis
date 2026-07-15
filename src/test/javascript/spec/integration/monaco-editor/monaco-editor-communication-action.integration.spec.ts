@@ -310,8 +310,11 @@ describe('MonacoEditorCommunicationActionIntegration', () => {
                 attachmentVideoUnits: lecture.lectureUnits?.filter((unit) => unit.type === LectureUnitType.ATTACHMENT_VIDEO),
                 attachments: lecture.attachments?.map((attachment) => ({
                     ...attachment,
-                    link: attachment.link && attachment.name ? fileService.createAttachmentFileUrl(attachment.link, attachment.name, false) : attachment.link,
-                    linkUrl: attachment.link && attachment.name ? 'api/core/files/' + fileService.createAttachmentFileUrl(attachment.link, attachment.name, true) : attachment.link,
+                    link: attachment.link && attachment.name ? fileService.createAttachmentFileUrl(attachment.link, attachment.name, false, attachment.version) : attachment.link,
+                    linkUrl:
+                        attachment.link && attachment.name
+                            ? 'api/core/files/' + fileService.createAttachmentFileUrl(attachment.link, attachment.name, false, attachment.version)
+                            : attachment.link,
                 })),
             }));
 

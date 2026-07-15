@@ -746,7 +746,7 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
         const link = this.getAttachmentLink();
 
         if (link) {
-            this.fileService.downloadFileByAttachmentName(link, this.lectureUnit().attachment!.name!);
+            this.fileService.downloadFileByAttachmentName(link, this.lectureUnit().attachment!.name!, this.lectureUnit().attachment!.version);
             this.onCompletion.emit({ lectureUnit: this.lectureUnit(), completed: true });
         }
     }
@@ -766,7 +766,7 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
         const link = addPublicFilePrefix(this.lectureUnit().attachment!.link);
 
         if (link) {
-            this.fileService.downloadFileByAttachmentName(link, this.lectureUnit().attachment!.name!);
+            this.fileService.downloadFileByAttachmentName(link, this.lectureUnit().attachment!.name!, this.lectureUnit().attachment!.version);
             this.onCompletion.emit({ lectureUnit: this.lectureUnit(), completed: true });
         }
     }

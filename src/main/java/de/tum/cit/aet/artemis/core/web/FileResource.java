@@ -445,7 +445,7 @@ public class FileResource {
     /**
      * GET /files/attachments/lecture/:lectureId/:filename : Get the lecture attachment
      *
-     * The response may be stored in a private cache and must be revalidated via Last-Modified before every reuse.
+     * The response may be stored in a private cache for one day and is revalidated via Last-Modified after it becomes stale.
      *
      * @param lectureId      ID of the lecture, the attachment belongs to
      * @param attachmentName the filename of the file
@@ -520,7 +520,7 @@ public class FileResource {
     /**
      * GET files/attachments/attachment-unit/:attachmentVideoUnitId/:filename : Get the lecture unit attachment
      * Accesses to this endpoint are created by the server itself in the FilePathService
-     * The response may be stored in a private cache and must be revalidated via Last-Modified before every reuse.
+     * The response may be stored in a private cache for one day and is revalidated via Last-Modified after it becomes stale.
      *
      * @param attachmentVideoUnitId ID of the attachment video unit, the attachment belongs to
      * @param requestHeaders        request headers, used for optional HTTP range requests
@@ -662,7 +662,7 @@ public class FileResource {
 
     /**
      * GET files/attachments/attachment-unit/{attachmentUnitId}/student/* : Get the student version of attachment video unit by attachment video unit id
-     * The response may be stored in a private cache and must be revalidated via Last-Modified before every reuse.
+     * The response may be stored in a private cache for one day and is revalidated via Last-Modified after it becomes stale.
      *
      * @param attachmentVideoUnitId ID of the attachment video unit, the student version belongs to
      * @param requestHeaders        request headers, used for optional HTTP range requests
@@ -723,7 +723,7 @@ public class FileResource {
      *
      * @param path            file path including the file name
      * @param replaceFilename replaces the downloaded file's name, if provided
-     * @param privateCache    true if the response may be stored in a private cache but must be revalidated before reuse; false otherwise
+     * @param privateCache    true if the response may be stored in a private cache for one day; false otherwise
      * @param requestHeaders  request headers used for conditional and range requests
      * @return response entity for full or partial attachment download
      */
@@ -733,13 +733,13 @@ public class FileResource {
 
     /**
      * Builds an attachment response for the given directory and filename with optional range support.
-     * Private cached responses require revalidation so that authorization is checked before every reuse. Conditional requests are answered before the file body is read. Range
-     * requests are only honored when an optional If-Range date matches the current file timestamp.
+     * Private cached responses remain fresh for one day. Once stale, conditional requests are answered before the file body is read. Range requests are only honored when an
+     * optional If-Range date matches the current file timestamp.
      *
      * @param path            directory path of the file
      * @param filename        file name to serve from {@code path}
      * @param replaceFilename replaces the downloaded file's name, if provided
-     * @param privateCache    true if the response may be stored in a private cache but must be revalidated before reuse
+     * @param privateCache    true if the response may be stored in a private cache for one day
      * @param requestHeaders  request headers used for conditional and range requests
      * @return response entity for full or partial attachment download
      */
@@ -749,7 +749,7 @@ public class FileResource {
         if (lastModified >= 0 && FileHttpRequestValidator.isNotModified(requestHeaders, lastModified)) {
             var response = ResponseEntity.status(HttpStatus.NOT_MODIFIED).lastModified(lastModified);
             if (privateCache) {
-                response = response.cacheControl(CacheControl.noCache().cachePrivate());
+                response = response.cacheControl(CacheControl.maxAge(Duration.ofDays(DAYS_TO_CACHE)).cachePrivate());
             }
             return response.build();
         }
@@ -766,7 +766,7 @@ public class FileResource {
             response = response.header(HttpHeaders.CONTENT_RANGE, payload.contentRange().get());
         }
         if (privateCache) {
-            response = response.cacheControl(CacheControl.noCache().cachePrivate());
+            response = response.cacheControl(CacheControl.maxAge(Duration.ofDays(DAYS_TO_CACHE)).cachePrivate());
         }
         if (lastModified >= 0 && (payload.status() == HttpStatus.OK || payload.status() == HttpStatus.PARTIAL_CONTENT)) {
             response = response.lastModified(lastModified);

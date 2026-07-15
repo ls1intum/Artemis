@@ -187,6 +187,17 @@ describe('FileService', () => {
             expect(newWindow).not.toBeNull();
             expect(newWindow!.location.href).toBe(encodedUrl);
         });
+
+        it('should include the attachment version in the download URL', () => {
+            const downloadUrl = 'http://example.com/files/attachment.pdf';
+            const newWindowMock = { location: { href: '' } } as Window;
+
+            vi.spyOn(window, 'open').mockReturnValue(newWindowMock);
+
+            fileService.downloadFileByAttachmentName(downloadUrl, 'Lecture Slides', 4);
+
+            expect(newWindowMock.location.href).toBe('http://example.com/files/Lecture%20Slides.pdf?version=4');
+        });
     });
 
     describe('replaceAttachmentPrefixAndUnderscores', () => {

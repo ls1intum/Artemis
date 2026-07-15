@@ -17,6 +17,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import org.apache.commons.io.FileUtils;
@@ -631,8 +632,7 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         try (MockedStatic<FilePathConverter> filePathServiceMock = Mockito.mockStatic(FilePathConverter.class)) {
             filePathServiceMock.when(() -> FilePathConverter.fileSystemPathForExternalUri(Mockito.any(URI.class), Mockito.eq(FilePathType.ATTACHMENT_UNIT))).thenReturn(tempFile);
 
-            // The browser may store the response privately but must revalidate it after every authorization check
-            String expectedCacheControl = CacheControl.noCache().cachePrivate().getHeaderValue();
+            String expectedCacheControl = CacheControl.maxAge(1, TimeUnit.DAYS).cachePrivate().getHeaderValue();
             mockMvc.perform(get(url)).andExpect(status().isOk()).andExpect(header().string("Cache-Control", expectedCacheControl)).andExpect(header().exists("Last-Modified"));
         }
     }
@@ -655,8 +655,10 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
             String lastModified = result.getResponse().getHeader("Last-Modified");
             Mockito.clearInvocations(fileService);
 
-            // The authorization check has already run, but the unchanged file must not be read again
-            mockMvc.perform(get(url).header("If-Modified-Since", lastModified)).andExpect(status().isNotModified());
+            // A stale or explicitly revalidated cached response must not read the unchanged file again
+            String expectedCacheControl = CacheControl.maxAge(1, TimeUnit.DAYS).cachePrivate().getHeaderValue();
+            mockMvc.perform(get(url).header("If-Modified-Since", lastModified)).andExpect(status().isNotModified())
+                    .andExpect(header().string("Cache-Control", expectedCacheControl));
             Mockito.verify(fileService, Mockito.never()).getFileForPath(tempFile);
         }
     }
@@ -676,7 +678,7 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
             filePathServiceMock.when(() -> FilePathConverter.fileSystemPathForExternalUri(Mockito.any(URI.class), Mockito.eq(FilePathType.LECTURE_ATTACHMENT)))
                     .thenReturn(tempFile);
 
-            String expectedCacheControl = CacheControl.noCache().cachePrivate().getHeaderValue();
+            String expectedCacheControl = CacheControl.maxAge(1, TimeUnit.DAYS).cachePrivate().getHeaderValue();
             mockMvc.perform(get(url)).andExpect(status().isOk()).andExpect(header().string("Cache-Control", expectedCacheControl)).andExpect(header().exists("Last-Modified"));
         }
     }
@@ -698,7 +700,7 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
             MvcResult fullResponse = mockMvc.perform(get(url)).andExpect(status().isOk()).andExpect(header().exists("Last-Modified")).andReturn();
             String lastModified = fullResponse.getResponse().getHeader("Last-Modified");
 
-            String expectedCacheControl = CacheControl.noCache().cachePrivate().getHeaderValue();
+            String expectedCacheControl = CacheControl.maxAge(1, TimeUnit.DAYS).cachePrivate().getHeaderValue();
             mockMvc.perform(get(url).header(HttpHeaders.RANGE, "bytes=2-5").header(HttpHeaders.IF_RANGE, lastModified)).andExpect(status().isPartialContent())
                     .andExpect(header().string("Cache-Control", expectedCacheControl)).andExpect(header().string("Last-Modified", lastModified))
                     .andExpect(content().bytes("2345".getBytes()));

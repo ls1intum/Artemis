@@ -151,6 +151,7 @@ describe('AttachmentVideoUnitComponent', () => {
 
         expect(createStudentLinkSpy).toHaveBeenCalledTimes(1);
         expect(downloadFileSpy).toHaveBeenCalledTimes(1);
+        expect(downloadFileSpy).toHaveBeenCalledWith(expect.any(String), attachmentVideoUnit.attachment!.name, attachmentVideoUnit.attachment!.version);
         expect(onCompletionEmitSpy).toHaveBeenCalledTimes(1);
     });
 
@@ -161,6 +162,7 @@ describe('AttachmentVideoUnitComponent', () => {
         component.handleOriginalVersion();
 
         expect(downloadFileSpy).toHaveBeenCalledTimes(1);
+        expect(downloadFileSpy).toHaveBeenCalledWith(expect.any(String), attachmentVideoUnit.attachment!.name, attachmentVideoUnit.attachment!.version);
         expect(onCompletionEmitSpy).toHaveBeenCalledTimes(1);
     });
 

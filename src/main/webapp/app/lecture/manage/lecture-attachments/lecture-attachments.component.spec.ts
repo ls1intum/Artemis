@@ -295,9 +295,12 @@ describe('LectureAttachmentsComponent', () => {
     it('should download attachment', async () => {
         fixture.detectChanges();
         await fixture.whenStable();
+        const fileService = TestBed.inject(FileService);
+        const downloadFileSpy = vi.spyOn(fileService, 'downloadFileByAttachmentName');
         comp.isDownloadingAttachmentLink.set(undefined);
         expect(comp.isDownloadingAttachmentLink()).toBeUndefined();
-        comp.downloadAttachment('https://my/own/download/url', 'test');
+        comp.downloadAttachment('test', 'https://my/own/download/url', 5);
+        expect(downloadFileSpy).toHaveBeenCalledWith('https://my/own/download/url', 'test', 5);
         expect(comp.isDownloadingAttachmentLink()).toBeUndefined();
     });
 
