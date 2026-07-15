@@ -233,7 +233,11 @@ export class RequestFeedbackButtonComponent implements OnInit, OnDestroy {
         if (!this.participation?.id) {
             return false;
         }
-        return this.exercise().type === ExerciseType.PROGRAMMING || this.assureTextModelingConditions();
+        if (this.exercise().type === ExerciseType.PROGRAMMING) {
+            // Athena feedback requests for programming exercises require manual assessment to be enabled
+            return this.exercise().assessmentType === AssessmentType.SEMI_AUTOMATIC;
+        }
+        return this.assureTextModelingConditions();
     }
 
     /**

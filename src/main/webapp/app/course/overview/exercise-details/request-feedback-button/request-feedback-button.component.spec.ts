@@ -417,6 +417,7 @@ describe('RequestFeedbackButtonComponent', () => {
         setAthenaEnabled(true);
         const participation = createParticipation();
         const exercise = createBaseExercise(ExerciseType.PROGRAMMING, false, participation);
+        exercise.assessmentType = AssessmentType.SEMI_AUTOMATIC;
         setupComponentInputs(exercise);
         await initAndTick();
 
@@ -537,14 +538,26 @@ describe('RequestFeedbackButtonComponent', () => {
         expect(participationWebsocketService.subscribeForLatestResultOfParticipation).toHaveBeenCalled();
     });
 
-    it('should return true for programming exercises in assureConditionsSatisfied', () => {
+    it('should return true for programming exercises with manual assessment enabled in assureConditionsSatisfied', () => {
         const participation = createParticipation();
         const exercise = createBaseExercise(ExerciseType.PROGRAMMING, false, participation);
+        exercise.assessmentType = AssessmentType.SEMI_AUTOMATIC;
         fixture.componentRef.setInput('exercise', exercise);
 
         const result = component.assureConditionsSatisfied();
 
         expect(result).toBe(true);
+    });
+
+    it('should return false for programming exercises without manual assessment enabled in assureConditionsSatisfied', () => {
+        const participation = createParticipation();
+        const exercise = createBaseExercise(ExerciseType.PROGRAMMING, false, participation);
+        exercise.assessmentType = AssessmentType.AUTOMATIC;
+        fixture.componentRef.setInput('exercise', exercise);
+
+        const result = component.assureConditionsSatisfied();
+
+        expect(result).toBe(false);
     });
 
     it('should show warning for pending changes in text exercises', () => {
@@ -614,6 +627,7 @@ describe('RequestFeedbackButtonComponent', () => {
         setAthenaEnabled(true);
         const participation = createParticipation();
         const exercise = createBaseExercise(ExerciseType.PROGRAMMING, false, participation);
+        exercise.assessmentType = AssessmentType.SEMI_AUTOMATIC;
         setupComponentInputs(exercise);
         component.hasUserAcceptedLLMUsage.set(true);
 
