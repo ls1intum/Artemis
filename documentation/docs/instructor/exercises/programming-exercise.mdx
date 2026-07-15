@@ -864,7 +864,7 @@ Before a build runs, any phases where the inclusion condition is not met are dro
 
 **Default behavior:**
 - **Creating a course programming exercise**: Phases are set to always run. Test results are set to always be visible.
-- **Creating a programming exercise in exam mode**: Phases that expect tests are automatically set to run after the due date. This means only compilation will occur during the exam, while tests will run after the exam concludes.
+- **Creating a programming exercise in exam mode**: Phases that expect tests are automatically set to run after the due date. This means phases without expected test results remain active during the exam. Tests will run after the exam concludes.
 - **Importing a programming exercise in exam mode**: Tests are automatically set to only show after the release date of results. However, the build plan is imported as-is. This prevents situations where, for example, a build plan with only a single phase is unintentionally set to run `After due date`.
 
 You can also use a custom Docker image. Make sure to:
