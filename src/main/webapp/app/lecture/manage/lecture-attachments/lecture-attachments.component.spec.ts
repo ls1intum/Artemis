@@ -195,13 +195,14 @@ describe('LectureAttachmentsComponent', () => {
     it('should update Attachment', async () => {
         fixture.detectChanges();
         await fixture.whenStable();
-        comp.attachmentToBeUpdatedOrCreated.set({
+        const attachmentToUpdate = {
             id: 1,
             lecture: comp.lecture,
             attachmentType: AttachmentType.FILE,
             version: 1,
             uploadDate: dayjs(),
-        } as Attachment);
+        } as Attachment;
+        comp.attachmentToBeUpdatedOrCreated.set(attachmentToUpdate);
         comp.notificationText = 'wow how did i get here';
         const attachmentServiceUpdateStub = vi.spyOn(attachmentService, 'update').mockReturnValue(
             of(
@@ -219,6 +220,7 @@ describe('LectureAttachmentsComponent', () => {
         );
         comp.saveAttachment();
         expect(attachmentServiceUpdateStub).toHaveBeenCalledTimes(1);
+        expect(attachmentToUpdate.version).toBe(1);
         expect(comp.attachments()[1].version).toBe(2);
         expect(attachmentServiceFindAllByLectureIdStub).toHaveBeenCalledTimes(1);
     });
