@@ -207,6 +207,7 @@ describe('FileService', () => {
 
         it('should leave the URL unchanged when no version is available', () => {
             expect(fileService.addAttachmentVersionToUrl('http://example.com/attachment.pdf')).toBe('http://example.com/attachment.pdf');
+            expect(fileService.addAttachmentVersionToUrl('http://example.com/attachment.pdf', null)).toBe('http://example.com/attachment.pdf');
         });
     });
 

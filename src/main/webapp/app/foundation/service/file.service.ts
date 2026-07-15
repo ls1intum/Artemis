@@ -109,8 +109,8 @@ export class FileService {
      * @param attachmentUrl attachment URL to version
      * @param version attachment version used to invalidate cached downloads after a replacement
      */
-    addAttachmentVersionToUrl(attachmentUrl: string, version?: number): string {
-        if (version === undefined) {
+    addAttachmentVersionToUrl(attachmentUrl: string, version?: number | null): string {
+        if (version === undefined || version === null) {
             return attachmentUrl;
         }
         const separator = attachmentUrl.includes('?') ? '&' : '?';

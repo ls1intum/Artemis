@@ -24,8 +24,8 @@ export class MockFileService {
         return this.addAttachmentVersionToUrl('attachments/' + downloadName.replace(' ', '-') + '.pdf', version);
     }
 
-    addAttachmentVersionToUrl(attachmentUrl: string, version?: number): string {
-        if (version === undefined) {
+    addAttachmentVersionToUrl(attachmentUrl: string, version?: number | null): string {
+        if (version === undefined || version === null) {
             return attachmentUrl;
         }
         const separator = attachmentUrl.includes('?') ? '&' : '?';
