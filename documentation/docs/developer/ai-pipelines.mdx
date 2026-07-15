@@ -1,0 +1,144 @@
+---
+id: ai-pipelines
+title: AI Pipelines and Service Boundaries
+sidebar_label: AI Pipelines
+---
+
+# AI Pipelines and Service Boundaries
+
+This catalog describes the **Artemis-owned control plane** for AI-enabled workflows: the requests Artemis creates, the data and authorization it owns, and the integration contracts it exposes. It is not generated API documentation and does not replace the implementation documentation of Iris, Athena, AtlasML, Logos, or Memiris.
+
+Use this page together with the [Artemis Intelligence ecosystem map](../admin/artemis-intelligence). It intentionally avoids deployment-specific hosts, credentials, model assignments, provider aliases, capacity, topology, and rollout state. Feature flags and configuration determine whether a boundary is enabled; they do not establish how a particular deployment is configured.
+
+## Ownership at a glance
+
+| Family                | Artemis owns                                                                                                                   | Service-owned or infrastructure boundary                                         |
+| --------------------- | ------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------- |
+| Iris / Pyris          | Request DTOs, job tokens, authentication, session and message state, Artemis callbacks, and WebSocket delivery                 | Tutor, ingestion, retrieval, answer, and memory-pipeline execution in Iris/Pyris |
+| Athena                | Module selection/configuration, request forwarding, exercise/submission state, scheduling, and repository export authorization | Module processing and any module-specific model decisions in Athena              |
+| Hyperion              | Authoring workflows, prompts and context assembly, exercise/repository integration, and result persistence                     | Model access selected through Artemis Spring AI configuration                    |
+| Atlas                 | Companion-agent, competency-orchestration, tool, course, and competency contracts                                              | Optional AtlasML ML workflows behind a REST boundary                             |
+| Artemis Global Search | Searchable-entity schemas, index lifecycle, query authorization, and result shaping                                            | Weaviate storage and optional vectorization                                      |
+
+## Iris and Pyris
+
+`PyrisPipelineService` and `PyrisConnectorService` are the central Artemis integration boundary for Iris (whose implementation repository calls the service Pyris). Artemis prepares typed execution DTOs, creates a `PyrisJob` token before dispatch, and sends the request to the matching Iris endpoint. The common execution settings carry the job token, the Artemis callback base URL, the selected pipeline variant and support level, and—where supported—the user's AI-selection decision.
+
+`PyrisInternalStatusUpdateResource` is the callback entry point. It authenticates the tracked job and verifies that the path run ID matches it before `PyrisStatusUpdateService` routes the update to the Artemis owner of that job. Terminal updates remove the job; non-terminal updates keep it available for subsequent callbacks. The callback contract, rather than a direct connection to Iris internals, is the stable Artemis responsibility.
+
+For the implementation hierarchy, executor behavior, and Iris-owned agents, see the [Iris pipeline system](https://ls1intum.github.io/edutelligence/iris/docs/developer/pipeline-system). For Iris-owned retrieval and content collections, see the [Iris RAG pipeline](https://ls1intum.github.io/edutelligence/iris/docs/developer/rag-pipeline).
+
+### Chat, tutor suggestions, autonomous tutor, and competency extraction
+
+| Artemis flow          | Trigger and source entry points                                                                                                                                      | Artemis-side response path                                                                                                                                                                                                                          |
+| --------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Chat                  | A user message or resend is handled through `IrisMessageResource` and `IrisChatPipelineExecutionService`, which call `PyrisPipelineService.executeChatPipeline`.     | Chat callbacks reach `PyrisInternalStatusUpdateResource`; `PyrisStatusUpdateService` delegates to `IrisChatSessionService`. Artemis persists its session/message state and sends status and partial/final results over the Iris WebSocket services. |
+| Tutor suggestions     | `IrisTutorSuggestionSessionService` calls `PyrisPipelineService.executeTutorSuggestionPipeline` with post, session, course, and applicable exercise/lecture context. | The tutor-suggestion callback updates the corresponding session and is delivered through the Iris WebSocket path.                                                                                                                                   |
+| Autonomous tutor      | `AutonomousTutorForwardingService` calls `PyrisPipelineService.executeAutonomousTutorPipeline` for the communication context.                                        | The authenticated callback is handled by `AutonomousTutorService`, which applies the Artemis-side post/decision behavior.                                                                                                                           |
+| Competency extraction | `IrisCompetencyGenerationService` starts the typed Pyris pipeline through `PyrisPipelineService`.                                                                    | The competency-extraction callback is routed back to `IrisCompetencyGenerationService`, which owns the Artemis-side result handling.                                                                                                                |
+
+These paths are conditional on Iris being enabled. Artemis creates the request and owns its stored application data; it does not own the underlying Iris pipeline implementation or provider policy.
+
+### Content ingestion, update, and deletion
+
+`PyrisWebhookService` connects Artemis content lifecycles to Iris ingestion. It creates tracked lecture or FAQ ingestion jobs and delegates transport to `PyrisConnectorService`. Ingestion status returns through the authenticated internal webhook endpoints.
+
+- **Lecture units:** `IrisLectureApi` exposes `PyrisWebhookService` to the lecture module. `addLectureUnitToPyrisDB` sends eligible attachment/video units for ingestion; `deleteLectureFromPyrisDB` sends their identifiers for deletion. Course Iris settings gate eligible additions. `PyrisStatusUpdateService` forwards checkpoint data, heartbeats, and terminal completion to the lecture processing API, allowing Artemis to maintain its processing state.
+- **FAQs:** `FaqService` uses `PyrisFaqApi` and `PyrisWebhookService` to ingest changed FAQs or remove deleted ones. FAQ ingestion is governed by the course Iris settings. Artemis tracks the request lifecycle, while Iris owns indexing and retrieval behavior.
+- **Callback integrity:** `PyrisInternalStatusUpdateResource` has separate callback contracts for lecture and FAQ ingestion. A callback must authenticate a matching tracked job and have the expected job type before Artemis accepts it.
+
+Iris owns the ingestion implementation, transcription behavior, RAG collections, and vector processing. Read the [Iris RAG pipeline](https://ls1intum.github.io/edutelligence/iris/docs/developer/rag-pipeline) before changing an Artemis payload or relying on service-side retrieval behavior.
+
+### Lecture search and asynchronous answers are separate paths
+
+Do not conflate Artemis Global Search with the two Iris-backed endpoints in `IrisGlobalSearchResource`:
+
+- `lecture-search` is a synchronous request. `PyrisConnectorService.searchLectures` forwards the query and Artemis returns the Iris search result list directly.
+- `search-answer` is an asynchronous answer pipeline. Artemis checks the user’s LLM-usage consent, stores a `GlobalSearchAnswerJob` with a time-to-live, and calls `PyrisConnectorService.executeGlobalSearchIrisAnswer`. The callback first emits a thinking frame when applicable and later sends the final answer and sources on the `global-search-answer` WebSocket topic. Transport failures do not eagerly remove the job because a callback may still arrive.
+
+Both paths use Iris retrieval rather than Artemis’s Global Search schemas or query authorization layer.
+
+### Memiris management through Iris
+
+`IrisMemoryResource` exposes the Artemis user-management boundary for memories when both Iris and `Feature.Memiris` are enabled. It obtains the current Artemis user and delegates to `PyrisConnectorService` for:
+
+- aggregated memory data;
+- a single memory with its learning and connection details;
+- single-memory deletion; and
+- delete-all forwarding.
+
+Artemis owns the authenticated user boundary and the response DTOs. Iris and Memiris own memory creation, semantic retrieval, relationships, memory storage, and periodic sleep orchestration. For the Iris integration and runtime pipeline details, use the [Iris pipeline system](https://ls1intum.github.io/edutelligence/iris/docs/developer/pipeline-system); the reusable library is documented in the [Memiris source repository](https://github.com/ls1intum/edutelligence/tree/main/memiris).
+
+## Athena
+
+Athena is an external assessment service. Artemis determines which configured Athena module is applicable to an exercise and owns all Artemis assessment data before and after a request. Athena owns module execution and, for modules that use LLMs, its own module-level AI selection.
+
+`AthenaModuleService` resolves configured module URLs, obtains module availability for a course/exercise type, and validates whether an exercise may use the configured module. The forwarding services convert Artemis domain data into Athena contracts and use the Athena connector; they do not give Athena direct database access.
+
+For the end-to-end service contract, headers, module manager, and module behavior, see the [Athena request lifecycle](https://ls1intum.github.io/edutelligence/athena/docs/dev/module/request-lifecycle).
+
+### Feedback, submissions, scheduling, and repository access
+
+| Flow                          | Artemis entry points                                                                        | Boundary                                                                                                                                                                                                                        |
+| ----------------------------- | ------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Tutor feedback suggestions    | `AthenaFeedbackSuggestionsService` with `AthenaModuleService`                               | Artemis selects/configures the module, converts the applicable exercise/submission context, forwards the request, and consumes the resulting suggestion in the tutor assessment flow.                                           |
+| Preliminary feedback requests | `AthenaFeedbackSuggestionsService` and the text, modeling, or programming feedback services | Artemis validates the configured exercise flow, user AI-selection decision, request limit, and applicable submission state before its asynchronous request/result lifecycle. Athena returns the service-owned feedback content. |
+| Tutor-feedback forwarding     | `AthenaFeedbackSendingService`                                                              | Applicable manual tutor feedback is forwarded to the selected Athena module. Artemis remains authoritative for its feedback records.                                                                                            |
+| Submission forwarding         | `AthenaSubmissionSendingService`                                                            | Artemis forwards configured submissions for Athena processing while retaining its submission/exercise state.                                                                                                                    |
+| Assessment-queue selection    | `AthenaSubmissionSelectionService`                                                          | Artemis can ask Athena to propose an assessable submission, then rechecks eligibility and falls back to its normal selection when no usable proposal is returned.                                                               |
+| Due-date work                 | `AthenaScheduleService`                                                                     | Artemis schedules eligible configured exercises around their due date, restores scheduled work at startup, and cancels it when exercise state changes.                                                                          |
+| Programming repositories      | `AthenaInternalResource` and `AthenaRepositoryExportService`                                | Athena requests repository content through a secret-authenticated internal endpoint. Artemis authorizes and exports only the requested submission, template, solution, or test repository representation.                       |
+
+The `AthenaInternalResource` is a deliberately narrow contract: it is an authenticated export boundary, not a general database or repository interface. Changes to Athena decorators or module internals belong in the Athena documentation, not this page.
+
+## Hyperion authoring pipelines
+
+Hyperion is Artemis-native and uses Artemis Spring AI integration. It is enabled through Artemis configuration; the associated authoring resources and services remain within the Artemis server. See [Hyperion setup](../admin/hyperion) and the [Spring AI development guide](./spring-ai) for configuration-oriented documentation.
+
+The authoring resources expose focused workflows, rather than one monolithic pipeline:
+
+| Authoring flow                              | Artemis services                                                                                                                                                                         |
+| ------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Problem-statement generation and refinement | `HyperionProblemStatementResource`, `HyperionProblemStatementGenerationService`, `HyperionProblemStatementRefinementService`                                                             |
+| FAQ rewriting                               | `HyperionFaqResource`, `HyperionFaqRewriteService`                                                                                                                                       |
+| Consistency verification                    | `HyperionProblemStatementResource`, `HyperionConsistencyCheckService`, plus the programming-language context services                                                                    |
+| Checklist analysis and actions              | `HyperionProblemStatementResource`, `HyperionChecklistService`                                                                                                                           |
+| Quiz generation and refinement              | `HyperionQuizQuestionGenerationResource`, `HyperionQuizQuestionGenerationService`                                                                                                        |
+| Staged programming-exercise code generation | `HyperionCodeGenerationResource`, `HyperionCodeGenerationService`, `HyperionCodeGenerationJobService`, `HyperionCodeGenerationTaskService`, and `HyperionCodeGenerationExecutionService` |
+
+The staged code-generation services coordinate Artemis exercise and repository context, jobs, tasks, execution, and generated artifacts. They should not be documented as a direct external service call. For the detailed consistency-check flow, including its language-aware context filtering and verification pass, see [Consistency Check](./hyperion/consistency-check).
+
+## Atlas agents, competency orchestration, and AtlasML
+
+Atlas contains two related but distinct Artemis-side responsibilities: native companion-agent and competency-orchestration workflows, and an optional REST integration with AtlasML.
+
+### Native Atlas agent and orchestration control plane
+
+`AtlasAgentResource` accepts course chat requests and delegates them through `AtlasAgentService` and `AtlasAgentDelegationService`. Artemis owns the course context, authorization, agent-session history, and tool contract. These beans require the Artemis Atlas module to be enabled.
+
+`CompetencyOrchestrationResource` starts programming-exercise orchestration and additionally requires `Feature.AtlasAgent`. `CompetencyOrchestrationService` coordinates the workflow, while `AtlasAgentToolCallbackService` handles agent-tool callbacks. The supporting tool services (`AtlasAgentToolsService`, `CompetencyExpertToolsService`, `CompetencyMappingToolsService`, `ExerciseMappingToolsService`, and `OrchestratorToolsService`) apply Artemis-owned competency, mapping, and course operations. Their results are persisted in Artemis through the normal competency and course services.
+
+`ContentExtractionService` is a native Atlas preprocessing flow for supported programming exercises. It uses Artemis Spring AI to identify narrowly removable flavor-text edits, applies those edits locally, and supplies the resulting learning-focused content before competency orchestration and optional AtlasML mapping suggestions. If the chat client or flavor-strip model is unavailable, it passes the raw content through unchanged.
+
+### Optional AtlasML REST boundary
+
+`AtlasMLService`, `AtlasMLApi`, and their transport beans require both `artemis.atlas.enabled` and `artemis.atlas.atlasml.enabled`. `CompetencyAtlasMLNotificationService` requires only the Atlas module and becomes a no-op when its optional `AtlasMLApi` is absent. `Feature.AtlasML` additionally gates AtlasML write and mapping operations and the direct suggestion endpoints, but not every client method. AtlasML is not required for the native Atlas workflows; Artemis remains authoritative for its competency data and emits applicable notifications or calls only through this client boundary.
+
+AtlasML owns its ML pipeline implementation, including its own persistence and vector behavior. Refer to [AtlasML pipelines](https://ls1intum.github.io/edutelligence/atlas/dev/code-reference/ml-pipelines) for those details. Do not infer a particular AtlasML deployment or runtime model configuration from the presence of the Artemis client.
+
+## Artemis Global Search
+
+Artemis Global Search is a standalone Artemis feature, not an Iris pipeline. When `artemis.weaviate.enabled` enables the integration, Artemis uses `WeaviateService`, `SearchableEntityWeaviateService`, `WeaviateSchemas`, and the searchable-entity DTOs to maintain Artemis-owned schemas and documents. `GlobalSearchResource` applies Artemis authorization and course/entity filters before returning query results.
+
+The searchable-entity schema covers Artemis content such as courses, exercises, exams, lectures and lecture units, FAQs, and communication entities. Entity lifecycle callers update or remove the corresponding Artemis documents; startup migration services manage the Artemis schema lifecycle.
+
+A Weaviate instance can be shared with Iris, but the two consumers use independent collection namespaces and data flows. Artemis Global Search does not call Iris RAG, and Iris lecture answers do not use the Artemis Global Search authorization/query contract. For setup and operational details, use [Global Search & Weaviate Setup](../admin/global-search-weaviate) and [Weaviate Setup](./weaviate-setup).
+
+## Change guidance
+
+When changing an AI-related feature, first identify the owning boundary:
+
+1. Preserve Artemis-side authorization, data minimization, request construction, job tracking, and callback validation.
+2. Keep service-owned execution claims in the linked service documentation instead of copying or guessing them here.
+3. Treat configuration as configuration. Do not turn a property, feature flag, or source default into a claim about live deployments or provider assignment.
+4. Keep Artemis Global Search separate from Iris RAG, even if both use the same Weaviate infrastructure.
