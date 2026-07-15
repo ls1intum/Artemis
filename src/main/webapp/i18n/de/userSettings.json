@@ -231,7 +231,8 @@
                     "NEW_PASSKEY_ADDED": "Neuer Passkey hinzugefügt",
                     "VCS_TOKEN_EXPIRED": "VCS-Token abgelaufen",
                     "SSH_KEY_EXPIRED": "SSH-Schlüssel abgelaufen",
-                    "MAINTENANCE": "Geplante Wartungsankündigungen"
+                    "MAINTENANCE": "Geplante Wartungsankündigungen",
+                    "MAVEN_CENTRAL_RATE_LIMIT": "Fehlschlagende Aufgaben-Builds wegen Maven-Central-Rate-Limits (Lehrende)"
                 },
                 "viewPasskeySettings": "Passkey-Einstellungen anzeigen",
                 "viewVcsTokenSettings": "VCS-Token-Einstellungen anzeigen",

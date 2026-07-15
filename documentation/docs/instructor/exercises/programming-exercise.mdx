@@ -828,6 +828,68 @@ Check the build plan results:
 
 </Callout>
 
+### Prevent Maven Central Rate Limits (Java and Kotlin)
+
+<Callout variant={CalloutVariant.warning}>
+
+  <strong>Important for Java and Kotlin exercises:</strong> Maven Central rate-limits download requests. Because all builds of an Artemis instance originate from the same IP addresses, builds can suddenly fail with <strong>HTTP 429 (Too Many Requests)</strong> errors — especially during high-load periods such as exams, when many students submit at the same time.
+We strongly recommend configuring a Maven repository mirror as the <strong>first</strong> repository in the test repository's build configuration, as described below.
+
+</Callout>
+
+Affected builds fail with errors such as:
+
+```
+Could not GET 'https://repo.maven.apache.org/maven2/de/tum/in/ase/artemis-java-test-sandbox/1.11.3/artemis-java-test-sandbox-1.11.3.pom'.
+Received status code 429 from server: Too Many Requests
+```
+
+Only **Java** and **Kotlin** exercises are affected, because their builds resolve dependencies via Maven Central. There is currently no central Artemis-side solution, so instructors must configure the mirror in each exercise's **test repository**.
+
+When Artemis detects a build that failed due to Maven Central rate limiting, it automatically notifies the instructors of the affected course by email (at most once per day per exercise), including a link to this section and to the online editor of the affected exercise.
+
+For Artemis instances operated by TUM, the Artemis team provides a [Reposilite](https://reposilite.com/) mirror at [https://reposilite.aet.cit.tum.de](https://reposilite.aet.cit.tum.de) that proxies and caches all required artifacts. Other institutions can operate their own mirror and configure it in the same way.
+
+#### Recommended: Add the Mirror to the Test Repository
+
+**Gradle exercises:** In the `build.gradle` file of the test repository, add the mirror as the **first** entry in the `repositories` block:
+
+```groovy
+repositories {
+    maven {
+        name "reposiliteRepositoryReleases"
+        url "https://reposilite.aet.cit.tum.de/releases"
+    }
+    mavenCentral()
+}
+```
+
+**Maven exercises:** In the `pom.xml` file of the test repository, add the mirror as the **first** entry in the `<repositories>` section (create the section if it does not exist yet):
+
+```xml
+<repositories>
+    <repository>
+        <id>reposilite-repository-releases</id>
+        <name>Reposilite Repository</name>
+        <url>https://reposilite.aet.cit.tum.de/releases</url>
+    </repository>
+</repositories>
+```
+
+<Callout variant={CalloutVariant.warning}>
+
+  <strong>The repository order matters:</strong> Repositories are queried in the order they are declared. The mirror must come <strong>before</strong> Maven Central so that all dependencies are resolved from the mirror and Maven Central is not contacted at all. If the mirror is declared after Maven Central, builds will still hit the rate limit.
+
+</Callout>
+
+#### Alternative: Configure the Mirror in the Docker Image
+
+Alternatively, the mirror can be baked into the Docker image used for the build (e.g., via a Gradle init script or a Maven `settings.xml` inside the image). We mention this option for completeness, but **recommend the test repository configuration above** because it is much more flexible:
+
+- While the mirror has been stable so far, its availability cannot be guaranteed. If it ever becomes unavailable, changing a single entry in the test repository (e.g., via the online code editor) takes seconds and immediately applies to all subsequent builds.
+- Switching or rebuilding a Docker image is much slower and must be repeated for every exercise that uses the image.
+
+
 ### Adapt Build Phases (Optional)
 
 **Only available with [Integrated Code Lifecycle](/instructor/integrations/integrated-code-lifecycle)**
