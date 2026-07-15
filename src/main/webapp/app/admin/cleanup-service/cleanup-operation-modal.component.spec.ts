@@ -381,6 +381,8 @@ describe('CleanupOperationModalComponent', () => {
 
             expect(component.dialogError()).toBe(httpError.message);
             expect(component.operationExecuted()).toBe(false);
+            // The guard must be released on failure (via finalize) so the operation can be retried.
+            expect(component.operationExecuting()).toBe(false);
         });
 
         it('should emit generic error message for non-HttpErrorResponse failures', () => {
@@ -392,6 +394,47 @@ describe('CleanupOperationModalComponent', () => {
             component.executeCleanupOperation();
 
             expect(component.dialogError()).toBe('An unexpected error occurred.');
+            expect(component.operationExecuting()).toBe(false);
+        });
+
+        it('should clear a previous error when re-executing in place after a failure', () => {
+            const httpError = new HttpErrorResponse({ status: 500, error: { message: 'Delete failed' } });
+            vi.spyOn(dataCleanupService, 'deleteOrphans')
+                .mockReturnValueOnce(throwError(() => httpError))
+                .mockReturnValueOnce(of(new HttpResponse({ body: { executionDate: dayjs(), jobType: 'deleteOrphans' } })));
+            componentRef.setInput('operation', deleteOrphansOperation);
+            component.visible.set(true);
+            fixture.detectChanges();
+
+            // First attempt fails and shows an error banner.
+            component.executeCleanupOperation();
+            expect(component.dialogError()).toBe(httpError.message);
+
+            // A successful in-place retry must clear the stale error rather than show it beside the success state.
+            component.executeCleanupOperation();
+            expect(component.dialogError()).toBeUndefined();
+            expect(component.operationExecuted()).toBe(true);
+        });
+
+        it('should ignore a cleanup completion delivered after the modal was closed', () => {
+            const execution = new Subject<HttpResponse<CleanupServiceExecutionRecordDTO>>();
+            vi.spyOn(dataCleanupService, 'deleteOrphans').mockReturnValue(execution);
+            componentRef.setInput('operation', deleteOrphansOperation);
+            component.visible.set(true);
+            fixture.detectChanges();
+            component.executeCleanupOperation();
+
+            // Close without reopening; the DELETE is still running server-side.
+            component.close();
+            fixture.detectChanges();
+
+            // The completion arrives while the modal is closed (same operation), so only the !visible() half of the
+            // stale-completion guard can trip: it must not flip operationExecuted, and the guard must be released.
+            execution.next(new HttpResponse({ body: { executionDate: dayjs(), jobType: 'deleteOrphans' } }));
+            execution.complete();
+
+            expect(component.operationExecuted()).toBe(false);
+            expect(component.operationExecuting()).toBe(false);
         });
     });
 

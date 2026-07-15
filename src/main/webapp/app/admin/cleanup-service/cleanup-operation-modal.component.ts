@@ -96,6 +96,9 @@ export class CleanupOperationModalComponent {
         }
 
         const operation = this.operation();
+        // Clear any error from a previous attempt so an in-place retry does not show a stale error banner next to
+        // the fresh success icons/counts (the open effect only clears it on a closed -> open transition).
+        this.dialogError.set(undefined);
         this.operationExecuting.set(true);
         const operationHandler = {
             next: () => {
