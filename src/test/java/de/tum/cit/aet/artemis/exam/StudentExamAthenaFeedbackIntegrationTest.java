@@ -30,7 +30,7 @@ import de.tum.cit.aet.artemis.course.domain.CourseAthenaConfig;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
 import de.tum.cit.aet.artemis.exam.dto.AthenaFeedbackUsageDTO;
-import de.tum.cit.aet.artemis.exam.service.StudentExamService;
+import de.tum.cit.aet.artemis.exam.service.StudentExamAthenaFeedbackService;
 import de.tum.cit.aet.artemis.exam.test_repository.ExamTestRepository;
 import de.tum.cit.aet.artemis.exam.test_repository.StudentExamTestRepository;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
@@ -44,7 +44,7 @@ import de.tum.cit.aet.artemis.text.domain.TextSubmission;
 import de.tum.cit.aet.artemis.text.util.TextExerciseUtilService;
 
 /**
- * Integration test for the Athena feedback request in {@link StudentExamService#requestAthenaFeedbackForTestExam}:
+ * Integration test for the Athena feedback request in {@link StudentExamAthenaFeedbackService#requestAthenaFeedbackForTestExam}:
  * happy path, real-exam rejection, cross-attempt rate limit, mixed-batch dispatch when one submission already has
  * an Athena result, and unsubmitted exam.
  */
@@ -54,7 +54,7 @@ class StudentExamAthenaFeedbackIntegrationTest extends AbstractAthenaTest {
     private static final String TEST_PREFIX = "seathena";
 
     @Autowired
-    private StudentExamService studentExamService;
+    private StudentExamAthenaFeedbackService studentExamAthenaFeedbackService;
 
     @Autowired
     private UserUtilService userUtilService;
@@ -187,7 +187,7 @@ class StudentExamAthenaFeedbackIntegrationTest extends AbstractAthenaTest {
 
             detachExerciseParticipationsCollection(studentExam);
 
-            studentExamService.requestAthenaFeedbackForTestExam(studentExam, student);
+            studentExamAthenaFeedbackService.requestAthenaFeedbackForTestExam(studentExam, student);
 
             verify(resultWebsocketService, timeout(5000).times(2)).broadcastNewResult(eq(textParticipation), any(Result.class));
         }
@@ -221,7 +221,7 @@ class StudentExamAthenaFeedbackIntegrationTest extends AbstractAthenaTest {
 
             detachExerciseParticipationsCollection(studentExam);
 
-            studentExamService.requestAthenaFeedbackForTestExam(studentExam, student);
+            studentExamAthenaFeedbackService.requestAthenaFeedbackForTestExam(studentExam, student);
 
             verify(resultWebsocketService, timeout(5000).times(2)).broadcastNewResult(eq(modelingParticipation), any(Result.class));
         }
@@ -265,7 +265,7 @@ class StudentExamAthenaFeedbackIntegrationTest extends AbstractAthenaTest {
 
             detachExerciseParticipationsCollection(studentExam);
 
-            studentExamService.requestAthenaFeedbackForTestExam(studentExam, student);
+            studentExamAthenaFeedbackService.requestAthenaFeedbackForTestExam(studentExam, student);
 
             verify(resultWebsocketService, timeout(5000).times(2)).broadcastNewResult(eq(modelingParticipation), any(Result.class));
         }
@@ -292,7 +292,8 @@ class StudentExamAthenaFeedbackIntegrationTest extends AbstractAthenaTest {
             studentExam = studentExamRepository.save(studentExam);
 
             StudentExam finalStudentExam = studentExam;
-            assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> studentExamService.requestAthenaFeedbackForTestExam(finalStudentExam, student));
+            assertThatExceptionOfType(BadRequestAlertException.class)
+                    .isThrownBy(() -> studentExamAthenaFeedbackService.requestAthenaFeedbackForTestExam(finalStudentExam, student));
         }
 
         @Test
@@ -306,7 +307,7 @@ class StudentExamAthenaFeedbackIntegrationTest extends AbstractAthenaTest {
             StudentExam studentExam = examUtilService.addStudentExamForTestExam(testExam, student);
             // Do NOT mark as submitted
 
-            assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> studentExamService.requestAthenaFeedbackForTestExam(studentExam, student));
+            assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> studentExamAthenaFeedbackService.requestAthenaFeedbackForTestExam(studentExam, student));
         }
 
         @Test
@@ -335,7 +336,8 @@ class StudentExamAthenaFeedbackIntegrationTest extends AbstractAthenaTest {
             detachExerciseParticipationsCollection(studentExam);
 
             StudentExam finalStudentExam = studentExam;
-            assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> studentExamService.requestAthenaFeedbackForTestExam(finalStudentExam, student));
+            assertThatExceptionOfType(BadRequestAlertException.class)
+                    .isThrownBy(() -> studentExamAthenaFeedbackService.requestAthenaFeedbackForTestExam(finalStudentExam, student));
         }
     }
 
@@ -372,7 +374,8 @@ class StudentExamAthenaFeedbackIntegrationTest extends AbstractAthenaTest {
             detachExerciseParticipationsCollection(studentExam);
 
             StudentExam finalStudentExam = studentExam;
-            assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> studentExamService.requestAthenaFeedbackForTestExam(finalStudentExam, student));
+            assertThatExceptionOfType(BadRequestAlertException.class)
+                    .isThrownBy(() -> studentExamAthenaFeedbackService.requestAthenaFeedbackForTestExam(finalStudentExam, student));
         }
     }
 
@@ -387,7 +390,7 @@ class StudentExamAthenaFeedbackIntegrationTest extends AbstractAthenaTest {
             testExam.setEndDate(ZonedDateTime.now().plusHours(1));
             testExam = examRepository.save(testExam);
 
-            AthenaFeedbackUsageDTO usage = studentExamService.getAthenaFeedbackUsage(student.getId(), testExam.getId());
+            AthenaFeedbackUsageDTO usage = studentExamAthenaFeedbackService.getAthenaFeedbackUsage(student.getId(), testExam.getId());
 
             assertThat(usage.used()).isZero();
             assertThat(usage.limit()).isPositive();
@@ -406,7 +409,7 @@ class StudentExamAthenaFeedbackIntegrationTest extends AbstractAthenaTest {
             seedAttemptWithAthenaResult(testExam, textExercise);
             seedAttemptWithAthenaResult(testExam, textExercise);
 
-            AthenaFeedbackUsageDTO usage = studentExamService.getAthenaFeedbackUsage(student.getId(), testExam.getId());
+            AthenaFeedbackUsageDTO usage = studentExamAthenaFeedbackService.getAthenaFeedbackUsage(student.getId(), testExam.getId());
 
             assertThat(usage.used()).isEqualTo(3L);
         }
@@ -427,7 +430,7 @@ class StudentExamAthenaFeedbackIntegrationTest extends AbstractAthenaTest {
             testExam.setEndDate(ZonedDateTime.now().plusHours(1));
             testExam = examRepository.save(testExam);
 
-            AthenaFeedbackUsageDTO usage = studentExamService.getAthenaFeedbackUsage(student.getId(), testExam.getId());
+            AthenaFeedbackUsageDTO usage = studentExamAthenaFeedbackService.getAthenaFeedbackUsage(student.getId(), testExam.getId());
 
             assertThat(usage.used()).isZero();
         }
