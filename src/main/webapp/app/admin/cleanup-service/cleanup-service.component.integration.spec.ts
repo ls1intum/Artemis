@@ -36,13 +36,14 @@ describe('CleanupServiceComponent date range integration', () => {
         fixture.detectChanges();
     });
 
-    function datePickers(): FormDateTimePickerComponent[] {
-        return fixture.debugElement.queryAll(By.directive(FormDateTimePickerComponent)).map((debugElement) => debugElement.componentInstance as FormDateTimePickerComponent);
+    function datePickers(operationName: string): FormDateTimePickerComponent[] {
+        const row = fixture.debugElement.query(By.css(`[data-testid="cleanup-row-${operationName}"]`));
+        return row.queryAll(By.directive(FormDateTimePickerComponent)).map((debugElement) => debugElement.componentInstance as FormDateTimePickerComponent);
     }
 
     it('should recover when the to-date corrects an invalid date range', () => {
         const operation = component.cleanupOperations()[1];
-        const [fromPicker, toPicker] = datePickers();
+        const [fromPicker, toPicker] = datePickers(operation.name);
         const invalidFrom = operation.deleteTo!.add(1, 'day');
 
         fromPicker.updateField(invalidFrom.toDate());
@@ -61,7 +62,7 @@ describe('CleanupServiceComponent date range integration', () => {
 
     it('should recover when the from-date corrects an invalid date range', () => {
         const operation = component.cleanupOperations()[1];
-        const [fromPicker, toPicker] = datePickers();
+        const [fromPicker, toPicker] = datePickers(operation.name);
         const invalidTo = operation.deleteFrom!.subtract(1, 'day');
 
         toPicker.updateField(invalidTo.toDate());
