@@ -10,6 +10,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -54,9 +55,16 @@ public class MavenCentralRateLimitNotificationService {
     private static final Logger log = LoggerFactory.getLogger(MavenCentralRateLimitNotificationService.class);
 
     /**
-     * Error message emitted by Gradle/Maven when Maven Central rejects a download due to rate limiting.
+     * Error message emitted by Gradle when Maven Central rejects a download due to rate limiting, e.g.
+     * {@code Could not GET 'https://repo.maven.apache.org/...'. Received status code 429 from server: Too Many Requests}.
      */
-    static final String RATE_LIMIT_ERROR = "Received status code 429 from server: Too Many Requests";
+    static final String GRADLE_RATE_LIMIT_ERROR = "Received status code 429 from server: Too Many Requests";
+
+    /**
+     * Error message emitted by Maven (Maven Resolver) when Maven Central rejects a download due to rate limiting, e.g.
+     * {@code Could not transfer artifact ... from/to central (https://repo.maven.apache.org/maven2): status code: 429, reason phrase: Too Many Requests (429)}.
+     */
+    static final String MAVEN_RATE_LIMIT_ERROR = "status code: 429, reason phrase: Too Many Requests";
 
     private static final String MAVEN_MARKER = "maven";
 
@@ -128,10 +136,12 @@ public class MavenCentralRateLimitNotificationService {
     }
 
     private static boolean isRateLimitedByMavenCentral(List<String> buildLogs) {
-        boolean rateLimited = buildLogs.stream().anyMatch(logEntry -> logEntry != null && logEntry.contains(RATE_LIMIT_ERROR));
+        boolean rateLimited = buildLogs.stream()
+                .anyMatch(logEntry -> logEntry != null && (logEntry.contains(GRADLE_RATE_LIMIT_ERROR) || logEntry.contains(MAVEN_RATE_LIMIT_ERROR)));
         if (!rateLimited) {
             return false;
         }
+        // Require a Maven reference in the logs so that unrelated HTTP 429 errors (e.g. from other registries) do not trigger the notification
         return buildLogs.stream().anyMatch(logEntry -> logEntry != null && logEntry.toLowerCase(Locale.ROOT).contains(MAVEN_MARKER));
     }
 
@@ -194,11 +204,13 @@ public class MavenCentralRateLimitNotificationService {
         Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
         Set<User> instructors = userRepository.getInstructors(course);
         log.info("Notifying {} instructors of course {} about Maven Central rate limiting in programming exercise {}", instructors.size(), course.getId(), exercise.getId());
+        Set<Long> instructorIds = instructors.stream().map(User::getId).collect(Collectors.toSet());
+        Set<Long> optedOutUserIds = instructorIds.isEmpty() ? Set.of()
+                : globalNotificationSettingRepository.findUserIdsWithNotificationDisabled(instructorIds, GlobalNotificationType.MAVEN_CENTRAL_RATE_LIMIT);
         Map<String, Object> contextVariables = Map.of("exerciseTitle", exercise.getTitle(), "courseTitle", course.getTitle(), "exerciseId", exercise.getId(), "courseId",
                 course.getId(), "documentationUrl", DOCUMENTATION_URL);
         for (User instructor : instructors) {
-            if (!instructor.getActivated() || instructor.getEmail() == null
-                    || !globalNotificationSettingRepository.isNotificationEnabled(instructor.getId(), GlobalNotificationType.MAVEN_CENTRAL_RATE_LIMIT)) {
+            if (!instructor.getActivated() || instructor.getEmail() == null || optedOutUserIds.contains(instructor.getId())) {
                 continue;
             }
             try {

@@ -133,6 +133,19 @@ class MavenCentralRateLimitNotificationServiceIntegrationTest extends AbstractPr
     }
 
     @Test
+    void shouldNotifyInstructorsForMavenErrorFormat() {
+        // Maven (Maven Resolver) reports rate limiting with a different wording than Gradle
+        var buildLogs = List.of("[ERROR] Failed to execute goal on project test: Could not resolve dependencies for project de.tum.in.ase:test:jar:1.0: "
+                + "Could not transfer artifact de.tum.in.ase:artemis-java-test-sandbox:pom:1.11.3 from/to central (https://repo.maven.apache.org/maven2): "
+                + "status code: 429, reason phrase: Too Many Requests (429)");
+
+        mavenCentralRateLimitNotificationService.notifyInstructorsIfBuildWasRateLimited(exercise.getId(), exercise.getProgrammingLanguage(), buildLogs);
+
+        verify(mailSendingService, timeout(2000).times(2)).buildAndSendAsync(any(MailRecipientDTO.class), eq(SUBJECT_KEY), eq(List.of(exercise.getTitle())), eq(TEMPLATE),
+                anyMap());
+    }
+
+    @Test
     void shouldNotNotifyWhenBuildLogsDoNotContainRateLimitError() {
         var buildLogs = List.of("[ERROR] Failed to execute goal org.apache.maven.plugins:maven-compiler-plugin:3.13.0:compile: Compilation failure");
 
