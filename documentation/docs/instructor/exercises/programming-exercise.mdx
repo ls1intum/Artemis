@@ -96,6 +96,7 @@ import reviewAddButton from './assets/programming/review-add-button.png';
 import reviewAddThreadWidget from './assets/programming/review-add-thread-widget.png';
 import reviewConsistencyThreadWidget from './assets/programming/review-consistency-thread-widget.png';
 import reviewThreadWidget from './assets/programming/review-thread-widget.png';
+import buildPlanPhases from './assets/programming/build-plan-phases.png';
 
 # Programming Exercise
 
@@ -244,7 +245,7 @@ Creating a programming exercise consists of the following steps:
 
 1. [Generate programming exercise in Artemis](#generate-programming-exercise)
 2. [Update exercise code in the template, solution, and test repositories](#update-exercise-code-in-repositories)
-3. [Adapt the build script (optional)](#adapt-build-script-optional)
+3. [Adapt the build phases (optional)](#adapt-build-phases-optional)
 4. [Configure static code analysis (optional)](#configure-static-code-analysis)
 5. [Adapt the interactive problem statement](#adapt-interactive-problem-statement)
 6. [Configure grading settings](#configure-grading)
@@ -827,13 +828,37 @@ Check the build plan results:
 
 </Callout>
 
-### Adapt Build Script (Optional)
+### Adapt Build Phases (Optional)
 
-This section is optional. The preconfigured build script usually does not need changes.
+**Only available with [Integrated Code Lifecycle](/instructor/integrations/integrated-code-lifecycle)**
 
-If you need additional build steps or different configurations, activate **Customize Build Script** in the exercise create/edit/import screen. All changes apply to all builds (template, solution, student submissions).
+Instructors can configure the build phases.
+To do this, check the **Customize Build Plan** option in the exercise creation, edit, or import screen. All changes apply to all builds (template, solution, and student submissions).
+You can view the configured build plan on the exercise's detail or edit page.
 
-Predefined build scripts in bash exist for all languages, project types, and configurations. Most languages clone the test repository into the root folder and the assignment repository into the **assignment** folder.
+<Image src={buildPlanPhases} alt="Build Plan Configuration" size={ImageSize.large} caption="Build Plan Configuration" />
+
+The build plan consists of multiple phases. Each phase can be customized in the following ways:
+
+- **Name**: The name of the phase.
+- **Inclusion condition**: The condition can be either `Always` or `After due date`. If a phase is configured to run after the due date, Artemis automatically schedules all submissions to be rebuilt one minute (configurable) after the due date (or after the exam's due date, including grace period and student time extensions).
+- **Script**: The script specifying the commands to run for the phase.
+- **Tests expected**: A toggle indicating whether tests are expected for a phase. If disabled for all phases, the exercise will not collect any test results, but the build status will still be accurately determined by the build's exit code.
+- **Result paths**: The paths where the test results for this phase are located.
+- **Execute at end regardless of previous failures**: A toggle indicating whether the phase should run at the end of the build, even if a previous phase failed.
+
+Instructors can freely define how many phases are executed and in which order.
+
+**Common Test Setup Scenarios:**
+1. **Immediate Full Feedback:** Set all phases to `Always`. All test results are shown immediately after submission.
+2. **Build Status Only:** Remove all phases that expect tests. Students only see if their code compiled successfully.
+3. **Tests After Due Date:** Keep the compilation phase as `Always` and set any phases expecting tests to `After due date`. Test output remains hidden until the deadline passes.
+4. **Partial Immediate Feedback:** Set specific test phases (e.g., static code analysis) to `Always`, and other test phases to `After due date`. Students receive immediate feedback on some aspects and delayed feedback on others.
+
+**Default behavior:**
+- **Creating a course programming exercise**: Phases are set to always run. Test results are set to always be visible.
+- **Creating a programming exercise in exam mode**: Phases that expect tests are automatically set to run after the due date. This means only compilation will occur during the exam, while tests will run after the exam concludes.
+- **Importing a programming exercise in exam mode**: Tests are automatically set to only show after the release date of results. However, the build plan is imported as-is. This prevents situations where, for example, a build plan with only a single phase is unintentionally set to run `After due date`.
 
 You can also use a custom Docker image. Make sure to:
 - Publish the image in a publicly available repository (e.g., DockerHub)
@@ -861,7 +886,7 @@ To change checkout paths, click **edit repositories checkout path**:
 
 <Image src={checkoutPathsEdit} alt="Checkout Paths Edit" size={ImageSize.large} caption="Edit Checkout Paths (Java)" />
 
-Update the build script accordingly (see the [Adapt Build Script](#adapt-build-script-optional) section).
+Update the build plan accordingly (see the [Adapt Build Configuration](#adapt-build-phases-optional) section).
 
 <Callout variant={CalloutVariant.warning}>
 
