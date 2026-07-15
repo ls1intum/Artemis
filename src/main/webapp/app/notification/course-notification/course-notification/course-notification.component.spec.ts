@@ -96,10 +96,13 @@ describe('CourseNotificationComponent', () => {
         fixture.componentRef.setInput('courseNotification', notification);
         fixture.detectChanges();
 
+        expect(componentAsAny.notificationInitialized()).toBe(false);
+
         // Rendering markdown lazily loads the pipeline, so the parameter is populated after a microtask.
         await vi.waitFor(() => {
             expect(componentAsAny.notificationParameters()?.postMarkdownContent).toBe('bold italic');
         });
+        expect(componentAsAny.notificationInitialized()).toBe(true);
     });
 
     it('should show close button when isShowClose is true', () => {

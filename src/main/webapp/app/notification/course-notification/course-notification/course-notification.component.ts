@@ -67,6 +67,9 @@ export class CourseNotificationComponent {
      * runs asynchronously (the pipeline is no longer part of the eager bundle).
      */
     private async initializeNotification(notification: CourseNotification): Promise<void> {
+        // Do not keep rendering the previous notification while markdown parameters for a replacement input are
+        // still being converted asynchronously.
+        this.notificationInitialized.set(false);
         this.faIcon.set(this.courseNotificationService.getIconFromType(notification.notificationType));
         // For translations, we pass all parameters and the course name and id so they can automatically be used.
         const notificationParameters: { [key: string]: unknown } = {
