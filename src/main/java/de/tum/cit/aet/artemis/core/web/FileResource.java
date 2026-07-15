@@ -103,13 +103,12 @@ public class FileResource {
 
     private enum AttachmentCachePolicy {
 
-        NONE, PRIVATE_ONE_DAY, PRIVATE_REVALIDATE;
+        NONE, PRIVATE_ONE_DAY;
 
         private Optional<CacheControl> cacheControl() {
             return switch (this) {
                 case NONE -> Optional.empty();
                 case PRIVATE_ONE_DAY -> Optional.of(CacheControl.maxAge(Duration.ofDays(DAYS_TO_CACHE)).cachePrivate());
-                case PRIVATE_REVALIDATE -> Optional.of(CacheControl.noCache().cachePrivate());
             };
         }
     }
@@ -675,8 +674,7 @@ public class FileResource {
 
     /**
      * GET files/attachments/attachment-unit/{attachmentUnitId}/student/* : Get the student version of attachment video unit by attachment video unit id
-     * The response may be stored in a private cache but must be revalidated via Last-Modified before every reuse because the derived student PDF can change independently of the
-     * attachment version.
+     * The response may be stored in a private cache for one day. The student-version path changes whenever the derived PDF is regenerated, so changed content uses a new cache key.
      *
      * @param attachmentVideoUnitId ID of the attachment video unit, the student version belongs to
      * @param requestHeaders        request headers, used for optional HTTP range requests
@@ -698,13 +696,13 @@ public class FileResource {
         String studentVersion = attachment.getStudentVersion();
         if (studentVersion == null) {
             return buildAttachmentFileResponse(getActualPathFromPublicPathString(attachment.getLink(), FilePathType.ATTACHMENT_UNIT), downloadFilename,
-                    AttachmentCachePolicy.PRIVATE_REVALIDATE, requestHeaders);
+                    AttachmentCachePolicy.PRIVATE_ONE_DAY, requestHeaders);
         }
 
         String fileName = studentVersion.substring(studentVersion.lastIndexOf("/") + 1);
 
         return buildAttachmentFileResponse(FilePathConverter.getAttachmentVideoUnitFileSystemPath().resolve(Path.of(attachmentVideoUnit.getId().toString(), "student")), fileName,
-                downloadFilename, AttachmentCachePolicy.PRIVATE_REVALIDATE, requestHeaders);
+                downloadFilename, AttachmentCachePolicy.PRIVATE_ONE_DAY, requestHeaders);
     }
 
     /**
@@ -748,8 +746,8 @@ public class FileResource {
 
     /**
      * Builds an attachment response for the given directory and filename with optional range support.
-     * Depending on the cache policy, private cached responses either remain fresh for one day or require revalidation before every reuse. Conditional requests are answered
-     * before the file body is read. Range requests are only honored when an optional If-Range date matches the current file timestamp.
+     * Private cached responses remain fresh for one day and vary by authentication headers so browser entries are isolated between login sessions. Conditional requests are
+     * answered before the file body is read. Range requests are only honored when an optional If-Range date matches the current file timestamp.
      *
      * @param path            directory path of the file
      * @param filename        file name to serve from {@code path}
@@ -766,7 +764,7 @@ public class FileResource {
             var response = ResponseEntity.status(HttpStatus.NOT_MODIFIED).lastModified(lastModified);
             Optional<CacheControl> cacheControl = cachePolicy.cacheControl();
             if (cacheControl.isPresent()) {
-                response = response.cacheControl(cacheControl.orElseThrow());
+                response = response.cacheControl(cacheControl.orElseThrow()).varyBy(HttpHeaders.AUTHORIZATION, HttpHeaders.COOKIE);
             }
             return response.build();
         }
@@ -784,7 +782,7 @@ public class FileResource {
         }
         Optional<CacheControl> cacheControl = cachePolicy.cacheControl();
         if (cacheControl.isPresent()) {
-            response = response.cacheControl(cacheControl.orElseThrow());
+            response = response.cacheControl(cacheControl.orElseThrow()).varyBy(HttpHeaders.AUTHORIZATION, HttpHeaders.COOKIE);
         }
         if (lastModified >= 0 && (payload.status() == HttpStatus.OK || payload.status() == HttpStatus.PARTIAL_CONTENT)) {
             response = response.lastModified(lastModified);

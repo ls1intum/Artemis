@@ -561,15 +561,15 @@ describe('AttachmentVideoUnitComponent', () => {
 
             // PDF is loaded directly via URL, no HTTP request for blob
             expect(component.isPdfLoading()).toBe(true);
-            expect(component.pdfUrl()).toBe('api/core/files//path/to/file/test.pdf');
+            expect(component.pdfUrl()).toBe('api/core/files//path/to/file/test.pdf?version=1');
 
             // Simulate PDF load error to trigger blob fallback
-            component['onPdfLoadError']({ pdfUrl: 'api/core/files//path/to/file/test.pdf' });
+            component['onPdfLoadError']({ pdfUrl: 'api/core/files//path/to/file/test.pdf?version=1' });
 
             // Blob fallback should trigger only one request even if the direct-load error fires twice
-            component['onPdfLoadError']({ pdfUrl: 'api/core/files//path/to/file/test.pdf' });
+            component['onPdfLoadError']({ pdfUrl: 'api/core/files//path/to/file/test.pdf?version=1' });
             expect(getBlobFromUrlSpy).toHaveBeenCalledTimes(1);
-            expect(getBlobFromUrlSpy).toHaveBeenCalledWith('api/core/files//path/to/file/test.pdf');
+            expect(getBlobFromUrlSpy).toHaveBeenCalledWith('api/core/files//path/to/file/test.pdf?version=1');
 
             expect(component.isPdfLoading()).toBe(true);
             expect(component.pdfUrl()).toBe(mockBlobUrl);
@@ -653,7 +653,7 @@ describe('AttachmentVideoUnitComponent', () => {
 
             expect(component.playlistUrl()).toBe(playlist);
             // PDF is now loaded directly via URL (no blob)
-            expect(component.pdfUrl()).toBe('api/core/files//path/to/file/test.pdf');
+            expect(component.pdfUrl()).toBe('api/core/files//path/to/file/test.pdf?version=1');
         });
 
         it('ngOnDestroy: cleanup', async () => {

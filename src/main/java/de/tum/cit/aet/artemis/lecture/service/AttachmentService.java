@@ -139,7 +139,7 @@ public class AttachmentService {
         Files.createDirectories(basePath);
 
         String sanitizedName = FileUtil.checkAndSanitizeFilename(attachment.getName());
-        String filename = sanitizedName + ".pdf";
+        String filename = FileUtil.generateFilename(FileUtil.generateTargetFilenameBase(FilePathType.STUDENT_VERSION_SLIDES), sanitizedName + ".pdf", false);
         Path savePath = basePath.resolve(filename);
 
         FileUtils.writeByteArrayToFile(savePath.toFile(), pdfData);

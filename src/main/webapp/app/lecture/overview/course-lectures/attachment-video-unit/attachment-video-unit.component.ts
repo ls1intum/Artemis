@@ -320,7 +320,7 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
             return;
         }
 
-        if (failedUrl !== this.getAttachmentLink()) {
+        if (failedUrl !== this.getVersionedAttachmentLink()) {
             return;
         }
 
@@ -433,7 +433,7 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
         this.isPdfLoading.set(true);
         this.pdfLoadError.set(false);
 
-        const link = this.getAttachmentLink();
+        const link = this.getVersionedAttachmentLink();
 
         if (!link) {
             this.pdfLoadError.set(true);
@@ -449,7 +449,7 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
         this.isPdfLoading.set(true);
         this.isBlobLoadInProgress.set(true);
 
-        const link = this.getAttachmentLink();
+        const link = this.getVersionedAttachmentLink();
         if (!link) {
             this.pdfLoadError.set(true);
             this.isPdfLoading.set(false);
@@ -758,6 +758,12 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
         }
         const link = attachment.studentVersion ?? (attachment.link ? this.fileService.createStudentLink(attachment.link) : undefined);
         return link ? addPublicFilePrefix(link) : undefined;
+    }
+
+    private getVersionedAttachmentLink(): string | undefined {
+        const link = this.getAttachmentLink();
+        const attachment = this.lectureUnit().attachment;
+        return link && attachment ? this.fileService.addAttachmentVersionToUrl(link, attachment.version) : undefined;
     }
 
     handleOriginalVersion() {
