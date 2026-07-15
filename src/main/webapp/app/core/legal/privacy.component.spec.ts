@@ -9,7 +9,7 @@ import { MockDirective } from 'ng-mocks';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { JhiLanguageHelper } from 'app/core/language/shared/language.helper';
 import { MockLanguageHelper, MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
-import { of } from 'rxjs';
+import { BehaviorSubject, of } from 'rxjs';
 import { LegalDocumentLanguage } from 'app/admin/legal/legal-document.model';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
@@ -18,6 +18,7 @@ import { MockAccountService } from 'test/helpers/mocks/service/mock-account.serv
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { TranslateService } from '@ngx-translate/core';
+import { By } from '@angular/platform-browser';
 
 describe('PrivacyComponent', () => {
     setupTestBed({ zoneless: true });
@@ -26,14 +27,16 @@ describe('PrivacyComponent', () => {
     let fixture: ComponentFixture<PrivacyComponent>;
     let privacyStatementService: LegalDocumentService;
     let languageHelper: JhiLanguageHelper;
+    let fragmentSubject: BehaviorSubject<string | null>;
     beforeEach(async () => {
+        fragmentSubject = new BehaviorSubject<string | null>(null);
         await TestBed.configureTestingModule({
             imports: [RouterModule, PrivacyComponent, MockDirective(TranslateDirective), MockDirective(MarkdownDirective)],
             providers: [
                 { provide: JhiLanguageHelper, useClass: MockLanguageHelper },
                 { provide: TranslateService, useClass: MockTranslateService },
                 SessionStorageService,
-                { provide: ActivatedRoute, useValue: new MockActivatedRoute() },
+                { provide: ActivatedRoute, useValue: Object.assign(new MockActivatedRoute(), { fragment: fragmentSubject }) },
                 { provide: AccountService, useClass: MockAccountService },
                 provideHttpClient(),
                 provideHttpClientTesting(),
@@ -57,5 +60,19 @@ describe('PrivacyComponent', () => {
         fixture.changeDetectorRef.detectChanges();
         expect(privacyServiceSpy).toHaveBeenCalledOnce();
         expect(privacyServiceSpy).toHaveBeenCalledWith(LegalDocumentLanguage.ENGLISH);
+    });
+
+    it('should retry fragment scrolling after markdown rendering completes', () => {
+        vi.spyOn(window, 'requestAnimationFrame').mockImplementation(() => 0);
+        fragmentSubject.next('delayed-fragment');
+        const fragment = document.createElement('div');
+        fragment.id = 'delayed-fragment';
+        fragment.scrollIntoView = vi.fn();
+        document.body.append(fragment);
+
+        fixture.debugElement.query(By.css('div')).triggerEventHandler('markdownRendered');
+
+        expect(fragment.scrollIntoView).toHaveBeenCalledOnce();
+        fragment.remove();
     });
 });

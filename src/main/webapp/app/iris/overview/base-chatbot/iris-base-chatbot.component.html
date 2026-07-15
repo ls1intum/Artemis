@@ -251,6 +251,7 @@
                                                         class="bubble-content"
                                                         [jhiMarkdown]="(content | as: IrisTextMessageContent).textContent!"
                                                         [markdownLineBreaks]="true"
+                                                        (markdownRendered)="onMessageMarkdownRendered()"
                                                     ></span>
                                                 }
                                             }

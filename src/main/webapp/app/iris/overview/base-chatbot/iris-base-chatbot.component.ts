@@ -1213,6 +1213,16 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     }
 
     /**
+     * Restarts the initial-history settle window when lazily rendered markdown changes the message height.
+     * Do not move a user who has scrolled up or disturb the explicit exchange anchor used for new messages.
+     */
+    protected onMessageMarkdownRendered(): void {
+        if (this.isScrolledToBottom() && !this.exchangeAnchorActive) {
+            this.scrollToBottomSettled();
+        }
+    }
+
+    /**
      * Accepts the permission to use the chat widget.
      */
     acceptPermission(decision: LLMSelectionDecision) {

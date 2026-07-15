@@ -9,7 +9,7 @@ import { switchMap } from 'rxjs';
 
 @Component({
     selector: 'jhi-imprint',
-    template: ` <div [jhiMarkdown]="imprint()"></div> `,
+    template: ` <div [jhiMarkdown]="imprint()" (markdownRendered)="onMarkdownRendered()"></div> `,
     imports: [MarkdownDirective],
 })
 export class ImprintComponent implements AfterViewInit, OnInit {
@@ -19,6 +19,7 @@ export class ImprintComponent implements AfterViewInit, OnInit {
     private readonly destroyRef = inject(DestroyRef);
 
     readonly imprint = signal<string | undefined>(undefined);
+    private currentFragmentId: string | undefined;
 
     /**
      * On init get the Imprint statement file from the Artemis server and set up a subscription to fetch the file again if the language was changed.
@@ -37,9 +38,15 @@ export class ImprintComponent implements AfterViewInit, OnInit {
      * After view initialization scroll the fragment of the current route into view.
      */
     ngAfterViewInit(): void {
-        this.route.params.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
-            this.scrollToFragment(params?.['fragment']);
+        this.route.fragment.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((fragmentId) => {
+            this.currentFragmentId = fragmentId ?? undefined;
+            this.scrollToFragment(this.currentFragmentId);
         });
+    }
+
+    /** Re-attempt fragment scrolling once the lazy markdown pipeline has produced the document. */
+    protected onMarkdownRendered(): void {
+        this.scrollToFragment(this.currentFragmentId);
     }
 
     /**

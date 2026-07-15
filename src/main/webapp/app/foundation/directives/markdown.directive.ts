@@ -1,4 +1,4 @@
-import { Directive, effect, inject, input, signal } from '@angular/core';
+import { Directive, effect, inject, input, output, signal } from '@angular/core';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import type { PluginSimple } from 'markdown-it';
 import { renderMarkdownToHtml, renderPostingMarkdownToHtml } from 'app/foundation/util/markdown-render.util';
@@ -36,6 +36,8 @@ export class MarkdownDirective {
     readonly markdownPosting = input<boolean>(false);
     /** For posting content: whether this part is before (true) or after (false) a reference. */
     readonly markdownContentBeforeReference = input<boolean>(true);
+    /** Emits after the current markdown input has been converted, allowing layout-dependent consumers to react to the lazy render. */
+    readonly markdownRendered = output<void>();
 
     protected readonly renderedHtml = signal<SafeHtml>('');
     private renderGeneration = 0;
@@ -55,6 +57,7 @@ export class MarkdownDirective {
             const generation = ++this.renderGeneration;
             if (!text) {
                 this.renderedHtml.set('');
+                this.markdownRendered.emit();
                 return;
             }
 
@@ -66,6 +69,7 @@ export class MarkdownDirective {
                     // Ignore a render whose inputs were superseded before the lazy chunk/conversion resolved.
                     if (generation === this.renderGeneration) {
                         this.renderedHtml.set(this.sanitizer.bypassSecurityTrustHtml(html));
+                        this.markdownRendered.emit();
                     }
                 })
                 .catch(() => {

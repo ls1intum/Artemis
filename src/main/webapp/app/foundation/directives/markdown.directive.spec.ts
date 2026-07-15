@@ -5,13 +5,20 @@ import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
 
 @Component({
-    template: `<div class="md" [jhiMarkdown]="text()" [markdownPosting]="posting()" [markdownContentBeforeReference]="before()"></div>`,
+    template: `<div
+        class="md"
+        [jhiMarkdown]="text()"
+        [markdownPosting]="posting()"
+        [markdownContentBeforeReference]="before()"
+        (markdownRendered)="renderCount.update((count) => count + 1)"
+    ></div>`,
     imports: [MarkdownDirective],
 })
 class TestHostComponent {
     readonly text = signal<string | undefined>(undefined);
     readonly posting = signal(false);
     readonly before = signal(true);
+    readonly renderCount = signal(0);
 }
 
 describe('MarkdownDirective', () => {
@@ -35,6 +42,7 @@ describe('MarkdownDirective', () => {
             expect(element().innerHTML).toContain('<h1');
         });
         expect(element().innerHTML).toContain('<strong>bold</strong>');
+        expect(host.renderCount()).toBe(1);
     });
 
     it('renders nothing for empty content', async () => {

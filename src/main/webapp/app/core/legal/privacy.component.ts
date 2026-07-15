@@ -12,7 +12,7 @@ import { switchMap } from 'rxjs';
 @Component({
     selector: 'jhi-privacy',
     template: `
-        <div [jhiMarkdown]="privacyStatement()"></div>
+        <div [jhiMarkdown]="privacyStatement()" (markdownRendered)="onMarkdownRendered()"></div>
         @if (isAuthenticated()) {
             <a jhiTranslate="artemisApp.dataExport.title" [routerLink]="['/privacy/data-exports']"> </a>
         }
@@ -28,6 +28,7 @@ export class PrivacyComponent implements AfterViewInit, OnInit {
 
     readonly privacyStatement = signal<string | undefined>(undefined);
     readonly isAuthenticated = signal(false);
+    private currentFragmentId: string | undefined;
 
     /**
      * On init get the privacy statement file from the Artemis server and set up a subscription to fetch the file again if the language was changed.
@@ -47,9 +48,15 @@ export class PrivacyComponent implements AfterViewInit, OnInit {
      * After view initialization scroll the fragment of the current route into view.
      */
     ngAfterViewInit(): void {
-        this.route.params.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
-            this.scrollToFragment(params?.['fragment']);
+        this.route.fragment.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((fragmentId) => {
+            this.currentFragmentId = fragmentId ?? undefined;
+            this.scrollToFragment(this.currentFragmentId);
         });
+    }
+
+    /** Re-attempt fragment scrolling once the lazy markdown pipeline has produced the document. */
+    protected onMarkdownRendered(): void {
+        this.scrollToFragment(this.currentFragmentId);
     }
 
     /**
