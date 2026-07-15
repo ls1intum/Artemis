@@ -55,9 +55,15 @@ class HyperionWebsocketServiceTest {
 
     @Test
     void send_doesNotWaitForBrokerDelivery() {
-        when(messagingService.sendMessageToUser(eq("instructor1"), anyString(), any())).thenReturn(new CompletableFuture<>());
+        CompletableFuture<Void> brokerDelivery = new CompletableFuture<>();
+        when(messagingService.sendMessageToUser(eq("instructor1"), anyString(), any())).thenReturn(brokerDelivery);
 
-        assertThatCode(() -> org.junit.jupiter.api.Assertions.assertTimeoutPreemptively(Duration.ofSeconds(1), () -> service.send("instructor1", "jobs/x", "payload")))
-                .doesNotThrowAnyException();
+        CompletableFuture<Void> invocation = CompletableFuture.runAsync(() -> service.send("instructor1", "jobs/x", "payload"));
+        try {
+            assertThat(invocation).succeedsWithin(Duration.ofSeconds(1));
+        }
+        finally {
+            brokerDelivery.complete(null);
+        }
     }
 }

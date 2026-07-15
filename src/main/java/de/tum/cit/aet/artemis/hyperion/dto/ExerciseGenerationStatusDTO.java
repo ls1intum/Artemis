@@ -23,7 +23,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record ExerciseGenerationStatusDTO(String jobId, boolean running, @Nullable GenerationMode mode, @JsonInclude List<ExerciseGenerationEventDTO> events,
         @JsonInclude List<ExerciseGenerationFileSnapshotDTO> fileSnapshots, boolean revertAvailable, @Nullable String revertJobId, @Nullable GenerationMode revertMode,
-        @JsonInclude(JsonInclude.Include.ALWAYS) boolean ownedByCaller, @JsonInclude(JsonInclude.Include.ALWAYS) boolean cancellable) {
+        boolean ownedByCaller, boolean cancellable) {
 
     public ExerciseGenerationStatusDTO(String jobId, boolean running, @Nullable GenerationMode mode, List<ExerciseGenerationEventDTO> events,
             List<ExerciseGenerationFileSnapshotDTO> fileSnapshots, boolean revertAvailable, @Nullable String revertJobId, @Nullable GenerationMode revertMode,
