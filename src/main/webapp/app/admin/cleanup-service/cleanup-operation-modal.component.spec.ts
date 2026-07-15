@@ -189,6 +189,31 @@ describe('CleanupOperationModalComponent', () => {
         });
     });
 
+    describe('reopening', () => {
+        it('should reset operationExecuted and counts when reopened', () => {
+            componentRef.setInput('operation', deleteOrphansOperation);
+            component.visible.set(true);
+            fixture.detectChanges();
+
+            // Run the operation so both result flags become "dirty".
+            component.executeCleanupOperation();
+            expect(component.operationExecuted()).toBe(true);
+            expect(component.counts()).toEqual(mockOrphanCounts);
+
+            component.close();
+            fixture.detectChanges();
+
+            // Reopening must clear the previous run's result state. Fail the reopen count-fetch so the reset
+            // value (totalCount 0) stays observable instead of being immediately overwritten by fresh counts.
+            vi.spyOn(dataCleanupService, 'countOrphans').mockReturnValue(throwError(() => new Error('Network error')));
+            component.visible.set(true);
+            fixture.detectChanges();
+
+            expect(component.operationExecuted()).toBe(false);
+            expect(component.counts()).toEqual({ totalCount: 0 });
+        });
+    });
+
     describe('executeCleanupOperation', () => {
         it('should execute deleteOrphans operation', () => {
             componentRef.setInput('operation', deleteOrphansOperation);

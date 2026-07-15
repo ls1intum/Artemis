@@ -5,9 +5,12 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TranslateService } from '@ngx-translate/core';
+import { HttpErrorResponse } from '@angular/common/http';
+import { Subject, throwError } from 'rxjs';
 
 import { AdminFeatureToggleComponent } from 'app/admin/features/admin-feature-toggle.component';
 import { FeatureToggle, FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockFeatureToggleService } from 'test/helpers/mocks/service/mock-feature-toggle.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
@@ -81,6 +84,42 @@ describe('AdminFeatureToggleComponentTest', () => {
             // Then toggle on
             comp.onFeatureToggle(comp.featureToggles()[0]);
             expect(comp.featureToggles()[0].isActive).toBe(true);
+        });
+
+        it('onFeatureToggle should optimistically flip, then revert and alert when the update fails', () => {
+            comp.ngOnInit();
+            const featureToggleService = TestBed.inject(FeatureToggleService);
+            // A controllable source so we can observe the flip BEFORE the server responds — otherwise a regression
+            // that drops the optimistic flip (reintroducing the UI-lie bug) would still pass on the final state alone.
+            const response = new Subject<object>();
+            vi.spyOn(featureToggleService, 'setFeatureToggleState').mockReturnValue(response);
+            const errorSpy = vi.spyOn(TestBed.inject(AlertService), 'error');
+
+            const featureInfo = comp.featureToggles()[0];
+            expect(featureInfo.isActive).toBe(true);
+
+            comp.onFeatureToggle(featureInfo);
+            // Optimistic flip is applied immediately, while the request is still in flight.
+            expect(comp.featureToggles()[0].isActive).toBe(false);
+
+            // Server rejects the change: the flip rolls back to the true state and the error surfaces.
+            response.error(new HttpErrorResponse({ status: 400 }));
+            expect(comp.featureToggles()[0].isActive).toBe(true);
+            expect(errorSpy).toHaveBeenCalledOnce();
+        });
+
+        it('should alert and leave toggles empty when loading feature toggles fails', () => {
+            const featureToggleService = TestBed.inject(FeatureToggleService);
+            vi.spyOn(featureToggleService, 'getFeatureToggles').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 400 })));
+            const errorSpy = vi.spyOn(TestBed.inject(AlertService), 'error');
+
+            comp.ngOnInit();
+
+            expect(errorSpy).toHaveBeenCalledOnce();
+            expect(comp.featureToggles()).toHaveLength(0);
+            // Profile and module features load independently and must still be populated despite the toggle failure.
+            expect(comp.profileFeatures()).toHaveLength(3);
+            expect(comp.moduleFeatures()).toHaveLength(19);
         });
 
         it('should set documentation links for features that have them', () => {
@@ -178,6 +217,24 @@ describe('AdminFeatureToggleComponentTest', () => {
             expect(passkeyAdmin).toBeDefined();
             expect(passkeyAdmin?.isActive).toBe(true);
             expect(passkeyAdmin?.documentationLink).toContain('docs.artemis.tum.de');
+        });
+    });
+
+    describe('Navigation', () => {
+        it('scrollToSection should scroll the target element into view', () => {
+            const scrollIntoView = vi.fn();
+            vi.spyOn(document, 'getElementById').mockReturnValue({ scrollIntoView } as unknown as HTMLElement);
+
+            comp.scrollToSection('module-features');
+
+            expect(document.getElementById).toHaveBeenCalledWith('module-features');
+            expect(scrollIntoView).toHaveBeenCalledWith({ behavior: 'smooth', block: 'start' });
+        });
+
+        it('scrollToSection should do nothing when the target element is missing', () => {
+            vi.spyOn(document, 'getElementById').mockReturnValue(null);
+
+            expect(() => comp.scrollToSection('missing-section')).not.toThrow();
         });
     });
 

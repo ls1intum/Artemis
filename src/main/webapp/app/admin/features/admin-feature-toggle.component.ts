@@ -1,7 +1,10 @@
 import { ChangeDetectionStrategy, Component, DestroyRef, OnInit, inject, signal } from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FeatureToggle, FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
+import { AlertService } from 'app/foundation/service/alert.service';
+import { onError } from 'app/foundation/util/global.utils';
 import { faExternalLinkAlt } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -85,6 +88,7 @@ export class AdminFeatureToggleComponent implements OnInit {
     private readonly featureToggleService = inject(FeatureToggleService);
     private readonly profileService = inject(ProfileService);
     private readonly destroyRef = inject(DestroyRef);
+    private readonly alertService = inject(AlertService);
 
     /** Available feature toggles with their current state */
     readonly featureToggles = signal<FeatureToggleInfo[]>([]);
@@ -174,14 +178,17 @@ export class AdminFeatureToggleComponent implements OnInit {
         this.featureToggleService
             .getFeatureToggles()
             .pipe(takeUntilDestroyed(this.destroyRef))
-            .subscribe((activeToggles) => {
-                this.featureToggles.set(
-                    Object.values(FeatureToggle).map((feature) => ({
-                        feature,
-                        isActive: activeToggles.includes(feature),
-                        documentationLink: this.documentationLinks[feature],
-                    })),
-                );
+            .subscribe({
+                next: (activeToggles) => {
+                    this.featureToggles.set(
+                        Object.values(FeatureToggle).map((feature) => ({
+                            feature,
+                            isActive: activeToggles.includes(feature),
+                            documentationLink: this.documentationLinks[feature],
+                        })),
+                    );
+                },
+                error: (error: HttpErrorResponse) => onError(this.alertService, error),
             });
 
         // Load profile-based features
@@ -205,12 +212,24 @@ export class AdminFeatureToggleComponent implements OnInit {
 
     onFeatureToggle(featureInfo: FeatureToggleInfo): void {
         const newState = !featureInfo.isActive;
+        // Optimistically reflect the new state so the signal, the [ngModel]-bound switch, and the server request
+        // all agree. On failure, revert isActive so the one-way [ngModel] re-applies the true state and the
+        // switch flips back (otherwise it would silently stay flipped while the server state is unchanged), and
+        // surface the error instead of swallowing it.
+        this.setToggleState(featureInfo.feature, newState);
         this.featureToggleService
             .setFeatureToggleState(featureInfo.feature, newState)
             .pipe(takeUntilDestroyed(this.destroyRef))
-            .subscribe(() => {
-                this.featureToggles.update((toggles) => toggles.map((toggle) => (toggle.feature === featureInfo.feature ? { ...toggle, isActive: newState } : toggle)));
+            .subscribe({
+                error: (error: HttpErrorResponse) => {
+                    this.setToggleState(featureInfo.feature, !newState);
+                    onError(this.alertService, error);
+                },
             });
+    }
+
+    private setToggleState(feature: FeatureToggle, isActive: boolean): void {
+        this.featureToggles.update((toggles) => toggles.map((toggle) => (toggle.feature === feature ? { ...toggle, isActive } : toggle)));
     }
 
     /**

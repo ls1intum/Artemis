@@ -53,7 +53,14 @@ export class CleanupOperationModalComponent {
     constructor() {
         effect(() => {
             if (this.visible()) {
-                untracked(() => this.updateCounts());
+                untracked(() => {
+                    // Reset per-open state so reopening the modal for a different operation does not flash the
+                    // previous run's result icons/counts (operationExecuted is only ever set true, and counts
+                    // refresh asynchronously): start clean, then fetch this operation's counts.
+                    this.operationExecuted.set(false);
+                    this.counts.set({ totalCount: 0 });
+                    this.updateCounts();
+                });
             }
         });
     }
