@@ -15,7 +15,6 @@ import org.apache.pdfbox.pdmodel.PDDocument;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import de.tum.cit.aet.artemis.core.FilePathType;
@@ -48,37 +47,37 @@ public class AttachmentService {
     }
 
     /**
-     * Updates a lecture attachment while deriving its cache-busting version from the persisted state. The attachment row is locked for the transaction, ensuring that concurrent
-     * file replacements receive distinct, monotonically increasing versions even when their request payloads are stale.
+     * Updates a lecture attachment while deriving its cache-busting version from the persisted state. File replacements use a compare-and-set database update so concurrent
+     * requests receive distinct, monotonically increasing versions even when their request payloads are stale.
      *
      * @param attachmentId     the attachment to update
      * @param attachmentUpdate client-provided metadata
      * @param file             replacement file, or {@code null} for a metadata-only update
      * @return the updated attachment
      */
-    @Transactional
     public Attachment updateLectureAttachment(Long attachmentId, Attachment attachmentUpdate, MultipartFile file) {
-        Attachment existingAttachment = attachmentRepository.findByIdForUpdateElseThrow(attachmentId);
+        Attachment existingAttachment = attachmentRepository.findByIdOrElseThrow(attachmentId);
 
-        existingAttachment.setName(attachmentUpdate.getName());
-        existingAttachment.setReleaseDate(attachmentUpdate.getReleaseDate());
-        existingAttachment.setUploadDate(attachmentUpdate.getUploadDate());
-        existingAttachment.setAttachmentType(attachmentUpdate.getAttachmentType());
-        existingAttachment.setStudentVersion(attachmentUpdate.getStudentVersion());
-
-        if (file != null) {
-            Path basePath = FilePathConverter.getLectureAttachmentFileSystemPath().resolve(existingAttachment.getLecture().getId().toString());
-            Path savePath = FileUtil.saveFile(file, basePath, FilePathType.LECTURE_ATTACHMENT, true);
-            URI oldPath = URI.create(existingAttachment.getLink());
-            Path oldFilePath = FilePathConverter.fileSystemPathForExternalUri(oldPath, FilePathType.LECTURE_ATTACHMENT);
-            fileService.schedulePathForDeletion(oldFilePath, 0);
-            fileService.evictCacheForPath(oldFilePath);
-            existingAttachment
-                    .setLink(FilePathConverter.externalUriForFileSystemPath(savePath, FilePathType.LECTURE_ATTACHMENT, existingAttachment.getLecture().getId()).toString());
-            existingAttachment.setVersion(existingAttachment.getVersion() == null ? 1 : existingAttachment.getVersion() + 1);
+        if (file == null) {
+            attachmentRepository.updateMetadata(attachmentId, attachmentUpdate.getName(), attachmentUpdate.getReleaseDate(), attachmentUpdate.getUploadDate(),
+                    attachmentUpdate.getAttachmentType(), attachmentUpdate.getStudentVersion());
+            return attachmentRepository.findByIdOrElseThrow(attachmentId);
         }
 
-        return attachmentRepository.save(existingAttachment);
+        Path basePath = FilePathConverter.getLectureAttachmentFileSystemPath().resolve(existingAttachment.getLecture().getId().toString());
+        Path savePath = FileUtil.saveFile(file, basePath, FilePathType.LECTURE_ATTACHMENT, true);
+        String newLink = FilePathConverter.externalUriForFileSystemPath(savePath, FilePathType.LECTURE_ATTACHMENT, existingAttachment.getLecture().getId()).toString();
+
+        while (attachmentRepository.replaceFileAndIncrementVersion(attachmentId, existingAttachment.getVersion(), attachmentUpdate.getName(), attachmentUpdate.getReleaseDate(),
+                attachmentUpdate.getUploadDate(), attachmentUpdate.getAttachmentType(), attachmentUpdate.getStudentVersion(), newLink) == 0) {
+            existingAttachment = attachmentRepository.findByIdOrElseThrow(attachmentId);
+        }
+
+        URI oldPath = URI.create(existingAttachment.getLink());
+        Path oldFilePath = FilePathConverter.fileSystemPathForExternalUri(oldPath, FilePathType.LECTURE_ATTACHMENT);
+        fileService.schedulePathForDeletion(oldFilePath, 0);
+        fileService.evictCacheForPath(oldFilePath);
+        return attachmentRepository.findByIdOrElseThrow(attachmentId);
     }
 
     /**
