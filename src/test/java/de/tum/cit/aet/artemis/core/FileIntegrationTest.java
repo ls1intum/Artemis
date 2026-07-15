@@ -10,6 +10,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import java.io.ByteArrayOutputStream;
 import java.net.URI;
 import java.nio.file.Path;
+import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
@@ -28,6 +29,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.CacheControl;
 import org.springframework.http.HttpStatus;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -611,6 +613,90 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
         // Verify cache headers (30 days = 2592000 seconds)
         mockMvc.perform(get(requestUrl)).andExpect(status().isOk()).andExpect(header().string("Cache-Control", "max-age=2592000, public"));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetAttachmentVideoUnitStudentVersionCacheHeaders() throws Exception {
+        byte[] dummyContent = "dummy pdf content".getBytes();
+        Path tempFile = tempFileUtilService.createTempFile("dummy-cache-student", ".pdf");
+        FileUtils.writeByteArrayToFile(tempFile.toFile(), dummyContent);
+        tempFile.toFile().deleteOnExit();
+
+        AttachmentVideoUnit attachmentVideoUnit = createAttachmentVideoUnitWithTempFile(tempFile);
+        String url = "/api/core/files/attachments/attachment-video-units/" + attachmentVideoUnit.getId() + "/student/dummy.pdf";
+
+        try (MockedStatic<FilePathConverter> filePathServiceMock = Mockito.mockStatic(FilePathConverter.class)) {
+            filePathServiceMock.when(() -> FilePathConverter.fileSystemPathForExternalUri(Mockito.any(URI.class), Mockito.eq(FilePathType.ATTACHMENT_UNIT))).thenReturn(tempFile);
+
+            // Verify private cache headers (1 day = 86400 seconds) and the Last-Modified header used for revalidation
+            String expectedCacheControl = CacheControl.maxAge(Duration.ofDays(1)).cachePrivate().getHeaderValue();
+            mockMvc.perform(get(url)).andExpect(status().isOk()).andExpect(header().string("Cache-Control", expectedCacheControl)).andExpect(header().exists("Last-Modified"));
+        }
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetAttachmentVideoUnitStudentVersionNotModified() throws Exception {
+        byte[] dummyContent = "dummy pdf content".getBytes();
+        Path tempFile = tempFileUtilService.createTempFile("dummy-cache-304", ".pdf");
+        FileUtils.writeByteArrayToFile(tempFile.toFile(), dummyContent);
+        tempFile.toFile().deleteOnExit();
+
+        AttachmentVideoUnit attachmentVideoUnit = createAttachmentVideoUnitWithTempFile(tempFile);
+        String url = "/api/core/files/attachments/attachment-video-units/" + attachmentVideoUnit.getId() + "/student/dummy.pdf";
+
+        try (MockedStatic<FilePathConverter> filePathServiceMock = Mockito.mockStatic(FilePathConverter.class)) {
+            filePathServiceMock.when(() -> FilePathConverter.fileSystemPathForExternalUri(Mockito.any(URI.class), Mockito.eq(FilePathType.ATTACHMENT_UNIT))).thenReturn(tempFile);
+
+            MvcResult result = mockMvc.perform(get(url)).andExpect(status().isOk()).andExpect(header().exists("Last-Modified")).andReturn();
+            String lastModified = result.getResponse().getHeader("Last-Modified");
+
+            // A conditional request with the returned Last-Modified value must be answered with 304 Not Modified instead of a re-download
+            mockMvc.perform(get(url).header("If-Modified-Since", lastModified)).andExpect(status().isNotModified());
+        }
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetLectureAttachmentCacheHeaders() throws Exception {
+        byte[] dummyContent = "dummy pdf content".getBytes();
+        Path tempFile = tempFileUtilService.createTempFile("dummy-cache-lecture", ".pdf");
+        FileUtils.writeByteArrayToFile(tempFile.toFile(), dummyContent);
+        tempFile.toFile().deleteOnExit();
+
+        Attachment attachment = createLectureAttachmentWithTempFile(tempFile);
+        String url = "/api/core/files/attachments/lectures/" + attachment.getLecture().getId() + "/" + attachment.getName() + ".pdf";
+
+        try (MockedStatic<FilePathConverter> filePathServiceMock = Mockito.mockStatic(FilePathConverter.class)) {
+            filePathServiceMock.when(() -> FilePathConverter.fileSystemPathForExternalUri(Mockito.any(URI.class), Mockito.eq(FilePathType.LECTURE_ATTACHMENT)))
+                    .thenReturn(tempFile);
+
+            // Verify private cache headers (1 day = 86400 seconds)
+            String expectedCacheControl = CacheControl.maxAge(Duration.ofDays(1)).cachePrivate().getHeaderValue();
+            mockMvc.perform(get(url)).andExpect(status().isOk()).andExpect(header().string("Cache-Control", expectedCacheControl)).andExpect(header().exists("Last-Modified"));
+        }
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetAttachmentVideoUnitStudentVersionRangeRequestCacheHeaders() throws Exception {
+        byte[] dummyContent = "0123456789".getBytes();
+        Path tempFile = tempFileUtilService.createTempFile("dummy-cache-range", ".pdf");
+        FileUtils.writeByteArrayToFile(tempFile.toFile(), dummyContent);
+        tempFile.toFile().deleteOnExit();
+
+        AttachmentVideoUnit attachmentVideoUnit = createAttachmentVideoUnitWithTempFile(tempFile);
+        String url = "/api/core/files/attachments/attachment-video-units/" + attachmentVideoUnit.getId() + "/student/dummy.pdf";
+
+        try (MockedStatic<FilePathConverter> filePathServiceMock = Mockito.mockStatic(FilePathConverter.class)) {
+            filePathServiceMock.when(() -> FilePathConverter.fileSystemPathForExternalUri(Mockito.any(URI.class), Mockito.eq(FilePathType.ATTACHMENT_UNIT))).thenReturn(tempFile);
+
+            // Partial (206) responses keep the private Cache-Control but must not carry a Last-Modified header (avoids If-Range hazards)
+            String expectedCacheControl = CacheControl.maxAge(Duration.ofDays(1)).cachePrivate().getHeaderValue();
+            mockMvc.perform(get(url).header("Range", "bytes=2-5")).andExpect(status().isPartialContent()).andExpect(header().string("Cache-Control", expectedCacheControl))
+                    .andExpect(header().doesNotExist("Last-Modified"));
+        }
     }
 
     private AttachmentVideoUnit createAttachmentVideoUnitWithTempFile(Path tempFile) {
