@@ -4,7 +4,7 @@ import { CleanupOperation } from 'app/admin/cleanup-service/cleanup-operation.mo
 import { CleanupCount, DataCleanupService } from 'app/admin/cleanup-service/data-cleanup.service';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 
-import { Observable, Subject } from 'rxjs';
+import { Observable, Subject, Subscription } from 'rxjs';
 import { faCheckCircle, faTimes, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -38,6 +38,9 @@ export class CleanupOperationModalComponent {
     private dialogErrorSource = new Subject<string>();
     dialogError = this.dialogErrorSource.asObservable();
 
+    /** The in-flight count request, so it can be superseded/cancelled to avoid stale, out-of-order responses. */
+    private countSubscription?: Subscription;
+
     private readonly dataCleanupService = inject(DataCleanupService);
 
     protected readonly faTimes = faTimes;
@@ -61,6 +64,11 @@ export class CleanupOperationModalComponent {
                     this.counts.set({ totalCount: 0 });
                     this.updateCounts();
                 });
+            } else {
+                // This modal instance persists across opens (its host @if never tears it down), so cancel any
+                // in-flight count request on close: otherwise a late response could overwrite the counts of the
+                // next operation opened here.
+                this.countSubscription?.unsubscribe();
             }
         });
     }
@@ -137,7 +145,10 @@ export class CleanupOperationModalComponent {
      * Fetch updated counts after operation execution.
      */
     private updateCounts(): void {
-        this.fetchCounts().subscribe({
+        // Supersede any previous, still-pending count request so an out-of-order response cannot overwrite the
+        // counts of the operation currently shown.
+        this.countSubscription?.unsubscribe();
+        this.countSubscription = this.fetchCounts().subscribe({
             next: (response: HttpResponse<CleanupCount>) => {
                 this.counts.set(response.body!);
             },

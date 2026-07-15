@@ -6,7 +6,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentRef, signal } from '@angular/core';
-import { of, throwError } from 'rxjs';
+import { Subject, of, throwError } from 'rxjs';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import dayjs from 'dayjs/esm';
 
@@ -211,6 +211,28 @@ describe('CleanupOperationModalComponent', () => {
 
             expect(component.operationExecuted()).toBe(false);
             expect(component.counts()).toEqual({ totalCount: 0 });
+        });
+
+        it('should ignore a stale count response from a previously opened operation', () => {
+            // The modal instance persists across opens. Open A with a count request that never resolves yet.
+            const orphanCounts = new Subject<HttpResponse<OrphanCleanupCountDTO>>();
+            vi.spyOn(dataCleanupService, 'countOrphans').mockReturnValue(orphanCounts);
+
+            componentRef.setInput('operation', deleteOrphansOperation);
+            component.visible.set(true);
+            fixture.detectChanges();
+
+            // Close (cancels A's pending request), then reopen for B, whose counts resolve synchronously.
+            component.close();
+            fixture.detectChanges();
+            componentRef.setInput('operation', deleteNonRatedOperation);
+            component.visible.set(true);
+            fixture.detectChanges();
+            expect(component.counts()).toEqual(mockNonRatedCounts);
+
+            // A's late response must not overwrite B's counts.
+            orphanCounts.next(new HttpResponse({ body: mockOrphanCounts }));
+            expect(component.counts()).toEqual(mockNonRatedCounts);
         });
     });
 

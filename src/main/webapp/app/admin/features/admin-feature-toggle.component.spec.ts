@@ -108,6 +108,34 @@ describe('AdminFeatureToggleComponentTest', () => {
             expect(errorSpy).toHaveBeenCalledOnce();
         });
 
+        it('onFeatureToggle should ignore a stale failed request superseded by a newer toggle', () => {
+            comp.ngOnInit();
+            const featureToggleService = TestBed.inject(FeatureToggleService);
+            const first = new Subject<object>();
+            const second = new Subject<object>();
+            vi.spyOn(featureToggleService, 'setFeatureToggleState').mockReturnValueOnce(first).mockReturnValueOnce(second);
+            const errorSpy = vi.spyOn(TestBed.inject(AlertService), 'error');
+
+            expect(comp.featureToggles()[0].isActive).toBe(true);
+
+            // Click 1: optimistic off, request R1 in flight.
+            comp.onFeatureToggle(comp.featureToggles()[0]);
+            expect(comp.featureToggles()[0].isActive).toBe(false);
+
+            // Click 2 (before R1 resolves): optimistic on, request R2 in flight and now the latest.
+            comp.onFeatureToggle(comp.featureToggles()[0]);
+            expect(comp.featureToggles()[0].isActive).toBe(true);
+
+            // R2 succeeds (server is now on), then the stale R1 fails late.
+            second.next({});
+            second.complete();
+            first.error(new HttpErrorResponse({ status: 400 }));
+
+            // The superseded R1 failure must not roll back R2's applied state, nor raise a misleading alert.
+            expect(comp.featureToggles()[0].isActive).toBe(true);
+            expect(errorSpy).not.toHaveBeenCalled();
+        });
+
         it('should alert and leave toggles empty when loading feature toggles fails', () => {
             const featureToggleService = TestBed.inject(FeatureToggleService);
             vi.spyOn(featureToggleService, 'getFeatureToggles').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 400 })));

@@ -210,20 +210,30 @@ export class AdminFeatureToggleComponent implements OnInit {
         );
     }
 
+    /** Id of the most recent toggle request per feature, so out-of-order completions can be ignored. */
+    private readonly latestToggleRequest = new Map<FeatureToggle, number>();
+
     onFeatureToggle(featureInfo: FeatureToggleInfo): void {
+        const feature = featureInfo.feature;
         const newState = !featureInfo.isActive;
         // Optimistically reflect the new state so the signal, the [ngModel]-bound switch, and the server request
-        // all agree. On failure, revert isActive so the one-way [ngModel] re-applies the true state and the
-        // switch flips back (otherwise it would silently stay flipped while the server state is unchanged), and
-        // surface the error instead of swallowing it.
-        this.setToggleState(featureInfo.feature, newState);
+        // all agree. Track this as the latest request for the feature: overlapping clicks (or a live websocket
+        // update) can complete out of order, and a stale request must not roll back a newer one.
+        const requestId = (this.latestToggleRequest.get(feature) ?? 0) + 1;
+        this.latestToggleRequest.set(feature, requestId);
+        this.setToggleState(feature, newState);
         this.featureToggleService
-            .setFeatureToggleState(featureInfo.feature, newState)
+            .setFeatureToggleState(feature, newState)
             .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe({
                 error: (error: HttpErrorResponse) => {
-                    this.setToggleState(featureInfo.feature, !newState);
-                    onError(this.alertService, error);
+                    // Ignore a superseded request entirely: a newer toggle (or update) already owns the state, so
+                    // reverting here would flip the switch back to a value the server no longer has and raise a
+                    // misleading alert. Only the latest request reverts its optimistic change and surfaces the error.
+                    if (this.latestToggleRequest.get(feature) === requestId) {
+                        this.setToggleState(feature, !newState);
+                        onError(this.alertService, error);
+                    }
                 },
             });
     }
