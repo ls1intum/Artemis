@@ -52,7 +52,7 @@ public record ExerciseSnapshotDTO(
      *                                    {@code null} for non-programming exercises
      * @return {@link ExerciseSnapshotDTO}
      */
-    public static ExerciseSnapshotDTO of(Exercise exercise, ProgrammingExerciseSnapshotDTO.@Nullable CommitHashes programmingCommitHashes) {
+    public static ExerciseSnapshotDTO of(Exercise exercise, ProgrammingExerciseSnapshotDTO.@Nullable CommitHashesDTO programmingCommitHashes) {
 
         var competencyLinks = CollectionUtil.nullIfEmpty(exercise.getCompetencyLinks().stream().map(CompetencyExerciseLinkSnapshotDTO::of).collect(Collectors.toSet()));
         var gradingCriteria = CollectionUtil.nullIfEmpty(exercise.getGradingCriteria().stream().map(GradingCriterionDTO::of).collect(Collectors.toSet()));

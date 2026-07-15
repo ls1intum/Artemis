@@ -43,7 +43,8 @@ public record ProgrammingExerciseSnapshotDTO(String testRepositoryUri, List<Auxi
      * @param testsCommitHash                 commit hash of the tests repository (may be {@code null})
      * @param auxiliaryRepositoryCommitHashes commit hash per auxiliary repository, keyed by auxiliary repository id
      */
-    public record CommitHashes(String templateCommitHash, String solutionCommitHash, String testsCommitHash, Map<Long, String> auxiliaryRepositoryCommitHashes) {
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    public record CommitHashesDTO(String templateCommitHash, String solutionCommitHash, String testsCommitHash, Map<Long, String> auxiliaryRepositoryCommitHashes) {
     }
 
     /**
@@ -53,7 +54,7 @@ public record ProgrammingExerciseSnapshotDTO(String testRepositoryUri, List<Auxi
      * @param commitHashes the pre-resolved git commit hashes of the exercise's repositories
      * @return {@link ProgrammingExerciseSnapshotDTO}
      */
-    public static ProgrammingExerciseSnapshotDTO of(ProgrammingExercise exercise, CommitHashes commitHashes) {
+    public static ProgrammingExerciseSnapshotDTO of(ProgrammingExercise exercise, CommitHashesDTO commitHashes) {
         var templateParticipation = exercise.getTemplateParticipation() != null
                 ? new ParticipationSnapshotDTO(exercise.getTemplateParticipation().getId(), exercise.getTemplateRepositoryUri(), exercise.getTemplateBuildPlanId(),
                         commitHashes.templateCommitHash())

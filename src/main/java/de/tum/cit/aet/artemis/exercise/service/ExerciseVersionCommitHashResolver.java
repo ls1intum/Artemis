@@ -33,7 +33,7 @@ public final class ExerciseVersionCommitHashResolver {
      * @param gitService the git service used to read the last commit hash of each repository
      * @return the resolved commit hashes, or {@code null} for non-programming exercises
      */
-    public static ProgrammingExerciseSnapshotDTO.@Nullable CommitHashes resolveForExercise(Exercise exercise, GitService gitService) {
+    public static ProgrammingExerciseSnapshotDTO.@Nullable CommitHashesDTO resolveForExercise(Exercise exercise, GitService gitService) {
         if (exercise instanceof ProgrammingExercise programmingExercise) {
             return resolve(programmingExercise, gitService);
         }
@@ -48,7 +48,7 @@ public final class ExerciseVersionCommitHashResolver {
      * @param gitService the git service used to read the last commit hash of each repository
      * @return the resolved commit hashes
      */
-    public static ProgrammingExerciseSnapshotDTO.CommitHashes resolve(ProgrammingExercise exercise, GitService gitService) {
+    public static ProgrammingExerciseSnapshotDTO.CommitHashesDTO resolve(ProgrammingExercise exercise, GitService gitService) {
         var templateCommitHash = getCommitHash(exercise.getVcsTemplateRepositoryUri(), gitService);
         var solutionCommitHash = getCommitHash(exercise.getVcsSolutionRepositoryUri(), gitService);
         var testsCommitHash = getCommitHash(exercise.getVcsTestRepositoryUri(), gitService);
@@ -60,7 +60,7 @@ public final class ExerciseVersionCommitHashResolver {
                 auxiliaryRepositoryCommitHashes.put(repository.getId(), commitHash);
             }
         }
-        return new ProgrammingExerciseSnapshotDTO.CommitHashes(templateCommitHash, solutionCommitHash, testsCommitHash, auxiliaryRepositoryCommitHashes);
+        return new ProgrammingExerciseSnapshotDTO.CommitHashesDTO(templateCommitHash, solutionCommitHash, testsCommitHash, auxiliaryRepositoryCommitHashes);
     }
 
     @Nullable
