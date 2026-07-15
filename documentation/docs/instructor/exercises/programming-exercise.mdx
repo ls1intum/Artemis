@@ -849,6 +849,11 @@ The build plan consists of multiple phases. Each phase can be customized in the 
 
 Instructors can freely define how many phases are executed and in which order.
 
+**Determining Build Success:**
+Before a build runs, any phases where the inclusion condition is not met are dropped. Artemis then determines build success based on the remaining phases:
+- **If phases expecting tests (excluding static code analysis) remain:** Build success is determined by whether the expected tests were successfully found and executed.
+- **If no phases expecting tests (excluding static code analysis) remain:** Build success is determined by the exit code of the build.
+
 **Common Test Setup Scenarios:**
 1. **Immediate Full Feedback:** Set all phases to `Always`. All test results are shown immediately after submission.
 2. **Build Status Only:** Remove all phases that expect tests. Students only see if their code compiled successfully.
