@@ -71,7 +71,7 @@ class AutomaticAfterDueDateServiceTest {
 
         var result = service.computeBuildAndTestDate(exercise, null);
 
-        assertThat(result).isEqualTo(dueDate.plusMinutes(15));
+        assertThat(result).isEqualTo(dueDate.plusMinutes(1));
     }
 
     @Test
@@ -102,14 +102,14 @@ class AutomaticAfterDueDateServiceTest {
         var exercise = createCourseExercise(originalDueDate, BuildPhaseCondition.AFTER_DUE_DATE);
 
         var firstResult = service.computeBuildAndTestDate(exercise, null);
-        assertThat(firstResult).isEqualTo(originalDueDate.plusMinutes(15));
+        assertThat(firstResult).isEqualTo(originalDueDate.plusMinutes(1));
 
         exercise.setBuildAndTestStudentSubmissionsAfterDueDate(firstResult);
         exercise.setDueDate(updatedDueDate);
 
         var offset = Duration.between(originalDueDate, firstResult);
         var secondResult = service.computeBuildAndTestDate(exercise, offset);
-        assertThat(secondResult).isEqualTo(updatedDueDate.plusMinutes(15));
+        assertThat(secondResult).isEqualTo(updatedDueDate.plusMinutes(1));
     }
 
     @Test
@@ -122,7 +122,7 @@ class AutomaticAfterDueDateServiceTest {
 
         exercise.setBuildConfig(createBuildConfig(BuildPhaseCondition.AFTER_DUE_DATE));
         var secondResult = service.computeBuildAndTestDate(exercise, null);
-        assertThat(secondResult).isEqualTo(dueDate.plusMinutes(15));
+        assertThat(secondResult).isEqualTo(dueDate.plusMinutes(1));
 
         exercise.setBuildConfig(createBuildConfig(BuildPhaseCondition.ALWAYS));
         var thirdResult = service.computeBuildAndTestDate(exercise, null);
@@ -175,7 +175,7 @@ class AutomaticAfterDueDateServiceTest {
 
         var result = service.computeBuildAndTestDate(exercise, null);
 
-        assertThat(result).isEqualTo(latestExamEndDate.plusSeconds(180).plusMinutes(15));
+        assertThat(result).isEqualTo(latestExamEndDate.plusSeconds(180).plusMinutes(1));
     }
 
     @Test
@@ -186,7 +186,7 @@ class AutomaticAfterDueDateServiceTest {
         var latestExamEndDate = BASE_TIME.plusDays(2);
         var exercise = createExamExercise(dueDate, BuildPhaseCondition.AFTER_DUE_DATE, 120);
         exercise.setId(exerciseId);
-        exercise.setBuildAndTestStudentSubmissionsAfterDueDate(dueDate.plusMinutes(15));
+        exercise.setBuildAndTestStudentSubmissionsAfterDueDate(dueDate.plusMinutes(1));
 
         var exam = exercise.getExerciseGroup().getExam();
         exam.setId(examId);
@@ -200,7 +200,7 @@ class AutomaticAfterDueDateServiceTest {
         Set<Long> updatedIds = service.updateAndSaveBuildAndTestDateInProgrammingExercisesOfExam(exam, null);
 
         assertThat(updatedIds).containsExactly(exerciseId);
-        assertThat(exercise.getBuildAndTestStudentSubmissionsAfterDueDate()).isEqualTo(latestExamEndDate.plusSeconds(120).plusMinutes(15));
+        assertThat(exercise.getBuildAndTestStudentSubmissionsAfterDueDate()).isEqualTo(latestExamEndDate.plusSeconds(120).plusMinutes(1));
         verify(programmingExerciseRepository).saveAll(anyList());
     }
 
@@ -210,7 +210,7 @@ class AutomaticAfterDueDateServiceTest {
         var dueDate = BASE_TIME.plusDays(1);
         var latestExamEndDate = BASE_TIME.plusDays(2);
         var exercise = createExamExercise(dueDate, BuildPhaseCondition.AFTER_DUE_DATE, 90);
-        exercise.setBuildAndTestStudentSubmissionsAfterDueDate(latestExamEndDate.plusSeconds(90).plusMinutes(15));
+        exercise.setBuildAndTestStudentSubmissionsAfterDueDate(latestExamEndDate.plusSeconds(90).plusMinutes(1));
 
         var exam = exercise.getExerciseGroup().getExam();
         exam.setId(examId);
@@ -234,7 +234,7 @@ class AutomaticAfterDueDateServiceTest {
 
         var previewDate = service.getAutomaticBuildAndTestDate(new AutomaticAfterDueDatePreviewRequestDTO(exerciseId, null, dueDate, null, null, null, null, null), exercise, null);
 
-        assertThat(previewDate).isEqualTo(dueDate.plusMinutes(15));
+        assertThat(previewDate).isEqualTo(dueDate.plusMinutes(1));
     }
 
     @Test
@@ -325,7 +325,7 @@ class AutomaticAfterDueDateServiceTest {
         var previewDate = service.getAutomaticBuildAndTestDate(
                 new AutomaticAfterDueDatePreviewRequestDTO(null, null, dueDate, null, ProgrammingLanguage.JAVA, ProjectType.PLAIN_MAVEN, true, false), null, null);
 
-        assertThat(previewDate).isEqualTo(dueDate.plusMinutes(15));
+        assertThat(previewDate).isEqualTo(dueDate.plusMinutes(1));
     }
 
     @Test
@@ -344,7 +344,7 @@ class AutomaticAfterDueDateServiceTest {
         var previewDate = service.getAutomaticBuildAndTestDate(
                 new AutomaticAfterDueDatePreviewRequestDTO(null, exam.getId(), dueDate, null, ProgrammingLanguage.JAVA, ProjectType.PLAIN_MAVEN, false, false), null, exam);
 
-        assertThat(previewDate).isEqualTo(latestExamEndDate.plusSeconds(120).plusMinutes(15));
+        assertThat(previewDate).isEqualTo(latestExamEndDate.plusSeconds(120).plusMinutes(1));
     }
 
     private static ProgrammingExercise createCourseExercise(ZonedDateTime dueDate, BuildPhaseCondition phaseCondition) throws JsonProcessingException {
