@@ -1391,7 +1391,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
      */
     private scheduleCodeGenerationStatusPopoverRealign() {
         const popover = this.codeGenerationStatusPopover();
-        // PrimeNG 22 changed Popover.overlayVisible from a plain boolean to a signal — it must be invoked.
+        // Popover.overlayVisible is a plain boolean field, so read it directly (do not invoke it).
         if (!popover?.overlayVisible) {
             return;
         }

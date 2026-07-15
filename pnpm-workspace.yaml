@@ -21,15 +21,15 @@ enablePrePostScripts: true
 
 # pnpm 11 enforces a default `minimumReleaseAge` (24h): a frozen install rejects
 # any lockfile entry published within the last day as a supply-chain safeguard.
-# The PrimeNG 22 ecosystem was adopted at RC while still fresh (deliberate, the
-# whole stack moves together), so it is explicitly excluded from the age gate.
-# Remove these entries once PrimeNG 22 reaches a stable release that is older
-# than the cutoff (by then the gate passes on its own).
+# PrimeNG is intentionally pinned to the latest stable release of its current
+# major (the whole PrimeNG ecosystem moves together), and this branch adopts fresh
+# patches as soon as they publish, so the ecosystem is excluded from the age gate.
+# Remove an entry once its pinned version is older than the cutoff (by then the
+# gate passes on its own).
 minimumReleaseAgeExclude:
     - primeng
     - '@primeuix/*'
-    - '@primeicons/*'
-    - '@primeui/*'
+    - primeicons
     # AnalogJS 2.6.x reached a stable 2.6.3 (was 2.6.3-beta.1); the Angular-22-compatible
     # vite-plugin-angular / vitest-angular were published recently. Remove once a
     # stable AnalogJS 2.6.x is older than the cutoff.
@@ -72,6 +72,10 @@ overrides:
     'ng-mocks>@angular/platform-browser-dynamic': '^22.0.0'
     'ng-mocks>@angular/router': '^22.0.0'
     'ng-mocks>rxjs': '^7.8.2'
+    # @angular/localize is only pulled in transitively (e.g. via @ng-bootstrap/ng-bootstrap,
+    # whose peer range requires ^22.0.0). Without this pin it resolves to an older 21.x
+    # straggler that violates that peer range; force it to match the @angular/core version.
+    '@angular/localize': '22.0.6'
     'babel-plugin-istanbul>test-exclude': '8.0.0'
     '@babel/core': '7.29.7'
     '@babel/runtime': '7.29.2'
@@ -84,7 +88,7 @@ overrides:
     cookie: '1.1.1'
     debug: '4.4.3'
     diff: '9.0.0'
-    dompurify: '3.4.11'
+    dompurify: '3.4.12'
     esbuild: '0.28.1'
     express: '5.2.1'
     fast-uri: '3.1.2'
@@ -100,7 +104,7 @@ overrides:
     piscina: '5.2.0'
     postcss: '8.5.14'
     punycode: '2.3.1'
-    # @tumaet/apollon 4.7.0 requires react/react-dom ^19 as peers. Artemis embeds
+    # @tumaet/apollon's react/react-dom peer requires react 19. Artemis embeds
     # Apollon but has no direct React code, so force the whole React subtree to 19
     # (matches the version used in the documentation/ project).
     react: '19.2.7'
@@ -122,7 +126,7 @@ overrides:
 # Patch files applied by pnpm to specific transitive dependencies during install
 # (the pnpm-native replacement for the old patch-package/postinstall flow).
 patchedDependencies:
-    'eslint@10.6.0': 'patches/eslint+10.6.0.patch'
+    'eslint@10.7.0': 'patches/eslint+10.7.0.patch'
 
 # Allowlist of dependencies permitted to run install-time build / lifecycle scripts.
 # pnpm 11 blocks build scripts by default; these are needed for native bindings

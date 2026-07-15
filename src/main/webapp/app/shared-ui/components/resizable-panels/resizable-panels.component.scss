@@ -11,8 +11,8 @@
     border: 0;
     background: transparent;
 
-    // PrimeNG 21.1.9 (pinned by this PR) renders `p-splitterpanel`; PrimeNG 22 renames it to `p-splitter-panel`
-    // (update these selectors when upgrading).
+    // The current PrimeNG Splitter renders its panels as `p-splitterpanel`. This class name has
+    // changed across PrimeNG majors, so revisit these selectors when upgrading PrimeNG.
     .p-splitterpanel {
         display: flex;
         min-width: 0;

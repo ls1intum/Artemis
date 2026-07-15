@@ -1128,8 +1128,8 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
                     value: () => ({ left: 80, width: 200 }),
                 });
                 vi.spyOn(comp, 'codeGenerationStatusPopover').mockReturnValue({
-                    // PrimeNG 22: Popover.overlayVisible is a signal, so the mock must be callable.
-                    overlayVisible: () => true,
+                    // Popover.overlayVisible is a plain boolean field, so the mock exposes it as a boolean.
+                    overlayVisible: true,
                     align,
                     target: {
                         getBoundingClientRect: () => ({ left: 120, width: 20 }),

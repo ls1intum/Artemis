@@ -151,8 +151,8 @@ describe('FormDateTimePickerComponent', () => {
         // "changed after checked" assertion, which the picker's overlay-open focus state churn would
         // otherwise trip in the test harness (not a production concern).
         // The confirm affordance lives in the `#buttonbar` template and is wired to `applyAndClose(datePicker)`.
-        // PrimeNG's DatePicker does not project the overlay panel DOM in the jsdom harness
-        // in the jsdom harness, so drive the button's handler directly instead of clicking the panel button.
+        // PrimeNG's DatePicker does not project the overlay panel DOM in the jsdom harness,
+        // so drive the button's handler directly instead of clicking the panel button.
         it('commits the shown time and closes when the time-only confirm button is clicked (one-click apply)', () => {
             fixture.componentRef.setInput('pickerType', DateTimePickerType.TIMER);
             fixture.detectChanges();

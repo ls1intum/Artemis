@@ -140,9 +140,8 @@ export class ResultHistoryDropdownComponent {
 
     toggleResultsPopover(event: Event) {
         const popover = this.resultsPopover();
-        // PrimeNG 22 changed Popover.overlayVisible from a plain boolean property to a signal, so it must be invoked.
-        // Reading the signal reference itself (a function) is always truthy, which previously made this branch always
-        // take the hide() path and never open the popover (the result-history dropdown never appeared).
+        // Popover.overlayVisible is a plain boolean field, so read it directly (do not invoke it).
+        // When the popover is already open, close it; otherwise open it anchored to the dropdown arrow.
         if (popover?.overlayVisible) {
             popover.hide();
         } else {
