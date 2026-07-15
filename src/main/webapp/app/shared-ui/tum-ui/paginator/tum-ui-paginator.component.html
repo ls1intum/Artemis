@@ -27,10 +27,10 @@
     @for (p of visiblePages(); track p) {
         <button
             type="button"
-            [class]="p === page() ? selectedPageClasses : navButtonClasses"
+            [class]="p === clampedPage() ? selectedPageClasses : navButtonClasses"
             [disabled]="disabled()"
             (click)="goToPage(p)"
-            [attr.aria-current]="p === page() ? 'page' : null"
+            [attr.aria-current]="p === clampedPage() ? 'page' : null"
             data-testid="paginator-page"
         >
             {{ p + 1 }}

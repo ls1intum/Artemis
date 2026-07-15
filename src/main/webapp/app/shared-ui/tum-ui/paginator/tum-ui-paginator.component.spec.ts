@@ -95,4 +95,13 @@ describe('TumUiPaginatorComponent', () => {
         pageButtons[0].nativeElement.click(); // first visible page (index 2 for a window centered on 4)
         expect(spy).toHaveBeenCalledWith(2);
     });
+
+    it('clamps the display when the page input exceeds the last valid page (no stranded/empty state)', () => {
+        setInputs(30, 5, 50); // 30 records, pageSize 50 -> 1 page; page=5 is out of range
+        expect(navButton('paginator-next').disabled).toBe(true);
+        expect(navButton('paginator-last').disabled).toBe(true);
+        const pages = fixture.debugElement.queryAll(By.css('[data-testid="paginator-page"]'));
+        expect(pages.length).toBe(1);
+        expect(pages[0].nativeElement.getAttribute('aria-current')).toBe('page'); // clamped to page 0, still marked active
+    });
 });

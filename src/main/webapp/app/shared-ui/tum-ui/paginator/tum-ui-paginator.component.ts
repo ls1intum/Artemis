@@ -42,16 +42,19 @@ export class TumUiPaginatorComponent {
     protected readonly selectedPageClasses = `${NAV_BUTTON_CLASSES.replace('text-muted-color', 'bg-primary/15 font-semibold text-primary')}`;
 
     protected readonly totalPages = computed(() => Math.max(1, Math.ceil(this.totalRecords() / Math.max(1, this.pageSize()))));
-    protected readonly isFirst = computed(() => this.page() <= 0);
-    protected readonly isLast = computed(() => this.page() >= this.totalPages() - 1);
-    protected readonly rangeBegin = computed(() => (this.totalRecords() === 0 ? 0 : this.page() * this.pageSize() + 1));
-    protected readonly rangeEnd = computed(() => Math.min(this.totalRecords(), (this.page() + 1) * this.pageSize()));
+    // Guard the display/nav against a transient out-of-range `page` input (e.g. the row set shrank and the table
+    // has not yet re-emitted the clamped page): never render "Showing 51 to 50" or leave no active page.
+    protected readonly clampedPage = computed(() => Math.min(Math.max(0, this.page()), this.totalPages() - 1));
+    protected readonly isFirst = computed(() => this.clampedPage() <= 0);
+    protected readonly isLast = computed(() => this.clampedPage() >= this.totalPages() - 1);
+    protected readonly rangeBegin = computed(() => (this.totalRecords() === 0 ? 0 : this.clampedPage() * this.pageSize() + 1));
+    protected readonly rangeEnd = computed(() => Math.min(this.totalRecords(), (this.clampedPage() + 1) * this.pageSize()));
 
     /** 0-based page indices to render as page-number buttons, windowed around the current page (like PrimeNG). */
     protected readonly visiblePages = computed(() => {
         const total = this.totalPages();
         const size = Math.min(PAGE_LINK_SIZE, total);
-        let start = Math.max(0, this.page() - Math.floor(size / 2));
+        let start = Math.max(0, this.clampedPage() - Math.floor(size / 2));
         const end = Math.min(total, start + size);
         start = Math.max(0, end - size);
         return Array.from({ length: end - start }, (_, i) => start + i);
@@ -71,13 +74,13 @@ export class TumUiPaginatorComponent {
 
     protected goToPrevious(): void {
         if (!this.disabled() && !this.isFirst()) {
-            this.pageChange.emit(this.page() - 1);
+            this.pageChange.emit(this.clampedPage() - 1);
         }
     }
 
     protected goToNext(): void {
         if (!this.disabled() && !this.isLast()) {
-            this.pageChange.emit(this.page() + 1);
+            this.pageChange.emit(this.clampedPage() + 1);
         }
     }
 
