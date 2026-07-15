@@ -5,12 +5,13 @@ import static de.tum.cit.aet.artemis.core.config.Constants.SETUP_COMMIT_MESSAGE;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
-import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.jspecify.annotations.Nullable;
@@ -222,15 +223,23 @@ public class ProgrammingSubmissionService extends SubmissionService {
      *         pending submission exists or null if not.
      */
     public Map<Long, Optional<Submission>> getLatestPendingSubmissionsForProgrammingExercise(Long programmingExerciseId) {
-        var participations = programmingExerciseStudentParticipationRepository.findWithSubmissionsAndResultsByExerciseId(programmingExerciseId);
-        return participations.stream().collect(Collectors.toMap(Participation::getId, p -> {
-            var latestSubmission = p.getSubmissions().stream().max(Comparator.comparing(Submission::getSubmissionDate));
-            if (latestSubmission.isEmpty() || latestSubmission.get().getLatestResult() != null) {
-                // This is not an error case, it is very likely that there is no pending submission for a participation.
-                return Optional.empty();
-            }
-            return latestSubmission;
-        }));
+        // Only the latest submission per participation is fetched (with its results), instead of the exercise's entire
+        // submission and result history. For large exercises the previous approach transferred tens of thousands of
+        // rows from the database just to inspect one submission per participation.
+        List<Long> participationIds = programmingExerciseStudentParticipationRepository.findStudentParticipationIdsByExerciseId(programmingExerciseId);
+        List<Long> latestSubmissionIds = programmingSubmissionRepository.findLatestSubmissionIdsByExerciseId(programmingExerciseId);
+        Map<Long, ProgrammingSubmission> latestSubmissionByParticipationId = programmingSubmissionRepository.findSubmissionsWithResultsByIdIn(latestSubmissionIds).stream()
+                .collect(Collectors.toMap(submission -> submission.getParticipation().getId(), Function.identity()));
+
+        Map<Long, Optional<Submission>> pendingSubmissions = new HashMap<>();
+        for (Long participationId : participationIds) {
+            ProgrammingSubmission latestSubmission = latestSubmissionByParticipationId.get(participationId);
+            // A pending submission is the latest submission of a participation that does not have a result yet. It is not
+            // an error case for a participation to have no pending submission, so those map to an empty Optional.
+            Optional<Submission> pendingSubmission = latestSubmission != null && latestSubmission.getLatestResult() == null ? Optional.of(latestSubmission) : Optional.empty();
+            pendingSubmissions.put(participationId, pendingSubmission);
+        }
+        return pendingSubmissions;
     }
 
     private Optional<ProgrammingSubmission> findLatestPendingSubmissionForParticipation(final long participationId, final boolean isGraded) {

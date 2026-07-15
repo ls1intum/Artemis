@@ -82,6 +82,50 @@ public class AsyncConfiguration implements AsyncConfigurer {
         return taskExecutor::execute;
     }
 
+    /**
+     * Executor for asynchronous exercise versioning (see {@code ExerciseVersionService}).
+     * <p>
+     * In production this delegates to the shared {@code taskExecutor}, so creating an exercise version runs
+     * asynchronously and no longer blocks the request thread of an exercise update (which previously had to wait for
+     * potentially slow versioning queries and git access). It returns a thin delegating {@link Executor} rather than the
+     * {@code taskExecutor} bean instance for the same lifecycle reason described on {@link #mailTaskExecutor(Executor)}.
+     * <p>
+     * In the {@code test} profile it is a {@link SyncTaskExecutor} so versioning runs on the calling thread. This keeps
+     * the many tests that trigger versioning (directly or through a REST call) deterministic: the exercise version is
+     * created before the test continues, without having to await a background thread.
+     *
+     * @param taskExecutor the shared async executor, delegated to for versioning in production
+     * @return a synchronous executor under the {@code test} profile, otherwise a thin delegate to the shared executor
+     */
+    @Bean("exerciseVersionTaskExecutor")
+    public Executor exerciseVersionTaskExecutor(@Qualifier("taskExecutor") Executor taskExecutor) {
+        if (environment.acceptsProfiles(Profiles.of(SPRING_PROFILE_TEST))) {
+            return new SyncTaskExecutor();
+        }
+        return taskExecutor::execute;
+    }
+
+    /**
+     * Executor for asynchronous quiz statistics updates (see {@code QuizSubmissionService}).
+     * <p>
+     * In production this delegates to the shared {@code taskExecutor}, so recomputing/updating quiz statistics after a
+     * submission no longer blocks the student's request (statistics are only relevant for instructors). It returns a
+     * thin delegating {@link Executor} for the same lifecycle reason described on {@link #mailTaskExecutor(Executor)}.
+     * <p>
+     * In the {@code test} profile it is a {@link SyncTaskExecutor} so the statistics update runs on the calling thread,
+     * keeping tests that assert on quiz statistics deterministic.
+     *
+     * @param taskExecutor the shared async executor, delegated to for quiz statistics in production
+     * @return a synchronous executor under the {@code test} profile, otherwise a thin delegate to the shared executor
+     */
+    @Bean("quizStatisticsTaskExecutor")
+    public Executor quizStatisticsTaskExecutor(@Qualifier("taskExecutor") Executor taskExecutor) {
+        if (environment.acceptsProfiles(Profiles.of(SPRING_PROFILE_TEST))) {
+            return new SyncTaskExecutor();
+        }
+        return taskExecutor::execute;
+    }
+
     @Override
     public AsyncUncaughtExceptionHandler getAsyncUncaughtExceptionHandler() {
         return new SimpleAsyncUncaughtExceptionHandler();

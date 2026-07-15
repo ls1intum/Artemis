@@ -23,6 +23,7 @@ import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.domain.QuizPointStatistic;
 import de.tum.cit.aet.artemis.quiz.domain.QuizQuestion;
 import de.tum.cit.aet.artemis.quiz.domain.QuizQuestionStatistic;
+import de.tum.cit.aet.artemis.quiz.repository.QuizExerciseRepository;
 import de.tum.cit.aet.artemis.quiz.repository.QuizPointStatisticRepository;
 import de.tum.cit.aet.artemis.quiz.repository.QuizQuestionStatisticRepository;
 import de.tum.cit.aet.artemis.quiz.repository.QuizSubmissionRepository;
@@ -44,20 +45,42 @@ public class QuizStatisticService {
 
     private final QuizSubmissionRepository quizSubmissionRepository;
 
+    private final QuizExerciseRepository quizExerciseRepository;
+
     private final WebsocketMessagingService websocketMessagingService;
 
     private final Optional<LtiApi> ltiApi;
 
     public QuizStatisticService(StudentParticipationRepository studentParticipationRepository, ResultRepository resultRepository,
             WebsocketMessagingService websocketMessagingService, QuizPointStatisticRepository quizPointStatisticRepository,
-            QuizQuestionStatisticRepository quizQuestionStatisticRepository, QuizSubmissionRepository quizSubmissionRepository, Optional<LtiApi> ltiApi) {
+            QuizQuestionStatisticRepository quizQuestionStatisticRepository, QuizSubmissionRepository quizSubmissionRepository, QuizExerciseRepository quizExerciseRepository,
+            Optional<LtiApi> ltiApi) {
         this.studentParticipationRepository = studentParticipationRepository;
         this.resultRepository = resultRepository;
         this.quizPointStatisticRepository = quizPointStatisticRepository;
         this.quizQuestionStatisticRepository = quizQuestionStatisticRepository;
         this.websocketMessagingService = websocketMessagingService;
         this.quizSubmissionRepository = quizSubmissionRepository;
+        this.quizExerciseRepository = quizExerciseRepository;
         this.ltiApi = ltiApi;
+    }
+
+    /**
+     * Incrementally updates the quiz statistics for a single newly created result, loading the quiz and result freshly
+     * by id. This is intended to be run off the request thread: the caller (e.g. a practice submission) does not need to
+     * wait for the statistics update, and because everything is loaded fresh here it never mutates entities the request
+     * thread still uses (notably {@link QuizExercise#filterForStatisticWebsocket()} inside {@link #updateStatistics}).
+     *
+     * @param quizExerciseId the id of the quiz exercise
+     * @param resultId       the id of the newly created result to add to the statistics
+     */
+    public void updateStatisticsForNewResult(long quizExerciseId, long resultId) {
+        Optional<Result> result = resultRepository.findResultWithSubmissionAndParticipationById(resultId);
+        if (result.isEmpty()) {
+            return;
+        }
+        QuizExercise quizExercise = quizExerciseRepository.findByIdWithQuestionsAndStatisticsElseThrow(quizExerciseId);
+        updateStatistics(Set.of(result.get()), quizExercise);
     }
 
     /**

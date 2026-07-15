@@ -99,6 +99,23 @@ public interface ProgrammingSubmissionRepository extends ArtemisJpaRepository<Pr
     List<ProgrammingSubmission> findSubmissionsWithResultsByIdIn(List<Long> ids);
 
     /**
+     * Returns the id of the latest submission (the one with the highest id) for every student participation of the given
+     * programming exercise. This allows callers to fetch only the latest submission per participation (e.g. via
+     * {@link #findSubmissionsWithResultsByIdIn}) instead of loading the exercise's entire submission and result history,
+     * which for large exercises meant transferring tens of thousands of rows.
+     *
+     * @param exerciseId the id of the programming exercise
+     * @return the latest submission id per participation
+     */
+    @Query("""
+            SELECT MAX(s.id)
+            FROM ProgrammingSubmission s
+            WHERE s.participation.exercise.id = :exerciseId
+            GROUP BY s.participation.id
+            """)
+    List<Long> findLatestSubmissionIdsByExerciseId(@Param("exerciseId") long exerciseId);
+
+    /**
      * Provide a list of graded submissions. To be graded a submission must:
      * - be of type 'INSTRUCTOR' or 'TEST'
      * - have a submission date before the exercise due date

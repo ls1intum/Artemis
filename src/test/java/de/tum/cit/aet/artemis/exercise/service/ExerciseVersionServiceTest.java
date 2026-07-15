@@ -162,7 +162,7 @@ class ExerciseVersionServiceTest extends AbstractProgrammingIntegrationLocalCILo
         assertThat(snapshot).isNotNull();
 
         Exercise fetchedExercise = fetchExerciseForComparison(exercise);
-        ExerciseSnapshotDTO expectedSnapshot = ExerciseSnapshotDTO.of(fetchedExercise, gitService);
+        ExerciseSnapshotDTO expectedSnapshot = ExerciseSnapshotDTO.of(fetchedExercise, ExerciseVersionCommitHashResolver.resolveForExercise(fetchedExercise, gitService));
         // Compare via JSON strings to avoid null vs empty list mismatches from @JsonInclude(NON_EMPTY) round-trip
         assertThat(objectMapper.writeValueAsString(snapshot)).isEqualTo(objectMapper.writeValueAsString(expectedSnapshot));
         assertThat(objectMapper.writeValueAsString(snapshot)).isNotEqualTo(objectMapper.writeValueAsString(previousVersion.getExerciseSnapshot()));
@@ -192,7 +192,7 @@ class ExerciseVersionServiceTest extends AbstractProgrammingIntegrationLocalCILo
         assertThat(snapshot).isNotNull();
 
         Exercise fetchedExercise = fetchExerciseForComparison(exercise);
-        ExerciseSnapshotDTO expectedSnapshot = ExerciseSnapshotDTO.of(fetchedExercise, gitService);
+        ExerciseSnapshotDTO expectedSnapshot = ExerciseSnapshotDTO.of(fetchedExercise, ExerciseVersionCommitHashResolver.resolveForExercise(fetchedExercise, gitService));
         // Compare via JSON strings to avoid null vs empty list mismatches from @JsonInclude(NON_EMPTY) round-trip
         assertThat(objectMapper.writeValueAsString(snapshot)).isEqualTo(objectMapper.writeValueAsString(expectedSnapshot));
     }
