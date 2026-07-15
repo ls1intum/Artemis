@@ -1459,7 +1459,7 @@ components:
           items: {type: integer, format: int64}
     ExerciseGenerationStatus:
       type: object
-      required: [jobId, running, events, fileSnapshots, revertAvailable]
+      required: [jobId, running, events, fileSnapshots, revertAvailable, ownedByCaller, cancellable]
       properties:
         jobId: {type: string}
         running: {type: boolean}
@@ -1477,6 +1477,8 @@ components:
         revertMode:
           type: string
           enum: [GENERATE, ADAPT]
+        ownedByCaller: {type: boolean}
+        cancellable: {type: boolean}
     ExerciseGenerationEvent:
       type: object
       required: [type, timestamp]

@@ -151,7 +151,7 @@ public class GenerationPersistenceService {
     }
 
     /**
-     * Persists generated repository files from a non-accepted run without touching the live default branch. The generated problem statement is not stored by this recovery path.
+     * Persists generated repository files from a non-accepted run without touching the live default branch. Statement recovery is handled separately as a required review note.
      * Rejected repository output is diverted to an isolated branch with no CI build and no exercise version; only the accepted path may update the canonical exercise.
      *
      * @param exercise the exercise to persist the draft into
@@ -178,22 +178,31 @@ public class GenerationPersistenceService {
         String draftBranch = RECOVERY_DRAFT_BRANCH_PREFIX + jobId;
         String repositoryBranch = repositoryBranch(exercise);
         Set<RepositoryType> savedRepositories = EnumSet.noneOf(RepositoryType.class);
-        assertStillOwnsMutationSlot(stillOwnsMutationSlot);
-        if (commitDraftToIsolatedBranch(exercise, user, RepositoryType.TEMPLATE, outcome.producedFiles(RepositoryType.TEMPLATE), repositoryBranch, draftBranch)) {
-            savedRepositories.add(RepositoryType.TEMPLATE);
+        RuntimeException firstFailure = null;
+        for (RepositoryType repositoryType : PERSIST_ORDER) {
+            assertStillOwnsMutationSlot(stillOwnsMutationSlot);
+            try {
+                if (commitDraftToIsolatedBranch(exercise, user, repositoryType, outcome.producedFiles(repositoryType), repositoryBranch, draftBranch)) {
+                    savedRepositories.add(repositoryType);
+                }
+            }
+            catch (RuntimeException e) {
+                if (firstFailure == null) {
+                    firstFailure = e;
+                }
+                log.warn("Could not save the {} recovery draft for exercise {}; continuing with later repositories: {}", repositoryType, exercise.getId(), e.getMessage());
+            }
         }
-        assertStillOwnsMutationSlot(stillOwnsMutationSlot);
-        if (commitDraftToIsolatedBranch(exercise, user, RepositoryType.SOLUTION, outcome.producedFiles(RepositoryType.SOLUTION), repositoryBranch, draftBranch)) {
-            savedRepositories.add(RepositoryType.SOLUTION);
+        String liveProblemStatement = exercise.getProblemStatement() == null ? "" : exercise.getProblemStatement().trim();
+        boolean statementChanged = !liveProblemStatement.equals(outcome.producedProblemStatement().trim());
+        if (firstFailure != null) {
+            throw firstFailure;
         }
-        assertStillOwnsMutationSlot(stillOwnsMutationSlot);
-        if (commitDraftToIsolatedBranch(exercise, user, RepositoryType.TESTS, outcome.producedFiles(RepositoryType.TESTS), repositoryBranch, draftBranch)) {
-            savedRepositories.add(RepositoryType.TESTS);
-        }
-        if (savedRepositories.isEmpty()) {
+        if (savedRepositories.isEmpty() && !statementChanged) {
             throw new IllegalStateException("No repository draft was saved for exercise " + exercise.getId());
         }
-        log.info("Recovered non-accepted repository draft for exercise {} onto isolated branch {} in {}", exercise.getId(), draftBranch, savedRepositories);
+        log.info("Recovered non-accepted generation draft for exercise {} onto isolated branch {} in {}; generated statement present: {}", exercise.getId(), draftBranch,
+                savedRepositories, !outcome.producedProblemStatement().isBlank());
         return new RecoveryPersistResult(draftBranch, savedRepositories);
     }
 
@@ -321,9 +330,9 @@ public class GenerationPersistenceService {
                 targetTitle = generatedTitle;
             }
         }
+        assertStillOwnsMutationSlot(stillOwnsMutationSlot);
+        assertMetadataUnchangedSinceJobStart(exercise, originalProblemStatement, originalTitle);
         try {
-            assertStillOwnsMutationSlot(stillOwnsMutationSlot);
-            assertMetadataUnchangedSinceJobStart(exercise, originalProblemStatement, originalTitle);
             for (RepositoryType repositoryType : PERSIST_ORDER) {
                 assertStillOwnsMutationSlot(stillOwnsMutationSlot);
                 Map<String, String> producedFiles = outcome.producedFiles(repositoryType);

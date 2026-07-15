@@ -22,6 +22,8 @@ type GenerationStatus = {
     jobId: string;
     running: boolean;
     revertAvailable: boolean;
+    ownedByCaller: boolean;
+    cancellable: boolean;
     mode?: 'GENERATE' | 'ADAPT';
     events: {
         type: 'STARTED' | 'PROGRESS' | 'DONE' | 'CANCELLED' | 'ERROR';
@@ -47,7 +49,8 @@ type LlmMockRequestSummary = {
     roles?: string[];
     promptText?: string;
     toolNames?: string[];
-    executedToolNames?: string[];
+    acknowledgedToolNames?: string[];
+    responseToolName?: string;
 };
 
 const correctedSeedStatementMarker = 'more than 5 dates';
@@ -79,7 +82,7 @@ test.describe('Hyperion exercise generation browser UI', { tag: '@slow' }, () =>
     let runningJobId: string | undefined;
 
     test.beforeEach('Create unreleased Java programming exercise', async ({ login, page, exerciseAPIRequests }) => {
-        await skipIfHyperionGenerationUnavailable(page);
+        await requireHyperionGenerationAvailable(page);
         await login(admin);
         exercise = await exerciseAPIRequests.createProgrammingExercise({
             course,
@@ -233,6 +236,60 @@ test.describe('Hyperion exercise generation browser UI', { tag: '@slow' }, () =>
         runningJobId = undefined;
     });
 
+    test('keeps a non-owner editor locked until the owner stops and the exercise refreshes', async ({ browser, page, login }) => {
+        test.setTimeout(180_000);
+        await openEditor(page, login, exercise!);
+
+        const observerPage = await newBrowserPage(browser);
+        try {
+            await Commands.login(
+                observerPage,
+                admin,
+                `/course-management/${course.id}/programming-exercises/${exercise!.id}/code-editor/TEMPLATE/${exercise!.templateParticipation!.id}`,
+            );
+            await openHyperionTabWithKeyboard(observerPage);
+            await expectHyperionTabSelected(observerPage);
+            await expect(observerPage.getByTestId('hyperion-generation-activity')).toBeVisible({ timeout: 60_000 });
+            await expect(observerPage.getByTestId('hyperion-generation-empty')).toBeVisible();
+
+            const { jobId } = await startGenerationFromMenu(page, exercise!.id!);
+            runningJobId = jobId;
+
+            await expect(observerPage.getByTestId('hyperion-generation-cancel')).toBeHidden();
+            await expect(observerPage.getByTestId('hyperion-generation-activity')).toContainText('another instructor', { timeout: 60_000 });
+            await expectEditorActionsLockedDuringGeneration(observerPage);
+
+            const observerStatusResponse = await observerPage.request.get(`api/hyperion/programming-exercises/${exercise!.id}/generate-exercise/status`);
+            expect(observerStatusResponse.ok()).toBeTruthy();
+            const observerStatus = (await observerStatusResponse.json()) as GenerationStatus;
+            expect(observerStatus).toMatchObject({ jobId, running: true, ownedByCaller: false, cancellable: false });
+            expect(observerStatus.events).toEqual([]);
+            expect(observerStatus.fileSnapshots ?? []).toEqual([]);
+
+            const observerCancel = await observerPage.request.delete(`api/hyperion/programming-exercises/${exercise!.id}/generate-exercise/jobs/${jobId}`);
+            expect(observerCancel.status()).toBe(404);
+
+            const refreshedResponses: string[] = [];
+            observerPage.on('response', (response) => {
+                if (response.ok() && response.request().method() === 'GET') {
+                    refreshedResponses.push(response.url());
+                }
+            });
+            await cancelRunningJobFromUi(page, exercise!.id!, jobId);
+            runningJobId = undefined;
+
+            const observerActivity = observerPage.getByTestId('hyperion-generation-activity');
+            await expect(observerActivity.getByTestId('hyperion-generation-empty')).toBeVisible({ timeout: 60_000 });
+            await expect(observerActivity).toContainText('No generation activity yet');
+            await expect(observerPage.getByTestId('hyperion-ai-menu')).toBeEnabled();
+            await expect(observerPage.locator('#submit_button')).toBeEnabled();
+            await expect(observerPage.locator('#refresh_button')).toBeEnabled();
+            expect(refreshedResponses.some((url) => url.includes(`/api/programming/programming-exercises/${exercise!.id}`))).toBeTruthy();
+        } finally {
+            await observerPage.context().close();
+        }
+    });
+
     test('starts adaptation through the real Hyperion workflow with instructor instructions', async ({ page, login }) => {
         test.setTimeout(180_000);
         const initialLlmRequests = await getHyperionLlmMockRequestCount(page);
@@ -283,7 +340,7 @@ test.describe('Hyperion exercise generation browser UI', { tag: '@slow' }, () =>
         });
         const activity = page.getByTestId('hyperion-generation-activity');
         await expect(activity).toContainText('Checking the exercise builds and grades', { timeout: 180_000 });
-        await expect(activity).toContainText('full-artifact review found contract issues', { timeout: 180_000 });
+        await expect(activity).toContainText('exercise review found requirements or quality issues', { timeout: 180_000 });
         const buildOutputTab = page.getByRole('tab', { name: 'Build Output' });
         await selectTabWithKeyboard(page.getByRole('tab', { name: 'AI activity' }), buildOutputTab, 'ArrowLeft');
         await expectSuccessfulGenerationStatus(page, exercise!.id!, jobId, 'ADAPT');
@@ -348,10 +405,11 @@ test.describe('Hyperion exercise generation browser UI', { tag: '@slow' }, () =>
         }
     });
 
-    test('surfaces external LLM failures through the real Hyperion workflow and unlocks the UI', async ({ browser, page, login }) => {
+    test('preserves useful work after a late external LLM failure and leaves the live exercise unchanged', async ({ browser, page, login }) => {
         test.setTimeout(240_000);
         const initialLlmRequests = await getHyperionLlmMockRequestCount(page);
         await openEditor(page, login, exercise!);
+        const initialSolutionFiles = await getRepositoryFiles(page, `api/programming/programming-exercises/${exercise!.id}/solution-files-content?omitBinaries=true`);
 
         await page.getByTestId('hyperion-ai-menu').click();
         await page.getByTestId('hyperion-adapt-with-feedback').click();
@@ -368,23 +426,47 @@ test.describe('Hyperion exercise generation browser UI', { tag: '@slow' }, () =>
         });
 
         const activity = page.getByTestId('hyperion-generation-activity');
-        await expect(activity).toContainText('The agent loop ended with an error.', { timeout: 180_000 });
-        await expect(activity.getByTestId('hyperion-generation-persistence-state')).toContainText('Not saved — failed');
-        await expect(activity.getByTestId('hyperion-generation-file').getByRole('button')).toHaveCount(0);
+        await expect(activity.getByTestId('hyperion-generation-persistence-state')).toContainText('Draft saved — live exercise unchanged', { timeout: 120_000 });
+        await expect(activity.getByTestId('hyperion-generation-file-static')).toContainText('HyperionRecovery.java');
         await expect(page.getByTestId('hyperion-generation-cancel')).toBeHidden();
         await expect(page.getByTestId('hyperion-ai-menu')).toBeEnabled();
         await expectHyperionLlmMockRequestsIncreased(page, initialLlmRequests);
-        await expectTerminalGenerationStatus(page, exercise!.id!, jobId, 'ERROR');
+        await expect
+            .poll(async () =>
+                repositoryFilesEqual(
+                    await getRepositoryFiles(page, `api/programming/programming-exercises/${exercise!.id}/solution-files-content?omitBinaries=true`),
+                    initialSolutionFiles,
+                ),
+            )
+            .toBe(true);
+        await expect
+            .poll(async () => {
+                const status = await getGenerationStatus(page, exercise!.id!);
+                const terminal = [...status.events].reverse().find((event) => event.type === 'DONE');
+                return { jobId: status.jobId, running: status.running, completionStatus: terminal?.completionStatus, liveExerciseChanged: terminal?.liveExerciseChanged };
+            })
+            .toEqual({ jobId, running: false, completionStatus: 'NEEDS_REVIEW', liveExerciseChanged: false });
+
+        const freshPage = await newBrowserPage(browser);
+        try {
+            await openEditor(freshPage, (credentials, url) => Commands.login(freshPage, credentials, url), exercise!);
+            await openHyperionTabWithKeyboard(freshPage);
+            const recovered = freshPage.getByTestId('hyperion-generation-activity');
+            await expect(recovered.getByTestId('hyperion-generation-persistence-state')).toContainText('Draft saved — live exercise unchanged');
+            await expect(recovered.getByTestId('hyperion-generation-file-static')).toContainText('HyperionRecovery.java');
+        } finally {
+            await freshPage.context().close();
+        }
         await expectAdminGenerationSandboxSlots(browser, '0 / 1');
         runningJobId = undefined;
     });
 });
 
-async function skipIfHyperionGenerationUnavailable(page: Page) {
+async function requireHyperionGenerationAvailable(page: Page) {
     const response = await page.request.get('/management/info');
-    test.skip(!response.ok(), 'Hyperion generation E2E needs management info to detect active features.');
+    expect(response.ok(), 'Hyperion generation E2E needs management info to detect active features.').toBeTruthy();
     const info = await response.json();
-    test.skip(!info.activeModuleFeatures?.includes('hyperion'), 'Hyperion generation is not enabled in this E2E environment.');
+    expect(info.activeModuleFeatures, 'Hyperion generation must be enabled in the dedicated mocked E2E environment.').toContain('hyperion');
 }
 
 async function openEditor(page: Page, login: (credentials: UserCredentials, url?: string) => Promise<void>, programmingExercise: ProgrammingExercise) {
@@ -650,7 +732,11 @@ async function expectLlmMockSawPrompt(page: Page, expectedPromptSnippet: string,
     await expect
         .poll(async () => {
             const requests = (await getHyperionLlmMockRequests(page)).slice(firstRequestIndex);
-            const matching = requests.find((request) => request.promptText?.includes(expectedPromptSnippet));
+            const matching = requests.find(
+                (request) =>
+                    request.promptText?.includes(expectedPromptSnippet) &&
+                    ['write_file', 'edit_file', 'delete_file', 'bash', 'submit'].every((tool) => request.toolNames?.includes(tool)),
+            );
             return matching
                 ? {
                       hasPrompt: true,

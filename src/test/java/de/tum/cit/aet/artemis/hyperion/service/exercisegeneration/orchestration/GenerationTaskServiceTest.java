@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -112,6 +113,7 @@ class GenerationTaskServiceTest {
         });
         when(persistenceService.persist(any(), any(), any(), any(), any(), anyString(), any()))
                 .thenReturn(new GenerationPersistenceService.PersistResult(Map.of(), Map.of(), exercise.getProblemStatement(), exercise.getTitle(), "main"));
+        when(generationRevertService.recordBaseline(any(), anyString(), any(), any(), any(), any(), any(), any(), any(), anyString())).thenReturn(true);
     }
 
     /** Builds a run-completing outcome that holds the mock orchestrator + sandbox, so try-with-resources close() is observable as a destroyQuietly call. */
@@ -198,6 +200,20 @@ class GenerationTaskServiceTest {
     }
 
     @Test
+    void transientHeartbeatFailure_doesNotSuppressLaterHeartbeatAttempts() {
+        ArgumentCaptor<Runnable> heartbeat = ArgumentCaptor.forClass(Runnable.class);
+        when(jobService.heartbeat(EXERCISE_ID, JOB_ID)).thenThrow(new IllegalStateException("cluster temporarily unavailable")).thenReturn(true);
+        run(GenerationMode.GENERATE, outcomeWith(AgentLoopResult.Status.CANCELLED, null));
+        verify(taskScheduler).scheduleWithFixedDelay(heartbeat.capture(), any(java.time.Duration.class));
+
+        assertThatCode(heartbeat.getValue()::run).doesNotThrowAnyException();
+        assertThatCode(heartbeat.getValue()::run).doesNotThrowAnyException();
+
+        verify(jobService, Mockito.times(2)).heartbeat(EXERCISE_ID, JOB_ID);
+        verify(jobService, never()).requestSystemCancellation(EXERCISE_ID, JOB_ID);
+    }
+
+    @Test
     void acceptedRun_usesStartTimeProblemStatementAndTitleAsPersistenceGuard() {
         exercise.setProblemStatement("Original problem statement");
         exercise.setTitle("Original title");
@@ -237,15 +253,62 @@ class GenerationTaskServiceTest {
     void acceptedRun_whenMultiRepoPersistIsIncomplete_emitsStructuredPartial() {
         when(persistenceService.persist(any(), any(), any(), any(), any(), anyString(), any()))
                 .thenThrow(new GenerationIncompleteException("already-committed repositories were reverted", new RuntimeException()));
+        when(recoveryService.recover(any(), any(), any(), anyString(), any()))
+                .thenReturn(new GenerationRecoveryService.RecoveryResult(1, "hyperion-draft/job-1", Set.of(RepositoryType.SOLUTION, RepositoryType.TESTS)));
 
         run(GenerationMode.GENERATE, outcomeWith(AgentLoopResult.Status.COMPLETED, new VerificationResult(true, true, true, 3, List.of())));
 
         ExerciseGenerationEventDTO terminal = sentEvents().getLast();
         assertThat(terminal.type()).isEqualTo(ExerciseGenerationEventDTO.Type.DONE);
         assertThat(terminal.completionStatus()).isEqualTo(ExerciseGenerationEventDTO.CompletionStatus.PARTIAL);
+        assertThat(terminal.liveExerciseChanged()).isTrue();
         assertThat(terminal.verdict().accepted()).isTrue();
-        assertThat(terminal.message()).contains("may already have been saved", "manual review");
+        assertThat(terminal.message()).contains("may already have been saved", "manual review", "hyperion-draft/job-1", "verified candidate");
         assertThat(terminal.message()).doesNotContain("already-committed repositories");
+        verify(recoveryService).recover(any(), any(), any(), eq(JOB_ID), any());
+    }
+
+    @Test
+    void acceptedRun_whenIncompletePersistAndRecoveryBothFail_stillRefreshesPotentiallyChangedLiveState() {
+        when(persistenceService.persist(any(), any(), any(), any(), any(), anyString(), any()))
+                .thenThrow(new GenerationIncompleteException("live state may be partial", new RuntimeException()));
+        when(recoveryService.recover(any(), any(), any(), anyString(), any())).thenThrow(new RuntimeException("draft persist failed"));
+
+        run(GenerationMode.GENERATE, outcomeWith(AgentLoopResult.Status.COMPLETED, new VerificationResult(true, true, true, 3, List.of())));
+
+        ExerciseGenerationEventDTO terminal = sentEvents().getLast();
+        assertThat(terminal.completionStatus()).isEqualTo(ExerciseGenerationEventDTO.CompletionStatus.PARTIAL);
+        assertThat(terminal.liveExerciseChanged()).isTrue();
+        assertThat(terminal.message()).contains("may already have been saved", "could not be fully preserved");
+    }
+
+    @Test
+    void acceptedRun_whenRevertCheckpointFails_reportsSuccessfulSaveWithoutHidingTheDegradation() {
+        when(generationRevertService.recordBaseline(any(), anyString(), any(), any(), any(), any(), any(), any(), any(), anyString())).thenReturn(false);
+
+        run(GenerationMode.GENERATE, outcomeWith(AgentLoopResult.Status.COMPLETED, new VerificationResult(true, true, true, 3, List.of())));
+
+        ExerciseGenerationEventDTO terminal = sentEvents().getLast();
+        assertThat(terminal.completionStatus()).isEqualTo(ExerciseGenerationEventDTO.CompletionStatus.SUCCESS);
+        assertThat(terminal.liveExerciseChanged()).isTrue();
+        assertThat(terminal.message()).contains("generated and saved", "Automatic revert is unavailable");
+    }
+
+    @Test
+    void acceptedRun_whenSavingFailsBeforeLiveMutation_preservesTheVerifiedCandidateForReview() {
+        when(persistenceService.persist(any(), any(), any(), any(), any(), anyString(), any())).thenThrow(new IllegalStateException("metadata changed"));
+        when(recoveryService.recover(any(), any(), any(), anyString(), any()))
+                .thenReturn(new GenerationRecoveryService.RecoveryResult(1, "hyperion-draft/job-1", Set.of(RepositoryType.TEMPLATE, RepositoryType.SOLUTION)));
+
+        run(GenerationMode.GENERATE, outcomeWith(AgentLoopResult.Status.COMPLETED, new VerificationResult(true, true, true, 3, List.of())));
+
+        ExerciseGenerationEventDTO terminal = sentEvents().getLast();
+        assertThat(terminal.type()).isEqualTo(ExerciseGenerationEventDTO.Type.DONE);
+        assertThat(terminal.completionStatus()).isEqualTo(ExerciseGenerationEventDTO.CompletionStatus.NEEDS_REVIEW);
+        assertThat(terminal.verdict().accepted()).isTrue();
+        assertThat(terminal.liveExerciseChanged()).isFalse();
+        assertThat(terminal.message()).contains("Saving the live exercise failed", "verified candidate", "hyperion-draft/job-1").doesNotContain("metadata changed");
+        verify(recoveryService).recover(any(), any(), any(), eq(JOB_ID), any());
     }
 
     @Test
@@ -294,7 +357,7 @@ class GenerationTaskServiceTest {
         assertThat(terminal.completionStatus()).isEqualTo(ExerciseGenerationEventDTO.CompletionStatus.NEEDS_REVIEW);
         assertThat(terminal.verdict().accepted()).isFalse();
         assertThat(terminal.liveExerciseChanged()).isFalse();
-        assertThat(terminal.message()).contains("repository files", "problem statement was not saved");
+        assertThat(terminal.message()).contains("repository files", "problem statement did not differ from the live exercise");
         // A rejected outcome never goes through the clean persist path; recovery owns the draft save.
         verify(persistenceService, never()).persist(any(), any(), any(), any(), any(), anyString(), any());
         verify(jobService).enterNonCancellablePhase(EXERCISE_ID, JOB_ID);
@@ -396,6 +459,8 @@ class GenerationTaskServiceTest {
         assertThat(terminal.completionStatus()).isEqualTo(ExerciseGenerationEventDTO.CompletionStatus.NEEDS_REVIEW);
         assertThat(terminal.verdict().accepted()).isTrue();
         assertThat(terminal.liveExerciseChanged()).isFalse();
+        assertThat(terminal.message()).contains("1 issue to review", "requirements issue", "review notes").doesNotContain("contract issue",
+                "The feedback required preserving displayName");
         verify(persistenceService, never()).persist(any(), any(), any(), any(), any(), anyString(), any());
         verify(recoveryService).recover(any(), any(), any(), anyString(), any());
     }
@@ -410,7 +475,7 @@ class GenerationTaskServiceTest {
         run(GenerationMode.ADAPT, outcomeWith(AgentLoopResult.Status.COMPLETED, new VerificationResult(false, false, true, 3, List.of("solution failed")), report));
 
         ExerciseGenerationEventDTO terminal = sentEvents().getLast();
-        assertThat(terminal.message()).contains("did not pass verification", "solution failed", "exercise-quality review also found")
+        assertThat(terminal.message()).contains("did not pass verification", "exercise-quality review also found", "review notes").doesNotContain("solution failed")
                 .doesNotContain("Build and grading checks passed");
     }
 
@@ -426,7 +491,7 @@ class GenerationTaskServiceTest {
     }
 
     @Test
-    void deadlineExceeded_requestsSystemCancellationAndEmitsSpecificTerminalMessage() {
+    void deadlineExceeded_stopsCooperativelyAndEmitsSpecificTerminalMessage() {
         ArgumentCaptor<Runnable> deadline = ArgumentCaptor.forClass(Runnable.class);
         when(orchestrator.generate(any(), any(), any(), any(), any(), any(), any(), any(), any())).thenAnswer((Answer<GenerationOutcome>) invocation -> {
             verify(taskScheduler).schedule(deadline.capture(), any(java.time.Instant.class));
@@ -447,10 +512,10 @@ class GenerationTaskServiceTest {
         ArgumentCaptor<Runnable> deadline = ArgumentCaptor.forClass(Runnable.class);
         when(orchestrator.generate(any(), any(), any(), any(), any(), any(), any(), any(), any())).thenAnswer((Answer<GenerationOutcome>) invocation -> {
             verify(taskScheduler).schedule(deadline.capture(), any(java.time.Instant.class));
-            deadline.getValue().run();
             return outcomeWith(AgentLoopResult.Status.COMPLETED, new VerificationResult(true, true, true, 3, List.of()));
         });
         when(persistenceService.persist(any(), any(), any(), any(), any(), anyString(), any())).thenAnswer(invocation -> {
+            deadline.getValue().run();
             BooleanSupplier mutationGuard = invocation.getArgument(6);
             assertThat(mutationGuard.getAsBoolean()).isFalse();
             throw new GenerationIncompleteException("deadline closed the mutation guard", new IllegalStateException());
@@ -462,7 +527,27 @@ class GenerationTaskServiceTest {
     }
 
     @Test
-    void tokenBudgetExceeded_requestsSystemCancellationAndEmitsSpecificTerminalMessage() {
+    void exerciseBecomingIneligibleDuringPersistence_closesTheMutationGuard() {
+        when(jobService.isOwnedActiveJob(EXERCISE_ID, JOB_ID)).thenReturn(true);
+        when(programmingExerciseRepository.isUnreleasedAndWithoutStudentParticipations(EXERCISE_ID)).thenReturn(true, false);
+        when(orchestrator.generate(any(), any(), any(), any(), any(), any(), any(), any(), any()))
+                .thenReturn(outcomeWith(AgentLoopResult.Status.COMPLETED, new VerificationResult(true, true, true, 3, List.of())));
+        when(recoveryService.recover(any(), any(), any(), anyString(), any()))
+                .thenReturn(new GenerationRecoveryService.RecoveryResult(1, "hyperion-draft/job-1", Set.of(RepositoryType.SOLUTION)));
+        when(persistenceService.persist(any(), any(), any(), any(), any(), anyString(), any())).thenAnswer(invocation -> {
+            BooleanSupplier mutationGuard = invocation.getArgument(6);
+            assertThat(mutationGuard.getAsBoolean()).isTrue();
+            assertThat(mutationGuard.getAsBoolean()).isFalse();
+            throw new GenerationIncompleteException("exercise became ineligible while saving", new IllegalStateException());
+        });
+
+        taskService.runAsync(new GenerationStartedEvent(JOB_ID, user, exercise, "make it", GenerationMode.GENERATE));
+
+        assertThat(sentEvents().getLast().completionStatus()).isEqualTo(ExerciseGenerationEventDTO.CompletionStatus.PARTIAL);
+    }
+
+    @Test
+    void tokenBudgetExceeded_stopsCooperativelyAndEmitsSpecificTerminalMessage() {
         taskService = new GenerationTaskService(orchestrator, persistenceService, recoveryService, websocket, jobService, programmingExerciseRepository, generationBudgetService,
                 generationRevertService, taskScheduler, java.time.Duration.ofMinutes(30), 10, java.time.Duration.ofSeconds(15));
         when(orchestrator.generate(any(), any(), any(), any(), any(), any(), any(), any(), any())).thenAnswer((Answer<GenerationOutcome>) invocation -> {
@@ -477,7 +562,7 @@ class GenerationTaskServiceTest {
         ExerciseGenerationEventDTO terminal = sentEvents().getLast();
         assertThat(terminal.type()).isEqualTo(ExerciseGenerationEventDTO.Type.CANCELLED);
         assertThat(terminal.message()).contains("token budget");
-        verify(jobService).requestSystemCancellation(EXERCISE_ID, JOB_ID);
+        verify(jobService, never()).requestSystemCancellation(EXERCISE_ID, JOB_ID);
     }
 
     @Test
@@ -487,6 +572,26 @@ class GenerationTaskServiceTest {
         assertThat(sentEvents().getLast().type()).isEqualTo(ExerciseGenerationEventDTO.Type.ERROR);
         verify(persistenceService, never()).persist(any(), any(), any(), any(), any(), anyString(), any());
         verify(recoveryService, never()).recover(any(), any(), any(), anyString());
+    }
+
+    @Test
+    void erroredRunWithChangedArtifacts_preservesAnIsolatedReviewDraft() {
+        GenerationOutcome outcome = new GenerationOutcome(new AgentLoopResult(AgentLoopResult.Status.ERROR, 4, "Provider stopped responding"), null, SESSION_ID, orchestrator,
+                sandbox, Map.of(RepositoryType.SOLUTION, Map.of("src/Library.java", "class Library {}")), "Improved statement",
+                SpecFidelityReport.qualityReviewUnavailable("The partial candidate was not verified."), Map.of());
+        when(recoveryService.recover(any(), any(), any(), anyString(), any()))
+                .thenReturn(new GenerationRecoveryService.RecoveryResult(2, "hyperion-draft/job-1", Set.of(RepositoryType.SOLUTION)));
+
+        run(GenerationMode.GENERATE, outcome);
+
+        ExerciseGenerationEventDTO terminal = sentEvents().getLast();
+        assertThat(terminal.type()).isEqualTo(ExerciseGenerationEventDTO.Type.DONE);
+        assertThat(terminal.completionStatus()).isEqualTo(ExerciseGenerationEventDTO.CompletionStatus.NEEDS_REVIEW);
+        assertThat(terminal.message()).contains("live exercise was left unchanged", "hyperion-draft/job-1", "problem statement was preserved");
+        assertThat(terminal.message()).contains("not verified", "review notes").doesNotContain("stopped before verification", "within the budget");
+        verify(recoveryService).recover(eq(exercise), eq(user), eq(outcome), eq(JOB_ID), any());
+        verify(persistenceService, never()).persist(any(), any(), any(), any(), any(), anyString(), any());
+        verify(orchestrator).destroyQuietly(sandbox, SESSION_ID);
     }
 
     @Test

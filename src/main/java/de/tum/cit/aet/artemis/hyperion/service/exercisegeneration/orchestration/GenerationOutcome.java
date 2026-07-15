@@ -39,16 +39,17 @@ public final class GenerationOutcome implements AutoCloseable {
     private final String errorMessage;
 
     /**
-     * The verification-time produced files per repository, captured so persist reuses them instead of re-reading the sandbox. Empty when verification never ran (cancelled/errored
-     * outcomes), which are never persisted, so {@link #producedFiles} then returns an empty map.
+     * Produced files captured from the sandbox. Verified outcomes reuse the verification extraction; an errored run may carry a complete best-effort extraction for isolated
+     * recovery.
+     * Cancelled and unrecoverable errored outcomes keep this empty.
      */
     private final Map<RepositoryType, Map<String, String>> capturedProducedFiles;
 
     private final Map<RepositoryType, String> seedRepositoryHeads;
 
     /**
-     * The verification-time produced problem statement, captured to avoid re-reading it at persist. {@code null} when verification never ran (such outcomes are never persisted;
-     * {@link #producedProblemStatement} then returns an empty string).
+     * The produced problem statement captured to avoid a later sandbox read. It may also be present on an errored run so recovery can preserve a changed statement in a review
+     * note.
      */
     @Nullable
     private final String capturedProblemStatement;
@@ -112,6 +113,11 @@ public final class GenerationOutcome implements AutoCloseable {
 
     public AgentLoopResult loopResult() {
         return loopResult;
+    }
+
+    /** @return whether an errored run still carries changed workspace artifacts that can be saved to an isolated review draft */
+    public boolean hasRecoverableDraft() {
+        return sessionId != null && (!capturedProducedFiles.isEmpty() || capturedProblemStatement != null);
     }
 
     @Nullable

@@ -130,9 +130,7 @@ class AgentLoopRunnerTest {
     @Test
     void agentLoop_backsOffAndRetriesTransientModelFailures_thenRecovers() {
         ChatModel chatModel = mock(ChatModel.class);
-        // Exercise both a typed transport failure and an untyped HTTP 503 before recovery.
-        when(chatModel.call(any(Prompt.class))).thenThrow(new OpenAIIoException("read timed out"))
-                .thenThrow(new RuntimeException("GPU endpoint returned HTTP 503: service unavailable")).thenReturn(textResponse("DONE"));
+        when(chatModel.call(any(Prompt.class))).thenThrow(new OpenAIIoException("read timed out")).thenReturn(textResponse("DONE"));
 
         AgentLoopRunner runner = newTestRunner(List.of(chatModel), 128_000);
         runner.setModelCallRetryTimingForTests(0L, 0L); // no real backoff waits in the test
@@ -144,7 +142,7 @@ class AgentLoopRunnerTest {
 
         assertThat(result.status()).isEqualTo(AgentLoopResult.Status.COMPLETED);
         assertThat(result.finalMessage()).isEqualTo("DONE");
-        verify(chatModel, times(3)).call(any(Prompt.class)); // 2 transient failures + 1 success
+        verify(chatModel, times(2)).call(any(Prompt.class));
         assertThat(recorded).hasSize(1);
         assertThat(steps).contains("The AI service is temporarily unavailable. Retrying.").noneMatch(step -> step.contains("read timed out"));
     }
@@ -216,7 +214,7 @@ class AgentLoopRunnerTest {
         AgentLoopResult result = runner.run("system", "do it", new SandboxAgentTools(new FakeSandbox(), "fake-session"), 10, () -> false, null, null);
 
         assertThat(result.status()).isEqualTo(AgentLoopResult.Status.ERROR);
-        verify(rateLimitedModel, times(6)).call(any(Prompt.class));
+        verify(rateLimitedModel, times(2)).call(any(Prompt.class));
 
         ChatModel secondChatModel = mock(ChatModel.class);
         when(secondChatModel.call(any(Prompt.class))).thenReturn(textResponse("DONE"));
@@ -304,6 +302,22 @@ class AgentLoopRunnerTest {
     }
 
     @Test
+    void agentLoop_repeatedEmptyResponsesReportErrorInsteadOfSilentCompletion() {
+        ChatModel chatModel = mock(ChatModel.class);
+        when(chatModel.call(any(Prompt.class))).thenReturn(textResponse(""));
+
+        AgentLoopRunner runner = newTestRunner(List.of(chatModel), 128_000);
+        runner.setModelCallRetryTimingForTests(0L, 0L);
+        List<String> steps = new ArrayList<>();
+
+        AgentLoopResult result = runner.run("system", "do it", new SandboxAgentTools(new FakeSandbox(), "fake-session"), 10, () -> false, null, steps::add);
+
+        assertThat(result.status()).isEqualTo(AgentLoopResult.Status.ERROR);
+        verify(chatModel, times(2)).call(any(Prompt.class));
+        assertThat(steps).contains("The AI service returned no usable response.");
+    }
+
+    @Test
     void agentLoop_interruptedDuringEmptyResponseBackoff_reportsError() {
         ChatModel chatModel = mock(ChatModel.class);
         // A cancel lands while the empty-response re-sample is backing off: the interrupt must surface as ERROR, not be papered over by handing the benign empty response to the
@@ -327,7 +341,7 @@ class AgentLoopRunnerTest {
     }
 
     @Test
-    void agentLoop_givesUpAfterAllSixAttemptsFail_andReportsError() {
+    void agentLoop_givesUpAfterTheBoundedOuterAttemptsFail_andReportsError() {
         ChatModel chatModel = mock(ChatModel.class);
         when(chatModel.call(any(Prompt.class))).thenThrow(new RuntimeException("GPU endpoint returned HTTP 500"));
 
@@ -339,7 +353,7 @@ class AgentLoopRunnerTest {
         AgentLoopResult result = runner.run("system", "do it", tools, 10, () -> false, null, steps::add);
 
         assertThat(result.status()).isEqualTo(AgentLoopResult.Status.ERROR);
-        verify(chatModel, times(6)).call(any(Prompt.class)); // transient 5xx retried up to MODEL_CALL_ATTEMPTS, all exhausted
+        verify(chatModel, times(2)).call(any(Prompt.class));
         assertThat(steps).contains("The AI service could not complete the request.").noneMatch(step -> step.contains("GPU endpoint"));
     }
 

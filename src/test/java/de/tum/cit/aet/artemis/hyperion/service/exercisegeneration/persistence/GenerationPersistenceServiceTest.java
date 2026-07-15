@@ -378,8 +378,8 @@ class GenerationPersistenceServiceTest {
 
         GenerationOutcome outcome = outcomeWith(Map.of("Template.java", "t"), Map.of("Solution.java", "s"), Map.of("Test.java", "x"), "new statement");
 
-        assertThatThrownBy(() -> service.persist(exercise, user, outcome, "original statement", null)).isInstanceOf(GenerationIncompleteException.class)
-                .hasMessageContaining("problem statement").hasMessageContaining("INCOMPLETE");
+        assertThatThrownBy(() -> service.persist(exercise, user, outcome, "original statement", null)).isInstanceOf(IllegalStateException.class)
+                .isNotInstanceOf(GenerationIncompleteException.class).hasMessageContaining("problem statement");
 
         verify(programmingExerciseRepository, never()).updateProblemStatementAndTitleIfUnchanged(anyLong(), any(), any(), any(), any());
         verify(repositoryService, never()).commitChanges(any(), any());
@@ -394,8 +394,8 @@ class GenerationPersistenceServiceTest {
 
         GenerationOutcome outcome = outcomeWith(Map.of("Template.java", "t"), Map.of("Solution.java", "s"), Map.of("Test.java", "x"), "new statement");
 
-        assertThatThrownBy(() -> service.persist(exercise, user, outcome, "old statement", null)).isInstanceOf(GenerationIncompleteException.class)
-                .hasMessageContaining("problem statement").hasMessageContaining("INCOMPLETE");
+        assertThatThrownBy(() -> service.persist(exercise, user, outcome, "old statement", null)).isInstanceOf(IllegalStateException.class)
+                .isNotInstanceOf(GenerationIncompleteException.class).hasMessageContaining("problem statement");
 
         verify(programmingExerciseRepository, never()).updateProblemStatementAndTitleIfUnchanged(anyLong(), any(), any(), any(), any());
         verify(repositoryService, never()).commitChanges(any(), any());
@@ -449,8 +449,8 @@ class GenerationPersistenceServiceTest {
 
         GenerationOutcome outcome = outcomeWith(Map.of("Template.java", "t"), Map.of("Solution.java", "s"), Map.of("Test.java", "x"), "new statement");
 
-        assertThatThrownBy(() -> service.persist(exercise, user, outcome, "old statement", "Original title")).isInstanceOf(GenerationIncompleteException.class)
-                .hasMessageContaining("problem statement/title changed");
+        assertThatThrownBy(() -> service.persist(exercise, user, outcome, "old statement", "Original title")).isInstanceOf(IllegalStateException.class)
+                .isNotInstanceOf(GenerationIncompleteException.class).hasMessageContaining("problem statement/title changed");
 
         verify(repositoryService, never()).commitChanges(any(), any());
     }
@@ -463,8 +463,8 @@ class GenerationPersistenceServiceTest {
 
         GenerationOutcome outcome = outcomeWith(Map.of("Template.java", "t"), Map.of("Solution.java", "s"), Map.of("Test.java", "x"), "old statement");
 
-        assertThatThrownBy(() -> service.persist(exercise, user, outcome, "old statement", "Original title")).isInstanceOf(GenerationIncompleteException.class)
-                .hasMessageContaining("problem statement/title changed");
+        assertThatThrownBy(() -> service.persist(exercise, user, outcome, "old statement", "Original title")).isInstanceOf(IllegalStateException.class)
+                .isNotInstanceOf(GenerationIncompleteException.class).hasMessageContaining("problem statement/title changed");
 
         verify(repositoryService, never()).commitChanges(any(), any());
     }
@@ -1024,28 +1024,82 @@ class GenerationPersistenceServiceTest {
     }
 
     @Test
-    void persistRecoveryDraft_adaptIsolatedPushFailsMidMultiRepo_propagates_andNeverTouchesDefaultBranch() throws Exception {
+    void persistRecoveryDraft_adaptIsolatedPushFailsMidMultiRepo_savesLaterRepositoriesButReportsIncompleteRecovery() throws Exception {
         stubSuccessfulCheckoutAndCommits();
         stubAdaptTarget();
         when(gitService.commitToIsolatedBranchAndPush(any(), eq("hyperion-draft/" + jobId), any(), eq(user))).thenReturn("draft-template")
-                .thenThrow(new org.eclipse.jgit.api.errors.NoHeadException("isolated push boom"));
+                .thenThrow(new org.eclipse.jgit.api.errors.NoHeadException("isolated push boom")).thenReturn("draft-tests");
         GenerationOutcome outcome = outcomeWith(Map.of("Template.java", "t"), Map.of("Solution.java", "s"), Map.of("Test.java", "x"), "");
 
-        assertThatThrownBy(() -> service.persistRecoveryDraft(exercise, user, outcome, jobId)).isInstanceOf(IllegalStateException.class).hasMessageContaining("recovery draft");
+        assertThatThrownBy(() -> service.persistRecoveryDraft(exercise, user, outcome, jobId)).isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("solution recovery draft");
+        verify(gitService, times(3)).commitToIsolatedBranchAndPush(any(), eq("hyperion-draft/" + jobId), any(), eq(user));
         verify(repositoryService, never()).commitChanges(any(), any());
         verify(exerciseVersionService, never()).createExerciseVersionOrThrow(any(), any());
     }
 
     @Test
-    void persistRecoveryDraft_whenProducedTreesMatchLiveRepositories_doesNotClaimDraftBranch() throws Exception {
+    void persistRecoveryDraft_whenEveryIsolatedPushFailsAndStatementIsUnchanged_preservesFailure() throws Exception {
+        stubSuccessfulCheckoutAndCommits();
+        stubAdaptTarget();
+        when(gitService.commitToIsolatedBranchAndPush(any(), eq("hyperion-draft/" + jobId), any(), eq(user)))
+                .thenThrow(new org.eclipse.jgit.api.errors.NoHeadException("isolated push boom"));
+        GenerationOutcome outcome = outcomeWith(Map.of("Template.java", "t"), Map.of("Solution.java", "s"), Map.of("Test.java", "x"), "");
+
+        assertThatThrownBy(() -> service.persistRecoveryDraft(exercise, user, outcome, jobId)).isInstanceOf(IllegalStateException.class).hasMessageContaining("recovery draft");
+
+        verify(gitService, times(3)).commitToIsolatedBranchAndPush(any(), eq("hyperion-draft/" + jobId), any(), eq(user));
+    }
+
+    @Test
+    void persistRecoveryDraft_afterRepositoryFailure_rechecksOwnershipBeforeTryingTheNextRepository() throws Exception {
+        stubSuccessfulCheckoutAndCommits();
+        stubAdaptTarget();
+        when(gitService.commitToIsolatedBranchAndPush(any(), eq("hyperion-draft/" + jobId), any(), eq(user)))
+                .thenThrow(new org.eclipse.jgit.api.errors.NoHeadException("isolated push boom"));
+        AtomicInteger ownershipChecks = new AtomicInteger();
+        GenerationOutcome outcome = outcomeWith(Map.of("Template.java", "t"), Map.of("Solution.java", "s"), Map.of("Test.java", "x"), "");
+
+        assertThatThrownBy(() -> service.persistRecoveryDraft(exercise, user, outcome, jobId, () -> ownershipChecks.incrementAndGet() == 1))
+                .isInstanceOf(IllegalStateException.class).hasMessageContaining("lost ownership");
+
+        assertThat(ownershipChecks).hasValue(2);
+        verify(gitService).commitToIsolatedBranchAndPush(any(), eq("hyperion-draft/" + jobId), any(), eq(user));
+    }
+
+    @Test
+    void persistRecoveryDraft_whenOnlyTheProblemStatementChanged_preservesAStatementOnlyDraft() throws Exception {
         stubSuccessfulCheckoutAndCommits();
         when(gitService.isWorkingCopyClean(any())).thenReturn(true);
         GenerationOutcome outcome = outcomeWith(Map.of("Template.java", "t"), Map.of("Solution.java", "s"), Map.of("Test.java", "x"), "new statement");
 
-        assertThatThrownBy(() -> service.persistRecoveryDraft(exercise, user, outcome, jobId)).isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("No repository draft was saved");
+        GenerationPersistenceService.RecoveryPersistResult result = service.persistRecoveryDraft(exercise, user, outcome, jobId);
+
+        assertThat(result.savedRepositories()).isEmpty();
+        assertThat(result.draftBranch()).isEqualTo("hyperion-draft/" + jobId);
 
         verify(gitService, never()).commitToIsolatedBranchAndPush(any(), any(), any(), any());
+    }
+
+    @Test
+    void persistRecoveryDraft_rejectsAnUnchangedStatementWhenNoRepositoryWasSaved() throws Exception {
+        when(exercise.getProblemStatement()).thenReturn("Original statement");
+        stubSuccessfulCheckoutAndCommits();
+        when(gitService.isWorkingCopyClean(any())).thenReturn(true);
+        GenerationOutcome outcome = outcomeWith(Map.of("Template.java", "t"), Map.of("Solution.java", "s"), Map.of("Test.java", "x"), "Original statement");
+
+        assertThatThrownBy(() -> service.persistRecoveryDraft(exercise, user, outcome, jobId)).isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("No repository draft was saved");
+    }
+
+    @Test
+    void persistRecoveryDraft_whenNothingWasProduced_failsClearly() throws Exception {
+        stubSuccessfulCheckoutAndCommits();
+        when(gitService.isWorkingCopyClean(any())).thenReturn(true);
+        GenerationOutcome outcome = outcomeWith(Map.of("Template.java", "t"), Map.of("Solution.java", "s"), Map.of("Test.java", "x"), "");
+
+        assertThatThrownBy(() -> service.persistRecoveryDraft(exercise, user, outcome, jobId)).isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("No repository draft was saved");
     }
 
     @Test

@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.persistence;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
@@ -107,6 +108,21 @@ class GenerationRecoveryServiceTest {
     }
 
     @Test
+    void toFindings_preservesTheGeneratedProblemStatementWithoutApplyingItToTheLiveExercise() {
+        GenerationOutcome outcome = outcome(new VerificationResult(false, false, true, 1, List.of("contract conflict")), "");
+        String generatedStatement = "# Generated checkout exercise\n\nInvalid events are ignored without changing member totals.";
+        when(outcome.producedProblemStatement()).thenReturn(generatedStatement);
+
+        List<ConsistencyIssueDTO> findings = GenerationRecoveryService.toFindings(outcome);
+
+        assertThat(findings).anySatisfy(finding -> {
+            assertThat(finding.description()).contains("Generated problem statement", "not applied");
+            assertThat(finding.suggestedFix()).contains(generatedStatement).containsIgnoringCase("copy");
+            assertThat(finding.severity()).isEqualTo(Severity.MEDIUM);
+        });
+    }
+
+    @Test
     void recover_persistsDraft_createsReviewThreads_andNotifiesEditors() {
         VerificationResult verification = new VerificationResult(false, false, true, 2, List.of("gap one", "gap two"));
         GenerationOutcome outcome = outcome(verification, "");
@@ -170,6 +186,19 @@ class GenerationRecoveryServiceTest {
         verify(persistenceService).persistRecoveryDraft(exercise, user, outcome, "job-1");
         // No editor broadcast happened (the thread step failed before it), but that degradation is now surfaced via the sentinel rather than a PARTIAL mislabel.
         verify(exerciseEditorSyncService, never()).broadcastReviewThreadUpdate(anyLong(), any());
+    }
+
+    @Test
+    void recover_statementOnlyDraftFailsWhenItsRequiredReviewNoteCannotBeSaved() {
+        GenerationOutcome outcome = outcome(new VerificationResult(false, false, true, 1, List.of()), "");
+        when(exercise.getProblemStatement()).thenReturn("Original statement");
+        when(outcome.producedProblemStatement()).thenReturn("Generated statement");
+        when(persistenceService.persistRecoveryDraft(exercise, user, outcome, "job-1"))
+                .thenReturn(new GenerationPersistenceService.RecoveryPersistResult("hyperion-draft/job-1", Set.of()));
+        when(exerciseReviewService.createConsistencyCheckThreads(anyLong(), any(), any())).thenThrow(new IllegalStateException("thread persistence failed"));
+
+        assertThatThrownBy(() -> recoveryService.recover(exercise, user, outcome, "job-1")).isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("problem statement could not be preserved");
     }
 
     @Test

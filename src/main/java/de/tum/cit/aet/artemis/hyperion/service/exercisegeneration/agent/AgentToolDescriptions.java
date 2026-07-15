@@ -34,9 +34,9 @@ final class AgentToolDescriptions {
 
     static final String BASH_COMMAND = "the shell command to run, as ONE string (not a JSON array), e.g. 'sh verify.sh solution', 'ls -R', or 'grep -n sort tests/test/sorting/SortTest.java'";
 
-    static final String VERIFY = "Run the authoritative self-check: builds the solution and the template, parses the test reports with the SAME production parser the final grader uses, and returns which tests pass/fail on each, the EXACT test names to bind your [task]s to (copy them verbatim — never guess), any template tests that wrongly pass, and a VERDICT. This is your primary self-check — call it after changes and iterate until the VERDICT says ACCEPTED before you submit. Each call re-runs both builds (no cache); it takes the same time as one 'sh verify.sh solution' plus one 'sh verify.sh template'.";
+    static final String VERIFY = "Run the mechanical precheck: builds the solution and template, parses reports with the SAME production parser, and returns exact test names, pass/fail results, bounded failure evidence, binding problems, and mechanical gate results. Use the failure evidence to spot assertion, exception, or shared setup failures. A passing precheck does not prove semantic relevance; final post-loop integrity and semantic review decides acceptance. Call it after changes and iterate until the mechanical precheck passes before submitting. Each call re-runs both builds (no cache).";
 
-    static final String SUBMIT = "Submit the finished exercise for authoritative verification and end the session. Only call this after the 'verify' tool's VERDICT says ACCEPTED. Stop immediately after calling it.";
+    static final String SUBMIT = "Submit the finished exercise for final post-loop integrity and semantic review and end the session. Only call this after the 'verify' mechanical precheck passes. Stop immediately after calling it.";
 
     static final String SUBMIT_SUMMARY = "one-line summary of what you created or changed";
 }

@@ -106,6 +106,9 @@ class HyperionProblemStatementGenerationServiceTest {
         assertThat(promptText).contains("typically 300–700 words");
         assertThat(promptText).contains("Do not invent delivery mechanisms");
         assertThat(promptText).contains("Do not add submission or deliverable sections");
+        assertThat(promptText).contains("Do not invent boundary or invalid-input behavior");
+        assertThat(promptText).contains("A normal domain case must not become invalid merely because it exercises a boundary");
+        assertThat(promptText).contains("Check every worked example against every stated rule before returning the draft");
         assertThat(promptText).doesNotContain("instructor-decisions section", "Instructor Decisions Before Final Generation");
     }
 
@@ -323,6 +326,47 @@ class HyperionProblemStatementGenerationServiceTest {
 
                 ## Deliverable Expectations
                 Print a JSON-like summary.
+                """;
+        when(chatModel.call(any(Prompt.class))).thenAnswer(_ -> new ChatResponse(List.of(new Generation(new AssistantMessage(artifactDraft)))));
+
+        var course = new Course();
+        course.setTitle("Test Course");
+        course.setDescription("Test Description");
+
+        assertThatThrownBy(() -> hyperionProblemStatementGenerationService.generateProblemStatement(course, "Create a compact library exercise"))
+                .isInstanceOf(InternalServerErrorAlertException.class).hasMessageContaining("generation-only artifacts");
+    }
+
+    @Test
+    void generateProblemStatement_allowsJsonLikeNotationUsedOnlyToExplainAnExample() {
+        String generatedDraft = """
+                # Library Checkout
+
+                Students summarize checkout events.
+
+                ## Example
+                The input list is shown as JSON-like records for clarity:
+
+                ```text
+                { member: "Ada", returned: true }
+                ```
+                """;
+        when(chatModel.call(any(Prompt.class))).thenAnswer(_ -> new ChatResponse(List.of(new Generation(new AssistantMessage(generatedDraft)))));
+
+        var course = new Course();
+        course.setTitle("Test Course");
+        course.setDescription("Test Description");
+
+        assertThat(hyperionProblemStatementGenerationService.generateProblemStatement(course, "Create a compact library exercise").draftProblemStatement())
+                .isEqualTo(generatedDraft.strip());
+    }
+
+    @Test
+    void generateProblemStatement_rejectsJsonAsAnUnrequestedInputFormat() {
+        String artifactDraft = """
+                # Library Checkout
+
+                The input must be provided as JSON.
                 """;
         when(chatModel.call(any(Prompt.class))).thenAnswer(_ -> new ChatResponse(List.of(new Generation(new AssistantMessage(artifactDraft)))));
 

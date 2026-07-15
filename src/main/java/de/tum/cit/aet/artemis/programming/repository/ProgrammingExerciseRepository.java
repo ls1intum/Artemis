@@ -602,6 +602,24 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
     long countStudentParticipationsByExerciseId(@Param("exerciseId") long exerciseId);
 
     @Query("""
+            SELECT CASE WHEN COUNT(pe) > 0 THEN TRUE ELSE FALSE END
+            FROM ProgrammingExercise pe
+                LEFT JOIN pe.exerciseGroup exerciseGroup
+                LEFT JOIN exerciseGroup.exam exam
+            WHERE pe.id = :exerciseId
+                AND (
+                    (pe.course IS NOT NULL AND COALESCE(pe.startDate, pe.releaseDate) > CURRENT_TIMESTAMP)
+                    OR (exerciseGroup IS NOT NULL AND exam.startDate > CURRENT_TIMESTAMP)
+                )
+                AND NOT EXISTS (
+                    SELECT participation.id
+                    FROM ProgrammingExerciseStudentParticipation participation
+                    WHERE participation.exercise.id = pe.id
+                )
+            """)
+    boolean isUnreleasedAndWithoutStudentParticipations(@Param("exerciseId") long exerciseId);
+
+    @Query("""
             SELECT DISTINCT p.id
             FROM ProgrammingExercise p
             WHERE p.exerciseGroup.exam.id = :examId

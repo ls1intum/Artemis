@@ -1193,7 +1193,7 @@ class DifferentialVerificationServiceTest {
             assertThat(report.solutionTests()).isEqualTo(2);
             assertThat(report.templateCompiled()).isTrue();
             assertThat(report.templateWronglyPassing()).isEmpty();
-            assertThat(report.toObservation()).contains("Solution: 2/2 tests pass.").contains("Template: correctly fails all 2.").contains("VERDICT: would be ACCEPTED");
+            assertThat(report.toObservation()).contains("Solution: 2/2 tests pass.").contains("Template: correctly fails all 2.").contains("MECHANICAL PRECHECK: PASS");
         }
 
         @Test
@@ -1216,7 +1216,7 @@ class DifferentialVerificationServiceTest {
                     "# Reverse\n[task][Empty](returns_empty_for_empty_input)\n[task][Non-empty](reverses_non_empty)\n");
             assertThat(report.wouldBeAccepted()).isFalse();
             assertThat(report.templateWronglyPassing()).containsExactly("returns_empty_for_empty_input");
-            assertThat(report.toObservation()).contains("Template WRONGLY PASSES").contains("returns_empty_for_empty_input").contains("VERDICT: NOT YET");
+            assertThat(report.toObservation()).contains("Template WRONGLY PASSES").contains("returns_empty_for_empty_input").contains("MECHANICAL PRECHECK: FAIL");
         }
 
         @Test
@@ -1227,6 +1227,32 @@ class DifferentialVerificationServiceTest {
             assertThat(report.solutionFailedNames()).contains("sortsArrayWithDuplicates");
             assertThat(report.wouldBeAccepted()).isFalse();
             assertThat(report.toObservation()).contains("Solution FAILS").contains("sortsArrayWithDuplicates").contains("must pass every test");
+        }
+
+        @Test
+        void includesParsedFailureMessagesForSolutionAndTemplate() {
+            BuildReportSpec solution = BuildReportSpec.withJunitXml("""
+                    <testsuite name="GeneratedSuite">
+                      <testcase name="sortsUnsortedArray"><failure message="expected sorted first element but was 9"/></testcase>
+                      <testcase name="sortsArrayWithDuplicates"/>
+                    </testsuite>
+                    """, 1);
+            BuildReportSpec template = BuildReportSpec.withJunitXml("""
+                    <testsuite name="GeneratedSuite">
+                      <testcase name="sortsUnsortedArray"><error message="Sorter constructor threw NullPointerException"/></testcase>
+                      <testcase name="sortsArrayWithDuplicates"><failure message="expected duplicate values to remain"/></testcase>
+                    </testsuite>
+                    """, 1);
+
+            AgentVerifyReport report = selfCheck(solution, template, PROBLEM_STATEMENT_WITH_TASK);
+
+            assertThat(report.solutionFailureEvidence())
+                    .containsExactly(new AgentVerifyReport.TestFailureEvidence("sortsUnsortedArray", "expected sorted first element but was 9"));
+            assertThat(report.templateFailureEvidence()).containsExactly(
+                    new AgentVerifyReport.TestFailureEvidence("sortsUnsortedArray", "Sorter constructor threw NullPointerException"),
+                    new AgentVerifyReport.TestFailureEvidence("sortsArrayWithDuplicates", "expected duplicate values to remain"));
+            assertThat(report.toObservation()).contains("Solution failure evidence", "sortsUnsortedArray: expected sorted first element but was 9", "Template failure evidence",
+                    "sortsUnsortedArray: Sorter constructor threw NullPointerException");
         }
 
         @Test

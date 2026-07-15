@@ -2,6 +2,8 @@ package de.tum.cit.aet.artemis.programming;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.time.ZonedDateTime;
+
 import jakarta.persistence.EntityManager;
 
 import org.junit.jupiter.api.Test;
@@ -11,6 +13,8 @@ import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 
 class ProgrammingExerciseRepositoryTest extends AbstractProgrammingIntegrationIndependentTest {
+
+    private static final String TEST_PREFIX = "programmingexerciserepository";
 
     @Autowired
     private EntityManager entityManager;
@@ -64,6 +68,43 @@ class ProgrammingExerciseRepositoryTest extends AbstractProgrammingIntegrationIn
 
         assertThat(updatedRows).isOne();
         assertPersistedMetadata(exercise.getId(), "new statement", "New Title");
+    }
+
+    @Test
+    void isUnreleasedAndWithoutStudentParticipations_matchesCourseExerciseEligibility() {
+        ProgrammingExercise exercise = createExercise("Draft", "statement");
+        exercise.setReleaseDate(ZonedDateTime.now().plusDays(1));
+        exercise.setStartDate(null);
+        programmingExerciseRepository.saveAndFlush(exercise);
+
+        assertThat(programmingExerciseRepository.isUnreleasedAndWithoutStudentParticipations(exercise.getId())).isTrue();
+
+        exercise.setStartDate(ZonedDateTime.now().minusDays(1));
+        programmingExerciseRepository.saveAndFlush(exercise);
+        assertThat(programmingExerciseRepository.isUnreleasedAndWithoutStudentParticipations(exercise.getId())).isFalse();
+
+        exercise.setStartDate(ZonedDateTime.now().plusDays(1));
+        programmingExerciseRepository.saveAndFlush(exercise);
+        userUtilService.addUsers(TEST_PREFIX, 1, 0, 0, 0);
+        participationUtilService.addStudentParticipationForProgrammingExercise(exercise, TEST_PREFIX + "student1");
+        assertThat(programmingExerciseRepository.isUnreleasedAndWithoutStudentParticipations(exercise.getId())).isFalse();
+    }
+
+    @Test
+    void isUnreleasedAndWithoutStudentParticipations_matchesExamStartDateEligibility() {
+        ProgrammingExercise exercise = programmingExerciseUtilService.addCourseExamExerciseGroupWithOneProgrammingExercise();
+        var exam = exercise.getExam();
+        exam.setStartDate(ZonedDateTime.now().plusDays(1));
+        examRepository.saveAndFlush(exam);
+        entityManager.clear();
+
+        assertThat(programmingExerciseRepository.isUnreleasedAndWithoutStudentParticipations(exercise.getId())).isTrue();
+
+        exam.setStartDate(ZonedDateTime.now().minusDays(1));
+        examRepository.saveAndFlush(exam);
+        entityManager.clear();
+
+        assertThat(programmingExerciseRepository.isUnreleasedAndWithoutStudentParticipations(exercise.getId())).isFalse();
     }
 
     private ProgrammingExercise createExercise(String title, String problemStatement) {

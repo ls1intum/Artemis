@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.hyperion.service.websocket;
 
-import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,6 +20,8 @@ public class HyperionWebsocketService {
 
     private static final String TOPIC_PREFIX = "/topic/hyperion/";
 
+    private static final long DELIVERY_TIMEOUT_SECONDS = 10;
+
     private final WebsocketMessagingService websocketMessagingService;
 
     public HyperionWebsocketService(WebsocketMessagingService websocketMessagingService) {
@@ -36,16 +38,17 @@ public class HyperionWebsocketService {
     public void send(String userLogin, String topicSuffix, Object payload) {
         String topic = TOPIC_PREFIX + topicSuffix;
         try {
-            websocketMessagingService.sendMessageToUser(userLogin, topic, payload).get();
-            log.debug("Sent Hyperion {} message to {} on topic {}", payload.getClass().getSimpleName(), userLogin, topic);
+            websocketMessagingService.sendMessageToUser(userLogin, topic, payload).orTimeout(DELIVERY_TIMEOUT_SECONDS, TimeUnit.SECONDS).whenComplete((ignored, error) -> {
+                if (error == null) {
+                    log.debug("Sent Hyperion {} message to {} on topic {}", payload.getClass().getSimpleName(), userLogin, topic);
+                }
+                else {
+                    log.warn("Could not deliver Hyperion {} message to {} on topic {}", payload.getClass().getSimpleName(), userLogin, topic, error);
+                }
+            });
         }
-        catch (InterruptedException e) {
-            // Restore the interrupt flag so the running generation loop can still observe the interruption (e.g. a cancellation) instead of silently swallowing it.
-            Thread.currentThread().interrupt();
-            log.warn("Interrupted while sending Hyperion message to {} on topic {}", userLogin, topic, e);
-        }
-        catch (ExecutionException e) {
-            log.error("Error sending Hyperion {} message to {} on topic {}", payload.getClass().getSimpleName(), userLogin, topic, e);
+        catch (RuntimeException e) {
+            log.warn("Could not send Hyperion {} message to {} on topic {}", payload.getClass().getSimpleName(), userLogin, topic, e);
         }
     }
 }

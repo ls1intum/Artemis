@@ -208,10 +208,11 @@ public class DifferentialVerificationService {
 
     /**
      * The in-loop self-check the agent's {@code verify} tool calls: runs the same two pristine builds + production parse + actionable gates as the post-loop {@link #verify} and
-     * returns an agent-readable {@link AgentVerifyReport}, so the agent sees what the acceptance verdict will conclude.
+     * returns an agent-readable {@link AgentVerifyReport} as a mechanical precheck before final post-loop integrity and semantic review.
      * <p>
      * It skips the sandbox-free integrity gates (they need the seed snapshot and read-back the agent loop lacks), so {@code wouldBeAccepted} reflects the differential + actionable
-     * gates only; the post-loop {@link #verify} remains the acceptance decision. Each call re-runs the two builds (no stale cache).
+     * gates only; it neither checks nor proves semantic relevance. Final post-loop integrity and semantic review remains the acceptance decision. Each call re-runs the two builds
+     * (no stale cache).
      *
      * @param sandbox   the open sandbox session the pristine builds run in
      * @param sessionId the sandbox session id
@@ -253,9 +254,9 @@ public class DifferentialVerificationService {
             reasons.addAll(javaAresConventionReasons);
         }
 
-        return new AgentVerifyReport(solution.tests(), solutionPassed, List.copyOf(solution.testFailedNames()), template.tests(), templateCompiled, analysis.templateFailed(),
-                templateWronglyPassing, List.copyOf(solution.testNames()), analysis.unresolvedTaskBindings(), analysis.possiblyDeadFiles(),
-                analysis.actionableGatesPass() && javaAresConventionsHold, reasons);
+        return new AgentVerifyReport(solution.tests(), solutionPassed, List.copyOf(solution.testFailedNames()), solution.failureEvidence(), template.tests(), templateCompiled,
+                analysis.templateFailed(), template.failureEvidence(), templateWronglyPassing, List.copyOf(solution.testNames()), analysis.unresolvedTaskBindings(),
+                analysis.possiblyDeadFiles(), analysis.actionableGatesPass() && javaAresConventionsHold, reasons);
     }
 
     private static Map<String, String> readTestsRepositoryFiles(InteractiveSandbox sandbox, String sessionId) {
@@ -677,19 +678,20 @@ public class DifferentialVerificationService {
      * @param tests           tests that ran (zero when the build did not reach the runner, e.g. a compile error); excludes {@code <skipped>} cases, as production grades
      * @param testNames       distinct test-case names from the JUnit XML, composed as production does; empty if none collected
      * @param testFailedNames distinct names of cases that failed/errored; used by the strict per-test gate; empty if none collected
+     * @param failureEvidence bounded, sanitized names and first useful failure messages for agent feedback
      * @param scaFindings     SCA findings (tool + real derived category from {@link ReportParser}); populated only when the SCA reports were collected; empty otherwise
      */
     record BuildSummary(int tests, int failures, int exitCode, boolean timedOut, List<String> testNames, List<String> testFailedNames,
-            List<ScaPenaltyParity.ScaFinding> scaFindings) {
+            List<AgentVerifyReport.TestFailureEvidence> failureEvidence, List<ScaPenaltyParity.ScaFinding> scaFindings) {
 
         /** Build killed for exceeding its timeout; treated as a failed build with no tests. */
         static BuildSummary timedOut(int exitCode) {
-            return new BuildSummary(0, 0, exitCode, true, List.of(), List.of(), List.of());
+            return new BuildSummary(0, 0, exitCode, true, List.of(), List.of(), List.of(), List.of());
         }
 
         /** Reports archive unreadable or rejected (linked/escaping/oversize entry): treat as a non-compiling build (no tests) so the oracle rejects (fail-closed). */
         static BuildSummary unparseable(int exitCode) {
-            return new BuildSummary(0, 0, exitCode == 0 ? 1 : exitCode, false, List.of(), List.of(), List.of());
+            return new BuildSummary(0, 0, exitCode == 0 ? 1 : exitCode, false, List.of(), List.of(), List.of(), List.of());
         }
 
         static BuildSummary fromReports(Map<String, byte[]> reports, int exitCode) {
@@ -716,13 +718,16 @@ public class DifferentialVerificationService {
             }
             List<String> testNames = new ArrayList<>();
             List<String> failedNames = new ArrayList<>();
+            List<AgentVerifyReport.TestFailureEvidence> failureEvidence = new ArrayList<>();
             failed.forEach(job -> {
                 testNames.add(job.name());
                 failedNames.add(job.name());
+                failureEvidence.add(AgentVerifyReport.TestFailureEvidence.from(job.name(), job.testMessages()));
             });
             successful.forEach(job -> testNames.add(job.name()));
             int tests = failed.size() + successful.size();
-            return new BuildSummary(tests, failed.size(), exitCode, false, List.copyOf(testNames), List.copyOf(failedNames), List.copyOf(scaFindings));
+            return new BuildSummary(tests, failed.size(), exitCode, false, List.copyOf(testNames), List.copyOf(failedNames), List.copyOf(failureEvidence),
+                    List.copyOf(scaFindings));
         }
 
         private static boolean parseScaReport(String content, String canonicalFileName, List<ScaPenaltyParity.ScaFinding> scaFindings) {

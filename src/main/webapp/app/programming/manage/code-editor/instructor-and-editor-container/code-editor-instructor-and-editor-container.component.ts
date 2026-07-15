@@ -449,12 +449,13 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         let refreshedExercise: ProgrammingExercise | undefined;
         const finishRefresh = () => {
             if (repositoryRefreshComplete && exerciseRefreshComplete) {
-                if (repositoryRefreshSucceeded && refreshedExercise && this.exercise?.id === exerciseId && this.canRefreshAfterHyperionRepositoryChange()) {
+                const safeToApply = this.exercise?.id === exerciseId && this.canRefreshAfterHyperionRepositoryChange();
+                if (repositoryRefreshSucceeded && refreshedExercise && safeToApply) {
                     this.editableInstructions()?.acceptServerBaseline(refreshedExercise);
                     this.exercise = refreshedExercise;
                     this.onInstructionChanged(refreshedExercise.problemStatement ?? '');
                 }
-                this.generationRefreshFailed.set(!repositoryRefreshSucceeded || refreshedExercise === undefined);
+                this.generationRefreshFailed.set(!repositoryRefreshSucceeded || refreshedExercise === undefined || !safeToApply);
                 this.fileSyncService.endExpectedRepositoryUpdate();
                 this.generationRefreshPending.set(false);
             }

@@ -174,6 +174,7 @@ class HyperionExerciseGenerationMockedEndToEndTest extends AbstractHyperionMocke
                 @StrictTimeout(1)
                 void rejectsNonPositiveMaximum() {
                     assertThrows(IllegalArgumentException.class, () -> new BoundedCounter(0), "max <= 0 must be rejected.");
+                    assertThrows(IllegalArgumentException.class, () -> new BoundedCounter(-1), "negative maxima must be rejected.");
                 }
             }
             """;

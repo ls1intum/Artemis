@@ -49,8 +49,9 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseReposito
  * REST controller for Hyperion's agentic whole-exercise generation and adaptation.
  * <p>
  * A single endpoint and a single engine drive both {@code GENERATE} and {@code ADAPT} — the client picks the mode explicitly (never inferred from the exercise's contents). The
- * agent produces or revises a complete, verified exercise (problem statement plus all repositories) and it is saved only after the differential oracle has verified it. Progress
- * streams over the websocket topic {@code /topic/hyperion/exercise-generation/jobs/{jobId}}; a run is a multi-minute async job addressed by the returned {@code jobId}.
+ * agent produces or revises a complete exercise candidate (problem statement plus all repositories). The live exercise is saved only after mechanical verification and a
+ * blocking full-artifact review; rejected or interrupted candidates can instead be preserved for instructor review. Progress streams over the websocket topic
+ * {@code /topic/hyperion/exercise-generation/jobs/{jobId}}; a run is a multi-minute async job addressed by the returned {@code jobId}.
  */
 @Conditional(HyperionExerciseGenerationEnabled.class)
 @Lazy
@@ -165,7 +166,7 @@ public class HyperionExerciseGenerationResource {
             ExerciseGenerationStatusDTO status = retainedStatus.get();
             return ResponseEntity.ok(new ExerciseGenerationStatusDTO(status.jobId(), status.running(), status.mode(), status.events(), status.fileSnapshots(),
                     revertibleRun.isPresent(), revertibleRun.map(ExerciseGenerationRevertService.RevertibleRun::jobId).orElse(null),
-                    revertibleRun.map(ExerciseGenerationRevertService.RevertibleRun::mode).orElse(null)));
+                    revertibleRun.map(ExerciseGenerationRevertService.RevertibleRun::mode).orElse(null), status.ownedByCaller(), status.cancellable()));
         }
         return revertibleRun
                 .<ResponseEntity<ExerciseGenerationStatusDTO>>map(

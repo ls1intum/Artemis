@@ -1829,6 +1829,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Adapt with feedback'
 
         expect(acceptServerBaseline).not.toHaveBeenCalled();
         expect(comp.exercise.problemStatement).toBe('Implement the specified behavior and cover all required edge cases.');
+        expect((comp as any).generationRefreshFailed()).toBe(true);
     });
 
     it('uses the server revert timestamp as the commit-alert suppression boundary', () => {

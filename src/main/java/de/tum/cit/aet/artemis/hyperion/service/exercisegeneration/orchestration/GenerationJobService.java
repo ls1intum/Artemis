@@ -238,7 +238,7 @@ public class GenerationJobService {
 
     /**
      * Fails with the same conflict as {@link #startJob(User, ProgrammingExercise, String, GenerationMode, String)} when a live slot exists, but first reclaims an abandoned or
-     * expired cancellable slot. The REST resource uses this before checking sandbox capacity so duplicate starts report the active job, not transient capacity exhaustion.
+     * stale cancellable slot. The REST resource uses this before checking sandbox capacity so duplicate starts report the active job, not transient capacity exhaustion.
      *
      * @param exerciseId the exercise id whose slot should be checked
      */
@@ -251,7 +251,7 @@ public class GenerationJobService {
                 return;
             }
             Instant now = Instant.now();
-            if (shouldClearAsStaleOrExpired(existing, staleBefore(now), now)) {
+            if (shouldClearAsStale(existing, staleBefore(now))) {
                 stopActiveJob(key, existing, now);
                 return;
             }
@@ -264,20 +264,24 @@ public class GenerationJobService {
 
     private void rollbackUnpublishedStart(long exerciseId, String key, JobInfo newJob, JobTranscript newTranscript, JobFileSnapshotIndex newSnapshotIndex,
             @Nullable JobTranscript previousTranscript, @Nullable JobFileSnapshotIndex previousSnapshotIndex) {
-        jobMap.remove(key, newJob);
-        if (previousTranscript == null) {
-            transcriptMap.remove(key, newTranscript);
-        }
-        else {
-            restoreTranscriptIfStillUnpublished(key, newTranscript, previousTranscript);
-        }
-        if (previousSnapshotIndex == null) {
-            snapshotIndexMap.remove(key, newSnapshotIndex);
-        }
-        else {
-            if (restoreSnapshotIndexIfStillUnpublished(key, newSnapshotIndex, previousSnapshotIndex)) {
+        jobMap.lock(key);
+        try {
+            jobMap.remove(key, newJob);
+            if (previousTranscript == null) {
+                transcriptMap.remove(key, newTranscript);
+            }
+            else {
+                restoreTranscriptIfStillUnpublished(key, newTranscript, previousTranscript);
+            }
+            if (previousSnapshotIndex == null) {
+                snapshotIndexMap.remove(key, newSnapshotIndex);
+            }
+            else if (restoreSnapshotIndexIfStillUnpublished(key, newSnapshotIndex, previousSnapshotIndex)) {
                 retainSnapshotFilesForReplay(exerciseId, previousSnapshotIndex);
             }
+        }
+        finally {
+            jobMap.unlock(key);
         }
     }
 
@@ -313,7 +317,7 @@ public class GenerationJobService {
             JobInfo existing = jobMap.get(key);
             if (existing != null) {
                 Instant now = Instant.now();
-                if (shouldClearAsStaleOrExpired(existing, staleBefore(now), now)) {
+                if (shouldClearAsStale(existing, staleBefore(now))) {
                     stopActiveJob(key, existing, now);
                 }
                 else {
@@ -429,14 +433,30 @@ public class GenerationJobService {
      * @return the reconnection view (with a {@code running} flag derived from the live slot), or empty if none is retained for this user
      */
     public Optional<ExerciseGenerationStatusDTO> getStatus(User user, ProgrammingExercise exercise) {
-        JobTranscript transcript = transcriptMap.get(key(exercise.getId()));
-        if (transcript == null || !transcript.userLogin().equals(user.getLogin())) {
-            return Optional.empty();
+        String exerciseKey = key(exercise.getId());
+        jobMap.lock(exerciseKey);
+        try {
+            JobTranscript transcript = transcriptMap.get(exerciseKey);
+            JobInfo active = jobMap.get(exerciseKey);
+            if (active != null) {
+                boolean ownedByCaller = active.userLogin().equals(user.getLogin());
+                GenerationMode mode = transcript != null && transcript.jobId().equals(active.jobId()) ? transcript.mode() : null;
+                if (!ownedByCaller || transcript == null || !transcript.jobId().equals(active.jobId()) || !transcript.userLogin().equals(user.getLogin())) {
+                    return Optional.of(new ExerciseGenerationStatusDTO(active.jobId(), true, mode, List.of(), List.of(), false, null, null, ownedByCaller,
+                            ownedByCaller && active.cancellable()));
+                }
+                return Optional.of(new ExerciseGenerationStatusDTO(transcript.jobId(), !transcript.done(), transcript.mode(), transcript.events(),
+                        latestSnapshotsFor(exercise.getId(), transcript.jobId()), false, null, null, true, active.cancellable()));
+            }
+            if (transcript == null || !transcript.userLogin().equals(user.getLogin())) {
+                return Optional.empty();
+            }
+            return Optional.of(new ExerciseGenerationStatusDTO(transcript.jobId(), false, transcript.mode(), transcript.events(),
+                    latestSnapshotsFor(exercise.getId(), transcript.jobId()), false, null, null, true, false));
         }
-        JobInfo active = jobMap.get(key(exercise.getId()));
-        boolean running = active != null && active.jobId().equals(transcript.jobId()) && !transcript.done();
-        return Optional.of(new ExerciseGenerationStatusDTO(transcript.jobId(), running, transcript.mode(), transcript.events(),
-                latestSnapshotsFor(exercise.getId(), transcript.jobId()), false));
+        finally {
+            jobMap.unlock(exerciseKey);
+        }
     }
 
     /**
@@ -447,13 +467,19 @@ public class GenerationJobService {
      */
     public void discardRetainedRun(long exerciseId, String jobId) {
         String key = key(exerciseId);
-        JobTranscript transcript = transcriptMap.get(key);
-        if (transcript != null && transcript.jobId().equals(jobId)) {
-            transcriptMap.remove(key, transcript);
+        jobMap.lock(key);
+        try {
+            JobTranscript transcript = transcriptMap.get(key);
+            if (transcript != null && transcript.jobId().equals(jobId)) {
+                transcriptMap.remove(key, transcript);
+            }
+            JobFileSnapshotIndex index = snapshotIndexMap.get(key);
+            if (index != null && index.jobId().equals(jobId) && snapshotIndexMap.remove(key, index)) {
+                removeSnapshotFiles(exerciseId, index);
+            }
         }
-        JobFileSnapshotIndex index = snapshotIndexMap.get(key);
-        if (index != null && index.jobId().equals(jobId) && snapshotIndexMap.remove(key, index)) {
-            removeSnapshotFiles(exerciseId, index);
+        finally {
+            jobMap.unlock(key);
         }
     }
 
@@ -769,14 +795,14 @@ public class GenerationJobService {
         Instant staleBefore = staleBefore(now);
         for (Map.Entry<String, JobInfo> entry : jobMap.entrySet()) {
             JobInfo job = entry.getValue();
-            if (job == null || !shouldClearAsStaleOrExpired(job, staleBefore, now)) {
+            if (job == null || !shouldClearAsStale(job, staleBefore)) {
                 continue;
             }
             String key = entry.getKey();
             jobMap.lock(key);
             try {
                 JobInfo current = jobMap.get(key);
-                if (current == null || !current.jobId().equals(job.jobId()) || !shouldClearAsStaleOrExpired(current, staleBefore, Instant.now())) {
+                if (current == null || !current.jobId().equals(job.jobId()) || !shouldClearAsStale(current, staleBefore)) {
                     continue;
                 }
                 stopActiveJob(key, current, Instant.now());
@@ -807,11 +833,8 @@ public class GenerationJobService {
         return staleJobTimeout == null || staleJobTimeout.isZero() || staleJobTimeout.isNegative() ? null : now.minus(staleJobTimeout);
     }
 
-    private boolean shouldClearAsStaleOrExpired(JobInfo job, @Nullable Instant staleBefore, Instant now) {
-        boolean cancellable = job.cancellable();
-        boolean stale = cancellable && staleBefore != null && !job.lastHeartbeatOrStartedAt().isAfter(staleBefore);
-        boolean expired = cancellable && job.deadlineAt() != null && !job.deadlineAt().isAfter(now);
-        return stale || expired;
+    private boolean shouldClearAsStale(JobInfo job, @Nullable Instant staleBefore) {
+        return staleBefore != null && job.cancellable() && !job.lastHeartbeatOrStartedAt().isAfter(staleBefore);
     }
 
     private String stoppedMessage(JobInfo job, Instant now) {

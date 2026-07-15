@@ -87,10 +87,11 @@ public class ExerciseGenerationRevertService {
      * @param postRunHeads     repository heads after persistence
      * @param problemStatement problem statement before persistence
      * @param title            title before persistence
+     * @return whether the baseline was recorded and automatic revert is available
      */
-    public void recordBaseline(ProgrammingExercise exercise, String jobId, GenerationMode mode, Map<RepositoryType, String> preRunHeads, Map<RepositoryType, String> postRunHeads,
-            String problemStatement, String title) {
-        recordBaseline(exercise, jobId, mode, preRunHeads, postRunHeads, problemStatement, title, exercise.getProblemStatement(), exercise.getTitle());
+    public boolean recordBaseline(ProgrammingExercise exercise, String jobId, GenerationMode mode, Map<RepositoryType, String> preRunHeads,
+            Map<RepositoryType, String> postRunHeads, String problemStatement, String title) {
+        return recordBaseline(exercise, jobId, mode, preRunHeads, postRunHeads, problemStatement, title, exercise.getProblemStatement(), exercise.getTitle());
     }
 
     /**
@@ -105,10 +106,11 @@ public class ExerciseGenerationRevertService {
      * @param title                           title before persistence
      * @param expectedCurrentProblemStatement problem statement written by the run
      * @param expectedCurrentTitle            title written by the run
+     * @return whether the baseline was recorded and automatic revert is available
      */
-    public void recordBaseline(ProgrammingExercise exercise, String jobId, GenerationMode mode, Map<RepositoryType, String> preRunHeads, Map<RepositoryType, String> postRunHeads,
-            String problemStatement, String title, String expectedCurrentProblemStatement, String expectedCurrentTitle) {
-        recordBaseline(exercise, jobId, mode, preRunHeads, postRunHeads, problemStatement, title, expectedCurrentProblemStatement, expectedCurrentTitle,
+    public boolean recordBaseline(ProgrammingExercise exercise, String jobId, GenerationMode mode, Map<RepositoryType, String> preRunHeads,
+            Map<RepositoryType, String> postRunHeads, String problemStatement, String title, String expectedCurrentProblemStatement, String expectedCurrentTitle) {
+        return recordBaseline(exercise, jobId, mode, preRunHeads, postRunHeads, problemStatement, title, expectedCurrentProblemStatement, expectedCurrentTitle,
                 repositoryBranch(exercise));
     }
 
@@ -125,9 +127,11 @@ public class ExerciseGenerationRevertService {
      * @param expectedCurrentProblemStatement problem statement written by the run
      * @param expectedCurrentTitle            title written by the run
      * @param repositoryBranch                repository branch used by the persistence operation
+     * @return whether the baseline was recorded and automatic revert is available
      */
-    public void recordBaseline(ProgrammingExercise exercise, String jobId, GenerationMode mode, Map<RepositoryType, String> preRunHeads, Map<RepositoryType, String> postRunHeads,
-            String problemStatement, String title, String expectedCurrentProblemStatement, String expectedCurrentTitle, String repositoryBranch) {
+    public boolean recordBaseline(ProgrammingExercise exercise, String jobId, GenerationMode mode, Map<RepositoryType, String> preRunHeads,
+            Map<RepositoryType, String> postRunHeads, String problemStatement, String title, String expectedCurrentProblemStatement, String expectedCurrentTitle,
+            String repositoryBranch) {
         try {
             baselineMap.delete(exercise.getId());
             Map<RepositoryType, String> heads = new LinkedHashMap<>();
@@ -140,13 +144,13 @@ public class ExerciseGenerationRevertService {
                         log.warn(
                                 "Could not record the generation baseline for the {} repository of exercise {} because the repository URI is missing; this run will not be revertible",
                                 repositoryType, exercise.getId());
-                        return;
+                        return false;
                     }
                     String expectedCurrentHead = postRunHeads.get(repositoryType);
                     if (expectedCurrentHead == null) {
                         log.warn("Could not record the generation baseline for the {} repository of exercise {} because Hyperion's post-run HEAD is missing", repositoryType,
                                 exercise.getId());
-                        return;
+                        return false;
                     }
                     heads.put(repositoryType, head);
                     expectedCurrentHeads.put(repositoryType, expectedCurrentHead);
@@ -155,9 +159,11 @@ public class ExerciseGenerationRevertService {
             baselineMap.set(exercise.getId(), new ExerciseGenerationBaseline(jobId, mode, heads, expectedCurrentHeads, problemStatement, title, expectedCurrentProblemStatement,
                     expectedCurrentTitle, repositoryBranch), BASELINE_TTL_SECONDS, TimeUnit.SECONDS);
             log.info("Recorded revertible generation baseline for exercise {} (job {}): {} repository head(s)", exercise.getId(), jobId, heads.size());
+            return true;
         }
         catch (RuntimeException e) {
             log.warn("Could not record the generation baseline for exercise {} (job {}); this run will not be revertible: {}", exercise.getId(), jobId, e.getMessage());
+            return false;
         }
     }
 
@@ -241,7 +247,6 @@ public class ExerciseGenerationRevertService {
         String repositoryBranch = baseline.repositoryBranch() == null || baseline.repositoryBranch().isBlank() ? defaultBranch : baseline.repositoryBranch();
         GenerationPersistenceService.TestsBuildSignal testsBuildSignal = baseline.headFor(RepositoryType.TESTS) == null ? null
                 : persistenceService.prepareTestsBuildSignal(exercise, baseline.headFor(RepositoryType.TESTS));
-        boolean testsRefUpdated = false;
         boolean fullyReverted = true;
         for (RepositoryType repositoryType : REVERT_ORDER) {
             String head = baseline.headFor(repositoryType);
@@ -277,9 +282,6 @@ public class ExerciseGenerationRevertService {
                     throw new IllegalStateException("Current repository HEAD " + currentHead + " differs from the generated commit " + expectedCurrentHead);
                 }
                 gitService.resetToCommitAndForcePush(repository, head, expectedCurrentHead, repositoryBranch);
-                if (repositoryType == RepositoryType.TESTS) {
-                    testsRefUpdated = true;
-                }
                 refreshCachedCheckout(uri, repositoryBranch);
                 reverted.add(repositoryType);
                 log.info("Reverted the {} repository of exercise {} back to its pre-generated commit {}", repositoryType, exercise.getId(), head);
@@ -304,11 +306,8 @@ public class ExerciseGenerationRevertService {
                         exercise.getId());
                 return new RevertResult(false, List.copyOf(reverted));
             }
-            // Re-sync grading to the reverted tests. On failure, the loop stops before TESTS so its post-receive hook cannot build a mixed repository state.
+            // Resynchronization triggers the canonical tests build after every required repository reset has completed.
             try {
-                if (testsBuildSignal != null && !testsRefUpdated) {
-                    testsBuildSignal = persistenceService.triggerTestsBuild(exercise, testsBuildSignal);
-                }
                 fullyReverted = persistenceService.resyncAfterRevertWithSignal(exercise, user, testsBuildSignal, baseline.problemStatement(), baseline.title(),
                         baseline.expectedProblemStatement(), baseline.expectedTitle());
             }

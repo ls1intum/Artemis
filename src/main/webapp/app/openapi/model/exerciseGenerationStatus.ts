@@ -20,6 +20,8 @@ export interface ExerciseGenerationStatus {
     revertAvailable: boolean;
     revertJobId?: string;
     revertMode?: ExerciseGenerationStatus.RevertModeEnum;
+    ownedByCaller: boolean;
+    cancellable: boolean;
 }
 export namespace ExerciseGenerationStatus {
     export const ModeEnum = {

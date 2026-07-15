@@ -79,8 +79,8 @@ public class GenerationOrchestrationService {
      */
     private final int maxTurns;
 
-    /** First attempt plus a couple of verifier-feedback-driven fix iterations before giving up. */
-    private static final int MAX_GENERATION_ATTEMPTS = 3;
+    /** First attempt plus three bounded repair iterations, leaving room for a semantic repair after mechanical setup problems. */
+    private static final int MAX_GENERATION_ATTEMPTS = 4;
 
     // Optional so a core-only node (where no build agent is co-located to host the sandbox) still starts; absence is reported only when a run is attempted.
     private final Optional<InteractiveSandbox> interactiveSandbox;
@@ -152,6 +152,11 @@ public class GenerationOrchestrationService {
         String baselineProblemStatement = exercise.getProblemStatement();
         InteractiveSandbox sandbox = requireSandbox();
         String sessionId = null;
+        GenerationWorkspaceService.WorkspaceSeed workspaceSeed = null;
+        Map<String, String> placeholderReplacements = Map.of();
+        Map<RepositoryType, Map<String, String>> baselineRepositoryFiles = Map.of();
+        CandidateSnapshot lastMechanicallyVerifiedCandidate = null;
+        ExtractedCandidate lastExtractedCandidate = null;
         Long courseId = courseIdOf(exercise);
         SandboxSessionSpec sessionSpec = workspace.sessionSpec(exercise,
                 new SandboxSessionContext(jobId, exercise.getId(), exercise.getTitle(), courseId, user.getLogin(), mode.name()));
@@ -165,10 +170,18 @@ public class GenerationOrchestrationService {
 
             emit(progress, mode == GenerationMode.GENERATE ? "Preparing a clean exercise workspace" : "Loading the existing exercise");
             // Snapshot the seeded tests-repo harness so the verifier can reject later tampering against this exact baseline.
-            GenerationWorkspaceService.WorkspaceSeed workspaceSeed = workspace.seedWorkspace(sandbox, sessionId, exercise, mode);
-            Map<String, String> placeholderReplacements = ciPlaceholderReplacements(exercise);
+            workspaceSeed = workspace.seedWorkspace(sandbox, sessionId, exercise, mode);
+            placeholderReplacements = ciPlaceholderReplacements(exercise);
             Map<String, String> testsSeedSnapshot = replacePlaceholders(workspaceSeed.testsSeedSnapshot(), placeholderReplacements);
-            Map<RepositoryType, Map<String, String>> baselineRepositoryFiles = replacePlaceholdersByRepository(workspaceSeed.repositoryTextFiles(), placeholderReplacements);
+            baselineRepositoryFiles = replacePlaceholdersByRepository(workspaceSeed.repositoryTextFiles(), placeholderReplacements);
+            if (cancelled.getAsBoolean()) {
+                return stopOrPreserve(sandbox, sessionId, workspaceSeed, placeholderReplacements, baselineRepositoryFiles, baselineProblemStatement,
+                        new AgentLoopResult(AgentLoopResult.Status.CANCELLED, 0, ""));
+            }
+
+            emit(progress, "Preparing the exercise requirements");
+            String sourceBrief = renderReviewBrief(mode, userPrompt, baselineProblemStatement);
+            String reviewBrief = sourceBrief;
 
             String systemPrompt = systemPromptService.build(exercise, mode);
             // The agent's `verify` tool runs the same differential as the post-loop gate so it sees the verdict in-loop (pass/fail tests, exact [task] names); the post-loop
@@ -180,7 +193,7 @@ public class GenerationOrchestrationService {
 
             // Free turn-0 observation of the seeded layout so the agent need not `ls -R`. Best-effort (empty probe leaves the prompt unchanged) and first-attempt only — retries
             // already operate on a workspace the agent has explored.
-            String firstPrompt = prependWorkspaceLayout(workspace.probeWorkspaceLayout(sandbox, sessionId), userPrompt);
+            String firstPrompt = prependWorkspaceLayout(workspace.probeWorkspaceLayout(sandbox, sessionId), renderAuthoringBrief(sourceBrief));
 
             // On rejection, feed the verifier's reasons back and retry up to a small bound. The verifier enforces rules the agent's own verify.sh cannot show (template must fail a
             // meaningful fraction; problem statement must bind tasks), so this loop turns a "builds but not quite right" first attempt into an accepted exercise.
@@ -198,25 +211,39 @@ public class GenerationOrchestrationService {
                 log.info("Exercise generation attempt {} took {} turn(s)", attempt, loopResult.turns());
 
                 if (loopResult.status() == AgentLoopResult.Status.CANCELLED) {
-                    destroyQuietly(sandbox, sessionId);
-                    return GenerationOutcome.cancelled(loopResult);
+                    return stopOrPreserve(sandbox, sessionId, workspaceSeed, placeholderReplacements, baselineRepositoryFiles, baselineProblemStatement, loopResult);
                 }
                 if (loopResult.status() == AgentLoopResult.Status.ERROR) {
+                    if (lastMechanicallyVerifiedCandidate != null) {
+                        return new GenerationOutcome(lastMechanicallyVerifiedCandidate.loopResult(), lastMechanicallyVerifiedCandidate.verification(), sessionId, this, sandbox,
+                                lastMechanicallyVerifiedCandidate.producedFiles(), lastMechanicallyVerifiedCandidate.problemStatement(),
+                                lastMechanicallyVerifiedCandidate.reviewReport(), workspaceSeed.repositoryHeads());
+                    }
+                    CapturedRepositories erroredRepositories = captureRepositoryFiles(sandbox, sessionId, workspaceSeed, placeholderReplacements);
+                    Map<RepositoryType, Map<String, String>> erroredFiles = erroredRepositories.complete() ? erroredRepositories.files() : Map.of();
+                    String erroredStatement = workspace.extractProblemStatement(sandbox, sessionId).trim();
+                    boolean statementChanged = !java.util.Objects.equals(baselineProblemStatement == null ? "" : baselineProblemStatement.trim(), erroredStatement);
+                    if (statementChanged
+                            || (erroredRepositories.complete() && hasProducedChanges(baselineRepositoryFiles, erroredFiles, baselineProblemStatement, erroredStatement))) {
+                        return new GenerationOutcome(loopResult, null, sessionId, this, sandbox, erroredFiles, erroredStatement,
+                                SpecFidelityReport.qualityReviewUnavailable("The agent stopped before verification; the partial candidate requires manual review."),
+                                workspaceSeed.repositoryHeads());
+                    }
                     destroyQuietly(sandbox, sessionId);
                     return GenerationOutcome.error(loopResult);
                 }
                 // The loop only polls cancellation between turns; honour a cancel that arrived during the last turn before spending minutes on the verification build.
                 if (cancelled.getAsBoolean()) {
-                    destroyQuietly(sandbox, sessionId);
-                    return GenerationOutcome.cancelled(cancelledResult(loopResult));
+                    return stopOrPreserve(sandbox, sessionId, workspaceSeed, placeholderReplacements, baselineRepositoryFiles, baselineProblemStatement,
+                            cancelledResult(loopResult));
                 }
 
                 // Seed Java structural tests when the produced solution/template structures differ. The returned set is the list of names just injected; the verifier exempts a
                 // [task] bound to one from the binding-resolution gate (the agent could not bind tests seeded after it ran) while still requiring solution-pass/template-fail.
                 Set<String> seededStructuralTestNames = structuralOracleSeeder.seedIfStructuralDiff(sandbox, sessionId, exercise);
                 if (cancelled.getAsBoolean()) {
-                    destroyQuietly(sandbox, sessionId);
-                    return GenerationOutcome.cancelled(cancelledResult(loopResult));
+                    return stopOrPreserve(sandbox, sessionId, workspaceSeed, placeholderReplacements, baselineRepositoryFiles, baselineProblemStatement,
+                            cancelledResult(loopResult));
                 }
 
                 emit(progress, "Checking the exercise builds and grades (attempt " + attempt + " of " + MAX_GENERATION_ATTEMPTS + ")");
@@ -244,20 +271,32 @@ public class GenerationOrchestrationService {
                 addIfExtractionFailed(extractionFailed, producedSolution, RepositoryType.SOLUTION);
                 if (extractionFailed.isEmpty()) {
                     workspace.materializeRepositoryFiles(sandbox, sessionId, producedFilesByType, workspaceSeed.repositoryMetadata());
+                    if (hasProducedChanges(baselineRepositoryFiles, producedFilesByType, baselineProblemStatement, producedProblemStatement)) {
+                        lastExtractedCandidate = new ExtractedCandidate(loopResult, copyProducedFiles(producedFilesByType), producedProblemStatement);
+                    }
                 }
                 VerificationRequest verificationRequest = new VerificationRequest(testsSeedSnapshot, baselineRepositoryFiles.getOrDefault(RepositoryType.TEMPLATE, Map.of()),
                         baselineRepositoryFiles.getOrDefault(RepositoryType.SOLUTION, Map.of()), producedTests.files(), producedTemplate.files(), producedSolution.files(),
                         extractionFailed, seededStructuralTestNames, baselineGradedTestNames, producedProblemStatement, mode == GenerationMode.ADAPT);
                 if (cancelled.getAsBoolean()) {
-                    destroyQuietly(sandbox, sessionId);
-                    return GenerationOutcome.cancelled(cancelledResult(loopResult));
+                    return stopOrPreserve(sandbox, sessionId, workspaceSeed, placeholderReplacements, baselineRepositoryFiles, baselineProblemStatement,
+                            cancelledResult(loopResult));
                 }
                 // The authoritative pass re-seeds its pristine script, discards old reports, and builds from fresh temporary directories before parsing the result independently.
                 verification = verifier.verify(sandbox, sessionId, exercise, verificationRequest);
                 emit(progress, verification.report());
+                if (verification.accepted()) {
+                    lastMechanicallyVerifiedCandidate = new CandidateSnapshot(loopResult, verification, copyProducedFiles(producedFilesByType), producedProblemStatement,
+                            SpecFidelityReport.qualityReviewUnavailable("Generation stopped before the mechanically verified candidate received its full-artifact review."));
+                }
                 if (cancelled.getAsBoolean()) {
-                    destroyQuietly(sandbox, sessionId);
-                    return GenerationOutcome.cancelled(cancelledResult(loopResult));
+                    if (lastMechanicallyVerifiedCandidate != null) {
+                        return new GenerationOutcome(lastMechanicallyVerifiedCandidate.loopResult(), lastMechanicallyVerifiedCandidate.verification(), sessionId, this, sandbox,
+                                lastMechanicallyVerifiedCandidate.producedFiles(), lastMechanicallyVerifiedCandidate.problemStatement(),
+                                lastMechanicallyVerifiedCandidate.reviewReport(), workspaceSeed.repositoryHeads());
+                    }
+                    return stopOrPreserve(sandbox, sessionId, workspaceSeed, placeholderReplacements, baselineRepositoryFiles, baselineProblemStatement,
+                            cancelledResult(loopResult));
                 }
 
                 // Run the expensive semantic review only after the deterministic mechanical gate passes. Reviewing a candidate that cannot build or grade wastes provider quota and
@@ -267,11 +306,14 @@ public class GenerationOrchestrationService {
                     String adaptationChanges = mode == GenerationMode.ADAPT
                             ? renderAdaptationChanges(baselineProblemStatement, producedProblemStatement, baselineRepositoryFiles, producedFilesByType)
                             : null;
-                    specFidelityReport = runSpecFidelityCritic(userPrompt, producedProblemStatement, exercise.getProgrammingLanguage(), producedFilesByType, adaptationChanges,
+                    specFidelityReport = runSpecFidelityCritic(reviewBrief, producedProblemStatement, exercise.getProgrammingLanguage(), producedFilesByType, adaptationChanges,
                             effectiveUsageSink, progress);
+                    lastMechanicallyVerifiedCandidate = new CandidateSnapshot(loopResult, verification, copyProducedFiles(producedFilesByType), producedProblemStatement,
+                            specFidelityReport);
                     if (cancelled.getAsBoolean()) {
-                        destroyQuietly(sandbox, sessionId);
-                        return GenerationOutcome.cancelled(cancelledResult(loopResult));
+                        return new GenerationOutcome(lastMechanicallyVerifiedCandidate.loopResult(), lastMechanicallyVerifiedCandidate.verification(), sessionId, this, sandbox,
+                                lastMechanicallyVerifiedCandidate.producedFiles(), lastMechanicallyVerifiedCandidate.problemStatement(),
+                                lastMechanicallyVerifiedCandidate.reviewReport(), workspaceSeed.repositoryHeads());
                     }
                 }
                 else {
@@ -288,39 +330,184 @@ public class GenerationOrchestrationService {
                     boolean reviewUnavailable = specFidelityReport.findings().stream()
                             .anyMatch(finding -> finding.kind() == SpecFidelityReport.Kind.ADAPTATION_SCOPE_REVIEW_UNAVAILABLE
                                     || finding.kind() == SpecFidelityReport.Kind.QUALITY_REVIEW_UNAVAILABLE);
-                    if (reviewUnavailable) {
+                    boolean hasActionableReviewFinding = specFidelityReport.findings().stream()
+                            .anyMatch(finding -> finding.isBlocking() && finding.kind() != SpecFidelityReport.Kind.ADAPTATION_SCOPE_REVIEW_UNAVAILABLE
+                                    && finding.kind() != SpecFidelityReport.Kind.QUALITY_REVIEW_UNAVAILABLE);
+                    if (reviewUnavailable && !hasActionableReviewFinding) {
                         break;
                     }
-                    emit(progress, "Mechanical verification passed, but the full-artifact review found contract issues; asking the agent to correct them.");
+                    emit(progress, "Mechanical verification passed, but the exercise review found requirements or quality issues; asking the AI to correct them.");
                     String scopeGuidance = mode == GenerationMode.ADAPT ? " Preserve all content outside the requested adaptation." : "";
                     currentPrompt = "Your previous attempt passed mechanical verification, but the automated full-artifact review found acceptance blockers." + scopeGuidance
-                            + " Make the smallest coherent changes across the statement, solution, template, and tests; re-run `sh verify.sh solution` and `sh verify.sh template`, then "
-                            + "call submit again.\n\nThe instructor instruction is:\n" + userPrompt + specFidelityCritic.renderForRetryPrompt(specFidelityReport);
+                            + " Preserve the mechanically correct work: do not restart or rewrite unrelated files. Re-read the cited artifacts and repair them to match the source requirements and "
+                            + "remove unsupported candidate choices identified by the review. Make the smallest coherent repair across the statement, solution, template, and tests. Keep every unaffected "
+                            + "requirement, API, test, and example. Re-run `sh verify.sh solution` and `sh verify.sh template`, then call submit again.\n\nThe instructor "
+                            + "specification is:\n" + reviewBrief + specFidelityCritic.renderForRetryPrompt(specFidelityReport);
                     continue;
                 }
                 emit(progress, "Verification rejected the exercise; asking the agent to fix the issues and try again.");
                 // The hard rejection (must fix) plus the advisory findings, the latter framed so the rejection is prioritised.
                 currentPrompt = "Your previous attempt was rejected by the differential verifier:\n" + verification.report()
                         + "\n\nThe workspace still contains all your files. Read the relevant files, fix exactly these issues, re-run `sh verify.sh solution` and "
-                        + "`sh verify.sh template` to confirm, then call submit again." + specFidelityCritic.renderForRetryPrompt(specFidelityReport);
+                        + "`sh verify.sh template` to confirm, then call submit again. If a reason names a forbidden, duplicate, or abandoned path, delete it; replacing it with a "
+                        + "placeholder does not remove the violation. Preserve the source requirements below while repairing the mechanical issue.\n\n" + reviewBrief
+                        + specFidelityCritic.renderForRetryPrompt(specFidelityReport);
+            }
+
+            // A semantic repair can accidentally break a candidate that already built and graded correctly. Never discard that more useful checkpoint in favour of a later
+            // mechanically broken tree; recovery should expose the last buildable candidate and the review findings that still prevented live persistence.
+            if ((verification == null || !verification.accepted()) && lastMechanicallyVerifiedCandidate != null) {
+                loopResult = lastMechanicallyVerifiedCandidate.loopResult();
+                verification = lastMechanicallyVerifiedCandidate.verification();
+                producedFilesByType = lastMechanicallyVerifiedCandidate.producedFiles();
+                producedProblemStatement = lastMechanicallyVerifiedCandidate.problemStatement();
+                specFidelityReport = lastMechanicallyVerifiedCandidate.reviewReport();
             }
 
             return new GenerationOutcome(loopResult, verification, sessionId, this, sandbox, producedFilesByType, producedProblemStatement, specFidelityReport,
                     workspaceSeed.repositoryHeads());
         }
         catch (RuntimeException e) {
-            // The caller gets no usable outcome to close, so tear down here.
-            destroyQuietly(sandbox, sessionId);
             // A build interrupted by the cancel hook surfaces as a throw; report it as a clean cancellation.
             if (cancelled.getAsBoolean()) {
-                return GenerationOutcome.cancelled(new AgentLoopResult(AgentLoopResult.Status.CANCELLED, 0, ""));
+                return stopOrPreserve(sandbox, sessionId, workspaceSeed, placeholderReplacements, baselineRepositoryFiles, baselineProblemStatement,
+                        new AgentLoopResult(AgentLoopResult.Status.CANCELLED, 0, ""));
             }
+            if (lastMechanicallyVerifiedCandidate != null && workspaceSeed != null) {
+                log.warn("Exercise generation failed while repairing a mechanically verified candidate for exercise {}; preserving the verified checkpoint", exercise.getId(), e);
+                return new GenerationOutcome(lastMechanicallyVerifiedCandidate.loopResult(), lastMechanicallyVerifiedCandidate.verification(), sessionId, this, sandbox,
+                        lastMechanicallyVerifiedCandidate.producedFiles(), lastMechanicallyVerifiedCandidate.problemStatement(), lastMechanicallyVerifiedCandidate.reviewReport(),
+                        workspaceSeed.repositoryHeads());
+            }
+            if (lastExtractedCandidate != null && workspaceSeed != null) {
+                log.warn("Exercise generation failed while verifying an extracted candidate for exercise {}; preserving the captured work", exercise.getId(), e);
+                AgentLoopResult stopped = new AgentLoopResult(AgentLoopResult.Status.ERROR, lastExtractedCandidate.loopResult().turns(),
+                        "Generation stopped before verification completed.");
+                return new GenerationOutcome(stopped, null, sessionId, this, sandbox, lastExtractedCandidate.producedFiles(), lastExtractedCandidate.problemStatement(),
+                        SpecFidelityReport.qualityReviewUnavailable("Generation stopped before the captured candidate could be fully verified."), workspaceSeed.repositoryHeads());
+            }
+            GenerationOutcome recoveredError = captureUnexpectedFailure(sandbox, sessionId, workspaceSeed, placeholderReplacements, baselineRepositoryFiles,
+                    baselineProblemStatement);
+            if (recoveredError != null) {
+                log.warn("Exercise generation failed after producing recoverable work for exercise {}; preserving it as an isolated review draft", exercise.getId(), e);
+                return recoveredError;
+            }
+            // No usable outcome exists for the caller to close.
+            destroyQuietly(sandbox, sessionId);
             log.error("Exercise generation failed for exercise {}", exercise.getId(), e);
             throw e;
         }
         finally {
             jobService.deregisterCancelHook(jobId);
         }
+    }
+
+    private record CandidateSnapshot(AgentLoopResult loopResult, VerificationResult verification, Map<RepositoryType, Map<String, String>> producedFiles, String problemStatement,
+            SpecFidelityReport reviewReport) {
+    }
+
+    private record ExtractedCandidate(AgentLoopResult loopResult, Map<RepositoryType, Map<String, String>> producedFiles, String problemStatement) {
+    }
+
+    private static Map<RepositoryType, Map<String, String>> copyProducedFiles(Map<RepositoryType, Map<String, String>> producedFiles) {
+        Map<RepositoryType, Map<String, String>> copy = new EnumMap<>(RepositoryType.class);
+        producedFiles.forEach((type, files) -> copy.put(type, Map.copyOf(files)));
+        return Map.copyOf(copy);
+    }
+
+    private record CapturedRepositories(Map<RepositoryType, Map<String, String>> files, boolean complete) {
+    }
+
+    private GenerationOutcome stopOrPreserve(InteractiveSandbox sandbox, @Nullable String sessionId, GenerationWorkspaceService.@Nullable WorkspaceSeed workspaceSeed,
+            Map<String, String> placeholderReplacements, Map<RepositoryType, Map<String, String>> baselineRepositoryFiles, @Nullable String baselineProblemStatement,
+            AgentLoopResult cancelledResult) {
+        GenerationOutcome recoverable = captureUnexpectedFailure(sandbox, sessionId, workspaceSeed, placeholderReplacements, baselineRepositoryFiles, baselineProblemStatement);
+        if (recoverable != null) {
+            return recoverable;
+        }
+        destroyQuietly(sandbox, sessionId);
+        return GenerationOutcome.cancelled(cancelledResult);
+    }
+
+    private @Nullable GenerationOutcome captureUnexpectedFailure(InteractiveSandbox sandbox, @Nullable String sessionId,
+            GenerationWorkspaceService.@Nullable WorkspaceSeed workspaceSeed, Map<String, String> placeholderReplacements,
+            Map<RepositoryType, Map<String, String>> baselineRepositoryFiles, @Nullable String baselineProblemStatement) {
+        if (sessionId == null || workspaceSeed == null) {
+            return null;
+        }
+        try {
+            workspace.cleanTransientBuildOutputs(sandbox, sessionId);
+        }
+        catch (RuntimeException cleanupFailure) {
+            log.debug("Could not clean transient outputs before generation recovery: {}", cleanupFailure.getMessage());
+        }
+        Map<RepositoryType, Map<String, String>> files = Map.of();
+        boolean repositoriesComplete = false;
+        try {
+            CapturedRepositories captured = captureRepositoryFiles(sandbox, sessionId, workspaceSeed, placeholderReplacements);
+            if (captured.complete()) {
+                files = captured.files();
+                repositoriesComplete = true;
+            }
+        }
+        catch (RuntimeException extractionFailure) {
+            log.debug("Could not extract every repository after generation failed: {}", extractionFailure.getMessage());
+        }
+        String statement;
+        try {
+            statement = workspace.extractProblemStatement(sandbox, sessionId).trim();
+        }
+        catch (RuntimeException extractionFailure) {
+            statement = baselineProblemStatement == null ? "" : baselineProblemStatement.trim();
+        }
+        boolean statementChanged = !java.util.Objects.equals(baselineProblemStatement == null ? "" : baselineProblemStatement.trim(), statement);
+        if (!statementChanged && (!repositoriesComplete || !hasProducedChanges(baselineRepositoryFiles, files, baselineProblemStatement, statement))) {
+            return null;
+        }
+        AgentLoopResult loopResult = new AgentLoopResult(AgentLoopResult.Status.ERROR, 0, "Generation stopped unexpectedly before verification completed.");
+        return new GenerationOutcome(loopResult, null, sessionId, this, sandbox, files, statement,
+                SpecFidelityReport.qualityReviewUnavailable("Generation stopped before the candidate could be fully verified."), workspaceSeed.repositoryHeads());
+    }
+
+    private CapturedRepositories captureRepositoryFiles(InteractiveSandbox sandbox, String sessionId, GenerationWorkspaceService.WorkspaceSeed workspaceSeed,
+            Map<String, String> placeholderReplacements) {
+        Map<RepositoryType, Map<String, String>> captured = new EnumMap<>(RepositoryType.class);
+        boolean complete = true;
+        for (RepositoryType type : List.of(RepositoryType.SOLUTION, RepositoryType.TEMPLATE, RepositoryType.TESTS)) {
+            GenerationWorkspaceService.RepositoryExtraction extraction = workspace.extractRepository(sandbox, sessionId, type,
+                    workspaceSeed.repositoryMetadata().getOrDefault(type, GenerationWorkspaceService.RepositorySeedMetadata.EMPTY));
+            if (extraction.extractionFailed()) {
+                complete = false;
+            }
+            else {
+                captured.put(type, replacePlaceholders(extraction, placeholderReplacements).files());
+            }
+        }
+        return new CapturedRepositories(Map.copyOf(captured), complete);
+    }
+
+    private static boolean hasProducedChanges(Map<RepositoryType, Map<String, String>> baselineFiles, Map<RepositoryType, Map<String, String>> producedFiles,
+            @Nullable String baselineProblemStatement, String producedProblemStatement) {
+        if (!java.util.Objects.equals(baselineProblemStatement == null ? "" : baselineProblemStatement.trim(), producedProblemStatement)) {
+            return true;
+        }
+        return List.of(RepositoryType.SOLUTION, RepositoryType.TEMPLATE, RepositoryType.TESTS).stream()
+                .anyMatch(type -> !baselineFiles.getOrDefault(type, Map.of()).equals(producedFiles.getOrDefault(type, Map.of())));
+    }
+
+    static String renderReviewBrief(GenerationMode mode, String runInstruction, @Nullable String startingProblemStatement) {
+        if (startingProblemStatement == null || startingProblemStatement.isBlank()) {
+            return runInstruction;
+        }
+        String instructionRole = mode == GenerationMode.ADAPT ? "authoritative adaptation request" : "authoritative for requested changes";
+        return "RUN INSTRUCTION (" + instructionRole + "):\n" + runInstruction
+                + "\n\nSTARTING PROBLEM STATEMENT (preserve every requirement where the run instruction is silent):\n" + startingProblemStatement.strip();
+    }
+
+    static String renderAuthoringBrief(String sourceBrief) {
+        return "PRIMARY SOURCE REQUIREMENTS (authoritative; preserve every explicit requirement):\n" + sourceBrief
+                + "\n\nChoose only the minimal API and behavior needed to implement these requirements. Do not add graded purity, immutability, thread-safety, exception, or architecture "
+                + "requirements unless the source explicitly requests them. Keep the statement, starter, solution, tests, examples, and task bindings consistent.";
     }
 
     /** Records the repository's directory as extraction-failed so the verifier can fail CLOSED on a read-back error (distinct from a genuinely empty repo). */
@@ -362,10 +549,12 @@ public class GenerationOrchestrationService {
                 report = new SpecFidelityReport(combined);
             }
             if (report.hasFindings()) {
-                emit(progress,
-                        report.hasBlockingFindings()
-                                ? "The review found " + report.findings().size() + " blocking exercise-quality gap(s) that must be resolved before live persistence."
-                                : "The review found " + report.findings().size() + " advisory exercise-quality gap(s).");
+                long blockingCount = report.findings().stream().filter(SpecFidelityReport.Finding::isBlocking).count();
+                long advisoryCount = report.findings().size() - blockingCount;
+                String counts = blockingCount > 0 && advisoryCount > 0 ? blockingCount + " blocking and " + advisoryCount + " advisory"
+                        : blockingCount > 0 ? blockingCount + " blocking" : advisoryCount + " advisory";
+                String gaps = report.findings().size() == 1 ? " exercise-quality gap" : " exercise-quality gaps";
+                emit(progress, "The review found " + counts + gaps + (blockingCount > 0 ? " that must be resolved before live persistence." : "."));
             }
             return report;
         }

@@ -1,6 +1,5 @@
 package de.tum.cit.aet.artemis.localci.service;
 
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -18,7 +17,6 @@ import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.dto.BuildResultNotification;
-import de.tum.cit.aet.artemis.programming.exception.ContinuousIntegrationException;
 import de.tum.cit.aet.artemis.programming.repository.StaticCodeAnalysisCategoryRepository;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseTaskService;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestCaseTestRepository;
@@ -27,21 +25,20 @@ import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTes
 class ProgrammingExerciseFeedbackCreationServiceTest {
 
     @Test
-    void rejectsTestCaseUpdatesFromStaleTestsCommit() {
+    void skipsTestCaseUpdatesFromStaleTestsCommit() {
         Harness harness = harness("stale-tests-commit");
-        when(harness.gitService().getLastCommitHash(harness.testsUri())).thenReturn("current-tests-commit");
+        when(harness.gitService().getLastCommitHash(harness.testsUri(), "main")).thenReturn("current-tests-commit");
 
-        assertThatThrownBy(() -> harness.service().extractTestCasesFromResultAndBroadcastUpdates(harness.buildResult(), harness.exercise()))
-                .isInstanceOf(ContinuousIntegrationException.class).hasMessageContaining("stale");
+        harness.service().extractTestCasesFromResultAndBroadcastUpdates(harness.buildResult(), harness.exercise());
 
         verify(harness.service(), never()).generateTestCasesFromBuildResult(harness.buildResult(), harness.exercise());
-        verifyNoInteractions(harness.testCaseRepository(), harness.websocketMessagingService(), harness.taskService(), harness.exerciseRepository());
+        verifyNoInteractions(harness.testCaseRepository(), harness.websocketMessagingService(), harness.taskService());
     }
 
     @Test
     void appliesTestCaseUpdatesFromCurrentTestsCommit() {
         Harness harness = harness("current-tests-commit");
-        when(harness.gitService().getLastCommitHash(harness.testsUri())).thenReturn("current-tests-commit");
+        when(harness.gitService().getLastCommitHash(harness.testsUri(), "main")).thenReturn("current-tests-commit");
 
         harness.service().extractTestCasesFromResultAndBroadcastUpdates(harness.buildResult(), harness.exercise());
 
@@ -49,15 +46,30 @@ class ProgrammingExerciseFeedbackCreationServiceTest {
     }
 
     @Test
-    void verifiesTestsCommitWithoutLoadingBranchMetadata() {
+    void appliesTestCaseUpdatesFromCurrentTestsCommitOnCustomBuildBranch() {
         Harness harness = harness("current-tests-commit");
-        when(harness.buildResult().assignmentRepoBranchName()).thenThrow(new AssertionError("assignment branch must not be loaded"));
-        when(harness.exercise().getBuildConfig()).thenThrow(new AssertionError("build config must not be loaded"));
-        when(harness.gitService().getLastCommitHash(harness.testsUri())).thenReturn("current-tests-commit");
+        when(harness.exerciseRepository().findBranchByExerciseId(42L)).thenReturn("custom-build-branch");
+        when(harness.gitService().getLastCommitHash(harness.testsUri())).thenReturn("symbolic-head-commit");
+        when(harness.gitService().getLastCommitHash(harness.testsUri(), "custom-build-branch")).thenReturn("current-tests-commit");
 
         harness.service().extractTestCasesFromResultAndBroadcastUpdates(harness.buildResult(), harness.exercise());
 
-        verify(harness.gitService()).getLastCommitHash(harness.testsUri());
+        verify(harness.gitService()).getLastCommitHash(harness.testsUri(), "custom-build-branch");
+        verify(harness.gitService(), never()).getLastCommitHash(harness.testsUri());
+        verify(harness.service()).generateTestCasesFromBuildResult(harness.buildResult(), harness.exercise());
+    }
+
+    @Test
+    void verifiesTestsCommitUsingStoredBuildBranchWithoutLoadingBuildConfig() {
+        Harness harness = harness("current-tests-commit");
+        when(harness.buildResult().assignmentRepoBranchName()).thenThrow(new AssertionError("assignment branch must not be loaded"));
+        when(harness.exercise().getBuildConfig()).thenThrow(new AssertionError("build config must not be loaded"));
+        when(harness.gitService().getLastCommitHash(harness.testsUri(), "main")).thenReturn("current-tests-commit");
+
+        harness.service().extractTestCasesFromResultAndBroadcastUpdates(harness.buildResult(), harness.exercise());
+
+        verify(harness.exerciseRepository()).findBranchByExerciseId(42L);
+        verify(harness.gitService()).getLastCommitHash(harness.testsUri(), "main");
         verify(harness.service()).generateTestCasesFromBuildResult(harness.buildResult(), harness.exercise());
     }
 
@@ -72,12 +84,11 @@ class ProgrammingExerciseFeedbackCreationServiceTest {
     }
 
     @Test
-    void rejectsTestCaseUpdatesWhenCurrentTestsCommitCannotBeRead() {
+    void skipsTestCaseUpdatesWhenCurrentTestsCommitCannotBeRead() {
         Harness harness = harness("tests-commit");
-        when(harness.gitService().getLastCommitHash(harness.testsUri())).thenThrow(new IllegalStateException("VCS unavailable"));
+        when(harness.gitService().getLastCommitHash(harness.testsUri(), "main")).thenThrow(new IllegalStateException("VCS unavailable"));
 
-        assertThatThrownBy(() -> harness.service().extractTestCasesFromResultAndBroadcastUpdates(harness.buildResult(), harness.exercise()))
-                .isInstanceOf(ContinuousIntegrationException.class).hasMessageContaining("could not be verified");
+        harness.service().extractTestCasesFromResultAndBroadcastUpdates(harness.buildResult(), harness.exercise());
 
         verify(harness.service(), never()).generateTestCasesFromBuildResult(harness.buildResult(), harness.exercise());
     }
@@ -112,6 +123,7 @@ class ProgrammingExerciseFeedbackCreationServiceTest {
         LocalVCRepositoryUri testsUri = mock();
         when(exercise.getId()).thenReturn(42L);
         when(exercise.getRepositoryURI(RepositoryType.TESTS)).thenReturn(testsUri);
+        when(exerciseRepository.findBranchByExerciseId(42L)).thenReturn("main");
         doReturn(false).when(service).generateTestCasesFromBuildResult(buildResult, exercise);
         return new Harness(service, buildResult, exercise, testsUri, gitService, testCaseRepository, websocketMessagingService, taskService, exerciseRepository);
     }

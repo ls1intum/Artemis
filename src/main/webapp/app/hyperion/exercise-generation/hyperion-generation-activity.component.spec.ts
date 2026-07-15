@@ -20,9 +20,11 @@ import {
 
 type TestGenerationEvent = Omit<HyperionGenerationEvent, 'timestamp'> & { timestamp?: string };
 type TestGenerationMessage = TestGenerationEvent | ExerciseGenerationFileSnapshot;
-type TestGenerationStatus = Omit<HyperionGenerationStatus, 'events' | 'revertAvailable'> & {
+type TestGenerationStatus = Omit<HyperionGenerationStatus, 'events' | 'revertAvailable' | 'ownedByCaller' | 'cancellable'> & {
     events: TestGenerationEvent[];
     revertAvailable?: boolean;
+    ownedByCaller?: boolean;
+    cancellable?: boolean;
 };
 
 function normalizeEvent(event: TestGenerationEvent): HyperionGenerationEvent {
@@ -34,7 +36,13 @@ function normalizeMessage(message: TestGenerationMessage): HyperionGenerationMes
 }
 
 function normalizeStatus(status: TestGenerationStatus): HyperionGenerationStatus {
-    return { ...status, events: status.events.map(normalizeEvent), revertAvailable: status.revertAvailable ?? false };
+    return {
+        ...status,
+        events: status.events.map(normalizeEvent),
+        revertAvailable: status.revertAvailable ?? false,
+        ownedByCaller: status.ownedByCaller ?? true,
+        cancellable: status.cancellable ?? status.running,
+    };
 }
 
 class MockService {
@@ -392,8 +400,11 @@ describe('HyperionGenerationActivityComponent', () => {
         const fixture = createWith({ jobId: 'j1', running: true, events: [], fileSnapshots: [snapshot('solution/A.java', 'create', 'a')] });
         const component = fixture.componentInstance;
 
-        service.stream$.next(snapshot('solution/A.java', 'edit', 'a2'));
+        service.stream$.next(snapshot('solution/A.java', 'edit', 'a2', { turn: 2 }));
         expect(component.snapshots()).toHaveLength(1);
+        expect(component.snapshots()[0].content).toBe('a2');
+
+        service.stream$.next(snapshot('solution/A.java', 'edit', 'stale', { turn: 1 }));
         expect(component.snapshots()[0].content).toBe('a2');
 
         service.stream$.next(snapshot('template/B.java', 'create', 'b'));
@@ -591,8 +602,15 @@ describe('HyperionGenerationActivityComponent', () => {
         fixture.componentInstance.cancel();
         vi.advanceTimersByTime(10_000);
 
-        expect(statusSpy).toHaveBeenCalledTimes(3);
-        expect(fixture.componentInstance.cancelRequested()).toBe(false);
+        expect(statusSpy).toHaveBeenCalled();
+        expect(fixture.componentInstance.cancelRequested()).toBe(true);
+
+        const callsAfterInitialReconciliation = statusSpy.mock.calls.length;
+        vi.advanceTimersByTime(10_000);
+        expect(statusSpy.mock.calls.length).toBeGreaterThan(callsAfterInitialReconciliation);
+
+        fixture.componentInstance.cancel();
+        expect(service.cancelCalls).toEqual([[42, 'j1']]);
     });
 
     it('clears stale running state when cancellation status has no retained job', () => {
@@ -689,6 +707,28 @@ describe('HyperionGenerationActivityComponent', () => {
             completedAt: '',
         });
         expect(fixture.nativeElement.querySelector('[data-testid="hyperion-generation-completion-status"]')).toBeNull();
+    });
+
+    it('reconciles retained snapshots when a terminal event overtakes an earlier file message', () => {
+        const fixture = createWith({
+            jobId: 'j1',
+            mode: 'GENERATE',
+            running: true,
+            events: [],
+            fileSnapshots: [snapshot('solution/A.java', 'create', 'old', { turn: 1 })],
+        });
+        service.status = {
+            jobId: 'j1',
+            mode: 'GENERATE',
+            running: false,
+            events: [{ type: 'DONE', completionStatus: 'SUCCESS', liveExerciseChanged: true }],
+            fileSnapshots: [snapshot('solution/A.java', 'edit', 'new', { turn: 2 })],
+        };
+
+        service.stream$.next({ type: 'DONE', completionStatus: 'SUCCESS', liveExerciseChanged: true });
+
+        expect(fixture.componentInstance.snapshots()).toHaveLength(1);
+        expect(fixture.componentInstance.snapshots()[0].content).toBe('new');
     });
 
     it('describes the inverted template check as an expected pass condition', () => {
@@ -832,6 +872,90 @@ describe('HyperionGenerationActivityComponent', () => {
         expect(component.jobId()).toBe('j9');
         expect(component.running()).toBe(true);
         expect(component.runningLabelKey()).toBe('artemisApp.hyperion.generationActivity.adapting');
+    });
+
+    it('shows a sanitized active run owned by another instructor without exposing cancellation', () => {
+        const subscribeToStream = vi.spyOn(service, 'subscribeToStream');
+        const fixture = createWith({ jobId: 'other-job', mode: 'GENERATE', running: true, ownedByCaller: false, events: [], fileSnapshots: [] });
+        fixture.detectChanges();
+
+        expect(fixture.componentInstance.running()).toBe(true);
+        expect(fixture.componentInstance.ownedByCaller()).toBe(false);
+        expect(fixture.nativeElement.querySelector('[data-testid="hyperion-generation-cancel"]')).toBeNull();
+        expect(fixture.nativeElement.querySelector('[data-testid="hyperion-generation-live-status"]')?.textContent).toContain('runningByAnotherInstructor');
+        expect(subscribeToStream).not.toHaveBeenCalled();
+
+        fixture.componentInstance.cancel();
+        expect(service.cancelCalls).toEqual([]);
+    });
+
+    it('requests an editor refresh before clearing a sanitized run that disappears', () => {
+        vi.useFakeTimers();
+        const fixture = createWith({ jobId: 'other-job', mode: 'GENERATE', running: true, ownedByCaller: false, events: [], fileSnapshots: [] });
+        const completed = vi.fn(() => expect(fixture.componentInstance.running()).toBe(true));
+        fixture.componentInstance.generationCompleted.subscribe(completed);
+        expect(fixture.componentInstance.running()).toBe(true);
+
+        service.status = null;
+        vi.advanceTimersByTime(5_000);
+
+        expect(completed).toHaveBeenCalledExactlyOnceWith({ mode: 'GENERATE', liveExerciseChanged: true });
+        expect(fixture.componentInstance.running()).toBe(false);
+        expect(fixture.componentInstance.jobId()).toBeUndefined();
+    });
+
+    it('treats missing ownership fields as non-owned and non-cancellable', () => {
+        const malformedStatus = {
+            jobId: 'unknown-owner-job',
+            mode: 'GENERATE',
+            running: true,
+            events: [],
+            fileSnapshots: [],
+            revertAvailable: false,
+        } as unknown as HyperionGenerationStatus;
+        service.getStatus = vi.fn(() => of(new HttpResponse({ body: malformedStatus })));
+        const subscribeToStream = vi.spyOn(service, 'subscribeToStream');
+
+        const fixture = createWith(null);
+
+        expect(fixture.componentInstance.ownedByCaller()).toBe(false);
+        expect(fixture.componentInstance.cancellable()).toBe(false);
+        expect(subscribeToStream).not.toHaveBeenCalled();
+        fixture.componentInstance.cancel();
+        expect(service.cancelCalls).toEqual([]);
+    });
+
+    it('subscribes before a second authoritative status read closes the reload race', () => {
+        const running = normalizeStatus({ jobId: 'j1', mode: 'GENERATE', running: true, events: [], fileSnapshots: [] });
+        const done = normalizeStatus({
+            jobId: 'j1',
+            mode: 'GENERATE',
+            running: false,
+            events: [{ type: 'DONE', completionStatus: 'SUCCESS', liveExerciseChanged: true }],
+            fileSnapshots: [],
+        });
+        service.getStatus = vi
+            .fn()
+            .mockReturnValueOnce(of(new HttpResponse({ body: running })))
+            .mockReturnValueOnce(of(new HttpResponse({ body: done })));
+        const subscribeToStream = vi.spyOn(service, 'subscribeToStream');
+
+        const fixture = createWith(null);
+
+        expect(subscribeToStream).toHaveBeenCalledOnce();
+        expect(service.getStatus).toHaveBeenCalledTimes(2);
+        expect(fixture.componentInstance.running()).toBe(false);
+        expect(fixture.componentInstance.completionStatus()).toBe('SUCCESS');
+    });
+
+    it('hides cancellation while the owner run is finalizing', () => {
+        const fixture = createWith({ jobId: 'j1', mode: 'GENERATE', running: true, ownedByCaller: true, cancellable: false, events: [], fileSnapshots: [] });
+        fixture.detectChanges();
+
+        expect(fixture.componentInstance.runningLabelKey()).toContain('finalizing');
+        expect(fixture.nativeElement.querySelector('[data-testid="hyperion-generation-cancel"]')).toBeNull();
+        fixture.componentInstance.cancel();
+        expect(service.cancelCalls).toEqual([]);
     });
 
     it('replays retained status immediately after attaching to avoid missing early stream events', () => {
@@ -1069,6 +1193,37 @@ describe('HyperionGenerationActivityComponent', () => {
         expect(component.events()).toEqual([{ type: 'PROGRESS', message: 'still running', timestamp: '' }]);
     });
 
+    it('periodically reconciles an active stream so a lost terminal message cannot leave the editor stuck', () => {
+        vi.useFakeTimers();
+        const fixture = createWith({ jobId: 'j1', mode: 'GENERATE', running: true, events: [], fileSnapshots: [] });
+        const component = fixture.componentInstance;
+        const completed = vi.fn();
+        component.generationCompleted.subscribe(completed);
+        service.status = null;
+        vi.advanceTimersByTime(5_000);
+        expect(component.running()).toBe(true);
+
+        service.status = {
+            jobId: 'j1',
+            mode: 'GENERATE',
+            running: false,
+            events: [{ type: 'DONE', completionStatus: 'SUCCESS', liveExerciseChanged: true }],
+            fileSnapshots: [],
+        };
+
+        vi.advanceTimersByTime(5_000);
+
+        expect(component.running()).toBe(false);
+        expect(component.completionStatus()).toBe('SUCCESS');
+        expect(completed).toHaveBeenCalledExactlyOnceWith({
+            mode: 'GENERATE',
+            verdict: undefined,
+            completionStatus: 'SUCCESS',
+            liveExerciseChanged: true,
+            completedAt: '',
+        });
+    });
+
     it('replaces a stale local snapshot with a newer retained status snapshot after stream loss', () => {
         vi.useFakeTimers();
         const fixture = createWith({ jobId: 'j1', running: true, events: [], fileSnapshots: [snapshot('solution/A.java', 'create', 'old', { turn: 1 })] });
@@ -1135,6 +1290,8 @@ describe('HyperionGenerationActivityComponent', () => {
             events: [],
             fileSnapshots: [],
             revertAvailable: false,
+            ownedByCaller: true,
+            cancellable: true,
         };
         const stoppedStatus = { ...runningStatus, running: false, events: [{ type: 'CANCELLED' as const, message: 'Cancelled' }] };
         service.getStatus = vi
@@ -1145,9 +1302,6 @@ describe('HyperionGenerationActivityComponent', () => {
         component.attachToJob('later-run', 'GENERATE');
 
         service.stream$.next({ type: 'CANCELLED', message: 'Cancelled' });
-
-        expect(component.canRevert()).toBe(false);
-        vi.advanceTimersByTime(500);
 
         expect(component.canRevert()).toBe(true);
         expect(service.getStatus).toHaveBeenCalledTimes(3);
@@ -1216,6 +1370,38 @@ describe('HyperionGenerationActivityComponent', () => {
         expect(component.running()).toBe(true);
     });
 
+    it('adopts a newer active run owned by the same instructor', () => {
+        const pendingStatus = new Subject<HttpResponse<HyperionGenerationStatus>>();
+        service.getStatus = () => pendingStatus.asObservable();
+        const fixture = createWith(null);
+        const component = fixture.componentInstance;
+
+        component.attachToJob('previous', 'GENERATE');
+        pendingStatus.next(
+            new HttpResponse<HyperionGenerationStatus>({
+                body: normalizeStatus({ jobId: 'current', mode: 'ADAPT', running: true, ownedByCaller: true, events: [], fileSnapshots: [] }),
+            }),
+        );
+
+        expect(component.jobId()).toBe('current');
+        expect(component.mode()).toBe('ADAPT');
+        expect(component.running()).toBe(true);
+    });
+
+    it('discovers a run started after this editor became idle', () => {
+        vi.useFakeTimers();
+        const fixture = createWith(null);
+        const component = fixture.componentInstance;
+        service.status = { jobId: 'remote', mode: 'ADAPT', running: true, ownedByCaller: false, events: [], fileSnapshots: [] };
+
+        vi.advanceTimersByTime(15_000);
+
+        expect(component.jobId()).toBe('remote');
+        expect(component.mode()).toBe('ADAPT');
+        expect(component.running()).toBe(true);
+        expect(component.ownedByCaller()).toBe(false);
+    });
+
     it('merges a late status response without clobbering newer live snapshots or terminal state', () => {
         const pendingStatus = new Subject<HttpResponse<HyperionGenerationStatus>>();
         service.getStatus = () => pendingStatus.asObservable();
@@ -1234,6 +1420,8 @@ describe('HyperionGenerationActivityComponent', () => {
                     events: [{ type: 'DONE', message: 'older retained terminal', liveExerciseChanged: true, timestamp: '' }],
                     fileSnapshots: [snapshot('solution/A.java', 'create', 'older')],
                     revertAvailable: false,
+                    ownedByCaller: true,
+                    cancellable: true,
                 },
             }),
         );

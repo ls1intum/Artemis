@@ -405,6 +405,20 @@ class HyperionExerciseGenerationResourceTest {
     }
 
     @Test
+    void getExerciseGenerationStatus_preservesActiveRunOwnership() {
+        ExerciseGenerationStatusDTO status = new ExerciseGenerationStatusDTO("job-42", true, GenerationMode.ADAPT, List.of(), List.of(), false, null, null, false, false);
+        when(programmingExerciseRepository.findWithAllParticipationsAndBuildConfigById(1L)).thenReturn(Optional.of(testExercise));
+        when(userRepository.getUserWithGroupsAndAuthorities()).thenReturn(testUser);
+        when(jobService.getStatus(testUser, testExercise)).thenReturn(Optional.of(status));
+
+        ResponseEntity<ExerciseGenerationStatusDTO> response = resource.getExerciseGenerationStatus(1L);
+
+        assertThat(response.getBody()).isNotNull();
+        assertThat(response.getBody().ownedByCaller()).isFalse();
+        assertThat(response.getBody().cancellable()).isFalse();
+    }
+
+    @Test
     void getExerciseGenerationStatus_whenOnlyRevertBaselineRemains_returnsRevertCapability() {
         when(programmingExerciseRepository.findWithAllParticipationsAndBuildConfigById(1L)).thenReturn(Optional.of(testExercise));
         when(userRepository.getUserWithGroupsAndAuthorities()).thenReturn(testUser);

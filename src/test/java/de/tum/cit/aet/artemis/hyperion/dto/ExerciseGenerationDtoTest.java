@@ -165,6 +165,18 @@ class ExerciseGenerationDtoTest {
         assertThat(json.get("events")).isEmpty();
         assertThat(json.get("fileSnapshots")).isEmpty();
         assertThat(json.get("revertAvailable").asBoolean()).isTrue();
+        assertThat(json.get("ownedByCaller").asBoolean()).isTrue();
+        assertThat(json.get("cancellable").asBoolean()).isFalse();
         assertThat(json.has("mode")).isFalse();
+    }
+
+    @Test
+    void status_serializesFalseOwnershipRequiredByTheWireContract() throws Exception {
+        JsonNode json = mapper
+                .readTree(mapper.writeValueAsString(new ExerciseGenerationStatusDTO("job", true, GenerationMode.GENERATE, List.of(), List.of(), false, null, null, false)));
+
+        assertThat(json.has("ownedByCaller")).isTrue();
+        assertThat(json.get("ownedByCaller").asBoolean()).isFalse();
+        assertThat(json.get("cancellable").asBoolean()).isFalse();
     }
 }

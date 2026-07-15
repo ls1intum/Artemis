@@ -95,6 +95,10 @@ final class HyperionUtils {
             Pattern.compile("^\\s*#{1,6}\\s*(?:instructor decisions?|open questions?|authoring notes?|drafting notes?)\\b", Pattern.CASE_INSENSITIVE | Pattern.MULTILINE),
             Pattern.compile("\\bconflict\\b[^\\n]{0,160}\\bdo\\s+\\*?\\*?not\\*?\\*?\\s+overlap\\b[^\\n]{0,160}\\bno conflict\\b", Pattern.CASE_INSENSITIVE));
 
+    private static final Pattern REQUIRED_JSON_ARTIFACT = Pattern
+            .compile("(?:\\b(?:must|should|shall|required|provide|return|print|read|write|submit|export|use|using)\\b[^\\n.!?]{0,80}\\bJSON(?:-like)?\\b|"
+                    + "\\bJSON(?:-like)?\\b[^\\n.!?]{0,80}\\b(?:input|output|payload|file|format|submission)\\b)", Pattern.CASE_INSENSITIVE);
+
     private static final List<ConditionalDraftArtifact> CONDITIONAL_DRAFT_ARTIFACTS = List.of(
             new ConditionalDraftArtifact(Pattern.compile("(?:^\\s*#{1,6}\\s*(?:optional challenges?|extra credit)\\b|\\*\\*\\(Optional\\)|\\bif you choose to expose\\b)",
                     Pattern.CASE_INSENSITIVE | Pattern.MULTILINE), Pattern.compile("\\b(?:optional|challenge|extra credit)\\b", Pattern.CASE_INSENSITIVE)),
@@ -109,7 +113,7 @@ final class HyperionUtils {
             new ConditionalDraftArtifact(Pattern.compile(
                     "\\b(?:provided test suite|test suite|unit tests?|students?\\s+(?:must|should|need to|are required to)\\s+(?:write|create|provide)\\s+unit tests?)\\b",
                     Pattern.CASE_INSENSITIVE), Pattern.compile("\\b(?:unit tests?|testing|test suite)\\b", Pattern.CASE_INSENSITIVE)),
-            new ConditionalDraftArtifact(Pattern.compile("\\bJSON(?:-like)?\\b", Pattern.CASE_INSENSITIVE), Pattern.compile("\\bJSON\\b", Pattern.CASE_INSENSITIVE)),
+            new ConditionalDraftArtifact(REQUIRED_JSON_ARTIFACT, Pattern.compile("\\bJSON\\b", Pattern.CASE_INSENSITIVE)),
             new ConditionalDraftArtifact(Pattern.compile("\\b(?:standard input|command[- ]line|CSV|database|web interface|printed (?:lines|output))\\b", Pattern.CASE_INSENSITIVE),
                     Pattern.compile("\\b(?:standard input|command[- ]line|CSV|database|web interface|printed (?:lines|output))\\b", Pattern.CASE_INSENSITIVE)));
 

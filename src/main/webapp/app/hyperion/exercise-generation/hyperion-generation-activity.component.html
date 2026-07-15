@@ -61,7 +61,7 @@
                             <span [jhiTranslate]="detailsLabelKey()"></span>
                         </button>
                     }
-                    @if (running()) {
+                    @if (running() && ownedByCaller() && cancellable()) {
                         <p-button
                             size="small"
                             severity="danger"

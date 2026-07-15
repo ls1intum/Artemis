@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -9,8 +10,10 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
@@ -98,6 +101,29 @@ class HyperionProviderFailureCooldownServiceTest {
         service.startCooldown("model", Instant.now().plusMillis(1500));
 
         verify(mockedMap).set(eq("model"), any(), anyLong(), eq(TimeUnit.MILLISECONDS));
+    }
+
+    @Test
+    void executeOpensSharedCooldownAfterHardFailureAndRejectsTheNextCall() {
+        assertThatThrownBy(() -> firstService.execute("model", Duration.ofMinutes(5), () -> {
+            throw new RuntimeException("HTTP 429 insufficient_quota: exceeded your current quota");
+        })).isInstanceOf(RuntimeException.class).hasMessageContaining("insufficient_quota");
+        AtomicBoolean called = new AtomicBoolean();
+
+        assertThatThrownBy(() -> secondService.execute("model", Duration.ofMinutes(5), () -> {
+            called.set(true);
+            return "response";
+        })).isInstanceOf(ProviderFailureCooldown.ProviderInCooldownException.class);
+        assertThat(called).isFalse();
+    }
+
+    @Test
+    void executeDoesNotOpenCooldownForTransientRateLimit() {
+        assertThatThrownBy(() -> firstService.execute("model", Duration.ofMinutes(5), () -> {
+            throw new RuntimeException("HTTP 429 rate_limit_exceeded: too many requests");
+        })).isInstanceOf(RuntimeException.class).hasMessageContaining("rate_limit_exceeded");
+
+        assertThat(secondService.execute("model", Duration.ofMinutes(5), () -> "response")).isEqualTo("response");
     }
 
 }

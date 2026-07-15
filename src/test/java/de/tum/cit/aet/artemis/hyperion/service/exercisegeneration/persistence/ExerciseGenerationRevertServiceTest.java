@@ -143,8 +143,9 @@ class ExerciseGenerationRevertServiceTest {
 
     @Test
     void recordBaseline_retainsTheRunModeForStatusRecovery() {
-        revertService.recordBaseline(exercise, "job-generate", GenerationMode.GENERATE, preRunHeads(), postRunHeads(), "old statement", "Old Title");
+        boolean recorded = revertService.recordBaseline(exercise, "job-generate", GenerationMode.GENERATE, preRunHeads(), postRunHeads(), "old statement", "Old Title");
 
+        assertThat(recorded).isTrue();
         assertThat(revertService.findRevertibleRun(77L)).contains(new ExerciseGenerationRevertService.RevertibleRun("job-generate", GenerationMode.GENERATE));
     }
 
@@ -153,9 +154,10 @@ class ExerciseGenerationRevertServiceTest {
         Map<RepositoryType, String> templateAndSolution = new EnumMap<>(RepositoryType.class);
         templateAndSolution.put(RepositoryType.TEMPLATE, "sha-template");
         templateAndSolution.put(RepositoryType.SOLUTION, "sha-solution");
-        revertService.recordBaseline(exercise, "job-1", GenerationMode.ADAPT, templateAndSolution, Map.of(RepositoryType.TEMPLATE, "adapted-template"), "old statement",
-                "Old Title");
+        boolean recorded = revertService.recordBaseline(exercise, "job-1", GenerationMode.ADAPT, templateAndSolution, Map.of(RepositoryType.TEMPLATE, "adapted-template"),
+                "old statement", "Old Title");
 
+        assertThat(recorded).isFalse();
         assertThat(revertService.findRevertibleJobId(77L)).isEmpty();
         assertThat(revertService.revert(exercise, user)).isEmpty();
         verify(gitService, never()).resetToCommitAndForcePush(any(), any(), any(), any());
@@ -269,7 +271,6 @@ class ExerciseGenerationRevertServiceTest {
     void revert_whenARepositoryFails_keepsBaselineForRetry() throws Exception {
         GenerationPersistenceService.TestsBuildSignal signal = new GenerationPersistenceService.TestsBuildSignal(11L, "sha-tests", 17L);
         when(persistenceService.prepareTestsBuildSignal(exercise, "sha-tests")).thenReturn(signal);
-        when(persistenceService.triggerTestsBuild(exercise, signal)).thenReturn(signal);
         when(gitService.getLastCommitHash(templateUri, DEFAULT_BRANCH)).thenReturn("adapted-template", "sha-template");
         when(gitService.getLastCommitHash(solutionUri, DEFAULT_BRANCH)).thenReturn("adapted-solution");
         when(gitService.getLastCommitHash(testsUri, DEFAULT_BRANCH)).thenReturn("adapted-tests", "sha-tests");

@@ -1,12 +1,9 @@
 package de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent;
 
-import java.io.IOException;
 import java.time.Duration;
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.Locale;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
@@ -34,9 +31,6 @@ import org.springframework.ai.tool.ToolCallbackProvider;
 import org.springframework.ai.tool.method.MethodToolCallbackProvider;
 
 import com.knuddels.jtokkit.api.EncodingType;
-import com.openai.errors.OpenAIIoException;
-import com.openai.errors.OpenAIRetryableException;
-import com.openai.errors.OpenAIServiceException;
 
 /**
  * Drives the Spring AI tool-calling loop for agentic exercise generation: repeatedly calls the model, executes the requested tools, and feeds the results back until the model
@@ -112,13 +106,11 @@ public class AgentLoopRunner {
 
     /**
      * Bounded attempts for a single model call before giving up. Only <em>transient</em> failures (see {@link #isRetryable}) and empty responses consume attempts: a fresh sample
-     * of a transient blip usually succeeds, so one should not abort a whole generation. Deterministic 4xx rejections do not retry at all — they fail fast. The {@code ChatModel}
-     * applies no {@code RetryTemplate}, so this ladder is the sole retry for the agent's chat calls.
+     * of a transient blip usually succeeds, so one should not abort a whole generation. Deterministic 4xx rejections do not retry at all — they fail fast. The OpenAI SDK already
+     * retries transport failures internally; this small outer allowance covers an exhausted SDK call or a successful-but-empty response without multiplying one logical turn into
+     * an excessive request storm.
      */
-    private static final int MODEL_CALL_ATTEMPTS = 6;
-
-    /** HTTP status extracted from an untyped error message when no typed openai-java exception is available; used only by the {@link #isRetryable} fallback. */
-    private static final Pattern HTTP_STATUS_IN_MESSAGE = Pattern.compile("(?i)(?:http|status|code|error)\\D{0,6}([1-5]\\d{2})\\b");
+    private static final int MODEL_CALL_ATTEMPTS = 2;
 
     /** Exponential-backoff base/cap (ms) between model-call retries; instance fields so a test can shrink them to assert retry behaviour without real waits. */
     private long modelCallRetryBaseMillis = 1_500L;
@@ -294,7 +286,7 @@ public class AgentLoopRunner {
             }
 
             if (submitRequested) {
-                // End the loop so the authoritative verifier (which does not trust the agent) decides acceptance.
+                // End the loop so the post-loop mechanical verifier (which does not trust the agent) can run before semantic review decides acceptance.
                 emit(stepListener, "Submitting the exercise for verification.");
                 return new AgentLoopResult(AgentLoopResult.Status.COMPLETED, turn, lastAssistantText);
             }
@@ -426,32 +418,25 @@ public class AgentLoopRunner {
      * see
      * {@link #isRetryable}) or an empty/no-usable-content response. A deterministic 4xx rejection (400/401/403/404/422) fails fast without retrying, because an identical re-send
      * will
-     * be rejected the same way. Returns {@code null} when a call fails permanently or every attempt is exhausted on errors; returns the last (empty) response when attempts are
-     * exhausted only on empty responses, so the loop can complete instead of falsely erroring. The caller turns a {@code null} into an ERROR outcome.
+     * be rejected the same way. Returns {@code null} when a call fails permanently or every attempt is exhausted without usable content. The caller turns a {@code null} into an
+     * ERROR outcome.
      */
     @Nullable
     private ChatResponse callModelWithRetries(Prompt prompt, int turn, BooleanSupplier cancelled, @Nullable Consumer<ChatResponse> usageSink,
             @Nullable Consumer<String> stepListener) {
         RuntimeException lastError = null;
-        ChatResponse lastEmptyResponse = null;
-        String providerFailureKey = configuredModel() != null ? configuredModel() : "default";
-        Instant cooldownUntil = providerFailureCooldown.cooldownUntil(providerFailureKey);
-        if (cooldownUntil != null) {
-            emit(stepListener, "The AI service is temporarily unavailable. Please try again later.");
-            return null;
-        }
+        String providerFailureKey = ProviderFailureCooldown.keyForModel(configuredModel());
         for (int attempt = 1; attempt <= MODEL_CALL_ATTEMPTS; attempt++) {
             if (cancelled.getAsBoolean()) {
                 return null;
             }
             try {
-                ChatResponse response = chatModel.call(prompt);
+                ChatResponse response = providerFailureCooldown.execute(providerFailureKey, providerHardFailureCooldown, () -> chatModel.call(prompt));
                 emitUsage(usageSink, response);
                 if (!isEmptyResponse(response)) {
                     return response;
                 }
                 // No tool calls and no text: a genuinely-flaky empty sample. Re-sample rather than treat it as a silent completion.
-                lastEmptyResponse = response;
                 lastError = null;
                 log.warn("Agent loop model call returned an empty response on turn {} (attempt {}/{})", turn, attempt, MODEL_CALL_ATTEMPTS);
                 if (attempt < MODEL_CALL_ATTEMPTS) {
@@ -468,11 +453,9 @@ public class AgentLoopRunner {
                     // Deterministic failure (e.g. 400/401/403/422): re-sending the identical request cannot help, so fail fast with a clear message instead of burning the ladder.
                     log.error("Agent loop model call failed on turn {} with a non-retryable error; not retrying", turn, e);
                     emit(stepListener, "The AI service could not complete the request.");
-                    openProviderFailureCooldownIfNeeded(providerFailureKey, e);
                     return null;
                 }
                 lastError = e;
-                lastEmptyResponse = null;
                 log.warn("Agent loop model call failed on turn {} (attempt {}/{})", turn, attempt, MODEL_CALL_ATTEMPTS, e);
                 if (attempt < MODEL_CALL_ATTEMPTS) {
                     emit(stepListener, "The AI service is temporarily unavailable. Retrying.");
@@ -482,15 +465,12 @@ public class AgentLoopRunner {
                 }
             }
         }
-        if (lastError == null && lastEmptyResponse != null) {
-            // Every attempt produced an empty response: return it so the loop finishes rather than turning a benign empty completion into an ERROR.
+        if (lastError == null) {
             log.warn("Agent loop model call returned an empty response on turn {} after {} attempts", turn, MODEL_CALL_ATTEMPTS);
-            return lastEmptyResponse;
+            emit(stepListener, "The AI service returned no usable response.");
+            return null;
         }
         log.error("Agent loop model call failed on turn {} after {} attempts", turn, MODEL_CALL_ATTEMPTS, lastError);
-        if (lastError != null) {
-            openProviderFailureCooldownIfNeeded(providerFailureKey, lastError);
-        }
         emit(stepListener, "The AI service could not complete the request.");
         return null;
     }
@@ -537,82 +517,7 @@ public class AgentLoopRunner {
      * fails fast. Prefers the typed openai-java exceptions (authoritative) and falls back to an HTTP status parsed from the message only when no typed signal is present.
      */
     static boolean isRetryable(Throwable error) {
-        if (isQuotaOrConfigurationFailure(error)) {
-            return false;
-        }
-        Throwable cause = error;
-        for (int depth = 0; cause != null && depth < 16; depth++, cause = cause.getCause()) {
-            if (cause instanceof OpenAIServiceException serviceException) {
-                // Every HTTP-status exception (BadRequest/Unauthorized/PermissionDenied/RateLimit/InternalServer/...) extends this and exposes the status.
-                return isTransientStatus(serviceException.statusCode());
-            }
-            if (cause instanceof OpenAIIoException || cause instanceof OpenAIRetryableException || cause instanceof IOException) {
-                // Connection reset / read timeout / socket error: transport-level, transient.
-                return true;
-            }
-        }
-        Integer status = firstHttpStatusInMessage(error);
-        // No typed signal: a discernible deterministic 4xx is not worth retrying; anything else (429, 5xx, or no status at all) is treated as transient.
-        return status == null || isTransientStatus(status);
-    }
-
-    private void openProviderFailureCooldownIfNeeded(String providerFailureKey, Throwable error) {
-        if (!opensProviderFailureCooldown(error) || providerHardFailureCooldown == null || !providerHardFailureCooldown.isPositive()) {
-            return;
-        }
-        providerFailureCooldown.startCooldown(providerFailureKey, Instant.now().plus(providerHardFailureCooldown));
-    }
-
-    private static boolean opensProviderFailureCooldown(Throwable error) {
-        Integer status = firstOpenAiStatus(error);
-        if (status == null) {
-            status = firstHttpStatusInMessage(error);
-        }
-        return isQuotaOrConfigurationFailure(error) || isProviderConfigurationFailure(error) || status != null && (status == 401 || status == 403);
-    }
-
-    private static Integer firstOpenAiStatus(Throwable error) {
-        Throwable cause = error;
-        for (int depth = 0; cause != null && depth < 16; depth++, cause = cause.getCause()) {
-            if (cause instanceof OpenAIServiceException serviceException) {
-                return serviceException.statusCode();
-            }
-        }
-        return null;
-    }
-
-    private static boolean isQuotaOrConfigurationFailure(Throwable error) {
-        String message = messages(error);
-        return message.contains("insufficient_quota") || message.contains("exceeded your current quota") || message.contains("billing") || message.contains("hard limit")
-                || message.contains("monthly limit");
-    }
-
-    private static boolean isProviderConfigurationFailure(Throwable error) {
-        String message = messages(error);
-        return message.contains("model_not_found") || message.contains("deployment_not_found") || message.contains("deployment not found")
-                || message.contains("model does not exist") || message.contains("no model") && message.contains("found");
-    }
-
-    private static String messages(Throwable error) {
-        StringBuilder messages = new StringBuilder();
-        Throwable cause = error;
-        for (int depth = 0; cause != null && depth < 16; depth++, cause = cause.getCause()) {
-            if (cause.getMessage() != null) {
-                messages.append(cause.getMessage()).append('\n');
-            }
-        }
-        return messages.toString().toLowerCase(Locale.ROOT);
-    }
-
-    private static boolean isTransientStatus(int status) {
-        return status == 408 || status == 409 || status == 429 || status >= 500;
-    }
-
-    /** Extracts the first HTTP status embedded in the throwable's (and its causes') messages, or {@code null} when none is discernible. */
-    @Nullable
-    private static Integer firstHttpStatusInMessage(Throwable error) {
-        Matcher matcher = HTTP_STATUS_IN_MESSAGE.matcher(messages(error));
-        return matcher.find() ? Integer.valueOf(matcher.group(1)) : null;
+        return ProviderFailureCooldown.isRetryable(error);
     }
 
     /**
@@ -816,7 +721,8 @@ public class AgentLoopRunner {
         if (configuredModel != null) {
             summaryOptions.model(configuredModel);
         }
-        ChatResponse response = chatModel.call(new Prompt(summaryPrompt, summaryOptions.build()));
+        ChatResponse response = providerFailureCooldown.execute(ProviderFailureCooldown.keyForModel(configuredModel), providerHardFailureCooldown,
+                () -> chatModel.call(new Prompt(summaryPrompt, summaryOptions.build())));
         emitUsage(usageSink, response);
         String text = extractText(response);
         if (text == null || text.isBlank()) {

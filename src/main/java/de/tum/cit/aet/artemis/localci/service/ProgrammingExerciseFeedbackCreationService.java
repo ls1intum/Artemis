@@ -50,7 +50,6 @@ import de.tum.cit.aet.artemis.programming.domain.StaticCodeAnalysisTool;
 import de.tum.cit.aet.artemis.programming.dto.BuildResultNotification;
 import de.tum.cit.aet.artemis.programming.dto.StaticCodeAnalysisIssue;
 import de.tum.cit.aet.artemis.programming.dto.StaticCodeAnalysisReportDTO;
-import de.tum.cit.aet.artemis.programming.exception.ContinuousIntegrationException;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseTestCaseRepository;
 import de.tum.cit.aet.artemis.programming.repository.StaticCodeAnalysisCategoryRepository;
@@ -289,7 +288,9 @@ public class ProgrammingExerciseFeedbackCreationService {
      * @param exercise    the programming exercise for which the test cases should be extracted from the new result
      */
     public void extractTestCasesFromResultAndBroadcastUpdates(BuildResultNotification buildResult, ProgrammingExercise exercise) {
-        assertCurrentTestsCommit(buildResult, exercise);
+        if (!belongsToCurrentTestsCommit(buildResult, exercise)) {
+            return;
+        }
         boolean haveTestCasesChanged = generateTestCasesFromBuildResult(buildResult, exercise);
         if (haveTestCasesChanged) {
             // Notify the client about the updated testCases
@@ -298,26 +299,30 @@ public class ProgrammingExerciseFeedbackCreationService {
         }
     }
 
-    private void assertCurrentTestsCommit(BuildResultNotification buildResult, ProgrammingExercise exercise) {
+    private boolean belongsToCurrentTestsCommit(BuildResultNotification buildResult, ProgrammingExercise exercise) {
         if (!(buildResult instanceof BuildResult)) {
-            return;
+            return true;
         }
         String resultCommit = buildResult.testsRepoCommitHash();
         if (resultCommit == null) {
-            return;
+            return true;
         }
         String currentCommit;
         try {
             var testsRepositoryUri = exercise.getRepositoryURI(RepositoryType.TESTS);
-            currentCommit = testsRepositoryUri == null ? null : gitService.getLastCommitHash(testsRepositoryUri);
+            String buildBranch = programmingExerciseRepository.findBranchByExerciseId(exercise.getId());
+            currentCommit = testsRepositoryUri == null ? null : gitService.getLastCommitHash(testsRepositoryUri, buildBranch);
         }
         catch (RuntimeException e) {
-            throw new ContinuousIntegrationException("The current tests HEAD could not be verified; refusing to apply test-case updates", e);
+            log.warn("Could not verify the current tests HEAD for exercise {}; skipping test-case updates from build result commit {}", exercise.getId(), resultCommit, e);
+            return false;
         }
         if (!resultCommit.equals(currentCommit)) {
-            throw new ContinuousIntegrationException(
-                    "Build result tests commit " + resultCommit + " is stale; current tests HEAD for exercise " + exercise.getId() + " is " + currentCommit);
+            log.info("Skipping stale test-case updates for exercise {}: build result used tests commit {}, current tests HEAD is {}", exercise.getId(), resultCommit,
+                    currentCommit);
+            return false;
         }
+        return true;
     }
 
     /**

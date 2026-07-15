@@ -5,6 +5,7 @@ const port = Number(process.env.HYPERION_LLM_MOCK_PORT ?? 1234);
 let requestCount = 0;
 const requests = [];
 const failMarker = 'HYPERION_E2E_FAIL_LLM';
+const recoveryFilePath = 'solution/src/de/test/HyperionRecovery.java';
 const writeSnapshotMarker = 'HYPERION_E2E_WRITE_SNAPSHOT';
 const submitSeedMarker = 'HYPERION_E2E_SUBMIT_SEEDED_EXERCISE';
 const correctedSeedStatementMarker = 'more than 5 dates';
@@ -202,19 +203,31 @@ const server = http.createServer((req, res) => {
             const body = Buffer.concat(chunks).toString('utf8');
             const requestSummary = summarizeRequest(body);
             requests.push(requestSummary);
-            if (body.includes(failMarker)) {
-                jsonResponse(res, 400, { error: { message: 'Hyperion E2E requested LLM failure' } });
-                return;
-            }
             if (body.includes(draftPromptMarker)) {
                 jsonResponse(res, 200, textResponse(requestNumber, draftProblemStatement));
+                return;
+            }
+            if (body.includes(failMarker)) {
+                if (!hasToolCall(body, 'write_file', (args) => args.path === recoveryFilePath)) {
+                    jsonResponse(
+                        res,
+                        200,
+                        toolCallResponse(requestNumber, 'write_file', {
+                            path: recoveryFilePath,
+                            content:
+                                'package de.test;\n\npublic class HyperionRecovery {\n    public String marker() {\n        return "preserved-after-provider-failure";\n    }\n}\n',
+                        }),
+                    );
+                    return;
+                }
+                jsonResponse(res, 400, { error: { message: 'Hyperion E2E requested LLM failure after producing recoverable work' } });
                 return;
             }
             if (body.includes(criticPromptMarker)) {
                 const weakThresholdOracle = body.includes(submitSeedMarker) && currentCandidateContains(body, 'for (int i = 0; i < 3; i++)');
                 const oracleReview = body.includes(oracleReviewPromptMarker);
                 const audit = oracleReview
-                    ? `"exampleChecks":[],"apiChecks":[],"templateChecks":[],"mutantChecks":[{"mutant":"a threshold of 4","killed":${!weakThresholdOracle},"reason":"the boundary tests must distinguish sizes 5 and 6"}]`
+                    ? `"exampleChecks":[],"apiChecks":[],"templateChecks":[],"mutantChecks":[{"mutant":"a threshold of 4","killed":${!weakThresholdOracle},"sourceQuote":"use merge sort for lists with more than 5 dates and update the matching test.","reason":"the boundary tests must distinguish sizes 5 and 6"}]`
                     : '"exampleChecks":[],"apiChecks":[{"symbol":"seeded public API","discoverable":true,"reason":"the statement and starter expose it"}],"templateChecks":[{"test":"seeded task groups","targetReached":true,"reason":"the existing starter reaches each target"}],"mutantChecks":[]';
                 jsonResponse(
                     res,

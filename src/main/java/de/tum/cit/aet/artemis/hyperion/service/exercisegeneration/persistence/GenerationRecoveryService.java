@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.function.BooleanSupplier;
 
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Conditional;
@@ -35,9 +36,8 @@ import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
  * (plus the agent's final note) into
  * {@code CONSISTENCY_CHECK} review-comment threads via the manual consistency-check path ({@link ExerciseReviewService#createConsistencyCheckThreads}).
  * <p>
- * Load-bearing invariant: a recovered draft is never presented as accepted — the terminal verdict is always {@code NEEDS_REVIEW} (never {@code SUCCESS})
- * and the draft always carries at least one review comment. Recovery runs only on a clean non-accepted terminal state with extractable files (never on a
- * cancelled or hard-error run, whose workspace is unusable).
+ * Load-bearing invariant: a recovered draft is never presented as accepted. Recovery accepts verified near misses and errored runs only when orchestration captured trustworthy
+ * changed artifacts; cancelled and artifact-less errors are never persisted.
  */
 @Lazy
 @Service
@@ -99,28 +99,34 @@ public class GenerationRecoveryService {
      * @throws RuntimeException when the repository draft persist does not complete; the caller maps that to {@code PARTIAL}
      */
     public RecoveryResult recover(ProgrammingExercise exercise, User user, GenerationOutcome outcome, String jobId) {
-        return recoverAfterPersist(exercise, user, outcome, persistenceService.persistRecoveryDraft(exercise, user, outcome, jobId));
+        return recoverAfterPersist(exercise, user, outcome, persistenceService.persistRecoveryDraft(exercise, user, outcome, jobId), () -> true);
     }
 
     public RecoveryResult recover(ProgrammingExercise exercise, User user, GenerationOutcome outcome, String jobId, BooleanSupplier stillOwnsMutationSlot) {
         // A persist failure propagates so the caller reports PARTIAL rather than claiming a complete repository draft.
         GenerationPersistenceService.RecoveryPersistResult persistResult = persistenceService.persistRecoveryDraft(exercise, user, outcome, jobId, stillOwnsMutationSlot);
-        return recoverAfterPersist(exercise, user, outcome, persistResult);
+        return recoverAfterPersist(exercise, user, outcome, persistResult, stillOwnsMutationSlot);
     }
 
-    private RecoveryResult recoverAfterPersist(ProgrammingExercise exercise, User user, GenerationOutcome outcome,
-            GenerationPersistenceService.RecoveryPersistResult persistResult) {
+    private RecoveryResult recoverAfterPersist(ProgrammingExercise exercise, User user, GenerationOutcome outcome, GenerationPersistenceService.RecoveryPersistResult persistResult,
+            BooleanSupplier stillOwnsMutationSlot) {
+        List<ConsistencyIssueDTO> findings = toFindings(outcome, exercise.getProblemStatement());
+        if (findings.isEmpty()) {
+            return new RecoveryResult(0, persistResult.draftBranch(), persistResult.savedRepositories());
+        }
+        if (!stillOwnsMutationSlot.getAsBoolean()) {
+            throw new IllegalStateException("This node no longer owns the generation job; refusing to create recovery review notes.");
+        }
         // The draft is now committed, so a failed annotation must not be reported as "nothing saved": swallow it and return REVIEW_COMMENTS_FAILED for a degraded NEEDS_REVIEW.
         try {
-            List<ConsistencyIssueDTO> findings = toFindings(outcome);
-            if (findings.isEmpty()) {
-                return new RecoveryResult(0, persistResult.draftBranch(), persistResult.savedRepositories());
-            }
-            List<CommentThread> createdThreads = createAndBroadcastThreads(exercise.getId(), findings, user);
+            List<CommentThread> createdThreads = createAndBroadcastThreads(exercise.getId(), findings, user, stillOwnsMutationSlot);
             log.info("Recovered generation draft for exercise {} with {} review-comment thread(s) from verification findings", exercise.getId(), createdThreads.size());
             return new RecoveryResult(createdThreads.size(), persistResult.draftBranch(), persistResult.savedRepositories());
         }
         catch (RuntimeException e) {
+            if (persistResult.savedRepositories().isEmpty() && problemStatementChanged(exercise, outcome)) {
+                throw new IllegalStateException("The generated problem statement could not be preserved in a review note.", e);
+            }
             // The draft IS saved; only the annotation failed. Do not let that masquerade as "nothing saved".
             log.error("Generation draft for exercise {} was persisted but its review comments could not be attached; surfacing as a degraded NEEDS_REVIEW", exercise.getId(), e);
             return new RecoveryResult(REVIEW_COMMENTS_FAILED, persistResult.draftBranch(), persistResult.savedRepositories());
@@ -135,6 +141,10 @@ public class GenerationRecoveryService {
      * @return the findings to persist as review threads (possibly empty)
      */
     static List<ConsistencyIssueDTO> toFindings(GenerationOutcome outcome) {
+        return toFindings(outcome, null);
+    }
+
+    private static List<ConsistencyIssueDTO> toFindings(GenerationOutcome outcome, @Nullable String liveProblemStatement) {
         List<ConsistencyIssueDTO> findings = new ArrayList<>();
         VerificationResult verification = outcome.verification();
         if (verification != null) {
@@ -150,8 +160,20 @@ public class GenerationRecoveryService {
             findings.add(finding(Severity.MEDIUM, "Note from the generation agent: " + agentNote.trim(),
                     "Use the agent's note for context on what was attempted and what remains to be done."));
         }
+        String generatedProblemStatement = outcome.producedProblemStatement();
+        if (generatedProblemStatement != null && !generatedProblemStatement.isBlank()
+                && (liveProblemStatement == null || !generatedProblemStatement.strip().equals(liveProblemStatement.strip()))) {
+            findings.add(finding(Severity.MEDIUM, "Generated problem statement preserved from the rejected run; it was not applied to the live exercise.",
+                    "Review this candidate alongside the generated repository branch and the blockers above. Copy valid parts into the live problem statement only after reconciling "
+                            + "them with the solution and tests.\n\n" + generatedProblemStatement.strip()));
+        }
         findings.addAll(specFidelityFindings(outcome.specFidelityReport()));
         return findings;
+    }
+
+    private static boolean problemStatementChanged(ProgrammingExercise exercise, GenerationOutcome outcome) {
+        String live = exercise.getProblemStatement() == null ? "" : exercise.getProblemStatement().strip();
+        return !outcome.producedProblemStatement().strip().equals(live);
     }
 
     /**
@@ -219,8 +241,15 @@ public class GenerationRecoveryService {
      * @return the created threads
      */
     private List<CommentThread> createAndBroadcastThreads(long exerciseId, List<ConsistencyIssueDTO> findings, User author) {
+        return createAndBroadcastThreads(exerciseId, findings, author, () -> true);
+    }
+
+    private List<CommentThread> createAndBroadcastThreads(long exerciseId, List<ConsistencyIssueDTO> findings, User author, BooleanSupplier stillOwnsMutationSlot) {
         List<CommentThread> createdThreads = exerciseReviewService.createConsistencyCheckThreads(exerciseId, findings, author);
         for (CommentThread thread : createdThreads) {
+            if (!stillOwnsMutationSlot.getAsBoolean()) {
+                throw new IllegalStateException("This node no longer owns the generation job; stopping recovery notifications.");
+            }
             CommentThreadDTO createdThread = new CommentThreadDTO(thread, CommentDTO.fromThread(thread));
             exerciseEditorSyncService.broadcastReviewThreadUpdate(exerciseId, ReviewThreadSyncDTO.threadCreated(createdThread));
         }

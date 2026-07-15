@@ -105,7 +105,7 @@ artemis:
       owner-heartbeat-interval: PT15S
       stale-job-timeout: PT35M # Reclaims abandoned cancellable slots; keep above max-job-duration.
       stale-job-scan-ms: 60000 # Deadline/stale-slot cleanup interval.
-      provider-hard-failure-cooldown: PT5M # Shared cooldown across nodes for hard provider quota/auth/config failures; plain transient rate limits still use per-call retries/backoff.
+      provider-hard-failure-cooldown: PT5M # Shared admission for agent-turn, contract, and critic calls after hard quota/auth/config failures; transient rate limits do not open it.
   llm:  # Shared LLM configuration for Spring AI-based services (Hyperion, Atlas)
     # Token costs (EUR per million tokens). Baselines incl. gpt-5.4 / gpt-5.4-mini are seeded in
     # LLMModelCostConfiguration; add entries here only to override or register a model (dotted keys
@@ -212,9 +212,8 @@ spring:
       # chat:
       #   model: openai/gpt-oss-20b    # or whatever name your local server expects
       #   temperature: 0.7
-    # NOTE: no spring.ai.retry.* here. Spring AI 2.0's OpenAiChatModel carries no RetryTemplate (retry moved into the
-    # openai-java SDK client), so that block was inert for chat calls. The agent loop does its own bounded, failure-aware
-    # retry (AgentLoopRunner.callModelWithRetries / isRetryable), and no Spring AI embedding model is enabled here either.
+    # NOTE: no spring.ai.retry.* here. Spring AI 2.0 delegates transport retries to the openai-java SDK. Only Hyperion's main
+    # agent loop adds a small outer allowance for exhausted SDK calls and successful-but-empty responses; contract/critic calls do not.
   # data:
     # Redis configuration, in case `artemis.continuous-integration.data-store` is set to `Redis`
     # redis:
