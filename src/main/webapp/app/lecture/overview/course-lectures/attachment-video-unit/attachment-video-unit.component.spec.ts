@@ -155,6 +155,30 @@ describe('AttachmentVideoUnitComponent', () => {
         expect(onCompletionEmitSpy).toHaveBeenCalledTimes(1);
     });
 
+    it('should preserve regenerated student-version paths when downloading', () => {
+        const downloadFileSpy = vi.spyOn(fileService, 'downloadFile');
+        const downloadFileByAttachmentNameSpy = vi.spyOn(fileService, 'downloadFileByAttachmentName');
+        const firstStudentVersion = 'attachments/attachment-unit/1/student/StudentVersionSlides_first.pdf';
+        const secondStudentVersion = 'attachments/attachment-unit/1/student/StudentVersionSlides_second.pdf';
+
+        fixture.componentRef.setInput('lectureUnit', {
+            ...attachmentVideoUnit,
+            attachment: { ...attachmentVideoUnit.attachment, studentVersion: firstStudentVersion },
+        });
+        component.handleDownload();
+        fixture.componentRef.setInput('lectureUnit', {
+            ...attachmentVideoUnit,
+            attachment: { ...attachmentVideoUnit.attachment, studentVersion: secondStudentVersion },
+        });
+        component.handleDownload();
+
+        expect(downloadFileSpy).toHaveBeenCalledTimes(2);
+        expect(downloadFileSpy.mock.calls[0][0]).toContain(firstStudentVersion);
+        expect(downloadFileSpy.mock.calls[1][0]).toContain(secondStudentVersion);
+        expect(downloadFileSpy.mock.calls[0][0]).not.toBe(downloadFileSpy.mock.calls[1][0]);
+        expect(downloadFileByAttachmentNameSpy).not.toHaveBeenCalled();
+    });
+
     it('should handle original version', () => {
         const downloadFileSpy = vi.spyOn(fileService, 'downloadFileByAttachmentName');
         const onCompletionEmitSpy = vi.spyOn(component.onCompletion, 'emit');

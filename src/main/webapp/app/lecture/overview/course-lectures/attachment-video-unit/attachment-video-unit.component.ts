@@ -744,9 +744,15 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
         this.scienceService.logEvent(ScienceEventType.LECTURE__OPEN_UNIT, this.lectureUnit().id);
 
         const link = this.getAttachmentLink();
+        const attachment = this.lectureUnit().attachment;
 
-        if (link) {
-            this.fileService.downloadFileByAttachmentName(link, this.lectureUnit().attachment!.name!, this.lectureUnit().attachment!.version);
+        if (link && attachment) {
+            if (attachment.studentVersion) {
+                // The endpoint supplies the attachment's display name through Content-Disposition. Keep the unique student-version path as the browser cache key.
+                this.fileService.downloadFile(link);
+            } else {
+                this.fileService.downloadFileByAttachmentName(link, attachment.name!, attachment.version);
+            }
             this.onCompletion.emit({ lectureUnit: this.lectureUnit(), completed: true });
         }
     }
