@@ -22,7 +22,7 @@ const TIER_ADMIN = 3;
 /** Reads `route.data.authorities` defensively — route data is untyped, so a non-array value yields `undefined`. */
 function authoritiesOf(route: Route): readonly Authority[] | undefined {
     const authorities = route.data?.['authorities'];
-    return Array.isArray(authorities) ? (authorities as readonly Authority[]) : undefined;
+    return Array.isArray(authorities) && authorities.length > 0 ? (authorities as readonly Authority[]) : undefined;
 }
 
 /**

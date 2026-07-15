@@ -65,6 +65,12 @@ describe('RoleAwarePreloadingStrategy', () => {
         expect(enqueue).not.toHaveBeenCalled();
     });
 
+    it('skips routes that explicitly declare an empty authorities array', () => {
+        emitted(route({ authorities: [] }));
+        expect(accountStub.hasAnyAuthorityDirect).not.toHaveBeenCalled();
+        expect(enqueue).not.toHaveBeenCalled();
+    });
+
     it('preloads authority-less lazy parents when opted in via preload:eager', () => {
         emitted(route({ usesModuleBackground: true, preload: 'eager' }));
         expect(enqueue).toHaveBeenCalledOnce();
@@ -127,6 +133,7 @@ describe('preloadTierForRoute', () => {
 
     it('returns undefined for authority-less routes (requires explicit opt-in)', () => {
         expect(preloadTierForRoute(route())).toBeUndefined();
+        expect(preloadTierForRoute(route({ authorities: [] }))).toBeUndefined();
     });
 
     it('puts management routes in tier 2', () => {
