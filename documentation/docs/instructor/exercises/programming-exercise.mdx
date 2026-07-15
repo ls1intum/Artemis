@@ -341,7 +341,7 @@ This can be used for providing additional resources or overwriting template sour
 - **Package Name**: The package name for this exercise. Not available for all languages
 - **Enable Static Code Analysis**: Enable automated code quality checks. **Cannot be changed after creation**. See Static Code Analysis Configuration section below
 - **Sequential Test Runs**: First run structural, then behavioral tests. Helps students focus on immediate challenges. Not compatible with static code analysis. **Cannot be changed after creation**
-- **Customize Build Plan**: Customize the build plan of your exercise. Available for all languages with Local CI and Jenkins. Can also be customized after creation
+- **Customize Build Configuration**: Customize the build plan of your exercise. Available for all languages with Local CI and Jenkins. Can also be customized after creation
 
 </details>
 
@@ -833,7 +833,7 @@ Check the build plan results:
 **Only available with [Integrated Code Lifecycle](/instructor/integrations/integrated-code-lifecycle)**
 
 Instructors can configure the build phases.
-To do this, check the **Customize Build Plan** option in the exercise creation, edit, or import screen. All changes apply to all builds (template, solution, and student submissions).
+To do this, check the **Customize Build Configuration** option in the exercise creation, edit, or import screen. All changes apply to all builds (template, solution, and student submissions).
 You can view the configured build plan on the exercise's detail or edit page.
 
 <Image src={buildPlanPhases} alt="Build Plan Configuration" size={ImageSize.large} caption="Build Plan Configuration" />
@@ -893,7 +893,7 @@ To change checkout paths, click **edit repositories checkout path**:
 
 <Image src={checkoutPathsEdit} alt="Checkout Paths Edit" size={ImageSize.large} caption="Edit Checkout Paths (Java)" />
 
-Update the build plan accordingly (see the [Adapt Build Configuration](#adapt-build-phases-optional) section).
+Update the build plan accordingly (see the [Adapt Build Phases](#adapt-build-phases-optional) section).
 
 <Callout variant={CalloutVariant.warning}>
 
