@@ -7,6 +7,7 @@ import static de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismStatus.CONFIRME
 import static de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismStatus.DENIED;
 import static de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismStatus.NONE;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatNoException;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
@@ -181,6 +182,26 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         course = textExerciseUtilService.addCourseWithOneReleasedTextExercise();
         textExercise = textExerciseRepository.findByCourseIdWithCategories(course.getId()).getFirst();
         competency = competencyUtilService.createCompetency(course);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void responseDtosMustNotHoldLiveLazyCategoriesCollection() {
+        // Load through a query that does NOT fetch the LAZY categories @ElementCollection: the repository transaction
+        // is closed when the factory runs, exactly like in a REST call (OSIV is off). Pre-fix, the record stored the
+        // live Hibernate collection and the dev-profile LoggingAspect's toString() threw LazyInitializationException.
+        TextExercise detached = textExerciseRepository.findById(textExercise.getId()).orElseThrow();
+
+        TextExerciseResponseDTO responseDTO = TextExerciseResponseDTO.of(detached);
+        assertThatNoException().as("toString on a DTO built from an exercise without fetched categories").isThrownBy(responseDTO::toString);
+        assertThat(responseDTO.categories()).as("uninitialized categories map to null instead of a live collection").isNull();
+
+        TextExerciseListItemDTO listItemDTO = TextExerciseListItemDTO.of(detached);
+        assertThatNoException().as("toString on a list-item DTO built from an exercise without fetched categories").isThrownBy(listItemDTO::toString);
+        assertThat(listItemDTO.categories()).as("uninitialized categories map to null instead of a live collection").isNull();
+
+        // The initialized path still carries the categories (setup loads via findByCourseIdWithCategories).
+        assertThat(TextExerciseResponseDTO.of(textExercise).categories()).isEqualTo(textExercise.getCategories());
     }
 
     @Test
