@@ -445,7 +445,7 @@ public class FileResource {
     /**
      * GET /files/attachments/lecture/:lectureId/:filename : Get the lecture attachment
      *
-     * The response is privately cacheable for {@link #DAYS_TO_CACHE} days and revalidatable via Last-Modified.
+     * The response may be stored in a private cache and must be revalidated via Last-Modified before every reuse.
      *
      * @param lectureId      ID of the lecture, the attachment belongs to
      * @param attachmentName the filename of the file
@@ -470,7 +470,7 @@ public class FileResource {
         checkAttachmentAuthorizationOrThrow(course, attachment);
 
         return buildAttachmentFileResponse(getActualPathFromPublicPathString(attachment.getLink(), FilePathType.LECTURE_ATTACHMENT), retrieveDownloadFilename(attachment), true,
-                parseRequestedRangesOrThrowBadRequest(requestHeaders));
+                requestHeaders);
     }
 
     /**
@@ -520,7 +520,7 @@ public class FileResource {
     /**
      * GET files/attachments/attachment-unit/:attachmentVideoUnitId/:filename : Get the lecture unit attachment
      * Accesses to this endpoint are created by the server itself in the FilePathService
-     * The response is privately cacheable for {@link #DAYS_TO_CACHE} days and revalidatable via Last-Modified.
+     * The response may be stored in a private cache and must be revalidated via Last-Modified before every reuse.
      *
      * @param attachmentVideoUnitId ID of the attachment video unit, the attachment belongs to
      * @param requestHeaders        request headers, used for optional HTTP range requests
@@ -541,7 +541,7 @@ public class FileResource {
         // check if the user is authorized to access the requested attachment video unit
         checkAttachmentAuthorizationOrThrow(course, attachment);
         return buildAttachmentFileResponse(getActualPathFromPublicPathString(attachment.getLink(), FilePathType.ATTACHMENT_UNIT), retrieveDownloadFilename(attachment), true,
-                parseRequestedRangesOrThrowBadRequest(requestHeaders));
+                requestHeaders);
     }
 
     /**
@@ -564,7 +564,7 @@ public class FileResource {
         checkAttachmentVideoUnitExistsInCourseOrThrow(course, attachmentVideoUnit);
 
         return buildAttachmentFileResponse(getActualPathFromPublicPathString(attachment.getLink(), FilePathType.ATTACHMENT_UNIT), retrieveDownloadFilename(attachment), false,
-                parseRequestedRangesOrThrowBadRequest(requestHeaders));
+                requestHeaders);
     }
 
     /**
@@ -586,7 +586,7 @@ public class FileResource {
         checkAttachmentExistsInCourseOrThrow(course, attachment);
 
         return buildAttachmentFileResponse(getActualPathFromPublicPathString(attachment.getLink(), FilePathType.LECTURE_ATTACHMENT), retrieveDownloadFilename(attachment), false,
-                parseRequestedRangesOrThrowBadRequest(requestHeaders));
+                requestHeaders);
     }
 
     /**
@@ -662,7 +662,7 @@ public class FileResource {
 
     /**
      * GET files/attachments/attachment-unit/{attachmentUnitId}/student/* : Get the student version of attachment video unit by attachment video unit id
-     * The response is privately cacheable for {@link #DAYS_TO_CACHE} days and revalidatable via Last-Modified.
+     * The response may be stored in a private cache and must be revalidated via Last-Modified before every reuse.
      *
      * @param attachmentVideoUnitId ID of the attachment video unit, the student version belongs to
      * @param requestHeaders        request headers, used for optional HTTP range requests
@@ -683,14 +683,13 @@ public class FileResource {
         // check if hidden link is available in the attachment
         String studentVersion = attachment.getStudentVersion();
         if (studentVersion == null) {
-            return buildAttachmentFileResponse(getActualPathFromPublicPathString(attachment.getLink(), FilePathType.ATTACHMENT_UNIT), downloadFilename, true,
-                    parseRequestedRangesOrThrowBadRequest(requestHeaders));
+            return buildAttachmentFileResponse(getActualPathFromPublicPathString(attachment.getLink(), FilePathType.ATTACHMENT_UNIT), downloadFilename, true, requestHeaders);
         }
 
         String fileName = studentVersion.substring(studentVersion.lastIndexOf("/") + 1);
 
         return buildAttachmentFileResponse(FilePathConverter.getAttachmentVideoUnitFileSystemPath().resolve(Path.of(attachmentVideoUnit.getId().toString(), "student")), fileName,
-                downloadFilename, DAYS_TO_CACHE, parseRequestedRangesOrThrowBadRequest(requestHeaders));
+                downloadFilename, true, requestHeaders);
     }
 
     /**
@@ -724,46 +723,94 @@ public class FileResource {
      *
      * @param path            file path including the file name
      * @param replaceFilename replaces the downloaded file's name, if provided
-     * @param cache           true if the response should be privately cacheable for {@link #DAYS_TO_CACHE} days; false otherwise
-     * @param ranges          optional requested HTTP ranges
+     * @param privateCache    true if the response may be stored in a private cache but must be revalidated before reuse; false otherwise
+     * @param requestHeaders  request headers used for conditional and range requests
      * @return response entity for full or partial attachment download
      */
-    private ResponseEntity<byte[]> buildAttachmentFileResponse(Path path, Optional<String> replaceFilename, boolean cache, List<HttpRange> ranges) {
-        return buildAttachmentFileResponse(path.getParent(), path.getFileName().toString(), replaceFilename, cache ? DAYS_TO_CACHE : 0, ranges);
+    private ResponseEntity<byte[]> buildAttachmentFileResponse(Path path, Optional<String> replaceFilename, boolean privateCache, HttpHeaders requestHeaders) {
+        return buildAttachmentFileResponse(path.getParent(), path.getFileName().toString(), replaceFilename, privateCache, requestHeaders);
     }
 
     /**
      * Builds an attachment response for the given directory and filename with optional range support.
-     * If {@code cacheDays} is positive, a private Cache-Control header is set (the endpoints are auth-protected, so shared caches must not store the response).
-     * Full (200 OK) responses additionally carry a Last-Modified header, so expired cache entries can be revalidated with a cheap 304 instead of a re-download.
+     * Private cached responses require revalidation so that authorization is checked before every reuse. Conditional requests are answered before the file body is read. Range
+     * requests are only honored when an optional If-Range date matches the current file timestamp.
      *
      * @param path            directory path of the file
      * @param filename        file name to serve from {@code path}
      * @param replaceFilename replaces the downloaded file's name, if provided
-     * @param cacheDays       number of days the response may be cached privately
-     * @param ranges          optional requested HTTP ranges
+     * @param privateCache    true if the response may be stored in a private cache but must be revalidated before reuse
+     * @param requestHeaders  request headers used for conditional and range requests
      * @return response entity for full or partial attachment download
      */
-    private ResponseEntity<byte[]> buildAttachmentFileResponse(Path path, String filename, Optional<String> replaceFilename, int cacheDays, List<HttpRange> ranges) {
+    private ResponseEntity<byte[]> buildAttachmentFileResponse(Path path, String filename, Optional<String> replaceFilename, boolean privateCache, HttpHeaders requestHeaders) {
+        Path actualPath = path.resolve(filename);
+        long lastModified = getLastModified(actualPath);
+        if (lastModified >= 0 && isNotModified(requestHeaders, lastModified)) {
+            var response = ResponseEntity.status(HttpStatus.NOT_MODIFIED).lastModified(lastModified);
+            if (privateCache) {
+                response = response.cacheControl(CacheControl.noCache().cachePrivate());
+            }
+            return response.build();
+        }
+
+        List<HttpRange> ranges = parseRequestedRangesOrThrowBadRequest(requestHeaders);
+        if (!ranges.isEmpty() && !ifRangeMatches(requestHeaders, lastModified)) {
+            ranges = List.of();
+        }
+
         var payload = fileDownloadService.prepareAttachmentDownload(path, filename, replaceFilename, ranges, MAX_PDF_RANGE_BYTES);
         var response = ResponseEntity.status(payload.status()).headers(payload.headers()).contentType(payload.mediaType()).header("filename", filename)
                 .contentLength(payload.content().length);
         if (payload.contentRange().isPresent()) {
             response = response.header(HttpHeaders.CONTENT_RANGE, payload.contentRange().get());
         }
-        if (cacheDays > 0) {
-            response = response.cacheControl(CacheControl.maxAge(Duration.ofDays(cacheDays)).cachePrivate());
+        if (privateCache) {
+            response = response.cacheControl(CacheControl.noCache().cachePrivate());
         }
-        // Only full responses get a Last-Modified header; 206 partial responses deliberately do not (avoids If-Range hazards)
-        if (payload.status() == HttpStatus.OK) {
-            try {
-                response = response.lastModified(Files.getLastModifiedTime(path.resolve(filename)).toInstant());
-            }
-            catch (IOException e) {
-                log.warn("Could not determine last modified time for file {} in {}, skipping Last-Modified header", filename, path, e);
-            }
+        if (lastModified >= 0 && (payload.status() == HttpStatus.OK || payload.status() == HttpStatus.PARTIAL_CONTENT)) {
+            response = response.lastModified(lastModified);
         }
         return response.body(payload.content());
+    }
+
+    private long getLastModified(Path path) {
+        try {
+            return Files.getLastModifiedTime(path).toMillis();
+        }
+        catch (IOException e) {
+            log.warn("Could not determine last modified time for file {}, skipping conditional request handling", path, e);
+            return -1;
+        }
+    }
+
+    private boolean isNotModified(HttpHeaders requestHeaders, long lastModified) {
+        if (requestHeaders.getFirst(HttpHeaders.IF_NONE_MATCH) != null) {
+            return false;
+        }
+        try {
+            long ifModifiedSince = requestHeaders.getIfModifiedSince();
+            return ifModifiedSince >= 0 && lastModified / 1000 <= ifModifiedSince / 1000;
+        }
+        catch (IllegalArgumentException ignored) {
+            return false;
+        }
+    }
+
+    private boolean ifRangeMatches(HttpHeaders requestHeaders, long lastModified) {
+        if (requestHeaders.getFirst(HttpHeaders.IF_RANGE) == null) {
+            return true;
+        }
+        if (lastModified < 0) {
+            return false;
+        }
+        try {
+            long ifRange = requestHeaders.getFirstDate(HttpHeaders.IF_RANGE);
+            return ifRange >= 0 && lastModified / 1000 == ifRange / 1000;
+        }
+        catch (IllegalArgumentException ignored) {
+            return false;
+        }
     }
 
     /**

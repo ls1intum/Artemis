@@ -4,14 +4,15 @@ import static de.tum.cit.aet.artemis.core.config.Constants.ARTEMIS_FILE_PATH_PRE
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.within;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.io.ByteArrayOutputStream;
 import java.net.URI;
 import java.nio.file.Path;
-import java.time.Duration;
 import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -30,9 +31,11 @@ import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.CacheControl;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.springframework.test.web.client.ExpectedCount;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
@@ -45,6 +48,7 @@ import de.tum.cit.aet.artemis.communication.util.ConversationUtilService;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.connector.IrisRequestMockProvider;
 import de.tum.cit.aet.artemis.core.service.TempFileUtilService;
+import de.tum.cit.aet.artemis.core.service.file.FileDownloadService;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.exam.domain.ExamUser;
 import de.tum.cit.aet.artemis.exam.dto.ExamUserDTO;
@@ -98,6 +102,9 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     @Autowired
     private TempFileUtilService tempFileUtilService;
+
+    @MockitoSpyBean
+    private FileDownloadService fileDownloadService;
 
     @BeforeEach
     void initTestCase() {
@@ -629,8 +636,8 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         try (MockedStatic<FilePathConverter> filePathServiceMock = Mockito.mockStatic(FilePathConverter.class)) {
             filePathServiceMock.when(() -> FilePathConverter.fileSystemPathForExternalUri(Mockito.any(URI.class), Mockito.eq(FilePathType.ATTACHMENT_UNIT))).thenReturn(tempFile);
 
-            // Verify private cache headers (1 day = 86400 seconds) and the Last-Modified header used for revalidation
-            String expectedCacheControl = CacheControl.maxAge(Duration.ofDays(1)).cachePrivate().getHeaderValue();
+            // The browser may store the response privately but must revalidate it after every authorization check
+            String expectedCacheControl = CacheControl.noCache().cachePrivate().getHeaderValue();
             mockMvc.perform(get(url)).andExpect(status().isOk()).andExpect(header().string("Cache-Control", expectedCacheControl)).andExpect(header().exists("Last-Modified"));
         }
     }
@@ -651,9 +658,12 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
             MvcResult result = mockMvc.perform(get(url)).andExpect(status().isOk()).andExpect(header().exists("Last-Modified")).andReturn();
             String lastModified = result.getResponse().getHeader("Last-Modified");
+            Mockito.clearInvocations(fileDownloadService);
 
-            // A conditional request with the returned Last-Modified value must be answered with 304 Not Modified instead of a re-download
+            // The authorization check has already run, but the unchanged file must not be read again
             mockMvc.perform(get(url).header("If-Modified-Since", lastModified)).andExpect(status().isNotModified());
+            Mockito.verify(fileDownloadService, Mockito.never()).prepareAttachmentDownload(Mockito.eq(tempFile.getParent()), Mockito.eq(tempFile.getFileName().toString()),
+                    Mockito.any(), Mockito.anyList(), Mockito.anyInt());
         }
     }
 
@@ -672,15 +682,14 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
             filePathServiceMock.when(() -> FilePathConverter.fileSystemPathForExternalUri(Mockito.any(URI.class), Mockito.eq(FilePathType.LECTURE_ATTACHMENT)))
                     .thenReturn(tempFile);
 
-            // Verify private cache headers (1 day = 86400 seconds)
-            String expectedCacheControl = CacheControl.maxAge(Duration.ofDays(1)).cachePrivate().getHeaderValue();
+            String expectedCacheControl = CacheControl.noCache().cachePrivate().getHeaderValue();
             mockMvc.perform(get(url)).andExpect(status().isOk()).andExpect(header().string("Cache-Control", expectedCacheControl)).andExpect(header().exists("Last-Modified"));
         }
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testGetAttachmentVideoUnitStudentVersionRangeRequestCacheHeaders() throws Exception {
+    void testGetAttachmentVideoUnitStudentVersionRangeRequestWithMatchingIfRange() throws Exception {
         byte[] dummyContent = "0123456789".getBytes();
         Path tempFile = tempFileUtilService.createTempFile("dummy-cache-range", ".pdf");
         FileUtils.writeByteArrayToFile(tempFile.toFile(), dummyContent);
@@ -692,10 +701,37 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         try (MockedStatic<FilePathConverter> filePathServiceMock = Mockito.mockStatic(FilePathConverter.class)) {
             filePathServiceMock.when(() -> FilePathConverter.fileSystemPathForExternalUri(Mockito.any(URI.class), Mockito.eq(FilePathType.ATTACHMENT_UNIT))).thenReturn(tempFile);
 
-            // Partial (206) responses keep the private Cache-Control but must not carry a Last-Modified header (avoids If-Range hazards)
-            String expectedCacheControl = CacheControl.maxAge(Duration.ofDays(1)).cachePrivate().getHeaderValue();
-            mockMvc.perform(get(url).header("Range", "bytes=2-5")).andExpect(status().isPartialContent()).andExpect(header().string("Cache-Control", expectedCacheControl))
-                    .andExpect(header().doesNotExist("Last-Modified"));
+            MvcResult fullResponse = mockMvc.perform(get(url)).andExpect(status().isOk()).andExpect(header().exists("Last-Modified")).andReturn();
+            String lastModified = fullResponse.getResponse().getHeader("Last-Modified");
+
+            String expectedCacheControl = CacheControl.noCache().cachePrivate().getHeaderValue();
+            mockMvc.perform(get(url).header(HttpHeaders.RANGE, "bytes=2-5").header(HttpHeaders.IF_RANGE, lastModified)).andExpect(status().isPartialContent())
+                    .andExpect(header().string("Cache-Control", expectedCacheControl)).andExpect(header().string("Last-Modified", lastModified))
+                    .andExpect(content().bytes("2345".getBytes()));
+        }
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetAttachmentVideoUnitStudentVersionRangeRequestWithStaleIfRange() throws Exception {
+        byte[] dummyContent = "0123456789".getBytes();
+        Path tempFile = tempFileUtilService.createTempFile("dummy-cache-stale-range", ".pdf");
+        FileUtils.writeByteArrayToFile(tempFile.toFile(), dummyContent);
+        tempFile.toFile().deleteOnExit();
+
+        AttachmentVideoUnit attachmentVideoUnit = createAttachmentVideoUnitWithTempFile(tempFile);
+        String url = "/api/core/files/attachments/attachment-video-units/" + attachmentVideoUnit.getId() + "/student/dummy.pdf";
+
+        try (MockedStatic<FilePathConverter> filePathServiceMock = Mockito.mockStatic(FilePathConverter.class)) {
+            filePathServiceMock.when(() -> FilePathConverter.fileSystemPathForExternalUri(Mockito.any(URI.class), Mockito.eq(FilePathType.ATTACHMENT_UNIT))).thenReturn(tempFile);
+
+            MvcResult fullResponse = mockMvc.perform(get(url)).andExpect(status().isOk()).andExpect(header().exists("Last-Modified")).andReturn();
+            String lastModified = fullResponse.getResponse().getHeader("Last-Modified");
+            String staleIfRange = ZonedDateTime.parse(lastModified, DateTimeFormatter.RFC_1123_DATE_TIME).minusSeconds(1).format(DateTimeFormatter.RFC_1123_DATE_TIME);
+
+            // A stale validator makes the server ignore Range and return the complete current representation
+            mockMvc.perform(get(url).header(HttpHeaders.RANGE, "bytes=2-5").header(HttpHeaders.IF_RANGE, staleIfRange)).andExpect(status().isOk())
+                    .andExpect(header().string("Last-Modified", lastModified)).andExpect(header().doesNotExist(HttpHeaders.CONTENT_RANGE)).andExpect(content().bytes(dummyContent));
         }
     }
 
