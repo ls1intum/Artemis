@@ -841,7 +841,7 @@ You can view the configured build plan on the exercise's detail or edit page.
 The build plan consists of multiple phases. Each phase can be customized in the following ways:
 
 - **Name**: The name of the phase.
-- **Inclusion condition**: The condition can be either `Always` or `After due date`. If a phase is configured to run after the due date, Artemis automatically schedules the latest submission for each student participation to be rebuilt one minute (configurable) after the due date (or after the exam's due date, including grace period and student time extensions).
+- **Inclusion condition**: The condition can be either `Always` or `After due date`. If a phase is configured to run after the due date, Artemis automatically schedules the latest submission for each student participation to be rebuilt 15 minutes (adjustable) after the due date (or after the exam's due date, including grace period and student time extensions).
 - **Script**: The script specifying the commands to run for the phase.
 - **Tests expected**: A toggle indicating whether tests are expected for a phase. If disabled for all phases, the exercise will not collect any test results, but the build status will still be accurately determined by the build's exit code.
 - **Result paths**: The paths where the test results for this phase are located.
