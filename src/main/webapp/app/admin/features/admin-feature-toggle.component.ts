@@ -210,36 +210,52 @@ export class AdminFeatureToggleComponent implements OnInit {
         );
     }
 
-    /** Id of the most recent toggle request per feature, so out-of-order completions can be ignored. */
-    private readonly latestToggleRequest = new Map<FeatureToggle, number>();
+    /** Features with an in-flight update; their switch is disabled so updates are serialized per feature. */
+    readonly pendingFeatures = signal<ReadonlySet<FeatureToggle>>(new Set());
 
     onFeatureToggle(featureInfo: FeatureToggleInfo): void {
         const feature = featureInfo.feature;
+        // Serialize updates per feature: while a request is in flight the switch is disabled, and any stray change
+        // is ignored here. Sending only one request at a time keeps the server writes in click order (last click
+        // wins) — otherwise two successful writes could reach the server out of order and leave it on the older
+        // value, and a late failure could race the optimistic UI.
+        if (this.pendingFeatures().has(feature)) {
+            return;
+        }
         const newState = !featureInfo.isActive;
-        // Optimistically reflect the new state so the signal, the [ngModel]-bound switch, and the server request
-        // all agree. Track this as the latest request for the feature: overlapping clicks (or a live websocket
-        // update) can complete out of order, and a stale request must not roll back a newer one.
-        const requestId = (this.latestToggleRequest.get(feature) ?? 0) + 1;
-        this.latestToggleRequest.set(feature, requestId);
+        // Optimistically reflect the new state so the signal, the [ngModel]-bound switch, and the server request agree.
         this.setToggleState(feature, newState);
+        this.setPending(feature, true);
         this.featureToggleService
             .setFeatureToggleState(feature, newState)
             .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe({
+                next: () => this.setPending(feature, false),
                 error: (error: HttpErrorResponse) => {
-                    // Ignore a superseded request entirely: a newer toggle (or update) already owns the state, so
-                    // reverting here would flip the switch back to a value the server no longer has and raise a
-                    // misleading alert. Only the latest request reverts its optimistic change and surfaces the error.
-                    if (this.latestToggleRequest.get(feature) === requestId) {
-                        this.setToggleState(feature, !newState);
-                        onError(this.alertService, error);
-                    }
+                    // No newer request for this feature can exist (it was disabled while pending), so reverting the
+                    // optimistic change safely restores the true server state and flips the switch back; surface the
+                    // error instead of leaving the switch silently flipped.
+                    this.setToggleState(feature, !newState);
+                    this.setPending(feature, false);
+                    onError(this.alertService, error);
                 },
             });
     }
 
     private setToggleState(feature: FeatureToggle, isActive: boolean): void {
         this.featureToggles.update((toggles) => toggles.map((toggle) => (toggle.feature === feature ? { ...toggle, isActive } : toggle)));
+    }
+
+    private setPending(feature: FeatureToggle, pending: boolean): void {
+        this.pendingFeatures.update((features) => {
+            const next = new Set(features);
+            if (pending) {
+                next.add(feature);
+            } else {
+                next.delete(feature);
+            }
+            return next;
+        });
     }
 
     /**

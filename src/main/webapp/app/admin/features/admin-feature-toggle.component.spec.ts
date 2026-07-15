@@ -6,7 +6,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TranslateService } from '@ngx-translate/core';
 import { HttpErrorResponse } from '@angular/common/http';
-import { Subject, throwError } from 'rxjs';
+import { Subject, of, throwError } from 'rxjs';
 
 import { AdminFeatureToggleComponent } from 'app/admin/features/admin-feature-toggle.component';
 import { FeatureToggle, FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
@@ -108,32 +108,34 @@ describe('AdminFeatureToggleComponentTest', () => {
             expect(errorSpy).toHaveBeenCalledOnce();
         });
 
-        it('onFeatureToggle should ignore a stale failed request superseded by a newer toggle', () => {
+        it('onFeatureToggle should serialize updates per feature, ignoring clicks while a request is in flight', () => {
             comp.ngOnInit();
             const featureToggleService = TestBed.inject(FeatureToggleService);
-            const first = new Subject<object>();
-            const second = new Subject<object>();
-            vi.spyOn(featureToggleService, 'setFeatureToggleState').mockReturnValueOnce(first).mockReturnValueOnce(second);
-            const errorSpy = vi.spyOn(TestBed.inject(AlertService), 'error');
+            const inFlight = new Subject<object>();
+            const spy = vi.spyOn(featureToggleService, 'setFeatureToggleState').mockReturnValueOnce(inFlight).mockReturnValueOnce(of({}));
 
+            const feature = comp.featureToggles()[0].feature;
             expect(comp.featureToggles()[0].isActive).toBe(true);
 
-            // Click 1: optimistic off, request R1 in flight.
+            // First click: optimistic off, one request in flight, feature marked pending (its switch is disabled).
             comp.onFeatureToggle(comp.featureToggles()[0]);
             expect(comp.featureToggles()[0].isActive).toBe(false);
+            expect(comp.pendingFeatures().has(feature)).toBe(true);
+            expect(spy).toHaveBeenCalledTimes(1);
 
-            // Click 2 (before R1 resolves): optimistic on, request R2 in flight and now the latest.
+            // A click while the request is in flight is ignored: no second request, state unchanged. Serializing
+            // the writes prevents an older successful request from overwriting a newer server state.
             comp.onFeatureToggle(comp.featureToggles()[0]);
-            expect(comp.featureToggles()[0].isActive).toBe(true);
+            expect(spy).toHaveBeenCalledTimes(1);
+            expect(comp.featureToggles()[0].isActive).toBe(false);
 
-            // R2 succeeds (server is now on), then the stale R1 fails late.
-            second.next({});
-            second.complete();
-            first.error(new HttpErrorResponse({ status: 400 }));
-
-            // The superseded R1 failure must not roll back R2's applied state, nor raise a misleading alert.
+            // Once the request completes, the feature is interactive again and the next click is sent in order.
+            inFlight.next({});
+            inFlight.complete();
+            expect(comp.pendingFeatures().has(feature)).toBe(false);
+            comp.onFeatureToggle(comp.featureToggles()[0]);
+            expect(spy).toHaveBeenCalledTimes(2);
             expect(comp.featureToggles()[0].isActive).toBe(true);
-            expect(errorSpy).not.toHaveBeenCalled();
         });
 
         it('should alert and leave toggles empty when loading feature toggles fails', () => {
