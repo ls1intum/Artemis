@@ -14,6 +14,7 @@ import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.dao.ConcurrencyFailureException;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -34,6 +35,8 @@ import de.tum.cit.aet.artemis.lecture.repository.SlideRepository;
 @Conditional(LectureEnabled.class)
 public class AttachmentService {
 
+    private static final int MAX_FILE_REPLACEMENT_ATTEMPTS = 3;
+
     private final AttachmentRepository attachmentRepository;
 
     private final SlideRepository slideRepository;
@@ -47,8 +50,8 @@ public class AttachmentService {
     }
 
     /**
-     * Updates a lecture attachment while deriving its cache-busting version from the persisted state. File replacements use a compare-and-set database update so concurrent
-     * requests receive distinct, monotonically increasing versions even when their request payloads are stale.
+     * Updates a lecture attachment while deriving its cache-busting version from the persisted state. File replacements use a bounded compare-and-set database update so
+     * concurrent requests receive distinct, monotonically increasing versions even when their request payloads are stale.
      *
      * @param attachmentId     the attachment to update
      * @param attachmentUpdate client-provided metadata
@@ -68,16 +71,22 @@ public class AttachmentService {
         Path savePath = FileUtil.saveFile(file, basePath, FilePathType.LECTURE_ATTACHMENT, true);
         String newLink = FilePathConverter.externalUriForFileSystemPath(savePath, FilePathType.LECTURE_ATTACHMENT, existingAttachment.getLecture().getId()).toString();
 
-        while (attachmentRepository.replaceFileAndIncrementVersion(attachmentId, existingAttachment.getVersion(), attachmentUpdate.getName(), attachmentUpdate.getReleaseDate(),
-                attachmentUpdate.getUploadDate(), attachmentUpdate.getAttachmentType(), attachmentUpdate.getStudentVersion(), newLink) == 0) {
-            existingAttachment = attachmentRepository.findByIdOrElseThrow(attachmentId);
+        for (int attempt = 1; attempt <= MAX_FILE_REPLACEMENT_ATTEMPTS; attempt++) {
+            if (attachmentRepository.replaceFileAndIncrementVersion(attachmentId, existingAttachment.getVersion(), attachmentUpdate.getName(), attachmentUpdate.getReleaseDate(),
+                    attachmentUpdate.getUploadDate(), attachmentUpdate.getAttachmentType(), attachmentUpdate.getStudentVersion(), newLink) == 1) {
+                URI oldPath = URI.create(existingAttachment.getLink());
+                Path oldFilePath = FilePathConverter.fileSystemPathForExternalUri(oldPath, FilePathType.LECTURE_ATTACHMENT);
+                fileService.schedulePathForDeletion(oldFilePath, 0);
+                fileService.evictCacheForPath(oldFilePath);
+                return attachmentRepository.findByIdOrElseThrow(attachmentId);
+            }
+            if (attempt < MAX_FILE_REPLACEMENT_ATTEMPTS) {
+                existingAttachment = attachmentRepository.findByIdOrElseThrow(attachmentId);
+            }
         }
 
-        URI oldPath = URI.create(existingAttachment.getLink());
-        Path oldFilePath = FilePathConverter.fileSystemPathForExternalUri(oldPath, FilePathType.LECTURE_ATTACHMENT);
-        fileService.schedulePathForDeletion(oldFilePath, 0);
-        fileService.evictCacheForPath(oldFilePath);
-        return attachmentRepository.findByIdOrElseThrow(attachmentId);
+        fileService.schedulePathForDeletion(savePath, 0);
+        throw new ConcurrencyFailureException("Attachment file replacement conflicted with concurrent updates");
     }
 
     /**
