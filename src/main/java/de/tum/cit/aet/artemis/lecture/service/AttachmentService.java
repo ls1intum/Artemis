@@ -18,6 +18,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import de.tum.cit.aet.artemis.core.FilePathType;
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.InternalServerErrorException;
 import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
@@ -62,13 +63,24 @@ public class AttachmentService {
         existingAttachment.setReleaseDate(attachmentUpdate.getReleaseDate());
         existingAttachment.setUploadDate(attachmentUpdate.getUploadDate());
         existingAttachment.setAttachmentType(attachmentUpdate.getAttachmentType());
-        existingAttachment.setStudentVersion(attachmentUpdate.getStudentVersion());
 
         if (file != null) {
+            if (existingAttachment.getLecture() == null || existingAttachment.getLecture().getId() == null || existingAttachment.getLink() == null
+                    || existingAttachment.getLink().isBlank()) {
+                throw new BadRequestAlertException("The attachment must belong to a persisted lecture and have an existing file", "attachment", "invalidLectureAttachment");
+            }
+
+            Path oldFilePath;
+            try {
+                URI oldPath = URI.create(existingAttachment.getLink());
+                oldFilePath = FilePathConverter.fileSystemPathForExternalUri(oldPath, FilePathType.LECTURE_ATTACHMENT);
+            }
+            catch (IllegalArgumentException exception) {
+                throw new BadRequestAlertException("The attachment has an invalid file link", "attachment", "invalidLectureAttachment");
+            }
+
             Path basePath = FilePathConverter.getLectureAttachmentFileSystemPath().resolve(existingAttachment.getLecture().getId().toString());
             Path savePath = FileUtil.saveFile(file, basePath, FilePathType.LECTURE_ATTACHMENT, true);
-            URI oldPath = URI.create(existingAttachment.getLink());
-            Path oldFilePath = FilePathConverter.fileSystemPathForExternalUri(oldPath, FilePathType.LECTURE_ATTACHMENT);
             fileService.schedulePathForDeletion(oldFilePath, 0);
             fileService.evictCacheForPath(oldFilePath);
             existingAttachment

@@ -66,10 +66,12 @@ class AttachmentResourceIntegrationTest extends AbstractSpringIntegrationIndepen
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     @ValueSource(booleans = { true, false })
     void updateAttachment(boolean fileUpdate) throws Exception {
+        attachment.setStudentVersion("server-managed-student-version.pdf");
         attachment = attachmentRepository.save(attachment);
         Integer storedVersion = attachment.getVersion();
         attachment.setName("new name");
         attachment.setVersion(storedVersion == null ? 100 : storedVersion + 100);
+        attachment.setStudentVersion("client-controlled-student-version.pdf");
         var params = new LinkedMultiValueMap<String, String>();
         var notificationText = "notified!";
         params.add("notificationText", notificationText);
@@ -80,6 +82,7 @@ class AttachmentResourceIntegrationTest extends AbstractSpringIntegrationIndepen
         var expectedAttachment = attachmentRepository.findById(actualAttachment.getId()).orElseThrow();
 
         assertThat(actualAttachment.getName()).isEqualTo("new name");
+        assertThat(actualAttachment.getStudentVersion()).isEqualTo("server-managed-student-version.pdf");
         if (fileUpdate) {
             assertThat(actualAttachment.getVersion()).isEqualTo(storedVersion == null ? 1 : storedVersion + 1);
         }
@@ -111,6 +114,22 @@ class AttachmentResourceIntegrationTest extends AbstractSpringIntegrationIndepen
                 HttpStatus.OK, null);
 
         assertThat(secondUpdate.getVersion()).isEqualTo(7);
+    }
+
+    @ParameterizedTest
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @ValueSource(booleans = { true, false })
+    void updateAttachmentWithFileRejectsMissingStoredReference(boolean missingLecture) throws Exception {
+        if (missingLecture) {
+            attachment.setLecture(null);
+        }
+        else {
+            attachment.setLink(null);
+        }
+        attachment = attachmentRepository.save(attachment);
+        MockMultipartFile file = new MockMultipartFile("file", "replacement.txt", MediaType.TEXT_PLAIN_VALUE, "replacement content".getBytes());
+
+        request.putWithMultipartFile("/api/lecture/attachments/" + attachment.getId(), attachment, "attachment", file, Attachment.class, HttpStatus.BAD_REQUEST, null);
     }
 
     @Test
