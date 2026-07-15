@@ -12,7 +12,13 @@ import dayjs from 'dayjs/esm';
 
 import { CleanupOperationModalComponent } from 'app/admin/cleanup-service/cleanup-operation-modal.component';
 import { CleanupOperation, OperationName } from 'app/admin/cleanup-service/cleanup-operation.model';
-import { CleanupCount, DataCleanupService, OrphanCleanupCountDTO, PlagiarismComparisonCleanupCountDTO } from 'app/admin/cleanup-service/data-cleanup.service';
+import {
+    CleanupCount,
+    CleanupServiceExecutionRecordDTO,
+    DataCleanupService,
+    OrphanCleanupCountDTO,
+    PlagiarismComparisonCleanupCountDTO,
+} from 'app/admin/cleanup-service/data-cleanup.service';
 
 /**
  * Helper to create a CleanupOperation with required properties
@@ -237,6 +243,46 @@ describe('CleanupOperationModalComponent', () => {
     });
 
     describe('executeCleanupOperation', () => {
+        it('should ignore duplicate execution attempts while a cleanup request is in flight', () => {
+            const execution = new Subject<HttpResponse<CleanupServiceExecutionRecordDTO>>();
+            vi.spyOn(dataCleanupService, 'deleteOrphans').mockReturnValue(execution);
+            componentRef.setInput('operation', deleteOrphansOperation);
+            component.visible.set(true);
+            fixture.detectChanges();
+
+            component.executeCleanupOperation();
+            component.executeCleanupOperation();
+
+            expect(dataCleanupService.deleteOrphans).toHaveBeenCalledOnce();
+            expect(component.operationExecuting()).toBe(true);
+
+            execution.next(new HttpResponse({ body: { executionDate: dayjs(), jobType: 'deleteOrphans' } }));
+            execution.complete();
+            expect(component.operationExecuting()).toBe(false);
+            expect(component.operationExecuted()).toBe(true);
+        });
+
+        it('should ignore a stale cleanup completion after closing and reopening for another operation', () => {
+            const execution = new Subject<HttpResponse<CleanupServiceExecutionRecordDTO>>();
+            vi.spyOn(dataCleanupService, 'deleteOrphans').mockReturnValue(execution);
+            componentRef.setInput('operation', deleteOrphansOperation);
+            component.visible.set(true);
+            fixture.detectChanges();
+            component.executeCleanupOperation();
+
+            component.close();
+            fixture.detectChanges();
+            componentRef.setInput('operation', deleteNonRatedOperation);
+            component.visible.set(true);
+            fixture.detectChanges();
+
+            execution.next(new HttpResponse({ body: { executionDate: dayjs(), jobType: 'deleteOrphans' } }));
+            execution.complete();
+
+            expect(component.operationExecuted()).toBe(false);
+            expect(component.counts()).toEqual(mockNonRatedCounts);
+        });
+
         it('should execute deleteOrphans operation', () => {
             componentRef.setInput('operation', deleteOrphansOperation);
             component.visible.set(true);

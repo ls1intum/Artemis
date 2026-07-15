@@ -4,7 +4,7 @@ import { CleanupOperation } from 'app/admin/cleanup-service/cleanup-operation.mo
 import { CleanupCount, DataCleanupService } from 'app/admin/cleanup-service/data-cleanup.service';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 
-import { Observable, Subject, Subscription } from 'rxjs';
+import { Observable, Subject, Subscription, finalize } from 'rxjs';
 import { faCheckCircle, faTimes, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -35,11 +35,17 @@ export class CleanupOperationModalComponent {
     /** Whether the operation has been executed */
     readonly operationExecuted = signal(false);
 
+    /** Whether a cleanup operation is currently being executed. */
+    readonly operationExecuting = signal(false);
+
     private dialogErrorSource = new Subject<string>();
     dialogError = this.dialogErrorSource.asObservable();
 
     /** The in-flight count request, so it can be superseded/cancelled to avoid stale, out-of-order responses. */
     private countSubscription?: Subscription;
+
+    /** The in-flight cleanup request, so reopening the persistent modal cannot apply a stale completion to another operation. */
+    private executionSubscription?: Subscription;
 
     private readonly dataCleanupService = inject(DataCleanupService);
 
@@ -60,6 +66,8 @@ export class CleanupOperationModalComponent {
                     // Reset per-open state so reopening the modal for a different operation does not flash the
                     // previous run's result icons/counts (operationExecuted is only ever set true, and counts
                     // refresh asynchronously): start clean, then fetch this operation's counts.
+                    this.executionSubscription?.unsubscribe();
+                    this.operationExecuting.set(false);
                     this.operationExecuted.set(false);
                     this.counts.set({ totalCount: 0 });
                     this.updateCounts();
@@ -69,6 +77,8 @@ export class CleanupOperationModalComponent {
                 // in-flight count request on close: otherwise a late response could overwrite the counts of the
                 // next operation opened here.
                 this.countSubscription?.unsubscribe();
+                this.executionSubscription?.unsubscribe();
+                this.operationExecuting.set(false);
             }
         });
     }
@@ -84,37 +94,52 @@ export class CleanupOperationModalComponent {
      * Execute the cleanup operation and update counts afterward.
      */
     executeCleanupOperation(): void {
+        if (this.operationExecuting()) {
+            return;
+        }
+
+        const operation = this.operation();
+        this.operationExecuting.set(true);
         const operationHandler = {
             next: () => {
+                if (!this.visible() || this.operation() !== operation) {
+                    return;
+                }
                 this.operationExecuted.set(true);
                 this.updateCounts();
             },
             error: (error: unknown) => {
-                this.dialogErrorSource.next(error instanceof HttpErrorResponse ? error.message : 'An unexpected error occurred.');
+                if (this.visible() && this.operation() === operation) {
+                    this.dialogErrorSource.next(error instanceof HttpErrorResponse ? error.message : 'An unexpected error occurred.');
+                }
             },
         };
 
-        const operation = this.operation();
         // Range operations are only reachable once validateDates has confirmed both dates are set.
         const deleteFrom = operation.deleteFrom!;
         const deleteTo = operation.deleteTo!;
+        let executionRequest: Observable<unknown>;
         switch (operation.name) {
             case 'deleteOrphans':
-                this.dataCleanupService.deleteOrphans().subscribe(operationHandler);
+                executionRequest = this.dataCleanupService.deleteOrphans();
                 break;
             case 'deletePlagiarismComparisons':
-                this.dataCleanupService.deletePlagiarismComparisons(deleteFrom, deleteTo).subscribe(operationHandler);
+                executionRequest = this.dataCleanupService.deletePlagiarismComparisons(deleteFrom, deleteTo);
                 break;
             case 'deleteNonRatedResults':
-                this.dataCleanupService.deleteNonRatedResults(deleteFrom, deleteTo).subscribe(operationHandler);
+                executionRequest = this.dataCleanupService.deleteNonRatedResults(deleteFrom, deleteTo);
                 break;
             case 'deleteOldRatedResults':
-                this.dataCleanupService.deleteOldRatedResults(deleteFrom, deleteTo).subscribe(operationHandler);
+                executionRequest = this.dataCleanupService.deleteOldRatedResults(deleteFrom, deleteTo);
                 break;
             case 'deleteOldSubmissionVersions':
-                this.dataCleanupService.deleteOldSubmissionVersions(deleteFrom, deleteTo).subscribe(operationHandler);
+                executionRequest = this.dataCleanupService.deleteOldSubmissionVersions(deleteFrom, deleteTo);
                 break;
+            default:
+                this.operationExecuting.set(false);
+                throw new Error(`Unsupported operation: ${operation.name}`);
         }
+        this.executionSubscription = executionRequest.pipe(finalize(() => this.operationExecuting.set(false))).subscribe(operationHandler);
     }
 
     /**
