@@ -18,6 +18,7 @@ import java.util.Map;
 
 import jakarta.mail.internet.MimeMessage;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
@@ -36,7 +37,10 @@ import com.icegreen.greenmail.util.ServerSetupTest;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.core.config.ArtemisProperties;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
+import de.tum.cit.aet.artemis.notification.domain.GlobalNotificationSetting;
+import de.tum.cit.aet.artemis.notification.domain.GlobalNotificationType;
 import de.tum.cit.aet.artemis.notification.dto.MailRecipientDTO;
+import de.tum.cit.aet.artemis.notification.repository.GlobalNotificationSettingRepository;
 import de.tum.cit.aet.artemis.notification.service.notifications.MailSendingService;
 import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationIndependentTest;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -62,7 +66,12 @@ class MavenCentralRateLimitNotificationServiceIntegrationTest extends AbstractPr
     @Autowired
     private SpringTemplateEngine templateEngine;
 
+    @Autowired
+    private GlobalNotificationSettingRepository globalNotificationSettingRepository;
+
     private ProgrammingExercise exercise;
+
+    private GlobalNotificationSetting optOutSetting;
 
     @BeforeEach
     void setUp() {
@@ -84,6 +93,30 @@ class MavenCentralRateLimitNotificationServiceIntegrationTest extends AbstractPr
         var recipientCaptor = ArgumentCaptor.forClass(MailRecipientDTO.class);
         verify(mailSendingService, timeout(2000).times(2)).buildAndSendAsync(recipientCaptor.capture(), eq(SUBJECT_KEY), eq(List.of(exercise.getTitle())), eq(TEMPLATE), anyMap());
         assertThat(recipientCaptor.getAllValues()).extracting(MailRecipientDTO::login).containsExactlyInAnyOrder(TEST_PREFIX + "instructor1", TEST_PREFIX + "instructor2");
+    }
+
+    @AfterEach
+    void tearDown() {
+        if (optOutSetting != null) {
+            globalNotificationSettingRepository.delete(optOutSetting);
+            optOutSetting = null;
+        }
+    }
+
+    @Test
+    void shouldNotNotifyInstructorsWhoOptedOut() {
+        var optedOutInstructor = userTestRepository.findOneWithGroupsByLogin(TEST_PREFIX + "instructor1").orElseThrow();
+        optOutSetting = new GlobalNotificationSetting();
+        optOutSetting.setUserId(optedOutInstructor.getId());
+        optOutSetting.setNotificationType(GlobalNotificationType.MAVEN_CENTRAL_RATE_LIMIT);
+        optOutSetting.setEnabled(false);
+        optOutSetting = globalNotificationSettingRepository.save(optOutSetting);
+
+        mavenCentralRateLimitNotificationService.notifyInstructorsIfBuildWasRateLimited(exercise.getId(), exercise.getProgrammingLanguage(), rateLimitedBuildLogs());
+
+        var recipientCaptor = ArgumentCaptor.forClass(MailRecipientDTO.class);
+        verify(mailSendingService, timeout(2000).times(1)).buildAndSendAsync(recipientCaptor.capture(), eq(SUBJECT_KEY), eq(List.of(exercise.getTitle())), eq(TEMPLATE), anyMap());
+        assertThat(recipientCaptor.getValue().login()).isEqualTo(TEST_PREFIX + "instructor2");
     }
 
     @Test
