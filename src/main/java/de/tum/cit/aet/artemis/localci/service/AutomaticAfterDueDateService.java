@@ -40,7 +40,7 @@ public class AutomaticAfterDueDateService {
 
     private static final Logger log = LoggerFactory.getLogger(AutomaticAfterDueDateService.class);
 
-    private static final int BUILD_AND_TEST_OFFSET_MINUTES = 15;
+    private static final int BUILD_AND_TEST_OFFSET_MINUTES = 1;
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
