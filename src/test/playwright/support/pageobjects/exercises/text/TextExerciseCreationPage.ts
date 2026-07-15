@@ -1,5 +1,8 @@
 import { TEXT_EXERCISE_BASE } from '../../../constants';
 import { AbstractExerciseCreationPage } from '../AbstractExerciseCreationPage';
+import { Dayjs } from 'dayjs';
+
+const TIMELINE_DATE_FORMAT = 'DD.MM.YYYY HH:mm';
 
 export class TextExerciseCreationPage extends AbstractExerciseCreationPage {
     private readonly PROBLEM_STATEMENT_SELECTOR = '#problemStatement';
@@ -8,6 +11,22 @@ export class TextExerciseCreationPage extends AbstractExerciseCreationPage {
 
     async typeMaxPoints(maxPoints: number) {
         await this.page.locator('#field_points').fill(maxPoints.toString());
+    }
+
+    async setReleaseDate(date: Dayjs) {
+        await this.setTimelineDate('Release Date', date);
+    }
+
+    async setStartDate(date: Dayjs) {
+        await this.setTimelineDate('Start Date', date);
+    }
+
+    async setDueDate(date: Dayjs) {
+        await this.setTimelineDate('Due Date', date);
+    }
+
+    async setAssessmentDueDate(date: Dayjs) {
+        await this.setTimelineDate('Assessment Due Date', date);
     }
 
     async typeProblemStatement(statement: string) {
@@ -55,5 +74,12 @@ export class TextExerciseCreationPage extends AbstractExerciseCreationPage {
     private getTextEditorLocator(selector: string) {
         // Return just the container - setMonacoEditorContentByLocator will find .monaco-editor inside
         return this.page.locator(selector);
+    }
+
+    private async setTimelineDate(label: string, date: Dayjs) {
+        const dateInput = this.page.getByLabel(label, { exact: true });
+        await dateInput.waitFor({ state: 'visible' });
+        await dateInput.fill(date.format(TIMELINE_DATE_FORMAT));
+        await dateInput.press('Tab');
     }
 }

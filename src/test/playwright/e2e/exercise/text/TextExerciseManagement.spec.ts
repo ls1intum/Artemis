@@ -38,6 +38,7 @@ test.describe('Text exercise management', { tag: '@slow' }, () => {
             const exerciseTitle = 'text exercise' + generateUUID();
             await textExerciseCreation.setTitle(exerciseTitle);
             await textExerciseCreation.setReleaseDate(dayjs());
+            await textExerciseCreation.setStartDate(dayjs().add(1, 'hour'));
             await textExerciseCreation.setDueDate(dayjs().add(1, 'days'));
             await textExerciseCreation.setAssessmentDueDate(dayjs().add(2, 'days'));
             await textExerciseCreation.typeMaxPoints(10);
