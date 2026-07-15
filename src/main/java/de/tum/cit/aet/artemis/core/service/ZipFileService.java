@@ -83,6 +83,15 @@ public class ZipFileService {
         Files.walkFileTree(directory, new SimpleFileVisitor<>() {
 
             @Override
+            public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
+                String relativePath = directory.relativize(dir).toString().replace('\\', '/');
+                String entryName = relativePath.isEmpty() ? prefix + "/" : prefix + "/" + relativePath + "/";
+                zipOutputStream.putNextEntry(new ZipEntry(entryName));
+                zipOutputStream.closeEntry();
+                return FileVisitResult.CONTINUE;
+            }
+
+            @Override
             public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
                 if (Files.isReadable(file) && !isIgnoredZipFileName(file)) {
                     addFileToZip(zipOutputStream, file, prefix + "/" + directory.relativize(file).toString().replace('\\', '/'));

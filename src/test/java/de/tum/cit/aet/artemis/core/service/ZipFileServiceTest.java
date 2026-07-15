@@ -96,6 +96,7 @@ class ZipFileServiceTest extends AbstractSpringIntegrationIndependentTest {
         Path contentDir = tempFileUtilService.createTempDirectory(sourceDir, "content-dir");
         Path nestedFile = tempFileUtilService.createTempFile(contentDir, "nested", ".txt");
         FileUtils.writeByteArrayToFile(nestedFile.toFile(), "world".getBytes());
+        Path emptyDir = tempFileUtilService.createTempDirectory(contentDir, "empty-dir");
         Path ignoredStandaloneFile = sourceDir.resolve("gc.log.lock");
         FileUtils.writeByteArrayToFile(ignoredStandaloneFile.toFile(), "ignored".getBytes());
         Path ignoredNestedFile = contentDir.resolve("gc.log.lock");
@@ -117,6 +118,8 @@ class ZipFileServiceTest extends AbstractSpringIntegrationIndependentTest {
         assertThat(entryNames).contains(standaloneFile.getFileName().toString());
         // a directory is stored recursively with the directory name as the top-level entry
         assertThat(entryNames).contains(contentDir.getFileName().toString() + "/" + nestedFile.getFileName().toString());
+        // empty directories must not disappear when replacing zip4j's addFolder behavior
+        assertThat(entryNames).contains(contentDir.getFileName() + "/" + contentDir.relativize(emptyDir) + "/");
         assertThat(entryNames).doesNotContain(ignoredStandaloneFile.getFileName().toString(), contentDir.getFileName() + "/" + ignoredNestedFile.getFileName());
     }
 
