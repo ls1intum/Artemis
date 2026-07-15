@@ -145,7 +145,7 @@ Every old column and where it lands. `content` / `selection` are on the question
 | Old column(s) | Why |
 | --- | --- |
 | `*.question_id` / `submitted_answer_id` / `multiple_choice_submitted_answers_id` FKs | Replaced by JSON containment in the owning row |
-| `drop_locations_order`, `drag_items_order`, `spots_order`, `solutions_order`, `answer_options_order` | Array element order encodes it (preserved via `ORDER BY` on PostgreSQL; see the MySQL ordering caveat) |
+| `drop_locations_order`, `drag_items_order`, `spots_order`, `solutions_order`, `answer_options_order` | Array element order encodes it (preserved via ordered aggregates on both PostgreSQL and MySQL) |
 | `short_answer_mapping.correct_mappings_order` | Correct mappings are an unordered set (matched by id) |
 | `short_answer_submitted_text.id` | Submitted texts have no identity in the new model |
 | `quiz_statistic_counter.{drag_and_drop_question_statistic_id, short_answer_question_statistic_id, multiple_choice_question_statistic_id}` | Statistic ownership is by containment in `quiz_statistic.counters`; these columns are dropped (only `quiz_point_statistic_id` remains, for `PointCounter`) |
@@ -170,7 +170,7 @@ Each dialect has its own changeset: PostgreSQL uses `jsonb_build_object` / `json
 ## Cleanup: what is dropped and what is kept
 
 <Callout variant={CalloutVariant.danger}>
-  <strong>Steps 15–17 are destructive and irreversible.</strong> They delete the source rows and drop the legacy tables, so the JSON backfills become the single source of truth. Run the migration against a copy of the production database and verify a sample of migrated quizzes <em>before</em> the real cutover — especially on MySQL, where the backfill SQL is not covered by the test suite (see Caveats).
+  <strong>Steps 15–17 are destructive and irreversible.</strong> They delete the source rows and drop the legacy tables, so the JSON backfills become the single source of truth. Run the migration against a copy of the production database and verify a sample of migrated quizzes <em>before</em> the real cutover — especially on MySQL, where the backfill SQL is not covered by the automated test suite (see Caveats).
 </Callout>
 
 **Tables dropped (step 17)** — now fully represented in `content` / `selection`:
@@ -198,9 +198,9 @@ They are dropped in dependency order (referencing tables first) so no foreign ke
 
 ## Caveats
 
-- **MySQL is not covered by the test suite** (tests use PostgreSQL via Testcontainers). Two MySQL-specific behaviors to validate on a staging copy before cutover:
+- **MySQL is not covered by the automated test suite** (tests use PostgreSQL via Testcontainers). Two MySQL-specific behaviors to validate on a staging copy before cutover:
   - *Booleans*: `x = TRUE` produces the JSON numbers `1` / `0` (not `true` / `false`). Jackson coerces them back to `Boolean` on read, so this is functionally correct, but the on-disk representation differs from PostgreSQL.
-  - *Ordering*: MySQL `JSON_ARRAYAGG` does not support `ORDER BY` and does not guarantee element order. This is irrelevant for drop locations / drag items / spots / solutions (matched by id or `spotNr`), but the authored **display order of multiple-choice answer options** may not be preserved on MySQL for non-randomized questions (scoring is unaffected; PostgreSQL preserves the order via `ORDER BY answer_options_order`).
+  - *Ordering*: MySQL `JSON_ARRAYAGG` has undefined order as a grouped aggregate. The migration therefore uses ordered window aggregates for every authored list and has been exercised directly on MySQL 9.7 with deliberately scrambled source ids; still verify representative migrated quizzes on staging because the destructive MySQL changesets are not part of regular CI.
 - **H2 is not backfilled.** The columns are added on H2, but there are no H2 backfill changesets — H2 is only used for ephemeral, freshly-created schemas that never contain pre-migration relational data.
 - **Irreversible.** Once step 17 drops the tables there is no rollback path for the child data; the JSON columns are authoritative.
 
