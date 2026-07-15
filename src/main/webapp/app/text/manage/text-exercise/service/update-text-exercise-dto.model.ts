@@ -58,6 +58,9 @@ export interface UpdateTextExerciseDTO {
 
     // TextExercise specific fields
     exampleSolution?: string;
+
+    // Plagiarism detection config
+    plagiarismDetectionConfig?: TextExercise['plagiarismDetectionConfig'];
 }
 
 /**
@@ -140,6 +143,7 @@ export function toUpdateTextExerciseDTO(textExercise: TextExercise): UpdateTextE
         teamAssignmentConfig: textExercise.teamAssignmentConfig
             ? { minTeamSize: textExercise.teamAssignmentConfig.minTeamSize, maxTeamSize: textExercise.teamAssignmentConfig.maxTeamSize }
             : undefined,
+        plagiarismDetectionConfig: textExercise.plagiarismDetectionConfig,
     };
 }
 

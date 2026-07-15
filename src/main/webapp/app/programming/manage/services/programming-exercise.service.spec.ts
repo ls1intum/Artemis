@@ -217,16 +217,25 @@ describe('ProgrammingExercise Service', () => {
             req.flush(returnedFromService);
         });
 
-        it('should include assessmentType when updating', () => {
+        it('should include assessmentType and plagiarismDetectionConfig when updating', () => {
             const exercise = new ProgrammingExercise(new Course(), undefined);
             exercise.id = 1;
             exercise.assessmentType = AssessmentType.SEMI_AUTOMATIC;
+            exercise.plagiarismDetectionConfig = {
+                continuousPlagiarismControlEnabled: true,
+                continuousPlagiarismControlPostDueDateChecksEnabled: false,
+                continuousPlagiarismControlPlagiarismCaseStudentResponsePeriod: 14,
+                similarityThreshold: 42,
+                minimumScore: 7,
+                minimumSize: 13,
+            };
 
             service.update(exercise).subscribe();
 
             const req = httpMock.expectOne({ method: 'PUT' });
             // Check that dto assessmentType field has correct value
             expect(req.request.body.assessmentType).toBe(AssessmentType.SEMI_AUTOMATIC);
+            expect(req.request.body.plagiarismDetectionConfig).toEqual(exercise.plagiarismDetectionConfig);
 
             req.flush(exercise);
         });

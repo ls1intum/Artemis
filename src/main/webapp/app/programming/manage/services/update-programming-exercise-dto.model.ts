@@ -98,6 +98,9 @@ export interface UpdateProgrammingExerciseDTO {
 
     // Build config
     buildConfig?: UpdateProgrammingExerciseBuildConfigDTO;
+
+    // Plagiarism detection config
+    plagiarismDetectionConfig?: ProgrammingExercise['plagiarismDetectionConfig'];
 }
 
 /**
@@ -211,5 +214,6 @@ export function toUpdateProgrammingExerciseDTO(exercise: ProgrammingExercise): U
         projectType: exercise.projectType,
         releaseTestsWithExampleSolution: exercise.releaseTestsWithExampleSolution ?? false,
         buildConfig: buildConfigDTO,
+        plagiarismDetectionConfig: exercise.plagiarismDetectionConfig,
     };
 }

@@ -83,13 +83,22 @@ describe('TextExercise Service', () => {
         });
 
         it('should update a TextExercise', () => {
-            const returnedFromService = Object.assign({ exampleSolution: 'BBBBBB' }, elemDefault);
+            const plagiarismDetectionConfig = {
+                continuousPlagiarismControlEnabled: true,
+                continuousPlagiarismControlPostDueDateChecksEnabled: false,
+                continuousPlagiarismControlPlagiarismCaseStudentResponsePeriod: 14,
+                similarityThreshold: 42,
+                minimumScore: 7,
+                minimumSize: 13,
+            };
+            const returnedFromService = Object.assign({}, elemDefault, { exampleSolution: 'BBBBBB', plagiarismDetectionConfig });
             const expected = Object.assign({}, returnedFromService);
             service
                 .update(expected)
                 .pipe(take(1))
                 .subscribe((resp) => (requestResult = resp));
             const req = httpMock.expectOne({ method: 'PUT' });
+            expect(req.request.body.plagiarismDetectionConfig).toEqual(plagiarismDetectionConfig);
             req.flush(returnedFromService);
             expect(requestResult.body).toEqual(expected);
         });

@@ -42,8 +42,6 @@ import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exercise.dto.SubmissionExportOptionsDTO;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseVersionService;
 import de.tum.cit.aet.artemis.lecture.dto.CompetencyLinkDTO;
-import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismDetectionConfig;
-import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismDetectionConfigDTO;
 import de.tum.cit.aet.artemis.text.config.TextEnabled;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.dto.ImportTextExerciseDTO;
@@ -208,7 +206,7 @@ public class TextExerciseExportImportResource {
             exercise.setTeamAssignmentConfig(dto.teamAssignmentConfig().toEntity());
         }
         if (dto.plagiarismDetectionConfig() != null) {
-            exercise.setPlagiarismDetectionConfig(toPlagiarismDetectionConfig(dto.plagiarismDetectionConfig()));
+            exercise.setPlagiarismDetectionConfig(dto.plagiarismDetectionConfig().toEntity());
         }
 
         // Grading criteria (with their structured grading instructions, needed for the copy tracker during import)
@@ -247,17 +245,6 @@ public class TextExerciseExportImportResource {
             exercise.setExerciseGroup(exerciseGroup);
         }
         return exercise;
-    }
-
-    private static PlagiarismDetectionConfig toPlagiarismDetectionConfig(PlagiarismDetectionConfigDTO dto) {
-        PlagiarismDetectionConfig config = new PlagiarismDetectionConfig();
-        config.setContinuousPlagiarismControlEnabled(dto.continuousPlagiarismControlEnabled());
-        config.setContinuousPlagiarismControlPostDueDateChecksEnabled(dto.continuousPlagiarismControlPostDueDateChecksEnabled());
-        config.setContinuousPlagiarismControlPlagiarismCaseStudentResponsePeriod(dto.continuousPlagiarismControlPlagiarismCaseStudentResponsePeriod());
-        config.setSimilarityThreshold(dto.similarityThreshold());
-        config.setMinimumScore(dto.minimumScore());
-        config.setMinimumSize(dto.minimumSize());
-        return config;
     }
 
     /**

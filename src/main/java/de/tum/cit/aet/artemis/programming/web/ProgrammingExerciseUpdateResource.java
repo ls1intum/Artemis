@@ -408,6 +408,9 @@ public class ProgrammingExerciseUpdateResource {
         // Update build config
         updateBuildConfig(dto.buildConfig(), exercise.getBuildConfig());
 
+        // Update plagiarism detection config
+        PlagiarismDetectionConfigHelper.applyToExercise(exercise, dto.plagiarismDetectionConfig());
+
         // Update grading criteria
         updateGradingCriteria(dto, exercise);
 
@@ -526,6 +529,7 @@ public class ProgrammingExerciseUpdateResource {
 
         // Apply DTO changes BEFORE re-evaluation so that updated grading criteria take effect.
         update(updateDTO, programmingExercise);
+        PlagiarismDetectionConfigHelper.validatePlagiarismDetectionConfigOrThrow(programmingExercise, ENTITY_NAME);
 
         exerciseService.reEvaluateExercise(programmingExercise, deleteFeedbackAfterGradingInstructionUpdate);
 

@@ -29,6 +29,7 @@ import de.tum.cit.aet.artemis.exam.test_repository.ExamTestRepository;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.localci.service.LocalVCLocalCITestService;
+import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismDetectionConfig;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildPhaseCondition;
@@ -402,6 +403,184 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
 
         request.putWithResponseBody("/api/programming/programming-exercises", UpdateProgrammingExerciseDTO.of(programmingExercise), ProgrammingExercise.class,
                 HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
+    void testCreateProgrammingExercise_invalidPlagiarismDetectionConfig_badRequest() throws Exception {
+        // ProgrammingExercise create still receives the raw entity, so the submitted plagiarism config reaches validation
+        // directly. This path is intentionally left unchanged; the test guards that invalid values are still rejected.
+        addInstructorToCourse();
+
+        ProgrammingExercise newExercise = ProgrammingExerciseFactory.generateProgrammingExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(7), course);
+        var validPhases = new BuildPlanPhasesDTO(List.of(new BuildPhaseDTO("Compile", "./gradlew testClasses", BuildPhaseCondition.ALWAYS, false, List.of()),
+                new BuildPhaseDTO("Test", "./gradlew test", BuildPhaseCondition.ALWAYS, false, List.of("build/test-results/test/*.xml"))), "ubuntu:latest");
+        newExercise.getBuildConfig().setBuildPlanConfiguration(validPhases.toBuildPlanConfiguration());
+
+        var config = new PlagiarismDetectionConfig();
+        config.setSimilarityThreshold(-1); // invalid: below 0
+        config.setMinimumScore(50);
+        config.setMinimumSize(50);
+        config.setContinuousPlagiarismControlPlagiarismCaseStudentResponsePeriod(7);
+        newExercise.setPlagiarismDetectionConfig(config);
+
+        request.postWithResponseBody("/api/programming/programming-exercises/setup", newExercise, ProgrammingExercise.class, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
+    void testUpdateProgrammingExercise_validPlagiarismDetectionConfig_updatesExistingConfigInPlace() throws Exception {
+        addInstructorToCourse();
+        programmingExercise = programmingExerciseRepository.findWithPlagiarismDetectionConfigTeamConfigBuildConfigAndGradingCriteriaById(programmingExercise.getId()).orElseThrow();
+        setValidBuildPlanConfiguration();
+
+        PlagiarismDetectionConfig config = ensurePlagiarismDetectionConfig(programmingExercise);
+        config.setSimilarityThreshold(30);
+        config.setMinimumScore(5);
+        config.setMinimumSize(10);
+        config.setContinuousPlagiarismControlPlagiarismCaseStudentResponsePeriod(10);
+        programmingExercise = programmingExerciseRepository.save(programmingExercise);
+        Long configId = programmingExercise.getPlagiarismDetectionConfig().getId();
+        assertThat(configId).isNotNull();
+
+        programmingExercise.getPlagiarismDetectionConfig().setSimilarityThreshold(66);
+        programmingExercise.getPlagiarismDetectionConfig().setMinimumScore(9);
+        var updated = request.putWithResponseBody("/api/programming/programming-exercises", UpdateProgrammingExerciseDTO.of(programmingExercise), ProgrammingExercise.class,
+                HttpStatus.OK);
+
+        var fromDb = programmingExerciseRepository.findWithPlagiarismDetectionConfigTeamConfigBuildConfigAndGradingCriteriaById(updated.getId()).orElseThrow();
+        // Same config row is mutated in place (no duplicate row), and the new values are persisted.
+        assertThat(fromDb.getPlagiarismDetectionConfig().getId()).isEqualTo(configId);
+        assertThat(fromDb.getPlagiarismDetectionConfig().getSimilarityThreshold()).isEqualTo(66);
+        assertThat(fromDb.getPlagiarismDetectionConfig().getMinimumScore()).isEqualTo(9);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
+    void testUpdateProgrammingExercise_invalidPlagiarismDetectionConfig_badRequest() throws Exception {
+        addInstructorToCourse();
+        programmingExercise = programmingExerciseRepository.findWithPlagiarismDetectionConfigTeamConfigBuildConfigAndGradingCriteriaById(programmingExercise.getId()).orElseThrow();
+        setValidBuildPlanConfiguration();
+
+        PlagiarismDetectionConfig config = ensurePlagiarismDetectionConfig(programmingExercise);
+        // Persist a valid baseline first, so a 400 can only stem from the submitted (invalid) config, not the stored one.
+        config.setContinuousPlagiarismControlEnabled(true);
+        config.setContinuousPlagiarismControlPostDueDateChecksEnabled(false);
+        config.setContinuousPlagiarismControlPlagiarismCaseStudentResponsePeriod(9);
+        config.setSimilarityThreshold(50);
+        config.setMinimumScore(4);
+        config.setMinimumSize(12);
+        programmingExercise = programmingExerciseRepository.save(programmingExercise);
+        Long configId = programmingExercise.getPlagiarismDetectionConfig().getId();
+        assertThat(configId).isNotNull();
+
+        programmingExercise.getPlagiarismDetectionConfig().setSimilarityThreshold(101); // invalid: above 100
+        request.putWithResponseBody("/api/programming/programming-exercises", UpdateProgrammingExerciseDTO.of(programmingExercise), ProgrammingExercise.class,
+                HttpStatus.BAD_REQUEST);
+
+        ProgrammingExercise reloaded = programmingExerciseRepository.findWithPlagiarismDetectionConfigTeamConfigBuildConfigAndGradingCriteriaById(programmingExercise.getId())
+                .orElseThrow();
+        PlagiarismDetectionConfig reloadedConfig = reloaded.getPlagiarismDetectionConfig();
+        assertThat(reloadedConfig).isNotNull();
+        assertThat(reloadedConfig.getId()).isEqualTo(configId);
+        assertThat(reloadedConfig.isContinuousPlagiarismControlEnabled()).isTrue();
+        assertThat(reloadedConfig.isContinuousPlagiarismControlPostDueDateChecksEnabled()).isFalse();
+        assertThat(reloadedConfig.getContinuousPlagiarismControlPlagiarismCaseStudentResponsePeriod()).isEqualTo(9);
+        assertThat(reloadedConfig.getSimilarityThreshold()).isEqualTo(50);
+        assertThat(reloadedConfig.getMinimumScore()).isEqualTo(4);
+        assertThat(reloadedConfig.getMinimumSize()).isEqualTo(12);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
+    void testReEvaluateAndUpdateProgrammingExercise_invalidPlagiarismDetectionConfig_badRequestAndPreservesExistingConfig() throws Exception {
+        addInstructorToCourse();
+        programmingExercise = programmingExerciseRepository.findWithPlagiarismDetectionConfigTeamConfigBuildConfigAndGradingCriteriaById(programmingExercise.getId()).orElseThrow();
+        setValidBuildPlanConfiguration();
+
+        PlagiarismDetectionConfig config = ensurePlagiarismDetectionConfig(programmingExercise);
+        config.setContinuousPlagiarismControlEnabled(true);
+        config.setContinuousPlagiarismControlPostDueDateChecksEnabled(false);
+        config.setContinuousPlagiarismControlPlagiarismCaseStudentResponsePeriod(11);
+        config.setSimilarityThreshold(45);
+        config.setMinimumScore(6);
+        config.setMinimumSize(14);
+        programmingExercise = programmingExerciseRepository.save(programmingExercise);
+        Long configId = programmingExercise.getPlagiarismDetectionConfig().getId();
+        assertThat(configId).isNotNull();
+
+        programmingExercise.getPlagiarismDetectionConfig().setSimilarityThreshold(101); // invalid: above 100
+        request.putWithResponseBody("/api/programming/programming-exercises/" + programmingExercise.getId() + "/re-evaluate?deleteFeedback=false",
+                UpdateProgrammingExerciseDTO.of(programmingExercise), ProgrammingExercise.class, HttpStatus.BAD_REQUEST);
+
+        ProgrammingExercise reloaded = programmingExerciseRepository.findWithPlagiarismDetectionConfigTeamConfigBuildConfigAndGradingCriteriaById(programmingExercise.getId())
+                .orElseThrow();
+        PlagiarismDetectionConfig reloadedConfig = reloaded.getPlagiarismDetectionConfig();
+        assertThat(reloadedConfig).isNotNull();
+        assertThat(reloadedConfig.getId()).isEqualTo(configId);
+        assertThat(reloadedConfig.isContinuousPlagiarismControlEnabled()).isTrue();
+        assertThat(reloadedConfig.isContinuousPlagiarismControlPostDueDateChecksEnabled()).isFalse();
+        assertThat(reloadedConfig.getContinuousPlagiarismControlPlagiarismCaseStudentResponsePeriod()).isEqualTo(11);
+        assertThat(reloadedConfig.getSimilarityThreshold()).isEqualTo(45);
+        assertThat(reloadedConfig.getMinimumScore()).isEqualTo(6);
+        assertThat(reloadedConfig.getMinimumSize()).isEqualTo(14);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
+    void testUpdateProgrammingExercise_omittedPlagiarismDetectionConfig_preservesExisting() throws Exception {
+        addInstructorToCourse();
+        programmingExercise = programmingExerciseRepository.findWithPlagiarismDetectionConfigTeamConfigBuildConfigAndGradingCriteriaById(programmingExercise.getId()).orElseThrow();
+        setValidBuildPlanConfiguration();
+
+        PlagiarismDetectionConfig config = ensurePlagiarismDetectionConfig(programmingExercise);
+        config.setSimilarityThreshold(37);
+        config.setMinimumScore(4);
+        config.setMinimumSize(9);
+        config.setContinuousPlagiarismControlPlagiarismCaseStudentResponsePeriod(12);
+        programmingExercise = programmingExerciseRepository.save(programmingExercise);
+        Long configId = programmingExercise.getPlagiarismDetectionConfig().getId();
+
+        // Simulate a caller that does not send the field: rebuild the same DTO but with a null plagiarism config.
+        UpdateProgrammingExerciseDTO base = UpdateProgrammingExerciseDTO.of(programmingExercise);
+        UpdateProgrammingExerciseDTO withoutConfig = new UpdateProgrammingExerciseDTO(base.id(), base.title(), base.channelName(), base.shortName(), base.problemStatement(),
+                base.categories(), base.difficulty(), base.maxPoints(), base.bonusPoints(), base.includedInOverallScore(), base.allowComplaintsForAutomaticAssessments(),
+                base.allowFeedbackRequests(), base.presentationScoreEnabled(), base.secondCorrectionEnabled(), base.feedbackSuggestionModule(), base.gradingInstructions(),
+                base.releaseDate(), base.startDate(), base.dueDate(), base.assessmentDueDate(), base.exampleSolutionPublicationDate(), base.courseId(), base.exerciseGroupId(),
+                base.gradingCriteria(), base.competencyLinks(), base.testRepositoryUri(), base.solutionRepositoryUri(), base.auxiliaryRepositories(), base.allowOnlineEditor(),
+                base.allowOfflineIde(), base.allowOnlineIde(), base.staticCodeAnalysisEnabled(), base.maxStaticCodeAnalysisPenalty(), base.programmingLanguage(),
+                base.packageName(), base.showTestNamesToStudents(), base.buildAndTestStudentSubmissionsAfterDueDate(), base.testCasesChanged(), base.projectKey(),
+                base.submissionPolicy(), base.projectType(), base.releaseTestsWithExampleSolution(), base.assessmentType(), base.buildConfig(), null);
+        var updated = request.putWithResponseBody("/api/programming/programming-exercises", withoutConfig, ProgrammingExercise.class, HttpStatus.OK);
+
+        var fromDb = programmingExerciseRepository.findWithPlagiarismDetectionConfigTeamConfigBuildConfigAndGradingCriteriaById(updated.getId()).orElseThrow();
+        // The existing config is preserved unchanged when the DTO omits it.
+        assertThat(fromDb.getPlagiarismDetectionConfig()).isNotNull();
+        assertThat(fromDb.getPlagiarismDetectionConfig().getId()).isEqualTo(configId);
+        assertThat(fromDb.getPlagiarismDetectionConfig().getSimilarityThreshold()).isEqualTo(37);
+        assertThat(fromDb.getPlagiarismDetectionConfig().getMinimumScore()).isEqualTo(4);
+    }
+
+    /**
+     * Ensures the given exercise has a (managed) plagiarism detection config, creating one when absent.
+     */
+    private PlagiarismDetectionConfig ensurePlagiarismDetectionConfig(ProgrammingExercise exercise) {
+        PlagiarismDetectionConfig config = exercise.getPlagiarismDetectionConfig();
+        if (config == null) {
+            config = new PlagiarismDetectionConfig();
+            exercise.setPlagiarismDetectionConfig(config);
+        }
+        return config;
+    }
+
+    /**
+     * Applies a valid build plan configuration so that the exercise passes general update validation and any rejection can
+     * be attributed to the plagiarism config under test.
+     */
+    private void setValidBuildPlanConfiguration() throws Exception {
+        var phase = new BuildPhaseDTO("test", "echo test", BuildPhaseCondition.AFTER_DUE_DATE, false, List.of("build/test-results/*.xml"));
+        programmingExercise.getBuildConfig().setBuildPlanConfiguration(new BuildPlanPhasesDTO(List.of(phase), "ghcr.io/example-image").toBuildPlanConfiguration());
+        programmingExerciseBuildConfigRepository.save(programmingExercise.getBuildConfig());
     }
 
     @Test
