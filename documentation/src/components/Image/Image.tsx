@@ -58,6 +58,8 @@ const Image = ({
 
     const renderImage = () => {
         if (typeof src === 'string') {
+            // `rest` is an intentional passthrough of caller-provided <img> attributes, so spreading is correct here.
+            // nosemgrep: typescript.react.best-practice.react-props-spreading.react-props-spreading
             return <img src={src} alt={alt} style={combinedImageStyles} {...rest} />;
         }
         // SVG component imported via @svgr
