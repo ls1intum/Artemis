@@ -5,6 +5,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.after;
 import static org.mockito.Mockito.doReturn;
@@ -129,7 +130,9 @@ class MavenCentralRateLimitNotificationServiceIntegrationTest extends AbstractPr
         mavenCentralRateLimitNotificationService.notifyInstructorsIfBuildWasRateLimited(examExercise.getId(), examExercise.getProgrammingLanguage(), rateLimitedBuildLogs());
 
         verify(mailSendingService, timeout(2000).times(2)).buildAndSendAsync(any(MailRecipientDTO.class), eq(SUBJECT_KEY), eq(List.of(examExercise.getTitle())), eq(TEMPLATE),
-                anyMap());
+                argThat(context -> "/course-management/%d/exams/%d/exercise-groups/%d/programming-exercises/%d/code-editor/TESTS/test"
+                        .formatted(examCourse.getId(), examExercise.getExerciseGroup().getExam().getId(), examExercise.getExerciseGroup().getId(), examExercise.getId())
+                        .equals(context.get("editorPath"))));
     }
 
     @Test
@@ -184,8 +187,9 @@ class MavenCentralRateLimitNotificationServiceIntegrationTest extends AbstractPr
     void shouldRenderEmailWithDocumentationAndEditorLinks() throws Exception {
         var testMailService = createGreenMailSendingService();
 
-        testMailService.buildAndSendSync(MailRecipientDTO.from(createRecipient("en")), SUBJECT_KEY, TEMPLATE, Map.of("exerciseTitle", "My Java Exercise", "courseTitle",
-                "My Course", "exerciseId", 42L, "courseId", 7L, "documentationUrl", MavenCentralRateLimitNotificationService.DOCUMENTATION_URL));
+        testMailService.buildAndSendSync(MailRecipientDTO.from(createRecipient("en")), SUBJECT_KEY, TEMPLATE,
+                Map.of("exerciseTitle", "My Java Exercise", "courseTitle", "My Course", "editorPath", "/course-management/7/programming-exercises/42/code-editor/TESTS/test",
+                        "documentationUrl", MavenCentralRateLimitNotificationService.DOCUMENTATION_URL));
 
         String body = getDeliveredEmailBody();
         assertThat(body).contains("My Java Exercise");
@@ -196,11 +200,23 @@ class MavenCentralRateLimitNotificationServiceIntegrationTest extends AbstractPr
     }
 
     @Test
+    void shouldRenderEmailWithExamEditorLink() throws Exception {
+        var testMailService = createGreenMailSendingService();
+        var examEditorPath = "/course-management/7/exams/8/exercise-groups/9/programming-exercises/42/code-editor/TESTS/test";
+
+        testMailService.buildAndSendSync(MailRecipientDTO.from(createRecipient("en")), SUBJECT_KEY, TEMPLATE, Map.of("exerciseTitle", "My Exam Exercise", "courseTitle",
+                "My Course", "editorPath", examEditorPath, "documentationUrl", MavenCentralRateLimitNotificationService.DOCUMENTATION_URL));
+
+        assertThat(getDeliveredEmailBody()).contains("http://localhost:9000" + examEditorPath);
+    }
+
+    @Test
     void shouldRenderEmailInGerman() throws Exception {
         var testMailService = createGreenMailSendingService();
 
-        testMailService.buildAndSendSync(MailRecipientDTO.from(createRecipient("de")), SUBJECT_KEY, TEMPLATE, Map.of("exerciseTitle", "Meine Java-Aufgabe", "courseTitle",
-                "Mein Kurs", "exerciseId", 42L, "courseId", 7L, "documentationUrl", MavenCentralRateLimitNotificationService.DOCUMENTATION_URL));
+        testMailService.buildAndSendSync(MailRecipientDTO.from(createRecipient("de")), SUBJECT_KEY, TEMPLATE,
+                Map.of("exerciseTitle", "Meine Java-Aufgabe", "courseTitle", "Mein Kurs", "editorPath", "/course-management/7/programming-exercises/42/code-editor/TESTS/test",
+                        "documentationUrl", MavenCentralRateLimitNotificationService.DOCUMENTATION_URL));
 
         String body = getDeliveredEmailBody();
         assertThat(body).contains("Meine Java-Aufgabe");

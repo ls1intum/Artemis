@@ -206,8 +206,17 @@ public class MavenCentralRateLimitNotificationService {
         Set<Long> instructorIds = instructors.stream().map(User::getId).collect(Collectors.toSet());
         Set<Long> optedOutUserIds = instructorIds.isEmpty() ? Set.of()
                 : globalNotificationSettingRepository.findUserIdsWithNotificationDisabled(instructorIds, GlobalNotificationType.MAVEN_CENTRAL_RATE_LIMIT);
-        Map<String, Object> contextVariables = Map.of("exerciseTitle", exercise.getTitle(), "courseTitle", course.getTitle(), "exerciseId", exercise.getId(), "courseId",
-                course.getId(), "documentationUrl", DOCUMENTATION_URL);
+        String editorPath;
+        if (exercise.isExamExercise()) {
+            var exerciseGroup = exercise.getExerciseGroup();
+            editorPath = "/course-management/%d/exams/%d/exercise-groups/%d/programming-exercises/%d/code-editor/TESTS/test".formatted(course.getId(),
+                    exerciseGroup.getExam().getId(), exerciseGroup.getId(), exercise.getId());
+        }
+        else {
+            editorPath = "/course-management/%d/programming-exercises/%d/code-editor/TESTS/test".formatted(course.getId(), exercise.getId());
+        }
+        Map<String, Object> contextVariables = Map.of("exerciseTitle", exercise.getTitle(), "courseTitle", course.getTitle(), "editorPath", editorPath, "documentationUrl",
+                DOCUMENTATION_URL);
         for (User instructor : instructors) {
             if (!instructor.getActivated() || instructor.getEmail() == null || optedOutUserIds.contains(instructor.getId())) {
                 continue;

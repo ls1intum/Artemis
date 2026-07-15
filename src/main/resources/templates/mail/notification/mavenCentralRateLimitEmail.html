@@ -22,7 +22,7 @@
     </p>
     <p>
         <span th:text="#{email.notification.mavenCentralRateLimit.openEditor}">You can adapt the test repository directly in the online editor:</span>
-        <a th:with="url=(@{|${baseUrl}/course-management/${courseId}/programming-exercises/${exerciseId}/code-editor/TESTS/test|})" th:href="${url}" th:text="${url}">Editor link</a>
+        <a th:with="url=(@{|${baseUrl}${editorPath}|})" th:href="${url}" th:text="${url}">Editor link</a>
     </p>
     <p>
         <span th:text="#{email.notification.mavenCentralRateLimit.frequency}">You will receive this notification at most once per day for each affected exercise.</span>
