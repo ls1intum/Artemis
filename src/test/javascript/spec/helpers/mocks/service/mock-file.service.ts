@@ -20,8 +20,16 @@ export class MockFileService {
         return of(new Blob());
     };
 
-    createAttachmentFileUrl(downloadUrl: string, downloadName: string, encodeName: boolean) {
-        return 'attachments/' + downloadName.replace(' ', '-') + '.pdf';
+    createAttachmentFileUrl(downloadUrl: string, downloadName: string, encodeName: boolean, version?: number) {
+        return this.addAttachmentVersionToUrl('attachments/' + downloadName.replace(' ', '-') + '.pdf', version);
+    }
+
+    addAttachmentVersionToUrl(attachmentUrl: string, version?: number): string {
+        if (version === undefined) {
+            return attachmentUrl;
+        }
+        const separator = attachmentUrl.includes('?') ? '&' : '?';
+        return `${attachmentUrl}${separator}version=${version}`;
     }
 
     replaceLectureAttachmentPrefixAndUnderscores = (link: string) => link;

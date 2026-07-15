@@ -442,9 +442,10 @@ describe('MonacoEditorCommunicationActionIntegration', () => {
                 link: '/api/files/attachments/Metis-Attachment.pdf',
                 studentVersion: 'attachments/Metis-Attachment.pdf',
                 name: 'Metis-Attachment.pdf',
+                version: 2,
             } as Attachment;
 
-            const attachmentVideoUnitFileName = 'Metis-Attachment.pdf';
+            const attachmentVideoUnitFileName = 'Metis-Attachment.pdf?version=2';
 
             lectureAttachmentReferenceAction.executeInCurrentEditor({
                 reference: ReferenceType.ATTACHMENT_UNITS,
@@ -452,6 +453,28 @@ describe('MonacoEditorCommunicationActionIntegration', () => {
                 attachmentVideoUnit: attachmentVideoUnit,
             });
             expect(comp.getText()).toBe(`[lecture-unit]${attachmentVideoUnit.name}(${attachmentVideoUnitFileName})[/lecture-unit]`);
+        });
+
+        it('should create a versioned fallback student link for an attachment video unit', () => {
+            fixture.detectChanges();
+            comp.registerAction(lectureAttachmentReferenceAction);
+            const lecture = lectureAttachmentReferenceAction.lecturesWithDetails[2];
+            const attachmentVideoUnit = lecture.attachmentVideoUnits![0];
+
+            attachmentVideoUnit.attachment = {
+                link: 'attachments/attachment-unit/123/Metis-Attachment.pdf',
+                name: 'Metis-Attachment.pdf',
+                version: 3,
+            } as Attachment;
+            vi.spyOn(fileService, 'createStudentLink').mockReturnValue('attachments/attachment-unit/123/student/Metis-Attachment.pdf');
+
+            lectureAttachmentReferenceAction.executeInCurrentEditor({
+                reference: ReferenceType.ATTACHMENT_UNITS,
+                lecture,
+                attachmentVideoUnit,
+            });
+
+            expect(comp.getText()).toBe(`[lecture-unit]${attachmentVideoUnit.name}(attachment-unit/123/student/Metis-Attachment.pdf?version=3)[/lecture-unit]`);
         });
 
         it('should error when trying to reference a nonexistent attachment video unit', () => {

@@ -100,7 +100,21 @@ export class FileService {
         const restOfUrl = downloadUrlComponents.join('/');
         const encodedDownloadName = encodeName ? encodeURIComponent(downloadName + '.' + extension) : downloadName + '.' + extension;
         const attachmentUrl = restOfUrl + '/' + encodedDownloadName;
-        return version === undefined ? attachmentUrl : `${attachmentUrl}?version=${version}`;
+        return this.addAttachmentVersionToUrl(attachmentUrl, version);
+    }
+
+    /**
+     * Adds the attachment version to a URL so replacements use a new browser cache entry.
+     *
+     * @param attachmentUrl attachment URL to version
+     * @param version attachment version used to invalidate cached downloads after a replacement
+     */
+    addAttachmentVersionToUrl(attachmentUrl: string, version?: number): string {
+        if (version === undefined) {
+            return attachmentUrl;
+        }
+        const separator = attachmentUrl.includes('?') ? '&' : '?';
+        return `${attachmentUrl}${separator}version=${version}`;
     }
 
     /**

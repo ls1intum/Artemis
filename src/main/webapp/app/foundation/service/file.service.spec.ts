@@ -200,6 +200,16 @@ describe('FileService', () => {
         });
     });
 
+    describe('addAttachmentVersionToUrl', () => {
+        it('should preserve existing query parameters', () => {
+            expect(fileService.addAttachmentVersionToUrl('http://example.com/attachment.pdf?download=true', 4)).toBe('http://example.com/attachment.pdf?download=true&version=4');
+        });
+
+        it('should leave the URL unchanged when no version is available', () => {
+            expect(fileService.addAttachmentVersionToUrl('http://example.com/attachment.pdf')).toBe('http://example.com/attachment.pdf');
+        });
+    });
+
     describe('replaceAttachmentPrefixAndUnderscores', () => {
         it('should replace the prefix and underscores in a file name', () => {
             const fileName = 'AttachmentUnit_2023-01-01T00-00-00-000_some_file_name';
