@@ -164,6 +164,16 @@ class MavenCentralRateLimitNotificationServiceIntegrationTest extends AbstractPr
     }
 
     @Test
+    void shouldNotNotifyForRateLimitFromPrivateMavenRegistry() {
+        var buildLogs = List.of("Downloaded from central: https://repo.maven.apache.org/maven2/com/example/other/1.0/other-1.0.pom",
+                "Could not GET 'https://gitlab.example.com/api/v4/projects/42/packages/maven/com/example/library/1.0/library-1.0.pom'. Received status code 429 from server: Too Many Requests");
+
+        mavenCentralRateLimitNotificationService.notifyInstructorsIfBuildWasRateLimited(exercise.getId(), exercise.getProgrammingLanguage(), buildLogs);
+
+        verify(mailSendingService, after(1000).never()).buildAndSendAsync(any(), anyString(), anyList(), eq(TEMPLATE), anyMap());
+    }
+
+    @Test
     void shouldNotNotifyForOtherProgrammingLanguages() {
         mavenCentralRateLimitNotificationService.notifyInstructorsIfBuildWasRateLimited(exercise.getId(), ProgrammingLanguage.PYTHON, rateLimitedBuildLogs());
 

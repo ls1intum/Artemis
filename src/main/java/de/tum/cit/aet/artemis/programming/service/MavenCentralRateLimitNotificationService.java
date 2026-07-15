@@ -4,8 +4,8 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.time.Duration;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -66,7 +66,8 @@ public class MavenCentralRateLimitNotificationService {
      */
     static final String MAVEN_RATE_LIMIT_ERROR = "status code: 429, reason phrase: Too Many Requests";
 
-    private static final String MAVEN_MARKER = "maven";
+    /** Hosts used by Maven Central. Requiring one avoids misclassifying rate limits from private Maven-compatible registries. */
+    private static final List<String> MAVEN_CENTRAL_HOSTS = List.of("repo.maven.apache.org", "repo1.maven.org");
 
     static final String DOCUMENTATION_URL = "https://docs.artemis.tum.de/instructor/exercises/programming-exercise#prevent-maven-central-rate-limits-java-and-kotlin";
 
@@ -136,13 +137,11 @@ public class MavenCentralRateLimitNotificationService {
     }
 
     private static boolean isRateLimitedByMavenCentral(List<String> buildLogs) {
-        boolean rateLimited = buildLogs.stream()
-                .anyMatch(logEntry -> logEntry != null && (logEntry.contains(GRADLE_RATE_LIMIT_ERROR) || logEntry.contains(MAVEN_RATE_LIMIT_ERROR)));
-        if (!rateLimited) {
-            return false;
-        }
-        // Require a Maven reference in the logs so that unrelated HTTP 429 errors (e.g. from other registries) do not trigger the notification
-        return buildLogs.stream().anyMatch(logEntry -> logEntry != null && logEntry.toLowerCase(Locale.ROOT).contains(MAVEN_MARKER));
+        return buildLogs.stream().filter(Objects::nonNull).anyMatch(logEntry -> {
+            boolean rateLimited = logEntry.contains(GRADLE_RATE_LIMIT_ERROR) || logEntry.contains(MAVEN_RATE_LIMIT_ERROR);
+            boolean referencesMavenCentral = MAVEN_CENTRAL_HOSTS.stream().anyMatch(host -> logEntry.contains("://" + host + "/"));
+            return rateLimited && referencesMavenCentral;
+        });
     }
 
     /**
