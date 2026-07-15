@@ -32,6 +32,7 @@ permissions: {}
 
 env:
   IMAGE_NAME: ghcr.io/ls1intum/artemis
+  WORKFLOW_CHECKOUT_ROOT: .workflow-checkouts/${{ github.run_id }}-${{ github.run_attempt }}
 
 # The registry is the source of truth: resolve the commit to deploy, verify its immutable
 # `sha-<commit>` image exists in GHCR (or build it on the fly for a branch with no PR), then
@@ -151,18 +152,28 @@ jobs:
       packages: read
     steps:
       # Check out only the verify action, from the workflow's own ref (Helios dispatches this workflow
-      # from the branch being deployed). It is a build-correctness gate, not a trust boundary against
-      # the deployer, so it needs no pinned ref — and a pin to the default branch would break any
-      # branch that adds or edits the action.
-      - uses: actions/checkout@v6
+      # from the branch being deployed). Keep it out of the root workspace: this job can run in
+      # parallel with the database approval check, and sparse checkouts mutate the worktree.
+      - name: Check out verify action
+        uses: actions/checkout@v6
         with:
           sparse-checkout: .github/actions/verify-image-build
           sparse-checkout-cone-mode: false
-      - uses: ./.github/actions/verify-image-build
-        with:
-          image: ${{ env.IMAGE_NAME }}
-          sha: ${{ needs.determine-build-context.outputs.head_sha }}
-          token: ${{ secrets.GITHUB_TOKEN }}
+          path: ${{ env.WORKFLOW_CHECKOUT_ROOT }}/verify-image-build
+
+      - name: Verify deployable image exists
+        env:
+          IMAGE: ${{ env.IMAGE_NAME }}
+          SHA: ${{ needs.determine-build-context.outputs.head_sha }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REGISTRY_USER: ${{ github.actor }}
+        run: |
+          set -Eeuo pipefail
+          bash "${WORKFLOW_CHECKOUT_ROOT}/verify-image-build/.github/actions/verify-image-build/verify-image-build.sh"
+
+      - name: Cleanup verify checkout
+        if: always()
+        run: rm -rf -- "${WORKFLOW_CHECKOUT_ROOT}/verify-image-build"
 
   check-database-migration-approval:
     name: Check Database Migration Approval
@@ -173,29 +184,35 @@ jobs:
     permissions:
       contents: read
     steps:
-      - name: Checkout Repository
+      - name: Check out database approval check
         uses: actions/checkout@v6
+        with:
+          sparse-checkout: supporting_scripts/database_approval_check
+          path: ${{ env.WORKFLOW_CHECKOUT_ROOT }}/database-approval-check
       - name: Install Python
         uses: actions/setup-python@v6
         with:
           python-version: "3.14"
       - name: Install Dependencies
+        working-directory: ${{ env.WORKFLOW_CHECKOUT_ROOT }}/database-approval-check/supporting_scripts/database_approval_check
         run: |
           set -Eeuo pipefail
           python -m pip install --upgrade pip
-          cd supporting_scripts/database_approval_check
-          pip install -r requirements.txt
+          python -m pip install -r requirements.txt
       - name: Check Migration Approval
+        working-directory: ${{ env.WORKFLOW_CHECKOUT_ROOT }}/database-approval-check/supporting_scripts/database_approval_check
         env:
           GITHUB_TOKEN: ${{ secrets.DB_MIGRATON_APPROVAL_GITHUB_TOKEN }}
           GITHUB_PR: ${{ needs.determine-build-context.outputs.pr_number }}
         run: |
           set -Eeuo pipefail
-          cd supporting_scripts/database_approval_check
           python main.py || {
             echo "::error::Database migration approval check failed. Ensure the latest database migration changes have been approved by a database maintainer."
             exit 1
           }
+      - name: Cleanup database approval checkout
+        if: always()
+        run: rm -rf -- "${WORKFLOW_CHECKOUT_ROOT}/database-approval-check"
 
   deploy:
     name: Deploy to Test-Server
@@ -234,6 +251,7 @@ jobs:
         with:
           sparse-checkout: artemis-server-cli
           sparse-checkout-cone-mode: false
+          path: ${{ env.WORKFLOW_CHECKOUT_ROOT }}/deploy-cli
 
       - name: Setup SSH Keys and known_hosts
         env:
@@ -259,11 +277,13 @@ jobs:
           DEPLOYMENT_FOLDER: ${{ vars.DEPLOYMENT_FOLDER }}
         run: |
           set -Eeuo pipefail
-          chmod +x artemis-server-cli
-          ./artemis-server-cli docker-deploy "$DEPLOYMENT_USER@$DEPLOYMENT_HOSTS" \
+          chmod +x "${WORKFLOW_CHECKOUT_ROOT}/deploy-cli/artemis-server-cli"
+          "${WORKFLOW_CHECKOUT_ROOT}/deploy-cli/artemis-server-cli" docker-deploy "$DEPLOYMENT_USER@$DEPLOYMENT_HOSTS" \
             -g "$GATEWAY_USER@$GATEWAY_HOST" \
             -t "$TAG" -b "$BRANCH_NAME" -d "$DEPLOYMENT_FOLDER" -y
 
       - name: Cleanup
         if: always()
-        run: rm -f /tmp/ssh_agent.sock
+        run: |
+          rm -f /tmp/ssh_agent.sock
+          rm -rf -- "${WORKFLOW_CHECKOUT_ROOT}/deploy-cli"
