@@ -92,6 +92,7 @@ import reviewAddButton from './assets/programming/review-add-button.png';
 import reviewAddThreadWidget from './assets/programming/review-add-thread-widget.png';
 import reviewConsistencyThreadWidget from './assets/programming/review-consistency-thread-widget.png';
 import reviewThreadWidget from './assets/programming/review-thread-widget.png';
+import buildPlanPhases from './assets/programming/build-plan-phases.png';
 
 # Programming Exercise
 
@@ -240,7 +241,7 @@ Creating a programming exercise consists of the following steps:
 
 1. [Generate programming exercise in Artemis](#generate-programming-exercise)
 2. [Update exercise code in the template, solution, and test repositories](#update-exercise-code-in-repositories)
-3. [Adapt the build script (optional)](#adapt-build-script-optional)
+3. [Adapt build phases (optional)](#adapt-build-phases-optional)
 4. [Configure static code analysis (optional)](#configure-static-code-analysis)
 5. [Adapt the interactive problem statement](#adapt-interactive-problem-statement)
 6. [Configure grading settings](#configure-grading)
@@ -336,7 +337,7 @@ This can be used for providing additional resources or overwriting template sour
 - **Package Name**: The package name for this exercise. Not available for all languages
 - **Enable Static Code Analysis**: Enable automated code quality checks. **Cannot be changed after creation**. See Static Code Analysis Configuration section below
 - **Sequential Test Runs**: First run structural, then behavioral tests. Helps students focus on immediate challenges. Not compatible with static code analysis. **Cannot be changed after creation**
-- **Customize Build Plan**: Customize the build plan of your exercise. Available for all languages with Local CI and Jenkins. Can also be customized after creation
+- **Customize Build Configuration**: Customize the build plan of your exercise. Available for all languages with Local CI and Jenkins. Can also be customized after creation
 
 </details>
 
@@ -806,13 +807,109 @@ Check the build plan results:
 
 </Callout>
 
-### Adapt Build Script (Optional)
+### Prevent Maven Central Rate Limits (Java and Kotlin)
 
-This section is optional. The preconfigured build script usually does not need changes.
+<Callout variant={CalloutVariant.warning}>
 
-If you need additional build steps or different configurations, activate **Customize Build Script** in the exercise create/edit/import screen. All changes apply to all builds (template, solution, student submissions).
+  <strong>Important for Java and Kotlin exercises:</strong> Maven Central rate-limits download requests. Because all builds of an Artemis instance originate from the same IP addresses, builds can suddenly fail with <strong>HTTP 429 (Too Many Requests)</strong> errors — especially during high-load periods such as exams, when many students submit at the same time.
+We strongly recommend configuring a Maven repository mirror as the <strong>first</strong> repository in the test repository's build configuration, as described below.
 
-Predefined build scripts in bash exist for all languages, project types, and configurations. Most languages clone the test repository into the root folder and the assignment repository into the **assignment** folder.
+</Callout>
+
+Affected builds fail with errors such as:
+
+```
+Could not GET 'https://repo.maven.apache.org/maven2/de/tum/in/ase/artemis-java-test-sandbox/1.11.3/artemis-java-test-sandbox-1.11.3.pom'.
+Received status code 429 from server: Too Many Requests
+```
+
+Only **Java** and **Kotlin** exercises are affected, because their builds resolve dependencies via Maven Central. There is currently no central Artemis-side solution, so instructors must configure the mirror in each exercise's **test repository**.
+
+When Artemis detects a build that failed due to Maven Central rate limiting, it automatically notifies the instructors of the affected course by email (at most once per day per exercise), including a link to this section and to the online editor of the affected exercise.
+
+For Artemis instances operated by TUM, the Artemis team provides a [Reposilite](https://reposilite.com/) mirror at [https://reposilite.aet.cit.tum.de](https://reposilite.aet.cit.tum.de) that proxies and caches all required artifacts. Other institutions can operate their own mirror and configure it in the same way.
+
+#### Recommended: Add the Mirror to the Test Repository
+
+**Gradle exercises:** In the `build.gradle` file of the test repository, add the mirror as the **first** entry in the `repositories` block:
+
+```groovy
+repositories {
+    maven {
+        name "reposiliteRepositoryReleases"
+        url "https://reposilite.aet.cit.tum.de/releases"
+    }
+    mavenCentral()
+}
+```
+
+**Maven exercises:** In the `pom.xml` file of the test repository, add the mirror as the **first** entry in the `<repositories>` section (create the section if it does not exist yet):
+
+```xml
+<repositories>
+    <repository>
+        <id>reposilite-repository-releases</id>
+        <name>Reposilite Repository</name>
+        <url>https://reposilite.aet.cit.tum.de/releases</url>
+    </repository>
+</repositories>
+```
+
+<Callout variant={CalloutVariant.warning}>
+
+  <strong>The repository order matters:</strong> Repositories are queried in the order they are declared. The mirror must come <strong>before</strong> Maven Central so that all dependencies are resolved from the mirror and Maven Central is not contacted at all. If the mirror is declared after Maven Central, builds will still hit the rate limit.
+
+</Callout>
+
+#### Alternative: Configure the Mirror in the Docker Image
+
+Alternatively, the mirror can be baked into the Docker image used for the build (e.g., via a Gradle init script or a Maven `settings.xml` inside the image). We mention this option for completeness, but **recommend the test repository configuration above** because it is much more flexible:
+
+- While the mirror has been stable so far, its availability cannot be guaranteed. If it ever becomes unavailable, changing a single entry in the test repository (e.g., via the online code editor) takes seconds and immediately applies to all subsequent builds.
+- Switching or rebuilding a Docker image is much slower and must be repeated for every exercise that uses the image.
+
+
+### Adapt Build Phases (Optional)
+
+**Only available with [Integrated Code Lifecycle](/instructor/integrations/integrated-code-lifecycle)**
+
+Instructors can configure the build phases.
+To do this, check the **Customize Build Configuration** option in the exercise creation, edit, or import screen. All changes apply to all builds (template, solution, and student submissions).
+You can view the configured build plan on the exercise's detail or edit page.
+
+<Image src={buildPlanPhases} alt="Build Plan Configuration" size={ImageSize.large} caption="Build Plan Configuration" />
+
+The build plan consists of multiple phases. Each phase can be customized in the following ways:
+
+- **Name**: The name of the phase.
+- **Inclusion condition**: The condition can be either `Always` or `After due date`. If a phase is configured to run after the due date, Artemis automatically schedules the latest submission for each student participation to be rebuilt 15 minutes (adjustable) after the due date (or after the exam's due date, including grace period and student time extensions).
+- **Script**: The script specifying the commands to run for the phase.
+- **Tests expected**: A toggle indicating whether tests are expected for a phase. If disabled for all phases, the exercise will not collect any test results, but the build status will still be accurately determined by the build's exit code.
+- **Result paths**: The paths where the test results for this phase are located.
+- **Execute at end regardless of previous failures**: A toggle indicating whether the phase should run at the end of the build, even if a previous phase failed.
+
+Instructors can freely define how many phases are executed and in which order.
+
+**Determining Build Success:**
+
+Before a build runs, any phases where the inclusion condition is not met are dropped. Artemis then determines build success based on the remaining phases:
+
+- **If phases expecting tests (excluding static code analysis) remain:** Build success is determined by whether the expected tests were successfully found and executed.
+- **If no phases expecting tests (excluding static code analysis) remain:** Build success is determined by the exit code of the build.
+
+**Common Test Setup Scenarios:**
+
+Controlling when tests *run* (via build-phase inclusion conditions) is separate from controlling when results are *visible* to students (via test-case visibility in the grading page). To achieve the desired outcome, both must be configured accordingly:
+
+1. **Immediate Full Feedback:** Set all build phases to `Always` and configure the corresponding test cases to always be visible. Tests execute on every commit, and all results are shown immediately after submission.
+2. **Build Status Only:** Remove all phases that expect tests. Students only see if their code compiled successfully based on the build's exit status. Test-case visibility is irrelevant since no tests are executed.
+3. **Tests After Due Date:** Keep the compilation phase as `Always` and set any phases expecting tests to `After due date`. Since the tests do not execute before the deadline, test-case visibility technically does not matter, but can be set to `After Due Date` for consistency. The tests will only execute after the deadline passes, and their output will become available at that point.
+4. **Partial Immediate Feedback:** Set specific test phases (e.g., static code analysis) to `Always`, and other test phases to `After due date`. For tests running immediately, set their visibility to `Always`. For tests running after the due date, visibility technically does not matter, but can be set to `After Due Date` for consistency. Students receive immediate feedback on some aspects and delayed feedback on others.
+
+**Default behavior:**
+- **Creating a course programming exercise**: Phases are set to always run. Test results are set to always be visible.
+- **Creating a programming exercise in exam mode**: Phases that expect tests are automatically set to run after the due date. This means phases without expected test results remain active during the exam. Tests will run after the exam concludes.
+- **Importing a programming exercise in exam mode**: Tests are automatically set to only show after the release date of results. However, the build plan is imported as-is. This prevents situations where, for example, a build plan with only a single phase is unintentionally set to run `After due date`.
 
 You can also use a custom Docker image. Make sure to:
 - Publish the image in a publicly available repository (e.g., DockerHub)
@@ -840,7 +937,7 @@ To change checkout paths, click **edit repositories checkout path**:
 
 <Image src={checkoutPathsEdit} alt="Checkout Paths Edit" size={ImageSize.large} caption="Edit Checkout Paths (Java)" />
 
-Update the build script accordingly (see the [Adapt Build Script](#adapt-build-script-optional) section).
+Update the build plan accordingly (see the [Adapt Build Phases](#adapt-build-phases-optional) section).
 
 <Callout variant={CalloutVariant.warning}>
 

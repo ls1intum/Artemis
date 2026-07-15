@@ -485,6 +485,24 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
     List<ProgrammingExercise> findAllWithEagerExamByExamEndDateAfterDate(@Param("dateTime") ZonedDateTime dateTime);
 
     /**
+     * Returns the programming exercise with its course eagerly fetched, both directly ({@code course}) and via the exam path ({@code exerciseGroup → exam → course}), so that
+     * callers can resolve the course via {@code getCourseViaExerciseGroupOrCourseMember} outside a Hibernate session (open-session-in-view is disabled).
+     *
+     * @param exerciseId the id of the programming exercise to load
+     * @return the programming exercise with its course and exam eagerly loaded (empty if the exercise does not exist)
+     */
+    @Query("""
+            SELECT pe
+            FROM ProgrammingExercise pe
+                LEFT JOIN FETCH pe.course
+                LEFT JOIN FETCH pe.exerciseGroup eg
+                LEFT JOIN FETCH eg.exam e
+                LEFT JOIN FETCH e.course
+            WHERE pe.id = :exerciseId
+            """)
+    Optional<ProgrammingExercise> findWithEagerCourseAndExamById(@Param("exerciseId") long exerciseId);
+
+    /**
      * In distinction to other exercise types, students can have multiple submissions in a programming exercise.
      * We therefore have to check here that a submission exists, that was submitted before the due date.
      * Should be used for exam dashboard to ignore test run submissions.
