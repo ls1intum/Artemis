@@ -66,6 +66,20 @@ describe('LocalCIBuildPlanEditorComponent', () => {
         expect(comp.loadingResults()).toBe(false);
     });
 
+    it('should keep the editor usable and surface an alert when loading the participations fails', () => {
+        const exercise = { id: 7, buildConfig: { buildPlanConfiguration, timeoutSeconds: 90 } } as unknown as ProgrammingExercise;
+        activatedRoute.data = of({ exercise });
+        vi.spyOn(programmingExerciseService, 'findWithTemplateAndSolutionParticipationAndLatestResults').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 404 })));
+        const errorStub = vi.spyOn(alertService, 'error');
+
+        comp.ngOnInit();
+
+        expect(comp.programmingExercise()).toBe(exercise);
+        expect(comp.phases()).toEqual(phases);
+        expect(comp.loadingResults()).toBe(false);
+        expect(errorStub).toHaveBeenCalledWith('error.http.404');
+    });
+
     it('should convert a legacy build script when the exercise has no structured phases', () => {
         const exercise = { id: 7, buildConfig: { buildScript: 'echo hello', timeoutSeconds: 60 } } as unknown as ProgrammingExercise;
         activatedRoute.data = of({ exercise });
@@ -102,6 +116,8 @@ describe('LocalCIBuildPlanEditorComponent', () => {
 
     it('should surface an error alert when saving fails', () => {
         comp.programmingExercise.set({ id: 7, buildConfig: {} } as unknown as ProgrammingExercise);
+        comp.phases.set(phases);
+        comp.dockerImage.set('some-image');
         vi.spyOn(buildPlanConfigurationService, 'updateBuildPlanConfiguration').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 400 })));
         const errorStub = vi.spyOn(alertService, 'error');
 
@@ -117,6 +133,26 @@ describe('LocalCIBuildPlanEditorComponent', () => {
 
         comp.submit();
 
+        expect(updateStub).not.toHaveBeenCalled();
+    });
+
+    const invalidConfigurations: [string, typeof phases, string][] = [
+        ['duplicate phase names', [phases[0], { ...phases[0], name: 'Compile' }], 'some-image'],
+        ['a reserved phase name', [{ ...phases[0], name: 'main' }], 'some-image'],
+        ['an invalid phase name', [{ ...phases[0], name: 'compile phase' }], 'some-image'],
+        ['no phases', [], 'some-image'],
+        ['an empty docker image', phases, '   '],
+    ];
+
+    it.each(invalidConfigurations)('should not submit with %s', (_description, invalidPhases, dockerImage) => {
+        comp.programmingExercise.set({ id: 7, buildConfig: {} } as unknown as ProgrammingExercise);
+        comp.phases.set(invalidPhases);
+        comp.dockerImage.set(dockerImage);
+        const updateStub = vi.spyOn(buildPlanConfigurationService, 'updateBuildPlanConfiguration');
+
+        comp.submit();
+
+        expect(comp.canSubmit()).toBe(false);
         expect(updateStub).not.toHaveBeenCalled();
     });
 });

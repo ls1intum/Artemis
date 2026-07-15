@@ -308,6 +308,8 @@
         "fileReadError": "An error occurred while reading the files of the referenced commit. Please try again.",
         "buildConfigMissing": "The programming exercise build configuration is missing.",
         "emptyBuildPlan": "The build plan must contain at least one build phase.",
+        "duplicateBuildPhaseName": "Build phase names must be unique.",
+        "reservedBuildPhaseName": "A build phase uses a reserved name. Please choose a different name.",
         "problemStatementTooLong": "The problem statement must not exceed 100,000 characters."
     }
 }

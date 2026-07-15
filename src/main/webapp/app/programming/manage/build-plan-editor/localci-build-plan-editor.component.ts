@@ -1,8 +1,9 @@
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { Component, OnInit, computed, inject, signal, viewChild } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { faPlayCircle } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { ButtonModule } from 'primeng/button';
+import { TooltipModule } from 'primeng/tooltip';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { AlertService } from 'app/foundation/service/alert.service';
@@ -13,7 +14,7 @@ import { ProgrammingExercise } from 'app/programming/shared/entities/programming
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
 import { BuildPlanConfigurationService } from 'app/programming/manage/services/build-plan-configuration.service';
 import { LegacyBuildPlanConverterService } from 'app/programming/shared/services/legacy-build-plan-converter.service';
-import { BuildPhase, parseBuildPlanPhases } from 'app/programming/shared/entities/build-plan-phases.model';
+import { BUILD_PHASE_NAME_PATTERN, BUILD_PHASE_RESERVED_NAMES, BuildPhase, parseBuildPlanPhases } from 'app/programming/shared/entities/build-plan-phases.model';
 import { ProgrammingExerciseBuildConfigurationComponent } from 'app/programming/manage/update/update-components/custom-build-plans/programming-exercise-build-configuration/programming-exercise-build-configuration.component';
 import { BuildPhasesEditorComponent } from 'app/programming/manage/update/update-components/custom-build-plans/build-phases-editor/build-phases-editor.component';
 
@@ -28,7 +29,8 @@ import { BuildPhasesEditorComponent } from 'app/programming/manage/update/update
     imports: [
         TranslateDirective,
         ArtemisTranslatePipe,
-        NgbTooltip,
+        ButtonModule,
+        TooltipModule,
         FaIconComponent,
         HelpIconComponent,
         UpdatingResultComponent,
@@ -54,6 +56,30 @@ export class LocalCIBuildPlanEditorComponent implements OnInit {
     readonly timeout = signal<number>(0);
 
     readonly isExamMode = computed(() => !!this.programmingExercise()?.exerciseGroup);
+
+    private readonly buildConfigurationComponent = viewChild(ProgrammingExerciseBuildConfigurationComponent);
+
+    readonly arePhaseNamesValid = computed(() => {
+        const phases = this.phases();
+        const normalizedNames = phases.map((phase) => phase.name.toLowerCase());
+        const namesAreUnique = new Set(normalizedNames).size === normalizedNames.length;
+        const namesArePatternValid = phases.every((phase) => BUILD_PHASE_NAME_PATTERN.test(phase.name));
+        const namesAreNotReserved = normalizedNames.every((name) => !BUILD_PHASE_RESERVED_NAMES.has(name));
+        return namesAreUnique && namesArePatternValid && namesAreNotReserved;
+    });
+
+    readonly isDockerImageValid = computed(() => this.dockerImage().trim().length > 0);
+
+    readonly isTimeoutValid = computed(() => {
+        const buildConfigurationComponent = this.buildConfigurationComponent();
+        // before the build configuration component has initialized its bounds from the profile info, do not block saving
+        const min = buildConfigurationComponent?.timeoutMinValue();
+        const max = buildConfigurationComponent?.timeoutMaxValue();
+        const timeout = this.timeout();
+        return (min === undefined || timeout >= min) && (max === undefined || timeout <= max);
+    });
+
+    readonly canSubmit = computed(() => this.phases().length > 0 && this.arePhaseNamesValid() && this.isDockerImageValid() && this.isTimeoutValid());
 
     ngOnInit(): void {
         this.activatedRoute.data.subscribe(({ exercise }) => {
@@ -90,11 +116,18 @@ export class LocalCIBuildPlanEditorComponent implements OnInit {
      * the full build config of the resolved exercise (the participation query may not return it).
      */
     private loadParticipationsWithResults(resolvedExercise: ProgrammingExercise): void {
-        this.programmingExerciseService.findWithTemplateAndSolutionParticipationAndLatestResults(resolvedExercise.id!).subscribe((response) => {
-            const exercise = response.body!;
-            exercise.buildConfig = resolvedExercise.buildConfig;
-            this.programmingExercise.set(exercise);
-            this.loadingResults.set(false);
+        this.programmingExerciseService.findWithTemplateAndSolutionParticipationAndLatestResults(resolvedExercise.id!).subscribe({
+            next: (response) => {
+                const exercise = response.body!;
+                exercise.buildConfig = resolvedExercise.buildConfig;
+                this.programmingExercise.set(exercise);
+                this.loadingResults.set(false);
+            },
+            error: (error) => {
+                // the editor stays usable with the resolved exercise; only the live build status is unavailable
+                this.loadingResults.set(false);
+                onError(this.alertService, error);
+            },
         });
     }
 
@@ -103,7 +136,7 @@ export class LocalCIBuildPlanEditorComponent implements OnInit {
      */
     submit(): void {
         const exercise = this.programmingExercise();
-        if (!exercise?.id) {
+        if (!exercise?.id || !this.canSubmit()) {
             return;
         }
         this.isSaving.set(true);
