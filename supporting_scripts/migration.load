@@ -1,0 +1,55 @@
+LOAD DATABASE
+ FROM {{FROM_DB}}
+ INTO {{INTO_DB}}
+ alter schema 'artemis' rename to 'public'
+
+WITH data only,
+ workers = 8, concurrency = 1,
+ multiple readers per thread, rows per range = 10000,
+ prefetch rows = 10000, batch rows = 2500,
+ create no tables, create no indexes,
+ preserve index names,
+ reset sequences,
+ on error stop
+
+SET PostgreSQL PARAMETERS
+ maintenance_work_mem to '128MB',
+ work_mem to '12MB'
+
+SET MySQL PARAMETERS
+ net_read_timeout  = '120',
+ net_write_timeout = '120'
+
+
+EXCLUDING TABLE NAMES MATCHING 'databasechangelog', 'databasechangeloglock', 'artemis_version'
+
+BEFORE LOAD DO
+ $$ TRUNCATE TABLE jhi_user_authority; $$,
+ $$ TRUNCATE TABLE jhi_authority CASCADE; $$,
+ $$ TRUNCATE TABLE jhi_user CASCADE; $$
+
+AFTER LOAD DO $$
+ DO $do$
+     DECLARE
+         r RECORD;
+     BEGIN
+         FOR r IN
+             SELECT s.schemaname                                     as schema_name,
+                    concat(c.table_name, '_', c.column_name, '_seq') as sequence_name,
+                    c.column_name,
+                    c.table_name
+             FROM pg_sequences s
+                      JOIN information_schema.columns c
+                           ON concat(c.table_name, '_', c.column_name, '_seq') = s.sequencename
+                      JOIN information_schema.tables t ON t.table_name = c.table_name
+             WHERE c.is_identity = 'YES'
+               AND c.table_schema = 'public'
+             LOOP
+                 EXECUTE format(
+                         'SELECT setval(''%I.%I'', COALESCE((SELECT MAX(%I) + 1 FROM %I.%I), 1), false)',
+                         r.schema_name, r.sequence_name, r.column_name, r.schema_name, r.table_name
+                         );
+             END LOOP;
+     END
+ $do$;
+ $$;
