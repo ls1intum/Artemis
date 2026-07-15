@@ -746,7 +746,7 @@ export class ExerciseAPIRequests {
     /**
      * Triggers an instructor build-and-test run for ALL student participations of a programming exercise.
      * Used by exam tests to run the AFTER_DUE_DATE-gated build "test" phase on demand instead of waiting for
-     * the server's scheduled build-and-test-after-due-date (which defaults to dueDate + 1 minute for exams).
+     * the server's scheduled build-and-test-after-due-date (which defaults to dueDate + 15 min for exams).
      * Must be called after the (individual) due date by a user with at least instructor rights.
      */
     async triggerInstructorBuildForAll(exerciseId: number) {
@@ -759,11 +759,11 @@ export class ExerciseAPIRequests {
     /**
      * Moves a programming exercise's "Run Tests after Due Date" date into the recent past via the timeline endpoint.
      *
-     * For exam programming exercises the server defaults this date to (latest individual exam end + grace + 1 minute)
+     * For exam programming exercises the server defaults this date to (latest individual exam end + grace + 15 min)
      * — the intended default (see AutomaticAfterDueDateService.BUILD_AND_TEST_OFFSET_MINUTES). Until it passes,
      * {@code ProgrammingExercise.areManualResultsAllowed()} is false and the server rejects manual assessment with
      * 403 "Creating manual results is disabled for this exercise!". An instructor would normally move this date
-     * earlier to start assessing right away; this mirrors that so the E2E test does not have to wait 1 minute.
+     * earlier to start assessing right away; this mirrors that so the E2E test does not have to wait 15 minutes.
      *
      * Must be called after the exam (and its grace period) has ended: the timeline update keeps a client-provided
      * value only when it is not before the exam end date, so {@code dayjs()} here must already be past that.

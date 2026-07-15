@@ -105,7 +105,7 @@ export function getExamEndDateWithGrace(exam: Exam) {
 
 export async function waitForExamBuildAndTestAfterDueDate(exam: Exam, page: Page) {
     // For exam programming exercises the score-producing build "test" phase runs only AFTER_DUE_DATE, which
-    // the server schedules at dueDate + 1 minute (the intended default; see
+    // the server schedules at dueDate + 15 min (the intended default; see
     // AutomaticAfterDueDateService.BUILD_AND_TEST_OFFSET_MINUTES). Instead of waiting that long, trigger the
     // instructor build-and-test for the exam's programming exercise on demand: by the time this is called the
     // student's individual working period is already over, so the AFTER_DUE_DATE-gated phase runs and produces
@@ -123,7 +123,7 @@ export async function waitForExamBuildAndTestAfterDueDate(exam: Exam, page: Page
     await exerciseAPIRequests.triggerInstructorBuildForAll(programmingExercise.id);
     await Commands.waitForExerciseBuildToFinish(page, exerciseAPIRequests, programmingExercise.id);
     // The build above produces the automatic result, but for exam programming exercises the server also defaults
-    // the "Run Tests after Due Date" date to (latest exam end + grace + 1 minute). Until that date passes, the server
+    // the "Run Tests after Due Date" date to (latest exam end + grace + 15 min). Until that date passes, the server
     // rejects manual assessment with 403 "Creating manual results is disabled for this exercise!"
     // (ProgrammingExercise.areManualResultsAllowed). Mirror what an instructor would do to assess immediately and
     // move the date into the recent past. We do this only now, after waiting for the build, so the new date is
