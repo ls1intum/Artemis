@@ -713,7 +713,8 @@ public class StudentExamResource {
     private void prepareStudentExamForConduction(HttpServletRequest request, User currentUser, StudentExam studentExam) {
 
         // In case the studentExam is not yet started, a new participation with a specific initialization date should be created - isStarted uses Boolean
-        if (studentExam.isTestExam()) {
+        // Test runs are already prepared when they are created.
+        if (studentExam.isTestExam() && !studentExam.isTestRun()) {
             boolean setupTestExamNeeded = studentExam.isStarted() == null || !studentExam.isStarted();
             if (setupTestExamNeeded) {
 
