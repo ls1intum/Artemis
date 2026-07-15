@@ -857,10 +857,13 @@ Before a build runs, any phases where the inclusion condition is not met are dro
 - **If no phases expecting tests (excluding static code analysis) remain:** Build success is determined by the exit code of the build.
 
 **Common Test Setup Scenarios:**
-1. **Immediate Full Feedback:** Set all phases to `Always`. All test results are shown immediately after submission.
-2. **Build Status Only:** Remove all phases that expect tests. Students only see if their code compiled successfully.
-3. **Tests After Due Date:** Keep the compilation phase as `Always` and set any phases expecting tests to `After due date`. Test output remains hidden until the deadline passes.
-4. **Partial Immediate Feedback:** Set specific test phases (e.g., static code analysis) to `Always`, and other test phases to `After due date`. Students receive immediate feedback on some aspects and delayed feedback on others.
+
+Controlling when tests *run* (via build-phase inclusion conditions) is separate from controlling when results are *visible* to students (via test-case visibility in the grading page). To achieve the desired outcome, both must be configured accordingly:
+
+1. **Immediate Full Feedback:** Set all build phases to `Always` and configure the corresponding test cases to always be visible. Tests execute on every commit, and all results are shown immediately after submission.
+2. **Build Status Only:** Remove all phases that expect tests. Students only see if their code compiled successfully based on the build's exit status. Test-case visibility is irrelevant since no tests are executed.
+3. **Tests After Due Date:** Keep the compilation phase as `Always` and set any phases expecting tests to `After due date`. Since the tests do not execute before the deadline, test-case visibility technically does not matter, but can be set to `After Due Date` for consistency. The tests will only execute after the deadline passes, and their output will become available at that point.
+4. **Partial Immediate Feedback:** Set specific test phases (e.g., static code analysis) to `Always`, and other test phases to `After due date`. For tests running immediately, set their visibility to `Always`. For tests running after the due date, visibility technically does not matter, but can be set to `After Due Date` for consistency. Students receive immediate feedback on some aspects and delayed feedback on others.
 
 **Default behavior:**
 - **Creating a course programming exercise**: Phases are set to always run. Test results are set to always be visible.
