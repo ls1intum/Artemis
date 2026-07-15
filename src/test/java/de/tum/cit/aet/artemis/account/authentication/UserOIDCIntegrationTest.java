@@ -3,10 +3,15 @@ package de.tum.cit.aet.artemis.account.authentication;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -31,6 +36,8 @@ import de.tum.cit.aet.artemis.account.security.OIDCAuthenticationFailureHandler;
 import de.tum.cit.aet.artemis.account.security.OIDCAuthenticationSuccessHandler;
 import de.tum.cit.aet.artemis.account.security.OIDCService;
 import de.tum.cit.aet.artemis.account.service.ArtemisSuccessfulLoginService;
+import de.tum.cit.aet.artemis.account.service.ldap.LdapUserDto;
+import de.tum.cit.aet.artemis.account.service.ldap.LdapUserService;
 import de.tum.cit.aet.artemis.account.service.user.PasswordService;
 import de.tum.cit.aet.artemis.account.service.user.UserCreationService;
 import de.tum.cit.aet.artemis.core.dto.vm.LoginVM;
@@ -67,9 +74,13 @@ class UserOIDCIntegrationTest extends AbstractSpringIntegrationLocalVCSamlTest {
 
     private OIDCAuthenticationFailureHandler failureHandler;
 
+    private LdapUserService ldapUserServiceMock;
+
     @BeforeEach
     void initManualMocks() {
-        oidcService = new OIDCService(userTestRepository, userCreationService);
+        ldapUserServiceMock = mock(LdapUserService.class);
+        oidcService = new OIDCService(userTestRepository, userCreationService, Optional.of(ldapUserServiceMock));
+
         ReflectionTestUtils.setField(oidcService, "usernameClaimKey", "preferred_username");
         ReflectionTestUtils.setField(oidcService, "matriculationClaimKey", "matriculation_number");
         ReflectionTestUtils.setField(oidcService, "firstNameClaimKey", "given_name");
@@ -95,6 +106,31 @@ class UserOIDCIntegrationTest extends AbstractSpringIntegrationLocalVCSamlTest {
 
         assertStudentExists();
         assertRegistrationNumber(STUDENT_REGISTRATION_NUMBER);
+    }
+
+    @Test
+    void testOidcRegistrationWithLdapFallback() {
+        assertStudentNotExists();
+
+        // 1. IdP provided no registration number
+        Map<String, Object> claimsWithoutMatriculation = createClaimsMap(null, "FirstName", "LastName");
+        claimsWithoutMatriculation.remove("matriculation_number");
+
+        // 2. User which will be returned from LdapService
+        LdapUserDto mockLdapUser = new LdapUserDto().login(STUDENT_NAME).registrationNumber(STUDENT_REGISTRATION_NUMBER).firstName("FirstName").lastName("LastName")
+                .email(STUDENT_NAME + "@artemis.local");
+
+        when(ldapUserServiceMock.loadUserDetailsFromLdap(STUDENT_NAME)).thenReturn(mockLdapUser);
+
+        // 3. Start authentication
+        oidcService.loadUser(createMockUserRequest(claimsWithoutMatriculation));
+
+        // 4. Verify that user is created and registration number is fetched from ldap
+        assertStudentExists();
+        assertRegistrationNumber(STUDENT_REGISTRATION_NUMBER);
+
+        // 5. Verify ldapUserService was used only 1 time
+        verify(ldapUserServiceMock, times(1)).loadUserDetailsFromLdap(STUDENT_NAME);
     }
 
     @Test

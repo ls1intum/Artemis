@@ -35,7 +35,8 @@ export class AuthServerProvider implements IAuthServerProvider {
     }
 
     loginOIDC(rememberMe: boolean): Observable<object> {
-        window.location.href = window.location.origin + `/oauth2/authorization/oidc?rememberMe=${rememberMe}`;
+        const isRememberMeEnabled = rememberMe === true ? 'true' : 'false';
+        window.location.href = window.location.origin + `/oauth2/authorization/oidc?rememberMe=${isRememberMeEnabled}`;
         return of({});
     }
 

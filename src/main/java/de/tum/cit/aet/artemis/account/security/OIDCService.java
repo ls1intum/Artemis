@@ -21,6 +21,8 @@ import org.springframework.stereotype.Service;
 import de.tum.cit.aet.artemis.account.config.OIDCEnabled;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
+import de.tum.cit.aet.artemis.account.service.ldap.LdapUserDto;
+import de.tum.cit.aet.artemis.account.service.ldap.LdapUserService;
 import de.tum.cit.aet.artemis.account.service.user.UserCreationService;
 import de.tum.cit.aet.artemis.core.dto.vm.ManagedUserVM;
 import de.tum.cit.aet.artemis.core.security.Role;
@@ -35,6 +37,9 @@ public class OIDCService extends OidcUserService {
     private final UserRepository userRepository;
 
     private final UserCreationService userCreationService;
+
+    // Optional since it's used only if LDAP profile is enbabled
+    private final Optional<LdapUserService> ldapUserService;
 
     @Value("${artemis.user-management.oidc.mappings.username:preferred_username}")
     private String usernameClaimKey;
@@ -51,9 +56,10 @@ public class OIDCService extends OidcUserService {
     @Value("${artemis.user-management.oidc.mappings.email:email}")
     private String emailClaimKey;
 
-    public OIDCService(UserRepository userRepository, UserCreationService userCreationService) {
+    public OIDCService(UserRepository userRepository, UserCreationService userCreationService, Optional<LdapUserService> ldapUserService) {
         this.userRepository = userRepository;
         this.userCreationService = userCreationService;
+        this.ldapUserService = ldapUserService;
     }
 
     /**
@@ -130,6 +136,18 @@ public class OIDCService extends OidcUserService {
         newUserDto.setLastName(oidcUser.getAttribute(lastNameClaimKey));
         newUserDto.setEmail(oidcUser.getAttribute(emailClaimKey));
         String matriculationNumber = oidcUser.getAttribute(matriculationClaimKey);
+        if ((matriculationNumber == null || matriculationNumber.isBlank()) && ldapUserService.isPresent()) {
+            try {
+                LdapUserDto ldapUserInfo = ldapUserService.get().loadUserDetailsFromLdap(username);
+
+                if (ldapUserInfo != null && ldapUserInfo.getRegistrationNumber() != null) {
+                    matriculationNumber = ldapUserInfo.getRegistrationNumber();
+                }
+            }
+            catch (Exception e) {
+                log.error("Failed to query LDAP fallback during OIDC login for user: {}", username, e);
+            }
+        }
         if (matriculationNumber != null && !matriculationNumber.isBlank()) {
             newUserDto.setVisibleRegistrationNumber(matriculationNumber);
         }
