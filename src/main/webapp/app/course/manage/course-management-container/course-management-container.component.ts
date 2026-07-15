@@ -44,6 +44,7 @@ import { AssessmentDashboardComponent } from 'app/assessment/shared/assessment-d
 import { CourseScoresComponent } from 'app/course/manage/course-scores/course-scores.component';
 import { FaqComponent } from 'app/communication/faq/faq.component';
 import { BuildOverviewComponent } from 'app/localci/build-queue/build-overview.component';
+import { PresentationAssessmentManagementComponent } from 'app/presentation/manage/presentation-assessment-management.component';
 import { CourseDetailComponent } from 'app/course/manage/detail/course-detail.component';
 import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
 import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
@@ -162,6 +163,7 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
         | CourseScoresComponent
         | FaqComponent
         | BuildOverviewComponent
+        | PresentationAssessmentManagementComponent
         | undefined
     >(undefined);
 
@@ -304,7 +306,8 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
             componentRef instanceof AssessmentDashboardComponent ||
             componentRef instanceof CourseScoresComponent ||
             componentRef instanceof FaqComponent ||
-            componentRef instanceof BuildOverviewComponent
+            componentRef instanceof BuildOverviewComponent ||
+            componentRef instanceof PresentationAssessmentManagementComponent
         ) {
             this.activatedComponentReference.set(componentRef);
         }
@@ -352,6 +355,9 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
         sidebarItems.push(this.sidebarItemService.getExercisesItem(courseId));
         if (this.lectureEnabled && isEditor) {
             sidebarItems.push(this.sidebarItemService.getLecturesItem(courseId));
+        }
+        if (isInstructor) {
+            sidebarItems.push(this.sidebarItemService.getPresentationAssessmentsItem(courseId));
         }
         sidebarItems.push(...this.addTutorialGroupsItem(currentCourse, isInstructor));
         sidebarItems.push(this.sidebarItemService.getExamsItem(courseId));

@@ -37,4 +37,21 @@
                           columnName="id"
                           columnDataType="bigint"/>
     </changeSet>
+
+    <changeSet id="20260706120000-3" author="artemis">
+        <addColumn tableName="presentation_assessment">
+            <column name="result_points" type="double"/>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="20260706120000-4" author="artemis">
+        <dropForeignKeyConstraint baseTableName="presentation_assessment"
+                                  constraintName="fk_presentation_assessment_course_id"/>
+        <addForeignKeyConstraint baseColumnNames="course_id"
+                                 baseTableName="presentation_assessment"
+                                 constraintName="fk_presentation_assessment_course_id"
+                                 referencedColumnNames="id"
+                                 referencedTableName="course"
+                                 onDelete="CASCADE"/>
+    </changeSet>
 </databaseChangeLog>

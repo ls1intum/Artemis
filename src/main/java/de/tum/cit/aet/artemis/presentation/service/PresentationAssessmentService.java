@@ -100,9 +100,13 @@ public class PresentationAssessmentService {
     }
 
     private void applyDto(PresentationAssessment presentationAssessment, PresentationAssessmentDTO dto) {
+        if (dto.resultPoints() != null && dto.resultPoints() > dto.maxPoints()) {
+            throw new BadRequestAlertException("The achieved result points cannot exceed the maximum points", PresentationAssessment.ENTITY_NAME, "resultPointsExceedMaxPoints");
+        }
         presentationAssessment.setTitle(dto.title().trim());
         presentationAssessment.setDescription(dto.description());
         presentationAssessment.setMaxPoints(dto.maxPoints());
+        presentationAssessment.setResultPoints(dto.resultPoints());
         presentationAssessment.setPresentationDate(dto.presentationDate());
     }
 }

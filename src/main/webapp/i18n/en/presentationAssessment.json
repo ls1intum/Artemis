@@ -1,0 +1,24 @@
+{
+    "artemisApp": {
+        "presentationAssessment": {
+            "home": {
+                "title": "Presentations",
+                "createLabel": "Create presentation",
+                "editLabel": "Edit presentation"
+            },
+            "created": "The presentation assessment was successfully created",
+            "updated": "The presentation assessment was successfully updated",
+            "deleted": "The presentation assessment {{ title }} was successfully deleted",
+            "title": "Title",
+            "description": "Description",
+            "maxPoints": "Max. points",
+            "resultPoints": "Result",
+            "presentationDate": "Presentation date",
+            "noExisting": "There are no presentation assessments for this course yet.",
+            "delete": {
+                "question": "Are you sure you want to permanently delete the presentation assessment <strong>{{ title }}</strong>? This action can NOT be undone!",
+                "typeNameToConfirm": "Please type in the title of the presentation assessment to confirm."
+            }
+        }
+    }
+}

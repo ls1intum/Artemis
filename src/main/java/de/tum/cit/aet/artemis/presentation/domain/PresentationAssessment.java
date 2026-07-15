@@ -33,6 +33,9 @@ public class PresentationAssessment extends DomainObject {
     @Column(name = "max_points", nullable = false)
     private double maxPoints;
 
+    @Column(name = "result_points")
+    private Double resultPoints;
+
     @Column(name = "presentation_date")
     private ZonedDateTime presentationDate;
 
@@ -62,6 +65,14 @@ public class PresentationAssessment extends DomainObject {
 
     public void setMaxPoints(double maxPoints) {
         this.maxPoints = maxPoints;
+    }
+
+    public Double getResultPoints() {
+        return resultPoints;
+    }
+
+    public void setResultPoints(Double resultPoints) {
+        this.resultPoints = resultPoints;
     }
 
     public ZonedDateTime getPresentationDate() {

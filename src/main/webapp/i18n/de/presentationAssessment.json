@@ -1,0 +1,24 @@
+{
+    "artemisApp": {
+        "presentationAssessment": {
+            "home": {
+                "title": "Präsentationen",
+                "createLabel": "Präsentation erstellen",
+                "editLabel": "Präsentation bearbeiten"
+            },
+            "created": "Die Präsentationsbewertung wurde erfolgreich erstellt",
+            "updated": "Die Präsentationsbewertung wurde erfolgreich aktualisiert",
+            "deleted": "Die Präsentationsbewertung {{ title }} wurde erfolgreich gelöscht",
+            "title": "Titel",
+            "description": "Beschreibung",
+            "maxPoints": "Max. Punkte",
+            "resultPoints": "Ergebnis",
+            "presentationDate": "Präsentationstermin",
+            "noExisting": "Für diesen Kurs gibt es noch keine Präsentationsbewertungen.",
+            "delete": {
+                "question": "Soll die Präsentationsbewertung <strong>{{ title }}</strong> wirklich dauerhaft gelöscht werden? Diese Aktion kann NICHT rückgängig gemacht werden!",
+                "typeNameToConfirm": "Bitte gib den Titel der Präsentationsbewertung zur Bestätigung ein."
+            }
+        }
+    }
+}

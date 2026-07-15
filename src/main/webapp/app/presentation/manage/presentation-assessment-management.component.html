@@ -1,0 +1,135 @@
+<div>
+    <div *titleBarActions class="d-flex justify-content-end">
+        <button id="create-presentation-assessment" type="button" class="btn btn-sm btn-primary" (click)="startCreate()">
+            <fa-icon [icon]="faPlus" />
+            <span jhiTranslate="artemisApp.presentationAssessment.home.createLabel"></span>
+        </button>
+    </div>
+
+    @if (showForm()) {
+        <form class="border rounded p-3 mb-4" [formGroup]="editForm" (ngSubmit)="save()" novalidate>
+            <h4 class="mb-3">
+                @if (editedAssessment()) {
+                    <span jhiTranslate="artemisApp.presentationAssessment.home.editLabel"></span>
+                } @else {
+                    <span jhiTranslate="artemisApp.presentationAssessment.home.createLabel"></span>
+                }
+            </h4>
+
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <label class="form-label" for="presentation-assessment-title" jhiTranslate="artemisApp.presentationAssessment.title"></label>
+                    <input id="presentation-assessment-title" class="form-control" type="text" formControlName="title" />
+                    @if (editForm.controls.title.invalid && editForm.controls.title.touched) {
+                        <div class="invalid-feedback d-block" jhiTranslate="entity.validation.required"></div>
+                    }
+                </div>
+
+                <div class="col-md-3">
+                    <label class="form-label" for="presentation-assessment-max-points" jhiTranslate="artemisApp.presentationAssessment.maxPoints"></label>
+                    <input id="presentation-assessment-max-points" class="form-control" type="number" min="0.01" step="0.5" formControlName="maxPoints" />
+                    @if (editForm.controls.maxPoints.invalid && editForm.controls.maxPoints.touched) {
+                        <div class="invalid-feedback d-block" jhiTranslate="entity.validation.min"></div>
+                    }
+                </div>
+
+                <div class="col-md-2">
+                    <label class="form-label" for="presentation-assessment-result-points" jhiTranslate="artemisApp.presentationAssessment.resultPoints"></label>
+                    <input id="presentation-assessment-result-points" class="form-control" type="number" min="0" step="0.5" formControlName="resultPoints" />
+                    @if (editForm.controls.resultPoints.invalid && editForm.controls.resultPoints.touched) {
+                        <div class="invalid-feedback d-block" jhiTranslate="entity.validation.min"></div>
+                    }
+                </div>
+
+                <div class="col-md-3">
+                    <jhi-date-time-picker
+                        class="presentation-date-picker"
+                        id="presentation-assessment-date"
+                        labelName="{{ 'artemisApp.presentationAssessment.presentationDate' | artemisTranslate }}"
+                        formControlName="presentationDate"
+                        name="presentationDate"
+                    />
+                </div>
+
+                <div class="col-12">
+                    <label class="form-label" for="presentation-assessment-description" jhiTranslate="artemisApp.presentationAssessment.description"></label>
+                    <textarea id="presentation-assessment-description" class="form-control" rows="3" formControlName="description"></textarea>
+                </div>
+            </div>
+
+            <div class="d-flex justify-content-end gap-2 mt-3">
+                <button type="button" class="btn btn-secondary" (click)="cancelEdit()">
+                    <fa-icon [icon]="faBan" />
+                    <span jhiTranslate="entity.action.cancel"></span>
+                </button>
+                <button type="submit" class="btn btn-primary" [disabled]="isSaving()">
+                    <fa-icon [icon]="faSave" />
+                    <span jhiTranslate="entity.action.save"></span>
+                </button>
+            </div>
+        </form>
+    }
+
+    @if (presentationAssessments().length) {
+        <div class="table-responsive">
+            <table class="table table-striped">
+                <thead>
+                    <tr jhiSort [(predicate)]="predicate" [(ascending)]="ascending" (sortChange)="sortRows()">
+                        <th jhiSortBy="title">
+                            <span jhiTranslate="artemisApp.presentationAssessment.title"></span>
+                            <fa-icon [icon]="faSort" />
+                        </th>
+                        <th jhiSortBy="maxPoints">
+                            <span jhiTranslate="artemisApp.presentationAssessment.maxPoints"></span>
+                            <fa-icon [icon]="faSort" />
+                        </th>
+                        <th jhiSortBy="resultPoints">
+                            <span jhiTranslate="artemisApp.presentationAssessment.resultPoints"></span>
+                            <fa-icon [icon]="faSort" />
+                        </th>
+                        <th jhiSortBy="presentationDate">
+                            <span jhiTranslate="artemisApp.presentationAssessment.presentationDate"></span>
+                            <fa-icon [icon]="faSort" />
+                        </th>
+                        <th>
+                            <span jhiTranslate="artemisApp.presentationAssessment.description"></span>
+                        </th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @for (presentationAssessment of presentationAssessments(); track presentationAssessment.id) {
+                        <tr id="presentation-assessment-{{ presentationAssessment.id }}">
+                            <td>{{ presentationAssessment.title }}</td>
+                            <td>{{ presentationAssessment.maxPoints }}</td>
+                            <td>{{ presentationAssessment.resultPoints ?? '-' }}</td>
+                            <td>{{ presentationAssessment.presentationDate | artemisDate }}</td>
+                            <td>{{ presentationAssessment.description }}</td>
+                            <td class="text-end">
+                                <div class="btn-group flex-btn-group-container">
+                                    <button type="button" class="btn btn-primary btn-sm me-1" (click)="startEdit(presentationAssessment)">
+                                        <fa-icon [icon]="faPencilAlt" />
+                                        <span class="d-none d-md-inline" jhiTranslate="entity.action.edit"></span>
+                                    </button>
+                                    <button
+                                        jhiDeleteButton
+                                        id="delete-presentation-assessment-{{ presentationAssessment.id }}"
+                                        [entityTitle]="presentationAssessment.title || ''"
+                                        deleteQuestion="artemisApp.presentationAssessment.delete.question"
+                                        deleteConfirmationText="artemisApp.presentationAssessment.delete.typeNameToConfirm"
+                                        (delete)="deletePresentationAssessment(presentationAssessment)"
+                                        [dialogError]="dialogError$"
+                                    >
+                                        <fa-icon [icon]="faTrash" />
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    } @else {
+        <div class="alert alert-secondary" role="alert" jhiTranslate="artemisApp.presentationAssessment.noExisting"></div>
+    }
+</div>
