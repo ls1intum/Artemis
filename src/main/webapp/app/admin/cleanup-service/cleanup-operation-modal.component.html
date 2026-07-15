@@ -9,6 +9,9 @@
     [style]="{ width: '50dvw' }"
     [header]="'cleanupService.operation.' + operation().name | artemisTranslate"
 >
+    @if (dialogError(); as error) {
+        <p-message severity="error" [text]="error" styleClass="mb-3 w-full" aria-live="assertive" data-testid="cleanup-error-message" />
+    }
     @if (operation().name === 'deleteOrphans') {
         <p
             [jhiTranslate]="'cleanupService.execute.questionWithoutDates'"

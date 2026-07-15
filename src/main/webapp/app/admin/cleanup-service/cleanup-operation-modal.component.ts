@@ -4,13 +4,14 @@ import { CleanupOperation } from 'app/admin/cleanup-service/cleanup-operation.mo
 import { CleanupCount, DataCleanupService } from 'app/admin/cleanup-service/data-cleanup.service';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 
-import { Observable, Subject, Subscription, finalize } from 'rxjs';
+import { Observable, Subscription, finalize } from 'rxjs';
 import { faCheckCircle, faTimes, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { DialogModule } from 'primeng/dialog';
 import { ButtonModule } from 'primeng/button';
+import { MessageModule } from 'primeng/message';
 
 /**
  * Modal component for executing and monitoring cleanup operations.
@@ -19,7 +20,7 @@ import { ButtonModule } from 'primeng/button';
 @Component({
     selector: 'jhi-cleanup-operation-modal',
     templateUrl: './cleanup-operation-modal.component.html',
-    imports: [TranslateDirective, ArtemisDatePipe, ArtemisTranslatePipe, FontAwesomeModule, DialogModule, ButtonModule],
+    imports: [TranslateDirective, ArtemisDatePipe, ArtemisTranslatePipe, FontAwesomeModule, DialogModule, ButtonModule, MessageModule],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class CleanupOperationModalComponent {
@@ -38,8 +39,8 @@ export class CleanupOperationModalComponent {
     /** Whether a cleanup operation is currently being executed. */
     readonly operationExecuting = signal(false);
 
-    private dialogErrorSource = new Subject<string>();
-    dialogError = this.dialogErrorSource.asObservable();
+    /** Error shown inside the dialog for the current operation. */
+    readonly dialogError = signal<string | undefined>(undefined);
 
     /** The in-flight count request, so it can be superseded/cancelled to avoid stale, out-of-order responses. */
     private countSubscription?: Subscription;
@@ -69,6 +70,7 @@ export class CleanupOperationModalComponent {
                     this.executionSubscription?.unsubscribe();
                     this.operationExecuting.set(false);
                     this.operationExecuted.set(false);
+                    this.dialogError.set(undefined);
                     this.counts.set({ totalCount: 0 });
                     this.updateCounts();
                 });
@@ -110,7 +112,7 @@ export class CleanupOperationModalComponent {
             },
             error: (error: unknown) => {
                 if (this.visible() && this.operation() === operation) {
-                    this.dialogErrorSource.next(error instanceof HttpErrorResponse ? error.message : 'An unexpected error occurred.');
+                    this.dialogError.set(error instanceof HttpErrorResponse ? error.message : 'An unexpected error occurred.');
                 }
             },
         };
@@ -178,7 +180,7 @@ export class CleanupOperationModalComponent {
                 this.counts.set(response.body!);
             },
             error: () => {
-                this.dialogErrorSource.next('An error occurred while fetching updated counts.');
+                this.dialogError.set('An error occurred while fetching updated counts.');
             },
         });
     }

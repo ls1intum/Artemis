@@ -169,17 +169,14 @@ describe('CleanupOperationModalComponent', () => {
             expect(component.counts()).toEqual(mockSubmissionVersionCounts);
         });
 
-        it('should emit error to dialogError when fetching counts fails', () => {
+        it('should set dialogError when fetching counts fails', () => {
             vi.spyOn(dataCleanupService, 'countOrphans').mockReturnValue(throwError(() => new Error('Network error')));
             componentRef.setInput('operation', deleteOrphansOperation);
-
-            let emittedError: string | undefined;
-            component.dialogError.subscribe((error) => (emittedError = error));
 
             component.visible.set(true);
             fixture.detectChanges();
 
-            expect(emittedError).toBe('An error occurred while fetching updated counts.');
+            expect(component.dialogError()).toBe('An error occurred while fetching updated counts.');
         });
     });
 
@@ -217,6 +214,23 @@ describe('CleanupOperationModalComponent', () => {
 
             expect(component.operationExecuted()).toBe(false);
             expect(component.counts()).toEqual({ totalCount: 0 });
+        });
+
+        it('should clear the previous error when reopened', () => {
+            vi.spyOn(dataCleanupService, 'countOrphans')
+                .mockReturnValueOnce(throwError(() => new Error('Network error')))
+                .mockReturnValue(of(new HttpResponse({ body: mockOrphanCounts })));
+            componentRef.setInput('operation', deleteOrphansOperation);
+            component.visible.set(true);
+            fixture.detectChanges();
+            expect(component.dialogError()).toBe('An error occurred while fetching updated counts.');
+
+            component.close();
+            fixture.detectChanges();
+            component.visible.set(true);
+            fixture.detectChanges();
+
+            expect(component.dialogError()).toBeUndefined();
         });
 
         it('should ignore a stale count response from a previously opened operation', () => {
@@ -349,19 +363,16 @@ describe('CleanupOperationModalComponent', () => {
             expect(dataCleanupService.countOrphans).toHaveBeenCalledTimes(2);
         });
 
-        it('should emit HttpErrorResponse message to dialogError on operation failure', () => {
+        it('should set the HttpErrorResponse message on dialogError when an operation fails', () => {
             const httpError = new HttpErrorResponse({ status: 500, statusText: 'Server Error', error: { message: 'Delete failed' } });
             vi.spyOn(dataCleanupService, 'deleteOrphans').mockReturnValue(throwError(() => httpError));
             componentRef.setInput('operation', deleteOrphansOperation);
             component.visible.set(true);
             fixture.detectChanges();
 
-            let emittedError: string | undefined;
-            component.dialogError.subscribe((error) => (emittedError = error));
-
             component.executeCleanupOperation();
 
-            expect(emittedError).toBe(httpError.message);
+            expect(component.dialogError()).toBe(httpError.message);
             expect(component.operationExecuted()).toBe(false);
         });
 
@@ -371,12 +382,9 @@ describe('CleanupOperationModalComponent', () => {
             component.visible.set(true);
             fixture.detectChanges();
 
-            let emittedError: string | undefined;
-            component.dialogError.subscribe((error) => (emittedError = error));
-
             component.executeCleanupOperation();
 
-            expect(emittedError).toBe('An unexpected error occurred.');
+            expect(component.dialogError()).toBe('An unexpected error occurred.');
         });
     });
 
