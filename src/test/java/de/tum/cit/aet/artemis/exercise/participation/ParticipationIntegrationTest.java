@@ -805,6 +805,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void requestFeedbackExerciseNotPossibleIfOnlyAutomaticFeedbacks() throws Exception {
+        setupAthenaForExercise(programmingExercise);
         programmingExercise.setAssessmentType(AssessmentType.AUTOMATIC);
         exerciseRepository.save(programmingExercise);
 
@@ -812,8 +813,8 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
                 userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
         participationRepo.save(participation);
 
-        request.putWithResponseBody("/api/exercise/exercises/" + programmingExercise.getId() + "/participations/" + participation.getId() + "/request-feedback", null,
-                ProgrammingExerciseStudentParticipation.class, HttpStatus.BAD_REQUEST);
+        request.putAndExpectError("/api/exercise/exercises/" + programmingExercise.getId() + "/participations/" + participation.getId() + "/request-feedback", null,
+                HttpStatus.BAD_REQUEST, "feedbackRequest.manualAssessmentRequired");
     }
 
     @Test
@@ -827,6 +828,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         course.setAthenaConfig(athenaConfig);
         this.courseRepository.save(course);
 
+        programmingExercise.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
         RepositoryExportTestUtil.createAndWireBaseRepositories(localVCLocalCITestService, programmingExercise);
         this.programmingExercise = exerciseRepository.save(programmingExercise);
 
@@ -896,6 +898,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         course.setAthenaConfig(athenaConfig);
         this.courseRepository.save(course);
 
+        programmingExercise.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
         RepositoryExportTestUtil.createAndWireBaseRepositories(localVCLocalCITestService, programmingExercise);
         this.programmingExercise = exerciseRepository.save(programmingExercise);
 
@@ -929,6 +932,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void requestProgrammingFeedbackWithSubmittedSubmissionWithoutResult() throws Exception {
         setupAthenaForExercise(programmingExercise);
+        programmingExercise.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
         RepositoryExportTestUtil.createAndWireBaseRepositories(localVCLocalCITestService, programmingExercise);
         programmingExercise = exerciseRepository.save(programmingExercise);
 
@@ -1061,6 +1065,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         teamCourse.setAthenaConfig(teamAthenaConfig);
         courseRepository.save(teamCourse);
 
+        teamExercise.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
         RepositoryExportTestUtil.createAndWireBaseRepositories(localVCLocalCITestService, teamExercise);
         teamExercise = exerciseRepository.save(teamExercise);
 
@@ -1193,6 +1198,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         course.setAthenaConfig(athenaConfig);
         this.courseRepository.save(course);
 
+        programmingExercise.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
         RepositoryExportTestUtil.createAndWireBaseRepositories(localVCLocalCITestService, programmingExercise);
         this.programmingExercise = exerciseRepository.save(programmingExercise);
         this.athenaRequestMockProvider.mockGetFeedbackSuggestionsWithFailure("programming");
@@ -1908,6 +1914,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         courseRepository.save(course);
 
         programmingExercise.setDueDate(ZonedDateTime.now().plusDays(100));
+        programmingExercise.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
         RepositoryExportTestUtil.createAndWireBaseRepositories(localVCLocalCITestService, programmingExercise);
         programmingExercise = exerciseRepository.save(programmingExercise);
 

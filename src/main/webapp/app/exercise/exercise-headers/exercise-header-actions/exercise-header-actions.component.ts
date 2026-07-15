@@ -208,9 +208,20 @@ export class ExerciseHeaderActionsComponent {
         const selection = this.userLLMSelection();
         return selection === LLMSelectionDecision.CLOUD_AI || selection === LLMSelectionDecision.LOCAL_AI;
     });
-    readonly showFeedbackPopover = computed(
-        () => !this.examMode() && this.hasUserAcceptedLLM() && this.athenaEnabled && (this.exercise().course?.athenaFormativeFeedbackEnabled ?? false),
-    );
+    readonly showFeedbackPopover = computed(() => {
+        const exercise = this.exercise();
+        if (exercise.type === ExerciseType.PROGRAMMING && exercise.assessmentType !== AssessmentType.SEMI_AUTOMATIC) {
+            // Athena feedback requests for programming exercises require manual assessment to be enabled
+            return false;
+        }
+        return (
+            !this.examMode() &&
+            this.hasUserAcceptedLLM() &&
+            this.athenaEnabled &&
+            (exercise.course?.athenaFormativeFeedbackEnabled ?? false) &&
+            (exercise.type === ExerciseType.PROGRAMMING || exercise.type === ExerciseType.TEXT || exercise.type === ExerciseType.MODELING)
+        );
+    });
 
     readonly beforeDueDate = computed(() => {
         const exercise = this.exercise();

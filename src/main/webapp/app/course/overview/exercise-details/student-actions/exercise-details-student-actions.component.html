@@ -130,7 +130,12 @@
                             [repositoryUri]="''"
                         />
                     }
-                    @if (exercise().course?.athenaFormativeFeedbackEnabled && gradedParticipation() && exercise().type === ExerciseType.PROGRAMMING) {
+                    @if (
+                        exercise().course?.athenaFormativeFeedbackEnabled &&
+                        gradedParticipation() &&
+                        exercise().type === ExerciseType.PROGRAMMING &&
+                        exercise().assessmentType === AssessmentType.SEMI_AUTOMATIC
+                    ) {
                         <jhi-request-feedback-button [exercise]="exercise()" [smallButtons]="smallButtons()" />
                     }
                     <!--                    </ng-container>-->

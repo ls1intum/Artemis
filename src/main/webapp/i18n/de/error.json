@@ -132,7 +132,8 @@
             "programmingExercisesDisabled_detail": "Die Funktion für Programmieraufgaben ist deaktiviert.",
             "athenaNotEnabled": "Feedback-Anfragen für Text- und Modellierungsaufgaben sind nicht verfügbar.",
             "athenaNotEnabled_detail": "Das Athena-Modul ist nicht aktiviert (artemis.athena.enabled=true setzen).",
-            "notEnabled": "KI-Feedback-Anfragen sind für diesen Kurs nicht aktiviert."
+            "notEnabled": "KI-Feedback-Anfragen sind für diesen Kurs nicht aktiviert.",
+            "manualAssessmentRequired": "Feedback-Anfragen für Programmieraufgaben erfordern eine aktivierte manuelle Bewertung."
         },
         "athenaGradingFeedbackNotEnabled": "Athena-Bewertungsfeedback ist für diesen Kurs nicht aktiviert.",
         "teamExercise": {

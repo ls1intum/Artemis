@@ -132,7 +132,8 @@
             "programmingExercisesDisabled_detail": "The programming exercises feature toggle is disabled.",
             "athenaNotEnabled": "Feedback requests for text and modeling exercises are unavailable.",
             "athenaNotEnabled_detail": "The Athena module feature is not enabled (set artemis.athena.enabled=true).",
-            "notEnabled": "AI feedback requests are not enabled for this course."
+            "notEnabled": "AI feedback requests are not enabled for this course.",
+            "manualAssessmentRequired": "Feedback requests for programming exercises require manual assessment to be enabled."
         },
         "athenaGradingFeedbackNotEnabled": "Athena grading feedback is not enabled for this course.",
         "teamExercise": {

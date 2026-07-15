@@ -304,6 +304,11 @@ public class ParticipationResource {
             throw new ServiceUnavailableAlertException("The feature for programming exercises is disabled", ENTITY_NAME, "feedbackRequest.programmingExercisesDisabled");
         }
 
+        if (exercise instanceof ProgrammingExercise && exercise.getAssessmentType() != AssessmentType.SEMI_AUTOMATIC) {
+            throw new BadRequestAlertException("Feedback requests for programming exercises require manual assessment to be enabled", ENTITY_NAME,
+                    "feedbackRequest.manualAssessmentRequired");
+        }
+
         if ((exercise instanceof TextExercise || exercise instanceof ModelingExercise) && !moduleFeatureService.isAthenaEnabled()) {
             throw new ServiceUnavailableAlertException("Feedback requests for text and modeling exercises require Athena to be enabled (artemis.athena.enabled=true)", ENTITY_NAME,
                     "feedbackRequest.athenaNotEnabled");
