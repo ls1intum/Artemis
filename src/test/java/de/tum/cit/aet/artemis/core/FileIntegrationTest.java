@@ -638,9 +638,9 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
             filePathServiceMock.when(() -> FilePathConverter.fileSystemPathForExternalUri(Mockito.any(URI.class), Mockito.eq(FilePathType.ATTACHMENT_UNIT))).thenReturn(tempFile);
 
             String expectedCacheControl = CacheControl.noCache().cachePrivate().getHeaderValue();
-            MvcResult initialResponse = mockMvc.perform(get(url)).andExpect(status().isOk()).andExpect(header().string("Cache-Control", expectedCacheControl))
-                    .andExpect(header().exists("Last-Modified")).andExpect(content().bytes(dummyContent)).andReturn();
-            String initialLastModified = initialResponse.getResponse().getHeader("Last-Modified");
+            MvcResult initialResponse = mockMvc.perform(get(url)).andExpect(status().isOk()).andExpect(header().string(HttpHeaders.CACHE_CONTROL, expectedCacheControl))
+                    .andExpect(header().exists(HttpHeaders.LAST_MODIFIED)).andExpect(content().bytes(dummyContent)).andReturn();
+            String initialLastModified = initialResponse.getResponse().getHeader(HttpHeaders.LAST_MODIFIED);
             Integer initialAttachmentVersion = attachmentVideoUnit.getAttachment().getVersion();
 
             // A hidden-slide update can replace the derived student PDF without changing the original attachment version. The no-cache policy forces revalidation and the changed
@@ -652,7 +652,7 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
             assertThat(attachmentVideoUnit.getAttachment().getVersion()).isEqualTo(initialAttachmentVersion);
             mockMvc.perform(get(url).header(HttpHeaders.IF_MODIFIED_SINCE, initialLastModified)).andExpect(status().isOk())
-                    .andExpect(header().string("Cache-Control", expectedCacheControl)).andExpect(content().bytes(updatedContent));
+                    .andExpect(header().string(HttpHeaders.CACHE_CONTROL, expectedCacheControl)).andExpect(content().bytes(updatedContent));
         }
     }
 
@@ -670,14 +670,14 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         try (MockedStatic<FilePathConverter> filePathServiceMock = Mockito.mockStatic(FilePathConverter.class)) {
             filePathServiceMock.when(() -> FilePathConverter.fileSystemPathForExternalUri(Mockito.any(URI.class), Mockito.eq(FilePathType.ATTACHMENT_UNIT))).thenReturn(tempFile);
 
-            MvcResult result = mockMvc.perform(get(url)).andExpect(status().isOk()).andExpect(header().exists("Last-Modified")).andReturn();
-            String lastModified = result.getResponse().getHeader("Last-Modified");
+            MvcResult result = mockMvc.perform(get(url)).andExpect(status().isOk()).andExpect(header().exists(HttpHeaders.LAST_MODIFIED)).andReturn();
+            String lastModified = result.getResponse().getHeader(HttpHeaders.LAST_MODIFIED);
             Mockito.clearInvocations(fileService);
 
             // A stale or explicitly revalidated cached response must not read the unchanged file again
             String expectedCacheControl = CacheControl.noCache().cachePrivate().getHeaderValue();
-            mockMvc.perform(get(url).header("If-Modified-Since", lastModified)).andExpect(status().isNotModified())
-                    .andExpect(header().string("Cache-Control", expectedCacheControl));
+            mockMvc.perform(get(url).header(HttpHeaders.IF_MODIFIED_SINCE, lastModified)).andExpect(status().isNotModified())
+                    .andExpect(header().string(HttpHeaders.CACHE_CONTROL, expectedCacheControl));
             Mockito.verify(fileService, Mockito.never()).getFileForPath(tempFile);
         }
     }
@@ -698,7 +698,8 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
                     .thenReturn(tempFile);
 
             String expectedCacheControl = CacheControl.maxAge(1, TimeUnit.DAYS).cachePrivate().getHeaderValue();
-            mockMvc.perform(get(url)).andExpect(status().isOk()).andExpect(header().string("Cache-Control", expectedCacheControl)).andExpect(header().exists("Last-Modified"));
+            mockMvc.perform(get(url)).andExpect(status().isOk()).andExpect(header().string(HttpHeaders.CACHE_CONTROL, expectedCacheControl))
+                    .andExpect(header().exists(HttpHeaders.LAST_MODIFIED));
         }
     }
 
@@ -716,12 +717,12 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         try (MockedStatic<FilePathConverter> filePathServiceMock = Mockito.mockStatic(FilePathConverter.class)) {
             filePathServiceMock.when(() -> FilePathConverter.fileSystemPathForExternalUri(Mockito.any(URI.class), Mockito.eq(FilePathType.ATTACHMENT_UNIT))).thenReturn(tempFile);
 
-            MvcResult fullResponse = mockMvc.perform(get(url)).andExpect(status().isOk()).andExpect(header().exists("Last-Modified")).andReturn();
-            String lastModified = fullResponse.getResponse().getHeader("Last-Modified");
+            MvcResult fullResponse = mockMvc.perform(get(url)).andExpect(status().isOk()).andExpect(header().exists(HttpHeaders.LAST_MODIFIED)).andReturn();
+            String lastModified = fullResponse.getResponse().getHeader(HttpHeaders.LAST_MODIFIED);
 
             String expectedCacheControl = CacheControl.noCache().cachePrivate().getHeaderValue();
             mockMvc.perform(get(url).header(HttpHeaders.RANGE, "bytes=2-5").header(HttpHeaders.IF_RANGE, lastModified)).andExpect(status().isPartialContent())
-                    .andExpect(header().string("Cache-Control", expectedCacheControl)).andExpect(header().string("Last-Modified", lastModified))
+                    .andExpect(header().string(HttpHeaders.CACHE_CONTROL, expectedCacheControl)).andExpect(header().string(HttpHeaders.LAST_MODIFIED, lastModified))
                     .andExpect(content().bytes("2345".getBytes()));
         }
     }
@@ -740,14 +741,14 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         try (MockedStatic<FilePathConverter> filePathServiceMock = Mockito.mockStatic(FilePathConverter.class)) {
             filePathServiceMock.when(() -> FilePathConverter.fileSystemPathForExternalUri(Mockito.any(URI.class), Mockito.eq(FilePathType.ATTACHMENT_UNIT))).thenReturn(tempFile);
 
-            MvcResult fullResponse = mockMvc.perform(get(url)).andExpect(status().isOk()).andExpect(header().exists("Last-Modified")).andReturn();
-            String lastModified = fullResponse.getResponse().getHeader("Last-Modified");
+            MvcResult fullResponse = mockMvc.perform(get(url)).andExpect(status().isOk()).andExpect(header().exists(HttpHeaders.LAST_MODIFIED)).andReturn();
+            String lastModified = fullResponse.getResponse().getHeader(HttpHeaders.LAST_MODIFIED);
             String staleIfRange = ZonedDateTime.parse(lastModified, DateTimeFormatter.RFC_1123_DATE_TIME).minusSeconds(1).format(DateTimeFormatter.RFC_1123_DATE_TIME);
 
             // A stale validator makes the server ignore Range and return the complete current representation
             String expectedCacheControl = CacheControl.noCache().cachePrivate().getHeaderValue();
             mockMvc.perform(get(url).header(HttpHeaders.RANGE, "bytes=2-5").header(HttpHeaders.IF_RANGE, staleIfRange)).andExpect(status().isOk())
-                    .andExpect(header().string("Cache-Control", expectedCacheControl)).andExpect(header().string("Last-Modified", lastModified))
+                    .andExpect(header().string(HttpHeaders.CACHE_CONTROL, expectedCacheControl)).andExpect(header().string(HttpHeaders.LAST_MODIFIED, lastModified))
                     .andExpect(header().doesNotExist(HttpHeaders.CONTENT_RANGE)).andExpect(content().bytes(dummyContent));
         }
     }
