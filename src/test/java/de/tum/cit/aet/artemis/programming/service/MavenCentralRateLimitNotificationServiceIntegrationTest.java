@@ -6,9 +6,9 @@ import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.after;
 import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 
 import java.net.URI;
@@ -82,7 +82,7 @@ class MavenCentralRateLimitNotificationServiceIntegrationTest extends AbstractPr
         mavenCentralRateLimitNotificationService.notifyInstructorsIfBuildWasRateLimited(exercise.getId(), exercise.getProgrammingLanguage(), rateLimitedBuildLogs());
 
         var recipientCaptor = ArgumentCaptor.forClass(MailRecipientDTO.class);
-        verify(mailSendingService, times(2)).buildAndSendAsync(recipientCaptor.capture(), eq(SUBJECT_KEY), eq(List.of(exercise.getTitle())), eq(TEMPLATE), anyMap());
+        verify(mailSendingService, timeout(2000).times(2)).buildAndSendAsync(recipientCaptor.capture(), eq(SUBJECT_KEY), eq(List.of(exercise.getTitle())), eq(TEMPLATE), anyMap());
         assertThat(recipientCaptor.getAllValues()).extracting(MailRecipientDTO::login).containsExactlyInAnyOrder(TEST_PREFIX + "instructor1", TEST_PREFIX + "instructor2");
     }
 
@@ -95,7 +95,8 @@ class MavenCentralRateLimitNotificationServiceIntegrationTest extends AbstractPr
 
         mavenCentralRateLimitNotificationService.notifyInstructorsIfBuildWasRateLimited(examExercise.getId(), examExercise.getProgrammingLanguage(), rateLimitedBuildLogs());
 
-        verify(mailSendingService, times(2)).buildAndSendAsync(any(MailRecipientDTO.class), eq(SUBJECT_KEY), eq(List.of(examExercise.getTitle())), eq(TEMPLATE), anyMap());
+        verify(mailSendingService, timeout(2000).times(2)).buildAndSendAsync(any(MailRecipientDTO.class), eq(SUBJECT_KEY), eq(List.of(examExercise.getTitle())), eq(TEMPLATE),
+                anyMap());
     }
 
     @Test
@@ -104,7 +105,7 @@ class MavenCentralRateLimitNotificationServiceIntegrationTest extends AbstractPr
 
         mavenCentralRateLimitNotificationService.notifyInstructorsIfBuildWasRateLimited(exercise.getId(), exercise.getProgrammingLanguage(), buildLogs);
 
-        verify(mailSendingService, never()).buildAndSendAsync(any(), anyString(), anyList(), eq(TEMPLATE), anyMap());
+        verify(mailSendingService, after(1000).never()).buildAndSendAsync(any(), anyString(), anyList(), eq(TEMPLATE), anyMap());
     }
 
     @Test
@@ -113,14 +114,14 @@ class MavenCentralRateLimitNotificationServiceIntegrationTest extends AbstractPr
 
         mavenCentralRateLimitNotificationService.notifyInstructorsIfBuildWasRateLimited(exercise.getId(), exercise.getProgrammingLanguage(), buildLogs);
 
-        verify(mailSendingService, never()).buildAndSendAsync(any(), anyString(), anyList(), eq(TEMPLATE), anyMap());
+        verify(mailSendingService, after(1000).never()).buildAndSendAsync(any(), anyString(), anyList(), eq(TEMPLATE), anyMap());
     }
 
     @Test
     void shouldNotNotifyForOtherProgrammingLanguages() {
         mavenCentralRateLimitNotificationService.notifyInstructorsIfBuildWasRateLimited(exercise.getId(), ProgrammingLanguage.PYTHON, rateLimitedBuildLogs());
 
-        verify(mailSendingService, never()).buildAndSendAsync(any(), anyString(), anyList(), eq(TEMPLATE), anyMap());
+        verify(mailSendingService, after(1000).never()).buildAndSendAsync(any(), anyString(), anyList(), eq(TEMPLATE), anyMap());
     }
 
     @Test
