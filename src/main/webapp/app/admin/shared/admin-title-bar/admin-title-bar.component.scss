@@ -1,10 +1,5 @@
 @import 'src/main/webapp/content/scss/artemis-mixins';
 
-// Must match or exceed the quiz participation bar's z-index (1030)
-#course-title-bar {
-    z-index: 1030;
-}
-
 /* The action controls are projected from page templates, so their styling requires piercing encapsulation. */
 :host ::ng-deep {
     @include title-bar-compact-controls;
