@@ -7,7 +7,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.util.List;
@@ -60,6 +59,7 @@ import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.service.ResourceLoaderService;
 import de.tum.cit.aet.artemis.core.service.file.FileDownloadService;
 import de.tum.cit.aet.artemis.core.service.file.FileUploadService;
+import de.tum.cit.aet.artemis.core.util.FileHttpRequestValidator;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.core.util.FileUtil;
 import de.tum.cit.aet.artemis.course.domain.Course;
@@ -745,8 +745,8 @@ public class FileResource {
      */
     private ResponseEntity<byte[]> buildAttachmentFileResponse(Path path, String filename, Optional<String> replaceFilename, boolean privateCache, HttpHeaders requestHeaders) {
         Path actualPath = path.resolve(filename);
-        long lastModified = getLastModified(actualPath);
-        if (lastModified >= 0 && isNotModified(requestHeaders, lastModified)) {
+        long lastModified = FileHttpRequestValidator.getLastModified(actualPath);
+        if (lastModified >= 0 && FileHttpRequestValidator.isNotModified(requestHeaders, lastModified)) {
             var response = ResponseEntity.status(HttpStatus.NOT_MODIFIED).lastModified(lastModified);
             if (privateCache) {
                 response = response.cacheControl(CacheControl.noCache().cachePrivate());
@@ -755,7 +755,7 @@ public class FileResource {
         }
 
         List<HttpRange> ranges = parseRequestedRangesOrThrowBadRequest(requestHeaders);
-        if (!ranges.isEmpty() && !ifRangeMatches(requestHeaders, lastModified)) {
+        if (!ranges.isEmpty() && !FileHttpRequestValidator.ifRangeMatches(requestHeaders, lastModified)) {
             ranges = List.of();
         }
 
@@ -772,45 +772,6 @@ public class FileResource {
             response = response.lastModified(lastModified);
         }
         return response.body(payload.content());
-    }
-
-    private long getLastModified(Path path) {
-        try {
-            return Files.getLastModifiedTime(path).toMillis();
-        }
-        catch (IOException e) {
-            log.warn("Could not determine last modified time for file {}, skipping conditional request handling", path, e);
-            return -1;
-        }
-    }
-
-    private boolean isNotModified(HttpHeaders requestHeaders, long lastModified) {
-        if (requestHeaders.getFirst(HttpHeaders.IF_NONE_MATCH) != null) {
-            return false;
-        }
-        try {
-            long ifModifiedSince = requestHeaders.getIfModifiedSince();
-            return ifModifiedSince >= 0 && lastModified / 1000 <= ifModifiedSince / 1000;
-        }
-        catch (IllegalArgumentException ignored) {
-            return false;
-        }
-    }
-
-    private boolean ifRangeMatches(HttpHeaders requestHeaders, long lastModified) {
-        if (requestHeaders.getFirst(HttpHeaders.IF_RANGE) == null) {
-            return true;
-        }
-        if (lastModified < 0) {
-            return false;
-        }
-        try {
-            long ifRange = requestHeaders.getFirstDate(HttpHeaders.IF_RANGE);
-            return ifRange >= 0 && lastModified / 1000 == ifRange / 1000;
-        }
-        catch (IllegalArgumentException ignored) {
-            return false;
-        }
     }
 
     /**

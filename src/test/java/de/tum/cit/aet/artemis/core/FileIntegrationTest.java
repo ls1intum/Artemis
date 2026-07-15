@@ -35,7 +35,6 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.springframework.test.web.client.ExpectedCount;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
@@ -48,7 +47,6 @@ import de.tum.cit.aet.artemis.communication.util.ConversationUtilService;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.connector.IrisRequestMockProvider;
 import de.tum.cit.aet.artemis.core.service.TempFileUtilService;
-import de.tum.cit.aet.artemis.core.service.file.FileDownloadService;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.exam.domain.ExamUser;
 import de.tum.cit.aet.artemis.exam.dto.ExamUserDTO;
@@ -102,9 +100,6 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     @Autowired
     private TempFileUtilService tempFileUtilService;
-
-    @MockitoSpyBean
-    private FileDownloadService fileDownloadService;
 
     @BeforeEach
     void initTestCase() {
@@ -658,12 +653,11 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
             MvcResult result = mockMvc.perform(get(url)).andExpect(status().isOk()).andExpect(header().exists("Last-Modified")).andReturn();
             String lastModified = result.getResponse().getHeader("Last-Modified");
-            Mockito.clearInvocations(fileDownloadService);
+            Mockito.clearInvocations(fileService);
 
             // The authorization check has already run, but the unchanged file must not be read again
             mockMvc.perform(get(url).header("If-Modified-Since", lastModified)).andExpect(status().isNotModified());
-            Mockito.verify(fileDownloadService, Mockito.never()).prepareAttachmentDownload(Mockito.eq(tempFile.getParent()), Mockito.eq(tempFile.getFileName().toString()),
-                    Mockito.any(), Mockito.anyList(), Mockito.anyInt());
+            Mockito.verify(fileService, Mockito.never()).getFileForPath(tempFile);
         }
     }
 
