@@ -8,8 +8,9 @@ on:
         required: true
         type: string
       commit_sha:
-        description: 'Commit SHA to deploy'
+        description: "Exact commit SHA to deploy. When set, this commit's image is verified and deployed; otherwise the branch/PR head is used."
         required: false
+        type: string
       environment_name:
         description: "Which environment to deploy (e.g. artemis-test7.artemis.cit.tum.de, etc.)."
         required: true
@@ -19,179 +20,158 @@ on:
         required: false
         type: string
 
+# Serialize deployments per environment. `cancel-in-progress: false` means a running deploy is
+# never interrupted; GitHub keeps at most ONE pending run per group, so rapid re-dispatches to the
+# same environment coalesce to the most recent request.
+concurrency:
+  group: ${{ github.event.inputs.environment_name }}
+  cancel-in-progress: false
 
-concurrency: ${{ github.event.inputs.environment_name }}
+# Default-deny; each job opts into the minimum scope it needs.
+permissions: {}
 
 env:
-  CI: true
-  # The single CI entry point that publishes the docker-tag artifact (via ci-build.yml).
-  # When ci.yml is renamed, update this constant.
-  CI_WORKFLOW_FILE_NAME: "ci.yml"
-  RAW_URL: https://raw.githubusercontent.com/${{ github.repository }}/${{ github.event.inputs.branch_name }}
+  IMAGE_NAME: ghcr.io/ls1intum/artemis
 
-# ------------------------------------------------------------------------------
-#  Deployment to a Test Server
-#
-#  Trigger             : workflow_dispatch                 (GitHub UI / API)
-#  Required parameters : branch_name, environment_name
-#
-#  High-level flow
-#  ────────────────
-#  1. Log the incoming parameters (log-inputs)
-#  2. Decide which build artifact to use (determine-build-context)
-#     • PR exists → reuse its successful build
-#     • branch == main OR branch == develop → reuse latest push build
-#     • anything else → build the branch on-the-fly
-#  3. Deploy the resolved Docker image to the requested environment
-# ------------------------------------------------------------------------------
+# The registry is the source of truth: resolve the commit to deploy, verify its immutable
+# `sha-<commit>` image exists in GHCR (or build it on the fly for a branch with no PR), then
+# deploy that exact tag.
 jobs:
-  # Log the inputs for debugging
-  log-inputs:
-    name: Log Inputs
-    runs-on: [self-hosted, artemis-test-deployment]
-    steps:
-      - name: Print Inputs
-        env:
-          BRANCH_NAME: ${{ github.event.inputs.branch_name }}
-          ENVIRONMENT_NAME: ${{ github.event.inputs.environment_name }}
-          TRIGGERED_BY: ${{ github.event.inputs.triggered_by }}
-        run: |
-          echo "Branch: $BRANCH_NAME"
-          echo "Environment: $ENVIRONMENT_NAME"
-          echo "Triggered by: $TRIGGERED_BY"
-          echo "RAW_URL: $RAW_URL"
-
   determine-build-context:
     name: Determine Build Context
     runs-on: [self-hosted, artemis-test-deployment]
-    needs: log-inputs
+    timeout-minutes: 5
+    permissions:
+      contents: read        # git refs lookup
+      pull-requests: read    # find the PR for the branch
     outputs:
-      pr_number: ${{ steps.get_pr.outputs.pr_number }}
-      head_sha: ${{ steps.get_pr.outputs.head_sha }}
-      tag: ${{ steps.get_pr.outputs.tag }}
-      is_main_or_develop: ${{ steps.get_pr.outputs.is_main_or_develop }}
+      pr_number: ${{ steps.resolve.outputs.pr_number }}
+      head_sha: ${{ steps.resolve.outputs.head_sha }}
+      tag: ${{ steps.resolve.outputs.tag }}
+      needs_build: ${{ steps.resolve.outputs.needs_build }}
     steps:
-      - name: Check if a PR exists for the branch
-        id: get_pr
+      - name: Resolve deploy target (commit / PR / branch)
+        id: resolve
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          OWNER: ${{ github.repository_owner }}
           BRANCH_NAME: ${{ github.event.inputs.branch_name }}
-          REPO_NAME: ${{ github.repository }}
+          REQUESTED_SHA: ${{ github.event.inputs.commit_sha }}
+          ENVIRONMENT_NAME: ${{ github.event.inputs.environment_name }}
+          TRIGGERED_BY: ${{ github.event.inputs.triggered_by }}
         run: |
-          IS_MAIN_OR_DEVELOP=false
+          set -Eeuo pipefail
+          echo "Branch=$BRANCH_NAME  Commit=${REQUESTED_SHA:-<head>}  Env=$ENVIRONMENT_NAME  By=${TRIGGERED_BY:-?}"
 
-          echo "Checking if PR exists for branch: $BRANCH_NAME targeting 'develop' in $REPO_NAME (excluding forks)."
+          # Security boundary: these inputs flow into API calls, the deploy tag, the concurrency
+          # group and the target environment; allow only the characters each legitimately contains.
+          if [[ ! "$BRANCH_NAME" =~ ^[A-Za-z0-9._/-]+$ ]]; then
+            echo "::error::Refusing suspicious branch name '$BRANCH_NAME'."
+            exit 1
+          fi
+          if [[ ! "$ENVIRONMENT_NAME" =~ ^[A-Za-z0-9.-]+$ ]]; then
+            echo "::error::Refusing suspicious environment name '$ENVIRONMENT_NAME'."
+            exit 1
+          fi
+          # A commit_sha, when given, must be the full 40-char SHA: the deploy tag is sha-<commit>
+          # and an abbreviated value would point at a tag that was never pushed.
+          if [ -n "$REQUESTED_SHA" ] && [[ ! "$REQUESTED_SHA" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "::error::commit_sha '$REQUESTED_SHA' is not a full 40-char commit SHA."
+            exit 1
+          fi
 
-          PR_DETAILS=$(gh api "repos/$REPO_NAME/pulls" \
-            --paginate \
-            --jq ".[] | select(.head.repo.full_name == \"$REPO_NAME\" and .head.ref == \"$BRANCH_NAME\" and .base.ref == \"develop\") | {number: .number, sha: .head.sha}")
+          # Exactly one internal PR for this branch -> develop, via a server-side filter instead of
+          # paginating every open PR. `-X GET` is required: `-f` params otherwise default to POST
+          # (which would attempt to *create* a PR); with GET they become URL-encoded query params.
+          prs=$(gh api -X GET "repos/$REPO/pulls" \
+            -f head="$OWNER:$BRANCH_NAME" -f base=develop -f state=open \
+            --jq '[.[] | {number, sha: .head.sha}]')
+          count=$(jq 'length' <<<"$prs")
+          if [ "$count" -gt 1 ]; then
+            echo "::error::$count open PRs from '$BRANCH_NAME' to develop; expected at most one."
+            exit 1
+          fi
 
-          PR_NUMBER=$(echo "$PR_DETAILS" | jq -r ".number")
-          PR_HEAD_SHA=$(echo "$PR_DETAILS" | jq -r ".sha")
-
-          if [ -n "$PR_NUMBER" ] && [ "$PR_NUMBER" != "null" ]; then
-            echo "Found PR: $PR_NUMBER from branch: $BRANCH_NAME targeting 'develop' with Head: $PR_HEAD_SHA."
-            echo "pr_number=$PR_NUMBER" >> $GITHUB_OUTPUT
-            echo "head_sha=$PR_HEAD_SHA" >> $GITHUB_OUTPUT
-            echo "tag=pr-$PR_NUMBER" >> $GITHUB_OUTPUT
+          needs_build=false
+          if [ "$count" -eq 1 ]; then
+            pr_number=$(jq -r '.[0].number' <<<"$prs")
+            head_sha=${REQUESTED_SHA:-$(jq -r '.[0].sha' <<<"$prs")}
           else
-            echo "No PR found for branch: $BRANCH_NAME targeting 'develop'."
-            echo "pr_number=" >> $GITHUB_OUTPUT
-
-            # Fetch the latest commit SHA of the branch
-            LATEST_SHA=$(gh api "repos/$REPO_NAME/git/refs/heads/$BRANCH_NAME" --jq '.object.sha')
-
-            if [ -z "$LATEST_SHA" ]; then
-              echo "::error::Could not find the latest commit SHA for branch $BRANCH_NAME."
-              exit 1
-            fi
-
-            echo "Latest SHA for branch $BRANCH_NAME is $LATEST_SHA."
-            echo "head_sha=$LATEST_SHA" >> $GITHUB_OUTPUT
-
-            if [[ "$BRANCH_NAME" == "develop" || "$BRANCH_NAME" == "main" ]]; then
-              IS_MAIN_OR_DEVELOP=true
-              echo "tag=$BRANCH_NAME" >> $GITHUB_OUTPUT
-            else
-              # Set tag as branch-SHA
-              echo "tag=branch-$LATEST_SHA" >> $GITHUB_OUTPUT
+            pr_number=""
+            branch_tip=$(gh api "repos/$REPO/git/refs/heads/$BRANCH_NAME" --jq '.object.sha')
+            head_sha=${REQUESTED_SHA:-$branch_tip}
+            if [ "$BRANCH_NAME" != "develop" ] && [ "$BRANCH_NAME" != "main" ]; then
+              needs_build=true  # branch without a PR: no CI image exists -> build it on the fly
             fi
           fi
-          echo "is_main_or_develop=$IS_MAIN_OR_DEVELOP" >> $GITHUB_OUTPUT
 
+          # head_sha becomes the deploy tag and, on the needs_build path, is deployed with no other
+          # check (verify is skipped there), so ensure the resolved value is a real commit SHA.
+          if [[ ! "$head_sha" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "::error::Could not resolve a full 40-char commit SHA for '$BRANCH_NAME'."
+            exit 1
+          fi
 
-  # Build the Docker image (branch without PR)
+          {
+            echo "pr_number=$pr_number"
+            echo "head_sha=$head_sha"
+            echo "tag=sha-$head_sha"
+            echo "needs_build=$needs_build"
+          } >> "$GITHUB_OUTPUT"
+          echo "Resolved commit $head_sha (pr='$pr_number', needs_build=$needs_build) -> deploy tag sha-$head_sha"
+
+  # Branch without a PR: build the image now, tagged with its immutable sha-<commit>.
   conditional-build:
-    if: ${{ needs.determine-build-context.outputs.pr_number == '' && needs.determine-build-context.outputs.is_main_or_develop == 'false' }}
+    name: Build Image On-The-Fly
+    if: ${{ needs.determine-build-context.outputs.needs_build == 'true' }}
     needs: determine-build-context
+    # The reusable workflow checks out and pushes the image to GHCR via GITHUB_TOKEN; a called
+    # workflow cannot elevate beyond its caller, so grant packages: write here (matches ci-build.yml).
+    permissions:
+      contents: read
+      packages: write
     uses: ls1intum/.github/.github/workflows/build-and-push-docker-image.yml@v1.2.0
     with:
-      ref: ${{ github.event.inputs.branch_name }}
+      ref: ${{ needs.determine-build-context.outputs.head_sha }}
       image-name: ls1intum/artemis
       docker-file: ./docker/artemis/Dockerfile
       tags: ${{ needs.determine-build-context.outputs.tag }}
 
-  # Gate on the IMAGE build, not the whole CI run: the deployable prerequisite is that the
-  # Docker image was pushed (proved by the `docker-tag` artifact), which lands at ~6-7 min —
-  # decoupled from the slow, advisory E2E suite. Mirrors prod-like-deployment's artifact check.
-  check-existing-build-for-pull-request:
-    name: Check Existing Build of Pull Request
-    if: ${{ needs.determine-build-context.outputs.pr_number != '' }}
+  # PR / develop / main: the exact commit's `sha-<commit>` image must already exist in the registry.
+  # Checking the registry (not a per-run artifact) is immune to run ordering and artifact expiry.
+  verify-image-build:
+    name: Verify Deployable Image
+    if: ${{ needs.determine-build-context.outputs.needs_build == 'false' }}
     needs: determine-build-context
     runs-on: [self-hosted, artemis-test-deployment]
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      packages: read
     steps:
-      - name: Verify the image build succeeded (docker-tag artifact present)
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          HEAD_SHA: ${{ needs.determine-build-context.outputs.head_sha }}
-          BRANCH: ${{ github.event.inputs.branch_name }}
-        run: |
-          set -Eeuo pipefail
-          RUN_ID=$(gh api "repos/${{ github.repository }}/actions/workflows/${{ env.CI_WORKFLOW_FILE_NAME }}/runs?event=pull_request&head_sha=$HEAD_SHA" --jq '.workflow_runs[0].id // empty')
-          if [ -z "$RUN_ID" ]; then
-            echo "::error::No CI run found for branch '$BRANCH' with SHA '$HEAD_SHA'."
-            exit 1
-          fi
-          COUNT=$(gh api "repos/${{ github.repository }}/actions/runs/$RUN_ID/artifacts?name=docker-tag" --jq '.total_count')
-          if [ "$COUNT" -gt 0 ]; then
-            echo "Image build succeeded (docker-tag artifact present) for SHA '$HEAD_SHA'."
-          else
-            echo "::error::No successful image build found for branch '$BRANCH' with SHA '$HEAD_SHA'."
-            exit 1
-          fi
-
-  # Same gate for develop/main pushes — image build (docker-tag artifact), not whole-run success.
-  check-existing-build-for-branch:
-    name: Check Existing Build of main or develop branch
-    if: ${{ needs.determine-build-context.outputs.is_main_or_develop == 'true' }}
-    needs: determine-build-context
-    runs-on: [self-hosted, artemis-test-deployment]
-    steps:
-      - name: Verify the image build succeeded (docker-tag artifact present)
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          HEAD_SHA: ${{ needs.determine-build-context.outputs.head_sha }}
-          BRANCH: ${{ github.event.inputs.branch_name }}
-        run: |
-          set -Eeuo pipefail
-          RUN_ID=$(gh api "repos/${{ github.repository }}/actions/workflows/${{ env.CI_WORKFLOW_FILE_NAME }}/runs?event=push&branch=$BRANCH&head_sha=$HEAD_SHA" --jq '.workflow_runs[0].id // empty')
-          if [ -z "$RUN_ID" ]; then
-            echo "::error::No CI run found for branch '$BRANCH' with SHA '$HEAD_SHA'."
-            exit 1
-          fi
-          COUNT=$(gh api "repos/${{ github.repository }}/actions/runs/$RUN_ID/artifacts?name=docker-tag" --jq '.total_count')
-          if [ "$COUNT" -gt 0 ]; then
-            echo "Image build succeeded (docker-tag artifact present) for branch '$BRANCH'."
-          else
-            echo "::error::No successful image build found for branch '$BRANCH'."
-            exit 1
-          fi
+      # Check out only the verify action, from the workflow's own ref (Helios dispatches this workflow
+      # from the branch being deployed). It is a build-correctness gate, not a trust boundary against
+      # the deployer, so it needs no pinned ref — and a pin to the default branch would break any
+      # branch that adds or edits the action.
+      - uses: actions/checkout@v6
+        with:
+          sparse-checkout: .github/actions/verify-image-build
+          sparse-checkout-cone-mode: false
+      - uses: ./.github/actions/verify-image-build
+        with:
+          image: ${{ env.IMAGE_NAME }}
+          sha: ${{ needs.determine-build-context.outputs.head_sha }}
+          token: ${{ secrets.GITHUB_TOKEN }}
 
   check-database-migration-approval:
     name: Check Database Migration Approval
-    runs-on: [self-hosted, artemis-test-deployment]
-    needs: [determine-build-context]
+    needs: determine-build-context
     if: ${{ needs.determine-build-context.outputs.pr_number != '' }}
+    runs-on: [self-hosted, artemis-test-deployment]
+    timeout-minutes: 10
+    permissions:
+      contents: read
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v6
@@ -201,6 +181,7 @@ jobs:
           python-version: "3.14"
       - name: Install Dependencies
         run: |
+          set -Eeuo pipefail
           python -m pip install --upgrade pip
           cd supporting_scripts/database_approval_check
           pip install -r requirements.txt
@@ -209,50 +190,64 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.DB_MIGRATON_APPROVAL_GITHUB_TOKEN }}
           GITHUB_PR: ${{ needs.determine-build-context.outputs.pr_number }}
         run: |
+          set -Eeuo pipefail
           cd supporting_scripts/database_approval_check
-          python main.py
-          if [ $? -ne 0 ]; then
-              echo "::error::Database migration approval check failed. Please ensure the latest database migration changes have been approved by a database maintainer."
-              exit 1
-          fi
+          python main.py || {
+            echo "::error::Database migration approval check failed. Ensure the latest database migration changes have been approved by a database maintainer."
+            exit 1
+          }
 
-  # Deploy to the test-server
   deploy:
-    needs: [ determine-build-context, conditional-build, check-existing-build-for-pull-request, check-existing-build-for-branch, check-database-migration-approval ]
-    # Run if either the conditional-build or check-existing-build job was successful
-    # Use always() since one of the jobs will always skip
-    if: always() && (needs.conditional-build.result == 'success' || needs.check-existing-build-for-pull-request.result == 'success' || needs.check-existing-build-for-branch.result == 'success') && (needs.check-database-migration-approval.result == 'success' || needs.check-database-migration-approval.result == 'skipped')
     name: Deploy to Test-Server
+    needs:
+      - determine-build-context
+      - conditional-build
+      - verify-image-build
+      - check-database-migration-approval
+    # Deploy once the image is ready (verified or just built) and the migration gate passed or did
+    # not apply. `!cancelled()` (not `always()`) so a Cancel truly stops a queued deploy.
+    #
+    # The migration check runs only when a PR exists (it needs a PR to check against), so accepting
+    # its "skipped" result also lets the PR-less conditional-build path deploy without it — an
+    # accepted risk (test servers are limited to accredited developers); a PR-less check is out of scope.
+    if: >-
+      !cancelled()
+      && (needs.conditional-build.result == 'success' || needs.verify-image-build.result == 'success')
+      && (needs.check-database-migration-approval.result == 'success' || needs.check-database-migration-approval.result == 'skipped')
     runs-on: [self-hosted, artemis-test-deployment]
+    timeout-minutes: 30
+    permissions:
+      contents: read
     environment:
       name: ${{ github.event.inputs.environment_name }}
       url: ${{ vars.DEPLOYMENT_URL }}
-
     env:
       GATEWAY_USER: "jump"
       GATEWAY_HOST: "gateway2.aet.cit.tum.de:2010"
       GATEWAY_HOST_PUBLIC_KEY: "[gateway2.aet.cit.tum.de]:2010 ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKtTLiKRILjKZ+Qg4ReWKsG7mLDXkzHfeY5nalSQUNQ4"
-
     steps:
-      # Download artemis-server-cli from GH without cloning the Repo
-      - name: Fetch Artemis CLI
-        run: |
-          wget "$RAW_URL/artemis-server-cli"
-          chmod +x artemis-server-cli
+      # Check out the deploy CLI from the workflow's own ref — a proper checkout, replacing the old
+      # wget of the script from a mutable URL. Helios dispatches this workflow from the branch being
+      # deployed, and test-server deploys are limited to accredited developers.
+      - name: Check out deploy CLI
+        uses: actions/checkout@v6
+        with:
+          sparse-checkout: artemis-server-cli
+          sparse-checkout-cone-mode: false
 
-      # Configure SSH Key
       - name: Setup SSH Keys and known_hosts
         env:
           SSH_AUTH_SOCK: /tmp/ssh_agent.sock
-          GATEWAY_SSH_KEY: "${{ secrets.DEPLOYMENT_GATEWAY_SSH_KEY }}"
-          DEPLOYMENT_SSH_KEY: "${{ secrets.DEPLOYMENT_SSH_KEY }}"
+          GATEWAY_SSH_KEY: ${{ secrets.DEPLOYMENT_GATEWAY_SSH_KEY }}
+          DEPLOYMENT_SSH_KEY: ${{ secrets.DEPLOYMENT_SSH_KEY }}
         run: |
+          set -Eeuo pipefail
           mkdir -p ~/.ssh
-          rm -f $SSH_AUTH_SOCK
-          ssh-agent -a $SSH_AUTH_SOCK > /dev/null
-          ssh-add - <<< $GATEWAY_SSH_KEY
-          ssh-add - <<< $DEPLOYMENT_SSH_KEY
-          cat - <<< $GATEWAY_HOST_PUBLIC_KEY >> ~/.ssh/known_hosts
+          rm -f "$SSH_AUTH_SOCK"
+          ssh-agent -a "$SSH_AUTH_SOCK" > /dev/null
+          ssh-add - <<< "$GATEWAY_SSH_KEY"
+          ssh-add - <<< "$DEPLOYMENT_SSH_KEY"
+          cat - <<< "$GATEWAY_HOST_PUBLIC_KEY" >> ~/.ssh/known_hosts
 
       - name: Deploy Artemis with Docker
         env:
@@ -263,9 +258,12 @@ jobs:
           BRANCH_NAME: ${{ github.event.inputs.branch_name }}
           DEPLOYMENT_FOLDER: ${{ vars.DEPLOYMENT_FOLDER }}
         run: |
-          ./artemis-server-cli docker-deploy "$DEPLOYMENT_USER@$DEPLOYMENT_HOSTS" -g "$GATEWAY_USER@$GATEWAY_HOST" -t $TAG -b $BRANCH_NAME -d $DEPLOYMENT_FOLDER -y
+          set -Eeuo pipefail
+          chmod +x artemis-server-cli
+          ./artemis-server-cli docker-deploy "$DEPLOYMENT_USER@$DEPLOYMENT_HOSTS" \
+            -g "$GATEWAY_USER@$GATEWAY_HOST" \
+            -t "$TAG" -b "$BRANCH_NAME" -d "$DEPLOYMENT_FOLDER" -y
 
       - name: Cleanup
         if: always()
-        run: |
-          rm -f /tmp/ssh_agent.sock
+        run: rm -f /tmp/ssh_agent.sock
