@@ -845,6 +845,8 @@ Received status code 429 from server: Too Many Requests
 
 Only **Java** and **Kotlin** exercises are affected, because their builds resolve dependencies via Maven Central. There is currently no central Artemis-side solution, so instructors must configure the mirror in each exercise's **test repository**.
 
+When Artemis detects a build that failed due to Maven Central rate limiting, it automatically notifies the instructors of the affected course by email (at most once per day per exercise), including a link to this section and to the online editor of the affected exercise.
+
 For Artemis instances operated by TUM, the Artemis team provides a [Reposilite](https://reposilite.com/) mirror at [https://reposilite.aet.cit.tum.de](https://reposilite.aet.cit.tum.de) that proxies and caches all required artifacts. Other institutions can operate their own mirror and configure it in the same way.
 
 #### Recommended: Add the Mirror to the Test Repository
