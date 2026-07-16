@@ -1,3 +1,7 @@
+info:
+    oidc:
+        buttonLabel: "${ARTEMIS_OIDC_DISPLAY_NAME:TUM Login}"
+
 artemis:
     user-management:
         oidc:
