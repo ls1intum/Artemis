@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
@@ -22,8 +21,6 @@ import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/ex
 import { ParticipationResultDTO } from 'app/course/shared/entities/course-for-dashboard-dto';
 
 describe('CourseExerciseGroupDetailComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<CourseExerciseGroupDetailComponent>;
     let storedResults: Map<number, ParticipationResultDTO>;
 

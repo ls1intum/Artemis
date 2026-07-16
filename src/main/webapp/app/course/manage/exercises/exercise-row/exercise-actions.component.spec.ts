@@ -1,6 +1,5 @@
 import { Component, input, output } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { RouterLink, provideRouter } from '@angular/router';
 import { NgTemplateOutlet } from '@angular/common';
 import { MockProvider } from 'ng-mocks';
@@ -36,8 +35,6 @@ class QuizLifecycleButtonsStubComponent {
 }
 
 describe('ExerciseActionsComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<ExerciseActionsComponent>;
     let component: ExerciseActionsComponent;
     let exerciseService: ExerciseService;

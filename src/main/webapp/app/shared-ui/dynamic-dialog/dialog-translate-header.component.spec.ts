@@ -1,13 +1,10 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TranslateService } from '@ngx-translate/core';
 import { DynamicDialogConfig } from 'primeng/dynamicdialog';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { DialogTranslateHeaderComponent } from 'app/shared-ui/dynamic-dialog/dialog-translate-header.component';
 
 describe('DialogTranslateHeaderComponent', () => {
-    setupTestBed({ zoneless: true });
-
     const createComponent = async (data: DynamicDialogConfig['data']): Promise<ComponentFixture<DialogTranslateHeaderComponent>> => {
         await TestBed.configureTestingModule({
             imports: [DialogTranslateHeaderComponent],

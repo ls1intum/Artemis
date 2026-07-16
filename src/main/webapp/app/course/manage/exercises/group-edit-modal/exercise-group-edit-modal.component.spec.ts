@@ -1,5 +1,4 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { MockProvider } from 'ng-mocks';
 import { TranslateService } from '@ngx-translate/core';
 import { FormsModule } from '@angular/forms';
@@ -20,8 +19,6 @@ import { CourseExerciseGroup } from 'app/exercise/shared/entities/exercise/cours
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 
 describe('ExerciseGroupEditModalComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<ExerciseGroupEditModalComponent>;
     let component: ExerciseGroupEditModalComponent;
     let dialogRef: DynamicDialogRef;

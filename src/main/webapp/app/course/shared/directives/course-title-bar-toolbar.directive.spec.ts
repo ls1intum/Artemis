@@ -1,6 +1,5 @@
 import { Component, TemplateRef } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { CourseTitleBarToolbarDirective } from 'app/course/shared/directives/course-title-bar-toolbar.directive';
 import { CourseTitleBarService } from 'app/course/shared/services/course-title-bar.service';
 
@@ -12,8 +11,6 @@ import { CourseTitleBarService } from 'app/course/shared/services/course-title-b
 class TestHostComponent {}
 
 describe('CourseTitleBarToolbarDirective', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<TestHostComponent>;
     let service: CourseTitleBarService;
 

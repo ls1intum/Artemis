@@ -1,5 +1,4 @@
 import { TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import dayjs from 'dayjs/esm';
 import { vi } from 'vitest';
 import { ExerciseGroupSyncService } from 'app/course/manage/exercises/exercise-group-sync.service';
@@ -11,8 +10,6 @@ import { ExerciseVariantGroupDTO } from 'app/course/manage/exercises/exercise-va
 import { MockProvider } from 'ng-mocks';
 
 describe('ExerciseGroupSyncService', () => {
-    setupTestBed({ zoneless: true });
-
     let service: ExerciseGroupSyncService;
     let quizExerciseService: QuizExerciseService;
 

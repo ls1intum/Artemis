@@ -1,6 +1,5 @@
 import { Component, input, output } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { provideRouter } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { CdkDragDrop } from '@angular/cdk/drag-drop';
@@ -26,7 +25,6 @@ class ExerciseActionsStubComponent {
 }
 
 describe('ExerciseTableComponent', () => {
-    setupTestBed({ zoneless: true });
     let component: ExerciseTableComponent;
     let fixture: ComponentFixture<ExerciseTableComponent>;
 
