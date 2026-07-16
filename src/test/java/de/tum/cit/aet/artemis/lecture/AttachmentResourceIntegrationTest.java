@@ -66,8 +66,12 @@ class AttachmentResourceIntegrationTest extends AbstractSpringIntegrationIndepen
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     @ValueSource(booleans = { true, false })
     void updateAttachment(boolean fileUpdate) throws Exception {
+        attachment.setStudentVersion("server-managed-student-version.pdf");
         attachment = attachmentRepository.save(attachment);
+        Integer storedVersion = attachment.getVersion();
         attachment.setName("new name");
+        attachment.setVersion(storedVersion == null ? 100 : storedVersion + 100);
+        attachment.setStudentVersion("client-controlled-student-version.pdf");
         var params = new LinkedMultiValueMap<String, String>();
         var notificationText = "notified!";
         params.add("notificationText", notificationText);
@@ -78,10 +82,54 @@ class AttachmentResourceIntegrationTest extends AbstractSpringIntegrationIndepen
         var expectedAttachment = attachmentRepository.findById(actualAttachment.getId()).orElseThrow();
 
         assertThat(actualAttachment.getName()).isEqualTo("new name");
+        assertThat(actualAttachment.getStudentVersion()).isEqualTo("server-managed-student-version.pdf");
+        if (fileUpdate) {
+            assertThat(actualAttachment.getVersion()).isEqualTo(storedVersion == null ? 1 : storedVersion + 1);
+        }
+        else {
+            assertThat(actualAttachment.getVersion()).isEqualTo(storedVersion);
+        }
         var ignoringFields = new String[] { "name", "fileService", "filePathService", "entityFileService", "prevLink", "lecture.lectureUnits", "lecture.posts", "lecture.course",
                 "lecture.attachments", "lecture.lectureTranscriptions" };
         assertThat(actualAttachment).usingRecursiveComparison().ignoringFields(ignoringFields).isEqualTo(expectedAttachment);
         verify(groupNotificationService).notifyStudentGroupAboutAttachmentChange(actualAttachment);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void updateAttachmentWithFileIncrementsPersistedVersionForStalePayload() throws Exception {
+        attachment.setVersion(5);
+        attachment = attachmentRepository.save(attachment);
+        attachment.setVersion(1);
+
+        MockMultipartFile firstFile = new MockMultipartFile("file", "first.txt", MediaType.TEXT_PLAIN_VALUE, "first content".getBytes());
+        Attachment firstUpdate = request.putWithMultipartFile("/api/lecture/attachments/" + attachment.getId(), attachment, "attachment", firstFile, Attachment.class,
+                HttpStatus.OK, null);
+
+        assertThat(firstUpdate.getVersion()).isEqualTo(6);
+
+        firstUpdate.setVersion(1);
+        MockMultipartFile secondFile = new MockMultipartFile("file", "second.txt", MediaType.TEXT_PLAIN_VALUE, "second content".getBytes());
+        Attachment secondUpdate = request.putWithMultipartFile("/api/lecture/attachments/" + attachment.getId(), firstUpdate, "attachment", secondFile, Attachment.class,
+                HttpStatus.OK, null);
+
+        assertThat(secondUpdate.getVersion()).isEqualTo(7);
+    }
+
+    @ParameterizedTest
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @ValueSource(booleans = { true, false })
+    void updateAttachmentWithFileRejectsMissingStoredReference(boolean missingLecture) throws Exception {
+        if (missingLecture) {
+            attachment.setLecture(null);
+        }
+        else {
+            attachment.setLink(null);
+        }
+        attachment = attachmentRepository.save(attachment);
+        MockMultipartFile file = new MockMultipartFile("file", "replacement.txt", MediaType.TEXT_PLAIN_VALUE, "replacement content".getBytes());
+
+        request.putWithMultipartFile("/api/lecture/attachments/" + attachment.getId(), attachment, "attachment", file, Attachment.class, HttpStatus.BAD_REQUEST, null);
     }
 
     @Test
