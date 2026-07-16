@@ -20,6 +20,7 @@ import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.Searchabl
 public record PyrisSearchableEntityDTO(@JsonProperty("sourceType") String sourceType, @JsonProperty("entityId") long entityId, @JsonProperty("course") CourseRefDTO course,
         @JsonProperty("title") String title, @JsonProperty("snippet") @Nullable String snippet, @JsonProperty("exerciseType") @Nullable String exerciseType) {
 
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public record CourseRefDTO(@JsonProperty("id") long id, @JsonProperty("name") String name) {
     }
 
