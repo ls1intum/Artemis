@@ -43,6 +43,16 @@ describe('TumUiPaginatorComponent', () => {
         expect(navButton('paginator-last').disabled).toBe(false);
     });
 
+    it('highlights the selected page with a single, non-transparent background', () => {
+        setInputs(130, 1); // 3 pages (0..2); index 1 is the current/selected page
+        const selected = fixture.debugElement.query(By.css('[data-testid="paginator-page"][aria-current="page"]')).nativeElement as HTMLElement;
+        // Only prefix-less `bg-*` utilities count as the resolved background (hover:/dark: variants do not apply at rest).
+        const backgroundUtilities = Array.from(selected.classList).filter((token) => token.startsWith('bg-'));
+        // Exactly one background, and not bg-transparent: Artemis imports Bootstrap's `.bg-transparent { ...!important }`,
+        // which would otherwise override the primary tint and drop the highlight.
+        expect(backgroundUtilities).toEqual(['bg-primary/15']);
+    });
+
     it('disables next/last on the last page', () => {
         setInputs(130, 2); // ceil(130/50)=3 pages -> last index 2
         expect(navButton('paginator-next').disabled).toBe(true);

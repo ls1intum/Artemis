@@ -7,6 +7,9 @@
             @if (shouldDisplayTimeZoneWarning()) {
                 <fa-stack
                     class="icon-full-size"
+                    tabindex="0"
+                    role="img"
+                    [attr.aria-label]="'entity.timeZoneWarning' | artemisTranslate: { timeZone: currentTimeZone }"
                     [tumUiTooltip]="'entity.timeZoneWarning' | artemisTranslate: { timeZone: currentTimeZone }"
                     data-testid="tum-ui-date-picker-tz-warning"
                 >

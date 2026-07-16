@@ -173,6 +173,16 @@ describe('TumUiDatePickerComponent', () => {
         expect(fixture.debugElement.query(By.css('[data-testid="tum-ui-date-picker-tz-warning"]'))).toBeNull();
     });
 
+    it('exposes the timezone warning to keyboard and screen-reader users', () => {
+        const warning = fixture.debugElement.query(By.css('[data-testid="tum-ui-date-picker-tz-warning"]')).nativeElement as HTMLElement;
+        // Focusable, so keyboard users can reach it and the tooltip directive's focusin handler shows the warning
+        // (a non-focusable host would never receive focus, hiding the warning and its aria-describedby from them).
+        expect(warning.getAttribute('tabindex')).toBe('0');
+        // Roled and named, so screen readers announce it rather than skipping a decorative icon stack.
+        expect(warning.getAttribute('role')).toBe('img');
+        expect(warning.getAttribute('aria-label')).toBeTruthy();
+    });
+
     describe('two-way [(value)] binding', () => {
         function hostInput(host: ComponentFixture<TwoWayHostComponent>): HTMLInputElement {
             return host.debugElement.query(By.css('[data-testid="tum-ui-date-picker-input"]')).nativeElement;
