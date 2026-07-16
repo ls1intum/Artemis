@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -108,23 +109,29 @@ class IrisLectureSearchIntegrationTest extends AbstractIrisIntegrationTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void ask_shouldReturnAccepted() throws Exception {
-        irisRequestMockProvider.mockGlobalSearchIrisAnswer(dto -> {
-            // no assertions needed here; just confirm the mock is consumed
-        });
+        var pyrisCalled = new AtomicBoolean(false);
+        irisRequestMockProvider.mockGlobalSearchIrisAnswer(dto -> pyrisCalled.set(true));
 
         var requestDTO = new PyrisSearchAskRequestDTO("What is backpropagation?", 5, UUID.randomUUID());
         request.postWithoutResponseBody("/api/iris/search-answer", requestDTO, HttpStatus.ACCEPTED);
+
+        // Wait for the background thread to call the Pyris mock so its request does not leak into the next test.
+        await().atMost(5, TimeUnit.SECONDS).until(pyrisCalled::get);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void ask_thinkingWebhook_shouldForwardThinkingToWebSocket() throws Exception {
-        irisRequestMockProvider.mockGlobalSearchIrisAnswer(dto -> {
-        });
+        var pyrisCalled = new AtomicBoolean(false);
+        irisRequestMockProvider.mockGlobalSearchIrisAnswer(dto -> pyrisCalled.set(true));
 
         var runId = UUID.randomUUID();
         var requestDTO = new PyrisSearchAskRequestDTO("What is backpropagation?", 5, runId);
         request.postWithoutResponseBody("/api/iris/search-answer", requestDTO, HttpStatus.ACCEPTED);
+
+        // Wait for the background thread to call the Pyris mock before simulating its status callback,
+        // so the mock request does not leak into the next test.
+        await().atMost(5, TimeUnit.SECONDS).until(pyrisCalled::get);
 
         sendLectureSearchStatus(runId.toString(), new PyrisGlobalSearchAnswerStatusUpdateDTO(PyrisRunState.RUNNING, null, null, null));
 
@@ -135,12 +142,16 @@ class IrisLectureSearchIntegrationTest extends AbstractIrisIntegrationTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void ask_resultWebhookWithAnswer_shouldForwardAnswerToWebSocket() throws Exception {
-        irisRequestMockProvider.mockGlobalSearchIrisAnswer(dto -> {
-        });
+        var pyrisCalled = new AtomicBoolean(false);
+        irisRequestMockProvider.mockGlobalSearchIrisAnswer(dto -> pyrisCalled.set(true));
 
         var runId = UUID.randomUUID();
         var requestDTO = new PyrisSearchAskRequestDTO("What is backpropagation?", 5, runId);
         request.postWithoutResponseBody("/api/iris/search-answer", requestDTO, HttpStatus.ACCEPTED);
+
+        // Wait for the background thread to call the Pyris mock before simulating its status callback,
+        // so the mock request does not leak into the next test.
+        await().atMost(5, TimeUnit.SECONDS).until(pyrisCalled::get);
 
         var source = new PyrisGlobalSearchSourceDTO("lecture_unit_slide", 3L, new PyrisLectureSearchResultDTO.CourseDTO(1L, "ML"), "Neural Nets", "backprop snippet", null, null,
                 null);
@@ -154,12 +165,16 @@ class IrisLectureSearchIntegrationTest extends AbstractIrisIntegrationTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void ask_resultWebhookWithNullAnswer_shouldSendCompletionWithNoAnswer() throws Exception {
-        irisRequestMockProvider.mockGlobalSearchIrisAnswer(dto -> {
-        });
+        var pyrisCalled = new AtomicBoolean(false);
+        irisRequestMockProvider.mockGlobalSearchIrisAnswer(dto -> pyrisCalled.set(true));
 
         var runId = UUID.randomUUID();
         var requestDTO = new PyrisSearchAskRequestDTO("Go to course overview", 5, runId);
         request.postWithoutResponseBody("/api/iris/search-answer", requestDTO, HttpStatus.ACCEPTED);
+
+        // Wait for the background thread to call the Pyris mock before simulating its status callback,
+        // so the mock request does not leak into the next test.
+        await().atMost(5, TimeUnit.SECONDS).until(pyrisCalled::get);
 
         sendLectureSearchStatus(runId.toString(), new PyrisGlobalSearchAnswerStatusUpdateDTO(PyrisRunState.FINISHED, null, null, null));
 
@@ -170,13 +185,17 @@ class IrisLectureSearchIntegrationTest extends AbstractIrisIntegrationTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void ask_whenPyrisFails_shouldStillReturnAccepted() throws Exception {
-        irisRequestMockProvider.mockGlobalSearchIrisAnswerError(HttpStatus.INTERNAL_SERVER_ERROR);
+        var pyrisCalled = new AtomicBoolean(false);
+        irisRequestMockProvider.mockGlobalSearchIrisAnswerError(HttpStatus.INTERNAL_SERVER_ERROR, () -> pyrisCalled.set(true));
 
         var requestDTO = new PyrisSearchAskRequestDTO("machine learning", 5, UUID.randomUUID());
         // The search-answer endpoint dispatches asynchronously — it always returns 202 ACCEPTED
         // immediately. Pyris failures are handled in the background thread and do not propagate
         // back to the HTTP response.
         request.postWithoutResponseBody("/api/iris/search-answer", requestDTO, HttpStatus.ACCEPTED);
+
+        // Wait for the background thread to call the Pyris mock so its request does not leak into the next test.
+        await().atMost(5, TimeUnit.SECONDS).until(pyrisCalled::get);
     }
 
     @Test

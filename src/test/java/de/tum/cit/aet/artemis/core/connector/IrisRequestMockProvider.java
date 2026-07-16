@@ -401,6 +401,17 @@ public class IrisRequestMockProvider {
         mockServer.expect(ExpectedCount.once(), requestTo(globalSearchAnswerApiURL.toString())).andExpect(method(HttpMethod.POST)).andRespond(withRawStatus(status.value()));
     }
 
+    /**
+     * Like {@link #mockGlobalSearchIrisAnswerError(HttpStatus)}, but runs {@code onRequest} when the
+     * asynchronous Pyris call arrives so tests can await it and avoid leaking the request into the next test.
+     */
+    public void mockGlobalSearchIrisAnswerError(HttpStatus status, Runnable onRequest) {
+        mockServer.expect(ExpectedCount.once(), requestTo(globalSearchAnswerApiURL.toString())).andExpect(method(HttpMethod.POST)).andRespond(request -> {
+            onRequest.run();
+            return MockRestResponseCreators.withRawStatus(status.value()).createResponse(request);
+        });
+    }
+
     // -------------------- Memiris endpoints --------------------
 
     public void mockListMemories(long userId, Object responseBody) {
