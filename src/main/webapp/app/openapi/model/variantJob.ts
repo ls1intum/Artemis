@@ -7,19 +7,17 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
-
-
 import { VariantGenerationRequest } from './variantGenerationRequest';
 
 
-export interface VariantJob {
+export interface VariantJob { 
     jobId?: string;
     sourceExerciseId?: number;
     courseId?: number;
     sourceExerciseTitle?: string;
     exerciseType?: VariantJob.ExerciseTypeEnum;
     phase?: VariantJob.PhaseEnum;
-    failedInPhase?: VariantJob.PhaseEnum;
+    failedInPhase?: VariantJob.FailedInPhaseEnum;
     failureDetail?: string;
     instructorSummary?: string;
     attempt?: number;
@@ -55,6 +53,20 @@ export namespace VariantJob {
         Cancelled: 'CANCELLED'
     } as const;
     export type PhaseEnum = typeof PhaseEnum[keyof typeof PhaseEnum];
+    export const FailedInPhaseEnum = {
+        Analyzing: 'ANALYZING',
+        Planning: 'PLANNING',
+        Provisioning: 'PROVISIONING',
+        Transforming: 'TRANSFORMING',
+        Verifying: 'VERIFYING',
+        Repairing: 'REPAIRING',
+        Finalizing: 'FINALIZING',
+        Completed: 'COMPLETED',
+        DraftWithWarnings: 'DRAFT_WITH_WARNINGS',
+        Failed: 'FAILED',
+        Cancelled: 'CANCELLED'
+    } as const;
+    export type FailedInPhaseEnum = typeof FailedInPhaseEnum[keyof typeof FailedInPhaseEnum];
 }
 
 

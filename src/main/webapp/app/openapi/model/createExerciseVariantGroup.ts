@@ -9,7 +9,7 @@
  */
 
 
-export interface CreateExerciseVariantGroup {
+export interface CreateExerciseVariantGroup { 
     title: string;
     maxPoints?: number;
     releaseDate?: string;

@@ -12,7 +12,7 @@ import { StepOutput } from './stepOutput';
 import { VariantGenerationRequest } from './variantGenerationRequest';
 
 
-export interface VariantJobDetail {
+export interface VariantJobDetail { 
     job?: VariantJob;
     stepOutputs?: { [key: string]: StepOutput; };
     request?: VariantGenerationRequest;

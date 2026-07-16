@@ -10,7 +10,7 @@
 import { CreateExerciseVariantGroup } from './createExerciseVariantGroup';
 
 
-export interface VariantPlacement {
+export interface VariantPlacement { 
     type?: VariantPlacement.TypeEnum;
     existingGroupId?: number | null;
     newGroup?: CreateExerciseVariantGroup;
