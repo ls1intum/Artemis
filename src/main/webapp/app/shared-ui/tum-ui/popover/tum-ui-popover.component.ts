@@ -29,14 +29,16 @@ export class TumUiPopoverComponent implements OnDestroy {
 
     private readonly panel = viewChild.required('panel', { read: TemplateRef });
     private overlayRef?: OverlayRef;
-    readonly isOpen = signal(false);
+    private readonly openState = signal(false);
+    /** Whether the popover is currently open. Read-only: drive it through open() / close() / toggle(). */
+    readonly isOpen = this.openState.asReadonly();
 
     /** Open the popover anchored to `origin`. No-op if already open. */
     open(origin: ElementRef<HTMLElement> | HTMLElement): void {
         if (this.isOpen()) {
             return;
         }
-        this.overlayRef = this.overlayService.createConnectedOverlay(origin, this.placement(), true);
+        this.overlayRef = this.overlayService.createConnectedOverlay(origin, this.placement(), { hasBackdrop: true });
         this.overlayRef.attach(new TemplatePortal(this.panel(), this.viewContainerRef));
         this.overlayRef.backdropClick().subscribe(() => this.close());
         this.overlayRef.keydownEvents().subscribe((event) => {
@@ -44,7 +46,7 @@ export class TumUiPopoverComponent implements OnDestroy {
                 this.close();
             }
         });
-        this.isOpen.set(true);
+        this.openState.set(true);
         this.openChange.emit(true);
     }
 
@@ -55,7 +57,7 @@ export class TumUiPopoverComponent implements OnDestroy {
         }
         this.overlayRef?.dispose();
         this.overlayRef = undefined;
-        this.isOpen.set(false);
+        this.openState.set(false);
         this.openChange.emit(false);
     }
 
