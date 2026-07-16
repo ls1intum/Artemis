@@ -18,7 +18,7 @@ import reactor.core.publisher.Flux;
  * assistant {@code content}. If such a token were replayed verbatim in the next request, the server's harmony chat template would re-parse it as structure — most visibly an
  * {@code "Unknown role: assistant<|channel|>commentary"} HTTP 400 that aborts a long, otherwise-healthy run. Removing the tokens keeps the conversation replayable.
  * <p>
- * It delegates {@link #getDefaultOptions()} so the loop can still read the configured model id.
+ * It delegates {@link #getOptions()} so the loop can still read the configured model id and request defaults.
  */
 public class HarmonyScrubbingChatModel implements ChatModel {
 
@@ -42,8 +42,8 @@ public class HarmonyScrubbingChatModel implements ChatModel {
     }
 
     @Override
-    public ChatOptions getDefaultOptions() {
-        return delegate.getDefaultOptions();
+    public ChatOptions getOptions() {
+        return delegate.getOptions();
     }
 
     /**

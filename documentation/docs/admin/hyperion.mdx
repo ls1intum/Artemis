@@ -61,6 +61,12 @@ spring:
 
 Hyperion's agent loop applies its own bounded retry handling for transient model-call failures. `spring.ai.retry.*` is not used for OpenAI chat calls in this setup.
 
+Set `artemis.hyperion.agent.context-window-tokens` to the provider's usable context window (the default is 128,000). Hyperion uses
+`max_completion_tokens` by default and leaves enough room for reasoning-model output: 16,384 tokens for agent turns and up to 32,768 for semantic review. If an older
+OpenAI-compatible endpoint only accepts `max_tokens`, configure `spring.ai.openai.chat.options.max-tokens` explicitly. Otherwise, use
+`spring.ai.openai.chat.options.max-completion-tokens` only when the provider requires a lower output ceiling. Do not configure both fields. Hyperion clamps agent and reviewer
+requests to the configured provider ceiling and remaining context; low ceilings can make the fail-closed review return `NEEDS_REVIEW`.
+
 ### Azure OpenAI / Microsoft Foundry
 
 ```yaml
@@ -236,6 +242,7 @@ Agentic generation can run for several minutes and consume many model tokens. Co
 | --------------------------------------------------------------- | --------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `artemis.hyperion.generation.max-concurrent-jobs-per-core-node` | `2`       | Conservative node-local admission fallback, not a production sizing recommendation. Starts beyond this cap fail fast instead of waiting in memory. Jobs do not spill from a saturated core node to an idle one; the cluster upper bound is the sum of the node-local caps. |
 | `artemis.hyperion.agent.max-job-duration`                       | `PT30M`   | Admission-to-cancellation deadline. Cancellation is cooperative: provider, sandbox, verification, and repository operations must also have bounded timeouts.                                                                                                               |
+| `artemis.hyperion.agent.context-window-tokens`                  | `128000`  | Usable provider context window. Hyperion keeps prompt and completion headroom within this limit; set it to the deployed model/proxy's real limit.                                                                                                                            |
 | `artemis.hyperion.agent.max-turns`                              | `40`      | Per-attempt model-turn cap. The orchestrator can still retry verification-guided near misses (currently up to four attempts per job), but one runaway attempt is bounded.                                                                                                  |
 | `artemis.hyperion.agent.max-tokens-per-job`                     | `3000000` | Per-job post-response cost guard, not guaranteed headroom. The job is cancelled before the next agent turn once reached. Tune it with provider limits and the admission reservation.                                                                                       |
 | `artemis.hyperion.agent.token-budget-window`                    | `PT24H`   | Rolling window for admission budgets.                                                                                                                                                                                                                                      |

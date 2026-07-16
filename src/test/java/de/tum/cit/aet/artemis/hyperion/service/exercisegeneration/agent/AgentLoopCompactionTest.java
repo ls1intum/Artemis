@@ -5,12 +5,15 @@ import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.assertj.core.api.Assertions.assertThatNoException;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.messages.Message;
 import org.springframework.ai.chat.messages.SystemMessage;
@@ -20,6 +23,7 @@ import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.model.Generation;
 import org.springframework.ai.chat.prompt.Prompt;
+import org.springframework.ai.openai.OpenAiChatOptions;
 
 /**
  * Deterministic test for the agent loop's context-window management (no LLM, no Docker): token estimation, per-tool-result capping, the turn-start cut, the tool-pairing
@@ -119,11 +123,11 @@ class AgentLoopCompactionTest {
 
     @Test
     void findCutIndex_pushesForwardUntilTheKeptTailFitsTheBudget() {
-        // A deliberately tiny window (20k tokens => ~3.6k budget after the 16k reserve) forces most turns into the summary so the kept tail fits.
-        AgentLoopRunner runner = newTestRunner(List.of(mock(ChatModel.class)), 20_000);
+        // A deliberately tiny window (24k tokens => ~3.5k budget after the response reserve) forces most turns into the summary so the kept tail fits.
+        AgentLoopRunner runner = newTestRunner(List.of(mock(ChatModel.class)), 24_000);
         List<Message> conversation = conversationWithTurns(20, 9_000);
         int cut = runner.findCutIndex(conversation, 2);
-        long budget = 20_000L - 16_384L;
+        long budget = 24_000L - 20_480L;
         // The kept tail (everything from the cut to the end) must fit under the budget — keepRecent is a target, the real floor is "the tail must fit".
         long tailTokens = 0;
         for (int i = cut; i < conversation.size(); i++) {
@@ -134,9 +138,9 @@ class AgentLoopCompactionTest {
 
     @Test
     void findCutIndex_whenEvenTheLastTurnDoesNotFit_dropsTheWholeTail() {
-        // A tiny window whose budget (window - 16384) is below even one turn's tokens: the push-forward loop advances the cut all the way to the end, so nothing is kept verbatim
+        // A tiny window whose budget is below even one turn's tokens: the push-forward loop advances the cut all the way to the end, so nothing is kept verbatim
         // (the conversation becomes summary-only). The runner logs a warning for this edge; here we pin the behaviour.
-        AgentLoopRunner runner = newTestRunner(List.of(mock(ChatModel.class)), 16_500);
+        AgentLoopRunner runner = newTestRunner(List.of(mock(ChatModel.class)), 20_600);
         List<Message> conversation = conversationWithTurns(6, 9_000);
         int cut = runner.findCutIndex(conversation, 2);
         assertThat(cut).isEqualTo(conversation.size());
@@ -145,11 +149,22 @@ class AgentLoopCompactionTest {
     @Test
     void compact_summarizesOldTurnsKeepsRecentVerbatimAndStaysPaired() {
         ChatModel chatModel = mock(ChatModel.class);
+        when(chatModel.getOptions()).thenReturn(OpenAiChatOptions.builder().reasoningEffort("medium").serviceTier("priority").customHeaders(Map.of("X-Test", "value")).build());
         when(chatModel.call(any(Prompt.class))).thenReturn(textResponse("## Goal\nBuild a bubble-sort exercise.\n## Next steps\nFinish the tests."));
         AgentLoopRunner runner = newTestRunner(List.of(chatModel), 128_000);
 
         List<Message> conversation = conversationWithTurns(12, 24_000);
         List<Message> compacted = runner.compact(conversation, null);
+
+        ArgumentCaptor<Prompt> summaryPrompt = ArgumentCaptor.forClass(Prompt.class);
+        verify(chatModel).call(summaryPrompt.capture());
+        assertThat(summaryPrompt.getValue().getOptions()).isInstanceOfSatisfying(OpenAiChatOptions.class, options -> {
+            assertThat(options.getMaxCompletionTokens()).isEqualTo(4_096);
+            assertThat(options.getMaxTokens()).isNull();
+            assertThat(options.getReasoningEffort()).isEqualTo("low");
+            assertThat(options.getServiceTier()).isEqualTo("priority");
+            assertThat(options.getCustomHeaders()).containsEntry("X-Test", "value");
+        });
 
         // System prompt and the initial instruction are always preserved at the front.
         assertThat(compacted.get(0)).isInstanceOf(SystemMessage.class);
@@ -162,6 +177,23 @@ class AgentLoopCompactionTest {
         assertThat(compacted).hasSizeLessThan(conversation.size());
         assertThat(compacted.get(3)).isInstanceOf(AssistantMessage.class);
         assertThatNoException().isThrownBy(() -> AgentLoopRunner.assertValidPairing(compacted));
+    }
+
+    @Test
+    void compact_preservesTheLegacyTokenParameter() {
+        ChatModel chatModel = mock(ChatModel.class);
+        when(chatModel.getOptions()).thenReturn(OpenAiChatOptions.builder().maxTokens(1_234).build());
+        when(chatModel.call(any(Prompt.class))).thenReturn(textResponse("summary"));
+        AgentLoopRunner runner = newTestRunner(List.of(chatModel), 128_000);
+
+        runner.compact(conversationWithTurns(12, 24_000), null);
+
+        ArgumentCaptor<Prompt> prompt = ArgumentCaptor.forClass(Prompt.class);
+        verify(chatModel).call(prompt.capture());
+        assertThat(prompt.getValue().getOptions()).isInstanceOfSatisfying(OpenAiChatOptions.class, options -> {
+            assertThat(options.getMaxTokens()).isEqualTo(1_234);
+            assertThat(options.getMaxCompletionTokens()).isNull();
+        });
     }
 
     @Test

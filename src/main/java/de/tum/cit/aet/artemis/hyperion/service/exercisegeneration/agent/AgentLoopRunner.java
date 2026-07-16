@@ -53,8 +53,12 @@ public class AgentLoopRunner {
 
     // --- Context-window management ---
 
-    /** Headroom reserved below the context window for the model's response plus estimation slack; compaction triggers once the estimated prompt would exceed it. */
-    private static final int RESERVE_TOKENS = 16_384;
+    /** Headroom reserved below the context window for the default response allowance plus estimation slack. */
+    private static final int RESERVE_TOKENS = 20_480;
+
+    private static final int CONTEXT_ESTIMATION_SAFETY_TOKENS = 4_096;
+
+    private static final int MIN_TURN_OUTPUT_TOKENS = 1_024;
 
     /** Target size of the verbatim recent tail kept across a compaction (everything older is summarized). */
     private static final int KEEP_RECENT_TOKENS = 20_000;
@@ -77,13 +81,14 @@ public class AgentLoopRunner {
     private static final int SUMMARY_INPUT_TRUNCATE_CHARS = 2_000;
 
     /** Output cap for the summary, so the summary itself never becomes a context problem on the next turn. */
-    private static final int SUMMARY_MAX_OUTPUT_TOKENS = 2_000;
+    private static final int SUMMARY_MAX_OUTPUT_TOKENS = 4_096;
 
     /**
-     * Fallback per-turn completion cap (max_tokens) for the main agent call, bounding a single tool-calling step's cost/latency. A deployment that sets
-     * {@code spring.ai.openai.chat.options.max-tokens} overrides it (see {@link #configuredTurnMaxTokens()}).
+     * Fallback per-turn completion cap for the main agent call, bounding a single tool-calling step's cost/latency. A deployment can override it with
+     * {@code spring.ai.openai.chat.options.max-tokens} or {@code spring.ai.openai.chat.options.max-completion-tokens} (see
+     * {@link #configuredTurnTokenLimit()}).
      */
-    private static final int TURN_MAX_OUTPUT_TOKENS = 4_096;
+    private static final int TURN_MAX_OUTPUT_TOKENS = 16_384;
 
     /** Prefix marking the synthetic compaction-summary message, so a later compaction recognizes and folds it into the next summary. */
     private static final String SUMMARY_SENTINEL = "[SESSION SUMMARY — earlier steps were compacted to fit the context window. The workspace files on disk are the source of truth; re-read any file you need.]";
@@ -145,24 +150,61 @@ public class AgentLoopRunner {
     }
 
     /**
-     * The model id the configured {@link ChatModel} was set up with. Must be pinned on every {@link OpenAiChatOptions} this loop builds: {@code OpenAiChatOptions.builder()} seeds
-     * {@code model} with Spring AI's default ({@code gpt-5-mini}), which would otherwise win the request-options merge in {@code OpenAiChatModel#buildRequestPrompt} over the
-     * deployment's configured model. Returns {@code null} when the model exposes no default options.
+     * The model id the configured {@link ChatModel} was set up with. It is pinned on every request because Spring AI uses prompt options in place of model defaults when they are
+     * present. Returns {@code null} when the model exposes no options.
      */
     @Nullable
     private String configuredModel() {
-        return chatModel != null && chatModel.getDefaultOptions() != null ? chatModel.getDefaultOptions().getModel() : null;
+        return chatModel != null && chatModel.getOptions() != null ? chatModel.getOptions().getModel() : null;
     }
 
-    /**
-     * The per-turn completion cap to pin on the main call: the operator-configured {@code spring.ai.openai.chat.options.max-tokens} when set, otherwise
-     * {@link #TURN_MAX_OUTPUT_TOKENS}.
-     * Pinning it is required for the property to take effect: the loop builds its own {@link OpenAiChatOptions}, whose non-null fields win the request-options merge over the
-     * configured defaults.
-     */
-    private int configuredTurnMaxTokens() {
-        Integer configured = chatModel != null && chatModel.getDefaultOptions() != null ? chatModel.getDefaultOptions().getMaxTokens() : null;
-        return configured != null ? configured : TURN_MAX_OUTPUT_TOKENS;
+    private OpenAiChatOptions.Builder configuredOptionsBuilder() {
+        var defaults = chatModel == null ? null : chatModel.getOptions();
+        return defaults instanceof OpenAiChatOptions openAiDefaults ? openAiDefaults.mutate() : OpenAiChatOptions.builder();
+    }
+
+    private boolean hasConfiguredReasoningEffort() {
+        var defaults = chatModel == null ? null : chatModel.getOptions();
+        return defaults instanceof OpenAiChatOptions openAiDefaults && openAiDefaults.getReasoningEffort() != null;
+    }
+
+    private record TurnTokenLimit(boolean legacy, int tokens) {
+    }
+
+    private TurnTokenLimit configuredTurnTokenLimit() {
+        var defaults = chatModel == null ? null : chatModel.getOptions();
+        if (defaults instanceof OpenAiChatOptions openAiDefaults && openAiDefaults.getMaxCompletionTokens() != null) {
+            return new TurnTokenLimit(false, openAiDefaults.getMaxCompletionTokens());
+        }
+        if (defaults != null && defaults.getMaxTokens() != null) {
+            return new TurnTokenLimit(true, defaults.getMaxTokens());
+        }
+        return new TurnTokenLimit(false, TURN_MAX_OUTPUT_TOKENS);
+    }
+
+    private boolean usesLegacyMaxTokens() {
+        return configuredTurnTokenLimit().legacy();
+    }
+
+    private OpenAiChatOptions agentOptions(ToolCallback[] toolCallbacks, List<Message> conversation) {
+        TurnTokenLimit configuredLimit = configuredTurnTokenLimit();
+        long available = (long) contextWindowTokens - estimateTokens(conversation, 0, conversation.size()) - CONTEXT_ESTIMATION_SAFETY_TOKENS;
+        if (available < MIN_TURN_OUTPUT_TOKENS) {
+            throw new IllegalStateException("The agent prompt leaves insufficient context for a model response.");
+        }
+        int outputTokens = (int) Math.min(configuredLimit.tokens(), available);
+        OpenAiChatOptions.Builder builder = configuredOptionsBuilder().toolCallbacks(toolCallbacks).maxTokens(null).maxCompletionTokens(null);
+        if (configuredLimit.legacy()) {
+            builder.maxTokens(outputTokens);
+        }
+        else {
+            builder.maxCompletionTokens(outputTokens);
+        }
+        String configuredModel = configuredModel();
+        if (configuredModel != null) {
+            builder.model(configuredModel);
+        }
+        return builder.build();
     }
 
     /**
@@ -193,19 +235,11 @@ public class AgentLoopRunner {
 
         // The ChatModel does not auto-execute tools on call(), so the response carries raw tool calls this loop executes explicitly via toolCallingManager.executeToolCalls(...).
         // Build OpenAiChatOptions (not a generic ToolCallingChatOptions): OpenAiChatModel#buildRequestPrompt casts the runtime options to OpenAiChatOptions, so a
-        // DefaultToolCallingChatOptions throws ClassCastException. The model and per-turn max_tokens cap are pinned explicitly (see configuredModel()/configuredTurnMaxTokens()).
-        OpenAiChatOptions.Builder optionsBuilder = OpenAiChatOptions.builder().toolCallbacks(toolCallbacks).maxTokens(configuredTurnMaxTokens());
-        String configuredModel = configuredModel();
-        if (configuredModel != null) {
-            optionsBuilder.model(configuredModel);
-        }
-        OpenAiChatOptions options = optionsBuilder.build();
-
         List<Message> conversation = new ArrayList<>();
         conversation.add(new SystemMessage(systemPrompt));
         conversation.add(new UserMessage(userPrompt));
 
-        Prompt prompt = new Prompt(conversation, options);
+        Prompt prompt = new Prompt(conversation, agentOptions(toolCallbacks, conversation));
         String lastAssistantText = "";
         int consecutiveToolFailures = 0;
         // Context-window accounting: the previous call's real prompt-token count anchors the estimate; only messages appended since are estimated — see estimateContextTokens().
@@ -281,7 +315,7 @@ public class AgentLoopRunner {
                 // The catch is only reachable when this turn had tool calls (the no-tool-calls path returns above), so errorResponses always covers at least one call id.
                 conversation.add(ToolResponseMessage.builder().responses(errorResponses).build());
                 conversation = compactIfNeeded(conversation, lastPromptTokens, messagesAtLastCall, usageSink, stepListener);
-                prompt = new Prompt(conversation, options);
+                prompt = new Prompt(conversation, agentOptions(toolCallbacks, conversation));
                 continue;
             }
 
@@ -300,7 +334,7 @@ public class AgentLoopRunner {
                         + "and then stop calling tools."));
             }
             conversation = compactIfNeeded(conversation, lastPromptTokens, messagesAtLastCall, usageSink, stepListener);
-            prompt = new Prompt(conversation, options);
+            prompt = new Prompt(conversation, agentOptions(toolCallbacks, conversation));
         }
 
         emit(stepListener, "The generation step limit was reached.");
@@ -716,7 +750,18 @@ public class AgentLoopRunner {
         // OpenAiChatOptions with no tool callbacks so the summarizer cannot call tools; the output cap keeps the summary small. Must be OpenAiChatOptions (not a generic
         // ChatOptions): OpenAiChatModel#buildRequestPrompt casts the runtime options to OpenAiChatOptions, so a DefaultChatOptions would throw ClassCastException. Model pinned
         // as in the agent loop (see configuredModel()).
-        OpenAiChatOptions.Builder summaryOptions = OpenAiChatOptions.builder().maxTokens(SUMMARY_MAX_OUTPUT_TOKENS);
+        // Compaction is a bounded factual summary, not an authoring decision. Use explicit low reasoning when the provider enables reasoning so its server default cannot consume
+        // the
+        // small summary allowance; omit the field for providers that do not support it.
+        OpenAiChatOptions.Builder summaryOptions = configuredOptionsBuilder().toolCallbacks(List.of()).reasoningEffort(hasConfiguredReasoningEffort() ? "low" : null)
+                .maxTokens(null).maxCompletionTokens(null);
+        int summaryOutputTokens = Math.min(SUMMARY_MAX_OUTPUT_TOKENS, configuredTurnTokenLimit().tokens());
+        if (usesLegacyMaxTokens()) {
+            summaryOptions.maxTokens(summaryOutputTokens);
+        }
+        else {
+            summaryOptions.maxCompletionTokens(summaryOutputTokens);
+        }
         String configuredModel = configuredModel();
         if (configuredModel != null) {
             summaryOptions.model(configuredModel);

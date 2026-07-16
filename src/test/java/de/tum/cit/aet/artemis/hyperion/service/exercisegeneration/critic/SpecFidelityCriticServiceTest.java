@@ -443,14 +443,57 @@ class SpecFidelityCriticServiceTest {
     void criticUsesOpenAiChatOptions_soOpenAiModelsAcceptTheRequestOptions() {
         ChatModel chatModel = mock(ChatModel.class);
         when(chatModel.call(any(Prompt.class))).thenReturn(jsonResponse("{\"uncovered\":[]}"));
-        when(chatModel.getOptions()).thenReturn(OpenAiChatOptions.builder().build());
-        SpecFidelityCriticService critic = new SpecFidelityCriticService(ChatClient.create(chatModel), objectMapper);
+        when(chatModel.getOptions()).thenReturn(
+                OpenAiChatOptions.builder().model("configured-model").reasoningEffort("medium").serviceTier("priority").customHeaders(Map.of("X-Test", "value")).build());
+        SpecFidelityCriticService critic = new SpecFidelityCriticService(ChatClient.create(chatModel), objectMapper, "configured-model");
 
         critic.critique(UNICODE_BRIEF, "A clean problem statement.", List.of("test_x"));
 
         ArgumentCaptor<Prompt> prompt = ArgumentCaptor.forClass(Prompt.class);
         verify(chatModel, times(2)).call(prompt.capture());
-        assertThat(prompt.getAllValues()).allSatisfy(value -> assertThat(value.getOptions()).isInstanceOf(OpenAiChatOptions.class));
+        assertThat(prompt.getAllValues()).allSatisfy(value -> assertThat(value.getOptions()).isInstanceOfSatisfying(OpenAiChatOptions.class, options -> {
+            assertThat(options.getMaxCompletionTokens()).isEqualTo(32_768);
+            assertThat(options.getMaxTokens()).isNull();
+            assertThat(options.getReasoningEffort()).isEqualTo("medium");
+            assertThat(options.getServiceTier()).isEqualTo("priority");
+            assertThat(options.getCustomHeaders()).containsEntry("X-Test", "value");
+        }));
+    }
+
+    @Test
+    void critic_preservesTheLegacyConfiguredTokenParameter() {
+        ChatModel chatModel = mock(ChatModel.class);
+        when(chatModel.call(any(Prompt.class))).thenReturn(jsonResponse("{\"uncovered\":[]}"));
+        when(chatModel.getOptions()).thenReturn(OpenAiChatOptions.builder().maxTokens(1_234).build());
+        SpecFidelityCriticService critic = new SpecFidelityCriticService(ChatClient.create(chatModel), objectMapper, "configured-model", Duration.ZERO,
+                ProviderFailureCooldown.disabled(), 128_000, chatModel.getOptions());
+
+        critic.critique(UNICODE_BRIEF, "A clean problem statement.", List.of("test_x"));
+
+        ArgumentCaptor<Prompt> prompt = ArgumentCaptor.forClass(Prompt.class);
+        verify(chatModel, times(2)).call(prompt.capture());
+        assertThat(prompt.getAllValues()).allSatisfy(value -> assertThat(value.getOptions()).isInstanceOfSatisfying(OpenAiChatOptions.class, options -> {
+            assertThat(options.getMaxTokens()).isEqualTo(1_234);
+            assertThat(options.getMaxCompletionTokens()).isNull();
+        }));
+    }
+
+    @Test
+    void critic_clampsOutputToTheConfiguredContextWindow() {
+        ChatModel chatModel = mock(ChatModel.class);
+        when(chatModel.call(any(Prompt.class))).thenReturn(jsonResponse("{\"uncovered\":[]}"));
+        when(chatModel.getOptions()).thenReturn(OpenAiChatOptions.builder().build());
+        SpecFidelityCriticService critic = new SpecFidelityCriticService(ChatClient.create(chatModel), objectMapper, "configured-model", Duration.ZERO,
+                ProviderFailureCooldown.disabled(), 16_000, chatModel.getOptions());
+
+        critic.critique(UNICODE_BRIEF, "A clean problem statement.", List.of("test_x"));
+
+        ArgumentCaptor<Prompt> prompt = ArgumentCaptor.forClass(Prompt.class);
+        verify(chatModel, times(2)).call(prompt.capture());
+        assertThat(prompt.getAllValues()).allSatisfy(value -> assertThat(value.getOptions()).isInstanceOfSatisfying(OpenAiChatOptions.class, options -> {
+            assertThat(options.getMaxCompletionTokens()).isGreaterThanOrEqualTo(4_096).isLessThan(32_768);
+            assertThat(options.getMaxTokens()).isNull();
+        }));
     }
 
     @Test

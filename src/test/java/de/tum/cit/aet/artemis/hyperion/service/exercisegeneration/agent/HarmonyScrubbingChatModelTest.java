@@ -91,14 +91,14 @@ class HarmonyScrubbingChatModelTest {
     }
 
     @Test
-    void getDefaultOptions_delegatesUnchanged() {
+    void getOptions_delegatesUnchanged() {
         ChatModel delegate = mock(ChatModel.class);
         ChatOptions options = mock(ChatOptions.class);
-        when(delegate.getDefaultOptions()).thenReturn(options);
+        when(delegate.getOptions()).thenReturn(options);
         HarmonyScrubbingChatModel model = new HarmonyScrubbingChatModel(delegate);
 
         // A straight pass-through so the loop can read the configured model id.
-        assertThat(model.getDefaultOptions()).isSameAs(options);
+        assertThat(model.getOptions()).isSameAs(options);
     }
 
     @Test

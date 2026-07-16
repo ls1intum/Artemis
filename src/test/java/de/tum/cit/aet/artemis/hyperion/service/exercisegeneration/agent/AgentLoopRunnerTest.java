@@ -24,6 +24,7 @@ import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.model.Generation;
 import org.springframework.ai.chat.prompt.Prompt;
+import org.springframework.ai.openai.OpenAiChatOptions;
 
 import com.openai.core.http.Headers;
 import com.openai.errors.BadRequestException;
@@ -413,6 +414,75 @@ class AgentLoopRunnerTest {
         String finalTurnPrompt = promptCaptor.getAllValues().get(1).getInstructions().stream().map(message -> message.getText()).collect(Collectors.joining("\n"));
         assertThat(finalTurnPrompt).as("the budget-pressure nudge reached the model on the final allowed turn (not discarded by the history rebuild)")
                 .contains("close to the step limit");
+    }
+
+    @Test
+    void agentLoop_usesTheModernFallbackTokenParameter() {
+        ChatModel chatModel = mock(ChatModel.class);
+        when(chatModel.call(any(Prompt.class))).thenReturn(textResponse("DONE"));
+
+        AgentLoopRunner runner = newTestRunner(List.of(chatModel), 128_000);
+        runner.run("system", "do it", new SandboxAgentTools(new FakeSandbox(), "fake-session"), 1, () -> false, null, null);
+
+        ArgumentCaptor<Prompt> prompt = ArgumentCaptor.forClass(Prompt.class);
+        verify(chatModel).call(prompt.capture());
+        assertThat(prompt.getValue().getOptions()).isInstanceOfSatisfying(OpenAiChatOptions.class, options -> {
+            assertThat(options.getMaxCompletionTokens()).isEqualTo(16_384);
+            assertThat(options.getMaxTokens()).isNull();
+        });
+    }
+
+    @Test
+    void agentLoop_preservesModernProviderOptions() {
+        ChatModel chatModel = mock(ChatModel.class);
+        when(chatModel.getOptions()).thenReturn(
+                OpenAiChatOptions.builder().maxCompletionTokens(12_345).reasoningEffort("medium").serviceTier("priority").customHeaders(Map.of("X-Test", "value")).build());
+        when(chatModel.call(any(Prompt.class))).thenReturn(textResponse("DONE"));
+
+        AgentLoopRunner runner = newTestRunner(List.of(chatModel), 128_000);
+        runner.run("system", "do it", new SandboxAgentTools(new FakeSandbox(), "fake-session"), 1, () -> false, null, null);
+
+        ArgumentCaptor<Prompt> prompt = ArgumentCaptor.forClass(Prompt.class);
+        verify(chatModel).call(prompt.capture());
+        assertThat(prompt.getValue().getOptions()).isInstanceOfSatisfying(OpenAiChatOptions.class, options -> {
+            assertThat(options.getMaxCompletionTokens()).isEqualTo(12_345);
+            assertThat(options.getMaxTokens()).isNull();
+            assertThat(options.getReasoningEffort()).isEqualTo("medium");
+            assertThat(options.getServiceTier()).isEqualTo("priority");
+            assertThat(options.getCustomHeaders()).containsEntry("X-Test", "value");
+        });
+    }
+
+    @Test
+    void agentLoop_clampsConfiguredOutputToTheRemainingContext() {
+        ChatModel chatModel = mock(ChatModel.class);
+        when(chatModel.getOptions()).thenReturn(OpenAiChatOptions.builder().maxCompletionTokens(30_000).build());
+        when(chatModel.call(any(Prompt.class))).thenReturn(textResponse("DONE"));
+
+        AgentLoopRunner runner = newTestRunner(List.of(chatModel), 32_000);
+        runner.run("system", "do it", new SandboxAgentTools(new FakeSandbox(), "fake-session"), 1, () -> false, null, null);
+
+        ArgumentCaptor<Prompt> prompt = ArgumentCaptor.forClass(Prompt.class);
+        verify(chatModel).call(prompt.capture());
+        assertThat(prompt.getValue().getOptions()).isInstanceOfSatisfying(OpenAiChatOptions.class,
+                options -> assertThat(options.getMaxCompletionTokens()).isGreaterThan(20_000).isLessThan(30_000));
+    }
+
+    @Test
+    void agentLoop_preservesTheLegacyConfiguredTokenParameter() {
+        ChatModel chatModel = mock(ChatModel.class);
+        when(chatModel.getOptions()).thenReturn(OpenAiChatOptions.builder().maxTokens(1_234).build());
+        when(chatModel.call(any(Prompt.class))).thenReturn(textResponse("DONE"));
+
+        AgentLoopRunner runner = newTestRunner(List.of(chatModel), 128_000);
+        runner.run("system", "do it", new SandboxAgentTools(new FakeSandbox(), "fake-session"), 1, () -> false, null, null);
+
+        ArgumentCaptor<Prompt> prompt = ArgumentCaptor.forClass(Prompt.class);
+        verify(chatModel).call(prompt.capture());
+        assertThat(prompt.getValue().getOptions()).isInstanceOfSatisfying(OpenAiChatOptions.class, options -> {
+            assertThat(options.getMaxTokens()).isEqualTo(1_234);
+            assertThat(options.getMaxCompletionTokens()).isNull();
+        });
     }
 
     @Test

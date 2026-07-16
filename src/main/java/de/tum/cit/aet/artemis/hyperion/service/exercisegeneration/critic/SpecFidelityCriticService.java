@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.critic;
 import java.text.Normalizer;
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -16,8 +17,11 @@ import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.chat.model.ChatResponse;
+import org.springframework.ai.chat.prompt.ChatOptions;
 import org.springframework.ai.openai.OpenAiChatOptions;
+import org.springframework.ai.tokenizer.JTokkitTokenCountEstimator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Conditional;
@@ -25,6 +29,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.knuddels.jtokkit.api.EncodingType;
 
 import de.tum.cit.aet.artemis.admin.service.LLMTokenUsageService;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionExerciseGenerationEnabled;
@@ -58,8 +63,14 @@ public class SpecFidelityCriticService {
 
     private static final Logger log = LoggerFactory.getLogger(SpecFidelityCriticService.class);
 
-    /** Per-pass output cap with enough headroom for evidence-backed JSON. A review makes two baseline calls and at most one bounded oracle-correction call. */
-    private static final int CRITIC_MAX_OUTPUT_TOKENS = 8_192;
+    /** Per-pass cap for visible output plus hidden reasoning. A review makes two baseline calls and at most one bounded oracle-correction call. */
+    private static final int CRITIC_MAX_OUTPUT_TOKENS = 32_768;
+
+    private static final int MIN_CRITIC_OUTPUT_TOKENS = 4_096;
+
+    private static final int CRITIC_CONTEXT_SAFETY_TOKENS = 1_024;
+
+    private static final JTokkitTokenCountEstimator TOKEN_ESTIMATOR = new JTokkitTokenCountEstimator(EncodingType.O200K_BASE);
 
     /** Defensive cap on how many model-reported uncovered requirements are surfaced, so a degenerate response can never flood the retry prompt or the review panel. */
     private static final int MAX_REVIEW_FINDINGS = 12;
@@ -220,22 +231,48 @@ public class SpecFidelityCriticService {
 
     private final ProviderFailureCooldown providerFailureCooldown;
 
+    private final int contextWindowTokens;
+
+    private final boolean usesLegacyMaxTokens;
+
+    @Nullable
+    private final Integer configuredMaxOutputTokens;
+
     @Autowired
     public SpecFidelityCriticService(@Nullable ChatClient chatClient, ObjectMapper objectMapper, @Value("${spring.ai.openai.chat.model:}") String configuredModel,
-            @Value("${artemis.hyperion.agent.provider-hard-failure-cooldown:PT5M}") Duration providerHardFailureCooldown, ProviderFailureCooldown providerFailureCooldown) {
+            @Value("${artemis.hyperion.agent.provider-hard-failure-cooldown:PT5M}") Duration providerHardFailureCooldown, ProviderFailureCooldown providerFailureCooldown,
+            @Value("${artemis.hyperion.agent.context-window-tokens:128000}") int contextWindowTokens, Collection<ChatModel> chatModels) {
+        this(chatClient, objectMapper, configuredModel, providerHardFailureCooldown, providerFailureCooldown, contextWindowTokens, configuredOptions(chatModels));
+    }
+
+    SpecFidelityCriticService(@Nullable ChatClient chatClient, ObjectMapper objectMapper, String configuredModel, Duration providerHardFailureCooldown,
+            ProviderFailureCooldown providerFailureCooldown, int contextWindowTokens, @Nullable ChatOptions configuredOptions) {
         this.chatClient = chatClient;
         this.objectMapper = objectMapper;
         this.configuredModel = configuredModel == null || configuredModel.isBlank() ? null : configuredModel;
         this.providerHardFailureCooldown = providerHardFailureCooldown;
         this.providerFailureCooldown = providerFailureCooldown;
+        this.contextWindowTokens = contextWindowTokens;
+        Integer maxCompletionTokens = configuredOptions instanceof OpenAiChatOptions openAiOptions ? openAiOptions.getMaxCompletionTokens() : null;
+        this.usesLegacyMaxTokens = maxCompletionTokens == null && configuredOptions != null && configuredOptions.getMaxTokens() != null;
+        this.configuredMaxOutputTokens = maxCompletionTokens != null ? maxCompletionTokens : configuredOptions == null ? null : configuredOptions.getMaxTokens();
     }
 
     public SpecFidelityCriticService(@Nullable ChatClient chatClient, ObjectMapper objectMapper, String configuredModel) {
-        this(chatClient, objectMapper, configuredModel, Duration.ZERO, ProviderFailureCooldown.disabled());
+        this(chatClient, objectMapper, configuredModel, Duration.ZERO, ProviderFailureCooldown.disabled(), 128_000, (ChatOptions) null);
+    }
+
+    public SpecFidelityCriticService(@Nullable ChatClient chatClient, ObjectMapper objectMapper, String configuredModel, Duration providerHardFailureCooldown,
+            ProviderFailureCooldown providerFailureCooldown) {
+        this(chatClient, objectMapper, configuredModel, providerHardFailureCooldown, providerFailureCooldown, 128_000, (ChatOptions) null);
     }
 
     public SpecFidelityCriticService(@Nullable ChatClient chatClient, ObjectMapper objectMapper) {
         this(chatClient, objectMapper, "", Duration.ZERO, ProviderFailureCooldown.disabled());
+    }
+
+    private static @Nullable ChatOptions configuredOptions(Collection<ChatModel> chatModels) {
+        return chatModels.isEmpty() ? null : chatModels.iterator().next().getOptions();
     }
 
     /**
@@ -436,7 +473,14 @@ public class SpecFidelityCriticService {
             String authoritativeSource, boolean expectExampleChecks, boolean expectApiChecks, boolean expectTemplateChecks, boolean expectMutantChecks,
             @Nullable Consumer<ChatResponse> usageSink) {
         // Both calls are output-capped and tool-free; transport retry behavior is bounded by the configured OpenAI SDK client.
-        OpenAiChatOptions.Builder options = OpenAiChatOptions.builder().maxTokens(CRITIC_MAX_OUTPUT_TOKENS);
+        int outputTokens = reviewerOutputTokens(systemPrompt, userPrompt);
+        OpenAiChatOptions.Builder options = OpenAiChatOptions.builder();
+        if (usesLegacyMaxTokens) {
+            options.maxTokens(outputTokens);
+        }
+        else {
+            options.maxCompletionTokens(outputTokens);
+        }
         if (configuredModel != null) {
             options.model(configuredModel);
         }
@@ -448,6 +492,16 @@ public class SpecFidelityCriticService {
         String text = LLMTokenUsageService.extractResponseText(response);
         return text == null || text.isBlank() ? null
                 : parseCritique(text, pass, requireScopeVerdict, authoritativeSource, expectExampleChecks, expectApiChecks, expectTemplateChecks, expectMutantChecks);
+    }
+
+    private int reviewerOutputTokens(String systemPrompt, String userPrompt) {
+        long promptTokens = (long) TOKEN_ESTIMATOR.estimate(systemPrompt) + TOKEN_ESTIMATOR.estimate(userPrompt);
+        long available = (long) contextWindowTokens - promptTokens - CRITIC_CONTEXT_SAFETY_TOKENS;
+        if (available < MIN_CRITIC_OUTPUT_TOKENS) {
+            throw new IllegalArgumentException("The review prompt leaves insufficient context for a complete verdict.");
+        }
+        long providerLimit = configuredMaxOutputTokens == null || configuredMaxOutputTokens <= 0 ? Long.MAX_VALUE : configuredMaxOutputTokens;
+        return (int) Math.min(Math.min(CRITIC_MAX_OUTPUT_TOKENS, available), providerLimit);
     }
 
     private static List<SpecFidelityReport.Finding> reviewUnavailable(@Nullable String adaptationChanges, String detail) {
