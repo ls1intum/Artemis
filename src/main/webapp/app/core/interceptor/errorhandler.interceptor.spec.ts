@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TestBed } from '@angular/core/testing';
 import { HttpErrorResponse, HttpRequest } from '@angular/common/http';
 import { throwError } from 'rxjs';
@@ -8,8 +7,6 @@ import { EventManager } from 'app/foundation/service/event-manager.service';
 import { AccountService } from 'app/core/auth/account.service';
 
 describe(`ErrorHandlerInterceptor`, () => {
-    setupTestBed({ zoneless: true });
-
     let errorHandlerInterceptor: ErrorHandlerInterceptor;
 
     let eventManagerMock: EventManager;

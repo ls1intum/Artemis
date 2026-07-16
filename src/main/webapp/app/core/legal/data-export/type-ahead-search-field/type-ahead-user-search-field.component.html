@@ -1,5 +1,5 @@
 <label class="mb-1" for="typeahead-search" jhiTranslate="artemisApp.dataExport.loginOrName"></label>
-<p-autoComplete
+<p-autocomplete
     inputId="typeahead-search"
     name="search-filter"
     styleClass="w-full"
@@ -9,7 +9,7 @@
     (completeMethod)="onComplete($event)"
     (onSelect)="onSelectUser($event)"
     optionLabel="login"
-    [minLength]="MIN_SEARCH_QUERY_LENGTH"
+    [minQueryLength]="MIN_SEARCH_QUERY_LENGTH"
     [placeholder]="'artemisApp.dataExport.loginOrName' | artemisTranslate"
     (input)="onChange()"
     (onClear)="onChange()"
@@ -25,7 +25,7 @@
     <ng-template let-user #item>
         {{ resultFormatter(user) }}
     </ng-template>
-</p-autoComplete>
+</p-autocomplete>
 
 @if (searching()) {
     <small class="mt-1 block text-muted-color"><fa-icon size="lg" [icon]="faCircleNotch" animation="spin" /></small>

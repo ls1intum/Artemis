@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
 import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
@@ -17,8 +16,6 @@ import { of } from 'rxjs';
 import { UMLDiagramType } from '@tumaet/apollon';
 
 describe('ApollonDiagramCreateForm Component', () => {
-    setupTestBed({ zoneless: true });
-
     let apollonDiagramService: ApollonDiagramService;
     let dialogRef: DynamicDialogRef;
     let fixture: ComponentFixture<ApollonDiagramCreateFormComponent>;

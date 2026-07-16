@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { AccountService } from 'app/core/auth/account.service';
 import { of, throwError } from 'rxjs';
@@ -15,8 +14,6 @@ import { provideHttpClient } from '@angular/common/http';
 import { VcsAccessTokensSettingsComponent } from 'app/account/user/settings/vcs-access-tokens-settings/vcs-access-tokens-settings.component';
 
 describe('VcsAccessTokensSettingsComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<VcsAccessTokensSettingsComponent>;
     let comp: VcsAccessTokensSettingsComponent;
 

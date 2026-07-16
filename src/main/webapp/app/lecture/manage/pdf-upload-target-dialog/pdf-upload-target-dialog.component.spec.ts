@@ -1,6 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { PdfUploadTarget, PdfUploadTargetDialogComponent } from './pdf-upload-target-dialog.component';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
@@ -10,8 +9,6 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { Subject } from 'rxjs';
 
 describe('PdfUploadTargetDialogComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: PdfUploadTargetDialogComponent;
     let fixture: ComponentFixture<PdfUploadTargetDialogComponent>;
     let dialogRef: DynamicDialogRef;

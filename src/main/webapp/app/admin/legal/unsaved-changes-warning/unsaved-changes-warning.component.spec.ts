@@ -4,13 +4,10 @@
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 import { UnsavedChangesWarningComponent } from 'app/admin/legal/unsaved-changes-warning/unsaved-changes-warning.component';
 
 describe('UnsavedChangesWarningComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: UnsavedChangesWarningComponent;
     let fixture: ComponentFixture<UnsavedChangesWarningComponent>;
 

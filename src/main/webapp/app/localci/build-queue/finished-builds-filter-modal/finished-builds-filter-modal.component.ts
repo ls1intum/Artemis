@@ -188,7 +188,7 @@ export class FinishedBuildsFilterModalComponent implements OnInit {
     }
 
     /**
-     * Called by p-autoComplete on each keystroke/focus to populate the build agent address suggestions.
+     * Called by p-autocomplete on each keystroke/focus to populate the build agent address suggestions.
      * @param event the autocomplete complete event carrying the current query
      */
     searchBuildAgentAddresses(event: AutoCompleteCompleteEvent): void {

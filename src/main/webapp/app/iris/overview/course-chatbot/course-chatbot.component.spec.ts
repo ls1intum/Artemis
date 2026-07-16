@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { Component, input } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CourseChatbotComponent } from 'app/iris/overview/course-chatbot/course-chatbot.component';
@@ -21,8 +20,6 @@ class MockIrisBaseChatbotComponent {
 type CourseChatbotInternals = { irisBaseChatbot: () => { isChatHistoryOpen: () => boolean } | undefined };
 
 describe('CourseChatbotComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: CourseChatbotComponent;
     let fixture: ComponentFixture<CourseChatbotComponent>;
     let chatService: ReturnType<typeof createChatServiceMock>;

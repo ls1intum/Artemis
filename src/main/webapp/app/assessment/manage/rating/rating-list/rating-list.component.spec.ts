@@ -1,6 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { RatingListComponent } from 'app/assessment/manage/rating/rating-list/rating-list.component';
 import { RatingService } from 'app/assessment/shared/services/rating.service';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -18,7 +17,6 @@ import { PaginatorState } from 'primeng/paginator';
 import { PageableResult } from 'app/foundation/pagination/pageable-table';
 
 describe('RatingListComponent', () => {
-    setupTestBed({ zoneless: true });
     let component: RatingListComponent;
     let fixture: ComponentFixture<RatingListComponent>;
     let router: Router;
