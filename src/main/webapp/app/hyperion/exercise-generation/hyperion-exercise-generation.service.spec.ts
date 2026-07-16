@@ -1,5 +1,4 @@
 import { TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
@@ -16,8 +15,6 @@ class MockWebsocketService {
 }
 
 describe('HyperionExerciseGenerationService', () => {
-    setupTestBed({ zoneless: true });
-
     let service: HyperionExerciseGenerationService;
     let httpMock: HttpTestingController;
     let websocket: MockWebsocketService;
@@ -35,7 +32,7 @@ describe('HyperionExerciseGenerationService', () => {
 
     it('starts an adaptation run with the explicit mode and selected feedback threads', () => {
         service.generate(42, { mode: 'ADAPT', prompt: 'do it', selectedFeedbackThreadIds: [7, 9] }).subscribe();
-        const request = httpMock.expectOne('http://localhost:8080/api/hyperion/programming-exercises/42/generate-exercise');
+        const request = httpMock.expectOne('/api/hyperion/programming-exercises/42/generate-exercise');
         expect(request.request.method).toBe('POST');
         expect(request.request.body).toEqual({ mode: 'ADAPT', prompt: 'do it', selectedFeedbackThreadIds: [7, 9] });
         request.flush({ jobId: 'j1' });
@@ -43,21 +40,21 @@ describe('HyperionExerciseGenerationService', () => {
 
     it('requests the run status with observed response', () => {
         service.getStatus(42).subscribe();
-        const request = httpMock.expectOne('http://localhost:8080/api/hyperion/programming-exercises/42/generate-exercise/status');
+        const request = httpMock.expectOne('/api/hyperion/programming-exercises/42/generate-exercise/status');
         expect(request.request.method).toBe('GET');
         request.flush({ jobId: 'j1', running: false, events: [] });
     });
 
     it('deletes the job to cancel it for the owner', () => {
         service.cancel(42, 'j1').subscribe();
-        const request = httpMock.expectOne('http://localhost:8080/api/hyperion/programming-exercises/42/generate-exercise/jobs/j1');
+        const request = httpMock.expectOne('/api/hyperion/programming-exercises/42/generate-exercise/jobs/j1');
         expect(request.request.method).toBe('DELETE');
         request.flush(null);
     });
 
     it('reverts the last generated change', () => {
         service.revertExerciseGeneration(42).subscribe((result) => expect(result.fullyReverted).toBe(true));
-        const request = httpMock.expectOne('http://localhost:8080/api/hyperion/programming-exercises/42/generate-exercise/revert');
+        const request = httpMock.expectOne('/api/hyperion/programming-exercises/42/generate-exercise/revert');
         expect(request.request.method).toBe('POST');
         request.flush({ fullyReverted: true, revertedRepositories: ['exercise', 'solution', 'tests'], completedAt: '2026-07-10T20:00:00Z' });
     });

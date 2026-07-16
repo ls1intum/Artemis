@@ -1459,7 +1459,8 @@ components:
           items: {type: integer, format: int64}
     ExerciseGenerationStatus:
       type: object
-      required: [jobId, running, events, fileSnapshots, revertAvailable, ownedByCaller, cancellable]
+      required: [jobId, running, events, fileSnapshots, revertAvailable, ownedByCaller,
+        cancellable]
       properties:
         jobId: {type: string}
         running: {type: boolean}

@@ -1,6 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { Subject, of, throwError } from 'rxjs';
 import { ConfirmationService } from 'primeng/api';
@@ -10,8 +9,6 @@ import { BuildAgentsService } from 'app/localci/build-agents.service';
 import { HyperionGenerationDetailComponent } from 'app/localci/hyperion-generation-detail/hyperion-generation-detail.component';
 
 describe('HyperionGenerationDetailComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<HyperionGenerationDetailComponent>;
     const service = {
         getGenerationSandboxes: vi.fn(),

@@ -10,7 +10,7 @@ import { facArtemisIntelligence } from 'app/foundation/icons/icons';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { AdaptFinding } from 'app/exercise/review/review-comment-utils';
-import { ConsistencyIssue } from 'app/openapi/model/consistencyIssue';
+import { ConsistencyIssueSeverityEnum } from 'app/openapi/model/consistency-issue';
 
 export interface ReviewAdaptExerciseDialogData {
     findings?: AdaptFinding[];
@@ -36,9 +36,9 @@ export class ReviewAdaptExerciseDialogComponent {
 
     /** Severity order so the most important findings surface first when there are many to triage. */
     private static readonly SEVERITY_ORDER: Record<string, number> = {
-        [ConsistencyIssue.SeverityEnum.High]: 0,
-        [ConsistencyIssue.SeverityEnum.Medium]: 1,
-        [ConsistencyIssue.SeverityEnum.Low]: 2,
+        [ConsistencyIssueSeverityEnum.High]: 0,
+        [ConsistencyIssueSeverityEnum.Medium]: 1,
+        [ConsistencyIssueSeverityEnum.Low]: 2,
     };
 
     readonly findings: AdaptFinding[] = [...((this.dialogConfig.data as ReviewAdaptExerciseDialogData | undefined)?.findings ?? [])].sort(

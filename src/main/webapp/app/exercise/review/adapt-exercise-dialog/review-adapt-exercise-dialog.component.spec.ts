@@ -3,8 +3,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
-import { ConsistencyIssue } from 'app/openapi/model/consistencyIssue';
+import { ConsistencyIssueCategoryEnum, ConsistencyIssueSeverityEnum } from 'app/openapi/model/consistency-issue';
 import { AdaptFinding, adaptFindingTagSeverity } from 'app/exercise/review/review-comment-utils';
 import {
     ReviewAdaptExerciseDialogComponent,
@@ -12,8 +11,8 @@ import {
     ReviewAdaptExerciseDialogResult,
 } from 'app/exercise/review/adapt-exercise-dialog/review-adapt-exercise-dialog.component';
 
-function finding(severity: ConsistencyIssue.SeverityEnum, description: string): AdaptFinding {
-    return { category: ConsistencyIssue.CategoryEnum.MethodReturnTypeMismatch, severity, tagSeverity: adaptFindingTagSeverity(severity), description };
+function finding(severity: ConsistencyIssueSeverityEnum, description: string): AdaptFinding {
+    return { category: ConsistencyIssueCategoryEnum.MethodReturnTypeMismatch, severity, tagSeverity: adaptFindingTagSeverity(severity), description };
 }
 
 async function setup(data: ReviewAdaptExerciseDialogData): Promise<{
@@ -35,16 +34,14 @@ async function setup(data: ReviewAdaptExerciseDialogData): Promise<{
 }
 
 describe('ReviewAdaptExerciseDialogComponent', () => {
-    setupTestBed({ zoneless: true });
-
     afterEach(() => TestBed.resetTestingModule());
 
     it('sorts findings by severity, highest first', async () => {
         const { component } = await setup({
             findings: [
-                finding(ConsistencyIssue.SeverityEnum.Low, 'low'),
-                finding(ConsistencyIssue.SeverityEnum.High, 'high'),
-                finding(ConsistencyIssue.SeverityEnum.Medium, 'medium'),
+                finding(ConsistencyIssueSeverityEnum.Low, 'low'),
+                finding(ConsistencyIssueSeverityEnum.High, 'high'),
+                finding(ConsistencyIssueSeverityEnum.Medium, 'medium'),
             ],
         });
         expect(component.findings.map((f) => f.description)).toEqual(['high', 'medium', 'low']);
@@ -66,14 +63,14 @@ describe('ReviewAdaptExerciseDialogComponent', () => {
     });
 
     it('allows confirming with findings and no instructions, sending an undefined prompt', async () => {
-        const { component, close } = await setup({ findings: [finding(ConsistencyIssue.SeverityEnum.High, 'fix it')] });
+        const { component, close } = await setup({ findings: [finding(ConsistencyIssueSeverityEnum.High, 'fix it')] });
         expect(component.confirmDisabled()).toBe(false);
         component.confirm();
         expect(close).toHaveBeenCalledWith({ instructions: undefined } satisfies ReviewAdaptExerciseDialogResult);
     });
 
     it('closes with undefined when cancelled', async () => {
-        const { component, close } = await setup({ findings: [finding(ConsistencyIssue.SeverityEnum.High, 'fix it')] });
+        const { component, close } = await setup({ findings: [finding(ConsistencyIssueSeverityEnum.High, 'fix it')] });
         component.cancel();
         expect(close).toHaveBeenCalledWith(undefined);
     });
@@ -90,7 +87,7 @@ describe('ReviewAdaptExerciseDialogComponent', () => {
     });
 
     it('renders selected findings as a labelled list and discloses automatic persistence', async () => {
-        const { fixture } = await setup({ findings: [finding(ConsistencyIssue.SeverityEnum.High, 'fix it')] });
+        const { fixture } = await setup({ findings: [finding(ConsistencyIssueSeverityEnum.High, 'fix it')] });
         fixture.detectChanges();
 
         const heading = fixture.nativeElement.querySelector('#adaptExerciseFindingsHeading');

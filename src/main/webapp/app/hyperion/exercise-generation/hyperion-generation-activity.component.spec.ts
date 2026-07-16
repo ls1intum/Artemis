@@ -1,6 +1,5 @@
 import { TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { EMPTY, Observable, Subject, map, of, throwError } from 'rxjs';
@@ -77,8 +76,6 @@ function snapshot(path: string, action: 'create' | 'edit', content: string, over
 }
 
 describe('HyperionGenerationActivityComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let service: MockService;
 
     beforeEach(() => {

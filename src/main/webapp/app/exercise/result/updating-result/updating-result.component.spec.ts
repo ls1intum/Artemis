@@ -1,6 +1,5 @@
 import { expect, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { PROFILE_LOCALCI } from 'app/app.constants';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
@@ -30,7 +29,6 @@ import { MissingResultInformation } from 'app/exercise/result/result.utils';
 import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
 
 describe('UpdatingResultComponent', () => {
-    setupTestBed({ zoneless: true });
     let comp: UpdatingResultComponent;
     let fixture: ComponentFixture<UpdatingResultComponent>;
     let participationWebsocketService: ParticipationWebsocketService;

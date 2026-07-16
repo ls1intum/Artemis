@@ -6,10 +6,8 @@ import { AlertService } from 'app/foundation/service/alert.service';
 import { LearningObjectType, LearningPathNavigationDTO } from 'app/atlas/shared/entities/learning-path.model';
 import { provideHttpClient } from '@angular/common/http';
 import { MockAlertService } from 'test/helpers/mocks/service/mock-alert.service';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('LearningPathNavigationService', () => {
-    setupTestBed({ zoneless: true });
     let learningPathNavigationService: LearningPathNavigationService;
     let learningPathApiService: LearningPathApiService;
     let alertService: AlertService;

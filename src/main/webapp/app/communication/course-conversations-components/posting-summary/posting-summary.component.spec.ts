@@ -1,5 +1,4 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { PostingSummaryComponent } from 'app/communication/course-conversations-components/posting-summary/posting-summary.component';
 import { Posting, PostingType, SavedPostStatus } from 'app/communication/shared/entities/posting.model';
@@ -16,8 +15,6 @@ import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('PostingSummaryComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: PostingSummaryComponent;
     let fixture: ComponentFixture<PostingSummaryComponent>;
 

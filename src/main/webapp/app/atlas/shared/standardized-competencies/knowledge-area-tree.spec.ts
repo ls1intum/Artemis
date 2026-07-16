@@ -4,7 +4,6 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { KnowledgeAreaForTree } from 'app/atlas/shared/entities/standardized-competency.model';
 import { KnowledgeAreaTreeComponent, KnowledgeAreaTreeDataSource } from 'app/atlas/shared/standardized-competencies/knowledge-area-tree.component';
 
@@ -35,7 +34,6 @@ function ka(partial: Partial<KnowledgeAreaForTree> & { id: number }): KnowledgeA
 }
 
 describe('KnowledgeAreaTreeComponent', () => {
-    setupTestBed({ zoneless: true });
     let hostFixture: ComponentFixture<HostComponent>;
     let host: HostComponent;
 

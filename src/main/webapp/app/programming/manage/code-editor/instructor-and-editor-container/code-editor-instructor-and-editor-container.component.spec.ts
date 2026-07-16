@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 vi.mock('y-monaco', () => {
     const mockDestroy = vi.fn();
@@ -36,12 +35,11 @@ import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { ArtemisIntelligenceService } from 'app/editor/monaco-editor/model/actions/artemis-intelligence/artemis-intelligence.service';
 import { ConsistencyCheckService } from 'app/programming/manage/consistency-check/consistency-check.service';
-import { ConsistencyCheckResponse } from 'app/openapi/model/consistencyCheckResponse';
+import { ConsistencyCheckResponse } from 'app/openapi/model/consistency-check-response';
 import { ProblemStatementService } from 'app/programming/manage/services/problem-statement.service';
 import { ConsistencyCheckError, ErrorType } from 'app/programming/shared/entities/consistency-check-result.model';
 
-import { ConsistencyIssue } from 'app/openapi/model/consistencyIssue';
-import { ArtifactLocation } from 'app/openapi/model/artifactLocation';
+import { ConsistencyIssue } from 'app/openapi/model/consistency-issue';
 import { faCircleExclamation, faCircleInfo, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
 import { Course } from 'app/course/shared/entities/course.model';
 import { ProgrammingExercise, ProgrammingLanguage, ProjectType } from 'app/programming/shared/entities/programming-exercise.model';
@@ -166,8 +164,6 @@ async function configureTestBed(additionalProviders: Provider[] = []): Promise<v
 }
 
 describe('CodeEditorInstructorAndEditorContainerComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<CodeEditorInstructorAndEditorContainerComponent>;
     let comp: CodeEditorInstructorAndEditorContainerComponent;
 
@@ -184,13 +180,13 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
 
     const mockIssues: ConsistencyIssue[] = [
         {
-            severity: ConsistencyIssue.SeverityEnum.High,
-            category: ConsistencyIssue.CategoryEnum.ConstructorParameterMismatch,
+            severity: 'HIGH',
+            category: 'CONSTRUCTOR_PARAMETER_MISMATCH',
             description: 'Problem statement inconsistency',
             suggestedFix: 'Review the problem statement file.',
             relatedLocations: [
                 {
-                    type: ArtifactLocation.TypeEnum.ProblemStatement,
+                    type: 'PROBLEM_STATEMENT',
                     filePath: 'problem_statement.md',
                     startLine: 1,
                     endLine: 42,
@@ -198,13 +194,13 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
             ],
         },
         {
-            severity: ConsistencyIssue.SeverityEnum.Medium,
-            category: ConsistencyIssue.CategoryEnum.MethodParameterMismatch,
+            severity: 'MEDIUM',
+            category: 'METHOD_PARAMETER_MISMATCH',
             description: 'Template repository issue',
             suggestedFix: 'Fix template repository references.',
             relatedLocations: [
                 {
-                    type: ArtifactLocation.TypeEnum.TemplateRepository,
+                    type: 'TEMPLATE_REPOSITORY',
                     filePath: 'src/template/Example.java',
                     startLine: 5,
                     endLine: 50,
@@ -212,13 +208,13 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
             ],
         },
         {
-            severity: ConsistencyIssue.SeverityEnum.Medium,
-            category: ConsistencyIssue.CategoryEnum.AttributeTypeMismatch,
+            severity: 'MEDIUM',
+            category: 'ATTRIBUTE_TYPE_MISMATCH',
             description: 'Solution repository issue',
             suggestedFix: 'Fix solution repository references.',
             relatedLocations: [
                 {
-                    type: ArtifactLocation.TypeEnum.SolutionRepository,
+                    type: 'SOLUTION_REPOSITORY',
                     filePath: 'src/solution/Solution.java',
                     startLine: 3,
                     endLine: 60,
@@ -226,13 +222,13 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
             ],
         },
         {
-            severity: ConsistencyIssue.SeverityEnum.Low,
-            category: ConsistencyIssue.CategoryEnum.IdentifierNamingInconsistency,
+            severity: 'LOW',
+            category: 'IDENTIFIER_NAMING_INCONSISTENCY',
             description: 'Tests repository issue',
             suggestedFix: 'Adjust tests in test repository.',
             relatedLocations: [
                 {
-                    type: ArtifactLocation.TypeEnum.TestsRepository,
+                    type: 'TESTS_REPOSITORY',
                     filePath: 'src/tests/ExampleTest.java',
                     startLine: 10,
                     endLine: 70,
@@ -241,25 +237,25 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
         },
         {
             // A multi-location issue for testing next/previous navigation
-            severity: ConsistencyIssue.SeverityEnum.High,
-            category: ConsistencyIssue.CategoryEnum.VisibilityMismatch,
+            severity: 'HIGH',
+            category: 'VISIBILITY_MISMATCH',
             description: 'Multi-location navigation test issue',
             suggestedFix: 'Resolve inconsistencies across artifacts.',
             relatedLocations: [
                 {
-                    type: ArtifactLocation.TypeEnum.TestsRepository,
+                    type: 'TESTS_REPOSITORY',
                     filePath: 'src/template/A.java',
                     startLine: 10,
                     endLine: 20,
                 },
                 {
-                    type: ArtifactLocation.TypeEnum.TestsRepository,
+                    type: 'TESTS_REPOSITORY',
                     filePath: 'src/template/B.java',
                     startLine: 30,
                     endLine: 40,
                 },
                 {
-                    type: ArtifactLocation.TypeEnum.SolutionRepository,
+                    type: 'SOLUTION_REPOSITORY',
                     filePath: 'src/template/C.java',
                     startLine: 50,
                     endLine: 60,
@@ -273,13 +269,13 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
             const firstLocation = issue.relatedLocations[0];
             const targetType = (() => {
                 switch (firstLocation?.type) {
-                    case ArtifactLocation.TypeEnum.TemplateRepository:
+                    case 'TEMPLATE_REPOSITORY':
                         return CommentThreadLocationType.TEMPLATE_REPO;
-                    case ArtifactLocation.TypeEnum.SolutionRepository:
+                    case 'SOLUTION_REPOSITORY':
                         return CommentThreadLocationType.SOLUTION_REPO;
-                    case ArtifactLocation.TypeEnum.TestsRepository:
+                    case 'TESTS_REPOSITORY':
                         return CommentThreadLocationType.TEST_REPO;
-                    case ArtifactLocation.TypeEnum.ProblemStatement:
+                    case 'PROBLEM_STATEMENT':
                     default:
                         return CommentThreadLocationType.PROBLEM_STATEMENT;
                 }
@@ -520,16 +516,16 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
         });
 
         it('returns right icon', () => {
-            expect(comp.getSeverityIcon(ConsistencyIssue.SeverityEnum.High)).toBe(faCircleExclamation);
-            expect(comp.getSeverityIcon(ConsistencyIssue.SeverityEnum.Medium)).toBe(faTriangleExclamation);
-            expect(comp.getSeverityIcon(ConsistencyIssue.SeverityEnum.Low)).toBe(faCircleInfo);
+            expect(comp.getSeverityIcon('HIGH')).toBe(faCircleExclamation);
+            expect(comp.getSeverityIcon('MEDIUM')).toBe(faTriangleExclamation);
+            expect(comp.getSeverityIcon('LOW')).toBe(faCircleInfo);
             expect(comp.getSeverityIcon(undefined as any)).toBe(faCircleInfo);
         });
 
         it('returns right color', () => {
-            expect(comp.getSeverityColor(ConsistencyIssue.SeverityEnum.High)).toBe('text-danger');
-            expect(comp.getSeverityColor(ConsistencyIssue.SeverityEnum.Medium)).toBe('text-warning');
-            expect(comp.getSeverityColor(ConsistencyIssue.SeverityEnum.Low)).toBe('text-info');
+            expect(comp.getSeverityColor('HIGH')).toBe('text-danger');
+            expect(comp.getSeverityColor('MEDIUM')).toBe('text-warning');
+            expect(comp.getSeverityColor('LOW')).toBe('text-info');
             expect(comp.getSeverityColor(undefined as any)).toBe('text-secondary');
         });
 
@@ -844,8 +840,6 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
 });
 
 describe('CodeEditorInstructorAndEditorContainerComponent - Diff Editor', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<CodeEditorInstructorAndEditorContainerComponent>;
     let comp: CodeEditorInstructorAndEditorContainerComponent;
 
@@ -888,8 +882,6 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Diff Editor', () => 
 });
 
 describe('CodeEditorInstructorAndEditorContainerComponent - Problem Statement Refinement', () => {
-    setupTestBed({ zoneless: true });
-
     // Validation, error handling, and edge cases are covered by problem-statement.service.spec.ts.
     // These tests only verify the component wires up to ProblemStatementService correctly.
 
@@ -975,8 +967,6 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Problem Statement Re
 });
 
 describe('CodeEditorInstructorBaseContainerComponent - file sync binding', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<CodeEditorInstructorAndEditorContainerComponent>;
     let comp: CodeEditorInstructorAndEditorContainerComponent;
 
@@ -1200,8 +1190,6 @@ describe('CodeEditorInstructorBaseContainerComponent - file sync binding', () =>
 });
 
 describe('CodeEditorInstructorAndEditorContainerComponent - Adapt with feedback', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<CodeEditorInstructorAndEditorContainerComponent>;
     let comp: CodeEditorInstructorAndEditorContainerComponent;
     let generationService: { generate: ReturnType<typeof vi.fn> };
@@ -1236,8 +1224,8 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Adapt with feedback'
                 createdDate: new Date(2024, 0, 1).toISOString(),
                 content: {
                     contentType: CommentContentType.CONSISTENCY_CHECK,
-                    severity: ConsistencyIssue.SeverityEnum.High,
-                    category: ConsistencyIssue.CategoryEnum.MethodParameterMismatch,
+                    severity: 'HIGH',
+                    category: 'METHOD_PARAMETER_MISMATCH',
                     text: 'Fix method signature',
                 },
             },

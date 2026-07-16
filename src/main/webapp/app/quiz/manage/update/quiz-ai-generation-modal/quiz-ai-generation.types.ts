@@ -1,5 +1,5 @@
 import { MultipleChoiceQuestion } from 'app/quiz/shared/entities/multiple-choice-question.model';
-import { QuizQuestionRefinementSuccess } from 'app/openapi/model/quizQuestionRefinementSuccess';
+import { QuizQuestionRefinementSuccess } from 'app/openapi/model/quiz-question-refinement-success';
 
 export type GenerationLanguage = 'en' | 'de';
 

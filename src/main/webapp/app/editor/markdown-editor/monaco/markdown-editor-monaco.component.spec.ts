@@ -1,5 +1,4 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { vi } from 'vitest';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { MockComponent, MockProvider } from 'ng-mocks';
@@ -32,8 +31,6 @@ import { RedirectToIrisButtonComponent } from 'app/communication/shared/redirect
 const originalResizeObserver = globalThis.ResizeObserver;
 
 describe('MarkdownEditorMonacoComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<MarkdownEditorMonacoComponent>;
     let comp: MarkdownEditorMonacoComponent;
     let fileUploaderService: FileUploaderService;

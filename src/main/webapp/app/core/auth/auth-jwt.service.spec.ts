@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { AuthServerProvider, Credentials } from 'app/core/auth/auth-jwt.service';
@@ -9,8 +8,6 @@ import { SessionStorageService } from 'app/foundation/service/session-storage.se
 import { firstValueFrom } from 'rxjs';
 
 describe('AuthServerProvider', () => {
-    setupTestBed({ zoneless: true });
-
     let service: AuthServerProvider;
     let localStorageService: LocalStorageService;
     let sessionStorageService: SessionStorageService;

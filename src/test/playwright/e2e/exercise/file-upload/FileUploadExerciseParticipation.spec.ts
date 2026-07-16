@@ -5,6 +5,7 @@ import { test } from '../../../support/fixtures';
 import { expect } from '@playwright/test';
 import { FileUploadSubmission } from 'app/fileupload/shared/entities/file-upload-submission.model';
 import { SEED_COURSES } from '../../../support/seedData';
+import { readResponseJson } from '../../../support/utils';
 
 const course = { id: SEED_COURSES.exerciseParticipation.id } as any;
 
@@ -27,7 +28,7 @@ test.describe('File upload exercise participation', { tag: '@fast' }, () => {
         // Make a submission
         await fileUploadExerciseEditor.attachFile('pdf-test-file.pdf');
         const fileUploadResponse = await courseOverview.submitExercise('api/fileupload/exercises/*/file-upload-submissions');
-        const submission: FileUploadSubmission = await fileUploadResponse.json();
+        const submission: FileUploadSubmission = await readResponseJson(fileUploadResponse);
         expect(submission.submitted).toBe(true);
         expect(fileUploadResponse.status()).toBe(200);
     });

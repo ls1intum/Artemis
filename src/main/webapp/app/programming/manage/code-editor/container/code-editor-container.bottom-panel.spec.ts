@@ -1,7 +1,6 @@
 import { Component, signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { MockComponent } from 'ng-mocks';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { TranslateService } from '@ngx-translate/core';
@@ -33,8 +32,6 @@ class TestHostComponent {
 }
 
 describe('CodeEditorContainerComponent bottom panel composition', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<TestHostComponent>;
     let host: TestHostComponent;
 

@@ -46,7 +46,7 @@ import { ConfirmationService } from 'primeng/api';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ConsistencyCheckService } from 'app/programming/manage/consistency-check/consistency-check.service';
 import { ArtemisIntelligenceService } from 'app/editor/monaco-editor/model/actions/artemis-intelligence/artemis-intelligence.service';
-import { ConsistencyIssue } from 'app/openapi/model/consistencyIssue';
+import { ConsistencyIssueCategoryEnum, ConsistencyIssueSeverityEnum } from 'app/openapi/model/consistency-issue';
 import { ConsistencyCheckError } from 'app/programming/shared/entities/consistency-check-result.model';
 import { ExerciseReviewCommentService } from 'app/exercise/review/exercise-review-comment.service';
 import {
@@ -82,10 +82,10 @@ import { ProgrammingExerciseParticipationService } from 'app/programming/manage/
 import { Router } from '@angular/router';
 import { supportsHyperionExerciseGeneration } from 'app/hyperion/exercise-generation/hyperion-generation-support';
 
-const SEVERITY_ORDER: Record<ConsistencyIssue.SeverityEnum, number> = {
-    [ConsistencyIssue.SeverityEnum.High]: 0,
-    [ConsistencyIssue.SeverityEnum.Medium]: 1,
-    [ConsistencyIssue.SeverityEnum.Low]: 2,
+const SEVERITY_ORDER: Record<ConsistencyIssueSeverityEnum, number> = {
+    ['HIGH']: 0,
+    ['MEDIUM']: 1,
+    ['LOW']: 2,
 };
 
 const AUTO_START_EXERCISE_GENERATION_STATE = 'autoStartExerciseGeneration';
@@ -96,8 +96,8 @@ interface ConsistencyIssueNavigationIssue {
     filePath?: string;
     lineNumber?: number;
     auxiliaryRepositoryId?: number;
-    severity: ConsistencyIssue.SeverityEnum;
-    category: ConsistencyIssue.CategoryEnum;
+    severity: ConsistencyIssueSeverityEnum;
+    category: ConsistencyIssueCategoryEnum;
 }
 
 @Component({
@@ -149,11 +149,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
             .filter((thread) => thread.resolved !== true)
             .map((thread) => this.mapConsistencyThreadToNavigationIssue(thread))
             .filter((issue): issue is ConsistencyIssueNavigationIssue => issue !== undefined)
-            .sort(
-                (a, b) =>
-                    (SEVERITY_ORDER[a.severity] ?? SEVERITY_ORDER[ConsistencyIssue.SeverityEnum.Medium]) -
-                        (SEVERITY_ORDER[b.severity] ?? SEVERITY_ORDER[ConsistencyIssue.SeverityEnum.Medium]) || a.threadId - b.threadId,
-            ),
+            .sort((a, b) => (SEVERITY_ORDER[a.severity] ?? SEVERITY_ORDER['MEDIUM']) - (SEVERITY_ORDER[b.severity] ?? SEVERITY_ORDER['MEDIUM']) || a.threadId - b.threadId),
     );
 
     /** Shared helper that encapsulates all AI-powered problem statement operations. */
@@ -759,19 +755,19 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     /**
      * Returns the appropriate FontAwesome icon for the given severity.
      *
-     * @param {ConsistencyIssue.SeverityEnum} severity
+     * @param {ConsistencyIssueSeverityEnum} severity
      *        The severity that determines the returned icon.
      *
      * @returns
      *          A FontAwesome icon representing high, medium, or low severity.
      */
-    getSeverityIcon(severity: ConsistencyIssue.SeverityEnum | undefined) {
+    getSeverityIcon(severity: ConsistencyIssueSeverityEnum | undefined) {
         switch (severity) {
-            case ConsistencyIssue.SeverityEnum.High:
+            case 'HIGH':
                 return this.faCircleExclamation;
-            case ConsistencyIssue.SeverityEnum.Medium:
+            case 'MEDIUM':
                 return this.faTriangleExclamation;
-            case ConsistencyIssue.SeverityEnum.Low:
+            case 'LOW':
                 return this.faCircleInfo;
             default:
                 return this.faCircleInfo;
@@ -830,19 +826,19 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     /**
      * Returns a Bootstrap text color class based on an issue's severity.
      *
-     * @param {ConsistencyIssue.SeverityEnum} severity
+     * @param {ConsistencyIssueSeverityEnum} severity
      *        The severity that determines the color.
      *
      * @returns
      *          A text color class (`text-danger`, `text-warning`, `text-info`, or `text-secondary`).
      */
-    getSeverityColor(severity: ConsistencyIssue.SeverityEnum | undefined) {
+    getSeverityColor(severity: ConsistencyIssueSeverityEnum | undefined) {
         switch (severity) {
-            case ConsistencyIssue.SeverityEnum.High:
+            case 'HIGH':
                 return 'text-danger';
-            case ConsistencyIssue.SeverityEnum.Medium:
+            case 'MEDIUM':
                 return 'text-warning';
-            case ConsistencyIssue.SeverityEnum.Low:
+            case 'LOW':
                 return 'text-info';
             default:
                 return 'text-secondary';

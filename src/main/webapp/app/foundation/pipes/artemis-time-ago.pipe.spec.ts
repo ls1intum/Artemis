@@ -4,14 +4,11 @@ import { TranslateService } from '@ngx-translate/core';
 import { ChangeDetectorRef } from '@angular/core';
 import dayjs from 'dayjs/esm';
 import 'dayjs/esm/locale/de';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { provideHttpClient } from '@angular/common/http';
 
 describe('ArtemisTimeAgoPipe', () => {
-    setupTestBed({ zoneless: true });
-
     let pipe: ArtemisTimeAgoPipe;
     let translateService: TranslateService;
     const cdRef = { markForCheck: vi.fn() } as any as ChangeDetectorRef;

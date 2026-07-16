@@ -1,8 +1,8 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpResponse } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, map } from 'rxjs';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
-import { HyperionExerciseGenerationApiService } from 'app/openapi/api/hyperionExerciseGenerationApi.service';
+import { HyperionExerciseGenerationApi } from 'app/openapi/api/hyperion-exercise-generation-api';
 import {
     ExerciseGenerationRevertResult,
     HyperionGenerationJobStart,
@@ -17,7 +17,7 @@ import {
  */
 @Injectable({ providedIn: 'root' })
 export class HyperionExerciseGenerationService {
-    private readonly api = inject(HyperionExerciseGenerationApiService);
+    private readonly api = inject(HyperionExerciseGenerationApi);
     private readonly websocketService = inject(WebsocketService);
 
     /**
@@ -35,7 +35,7 @@ export class HyperionExerciseGenerationService {
      * @param exerciseId the exercise id
      */
     getStatus(exerciseId: number): Observable<HttpResponse<HyperionGenerationStatus>> {
-        return this.api.getExerciseGenerationStatus(exerciseId, 'response');
+        return (this.api.getExerciseGenerationStatus(exerciseId) as Observable<HyperionGenerationStatus | null>).pipe(map((status) => new HttpResponse({ body: status })));
     }
 
     /**

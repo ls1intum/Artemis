@@ -1,12 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TestBed } from '@angular/core/testing';
 
 import { CourseSidebarService } from 'app/course/overview/services/course-sidebar.service';
 
 describe('CourseSidebarService', () => {
-    setupTestBed({ zoneless: true });
-
     let service: CourseSidebarService;
 
     beforeEach(() => {

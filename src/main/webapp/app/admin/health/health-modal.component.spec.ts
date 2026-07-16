@@ -1,19 +1,17 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { HealthModalComponent } from 'app/admin/health/health-modal.component';
 import { HealthDetails, HealthKey } from 'app/admin/health/health.model';
-import { TranslateModule } from '@ngx-translate/core';
+import { provideTranslateService } from '@ngx-translate/core';
 
 describe('HealthModalComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<HealthModalComponent>;
     let comp: HealthModalComponent;
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [HealthModalComponent, TranslateModule.forRoot()],
+            imports: [HealthModalComponent],
+            providers: [provideTranslateService()],
         }).compileComponents();
 
         fixture = TestBed.createComponent(HealthModalComponent);

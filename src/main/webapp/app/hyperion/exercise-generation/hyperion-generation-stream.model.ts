@@ -1,10 +1,10 @@
-import { ExerciseGenerationRevertResult as GeneratedRevertResult } from 'app/openapi/model/exerciseGenerationRevertResult';
-import { ExerciseGenerationEvent as GeneratedEvent } from 'app/openapi/model/exerciseGenerationEvent';
-import { ExerciseGenerationFileSnapshot as GeneratedFileSnapshot } from 'app/openapi/model/exerciseGenerationFileSnapshot';
-import { ExerciseGenerationJobStart as GeneratedJobStart } from 'app/openapi/model/exerciseGenerationJobStart';
-import { ExerciseGenerationRequest as GeneratedRequest } from 'app/openapi/model/exerciseGenerationRequest';
-import { ExerciseGenerationStatus as GeneratedStatus } from 'app/openapi/model/exerciseGenerationStatus';
-import { ExerciseGenerationVerdict as GeneratedVerdict } from 'app/openapi/model/exerciseGenerationVerdict';
+import { ExerciseGenerationRevertResult as GeneratedRevertResult } from 'app/openapi/model/exercise-generation-revert-result';
+import { ExerciseGenerationEvent as GeneratedEvent } from 'app/openapi/model/exercise-generation-event';
+import { ExerciseGenerationFileSnapshot as GeneratedFileSnapshot } from 'app/openapi/model/exercise-generation-file-snapshot';
+import { ExerciseGenerationJobStart as GeneratedJobStart } from 'app/openapi/model/exercise-generation-job-start';
+import { ExerciseGenerationRequest as GeneratedRequest } from 'app/openapi/model/exercise-generation-request';
+import { ExerciseGenerationStatus as GeneratedStatus } from 'app/openapi/model/exercise-generation-status';
+import { ExerciseGenerationVerdict as GeneratedVerdict } from 'app/openapi/model/exercise-generation-verdict';
 
 export type HyperionGenerationEventType = GeneratedEvent['type'];
 export type HyperionGenerationCompletionStatus = NonNullable<GeneratedEvent['completionStatus']>;

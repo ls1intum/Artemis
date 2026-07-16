@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
@@ -34,8 +33,6 @@ const course = { id: 2 } as Course;
 let quizExercise = { id: 42, quizStarted: true, course, quizQuestions: [question] } as QuizExercise;
 
 describe('QuizExercise Drag And Drop Question Statistic Component', () => {
-    setupTestBed({ zoneless: true });
-
     let comp: DragAndDropQuestionStatisticComponent;
     let fixture: ComponentFixture<DragAndDropQuestionStatisticComponent>;
     let quizService: QuizExerciseService;
