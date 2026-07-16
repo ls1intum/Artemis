@@ -73,7 +73,7 @@ export class ArtemisDatePipe implements PipeTransform, OnDestroy {
         this.formatLengthBasedOnWindowWidth(window.innerWidth);
 
         // Set locale to current language
-        this.updateLocale(this.translateService.getCurrentLang());
+        this.updateLocale(this.translateService.getCurrentLang() ?? 'en');
         this.updateLocalizedDateTime(timeZone);
 
         // Clean up a possibly existing subscription to onLangChange

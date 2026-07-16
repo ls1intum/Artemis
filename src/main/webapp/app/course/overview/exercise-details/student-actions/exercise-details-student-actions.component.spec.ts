@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { HttpClient } from '@angular/common/http';
 import { DebugElement } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
@@ -40,8 +39,6 @@ import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 import { MODULE_FEATURE_TEXT } from 'app/app.constants';
 
 describe('ExerciseDetailsStudentActionsComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let comp: ExerciseDetailsStudentActionsComponent;
     let fixture: ComponentFixture<ExerciseDetailsStudentActionsComponent>;
     let debugElement: DebugElement;

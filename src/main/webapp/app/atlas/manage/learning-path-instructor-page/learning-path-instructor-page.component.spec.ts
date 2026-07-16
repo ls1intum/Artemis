@@ -14,10 +14,8 @@ import { CourseManagementService } from 'app/course/manage/services/course-manag
 import { Course } from 'app/course/shared/entities/course.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('LearningPathInstructorPageComponent', () => {
-    setupTestBed({ zoneless: true });
     let component: LearningPathInstructorPageComponent;
     let fixture: ComponentFixture<LearningPathInstructorPageComponent>;
     let learningPathApiService: LearningPathApiService;

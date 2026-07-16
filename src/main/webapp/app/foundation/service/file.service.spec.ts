@@ -1,14 +1,11 @@
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ProgrammingLanguage, ProjectType } from 'app/programming/shared/entities/programming-exercise.model';
 import { FileService } from 'app/foundation/service/file.service';
 
 describe('FileService', () => {
-    setupTestBed({ zoneless: true });
-
     const firstUniqueFileName = 'someOtherUniqueFileName';
     const secondUniqueFileName = 'someUniqueFileName';
 

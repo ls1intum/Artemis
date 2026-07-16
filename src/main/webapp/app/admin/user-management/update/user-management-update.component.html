@@ -141,7 +141,12 @@
                         (keydown.enter)="onGroupAdd(user(), $event)"
                         [placeholder]="'artemisApp.userManagement.addGroup' | artemisTranslate"
                         data-testid="group-autocomplete"
-                    />
+                    >
+                        <!-- Use the FontAwesome times icon for the built-in chip remove control -->
+                        <ng-template #removeicon let-removeCallback="removeCallback" let-index="index">
+                            <fa-icon [icon]="faTimes" class="group-tag-remove" (click)="removeCallback($event, index)" />
+                        </ng-template>
+                    </p-autocomplete>
                 </div>
                 <div class="mb-3 flex flex-col gap-2">
                     <label jhiTranslate="artemisApp.userManagement.organizations"></label>
