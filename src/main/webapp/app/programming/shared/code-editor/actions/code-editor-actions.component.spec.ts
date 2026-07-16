@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { By } from '@angular/platform-browser';
@@ -48,8 +47,6 @@ const cartesianProduct = (a: any[], b: any[], ...c: any[][]): any[] => {
 };
 
 describe('CodeEditorActionsComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let comp: CodeEditorActionsComponent;
     let fixture: ComponentFixture<CodeEditorActionsComponent>;
     let codeEditorRepositoryFileService: CodeEditorRepositoryFileService;

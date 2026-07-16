@@ -1,5 +1,4 @@
 import { vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ProgrammingDiffReportDetailComponent } from 'app/shared-ui/detail-overview-list/components/programming-diff-report-detail/programming-diff-report-detail.component';
 import { TranslateService } from '@ngx-translate/core';
@@ -13,7 +12,6 @@ import { DetailType } from 'app/shared-ui/detail-overview-list/detail-overview-l
 import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
 
 describe('ProgrammingDiffReportDetailComponent', () => {
-    setupTestBed({ zoneless: true });
     let component: ProgrammingDiffReportDetailComponent;
     let fixture: ComponentFixture<ProgrammingDiffReportDetailComponent>;
     let dialogService: DialogService;

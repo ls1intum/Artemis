@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
@@ -33,8 +32,6 @@ import { BehaviorSubject, distinctUntilChanged } from 'rxjs';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 
 describe('Course Management Service', () => {
-    setupTestBed({ zoneless: true });
-
     let courseManagementService: CourseManagementService;
     let accountService: AccountService;
     let lectureService: LectureService;
@@ -533,8 +530,6 @@ describe('Course Management Service', () => {
 });
 
 describe('CourseManagementService - authentication state changes', () => {
-    setupTestBed({ zoneless: true });
-
     let authState: BehaviorSubject<User | undefined>;
     let scoped: CourseManagementService;
     let scopedHttpMock: HttpTestingController;

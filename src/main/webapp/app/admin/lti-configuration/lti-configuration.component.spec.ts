@@ -3,7 +3,6 @@
  */
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { of, throwError } from 'rxjs';
 import { HttpErrorResponse, HttpHeaders, HttpResponse } from '@angular/common/http';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -15,8 +14,6 @@ import { LtiConfigurationComponent } from 'app/admin/lti-configuration/lti-confi
 import { AlertService } from 'app/foundation/service/alert.service';
 
 describe('LtiConfigurationComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: LtiConfigurationComponent;
     let fixture: ComponentFixture<LtiConfigurationComponent>;
     let mockRouter: any;

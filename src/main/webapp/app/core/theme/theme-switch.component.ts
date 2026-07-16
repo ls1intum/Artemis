@@ -1,6 +1,5 @@
 import { ChangeDetectionStrategy, Component, OnInit, computed, inject, input, viewChild } from '@angular/core';
 
-import { TranslateModule } from '@ngx-translate/core';
 import { NgbPopover } from '@ng-bootstrap/ng-bootstrap';
 import { Placement } from '@ng-bootstrap/ng-bootstrap';
 import { Theme, ThemeService } from 'app/core/theme/shared/theme.service';
@@ -18,7 +17,7 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
     selector: 'jhi-theme-switch',
     templateUrl: './theme-switch.component.html',
     styleUrls: ['theme-switch.component.scss'],
-    imports: [TranslateModule, NgbPopover, FontAwesomeModule, TranslateDirective],
+    imports: [NgbPopover, FontAwesomeModule, TranslateDirective],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ThemeSwitchComponent implements OnInit {

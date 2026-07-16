@@ -47,6 +47,33 @@
     opacity: 1;
 }
 
+/*
+ * Compact PrimeNG controls inside the title bars rendered below the breadcrumbs. Caps them at 28px so that
+ * together with the bars' py-2 (16px) every bar renders at the 44px floor (`min-h-11`) of the admin title bar,
+ * whether or not it contains action controls. Vertical centering of the control content is handled by the
+ * components' own flex layout.
+ */
+@mixin title-bar-compact-controls {
+    .p-button,
+    .p-togglebutton,
+    .p-select {
+        height: 1.75rem;
+        padding-block: 0;
+    }
+
+    .p-togglebutton-content {
+        padding-block: 0;
+    }
+
+    .p-select {
+        align-items: center;
+
+        .p-select-label {
+            padding-block: 0;
+        }
+    }
+}
+
 @mixin dynamic-content-height($extra-height-to-subtract...) {
     $base: calc(100vh - var(--sidebar-header-footer-combined-height));
     $base-dvh: calc(100dvh - var(--sidebar-header-footer-combined-height));

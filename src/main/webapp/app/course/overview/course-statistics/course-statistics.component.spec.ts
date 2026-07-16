@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { ActivatedRoute } from '@angular/router';
@@ -28,8 +27,6 @@ import { MockComponent } from 'ng-mocks';
 import { ChartModule, UIChart } from 'primeng/chart';
 
 describe('CourseStatisticsComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let comp: CourseStatisticsComponent;
     let fixture: ComponentFixture<CourseStatisticsComponent>;
     let courseStorageService: CourseStorageService;

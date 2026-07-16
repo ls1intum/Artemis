@@ -1,5 +1,4 @@
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { BrowserTestingModule, platformBrowserTesting } from '@angular/platform-browser/testing';
 import { GitDiffFileComponent } from 'app/programming/shared/git-diff-report/git-diff-file/git-diff-file.component';
@@ -8,7 +7,7 @@ import { MonacoDiffEditorComponent } from 'app/editor/monaco-editor/diff-editor/
 import { ThemeService } from 'app/core/theme/shared/theme.service';
 import { MockThemeService } from 'test/helpers/mocks/service/mock-theme.service';
 import { DiffInformation, FileStatus } from 'app/programming/shared/utils/diff.utils';
-import { TranslateModule, TranslateService, TranslateStore } from '@ngx-translate/core';
+import { TranslateService, TranslateStore, provideTranslateService } from '@ngx-translate/core';
 import { MockComponent } from 'ng-mocks';
 
 const mockDiffInformations: DiffInformation[] = [
@@ -75,8 +74,6 @@ const mockDiffInformations: DiffInformation[] = [
 ];
 
 describe('GitDiffFileComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let comp: GitDiffFileComponent;
     let fixture: ComponentFixture<GitDiffFileComponent>;
 
@@ -90,8 +87,8 @@ describe('GitDiffFileComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [GitDiffFileComponent, TranslateModule.forRoot()],
-            providers: [{ provide: ThemeService, useClass: MockThemeService }, TranslateStore],
+            imports: [GitDiffFileComponent],
+            providers: [{ provide: ThemeService, useClass: MockThemeService }, TranslateStore, provideTranslateService()],
         })
             .overrideComponent(GitDiffFileComponent, {
                 remove: { imports: [MonacoDiffEditorComponent] },

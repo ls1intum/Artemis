@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { DebugElement, ElementRef, signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
@@ -53,8 +52,6 @@ import { MODULE_FEATURE_IRIS } from 'app/app.constants';
 import { LectureUnitType } from 'app/lecture/shared/entities/lecture-unit/lectureUnit.model';
 
 describe('CourseLectureDetailsComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<CourseLectureDetailsComponent>;
     let courseLecturesDetailsComponent: CourseLectureDetailsComponent;
     let lecture: Lecture;
@@ -286,10 +283,10 @@ describe('CourseLectureDetailsComponent', () => {
         const downloadFileSpy = vi.spyOn(fileService, 'downloadFileByAttachmentName');
         const attachment = getAttachmentVideoUnit(lecture, 1, dayjs()).attachment!;
 
-        courseLecturesDetailsComponent.downloadAttachment(attachment.link, attachment.name);
+        courseLecturesDetailsComponent.downloadAttachment(attachment.link, attachment.name, attachment.version);
 
         expect(downloadFileSpy).toHaveBeenCalledTimes(1);
-        expect(downloadFileSpy).toHaveBeenCalledWith(attachment.link, attachment.name);
+        expect(downloadFileSpy).toHaveBeenCalledWith(attachment.link, attachment.name, attachment.version);
         expect(courseLecturesDetailsComponent.isDownloadingLink()).toBeUndefined();
     });
 
