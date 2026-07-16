@@ -38,8 +38,10 @@ export class TumUiPaginatorComponent {
     protected readonly faAnglesRight = faAnglesRight;
 
     protected readonly navButtonClasses = NAV_BUTTON_CLASSES;
-    // Selected page: subtle primary highlight (PrimeNG's --p-highlight-background / -color).
-    protected readonly selectedPageClasses = `${NAV_BUTTON_CLASSES.replace('text-muted-color', 'bg-primary/15 font-semibold text-primary')}`;
+    // Selected page: subtle primary highlight (PrimeNG's --p-highlight-background / -color). Replace bg-transparent
+    // rather than adding alongside it: Artemis imports Bootstrap's `.bg-transparent { ...!important }`, which would
+    // otherwise win over `bg-primary/15` and drop the highlight. Result carries exactly one background utility.
+    protected readonly selectedPageClasses = NAV_BUTTON_CLASSES.replace('bg-transparent', 'bg-primary/15').replace('text-muted-color', 'font-semibold text-primary');
 
     protected readonly totalPages = computed(() => Math.max(1, Math.ceil(this.totalRecords() / Math.max(1, this.pageSize()))));
     // Guard the display/nav against a transient out-of-range `page` input (e.g. the row set shrank and the table
