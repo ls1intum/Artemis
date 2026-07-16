@@ -686,6 +686,37 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void getLatestSubmissionsForExercise_noParticipations_returnsEmptyList() throws Exception {
+        // The exercise has no student participations yet, so the two lean queries (participation ids / latest submission
+        // ids) return nothing and the endpoint returns an empty list rather than failing.
+        List<PendingProgrammingSubmissionDTO> returnedSubmissions = request.getList(exercisesBaseUrl + programmingExercise.getId() + "/latest-pending-submissions", HttpStatus.OK,
+                PendingProgrammingSubmissionDTO.class);
+        assertThat(returnedSubmissions).isEmpty();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void getLatestSubmissionsForExercise_returnsMinimalSubmissionFields() throws Exception {
+        // A pending submission carries only the minimal fields the client reads: id, commit hash and submission date.
+        ZonedDateTime submissionDate = ZonedDateTime.now().minusSeconds(30L);
+        ProgrammingSubmission submission = (ProgrammingSubmission) new ProgrammingSubmission().commitHash("abc123def456").submissionDate(submissionDate);
+        submission = programmingExerciseUtilService.addProgrammingSubmission(programmingExercise, submission, TEST_PREFIX + "student1");
+
+        List<PendingProgrammingSubmissionDTO> returnedSubmissions = request.getList(exercisesBaseUrl + programmingExercise.getId() + "/latest-pending-submissions", HttpStatus.OK,
+                PendingProgrammingSubmissionDTO.class);
+
+        long participationId = submission.getParticipation().getId();
+        PendingProgrammingSubmissionDTO entry = returnedSubmissions.stream().filter(dto -> dto.participationId() == participationId).findFirst().orElseThrow();
+        assertThat(entry.submission()).isNotNull();
+        assertThat(entry.submission().id()).isEqualTo(submission.getId());
+        assertThat(entry.submission().commitHash()).isEqualTo("abc123def456");
+        // The submission date is serialized as part of the minimal projection (exact value is asserted elsewhere; a
+        // strict equality here is fragile due to PostgreSQL's UTC storage and microsecond truncation).
+        assertThat(entry.submission().submissionDate()).isNotNull();
+    }
+
+    @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetLatestSubmissionsForExercise_studentForbidden() throws Exception {
         request.getMap(exercisesBaseUrl + programmingExercise.getId() + "/latest-pending-submissions", HttpStatus.FORBIDDEN, Long.class, ProgrammingSubmission.class);

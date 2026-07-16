@@ -168,7 +168,16 @@ public class QuizStatisticService {
                 // check if the result is rated
                 // NOTE: there is never an old Result if the new result is rated
                 if (!result.isRated()) {
-                    quiz.removeResultFromAllStatistics(getPreviousResult(result));
+                    Result previousResult = getPreviousResult(result);
+                    if (previousResult != null && previousResult.getSubmission() != null) {
+                        // Attach the previous submission with its eagerly loaded submitted answers before removing it from the
+                        // statistics: removeResultFromAllStatistics reads the submitted answers, which are lazy on the result
+                        // returned by getPreviousResult. This method may run without an open session (e.g. the asynchronous
+                        // practice-statistics update on a repeated practice submission), where a lazy access would otherwise
+                        // fail with a LazyInitializationException.
+                        previousResult.setSubmission(quizSubmissionRepository.findWithEagerSubmittedAnswersById(previousResult.getSubmission().getId()));
+                    }
+                    quiz.removeResultFromAllStatistics(previousResult);
                 }
                 var quizSubmission = quizSubmissionRepository.findWithEagerSubmittedAnswersById(result.getSubmission().getId());
                 quiz.addResultToAllStatistics(result, quizSubmission);
