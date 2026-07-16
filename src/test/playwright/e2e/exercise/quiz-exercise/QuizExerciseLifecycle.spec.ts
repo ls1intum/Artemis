@@ -2,7 +2,7 @@ import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import multipleChoiceTemplate from '../../../fixtures/exercise/quiz/multiple_choice/template.json';
 import shortAnswerTemplate from '../../../fixtures/exercise/quiz/short_answer/template.json';
 import { admin } from '../../../support/users';
-import { generateUUID } from '../../../support/utils';
+import { generateUUID, readResponseJson } from '../../../support/utils';
 import { test } from '../../../support/fixtures';
 import { expect, Page } from '@playwright/test';
 import { SEED_COURSES } from '../../../support/seedData';
@@ -93,7 +93,7 @@ test.describe('Quiz Exercise Lifecycle', { tag: '@fast' }, () => {
             await quizExerciseCreation.addShortAnswerQuestion(saTitle);
 
             const quizResponse = await quizExerciseCreation.saveQuiz();
-            const quiz: QuizExercise = await quizResponse.json();
+            const quiz: QuizExercise = await readResponseJson(quizResponse);
             createdQuizId = quiz.id;
             expect(quiz.id).toBeDefined();
             expect(quiz.title).toBe(quizTitle);

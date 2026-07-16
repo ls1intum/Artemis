@@ -1,4 +1,5 @@
 import { AfterViewInit, Component, DestroyRef, ElementRef, OnDestroy, OnInit, inject, signal, viewChild } from '@angular/core';
+import { CdkScrollable } from '@angular/cdk/scrolling';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Params, RouterOutlet } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
@@ -70,6 +71,7 @@ import { AutoOrchestrationNotificationService } from 'app/atlas/shared/services/
     styleUrls: ['course-management-container.component.scss'],
     providers: [MetisConversationService],
     imports: [
+        CdkScrollable,
         NgClass,
         RouterOutlet,
         NgTemplateOutlet,

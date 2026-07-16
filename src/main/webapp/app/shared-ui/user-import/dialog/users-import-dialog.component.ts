@@ -4,7 +4,6 @@ import { AlertService } from 'app/foundation/service/alert.service';
 import { DialogModule } from 'primeng/dialog';
 import { ButtonModule } from 'primeng/button';
 import { TableModule } from 'primeng/table';
-import { HttpResponse } from '@angular/common/http';
 import { ExamUserDTO } from 'app/exam/shared/entities/exam-user-dto.model';
 import { Subject } from 'rxjs';
 import { ActionType } from 'app/shared-ui/delete-dialog/delete-dialog.model';
@@ -22,7 +21,7 @@ import { Student } from 'app/openapi/model/student';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { PrimeTemplate } from 'primeng/api';
 import { readExamUserDTOsFromCSVFile, readStudentDTOsFromCSVFile } from 'app/shared-ui/user-import/util/read-users-from-csv';
-import { TutorialGroupApiService } from 'app/openapi/api/tutorialGroupApi.service';
+import { TutorialGroupApi } from 'app/openapi/api/tutorial-group-api';
 
 @Component({
     selector: 'jhi-users-import-dialog',
@@ -36,7 +35,7 @@ export class UsersImportDialogComponent implements OnDestroy {
     private examManagementService = inject(ExamManagementService);
     private courseManagementService = inject(CourseManagementService);
     private adminUserService = inject(AdminUserService);
-    private tutorialGroupApiService = inject(TutorialGroupApiService);
+    private tutorialGroupApiService = inject(TutorialGroupApi);
 
     readonly ActionType = ActionType;
     readonly dialogVisible = signal<boolean>(false);
@@ -144,9 +143,9 @@ export class UsersImportDialogComponent implements OnDestroy {
         const courseId = this.courseId();
 
         if (tutorialGroup) {
-            this.tutorialGroupApiService.importRegistrations(courseId!, tutorialGroup.id!, this.usersToImport(), 'response').subscribe({
-                next: (res: HttpResponse<Array<Student>>) => {
-                    const convertedStudents = this.convertGeneratedDtoToNonGenerated(res.body || []);
+            this.tutorialGroupApiService.importRegistrations(courseId!, tutorialGroup.id!, this.usersToImport()).subscribe({
+                next: (students: Array<Student>) => {
+                    const convertedStudents = this.convertGeneratedDtoToNonGenerated(students || []);
                     this.onSaveSuccess(convertedStudents);
                 },
                 error: () => this.onSaveError(),
@@ -210,15 +209,15 @@ export class UsersImportDialogComponent implements OnDestroy {
      * @param user The user to be checked
      */
     wasImported(user: StudentDTO): boolean {
-        return this.hasImported() && !this.wasNotImported(user);
+        return this.hasImported() && !this.wasNotFound(user) && !this.wasRejectedStaff(user);
     }
 
     /**
-     * True if this user could not be imported, false otherwise
+     * True if this user could not be imported because it was not found
      * @param user The user to be checked
      */
-    wasNotImported(user: StudentDTO): boolean {
-        if (this.hasImported() && this.notFoundUsers?.length === 0 && this.rejectedStaffUsers?.length === 0) {
+    wasNotFound(user: StudentDTO): boolean {
+        if (!this.hasImported() || this.notFoundUsers?.length === 0) {
             return false;
         }
 
@@ -230,6 +229,18 @@ export class UsersImportDialogComponent implements OnDestroy {
             ) {
                 return true;
             }
+        }
+
+        return false;
+    }
+
+    /**
+     * True if this user could not be imported because it is staff
+     * @param user The user to be checked
+     */
+    wasRejectedStaff(user: StudentDTO): boolean {
+        if (!this.hasImported() || this.rejectedStaffUsers?.length === 0) {
+            return false;
         }
 
         for (const rejected of this.rejectedStaffUsers) {
@@ -252,15 +263,22 @@ export class UsersImportDialogComponent implements OnDestroy {
         return !this.hasImported()
             ? 0
             : this.examUserMode()
-              ? this.examUsersToImport().length - this.numberOfUsersNotImported
-              : this.usersToImport().length - this.numberOfUsersNotImported;
+              ? this.examUsersToImport().length - this.numberOfUsersNotFound - this.numberOfStaffRejected
+              : this.usersToImport().length - this.numberOfUsersNotFound - this.numberOfStaffRejected;
     }
 
     /**
      * Number of users which could not be imported
      */
-    get numberOfUsersNotImported(): number {
-        return !this.hasImported() ? 0 : this.notFoundUsers.length + this.rejectedStaffUsers.length;
+    get numberOfUsersNotFound(): number {
+        return !this.hasImported() ? 0 : this.notFoundUsers.length;
+    }
+
+    /**
+     * Number of staff users which could not be imported
+     */
+    get numberOfStaffRejected(): number {
+        return !this.hasImported() ? 0 : this.rejectedStaffUsers.length;
     }
 
     get isSubmitDisabled(): boolean {

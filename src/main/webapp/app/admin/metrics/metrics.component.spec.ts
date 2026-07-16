@@ -3,7 +3,6 @@
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { of, throwError } from 'rxjs';
@@ -15,8 +14,6 @@ import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 
 describe('MetricsComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let comp: MetricsComponent;
     let fixture: ComponentFixture<MetricsComponent>;
     let service: MetricsService;

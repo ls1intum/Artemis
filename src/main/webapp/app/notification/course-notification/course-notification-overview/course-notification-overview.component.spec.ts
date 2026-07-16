@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { CourseNotificationOverviewComponent } from 'app/notification/course-notification/course-notification-overview/course-notification-overview.component';
@@ -28,8 +27,6 @@ import { CourseNotificationSettingInfo } from 'app/notification/shared/entities/
 import { CourseNotificationPresetPickerComponent } from 'app/notification/course-notification/course-notification-preset-picker/course-notification-preset-picker.component';
 
 describe('CourseNotificationOverviewComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: CourseNotificationOverviewComponent;
     let fixture: ComponentFixture<CourseNotificationOverviewComponent>;
     let courseNotificationService: CourseNotificationService;

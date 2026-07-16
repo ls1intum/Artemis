@@ -1,5 +1,4 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { Course, CourseInformationSharingConfiguration } from 'app/course/shared/entities/course.model';
 import { CourseTutorialGroupDetailContainerComponent } from './course-tutorial-group-detail-container.component';
@@ -12,8 +11,6 @@ import { mockedActivatedRoute } from 'test/helpers/mocks/activated-route/mock-ac
 import { By } from '@angular/platform-browser';
 
 describe('CourseTutorialGroupDetailContainerComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<CourseTutorialGroupDetailContainerComponent>;
     let component: CourseTutorialGroupDetailContainerComponent;
     let tutorialGroupCourseAndGroupService: MockTutorialGroupCourseAndGroupService;

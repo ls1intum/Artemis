@@ -1,6 +1,5 @@
 import { ComponentFixture, ComponentFixtureAutoDetect, TestBed } from '@angular/core/testing';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { NO_ERRORS_SCHEMA } from '@angular/core';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { BehaviorSubject, Subject, of } from 'rxjs';
@@ -40,8 +39,6 @@ class ActivatedRouteStub {
 }
 
 describe('BuildQueueComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: BuildOverviewComponent;
     let fixture: ComponentFixture<BuildOverviewComponent>;
 

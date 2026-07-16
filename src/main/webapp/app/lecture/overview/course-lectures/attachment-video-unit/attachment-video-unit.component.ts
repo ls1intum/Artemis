@@ -320,7 +320,7 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
             return;
         }
 
-        if (failedUrl !== this.getAttachmentLink()) {
+        if (failedUrl !== this.getVersionedAttachmentLink()) {
             return;
         }
 
@@ -433,7 +433,7 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
         this.isPdfLoading.set(true);
         this.pdfLoadError.set(false);
 
-        const link = this.getAttachmentLink();
+        const link = this.getVersionedAttachmentLink();
 
         if (!link) {
             this.pdfLoadError.set(true);
@@ -449,7 +449,7 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
         this.isPdfLoading.set(true);
         this.isBlobLoadInProgress.set(true);
 
-        const link = this.getAttachmentLink();
+        const link = this.getVersionedAttachmentLink();
         if (!link) {
             this.pdfLoadError.set(true);
             this.isPdfLoading.set(false);
@@ -744,9 +744,15 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
         this.scienceService.logEvent(ScienceEventType.LECTURE__OPEN_UNIT, this.lectureUnit().id);
 
         const link = this.getAttachmentLink();
+        const attachment = this.lectureUnit().attachment;
 
-        if (link) {
-            this.fileService.downloadFileByAttachmentName(link, this.lectureUnit().attachment!.name!);
+        if (link && attachment) {
+            if (attachment.studentVersion) {
+                // The endpoint supplies the attachment's display name through Content-Disposition. Keep the unique student-version path as the browser cache key.
+                this.fileService.downloadFile(link);
+            } else {
+                this.fileService.downloadFileByAttachmentName(link, attachment.name!, attachment.version);
+            }
             this.onCompletion.emit({ lectureUnit: this.lectureUnit(), completed: true });
         }
     }
@@ -760,13 +766,19 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
         return link ? addPublicFilePrefix(link) : undefined;
     }
 
+    private getVersionedAttachmentLink(): string | undefined {
+        const link = this.getAttachmentLink();
+        const attachment = this.lectureUnit().attachment;
+        return link && attachment ? this.fileService.addAttachmentVersionToUrl(link, attachment.version) : undefined;
+    }
+
     handleOriginalVersion() {
         this.scienceService.logEvent(ScienceEventType.LECTURE__OPEN_UNIT, this.lectureUnit().id);
 
         const link = addPublicFilePrefix(this.lectureUnit().attachment!.link);
 
         if (link) {
-            this.fileService.downloadFileByAttachmentName(link, this.lectureUnit().attachment!.name!);
+            this.fileService.downloadFileByAttachmentName(link, this.lectureUnit().attachment!.name!, this.lectureUnit().attachment!.version);
             this.onCompletion.emit({ lectureUnit: this.lectureUnit(), completed: true });
         }
     }
