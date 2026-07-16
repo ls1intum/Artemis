@@ -2,7 +2,7 @@
     <ng-template #header>
         <h4 jhiTranslate="metrics.jvm.threads.dump.title"></h4>
     </ng-template>
-    <p-selectButton
+    <p-selectbutton
         class="block mb-3"
         [options]="filterOptions"
         [(ngModel)]="selectedThreadState"
@@ -17,7 +17,7 @@
                 <span>{{ option.count() }}</span>
             </span>
         </ng-template>
-    </p-selectButton>
+    </p-selectbutton>
     <div class="mt-2 mb-1 text-muted-color">{{ 'metrics.filter' | artemisTranslate }}: {{ filteredThreads().length }} {{ 'metrics.matches' | artemisTranslate }}</div>
     <input type="text" [(ngModel)]="threadFilter" pInputText class="w-full mb-3" />
     @for (thread of filteredThreads(); track thread) {

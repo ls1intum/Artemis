@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
 import { of, throwError } from 'rxjs';
@@ -13,8 +12,6 @@ import { ComponentRef } from '@angular/core';
 import { IrisCourseSettingsDTO, IrisCourseSettingsWithRateLimitDTO } from 'app/iris/shared/entities/settings/iris-course-settings.model';
 
 describe('IrisEnabledComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let comp: IrisEnabledComponent;
     let componentRef: ComponentRef<IrisEnabledComponent>;
     let fixture: ComponentFixture<IrisEnabledComponent>;

@@ -162,7 +162,7 @@
                     </div>
                     <p class="mb-2 text-sm leading-snug text-muted-color">{{ getFeatureDescriptionKey(featureInfo.feature) | artemisTranslate }}</p>
                     @if (!featureInfo.isActive) {
-                        <p-message severity="warn" [text]="getFeatureWarningKey(featureInfo.feature) | artemisTranslate" styleClass="w-full" data-testid="feature-warning" />
+                        <p-message severity="warn" styleClass="w-full" data-testid="feature-warning">{{ getFeatureWarningKey(featureInfo.feature) | artemisTranslate }}</p-message>
                     }
                 </div>
             }

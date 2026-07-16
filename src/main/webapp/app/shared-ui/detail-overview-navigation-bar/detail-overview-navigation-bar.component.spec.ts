@@ -1,5 +1,4 @@
 import { vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { DetailOverviewNavigationBarComponent } from 'app/shared-ui/detail-overview-navigation-bar/detail-overview-navigation-bar.component';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
@@ -15,7 +14,6 @@ const headlineToScrollInto = {
 } as any as HTMLElement;
 
 describe('DetailOverviewNavigationBar', () => {
-    setupTestBed({ zoneless: true });
     let component: DetailOverviewNavigationBarComponent;
     let fixture: ComponentFixture<DetailOverviewNavigationBarComponent>;
 

@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
@@ -10,8 +9,6 @@ import { ScienceSetting } from 'app/account/user/settings/science-settings/scien
 import { User } from 'app/account/user/user.model';
 
 describe('UserSettingsService', () => {
-    setupTestBed({ zoneless: true });
-
     let service: UserSettingsService;
     let httpMock: HttpTestingController;
 
