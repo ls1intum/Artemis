@@ -11,10 +11,8 @@ import { MockAlertService } from 'test/helpers/mocks/service/mock-alert.service'
 import { ImportTableComponent } from 'app/atlas/manage/import-list/import-table.component';
 import { Column } from 'app/shared-ui/import/import.component';
 import { PaginatorState } from 'primeng/paginator';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('ImportTableComponent', () => {
-    setupTestBed({ zoneless: true });
     let component: ImportTableComponent<Course>;
     let fixture: ComponentFixture<ImportTableComponent<Course>>;
 

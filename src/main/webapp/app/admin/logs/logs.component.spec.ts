@@ -3,7 +3,6 @@
  */
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { of } from 'rxjs';
@@ -13,8 +12,6 @@ import { LogsService } from 'app/admin/logs/logs.service';
 import { Log, LoggersResponse } from 'app/admin/logs/log.model';
 
 describe('LogsComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let comp: LogsComponent;
     let fixture: ComponentFixture<LogsComponent>;
     let service: LogsService;

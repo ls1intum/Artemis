@@ -5,7 +5,6 @@
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { of } from 'rxjs';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
@@ -35,8 +34,6 @@ import { DialogService } from 'primeng/dynamicdialog';
 import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
 
 describe('StandardizedCompetencyManagementComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let componentFixture: ComponentFixture<StandardizedCompetencyManagementComponent>;
     let component: StandardizedCompetencyManagementComponent;
     let competencyService: StandardizedCompetencyService;
