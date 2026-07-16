@@ -38,10 +38,8 @@ import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { FireworksComponent } from 'app/atlas/overview/fireworks/fireworks.component';
 import { ScienceService } from 'app/foundation/science/science.service';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('CourseCompetenciesDetails', () => {
-    setupTestBed({ zoneless: true });
     let fixture: ComponentFixture<CourseCompetenciesDetailsComponent>;
     let component: CourseCompetenciesDetailsComponent;
 

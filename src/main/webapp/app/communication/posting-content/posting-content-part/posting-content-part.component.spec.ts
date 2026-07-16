@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { DebugElement, Directive, computed, inject, input } from '@angular/core';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
@@ -54,8 +53,6 @@ class SyncMarkdownDirective {
 }
 
 describe('PostingContentPartComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: PostingContentPartComponent;
     let fixture: ComponentFixture<PostingContentPartComponent>;
     let debugElement: DebugElement;

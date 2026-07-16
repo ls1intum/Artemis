@@ -4,7 +4,6 @@
  */
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import dayjs from 'dayjs/esm';
@@ -71,7 +70,6 @@ class MockIrisExerciseChatbotButtonComponent {
 }
 
 describe('TextEditorComponent', () => {
-    setupTestBed({ zoneless: true });
     let comp: TextEditorComponent;
     let fixture: ComponentFixture<TextEditorComponent>;
     let textService: TextEditorService;

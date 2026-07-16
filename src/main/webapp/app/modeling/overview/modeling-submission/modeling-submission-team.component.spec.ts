@@ -1,7 +1,6 @@
 import { Component, EventEmitter, input, output } from '@angular/core';
 import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ChangeDetectorRef } from '@angular/core';
@@ -78,8 +77,6 @@ class StubModelingEditorComponent {
 }
 
 describe('ModelingSubmissionComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let comp: ModelingSubmissionComponent;
     let fixture: ComponentFixture<ModelingSubmissionComponent>;
     let service: ModelingSubmissionService;

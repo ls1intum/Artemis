@@ -11,7 +11,6 @@ import { ModelingEditorComponent } from 'app/modeling/shared/modeling-editor/mod
 import { MockComponent, MockDirective, MockProvider } from 'ng-mocks';
 import { MockTranslateService, TranslatePipeMock } from 'test/helpers/mocks/service/mock-translate.service';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 // Stub for ModelingEditorComponent to avoid Apollon editor initialization issues
 @Component({
@@ -44,8 +43,6 @@ import { ArtemisMarkdownService } from 'app/foundation/service/markdown.service'
 import { htmlForMarkdown } from 'app/foundation/util/markdown.conversion.util';
 
 describe('ModelingExamSubmissionComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<ModelingExamSubmissionComponent>;
     let comp: ModelingExamSubmissionComponent;
 

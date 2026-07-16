@@ -2,16 +2,15 @@ import { Injectable, inject } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { map } from 'rxjs/operators';
 import { Observable } from 'rxjs';
-import { HyperionQuizQuestionGenerationApiService } from 'app/openapi/api/hyperionQuizQuestionGenerationApi.service';
-import { QuizQuestionGenerationRequest } from 'app/openapi/model/quizQuestionGenerationRequest';
-import { QuizQuestionBulkRefinementRequest } from 'app/openapi/model/quizQuestionBulkRefinementRequest';
-import { QuizQuestionRefinementResponse } from 'app/openapi/model/quizQuestionRefinementResponse';
+import { HyperionQuizQuestionGenerationApi } from 'app/openapi/api/hyperion-quiz-question-generation-api';
+import { QuizQuestionGenerationRequest } from 'app/openapi/model/quiz-question-generation-request';
+import { QuizQuestionBulkRefinementRequest } from 'app/openapi/model/quiz-question-bulk-refinement-request';
+import { QuizQuestionRefinementResponse } from 'app/openapi/model/quiz-question-refinement-response';
 import {
     GeneratedQuestion,
     GeneratedQuestionType,
     QuizQuestionBulkRefinementResult,
     QuizQuestionRefinementResult,
-    SuccessfulRefinementResponse,
 } from 'app/quiz/manage/update/quiz-ai-generation-modal/quiz-ai-generation.types';
 import { MultipleChoiceQuestion } from 'app/quiz/shared/entities/multiple-choice-question.model';
 import { ScoringType } from 'app/quiz/shared/entities/quiz-question.model';
@@ -20,7 +19,7 @@ import { deepClone } from 'app/foundation/util/deep-clone.util';
 
 @Injectable({ providedIn: 'root' })
 export class QuizAiGenerationService {
-    private hyperionQuizQuestionGenerationApiService = inject(HyperionQuizQuestionGenerationApiService);
+    private hyperionQuizQuestionGenerationApiService = inject(HyperionQuizQuestionGenerationApi);
     private translateService = inject(TranslateService);
     generateQuizQuestions(courseId: number, request: QuizQuestionGenerationRequest): Observable<GeneratedQuestion[]> {
         return this.hyperionQuizQuestionGenerationApiService
@@ -57,7 +56,9 @@ export class QuizAiGenerationService {
         return this.hyperionQuizQuestionGenerationApiService.refineQuizQuestion(courseId, request).pipe(
             map((response: QuizQuestionRefinementResponse) => {
                 if (response.type === 'success') {
-                    const success = response as SuccessfulRefinementResponse;
+                    // The generated response type models the refined question polymorphically and omits `question`,
+                    // but a successful refinement always carries it at runtime; narrow to the shape that includes it.
+                    const success = response as QuizQuestionRefinementResponse & { question: Omit<GeneratedQuestion, 'id'> };
                     const previousQuestion = deepClone(question);
                     return {
                         refinedQuestion: this.applyRefinedContentToQuestion(question, this.toGeneratedQuestion(success.question, 0)),
@@ -102,7 +103,8 @@ export class QuizAiGenerationService {
                 const previousSnapshots = new Map<MultipleChoiceQuestion, MultipleChoiceQuestion>();
                 response.refinements.forEach((refinement, index) => {
                     if (refinement.type === 'success') {
-                        const success = refinement as SuccessfulRefinementResponse;
+                        // See note above: `question` is present at runtime for successful refinements but not in the generated type.
+                        const success = refinement as typeof refinement & { question: Omit<GeneratedQuestion, 'id'> };
                         previousSnapshots.set(questions[index], deepClone(questions[index]));
                         this.applyRefinedContentToQuestion(questions[index], this.toGeneratedQuestion(success.question, index));
                         results.set(questions[index], refinement.reasoning);

@@ -25,11 +25,8 @@ import { FullscreenComponent } from 'app/modeling/shared/fullscreen/fullscreen.c
 import { ArtemisMarkdownService } from 'app/foundation/service/markdown.service';
 import { htmlForMarkdown } from 'app/foundation/util/markdown.conversion.util';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('FileUploadExamSubmissionComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<FileUploadExamSubmissionComponent>;
     let comp: FileUploadExamSubmissionComponent;
     let alertService: AlertService;

@@ -1,6 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { MockDirective } from 'ng-mocks';
@@ -18,8 +17,6 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { By } from '@angular/platform-browser';
 
 describe('ImprintComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: ImprintComponent;
     let fixture: ComponentFixture<ImprintComponent>;
     let legalDocumentService: LegalDocumentService;

@@ -1,6 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { LegalDocumentService } from 'app/core/legal/legal-document.service';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { PrivacyComponent } from 'app/core/legal/privacy.component';
@@ -21,8 +20,6 @@ import { TranslateService } from '@ngx-translate/core';
 import { By } from '@angular/platform-browser';
 
 describe('PrivacyComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: PrivacyComponent;
     let fixture: ComponentFixture<PrivacyComponent>;
     let privacyStatementService: LegalDocumentService;

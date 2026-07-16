@@ -41,7 +41,7 @@
             <fa-icon [icon]="faSave" />
             <span jhiTranslate="entity.action.save"></span>
         </button>
-        <p-selectButton
+        <p-selectbutton
             size="small"
             [options]="LANGUAGE_OPTIONS"
             [ngModel]="currentLanguage()"
@@ -53,7 +53,7 @@
             <ng-template let-option #item>
                 {{ option.labelKey | artemisTranslate }}
             </ng-template>
-        </p-selectButton>
+        </p-selectbutton>
     </div>
 </div>
 

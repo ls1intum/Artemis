@@ -9,10 +9,9 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ActivatedRoute, Params, provideRouter } from '@angular/router';
 import { BehaviorSubject, of, throwError } from 'rxjs';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { TranslateModule } from '@ngx-translate/core';
+import { provideTranslateService } from '@ngx-translate/core';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import dayjs from 'dayjs/esm';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 import 'app/foundation/util/array.extension';
 
@@ -42,8 +41,6 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 import { ArtemisTimeAgoPipe } from 'app/foundation/pipes/artemis-time-ago.pipe';
 
 describe('FileUploadSubmissionComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: FileUploadSubmissionComponent;
     let fixture: ComponentFixture<FileUploadSubmissionComponent>;
     let fileUploadSubmissionService: FileUploadSubmissionService;
@@ -121,7 +118,7 @@ describe('FileUploadSubmissionComponent', () => {
         routeParams$ = new BehaviorSubject<Params>({ participationId: 111 });
 
         await TestBed.configureTestingModule({
-            imports: [FileUploadSubmissionComponent, TranslateModule.forRoot()],
+            imports: [FileUploadSubmissionComponent],
             providers: [
                 provideHttpClient(),
                 provideHttpClientTesting(),
@@ -150,6 +147,7 @@ describe('FileUploadSubmissionComponent', () => {
                         downloadFile: vi.fn(),
                     },
                 },
+                provideTranslateService(),
             ],
         })
             .overrideComponent(FileUploadSubmissionComponent, {

@@ -1,6 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { DebugElement, ElementRef, signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
@@ -53,8 +52,6 @@ import { MODULE_FEATURE_IRIS } from 'app/app.constants';
 import { LectureUnitType } from 'app/lecture/shared/entities/lecture-unit/lectureUnit.model';
 
 describe('CourseLectureDetailsComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<CourseLectureDetailsComponent>;
     let courseLecturesDetailsComponent: CourseLectureDetailsComponent;
     let lecture: Lecture;

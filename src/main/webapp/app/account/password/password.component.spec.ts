@@ -3,7 +3,6 @@
  */
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { provideHttpClient } from '@angular/common/http';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
@@ -20,8 +19,6 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 
 describe('Password Component Tests', () => {
     describe('PasswordComponent', () => {
-        setupTestBed({ zoneless: true });
-
         let comp: PasswordComponent;
         let fixture: ComponentFixture<PasswordComponent>;
         let service: PasswordService;

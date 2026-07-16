@@ -21,10 +21,8 @@ import { CourseImportStandardizedPrerequisitesComponent } from 'app/atlas/manage
 import { PrerequisiteService } from 'app/atlas/manage/services/prerequisite.service';
 import { StandardizedCompetencyService } from 'app/atlas/shared/standardized-competencies/standardized-competency.service';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('CourseImportStandardizedPrerequisitesComponent', () => {
-    setupTestBed({ zoneless: true });
     let componentFixture: ComponentFixture<CourseImportStandardizedPrerequisitesComponent>;
     let component: CourseImportStandardizedPrerequisitesComponent;
     const courseId = 1;
