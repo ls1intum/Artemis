@@ -34,11 +34,15 @@ minimumReleaseAgeExclude:
     # vite-plugin-angular / vitest-angular were published recently. Remove once a
     # stable AnalogJS 2.6.x is older than the cutoff.
     - '@analogjs/*'
-    # The Angular 22.0.6 framework packages were published <24h before this latest-dependency
-    # bump (2026-07-09), so the frozen supply-chain gate rejects them until they age past the
+    # The Angular 22.0.7 framework + CLI/build/devkit packages (including the transitive
+    # @angular-devkit/@ngtools/@schematics tooling) were published <24h before this latest-dependency
+    # bump (2026-07-15/16), so the frozen supply-chain gate rejects them until they age past the
     # 24h cutoff. This is the dedicated latest-dependency branch, so the newest patch is adopted
-    # deliberately. Remove this once the versions are older than the cutoff.
+    # deliberately. Remove these once the versions are older than the cutoff.
     - '@angular/*'
+    - '@angular-devkit/*'
+    - '@ngtools/*'
+    - '@schematics/*'
 
 # Tell pnpm that Angular 22 is an acceptable peer for packages whose published
 # peerDependencies range still lists only older majors ("18.x || 19.x || 20.x || 21.x").
