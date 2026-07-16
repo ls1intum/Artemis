@@ -35,6 +35,4 @@ public record VariantGenerationRequestDTO(@Nullable DifficultyLevel targetDiffic
     public boolean hasAnyIntent() {
         return targetDifficulty != null || (domainText != null && !domainText.isBlank()) || (additionalInstructions != null && !additionalInstructions.isBlank());
     }
-
-    // TODO (Sonnet): Reasonable @Size limits on the free-text fields (they go into prompts — bound the token cost).
 }
