@@ -52,7 +52,7 @@ export class LectureAttachmentReferenceAction extends TextEditorAction {
                     .map((lecture) => {
                         const attachmentsWithFileUrls = cloneDeep(lecture.attachments)?.map((attachment) => {
                             if (attachment.link && attachment.name) {
-                                attachment.link = this.fileService.createAttachmentFileUrl(attachment.link, attachment.name, false);
+                                attachment.link = this.fileService.createAttachmentFileUrl(attachment.link, attachment.name, false, attachment.version);
                                 attachment.linkUrl = addPublicFilePrefix(attachment.link);
                             }
 
@@ -146,7 +146,8 @@ export class LectureAttachmentReferenceAction extends TextEditorAction {
         const attachment = attachmentVideoUnit.attachment;
         if (attachment && attachment.link) {
             const link = attachment.studentVersion || this.fileService.createStudentLink(attachment.link);
-            const shortLink = link.split('attachments/')[1];
+            const versionedLink = this.fileService.addAttachmentVersionToUrl(link, attachment.version);
+            const shortLink = versionedLink.split('attachments/')[1];
             this.replaceTextAtCurrentSelection(editor, `[lecture-unit]${sanitizeStringForMarkdownEditor(attachmentVideoUnit.name)}(${shortLink})[/lecture-unit]`);
         }
     }

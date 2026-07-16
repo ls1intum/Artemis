@@ -1,6 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ParticipantScoresDistributionComponent } from 'app/course/participant-scores/participant-scores-distribution/participant-scores-distribution.component';
 import { MockProvider } from 'ng-mocks';
 import { GradingService } from 'app/assessment/manage/grading/grading-service';
@@ -11,7 +10,6 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { TranslateService } from '@ngx-translate/core';
 
 describe('ParticipantScoresDistributionComponent', () => {
-    setupTestBed({ zoneless: true });
     let fixture: ComponentFixture<ParticipantScoresDistributionComponent>;
     let component: ParticipantScoresDistributionComponent;
 

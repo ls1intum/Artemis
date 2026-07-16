@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ScaCategoryDistributionChartComponent } from 'app/programming/manage/grading/charts/sca-category-distribution-chart.component';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
@@ -10,8 +9,6 @@ import { StaticCodeAnalysisCategory, StaticCodeAnalysisCategoryState } from 'app
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 
 describe('SCA category distribution chart', () => {
-    setupTestBed({ zoneless: true });
-
     let component: ScaCategoryDistributionChartComponent;
     let fixture: ComponentFixture<ScaCategoryDistributionChartComponent>;
 

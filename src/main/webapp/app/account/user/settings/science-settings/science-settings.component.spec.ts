@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
@@ -19,8 +18,6 @@ import { UserSettingsService } from 'app/account/user/settings/directive/user-se
 import { of, throwError } from 'rxjs';
 
 describe('ScienceSettingsComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let comp: ScienceSettingsComponent;
     let fixture: ComponentFixture<ScienceSettingsComponent>;
 

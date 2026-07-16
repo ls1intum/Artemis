@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MetisService } from 'app/communication/service/metis.service';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
@@ -25,8 +24,6 @@ import { MockProvider } from 'ng-mocks';
 import { DialogService } from 'primeng/dynamicdialog';
 
 describe('MessageReplyInlineInputComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: MessageReplyInlineInputComponent;
     let fixture: ComponentFixture<MessageReplyInlineInputComponent>;
     let metisService: MetisService;

@@ -22,8 +22,9 @@
                         #deleteFromPicker
                         [inputId]="'deleteFromDate-' + operation.name"
                         [pickerType]="DateTimePickerType.DEFAULT"
-                        [value]="operation.deleteFrom"
-                        (valueChange)="onDeleteFromChange(operation, deleteFromPicker.isValid() ? deleteFromPicker.value() : undefined)"
+                        [ngModel]="operation.deleteFrom"
+                        [ngModelOptions]="{ standalone: true }"
+                        (valueChange)="onDeleteFromChange(operation, deleteFromPicker.dateInput.valid ? deleteFromPicker.value() : undefined)"
                         [error]="!operation.datesValid()"
                         [hideLabelName]="true"
                         [hideValidationMessage]="true"
@@ -39,8 +40,9 @@
                         #deleteToPicker
                         [inputId]="'deleteToDate-' + operation.name"
                         [pickerType]="DateTimePickerType.DEFAULT"
-                        [value]="operation.deleteTo"
-                        (valueChange)="onDeleteToChange(operation, deleteToPicker.isValid() ? deleteToPicker.value() : undefined)"
+                        [ngModel]="operation.deleteTo"
+                        [ngModelOptions]="{ standalone: true }"
+                        (valueChange)="onDeleteToChange(operation, deleteToPicker.dateInput.valid ? deleteToPicker.value() : undefined)"
                         [error]="!operation.datesValid()"
                         [hideLabelName]="true"
                         [hideValidationMessage]="true"
