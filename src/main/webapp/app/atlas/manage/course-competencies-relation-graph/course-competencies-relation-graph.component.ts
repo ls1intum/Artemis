@@ -43,14 +43,16 @@ export class CourseCompetenciesRelationGraphComponent {
     constructor() {
         effect(() => {
             return this.nodes.set(
-                this.courseCompetencies().map((courseCompetency): CourseCompetencyGraphNode => ({
-                    id: courseCompetency.id!.toString(),
-                    label: courseCompetency.title,
-                    data: {
-                        id: courseCompetency.id!,
-                        type: courseCompetency.type,
-                    },
-                })),
+                this.courseCompetencies().map(
+                    (courseCompetency): CourseCompetencyGraphNode => ({
+                        id: courseCompetency.id!.toString(),
+                        label: courseCompetency.title,
+                        data: {
+                            id: courseCompetency.id!,
+                            type: courseCompetency.type,
+                        },
+                    }),
+                ),
             );
         });
     }

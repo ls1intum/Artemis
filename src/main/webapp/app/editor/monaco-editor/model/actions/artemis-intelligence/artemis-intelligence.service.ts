@@ -41,12 +41,14 @@ export class ArtemisIntelligenceService {
                 faqText: toBeRewritten || '',
             };
             return this.hyperionFaqApiService.rewriteFaq(contextId, request).pipe(
-                map((response: RewriteFaqResponse): RewriteResult => ({
-                    result: response.rewrittenText,
-                    inconsistencies: response.inconsistencies,
-                    suggestions: response.suggestions,
-                    improvement: response.improvement,
-                })),
+                map(
+                    (response: RewriteFaqResponse): RewriteResult => ({
+                        result: response.rewrittenText,
+                        inconsistencies: response.inconsistencies,
+                        suggestions: response.suggestions,
+                        improvement: response.improvement,
+                    }),
+                ),
                 tap(() => {
                     this.alertService.success('artemisApp.markdownEditor.artemisIntelligence.alerts.rewrite.success');
                 }),
@@ -58,12 +60,14 @@ export class ArtemisIntelligenceService {
             };
 
             return this.hyperionProblemStatementApiService.rewriteProblemStatement(contextId, request).pipe(
-                map((response: ProblemStatementRewriteResponse): RewriteResult => ({
-                    result: response.rewrittenText,
-                    inconsistencies: undefined,
-                    suggestions: undefined,
-                    improvement: response.improved ? 'Text was improved' : 'Text was not improved',
-                })),
+                map(
+                    (response: ProblemStatementRewriteResponse): RewriteResult => ({
+                        result: response.rewrittenText,
+                        inconsistencies: undefined,
+                        suggestions: undefined,
+                        improvement: response.improved ? 'Text was improved' : 'Text was not improved',
+                    }),
+                ),
                 tap(() => {
                     this.alertService.success('artemisApp.markdownEditor.artemisIntelligence.alerts.rewrite.success');
                 }),

@@ -98,11 +98,13 @@ export class ProgrammingExerciseInstructionAnalysisService {
 
         return analysis
             .flat()
-            .map(([lineNumber, values, issueType]: AnalysisItem): AnalysisItem => [
-                lineNumber,
-                values.map((id) => this.translateService.instant(this.getTranslationByIssueType(issueType), { id })),
-                issueType,
-            ])
+            .map(
+                ([lineNumber, values, issueType]: AnalysisItem): AnalysisItem => [
+                    lineNumber,
+                    values.map((id) => this.translateService.instant(this.getTranslationByIssueType(issueType), { id })),
+                    issueType,
+                ],
+            )
             .reduce<ProblemStatementAnalysis>(reducer, new Map());
     };
 

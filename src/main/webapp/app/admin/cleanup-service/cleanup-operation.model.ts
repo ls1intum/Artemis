@@ -2,7 +2,12 @@ import { WritableSignal } from '@angular/core';
 import dayjs from 'dayjs/esm';
 
 export type OperationName =
-    'deleteOrphans' | 'deletePlagiarismComparisons' | 'deleteNonRatedResults' | 'deleteOldRatedResults' | 'deleteOldSubmissionVersions' | 'deleteOldFeedback';
+    | 'deleteOrphans'
+    | 'deletePlagiarismComparisons'
+    | 'deleteNonRatedResults'
+    | 'deleteOldRatedResults'
+    | 'deleteOldSubmissionVersions'
+    | 'deleteOldFeedback';
 
 /** Instantiated in code; fields are populated after construction, hence the definite-assignment (!) markers. */
 export class CleanupOperation {
