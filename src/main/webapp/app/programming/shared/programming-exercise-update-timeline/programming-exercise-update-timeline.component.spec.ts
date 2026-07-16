@@ -795,8 +795,8 @@ describe('ProgrammingExerciseUpdateTimelineComponent', () => {
         fixture.detectChanges();
         await fixture.whenStable();
 
-        const rejectButton = document.querySelector('.p-confirm-dialog-reject') as HTMLButtonElement;
-        rejectButton?.click();
+        const rejectButton = document.querySelector('.p-confirmdialog-reject-button') as HTMLButtonElement;
+        rejectButton.click();
         fixture.detectChanges();
         await fixture.whenStable();
 
@@ -816,12 +816,12 @@ describe('ProgrammingExerciseUpdateTimelineComponent', () => {
         fixture.detectChanges();
         await fixture.whenStable();
 
-        const acceptButton = document.querySelector('.p-confirm-dialog-accept') as HTMLButtonElement;
-        acceptButton?.click();
+        const acceptButton = document.querySelector('.p-confirmdialog-accept-button') as HTMLButtonElement;
+        acceptButton.click();
         fixture.detectChanges();
         await fixture.whenStable();
 
-        expect(component.setTestCaseVisibilityToAfterDueDate()).toBe(true);
+        expect(component.setTestCaseVisibilityToAfterDueDate()).toBe(false);
     });
 
     it('should not show a confirmation dialog when checking setTestCaseVisibilityToAfterDueDate in exam mode during import', async () => {
