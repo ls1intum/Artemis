@@ -28,7 +28,7 @@ import { LLMSelectionDecision } from 'app/account/user/shared/dto/updateLLMSelec
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { SearchEntityType, SearchableEntity } from 'app/core/navbar/global-search/models/searchable-entity.model';
 import { SearchableEntityItemComponent } from 'app/core/navbar/global-search/components/modal/searchable-entity-item/searchable-entity-item.component';
-import { GlobalSearchResult } from 'app/openapi/model/globalSearchResult';
+import { GlobalSearchResult } from 'app/openapi/model/global-search-result';
 import { SearchResultItemComponent } from 'app/core/navbar/global-search/components/modal/search-result-item/search-result-item.component';
 import { Router } from '@angular/router';
 import { SearchOverlayService } from 'app/core/navbar/global-search/services/search-overlay.service';
@@ -278,7 +278,7 @@ export class GlobalSearchNavigationViewComponent extends SearchResultView {
 
         switch (result.type) {
             case 'course':
-                this.router.navigate(['/courses', courseId]);
+                void this.router.navigate(['/courses', courseId]);
                 break;
             case 'exercise':
                 if (result.id) this.navigateToExercise(result, courseId);
@@ -293,7 +293,7 @@ export class GlobalSearchNavigationViewComponent extends SearchResultView {
                 if (result.id) this.navigateToExam(result, courseId);
                 break;
             case 'faq':
-                this.router.navigate(['/courses', courseId, 'faq']);
+                void this.router.navigate(['/courses', courseId, 'faq']);
                 break;
             case 'channel':
                 if (result.id) this.navigateToChannel(courseId, result.id);
@@ -320,27 +320,27 @@ export class GlobalSearchNavigationViewComponent extends SearchResultView {
             this.navigateToExamExerciseDetailsPage(courseId, examId, exerciseGroupId, result);
         } else if (examId && isAtLeastTutor) {
             // Tutors: exam exercise assessment dashboard
-            this.router.navigate(['/course-management', courseId, 'exams', examId, 'assessment-dashboard', result.id]);
+            void this.router.navigate(['/course-management', courseId, 'exams', examId, 'assessment-dashboard', result.id]);
         } else if (examId) {
             // Students: student exam view
-            this.router.navigate(['/courses', courseId, 'exams', examId]);
+            void this.router.navigate(['/courses', courseId, 'exams', examId]);
         } else {
             // Students: student exercise view
-            this.router.navigate(['/courses', courseId, 'exercises', result.id]);
+            void this.router.navigate(['/courses', courseId, 'exercises', result.id]);
         }
     }
 
     private navigateToExamExerciseDetailsPage(courseId: string, examId: string, exerciseGroupId: string, result: GlobalSearchResult) {
         const typeSegment = (result.badge?.toLowerCase().replace(/ /g, '-') ?? 'text') + '-exercises';
-        this.router.navigate(['/course-management', courseId, 'exams', examId, 'exercise-groups', exerciseGroupId, typeSegment, result.id]);
+        void this.router.navigate(['/course-management', courseId, 'exams', examId, 'exercise-groups', exerciseGroupId, typeSegment, result.id]);
     }
 
     private navigateToStudentExamView(courseId: string, examId: string) {
-        this.router.navigate(['/courses', courseId, 'exams', examId]);
+        void this.router.navigate(['/courses', courseId, 'exams', examId]);
     }
 
     private navigateToLecture(courseId: string, lectureId: string) {
-        this.router.navigate(['/courses', courseId, 'lectures', lectureId]);
+        void this.router.navigate(['/courses', courseId, 'lectures', lectureId]);
     }
 
     private navigateToLectureUnit(result: GlobalSearchResult, courseId: string) {
@@ -354,22 +354,22 @@ export class GlobalSearchNavigationViewComponent extends SearchResultView {
         const isAtLeastEditor = !!result.metadata?.['isAtLeastEditor'];
         const isAtLeastTutor = !!result.metadata?.['isAtLeastTutor'];
         if (isAtLeastEditor) {
-            this.router.navigate(['/course-management', courseId, 'exams', result.id]);
+            void this.router.navigate(['/course-management', courseId, 'exams', result.id]);
         } else if (isAtLeastTutor) {
-            this.router.navigate(['/course-management', courseId, 'exams', result.id, 'assessment-dashboard']);
+            void this.router.navigate(['/course-management', courseId, 'exams', result.id, 'assessment-dashboard']);
         } else {
             this.navigateToStudentExamView(courseId, result.id!);
         }
     }
 
     private navigateToChannel(courseId: string, channelId: string) {
-        this.router.navigate(['/courses', courseId, 'communication'], { queryParams: { conversationId: channelId } });
+        void this.router.navigate(['/courses', courseId, 'communication'], { queryParams: { conversationId: channelId } });
     }
 
     private navigateToPost(result: GlobalSearchResult, courseId: string) {
         const channelId = result.metadata?.['channelId'];
         if (channelId) {
-            this.router.navigate(['/courses', courseId, 'communication'], { queryParams: { conversationId: channelId, focusPostId: result.id } });
+            void this.router.navigate(['/courses', courseId, 'communication'], { queryParams: { conversationId: channelId, focusPostId: result.id } });
         }
     }
 
@@ -377,7 +377,7 @@ export class GlobalSearchNavigationViewComponent extends SearchResultView {
         const channelId = result.metadata?.['channelId'];
         const postId = result.metadata?.['postId'];
         if (channelId && postId) {
-            this.router.navigate(['/courses', courseId, 'communication'], { queryParams: { conversationId: channelId, messageId: postId, focusReplyId: result.id } });
+            void this.router.navigate(['/courses', courseId, 'communication'], { queryParams: { conversationId: channelId, messageId: postId, focusReplyId: result.id } });
         }
     }
 

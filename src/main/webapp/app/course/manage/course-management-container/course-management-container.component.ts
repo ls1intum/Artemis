@@ -1,6 +1,7 @@
 import { AfterViewInit, Component, DestroyRef, ElementRef, OnDestroy, OnInit, inject, signal, viewChild } from '@angular/core';
+import { CdkScrollable } from '@angular/cdk/scrolling';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { NavigationEnd, RouterLink, RouterOutlet } from '@angular/router';
+import { NavigationEnd, Params, RouterOutlet } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Observable, Subject, of } from 'rxjs';
 import { distinctUntilChanged, filter, map, startWith } from 'rxjs/operators';
@@ -58,7 +59,6 @@ import { CourseSummaryDTO } from 'app/course/shared/entities/course-summary.mode
 import { CourseOperationProgressDTO, CourseOperationType } from 'app/course/shared/entities/course-operation-progress.model';
 import { CourseOperationProgressComponent } from 'app/course/manage/course-operation-progress/course-operation-progress.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { ButtonDirective } from 'primeng/button';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { IS_AT_LEAST_ADMIN } from 'app/foundation/constants/authority.constants';
 import { Subscription } from 'rxjs';
@@ -71,9 +71,9 @@ import { AutoOrchestrationNotificationService } from 'app/atlas/shared/services/
     styleUrls: ['course-management-container.component.scss'],
     providers: [MetisConversationService],
     imports: [
+        CdkScrollable,
         NgClass,
         RouterOutlet,
-        RouterLink,
         NgTemplateOutlet,
         CourseSidebarComponent,
         CourseExamArchiveButtonComponent,
@@ -81,7 +81,6 @@ import { AutoOrchestrationNotificationService } from 'app/atlas/shared/services/
         DeleteButtonDirective,
         HasAnyAuthorityDirective,
         FaIconComponent,
-        ButtonDirective,
         CourseOperationProgressComponent,
         ArtemisTranslatePipe,
     ],
@@ -130,7 +129,6 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
     private learningPathsActive = signal(false);
     courseBody = viewChild<ElementRef<HTMLElement>>('courseBodyContainer');
     isSettingsPage = signal(false);
-    studentViewLink = signal<string[]>([]);
 
     // Stream of finalized URLs (after redirects), seeded with the current URL for reloads
     private readonly finalizedUrl$ = this.router.events.pipe(
@@ -166,8 +164,8 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
         | undefined
     >(undefined);
 
-    async ngOnInit() {
-        this.route.firstChild?.params.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params: { courseId: string }) => {
+    override async ngOnInit() {
+        this.route.firstChild?.params.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params: Params) => {
             const id = Number(params.courseId);
             this.handleCourseIdChange(id);
             this.checkIfSettingsPage();
@@ -198,13 +196,12 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
 
         // Subscribe to course modifications and reload the course after a change.
         this.eventSubscriber = this.eventManager.subscribe('courseModification', () => {
-            this.subscribeToCourseUpdates(this.courseId()!);
+            this.subscribeToCourseUpdates(this.courseId());
         });
     }
 
-    protected handleNavigationEndActions(): void {
+    protected override handleNavigationEndActions(): void {
         this.checkIfSettingsPage();
-        this.determineStudentViewLink();
     }
 
     private checkIfSettingsPage() {
@@ -215,48 +212,9 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
 
     handleCourseIdChange(courseId: number): void {
         this.courseId.set(courseId);
-        this.determineStudentViewLink();
         this.subscribeToCourseUpdates(courseId);
         this.subscribeToOperationProgress(courseId);
         this.subscribeToAutoOrchestrationNotifications(courseId);
-    }
-
-    determineStudentViewLink() {
-        const courseIdString = this.courseId().toString();
-        const routerUrl = this.router.url;
-        const baseStudentPath = ['/courses', courseIdString];
-
-        const routeMappings = [
-            { urlPart: 'exams', targetPath: [...baseStudentPath, 'exams'] },
-            { urlPart: 'exercises', targetPath: [...baseStudentPath, 'exercises'] },
-            { urlPart: 'lectures', targetPath: [...baseStudentPath, 'lectures'] },
-            { urlPart: 'communication', targetPath: [...baseStudentPath, 'communication'] },
-            { urlPart: 'learning-path-management', targetPath: [...baseStudentPath, 'learning-path'] },
-            { urlPart: 'competency-management', targetPath: [...baseStudentPath, 'competencies'] },
-            { urlPart: 'faqs', targetPath: [...baseStudentPath, 'faq'] },
-            {
-                urlPart: ['tutorial-groups', 'tutorial-groups-checklist'],
-                targetPath: [...baseStudentPath, 'tutorial-groups'],
-                matcher: (url: string, parts: string[]) => parts.some((part) => url.includes(part)),
-            },
-            { urlPart: 'course-statistics', targetPath: [...baseStudentPath, 'statistics'] },
-        ];
-
-        const defaultPath = [...baseStudentPath, 'dashboard'];
-
-        const matchedRoute = routeMappings.find((route) => {
-            if (route.matcher) {
-                return route.matcher(routerUrl, Array.isArray(route.urlPart) ? route.urlPart : [route.urlPart]);
-            }
-            return routerUrl.includes(route.urlPart);
-        });
-
-        if (routerUrl.includes('build-overview')) {
-            this.studentViewLink.set([]);
-            return;
-        }
-
-        this.studentViewLink.set(matchedRoute ? matchedRoute.targetPath : defaultPath);
     }
 
     private subscribeToAutoOrchestrationNotifications(courseId: number) {
@@ -291,7 +249,7 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
         this.operationProgress.set(undefined);
         // Navigate to course list after closing a completed delete operation
         if (progress?.operationType === CourseOperationType.DELETE) {
-            this.router.navigate(['/course-management']);
+            void this.router.navigate(['/course-management']);
         }
     }
 
@@ -299,14 +257,14 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
         this.courseSub?.unsubscribe();
         this.courseSub = this.courseManagementService.find(courseId).subscribe((courseResponse) => {
             if (courseResponse.body) {
-                this.course.set(courseResponse.body!);
+                this.course.set(courseResponse.body);
             }
             this.sidebarItems.set(this.getSidebarItems());
         });
     }
 
     loadCourse(): Observable<void> {
-        return this.courseManagementService.findOneForDashboard(this.courseId()!).pipe(
+        return this.courseManagementService.findOneForDashboard(this.courseId()).pipe(
             map((res: HttpResponse<Course>) => {
                 if (res.body) {
                     this.course.set(res.body);
@@ -319,7 +277,7 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
         return this.communicationRouteLoaded();
     }
 
-    protected handleComponentActivation(componentRef: any): void {
+    protected handleComponentActivation(componentRef: unknown): void {
         if (
             componentRef instanceof CourseDetailComponent ||
             componentRef instanceof CourseManagementExercisesComponent ||
@@ -439,7 +397,7 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
         return irisItems;
     }
 
-    ngOnDestroy() {
+    override ngOnDestroy() {
         super.ngOnDestroy();
         this.courseSub?.unsubscribe();
         this.progressSubscription?.unsubscribe();

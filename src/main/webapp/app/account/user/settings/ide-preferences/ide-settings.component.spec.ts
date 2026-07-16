@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { of } from 'rxjs';
@@ -10,8 +9,6 @@ import { IdeSettingsComponent } from 'app/account/user/settings/ide-preferences/
 import { IdeSettingsService } from 'app/account/user/settings/ide-preferences/ide-settings.service';
 
 describe('IdeSettingsComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: IdeSettingsComponent;
     let fixture: ComponentFixture<IdeSettingsComponent>;
 
@@ -50,13 +47,12 @@ describe('IdeSettingsComponent', () => {
             [ProgrammingLanguage.EMPTY, predefinedIdes[0]],
         ]);
 
-        const idePreferencesPromise = Promise.resolve(idePreferences);
         mockIdeSettingsService.loadPredefinedIdes.mockReturnValue(of(predefinedIdes));
-        mockIdeSettingsService.loadIdePreferences.mockReturnValue(idePreferencesPromise);
+        mockIdeSettingsService.loadIdePreferences.mockReturnValue(Promise.resolve(idePreferences));
 
-        component.ngOnInit();
+        expect(component.isLoading()).toBe(true);
 
-        await idePreferencesPromise;
+        await component.ngOnInit();
 
         expect(mockIdeSettingsService.loadPredefinedIdes).toHaveBeenCalledOnce();
         expect(mockIdeSettingsService.loadIdePreferences).toHaveBeenCalledOnce();
@@ -66,6 +62,8 @@ describe('IdeSettingsComponent', () => {
         expect(component.remainingProgrammingLanguages()).toEqual(
             Object.values(ProgrammingLanguage).filter((x) => x !== ProgrammingLanguage.JAVA && x !== ProgrammingLanguage.EMPTY),
         );
+        // Rendering is only unblocked after both async loads have completed.
+        expect(component.isLoading()).toBe(false);
     });
 
     it('should add a programming language and update the lists', () => {

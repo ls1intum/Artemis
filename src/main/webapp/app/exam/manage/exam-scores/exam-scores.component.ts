@@ -115,16 +115,16 @@ export class ExamScoresComponent implements OnInit {
     // TODO: Cache already calculated filter dependent statistics
     readonly aggregatedExamResults = signal<AggregatedExamResult>(undefined!);
     readonly aggregatedExerciseGroupResults = signal<AggregatedExerciseGroupResult[]>(undefined!);
-    public noOfExamsFiltered: number;
+    public noOfExamsFiltered = 0;
 
     dataLabelFormatting = this.formatDataLabel.bind(this);
     readonly scores = signal<number[]>(undefined!);
     readonly gradesWithBonus = signal<string[]>(undefined!);
-    lastCalculatedMedianType: MedianType;
+    lastCalculatedMedianType?: MedianType;
     readonly highlightedValue = signal<number | undefined>(undefined);
 
     readonly showOverallMedian = signal<boolean>(undefined!); // Indicates whether the median of all exams is currently highlighted
-    overallChartMedian: number; // This value can vary as it depends on if the user only includes submitted exams or not
+    overallChartMedian = 0; // This value can vary as it depends on if the user only includes submitted exams or not
     readonly overallChartMedianType = signal<MedianType>(undefined!); // We need to distinguish the different overall medians for the toggling
     readonly showPassedMedian = signal<boolean>(undefined!); // Same as above for the median of all passed exams
 
@@ -183,7 +183,7 @@ export class ExamScoresComponent implements OnInit {
 
             forkJoin([getExamScoresObservable, findExamScoresObservable, gradingScaleObservable]).subscribe({
                 next: ([getExamScoresResponse, findExamScoresResponse, gradingScaleResponse]) => {
-                    this.examScoreDTO.set(getExamScoresResponse!.body!);
+                    this.examScoreDTO.set(getExamScoresResponse.body!);
                     if (this.examScoreDTO()) {
                         this.hasSecondCorrectionAndStarted.set(this.examScoreDTO().hasSecondCorrectionAndStarted);
                         this.studentResults.set(this.examScoreDTO().studentResults);
@@ -211,7 +211,7 @@ export class ExamScoresComponent implements OnInit {
                     // set the grading scale if it exists for the exam
                     if (gradingScaleResponse.body) {
                         this.gradingScaleExists.set(true);
-                        this.gradingScale.set(toEntity(gradingScaleResponse.body!, this.course()));
+                        this.gradingScale.set(toEntity(gradingScaleResponse.body, this.course()));
                         this.isBonus.set(this.gradingScale()!.gradeType === GradeType.BONUS);
                         this.hasBonus.set(this.studentResults()?.find((studentResult) => studentResult?.gradeWithBonus)?.gradeWithBonus?.bonusStrategy);
                         this.gradingScale()!.gradeSteps = this.gradingService.sortGradeSteps(this.gradingScale()!.gradeSteps);
@@ -1070,7 +1070,7 @@ export class ExamScoresComponent implements OnInit {
 
                 this.aggregatedExamResults().medianGradeSubmittedAndNonEmptyInFirstCorrection = this.gradingService.findMatchingGradeStep(
                     this.gradingScale()!.gradeSteps,
-                    this.aggregatedExamResults().medianScoreSubmittedAndNonEmptyInFirstCorrection!,
+                    this.aggregatedExamResults().medianScoreSubmittedAndNonEmptyInFirstCorrection,
                 )!.gradeName;
             }
         }

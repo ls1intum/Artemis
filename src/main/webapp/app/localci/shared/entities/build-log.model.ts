@@ -9,7 +9,7 @@ export enum BuildLogType {
 }
 
 export type BuildLogEntry = {
-    time: any;
+    time: string;
     log: string;
     type?: BuildLogType;
 };
@@ -69,21 +69,22 @@ export class BuildLogEntryArray extends Array<BuildLogEntry> {
                 // Parse build logs
                 .map(({ log, time }) => ({ log: log.split('\n', 1)[0].trim().match(errorLogRegex), time }))
                 // Remove entries that could not be parsed, are too short or not errors
-                .filter(({ log }: { log: ParsedLogEntry | null; time: string }) => {
+                .filter((entry: { log: RegExpMatchArray | null; time: string }): entry is { log: ParsedLogEntry; time: string } => {
+                    const { log } = entry;
                     // Java logs do not always contain "ERROR"
-                    return log && log.length === 6 && (log[0]?.includes(':[') || log[1] === 'ERROR' || log[4] === 'error:');
+                    return !!log && log.length === 6 && (log[0]?.includes(':[') || log[1] === 'ERROR' || log[4] === 'error:');
                 })
                 // Sort entries to fit a standard format
                 .map(({ log, time }) => {
-                    const sortedLog = [...log!];
+                    const sortedLog = [...log];
                     if (programmingLanguage === ProgrammingLanguage.SWIFT || projectType === ProjectType.PLAIN_GRADLE || projectType === ProjectType.GRADLE_GRADLE) {
-                        const errorIndicator = sortedLog!.splice(sortedLog!.indexOf('error:'), 1)[0];
+                        const errorIndicator = sortedLog.splice(sortedLog.indexOf('error:'), 1)[0];
                         sortedLog.unshift(errorIndicator);
                     }
                     return { log: sortedLog, time };
                 })
                 // Map buildLogEntries into annotation format
-                .map(({ log: [, , fileName, row, column, text], time }: { log: ParsedLogEntry; time: string }) => ({
+                .map(({ log: [, , fileName, row, column, text], time }: { log: string[]; time: string }) => ({
                     type: 'error',
                     fileName,
                     row: Math.max(parseInt(row, 10) - 1, 0),

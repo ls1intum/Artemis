@@ -15,7 +15,7 @@ import de.tum.cit.aet.artemis.videosource.domain.VideoSourceType;
  * Pins the Pyris wire format contract:
  * <ul>
  * <li>Outbound webhook uses camelCase {@code videoSourceType}.</li>
- * <li>Inbound status update reads snake_case {@code error_code}.</li>
+ * <li>Inbound status update reads {@code error.code}.</li>
  * <li>Inbound ingestion status reads optional {@code displayPageNumbers} from its dedicated field.</li>
  * <li>Inbound status update silently ignores camelCase {@code errorCode} (unknown field), matching Spring Boot's default mapper config.</li>
  * </ul>
@@ -33,15 +33,15 @@ class WireFormatContractTest {
     }
 
     @Test
-    void inboundStatusUpdateReadsSnakeCaseErrorCode() throws Exception {
-        String json = "{\"result\":\"error\",\"stages\":[],\"jobId\":7,\"error_code\":\"YOUTUBE_PRIVATE\"}";
+    void inboundStatusUpdateReadsErrorCodeFromErrorObject() throws Exception {
+        String json = "{\"result\":\"error\",\"runState\":\"FAILED\",\"error\":{\"code\":\"YOUTUBE_PRIVATE\"},\"jobId\":7}";
         var dto = mapper.readValue(json, PyrisLectureIngestionStatusUpdateDTO.class);
-        assertThat(dto.errorCode()).isEqualTo("YOUTUBE_PRIVATE");
+        assertThat(dto.error().code()).isEqualTo("YOUTUBE_PRIVATE");
     }
 
     @Test
     void inboundStatusUpdateReadsDedicatedDisplayPageNumbersField() throws Exception {
-        String json = "{\"result\":\"done\",\"stages\":[],\"jobId\":7,\"displayPageNumbers\":[1,2,-1]}";
+        String json = "{\"result\":\"done\",\"runState\":\"FINISHED\",\"jobId\":7,\"displayPageNumbers\":[1,2,-1]}";
         var dto = mapper.readValue(json, PyrisLectureIngestionStatusUpdateDTO.class);
         assertThat(dto.result()).isEqualTo("done");
         assertThat(dto.displayPageNumbers()).containsExactly(1, 2, -1);
@@ -49,18 +49,18 @@ class WireFormatContractTest {
 
     @Test
     void inboundStatusUpdateKeepsMissingDisplayPageNumbersNullable() throws Exception {
-        String json = "{\"result\":\"done\",\"stages\":[],\"jobId\":7}";
+        String json = "{\"result\":\"done\",\"runState\":\"FINISHED\",\"jobId\":7}";
         var dto = mapper.readValue(json, PyrisLectureIngestionStatusUpdateDTO.class);
         assertThat(dto.displayPageNumbers()).isNull();
     }
 
     @Test
     void inboundStatusUpdateRejectsCamelCaseErrorCode() throws Exception {
-        String wire = "{\"result\":\"error\",\"stages\":[],\"jobId\":7,\"errorCode\":\"YOUTUBE_PRIVATE\"}";
+        String wire = "{\"result\":\"error\",\"runState\":\"FAILED\",\"jobId\":7,\"errorCode\":\"YOUTUBE_PRIVATE\"}";
         // Spring Boot's autoconfigured mapper has FAIL_ON_UNKNOWN_PROPERTIES=false, so camelCase "errorCode" is silently
-        // ignored and errorCode() returns null — this test mirrors that production behavior and documents the risk:
-        // if Pyris accidentally sends "errorCode" instead of "error_code", we will silently see null.
+        // ignored and error() returns null — this test mirrors that production behavior and documents the risk:
+        // if Pyris accidentally sends "errorCode" instead of "error": {"code": ...}, we will silently see null.
         var dto = mapper.readValue(wire, PyrisLectureIngestionStatusUpdateDTO.class);
-        assertThat(dto.errorCode()).isNull();
+        assertThat(dto.error()).isNull();
     }
 }

@@ -12,7 +12,6 @@
  */
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { of, throwError } from 'rxjs';
 import dayjs from 'dayjs/esm';
 import { TranslateService } from '@ngx-translate/core';
@@ -26,8 +25,6 @@ import { AdminDataExport, DataExportState } from 'app/admin/admin-data-exports/d
 import { PageableResult } from 'app/foundation/pagination/pageable-table';
 
 describe('AdminDataExportsComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: AdminDataExportsComponent;
     let fixture: ComponentFixture<AdminDataExportsComponent>;
     let adminDataExportsService: AdminDataExportsService;
@@ -165,19 +162,15 @@ describe('AdminDataExportsComponent', () => {
         expect(component.getStateIcon(DataExportState.DOWNLOADED_DELETED)).toBe(component['faTimes']);
     });
 
-    it('should return unique badge class for each state', () => {
-        expect(component.getStateBadgeClass(DataExportState.REQUESTED)).toBe('bg-primary');
-        expect(component.getStateBadgeClass(DataExportState.IN_CREATION)).toBe('bg-info');
-        expect(component.getStateBadgeClass(DataExportState.EMAIL_SENT)).toBe('bg-success');
-        expect(component.getStateBadgeClass(DataExportState.DOWNLOADED)).toBe('bg-warning text-dark');
-        expect(component.getStateBadgeClass(DataExportState.FAILED)).toBe('bg-danger');
-        expect(component.getStateBadgeClass(DataExportState.DELETED)).toBe('bg-secondary');
-        expect(component.getStateBadgeClass(DataExportState.DOWNLOADED_DELETED)).toBe('bg-secondary');
-    });
-
-    it('should track items by id', () => {
-        const item = mockExports[0];
-        expect(component.trackIdentity(0, item)).toBe(item.id);
+    it('maps each data-export state to its severity token', () => {
+        expect(component.getStateSeverity(DataExportState.REQUESTED)).toBe('contrast');
+        expect(component.getStateSeverity(DataExportState.IN_CREATION)).toBe('info');
+        expect(component.getStateSeverity(DataExportState.EMAIL_SENT)).toBe('success');
+        expect(component.getStateSeverity(DataExportState.DOWNLOADED)).toBe('warn');
+        expect(component.getStateSeverity(DataExportState.FAILED)).toBe('danger');
+        expect(component.getStateSeverity(DataExportState.EMAIL_FAILED)).toBe('warn');
+        expect(component.getStateSeverity(DataExportState.DELETED)).toBe('secondary');
+        expect(component.getStateSeverity(DataExportState.DOWNLOADED_DELETED)).toBe('secondary');
     });
 
     it('should initialize pagination signals with default values', () => {

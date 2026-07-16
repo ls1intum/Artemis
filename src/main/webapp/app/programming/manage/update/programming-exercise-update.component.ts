@@ -135,7 +135,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     isEditFieldDisplayedRecord = computed(() => {
         const inputFieldEditModeMapping = IS_DISPLAYED_IN_SIMPLE_MODE;
 
-        const isEditFieldDisplayedMapping: Record<ProgrammingExerciseInputField, boolean> = {} as Record<ProgrammingExerciseInputField, boolean>;
+        const isEditFieldDisplayedMapping: Partial<Record<ProgrammingExerciseInputField, boolean>> = {};
         Object.keys(inputFieldEditModeMapping).forEach((key) => {
             let isDisplayed = true;
             if (this.isSimpleMode() && !(this.isImportFromFile || this.isImportFromExistingExercise)) {
@@ -149,7 +149,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
             isEditFieldDisplayedMapping[ProgrammingExerciseInputField.SHORT_NAME] = true;
         }
 
-        return isEditFieldDisplayedMapping;
+        return isEditFieldDisplayedMapping as Record<ProgrammingExerciseInputField, boolean>;
     });
 
     private readonly translationBasePath = 'artemisApp.programmingExercise.';
@@ -160,9 +160,9 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     projectTypeChanged = (projectType: ProjectType) => this.onProjectTypeChange(projectType);
     staticCodeAnalysisChanged = () => this.onStaticCodeAnalysisChanged();
 
-    auxiliaryRepositoryDuplicateNames: boolean;
-    auxiliaryRepositoryDuplicateDirectories: boolean;
-    auxiliaryRepositoryNamedCorrectly: boolean;
+    auxiliaryRepositoryDuplicateNames = false;
+    auxiliaryRepositoryDuplicateDirectories = false;
+    auxiliaryRepositoryNamedCorrectly = false;
     private isImportFromExistingExerciseValue = false;
     private isImportFromFileValue = false;
     private isImportFromSharingValue = false;
@@ -197,10 +197,10 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         this.isImportFromSharingForAi.set(value);
     }
 
-    isEdit: boolean;
-    isCreate: boolean;
+    isEdit = false;
+    isCreate = false;
     readonly isExamMode = signal<boolean>(undefined!);
-    isLocalCIEnabled: boolean;
+    isLocalCIEnabled = false;
     hasUnsavedChanges = false;
     // programmingExercise is deeply template-bound (directly via [programmingExercise]/[(exercise)] and through the
     // recomputed getProgrammingExerciseCreationConfig()) and populated asynchronously from the route resolver, so it
@@ -221,7 +221,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         this.programmingExerciseLanguageForAi.set(value.programmingLanguage);
     }
 
-    backupExercise: ProgrammingExercise;
+    backupExercise!: ProgrammingExercise; // set in ngOnInit() from the loaded programming exercise, before any edit/update action reads it
     readonly isSaving = signal<boolean>(undefined!);
     goBackAfterSaving = false;
     problemStatementLoaded = false;
@@ -232,18 +232,19 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
 
     rerenderSubject = new Subject<void>();
     // This is used to revert the select if the user cancels to override the new selected programming language.
-    private selectedProgrammingLanguageValue: ProgrammingLanguage;
+    private selectedProgrammingLanguageValue!: ProgrammingLanguage; // set in ngOnInit() from the loaded exercise before the selectedProgrammingLanguage getter is read
     // This is used to revert the select if the user cancels to override the new selected project type.
     private selectedProjectTypeValue?: ProjectType;
 
-    exerciseCategories: ExerciseCategory[];
-    existingCategories: ExerciseCategory[];
+    // Left undefined until categories load; code distinguishes undefined ("not yet loaded") from an empty array.
+    exerciseCategories?: ExerciseCategory[];
+    existingCategories: ExerciseCategory[] = [];
 
     formStatusSections = signal<FormSectionStatus[]>([]);
 
     inputFieldSubscriptions: (Subscription | undefined)[] = [];
 
-    public inProductionEnvironment: boolean;
+    public inProductionEnvironment = false;
 
     public supportedLanguages = ['java'];
 
@@ -288,26 +289,26 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     public modePickerOptions?: ModePickerOption<ProjectType>[] = [];
 
     constructor() {
-        effect(
-            function updateStatusBarSectionsWhenEditModeChanges() {
-                if (this.isSimpleMode()) {
-                    this.calculateFormStatusSections();
-                }
-            }.bind(this),
-        );
+        effect(() => {
+            // Recalculate whenever the edit mode changes — in BOTH directions. Simple and detailed mode expose a
+            // different set (and therefore a different ordering/indexing) of status-bar sections: simple mode drops
+            // the difficulty/mode section, so e.g. "Problem" sits at a different index. Recalculating only when
+            // entering simple mode left the sections stale (still simple-mode-shaped) after switching to detailed
+            // mode, so the status bar pointed each section circle at the wrong headline.
+            this.isSimpleMode();
+            this.calculateFormStatusSections();
+        });
         effect(() => this.updateFormSectionOnIsValidPlagiarismChange());
 
-        effect(
-            function initializeEditMode() {
-                const editModeRetrievedFromLocalStorage: boolean | undefined = this.localStorageService.retrieve(LOCAL_STORAGE_KEY_IS_SIMPLE_MODE);
-                if (editModeRetrievedFromLocalStorage !== undefined) {
-                    this.isSimpleMode.set(editModeRetrievedFromLocalStorage);
-                } else {
-                    const DEFAULT_EDIT_MODE_IS_SIMPLE_MODE = true;
-                    this.isSimpleMode.set(DEFAULT_EDIT_MODE_IS_SIMPLE_MODE);
-                }
-            }.bind(this),
-        );
+        effect(() => {
+            const editModeRetrievedFromLocalStorage: boolean | undefined = this.localStorageService.retrieve(LOCAL_STORAGE_KEY_IS_SIMPLE_MODE);
+            if (editModeRetrievedFromLocalStorage !== undefined) {
+                this.isSimpleMode.set(editModeRetrievedFromLocalStorage);
+            } else {
+                const DEFAULT_EDIT_MODE_IS_SIMPLE_MODE = true;
+                this.isSimpleMode.set(DEFAULT_EDIT_MODE_IS_SIMPLE_MODE);
+            }
+        });
     }
 
     showGenerateWithAi = computed(() => {
@@ -327,7 +328,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
      * @param editedAuxiliaryRepository
      */
     updateRepositoryName(editedAuxiliaryRepository: AuxiliaryRepository) {
-        return (newValue: any) => {
+        return (newValue: string) => {
             editedAuxiliaryRepository.name = newValue;
             this.refreshAuxiliaryRepositoryChecks();
             return editedAuxiliaryRepository.name;
@@ -340,7 +341,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
      * @param editedAuxiliaryRepository
      */
     updateCheckoutDirectory(editedAuxiliaryRepository: AuxiliaryRepository) {
-        return (newValue: any) => {
+        return (newValue: string) => {
             editedAuxiliaryRepository.checkoutDirectory = newValue;
             this.refreshAuxiliaryRepositoryChecks();
             return editedAuxiliaryRepository.checkoutDirectory;
@@ -368,7 +369,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
 
         // Check that there are no duplicate checkout directories
         const directories = new Set<string | undefined>();
-        const auxReposWithDirectory = this.programmingExercise.auxiliaryRepositories!.filter((auxiliaryRepository) => auxiliaryRepository.checkoutDirectory);
+        const auxReposWithDirectory = this.programmingExercise.auxiliaryRepositories.filter((auxiliaryRepository) => auxiliaryRepository.checkoutDirectory);
         auxReposWithDirectory.forEach((auxiliaryRepository) => {
             directories.add(auxiliaryRepository.checkoutDirectory);
             legalNameAndDirs ||= !this.invalidDirectoryNamePattern.test(auxiliaryRepository.checkoutDirectory!);
@@ -376,7 +377,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         this.auxiliaryRepositoryDuplicateDirectories = directories.size !== auxReposWithDirectory.length;
 
         // Check that there are no empty/incorrect repository names and directories
-        this.auxiliaryRepositoryNamedCorrectly = this.programmingExercise.auxiliaryRepositories!.length === auxReposWithName?.length && !legalNameAndDirs;
+        this.auxiliaryRepositoryNamedCorrectly = this.programmingExercise.auxiliaryRepositories.length === auxReposWithName?.length && !legalNameAndDirs;
 
         // Combining auxiliary variables to one to keep the template readable
         this.auxiliaryRepositoriesValid.set(this.auxiliaryRepositoryNamedCorrectly && !this.auxiliaryRepositoryDuplicateNames && !this.auxiliaryRepositoryDuplicateDirectories);
@@ -609,7 +610,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
                                     }
                                     this.exerciseCategories = this.programmingExercise.categories || [];
 
-                                    this.loadCourseExerciseCategories(this.programmingExercise.course!.id!);
+                                    this.loadCourseExerciseCategories(this.programmingExercise.course.id);
                                 });
                             }
                         }
@@ -826,7 +827,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         this.saveWithModalCheck(
             () => this.saveExercise(),
             (reference) => {
-                const requestOptions = {} as any;
+                const requestOptions: { deleteFeedback?: unknown } = {};
                 requestOptions.deleteFeedback = reference.componentInstance.deleteFeedback;
                 this.subscribeToSaveResponse(this.programmingExerciseService.reevaluateAndUpdate(this.programmingExercise, requestOptions));
             },
@@ -855,7 +856,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
             return;
         }
 
-        preUpdateModalRef.then((reference) => {
+        void preUpdateModalRef.then((reference) => {
             reference.componentInstance.confirmed.subscribe(() => onConfirmed());
             reference.componentInstance.reEvaluated.subscribe(() => onReEvaluated(reference));
         });
@@ -904,7 +905,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         }
 
         if (this.programmingExercise.buildConfig?.timeoutSeconds && this.programmingExercise.buildConfig?.timeoutSeconds < 1) {
-            this.programmingExercise.buildConfig!.timeoutSeconds = 0;
+            this.programmingExercise.buildConfig.timeoutSeconds = 0;
         }
 
         // If the programming exercise has a submission policy with a NONE type, the policy is removed altogether
@@ -956,7 +957,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         } else if (this.isImportFromExistingExercise) {
             this.subscribeToSaveResponse(this.programmingExerciseService.importExercise(this.programmingExercise, this.importOptions));
         } else if (this.programmingExercise.id !== undefined) {
-            const requestOptions = {} as any;
+            const requestOptions: { notificationText?: string } = {};
             if (this.notificationText) {
                 requestOptions.notificationText = this.notificationText;
             }
@@ -1043,7 +1044,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         }
         const navigationExtras = { state: { [AUTO_START_CODE_GENERATION_ALL_REPOSITORIES_STATE]: true } };
         if (exercise.exerciseGroup?.exam?.id && exercise.exerciseGroup?.id) {
-            this.router.navigate(
+            void this.router.navigate(
                 [
                     'course-management',
                     courseId,
@@ -1060,7 +1061,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
                 navigationExtras,
             );
         } else {
-            this.router.navigate(
+            void this.router.navigate(
                 ['course-management', courseId, 'programming-exercises', exercise.id, 'code-editor', RepositoryType.TEMPLATE, exercise.templateParticipation.id],
                 navigationExtras,
             );
@@ -1370,6 +1371,24 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     }
 
     private validateExercisePoints(validationErrorReasons: ValidationReason[]): void {
+        if (this.programmingExercise.includedInOverallScore === IncludedInOverallScore.NOT_INCLUDED) {
+            if (this.programmingExercise.maxPoints === undefined || this.programmingExercise.maxPoints === null) {
+                return;
+            }
+            if (this.programmingExercise.maxPoints < 0) {
+                validationErrorReasons.push({
+                    translateKey: 'artemisApp.exercise.form.points.customMin',
+                    translateValues: {},
+                });
+            } else if (this.programmingExercise.maxPoints > 9999) {
+                validationErrorReasons.push({
+                    translateKey: 'artemisApp.exercise.form.points.customMax',
+                    translateValues: {},
+                });
+            }
+            return;
+        }
+
         if (this.programmingExercise.maxPoints === undefined) {
             validationErrorReasons.push({
                 translateKey: 'artemisApp.exercise.form.points.undefined',
@@ -1394,12 +1413,12 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
                 translateKey: 'artemisApp.exercise.form.bonusPoints.undefined',
                 translateValues: {},
             });
-        } else if (this.programmingExercise.bonusPoints! < 0) {
+        } else if (this.programmingExercise.bonusPoints < 0) {
             validationErrorReasons.push({
                 translateKey: 'artemisApp.exercise.form.bonusPoints.customMin',
                 translateValues: {},
             });
-        } else if (this.programmingExercise.bonusPoints! > 9999) {
+        } else if (this.programmingExercise.bonusPoints > 9999) {
             validationErrorReasons.push({
                 translateKey: 'artemisApp.exercise.form.bonusPoints.customMax',
                 translateValues: {},
@@ -1620,7 +1639,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
      * effect that both reads the config and writes back a two-way model() (e.g. isAuxiliaryRepositoryInputValid)
      * then re-dirties the parent every pass, producing an infinite change-detection loop (NG0103).
      */
-    private readonly programmingExerciseCreationConfig: ProgrammingExerciseCreationConfig = {} as ProgrammingExerciseCreationConfig;
+    private readonly programmingExerciseCreationConfig: ProgrammingExerciseCreationConfig = Object.assign({}) as ProgrammingExerciseCreationConfig;
 
     getProgrammingExerciseCreationConfig(): ProgrammingExerciseCreationConfig {
         return Object.assign(this.programmingExerciseCreationConfig, {

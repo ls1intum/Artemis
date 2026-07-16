@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { By } from '@angular/platform-browser';
@@ -70,8 +69,6 @@ const setMarkdownEditorMonaco = (c: ProgrammingExerciseEditableInstructionCompon
 };
 
 describe('ProgrammingExerciseEditableInstructionComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let comp: ProgrammingExerciseEditableInstructionComponent;
     let fixture: ComponentFixture<ProgrammingExerciseEditableInstructionComponent>;
     let debugElement: DebugElement;
@@ -260,6 +257,25 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
         expect(hasUnsavedSpy).not.toHaveBeenCalled();
         expect(comp.unsavedChangesValue()).toBe(false);
         expect(instructionChangeSpy).toHaveBeenCalledWith('changed-during-sync');
+    });
+
+    it('does not propagate a blank problem statement to the parent during initial sync, but still restores real content (#13046)', () => {
+        const instructionChangeSpy = vi.fn();
+        comp.instructionChange.subscribe(instructionChangeSpy);
+        setRequiredInputs(fixture, { ...exercise, problemStatement: 'existing content' });
+        fixture.detectChanges();
+
+        internals(comp).problemStatementSyncState = { doc: yDoc, text: yText, awareness: yAwareness } as ProblemStatementSyncState;
+        problemStatementSyncServiceMock.isAwaitingInitialSync.mockReturnValue(true);
+
+        // The internal `model.setValue('')` used to clear Monaco before the Yjs binding fires an empty value during bootstrap.
+        // It must not reach the parent, otherwise a save racing the sync would wipe the persisted problem statement.
+        comp.updateProblemStatement('');
+        expect(instructionChangeSpy).not.toHaveBeenCalled();
+
+        // Once the initial sync delivers the real content, it must still propagate so the parent model is restored.
+        comp.updateProblemStatement('existing content restored');
+        expect(instructionChangeSpy).toHaveBeenCalledExactlyOnceWith('existing content restored');
     });
 
     it('does not emit unsaved flag for finalize hydration when a bootstrap change was suppressed', () => {

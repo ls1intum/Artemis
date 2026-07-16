@@ -51,7 +51,7 @@ export class ComplaintsForTutorComponent implements OnInit {
     set complaintResponse(value: ComplaintResponse) {
         this._complaintResponse.set(value);
     }
-    complaintResponseUpdate: ComplaintResponseUpdateDTO;
+    complaintResponseUpdate!: ComplaintResponseUpdateDTO; // instantiated before use in each lock-refresh / resolve flow (ngOnInit and respondToComplaint)
     ComplaintType = ComplaintType;
     readonly isLoading = signal(false);
     readonly showLockDuration = signal(false);
@@ -61,7 +61,7 @@ export class ComplaintsForTutorComponent implements OnInit {
     readonly maxComplaintResponseTextLimit = signal<number>(undefined!);
 
     ngOnInit(): void {
-        this.course = getCourseFromExercise(this.exercise()!);
+        this.course = getCourseFromExercise(this.exercise());
 
         this.maxComplaintResponseTextLimit.set(this.course?.maxComplaintResponseTextLimit ?? 0);
         if (this.exercise()?.exerciseGroup) {
@@ -73,7 +73,12 @@ export class ComplaintsForTutorComponent implements OnInit {
             this.complaintText = this.complaint().complaintText;
             this.handled.set(this.complaint().accepted !== undefined);
             if (this.handled()) {
-                this.complaintResponse = this.complaint().complaintResponse!;
+                // Keep the already-initialized (non-undefined) complaint response if the complaint carries none.
+                // respondToComplaint() detaches complaint().complaintResponse to break the circular structure, so
+                // a late ngOnInit (zoneless change-detection ordering) must not overwrite the signal with undefined.
+                if (this.complaint().complaintResponse) {
+                    this.complaintResponse = this.complaint().complaintResponse!;
+                }
                 this.lockedByCurrentUser.set(false);
                 this.showLockDuration.set(false);
             } else {
@@ -105,8 +110,8 @@ export class ComplaintsForTutorComponent implements OnInit {
                 next: (response) => {
                     this.complaintResponse = response.body!;
                     this.complaintResponse.complaint = this.complaint();
-                    this.complaintResponse.complaint!.complaintResponse = this.complaintResponse;
-                    this.complaint.set(this.complaintResponse.complaint!);
+                    this.complaintResponse.complaint.complaintResponse = this.complaintResponse;
+                    this.complaint.set(this.complaintResponse.complaint);
                     this.lockedByCurrentUser.set(true);
                     this.showLockDuration.set(true);
                     this.alertService.success('artemisApp.locks.acquired');
@@ -126,7 +131,7 @@ export class ComplaintsForTutorComponent implements OnInit {
             // update the lock
             this.isLoading.set(true);
             this.complaintResponseService
-                .refreshLockOrResolveComplaint(this.complaintResponseUpdate, this.complaint().id!)
+                .refreshLockOrResolveComplaint(this.complaintResponseUpdate, this.complaint().id)
                 .pipe(
                     finalize(() => {
                         this.isLoading.set(false);
@@ -136,8 +141,8 @@ export class ComplaintsForTutorComponent implements OnInit {
                     next: (response) => {
                         this.complaintResponse = response.body!;
                         this.complaintResponse.complaint = this.complaint();
-                        this.complaintResponse.complaint!.complaintResponse = this.complaintResponse;
-                        this.complaint.set(this.complaintResponse.complaint!);
+                        this.complaintResponse.complaint.complaintResponse = this.complaintResponse;
+                        this.complaint.set(this.complaintResponse.complaint);
                         this.lockedByCurrentUser.set(true);
                         this.alertService.success('artemisApp.locks.acquired');
                     },
@@ -183,7 +188,7 @@ export class ComplaintsForTutorComponent implements OnInit {
 
         this.complaintResponse.complaint = this.complaint();
         this.complaintResponse.complaint.complaintResponse = undefined; // breaking circular structure
-        this.complaintResponse.complaint!.accepted = acceptComplaint;
+        this.complaintResponse.complaint.accepted = acceptComplaint;
 
         if (acceptComplaint && this.complaint().complaintType === ComplaintType.COMPLAINT) {
             // Tell the parent (assessment) component to update the corresponding result if the complaint was accepted.
@@ -230,9 +235,9 @@ export class ComplaintsForTutorComponent implements OnInit {
                     }
                     this.complaintResponse = response.body!;
                     this.complaintResponse.complaint = this.complaint();
-                    this.complaintResponse.complaint!.complaintResponse = this.complaintResponse;
-                    this.complaintResponse.complaint!.accepted = this.complaintResponseUpdate.complaintIsAccepted;
-                    this.complaint.set(this.complaintResponse.complaint!);
+                    this.complaintResponse.complaint.complaintResponse = this.complaintResponse;
+                    this.complaintResponse.complaint.accepted = this.complaintResponseUpdate.complaintIsAccepted;
+                    this.complaint.set(this.complaintResponse.complaint);
                     this.isLockedForLoggedInUser.set(false);
                     this.showLockDuration.set(false);
                     this.lockedByCurrentUser.set(false);

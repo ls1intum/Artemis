@@ -6,8 +6,8 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { FormsModule } from '@angular/forms';
 import { DialogModule } from 'primeng/dialog';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { TutorialGroupApiService } from 'app/openapi/api/tutorialGroupApi.service';
-import { TutorialGroupExportData } from 'app/openapi/model/tutorialGroupExportData';
+import { TutorialGroupApi } from 'app/openapi/api/tutorial-group-api';
+import { TutorialGroupExportData } from 'app/openapi/model/tutorial-group-export-data';
 import { map } from 'rxjs/operators';
 
 @Component({
@@ -17,7 +17,7 @@ import { map } from 'rxjs/operators';
     imports: [NgbDropdownButtonItem, NgbDropdownItem, TranslateDirective, FormsModule, DialogModule, ArtemisTranslatePipe],
 })
 export class TutorialGroupsExportButtonComponent implements OnDestroy {
-    private tutorialGroupApiService = inject(TutorialGroupApiService);
+    private tutorialGroupApiService = inject(TutorialGroupApi);
     private alertService = inject(AlertService);
 
     ngUnsubscribe = new Subject<void>();
@@ -62,7 +62,7 @@ export class TutorialGroupsExportButtonComponent implements OnDestroy {
         this.updateSelectedFields();
     }
 
-    onFieldSelectionChange(field: any) {
+    onFieldSelectionChange(field: { value: string; selected: boolean }) {
         field.selected = !field.selected;
         this.selectAll.set(this.areAllFieldsSelected());
         this.updateSelectedFields();
@@ -77,24 +77,29 @@ export class TutorialGroupsExportButtonComponent implements OnDestroy {
     }
 
     exportCSV() {
-        this.tutorialGroupApiService.exportTutorialGroupsToCSV(this.courseId(), this.selectedFields()).subscribe({
-            next: (blob: Blob) => {
-                const a = document.createElement('a');
-                const objectUrl = URL.createObjectURL(blob);
-                a.href = objectUrl;
-                a.download = 'tutorial-groups.csv';
-                a.click();
-                URL.revokeObjectURL(objectUrl);
-                this.resetSelections();
-                this.closeDialog();
-                this.exportFinished.emit();
-            },
-            error: () => {
-                this.alertService.error('artemisApp.tutorialGroupExportDialog.failedCSV');
-                this.resetSelections();
-                this.closeDialog();
-            },
-        });
+        this.tutorialGroupApiService
+            .exportTutorialGroupsToCSV(this.courseId(), this.selectedFields())
+            // The generated file-download endpoint now returns HttpResponse<Blob> (openapi-generator-angular22);
+            // unwrap the response body to keep the download working.
+            .pipe(map((response) => response.body!))
+            .subscribe({
+                next: (blob: Blob) => {
+                    const a = document.createElement('a');
+                    const objectUrl = URL.createObjectURL(blob);
+                    a.href = objectUrl;
+                    a.download = 'tutorial-groups.csv';
+                    a.click();
+                    URL.revokeObjectURL(objectUrl);
+                    this.resetSelections();
+                    this.closeDialog();
+                    this.exportFinished.emit();
+                },
+                error: () => {
+                    this.alertService.error('artemisApp.tutorialGroupExportDialog.failedCSV');
+                    this.resetSelections();
+                    this.closeDialog();
+                },
+            });
     }
 
     exportJSON() {

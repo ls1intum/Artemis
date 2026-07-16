@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { Course } from 'app/course/shared/entities/course.model';
-import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
+import { ExamManagementService, ExamRegistrationResultDTO } from 'app/exam/manage/services/exam-management.service';
 import { ExamStudentDTO, ExamStudentSearch } from 'app/exam/manage/students/exam-student-dto.model';
 import { UserForRegistration } from 'app/shared-ui/user-registration-modal/user-for-registration.model';
 import { SortingOrder } from 'app/foundation/pagination/pageable-table';
@@ -28,10 +28,7 @@ import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 describe('Exam Management Service Tests', () => {
-    setupTestBed({ zoneless: true });
-
     let service: ExamManagementService;
     let httpMock: HttpTestingController;
 
@@ -342,23 +339,6 @@ describe('Exam Management Service Tests', () => {
         await Promise.resolve();
     });
 
-    it('should add student to exam', async () => {
-        // GIVEN
-        const mockExam: Exam = { id: 1 };
-        const mockStudentLogin = 'studentLogin';
-
-        // WHEN
-        service.addStudentToExam(course.id!, mockExam.id!, mockStudentLogin).subscribe((res) => expect(res.body).toBeNull());
-
-        // THEN
-        const req = httpMock.expectOne({
-            method: 'POST',
-            url: `${service.resourceUrl}/${course.id!}/exams/${mockExam.id!}/students/${mockStudentLogin}`,
-        });
-        req.flush(null);
-        await Promise.resolve();
-    });
-
     it('should add students to exam', async () => {
         // GIVEN
         const mockExam: Exam = { id: 1 };
@@ -366,13 +346,13 @@ describe('Exam Management Service Tests', () => {
             { firstName: 'firstName1', lastName: 'lastName1', registrationNumber: '1', login: 'login1', email: '' },
             { firstName: 'firstName2', lastName: 'lastName2', registrationNumber: '2', login: 'login2', email: '' },
         ];
-        const expected: StudentDTO[] = [
-            { firstName: 'firstName1', lastName: 'lastName1', registrationNumber: '1', login: 'login1', email: '' },
-            { firstName: 'firstName2', lastName: 'lastName2', registrationNumber: '2', login: 'login2', email: '' },
-        ];
+        const expectedResponse: ExamRegistrationResultDTO = {
+            notFoundStudents: [],
+            rejectedStaffUsers: [],
+        };
 
         // WHEN
-        service.addStudentsToExam(course.id!, mockExam.id!, mockStudents).subscribe((res) => expect(res.body).toEqual(mockStudents));
+        service.addStudentsToExam(course.id!, mockExam.id!, mockStudents).subscribe((res) => expect(res.body).toEqual(expectedResponse));
 
         // THEN
         const req = httpMock.expectOne({
@@ -382,7 +362,7 @@ describe('Exam Management Service Tests', () => {
         expect(req.request.body).toEqual(mockStudents);
 
         // CLEAN
-        req.flush(expected);
+        req.flush(expectedResponse);
         await Promise.resolve();
     });
 

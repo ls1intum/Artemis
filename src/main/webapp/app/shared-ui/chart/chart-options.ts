@@ -68,13 +68,24 @@ export interface ChartSelectEvent {
     meta?: ChartSeriesEntry;
 }
 
+/** Narrows the `unknown` `element` of PrimeNG's chart select event to the fields we read. */
+function isChartDataElement(element: unknown): element is { datasetIndex: number; index: number } {
+    return (
+        typeof element === 'object' &&
+        element !== null &&
+        typeof (element as { datasetIndex?: unknown }).datasetIndex === 'number' &&
+        typeof (element as { index?: unknown }).index === 'number'
+    );
+}
+
 /**
  * Maps the payload of p-chart's (onDataSelect) output to a {@link ChartSelectEvent}.
+ * PrimeNG types the event's `element` as `unknown`, so it is narrowed before use.
  * Returns undefined for clicks that did not hit a data element or hit a reference line.
  */
-export function toChartSelectEvent(event: { element?: { datasetIndex: number; index: number } }, data: ChartData): ChartSelectEvent | undefined {
+export function toChartSelectEvent(event: { element?: unknown }, data: ChartData): ChartSelectEvent | undefined {
     const element = event?.element;
-    if (!element) {
+    if (!isChartDataElement(element)) {
         return undefined;
     }
     const dataset = data.datasets?.[element.datasetIndex];
@@ -177,7 +188,7 @@ export function barChartOptions(config: BarChartConfig): ChartOptions<'bar'> {
                   }
                 : { display: false },
         },
-    } as ChartOptions<'bar'>;
+    };
 }
 
 /**
@@ -202,7 +213,7 @@ export function lineChartOptions(config: LineChartConfig): ChartOptions<'line'> 
             tooltip: buildTooltip(config.tooltip),
             datalabels: { display: false },
         },
-    } as ChartOptions<'line'>;
+    };
 }
 
 /**
@@ -222,5 +233,5 @@ export function doughnutChartOptions(config: DoughnutChartConfig): ChartOptions<
             tooltip: buildTooltip(config.tooltip),
             datalabels: { display: false },
         },
-    } as ChartOptions<'doughnut'>;
+    };
 }

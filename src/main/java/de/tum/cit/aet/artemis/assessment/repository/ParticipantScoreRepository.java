@@ -35,8 +35,21 @@ import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 public interface ParticipantScoreRepository extends ArtemisJpaRepository<ParticipantScore, Long> {
 
     /**
-     * Find all outdated participant scores where the last result was deleted (and therefore set to null).
-     * Note: There are valid scores where the last *rated* result is null because of practice runs, see {@link #clearAllByResultId(Long)}
+     * Find all outdated participant scores that need to be recomputed by the scheduled service.
+     * <p>
+     * A score is outdated when:
+     * <ul>
+     * <li>its last result was deleted (and therefore set to null), or</li>
+     * <li>its last <i>rated</i> result reference was set to null while the rated score/points were left behind. This can
+     * only happen through the database-level {@code ON DELETE SET NULL} on {@code last_rated_result_id} (which nulls the
+     * reference but not the derived numeric columns) when a result is deleted concurrently with an async score update;
+     * a consistent score always has the rated reference and the rated score/points either both set or both null, so a
+     * non-null {@code lastRatedScore} with a null {@code lastRatedResult} is exactly this stale state. Matching it here
+     * (rather than only on {@code lastResult IS NULL}) ensures such a score is repaired, because when the rated result
+     * is nulled but a different last result survives, the score would otherwise never be picked up again.</li>
+     * </ul>
+     * A validly null rated result (e.g. a practice run, where {@code lastRatedScore} is also null, see
+     * {@link #clearAllByResultId(Long)}) is intentionally not matched.
      *
      * @return A list of outdated participant scores
      */
@@ -44,6 +57,7 @@ public interface ParticipantScoreRepository extends ArtemisJpaRepository<Partici
             SELECT p
             FROM ParticipantScore p
             WHERE p.lastResult IS NULL
+                OR (p.lastRatedResult IS NULL AND p.lastRatedScore IS NOT NULL)
             """)
     List<ParticipantScore> findAllOutdated();
 

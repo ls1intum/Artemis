@@ -106,7 +106,6 @@ export default tseslint.config(
             'src/test/vitest/',
             // Specific file exclusions within linted directories
             'src/main/webapp/app/openapi/**',
-            'src/main/webapp/content/scripts/pdf.worker.min.mjs',
             'src/test/javascript/spec/stub.js',
             // Root-level config files (not part of the Angular client)
             '*.js',
@@ -159,7 +158,10 @@ export default tseslint.config(
         rules: {
             ...prettierPlugin.configs.recommended.rules,
             ...tsPlugin.configs.recommended.rules,
-            ...angularPlugin.configs.recommended.rules,
+            // angular-eslint 22 removed `configs` from `@angular-eslint/eslint-plugin`; the recommended
+            // rules now live in the `angular-eslint` meta-package's flat `tsRecommended` config array
+            // (an array of flat-config objects, only one of which carries `rules`).
+            ...Object.assign({}, ...angular.configs.tsRecommended.map((c) => c.rules ?? {})),
             '@typescript-eslint/no-non-null-assertion': 'off',
             '@typescript-eslint/no-unsafe-return': 'off',
             '@typescript-eslint/no-unsafe-member-access': 'off',
@@ -167,7 +169,10 @@ export default tseslint.config(
             '@typescript-eslint/no-floating-promises': 'off',
             '@typescript-eslint/no-unsafe-assignment': 'off',
             '@angular-eslint/no-output-on-prefix': 'off',
-            '@typescript-eslint/ban-ts-comment': 'warn',
+            // Production client code must not silently disable the type checker. `@ts-ignore` is banned outright
+            // (convert to `@ts-expect-error` with a description, or fix the underlying type); `@ts-expect-error`
+            // is allowed only with a description. Specs relax this to 'off' in the test-file block below.
+            '@typescript-eslint/ban-ts-comment': 'error',
             '@typescript-eslint/no-deprecated': 'warn',
             '@typescript-eslint/no-empty-function': 'off',
             '@typescript-eslint/no-non-null-asserted-optional-chain': 'warn',
@@ -226,6 +231,104 @@ export default tseslint.config(
             'localRules/enforce-signal-apis': 'error',
             'localRules/enforce-cleanup-on-destroy': 'warn',
             'localRules/no-navigation-in-effect': 'error',
+            'localRules/no-as-unknown-cast': 'error',
+            'localRules/no-as-any-cast': 'error',
+        },
+    },
+    // Force JSON.parse results to carry an explicit type. `JSON.parse` is declared to return `any`, which
+    // silently disables type checking on everything derived from it — a typo like `obj.colour` compiles and
+    // yields `undefined` at runtime. Route parsing through `parseJson<T>()` (app/foundation/util/json.util),
+    // whose generic defaults to `unknown`, so a caller cannot touch the result's properties without stating
+    // the expected shape. All production call sites route through the wrapper, so this is an `error`. The
+    // wrapper itself holds the single sanctioned `JSON.parse` (line-level disabled), and test code may parse
+    // fixtures freely (specs excluded below).
+    {
+        files: ['src/main/webapp/**/*.ts'],
+        ignores: ['**/*.spec.ts'],
+        rules: {
+            'no-restricted-properties': [
+                'error',
+                {
+                    object: 'JSON',
+                    property: 'parse',
+                    message:
+                        'Avoid untyped JSON.parse(): its result is `any`, so property access is unchecked. Use parseJson<T>() from app/foundation/util/json.util and pass the expected type.',
+                },
+            ],
+            // Template literals must not stringify `any`, objects, nullish, etc. (which produce "[object Object]" /
+            // "undefined"). Numbers are allowed (allowNumber default); everything else must be converted explicitly.
+            '@typescript-eslint/restrict-template-expressions': 'error',
+        },
+    },
+    // Forbid `any` in all production client code. `any` opts a value out of type checking entirely, so it is
+    // banned across `src/main/webapp` (production). Specs may still use `any` for mocks/fixtures (excluded below).
+    {
+        files: ['src/main/webapp/**/*.ts'],
+        ignores: ['**/*.spec.ts'],
+        rules: {
+            '@typescript-eslint/no-explicit-any': 'error',
+        },
+    },
+    // Curb unsafe `as` casts in production code without banning `as` outright (downcasts the type system cannot
+    // infer — e.g. `event.target as HTMLInputElement` — remain the honest tool and stay allowed). Two targeted rules:
+    //   - `no-unnecessary-type-assertion`: removes redundant casts that do not change the type (noise, and they
+    //     silently hide the day the underlying type shifts). Auto-fixable.
+    //   - `consistent-type-assertions` with `objectLiteralTypeAssertions: 'never'`: forbids `{ … } as T` on object
+    //     literals, which bypasses excess-property checking. Use `satisfies T` (verifies shape, keeps the inferred
+    //     type) or a type annotation instead. `assertionStyle: 'as'` keeps `as const` and ordinary downcasts legal.
+    // The stronger `as any` / `as unknown` bans live in the localRules block above. Specs may cast freely (excluded).
+    {
+        files: ['src/main/webapp/**/*.ts'],
+        ignores: ['**/*.spec.ts'],
+        rules: {
+            '@typescript-eslint/no-unnecessary-type-assertion': 'error',
+            '@typescript-eslint/consistent-type-assertions': ['error', { assertionStyle: 'as', objectLiteralTypeAssertions: 'never' }],
+        },
+    },
+    // Keep diagnostics out of the console and off `globalThis` in production code.
+    //   - `no-console`: bare `console.*` is invisible in production; route real diagnostics to Sentry
+    //     (`captureException` from `@sentry/angular`). Specs may log freely (excluded below).
+    //   - `no-restricted-globals` on `globalThis`: prod is already `globalThis`-free; this is a regression guard.
+    //     Use `window` for browser globals and Sentry for diagnostics. It is a separate rule from the Monaco
+    //     `no-restricted-syntax` block above, so the two do not clobber each other. Specs use `globalThis` for
+    //     mocking (excluded below).
+    {
+        files: ['src/main/webapp/**/*.ts'],
+        ignores: ['**/*.spec.ts'],
+        rules: {
+            'no-console': 'error',
+            'no-restricted-globals': [
+                'error',
+                {
+                    name: 'globalThis',
+                    message: 'Do not use globalThis in production. Use `window` for browser globals, and Sentry captureException for diagnostics instead of globalThis.console.',
+                },
+            ],
+        },
+    },
+    // Require every Promise to be handled in production code. A floating Promise silently swallows rejections
+    // (unhandled errors) and hides ordering bugs. Handle it: `await` it (in an async function, typically with a
+    // try/catch that routes to `onError`), attach `.then(...)/.catch(...)`, or mark it deliberately fire-and-forget
+    // with the `void` operator (`ignoreVoid: true`). `ignoreIIFE` allows `(async () => { … })()`. This overrides the
+    // `'off'` default above for production code; specs may float promises for brevity (excluded below).
+    {
+        files: ['src/main/webapp/**/*.ts'],
+        ignores: ['**/*.spec.ts'],
+        rules: {
+            '@typescript-eslint/no-floating-promises': ['error', { ignoreVoid: true, ignoreIIFE: true }],
+        },
+    },
+    // Type-safety ratchet for production code (specs excluded below): catch real bug classes the compiler's
+    // `strictNullChecks`/`noImplicitAny` miss. `restrict-plus-operands` rejects `+` on mismatched/uncertain
+    // operand types (silent string/number coercion); `no-base-to-string` rejects stringifying a value whose
+    // `toString()` yields `"[object Object]"` (template literals, `String(x)`, concatenation). Both preserve
+    // behavior once fixed — they surface where a conversion was accidental. Companion to `restrict-template-expressions`.
+    {
+        files: ['src/main/webapp/**/*.ts'],
+        ignores: ['**/*.spec.ts'],
+        rules: {
+            '@typescript-eslint/restrict-plus-operands': 'error',
+            '@typescript-eslint/no-base-to-string': 'error',
         },
     },
     // Discourage `ngOnChanges` across Angular client files that have a clean baseline. Prefer computed() for derived
@@ -316,7 +419,13 @@ export default tseslint.config(
     },
     {
         files: ['src/test/javascript/**', 'src/main/webapp/app/**/*.spec.ts'],
+        plugins: {
+            localRules: localRulesPlugin,
+        },
         rules: {
+            // Legacy Angular decorators (@Input/@Output/@ViewChild/@ContentChild/...) are banned in test code too —
+            // test helpers, stubs, and mocks must use signal-based APIs (input()/output()/viewChild()/contentChild()).
+            'localRules/enforce-signal-apis': 'error',
             '@typescript-eslint/no-deprecated': 'warn',
             '@typescript-eslint/no-empty-function': 'off',
             '@typescript-eslint/ban-ts-comment': 'off',
@@ -337,7 +446,11 @@ export default tseslint.config(
         },
     },
     {
-        files: ['src/test/**/mock-*.ts'],
+        // The client test infrastructure under src/test/javascript (helpers, stubs, mocks) is TypeScript and must be
+        // parsed so ESLint actually lints it — otherwise files match no parser config and are silently "File ignored".
+        // Together with the enforce-signal-apis rule in the block above and `pnpm lint` targeting src/test/javascript,
+        // this makes the legacy-decorator ban real for test code. Rules stay relaxed as befits test doubles.
+        files: ['src/test/javascript/**/*.ts'],
         languageOptions: {
             parser: typescriptParser,
             parserOptions: {
@@ -372,6 +485,61 @@ export default tseslint.config(
             '@angular-eslint/template/elements-content': 'off',
             '@angular-eslint/template/prefer-control-flow': 'error',
             '@angular-eslint/template/prefer-self-closing-tags': 'error',
+        },
+    },
+    {
+        // Forbid raw Tailwind color palette classes (e.g. text-green-500) and hand-written PrimeNG component root
+        // classes (e.g. class="p-button") in ALL client templates: Tailwind + PrimeNG are loaded app-wide, so both
+        // are wrong everywhere — use semantic brand tokens and real PrimeNG components instead. The stylelint
+        // hex/--bs- guard (.stylelintrc.json) is scoped per migrated module. See client-development.mdx (### Styling).
+        files: ['src/main/webapp/app/**/*.html'],
+        languageOptions: {
+            parser: angularTemplateParser,
+        },
+        plugins: {
+            localRules: localRulesPlugin,
+        },
+        rules: {
+            'localRules/no-raw-tailwind-color-palette': 'error',
+            'localRules/no-primeng-component-classes': 'error',
+        },
+    },
+    {
+        // Regression lock: these modules are fully migrated to Tailwind + PrimeNG, so Bootstrap CSS classes are
+        // forbidden in their templates. Add each module here once it is fully Bootstrap-free. See client-development.mdx
+        // (### Styling).
+        files: [
+            'src/main/webapp/app/admin/**/*.html',
+            'src/main/webapp/app/course/request/**/*.html',
+            'src/main/webapp/app/exercise/result/**/*.html',
+            'src/main/webapp/app/iris/manage/settings/**/*.html',
+            'src/main/webapp/app/shared-ui/date-time-picker/**/*.html',
+            'src/main/webapp/app/atlas/shared/standardized-competencies/**/*.html',
+            'src/main/webapp/app/localci/build-queue/**/*.html',
+            'src/main/webapp/app/shared-ui/user-import/**/*.html',
+            'src/main/webapp/app/shared-ui/user-registration-modal/**/*.html',
+            // Admin-reachable global shell + delete-dialog chain (rendered on every admin page / during admin deletes).
+            'src/main/webapp/app/shared-ui/confirm-entity-name/**/*.html',
+            'src/main/webapp/app/shared-ui/delete-dialog/**/*.html',
+            'src/main/webapp/app/core/alert/**/*.html',
+            'src/main/webapp/app/core/layouts/footer/**/*.html',
+            // Only the modal shell is migrated; its search subcomponents go with the navbar/search follow-up.
+            'src/main/webapp/app/core/navbar/global-search/components/modal/global-search-modal.component.html',
+            'src/main/webapp/app/course/overview/setup-passkey-modal/**/*.html',
+            'src/main/webapp/app/notification/course-notification/course-notification-popup-overlay/**/*.html',
+            'src/main/webapp/app/localci/build-agent-summary/**/*.html',
+            'src/main/webapp/app/localci/build-agent-details/**/*.html',
+            'src/main/webapp/app/localci/build-job-statistics/**/*.html',
+            'src/main/webapp/app/shared-ui/components/buttons/copy-to-clipboard-button/**/*.html',
+        ],
+        languageOptions: {
+            parser: angularTemplateParser,
+        },
+        plugins: {
+            localRules: localRulesPlugin,
+        },
+        rules: {
+            'localRules/no-bootstrap-classes': 'error',
         },
     },
 );

@@ -25,11 +25,8 @@ import { FullscreenComponent } from 'app/modeling/shared/fullscreen/fullscreen.c
 import { ArtemisMarkdownService } from 'app/foundation/service/markdown.service';
 import { htmlForMarkdown } from 'app/foundation/util/markdown.conversion.util';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('FileUploadExamSubmissionComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<FileUploadExamSubmissionComponent>;
     let comp: FileUploadExamSubmissionComponent;
     let alertService: AlertService;
@@ -237,7 +234,7 @@ describe('FileUploadExamSubmissionComponent', () => {
         const studentSubmission = createFileUploadSubmission();
         fixture.componentRef.setInput('studentSubmission', studentSubmission);
         const jhiErrorSpy = vi.spyOn(alertService, 'error');
-        const event = { target: { files: [submissionFile] } };
+        const event = { target: { files: [submissionFile] } } as unknown as Event;
         comp.setFileSubmissionForExercise(event);
         fixture.detectChanges();
 
@@ -266,7 +263,7 @@ describe('FileUploadExamSubmissionComponent', () => {
         const studentSubmission = createFileUploadSubmission();
         fixture.componentRef.setInput('studentSubmission', studentSubmission);
         const jhiErrorSpy = vi.spyOn(alertService, 'error');
-        const event = { target: { files: [submissionFile] } };
+        const event = { target: { files: [submissionFile] } } as unknown as Event;
         comp.setFileSubmissionForExercise(event);
         fixture.detectChanges();
 

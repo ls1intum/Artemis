@@ -1,7 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { signal } from '@angular/core';
+import { CourseLecturesComponent } from 'app/lecture/shared/course-lectures/course-lectures.component';
 import { FeatureToggleHideDirective } from 'app/foundation/feature-toggle/feature-toggle-hide.directive';
-import { EMPTY, Observable, Subject, of, throwError } from 'rxjs';
+import { BehaviorSubject, EMPTY, Observable, Subject, of, throwError } from 'rxjs';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { HttpHeaders, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ActivatedRoute, Params, Router, RouterModule } from '@angular/router';
@@ -33,16 +34,18 @@ import { CourseExercisesComponent } from 'app/course/overview/course-exercises/c
 import { CourseRegistrationComponent } from 'app/course/overview/course-registration/course-registration.component';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 import { MODULE_FEATURE_ATLAS, MODULE_FEATURE_IRIS, MODULE_FEATURE_LECTURE, MODULE_FEATURE_LTI, PROFILE_PROD } from 'app/app.constants';
+import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { Course, CourseInformationSharingConfiguration } from 'app/course/shared/entities/course.model';
 import { CourseOverviewComponent } from 'app/course/overview/course-overview/course-overview.component';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
 import { ExamParticipationService } from 'app/exam/overview/services/exam-participation.service';
-import { TutorialGroupApiService } from 'app/openapi/api/tutorialGroupApi.service';
+import { TutorialGroupApi } from 'app/openapi/api/tutorial-group-api';
 import { TutorialGroupsConfigurationService } from 'app/tutorialgroup/manage/service/tutorial-groups-configuration.service';
 import { CourseAccessStorageService } from 'app/course/shared/services/course-access-storage.service';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { CourseSidebarService } from 'app/course/overview/services/course-sidebar.service';
+import { CourseTitleBarService } from 'app/course/shared/services/course-title-bar.service';
 import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
 import { MockHasAnyAuthorityDirective } from 'test/helpers/mocks/directive/mock-has-any-authority.directive';
 import { SortDirective } from 'app/foundation/sort/directive/sort.directive';
@@ -56,11 +59,6 @@ import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.serv
 import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
 import { generateExampleTutorialGroupsConfigurationDTO } from 'test/helpers/sample/tutorialgroup/tutorialGroupsConfigurationExampleModels';
 import { MockMetisConversationService } from 'test/helpers/mocks/service/mock-metis-conversation.service';
-import { CourseNotificationSettingService } from 'app/notification/course-notification/course-notification-setting.service';
-import { CourseNotificationService } from 'app/notification/course-notification/course-notification.service';
-import { CourseNotificationSettingPreset } from 'app/notification/shared/entities/course-notification/course-notification-setting-preset';
-import { CourseNotificationSettingInfo } from 'app/notification/shared/entities/course-notification/course-notification-setting-info';
-import { CourseNotificationInfo } from 'app/notification/shared/entities/course-notification/course-notification-info';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { CalendarService } from 'app/calendar/shared/service/calendar.service';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
@@ -131,15 +129,13 @@ class ControlsTestingComponent implements BarControlConfigurationProvider, After
 }
 
 describe('CourseOverviewComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: CourseOverviewComponent;
     let fixture: ComponentFixture<CourseOverviewComponent>;
     let courseService: CourseManagementService;
     let courseStorageService: CourseStorageService;
     let examParticipationService: ExamParticipationService;
     let teamService: TeamService;
-    let tutorialGroupApiService: TutorialGroupApiService;
+    let tutorialGroupApiService: TutorialGroupApi;
     let tutorialGroupsConfigurationService: TutorialGroupsConfigurationService;
     let jhiWebsocketService: WebsocketService;
     let courseAccessStorageService: CourseAccessStorageService;
@@ -150,8 +146,6 @@ describe('CourseOverviewComponent', () => {
     let findOneForRegistrationStub: ReturnType<typeof vi.spyOn>;
     let courseSidebarService: CourseSidebarService;
     let profileService: ProfileService;
-    let courseNotificationSettingService: CourseNotificationSettingService;
-    let courseNotificationService: CourseNotificationService;
 
     let metisConversationService: MetisConversationService;
 
@@ -160,28 +154,11 @@ describe('CourseOverviewComponent', () => {
         courseInformationSharingConfiguration: CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING,
     } as Course;
 
-    const mockCourseId = 123;
-
-    const mockNotificationSettingPresets: CourseNotificationSettingPreset[] = [
-        { typeId: 1, identifier: 'All Notifications', presetMap: { test: { PUSH: true, EMAIL: true, WEBAPP: true } } },
-        { typeId: 2, identifier: 'Important Only', presetMap: { test: { PUSH: true, EMAIL: false, WEBAPP: true } } },
-        { typeId: 3, identifier: 'Minimal', presetMap: { test: { PUSH: false, EMAIL: false, WEBAPP: true } } },
-    ];
-
-    const mockSettingInfo: CourseNotificationSettingInfo = {
-        selectedPreset: 1,
-        notificationTypeChannels: { test: { PUSH: true, EMAIL: true, WEBAPP: true } },
-    };
-
-    const mockNotificationInfo: CourseNotificationInfo = {
-        presets: mockNotificationSettingPresets,
-        notificationTypes: {},
-    };
-
     beforeEach(async () => {
         route = {
             params: of({ courseId: course1.id }) as Params,
-            snapshot: { firstChild: { routeConfig: { path: `courses/${course1.id}/exercises` } } },
+            data: of({}),
+            snapshot: { firstChild: { routeConfig: { path: 'exercises' } } },
         } as ActivatedRoute;
         router = new MockRouter();
 
@@ -214,11 +191,10 @@ describe('CourseOverviewComponent', () => {
                 MockProvider(CalendarService),
                 MockProvider(AlertService),
                 MockProvider(ChangeDetectorRef),
-                MockProvider(TutorialGroupApiService),
+                MockProvider(TutorialGroupApi),
                 MockProvider(TutorialGroupsConfigurationService),
                 MockProvider(MetisConversationService),
                 MockProvider(CourseAccessStorageService),
-                MockProvider(CourseNotificationSettingService),
                 { provide: Router, useValue: router },
                 { provide: ActivatedRoute, useValue: route },
                 { provide: MetisConversationService, useClass: MockMetisConversationService },
@@ -241,15 +217,13 @@ describe('CourseOverviewComponent', () => {
         examParticipationService = TestBed.inject(ExamParticipationService);
         teamService = TestBed.inject(TeamService);
         profileService = TestBed.inject(ProfileService);
-        tutorialGroupApiService = TestBed.inject(TutorialGroupApiService);
+        tutorialGroupApiService = TestBed.inject(TutorialGroupApi);
         tutorialGroupsConfigurationService = TestBed.inject(TutorialGroupsConfigurationService);
         jhiWebsocketService = TestBed.inject(WebsocketService);
         courseAccessStorageService = TestBed.inject(CourseAccessStorageService);
         metisConversationService = fixture.debugElement.injector.get(MetisConversationService);
         jhiWebsocketServiceSubscribeSpy = vi.spyOn(jhiWebsocketService, 'subscribe');
         vi.spyOn(teamService, 'teamAssignmentUpdates', 'get').mockResolvedValue(of(new TeamAssignmentPayload()));
-        courseNotificationSettingService = TestBed.inject(CourseNotificationSettingService);
-        courseNotificationService = TestBed.inject(CourseNotificationService);
         // default for findOneForDashboardStub is to return the course
         findOneForDashboardStub = vi.spyOn(courseService, 'findOneForDashboard').mockReturnValue(
             of(
@@ -267,9 +241,6 @@ describe('CourseOverviewComponent', () => {
             activeProfiles: [PROFILE_PROD],
             testServer: false,
         } as unknown as ProfileInfo);
-        vi.spyOn(courseNotificationSettingService, 'getSettingInfo').mockReturnValue(of(mockSettingInfo));
-        vi.spyOn(courseNotificationService, 'getInfo').mockReturnValue(of(new HttpResponse({ body: mockNotificationInfo })));
-        vi.spyOn(courseNotificationSettingService, 'setSettingPreset').mockImplementation(() => {});
     });
 
     afterEach(() => {
@@ -367,7 +338,7 @@ describe('CourseOverviewComponent', () => {
         expect(metisConversationServiceStub).toHaveBeenCalledOnce();
     });
 
-    it('should pass the page title to the exercises component and hide the top title bar', () => {
+    it('should pass the page title to the exercises component', () => {
         const exercisesComponent = Object.create(CourseExercisesComponent.prototype) as CourseExercisesComponent;
         exercisesComponent.setPageTitle = vi.fn();
         Object.defineProperty(exercisesComponent, 'isCollapsed', { value: true });
@@ -377,7 +348,6 @@ describe('CourseOverviewComponent', () => {
 
         expect(exercisesComponent.setPageTitle).toHaveBeenCalledWith('overview.exercises');
         expect(component.isSidebarCollapsed()).toBe(true);
-        expect((component as any).showCourseTitleBar()).toBe(false);
     });
 
     it.each([true, false])('should determine once if there are unread messages', async (hasNewMessages: boolean) => {
@@ -457,7 +427,8 @@ describe('CourseOverviewComponent', () => {
 
         await component.ngOnInit();
 
-        expect(getCourseStub).toHaveBeenCalledOnce();
+        // getCourse is read both in ngOnInit (initial cache lookup) and in loadCourse (reuse-vs-fetch decision)
+        expect(getCourseStub).toHaveBeenCalled();
         expect(subscribeForQuizChangesStub).toHaveBeenCalledOnce();
         expect(subscribeToTeamAssignmentUpdatesStub).toHaveBeenCalledOnce();
     });
@@ -528,6 +499,82 @@ describe('CourseOverviewComponent', () => {
         expect(refreshSpy).toHaveBeenCalledOnce();
     });
 
+    it('should fetch the course exactly once when navigating into the course', async () => {
+        await component.ngOnInit();
+        expect(findOneForDashboardStub).toHaveBeenCalledExactlyOnceWith(course1.id);
+    });
+
+    it('should reuse the cached full course without fetching when the guard already loaded it', async () => {
+        // The guard loads + stores the full course before activation; loadCourse must reuse it instead of fetching again (load once)
+        vi.spyOn(courseStorageService, 'getCourse').mockReturnValue(course1);
+        vi.spyOn(courseStorageService, 'isCourseFullyLoaded').mockReturnValue(true);
+
+        await component.ngOnInit();
+
+        expect(findOneForDashboardStub).not.toHaveBeenCalled();
+        expect(component.course()).toEqual(course1);
+    });
+
+    it('should still re-check access on the reused cached course (in-place switch) and redirect when inaccessible', async () => {
+        // On an in-place course switch the guard is not re-evaluated, so the reuse path must run the access check itself
+        (route.snapshot as any).firstChild = { routeConfig: { path: 'lectures' } };
+        vi.spyOn(courseStorageService, 'getCourse').mockReturnValue({ ...course1, lectures: undefined } as Course);
+        vi.spyOn(courseStorageService, 'isCourseFullyLoaded').mockReturnValue(true);
+        const navigateSpy = vi.spyOn(router, 'navigate');
+
+        await component.ngOnInit();
+
+        expect(findOneForDashboardStub).not.toHaveBeenCalled();
+        expect(navigateSpy).toHaveBeenCalledWith([`/courses/${course1.id}/exercises`]);
+    });
+
+    it('should re-check access for the target child route after loading the course and redirect when it is not accessible', async () => {
+        // Deep link into the lectures tab of a course without lectures, reaching loadCourse without the guard having
+        // decided (e.g. unguarded entry / in-place switch): the container fetches and must redirect after the load.
+        (route.snapshot as any).firstChild = { routeConfig: { path: 'lectures' } };
+        findOneForDashboardStub.mockReturnValue(of(new HttpResponse({ body: { ...course1, lectures: undefined } as Course, headers: new HttpHeaders() })));
+        const navigateSpy = vi.spyOn(router, 'navigate');
+
+        await component.ngOnInit();
+
+        expect(navigateSpy).toHaveBeenCalledWith([`/courses/${course1.id}/exercises`]);
+    });
+
+    it('should not redirect after loading the course when the target child route is accessible', async () => {
+        (route.snapshot as any).firstChild = { routeConfig: { path: 'lectures' } };
+        findOneForDashboardStub.mockReturnValue(of(new HttpResponse({ body: { ...course1, lectures: [new Lecture()] } as Course, headers: new HttpHeaders() })));
+        const navigateSpy = vi.spyOn(router, 'navigate');
+
+        await component.ngOnInit();
+
+        expect(navigateSpy).not.toHaveBeenCalled();
+    });
+
+    it('should not redirect after loading the course for child routes that the guard does not protect', async () => {
+        // settings/statistics/calendar are CourseOverviewRoutePath members without an access rule; they must never be redirected
+        (route.snapshot as any).firstChild = { routeConfig: { path: 'settings' } };
+        const navigateSpy = vi.spyOn(router, 'navigate');
+
+        await component.ngOnInit();
+
+        expect(navigateSpy).not.toHaveBeenCalled();
+    });
+
+    it('should reload the course when navigating to a different course in place', async () => {
+        const paramsSubject = new BehaviorSubject<Params>({ courseId: course1.id });
+        (route as any).params = paramsSubject.asObservable();
+        await component.ngOnInit();
+        expect(findOneForDashboardStub).toHaveBeenCalledExactlyOnceWith(course1.id);
+
+        const getSidebarItemsSpy = vi.spyOn(component, 'getSidebarItems');
+        paramsSubject.next({ courseId: 999 });
+
+        expect(component.courseId()).toBe(999);
+        expect(findOneForDashboardStub).toHaveBeenCalledTimes(2);
+        expect(findOneForDashboardStub).toHaveBeenLastCalledWith(999);
+        expect(getSidebarItemsSpy).toHaveBeenCalled();
+    });
+
     it('should have visible exams', () => {
         const getCourseStub = vi.spyOn(courseStorageService, 'getCourse');
         getCourseStub.mockReturnValue(course1);
@@ -577,7 +624,7 @@ describe('CourseOverviewComponent', () => {
             status: 200,
         });
 
-        vi.spyOn(tutorialGroupApiService, 'getTutorialGroupsForCourse').mockReturnValue(of(tutorialGroupsResponse));
+        vi.spyOn(tutorialGroupApiService, 'getTutorialGroupsForCourse').mockReturnValue(of(tutorialGroupsResponse.body!));
         vi.spyOn(tutorialGroupsConfigurationService, 'getOneOfCourse').mockReturnValue(of(configurationResponse));
 
         getCourseStub.mockReturnValue(course2);
@@ -707,62 +754,32 @@ describe('CourseOverviewComponent', () => {
         expect(component.isSidebarCollapsed()).toBe(true);
     });
 
-    it('should initialize course notification values when both settingInfo and info are available', async () => {
-        component.courseId.set(mockCourseId);
-        await component.ngOnInit();
-        fixture.detectChanges();
+    describe('sidebar toggle relocation', () => {
+        type CourseOverviewInternals = {
+            handleComponentActivation(componentRef: unknown): void;
+            showCourseTitleBar(): boolean;
+        };
+        const internals = (): CourseOverviewInternals => component as unknown as CourseOverviewInternals;
 
-        const selectableSettingPresets = (component as any).selectableSettingPresets();
-        const selectedSettingPreset = (component as any).selectedSettingPreset();
+        it('should push the page title into the activated list tab', () => {
+            const setPageTitle = vi.fn();
+            const fakeLectures: CourseLecturesComponent = Object.assign(Object.create(CourseLecturesComponent.prototype), { isCollapsed: signal(false), setPageTitle });
+            component.pageTitle.set('overview.lectures');
 
-        expect(selectableSettingPresets).toBeDefined();
-        expect(selectableSettingPresets).toEqual(mockNotificationSettingPresets);
-        expect(selectedSettingPreset).toBeDefined();
-        expect(selectedSettingPreset).toEqual(mockNotificationSettingPresets[0]);
-    });
+            internals().handleComponentActivation(fakeLectures);
 
-    it('should select a new notification preset when presetSelected is called', async () => {
-        const setSettingPresetSpy = vi.spyOn(courseNotificationSettingService, 'setSettingPreset');
-
-        await component.ngOnInit();
-        fixture.detectChanges();
-
-        component.presetSelected(2);
-
-        const selectedSettingPreset = (component as any).selectedSettingPreset();
-
-        expect(selectedSettingPreset).toBeDefined();
-        expect(selectedSettingPreset).toEqual(mockNotificationSettingPresets[1]);
-        expect(setSettingPresetSpy).toHaveBeenCalledWith(1, 2, mockNotificationSettingPresets[0]);
-    });
-
-    it('should set selectedSettingPreset to undefined when custom settings are selected', async () => {
-        await component.ngOnInit();
-        fixture.detectChanges();
-
-        component.presetSelected(0);
-
-        const selectedSettingPreset = (component as any).selectedSettingPreset();
-
-        expect(selectedSettingPreset).toBeUndefined();
-        expect(courseNotificationSettingService.setSettingPreset).toHaveBeenCalledWith(1, 0, mockNotificationSettingPresets[0]);
-    });
-
-    it('should update notification settings when both services return data', async () => {
-        component.courseId.set(mockCourseId);
-        const getSettingInfoSpy = vi.spyOn(courseNotificationSettingService, 'getSettingInfo').mockImplementation(() => {
-            return of(undefined);
+            expect(setPageTitle).toHaveBeenCalledWith('overview.lectures');
         });
 
-        await component.ngOnInit();
-        fixture.detectChanges();
+        it('should only show the title bar when a page projects title-bar content', () => {
+            const titleBarService = TestBed.inject(CourseTitleBarService);
+            expect(internals().showCourseTitleBar()).toBe(false);
 
-        getSettingInfoSpy.mockReturnValue(of(mockSettingInfo));
+            titleBarService.setActionsTemplate({} as TemplateRef<unknown>);
+            expect(internals().showCourseTitleBar()).toBe(true);
 
-        (component as any).settingInfo = mockSettingInfo;
-        (component as any).initializeCourseNotificationValues();
-
-        expect((component as any).selectableSettingPresets()).toBeDefined();
-        expect((component as any).selectedSettingPreset()).toBeDefined();
+            titleBarService.setActionsTemplate(undefined);
+            expect(internals().showCourseTitleBar()).toBe(false);
+        });
     });
 });

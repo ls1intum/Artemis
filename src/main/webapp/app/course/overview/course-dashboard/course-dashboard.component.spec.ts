@@ -1,9 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CourseDashboardComponent } from 'app/course/overview/course-dashboard/course-dashboard.component';
 import { By } from '@angular/platform-browser';
-import { Component, DebugElement, input } from '@angular/core';
+import { Component, DebugElement, input, signal } from '@angular/core';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
@@ -43,9 +42,9 @@ class MockCourseChatbotComponent {
     readonly courseId = input<number>();
 }
 
-describe('CourseDashboardComponent', () => {
-    setupTestBed({ zoneless: true });
+type CourseDashboardInternals = { courseChatbot: () => { isChatHistoryOpen: () => boolean; toggleChatHistory: () => void } | undefined };
 
+describe('CourseDashboardComponent', () => {
     let component: CourseDashboardComponent;
     let fixture: ComponentFixture<CourseDashboardComponent>;
     let debugElement: DebugElement;
@@ -233,14 +232,23 @@ describe('CourseDashboardComponent', () => {
         expect(spinner).toBeTruthy();
     });
 
-    it('should toggle isCollapsed when toggleSidebar is called', () => {
-        expect(component.isCollapsed).toBe(false);
+    it('should derive isCollapsed from the chatbot chat-history open state', () => {
+        const isChatHistoryOpen = signal(true);
+        vi.spyOn(component as unknown as CourseDashboardInternals, 'courseChatbot').mockReturnValue({ isChatHistoryOpen, toggleChatHistory: vi.fn() });
+
+        expect(component.isCollapsed()).toBe(false);
+
+        isChatHistoryOpen.set(false);
+        expect(component.isCollapsed()).toBe(true);
+    });
+
+    it('should toggle the chatbot chat history when toggleSidebar is called', () => {
+        const toggleChatHistory = vi.fn();
+        vi.spyOn(component as unknown as CourseDashboardInternals, 'courseChatbot').mockReturnValue({ isChatHistoryOpen: signal(false), toggleChatHistory });
 
         component.toggleSidebar();
-        expect(component.isCollapsed).toBe(true);
 
-        component.toggleSidebar();
-        expect(component.isCollapsed).toBe(false);
+        expect(toggleChatHistory).toHaveBeenCalledOnce();
     });
 
     it('should correctly calculate overall performance', () => {

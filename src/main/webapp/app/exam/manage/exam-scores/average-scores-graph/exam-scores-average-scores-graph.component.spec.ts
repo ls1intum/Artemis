@@ -13,11 +13,8 @@ import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.mod
 import { LocaleConversionService } from 'app/foundation/service/locale-conversion.service';
 import { RouterModule } from '@angular/router';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('ExamScoresAverageScoresGraphComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<ExamScoresAverageScoresGraphComponent>;
     let component: ExamScoresAverageScoresGraphComponent;
     let navigateToExerciseMock: ReturnType<typeof vi.spyOn>;

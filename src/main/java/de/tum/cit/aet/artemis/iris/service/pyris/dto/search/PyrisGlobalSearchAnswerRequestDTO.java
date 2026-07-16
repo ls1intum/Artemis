@@ -10,7 +10,6 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.PyrisPipelineExecutionSettingsDTO;
-import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageDTO;
 
 /**
  * Request body sent to Pyris POST /api/v1/pipelines/global-search/run (async, returns 202).
@@ -20,6 +19,5 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageDTO;
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record PyrisGlobalSearchAnswerRequestDTO(@NotBlank String query, @Min(1) @Max(5) int limit, PyrisPipelineExecutionSettingsDTO settings,
-        @JsonProperty("initialStages") List<PyrisStageDTO> initialStages, @JsonProperty("accessContext") PyrisAccessContextDTO accessContext,
-        @JsonProperty("prefetchedEntities") List<PyrisSearchableEntityDTO> prefetchedEntities) {
+        @JsonProperty("accessContext") PyrisAccessContextDTO accessContext, @JsonProperty("prefetchedEntities") List<PyrisSearchableEntityDTO> prefetchedEntities) {
 }

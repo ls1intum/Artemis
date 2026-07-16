@@ -5,7 +5,6 @@
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { BehaviorSubject, of, throwError } from 'rxjs';
 import { ActivatedRoute, Router } from '@angular/router';
 import { PaginatorState } from 'primeng/paginator';
@@ -27,8 +26,6 @@ import { SystemNotificationService } from 'app/core/notification/system-notifica
 import { AdminSystemNotificationService } from 'app/core/notification/system-notification/admin-system-notification.service';
 
 describe('SystemNotificationManagementComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<SystemNotificationManagementComponent>;
     let component: SystemNotificationManagementComponent;
     let router: MockRouter;
@@ -283,20 +280,6 @@ describe('SystemNotificationManagementComponent', () => {
             const result = component.sort();
 
             expect(result).toEqual(['id,asc']);
-        });
-    });
-
-    describe('trackIdentity', () => {
-        it('should return notification id', () => {
-            const notification = { id: 5 } as SystemNotification;
-
-            expect(component.trackIdentity(0, notification)).toBe(5);
-        });
-
-        it('should return -1 when id is undefined', () => {
-            const notification = {} as SystemNotification;
-
-            expect(component.trackIdentity(0, notification)).toBe(-1);
         });
     });
 

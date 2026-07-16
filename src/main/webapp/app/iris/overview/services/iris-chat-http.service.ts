@@ -32,7 +32,9 @@ export class IrisChatHttpService {
         return this.httpClient.get<IrisMessageResponseDTO[]>(`${this.apiPrefix}/sessions/${sessionId}/messages`, { observe: 'response' }).pipe(
             map((response) => {
                 const dtos = response.body;
-                if (!dtos) return response as unknown as HttpResponse<IrisMessage[]>;
+                // No body to convert: re-type the empty response via clone's generic overload (clone with no
+                // body key copies the existing body verbatim), preserving the real HttpResponse instance.
+                if (!dtos) return response.clone<IrisMessage[]>({});
 
                 const messages: IrisMessage[] = dtos.map((dto) => {
                     return Object.assign({}, dto, {
@@ -48,9 +50,7 @@ export class IrisChatHttpService {
                     return 0;
                 });
 
-                return Object.assign({}, response, {
-                    body: messages,
-                }) as HttpResponse<IrisMessage[]>;
+                return response.clone<IrisMessage[]>({ body: messages });
             }),
         );
     }
@@ -58,7 +58,7 @@ export class IrisChatHttpService {
     /**
      * creates a new message in a session
      * @param sessionId of the session
-     * @param request  the message request DTO containing content and optional uncommitted files
+     * @param request   the message request DTO containing content, optional uncommitted files and optional pending context
      */
     createMessage(sessionId: number, request: IrisMessageRequestDTO): Response<IrisMessageResponseDTO> {
         return this.httpClient.post<IrisMessageResponseDTO>(`${this.apiPrefix}/sessions/${sessionId}/messages`, request, { observe: 'response' });
@@ -112,24 +112,25 @@ export class IrisChatHttpService {
 
     getCurrentSessionOrCreateIfNotExists(mode: ChatServiceMode, entityId: number): Response<IrisSession> {
         if (mode === ChatServiceMode.TUTOR_SUGGESTION) {
-            return this.httpClient.post<IrisSession>(`${this.apiPrefix}/tutor-suggestion/${entityId}/sessions/current`, null, { observe: 'response' });
+            return this.httpClient.post<IrisSession>(`${this.apiPrefix}/tutor-suggestion/posts/${entityId}/sessions/current`, null, { observe: 'response' });
         }
         return this.httpClient.post<IrisSession>(`${this.apiPrefix}/chat/sessions/current`, null, { observe: 'response', params: { mode, entityId } });
     }
 
-    createSession(mode: ChatServiceMode, entityId: number): Response<IrisSession> {
-        if (mode === ChatServiceMode.TUTOR_SUGGESTION) {
-            return this.httpClient.post<IrisSession>(`${this.apiPrefix}/tutor-suggestion/${entityId}/sessions`, null, { observe: 'response' });
-        }
-        return this.httpClient.post<IrisSession>(`${this.apiPrefix}/chat/sessions`, null, { observe: 'response', params: { mode, entityId } });
+    /**
+     * Creates a new (empty) course chat session ("New Chat"). Every new session is a course session;
+     * exercise/lecture context is layered on later via a context switch.
+     */
+    createCourseSession(courseId: number): Response<IrisSession> {
+        return this.httpClient.post<IrisSession>(`${this.apiPrefix}/chat/sessions`, null, { observe: 'response', params: { courseId } });
     }
 
     getChatSessions(courseId: number): Observable<IrisSessionDTO[]> {
-        return this.httpClient.get<IrisSessionDTO[]>(`${this.apiPrefix}/chat/${courseId}/sessions/overview`);
+        return this.httpClient.get<IrisSessionDTO[]>(`${this.apiPrefix}/chat/courses/${courseId}/sessions/overview`);
     }
 
     getChatSessionById(courseId: number, sessionId: number): Observable<IrisSession> {
-        return this.httpClient.get<IrisSession>(`${this.apiPrefix}/chat/${courseId}/session/${sessionId}`);
+        return this.httpClient.get<IrisSession>(`${this.apiPrefix}/chat/courses/${courseId}/sessions/${sessionId}`);
     }
 
     /**

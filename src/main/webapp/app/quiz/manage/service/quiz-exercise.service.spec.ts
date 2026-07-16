@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TranslateService } from '@ngx-translate/core';
 import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, TestRequest, provideHttpClientTesting } from '@angular/common/http/testing';
@@ -15,7 +14,7 @@ import { ShortAnswerQuestion } from 'app/quiz/shared/entities/short-answer-quest
 import { DragAndDropQuestion } from 'app/quiz/shared/entities/drag-and-drop-question.model';
 import { QuizQuestion, QuizQuestionType } from 'app/quiz/shared/entities/quiz-question.model';
 import dayjs from 'dayjs/esm';
-import { firstValueFrom } from 'rxjs';
+import { Observable, firstValueFrom } from 'rxjs';
 import { ZipBuilder } from 'app/foundation/util/zip.util';
 import { DragAndDropMapping } from 'app/quiz/shared/entities/drag-and-drop-mapping.model';
 
@@ -104,8 +103,6 @@ const makeExamQuiz = () => {
 };
 
 describe('QuizExercise Service', () => {
-    setupTestBed({ zoneless: true });
-
     const fileMap = new Map<string, Blob>();
     fileMap.set('file.jpg', new Blob());
 
@@ -264,11 +261,11 @@ describe('QuizExercise Service', () => {
         ['recalculate', [123], quizEx, 'GET', '/recalculate-statistics'],
         ['find', [123], quizEx, 'GET', ''],
     ])('should perform a http request for %p', async (method, args, response, httpMethod, urlSuffix) => {
-        const functionToCall = service[method as keyof QuizExerciseService];
+        const functionToCall = service[method as keyof QuizExerciseService] as (...args: unknown[]) => Observable<HttpResponse<unknown>>;
         if (typeof functionToCall !== 'function') {
             throw new Error(`Method ${method} not found in service`);
         }
-        const result = firstValueFrom(functionToCall.apply(service, args)) as Promise<HttpResponse<unknown>>;
+        const result = firstValueFrom(functionToCall.apply(service, args));
         const req = httpMock.expectOne({ method: httpMethod });
         expect(req.request.url.endsWith(urlSuffix)).toBe(true);
         req.flush(response);

@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { checkForInvalidFlaggedQuestions } from 'app/quiz/shared/service/quiz-manage-util.service';
@@ -104,8 +103,6 @@ const createValidSAQuestion = () => {
 };
 
 describe('QuizQuestionListEditExistingComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<QuizQuestionListEditExistingComponent>;
     let component: QuizQuestionListEditExistingComponent;
     let courseService: CourseManagementService;
@@ -304,7 +301,7 @@ describe('QuizQuestionListEditExistingComponent', () => {
     describe('import questions', () => {
         it('should set import file correctly', () => {
             const file = new File(['content'], 'testFileName', { type: 'text/plain' });
-            const ev = { target: { files: [file] } };
+            const ev = { target: { files: [file] } } as unknown as Event;
             component.setImportFile(ev);
             expect(component.importFile()).toEqual(file);
             expect(component.importFileName()).toBe('testFileName');

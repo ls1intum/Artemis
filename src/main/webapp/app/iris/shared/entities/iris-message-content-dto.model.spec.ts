@@ -1,3 +1,4 @@
+import { describe, expect, it } from 'vitest';
 import { IrisMessageContentDTO } from 'app/iris/shared/entities/iris-message-content-dto.model';
 
 describe('IrisMessageContentDTO', () => {

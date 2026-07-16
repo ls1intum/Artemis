@@ -8,6 +8,15 @@ import { ContributorModel } from 'app/core/about-us/models/contributor-model';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
+/** Minimal shape of a contributor entry as returned in about-us.json (plain object, before mapping into {@link ContributorModel}). */
+interface ContributorDto {
+    fullName: string;
+    photoDirectory: string;
+    sortBy?: string;
+    role?: string;
+    website?: string;
+}
+
 @Component({
     selector: 'jhi-about-us',
     templateUrl: './about-us.component.html',
@@ -39,21 +48,21 @@ export class AboutUsComponent implements OnInit {
         ['exercises.text', { textUrl: 'https://docs.artemis.tum.de/instructor/exercises/text-exercise', athenaUrl: 'https://github.com/ls1intum/edutelligence/tree/main/athena' }],
         ['exercises.fileUpload', { fileUploadUrl: 'https://docs.artemis.tum.de/instructor/exercises/file-upload-exercise' }],
         ['exam', { examModeUrl: 'https://docs.artemis.tum.de/instructor/exams/intro', studentFeatureUrl: '/features/students', instructorFeatureUrl: '/features/instructors' }],
-        ['grading', { gradingUrl: 'https://docs.artemis.tum.de/instructor/grading' }],
+        ['grading', { gradingUrl: 'https://docs.artemis.tum.de/instructor/assessment-grading/grading' }],
         ['assessment', { assessmentUrl: 'https://docs.artemis.tum.de/instructor/assessment-grading/assessment' }],
-        ['communication', { communicationUrl: 'https://docs.artemis.tum.de/student/communication' }],
-        ['notifications', { notificationsURL: 'https://docs.artemis.tum.de/student/notifications' }],
+        ['communication', { communicationUrl: 'https://docs.artemis.tum.de/student/communication-support/communication' }],
+        ['notifications', { notificationsURL: 'https://docs.artemis.tum.de/student/communication-support/notifications' }],
         ['teamExercises', { teamExercisesUrl: 'https://docs.artemis.tum.de/instructor/exercises/team-exercise' }],
         ['lectures', { lecturesUrl: 'https://docs.artemis.tum.de/instructor/lectures' }],
-        ['integratedMarkdownEditor', { markdownEditorUrl: 'https://docs.artemis.tum.de/student/markdown-support' }],
-        ['plagiarismChecks', { jPlagUrl: 'https://github.com/jplag/JPlag/', plagiarismChecksUrl: 'https://docs.artemis.tum.de/instructor/plagiarism-check' }],
+        ['integratedMarkdownEditor', { markdownEditorUrl: 'https://docs.artemis.tum.de/student/tools-reference/markdown-support' }],
+        ['plagiarismChecks', { jPlagUrl: 'https://github.com/jplag/JPlag/', plagiarismChecksUrl: 'https://docs.artemis.tum.de/instructor/assessment-grading/plagiarism-check' }],
         ['learningAnalytics', { learningAnalyticsUrl: 'https://docs.artemis.tum.de/instructor/analytics/learning-analytics' }],
-        ['adaptiveLearning', { adaptiveLearningUrl: 'https://docs.artemis.tum.de/instructor/adaptive-learning' }],
-        ['tutorialGroups', { tutorialGroupsUrl: 'https://docs.artemis.tum.de/instructor/tutorial-groups' }],
+        ['adaptiveLearning', { adaptiveLearningUrl: 'https://docs.artemis.tum.de/instructor/analytics/adaptive-learning' }],
+        ['tutorialGroups', { tutorialGroupsUrl: 'https://docs.artemis.tum.de/instructor/communication-support/tutorial-groups' }],
         ['iris', { irisUrl: 'https://ls1intum.github.io/edutelligence/iris/' }],
         ['scalable', { scalingUrl: 'https://docs.artemis.tum.de/admin/scaling' }],
-        ['highUserSatisfaction', { userExperienceUrl: 'https://docs.artemis.tum.de/student/user-experience' }],
-        ['customizable', { customizableUrl: 'https://docs.artemis.tum.de/instructor/courses' }],
+        ['highUserSatisfaction', { userExperienceUrl: 'https://docs.artemis.tum.de/student/getting-started/user-experience' }],
+        ['customizable', { customizableUrl: 'https://docs.artemis.tum.de/instructor/course-management/course-configuration' }],
         ['openSource', { openSourceUrl: 'https://docs.artemis.tum.de/developer/open-source' }],
     ];
 
@@ -66,7 +75,7 @@ export class AboutUsComponent implements OnInit {
             // Map contributors into the model, as the returned data are just plain objects
             const mappedData: AboutUsModel = {
                 ...data,
-                contributors: data.contributors.map((con: any) => new ContributorModel(con.fullName, con.photoDirectory, con.sortBy, con.role, con.website)),
+                contributors: data.contributors.map((con: ContributorDto) => new ContributorModel(con.fullName, con.photoDirectory, con.sortBy, con.role, con.website)),
             };
 
             // Sort by last name

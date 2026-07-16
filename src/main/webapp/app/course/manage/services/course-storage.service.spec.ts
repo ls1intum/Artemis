@@ -1,5 +1,4 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TestBed } from '@angular/core/testing';
 import { BehaviorSubject, distinctUntilChanged, firstValueFrom } from 'rxjs';
 
@@ -10,8 +9,6 @@ import { MockAccountService } from 'test/helpers/mocks/service/mock-account.serv
 import { User } from 'app/account/user/user.model';
 
 describe('CourseStorageService', () => {
-    setupTestBed({ zoneless: true });
-
     let service: CourseStorageService;
 
     beforeEach(() => {
@@ -47,6 +44,26 @@ describe('CourseStorageService', () => {
         service.setCourses([{ id: 1 } as Course]);
         service.updateCourse(undefined);
         expect(service.getCourse(1)).toBeDefined();
+    });
+
+    describe('fully loaded course tracking', () => {
+        it('should mark a course as fully loaded only when stored as a full course', () => {
+            service.updateCourse({ id: 1 } as Course, true);
+            expect(service.isCourseFullyLoaded(1)).toBe(true);
+            expect(service.isCourseFullyLoaded(42)).toBe(false);
+        });
+
+        it('should drop the fully loaded marker when a course is updated without full details', () => {
+            service.updateCourse({ id: 1 } as Course, true);
+            service.updateCourse({ id: 1 } as Course);
+            expect(service.isCourseFullyLoaded(1)).toBe(false);
+        });
+
+        it('should drop all fully loaded markers when the slim course list replaces the stored courses', () => {
+            service.updateCourse({ id: 1 } as Course, true);
+            service.setCourses([{ id: 1 } as Course]);
+            expect(service.isCourseFullyLoaded(1)).toBe(false);
+        });
     });
 
     describe('authentication state changes', () => {

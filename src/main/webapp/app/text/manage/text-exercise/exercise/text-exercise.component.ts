@@ -138,7 +138,7 @@ export class TextExerciseComponent extends ExerciseComponent {
 
         dialogRef?.onClose.subscribe((result: TextExercise | undefined) => {
             if (result?.id) {
-                this.router.navigate(['course-management', this.courseId(), 'text-exercises', result.id, 'import']);
+                void this.router.navigate(['course-management', this.courseId(), 'text-exercises', result.id, 'import']);
             }
         });
     }

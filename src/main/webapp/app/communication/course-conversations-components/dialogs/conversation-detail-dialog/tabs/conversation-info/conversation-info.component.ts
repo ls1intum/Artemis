@@ -182,7 +182,7 @@ export class ConversationInfoComponent implements OnInit, OnDestroy {
         }
 
         const trimmedValue = value.trim();
-        const channelOrGroupChat = this.getAsChannelOrGroupChat(this.activeConversation()!);
+        const channelOrGroupChat = this.getAsChannelOrGroupChat(this.activeConversation());
         if (!channelOrGroupChat) return;
 
         this.saveStatus.set('saving');
@@ -209,8 +209,10 @@ export class ConversationInfoComponent implements OnInit, OnDestroy {
                 takeUntil(this.ngUnsubscribe),
             )
             .subscribe({
-                next: (updatedGroupChat: GroupChatDTO) => {
-                    groupChat[propertyName] = updatedGroupChat[propertyName];
+                next: (updatedGroupChat: GroupChatDTO | null) => {
+                    if (updatedGroupChat) {
+                        groupChat[propertyName] = updatedGroupChat[propertyName];
+                    }
                     this.markSaved();
                     this.onChangePerformed();
                 },
@@ -235,8 +237,10 @@ export class ConversationInfoComponent implements OnInit, OnDestroy {
                 takeUntil(this.ngUnsubscribe),
             )
             .subscribe({
-                next: (updatedChannel: ChannelDTO) => {
-                    channel[propertyName] = updatedChannel[propertyName];
+                next: (updatedChannel: ChannelDTO | null) => {
+                    if (updatedChannel) {
+                        channel[propertyName] = updatedChannel[propertyName];
+                    }
                     this.markSaved();
                     this.onChangePerformed();
                 },

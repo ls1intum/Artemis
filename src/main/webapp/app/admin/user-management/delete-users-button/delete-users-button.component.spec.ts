@@ -4,7 +4,6 @@
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { of, throwError } from 'rxjs';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
@@ -20,8 +19,6 @@ import { DialogService } from 'primeng/dynamicdialog';
 import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
 
 describe('DeleteUsersButtonComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: DeleteUsersButtonComponent;
     let fixture: ComponentFixture<DeleteUsersButtonComponent>;
     let adminUserService: AdminUserService;
@@ -55,6 +52,33 @@ describe('DeleteUsersButtonComponent', () => {
 
     afterEach(() => {
         vi.restoreAllMocks();
+    });
+
+    describe('rendering', () => {
+        it('should render a PrimeNG delete button that triggers loadUserList on click', async () => {
+            TestBed.resetTestingModule();
+            await TestBed.configureTestingModule({
+                imports: [DeleteUsersButtonComponent],
+                providers: [
+                    { provide: TranslateService, useClass: MockTranslateService },
+                    { provide: DialogService, useClass: MockDialogService },
+                    provideHttpClient(),
+                    provideHttpClientTesting(),
+                ],
+            }).compileComponents();
+
+            const renderFixture = TestBed.createComponent(DeleteUsersButtonComponent);
+            const renderComponent = renderFixture.componentInstance;
+            const loadUserListSpy = vi.spyOn(renderComponent, 'loadUserList').mockImplementation(() => {});
+            renderFixture.detectChanges();
+
+            const button = renderFixture.nativeElement.querySelector('[data-testid="delete-users-button"]');
+            expect(button).toBeTruthy();
+
+            const nativeButton: HTMLButtonElement = button.querySelector('button') ?? button;
+            nativeButton.click();
+            expect(loadUserListSpy).toHaveBeenCalledOnce();
+        });
     });
 
     describe('loadUserList', () => {

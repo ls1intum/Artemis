@@ -1,6 +1,5 @@
 import { MockInstance, afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { BonusComponent, BonusStrategyDiscreteness, BonusStrategyOption } from 'app/assessment/manage/grading/bonus/bonus.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
@@ -26,7 +25,6 @@ import { TranslateService } from '@ngx-translate/core';
 import { GradingScaleDTO, toGradingScaleDTO } from 'app/assessment/shared/entities/grading-scale-dto.model';
 
 describe('BonusComponent', () => {
-    setupTestBed({ zoneless: true });
     let component: BonusComponent;
     let fixture: ComponentFixture<BonusComponent>;
 
@@ -246,7 +244,7 @@ describe('BonusComponent', () => {
         },
     ];
 
-    const bonusStrategyToOptionAndDiscretenessMappings = [
+    const bonusStrategyToOptionAndDiscretenessMappings: [BonusStrategy | undefined, BonusStrategyOption | undefined, BonusStrategyDiscreteness | undefined][] = [
         [BonusStrategy.GRADES_CONTINUOUS, BonusStrategyOption.GRADES, BonusStrategyDiscreteness.CONTINUOUS],
         [BonusStrategy.GRADES_DISCRETE, BonusStrategyOption.GRADES, BonusStrategyDiscreteness.DISCRETE],
         [BonusStrategy.POINTS, BonusStrategyOption.POINTS, undefined],
@@ -351,7 +349,7 @@ describe('BonusComponent', () => {
 
     it.each(bonusStrategyToOptionAndDiscretenessMappings.slice(0, -1))(
         'should set bonus strategy and discreteness for [%p, %p, %p]',
-        (bonusStrategy: BonusStrategy, bonusStrategyOption: BonusStrategyOption, bonusStrategyDiscreteness: BonusStrategyDiscreteness) => {
+        (bonusStrategy: BonusStrategy | undefined, bonusStrategyOption: BonusStrategyOption | undefined, bonusStrategyDiscreteness: BonusStrategyDiscreteness | undefined) => {
             const bonusSpy = findBonusForExamSpy.mockReturnValue(of({ body: { bonusStrategy } } as EntityResponseType));
             component.ngOnInit();
             expect(bonusSpy).toHaveBeenCalledTimes(1);
@@ -362,7 +360,7 @@ describe('BonusComponent', () => {
 
     it.each(bonusStrategyToOptionAndDiscretenessMappings)(
         'should convert from inputs to BonusStrategy for [%p, %p, %p]',
-        (bonusStrategy: BonusStrategy, bonusStrategyOption: BonusStrategyOption, bonusStrategyDiscreteness: BonusStrategyDiscreteness) => {
+        (bonusStrategy: BonusStrategy | undefined, bonusStrategyOption: BonusStrategyOption | undefined, bonusStrategyDiscreteness: BonusStrategyDiscreteness | undefined) => {
             const actualBonusStrategy = component.convertFromInputsToBonusStrategy(bonusStrategyOption, bonusStrategyDiscreteness);
             expect(actualBonusStrategy).toBe(bonusStrategy);
         },

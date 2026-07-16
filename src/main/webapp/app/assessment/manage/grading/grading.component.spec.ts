@@ -1,6 +1,5 @@
 import { MockInstance, afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { GradeEditMode, GradingComponent, GradingViewMode } from 'app/assessment/manage/grading/grading.component';
 import { ActivatedRoute, Params } from '@angular/router';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
@@ -40,7 +39,6 @@ vi.mock('app/foundation/util/csv-download.util', () => {
 });
 
 describe('GradingComponent', () => {
-    setupTestBed({ zoneless: true });
     let fixture: ComponentFixture<GradingComponent>;
     let comp: GradingComponent;
     let gradingService: GradingService;
@@ -821,7 +819,7 @@ describe('GradingComponent', () => {
         const csvColumnsGrade = 'gradeName,lowerBoundPercentage,upperBoundPercentage,isPassingGrade';
 
         it('should read no grade steps from csv file without data', async () => {
-            const event = { target: { files: [csvColumnsGrade] } };
+            const event = { target: { files: [csvColumnsGrade] } } as unknown as Event;
             await comp.onCSVFileSelect(event);
 
             expect(comp.gradingScale.gradeSteps).toHaveLength(0);
@@ -830,7 +828,7 @@ describe('GradingComponent', () => {
         it('should read grade steps from csv file', async () => {
             const csvData = `gradeName,lowerBoundPercentage,upperBoundPercentage,isPassingGrade\n4.0,0,50,FALSE\n3.0,50,100,TRUE`;
             const blob = new Blob([csvData], { type: 'text/csv' });
-            const event = { target: { files: [new File([blob], 'test.csv')] } };
+            const event = { target: { files: [new File([blob], 'test.csv')] } } as unknown as Event;
 
             await comp.onCSVFileSelect(event);
 
@@ -841,7 +839,7 @@ describe('GradingComponent', () => {
         it('should read bonus steps from csv file', async () => {
             const csvData = `bonusPoints,lowerBoundPercentage,upperBoundPercentage\n0,0,50\n1,50,100`;
             const blob = new Blob([csvData], { type: 'text/csv' });
-            const event = { target: { files: [new File([blob], 'test.csv')] } };
+            const event = { target: { files: [new File([blob], 'test.csv')] } } as unknown as Event;
 
             await comp.onCSVFileSelect(event);
 

@@ -121,7 +121,6 @@ export class LectureAttachmentsComponent implements OnDestroy {
         if (!this.attachmentToBeUpdatedOrCreated()) {
             return;
         }
-        this.attachmentToBeUpdatedOrCreated()!.version!++;
         this.attachmentToBeUpdatedOrCreated()!.uploadDate = dayjs();
         this.attachmentToBeUpdatedOrCreated()!.name = this.form.value.attachmentName ?? undefined;
         this.attachmentToBeUpdatedOrCreated()!.releaseDate = this.form.value.releaseDate ?? undefined;
@@ -132,7 +131,7 @@ export class LectureAttachmentsComponent implements OnDestroy {
         }
 
         if (this.attachmentToBeUpdatedOrCreated()!.id) {
-            const requestOptions = {} as any;
+            const requestOptions: { notificationText?: string } = {};
             if (this.notificationText) {
                 requestOptions.notificationText = this.notificationText;
             }
@@ -232,10 +231,10 @@ export class LectureAttachmentsComponent implements OnDestroy {
         return item.id;
     }
 
-    downloadAttachment(downloadName: string, downloadUrl: string): void {
+    downloadAttachment(downloadName: string, downloadUrl: string, version?: number): void {
         if (!this.isDownloadingAttachmentLink()) {
             this.isDownloadingAttachmentLink.set(downloadUrl);
-            this.fileService.downloadFileByAttachmentName(downloadUrl, downloadName);
+            this.fileService.downloadFileByAttachmentName(downloadUrl, downloadName, version);
             this.isDownloadingAttachmentLink.set(undefined);
         }
     }

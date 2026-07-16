@@ -2,7 +2,6 @@ package de.tum.cit.aet.artemis.iris;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
 
@@ -49,7 +48,7 @@ class PyrisConnectorServiceTest extends AbstractIrisIntegrationTest {
         irisRequestMockProvider.mockIngestionWebhookRunError(httpStatus);
         PyrisLectureUnitWebhookDTO pyrisLectureUnitWebhookDTO = new PyrisLectureUnitWebhookDTO("example.pdf", 1, null, 123L, "Lecture Unit Name", 456L, "Lecture Name", 789L,
                 "Course Name", "Course Description", "/example/test.pdf", "", null, null);
-        PyrisWebhookLectureIngestionExecutionDTO executionDTO = new PyrisWebhookLectureIngestionExecutionDTO(pyrisLectureUnitWebhookDTO, 123L, null, List.of());
+        PyrisWebhookLectureIngestionExecutionDTO executionDTO = new PyrisWebhookLectureIngestionExecutionDTO(pyrisLectureUnitWebhookDTO, 123L, null);
         assertThatThrownBy(() -> pyrisConnectorService.executeLectureAdditionWebhook(executionDTO)).isInstanceOf(exceptionClass);
     }
 

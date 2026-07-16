@@ -19,7 +19,6 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { PostComponent } from 'app/communication/post/post.component';
-import { Course } from 'app/course/shared/entities/course.model';
 
 @Component({
     selector: 'jhi-plagiarism-case-student-detail-view',
@@ -36,18 +35,18 @@ export class PlagiarismCaseStudentDetailViewComponent implements OnInit, OnDestr
     readonly postComponent = viewChild.required<PostComponent>('post');
     readonly ButtonType = ButtonType;
 
-    courseId: number;
-    plagiarismCaseId: number;
+    courseId!: number; // set in ngOnInit() from route params
+    plagiarismCaseId!: number; // set in ngOnInit() from route params
     readonly plagiarismCase = signal<PlagiarismCase | undefined>(undefined);
 
-    private paramSubscription: Subscription;
+    private paramSubscription?: Subscription;
     readonly plagiarismVerdict = PlagiarismVerdict;
 
     getIcon = getIcon;
     faUser = faUser;
 
     readonly pageType = PageType.PLAGIARISM_CASE_STUDENT;
-    private postsSubscription: Subscription;
+    private postsSubscription?: Subscription;
     readonly posts = signal<Post[]>([]);
 
     readonly affectedExerciseRouterLink = signal<(string | number)[]>([]);
@@ -79,7 +78,7 @@ export class PlagiarismCaseStudentDetailViewComponent implements OnInit, OnDestr
                         this.affectedExerciseRouterLink.set(['/courses', this.courseId, 'exercises', plagiarismCase.exercise!.id!]);
                     }
 
-                    this.metisService.setCourse({ id: this.courseId, title: plagiarismCase.exercise?.courseTitle } as Course);
+                    this.metisService.setCourse({ id: this.courseId, title: plagiarismCase.exercise?.courseTitle });
 
                     this.metisService.setPageType(this.pageType);
                     this.metisService.getFilteredPosts({

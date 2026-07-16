@@ -1,13 +1,10 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'src/test/javascript/spec/helpers/mocks/service/mock-translate.service';
 import { TutorialRegistrationsImportModalTableComponent, TutorialRegistrationsImportModalTableRow } from './tutorial-registrations-import-modal-table.component';
 
 describe('TutorialRegistrationsImportModalTableComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: TutorialRegistrationsImportModalTableComponent;
     let fixture: ComponentFixture<TutorialRegistrationsImportModalTableComponent>;
 

@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, OnInit, WritableSignal, inject, signal } from '@angular/core';
-import { faPlus, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { firstValueFrom } from 'rxjs';
+import { faPlus, faSpinner, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { NgClass, NgTemplateOutlet } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbDropdown, NgbDropdownButtonItem, NgbDropdownItem, NgbDropdownMenu, NgbDropdownToggle } from '@ng-bootstrap/ng-bootstrap';
@@ -33,6 +34,10 @@ export class IdeSettingsComponent implements OnInit {
     protected readonly ProgrammingLanguage = ProgrammingLanguage;
     protected readonly faPlus = faPlus;
     protected readonly faTrash = faTrash;
+    protected readonly faSpinner = faSpinner;
+    // Hides the IDE button rows until the predefined IDEs and the saved preferences have loaded, so the
+    // selection is not first rendered on the VS Code default and then jumped to the actually saved IDE.
+    readonly isLoading = signal<boolean>(true);
     readonly PREDEFINED_IDE = signal<Ide[]>([{ name: 'VS Code', deepLink: 'vscode://vscode.git/clone?url={cloneUrl}' }]);
 
     programmingLanguageToIde: WritableSignal<Map<ProgrammingLanguage, Ide>> = signal(new Map([[ProgrammingLanguage.EMPTY, this.PREDEFINED_IDE()[0]]]));
@@ -41,14 +46,19 @@ export class IdeSettingsComponent implements OnInit {
     // languages that have no IDE assigned yet
     readonly remainingProgrammingLanguages = signal<ProgrammingLanguage[]>(Object.values(ProgrammingLanguage).filter((x) => x !== ProgrammingLanguage.EMPTY));
 
-    ngOnInit() {
-        this.ideSettingsService.loadPredefinedIdes().subscribe((predefinedIde) => {
-            this.PREDEFINED_IDE.set(predefinedIde);
-        });
+    async ngOnInit() {
+        try {
+            // Load the predefined IDEs and the saved preferences together and only then render, so the
+            // selection is shown correctly from the start instead of flashing on the VS Code default.
+            const [predefinedIdes, programmingLanguageToIdeMap] = await Promise.all([
+                firstValueFrom(this.ideSettingsService.loadPredefinedIdes()),
+                this.ideSettingsService.loadIdePreferences(true),
+            ]);
 
-        this.ideSettingsService.loadIdePreferences(true).then((programmingLanguageToIdeMap) => {
+            this.PREDEFINED_IDE.set(predefinedIdes);
+
             if (!programmingLanguageToIdeMap.has(ProgrammingLanguage.EMPTY)) {
-                programmingLanguageToIdeMap.set(ProgrammingLanguage.EMPTY, this.PREDEFINED_IDE()[0]);
+                programmingLanguageToIdeMap.set(ProgrammingLanguage.EMPTY, predefinedIdes[0]);
             }
 
             this.programmingLanguageToIde.set(programmingLanguageToIdeMap);
@@ -63,7 +73,9 @@ export class IdeSettingsComponent implements OnInit {
             this.remainingProgrammingLanguages.set(
                 Array.from(Object.values(ProgrammingLanguage).filter((x) => !assignedProgrammingLanguages.includes(x) && x !== ProgrammingLanguage.EMPTY)),
             );
-        });
+        } finally {
+            this.isLoading.set(false);
+        }
     }
 
     addProgrammingLanguage(programmingLanguage: ProgrammingLanguage) {

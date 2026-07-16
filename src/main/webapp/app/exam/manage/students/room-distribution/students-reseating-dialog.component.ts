@@ -84,7 +84,7 @@ export class StudentsReseatingDialogComponent implements OnInit {
     }
 
     updateRoomsUsedInExam(): void {
-        this.studentsRoomDistributionService.loadRoomsUsedInExam(this.courseId(), this.exam().id!).subscribe({
+        this.studentsRoomDistributionService.loadRoomsUsedInExam(this.courseId(), this.exam().id).subscribe({
             next: (rooms: RoomForDistributionDTO[]) => {
                 this.roomsUsedInExam.set(rooms);
 
@@ -130,13 +130,13 @@ export class StudentsReseatingDialogComponent implements OnInit {
     }
 
     protected pickSelectedRoom(event: { item: RoomForDistributionDTO }): void {
-        const selectedRoom: RoomForDistributionDTO = event.item as RoomForDistributionDTO;
+        const selectedRoom: RoomForDistributionDTO = event.item;
 
         this.selectedRoomNumber.set(selectedRoom.roomNumber);
     }
 
     protected pickSelectedSeat(event: { item: string }): void {
-        const selectedSeat: string = event.item as string;
+        const selectedSeat: string = event.item;
 
         this.selectedSeat.set(selectedSeat);
     }

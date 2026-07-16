@@ -1,6 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { GradeType, GradingScale } from 'app/assessment/shared/entities/grading-scale.model';
 import { take } from 'rxjs/operators';
@@ -13,7 +12,6 @@ import { provideHttpClient } from '@angular/common/http';
 import { provideRouter } from '@angular/router';
 
 describe('Bonus Service', () => {
-    setupTestBed({ zoneless: true });
     type GradeStepBuilder = {
         interval: number;
         gradeName: string;
@@ -205,7 +203,7 @@ describe('Bonus Service', () => {
             100,
             undefined,
         ],
-    ])('should get included boundary points [%p, %p, %p, %p]', (gradeStep: GradeStep, maxPoints: number, expected: number) => {
+    ])('should get included boundary points [%p, %p, %p, %p]', (gradeStep: GradeStep, maxPoints: number, expected: number | undefined) => {
         const result = service.getIncludedBoundaryPoints(gradeStep, maxPoints);
         expect(result).toBe(expected);
     });

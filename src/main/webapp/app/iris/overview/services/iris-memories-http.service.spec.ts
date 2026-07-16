@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
@@ -7,8 +6,6 @@ import { IrisMemoriesHttpService } from 'app/iris/overview/services/iris-memorie
 import { MemirisLearningDTO, MemirisMemory, MemirisMemoryConnectionDTO, MemirisMemoryDataDTO, MemirisMemoryWithRelationsDTO } from 'app/iris/shared/entities/memiris.model';
 
 describe('IrisMemoriesHttpService', () => {
-    setupTestBed({ zoneless: true });
-
     let service: IrisMemoriesHttpService;
     let httpMock: HttpTestingController;
 
@@ -51,7 +48,7 @@ describe('IrisMemoriesHttpService', () => {
 
     it('should get a specific user memory with relations and URL-encode the id', async () => {
         const rawId = 'a/b?c=d e';
-        const expectedUrl = `api/iris/user/memory/${encodeURIComponent(rawId)}`;
+        const expectedUrl = `api/iris/user/memories/${encodeURIComponent(rawId)}`;
         const returnedFromService: MemirisMemoryWithRelationsDTO = {
             id: rawId,
             title: 'Title',
@@ -79,7 +76,7 @@ describe('IrisMemoriesHttpService', () => {
         let completed = false;
         service.deleteUserMemory(memoryId).subscribe(() => (completed = true));
 
-        const req = httpMock.expectOne(`api/iris/user/memory/${memoryId}`);
+        const req = httpMock.expectOne(`api/iris/user/memories/${memoryId}`);
         expect(req.request.method).toBe('DELETE');
         req.flush(null, { status: 200, statusText: 'OK' });
         await vi.waitFor(() => expect(completed).toBe(true));

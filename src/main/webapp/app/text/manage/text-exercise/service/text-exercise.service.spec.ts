@@ -3,7 +3,6 @@
  * Tests CRUD operations, plagiarism detection, and tutor effort calculations for text exercises.
  */
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
@@ -24,7 +23,6 @@ import { TutorEffort } from 'app/assessment/shared/entities/tutor-effort.model';
 import { PlagiarismResult } from 'app/plagiarism/shared/entities/PlagiarismResult';
 
 describe('TextExercise Service', () => {
-    setupTestBed({ zoneless: true });
     let service: TextExerciseService;
     let httpMock: HttpTestingController;
     let elemDefault: TextExercise;
@@ -98,7 +96,7 @@ describe('TextExercise Service', () => {
             const returnedFromService = Object.assign({ exampleSolution: 'BBBBBB' }, elemDefault);
             const expected = Object.assign({}, returnedFromService);
             service
-                .query(expected)
+                .query(expected as unknown as Record<string, unknown>)
                 .pipe(take(1))
                 .subscribe((resp) => (requestResult = resp));
             const req = httpMock.expectOne({ method: 'GET' });
@@ -147,12 +145,13 @@ describe('TextExercise Service', () => {
             const textExerciseReturned = { ...elemDefault };
             textExerciseReturned.id = 123;
             service
-                .reevaluateAndUpdate(textExerciseReturned)
+                .reevaluateAndUpdate(textExerciseReturned, { deleteFeedback: false })
                 .pipe(take(1))
                 .subscribe((resp) => {
                     expect(resp.body).toEqual(textExerciseReturned);
                 });
             const request = httpMock.expectOne({ method: 'PUT' });
+            expect(request.request.params.get('deleteFeedback')).toBe('false');
             request.flush(textExerciseReturned);
         });
 

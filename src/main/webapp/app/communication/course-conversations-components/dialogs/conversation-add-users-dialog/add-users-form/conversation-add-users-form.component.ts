@@ -33,7 +33,7 @@ export class ConversationAddUsersFormComponent implements OnInit {
 
     isLoading = input<boolean>(false);
 
-    form: FormGroup;
+    form!: FormGroup; // set in initializeForm() from ngOnInit()
 
     // Icons
     protected readonly faSpinner = faSpinner;

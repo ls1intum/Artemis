@@ -6,7 +6,8 @@ import org.jspecify.annotations.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisRunState;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStatusErrorDTO;
 
 /**
  * Webhook payload sent by Pyris to Artemis at
@@ -15,10 +16,11 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageDTO;
  * <p>
  * Pyris sends two webhooks per request:
  * <ol>
- * <li>Thinking: {@code stages[0].state == IN_PROGRESS}, {@code answer == null}</li>
- * <li>Result: all stages terminal, {@code answer} is the LLM response (or null for nav queries)</li>
+ * <li>Thinking: {@code runState == RUNNING}, {@code answer == null}</li>
+ * <li>Result: terminal {@code runState}, {@code answer} is the LLM response (or null for nav queries)</li>
  * </ol>
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record PyrisGlobalSearchAnswerStatusUpdateDTO(List<PyrisStageDTO> stages, @Nullable String answer, @Nullable List<PyrisGlobalSearchSourceDTO> sources) {
+public record PyrisGlobalSearchAnswerStatusUpdateDTO(PyrisRunState runState, @Nullable PyrisStatusErrorDTO error, @Nullable String answer,
+        @Nullable List<PyrisGlobalSearchSourceDTO> sources) {
 }

@@ -46,7 +46,7 @@ export class ChannelFormComponent implements OnInit, OnDestroy {
     readonly isAnnouncementChannelChanged = output<boolean>();
     isCourseWideChannelChanged = output<boolean>();
 
-    form: FormGroup;
+    form!: FormGroup; // set in initializeForm() from ngOnInit()
 
     get nameControl() {
         return this.form.get('name');
@@ -94,7 +94,8 @@ export class ChannelFormComponent implements OnInit, OnDestroy {
     }
 
     submitForm() {
-        this.formSubmitted.emit({ ...this.form.value } as ChannelFormData);
+        const channelFormData: ChannelFormData = { ...this.form.value };
+        this.formSubmitted.emit(channelFormData);
     }
 
     private initializeForm() {

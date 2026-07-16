@@ -5,11 +5,11 @@ import { IrisMessageContentType, IrisTextMessageContent } from 'app/iris/shared/
 import { IrisMessageResponseDTO } from 'app/iris/shared/entities/iris-message-response-dto.model';
 import { IrisSession } from 'app/iris/shared/entities/iris-session.model';
 import { IrisChatWebsocketDTO, IrisChatWebsocketPayloadType } from 'app/iris/shared/entities/iris-chat-websocket-dto.model';
-import { IrisStageStateDTO } from 'app/iris/shared/entities/iris-stage-dto.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { HttpResponse } from '@angular/common/http';
 import { ChatServiceMode } from 'app/iris/overview/services/iris-chat.service';
 import { MemirisMemory } from 'app/iris/shared/entities/memiris.model';
+import { IrisActivityKind, IrisActivityState, IrisRunState } from 'app/iris/shared/entities/iris-activity.model';
 
 const map = new Map<string, any>();
 map.set('model', 'gpt-4');
@@ -41,7 +41,7 @@ export const mockServerMessageWithMemories = {
     content: [mockMessageContent],
     sentAt: dayjs(),
     accessedMemories: [new MemirisMemory('UUID', 'Memory Title', 'Memory content', [], [], false, false)],
-};
+} as IrisAssistantMessage;
 
 export const mockClientMessage = {
     id: 2,
@@ -92,13 +92,13 @@ const mockClientMessageWithMemoriesDTO: IrisMessageResponseDTO = {
 export const mockWebsocketServerMessage: IrisChatWebsocketDTO = {
     type: IrisChatWebsocketPayloadType.MESSAGE,
     message: mockServerMessageDTO,
-    stages: [],
+    runId: 'run-1',
 };
 
 export const mockWebsocketServerMessageWithMemories: IrisChatWebsocketDTO = {
     type: IrisChatWebsocketPayloadType.MESSAGE,
     message: mockServerMessageWithMemoriesDTO,
-    stages: [],
+    runId: 'run-1',
 };
 
 export const mockWebsocketClientMessage: IrisChatWebsocketDTO = {
@@ -113,27 +113,17 @@ export const mockWebsocketClientMessageWithMemories: IrisChatWebsocketDTO = {
 
 export const mockWebsocketStatusMessage = {
     type: IrisChatWebsocketPayloadType.STATUS,
-    stages: [
+    runId: 'run-1',
+    runState: IrisRunState.RUNNING,
+    activities: [
         {
-            name: 'Stage 1',
-            state: IrisStageStateDTO.IN_PROGRESS,
+            id: 'act-1',
+            kind: IrisActivityKind.TOOL,
+            name: 'lecture_content_retrieval',
+            state: IrisActivityState.RUNNING,
         },
     ],
-} as IrisChatWebsocketDTO;
-
-export const mockWebsocketStatusMessageWithInteralStage = {
-    type: IrisChatWebsocketPayloadType.STATUS,
-    stages: [
-        {
-            name: 'Stage 1',
-            state: IrisStageStateDTO.IN_PROGRESS,
-        },
-        {
-            name: 'Internal Stage',
-            state: IrisStageStateDTO.IN_PROGRESS,
-            internal: true,
-        },
-    ],
+    activitySeq: 1,
 } as IrisChatWebsocketDTO;
 
 export const mockConversation = {

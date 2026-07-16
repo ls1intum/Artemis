@@ -5,10 +5,11 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.MessageSource;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -29,7 +30,9 @@ import de.tum.cit.aet.artemis.iris.repository.IrisMessageRepository;
 import de.tum.cit.aet.artemis.iris.repository.IrisSessionRepository;
 import de.tum.cit.aet.artemis.iris.service.IrisCitationService;
 import de.tum.cit.aet.artemis.iris.service.IrisMessageService;
+import de.tum.cit.aet.artemis.iris.service.pyris.PyrisJobService;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.PyrisChatStatusUpdateDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisRunState;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.TrackedSessionBasedPyrisJob;
 import de.tum.cit.aet.artemis.iris.service.websocket.IrisChatWebsocketService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -40,15 +43,17 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingSubmissionReposi
 
 public abstract class AbstractIrisChatSessionService<S extends IrisSession> implements IrisChatBasedFeatureInterface<S>, IrisRateLimitedFeatureInterface<S> {
 
+    private static final Logger log = LoggerFactory.getLogger(AbstractIrisChatSessionService.class);
+
     private static final int MAX_SESSION_TITLE_LENGTH = 255;
 
-    private final IrisSessionRepository irisSessionRepository;
+    protected final IrisSessionRepository irisSessionRepository;
 
     private final ProgrammingSubmissionRepository programmingSubmissionRepository;
 
     private final ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository;
 
-    private final IrisMessageService irisMessageService;
+    protected final IrisMessageService irisMessageService;
 
     private final IrisMessageRepository irisMessageRepository;
 
@@ -60,6 +65,8 @@ public abstract class AbstractIrisChatSessionService<S extends IrisSession> impl
 
     private final Optional<IrisCitationService> irisCitationService;
 
+    private final PyrisJobService pyrisJobService;
+
     /**
      * Constructor with citation service support.
      * Use this for chat sessions that can have citations (Course, Lecture, Exercise chats).
@@ -67,7 +74,7 @@ public abstract class AbstractIrisChatSessionService<S extends IrisSession> impl
     public AbstractIrisChatSessionService(IrisSessionRepository irisSessionRepository, ProgrammingSubmissionRepository programmingSubmissionRepository,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, ObjectMapper objectMapper, IrisMessageService irisMessageService,
             IrisMessageRepository irisMessageRepository, IrisChatWebsocketService irisChatWebsocketService, LLMTokenUsageService llmTokenUsageService,
-            Optional<IrisCitationService> irisCitationService) {
+            Optional<IrisCitationService> irisCitationService, PyrisJobService pyrisJobService) {
         this.irisSessionRepository = irisSessionRepository;
         this.programmingSubmissionRepository = programmingSubmissionRepository;
         this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
@@ -77,6 +84,7 @@ public abstract class AbstractIrisChatSessionService<S extends IrisSession> impl
         this.irisChatWebsocketService = irisChatWebsocketService;
         this.llmTokenUsageService = llmTokenUsageService;
         this.irisCitationService = irisCitationService;
+        this.pyrisJobService = pyrisJobService;
     }
 
     /**
@@ -85,7 +93,8 @@ public abstract class AbstractIrisChatSessionService<S extends IrisSession> impl
      */
     public AbstractIrisChatSessionService(IrisSessionRepository irisSessionRepository, ProgrammingSubmissionRepository programmingSubmissionRepository,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, ObjectMapper objectMapper, IrisMessageService irisMessageService,
-            IrisMessageRepository irisMessageRepository, IrisChatWebsocketService irisChatWebsocketService, LLMTokenUsageService llmTokenUsageService) {
+            IrisMessageRepository irisMessageRepository, IrisChatWebsocketService irisChatWebsocketService, LLMTokenUsageService llmTokenUsageService,
+            PyrisJobService pyrisJobService) {
         this.irisSessionRepository = irisSessionRepository;
         this.programmingSubmissionRepository = programmingSubmissionRepository;
         this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
@@ -95,6 +104,7 @@ public abstract class AbstractIrisChatSessionService<S extends IrisSession> impl
         this.irisChatWebsocketService = irisChatWebsocketService;
         this.llmTokenUsageService = llmTokenUsageService;
         this.irisCitationService = Optional.empty();
+        this.pyrisJobService = pyrisJobService;
     }
 
     /**
@@ -160,13 +170,57 @@ public abstract class AbstractIrisChatSessionService<S extends IrisSession> impl
      * @return the same job record or a new job record with the same job id if changes were made
      */
     public TrackedSessionBasedPyrisJob handleStatusUpdate(TrackedSessionBasedPyrisJob job, PyrisChatStatusUpdateDTO statusUpdate) {
+        long handlingStart = System.nanoTime();
+        // Only the result branch (saving the assistant message) needs the messages and contents;
+        // the frequent intermediate status updates get away with a plain session load. Pyris blocks
+        // its pipeline thread on each callback, so this reload is on the chat latency critical path.
         // noinspection unchecked
-        var session = (S) irisSessionRepository.findByIdWithMessagesAndContents(job.sessionId());
-        AtomicReference<TrackedSessionBasedPyrisJob> updatedJob = new AtomicReference<>(job);
-        IrisMessage savedMessage;
+        var session = statusUpdate.result() != null ? (S) irisSessionRepository.findByIdWithMessagesAndContents(job.sessionId())
+                : (S) irisSessionRepository.findByIdElseThrow(job.sessionId());
 
         String sessionTitle = AbstractIrisChatSessionService.setSessionTitle(session, statusUpdate.sessionTitle(), irisSessionRepository);
+        TrackedSessionBasedPyrisJob updatedJob;
         if (statusUpdate.result() != null) {
+            updatedJob = Boolean.FALSE.equals(statusUpdate.finalResult()) ? handleIntermediateResultStatusUpdate(job, statusUpdate, session, sessionTitle)
+                    : handleResultStatusUpdate(job, statusUpdate, session, sessionTitle);
+        }
+        else {
+            applyNonResultSideEffects(session, job, statusUpdate, sessionTitle, false);
+            updatedJob = recordTokenUsage(session, job, statusUpdate, null);
+        }
+
+        updateLatestSuggestions(session, statusUpdate.suggestions());
+
+        log.debug("Iris status update handled in {} ms (result present: {})", (System.nanoTime() - handlingStart) / 1_000_000, statusUpdate.result() != null);
+
+        return updatedJob;
+    }
+
+    private TrackedSessionBasedPyrisJob handleIntermediateResultStatusUpdate(TrackedSessionBasedPyrisJob job, PyrisChatStatusUpdateDTO statusUpdate, S session,
+            String sessionTitle) {
+        var message = new IrisMessage();
+        for (var content : parseResultContents(statusUpdate.result())) {
+            message.addContent(content);
+        }
+        message.setIntermediate(true);
+        var savedMessage = irisMessageService.saveMessage(message, session, IrisMessageSender.LLM);
+        irisChatWebsocketService.sendMessage(session, savedMessage, PyrisRunState.RUNNING, statusUpdate.error(), sessionTitle, List.of(), job.jobId(), null, null, false);
+        return recordTokenUsage(session, job, statusUpdate, null);
+    }
+
+    private TrackedSessionBasedPyrisJob handleResultStatusUpdate(TrackedSessionBasedPyrisJob job, PyrisChatStatusUpdateDTO statusUpdate, S session, String sessionTitle) {
+        return pyrisJobService.runWithJobLock(job.jobId(), () -> {
+            var reloadedJob = pyrisJobService.getJob(job.jobId());
+            if (!(reloadedJob instanceof TrackedSessionBasedPyrisJob trackedJob)) {
+                log.debug("Skipping already processed result status update for Iris job {} because the job is no longer tracked", job.jobId());
+                applyNonResultSideEffects(session, job, statusUpdate, sessionTitle, true);
+                return job;
+            }
+            if (trackedJob.assistantMessageId() != null) {
+                applyNonResultSideEffects(session, trackedJob, statusUpdate, sessionTitle, true);
+                return trackedJob;
+            }
+
             var message = new IrisMessage();
             for (var content : parseResultContents(statusUpdate.result())) {
                 message.addContent(content);
@@ -174,58 +228,82 @@ public abstract class AbstractIrisChatSessionService<S extends IrisSession> impl
             var citationInfo = irisCitationService.map(service -> service.resolveCitationInfo(statusUpdate.result())).orElse(List.of());
             message.setAccessedMemories(statusUpdate.accessedMemories());
             message.setCreatedMemories(statusUpdate.createdMemories());
-            savedMessage = irisMessageService.saveMessage(message, session, IrisMessageSender.LLM);
-            updatedJob.getAndUpdate(j -> j.withAssistantMessageId(savedMessage.getId()));
-            irisChatWebsocketService.sendMessage(session, savedMessage, statusUpdate.stages(), sessionTitle, citationInfo);
+            message.setToolActivity(statusUpdate.activities());
+            var savedMessage = irisMessageService.saveMessage(message, session, IrisMessageSender.LLM);
+            var updatedJob = trackedJob.withAssistantMessageId(savedMessage.getId());
+            pyrisJobService.updateJob(updatedJob);
+            irisChatWebsocketService.sendMessage(session, savedMessage, PyrisRunState.RUNNING, statusUpdate.error(), sessionTitle, citationInfo, job.jobId(),
+                    statusUpdate.activities(), statusUpdate.activitySeq(), null);
+            updatedJob = recordTokenUsage(session, updatedJob, statusUpdate, savedMessage);
+            pyrisJobService.updateJob(updatedJob);
+            return updatedJob;
+        });
+    }
+
+    private void applyNonResultSideEffects(S session, TrackedSessionBasedPyrisJob job, PyrisChatStatusUpdateDTO statusUpdate, String sessionTitle,
+            boolean suppressMessageWebsocket) {
+        if (statusUpdate.accessedMemories() != null && !statusUpdate.accessedMemories().isEmpty() && job.userMessageId() != null) {
+            irisMessageRepository.findById(job.userMessageId()).ifPresent(message -> {
+                message.setAccessedMemories(statusUpdate.accessedMemories());
+                irisMessageRepository.save(message);
+                if (!suppressMessageWebsocket) {
+                    irisChatWebsocketService.sendMessage(session, message, statusUpdate.runState(), statusUpdate.error());
+                }
+            });
         }
-        else {
-            savedMessage = null;
-            if (statusUpdate.accessedMemories() != null && !statusUpdate.accessedMemories().isEmpty() && job.userMessageId() != null) {
-                irisMessageRepository.findById(job.userMessageId()).ifPresent(message -> {
-                    message.setAccessedMemories(statusUpdate.accessedMemories());
-                    irisMessageRepository.save(message);
-                    irisChatWebsocketService.sendMessage(session, message, statusUpdate.stages());
-                });
-            }
-            if (statusUpdate.createdMemories() != null && !statusUpdate.createdMemories().isEmpty() && job.assistantMessageId() != null) {
-                irisMessageRepository.findById(job.assistantMessageId()).ifPresent(message -> {
-                    message.setCreatedMemories(statusUpdate.createdMemories());
-                    irisMessageRepository.save(message);
-                    irisChatWebsocketService.sendMessage(session, message, statusUpdate.stages());
-                });
-            }
-            irisChatWebsocketService.sendStatusUpdate(session, statusUpdate.stages(), sessionTitle, statusUpdate.suggestions(), statusUpdate.tokens());
+        if (statusUpdate.createdMemories() != null && !statusUpdate.createdMemories().isEmpty() && job.assistantMessageId() != null) {
+            irisMessageRepository.findById(job.assistantMessageId()).ifPresent(message -> {
+                message.setCreatedMemories(statusUpdate.createdMemories());
+                irisMessageRepository.save(message);
+                if (!suppressMessageWebsocket) {
+                    irisChatWebsocketService.sendMessage(session, message, statusUpdate.runState(), statusUpdate.error());
+                }
+            });
+        }
+        irisChatWebsocketService.sendStatusUpdate(session, job.jobId(), statusUpdate.runState(), statusUpdate.error(), sessionTitle, statusUpdate.suggestions(),
+                statusUpdate.tokens(), statusUpdate.activities(), statusUpdate.activitySeq());
+    }
+
+    private TrackedSessionBasedPyrisJob recordTokenUsage(S session, TrackedSessionBasedPyrisJob job, PyrisChatStatusUpdateDTO statusUpdate, IrisMessage savedMessage) {
+        if (statusUpdate.tokens() == null || statusUpdate.tokens().isEmpty()) {
+            return job;
+        }
+        if (savedMessage != null) {
+            // generated message is first sent and generated trace is saved
+            var llmTokenUsageTrace = llmTokenUsageService.saveLLMTokenUsage(statusUpdate.tokens(), LLMServiceType.IRIS, builder -> {
+                builder.withIrisMessageID(savedMessage.getId()).withUser(session.getUserId());
+                this.setLLMTokenUsageParameters(builder, session);
+                return builder;
+            });
+
+            return job.withTraceId(llmTokenUsageTrace.getId());
         }
 
-        if (statusUpdate.tokens() != null && !statusUpdate.tokens().isEmpty()) {
-            if (savedMessage != null) {
-                // generated message is first sent and generated trace is saved
-                var llmTokenUsageTrace = llmTokenUsageService.saveLLMTokenUsage(statusUpdate.tokens(), LLMServiceType.IRIS, builder -> {
-                    builder.withIrisMessageID(savedMessage.getId()).withUser(session.getUserId());
-                    this.setLLMTokenUsageParameters(builder, session);
-                    return builder;
-                });
-
-                updatedJob.getAndUpdate(j -> j.withTraceId(llmTokenUsageTrace.getId()));
-            }
-            else {
-                // interaction suggestion is sent and appended to the generated trace if it exists
-                Optional.ofNullable(job.traceId()).flatMap(llmTokenUsageService::findLLMTokenUsageTraceById)
-                        .ifPresentOrElse(trace -> llmTokenUsageService.appendRequestsToTrace(statusUpdate.tokens(), trace), () -> {
-                            var llmTokenUsage = llmTokenUsageService.saveLLMTokenUsage(statusUpdate.tokens(), LLMServiceType.IRIS, builder -> {
-                                builder.withUser(session.getUserId());
-                                this.setLLMTokenUsageParameters(builder, session);
-                                return builder;
-                            });
-
-                            updatedJob.getAndUpdate(j -> j.withTraceId(llmTokenUsage.getId()));
-                        });
-            }
+        // interaction suggestion is sent and appended to the generated trace if it exists
+        var existingTrace = Optional.ofNullable(job.traceId()).flatMap(llmTokenUsageService::findLLMTokenUsageTraceById);
+        if (existingTrace.isPresent()) {
+            llmTokenUsageService.appendRequestsToTrace(statusUpdate.tokens(), existingTrace.get());
+            return job;
         }
+        var llmTokenUsage = llmTokenUsageService.saveLLMTokenUsage(statusUpdate.tokens(), LLMServiceType.IRIS, builder -> {
+            builder.withUser(session.getUserId());
+            this.setLLMTokenUsageParameters(builder, session);
+            return builder;
+        });
+        return job.withTraceId(llmTokenUsage.getId());
+    }
 
-        updateLatestSuggestions(session, statusUpdate.suggestions());
-
-        return updatedJob.get();
+    /**
+     * Handles a partial chat status update by relaying the partial response over the websocket.
+     * The partial response is ephemeral and is not persisted.
+     *
+     * @param job          The job that is currently executed
+     * @param statusUpdate The partial status update of the job
+     */
+    public void handlePartialStatusUpdate(TrackedSessionBasedPyrisJob job, PyrisChatStatusUpdateDTO statusUpdate) {
+        // noinspection unchecked
+        var session = (S) irisSessionRepository.findByIdElseThrow(job.sessionId());
+        irisChatWebsocketService.sendPartialUpdate(session, statusUpdate.partialResult(), statusUpdate.partialSeq(), job.jobId());
     }
 
     private static final String MALFORMED_MCQ_ERROR_MESSAGE = "Sorry, I tried to generate a quiz question but the response was malformed. Please try again.";

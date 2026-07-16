@@ -1,6 +1,5 @@
 import { Component, OnInit, inject, input, output, signal, viewChildren } from '@angular/core';
 import { Exercise, ExerciseType, IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { AbstractQuizSubmission } from 'app/quiz/shared/entities/abstract-quiz-exam-submission.model';
 import { AnswerOption } from 'app/quiz/shared/entities/answer-option.model';
 import { DragAndDropMapping } from 'app/quiz/shared/entities/drag-and-drop-mapping.model';
 import { DragAndDropSubmittedAnswer } from 'app/quiz/shared/entities/drag-and-drop-submitted-answer.model';
@@ -8,6 +7,7 @@ import { MultipleChoiceSubmittedAnswer } from 'app/quiz/shared/entities/multiple
 import { QuizConfiguration } from 'app/quiz/shared/entities/quiz-configuration.model';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { QuizQuestion, QuizQuestionType } from 'app/quiz/shared/entities/quiz-question.model';
+import type { QuizSubmission } from 'app/quiz/shared/entities/quiz-submission.model';
 import { ShortAnswerSubmittedAnswer } from 'app/quiz/shared/entities/short-answer-submitted-answer.model';
 import { ShortAnswerSubmittedText } from 'app/quiz/shared/entities/short-answer-submitted-text.model';
 import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
@@ -27,6 +27,8 @@ import { captureException } from '@sentry/angular';
 import { ArtemisQuizService } from 'app/quiz/shared/service/quiz.service';
 import { SubmissionVersion } from 'app/exam/shared/entities/submission-version.model';
 import { addTemporaryHighlightToQuestion } from 'app/quiz/shared/questions/quiz-stepwizard.util';
+import { SubmittedAnswer } from 'app/quiz/shared/entities/submitted-answer.model';
+import { parseJson } from 'app/foundation/util/json.util';
 
 @Component({
     selector: 'jhi-quiz-submission-exam',
@@ -65,9 +67,9 @@ export class QuizExamSubmissionComponent extends ExamSubmissionComponent impleme
     shortAnswerQuestionComponents = viewChildren(ShortAnswerQuestionComponent);
 
     // IMPORTANT: this reference must be contained in this.studentParticipation.submissions[0] otherwise the parent component will not be able to react to changes
-    studentSubmission = input.required<AbstractQuizSubmission>();
+    studentSubmission = input.required<QuizSubmission>();
     exercise = input<QuizExercise>();
-    examTimeline = input(false);
+    override examTimeline = input(false);
     quizConfiguration = input.required<QuizConfiguration>();
 
     saveCurrentExercise = output<void>();
@@ -137,7 +139,7 @@ export class QuizExamSubmissionComponent extends ExamSubmissionComponent impleme
                         this.shortAnswerSubmittedTexts.update((map) => new Map(map).set(question.id!, []));
                         break;
                     default:
-                        captureException('Unknown question type: ' + question);
+                        captureException('Unknown question type: ' + question.type);
                         break;
                 }
             }, this);
@@ -236,7 +238,7 @@ export class QuizExamSubmissionComponent extends ExamSubmissionComponent impleme
                         }
                         break;
                     default:
-                        captureException('Unknown question type: ' + question);
+                        captureException('Unknown question type: ' + question.type);
                         break;
                 }
             }, this);
@@ -322,7 +324,7 @@ export class QuizExamSubmissionComponent extends ExamSubmissionComponent impleme
     }
 
     updateViewFromSubmissionVersion(): void {
-        this.studentSubmission().submittedAnswers = JSON.parse(this.submissionVersion.content);
+        this.studentSubmission().submittedAnswers = parseJson<SubmittedAnswer[]>(this.submissionVersion.content);
         this.updateViewFromSubmission();
     }
 

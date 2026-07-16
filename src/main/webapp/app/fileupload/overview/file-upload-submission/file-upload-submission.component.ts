@@ -8,6 +8,7 @@ import { RatingComponent } from 'app/exercise/rating/rating.component';
 import dayjs from 'dayjs/esm';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { FileUploadSubmissionService } from 'app/fileupload/overview/file-upload-submission.service';
+import { addPublicFilePrefix } from 'app/app.constants';
 import { MAX_SUBMISSION_FILE_SIZE } from 'app/foundation/constants/input.constants';
 import { FileUploadAssessmentService } from 'app/fileupload/manage/assess/file-upload-assessment.service';
 import { omit } from 'lodash-es';
@@ -177,7 +178,7 @@ export class FileUploadSubmissionComponent implements ComponentCanDeactivate {
         const participation = submission.participation as StudentParticipation;
 
         // reconnect participation <--> submission
-        participation.submissions = [omit(submission, 'participation') as FileUploadSubmission];
+        participation.submissions = [omit(submission, 'participation')];
 
         this.submission.set(submission);
         this.result.set(tmpResult);
@@ -192,7 +193,7 @@ export class FileUploadSubmissionComponent implements ComponentCanDeactivate {
         if (this.submission()?.submitted && this.result()?.completionDate) {
             const submissionId = this.submission()?.id;
             if (submissionId) {
-                firstValueFrom(this.fileUploadAssessmentService.getAssessment(submissionId)).then((assessmentResult: Result) => {
+                void firstValueFrom(this.fileUploadAssessmentService.getAssessment(submissionId)).then((assessmentResult: Result) => {
                     this.result.set(assessmentResult);
                 });
             }
@@ -212,6 +213,9 @@ export class FileUploadSubmissionComponent implements ComponentCanDeactivate {
         }
         const submission = this.inputSubmission();
         if (submission) {
+            if (submission.filePath && !submission.filePathUrl) {
+                submission.filePathUrl = addPublicFilePrefix(submission.filePath);
+            }
             this.submission.set(submission);
         }
         const participation = this.inputParticipation();

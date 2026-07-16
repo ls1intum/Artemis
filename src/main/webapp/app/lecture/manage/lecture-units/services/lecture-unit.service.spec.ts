@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
@@ -18,8 +17,6 @@ import { TranslateService } from '@ngx-translate/core';
 import type { MockInstance } from 'vitest';
 
 describe('LectureUnitService', () => {
-    setupTestBed({ zoneless: true });
-
     let service: LectureUnitService;
     let httpMock: HttpTestingController;
     let exerciseUnit: ExerciseUnit;
@@ -116,6 +113,23 @@ describe('LectureUnitService', () => {
         service.completeLectureUnit(lecture, { lectureUnit: exerciseUnit, completed: false });
         httpMock.expectOne({ method: 'POST', url: 'api/lecture/lectures/5/lecture-units/42/completion?completed=false' }).flush(null);
         expect(exerciseUnit.completed).toBe(false);
+    });
+
+    it('should invoke the success callback after a completed request', async () => {
+        exerciseUnit.completed = false;
+        const onSuccess = vi.fn();
+        service.completeLectureUnit(lecture, { lectureUnit: exerciseUnit, completed: true }, onSuccess);
+        httpMock.expectOne({ method: 'POST', url: 'api/lecture/lectures/5/lecture-units/42/completion?completed=true' }).flush(null);
+        expect(exerciseUnit.completed).toBe(true);
+        expect(onSuccess).toHaveBeenCalledOnce();
+    });
+
+    it('should not invoke the success callback when the request is skipped', async () => {
+        exerciseUnit.completed = false;
+        const onSuccess = vi.fn();
+        service.completeLectureUnit(lecture, { lectureUnit: exerciseUnit, completed: false }, onSuccess);
+        httpMock.expectNone({ method: 'POST', url: 'api/lecture/lectures/5/lecture-units/42/completion?completed=false' });
+        expect(onSuccess).not.toHaveBeenCalled();
     });
 
     it('should not set completion status if already completed', async () => {

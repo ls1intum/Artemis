@@ -1,6 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import dayjs from 'dayjs/esm';
@@ -30,8 +29,6 @@ const mockLecture = {
 } as Lecture;
 
 describe('LectureDetailComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: LectureDetailComponent;
     let fixture: ComponentFixture<LectureDetailComponent>;
     let mockActivatedRoute: any;

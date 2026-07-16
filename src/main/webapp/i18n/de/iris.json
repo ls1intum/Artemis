@@ -194,12 +194,7 @@
                 "title": "Iris Einstellungen"
             },
             "error": {
-                "forbidden": "Artemis ist nicht konfiguriert, um Iris zu verwenden. (Ungültiges Token)",
-                "internalPyrisError": "Ein interner Fehler beim Kommunizieren mit dem LLM ist aufgetreten. Die Fehlermeldung lautet: {{ pyrisErrorMessage }}.",
-                "invalidTemplate": "Die Vorlage ist ungültig. Die Fehlermeldung lautet: {{ pyrisErrorMessage }}.",
-                "noVariantAvailable": "Die Variante {{ variant }} steht nicht zur Verfügung. Bitte kontaktiere einen Administrator, wenn das Problem weiterhin besteht.",
-                "noResponse": "Es wurde keine Antwort von Iris empfangen. Bitte kontaktiere einen Administrator, wenn das Problem weiterhin besteht.",
-                "parseResponse": "Ein Fehler ist beim Parsen der Antwort von Iris aufgetreten. Ursache: {{ cause }}"
+                "internal": "Ein interner Fehler ist aufgetreten"
             },
             "chat": {
                 "helpOffer": "Wie kann ich Dir helfen?",
@@ -243,7 +238,11 @@
                 "placeholder": "Kontext auswählen...",
                 "courseGroup": "Kurs",
                 "lecturesGroup": "Vorlesungen",
-                "exercisesGroup": "Aufgaben"
+                "exercisesGroup": "Aufgaben",
+                "chatTopicSet": "Chat-Thema gesetzt:",
+                "chatTopicCleared": "Chat-Thema entfernt",
+                "chatTopicSwitched": "Chat-Thema gewechselt:",
+                "addContextTooltip": "Vorlesung oder Aufgabe wählen"
             },
             "citation": {
                 "unitLabel": "Einheit:",
@@ -253,14 +252,27 @@
                 "loading": "Lade Vorschläge...",
                 "noIris": "Iris ist derzeit nicht verfügbar."
             },
-            "stages": {
-                "thinking": "Denke nach",
-                "analyzing": "Analysiere Kontext",
-                "processing": "Bearbeite deine Anfrage",
-                "formulating": "Formuliere eine Antwort",
-                "error": {
-                    "internal": "Ein interner Fehler ist aufgetreten"
-                }
+            "thinking": "Denke nach…",
+            "activities": {
+                "liveLabel": "Aktuelle Iris-Aktivität",
+                "trailLabel": "Iris-Aktivitätsverlauf",
+                "trailSummary": "Verwendete Tools: {{ count }} · {{ duration }}s",
+                "lecture_content_retrieval": "Lese Vorlesung",
+                "faq_content_retrieval": "Lese FAQs",
+                "get_course_details": "Suche Kursinformationen",
+                "get_exercise_list": "Suche Übungen",
+                "get_exercise_problem_statement": "Lese Aufgabenstellung",
+                "get_student_exercise_metrics": "Prüfe deinen Fortschritt",
+                "get_competency_list": "Suche Kompetenzen",
+                "get_submission_details": "Lese deine Abgabe",
+                "get_additional_exercise_details": "Suche Übungsdetails",
+                "get_build_logs_analysis_tool": "Prüfe Build-Logs",
+                "get_feedbacks": "Lese Feedback",
+                "repository_files": "Durchsuche deinen Code",
+                "file_lookup": "Lese Datei",
+                "memiris_search_for_memories": "Rufe Erinnerungen ab",
+                "memiris_find_similar_memories": "Suche ähnliche Erinnerungen",
+                "generate_mcq_questions": "Erstelle Quizfragen"
             },
             "chatBubble": {
                 "seeFull": "Vollständige Nachricht sehen"
@@ -294,6 +306,7 @@
                 "title": "Chats",
                 "newChat": "Neuer Chat",
                 "openChatHistory": "Chatverlauf öffnen",
+                "searchChatHistory": "Chatverlauf durchsuchen",
                 "aboutIris": "Über Iris",
                 "today": "Heute",
                 "yesterday": "Gestern",

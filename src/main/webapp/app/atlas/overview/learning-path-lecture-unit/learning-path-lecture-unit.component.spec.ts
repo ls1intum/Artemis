@@ -26,10 +26,8 @@ import { LocalStorageService } from 'app/foundation/service/local-storage.servic
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
 import { MockMetisConversationService } from 'test/helpers/mocks/service/mock-metis-conversation.service';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('LearningPathLectureUnitComponent', () => {
-    setupTestBed({ zoneless: true });
     let component: LearningPathLectureUnitComponent;
     let fixture: ComponentFixture<LearningPathLectureUnitComponent>;
 
@@ -133,27 +131,39 @@ describe('LearningPathLectureUnitComponent', () => {
 
         component.setLearningObjectCompletion({ completed: true, lectureUnit: lectureUnit });
 
-        expect(completeLectureUnitSpy).toHaveBeenCalledExactlyOnceWith(lectureUnit.lecture, {
-            completed: true,
-            lectureUnit: lectureUnit,
-        });
+        expect(completeLectureUnitSpy).toHaveBeenCalledExactlyOnceWith(
+            lectureUnit.lecture,
+            {
+                completed: true,
+                lectureUnit: lectureUnit,
+            },
+            expect.any(Function),
+        );
         expect(setLearningObjectCompletionSpy).not.toHaveBeenCalled();
     });
 
     it('should set current learning object completion', async () => {
         const completeLectureUnitSpy = vi
             .spyOn(lectureUnitService, 'completeLectureUnit')
-            .mockImplementationOnce((lecture: Lecture, completionEvent: LectureUnitCompletionEvent) => (completionEvent.lectureUnit.completed = completionEvent.completed));
+            .mockImplementationOnce((lecture: Lecture, completionEvent: LectureUnitCompletionEvent, onSuccess?: () => void) => {
+                completionEvent.lectureUnit.completed = completionEvent.completed;
+                onSuccess?.();
+            });
 
         fixture.detectChanges();
         await fixture.whenStable();
 
         component.setLearningObjectCompletion({ completed: true, lectureUnit: lectureUnit });
 
-        expect(completeLectureUnitSpy).toHaveBeenCalledExactlyOnceWith(lectureUnit.lecture, {
-            completed: true,
-            lectureUnit: lectureUnit,
-        });
+        expect(completeLectureUnitSpy).toHaveBeenCalledExactlyOnceWith(
+            lectureUnit.lecture,
+            {
+                completed: true,
+                lectureUnit: lectureUnit,
+            },
+            expect.any(Function),
+        );
+        expect(component.lectureUnit()?.completed).toBe(true);
         expect(setLearningObjectCompletionSpy).toHaveBeenCalledExactlyOnceWith(true);
     });
 

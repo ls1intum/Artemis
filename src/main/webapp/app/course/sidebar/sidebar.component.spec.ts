@@ -1,6 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { SidebarComponent } from 'app/course/sidebar/sidebar.component';
 import { SidebarCardMediumComponent } from 'app/course/sidebar/sidebar-card-medium/sidebar-card-medium.component';
 import { SidebarCardItemComponent } from 'app/course/sidebar/sidebar-card-item/sidebar-card-item.component';
@@ -33,7 +32,6 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { CourseTitleBarTitleComponent } from 'app/course/shared/course-title-bar-title/course-title-bar-title.component';
 
 describe('SidebarComponent', () => {
-    setupTestBed({ zoneless: true });
     let component: SidebarComponent;
     let fixture: ComponentFixture<SidebarComponent>;
     let modalService: NgbModal;
