@@ -2,7 +2,6 @@ import { HttpResponse } from '@angular/common/http';
 import { Component, input, model, output } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ActivatedRoute, Router } from '@angular/router';
 import { User } from 'app/account/user/user.model';
 import { UserService } from 'app/account/user/shared/user.service';
@@ -40,8 +39,6 @@ class MockCourseGroupComponent {
 }
 
 describe('Course Group Membership Component', () => {
-    setupTestBed({ zoneless: true });
-
     let comp: CourseGroupMembershipComponent;
     let fixture: ComponentFixture<CourseGroupMembershipComponent>;
     let courseService: CourseManagementService;

@@ -1,6 +1,5 @@
 import { Component, computed, signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { HasAnyAuthorityDirective } from 'app/foundation/auth/has-any-authority.directive';
 import { AccountService } from 'app/core/auth/account.service';
@@ -33,8 +32,6 @@ class HostComponent {
 }
 
 describe('HasAnyAuthorityDirective', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<HostComponent>;
     let account: SignalAccountServiceStub;
 

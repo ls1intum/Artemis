@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
@@ -13,8 +12,6 @@ import { MockPdfEngineService, createMockPdfDocument } from 'test/helpers/mocks/
 import { PdfActionType, PdfAnnotationSubtype } from '@embedpdf/models';
 
 describe('PdfViewerComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: PdfViewerComponent;
     let fixture: ComponentFixture<PdfViewerComponent>;
     let httpMock: HttpTestingController;
@@ -633,6 +630,8 @@ describe('PdfViewerComponent', () => {
         await loadPdf();
         const blur = vi.fn();
         const select = vi.fn();
+        // PrimeNG 21 InputNumber.input is a plain ElementRef property, so the
+        // component reads it as .input; the mock exposes .input. as the ref object directly.
         vi.spyOn(component, 'pageInputElement').mockReturnValue({ input: { nativeElement: { blur, select } } } as any);
         const preventDefault = vi.fn();
 

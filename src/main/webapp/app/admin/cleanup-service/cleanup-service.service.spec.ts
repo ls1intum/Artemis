@@ -3,7 +3,6 @@
  */
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
 import dayjs from 'dayjs/esm';
@@ -19,8 +18,6 @@ import {
 } from 'app/admin/cleanup-service/data-cleanup.service';
 
 describe('DataCleanupService', () => {
-    setupTestBed({ zoneless: true });
-
     let service: DataCleanupService;
     let httpMock: HttpTestingController;
 
