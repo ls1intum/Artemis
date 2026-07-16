@@ -20,11 +20,8 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { DialogService } from 'primeng/dynamicdialog';
 import { MockProvider } from 'ng-mocks';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('Exam Navigation Bar Component', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<ExamNavigationBarComponent>;
     let comp: ExamNavigationBarComponent;
     let repositoryService: CodeEditorRepositoryService;

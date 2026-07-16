@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { signal } from '@angular/core';
@@ -17,8 +16,6 @@ import { LLMSelectionDecision } from 'app/account/user/shared/dto/updateLLMSelec
 import type { User } from 'app/account/user/user.model';
 
 describe('AboutIrisModalComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: AboutIrisModalComponent;
     let fixture: ComponentFixture<AboutIrisModalComponent>;
     let dialogRef: { close: ReturnType<typeof vi.fn> };

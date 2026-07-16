@@ -3,7 +3,6 @@
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { Observable, of } from 'rxjs';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
@@ -18,8 +17,6 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { JhiLanguageHelper } from 'app/core/language/shared/language.helper';
 
 describe('LegalDocumentUpdateComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: LegalDocumentUpdateComponent;
     let fixture: ComponentFixture<LegalDocumentUpdateComponent>;
     let legalDocumentService: LegalDocumentService;

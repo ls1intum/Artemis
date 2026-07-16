@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { of } from 'rxjs';
@@ -10,8 +9,6 @@ import { IdeSettingsComponent } from 'app/account/user/settings/ide-preferences/
 import { IdeSettingsService } from 'app/account/user/settings/ide-preferences/ide-settings.service';
 
 describe('IdeSettingsComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: IdeSettingsComponent;
     let fixture: ComponentFixture<IdeSettingsComponent>;
 

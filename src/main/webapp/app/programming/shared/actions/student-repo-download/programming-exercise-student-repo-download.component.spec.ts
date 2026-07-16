@@ -1,26 +1,24 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockProgrammingExerciseService } from 'test/helpers/mocks/service/mock-programming-exercise.service';
-import { TranslateModule } from '@ngx-translate/core';
+import { provideTranslateService } from '@ngx-translate/core';
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
 import { ProgrammingExerciseStudentRepoDownloadComponent } from 'app/programming/shared/actions/student-repo-download/programming-exercise-student-repo-download.component';
 import { MockHttpService } from 'test/helpers/mocks/service/mock-http.service';
 import { HttpClient } from '@angular/common/http';
 
 describe('ProgrammingExerciseStudentRepoDownloadComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let comp: ProgrammingExerciseStudentRepoDownloadComponent;
     let fixture: ComponentFixture<ProgrammingExerciseStudentRepoDownloadComponent>;
     let programmingExerciseService: ProgrammingExerciseService;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [TranslateModule.forRoot()],
+            imports: [],
             providers: [
                 { provide: ProgrammingExerciseService, useClass: MockProgrammingExerciseService },
                 { provide: HttpClient, useClass: MockHttpService },
+                provideTranslateService(),
             ],
         }).compileComponents();
 

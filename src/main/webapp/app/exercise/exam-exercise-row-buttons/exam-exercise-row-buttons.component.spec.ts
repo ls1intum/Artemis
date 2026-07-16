@@ -1,5 +1,4 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Course } from 'app/course/shared/entities/course.model';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
@@ -29,8 +28,6 @@ const setExerciseInput = (fixture: ComponentFixture<ExamExerciseRowButtonsCompon
 };
 
 describe('ExamExerciseRowButtonsComponent', () => {
-    setupTestBed({ zoneless: true });
-
     const course = { id: 3 } as Course;
     let exam: Exam;
 

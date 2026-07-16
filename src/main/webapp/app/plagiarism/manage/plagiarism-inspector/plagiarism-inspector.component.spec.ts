@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
 import { PlagiarismComparison } from 'app/plagiarism/shared/entities/PlagiarismComparison';
@@ -40,8 +39,6 @@ vi.mock('app/foundation/util/csv-download.util', () => {
 });
 
 describe('Plagiarism Inspector Component', () => {
-    setupTestBed({ zoneless: true });
-
     let comp: PlagiarismInspectorComponent;
     let fixture: ComponentFixture<PlagiarismInspectorComponent>;
     let programmingExerciseService: ProgrammingExerciseService;
