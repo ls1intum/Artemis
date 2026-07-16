@@ -28,6 +28,10 @@ import { TumUiTooltipDirective } from 'app/shared-ui/tum-ui/tooltip/tum-ui-toolt
 import { TumUiCalendarComponent } from 'app/shared-ui/tum-ui/date-picker/tum-ui-calendar.component';
 import { DISPLAY_REGEX, TIME_REGEX, combineDateAndTime, formatDisplay, parseDisplay, valuesEqual } from 'app/shared-ui/tum-ui/date-picker/tum-ui-date-picker.util';
 
+// Per-instance counter for a unique default input id, so two pickers with no explicit [inputId] on the
+// same page never collide on the <input> id / <label for> (the admin cleanup grid renders many at once).
+let nextDatePickerId = 0;
+
 /**
  * Owned date+time picker on Angular CDK overlay + a hand-built dayjs calendar, part of the tum-aet-ui kit.
  *
@@ -73,7 +77,8 @@ export class TumUiDatePickerComponent implements FormValueControl<dayjs.Dayjs | 
     readonly hideLabelName = input(false);
     readonly hideValidationMessage = input(false);
     readonly shouldDisplayTimeZoneWarning = input(true);
-    readonly inputId = input('date-input-field');
+    /** `id` of the inner `<input>` (and the label's `for`). Defaults to a unique per-instance id; set it explicitly when you need a stable, known id. */
+    readonly inputId = input(`tum-ui-date-picker-${nextDatePickerId++}`);
     readonly labelName = input<string>();
     readonly baseZIndex = input(1060);
 
@@ -113,20 +118,19 @@ export class TumUiDatePickerComponent implements FormValueControl<dayjs.Dayjs | 
         this.destroyRef.onDestroy(() => this.overlayRef?.dispose());
     }
 
-    /** Overall validity: not externally-errored and the typed input parses. Read imperatively by consumers. */
-    isValid(): boolean {
-        return !(this.error() || !this.isInputValid());
-    }
+    /**
+     * Overall validity: the typed input parses AND the component is not externally `[error]`-flagged.
+     * A signal (the kit is signal-first); use it to gate an imperative action such as enabling a submit button.
+     */
+    readonly isValid = computed(() => !this.error() && this.isInputValid());
 
     /**
-     * Whether the currently typed text parses to a valid date, independent of the external `error` input.
-     * Consumers should gate `(valueChange)` on this rather than {@link isValid}: otherwise, once the consumer
-     * flags an external error (e.g. a from>to range), `isValid()` stays false and every subsequent edit would
-     * propagate `undefined`, wiping the value so the error could never be corrected.
+     * Whether the currently typed text parses to a valid date, ignoring the external `[error]` input.
+     * Note: `valueChange` already fires only on committed / cleared values, so a `(valueChange)` handler can
+     * consume `$event` directly — this accessor exists for imperative parse-only checks that must disregard
+     * an external error (e.g. a from>to range the consumer flags itself).
      */
-    hasValidInput(): boolean {
-        return this.isInputValid();
-    }
+    readonly hasValidInput = computed(() => this.isInputValid());
 
     protected onInput(raw: string): void {
         this.inputText.set(raw);
@@ -200,7 +204,7 @@ export class TumUiDatePickerComponent implements FormValueControl<dayjs.Dayjs | 
         const anchor = this.value() ?? dayjs();
         this.activeMonth.set(anchor.startOf('month'));
         this.timeText.set(this.value()?.format('HH:mm') ?? '');
-        this.overlayRef = this.overlayService.createConnectedOverlay(this.triggerWrapper(), 'bottom', true);
+        this.overlayRef = this.overlayService.createConnectedOverlay(this.triggerWrapper(), 'bottom', { hasBackdrop: true });
         this.overlayRef.overlayElement.style.zIndex = String(this.baseZIndex());
         this.overlayRef.attach(new TemplatePortal(this.panel(), this.viewContainerRef));
         this.overlayRef.backdropClick().subscribe(() => this.close());

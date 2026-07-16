@@ -25,21 +25,28 @@ export interface CellRendererParams<T> {
 
 export type CellTemplateRef<T> = TemplateRef<{ $implicit: CellRendererParams<T> }>;
 
-export type TumUiSortOrder = 1 | -1;
+/** Sort direction of a column: ascending or descending. */
+export type TumUiSortDirection = 'asc' | 'desc';
 
 export interface TumUiSortState {
     field: string;
-    order: TumUiSortOrder;
+    direction: TumUiSortDirection;
 }
 
 /**
- * Lazy-load event emitted by {@link TumUiTableComponent} on sort / page / search changes.
- * Structurally compatible with the query shape the server pagination expects (see the request builder).
+ * Emitted by {@link TumUiTableComponent} whenever the query changes (sort / page / search) so the
+ * consumer can (re)fetch the matching rows. Field names are intent-revealing (not PrimeNG-derived);
+ * feed the event into `buildDbQueryFromTableEvent` to get the standard Artemis paged-search shape.
  */
-export interface TumUiTableLazyEvent {
-    first: number;
-    rows: number;
+export interface TumUiTableQueryEvent {
+    /** Zero-based index of the first row to load (page offset). */
+    offset: number;
+    /** Number of rows per page. */
+    pageSize: number;
+    /** Column to sort by, or undefined when unsorted. */
     sortField?: string;
-    sortOrder?: TumUiSortOrder;
+    /** Sort direction for {@link sortField}. */
+    sortDirection?: TumUiSortDirection;
+    /** Trimmed global search term, or undefined when empty. */
     globalFilter?: string;
 }

@@ -59,26 +59,26 @@ describe('TumUiTableComponent', () => {
         expect(cellText).toContain('Beta');
     });
 
-    it('emits one initial lazyLoad after first render with defaults', async () => {
-        const spy = vi.spyOn(component.lazyLoad, 'emit');
+    it('emits one initial dataRequest after first render with defaults', async () => {
+        const spy = vi.spyOn(component.dataRequest, 'emit');
         fixture.detectChanges();
         await fixture.whenStable();
         expect(spy).toHaveBeenCalledTimes(1);
-        expect(spy).toHaveBeenCalledWith(expect.objectContaining({ first: 0, rows: 50 }));
+        expect(spy).toHaveBeenCalledWith(expect.objectContaining({ offset: 0, pageSize: 50 }));
     });
 
     it('emits sort on a sortable header click and toggles asc/desc with aria-sort', async () => {
         fixture.detectChanges();
         await fixture.whenStable();
-        const spy = vi.spyOn(component.lazyLoad, 'emit');
+        const spy = vi.spyOn(component.dataRequest, 'emit');
         const sortButton: HTMLButtonElement = headerCells()[0].querySelector('button')!;
         sortButton.click();
         fixture.detectChanges();
-        expect(spy).toHaveBeenLastCalledWith(expect.objectContaining({ sortField: 'name', sortOrder: 1, first: 0 }));
+        expect(spy).toHaveBeenLastCalledWith(expect.objectContaining({ sortField: 'name', sortDirection: 'asc', offset: 0 }));
         expect(headerCells()[0].getAttribute('aria-sort')).toBe('ascending');
         sortButton.click();
         fixture.detectChanges();
-        expect(spy).toHaveBeenLastCalledWith(expect.objectContaining({ sortField: 'name', sortOrder: -1 }));
+        expect(spy).toHaveBeenLastCalledWith(expect.objectContaining({ sortField: 'name', sortDirection: 'desc' }));
         expect(headerCells()[0].getAttribute('aria-sort')).toBe('descending');
     });
 
@@ -103,13 +103,13 @@ describe('TumUiTableComponent', () => {
     it('debounces the global search and resets the page', async () => {
         vi.useFakeTimers();
         fixture.detectChanges();
-        const spy = vi.spyOn(component.lazyLoad, 'emit');
+        const spy = vi.spyOn(component.dataRequest, 'emit');
         const search: HTMLInputElement = fixture.debugElement.query(By.css('[data-testid="tum-ui-table-search"]')).nativeElement;
         search.value = 'alp';
         search.dispatchEvent(new Event('input'));
         expect(spy).not.toHaveBeenCalled();
         vi.advanceTimersByTime(300);
-        expect(spy).toHaveBeenCalledWith(expect.objectContaining({ globalFilter: 'alp', first: 0 }));
+        expect(spy).toHaveBeenCalledWith(expect.objectContaining({ globalFilter: 'alp', offset: 0 }));
         vi.useRealTimers();
     });
 
@@ -130,15 +130,15 @@ describe('TumUiTableComponent', () => {
         expect(fixture.debugElement.query(By.css('tr[role="row"] td[colspan], td[colspan]'))).toBeTruthy();
     });
 
-    it('emits lazyLoad with the next page offset when the paginator advances', async () => {
+    it('emits dataRequest with the next page offset when the paginator advances', async () => {
         fixture.componentRef.setInput('totalRecords', 130);
         fixture.detectChanges();
         await fixture.whenStable();
-        const spy = vi.spyOn(component.lazyLoad, 'emit');
+        const spy = vi.spyOn(component.dataRequest, 'emit');
         const next: HTMLButtonElement = fixture.debugElement.query(By.css('[data-testid="paginator-next"]')).nativeElement;
         next.click();
         fixture.detectChanges();
-        expect(spy).toHaveBeenLastCalledWith(expect.objectContaining({ first: 50, rows: 50 }));
+        expect(spy).toHaveBeenLastCalledWith(expect.objectContaining({ offset: 50, pageSize: 50 }));
     });
 
     it('clamps to the last valid page and re-emits when totalRecords shrinks below the current page', async () => {
@@ -148,11 +148,11 @@ describe('TumUiTableComponent', () => {
         // Move to the last page (index 2).
         fixture.debugElement.query(By.css('[data-testid="paginator-last"]')).nativeElement.click();
         fixture.detectChanges();
-        const spy = vi.spyOn(component.lazyLoad, 'emit');
+        const spy = vi.spyOn(component.dataRequest, 'emit');
         // Rows shrink so page 2 no longer exists (30 records -> 1 page): the table must clamp to page 0 and re-emit.
         fixture.componentRef.setInput('totalRecords', 30);
         fixture.detectChanges();
         await fixture.whenStable();
-        expect(spy).toHaveBeenLastCalledWith(expect.objectContaining({ first: 0, rows: 50 }));
+        expect(spy).toHaveBeenLastCalledWith(expect.objectContaining({ offset: 0, pageSize: 50 }));
     });
 });

@@ -7,7 +7,7 @@ import { faMagnifyingGlass } from '@fortawesome/free-solid-svg-icons';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TumUiPaginatorComponent } from 'app/shared-ui/tum-ui/paginator/tum-ui-paginator.component';
-import { CellRendererParams, ColumnDef, TumUiSortOrder, TumUiSortState, TumUiTableLazyEvent } from 'app/shared-ui/tum-ui/table/tum-ui-table.types';
+import { CellRendererParams, ColumnDef, TumUiSortDirection, TumUiSortState, TumUiTableQueryEvent } from 'app/shared-ui/tum-ui/table/tum-ui-table.types';
 
 const ACTIONS_COLUMN = '__tum_ui_actions__';
 const SEARCH_DEBOUNCE_MS = 300;
@@ -17,7 +17,7 @@ const SEARCH_DEBOUNCE_MS = 300;
  *
  * Signal-based, PrimeNG-free. Renders dynamic columns from a {@link ColumnDef} array, supports
  * single-column server-side sort, a debounced global search, and pagination (via tum-ui-paginator),
- * emitting a {@link TumUiTableLazyEvent} the caller feeds into its server query. Styled with Artemis
+ * emitting a {@link TumUiTableQueryEvent} the caller feeds into its server query. Styled with Artemis
  * token utilities only.
  */
 @Component({
@@ -42,9 +42,9 @@ export class TumUiTableComponent<T> {
     readonly pageSize = input(50);
     readonly pageSizeOptions = input<number[]>([10, 20, 50, 100, 200]);
     readonly initialSortField = input<string | undefined>(undefined);
-    readonly initialSortOrder = input<TumUiSortOrder>(1);
+    readonly initialSortDirection = input<TumUiSortDirection>('asc');
 
-    readonly lazyLoad = output<TumUiTableLazyEvent>();
+    readonly dataRequest = output<TumUiTableQueryEvent>();
 
     protected readonly ACTIONS_COLUMN = ACTIONS_COLUMN;
     protected readonly faMagnifyingGlass = faMagnifyingGlass;
@@ -78,9 +78,9 @@ export class TumUiTableComponent<T> {
         afterNextRender(() => {
             const field = this.initialSortField();
             if (field) {
-                this.sortState.set({ field, order: this.initialSortOrder() });
+                this.sortState.set({ field, direction: this.initialSortDirection() });
             }
-            this.emitLazyLoad();
+            this.emitDataRequest();
         });
         // Dynamic-column safety: re-render CdkTable when the displayed column set changes.
         effect(() => {
@@ -98,7 +98,7 @@ export class TumUiTableComponent<T> {
             if (this.page() > lastPage) {
                 untracked(() => {
                     this.page.set(lastPage);
-                    this.emitLazyLoad();
+                    this.emitDataRequest();
                 });
             }
         });
@@ -122,16 +122,16 @@ export class TumUiTableComponent<T> {
         if (!sort || sort.field !== col.field) {
             return null;
         }
-        return sort.order === 1 ? 'ascending' : 'descending';
+        return sort.direction === 'asc' ? 'ascending' : 'descending';
     }
 
     /** Current sort direction for a column, driving the inline sort-icon SVG (matches PrimeNG's p-sortIcon). */
-    protected sortDirection(col: ColumnDef<T>): 'none' | 'asc' | 'desc' {
+    protected sortDirection(col: ColumnDef<T>): 'none' | TumUiSortDirection {
         const sort = this.sortState();
         if (!sort || sort.field !== col.field) {
             return 'none';
         }
-        return sort.order === 1 ? 'asc' : 'desc';
+        return sort.direction;
     }
 
     protected onSortClick(col: ColumnDef<T>): void {
@@ -139,9 +139,11 @@ export class TumUiTableComponent<T> {
             return;
         }
         const current = this.sortState();
-        this.sortState.set(current && current.field === col.field ? { field: col.field, order: current.order === 1 ? -1 : 1 } : { field: col.field, order: 1 });
+        this.sortState.set(
+            current && current.field === col.field ? { field: col.field, direction: current.direction === 'asc' ? 'desc' : 'asc' } : { field: col.field, direction: 'asc' },
+        );
         this.page.set(0);
-        this.emitLazyLoad();
+        this.emitDataRequest();
     }
 
     protected onSearchInput(value: string): void {
@@ -149,29 +151,29 @@ export class TumUiTableComponent<T> {
         this.searchTimer = setTimeout(() => {
             this.searchTerm.set(value);
             this.page.set(0);
-            this.emitLazyLoad();
+            this.emitDataRequest();
         }, SEARCH_DEBOUNCE_MS);
     }
 
     protected onPageChange(page: number): void {
         this.page.set(page);
-        this.emitLazyLoad();
+        this.emitDataRequest();
     }
 
     protected onPageSizeChange(size: number): void {
         this.pageSizeState.set(size);
         this.page.set(0);
-        this.emitLazyLoad();
+        this.emitDataRequest();
     }
 
-    private emitLazyLoad(): void {
-        const rows = this.effectivePageSize();
+    private emitDataRequest(): void {
+        const pageSize = this.effectivePageSize();
         const sort = this.sortState();
-        this.lazyLoad.emit({
-            first: this.page() * rows,
-            rows,
+        this.dataRequest.emit({
+            offset: this.page() * pageSize,
+            pageSize,
             sortField: sort?.field,
-            sortOrder: sort?.order,
+            sortDirection: sort?.direction,
             globalFilter: this.searchTerm().trim() || undefined,
         });
     }

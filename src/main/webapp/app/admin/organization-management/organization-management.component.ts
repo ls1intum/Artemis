@@ -7,13 +7,13 @@ import { Subject } from 'rxjs';
 import { faPencil, faPlus, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { ButtonModule } from 'primeng/button';
 import { TumUiTableComponent } from 'app/shared-ui/tum-ui/table/tum-ui-table.component';
-import { CellTemplateRef, ColumnDef, TumUiTableLazyEvent } from 'app/shared-ui/tum-ui/table/tum-ui-table.types';
+import { CellTemplateRef, ColumnDef, TumUiTableQueryEvent } from 'app/shared-ui/tum-ui/table/tum-ui-table.types';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
 import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-title.directive';
 import { AdminTitleBarActionsDirective } from 'app/admin/shared/admin-title-bar-actions.directive';
-import { buildDbQueryFromLazyEvent } from 'app/shared-ui/tum-ui/table/tum-ui-table-request-builder';
+import { buildDbQueryFromTableEvent } from 'app/shared-ui/tum-ui/table/tum-ui-table-request-builder';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { onError } from 'app/foundation/util/global.utils';
 
@@ -61,7 +61,7 @@ export class OrganizationManagementComponent {
     faTrash = faTrash;
     faPencil = faPencil;
 
-    private lastLoadEvent: TumUiTableLazyEvent | undefined;
+    private lastLoadEvent: TumUiTableQueryEvent | undefined;
     private loadRequestId = 0;
 
     /**
@@ -85,11 +85,11 @@ export class OrganizationManagementComponent {
         });
     }
 
-    loadOrganizations(event: TumUiTableLazyEvent): void {
+    loadOrganizations(event: TumUiTableQueryEvent): void {
         this.lastLoadEvent = event;
         this.isLoading.set(true);
         const requestId = ++this.loadRequestId;
-        const query = buildDbQueryFromLazyEvent(event);
+        const query = buildDbQueryFromTableEvent(event);
         this.organizationService.getOrganizations(query, true).subscribe({
             next: (response) => {
                 if (requestId !== this.loadRequestId) return;

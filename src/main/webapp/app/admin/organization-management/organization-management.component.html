@@ -11,7 +11,7 @@
             [columns]="columns()"
             [rows]="organizations()"
             [totalRecords]="totalCount()"
-            (lazyLoad)="loadOrganizations($event)"
+            (dataRequest)="loadOrganizations($event)"
             [rowActions]="organizationActions"
             [loading]="isLoading()"
             [striped]="true"

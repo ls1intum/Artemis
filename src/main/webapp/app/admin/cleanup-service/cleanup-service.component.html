@@ -19,10 +19,9 @@
             <td>
                 @if (operation.name !== 'deleteOrphans') {
                     <tum-ui-date-picker
-                        #deleteFromPicker
                         [inputId]="'deleteFromDate-' + operation.name"
                         [value]="operation.deleteFrom"
-                        (valueChange)="onDeleteFromChange(operation, deleteFromPicker.hasValidInput() ? deleteFromPicker.value() : undefined)"
+                        (valueChange)="onDeleteFromChange(operation, $event)"
                         [error]="!operation.datesValid()"
                         [hideLabelName]="true"
                         [hideValidationMessage]="true"
@@ -35,10 +34,9 @@
             <td>
                 @if (operation.name !== 'deleteOrphans') {
                     <tum-ui-date-picker
-                        #deleteToPicker
                         [inputId]="'deleteToDate-' + operation.name"
                         [value]="operation.deleteTo"
-                        (valueChange)="onDeleteToChange(operation, deleteToPicker.hasValidInput() ? deleteToPicker.value() : undefined)"
+                        (valueChange)="onDeleteToChange(operation, $event)"
                         [error]="!operation.datesValid()"
                         [hideLabelName]="true"
                         [hideValidationMessage]="true"

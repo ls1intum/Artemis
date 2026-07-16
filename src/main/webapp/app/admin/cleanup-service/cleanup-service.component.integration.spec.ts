@@ -47,7 +47,7 @@ describe('CleanupServiceComponent date range integration', () => {
         const invalidFrom = operation.deleteTo!.add(1, 'day');
 
         // Writing the picker's value model emits its valueChange (the model output) exactly as user input would,
-        // and resets hasValidInput() to true, so the template's (valueChange) handler runs with the new date.
+        // so the template's (valueChange)="onDeleteFromChange(operation, $event)" handler runs with the new date.
         fromPicker.value.set(invalidFrom);
         fixture.detectChanges();
 

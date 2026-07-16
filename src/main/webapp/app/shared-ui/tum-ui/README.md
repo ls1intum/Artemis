@@ -40,7 +40,7 @@ still being migrated.
 | Tag             | `tum-ui-tag`                               | Presentational status pill (tinted background, accessible label).                                                                          |
 | Tooltip         | `[tumUiTooltip]`                           | Hover + focus tooltip on the shared overlay, with `aria-describedby` wiring.                                                               |
 | Popover         | `tum-ui-popover` + `[tumUiPopoverTrigger]` | Content-projected `role="dialog"` panel; closes on backdrop click + Escape, traps focus.                                                   |
-| Table           | `tum-ui-table<T>`                          | Generic CDK-table data grid: dynamic columns, single-column server-side sort, lazy load, global search, row actions, striped / scrollable. |
+| Table           | `tum-ui-table<T>`                          | Generic CDK-table data grid: dynamic columns, single-column server-side sort, server-side paging, global search, row actions, striped / scrollable. |
 | Paginator       | `tum-ui-paginator`                         | First / prev / next / last + page-size selector; emits `pageChange` / `pageSizeChange`.                                                    |
 | Date picker     | `tum-ui-date-picker`                       | `dayjs`-backed date + time picker with a hand-built calendar; implements the Signal Forms `FormValueControl` contract.                     |
 | Overlay service | `TumUiOverlayService`                      | Shared CDK overlay substrate (connected positioning, flip, reposition-on-scroll, backdrop) that tooltip / popover / date picker build on.  |

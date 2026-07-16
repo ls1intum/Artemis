@@ -8,7 +8,7 @@ import { of, throwError } from 'rxjs';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ActivatedRoute } from '@angular/router';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { TumUiTableLazyEvent } from 'app/shared-ui/tum-ui/table/tum-ui-table.types';
+import { TumUiTableQueryEvent } from 'app/shared-ui/tum-ui/table/tum-ui-table.types';
 import { MockProvider } from 'ng-mocks';
 
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
@@ -66,7 +66,7 @@ describe('OrganizationManagementComponent', () => {
 
         vi.spyOn(organizationService, 'getOrganizations').mockReturnValue(of({ content: [organization1, organization2], totalElements: 2 }));
 
-        component.loadOrganizations({ first: 0, rows: 50 });
+        component.loadOrganizations({ offset: 0, pageSize: 50 });
 
         expect(organizationService.getOrganizations).toHaveBeenCalledWith(expect.anything(), true);
         expect(component).not.toBeNull();
@@ -82,7 +82,7 @@ describe('OrganizationManagementComponent', () => {
     it('should handle error when loading organizations', () => {
         vi.spyOn(organizationService, 'getOrganizations').mockReturnValue(throwError(() => new Error('Network error')));
 
-        component.loadOrganizations({ first: 0, rows: 50 });
+        component.loadOrganizations({ offset: 0, pageSize: 50 });
         expect(component.isLoading()).toBe(false);
         expect(component.totalCount()).toBe(0);
         expect(component.organizations()).toHaveLength(0);
@@ -98,7 +98,7 @@ describe('OrganizationManagementComponent', () => {
             .mockReturnValueOnce(of({ content: [organization1], totalElements: 1 }))
             .mockReturnValueOnce(of({ content: [], totalElements: 0 }));
 
-        const event: TumUiTableLazyEvent = { first: 0, rows: 50 };
+        const event: TumUiTableQueryEvent = { offset: 0, pageSize: 50 };
         component.loadOrganizations(event);
 
         vi.spyOn(organizationService, 'deleteOrganization').mockReturnValue(of(new HttpResponse<void>()));
