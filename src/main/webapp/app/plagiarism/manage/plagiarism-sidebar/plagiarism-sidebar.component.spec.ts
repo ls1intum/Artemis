@@ -1,5 +1,4 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
@@ -9,8 +8,6 @@ import { PlagiarismComparison } from 'app/plagiarism/shared/entities/PlagiarismC
 import { PlagiarismSidebarComponent } from 'app/plagiarism/manage/plagiarism-sidebar/plagiarism-sidebar.component';
 
 describe('Plagiarism Sidebar Component', () => {
-    setupTestBed({ zoneless: true });
-
     let comp: PlagiarismSidebarComponent;
     let fixture: ComponentFixture<PlagiarismSidebarComponent>;
 

@@ -1,5 +1,4 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { PostingContentPartComponent } from 'app/communication/posting-content/posting-content-part/posting-content-part.components';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
@@ -20,8 +19,6 @@ import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('PostingContentComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: PostingContentComponent;
     let fixture: ComponentFixture<PostingContentComponent>;
     let metisService: MetisService;

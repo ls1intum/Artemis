@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 // Mock @sentry/angular before importing anything else
 vi.mock('@sentry/angular', async (importOriginal) => {
@@ -22,8 +21,6 @@ import { PROFILE_PROD, PROFILE_TEST } from 'app/app.constants';
 import { MockProvider } from 'ng-mocks';
 
 describe('SentryErrorHandler', () => {
-    setupTestBed({ zoneless: true });
-
     let service: SentryErrorHandler;
     let localStorageService: LocalStorageService;
     let consoleErrorSpy: ReturnType<typeof vi.spyOn>;

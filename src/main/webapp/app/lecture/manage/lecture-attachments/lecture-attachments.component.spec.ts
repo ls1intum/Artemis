@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import dayjs from 'dayjs/esm';
@@ -25,8 +24,6 @@ import { TranslateService } from '@ngx-translate/core';
 import { FileService } from 'app/foundation/service/file.service';
 
 describe('LectureAttachmentsComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let comp: LectureAttachmentsComponent;
     let fixture: ComponentFixture<LectureAttachmentsComponent>;
     let attachmentService: AttachmentService;

@@ -10,7 +10,7 @@
         [panelSizes]="panelSizesForSplitter()"
         [minSizes]="[0, 0]"
         [gutterSize]="12"
-        [stateKey]="storageKey()"
+        [stateKey]="storageKey() ?? null"
         stateStorage="local"
         (onResizeEnd)="onResizeEnd($any($event.sizes))"
     >

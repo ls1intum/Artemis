@@ -1,5 +1,4 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { StatisticsScoreDistributionGraphComponent } from 'app/exercise/statistics-graph/score-distribution-graph/statistics-score-distribution-graph.component';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ArtemisNavigationUtilService } from 'app/foundation/util/navigation.utils';
@@ -12,7 +11,6 @@ import { ChartModule, UIChart } from 'primeng/chart';
 import { vi } from 'vitest';
 
 describe('StatisticsScoreDistributionGraphComponent', () => {
-    setupTestBed({ zoneless: true });
     let fixture: ComponentFixture<StatisticsScoreDistributionGraphComponent>;
     let component: StatisticsScoreDistributionGraphComponent;
     let routeInNewTabStub: ReturnType<typeof vi.spyOn>;
