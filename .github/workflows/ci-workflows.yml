@@ -10,6 +10,30 @@ on:
 permissions: {}
 
 jobs:
+  # Deploy-gating logic lives in checked-in scripts (not inline YAML) so it can be linted and
+  # unit-tested. shellcheck runs strictly on them (unlike actionlint's repo-wide `-shellcheck=`,
+  # disabled for legacy inline blocks), and bats exercises the run-resolution / image-verify logic.
+  deploy-scripts:
+    name: deploy scripts (shellcheck + bats)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v6
+      - name: Install bats
+        run: |
+          set -Eeuo pipefail
+          sudo apt-get update
+          sudo apt-get install -y bats
+      - name: shellcheck deploy action scripts
+        run: |
+          set -Eeuo pipefail
+          shellcheck .github/actions/verify-image-build/verify-image-build.sh \
+                     .github/actions/resolve-artifact-run/resolve-artifact-run.sh
+      - name: bats unit tests
+        run: bats .github/actions/verify-image-build/tests .github/actions/resolve-artifact-run/tests
+
   actionlint:
     name: actionlint
     runs-on: ubuntu-latest
