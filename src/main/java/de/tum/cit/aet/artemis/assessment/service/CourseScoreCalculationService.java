@@ -38,6 +38,7 @@ import de.tum.cit.aet.artemis.course.dto.CourseForDashboardDTO;
 import de.tum.cit.aet.artemis.course.dto.CourseScoresDTO;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
+import de.tum.cit.aet.artemis.exercise.domain.ExerciseVariantGroup;
 import de.tum.cit.aet.artemis.exercise.domain.IncludedInOverallScore;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
@@ -302,6 +303,10 @@ public class CourseScoreCalculationService {
         // Get scores per exercise type for the course (used in course-statistics.component i.a.).
         Map<ExerciseType, CourseScoresDTO> scoresPerExerciseType = calculateCourseScoresForStudentParticipations(course, gradedStudentParticipations, userId, plagiarismCases);
 
+        // The capped, plagiarism-adjusted points each variant group contributes to the course score. Computed before the
+        // loop below nulls each participation's exercise, so the group membership is still available here.
+        Map<Long, Double> achievedPointsPerVariantGroup = calculateAchievedPointsPerVariantGroup(userId, gradedStudentParticipations, plagiarismCases);
+
         // Get participation results (used in course-statistics.component).
         Set<ParticipationResultDTO> participationResults = new HashSet<>();
         for (StudentParticipation studentParticipation : gradedStudentParticipations) {
@@ -317,7 +322,41 @@ public class CourseScoreCalculationService {
         return new CourseForDashboardDTO(course, totalScores, scoresPerExerciseType.get(ExerciseType.TEXT), scoresPerExerciseType.get(ExerciseType.PROGRAMMING),
                 scoresPerExerciseType.get(ExerciseType.MODELING), scoresPerExerciseType.get(ExerciseType.FILE_UPLOAD), scoresPerExerciseType.get(ExerciseType.QUIZ),
                 participationResults, userCourseNotificationStatusRepository.countUnseenCourseNotificationsForUserInCourse(userId, course.getId()),
-                includeIrisEnabledInCourse ? irisSettingsApi.map(api -> api.isIrisEnabledForCourse(course.getId())).orElse(false) : null);
+                includeIrisEnabledInCourse ? irisSettingsApi.map(api -> api.isIrisEnabledForCourse(course.getId())).orElse(false) : null, achievedPointsPerVariantGroup);
+    }
+
+    /**
+     * Calculates the points a student earns from each exercise variant group, capped at each group's configured
+     * maxPoints and with plagiarism verdicts applied, keyed by group id. Mirrors the variant-group branch of
+     * {@link #calculateCourseScoreForStudentParticipations}: a course-wide {@link PlagiarismVerdict#PLAGIARISM} verdict
+     * zeroes the whole course (empty map), and each member's contribution runs through
+     * {@link #calculatePointsAchievedFromExercise}, which applies the per-exercise plagiarism point deduction.
+     *
+     * @param userId                  the id of the student whose per-group points are calculated
+     * @param participationsOfStudent the student's graded participations (exercises must still be attached)
+     * @param plagiarismCases         the plagiarism verdicts relevant for the student
+     * @return the capped, plagiarism-adjusted points per variant group id; empty when no variant group contributes
+     */
+    Map<Long, Double> calculateAchievedPointsPerVariantGroup(long userId, Collection<StudentParticipation> participationsOfStudent, Collection<PlagiarismCase> plagiarismCases) {
+        PlagiarismMapping plagiarismMapping = PlagiarismMapping.createFromPlagiarismCases(plagiarismCases);
+        if (plagiarismMapping.studentHasVerdict(userId, PlagiarismVerdict.PLAGIARISM)) {
+            return Map.of();
+        }
+        var plagiarismCasesForStudent = plagiarismMapping.getPlagiarismCasesForStudent(userId);
+        var achievedPointsPerVariantGroup = new VariantGroupCappedSum();
+        for (StudentParticipation participation : participationsOfStudent) {
+            Exercise exercise = participation.getExercise();
+            ExerciseVariantGroup variantGroup = exercise.getExerciseVariantGroup();
+            if (variantGroup == null || variantGroup.getMaxPoints() == null || !includeIntoScoreCalculation(ExerciseCourseScoreDTO.from(exercise))) {
+                continue;
+            }
+            Result result = getResultForParticipation(participation, exercise.getDueDate());
+            if (result != null && result.isRated()) {
+                double pointsAchievedFromExercise = calculatePointsAchievedFromExercise(exercise, result, plagiarismCasesForStudent.get(exercise.getId()));
+                achievedPointsPerVariantGroup.add(variantGroup.getId(), variantGroup.getMaxPoints(), pointsAchievedFromExercise);
+            }
+        }
+        return achievedPointsPerVariantGroup.cappedPointsPerGroup();
     }
 
     /**

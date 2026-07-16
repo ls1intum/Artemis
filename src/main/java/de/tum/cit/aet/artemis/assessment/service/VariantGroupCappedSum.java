@@ -62,4 +62,17 @@ final class VariantGroupCappedSum {
         }
         return total;
     }
+
+    /**
+     * @return the capped points each variant group contributes, keyed by group id: {@code min(sum(contributions), cap)}
+     *         per group. Only groups that received at least one contribution are present; ungrouped contributions are
+     *         not included.
+     */
+    Map<Long, Double> cappedPointsPerGroup() {
+        Map<Long, Double> cappedPerGroup = new HashMap<>();
+        for (var entry : sumPerVariantGroup.entrySet()) {
+            cappedPerGroup.put(entry.getKey(), Math.min(entry.getValue(), capPerVariantGroup.get(entry.getKey())));
+        }
+        return cappedPerGroup;
+    }
 }

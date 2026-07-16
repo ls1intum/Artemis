@@ -14,8 +14,8 @@
                 @if (exerciseSumMaxPoints() > 0) {
                     <jhi-information-box [informationBoxData]="pointsInfoBoxData()">
                         <span contentComponent class="d-flex align-items-center gap-1">
-                            <span>{{ achievedGroupPoints() }} / {{ group.maxPoints ?? exerciseSumMaxPoints() }}</span>
-                            @if (group.maxPoints) {
+                            <span>{{ achievedGroupPoints() }} / {{ effectiveGroupMaxPoints() }}</span>
+                            @if (capReducesMaxPoints()) {
                                 <fa-icon
                                     [icon]="faCircleInfo"
                                     class="text-body-tertiary"
@@ -51,7 +51,7 @@
                     <div class="fw-semibold mb-1" jhiTranslate="artemisApp.exerciseVariantGroup.detail.callout.heading"></div>
                     <p class="mb-0 text-body-secondary">
                         <span jhiTranslate="artemisApp.exerciseVariantGroup.detail.callout.body" [translateValues]="{ count: exercises().length }"></span>
-                        @if (group.maxPoints) {
+                        @if (capReducesMaxPoints()) {
                             <span jhiTranslate="artemisApp.exerciseVariantGroup.detail.callout.cappedScore" [translateValues]="{ maxPoints: group.maxPoints }"></span>
                         }
                     </p>

@@ -23,7 +23,6 @@ import { StudentParticipation } from 'app/exercise/shared/entities/participation
 import { Course } from 'app/course/shared/entities/course.model';
 import { ArtemisServerDateService } from 'app/foundation/service/server-date.service';
 import { ScoresStorageService } from 'app/course/manage/course-scores/scores-storage.service';
-import { roundValueSpecifiedByCourseSettings } from 'app/foundation/util/utils';
 import { isDateLessThanAWeekInTheFuture } from 'app/foundation/util/date.utils';
 import { TooltipModule } from 'primeng/tooltip';
 
@@ -89,26 +88,39 @@ export class CourseExerciseGroupDetailComponent {
     protected readonly exerciseSumMaxPoints = computed<number>(() => this.exercises().reduce((sum, ex) => sum + (ex.maxPoints ?? 0), 0));
 
     /**
-     * Sum of achieved points across all exercises in the group, capped at the group's configured maxPoints (matching
-     * the server-side cap in CourseScoreCalculationService) so the displayed score never exceeds the cap.
-     * <p>
-     * Uses the server-computed relevant result per participation (via {@link ScoresStorageService}, populated by the
-     * course dashboard load), exactly like the course statistics page. That result is the one the server counts toward
-     * the course score — the due-date-relevant rated result — so this preview matches the official score instead of
-     * locally guessing with the newest rated result, which could wrongly include a post-deadline result.
+     * The group's true maximum contribution to the course score: the sum of the variants' max points, capped at the
+     * group's configured maxPoints. A cap above the sum never raises the achievable maximum (a student cannot earn more
+     * than the variants offer), so the denominator shown to the student is min(sum, cap) — matching the server, which
+     * credits min(achieved, cap). A cap is only considered present via an explicit undefined check, so a zero cap
+     * (which discards all group points) is handled correctly instead of being treated as "no cap".
+     */
+    protected readonly effectiveGroupMaxPoints = computed<number>(() => {
+        const cap = this.group()?.maxPoints;
+        const sum = this.exerciseSumMaxPoints();
+        return cap !== undefined ? Math.min(sum, cap) : sum;
+    });
+
+    /** Whether the cap actually reduces the achievable maximum (set and strictly below the variants' sum). Only then is
+     * the cap explanation (tooltip / callout) meaningful; a cap ≥ the sum behaves exactly like no cap. */
+    protected readonly capReducesMaxPoints = computed<boolean>(() => {
+        const cap = this.group()?.maxPoints;
+        return cap !== undefined && cap < this.exerciseSumMaxPoints();
+    });
+
+    /**
+     * The points the student earns from this group toward the course score, read from the authoritative server value
+     * (via {@link ScoresStorageService}, populated by the course dashboard load). That value is already capped at the
+     * group's maxPoints and adjusted for plagiarism verdicts, so it matches the official course-score contribution
+     * exactly — reconstructing it from raw result scores here would miss those deductions. Falls back to 0 before the
+     * dashboard scores are loaded or when the group contributes nothing. Keyed on {@link group} so it re-derives once
+     * the group resolves from the loaded course exercises.
      */
     protected readonly achievedGroupPoints = computed<number>(() => {
-        const course = this.course();
-        const achieved = this.exercises().reduce((sum, ex) => {
-            const participationId = this.exerciseParticipation(ex)?.id;
-            const relevantResult = participationId !== undefined ? this.scoresStorageService.getStoredParticipationResult(participationId) : undefined;
-            if (!relevantResult?.rated || !relevantResult.score || !ex.maxPoints) {
-                return sum;
-            }
-            return sum + (roundValueSpecifiedByCourseSettings((relevantResult.score * ex.maxPoints) / 100, course) ?? 0);
-        }, 0);
-        const cap = this.group()?.maxPoints;
-        return cap !== undefined ? Math.min(achieved, cap) : achieved;
+        const group = this.group();
+        if (group?.id === undefined) {
+            return 0;
+        }
+        return this.scoresStorageService.getStoredAchievedGroupPoints(this.courseId, group.id) ?? 0;
     });
 
     protected readonly pointsInfoBoxData = computed<InformationBox>(() => ({

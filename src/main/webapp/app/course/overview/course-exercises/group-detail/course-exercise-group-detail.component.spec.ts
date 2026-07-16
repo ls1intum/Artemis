@@ -18,11 +18,11 @@ import { ArtemisServerDateService } from 'app/foundation/service/server-date.ser
 import { ScoresStorageService } from 'app/course/manage/course-scores/scores-storage.service';
 import { Course } from 'app/course/shared/entities/course.model';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { ParticipationResultDTO } from 'app/course/shared/entities/course-for-dashboard-dto';
 
 describe('CourseExerciseGroupDetailComponent', () => {
     let fixture: ComponentFixture<CourseExerciseGroupDetailComponent>;
-    let storedResults: Map<number, ParticipationResultDTO>;
+    /** Server-computed achieved points per variant group id, as the ScoresStorageService would hold after a dashboard load. */
+    let storedGroupPoints: Map<number, number>;
 
     const GROUP_ID = 10;
 
@@ -56,7 +56,7 @@ describe('CourseExerciseGroupDetailComponent', () => {
                 }),
                 MockProvider(ArtemisServerDateService, { now: () => dayjs() }),
                 MockProvider(DomSanitizer, { bypassSecurityTrustHtml: (value: string) => value }),
-                { provide: ScoresStorageService, useValue: { getStoredParticipationResult: (id: number) => storedResults.get(id) } },
+                { provide: ScoresStorageService, useValue: { getStoredAchievedGroupPoints: (_courseId: number, groupId: number) => storedGroupPoints.get(groupId) } },
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
@@ -73,6 +73,8 @@ describe('CourseExerciseGroupDetailComponent', () => {
         group: () => { id?: number; title?: string } | undefined;
         exercises: () => Exercise[];
         exerciseSumMaxPoints: () => number;
+        effectiveGroupMaxPoints: () => number;
+        capReducesMaxPoints: () => boolean;
         variantsInfoBoxData: () => InformationBox;
         pointsInfoBoxData: () => InformationBox;
         groupDateInfoBoxes: () => InformationBox[];
@@ -89,42 +91,51 @@ describe('CourseExerciseGroupDetailComponent', () => {
     }
 
     beforeEach(() => {
-        storedResults = new Map();
+        storedGroupPoints = new Map();
     });
 
     afterEach(() => {
         vi.restoreAllMocks();
     });
 
-    it('sums the server-provided results of the group members', async () => {
-        storedResults.set(101, { participationId: 101, rated: true, score: 80 });
-        storedResults.set(102, { participationId: 102, rated: true, score: 100 });
-        await setup(exercisesInGroup(undefined));
-        // 80% of 10 + 100% of 10 = 8 + 10 = 18 (no cap configured).
-        expect(achievedGroupPoints()).toBe(18);
+    it('surfaces the authoritative server-computed points for the group', async () => {
+        // The server already caps and plagiarism-adjusts this value; the component must display it verbatim.
+        storedGroupPoints.set(GROUP_ID, 13);
+        await setup(exercisesInGroup(15));
+        expect(achievedGroupPoints()).toBe(13);
     });
 
-    it('caps the summed points at the group maxPoints', async () => {
-        storedResults.set(101, { participationId: 101, rated: true, score: 80 });
-        storedResults.set(102, { participationId: 102, rated: true, score: 100 });
+    it('falls back to 0 when the server stored no contribution for the group', async () => {
+        // e.g. before the dashboard scores load, or when the group contributes nothing.
         await setup(exercisesInGroup(15));
-        // 18 achieved, capped at the group's 15.
-        expect(achievedGroupPoints()).toBe(15);
+        expect(achievedGroupPoints()).toBe(0);
     });
 
-    it('ignores unrated results', async () => {
-        storedResults.set(101, { participationId: 101, rated: true, score: 80 });
-        storedResults.set(102, { participationId: 102, rated: false, score: 100 });
-        await setup(exercisesInGroup(15));
-        // Only the rated result of exercise 1 counts: 8.
-        expect(achievedGroupPoints()).toBe(8);
-    });
+    describe('effectiveGroupMaxPoints', () => {
+        it('shows the variants sum when no cap is configured', async () => {
+            await setup(exercisesInGroup(undefined));
+            expect(comp().effectiveGroupMaxPoints()).toBe(20);
+            expect(comp().capReducesMaxPoints()).toBe(false);
+        });
 
-    it('ignores participations without a stored (server-computed) result', async () => {
-        storedResults.set(101, { participationId: 101, rated: true, score: 80 });
-        // Participation 102 has no stored result: it must not fall back to any local result.
-        await setup(exercisesInGroup(15));
-        expect(achievedGroupPoints()).toBe(8);
+        it('caps the maximum at a binding cap (below the variants sum)', async () => {
+            await setup(exercisesInGroup(15));
+            expect(comp().effectiveGroupMaxPoints()).toBe(15);
+            expect(comp().capReducesMaxPoints()).toBe(true);
+        });
+
+        it('ignores a cap that exceeds the variants sum and shows the sum instead', async () => {
+            await setup(exercisesInGroup(100));
+            // A student can never earn more than the 20 the variants offer, so the course maximum is 20, not 100.
+            expect(comp().effectiveGroupMaxPoints()).toBe(20);
+            expect(comp().capReducesMaxPoints()).toBe(false);
+        });
+
+        it('treats a zero cap as a binding cap that discards all group points', async () => {
+            await setup(exercisesInGroup(0));
+            expect(comp().effectiveGroupMaxPoints()).toBe(0);
+            expect(comp().capReducesMaxPoints()).toBe(true);
+        });
     });
 
     describe('group resolution', () => {

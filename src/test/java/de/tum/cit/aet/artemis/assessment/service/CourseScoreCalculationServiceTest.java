@@ -46,6 +46,7 @@ import de.tum.cit.aet.artemis.exercise.dto.CourseGradeScoreDTO;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
 import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
+import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismCase;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismVerdict;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentBatchTest;
@@ -422,6 +423,91 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationIndepen
         // The credited score caps the group's combined contribution at 5, while the total score keeps the uncapped 10.
         assertThat(scores.absoluteScore()).isEqualTo(5.0);
         assertThat(scores.absoluteScoreTotal()).isEqualTo(10.0);
+    }
+
+    @Test
+    void cappedPointsPerGroupReturnsMinOfSumAndCapPerGroupExcludingUngrouped() {
+        VariantGroupCappedSum cappedSum = new VariantGroupCappedSum();
+        cappedSum.add(1L, 5.0, 4.0); // group 1: 4
+        cappedSum.add(1L, 5.0, 4.0); // group 1 sum 8, capped to 5
+        cappedSum.add(2L, 10.0, 3.0); // group 2: 3 (below its cap)
+        cappedSum.add(null, null, 7.0); // ungrouped contribution: not part of any group
+
+        assertThat(cappedSum.cappedPointsPerGroup()).containsExactlyInAnyOrderEntriesOf(Map.of(1L, 5.0, 2L, 3.0));
+    }
+
+    @Test
+    void achievedPointsPerVariantGroupAreCappedAtGroupMaxPoints() {
+        ExerciseVariantGroup group = cappedGroup(200L, 5.0);
+        Course variantCourse = variantScoringCourse();
+        var participations = List.of(ratedParticipation(variantExercise(101L, variantCourse, group), 100.0),
+                ratedParticipation(variantExercise(102L, variantCourse, group), 100.0));
+
+        Map<Long, Double> perGroup = courseScoreCalculationService.calculateAchievedPointsPerVariantGroup(1L, participations, List.of());
+
+        // 5 + 5 earned, capped at the group's 5.
+        assertThat(perGroup).containsExactlyInAnyOrderEntriesOf(Map.of(200L, 5.0));
+    }
+
+    @Test
+    void achievedPointsPerVariantGroupApplyPerExercisePlagiarismDeduction() {
+        // Cap high enough not to bind, so the deduction (not the cap) drives the result.
+        ExerciseVariantGroup group = cappedGroup(200L, 100.0);
+        Course variantCourse = variantScoringCourse();
+        TextExercise variant1 = variantExercise(101L, variantCourse, group);
+        TextExercise variant2 = variantExercise(102L, variantCourse, group);
+        User student = new User();
+        student.setId(1L);
+        // A 50% point-deduction verdict on variant1 halves its 5 points to 2.5; variant2 keeps its 5 → 7.5 total.
+        PlagiarismCase deduction = plagiarismCase(student, variant1, PlagiarismVerdict.POINT_DEDUCTION, 50);
+
+        Map<Long, Double> perGroup = courseScoreCalculationService.calculateAchievedPointsPerVariantGroup(1L,
+                List.of(ratedParticipation(variant1, 100.0), ratedParticipation(variant2, 100.0)), List.of(deduction));
+
+        assertThat(perGroup).containsExactlyInAnyOrderEntriesOf(Map.of(200L, 7.5));
+    }
+
+    @Test
+    void achievedPointsPerVariantGroupAreEmptyOnPlagiarismVerdict() {
+        ExerciseVariantGroup group = cappedGroup(200L, 5.0);
+        Course variantCourse = variantScoringCourse();
+        TextExercise variant1 = variantExercise(101L, variantCourse, group);
+        TextExercise variant2 = variantExercise(102L, variantCourse, group);
+        User student = new User();
+        student.setId(1L);
+        // A full PLAGIARISM verdict zeroes the whole course, so no group contributes anything.
+        PlagiarismCase plagiarism = plagiarismCase(student, variant1, PlagiarismVerdict.PLAGIARISM, 0);
+
+        Map<Long, Double> perGroup = courseScoreCalculationService.calculateAchievedPointsPerVariantGroup(1L,
+                List.of(ratedParticipation(variant1, 100.0), ratedParticipation(variant2, 100.0)), List.of(plagiarism));
+
+        assertThat(perGroup).isEmpty();
+    }
+
+    /** A capped variant group with the given id and maxPoints. */
+    private static ExerciseVariantGroup cappedGroup(long id, double maxPoints) {
+        ExerciseVariantGroup group = new ExerciseVariantGroup();
+        group.setId(id);
+        group.setMaxPoints(maxPoints);
+        return group;
+    }
+
+    /** An in-memory course used for variant-group score rounding (accuracy of scores set so results are exact). */
+    private static Course variantScoringCourse() {
+        Course course = new Course();
+        course.setId(1L);
+        course.setAccuracyOfScores(1);
+        return course;
+    }
+
+    /** A plagiarism case assigning the given verdict (and point deduction) to the student for the given exercise. */
+    private static PlagiarismCase plagiarismCase(User student, TextExercise exercise, PlagiarismVerdict verdict, int pointDeduction) {
+        PlagiarismCase plagiarismCase = new PlagiarismCase();
+        plagiarismCase.setStudent(student);
+        plagiarismCase.setExercise(exercise);
+        plagiarismCase.setVerdict(verdict);
+        plagiarismCase.setVerdictPointDeduction(pointDeduction);
+        return plagiarismCase;
     }
 
     /** Builds an in-memory text exercise worth 5 points that belongs to the given (capped) variant group and is already due. */
