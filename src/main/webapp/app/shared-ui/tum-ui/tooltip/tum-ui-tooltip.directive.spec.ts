@@ -108,6 +108,21 @@ describe('TumUiTooltipDirective', () => {
         expect(bubble()?.textContent).toContain('Updated help text');
     });
 
+    it('hides the tooltip when the content is cleared to empty while shown', () => {
+        const appRef = TestBed.inject(ApplicationRef);
+        button.dispatchEvent(new MouseEvent('mouseenter'));
+        vi.advanceTimersByTime(1);
+        appRef.tick();
+        expect(bubble()).not.toBeNull();
+        expect(button.getAttribute('aria-describedby')).toBeTruthy();
+        // Clearing the content while open must hide the tooltip (not leave an empty bubble + dangling
+        // aria-describedby), mirroring scheduleShow() refusing to show empty content.
+        fixture.componentInstance.text.set('');
+        appRef.tick();
+        expect(bubble()).toBeNull();
+        expect(button.getAttribute('aria-describedby')).toBeNull();
+    });
+
     it('preserves a pre-existing aria-describedby token and restores it on hide', () => {
         button.setAttribute('aria-describedby', 'external-desc');
         button.dispatchEvent(new MouseEvent('mouseenter'));
