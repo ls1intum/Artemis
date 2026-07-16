@@ -47,13 +47,20 @@ export class TumUiTooltipDirective implements OnDestroy {
     private focused = false;
 
     constructor() {
-        // Keep a currently-shown tooltip's text in sync when the content input changes mid-hover
-        // (pTooltip parity). Read content() UNCONDITIONALLY first so the effect always tracks it —
-        // reading it inside `contentRef?.setInput(...)` would short-circuit while hidden (contentRef
-        // undefined), so the effect's first run would track no signal and never re-run. No-op while hidden.
+        // Keep a currently-shown tooltip in sync when the content input changes mid-hover (pTooltip
+        // parity). Read content() UNCONDITIONALLY first so the effect always tracks it — reading it inside
+        // `contentRef?.setInput(...)` would short-circuit while hidden (contentRef undefined), so the effect
+        // would track no signal and never re-run.
         effect(() => {
             const text = this.content();
-            this.contentRef?.setInput('text', text);
+            if (!text) {
+                // Content cleared while open: hide instead of leaving an empty bubble (and a dangling
+                // aria-describedby) attached, mirroring scheduleShow() refusing to show empty content.
+                // No-op while already hidden.
+                this.hideNow();
+            } else {
+                this.contentRef?.setInput('text', text);
+            }
         });
     }
 
