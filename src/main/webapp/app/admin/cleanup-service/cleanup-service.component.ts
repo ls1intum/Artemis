@@ -60,7 +60,6 @@ export class CleanupServiceComponent implements OnInit {
         deleteOldSubmissionVersions: 'deleteSubmissionVersions',
         deleteOldFeedback: 'deleteFeedback',
     };
-    protected readonly DateTimePickerType = DateTimePickerType;
 
     /** Whether the cleanup operation modal is visible */
     showCleanupModal = signal<boolean>(false);

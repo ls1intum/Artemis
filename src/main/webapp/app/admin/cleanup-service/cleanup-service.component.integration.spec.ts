@@ -8,7 +8,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { CleanupServiceComponent } from 'app/admin/cleanup-service/cleanup-service.component';
 import { DataCleanupService } from 'app/admin/cleanup-service/data-cleanup.service';
-import { FormDateTimePickerComponent } from 'app/shared-ui/date-time-picker/date-time-picker.component';
+import { TumUiDatePickerComponent } from 'app/shared-ui/tum-ui/date-picker/tum-ui-date-picker.component';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('CleanupServiceComponent date range integration', () => {
@@ -36,9 +36,9 @@ describe('CleanupServiceComponent date range integration', () => {
         fixture.detectChanges();
     });
 
-    function datePickers(operationName: string): FormDateTimePickerComponent[] {
+    function datePickers(operationName: string): TumUiDatePickerComponent[] {
         const row = fixture.debugElement.query(By.css(`[data-testid="cleanup-row-${operationName}"]`));
-        return row.queryAll(By.directive(FormDateTimePickerComponent)).map((debugElement) => debugElement.componentInstance as FormDateTimePickerComponent);
+        return row.queryAll(By.directive(TumUiDatePickerComponent)).map((debugElement) => debugElement.componentInstance as TumUiDatePickerComponent);
     }
 
     it('should recover when the to-date corrects an invalid date range', () => {
@@ -46,13 +46,15 @@ describe('CleanupServiceComponent date range integration', () => {
         const [fromPicker, toPicker] = datePickers(operation.name);
         const invalidFrom = operation.deleteTo!.add(1, 'day');
 
-        fromPicker.updateField(invalidFrom.toDate());
+        // Writing the picker's value model emits its valueChange (the model output) exactly as user input would,
+        // and resets hasValidInput() to true, so the template's (valueChange) handler runs with the new date.
+        fromPicker.value.set(invalidFrom);
         fixture.detectChanges();
 
         expect(operation.datesValid()).toBe(false);
 
         const correctedTo = invalidFrom.add(1, 'day');
-        toPicker.updateField(correctedTo.toDate());
+        toPicker.value.set(correctedTo);
         fixture.detectChanges();
 
         expect(operation.deleteFrom?.toISOString()).toBe(invalidFrom.toISOString());
@@ -65,13 +67,13 @@ describe('CleanupServiceComponent date range integration', () => {
         const [fromPicker, toPicker] = datePickers(operation.name);
         const invalidTo = operation.deleteFrom!.subtract(1, 'day');
 
-        toPicker.updateField(invalidTo.toDate());
+        toPicker.value.set(invalidTo);
         fixture.detectChanges();
 
         expect(operation.datesValid()).toBe(false);
 
         const correctedFrom = invalidTo.subtract(1, 'day');
-        fromPicker.updateField(correctedFrom.toDate());
+        fromPicker.value.set(correctedFrom);
         fixture.detectChanges();
 
         expect(operation.deleteFrom?.toISOString()).toBe(correctedFrom.toISOString());
