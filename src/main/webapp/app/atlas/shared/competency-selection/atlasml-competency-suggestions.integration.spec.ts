@@ -21,7 +21,6 @@ import { FeatureToggle, FeatureToggleService } from 'app/foundation/feature-togg
 import { MockFeatureToggleService } from 'test/helpers/mocks/service/mock-feature-toggle.service';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 /**
  * Integration test suite for AtlasML Competency Suggestion Feature
@@ -33,7 +32,6 @@ import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
  * 4. Handle various edge cases and error scenarios
  */
 describe('AtlasML Competency Suggestions Integration Tests', () => {
-    setupTestBed({ zoneless: true });
     let fixture: ComponentFixture<CompetencySelectionComponent>;
     let component: CompetencySelectionComponent;
     let courseStorageService: CourseStorageService;

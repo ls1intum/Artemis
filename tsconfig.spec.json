@@ -4,11 +4,15 @@
         "types": ["node"],
         "allowJs": true,
         "outDir": "build/www/app",
-        "baseUrl": ".",
+        // Explicit rootDir: the spec compilation spans both src/test and src/main/webapp, whose common
+        // source directory is ./src. Without it (previously implied by the removed baseUrl), tsc cannot
+        // determine the emit layout for outDir and fails with TS5011.
+        "rootDir": ".",
         "paths": {
-            "@angular/*": ["node_modules/@angular/*"],
-            "app/*": ["src/main/webapp/app/*"],
-            "test/*": ["src/test/javascript/spec/*"]
+            "@angular/*": ["./node_modules/@angular/*"],
+            "app/*": ["./src/main/webapp/app/*"],
+            "test/*": ["./src/test/javascript/spec/*"],
+            "src/*": ["./src/*"]
         },
         "emitDecoratorMetadata": false,
         "isolatedModules": true

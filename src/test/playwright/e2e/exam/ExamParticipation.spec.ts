@@ -3,7 +3,7 @@ import { Commands } from '../../support/commands';
 import { Course } from 'app/course/shared/entities/course.model';
 import { Exercise, ExerciseType, ProgrammingExerciseAssessmentType, ProgrammingLanguage } from '../../support/constants';
 import { admin, instructor, studentFour, studentOne, studentThree, studentTwo, users } from '../../support/users';
-import { addE2EInitScript, generateUUID } from '../../support/utils';
+import { addE2EInitScript, generateUUID, readResponseJson } from '../../support/utils';
 import cAllSuccessfulSubmission from '../../fixtures/exercise/programming/c/all_successful/submission.json';
 import dayjs from 'dayjs';
 import { Exam } from 'app/exam/shared/entities/exam.model';
@@ -348,7 +348,7 @@ test.describe('Exam participation', () => {
                 let participationId: number | undefined;
                 if (participationResponse) {
                     try {
-                        const data = await participationResponse.json();
+                        const data = await readResponseJson(participationResponse);
                         participationId = data.id ?? data[0]?.id;
                     } catch {
                         /* response might not be JSON */

@@ -6,7 +6,6 @@
  * - Forwarding criteria and readonly flags to structured layout
  */
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { Component, Directive, Pipe, PipeTransform, input } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
@@ -51,7 +50,6 @@ class HtmlForMarkdownPipeStub implements PipeTransform {
 }
 
 describe('ResizableInstructionsComponent', () => {
-    setupTestBed({ zoneless: true });
     beforeEach(async () => {
         await TestBed.configureTestingModule({
             imports: [ResizableInstructionsComponent, FaIconStubComponent, TranslateDirectiveStub, StructuredLayoutStubComponent, HtmlForMarkdownPipeStub],

@@ -2,7 +2,6 @@ import { Component, DebugElement } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { SortDirective } from 'app/foundation/sort/directive/sort.directive';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 @Component({
@@ -22,7 +21,6 @@ class TestSortDirectiveComponent {
 }
 
 describe('Directive: SortDirective', () => {
-    setupTestBed({ zoneless: true });
     let component: TestSortDirectiveComponent;
     let fixture: ComponentFixture<TestSortDirectiveComponent>;
     let tableRow: DebugElement;

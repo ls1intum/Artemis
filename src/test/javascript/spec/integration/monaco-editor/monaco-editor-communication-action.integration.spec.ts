@@ -31,11 +31,8 @@ import { MockFileService } from 'test/helpers/mocks/service/mock-file.service';
 import { FileService } from 'app/foundation/service/file.service';
 import { ChannelIdAndNameDTO } from 'app/communication/shared/entities/conversation/channel.model';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('MonacoEditorCommunicationActionIntegration', () => {
-    setupTestBed({ zoneless: true });
-
     let comp: MonacoEditorComponent;
     let fixture: ComponentFixture<MonacoEditorComponent>;
     let metisService: MetisService;

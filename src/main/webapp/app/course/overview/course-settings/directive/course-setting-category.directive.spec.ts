@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { Component } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
@@ -29,8 +28,6 @@ class TestComponent extends CourseSettingCategoryDirective {
 }
 
 describe('CourseSettingCategoryDirective', () => {
-    setupTestBed({ zoneless: true });
-
     let component: TestComponent;
     let fixture: ComponentFixture<TestComponent>;
     let courseStorageServiceMock: {

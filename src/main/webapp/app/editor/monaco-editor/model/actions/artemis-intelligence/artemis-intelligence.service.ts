@@ -4,13 +4,13 @@ import { finalize, map, tap } from 'rxjs/operators';
 import RewritingVariant from 'app/editor/monaco-editor/model/actions/artemis-intelligence/rewriting-variant';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { RewriteResult } from 'app/editor/monaco-editor/model/actions/artemis-intelligence/rewriting-result';
-import { HyperionProblemStatementApiService } from 'app/openapi/api/hyperionProblemStatementApi.service';
-import { ProblemStatementRewriteRequest } from 'app/openapi/model/problemStatementRewriteRequest';
-import { ProblemStatementRewriteResponse } from 'app/openapi/model/problemStatementRewriteResponse';
-import { ConsistencyCheckResponse } from 'app/openapi/model/consistencyCheckResponse';
-import { HyperionFaqApiService } from 'app/openapi/api/hyperionFaqApi.service';
-import { RewriteFaqRequest } from 'app/openapi/model/rewriteFaqRequest';
-import { RewriteFaqResponse } from 'app/openapi/model/rewriteFaqResponse';
+import { HyperionProblemStatementApi } from 'app/openapi/api/hyperion-problem-statement-api';
+import { ProblemStatementRewriteRequest } from 'app/openapi/model/problem-statement-rewrite-request';
+import { ProblemStatementRewriteResponse } from 'app/openapi/model/problem-statement-rewrite-response';
+import { ConsistencyCheckResponse } from 'app/openapi/model/consistency-check-response';
+import { HyperionFaqApi } from 'app/openapi/api/hyperion-faq-api';
+import { RewriteFaqRequest } from 'app/openapi/model/rewrite-faq-request';
+import { RewriteFaqResponse } from 'app/openapi/model/rewrite-faq-response';
 /**
  * Service providing shared functionality for Artemis Intelligence of the markdown editor.
  * This service is intended to be used by the AI actions of the Monaco editors.
@@ -18,8 +18,8 @@ import { RewriteFaqResponse } from 'app/openapi/model/rewriteFaqResponse';
 @Injectable({ providedIn: 'root' })
 export class ArtemisIntelligenceService {
     private alertService = inject(AlertService);
-    private hyperionProblemStatementApiService = inject(HyperionProblemStatementApiService);
-    private hyperionFaqApiService = inject(HyperionFaqApiService);
+    private hyperionProblemStatementApiService = inject(HyperionProblemStatementApi);
+    private hyperionFaqApiService = inject(HyperionFaqApi);
 
     private isLoadingRewrite = signal<boolean>(false);
     private isLoadingConsistencyCheck = signal<boolean>(false);
@@ -41,14 +41,12 @@ export class ArtemisIntelligenceService {
                 faqText: toBeRewritten || '',
             };
             return this.hyperionFaqApiService.rewriteFaq(contextId, request).pipe(
-                map(
-                    (response: RewriteFaqResponse): RewriteResult => ({
-                        result: response.rewrittenText,
-                        inconsistencies: response.inconsistencies,
-                        suggestions: response.suggestions,
-                        improvement: response.improvement,
-                    }),
-                ),
+                map((response: RewriteFaqResponse): RewriteResult => ({
+                    result: response.rewrittenText,
+                    inconsistencies: response.inconsistencies,
+                    suggestions: response.suggestions,
+                    improvement: response.improvement,
+                })),
                 tap(() => {
                     this.alertService.success('artemisApp.markdownEditor.artemisIntelligence.alerts.rewrite.success');
                 }),
@@ -60,14 +58,12 @@ export class ArtemisIntelligenceService {
             };
 
             return this.hyperionProblemStatementApiService.rewriteProblemStatement(contextId, request).pipe(
-                map(
-                    (response: ProblemStatementRewriteResponse): RewriteResult => ({
-                        result: response.rewrittenText,
-                        inconsistencies: undefined,
-                        suggestions: undefined,
-                        improvement: response.improved ? 'Text was improved' : 'Text was not improved',
-                    }),
-                ),
+                map((response: ProblemStatementRewriteResponse): RewriteResult => ({
+                    result: response.rewrittenText,
+                    inconsistencies: undefined,
+                    suggestions: undefined,
+                    improvement: response.improved ? 'Text was improved' : 'Text was not improved',
+                })),
                 tap(() => {
                     this.alertService.success('artemisApp.markdownEditor.artemisIntelligence.alerts.rewrite.success');
                 }),
