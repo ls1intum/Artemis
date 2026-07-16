@@ -230,7 +230,10 @@ public class ProgrammingSubmissionService extends SubmissionService {
         List<Long> participationIds = programmingExerciseStudentParticipationRepository.findStudentParticipationIdsByExerciseId(programmingExerciseId);
         List<Long> latestSubmissionIds = programmingSubmissionRepository.findLatestSubmissionIdsByExerciseId(programmingExerciseId);
         Map<Long, ProgrammingSubmission> latestSubmissionByParticipationId = programmingSubmissionRepository.findSubmissionsWithResultsByIdIn(latestSubmissionIds).stream()
-                .collect(Collectors.toMap(submission -> submission.getParticipation().getId(), Function.identity()));
+                // If a participation has several submissions with the same (latest) submission date, keep the one with
+                // the highest id as the deterministic tie-breaker.
+                .collect(Collectors.toMap(submission -> submission.getParticipation().getId(), Function.identity(),
+                        (first, second) -> first.getId() > second.getId() ? first : second));
 
         List<PendingProgrammingSubmissionDTO> pendingSubmissions = new ArrayList<>();
         for (Long participationId : participationIds) {

@@ -85,45 +85,56 @@ public class AsyncConfiguration implements AsyncConfigurer {
     /**
      * Executor for asynchronous exercise versioning (see {@code ExerciseVersionService}).
      * <p>
-     * In production this delegates to the shared {@code taskExecutor}, so creating an exercise version runs
-     * asynchronously and no longer blocks the request thread of an exercise update (which previously had to wait for
-     * potentially slow versioning queries and git access). It returns a thin delegating {@link Executor} rather than the
-     * {@code taskExecutor} bean instance for the same lifecycle reason described on {@link #mailTaskExecutor(Executor)}.
+     * In production this is a dedicated, bounded thread pool rather than a delegate to the shared {@code taskExecutor}.
+     * Versioning involves potentially slow git access; isolating it in its own pool prevents that slow work from
+     * exhausting the shared pool and starving unrelated {@code @Async} tasks (and vice versa).
      * <p>
      * In the {@code test} profile it is a {@link SyncTaskExecutor} so versioning runs on the calling thread. This keeps
      * the many tests that trigger versioning (directly or through a REST call) deterministic: the exercise version is
      * created before the test continues, without having to await a background thread.
      *
-     * @param taskExecutor the shared async executor, delegated to for versioning in production
-     * @return a synchronous executor under the {@code test} profile, otherwise a thin delegate to the shared executor
+     * @return a synchronous executor under the {@code test} profile, otherwise a dedicated bounded thread pool
      */
     @Bean("exerciseVersionTaskExecutor")
-    public Executor exerciseVersionTaskExecutor(@Qualifier("taskExecutor") Executor taskExecutor) {
+    public Executor exerciseVersionTaskExecutor() {
         if (environment.acceptsProfiles(Profiles.of(SPRING_PROFILE_TEST))) {
             return new SyncTaskExecutor();
         }
-        return taskExecutor::execute;
+        ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
+        executor.setCorePoolSize(2);
+        executor.setMaxPoolSize(4);
+        executor.setQueueCapacity(taskExecutionProperties.getPool().getQueueCapacity());
+        executor.setThreadNamePrefix("exercise-versioning-");
+        return new ExceptionHandlingAsyncTaskExecutor(executor);
     }
 
     /**
      * Executor for asynchronous quiz statistics updates (see {@code QuizSubmissionService}).
      * <p>
-     * In production this delegates to the shared {@code taskExecutor}, so recomputing/updating quiz statistics after a
-     * submission no longer blocks the student's request (statistics are only relevant for instructors). It returns a
-     * thin delegating {@link Executor} for the same lifecycle reason described on {@link #mailTaskExecutor(Executor)}.
+     * In production this is a dedicated, single-threaded executor rather than a delegate to the shared
+     * {@code taskExecutor}. Statistics are updated incrementally (read counters, add the new result, write them back);
+     * running such updates for the same quiz concurrently would lose updates. A single worker serializes all statistics
+     * updates so they are applied one after another, and also isolates them from the shared pool. Statistics are only
+     * relevant for instructors, so the student's submission request does not wait for this work.
      * <p>
      * In the {@code test} profile it is a {@link SyncTaskExecutor} so the statistics update runs on the calling thread,
      * keeping tests that assert on quiz statistics deterministic.
      *
-     * @param taskExecutor the shared async executor, delegated to for quiz statistics in production
-     * @return a synchronous executor under the {@code test} profile, otherwise a thin delegate to the shared executor
+     * @return a synchronous executor under the {@code test} profile, otherwise a dedicated single-threaded executor
      */
     @Bean("quizStatisticsTaskExecutor")
-    public Executor quizStatisticsTaskExecutor(@Qualifier("taskExecutor") Executor taskExecutor) {
+    public Executor quizStatisticsTaskExecutor() {
         if (environment.acceptsProfiles(Profiles.of(SPRING_PROFILE_TEST))) {
             return new SyncTaskExecutor();
         }
-        return taskExecutor::execute;
+        ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
+        // Single worker: serializes incremental statistics updates so concurrent updates for the same quiz cannot
+        // overwrite each other's counter changes.
+        executor.setCorePoolSize(1);
+        executor.setMaxPoolSize(1);
+        executor.setQueueCapacity(taskExecutionProperties.getPool().getQueueCapacity());
+        executor.setThreadNamePrefix("quiz-statistics-");
+        return new ExceptionHandlingAsyncTaskExecutor(executor);
     }
 
     @Override

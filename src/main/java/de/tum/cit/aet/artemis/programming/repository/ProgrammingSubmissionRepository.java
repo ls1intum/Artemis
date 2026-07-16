@@ -99,19 +99,28 @@ public interface ProgrammingSubmissionRepository extends ArtemisJpaRepository<Pr
     List<ProgrammingSubmission> findSubmissionsWithResultsByIdIn(List<Long> ids);
 
     /**
-     * Returns the id of the latest submission (the one with the highest id) for every student participation of the given
+     * Returns the id of the latest submission (by submission date) for every student participation of the given
      * programming exercise. This allows callers to fetch only the latest submission per participation (e.g. via
      * {@link #findSubmissionsWithResultsByIdIn}) instead of loading the exercise's entire submission and result history,
      * which for large exercises meant transferring tens of thousands of rows.
+     * <p>
+     * Ordering is by {@code submissionDate} (not by id) to match the previous behavior: a submission created out of
+     * order (e.g. a delayed fallback submission) can have the newest id but an older submission date, and must not be
+     * treated as the latest. If several submissions of a participation share the same latest date, all their ids are
+     * returned; the caller resolves the tie (e.g. by keeping the highest id).
      *
      * @param exerciseId the id of the programming exercise
-     * @return the latest submission id per participation
+     * @return the latest submission id(s) per participation
      */
     @Query("""
-            SELECT MAX(s.id)
+            SELECT s.id
             FROM ProgrammingSubmission s
             WHERE s.participation.exercise.id = :exerciseId
-            GROUP BY s.participation.id
+                AND s.submissionDate = (
+                    SELECT MAX(s2.submissionDate)
+                    FROM ProgrammingSubmission s2
+                    WHERE s2.participation.id = s.participation.id
+                )
             """)
     List<Long> findLatestSubmissionIdsByExerciseId(@Param("exerciseId") long exerciseId);
 
