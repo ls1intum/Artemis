@@ -82,9 +82,13 @@ export async function installApiResponseCapture(context: BrowserContext): Promis
                 // browser handles redirects itself; Node must not transparently follow a non-GET redirect.
                 apiResponse = await route.fetch({ maxRedirects: 0 });
             } catch {
-                // fetch() failed to produce a response (e.g. teardown mid-flight). The browser re-issuing
-                // the request is the same risk profile as no interception at all, so fall back to that.
-                await route.continue().catch(() => {});
+                // route.fetch() rejected. We cannot distinguish a pre-dispatch failure from a transport
+                // failure that occurred after the server already received (and possibly executed) the
+                // request, so route.continue() is unsafe here — it would re-dispatch and could duplicate a
+                // non-idempotent side effect (e.g. create a second entity). Per the invariant documented
+                // above, any failure once route.fetch() has been called must abort; the page then sees a
+                // network error and Playwright retries the test.
+                await route.abort('failed').catch(() => {});
                 return;
             }
             try {
