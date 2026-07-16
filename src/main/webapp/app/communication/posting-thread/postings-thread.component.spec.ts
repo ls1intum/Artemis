@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { PostingThreadComponent } from 'app/communication/posting-thread/posting-thread.component';
 import { PostService } from 'app/communication/service/post.service';
@@ -30,8 +29,6 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { DialogService } from 'primeng/dynamicdialog';
 
 describe('PostingThreadComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<PostingThreadComponent>;
 
     beforeEach(() => {

@@ -1,14 +1,11 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { TranslateService } from '@ngx-translate/core';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { ModePickerComponent, ModePickerOption } from 'app/exercise/mode-picker/mode-picker.component';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('Mode Picker Component', () => {
-    setupTestBed({ zoneless: true });
-
     let comp: ModePickerComponent<string>;
     let fixture: ComponentFixture<ModePickerComponent<string>>;
 

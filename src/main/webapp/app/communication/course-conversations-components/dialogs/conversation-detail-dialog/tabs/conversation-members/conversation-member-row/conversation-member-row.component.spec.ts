@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -51,8 +50,6 @@ const examples: ConversationDTO[] = [
 
 examples.forEach((activeConversation) => {
     describe('ConversationMemberRowComponent with ' + activeConversation.type, () => {
-        setupTestBed({ zoneless: true });
-
         let component: ConversationMemberRowComponent;
         let fixture: ComponentFixture<ConversationMemberRowComponent>;
         const course = { id: 1 } as Course;

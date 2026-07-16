@@ -454,12 +454,10 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
             exerciseId: preview.exerciseId,
             exerciseTitle: preview.exerciseTitle,
             viewOnly: preview.viewOnly,
-            competencies: preview.competencies.map(
-                (comp): CompetencyMappingViewModel => ({
-                    ...comp,
-                    selected: signal((comp.alreadyMapped ?? false) || (comp.suggested ?? false)),
-                }),
-            ),
+            competencies: preview.competencies.map((comp): CompetencyMappingViewModel => ({
+                ...comp,
+                selected: signal((comp.alreadyMapped ?? false) || (comp.suggested ?? false)),
+            })),
         };
     }
 

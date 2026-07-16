@@ -1,5 +1,4 @@
 import { describe, expect, it } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import {
     getAchievablePointsAndAchievedScoreFilterOptions,
     getExerciseCategoryFilterOptions,
@@ -44,8 +43,6 @@ const SIDEBAR_CARD_ELEMENT_4 = { exercise: EXERCISE_4 } as SidebarCardElement;
 const SIDEBAR_CARD_ELEMENT_5 = { exercise: EXERCISE_5, type: ExerciseType.PROGRAMMING, difficulty: DifficultyLevel.EASY } as SidebarCardElement;
 
 describe('getExerciseCategoryFilterOptions', () => {
-    setupTestBed({ zoneless: true });
-
     it('should return all exercise categories', () => {
         const sidebarData: SidebarData = {
             groupByCategory: true,
@@ -144,8 +141,6 @@ describe('getExerciseCategoryFilterOptions', () => {
 });
 
 describe('getExerciseTypeFilterOptions', () => {
-    setupTestBed({ zoneless: true });
-
     it('should return present exercise types and sort them properly (same order as instructor creation)', () => {
         const sidebarData: SidebarData = {
             groupByCategory: true,
@@ -199,8 +194,6 @@ describe('getExerciseTypeFilterOptions', () => {
 });
 
 describe('getExerciseDifficultyFilterOptions', () => {
-    setupTestBed({ zoneless: true });
-
     it('should return present exercise difficulties and sort them ascending', () => {
         const sidebarData: SidebarData = {
             groupByCategory: true,
@@ -254,8 +247,6 @@ describe('getExerciseDifficultyFilterOptions', () => {
 });
 
 describe('getAchievablePointsAndAchievedScoreFilterOptions', () => {
-    setupTestBed({ zoneless: true });
-
     const expectedFilterForFirstThreePresentExercises = {
         achievablePoints: {
             isDisplayed: true,

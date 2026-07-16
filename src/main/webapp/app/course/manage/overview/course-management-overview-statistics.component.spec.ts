@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CourseManagementOverviewStatisticsComponent } from 'app/course/manage/overview/course-management-overview-statistics.component';
 import dayjs from 'dayjs/esm';
@@ -13,8 +12,6 @@ import { MockComponent } from 'ng-mocks';
 import { ChartModule, UIChart } from 'primeng/chart';
 
 describe('CourseManagementOverviewStatisticsComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<CourseManagementOverviewStatisticsComponent>;
     let component: CourseManagementOverviewStatisticsComponent;
     let componentRef: ComponentRef<CourseManagementOverviewStatisticsComponent>;

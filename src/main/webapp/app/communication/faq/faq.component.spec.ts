@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
@@ -37,8 +36,6 @@ function createFaq(id: number, category: string, color: string): Faq {
 }
 
 describe('FaqComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let faqComponentFixture: ComponentFixture<FaqComponent>;
     let faqComponent: FaqComponent;
 
