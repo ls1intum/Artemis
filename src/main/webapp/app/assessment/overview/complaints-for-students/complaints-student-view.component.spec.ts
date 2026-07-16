@@ -1,6 +1,5 @@
 import { MockInstance, afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComplaintService, EntityResponseType } from 'app/assessment/shared/services/complaint.service';
 import { MockComplaintService } from 'test/helpers/mocks/service/mock-complaint.service';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -34,7 +33,6 @@ import { TranslateService } from '@ngx-translate/core';
 import { ComplaintDTO } from 'app/assessment/shared/entities/complaint-dto.model';
 
 describe('ComplaintsStudentViewComponent', () => {
-    setupTestBed({ zoneless: true });
     const complaintTimeLimitDays = 7;
     const course: Course = {
         id: 1,

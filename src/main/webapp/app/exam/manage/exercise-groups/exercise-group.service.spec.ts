@@ -1,12 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TestBed } from '@angular/core/testing';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
 import { HttpClient, provideHttpClient } from '@angular/common/http';
 
 describe('Exercise Group Service', () => {
-    setupTestBed({ zoneless: true });
-
     let httpClient: any;
     let httpClientDeleteSpy: any;
     let service: ExerciseGroupService;

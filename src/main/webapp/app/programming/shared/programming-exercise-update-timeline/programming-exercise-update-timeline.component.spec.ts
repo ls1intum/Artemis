@@ -1,7 +1,6 @@
 import dayjs from 'dayjs/esm';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ProgrammingExerciseUpdateTimelineComponent } from './programming-exercise-update-timeline.component';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
@@ -21,8 +20,6 @@ import { BuildPhasesTemplateService } from 'app/programming/shared/services/buil
 import { PROFILE_LOCALCI } from 'app/app.constants';
 
 describe('ProgrammingExerciseUpdateTimelineComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<ProgrammingExerciseUpdateTimelineComponent>;
     let component: ProgrammingExerciseUpdateTimelineComponent;
     let activatedRouteUrlSubject: BehaviorSubject<UrlSegment[]>;

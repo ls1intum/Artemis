@@ -3,7 +3,6 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CdkScrollable, ScrollDispatcher } from '@angular/cdk/scrolling';
 import { DOCUMENT } from '@angular/common';
 import { By } from '@angular/platform-browser';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TranslateService } from '@ngx-translate/core';
 import { faAlignLeft, faComment } from '@fortawesome/free-solid-svg-icons';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -41,8 +40,6 @@ class ResizablePanelsTestComponent {
 }
 
 describe('ResizablePanelsComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<ResizablePanelsTestComponent>;
 
     beforeEach(async () => {
