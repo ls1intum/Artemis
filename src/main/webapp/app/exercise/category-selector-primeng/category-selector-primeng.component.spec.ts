@@ -1,5 +1,4 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { CategorySelectorPrimengComponent } from 'app/exercise/category-selector-primeng/category-selector-primeng.component';
 import { AutoCompleteSelectEvent, AutoCompleteUnselectEvent } from 'primeng/autocomplete';
 import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
@@ -8,7 +7,6 @@ import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('CategorySelectorPrimengComponent', () => {
-    setupTestBed({ zoneless: true });
     let comp: CategorySelectorPrimengComponent;
     let fixture: ComponentFixture<CategorySelectorPrimengComponent>;
     let emitSpy: ReturnType<typeof vi.spyOn>;

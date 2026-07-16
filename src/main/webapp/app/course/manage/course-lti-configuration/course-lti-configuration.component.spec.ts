@@ -1,7 +1,6 @@
 import { HttpResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { of } from 'rxjs';
 import { By } from '@angular/platform-browser';
@@ -31,8 +30,6 @@ import { SortDirective } from 'app/foundation/sort/directive/sort.directive';
 import { SortByDirective } from 'app/foundation/sort/directive/sort-by.directive';
 
 describe('Course LTI Configuration Component', () => {
-    setupTestBed({ zoneless: true });
-
     let comp: CourseLtiConfigurationComponent;
     let fixture: ComponentFixture<CourseLtiConfigurationComponent>;
     let sortService: SortService;

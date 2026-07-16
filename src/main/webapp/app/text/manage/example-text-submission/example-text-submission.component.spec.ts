@@ -3,7 +3,6 @@
  * Verifies the component's behavior for creating, editing, and assessing example text submissions.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { HttpErrorResponse, HttpHeaders, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
@@ -49,7 +48,6 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('ExampleTextSubmissionComponent', () => {
-    setupTestBed({ zoneless: true });
     let fixture: ComponentFixture<ExampleTextSubmissionComponent>;
     let debugElement: DebugElement;
     let comp: ExampleTextSubmissionComponent;

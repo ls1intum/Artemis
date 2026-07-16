@@ -1,7 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { TranslateModule } from '@ngx-translate/core';
+import { provideTranslateService } from '@ngx-translate/core';
 import { LtiInitializerComponent } from 'app/course/overview/exercise-details/lti-initializer/lti-initializer.component';
 import { UserService } from 'app/account/user/shared/user.service';
 import { MockUserService } from 'test/helpers/mocks/service/mock-user.service';
@@ -15,8 +14,6 @@ import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 
 describe('LtiInitializerComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let comp: LtiInitializerComponent;
     let fixture: ComponentFixture<LtiInitializerComponent>;
     let userService: UserService;
@@ -30,13 +27,14 @@ describe('LtiInitializerComponent', () => {
 
     beforeEach(async () => {
         TestBed.configureTestingModule({
-            imports: [LtiInitializerComponent, TranslateModule.forRoot()],
+            imports: [LtiInitializerComponent],
             providers: [
                 MockProvider(AlertService),
                 { provide: UserService, useClass: MockUserService },
                 { provide: ActivatedRoute, useValue: new MockActivatedRoute({}) },
                 { provide: Router, useClass: MockRouter },
                 { provide: AccountService, useClass: MockAccountService },
+                provideTranslateService(),
             ],
         });
         await TestBed.compileComponents();

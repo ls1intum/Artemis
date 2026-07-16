@@ -6,7 +6,6 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { DynamicDialogRef } from 'primeng/dynamicdialog';
 import { Subject, of } from 'rxjs';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 import { FileUploadExercisePagingService } from 'app/fileupload/manage/services/file-upload-exercise-paging.service';
 import { ExerciseImportComponent } from 'app/exercise/import/exercise-import.component';
@@ -27,8 +26,6 @@ import { MockJhiTranslateDirective } from 'test/helpers/mocks/directive/mock-jhi
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('ExerciseImportComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<ExerciseImportComponent>;
     let comp: ExerciseImportComponent;
 
@@ -333,8 +330,6 @@ describe('ExerciseImportComponent', () => {
 });
 
 describe('ExerciseImportComponent template', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<ExerciseImportComponent>;
     let comp: ExerciseImportComponent;
 
