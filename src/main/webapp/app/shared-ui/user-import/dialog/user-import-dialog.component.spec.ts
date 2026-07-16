@@ -310,7 +310,7 @@ describe('UsersImportDialogComponent', () => {
         importedStudents.forEach((student) => expect(component.wasImported(student)).toBe(true));
         notImportedStudents.forEach((student) => expect(component.wasImported(student)).toBe(false));
         expect(component.numberOfUsersImported).toBe(importedStudents.length);
-        expect(component.numberOfUsersNotImported).toBe(notImportedStudents.length);
+        expect(component.numberOfUsersNotFound).toBe(notImportedStudents.length);
     });
 
     it('should invoke REST call on "Import" but not on "Finish"', () => {
@@ -501,9 +501,11 @@ describe('UsersImportDialogComponent', () => {
 
         expect(component.notFoundUsers).toHaveLength(0);
         expect(component.rejectedStaffUsers).toHaveLength(2);
-        rejectedStaff.forEach((student) => expect(component.wasNotImported(student)).toBe(true));
+        rejectedStaff.forEach((student) => expect(component.wasNotFound(student)).toBe(false));
+        rejectedStaff.forEach((student) => expect(component.wasRejectedStaff(student)).toBe(true));
         rejectedStaff.forEach((student) => expect(component.wasImported(student)).toBe(false));
-        expect(component.numberOfUsersNotImported).toBe(2);
+        expect(component.numberOfUsersNotFound).toBe(0);
+        expect(component.numberOfStaffRejected).toBe(2);
         expect(component.numberOfUsersImported).toBe(1);
     });
 
@@ -541,12 +543,20 @@ describe('UsersImportDialogComponent', () => {
         component.importUsers();
 
         expect(component.numberOfUsersImported).toBe(1);
-        expect(component.numberOfUsersNotImported).toBe(2);
+        expect(component.numberOfUsersNotFound).toBe(1);
+        expect(component.numberOfStaffRejected).toBe(1);
         expect(component.wasImported(studentsToImport[0])).toBe(true);
-        expect(component.wasNotImported(studentsToImport[0])).toBe(false);
-        expect(component.wasNotImported(studentsToImport[1])).toBe(true);
+        expect(component.wasNotFound(studentsToImport[0])).toBe(false);
+        expect(component.wasRejectedStaff(studentsToImport[0])).toBe(false);
+
+        // This one was rejected staff
+        expect(component.wasNotFound(studentsToImport[1])).toBe(false);
+        expect(component.wasRejectedStaff(studentsToImport[1])).toBe(true);
         expect(component.wasImported(studentsToImport[1])).toBe(false);
-        expect(component.wasNotImported(studentsToImport[2])).toBe(true);
+
+        // This one was not found
+        expect(component.wasNotFound(studentsToImport[2])).toBe(true);
+        expect(component.wasRejectedStaff(studentsToImport[2])).toBe(false);
         expect(component.wasImported(studentsToImport[2])).toBe(false);
     });
 });

@@ -209,15 +209,15 @@ export class UsersImportDialogComponent implements OnDestroy {
      * @param user The user to be checked
      */
     wasImported(user: StudentDTO): boolean {
-        return this.hasImported() && !this.wasNotImported(user);
+        return this.hasImported() && !this.wasNotFound(user) && !this.wasRejectedStaff(user);
     }
 
     /**
-     * True if this user could not be imported, false otherwise
+     * True if this user could not be imported because it was not found
      * @param user The user to be checked
      */
-    wasNotImported(user: StudentDTO): boolean {
-        if (this.hasImported() && this.notFoundUsers?.length === 0 && this.rejectedStaffUsers?.length === 0) {
+    wasNotFound(user: StudentDTO): boolean {
+        if (!this.hasImported() || this.notFoundUsers?.length === 0) {
             return false;
         }
 
@@ -229,6 +229,18 @@ export class UsersImportDialogComponent implements OnDestroy {
             ) {
                 return true;
             }
+        }
+
+        return false;
+    }
+
+    /**
+     * True if this user could not be imported because it is staff
+     * @param user The user to be checked
+     */
+    wasRejectedStaff(user: StudentDTO): boolean {
+        if (!this.hasImported() || this.rejectedStaffUsers?.length === 0) {
+            return false;
         }
 
         for (const rejected of this.rejectedStaffUsers) {
@@ -251,15 +263,22 @@ export class UsersImportDialogComponent implements OnDestroy {
         return !this.hasImported()
             ? 0
             : this.examUserMode()
-              ? this.examUsersToImport().length - this.numberOfUsersNotImported
-              : this.usersToImport().length - this.numberOfUsersNotImported;
+              ? this.examUsersToImport().length - this.numberOfUsersNotFound - this.numberOfStaffRejected
+              : this.usersToImport().length - this.numberOfUsersNotFound - this.numberOfStaffRejected;
     }
 
     /**
      * Number of users which could not be imported
      */
-    get numberOfUsersNotImported(): number {
-        return !this.hasImported() ? 0 : this.notFoundUsers.length + this.rejectedStaffUsers.length;
+    get numberOfUsersNotFound(): number {
+        return !this.hasImported() ? 0 : this.notFoundUsers.length;
+    }
+
+    /**
+     * Number of staff users which could not be imported
+     */
+    get numberOfStaffRejected(): number {
+        return !this.hasImported() ? 0 : this.rejectedStaffUsers.length;
     }
 
     get isSubmitDisabled(): boolean {

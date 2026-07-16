@@ -123,8 +123,8 @@
                         </tr>
                     </ng-template>
                     <ng-template #body let-user let-i="rowIndex">
-                        <tr [class.import-success]="wasImported(user)" [class.import-fail]="wasNotImported(user)">
-                            <th scope="row">{{ i + 1 }}</th>
+                        <tr [class.import-success]="wasImported(user)" [class.import-not-found]="wasNotFound(user)" [class.import-warning]="wasRejectedStaff(user)">
+                            <td>{{ i + 1 }}</td>
                             <td style="width: 300px">{{ user.registrationNumber }}</td>
                             <td>{{ user.login }}</td>
                             <td>{{ user.email }}</td>
@@ -155,8 +155,8 @@
                         </tr>
                     </ng-template>
                     <ng-template #body let-user let-i="rowIndex">
-                        <tr [class.import-success]="wasImported(user)" [class.import-fail]="wasNotImported(user)">
-                            <th scope="row">{{ i + 1 }}</th>
+                        <tr [class.import-success]="wasImported(user)" [class.import-not-found]="wasNotFound(user)" [class.import-warning]="wasRejectedStaff(user)">
+                            <td>{{ i + 1 }}</td>
                             <td style="width: 350px">{{ user.registrationNumber }}</td>
                             <td>{{ user.login }}</td>
                             <td>{{ user.email }}</td>
@@ -185,9 +185,9 @@
                             <span>{{ numberOfUsersImported }}</span>
                         </div>
                         <div class="ms-2">
-                            <strong jhiTranslate="artemisApp.importUsers.numberOfUsersNotImported"></strong>
+                            <strong jhiTranslate="artemisApp.importUsers.numberOfUsersNotFound"></strong>
                             <span
-                                ><b class="text-state-danger">{{ numberOfUsersNotImported }}</b></span
+                                ><b class="text-state-danger">{{ numberOfUsersNotFound }}</b></span
                             >
                         </div>
                     }
@@ -203,14 +203,24 @@
                     } @else {
                         <div>
                             <strong jhiTranslate="artemisApp.importUsers.numberOfUsersImported"></strong>
-                            <span>{{ numberOfUsersImported }}</span>
+                            <span>
+                                <b class="text-state-success">{{ numberOfUsersImported }}</b>
+                            </span>
                         </div>
                         <div class="ms-2">
-                            <strong jhiTranslate="artemisApp.importUsers.numberOfUsersNotImported"></strong>
-                            <span
-                                ><b class="text-state-danger">{{ numberOfUsersNotImported }}</b></span
-                            >
+                            <strong jhiTranslate="artemisApp.importUsers.numberOfUsersNotFound"></strong>
+                            <span>
+                                <b class="text-state-danger">{{ numberOfUsersNotFound }}</b>
+                            </span>
                         </div>
+                        @if (numberOfStaffRejected > 0) {
+                            <div class="ms-2">
+                                <strong jhiTranslate="artemisApp.importUsers.numberOfStaffRejected"></strong>
+                                <span>
+                                    <b class="text-state-warning">{{ numberOfStaffRejected }}</b>
+                                </span>
+                            </div>
+                        }
                     }
                 </div>
             }

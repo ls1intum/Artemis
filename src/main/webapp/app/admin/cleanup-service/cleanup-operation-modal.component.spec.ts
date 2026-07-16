@@ -5,13 +5,19 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ComponentRef, signal } from '@angular/core';
-import { of, throwError } from 'rxjs';
+import { Subject, of, throwError } from 'rxjs';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import dayjs from 'dayjs/esm';
 
 import { CleanupOperationModalComponent } from 'app/admin/cleanup-service/cleanup-operation-modal.component';
 import { CleanupOperation, OperationName } from 'app/admin/cleanup-service/cleanup-operation.model';
-import { CleanupCount, DataCleanupService, OrphanCleanupCountDTO, PlagiarismComparisonCleanupCountDTO } from 'app/admin/cleanup-service/data-cleanup.service';
+import {
+    CleanupCount,
+    CleanupServiceExecutionRecordDTO,
+    DataCleanupService,
+    OrphanCleanupCountDTO,
+    PlagiarismComparisonCleanupCountDTO,
+} from 'app/admin/cleanup-service/data-cleanup.service';
 
 /**
  * Helper to create a CleanupOperation with required properties
@@ -160,17 +166,14 @@ describe('CleanupOperationModalComponent', () => {
             expect(component.counts()).toEqual(mockSubmissionVersionCounts);
         });
 
-        it('should emit error to dialogError when fetching counts fails', () => {
+        it('should set dialogError when fetching counts fails', () => {
             vi.spyOn(dataCleanupService, 'countOrphans').mockReturnValue(throwError(() => new Error('Network error')));
             componentRef.setInput('operation', deleteOrphansOperation);
-
-            let emittedError: string | undefined;
-            component.dialogError.subscribe((error) => (emittedError = error));
 
             component.visible.set(true);
             fixture.detectChanges();
 
-            expect(emittedError).toBe('An error occurred while fetching updated counts.');
+            expect(component.dialogError()).toBe('An error occurred while fetching updated counts.');
         });
     });
 
@@ -186,7 +189,118 @@ describe('CleanupOperationModalComponent', () => {
         });
     });
 
+    describe('reopening', () => {
+        it('should reset operationExecuted and counts when reopened', () => {
+            componentRef.setInput('operation', deleteOrphansOperation);
+            component.visible.set(true);
+            fixture.detectChanges();
+
+            // Run the operation so both result flags become "dirty".
+            component.executeCleanupOperation();
+            expect(component.operationExecuted()).toBe(true);
+            expect(component.counts()).toEqual(mockOrphanCounts);
+
+            component.close();
+            fixture.detectChanges();
+
+            // Reopening must clear the previous run's result state. Fail the reopen count-fetch so the reset
+            // value (totalCount 0) stays observable instead of being immediately overwritten by fresh counts.
+            vi.spyOn(dataCleanupService, 'countOrphans').mockReturnValue(throwError(() => new Error('Network error')));
+            component.visible.set(true);
+            fixture.detectChanges();
+
+            expect(component.operationExecuted()).toBe(false);
+            expect(component.counts()).toEqual({ totalCount: 0 });
+        });
+
+        it('should clear the previous error when reopened', () => {
+            vi.spyOn(dataCleanupService, 'countOrphans')
+                .mockReturnValueOnce(throwError(() => new Error('Network error')))
+                .mockReturnValue(of(new HttpResponse({ body: mockOrphanCounts })));
+            componentRef.setInput('operation', deleteOrphansOperation);
+            component.visible.set(true);
+            fixture.detectChanges();
+            expect(component.dialogError()).toBe('An error occurred while fetching updated counts.');
+
+            component.close();
+            fixture.detectChanges();
+            component.visible.set(true);
+            fixture.detectChanges();
+
+            expect(component.dialogError()).toBeUndefined();
+        });
+
+        it('should ignore a stale count response from a previously opened operation', () => {
+            // The modal instance persists across opens. Open A with a count request that never resolves yet.
+            const orphanCounts = new Subject<HttpResponse<OrphanCleanupCountDTO>>();
+            vi.spyOn(dataCleanupService, 'countOrphans').mockReturnValue(orphanCounts);
+
+            componentRef.setInput('operation', deleteOrphansOperation);
+            component.visible.set(true);
+            fixture.detectChanges();
+
+            // Close (cancels A's pending request), then reopen for B, whose counts resolve synchronously.
+            component.close();
+            fixture.detectChanges();
+            componentRef.setInput('operation', deleteNonRatedOperation);
+            component.visible.set(true);
+            fixture.detectChanges();
+            expect(component.counts()).toEqual(mockNonRatedCounts);
+
+            // A's late response must not overwrite B's counts.
+            orphanCounts.next(new HttpResponse({ body: mockOrphanCounts }));
+            expect(component.counts()).toEqual(mockNonRatedCounts);
+        });
+    });
+
     describe('executeCleanupOperation', () => {
+        it('should ignore duplicate execution attempts while a cleanup request is in flight', () => {
+            const execution = new Subject<HttpResponse<CleanupServiceExecutionRecordDTO>>();
+            vi.spyOn(dataCleanupService, 'deleteOrphans').mockReturnValue(execution);
+            componentRef.setInput('operation', deleteOrphansOperation);
+            component.visible.set(true);
+            fixture.detectChanges();
+
+            component.executeCleanupOperation();
+            component.executeCleanupOperation();
+
+            expect(dataCleanupService.deleteOrphans).toHaveBeenCalledOnce();
+            expect(component.operationExecuting()).toBe(true);
+
+            execution.next(new HttpResponse({ body: { executionDate: dayjs(), jobType: 'deleteOrphans' } }));
+            execution.complete();
+            expect(component.operationExecuting()).toBe(false);
+            expect(component.operationExecuted()).toBe(true);
+        });
+
+        it('should ignore a stale cleanup completion after closing and reopening for another operation', () => {
+            const execution = new Subject<HttpResponse<CleanupServiceExecutionRecordDTO>>();
+            vi.spyOn(dataCleanupService, 'deleteOrphans').mockReturnValue(execution);
+            componentRef.setInput('operation', deleteOrphansOperation);
+            component.visible.set(true);
+            fixture.detectChanges();
+            component.executeCleanupOperation();
+
+            component.close();
+            fixture.detectChanges();
+            componentRef.setInput('operation', deleteNonRatedOperation);
+            component.visible.set(true);
+            fixture.detectChanges();
+
+            // Closing cannot cancel deletion after the server has started it. Keep the execution guard across the
+            // reopen so the newly displayed operation cannot submit a second destructive request concurrently.
+            expect(component.operationExecuting()).toBe(true);
+            component.executeCleanupOperation();
+            expect(dataCleanupService.deleteNonRatedResults).not.toHaveBeenCalled();
+
+            execution.next(new HttpResponse({ body: { executionDate: dayjs(), jobType: 'deleteOrphans' } }));
+            execution.complete();
+
+            expect(component.operationExecuting()).toBe(false);
+            expect(component.operationExecuted()).toBe(false);
+            expect(component.counts()).toEqual(mockNonRatedCounts);
+        });
+
         it('should execute deleteOrphans operation', () => {
             componentRef.setInput('operation', deleteOrphansOperation);
             component.visible.set(true);
@@ -253,20 +367,19 @@ describe('CleanupOperationModalComponent', () => {
             expect(dataCleanupService.countOrphans).toHaveBeenCalledTimes(2);
         });
 
-        it('should emit HttpErrorResponse message to dialogError on operation failure', () => {
+        it('should set the HttpErrorResponse message on dialogError when an operation fails', () => {
             const httpError = new HttpErrorResponse({ status: 500, statusText: 'Server Error', error: { message: 'Delete failed' } });
             vi.spyOn(dataCleanupService, 'deleteOrphans').mockReturnValue(throwError(() => httpError));
             componentRef.setInput('operation', deleteOrphansOperation);
             component.visible.set(true);
             fixture.detectChanges();
 
-            let emittedError: string | undefined;
-            component.dialogError.subscribe((error) => (emittedError = error));
-
             component.executeCleanupOperation();
 
-            expect(emittedError).toBe(httpError.message);
+            expect(component.dialogError()).toBe(httpError.message);
             expect(component.operationExecuted()).toBe(false);
+            // The guard must be released on failure (via finalize) so the operation can be retried.
+            expect(component.operationExecuting()).toBe(false);
         });
 
         it('should emit generic error message for non-HttpErrorResponse failures', () => {
@@ -275,12 +388,50 @@ describe('CleanupOperationModalComponent', () => {
             component.visible.set(true);
             fixture.detectChanges();
 
-            let emittedError: string | undefined;
-            component.dialogError.subscribe((error) => (emittedError = error));
-
             component.executeCleanupOperation();
 
-            expect(emittedError).toBe('An unexpected error occurred.');
+            expect(component.dialogError()).toBe('An unexpected error occurred.');
+            expect(component.operationExecuting()).toBe(false);
+        });
+
+        it('should clear a previous error when re-executing in place after a failure', () => {
+            const httpError = new HttpErrorResponse({ status: 500, error: { message: 'Delete failed' } });
+            vi.spyOn(dataCleanupService, 'deleteOrphans')
+                .mockReturnValueOnce(throwError(() => httpError))
+                .mockReturnValueOnce(of(new HttpResponse({ body: { executionDate: dayjs(), jobType: 'deleteOrphans' } })));
+            componentRef.setInput('operation', deleteOrphansOperation);
+            component.visible.set(true);
+            fixture.detectChanges();
+
+            // First attempt fails and shows an error banner.
+            component.executeCleanupOperation();
+            expect(component.dialogError()).toBe(httpError.message);
+
+            // A successful in-place retry must clear the stale error rather than show it beside the success state.
+            component.executeCleanupOperation();
+            expect(component.dialogError()).toBeUndefined();
+            expect(component.operationExecuted()).toBe(true);
+        });
+
+        it('should ignore a cleanup completion delivered after the modal was closed', () => {
+            const execution = new Subject<HttpResponse<CleanupServiceExecutionRecordDTO>>();
+            vi.spyOn(dataCleanupService, 'deleteOrphans').mockReturnValue(execution);
+            componentRef.setInput('operation', deleteOrphansOperation);
+            component.visible.set(true);
+            fixture.detectChanges();
+            component.executeCleanupOperation();
+
+            // Close without reopening; the DELETE is still running server-side.
+            component.close();
+            fixture.detectChanges();
+
+            // The completion arrives while the modal is closed (same operation), so only the !visible() half of the
+            // stale-completion guard can trip: it must not flip operationExecuted, and the guard must be released.
+            execution.next(new HttpResponse({ body: { executionDate: dayjs(), jobType: 'deleteOrphans' } }));
+            execution.complete();
+
+            expect(component.operationExecuted()).toBe(false);
+            expect(component.operationExecuting()).toBe(false);
         });
     });
 

@@ -152,6 +152,7 @@
                         <div class="flex items-center gap-2">
                             <p-toggleswitch
                                 [ngModel]="featureInfo.isActive"
+                                [disabled]="pendingFeatures().has(featureInfo.feature)"
                                 [inputId]="'toggle-' + featureInfo.feature"
                                 (onChange)="onFeatureToggle(featureInfo)"
                                 data-testid="feature-toggle-switch"
