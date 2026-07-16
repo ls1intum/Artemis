@@ -62,6 +62,7 @@ vi.mock('monaco-editor', () => ({
 }));
 
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ActivatedRoute, Data, Params, UrlSegment, provideRouter } from '@angular/router';
@@ -110,6 +111,7 @@ import { CategorySelectorPrimengComponent } from 'app/exercise/category-selector
 import { DifficultyPickerComponent } from 'app/exercise/difficulty-picker/difficulty-picker.component';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { CompetencySelectionComponent } from 'app/atlas/shared/competency-selection/competency-selection.component';
+import { FileUploadExerciseTimelineComponent } from 'app/fileupload/manage/file-upload-exercise-timeline/file-upload-exercise-timeline.component';
 // NOTE: Do NOT import MarkdownEditorMonacoComponent here - it transitively imports monaco-editor
 // which causes static initializers to run before mocks are applied.
 import { Component, input, output, signal, viewChild } from '@angular/core';
@@ -153,6 +155,7 @@ describe('FileUploadExerciseUpdateComponent', () => {
     let alertService: AlertService;
     let navigationService: ArtemisNavigationUtilService;
     let calendarService: CalendarService;
+    let exerciseService: ExerciseService;
 
     let routeData$: BehaviorSubject<Data>;
     let routeUrl$: BehaviorSubject<UrlSegment[]>;
@@ -269,6 +272,7 @@ describe('FileUploadExerciseUpdateComponent', () => {
                         MockComponent(HelpIconComponent),
                         MockComponent(CompetencySelectionComponent),
                         MockMarkdownEditorMonacoComponent,
+                        FileUploadExerciseTimelineComponent,
                     ],
                 },
             })
@@ -278,6 +282,7 @@ describe('FileUploadExerciseUpdateComponent', () => {
         alertService = TestBed.inject(AlertService);
         navigationService = TestBed.inject(ArtemisNavigationUtilService);
         calendarService = TestBed.inject(CalendarService);
+        exerciseService = TestBed.inject(ExerciseService);
     });
 
     afterEach(() => {
@@ -298,6 +303,46 @@ describe('FileUploadExerciseUpdateComponent', () => {
             await fixture.whenStable();
 
             expect(component.fileUploadExercise()).toBeDefined();
+        });
+
+        it('should render one timeline containing all exercise dates', async () => {
+            const exercise = createExercise(createCourse());
+            exercise.releaseDate = dayjs().add(1, 'hour');
+            exercise.startDate = dayjs().add(2, 'hours');
+            exercise.dueDate = dayjs().add(1, 'day');
+            exercise.assessmentDueDate = dayjs().add(2, 'days');
+            routeData$.next({ fileUploadExercise: exercise });
+
+            fixture = TestBed.createComponent(FileUploadExerciseUpdateComponent);
+            component = fixture.componentInstance;
+            fixture.detectChanges();
+            await fixture.whenStable();
+
+            const timelines = fixture.debugElement.queryAll(By.directive(FileUploadExerciseTimelineComponent));
+            const timeline = timelines[0].componentInstance as FileUploadExerciseTimelineComponent;
+
+            expect(timelines).toHaveLength(1);
+            expect(timeline.releaseDate()).toBe(exercise.releaseDate);
+            expect(timeline.startDate()).toBe(exercise.startDate);
+            expect(timeline.dueDate()).toBe(exercise.dueDate);
+            expect(timeline.assessmentDueDate()).toBe(exercise.assessmentDueDate);
+        });
+
+        it('should validate dates when the timeline status changes', async () => {
+            const exercise = createExercise(createCourse());
+            routeData$.next({ fileUploadExercise: exercise });
+
+            fixture = TestBed.createComponent(FileUploadExerciseUpdateComponent);
+            component = fixture.componentInstance;
+            fixture.detectChanges();
+            await fixture.whenStable();
+            vi.mocked(exerciseService.validateDate).mockClear();
+
+            component.timelineStatus.set({ valid: false, empty: true });
+            await fixture.whenStable();
+
+            expect(exerciseService.validateDate).toHaveBeenCalledWith(exercise);
+            expect(component.timelineStatus()).toEqual({ valid: false, empty: true });
         });
 
         it('should set isExamMode to true for exam exercises', async () => {
@@ -681,6 +726,7 @@ describe('FileUploadExerciseUpdateComponent', () => {
         it('should clear dates when importing course to course', async () => {
             const exercise = createExistingExercise();
             exercise.releaseDate = dayjs();
+            exercise.startDate = dayjs();
             exercise.dueDate = dayjs();
             exercise.assessmentDueDate = dayjs();
             routeData$.next({ fileUploadExercise: exercise });
@@ -693,6 +739,10 @@ describe('FileUploadExerciseUpdateComponent', () => {
             await fixture.whenStable();
 
             expect(component.isImport()).toBe(true);
+            expect(component.fileUploadExercise().releaseDate).toBeUndefined();
+            expect(component.fileUploadExercise().startDate).toBeUndefined();
+            expect(component.fileUploadExercise().dueDate).toBeUndefined();
+            expect(component.fileUploadExercise().assessmentDueDate).toBeUndefined();
         });
 
         it('should load exercise group when importing to exam', async () => {

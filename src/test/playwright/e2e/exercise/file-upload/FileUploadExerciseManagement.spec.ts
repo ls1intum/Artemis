@@ -21,6 +21,7 @@ test.describe('File upload exercise management', { tag: '@fast' }, () => {
         const exerciseTitle = 'file upload exercise' + generateUUID();
         await fileUploadExerciseCreation.setTitle(exerciseTitle);
         await fileUploadExerciseCreation.setReleaseDate(dayjs());
+        await fileUploadExerciseCreation.setStartDate(dayjs().add(1, 'hour'));
         await fileUploadExerciseCreation.setDueDate(dayjs().add(1, 'days'));
         await fileUploadExerciseCreation.setAssessmentDueDate(dayjs().add(2, 'days'));
         await fileUploadExerciseCreation.typeMaxPoints(10);
