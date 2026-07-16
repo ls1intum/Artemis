@@ -12,7 +12,7 @@ export type TumUiTagSeverity = 'secondary' | 'success' | 'info' | 'warn' | 'dang
 const TAG_BASE = 'inline-flex items-center gap-1 px-2 py-1 text-sm font-bold';
 
 const TAG_SEVERITY: Record<TumUiTagSeverity, string> = {
-    secondary: 'bg-surface-200 text-surface-700 dark:bg-surface-700 dark:text-surface-200',
+    secondary: 'bg-surface-200 text-surface-700 dark:bg-surface-800 dark:text-surface-200',
     // State severities are colored in the component stylesheet (by data-severity) to match p-tag exactly.
     success: '',
     info: '',

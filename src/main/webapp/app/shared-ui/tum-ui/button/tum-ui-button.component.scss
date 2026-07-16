@@ -6,10 +6,33 @@
 // tum-ui-button.variants.ts). Metrics chosen to match the PrimeNG Aura button; the focus ring is
 // keyed to brand CSS vars (sanctioned, same source primeng-artemis-theme.ts uses).
 .tum-ui-btn {
+    position: relative;
     appearance: none;
     line-height: 1.25;
     cursor: pointer;
     white-space: nowrap;
+    // Match the PrimeNG Aura button radius. Set structurally (not via the `rounded-md` utility) because
+    // Artemis' global `button` reset zeroes the utility's border-radius on native <button> elements,
+    // which made the kit buttons render square (PR #13226 review).
+    border-radius: 6px;
+
+    // Hover/active state layer, matching PrimeNG's subtle overlay. Applied as a pseudo-element rather than
+    // via Tailwind `hover:bg-*` utilities, which do not take effect on native <button> elements under
+    // Artemis' global styles (same reason as the radius above). Theme-aware direction (dark tint in light,
+    // light tint in dark) so the hover is visible on both themes and on solid / outlined / text variants.
+    &::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        border-radius: inherit;
+        background-color: transparent;
+        pointer-events: none;
+        transition: background-color 0.15s ease;
+    }
+
+    &:hover:not(:disabled)::after {
+        background-color: rgb(0 0 0 / 4.5%);
+    }
 
     &:focus-visible {
         outline: none;
@@ -21,4 +44,11 @@
     &:disabled {
         cursor: default;
     }
+}
+
+// Dark theme: a light overlay is visible on dark surfaces (matches PrimeNG's dark hover overlay). Keyed off
+// the framework-neutral data-theme attribute (set on <html> by ThemeService) like the tag, to stay
+// decoupled from PrimeNG's theming.
+:host-context(html[data-theme='dark']) .tum-ui-btn:hover:not(:disabled)::after {
+    background-color: rgb(255 255 255 / 6%);
 }
