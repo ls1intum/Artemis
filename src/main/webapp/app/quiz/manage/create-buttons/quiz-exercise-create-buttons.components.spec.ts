@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
@@ -11,8 +10,6 @@ import { DialogService } from 'primeng/dynamicdialog';
 import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
 
 describe('QuizExercise Create Buttons Component', () => {
-    setupTestBed({ zoneless: true });
-
     let comp: QuizExerciseCreateButtonsComponent;
     let fixture: ComponentFixture<QuizExerciseCreateButtonsComponent>;
     const course = { id: 123 } as Course;

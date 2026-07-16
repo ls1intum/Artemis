@@ -10,10 +10,7 @@ import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.
 import { provideHttpClient } from '@angular/common/http';
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 describe('ExamParticipationLiveEventsService', () => {
-    setupTestBed({ zoneless: true });
-
     let service: ExamParticipationLiveEventsService;
     let httpMock: HttpTestingController;
     let mockWebsocketService: MockWebsocketService;

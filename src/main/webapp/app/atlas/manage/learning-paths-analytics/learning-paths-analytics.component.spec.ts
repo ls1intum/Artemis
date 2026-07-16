@@ -9,10 +9,8 @@ import { TranslateService } from '@ngx-translate/core';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { CompetencyGraphDTO, CompetencyGraphEdgeDTO, CompetencyGraphNodeDTO, CompetencyGraphNodeValueType } from 'app/atlas/shared/entities/learning-path.model';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('LearningPathsAnalyticsComponent', () => {
-    setupTestBed({ zoneless: true });
     let component: LearningPathsAnalyticsComponent;
     let fixture: ComponentFixture<LearningPathsAnalyticsComponent>;
     let learningPathApiService: LearningPathApiService;

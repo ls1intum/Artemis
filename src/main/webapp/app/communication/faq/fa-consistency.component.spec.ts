@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FaqConsistencyComponent } from 'app/communication/faq/faq-consistency.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -8,8 +7,6 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { TranslateService } from '@ngx-translate/core';
 
 describe('FaqConsistencyComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: FaqConsistencyComponent;
     let fixture: ComponentFixture<FaqConsistencyComponent>;
 

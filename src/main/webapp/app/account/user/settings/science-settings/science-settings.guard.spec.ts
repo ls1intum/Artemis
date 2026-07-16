@@ -1,7 +1,6 @@
 import { ActivatedRouteSnapshot, Router, RouterStateSnapshot, UrlTree } from '@angular/router';
 import { TestBed } from '@angular/core/testing';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
@@ -9,8 +8,6 @@ import { MODULE_FEATURE_ATLAS } from 'app/app.constants';
 import { scienceSettingsGuard } from 'app/account/user/settings/science-settings/science-settings.guard';
 
 describe('scienceSettingsGuard', () => {
-    setupTestBed({ zoneless: true });
-
     let profileService: ProfileService;
     let router: MockRouter;
 

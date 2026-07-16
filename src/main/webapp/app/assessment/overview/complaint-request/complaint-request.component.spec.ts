@@ -1,6 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComplaintRequestComponent } from 'app/assessment/overview/complaint-request/complaint-request.component';
 import { Complaint, ComplaintType } from 'app/assessment/shared/entities/complaint.model';
 import { MockDirective, MockPipe, MockProvider } from 'ng-mocks';
@@ -13,7 +12,6 @@ import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import dayjs from 'dayjs/esm';
 
 describe('ComplaintRequestComponent', () => {
-    setupTestBed({ zoneless: true });
     let component: ComplaintRequestComponent;
     let fixture: ComponentFixture<ComplaintRequestComponent>;
 

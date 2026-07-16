@@ -1,6 +1,5 @@
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { StatisticsGraphComponent } from 'app/exercise/statistics-graph/statistics-graph.component';
 import { StatisticsService } from 'app/exercise/statistics-graph/service/statistics.service';
 import { Graphs, SpanType, StatisticsView } from 'app/exercise/shared/entities/statistics.model';
@@ -14,7 +13,6 @@ import { ChartModule, UIChart } from 'primeng/chart';
 import { vi } from 'vitest';
 
 describe('StatisticsGraphComponent', () => {
-    setupTestBed({ zoneless: true });
     let fixture: ComponentFixture<StatisticsGraphComponent>;
     let component: StatisticsGraphComponent;
     let service: StatisticsService;

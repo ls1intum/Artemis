@@ -3,7 +3,7 @@ import dayjs from 'dayjs';
 import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
 
 import { admin } from '../../../support/users';
-import { generateUUID } from '../../../support/utils';
+import { generateUUID, readResponseJson } from '../../../support/utils';
 import { test } from '../../../support/fixtures';
 import { expect } from '@playwright/test';
 import { SEED_COURSES } from '../../../support/seedData';
@@ -29,7 +29,7 @@ test.describe('File upload exercise management', { tag: '@fast' }, () => {
         await fileUploadExerciseCreation.typeProblemStatement(problemStatement);
         await fileUploadExerciseCreation.typeExampleSolution(exampleSolution);
         const exerciseCreationResponse = await fileUploadExerciseCreation.create();
-        const exercise: FileUploadExercise = await exerciseCreationResponse.json();
+        const exercise: FileUploadExercise = await readResponseJson(exerciseCreationResponse);
 
         // Verify the exercise was actually persisted by fetching it from the API. This is the
         // test's real contract — "creating a file-upload exercise via the UI produces a
