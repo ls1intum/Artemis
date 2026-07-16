@@ -1,6 +1,7 @@
 .controls {
     /* stylelint-disable-next-line selector-pseudo-element-no-unknown */
     ::ng-deep p-selectbutton .p-togglebutton {
+        height: auto;
         padding-block: 0.25rem;
 
         .p-togglebutton-content {

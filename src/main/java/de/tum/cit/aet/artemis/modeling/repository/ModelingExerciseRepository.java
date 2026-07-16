@@ -37,7 +37,7 @@ public interface ModelingExerciseRepository extends ArtemisJpaRepository<Modelin
             """)
     List<ModelingExercise> findByCourseIdWithCategories(@Param("courseId") Long courseId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "exampleSubmissions", "teamAssignmentConfig", "categories", "competencyLinks.competency", "exampleSubmissions.submission.results",
+    @EntityGraph(type = LOAD, attributePaths = { "teamAssignmentConfig", "categories", "competencyLinks.competency", "exampleSubmissions.submission.results",
             "exerciseVariantGroup" })
     Optional<ModelingExercise> findWithEagerExampleSubmissionsAndCompetenciesById(Long exerciseId);
 

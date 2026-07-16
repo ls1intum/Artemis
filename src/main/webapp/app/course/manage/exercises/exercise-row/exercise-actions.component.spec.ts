@@ -319,7 +319,7 @@ describe('ExerciseActionsComponent', () => {
 
         it('runAction invokes the action onClick callback', () => {
             const onClick = vi.fn();
-            component['runAction']({ id: 'x', labelKey: 'k', icon: 'trash' as never, styleClass: '', kind: 'button', onClick });
+            component['runAction']({ id: 'x', labelKey: 'k', icon: 'trash' as never, severity: 'primary', kind: 'button', onClick });
             expect(onClick).toHaveBeenCalledOnce();
         });
     });
