@@ -171,11 +171,14 @@ class BuildAgentIntegrationTest extends AbstractArtemisBuildAgentTest {
     }
 
     @Test
-    void testBuildAgentConcurrentBuilds() throws IOException {
+    void testBuildAgentConcurrentBuilds() throws IOException, InterruptedException {
+        CountDownLatch containersStarted = new CountDownLatch(2);
+        CountDownLatch finishContainers = new CountDownLatch(1);
         StartContainerCmd startContainerCmd = mock(StartContainerCmd.class);
         when(dockerClient.startContainerCmd(anyString())).thenReturn(startContainerCmd);
         doAnswer(invocation -> {
-            Thread.sleep(1000);
+            containersStarted.countDown();
+            finishContainers.await(30, TimeUnit.SECONDS);
             return null;
         }).when(startContainerCmd).exec();
         // For this test, we need to return different test result streams for different containers. This is necessary since the first job would close the stream
@@ -199,19 +202,25 @@ class BuildAgentIntegrationTest extends AbstractArtemisBuildAgentTest {
         buildJobQueue.add(queueItem);
         buildJobQueue.add(queueItem2);
 
-        await().atMost(30, TimeUnit.SECONDS).pollInterval(100, TimeUnit.MILLISECONDS).until(() -> {
-            var processingJob = processingJobs.get(queueItem.id());
-            var processingJob2 = processingJobs.get(queueItem2.id());
-            return processingJob != null && processingJob.jobTimingInfo().buildStartDate() != null && processingJob2 != null
-                    && processingJob2.jobTimingInfo().buildStartDate() != null;
-        });
+        try {
+            assertThat(containersStarted.await(30, TimeUnit.SECONDS)).isTrue();
+            await().atMost(30, TimeUnit.SECONDS).pollInterval(100, TimeUnit.MILLISECONDS).until(() -> {
+                var processingJob = processingJobs.get(queueItem.id());
+                var processingJob2 = processingJobs.get(queueItem2.id());
+                return processingJob != null && processingJob.jobTimingInfo().buildStartDate() != null && processingJob2 != null
+                        && processingJob2.jobTimingInfo().buildStartDate() != null;
+            });
 
-        await().atMost(30, TimeUnit.SECONDS).pollInterval(100, TimeUnit.MILLISECONDS).until(() -> {
-            var buildAgent = buildAgentInformation.get(buildAgentShortName);
-            return buildAgent.numberOfCurrentBuildJobs() == 2 && buildAgent.maxNumberOfConcurrentBuildJobs() == 2 && buildAgent.runningBuildJobs().size() == 2
-                    && (buildAgent.runningBuildJobs().getFirst().id().equals(queueItem.id()) || buildAgent.runningBuildJobs().getFirst().id().equals(queueItem2.id()))
-                    && (buildAgent.runningBuildJobs().getLast().id().equals(queueItem.id()) || buildAgent.runningBuildJobs().getLast().id().equals(queueItem2.id()));
-        });
+            await().atMost(30, TimeUnit.SECONDS).pollInterval(100, TimeUnit.MILLISECONDS).until(() -> {
+                var buildAgent = buildAgentInformation.get(buildAgentShortName);
+                return buildAgent.numberOfCurrentBuildJobs() == 2 && buildAgent.maxNumberOfConcurrentBuildJobs() == 2 && buildAgent.runningBuildJobs().size() == 2
+                        && (buildAgent.runningBuildJobs().getFirst().id().equals(queueItem.id()) || buildAgent.runningBuildJobs().getFirst().id().equals(queueItem2.id()))
+                        && (buildAgent.runningBuildJobs().getLast().id().equals(queueItem.id()) || buildAgent.runningBuildJobs().getLast().id().equals(queueItem2.id()));
+            });
+        }
+        finally {
+            finishContainers.countDown();
+        }
 
         await().atMost(30, TimeUnit.SECONDS).until(() -> {
             var resultQueueItem = resultQueue.poll();
