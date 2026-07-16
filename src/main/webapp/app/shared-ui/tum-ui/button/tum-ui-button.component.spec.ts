@@ -36,16 +36,37 @@ describe('TumUiButtonComponent', () => {
         expect(className).toContain('text-base');
     });
 
-    it('applies severity + size + outlined variants', () => {
+    it('applies severity + size + the outlined variant', () => {
         fixture.componentRef.setInput('severity', 'danger');
         fixture.componentRef.setInput('size', 'small');
-        fixture.componentRef.setInput('outlined', true);
+        fixture.componentRef.setInput('variant', 'outlined');
         fixture.detectChanges();
         const className = nativeButton().className;
         expect(className).toContain('bg-transparent');
         expect(className).toContain('text-state-danger');
         expect(className).toContain('border-state-danger');
         expect(className).toContain('text-sm');
+    });
+
+    it('applies the text variant (no border)', () => {
+        fixture.componentRef.setInput('variant', 'text');
+        fixture.detectChanges();
+        const className = nativeButton().className;
+        expect(className).toContain('bg-transparent');
+        expect(className).toContain('border-transparent');
+    });
+
+    it('forwards the baseline aria-* inputs to the inner native button', () => {
+        fixture.componentRef.setInput('ariaExpanded', true);
+        fixture.componentRef.setInput('ariaControls', 'menu-1');
+        fixture.componentRef.setInput('ariaDescribedBy', 'desc-1');
+        fixture.detectChanges();
+        const button = nativeButton();
+        expect(button.getAttribute('aria-expanded')).toBe('true');
+        expect(button.getAttribute('aria-controls')).toBe('menu-1');
+        expect(button.getAttribute('aria-describedby')).toBe('desc-1');
+        // Unset by default (no stray attributes).
+        expect(button.hasAttribute('aria-pressed')).toBe(false);
     });
 
     it('reflects disabled and blocks the click output', () => {

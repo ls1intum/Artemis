@@ -130,16 +130,16 @@ A native `<button>` with severity / size variants.
 | ------------------ | ------------------------------------------------------------------------------------- | ----------- | ---------------------------------------------------------------------- |
 | `severity`         | `'primary' \| 'secondary' \| 'success' \| 'info' \| 'warn' \| 'danger' \| 'contrast'` | `'primary'` |                                                                        |
 | `size`             | `'small' \| 'default' \| 'large'`                                                     | `'default'` |                                                                        |
-| `outlined`         | `boolean`                                                                             | `false`     | Transparent fill, colored border + text.                               |
-| `text`             | `boolean`                                                                             | `false`     | Text-only (no border).                                                 |
+| `variant`          | `'solid' \| 'outlined' \| 'text'`                                                     | `'solid'`   | Fill style. A single input (not two `outlined` / `text` booleans) so the states can't conflict. |
 | `disabled`         | `boolean`                                                                             | `false`     |                                                                        |
 | `icon`             | `IconProp`                                                                            | –           | FontAwesome icon rendered before the label.                            |
 | `type`             | `'button' \| 'submit'`                                                                | `'button'`  |                                                                        |
 | `ariaLabel`        | `string`                                                                              | –           | Forwarded to the inner `<button>`. **Required for icon-only buttons.** |
+| `ariaExpanded` / `ariaPressed` / `ariaControls` / `ariaDescribedBy` | `boolean` / `string`                                          | –           | Baseline accessibility attributes forwarded to the inner `<button>` (host attributes would sit on the wrong element). |
 | `clicked` (output) | `MouseEvent`                                                                          |             | The click contract; emitted on click when enabled. Prefer `(clicked)` over the host's bubbled native `(click)`. |
 
 ```html
-<tum-ui-button severity="secondary" size="small" [outlined]="true" (clicked)="scrollTo('features')"> {{ 'artemisApp.features.title' | artemisTranslate }} </tum-ui-button>
+<tum-ui-button severity="secondary" size="small" variant="outlined" (clicked)="scrollTo('features')"> {{ 'artemisApp.features.title' | artemisTranslate }} </tum-ui-button>
 
 <!-- Icon-only: the glyph carries no text, so an accessible name is mandatory -->
 <tum-ui-button [icon]="faTrash" severity="danger" ariaLabel="Delete" (clicked)="delete()" />

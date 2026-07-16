@@ -25,13 +25,15 @@
     @include tag-state(--danger);
 }
 
-// Dark theme: translucent tint + light label (matches p-tag dark, e.g. success #66d7ba on --success/16%).
+// Dark theme: translucent tint + light label (e.g. success #66d7ba = --success mixed at 16% opacity).
 @mixin tag-state-dark($var) {
     background: color-mix(in srgb, var($var) 16%, transparent);
     color: color-mix(in srgb, var($var) 60%, var(--white));
 }
 
-:host-context(html[prime-ng-use-dark-theme='true']) {
+// Keyed off the framework-neutral data-theme attribute (set on <html> by ThemeService alongside the PrimeNG
+// one) so this owned component stays decoupled from PrimeNG's theming.
+:host-context(html[data-theme='dark']) {
     span[data-severity='success'] {
         @include tag-state-dark(--success);
     }

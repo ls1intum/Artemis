@@ -9,12 +9,13 @@
  */
 export type TumUiButtonSeverity = 'primary' | 'secondary' | 'success' | 'info' | 'warn' | 'danger' | 'contrast';
 export type TumUiButtonSize = 'small' | 'default' | 'large';
+/** Fill style. A single input avoids the `outlined` + `text` two-boolean ambiguity (PR #13226 review). */
+export type TumUiButtonVariant = 'solid' | 'outlined' | 'text';
 
 export interface TumUiButtonVariantOptions {
     severity: TumUiButtonSeverity;
     size: TumUiButtonSize;
-    outlined: boolean;
-    text: boolean;
+    variant: TumUiButtonVariant;
 }
 
 // `appearance-none` resets the native button look: Artemis imports only Tailwind utilities (no preflight),
@@ -22,34 +23,36 @@ export interface TumUiButtonVariantOptions {
 const BASE =
     'tum-ui-btn inline-flex appearance-none items-center justify-center gap-2 rounded-md border font-normal transition-colors focus-visible:outline-none disabled:opacity-60 disabled:pointer-events-none';
 
+// Hover is applied by a component-level state-layer (tum-ui-button.component.scss), not per-variant
+// `hover:*` utilities: those do not take effect on native <button> elements under Artemis' global styles.
 const SOLID: Record<TumUiButtonSeverity, string> = {
-    primary: 'bg-primary text-surface-0 border-primary hover:brightness-95',
-    secondary: 'bg-surface-100 text-surface-700 border-surface-100 hover:bg-surface-200 dark:bg-surface-800 dark:text-surface-0 dark:border-surface-800 dark:hover:bg-surface-700',
-    success: 'bg-state-success text-surface-0 border-state-success hover:brightness-95',
-    info: 'bg-state-info text-surface-0 border-state-info hover:brightness-95',
-    warn: 'bg-state-warning text-surface-0 border-state-warning hover:brightness-95',
-    danger: 'bg-state-danger text-surface-0 border-state-danger hover:brightness-95',
+    primary: 'bg-primary text-surface-0 border-primary',
+    secondary: 'bg-surface-100 text-surface-700 border-surface-100 dark:bg-surface-800 dark:text-surface-0 dark:border-surface-800',
+    success: 'bg-state-success text-surface-0 border-state-success',
+    info: 'bg-state-info text-surface-0 border-state-info',
+    warn: 'bg-state-warning text-surface-0 border-state-warning',
+    danger: 'bg-state-danger text-surface-0 border-state-danger',
     contrast: 'bg-surface-900 text-surface-0 border-surface-900 dark:bg-surface-0 dark:text-surface-900 dark:border-surface-0',
 };
 
 const OUTLINED: Record<TumUiButtonSeverity, string> = {
-    primary: 'bg-transparent text-primary border-primary hover:bg-primary/10',
-    secondary: 'bg-transparent text-muted-color border-surface hover:bg-surface-100 dark:hover:bg-surface-800',
-    success: 'bg-transparent text-state-success border-state-success hover:bg-state-success/10',
-    info: 'bg-transparent text-state-info border-state-info hover:bg-state-info/10',
-    warn: 'bg-transparent text-state-warning border-state-warning hover:bg-state-warning/10',
-    danger: 'bg-transparent text-state-danger border-state-danger hover:bg-state-danger/10',
-    contrast: 'bg-transparent text-surface-900 border-surface-900 hover:bg-surface-100 dark:text-surface-0 dark:border-surface-0 dark:hover:bg-surface-800',
+    primary: 'bg-transparent text-primary border-primary',
+    secondary: 'bg-transparent text-muted-color border-surface-200 dark:border-surface-700',
+    success: 'bg-transparent text-state-success border-state-success',
+    info: 'bg-transparent text-state-info border-state-info',
+    warn: 'bg-transparent text-state-warning border-state-warning',
+    danger: 'bg-transparent text-state-danger border-state-danger',
+    contrast: 'bg-transparent text-surface-900 border-surface-900 dark:text-surface-0 dark:border-surface-0',
 };
 
 const TEXT: Record<TumUiButtonSeverity, string> = {
-    primary: 'bg-transparent text-primary border-transparent hover:bg-surface-100 dark:hover:bg-surface-800',
-    secondary: 'bg-transparent text-muted-color border-transparent hover:bg-surface-100 dark:hover:bg-surface-800',
-    success: 'bg-transparent text-state-success border-transparent hover:bg-state-success/10',
-    info: 'bg-transparent text-state-info border-transparent hover:bg-state-info/10',
-    warn: 'bg-transparent text-state-warning border-transparent hover:bg-state-warning/10',
-    danger: 'bg-transparent text-state-danger border-transparent hover:bg-state-danger/10',
-    contrast: 'bg-transparent text-surface-900 border-transparent hover:bg-surface-100 dark:text-surface-0 dark:hover:bg-surface-800',
+    primary: 'bg-transparent text-primary border-transparent',
+    secondary: 'bg-transparent text-muted-color border-transparent',
+    success: 'bg-transparent text-state-success border-transparent',
+    info: 'bg-transparent text-state-info border-transparent',
+    warn: 'bg-transparent text-state-warning border-transparent',
+    danger: 'bg-transparent text-state-danger border-transparent',
+    contrast: 'bg-transparent text-surface-900 border-transparent dark:text-surface-0',
 };
 
 const SIZE: Record<TumUiButtonSize, string> = {
@@ -58,10 +61,11 @@ const SIZE: Record<TumUiButtonSize, string> = {
     large: 'text-lg px-4 py-2.5',
 };
 
+const VARIANTS: Record<TumUiButtonVariant, Record<TumUiButtonSeverity, string>> = { solid: SOLID, outlined: OUTLINED, text: TEXT };
+
 /**
  * Compose the full class string for a button from its variant options.
  */
 export function tumUiButtonClasses(options: TumUiButtonVariantOptions): string {
-    const variant = options.text ? TEXT : options.outlined ? OUTLINED : SOLID;
-    return `${BASE} ${variant[options.severity]} ${SIZE[options.size]}`;
+    return `${BASE} ${VARIANTS[options.variant][options.severity]} ${SIZE[options.size]}`;
 }

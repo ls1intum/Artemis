@@ -1,6 +1,19 @@
 import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
 import { TumUiOverlayPlacement } from 'app/shared-ui/tum-ui/overlay/tum-ui-overlay.service';
 
+// A rotated square sharing the bubble background; positioned on the edge facing the trigger so half of it
+// sticks out as a caret. Keep the background in sync with the host bubble background below (surface-700,
+// matching PrimeNG's --p-tooltip-background in both themes).
+const ARROW_BASE = 'absolute h-2 w-2 rotate-45 bg-surface-700';
+
+// Caret position utilities per resolved placement: the caret sits on the bubble edge facing the trigger.
+const ARROW_POSITION: Record<TumUiOverlayPlacement, string> = {
+    top: 'left-1/2 top-full -translate-x-1/2 -translate-y-1/2',
+    bottom: 'left-1/2 bottom-full -translate-x-1/2 translate-y-1/2',
+    left: 'top-1/2 left-full -translate-y-1/2 -translate-x-1/2',
+    right: 'top-1/2 right-full -translate-y-1/2 translate-x-1/2',
+};
+
 /**
  * The tooltip bubble rendered inside the CDK overlay by {@link TumUiTooltipDirective}: a small dark
  * surface with a directional caret, styled with Artemis token utilities. The caret sits on the edge
@@ -22,19 +35,5 @@ export class TumUiTooltipContentComponent {
     readonly id = input<string>('');
     readonly placement = input<TumUiOverlayPlacement>('top');
 
-    // A rotated square sharing the bubble background; positioned on the edge facing the trigger so half of
-    // it sticks out as a caret. Keep the background in sync with the host bubble background above (surface-700,
-    // matching PrimeNG's --p-tooltip-background in both themes).
-    private static readonly ARROW_BASE = 'absolute h-2 w-2 rotate-45 bg-surface-700';
-
-    protected readonly arrowClasses = computed(() => {
-        const position =
-            {
-                top: 'left-1/2 top-full -translate-x-1/2 -translate-y-1/2',
-                bottom: 'left-1/2 bottom-full -translate-x-1/2 translate-y-1/2',
-                left: 'top-1/2 left-full -translate-y-1/2 -translate-x-1/2',
-                right: 'top-1/2 right-full -translate-y-1/2 translate-x-1/2',
-            }[this.placement()] ?? '';
-        return `${TumUiTooltipContentComponent.ARROW_BASE} ${position}`;
-    });
+    protected readonly arrowClasses = computed(() => `${ARROW_BASE} ${ARROW_POSITION[this.placement()]}`);
 }

@@ -48,8 +48,13 @@ export class TumUiTooltipDirective implements OnDestroy {
 
     constructor() {
         // Keep a currently-shown tooltip's text in sync when the content input changes mid-hover
-        // (pTooltip parity). No-op while hidden (contentRef is undefined).
-        effect(() => this.contentRef?.setInput('text', this.content()));
+        // (pTooltip parity). Read content() UNCONDITIONALLY first so the effect always tracks it —
+        // reading it inside `contentRef?.setInput(...)` would short-circuit while hidden (contentRef
+        // undefined), so the effect's first run would track no signal and never re-run. No-op while hidden.
+        effect(() => {
+            const text = this.content();
+            this.contentRef?.setInput('text', text);
+        });
     }
 
     protected onHoverStart(): void {

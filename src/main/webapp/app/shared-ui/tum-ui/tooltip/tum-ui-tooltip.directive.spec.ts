@@ -1,15 +1,15 @@
-import { Component } from '@angular/core';
+import { ApplicationRef, Component, signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { vi } from 'vitest';
 import { By } from '@angular/platform-browser';
 import { TumUiTooltipDirective } from 'app/shared-ui/tum-ui/tooltip/tum-ui-tooltip.directive';
 
 @Component({
-    template: `<button [tumUiTooltip]="text" [showDelay]="0" [hideDelay]="0">Hover me</button>`,
+    template: `<button [tumUiTooltip]="text()" [showDelay]="0" [hideDelay]="0">Hover me</button>`,
     imports: [TumUiTooltipDirective],
 })
 class TooltipHostComponent {
-    text = 'Help text';
+    text = signal('Help text');
 }
 
 describe('TumUiTooltipDirective', () => {
@@ -92,6 +92,20 @@ describe('TumUiTooltipDirective', () => {
         button.dispatchEvent(new MouseEvent('mouseleave'));
         vi.advanceTimersByTime(1);
         expect(bubble()).toBeNull();
+    });
+
+    it('updates the visible tooltip text when the content input changes while shown', () => {
+        const appRef = TestBed.inject(ApplicationRef);
+        button.dispatchEvent(new MouseEvent('mouseenter'));
+        vi.advanceTimersByTime(1);
+        appRef.tick();
+        expect(bubble()?.textContent).toContain('Help text');
+        // Change the bound content while the bubble is open; the directive's effect must push the new
+        // text into the live content component (regression: it previously never tracked content()).
+        fixture.componentInstance.text.set('Updated help text');
+        appRef.tick(); // propagate the input + flush the sync effect (setInput on the content component)
+        appRef.tick(); // render the content view with the pushed text
+        expect(bubble()?.textContent).toContain('Updated help text');
     });
 
     it('preserves a pre-existing aria-describedby token and restores it on hide', () => {
