@@ -111,9 +111,10 @@ public class ExerciseVariantGroupResource {
         ExerciseVariantGroup group = exerciseVariantGroupRepository.findByIdAndCourseIdElseThrow(groupId, courseId);
         updateDTO.applyTo(group);
         group.validateDates();
-        exerciseVariantGroupRepository.save(group);
         // Variants share the group's timeline. Keep every member exercise's own dates in sync with the (possibly changed)
         // group dates so they stay consistent wherever an exercise's dates are read (exercise lists, calendar, grading).
+        // This validates every member before persisting anything, then saves the group and its members — a rejected
+        // member timeline (400) therefore leaves the stored group unchanged.
         exerciseVariantGroupService.applyGroupTimelineToMembers(group);
         // Build the response from the loaded entity (its exercises were fetched); the save() return value is a re-merged
         // instance whose lazy exercises collection cannot initialize once the session is closed (open-in-view is off).

@@ -121,22 +121,30 @@ public class ExerciseVariantGroupService {
      */
     public void applyGroupTimelineToMembers(ExerciseVariantGroup group) {
         List<Exercise> nonProgrammingExercises = new ArrayList<>();
+        List<ProgrammingExercise> programmingExercises = new ArrayList<>();
+        // Phase 1 — apply the group's timeline to every member and validate, persisting nothing yet. Programming members
+        // route their timeline through the dedicated update flow (which reloads and saves the exercise itself), so they
+        // are collected here and updated only in phase 2, after every member has passed validation.
         group.getExercises().forEach(exercise -> {
+            applyGroupTimeline(group, exercise);
+            // Fail loudly (400) if the group's new timeline produces an invalid combination for a member exercise,
+            // instead of silently persisting dates that the exercise's own update endpoint would have rejected.
+            validateDatesIfPossible(exercise);
             if (exercise instanceof ProgrammingExercise programmingExercise) {
-                // Programming timeline changes recompute the build-and-test date and reschedule build/test operations, so
-                // they go through the dedicated update flow (which reloads and saves the exercise itself) rather than a
-                // plain saveAll.
-                updateProgrammingExerciseTimeline(programmingExercise, group);
+                programmingExercises.add(programmingExercise);
             }
             else {
-                applyGroupTimeline(group, exercise);
-                // Fail loudly (400) if the group's new timeline produces an invalid combination for a member exercise,
-                // instead of silently persisting dates that the exercise's own update endpoint would have rejected.
-                validateDatesIfPossible(exercise);
                 nonProgrammingExercises.add(exercise);
             }
         });
+        // Phase 2 — all members validated: only now persist the group and the member updates, so a rejected timeline
+        // leaves the stored group (and every member) untouched. Without service-level @Transactional, validating before
+        // the first save is what keeps a bad update side-effect-free.
+        exerciseVariantGroupRepository.save(group);
         exerciseRepository.saveAll(nonProgrammingExercises);
+        // Programming timeline changes recompute the build-and-test date and reschedule build/test operations, so they go
+        // through the dedicated update flow (which reloads and saves the exercise itself) rather than a plain saveAll.
+        programmingExercises.forEach(programmingExercise -> updateProgrammingExerciseTimeline(programmingExercise, group));
     }
 
     /**
