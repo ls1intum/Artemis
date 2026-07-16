@@ -20,6 +20,21 @@ $notification-padding-x: 1.2rem;
     border: var(--bs-border-width) var(--bs-border-style) var(--bs-border-color);
 }
 
+// Fill the overview popover content width.
+:host-context(.course-notification-overview-notification-wrap) {
+    display: block;
+    width: 100%;
+
+    .course-notification {
+        display: block;
+        width: 100%;
+    }
+
+    .course-notification-wrap {
+        width: 100%;
+    }
+}
+
 .course-notification-redirect-link {
     position: absolute;
     top: 0;

@@ -1,7 +1,10 @@
 $overlay-width: 29rem;
 $overlay-container-height: 30rem;
 $padding: 1.4rem;
-$overlay-offset-top: 2.8rem;
+// Keep the panel close to the bell; leave just enough room for the pointer triangle.
+$overlay-offset-top: 1.9rem;
+// Overlay is right-aligned to the toggle; this centers the triangle under the bell icon.
+$triangle-offset-right: 0.2rem;
 
 // CSS animations for enter/leave (used with Angular's animate.enter/animate.leave)
 // Wrapper for animation - similar pattern to alerts
@@ -138,15 +141,29 @@ $overlay-offset-top: 2.8rem;
     background-clip: content-box;
 }
 
+// Bordered CSS triangle so the pointer stays visible in light and dark mode
+// (a single border-color fill is nearly invisible on --module-bg in light mode).
 .course-notification-overview-triangle {
     width: 0;
     height: 0;
-    border-left: 8px solid transparent;
-    border-right: 8px solid transparent;
-    border-bottom: 8px solid var(--bs-border-color);
+    border-left: 9px solid transparent;
+    border-right: 9px solid transparent;
+    // Mix body color into the edge so the tip stays readable in light mode.
+    border-bottom: 9px solid color-mix(in srgb, var(--bs-body-color) 35%, var(--bs-border-color));
     position: absolute;
     bottom: 100%;
-    right: 1.4rem;
+    right: $triangle-offset-right;
+    filter: drop-shadow(0 -1px 1px rgba(0, 0, 0, 0.18));
+
+    &::after {
+        content: '';
+        position: absolute;
+        left: -8px;
+        top: 1px;
+        border-left: 8px solid transparent;
+        border-right: 8px solid transparent;
+        border-bottom: 8px solid var(--module-bg);
+    }
 }
 
 .course-notification-overview-overlay-headline {
@@ -206,7 +223,7 @@ $overlay-offset-top: 2.8rem;
 
 // Margins are now handled by .notification-animation-wrapper
 .course-notification-overview-notification-wrap {
-    // Content wrapper - no margins here, handled by animation wrapper
+    width: 100%;
 }
 
 .course-notification-overview-notification-empty-prompt {
