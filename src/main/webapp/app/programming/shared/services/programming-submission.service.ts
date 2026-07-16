@@ -45,6 +45,13 @@ export type BuildTimingInfo = {
 
 export type ExerciseSubmissionState = { [participationId: number]: ProgrammingSubmissionStateObj };
 
+/**
+ * The latest pending submission of a single participation, as returned by the exercise-wide latest-pending-submissions
+ * endpoint. There is one entry per student participation; {@code submission} is undefined when the participation has no
+ * pending submission. The submission only carries the minimal fields the client needs (id, commit hash, submission date).
+ */
+export type PendingProgrammingSubmission = { participationId: number; submission?: ProgrammingSubmission };
+
 type ProgrammingSubmissionError = { error: string; participationId: number };
 
 /**
@@ -219,7 +226,12 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
 
     /**
      * Fetch the latest pending submission for all participations of a given exercise.
-     * Returns an empty array if the api request fails.
+     * Returns an empty map if the api request fails.
+     *
+     * The server returns one entry per student participation ({@link PendingProgrammingSubmission}); the entry's
+     * submission is undefined when the participation currently has no pending submission. We keep an entry (with an
+     * undefined submission) for every participation so the downstream setup still primes the per-participation
+     * build-state cache and websocket subscriptions.
      *
      * This method is private on purpose as subscribers should not try to load initial data!
      * A separate initial fetch is not necessary as this service takes care of it and provides a BehaviorSubject.
@@ -227,9 +239,16 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
      * @param exerciseId of programming exercise.
      */
     private fetchLatestPendingSubmissionsByExerciseId(exerciseId: number): Observable<{ [participationId: number]: ProgrammingSubmission }> {
-        return this.http
-            .get<{ [participationId: number]: ProgrammingSubmission }>(`api/programming/programming-exercises/${exerciseId}/latest-pending-submissions`)
-            .pipe(catchError(() => of([])));
+        return this.http.get<PendingProgrammingSubmission[]>(`api/programming/programming-exercises/${exerciseId}/latest-pending-submissions`).pipe(
+            map((entries) => {
+                const submissionsByParticipationId: { [participationId: number]: ProgrammingSubmission } = {};
+                for (const entry of entries) {
+                    submissionsByParticipationId[entry.participationId] = entry.submission as ProgrammingSubmission;
+                }
+                return submissionsByParticipationId;
+            }),
+            catchError(() => of({})),
+        );
     }
 
     public fetchQueueReleaseDateEstimationByParticipationId(participationId: number): Observable<dayjs.Dayjs | undefined> {

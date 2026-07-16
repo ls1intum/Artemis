@@ -7,11 +7,13 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
-import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.apache.commons.io.FileUtils;
@@ -59,6 +61,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.SolutionProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.dto.CommitInfoDTO;
+import de.tum.cit.aet.artemis.programming.dto.PendingProgrammingSubmissionDTO;
 import de.tum.cit.aet.artemis.programming.dto.RepoNameProgrammingStudentParticipationDTO;
 import de.tum.cit.aet.artemis.programming.repository.AuxiliaryRepositoryRepository;
 import de.tum.cit.aet.artemis.programming.util.RepositoryExportTestUtil;
@@ -646,13 +649,18 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
         submission2 = programmingExerciseUtilService.addProgrammingSubmission(programmingExercise, submission2, TEST_PREFIX + "student2");
         ProgrammingSubmission notPendingSubmission = (ProgrammingSubmission) new ProgrammingSubmission().submissionDate(ZonedDateTime.now().minusSeconds(55L));
         programmingExerciseUtilService.addProgrammingSubmissionWithResult(programmingExercise, notPendingSubmission, TEST_PREFIX + "student3");
-        Map<Long, ProgrammingSubmission> submissions = new HashMap<>();
-        submissions.put(submission.getParticipation().getId(), submission);
-        submissions.put(submission2.getParticipation().getId(), submission2);
-        submissions.put(notPendingSubmission.getParticipation().getId(), null);
-        Map<Long, ProgrammingSubmission> returnedSubmissions = request.getMap(exercisesBaseUrl + programmingExercise.getId() + "/latest-pending-submissions", HttpStatus.OK,
-                Long.class, ProgrammingSubmission.class);
-        assertThat(returnedSubmissions).isEqualTo(submissions);
+
+        List<PendingProgrammingSubmissionDTO> returnedSubmissions = request.getList(exercisesBaseUrl + programmingExercise.getId() + "/latest-pending-submissions", HttpStatus.OK,
+                PendingProgrammingSubmissionDTO.class);
+
+        // There is one entry per student participation; the two pending submissions carry their submission id, the
+        // participation whose latest submission already has a result carries a null submission.
+        assertThat(returnedSubmissions).hasSize(3);
+        Map<Long, PendingProgrammingSubmissionDTO> byParticipationId = returnedSubmissions.stream()
+                .collect(Collectors.toMap(PendingProgrammingSubmissionDTO::participationId, Function.identity()));
+        assertThat(byParticipationId.get(submission.getParticipation().getId()).submission().id()).isEqualTo(submission.getId());
+        assertThat(byParticipationId.get(submission2.getParticipation().getId()).submission().id()).isEqualTo(submission2.getId());
+        assertThat(byParticipationId.get(notPendingSubmission.getParticipation().getId()).submission()).isNull();
     }
 
     @Test

@@ -5,7 +5,6 @@ import static de.tum.cit.aet.artemis.core.config.Constants.SETUP_COMMIT_MESSAGE;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -58,6 +57,8 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
+import de.tum.cit.aet.artemis.programming.dto.PendingProgrammingSubmissionDTO;
+import de.tum.cit.aet.artemis.programming.dto.ProgrammingSubmissionInfoDTO;
 import de.tum.cit.aet.artemis.programming.exception.ContinuousIntegrationException;
 import de.tum.cit.aet.artemis.programming.exception.VersionControlException;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
@@ -222,7 +223,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
      * @return a Map of {[participationId]: ProgrammingSubmission | null}. Will contain an entry for every student participation of the exercise and a submission object if a
      *         pending submission exists or null if not.
      */
-    public Map<Long, Optional<Submission>> getLatestPendingSubmissionsForProgrammingExercise(Long programmingExerciseId) {
+    public List<PendingProgrammingSubmissionDTO> getLatestPendingSubmissionsForProgrammingExercise(Long programmingExerciseId) {
         // Only the latest submission per participation is fetched (with its results), instead of the exercise's entire
         // submission and result history. For large exercises the previous approach transferred tens of thousands of
         // rows from the database just to inspect one submission per participation.
@@ -231,13 +232,14 @@ public class ProgrammingSubmissionService extends SubmissionService {
         Map<Long, ProgrammingSubmission> latestSubmissionByParticipationId = programmingSubmissionRepository.findSubmissionsWithResultsByIdIn(latestSubmissionIds).stream()
                 .collect(Collectors.toMap(submission -> submission.getParticipation().getId(), Function.identity()));
 
-        Map<Long, Optional<Submission>> pendingSubmissions = new HashMap<>();
+        List<PendingProgrammingSubmissionDTO> pendingSubmissions = new ArrayList<>();
         for (Long participationId : participationIds) {
             ProgrammingSubmission latestSubmission = latestSubmissionByParticipationId.get(participationId);
-            // A pending submission is the latest submission of a participation that does not have a result yet. It is not
-            // an error case for a participation to have no pending submission, so those map to an empty Optional.
-            Optional<Submission> pendingSubmission = latestSubmission != null && latestSubmission.getLatestResult() == null ? Optional.of(latestSubmission) : Optional.empty();
-            pendingSubmissions.put(participationId, pendingSubmission);
+            // A pending submission is the latest submission of a participation that does not have a result yet. There is
+            // one entry per participation; a participation without a pending submission has a null submission (which the
+            // client uses to prime its per-participation build-state cache), and is not an error case.
+            boolean isPending = latestSubmission != null && latestSubmission.getLatestResult() == null;
+            pendingSubmissions.add(new PendingProgrammingSubmissionDTO(participationId, isPending ? ProgrammingSubmissionInfoDTO.of(latestSubmission) : null));
         }
         return pendingSubmissions;
     }
