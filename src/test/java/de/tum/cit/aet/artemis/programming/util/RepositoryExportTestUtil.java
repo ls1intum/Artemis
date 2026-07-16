@@ -412,11 +412,11 @@ public final class RepositoryExportTestUtil {
             // A local JGit push writes the commit into a pack file (not a loose object) on JGit 7.6+, so the former
             // loose-object fast-path was always false and every poll fell through to resolve() + parseCommit().
             // Parsing reads the commit object data and memory-maps the pack through JGit's process-wide WindowCache,
-            // which is heavily contended under parallel CI (it holds pack locks until a GC runs, see JGitConfig) and
-            // could make the poll time out. ObjectDatabase.has(...) inspects loose objects and pack indexes only, so
-            // it confirms the commit landed without mapping the pack data.
+            // which is heavily contended under parallel CI. Prefer the cheap ref check for the common case where the
+            // pushed commit is HEAD, then inspect the object database for older commits.
             try (Git git = Git.open(repo.remoteBareGitRepoFile)) {
-                return git.getRepository().getObjectDatabase().has(commitId);
+                var repository = git.getRepository();
+                return commitId.equals(repository.resolve("HEAD")) || repository.getObjectDatabase().has(commitId);
             }
             catch (Exception e) {
                 log.debug("Bare repository does not yet contain commit {}: {}", commitHash, e.getMessage());
