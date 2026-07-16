@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ComponentRef } from '@angular/core';
 import { RedirectToIrisButtonComponent } from 'app/communication/shared/redirect-to-iris-button/redirect-to-iris-button.component';
@@ -19,8 +18,6 @@ import { IrisLogoSize } from 'app/iris/overview/iris-logo/iris-logo.component';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 
 describe('RedirectToIrisButtonComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: RedirectToIrisButtonComponent;
     let fixture: ComponentFixture<RedirectToIrisButtonComponent>;
     let componentRef: ComponentRef<RedirectToIrisButtonComponent>;

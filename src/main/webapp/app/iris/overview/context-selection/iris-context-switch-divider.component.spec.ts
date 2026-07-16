@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockDirective } from 'ng-mocks';
 import { faChalkboardUser, faFont, faKeyboard } from '@fortawesome/free-solid-svg-icons';
@@ -13,8 +12,6 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { provideRouter } from '@angular/router';
 
 describe('IrisContextSwitchDividerComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: IrisContextSwitchDividerComponent;
     let fixture: ComponentFixture<IrisContextSwitchDividerComponent>;
 

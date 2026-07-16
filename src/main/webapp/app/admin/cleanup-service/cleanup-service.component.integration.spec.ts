@@ -2,7 +2,6 @@ import { HttpResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { TranslateService } from '@ngx-translate/core';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { of } from 'rxjs';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -12,8 +11,6 @@ import { FormDateTimePickerComponent } from 'app/shared-ui/date-time-picker/date
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('CleanupServiceComponent date range integration', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<CleanupServiceComponent>;
     let component: CleanupServiceComponent;
 

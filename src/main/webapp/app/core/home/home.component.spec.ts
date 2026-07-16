@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { HomeComponent } from './home.component';
 import { AccountService } from 'app/core/auth/account.service';
@@ -25,8 +24,6 @@ import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.
 import { RouterLink } from '@angular/router';
 
 describe('HomeComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: HomeComponent;
     let fixture: ComponentFixture<HomeComponent>;
     let loginService: LoginService;

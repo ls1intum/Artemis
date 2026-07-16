@@ -1,6 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { By } from '@angular/platform-browser';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
@@ -8,7 +7,6 @@ import { FeedbackSuggestionsBannerComponent } from 'app/assessment/manage/feedba
 import { Message } from 'primeng/message';
 
 describe('FeedbackSuggestionsBannerComponent', () => {
-    setupTestBed({ zoneless: true });
     let fixture: ComponentFixture<FeedbackSuggestionsBannerComponent>;
 
     beforeEach(() => {

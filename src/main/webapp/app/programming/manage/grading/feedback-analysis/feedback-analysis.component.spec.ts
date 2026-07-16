@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
@@ -31,8 +30,6 @@ type ComponentInternals = Omit<FeedbackAnalysisComponent, keyof ComponentInterna
 const internals = (c: FeedbackAnalysisComponent): ComponentInternals => c as unknown as ComponentInternals;
 
 describe('FeedbackAnalysisComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<FeedbackAnalysisComponent>;
     let component: FeedbackAnalysisComponent;
     let feedbackAnalysisService: FeedbackAnalysisService;
