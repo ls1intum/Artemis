@@ -2,7 +2,7 @@ import { ProgrammingExercise } from 'app/programming/shared/entities/programming
 
 import { admin, instructor, studentFour, studentOne, studentThree, studentTwo, tutor } from '../../../support/users';
 import { test } from '../../../support/fixtures';
-import { generateUUID } from '../../../support/utils';
+import { generateUUID, readResponseJson } from '../../../support/utils';
 import { expect } from '@playwright/test';
 import { Exercise, ExerciseMode, ProgrammingLanguage } from '../../../support/constants';
 import { SEED_COURSES } from '../../../support/seedData';
@@ -35,7 +35,7 @@ test.describe('Programming Exercise Management', { tag: '@fast' }, () => {
             await programmingExerciseCreation.setPoints(100);
             await programmingExerciseCreation.checkAllowOnlineEditor();
             const response = await programmingExerciseCreation.generate();
-            const exercise: Exercise = await response.json();
+            const exercise: Exercise = await readResponseJson(response);
             createdExerciseId = exercise.id;
             await expect(courseManagementExercises.getExerciseTitle(exerciseTitle)).toBeVisible();
             await page.waitForURL(`**/programming-exercises/${exercise.id}**`);

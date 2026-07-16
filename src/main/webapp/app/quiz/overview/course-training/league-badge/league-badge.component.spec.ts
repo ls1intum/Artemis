@@ -1,5 +1,4 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { LeagueBadgeComponent } from './league-badge.component';
 import { MockDirective } from 'ng-mocks';
@@ -10,7 +9,6 @@ import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('LeagueBadgeComponent', () => {
-    setupTestBed({ zoneless: true });
     let fixture: ComponentFixture<LeagueBadgeComponent>;
     let component: LeagueBadgeComponent;
 
