@@ -13,6 +13,52 @@
     cursor: grab;
 }
 
+// Mass-actions bar: expand its height (and fade in) on appear instead of snapping in and shoving the
+// exercise cards down, and collapse it again on the last deselect. `overflow: hidden` clips the row
+// while the height animates; `max-height` is animatable where `height: auto` is not.
+.selection-entering {
+    display: block;
+    overflow: hidden;
+    animation: selection-expand 0.2s ease-in-out forwards;
+}
+
+.selection-leaving {
+    display: block;
+    overflow: hidden;
+    animation: selection-collapse 0.2s ease-in-out forwards;
+}
+
+@keyframes selection-expand {
+    from {
+        max-height: 0;
+        opacity: 0;
+    }
+
+    to {
+        max-height: 200px;
+        opacity: 1;
+    }
+}
+
+@keyframes selection-collapse {
+    from {
+        max-height: 200px;
+        opacity: 1;
+    }
+
+    to {
+        max-height: 0;
+        opacity: 0;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .selection-entering,
+    .selection-leaving {
+        animation: none;
+    }
+}
+
 /* Keep a too-wide table scrolling inside its panel, not the page: min-width:0 lets PrimeNG's grid
    track shrink and overflow:hidden clips the rest. */
 /* stylelint-disable-next-line selector-pseudo-element-no-unknown */

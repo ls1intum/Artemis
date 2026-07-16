@@ -84,6 +84,19 @@ const ELLIPSIS_WIDTH_PX = 40;
 const SAFETY_MARGIN_PX = 8;
 
 /**
+ * Keep-priority per action id when the row runs out of width: a lower number stays inline longer, a higher number
+ * collapses into the ellipsis menu first. Delete, Edit and Scores rank highest so every exercise type keeps the same
+ * three buttons inline; the type-specific extras (Preview, Solution, Statistics, Participations, …) all share
+ * {@link EXTRA_ACTION_PRIORITY} and therefore overflow first, in their original display order (the sort is stable).
+ */
+const ACTION_KEEP_PRIORITY: Readonly<Record<string, number>> = { delete: 0, edit: 1, scores: 2 };
+const EXTRA_ACTION_PRIORITY = 3;
+
+function keepPriorityOf(action: ActionItem): number {
+    return ACTION_KEEP_PRIORITY[action.id] ?? EXTRA_ACTION_PRIORITY;
+}
+
+/**
  * Element width in fractional CSS pixels. `offsetWidth` / `clientWidth` round to whole pixels, and at a non-100% browser
  * zoom the browser lays elements out on fractional boundaries — summing ~8 rounded-down button widths can then understate
  * the real total by several pixels, enough to overrun the safety margin and clip the leftmost button. `getBoundingClientRect`
@@ -344,20 +357,24 @@ export class ExerciseActionsComponent {
             return new Set();
         }
 
-        // Collapsing: reserve the ellipsis (plus the gap before it) and fill kept buttons from the right (Delete last).
+        // Collapsing: reserve the ellipsis (plus the gap before it) and keep buttons in priority order (Delete, Edit,
+        // Scores first, then the type-specific extras), stopping at the first that no longer fits. Keeping by priority
+        // rather than by position makes every exercise type keep the same core buttons inline; the template still
+        // renders the kept buttons in their original display order (only their `display` toggles).
         const budget = available - ELLIPSIS_WIDTH_PX - GAP_PX;
+        const byPriority = [...actions].sort((a, b) => keepPriorityOf(a) - keepPriorityOf(b));
+        const keptIds = new Set<string>();
         let used = 0;
-        let keepFrom = actions.length;
-        for (let i = actions.length - 1; i >= 0; i--) {
-            const addition = widthOf(actions[i]) + (keepFrom < actions.length ? GAP_PX : 0);
+        for (const action of byPriority) {
+            const addition = widthOf(action) + (keptIds.size > 0 ? GAP_PX : 0);
             if (used + addition <= budget) {
                 used += addition;
-                keepFrom = i;
+                keptIds.add(action.id);
             } else {
                 break;
             }
         }
-        return new Set(actions.slice(0, keepFrom).map((action) => action.id));
+        return new Set(actions.filter((action) => !keptIds.has(action.id)).map((action) => action.id));
     });
 
     /**

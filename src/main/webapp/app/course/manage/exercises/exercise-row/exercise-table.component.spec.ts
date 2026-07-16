@@ -378,6 +378,21 @@ describe('ExerciseTableComponent', () => {
             expect(handle.classList).toContain('disabled');
         });
 
+        it('renders both the drag handle and the group dropdown when both are enabled (group view)', () => {
+            const text = { id: 3, title: 'Text exercise', type: ExerciseType.TEXT, maxPoints: 5, difficulty: DifficultyLevel.EASY } as Exercise;
+            const group: CourseExerciseGroup = { id: 10, title: 'Group A', exercises: [text] };
+            fixture.componentRef.setInput('groups', [group]);
+            fixture.componentRef.setInput('showDragHandle', true);
+            fixture.componentRef.setInput('showGroupSelector', true);
+
+            const element = renderRows([text]);
+            // Drag-and-drop and the per-row group dropdown coexist in the group view.
+            expect(element.querySelector('.drag-handle')).not.toBeNull();
+            expect(element.querySelector('p-select')).not.toBeNull();
+            // The group column replaces the difficulty column, so the difficulty badge is not rendered.
+            expect(element.querySelector('p-tag')).toBeNull();
+        });
+
         it('reflects the active sort column in the header', () => {
             renderRows([quiz]);
             const titleHeader = fixture.nativeElement.querySelectorAll('th.sort-col')[0] as HTMLElement;

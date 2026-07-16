@@ -252,6 +252,44 @@ describe('ExerciseActionsComponent', () => {
             expect(component.hasOverflow()).toBe(false);
             expect(component.hiddenActions()).toEqual([]);
         });
+
+        /** Seeds every current action's cached natural width to the same value, so only the row width drives collapsing. */
+        const seedEqualWidths = (buttonWidth: number): void => {
+            const widths = new Map<string, number>();
+            for (const action of component.mainActions()) {
+                widths.set(component['signatureOf'](action), buttonWidth);
+            }
+            component['buttonWidths'].set(widths);
+        };
+
+        it('keeps scores, edit and delete inline and overflows the type-specific quiz actions first', () => {
+            // Editor+instructor quiz: participations, scores, statistics, preview, solution, edit, delete.
+            const quiz = { id: 2, type: ExerciseType.QUIZ, title: 'Quiz', isAtLeastEditor: true, isAtLeastInstructor: true } as QuizExercise;
+            fixture.componentRef.setInput('exercise', quiz);
+
+            // Each button 100px wide. With a 360px row (available 352 after the safety margin, budget 308 after the
+            // ellipsis + gap) exactly three 100px buttons plus their gaps fit.
+            seedEqualWidths(100);
+            component['quizWidth'].set(0);
+            component['rowWidth'].set(360);
+
+            const hidden = component.hiddenActions().map((a) => a.id);
+            expect(component.hasOverflow()).toBe(true);
+            // The three highest-priority actions stay inline regardless of their display position.
+            expect(hidden).not.toContain('scores');
+            expect(hidden).not.toContain('edit');
+            expect(hidden).not.toContain('delete');
+            // The type-specific extras collapse into the ellipsis menu.
+            expect(hidden).toEqual(expect.arrayContaining(['participations', 'statistics', 'preview', 'solution']));
+        });
+
+        it('hides nothing when every button fits', () => {
+            seedEqualWidths(50);
+            component['quizWidth'].set(0);
+            component['rowWidth'].set(2000);
+            expect(component.hiddenIds().size).toBe(0);
+            expect(component.hasOverflow()).toBe(false);
+        });
     });
 
     describe('deletionSummary / deleteTranslateValues', () => {

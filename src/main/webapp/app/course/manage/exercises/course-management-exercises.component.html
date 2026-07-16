@@ -42,44 +42,53 @@
         <!-- Mass actions row. All bulk actions target editor+ workflows, so tutors (who can reach this page but
              cannot select rows) never see it. -->
         @if (selectedCount() > 0 && course()?.isAtLeastEditor) {
-            <div class="d-flex align-items-center flex-wrap gap-2 mt-2">
-                <span class="text-muted small" jhiTranslate="artemisApp.exerciseManagement.selection.count" [translateValues]="{ count: selectedCount() }"></span>
-                <button pButton type="button" severity="secondary" [outlined]="true" size="small" (click)="clearSelection()">
-                    <span jhiTranslate="artemisApp.exerciseManagement.selection.deselectAll"></span>
-                </button>
-                @if (allSelectedAreProgramming()) {
-                    <button pButton type="button" severity="warn" size="small" (click)="editSelectedExercises()">
-                        <fa-icon [icon]="faWrench" />
-                        <span jhiTranslate="entity.action.editSelected"></span>
-                    </button>
-                    <jhi-programming-assessment-repo-export [programmingExercises]="selectedProgrammingExercises()" />
-                    <button pButton type="button" severity="primary" [outlined]="true" size="small" (click)="consistencyCheckSelected()">
-                        <fa-icon [icon]="faCheckDouble" />
-                        <span jhiTranslate="artemisApp.consistencyCheck.button"></span>
-                    </button>
-                }
-                @if (course()?.isAtLeastInstructor) {
-                    <button
-                        pButton
-                        type="button"
-                        severity="danger"
-                        size="small"
-                        jhiDeleteButton
-                        [renderButtonStyle]="false"
-                        deleteQuestion="artemisApp.exerciseActions.deleteMultipleExercisesQuestion"
-                        [translateValues]="{
-                            courseTitle: course()?.title,
-                            courseType: course()?.testCourse
-                                ? ('artemisApp.exercise.delete.testCourse' | artemisTranslate)
-                                : ('artemisApp.exercise.delete.realCourse' | artemisTranslate),
-                        }"
-                        [requireConfirmationOnlyForAdditionalChecks]="true"
-                        (delete)="deleteSelectedExercises()"
-                        [dialogError]="selectedDeleteError$"
-                    >
-                        <fa-icon [icon]="faTrash" />
-                    </button>
-                }
+            <div class="selection-bar" animate.enter="selection-entering" animate.leave="selection-leaving">
+                <div class="d-flex align-items-center flex-wrap gap-3 mt-2 pt-2 border-top">
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="text-muted-color small" jhiTranslate="artemisApp.exerciseManagement.selection.count" [translateValues]="{ count: selectedCount() }"></span>
+                        <button pButton type="button" severity="secondary" [outlined]="true" size="small" (click)="clearSelection()">
+                            <span jhiTranslate="artemisApp.exerciseManagement.selection.deselectAll"></span>
+                        </button>
+                    </div>
+                    @if (allSelectedAreProgramming() || course()?.isAtLeastInstructor) {
+                        <div class="vr"></div>
+                        <div class="d-flex align-items-center flex-wrap gap-2">
+                            @if (allSelectedAreProgramming()) {
+                                <button pButton type="button" severity="warn" size="small" (click)="editSelectedExercises()">
+                                    <fa-icon [icon]="faWrench" />
+                                    <span jhiTranslate="entity.action.editSelected"></span>
+                                </button>
+                                <jhi-programming-assessment-repo-export [programmingExercises]="selectedProgrammingExercises()" />
+                                <button pButton type="button" severity="primary" [outlined]="true" size="small" (click)="consistencyCheckSelected()">
+                                    <fa-icon [icon]="faCheckDouble" />
+                                    <span jhiTranslate="artemisApp.consistencyCheck.button"></span>
+                                </button>
+                            }
+                            @if (course()?.isAtLeastInstructor) {
+                                <button
+                                    pButton
+                                    type="button"
+                                    severity="danger"
+                                    size="small"
+                                    jhiDeleteButton
+                                    [renderButtonStyle]="false"
+                                    deleteQuestion="artemisApp.exerciseActions.deleteMultipleExercisesQuestion"
+                                    [translateValues]="{
+                                        courseTitle: course()?.title,
+                                        courseType: course()?.testCourse
+                                            ? ('artemisApp.exercise.delete.testCourse' | artemisTranslate)
+                                            : ('artemisApp.exercise.delete.realCourse' | artemisTranslate),
+                                    }"
+                                    [requireConfirmationOnlyForAdditionalChecks]="true"
+                                    (delete)="deleteSelectedExercises()"
+                                    [dialogError]="selectedDeleteError$"
+                                >
+                                    <fa-icon [icon]="faTrash" />
+                                </button>
+                            }
+                        </div>
+                    }
+                </div>
             </div>
         }
     </ng-template>
@@ -114,7 +123,7 @@
                             [connectedDropLists]="dropListIds()"
                             [showDragHandle]="isGroup()"
                             [showTypeIcon]="view() !== 'type'"
-                            [showGroupSelector]="!isGroup() && groups().length > 0"
+                            [showGroupSelector]="groups().length > 0"
                             [showCheckbox]="!isGroup() && (course()?.isAtLeastEditor ?? false)"
                             [selectedIds]="selectedIds()"
                             [groups]="groups()"
@@ -178,7 +187,7 @@
                                 </span>
                             </div>
                             <div class="d-flex align-items-center gap-2">
-                                <p-button severity="secondary" [outlined]="true" size="small" (onClick)="openGroupEditModal(card.group.id!)">
+                                <p-button severity="warn" [outlined]="true" size="small" (onClick)="openGroupEditModal(card.group.id!)">
                                     <fa-icon [icon]="faPen" />
                                     <span class="ms-1" jhiTranslate="artemisApp.exerciseVariantGroup.edit"></span>
                                 </p-button>
