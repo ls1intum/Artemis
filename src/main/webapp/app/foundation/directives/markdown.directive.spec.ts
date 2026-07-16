@@ -1,7 +1,6 @@
 import { Component, signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
 
 @Component({
@@ -22,7 +21,6 @@ class TestHostComponent {
 }
 
 describe('MarkdownDirective', () => {
-    setupTestBed({ zoneless: true });
     let fixture: ComponentFixture<TestHostComponent>;
     let host: TestHostComponent;
 
