@@ -72,7 +72,7 @@ public final class ExerciseVersionCommitHashResolver {
             return gitService.getLastCommitHash(uri);
         }
         catch (Exception e) {
-            log.warn("Could not retrieve the last commit hash for repoUri {} in ExerciseSnapshot", uri);
+            log.warn("Could not retrieve the last commit hash for repoUri {} in ExerciseSnapshot: {}", uri, e.getMessage());
             return null;
         }
     }
