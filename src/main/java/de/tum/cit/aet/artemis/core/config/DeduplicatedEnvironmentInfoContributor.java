@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.core.config;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_BUILDAGENT;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.LinkedHashMap;
@@ -38,10 +39,15 @@ import org.springframework.stereotype.Component;
  * and would silently break the case-sensitive {@code @Value("${info.testServer}")} placeholder lookups. Instead this contributor replaces the built-in one (which is
  * therefore disabled via {@code management.info.env.enabled: false}) and normalizes the <em>output</em>: it performs the same {@code info.*} map binding, then keeps the
  * camelCase spelling and drops the all-lowercase duplicate. New {@code info.*} properties are still exposed automatically with no per-property code.
+ * <p>
+ * <b>Profile coverage.</b> Because {@code management.info.env.enabled: false} disables Spring's built-in contributor globally (in the base {@code application.yml}), this
+ * replacement must be registered on every node type that serves {@code /management/info}. That includes standalone build-agent nodes (profiles {@code buildagent} without
+ * {@code core}, e.g. {@code SPRING_PROFILES_ACTIVE=prod,buildagent}); without covering them, their endpoint would lose the entire {@code info.*} namespace instead of
+ * merely deduplicating it. A node running both {@code core} and {@code buildagent} still registers the bean exactly once.
  *
  * @see "src/main/resources/config/application.yml (management.info.env.enabled)"
  */
-@Profile(PROFILE_CORE)
+@Profile(PROFILE_CORE + " | " + PROFILE_BUILDAGENT)
 @Component
 @Lazy
 public class DeduplicatedEnvironmentInfoContributor implements InfoContributor {

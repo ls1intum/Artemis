@@ -11,6 +11,7 @@ import java.util.stream.Collectors;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.actuate.info.EnvironmentInfoContributor;
 import org.springframework.boot.actuate.info.Info;
+import org.springframework.context.annotation.Profile;
 import org.springframework.core.env.MapPropertySource;
 import org.springframework.core.env.MutablePropertySources;
 import org.springframework.core.env.StandardEnvironment;
@@ -124,6 +125,17 @@ class DeduplicatedEnvironmentInfoContributorTest {
 
         // Every surviving key keeps the exact value the built-in contributor produced (including the nested sentry map).
         deduped.forEach((key, value) -> assertThat(value).isEqualTo(builtIn.get(key)));
+    }
+
+    @Test
+    void shouldBeRegisteredForCoreAndStandaloneBuildAgentNodes() {
+        // Spring's built-in EnvironmentInfoContributor is disabled globally via management.info.env.enabled: false, so this replacement must be active on every node type
+        // that serves /management/info. Standalone build-agent nodes run with the buildagent profile but without core (e.g. SPRING_PROFILES_ACTIVE=prod,buildagent), so
+        // covering only core would leave their endpoint without any info.* details.
+        Profile profile = DeduplicatedEnvironmentInfoContributor.class.getAnnotation(Profile.class);
+        assertThat(profile).isNotNull();
+        String expression = String.join(" ", profile.value());
+        assertThat(expression).contains(Constants.PROFILE_CORE).contains(Constants.PROFILE_BUILDAGENT);
     }
 
     @Test
