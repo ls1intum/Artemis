@@ -26,16 +26,12 @@ public record VariantGenerationEventDTO(Type type, VariantJobPhase phase, Intege
         implements Serializable {
 
     /**
-     * Event kinds. STEP_OUTPUT carries the freshly recorded step output so open modals
-     * can populate the expandable panel without a REST round-trip.
+     * Event kinds. STEP_OUTPUT signals that a phase recorded a step output and carries only its short summary
+     * in {@code detail}; the open modal fetches the full panel body from the job-detail endpoint.
      */
     public enum Type {
         PHASE_CHANGED, PROGRESS, ATTEMPT, STEP_OUTPUT, DONE, FAILED, CANCELLED
     }
-
-    // TODO (Sonnet): STEP_OUTPUT currently carries only the summary in `detail`; open modals fetch the full panel
-    // body from the job-detail endpoint. If live panel bodies are wanted, add a nullable
-    // StepOutputDTO component here and keep it truncated server-side.
 
     /**
      * @param phase the new phase

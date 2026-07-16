@@ -81,9 +81,12 @@ public class VariantJob implements Serializable {
     /** Accumulated LLM tokens across planning + agent rounds (budget enforcement + telemetry). */
     private long totalTokensUsed;
 
-    // TODO (Sonnet): Add a staleness mechanism (e.g. a heartbeat timestamp) so that after a server restart mid-job
-    // the tray/list can mark a non-terminal job FAILED-stale instead of showing it as forever-running until the
-    // Hazelcast TTL expires. Full resume is future work.
+    /**
+     * Last time the running node advanced this job (every state change plus each agent tool call). A
+     * non-terminal job whose heartbeat has gone stale lost its worker to a restart or crash and is marked
+     * FAILED-stale on read — see {@link ExerciseVariantJobService}.
+     */
+    private Instant lastHeartbeatAt;
 
     public String getJobId() {
         return jobId;
@@ -259,5 +262,13 @@ public class VariantJob implements Serializable {
 
     public void setTotalTokensUsed(long totalTokensUsed) {
         this.totalTokensUsed = totalTokensUsed;
+    }
+
+    public Instant getLastHeartbeatAt() {
+        return lastHeartbeatAt;
+    }
+
+    public void setLastHeartbeatAt(Instant lastHeartbeatAt) {
+        this.lastHeartbeatAt = lastHeartbeatAt;
     }
 }

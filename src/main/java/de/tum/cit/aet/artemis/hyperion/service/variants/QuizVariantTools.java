@@ -295,6 +295,8 @@ class QuizVariantTools implements VariantToolset {
      * short-circuits with the returned directive.
      */
     private String stopNotice() {
+        // Every tool call is a liveness signal for the long internal agent round (see the job's staleness handling).
+        jobService.heartbeat(jobId);
         if (jobService.isCancelRequested(jobId)) {
             return "The variant generation job was CANCELLED. Do not call any more tools; the round is over and all further work will be discarded.";
         }

@@ -8,6 +8,7 @@ import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.when;
 
 import java.time.Duration;
+import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
@@ -29,12 +30,15 @@ import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.ai.model.tool.ToolCallingChatOptions;
 import org.springframework.ai.tool.ToolCallback;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.hazelcast.core.HazelcastInstance;
+import com.hazelcast.map.IMap;
 
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
@@ -99,6 +103,10 @@ class ExerciseVariantGenerationIntegrationTest extends AbstractSpringIntegration
 
     @Autowired
     private ExerciseVariantJobService jobService;
+
+    @Autowired
+    @Qualifier("hazelcastInstance")
+    private HazelcastInstance hazelcastInstance;
 
     @Autowired
     private ObjectMapper objectMapper;
@@ -491,5 +499,33 @@ class ExerciseVariantGenerationIntegrationTest extends AbstractSpringIntegration
         assertThat(detail.request().placement().type()).isEqualTo(VariantPlacementDTO.PlacementType.STANDALONE);
         assertThat(detail.stepOutputs()).containsEntry(VariantJobPhase.PLANNING, new VariantJobDetailDTO.StepOutputDTO("summary", "detail"));
         assertThat(Map.copyOf(detail.stepOutputs())).hasSize(1);
+    }
+
+    @Test
+    @WithMockUser(username = EDITOR_LOGIN, roles = "EDITOR")
+    void shouldMarkNonTerminalJobsWithoutHeartbeatAsFailedStaleOnRead() {
+        var initiator = userUtilService.getUserByLogin(EDITOR_LOGIN);
+        VariantJob job = jobService.startJob(initiator, sourceQuiz, domainChangeRequest(standalonePlacement()));
+        // Simulate the worker node vanishing: push the heartbeat past the staleness threshold directly on the map.
+        IMap<String, VariantJob> jobMap = hazelcastInstance.getMap(ExerciseVariantJobService.JOB_MAP_NAME);
+        VariantJob stored = jobMap.get(job.getJobId());
+        stored.setLastHeartbeatAt(Instant.now().minus(Duration.ofHours(1)));
+        jobMap.put(job.getJobId(), stored);
+
+        VariantJob reconciled = jobService.getJob(job.getJobId(), EDITOR_LOGIN).orElseThrow();
+        assertThat(reconciled.getPhase()).isEqualTo(VariantJobPhase.FAILED);
+        assertThat(reconciled.getFailedInPhase()).isEqualTo(VariantJobPhase.ANALYZING);
+        assertThat(reconciled.getFailureDetail()).isNotBlank();
+        assertThat(reconciled.getFinishedAt()).isNotNull();
+    }
+
+    @Test
+    @WithMockUser(username = EDITOR_LOGIN, roles = "EDITOR")
+    void shouldNotMarkFreshlyStartedJobsAsStale() {
+        var initiator = userUtilService.getUserByLogin(EDITOR_LOGIN);
+        VariantJob job = jobService.startJob(initiator, sourceQuiz, domainChangeRequest(standalonePlacement()));
+
+        VariantJob read = jobService.getJob(job.getJobId(), EDITOR_LOGIN).orElseThrow();
+        assertThat(read.getPhase()).isEqualTo(VariantJobPhase.ANALYZING);
     }
 }

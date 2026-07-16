@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.hyperion.service.variants;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.util.Comparator;
 import java.util.List;
@@ -41,7 +42,7 @@ import de.tum.cit.aet.artemis.hyperion.service.websocket.HyperionWebsocketServic
 @Conditional(HyperionEnabled.class)
 public class ExerciseVariantJobService {
 
-    private static final String JOB_MAP_NAME = "hyperion-exercise-variant-jobs";
+    static final String JOB_MAP_NAME = "hyperion-exercise-variant-jobs";
 
     private static final String ENTITY_NAME = "exerciseVariantGeneration";
 
@@ -49,6 +50,12 @@ public class ExerciseVariantJobService {
 
     // Finished jobs stay listable/deep-linkable in the tray for a day.
     private static final int JOB_TTL_SECONDS = 24 * 3600;
+
+    // A non-terminal job whose worker node advanced it (state change or agent tool call) less recently than this
+    // lost that node to a restart/crash: it is marked FAILED-stale on read instead of showing as running until the
+    // TTL expires. The threshold comfortably exceeds the longest gap between updates (one agent round with its
+    // capped 3-minute build waits) while staying far below the 24h TTL.
+    private static final Duration STALE_THRESHOLD = Duration.ofMinutes(10);
 
     private final HazelcastInstance hazelcastInstance;
 
@@ -97,7 +104,9 @@ public class ExerciseVariantJobService {
         job.setInitiatorLogin(user.getLogin());
         job.setPhase(VariantJobPhase.ANALYZING);
         job.setRequest(request);
-        job.setStartedAt(Instant.now());
+        Instant now = Instant.now();
+        job.setStartedAt(now);
+        job.setLastHeartbeatAt(now);
         jobMap.put(jobId, job);
         return job;
     }
@@ -111,8 +120,10 @@ public class ExerciseVariantJobService {
      */
     public List<VariantJob> getJobsOfUser(String login) {
         // Full-values scan is fine here: the map only holds per-user jobs of the last 24h (TTL).
-        return jobMap.values().stream().filter(job -> login.equals(job.getInitiatorLogin())).sorted(Comparator.comparing((VariantJob job) -> job.getPhase().isTerminal())
-                .thenComparing(job -> job.getFinishedAt() != null ? job.getFinishedAt() : job.getStartedAt(), Comparator.reverseOrder())).toList();
+        return jobMap.values().stream().filter(job -> login.equals(job.getInitiatorLogin())).map(this::reconcileStaleness)
+                .sorted(Comparator.comparing((VariantJob job) -> job.getPhase().isTerminal())
+                        .thenComparing(job -> job.getFinishedAt() != null ? job.getFinishedAt() : job.getStartedAt(), Comparator.reverseOrder()))
+                .toList();
     }
 
     /**
@@ -128,7 +139,7 @@ public class ExerciseVariantJobService {
         if (job == null || !job.getInitiatorLogin().equals(login)) {
             return Optional.empty();
         }
-        return Optional.of(job);
+        return Optional.of(reconcileStaleness(job));
     }
 
     /**
@@ -322,12 +333,51 @@ public class ExerciseVariantJobService {
         publish(job, VariantGenerationEventDTO.cancelled());
     }
 
+    /**
+     * Refreshes the job's heartbeat without changing its state — called by the agent tools on every tool call
+     * so the long internal agent round (whose only other update is at its boundary) keeps the job from being
+     * misjudged as stale. No-op once the job is terminal or gone.
+     *
+     * @param jobId the job id
+     */
+    public void heartbeat(String jobId) {
+        VariantJob job = jobMap.get(jobId);
+        if (job != null && !job.getPhase().isTerminal()) {
+            job.setLastHeartbeatAt(Instant.now());
+            jobMap.put(jobId, job);
+        }
+    }
+
+    /**
+     * Read-side reconciliation: a non-terminal job whose heartbeat is older than {@link #STALE_THRESHOLD} lost
+     * its worker node to a restart/crash. Transition it to FAILED so it stops showing as running; any provisioned
+     * clone is left in place for the instructor to inspect or delete.
+     */
+    private VariantJob reconcileStaleness(VariantJob job) {
+        if (job.getPhase().isTerminal()) {
+            return job;
+        }
+        Instant lastBeat = job.getLastHeartbeatAt() != null ? job.getLastHeartbeatAt() : job.getStartedAt();
+        if (lastBeat == null || lastBeat.isAfter(Instant.now().minus(STALE_THRESHOLD))) {
+            return job;
+        }
+        VariantJob staleJob = mutate(job.getJobId(), mutableJob -> {
+            mutableJob.setFailedInPhase(mutableJob.getPhase());
+            mutableJob.setFailureDetail("Generation stopped responding (the server node running it restarted or crashed) and was marked as failed.");
+            mutableJob.setPhase(VariantJobPhase.FAILED);
+            mutableJob.setFinishedAt(Instant.now());
+        });
+        publish(staleJob, VariantGenerationEventDTO.failed(staleJob.getFailureDetail()));
+        return staleJob;
+    }
+
     private VariantJob mutate(String jobId, Consumer<VariantJob> mutation) {
         VariantJob job = jobMap.get(jobId);
         if (job == null) {
             throw new IllegalStateException("Variant job " + jobId + " no longer exists");
         }
         mutation.accept(job);
+        job.setLastHeartbeatAt(Instant.now());
         jobMap.put(jobId, job);
         return job;
     }
