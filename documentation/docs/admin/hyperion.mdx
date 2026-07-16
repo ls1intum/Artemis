@@ -224,7 +224,7 @@ artemis:
 
 Generation slots and normal LocalCI build slots are separate admission limits. Artemis does not dynamically subtract one from the other. On a mixed host, set
 `specify-concurrent-builds: true` and choose `concurrent-build-size` so the combined CPU and memory ceilings of normal builds and generation sandboxes fit the host. Start with one
-generation slot on a mixed non-exam agent. On a dedicated generation agent, set `run-build-jobs: false` and start with two generation slots. Keep generation disabled on exam agents.
+generation slot on a mixed non-exam agent. On a dedicated generation agent, set `run-build-jobs: false` and also start with one generation slot. Keep generation disabled on exam agents.
 Increase these values only after representative load tests meet defined CPU-pressure, throttling, latency, memory, Docker-disk, and failure-rate thresholds.
 
 Additional controls:
