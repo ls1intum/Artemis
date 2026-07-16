@@ -4,7 +4,6 @@ import { Course } from 'app/course/shared/entities/course.model';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { vi } from 'vitest';
 import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { ProgrammingAssessmentRepoExportButtonComponent } from 'app/programming/manage/assess/repo-export/export-button/programming-assessment-repo-export-button.component';
@@ -13,7 +12,6 @@ import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 
 describe('ProgrammingAssessmentRepoExportButtonComponent', () => {
-    setupTestBed({ zoneless: true });
     let comp: ProgrammingAssessmentRepoExportButtonComponent;
     let fixture: ComponentFixture<ProgrammingAssessmentRepoExportButtonComponent>;
     let dialogService: DialogService;

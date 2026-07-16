@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import dayjs from 'dayjs/esm';
 import { BehaviorSubject, Subject, distinctUntilChanged, lastValueFrom, of } from 'rxjs';
 import { User } from 'app/account/user/user.model';
@@ -68,8 +67,6 @@ const toPendingSubmissionList = (state: { [participationId: number]: Programming
     Object.entries(state).map(([participationId, submission]) => ({ participationId: parseInt(participationId, 10), submission }));
 
 describe('ProgrammingSubmissionService', () => {
-    setupTestBed({ zoneless: true });
-
     let websocketService: WebsocketService;
     let httpService: HttpClient;
     let participationWebsocketService: ParticipationWebsocketService;

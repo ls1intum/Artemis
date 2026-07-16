@@ -1,5 +1,4 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ProgrammingExerciseVersionProgrammingMetadataComponent } from 'app/programming/manage/version-history/programming-exercise-version-programming-metadata.component';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
@@ -8,8 +7,6 @@ import { RepositoryType } from 'app/programming/shared/code-editor/model/code-ed
 import { vi } from 'vitest';
 
 describe('ProgrammingExerciseVersionProgrammingMetadataComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<ProgrammingExerciseVersionProgrammingMetadataComponent>;
     let component: ProgrammingExerciseVersionProgrammingMetadataComponent;
 
@@ -156,8 +153,6 @@ describe('ProgrammingExerciseVersionProgrammingMetadataComponent', () => {
 });
 
 describe('ProgrammingExerciseVersionProgrammingMetadataComponent (exam route)', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<ProgrammingExerciseVersionProgrammingMetadataComponent>;
     let component: ProgrammingExerciseVersionProgrammingMetadataComponent;
 

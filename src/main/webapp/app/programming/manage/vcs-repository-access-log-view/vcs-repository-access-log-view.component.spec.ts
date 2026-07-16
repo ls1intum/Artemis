@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ProgrammingExerciseParticipationService } from 'app/programming/manage/services/programming-exercise-participation.service';
 import { ActivatedRoute } from '@angular/router';
@@ -18,8 +17,6 @@ import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.serv
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 
 describe('VcsRepositoryAccessLogViewComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<VcsRepositoryAccessLogViewComponent>;
     let programmingExerciseParticipationService: ProgrammingExerciseParticipationService;
     const userId = 4;

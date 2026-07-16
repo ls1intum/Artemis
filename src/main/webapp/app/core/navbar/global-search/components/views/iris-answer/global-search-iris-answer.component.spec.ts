@@ -2,7 +2,6 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { MockPipe } from 'ng-mocks';
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { Subject } from 'rxjs';
 import { provideRouter } from '@angular/router';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -34,8 +33,6 @@ const SOURCES: LectureSearchResult[] = [
 ];
 
 describe('GlobalSearchIrisAnswerComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: GlobalSearchIrisAnswerComponent;
     let fixture: ComponentFixture<GlobalSearchIrisAnswerComponent>;
     let askSubject: Subject<IrisSearchStatusUpdate>;
