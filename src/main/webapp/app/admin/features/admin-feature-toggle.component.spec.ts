@@ -146,7 +146,7 @@ describe('AdminFeatureToggleComponentTest', () => {
             expect(comp.featureToggles()).toHaveLength(0);
             // Profile and module features load independently and must still be populated despite the toggle failure.
             expect(comp.profileFeatures()).toHaveLength(3);
-            expect(comp.moduleFeatures()).toHaveLength(19);
+            expect(comp.moduleFeatures()).toHaveLength(20);
         });
 
         it('should set documentation links for features that have them', () => {
