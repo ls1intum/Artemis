@@ -75,6 +75,8 @@ export class CleanupServiceComponent implements OnInit {
             deleteTo: dayjs().subtract(6, 'months'),
             lastExecuted: undefined,
             datesValid: signal(true),
+            deleteFromValid: signal(true),
+            deleteToValid: signal(true),
         },
         {
             name: 'deletePlagiarismComparisons',
@@ -82,6 +84,8 @@ export class CleanupServiceComponent implements OnInit {
             deleteTo: dayjs().subtract(6, 'months'),
             lastExecuted: undefined,
             datesValid: signal(true),
+            deleteFromValid: signal(true),
+            deleteToValid: signal(true),
         },
         {
             name: 'deleteNonRatedResults',
@@ -89,6 +93,8 @@ export class CleanupServiceComponent implements OnInit {
             deleteTo: dayjs().subtract(6, 'months'),
             lastExecuted: undefined,
             datesValid: signal(true),
+            deleteFromValid: signal(true),
+            deleteToValid: signal(true),
         },
         {
             name: 'deleteOldRatedResults',
@@ -96,6 +102,8 @@ export class CleanupServiceComponent implements OnInit {
             deleteTo: dayjs().subtract(6, 'months'),
             lastExecuted: undefined,
             datesValid: signal(true),
+            deleteFromValid: signal(true),
+            deleteToValid: signal(true),
         },
         {
             name: 'deleteOldSubmissionVersions',
@@ -103,6 +111,8 @@ export class CleanupServiceComponent implements OnInit {
             deleteTo: dayjs().subtract(6, 'months'),
             lastExecuted: undefined,
             datesValid: signal(true),
+            deleteFromValid: signal(true),
+            deleteToValid: signal(true),
         },
     ]);
 

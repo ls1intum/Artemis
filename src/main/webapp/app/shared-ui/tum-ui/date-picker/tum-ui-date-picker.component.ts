@@ -6,10 +6,12 @@ import {
     TemplateRef,
     ViewContainerRef,
     computed,
+    effect,
     inject,
     input,
     linkedSignal,
     model,
+    output,
     signal,
     viewChild,
 } from '@angular/core';
@@ -82,6 +84,14 @@ export class TumUiDatePickerComponent implements FormValueControl<dayjs.Dayjs | 
     readonly labelName = input<string>();
     readonly baseZIndex = input(1060);
 
+    /**
+     * Emits whether the currently typed text parses to a valid date, on every validity change.
+     * Because an unparseable edit deliberately does NOT emit `valueChange` (keepInvalid), a consumer
+     * that must gate a destructive action on the field being parseable (e.g. disable a submit button)
+     * should listen here rather than infer validity from `valueChange`.
+     */
+    readonly validChange = output<boolean>();
+
     protected readonly faCalendar = faCalendar;
     protected readonly faXmark = faXmark;
     protected readonly faGlobe = faGlobe;
@@ -116,6 +126,9 @@ export class TumUiDatePickerComponent implements FormValueControl<dayjs.Dayjs | 
 
     constructor() {
         this.destroyRef.onDestroy(() => this.overlayRef?.dispose());
+        // Mirror parse-validity to consumers whenever it changes, so they can gate actions on
+        // unparseable input (which by design does not emit valueChange). Emits the initial `true`.
+        effect(() => this.validChange.emit(this.isInputValid()));
     }
 
     /**

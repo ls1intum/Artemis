@@ -127,10 +127,18 @@ export class TumUiCalendarComponent {
                 moveTo(index - (index % 7) + 6);
                 break;
             case 'Enter':
-            case ' ':
+            case ' ': {
                 event.preventDefault();
-                this.selectDay(this.flatDays()[index]);
+                const day = this.flatDays()[index];
+                // Selecting an adjacent-month day changes the active month → the grid re-renders and the
+                // focused <button> is destroyed, dropping focus to <body>. Restore the roving cell afterwards
+                // (same mechanism as PageUp/PageDown). Same-month selection does not re-render, so skip it.
+                if (this.isOtherMonth(day)) {
+                    this.restoreFocusAfterRender = true;
+                }
+                this.selectDay(day);
                 break;
+            }
             case 'PageUp':
                 event.preventDefault();
                 this.restoreFocusAfterRender = true;

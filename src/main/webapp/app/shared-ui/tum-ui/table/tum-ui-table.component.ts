@@ -94,7 +94,7 @@ export class TumUiTableComponent<T> {
         effect(() => {
             const total = this.totalRecords();
             const rows = this.effectivePageSize();
-            const lastPage = total > 0 ? Math.ceil(total / rows) - 1 : 0;
+            const lastPage = total > 0 ? Math.ceil(total / Math.max(1, rows)) - 1 : 0;
             if (this.page() > lastPage) {
                 untracked(() => {
                     this.page.set(lastPage);
@@ -117,10 +117,10 @@ export class TumUiTableComponent<T> {
         return { data: row, col, value: this.resolveValue(row, col), rowIndex };
     }
 
-    protected ariaSortFor(col: ColumnDef<T>): 'ascending' | 'descending' | null {
+    protected ariaSortFor(col: ColumnDef<T>): 'ascending' | 'descending' | undefined {
         const sort = this.sortState();
         if (!sort || sort.field !== col.field) {
-            return null;
+            return undefined;
         }
         return sort.direction === 'asc' ? 'ascending' : 'descending';
     }

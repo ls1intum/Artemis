@@ -77,4 +77,26 @@ describe('CleanupServiceComponent date range integration', () => {
         expect(operation.deleteTo?.toISOString()).toBe(invalidTo.toISOString());
         expect(operation.datesValid()).toBe(true);
     });
+
+    it('disables the destructive Execute button when a date field is overwritten with unparseable text', () => {
+        const operation = component.cleanupOperations()[1];
+        const row = fixture.debugElement.query(By.css(`[data-testid="cleanup-row-${operation.name}"]`));
+        const executeButton = () => row.query(By.css('[data-testid="execute-operation"]')).nativeElement as HTMLButtonElement;
+
+        // Valid seeded range → Execute enabled.
+        expect(executeButton().disabled).toBe(false);
+
+        // Overwrite the "from" field with garbage. This is the keepInvalid path: the picker does NOT emit
+        // valueChange (so operation.deleteFrom keeps its stale valid date and datesValid stays true), but it
+        // DOES emit validChange(false). The Execute button must reflect that and disable — otherwise the admin
+        // could run the destructive cleanup against a stale range while the field shows unparseable text.
+        const fromInput = row.query(By.css('[data-testid="delete-from-picker"] [data-testid="tum-ui-date-picker-input"]')).nativeElement as HTMLInputElement;
+        fromInput.value = 'not a date';
+        fromInput.dispatchEvent(new Event('input'));
+        fixture.detectChanges();
+
+        expect(operation.datesValid()).toBe(true); // value unchanged (keepInvalid), so the range check still passes
+        expect(operation.deleteFromValid()).toBe(false); // but the typed text no longer parses
+        expect(executeButton().disabled).toBe(true);
+    });
 });
