@@ -28,9 +28,6 @@ concurrency: ${{ github.event.inputs.environment_name }}
 env:
   # The single CI entry point that publishes the Artemis.war artifact (via ci-build.yml).
   build_workflow_name: ci.yml
-  # Self-hosted runners reuse their workspace; a sparse checkout there truncates it for every later
-  # job on that runner (actions/checkout#2249). Keep helper checkouts in a directory of their own.
-  WORKFLOW_CHECKOUT_ROOT: .workflow-checkouts/${{ github.run_id }}-${{ github.run_attempt }}
 
 # Default-deny; each job opts into the minimum scope it needs.
 permissions: {}
@@ -43,7 +40,7 @@ jobs:
       contents: read
       actions: read
     outputs:
-      build_workflow_run_id: ${{ steps.resolve.outputs.run_id }}
+      build_workflow_run_id: ${{ steps.resolve.outputs.run-id }}
     env:
       BRANCH_NAME: ${{ github.event.inputs.branch_name }}
       COMMIT_SHA: ${{ github.event.inputs.commit_sha }}
@@ -60,35 +57,20 @@ jobs:
           echo "Triggered by: $TRIGGERED_BY"
 
       # Helios dispatches this workflow from the branch being deployed, so the default ref is right.
-      - name: Check out resolver script
-        uses: actions/checkout@v6
-        with:
-          sparse-checkout: .github/actions/resolve-artifact-run
-          sparse-checkout-cone-mode: false
-          path: ${{ env.WORKFLOW_CHECKOUT_ROOT }}/resolve-artifact-run
+      - uses: actions/checkout@v6
 
       # Resolve the CI run that actually carries Artemis.war for this exact commit — enumerating all
       # runs for the SHA rather than trusting `.workflow_runs[0]`, which fails when a superseded or
       # artifact-less run for the same commit sorts first (Helios#1196).
       - name: Resolve build run for the commit
         id: resolve
-        env:
-          REPO: ${{ github.repository }}
-          WORKFLOW: ${{ env.build_workflow_name }}
-          SHA: ${{ github.event.inputs.commit_sha }}
-          BRANCH: ${{ github.event.inputs.branch_name }}
-          ARTIFACT_NAME: Artemis.war
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          set -Eeuo pipefail
-          bash "${WORKFLOW_CHECKOUT_ROOT}/resolve-artifact-run/.github/actions/resolve-artifact-run/resolve-artifact-run.sh"
-
-      - name: Cleanup resolver checkout
-        if: always()
-        run: |
-          set -Eeuo pipefail
-          : "${WORKFLOW_CHECKOUT_ROOT:?}"
-          rm -rf -- "${WORKFLOW_CHECKOUT_ROOT}/resolve-artifact-run"
+        uses: ./.github/actions/resolve-artifact-run
+        with:
+          workflow: ${{ env.build_workflow_name }}
+          sha: ${{ github.event.inputs.commit_sha }}
+          branch: ${{ github.event.inputs.branch_name }}
+          artifact-name: Artemis.war
+          token: ${{ secrets.GITHUB_TOKEN }}
 
   deploy:
     needs: check-build-status
