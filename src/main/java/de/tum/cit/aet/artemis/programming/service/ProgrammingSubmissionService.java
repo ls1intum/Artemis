@@ -229,11 +229,9 @@ public class ProgrammingSubmissionService extends SubmissionService {
         // rows from the database just to inspect one submission per participation.
         List<Long> participationIds = programmingExerciseStudentParticipationRepository.findStudentParticipationIdsByExerciseId(programmingExerciseId);
         List<Long> latestSubmissionIds = programmingSubmissionRepository.findLatestSubmissionIdsByExerciseId(programmingExerciseId);
+        // findLatestSubmissionIdsByExerciseId returns exactly one (latest) submission per participation.
         Map<Long, ProgrammingSubmission> latestSubmissionByParticipationId = programmingSubmissionRepository.findSubmissionsWithResultsByIdIn(latestSubmissionIds).stream()
-                // If a participation has several submissions with the same (latest) submission date, keep the one with
-                // the highest id as the deterministic tie-breaker.
-                .collect(Collectors.toMap(submission -> submission.getParticipation().getId(), Function.identity(),
-                        (first, second) -> first.getId() > second.getId() ? first : second));
+                .collect(Collectors.toMap(submission -> submission.getParticipation().getId(), Function.identity()));
 
         List<PendingProgrammingSubmissionDTO> pendingSubmissions = new ArrayList<>();
         for (Long participationId : participationIds) {

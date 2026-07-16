@@ -664,6 +664,28 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void getLatestSubmissionsForExercise_picksLatestBySubmissionDateNotById() throws Exception {
+        // Create a submission with a newer submission date first (so it gets the lower id) ...
+        ProgrammingSubmission newerByDate = (ProgrammingSubmission) new ProgrammingSubmission().submissionDate(ZonedDateTime.now().minusSeconds(30L));
+        newerByDate = programmingExerciseUtilService.addProgrammingSubmission(programmingExercise, newerByDate, TEST_PREFIX + "student1");
+        // ... then a submission with an older submission date for the same participation (so it gets the higher id).
+        ProgrammingSubmission olderByDateHigherId = (ProgrammingSubmission) new ProgrammingSubmission().submissionDate(ZonedDateTime.now().minusSeconds(90L));
+        olderByDateHigherId = programmingExerciseUtilService.addProgrammingSubmission(programmingExercise, olderByDateHigherId, TEST_PREFIX + "student1");
+        assertThat(olderByDateHigherId.getId()).isGreaterThan(newerByDate.getId());
+        assertThat(olderByDateHigherId.getParticipation().getId()).isEqualTo(newerByDate.getParticipation().getId());
+
+        List<PendingProgrammingSubmissionDTO> returnedSubmissions = request.getList(exercisesBaseUrl + programmingExercise.getId() + "/latest-pending-submissions", HttpStatus.OK,
+                PendingProgrammingSubmissionDTO.class);
+
+        long participationId = newerByDate.getParticipation().getId();
+        PendingProgrammingSubmissionDTO entry = returnedSubmissions.stream().filter(dto -> dto.participationId() == participationId).findFirst().orElseThrow();
+        // The latest submission is the one with the newer submission date, even though the other submission has a higher id.
+        assertThat(entry.submission()).isNotNull();
+        assertThat(entry.submission().id()).isEqualTo(newerByDate.getId());
+    }
+
+    @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetLatestSubmissionsForExercise_studentForbidden() throws Exception {
         request.getMap(exercisesBaseUrl + programmingExercise.getId() + "/latest-pending-submissions", HttpStatus.FORBIDDEN, Long.class, ProgrammingSubmission.class);

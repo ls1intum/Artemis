@@ -106,21 +106,23 @@ public interface ProgrammingSubmissionRepository extends ArtemisJpaRepository<Pr
      * <p>
      * Ordering is by {@code submissionDate} (not by id) to match the previous behavior: a submission created out of
      * order (e.g. a delayed fallback submission) can have the newest id but an older submission date, and must not be
-     * treated as the latest. If several submissions of a participation share the same latest date, all their ids are
-     * returned; the caller resolves the tie (e.g. by keeping the highest id).
+     * treated as the latest. Ties on the same latest date are broken by the higher id.
+     * <p>
+     * Implemented as a {@code LEFT JOIN} anti-join (select the submission for which no strictly later submission of the
+     * same participation exists) rather than a correlated subquery, following the project's "avoid subqueries" rule.
+     * This returns exactly one id per participation.
      *
      * @param exerciseId the id of the programming exercise
-     * @return the latest submission id(s) per participation
+     * @return the latest submission id per participation
      */
     @Query("""
             SELECT s.id
             FROM ProgrammingSubmission s
+                LEFT JOIN ProgrammingSubmission s2
+                    ON s2.participation.id = s.participation.id
+                    AND (s2.submissionDate > s.submissionDate OR (s2.submissionDate = s.submissionDate AND s2.id > s.id))
             WHERE s.participation.exercise.id = :exerciseId
-                AND s.submissionDate = (
-                    SELECT MAX(s2.submissionDate)
-                    FROM ProgrammingSubmission s2
-                    WHERE s2.participation.id = s.participation.id
-                )
+                AND s2.id IS NULL
             """)
     List<Long> findLatestSubmissionIdsByExerciseId(@Param("exerciseId") long exerciseId);
 
