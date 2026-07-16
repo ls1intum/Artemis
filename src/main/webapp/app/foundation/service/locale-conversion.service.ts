@@ -11,7 +11,7 @@ export class LocaleConversionService {
     // default value, will be overridden by the current language of Artemis
 
     constructor() {
-        this.locale = this.translateService.getCurrentLang();
+        this.locale = this.translateService.getCurrentLang() ?? 'en';
     }
 
     /**

@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { Observable, Subject, of } from 'rxjs';
@@ -17,8 +16,6 @@ import { PlagiarismComparison } from 'app/plagiarism/shared/entities/PlagiarismC
 import { DialogService } from 'primeng/dynamicdialog';
 
 describe('Plagiarism Header Component', () => {
-    setupTestBed({ zoneless: true });
-
     let comp: PlagiarismHeaderComponent;
     let fixture: ComponentFixture<PlagiarismHeaderComponent>;
     let plagiarismCasesService: PlagiarismCasesService;

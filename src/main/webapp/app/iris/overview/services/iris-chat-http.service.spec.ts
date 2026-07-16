@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { take } from 'rxjs/operators';
@@ -11,8 +10,6 @@ import { IrisMessageRequestDTO } from 'app/iris/shared/entities/iris-message-req
 import { IrisMessageContentDTO } from 'app/iris/shared/entities/iris-message-content-dto.model';
 
 describe('IrisChatHttpService', () => {
-    setupTestBed({ zoneless: true });
-
     let service: IrisChatHttpService;
     let httpMock: HttpTestingController;
 

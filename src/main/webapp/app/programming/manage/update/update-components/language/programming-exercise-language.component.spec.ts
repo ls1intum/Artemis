@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
 import { of } from 'rxjs';
@@ -12,8 +11,6 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { TranslateService } from '@ngx-translate/core';
 
 describe('ProgrammingExerciseLanguageComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<ProgrammingExerciseLanguageComponent>;
     let comp: ProgrammingExerciseLanguageComponent;
 
