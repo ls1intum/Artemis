@@ -1,12 +1,9 @@
 import { TestBed } from '@angular/core/testing';
 import { SafeHtml } from '@angular/platform-browser';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { SafeHtmlPipe } from 'app/foundation/pipes/safe-html.pipe';
 
 describe('SafeHtmlPipe', () => {
-    setupTestBed({ zoneless: true });
-
     let pipe: SafeHtmlPipe;
 
     beforeEach(() => {

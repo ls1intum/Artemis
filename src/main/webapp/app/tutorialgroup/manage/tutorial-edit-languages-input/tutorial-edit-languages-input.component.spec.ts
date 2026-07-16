@@ -1,6 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { OverlayContainer } from '@angular/cdk/overlay';
 import { TranslateService } from '@ngx-translate/core';
 import { TutorialEditLanguagesInputComponent } from './tutorial-edit-languages-input.component';
@@ -13,8 +12,6 @@ function assertNonNullable<T>(value: T): asserts value is NonNullable<T> {
 }
 
 describe('TutorialEditLanguagesInputComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: TutorialEditLanguagesInputComponent;
     let fixture: ComponentFixture<TutorialEditLanguagesInputComponent>;
     let overlayContainer: OverlayContainer;

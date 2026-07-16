@@ -1,6 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { StructuredGradingInstructionsAssessmentLayoutComponent } from 'app/assessment/manage/structured-grading-instructions-assessment-layout/structured-grading-instructions-assessment-layout.component';
 import { GradingInstruction } from 'app/exercise/structured-grading-criterion/grading-instruction.model';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
@@ -15,7 +14,6 @@ import { TranslateService } from '@ngx-translate/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 describe('StructuredGradingInstructionsAssessmentLayoutComponent', () => {
-    setupTestBed({ zoneless: true });
     let comp: StructuredGradingInstructionsAssessmentLayoutComponent;
     let fixture: ComponentFixture<StructuredGradingInstructionsAssessmentLayoutComponent>;
 

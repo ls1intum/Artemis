@@ -36,7 +36,7 @@
 <div class="d-flex mt-2 justify-content-center">
     <div class="line-chart-container" id="scores-line-chart">
         <div class="chart-scroll-content" [style.width.px]="chartWidth()">
-            <p-chart type="line" [data]="chartData()" [options]="chartOptions()" (onDataSelect)="onSelect($event)" />
+            <p-chart type="line" [data]="chartData()" [options]="chartOptions()" (onDataSelect)="onSelect($any($event))" />
         </div>
     </div>
 </div>

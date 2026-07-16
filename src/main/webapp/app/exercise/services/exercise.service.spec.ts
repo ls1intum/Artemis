@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
@@ -31,8 +30,6 @@ import { ExerciseDeletionSummaryDTO } from 'app/exercise/shared/entities/exercis
 import { EntitySummary } from 'app/shared-ui/delete-dialog/delete-dialog.model';
 
 describe('Exercise Service', () => {
-    setupTestBed({ zoneless: true });
-
     let service: ExerciseService;
     let httpMock: HttpTestingController;
     let artemisMarkdown: ArtemisMarkdownService;

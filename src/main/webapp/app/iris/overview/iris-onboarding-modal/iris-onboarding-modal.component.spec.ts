@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
@@ -38,8 +37,6 @@ function createMockElement(rect: Partial<DOMRect>): HTMLElement {
 }
 
 describe('IrisOnboardingModalComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: IrisOnboardingModalComponent;
     let fixture: ComponentFixture<IrisOnboardingModalComponent>;
     let dialogRef: DynamicDialogRef;

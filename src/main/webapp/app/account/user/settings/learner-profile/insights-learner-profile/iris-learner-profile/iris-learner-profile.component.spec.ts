@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { IrisLearnerProfileComponent } from './iris-learner-profile.component';
 import { AccountService } from 'app/core/auth/account.service';
@@ -14,8 +13,6 @@ import { DialogService } from 'primeng/dynamicdialog';
 import { of } from 'rxjs';
 
 describe('IrisLearnerProfileComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: IrisLearnerProfileComponent;
     let fixture: ComponentFixture<IrisLearnerProfileComponent>;
     let accountService: AccountService;

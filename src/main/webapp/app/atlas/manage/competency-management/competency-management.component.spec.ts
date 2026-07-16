@@ -35,10 +35,8 @@ import { LocalStorageService } from 'app/foundation/service/local-storage.servic
 import { FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { MockFeatureToggleService } from 'test/helpers/mocks/service/mock-feature-toggle.service';
 import { DialogService } from 'primeng/dynamicdialog';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('CompetencyManagementComponent', () => {
-    setupTestBed({ zoneless: true });
     let fixture: ComponentFixture<CompetencyManagementComponent>;
     let component: CompetencyManagementComponent;
     let courseCompetencyApiService: CourseCompetencyApiService;
