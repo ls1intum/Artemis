@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.exam.service;
 
+import static de.tum.cit.aet.artemis.core.util.TimeLogUtil.formatDurationFrom;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -20,6 +22,7 @@ import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.account.service.user.UserService;
 import de.tum.cit.aet.artemis.core.config.Constants;
+import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
@@ -180,8 +183,11 @@ public class ExamRegistrationService {
 
         if (exam.isStarted()) {
             // Generate student exams for the registered students if the exam has already started and prepare the exercises
-            studentExamService.generateMissingStudentExams(exam);
-            studentExamService.startExercises(examId);
+            List<StudentExam> newStudentExams = studentExamService.generateMissingStudentExams(exam);
+            List<Long> studentExamIds = newStudentExams.stream().map(DomainObject::getId).toList();
+            long start = System.nanoTime();
+            studentExamService.startExercisesForStudentExams(exam.getId(), studentExamIds).thenAccept(numberOfGeneratedParticipations -> log
+                    .info("Generated {} participations in {} for student exams of exam {}", numberOfGeneratedParticipations, formatDurationFrom(start), examId));
         }
 
         try {
