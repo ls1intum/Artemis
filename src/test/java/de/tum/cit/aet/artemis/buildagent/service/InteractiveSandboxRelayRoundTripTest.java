@@ -34,6 +34,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -80,6 +81,8 @@ class InteractiveSandboxRelayRoundTripTest {
 
     private LocalTopic<SandboxOpRequest> requestsTopic;
 
+    private LocalTopic<SandboxOpResponse> responsesTopic;
+
     private DistributedDataAccessService clientAccess;
 
     @BeforeEach
@@ -88,7 +91,7 @@ class InteractiveSandboxRelayRoundTripTest {
         // is shared the same way: the sender stages the bytes under the correlation id and removes them after the terminal response (copy-in: client→agent, copy-out:
         // agent→client).
         requestsTopic = new LocalTopic<>();
-        LocalTopic<SandboxOpResponse> responsesTopic = new LocalTopic<>();
+        responsesTopic = new LocalTopic<>();
         LocalMap<String, byte[]> payloads = new LocalMap<>();
 
         clientAccess = mock(DistributedDataAccessService.class);
@@ -327,6 +330,8 @@ class InteractiveSandboxRelayRoundTripTest {
         try (RelayHarness harness = newHarness(1)) {
             CountDownLatch createStarted = new CountDownLatch(1);
             CountDownLatch releaseCreate = new CountDownLatch(1);
+            AtomicBoolean createCompleted = new AtomicBoolean();
+            AtomicReference<Boolean> cleanupSawCompletedCreate = new AtomicReference<>();
             when(harness.localSandbox().createSession(any())).thenAnswer(invocation -> {
                 createStarted.countDown();
                 boolean interrupted = false;
@@ -342,7 +347,12 @@ class InteractiveSandboxRelayRoundTripTest {
                 if (interrupted) {
                     Thread.currentThread().interrupt();
                 }
+                createCompleted.set(true);
                 return CONTAINER_ID;
+            });
+            when(harness.localSandbox().removeSessionsForCurrentAgent()).thenAnswer(invocation -> {
+                cleanupSawCompletedCreate.set(createCompleted.get());
+                return 0;
             });
             clearInvocations(harness.localSandbox());
 
@@ -350,10 +360,11 @@ class InteractiveSandboxRelayRoundTripTest {
             assertThat(createStarted.await(2, TimeUnit.SECONDS)).isTrue();
             CompletableFuture<Void> shutdown = CompletableFuture.runAsync(harness.handler()::shutdown);
 
-            assertThat(shutdown.isDone()).isFalse();
+            await().atMost(Duration.ofSeconds(5)).until(() -> ReflectionTestUtils.getField(harness.handler(), "requestListenerId") == null);
             releaseCreate.countDown();
             assertThat(create.get(5, TimeUnit.SECONDS)).isEqualTo(AGENT_SHORT_NAME + "::" + CONTAINER_ID);
             shutdown.get(5, TimeUnit.SECONDS);
+            assertThat(cleanupSawCompletedCreate).hasValue(true);
             verify(harness.localSandbox()).removeSessionsForCurrentAgent();
         }
     }
@@ -381,17 +392,29 @@ class InteractiveSandboxRelayRoundTripTest {
         SandboxOpRequest foreignRequest = SandboxOpRequest.destroy("corr-foreign", "some-other-agent", CONTAINER_ID);
         requestsTopic.publish(foreignRequest);
 
-        await().during(Duration.ofMillis(200)).atMost(Duration.ofSeconds(2)).untilAsserted(() -> verify(localSandbox, never()).destroySession(anyString()));
+        verify(localSandbox, never()).destroySession(anyString());
     }
 
     @Test
-    void duplicateCorrelationId_isHandledOnlyOnce() {
-        createOwnedHandle();
-        SandboxOpRequest request = SandboxOpRequest.destroy("corr-dup", AGENT_SHORT_NAME, CONTAINER_ID);
+    void duplicateCorrelationId_replaysResponseWithoutRepeatingCreate() throws Exception {
+        String correlationId = "corr-dup";
+        CountDownLatch firstResponseReceived = new CountDownLatch(1);
+        AtomicInteger matchingResponses = new AtomicInteger();
+        responsesTopic.addMessageListener(response -> {
+            if (correlationId.equals(response.correlationId())) {
+                matchingResponses.incrementAndGet();
+                firstResponseReceived.countDown();
+            }
+        });
+        when(localSandbox.createSession(any())).thenReturn(CONTAINER_ID);
+        SandboxOpRequest request = SandboxOpRequest.create(correlationId, AGENT_SHORT_NAME, sessionSpec());
+
         requestsTopic.publish(request);
+        assertThat(firstResponseReceived.await(5, TimeUnit.SECONDS)).isTrue();
         requestsTopic.publish(request);
 
-        await().during(Duration.ofMillis(200)).atMost(Duration.ofSeconds(2)).untilAsserted(() -> verify(localSandbox, times(1)).destroySession(CONTAINER_ID));
+        assertThat(matchingResponses).hasValue(2);
+        verify(localSandbox, times(1)).createSession(any());
     }
 
     @Test
