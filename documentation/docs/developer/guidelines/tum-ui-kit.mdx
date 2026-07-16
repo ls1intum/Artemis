@@ -1,5 +1,20 @@
 import Callout from '../../../src/components/Callout/Callout';
 import { CalloutVariant } from '../../../src/components/Callout/Callout.types';
+import TumuiButtonLight from './assets/tumui-button-light.png';
+import TumuiButtonDark from './assets/tumui-button-dark.png';
+import TumuiTagLight from './assets/tumui-tag-light.png';
+import TumuiTagDark from './assets/tumui-tag-dark.png';
+import TumuiTooltipLight from './assets/tumui-tooltip-light.png';
+import TumuiTooltipDark from './assets/tumui-tooltip-dark.png';
+import TumuiPopoverLight from './assets/tumui-popover-light.png';
+import TumuiPopoverDark from './assets/tumui-popover-dark.png';
+
+export const Shots = ({ light, dark, alt }) => (
+    <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', alignItems: 'flex-start', margin: '1rem 0' }}>
+        <img src={light} alt={`${alt} (light theme)`} style={{ maxWidth: '100%', border: '1px solid var(--ifm-color-emphasis-300)', borderRadius: '6px' }} />
+        <img src={dark} alt={`${alt} (dark theme)`} style={{ maxWidth: '100%', border: '1px solid var(--ifm-color-emphasis-300)', borderRadius: '6px' }} />
+    </div>
+);
 
 # UI Kit (tum-aet-ui)
 
@@ -97,6 +112,8 @@ such as `text-state-danger` is correct in both themes without a `dark:` variant.
 
 A native `<button>` with severity / size variants.
 
+<Shots light={TumuiButtonLight} dark={TumuiButtonDark} alt="tum-ui-button variants" />
+
 | Input              | Type                                                                                  | Default     | Notes                                                                  |
 | ------------------ | ------------------------------------------------------------------------------------- | ----------- | ---------------------------------------------------------------------- |
 | `severity`         | `'primary' \| 'secondary' \| 'success' \| 'info' \| 'warn' \| 'danger' \| 'contrast'` | `'primary'` |                                                                        |
@@ -126,6 +143,8 @@ A native `<button>` with severity / size variants.
 A presentational status pill (no behavior). Colored severities use a tinted background (`bg-state-*/15`)
 with a `text-state-*` label; `secondary` / `contrast` use the surface ramp.
 
+<Shots light={TumuiTagLight} dark={TumuiTagDark} alt="tum-ui-tag severities" />
+
 | Input      | Type                                                                     | Default                             |
 | ---------- | ------------------------------------------------------------------------ | ----------------------------------- |
 | `severity` | `'secondary' \| 'success' \| 'info' \| 'warn' \| 'danger' \| 'contrast'` | `'secondary'`                       |
@@ -142,6 +161,8 @@ Hover + focus tooltip built on the overlay substrate, with `aria-describedby` wi
 announced. Hover and keyboard focus are tracked independently, so the tooltip stays visible while
 either is active.
 
+<Shots light={TumuiTooltipLight} dark={TumuiTooltipDark} alt="tum-ui tooltip" />
+
 | Input                     | Type                                     | Default       |
 | ------------------------- | ---------------------------------------- | ------------- |
 | `tumUiTooltip`            | `string` (required)                      | –             |
@@ -156,6 +177,8 @@ either is active.
 
 A content-projected `role="dialog"` panel. Closes on backdrop click and Escape, traps and restores
 focus (`cdkTrapFocus`), and is exposed as a modal dialog (`aria-modal="true"`).
+
+<Shots light={TumuiPopoverLight} dark={TumuiPopoverDark} alt="tum-ui-popover panel" />
 
 | Input                 | Type                                     | Notes                           |
 | --------------------- | ---------------------------------------- | ------------------------------- |
