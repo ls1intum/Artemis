@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { Component } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActiveMenuDirective } from './active-menu.directive';
@@ -15,8 +14,6 @@ class TestHostComponent {
 }
 
 describe('ActiveMenuDirective', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<TestHostComponent>;
     let hostComponent: TestHostComponent;
     let translateService: TranslateService;

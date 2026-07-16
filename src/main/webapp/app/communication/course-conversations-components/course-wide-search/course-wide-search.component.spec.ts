@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Directive, input, output } from '@angular/core';
 import { CourseWideSearchComponent, CourseWideSearchConfig } from 'app/communication/course-conversations-components/course-wide-search/course-wide-search.component';
@@ -43,8 +42,6 @@ class InfiniteScrollStubDirective {
     readonly fromRoot = input(false);
 }
 describe('CourseWideSearchComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: CourseWideSearchComponent;
     let fixture: ComponentFixture<CourseWideSearchComponent>;
 

@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Component, ComponentRef, input, output } from '@angular/core';
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
@@ -44,8 +43,6 @@ class MockIrisBaseChatbotComponent {
 }
 
 describe('TutorSuggestionComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: TutorSuggestionComponent;
     let componentRef: ComponentRef<TutorSuggestionComponent>;
     let fixture: ComponentFixture<TutorSuggestionComponent>;

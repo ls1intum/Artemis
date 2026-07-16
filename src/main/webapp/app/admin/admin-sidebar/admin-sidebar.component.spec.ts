@@ -3,7 +3,6 @@
  */
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { provideRouter } from '@angular/router';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
@@ -15,8 +14,6 @@ import { AdminSidebarComponent } from './admin-sidebar.component';
 class MockEmptyComponent {}
 
 describe('AdminSidebarComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: AdminSidebarComponent;
     let fixture: ComponentFixture<AdminSidebarComponent>;
 

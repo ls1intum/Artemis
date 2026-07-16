@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { DebugElement } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -19,8 +18,6 @@ import { DialogService } from 'primeng/dynamicdialog';
 import { EnlargeSlideImageComponent } from 'app/communication/posting-content/enlarge-slide-image/enlarge-slide-image.component';
 
 describe('PostingContentPartComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: PostingContentPartComponent;
     let fixture: ComponentFixture<PostingContentPartComponent>;
     let debugElement: DebugElement;

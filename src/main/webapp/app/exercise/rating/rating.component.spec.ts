@@ -1,7 +1,6 @@
 import { Component, SimpleChange, input, output } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { of } from 'rxjs';
 import { RatingComponent } from 'app/exercise/rating/rating.component';
@@ -31,8 +30,6 @@ class StarRatingComponentStub {
 }
 
 describe('RatingComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let ratingComponent: RatingComponent;
     let ratingComponentFixture: ComponentFixture<RatingComponent>;
     let ratingService: RatingService;
