@@ -10,6 +10,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
+import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
@@ -26,8 +27,30 @@ import java.util.Optional;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.pdfbox.Loader;
+import org.apache.pdfbox.contentstream.operator.Operator;
+import org.apache.pdfbox.cos.COSArray;
+import org.apache.pdfbox.cos.COSDictionary;
+import org.apache.pdfbox.cos.COSInteger;
+import org.apache.pdfbox.cos.COSName;
+import org.apache.pdfbox.multipdf.PDFMergerUtility;
+import org.apache.pdfbox.pdfparser.PDFStreamParser;
 import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.pdmodel.PDFormContentStream;
 import org.apache.pdfbox.pdmodel.PDPage;
+import org.apache.pdfbox.pdmodel.PDPageContentStream;
+import org.apache.pdfbox.pdmodel.PDResources;
+import org.apache.pdfbox.pdmodel.common.PDNumberTreeNode;
+import org.apache.pdfbox.pdmodel.common.PDRectangle;
+import org.apache.pdfbox.pdmodel.documentinterchange.logicalstructure.PDMarkInfo;
+import org.apache.pdfbox.pdmodel.documentinterchange.logicalstructure.PDMarkedContentReference;
+import org.apache.pdfbox.pdmodel.documentinterchange.logicalstructure.PDParentTreeValue;
+import org.apache.pdfbox.pdmodel.documentinterchange.logicalstructure.PDStructureElement;
+import org.apache.pdfbox.pdmodel.documentinterchange.logicalstructure.PDStructureTreeRoot;
+import org.apache.pdfbox.pdmodel.graphics.form.PDFormXObject;
+import org.apache.pdfbox.pdmodel.graphics.image.LosslessFactory;
+import org.apache.pdfbox.pdmodel.graphics.image.PDImageXObject;
+import org.apache.pdfbox.pdmodel.interactive.action.PDActionURI;
+import org.apache.pdfbox.pdmodel.interactive.annotation.PDAnnotationLink;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -288,35 +311,212 @@ class FileUtilUnitTest {
     }
 
     @Test
+    void testMergePdf_nonexistentFiles_shouldReturnPresentEmptyFile() {
+        Optional<byte[]> result = FileUtil.mergePdfFiles(List.of(exportTestRootPath.resolve("missing.pdf")), "missing");
+        assertThat(result).contains(new byte[0]);
+    }
+
+    @Test
     void testMergePdf() throws IOException {
-        List<Path> paths = new ArrayList<>();
-        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-        PDDocument doc1 = new PDDocument();
-        doc1.addPage(new PDPage());
-        doc1.addPage(new PDPage());
-        doc1.addPage(new PDPage());
-        doc1.save(outputStream);
-        doc1.close();
+        Path firstPdf = createPdf("testfile1.pdf", List.of(new PDRectangle(100, 100), new PDRectangle(110, 110), new PDRectangle(120, 120)));
+        Path secondPdf = createPdf("testfile2.pdf", List.of(new PDRectangle(200, 200), new PDRectangle(210, 210)));
 
-        writeFile("testfile1.pdf", outputStream.toByteArray());
+        Optional<byte[]> mergedFile = FileUtil.mergePdfFiles(List.of(firstPdf, secondPdf), "list_of_pdfs");
 
-        outputStream.reset();
-        PDDocument doc2 = new PDDocument();
-        doc2.addPage(new PDPage());
-        doc2.addPage(new PDPage());
-        doc2.save(outputStream);
-        doc2.close();
-
-        writeFile("testfile2.pdf", outputStream.toByteArray());
-
-        paths.add(exportTestRootPath.resolve("testfile1.pdf"));
-        paths.add(exportTestRootPath.resolve("testfile2.pdf"));
-
-        Optional<byte[]> mergedFile = FileUtil.mergePdfFiles(paths, "list_of_pdfs");
         assertThat(mergedFile).isPresent();
-        assertThat(mergedFile.get()).isNotEmpty();
-        PDDocument mergedDoc = Loader.loadPDF(mergedFile.get());
-        assertThat(mergedDoc.getNumberOfPages()).isEqualTo(5);
+        try (PDDocument mergedDocument = Loader.loadPDF(mergedFile.orElseThrow())) {
+            assertThat(mergedDocument.getNumberOfPages()).isEqualTo(5);
+            assertThat(mergedDocument.getDocumentInformation().getTitle()).isEqualTo("list_of_pdfs");
+            assertThat(mergedDocument.getPages()).extracting(page -> page.getMediaBox().getWidth()).containsExactly(100F, 110F, 120F, 200F, 210F);
+        }
+    }
+
+    @Test
+    void testMergePdfMalformedStructureTreeUsesPageOnlyFallback() throws IOException {
+        Path malformedPdf = createPdf("malformed.pdf", List.of(new PDRectangle(100, 100)));
+        addMalformedStructureTreeAndUriLink(malformedPdf);
+        Path secondPdf = createPdf("second.pdf", List.of(new PDRectangle(200, 200)));
+
+        assertThatThrownBy(() -> mergeWithLegacyMode(List.of(malformedPdf, secondPdf))).isInstanceOf(IOException.class).hasMessageContaining("number tree");
+
+        Optional<byte[]> mergedFile = FileUtil.mergePdfFiles(List.of(malformedPdf, secondPdf), "fallback_title");
+
+        assertThat(mergedFile).isPresent();
+        try (PDDocument mergedDocument = Loader.loadPDF(mergedFile.orElseThrow())) {
+            assertThat(mergedDocument.getNumberOfPages()).isEqualTo(2);
+            assertThat(mergedDocument.getDocumentInformation().getTitle()).isEqualTo("fallback_title");
+            assertThat(mergedDocument.getPages()).extracting(page -> page.getMediaBox().getWidth()).containsExactly(100F, 200F);
+            assertThat(mergedDocument.getDocumentCatalog().getStructureTreeRoot()).isNull();
+            assertThat(mergedDocument.getPage(0).getCOSObject().containsKey(COSName.STRUCT_PARENTS)).isFalse();
+
+            PDAnnotationLink link = (PDAnnotationLink) mergedDocument.getPage(0).getAnnotations().getFirst();
+            assertThat(link.getCOSObject().containsKey(COSName.STRUCT_PARENT)).isFalse();
+            assertThat(link.getAction()).isInstanceOf(PDActionURI.class);
+            assertThat(((PDActionURI) link.getAction()).getURI()).isEqualTo("https://example.com/lecture-slide");
+
+            PDFormXObject outerForm = (PDFormXObject) mergedDocument.getPage(0).getResources().getXObject(COSName.getPDFName("OuterForm"));
+            PDFormXObject innerForm = (PDFormXObject) outerForm.getResources().getXObject(COSName.getPDFName("InnerForm"));
+            PDImageXObject taggedImage = (PDImageXObject) innerForm.getResources().getXObject(COSName.getPDFName("TaggedImage"));
+            assertThat(outerForm.getCOSObject().containsKey(COSName.STRUCT_PARENTS)).isFalse();
+            assertThat(innerForm.getCOSObject().containsKey(COSName.STRUCT_PARENTS)).isFalse();
+            assertThat(taggedImage.getCOSObject().containsKey(COSName.STRUCT_PARENT)).isFalse();
+            assertThat(taggedImage.getWidth()).isEqualTo(2);
+            assertThat(taggedImage.getHeight()).isEqualTo(2);
+            assertThat(new PDFStreamParser(innerForm).parse()).filteredOn(Operator.class::isInstance).extracting(token -> ((Operator) token).getName()).containsSubsequence("Do",
+                    "re", "S");
+        }
+    }
+
+    @Test
+    void testMergePdfWellFormedStructureTreeUsesLegacyMerge() throws IOException {
+        Path taggedPdf = createPdf("tagged.pdf", List.of(new PDRectangle(100, 100)));
+        addWellFormedStructureTree(taggedPdf);
+
+        Optional<byte[]> mergedFile = FileUtil.mergePdfFiles(List.of(taggedPdf), "legacy_title");
+
+        assertThat(mergedFile).isPresent();
+        try (PDDocument mergedDocument = Loader.loadPDF(mergedFile.orElseThrow())) {
+            assertThat(mergedDocument.getDocumentInformation().getTitle()).isEqualTo("legacy_title");
+            PDStructureTreeRoot mergedStructureTree = mergedDocument.getDocumentCatalog().getStructureTreeRoot();
+            assertThat(mergedStructureTree).isNotNull();
+            assertThat(mergedStructureTree.getParentTree().getNumbers()).containsKey(0);
+            assertThat(mergedDocument.getDocumentCatalog().getMarkInfo().isMarked()).isTrue();
+            assertThat(mergedDocument.getPage(0).getCOSObject().getInt(COSName.STRUCT_PARENTS)).isZero();
+            PDStructureElement mergedStructureElement = (PDStructureElement) mergedStructureTree.getKids().getFirst();
+            assertThat(mergedStructureElement.getPage()).isEqualTo(mergedDocument.getPage(0));
+            PDMarkedContentReference markedContentReference = (PDMarkedContentReference) mergedStructureElement.getKids().getFirst();
+            assertThat(markedContentReference.getMCID()).isZero();
+            assertThat(markedContentReference.getPage()).isEqualTo(mergedDocument.getPage(0));
+            assertThat(new PDFStreamParser(mergedDocument.getPage(0)).parse()).filteredOn(Operator.class::isInstance).extracting(token -> ((Operator) token).getName())
+                    .containsSubsequence("BDC", "re", "f", "EMC");
+        }
+    }
+
+    @Test
+    void testMergePdfCorruptSourceReturnsEmptyOptional() throws IOException {
+        Path corruptPdf = exportTestRootPath.resolve("corrupt.pdf");
+        writeFile("corrupt.pdf", "%PDF-1.7\n1 0 obj\n<< /Type /Catalog".getBytes(StandardCharsets.US_ASCII));
+
+        assertThatThrownBy(() -> mergePdf(corruptPdf, PDFMergerUtility.DocumentMergeMode.PDFBOX_LEGACY_MODE)).isInstanceOf(IOException.class);
+        assertThatThrownBy(() -> mergePdf(corruptPdf, PDFMergerUtility.DocumentMergeMode.OPTIMIZE_RESOURCES_MODE)).isInstanceOf(IOException.class);
+        assertThat(FileUtil.mergePdfFiles(List.of(corruptPdf), "corrupt")).isEmpty();
+    }
+
+    private static Path createPdf(String filename, List<PDRectangle> pageSizes) throws IOException {
+        Path path = exportTestRootPath.resolve(filename);
+        Files.createDirectories(path.getParent());
+        try (PDDocument document = new PDDocument()) {
+            pageSizes.stream().map(PDPage::new).forEach(document::addPage);
+            document.save(path.toFile());
+        }
+        return path;
+    }
+
+    private static void addMalformedStructureTreeAndUriLink(Path path) throws IOException {
+        try (PDDocument document = Loader.loadPDF(path.toFile())) {
+            PDStructureTreeRoot structureTreeRoot = new PDStructureTreeRoot();
+            COSDictionary parentTree = new COSDictionary();
+            COSArray numbers = new COSArray();
+            numbers.add(COSInteger.ZERO);
+            numbers.add(COSInteger.ONE);
+            parentTree.setItem(COSName.NUMS, numbers);
+            structureTreeRoot.getCOSObject().setItem(COSName.PARENT_TREE, parentTree);
+            document.getDocumentCatalog().setStructureTreeRoot(structureTreeRoot);
+
+            document.getPage(0).getCOSObject().setInt(COSName.STRUCT_PARENTS, 0);
+            PDAnnotationLink link = new PDAnnotationLink();
+            link.getCOSObject().setInt(COSName.STRUCT_PARENT, 1);
+            link.setRectangle(new PDRectangle(10, 10, 20, 20));
+            PDActionURI action = new PDActionURI();
+            action.setURI("https://example.com/lecture-slide");
+            link.setAction(action);
+            document.getPage(0).getAnnotations().add(link);
+
+            PDFormXObject innerForm = new PDFormXObject(document);
+            innerForm.setBBox(new PDRectangle(20, 20));
+            PDResources innerFormResources = new PDResources();
+            PDImageXObject taggedImage = LosslessFactory.createFromImage(document, new BufferedImage(2, 2, BufferedImage.TYPE_INT_RGB));
+            taggedImage.setStructParent(4);
+            innerFormResources.put(COSName.getPDFName("TaggedImage"), taggedImage);
+            innerForm.setResources(innerFormResources);
+            innerForm.setStructParents(2);
+            try (PDFormContentStream contentStream = new PDFormContentStream(innerForm)) {
+                contentStream.drawImage(taggedImage, 1, 1, 2, 2);
+                contentStream.addRect(1, 1, 10, 10);
+                contentStream.stroke();
+            }
+
+            PDFormXObject outerForm = new PDFormXObject(document);
+            outerForm.setBBox(new PDRectangle(20, 20));
+            PDResources outerFormResources = new PDResources();
+            outerFormResources.put(COSName.getPDFName("InnerForm"), innerForm);
+            outerForm.setResources(outerFormResources);
+            outerForm.setStructParents(3);
+            try (PDFormContentStream contentStream = new PDFormContentStream(outerForm)) {
+                contentStream.drawForm(innerForm);
+            }
+
+            PDResources pageResources = new PDResources();
+            pageResources.put(COSName.getPDFName("OuterForm"), outerForm);
+            document.getPage(0).setResources(pageResources);
+            try (PDPageContentStream contentStream = new PDPageContentStream(document, document.getPage(0))) {
+                contentStream.drawForm(outerForm);
+            }
+            document.save(path.toFile());
+        }
+    }
+
+    private static void addWellFormedStructureTree(Path path) throws IOException {
+        try (PDDocument document = Loader.loadPDF(path.toFile())) {
+            PDStructureTreeRoot structureTreeRoot = new PDStructureTreeRoot();
+            PDStructureElement structureElement = new PDStructureElement("Document", structureTreeRoot);
+            structureElement.setPage(document.getPage(0));
+            PDMarkedContentReference markedContentReference = new PDMarkedContentReference();
+            markedContentReference.setPage(document.getPage(0));
+            markedContentReference.setMCID(0);
+            structureElement.appendKid(markedContentReference);
+            structureTreeRoot.appendKid(structureElement);
+
+            COSArray parentTreeEntry = new COSArray();
+            parentTreeEntry.add(structureElement);
+            PDNumberTreeNode parentTree = new PDNumberTreeNode(PDParentTreeValue.class);
+            parentTree.setNumbers(Map.of(0, new PDParentTreeValue(parentTreeEntry)));
+            structureTreeRoot.setParentTree(parentTree);
+            structureTreeRoot.setParentTreeNextKey(1);
+            document.getPage(0).getCOSObject().setInt(COSName.STRUCT_PARENTS, 0);
+            document.getDocumentCatalog().setStructureTreeRoot(structureTreeRoot);
+            PDMarkInfo markInfo = new PDMarkInfo();
+            markInfo.setMarked(true);
+            document.getDocumentCatalog().setMarkInfo(markInfo);
+            try (PDPageContentStream contentStream = new PDPageContentStream(document, document.getPage(0))) {
+                contentStream.beginMarkedContent(COSName.P, 0);
+                contentStream.addRect(10, 10, 20, 20);
+                contentStream.fill();
+                contentStream.endMarkedContent();
+            }
+            document.save(path.toFile());
+        }
+    }
+
+    private static void mergeWithLegacyMode(List<Path> paths) throws IOException {
+        PDFMergerUtility merger = new PDFMergerUtility();
+        for (Path path : paths) {
+            merger.addSource(path.toFile());
+        }
+        try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
+            merger.setDestinationStream(outputStream);
+            merger.mergeDocuments(null);
+        }
+    }
+
+    private static void mergePdf(Path path, PDFMergerUtility.DocumentMergeMode mergeMode) throws IOException {
+        PDFMergerUtility merger = new PDFMergerUtility();
+        merger.setDocumentMergeMode(mergeMode);
+        merger.addSource(path.toFile());
+        try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
+            merger.setDestinationStream(outputStream);
+            merger.mergeDocuments(null);
+        }
     }
 
     @Test
