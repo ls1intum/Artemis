@@ -55,6 +55,7 @@ import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentInformation;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentStatus;
 import de.tum.cit.aet.artemis.buildagent.dto.SandboxExecResult;
+import de.tum.cit.aet.artemis.buildagent.dto.SandboxOp;
 import de.tum.cit.aet.artemis.buildagent.dto.SandboxOpRequest;
 import de.tum.cit.aet.artemis.buildagent.dto.SandboxOpResponse;
 import de.tum.cit.aet.artemis.buildagent.dto.SandboxSessionContext;
@@ -613,7 +614,18 @@ class InteractiveSandboxRelayRoundTripTest {
 
     @Test
     void concurrentDestroy_removesTheContainerExactlyOnce() throws Exception {
-        try (RelayHarness harness = newHarness(1); ExecutorService callers = Executors.newFixedThreadPool(2)) {
+        CountDownLatch destroyRequestsPublished = new CountDownLatch(2);
+        LocalTopic<SandboxOpRequest> observedRequests = new LocalTopic<>() {
+
+            @Override
+            public void publish(SandboxOpRequest request) {
+                super.publish(request);
+                if (request.op() == SandboxOp.DESTROY) {
+                    destroyRequestsPublished.countDown();
+                }
+            }
+        };
+        try (RelayHarness harness = newHarness(1, observedRequests); ExecutorService callers = Executors.newFixedThreadPool(2)) {
             when(harness.localSandbox().createSession(any())).thenReturn(CONTAINER_ID);
             String handle = harness.client().createSession(sessionSpec());
             CountDownLatch destroyStarted = new CountDownLatch(1);
@@ -629,8 +641,8 @@ class InteractiveSandboxRelayRoundTripTest {
             try {
                 assertThat(destroyStarted.await(5, TimeUnit.SECONDS)).isTrue();
                 second = CompletableFuture.runAsync(() -> harness.client().destroySession(handle), callers);
-                ThreadPoolExecutor relayWorkers = (ThreadPoolExecutor) ReflectionTestUtils.getField(harness.handler(), "workerExecutor");
-                await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> assertThat(relayWorkers.getActiveCount()).isEqualTo(2));
+                assertThat(destroyRequestsPublished.await(5, TimeUnit.SECONDS)).isTrue();
+                assertThatExceptionOfType(LocalCIException.class).isThrownBy(() -> harness.client().listSessions(AGENT_SHORT_NAME)).withMessageContaining("overloaded");
             }
             finally {
                 finishDestroy.countDown();
@@ -856,7 +868,10 @@ class InteractiveSandboxRelayRoundTripTest {
     }
 
     private static RelayHarness newHarness(int maxGenerationSandboxSlots) {
-        LocalTopic<SandboxOpRequest> requests = new LocalTopic<>();
+        return newHarness(maxGenerationSandboxSlots, new LocalTopic<>());
+    }
+
+    private static RelayHarness newHarness(int maxGenerationSandboxSlots, LocalTopic<SandboxOpRequest> requests) {
         LocalTopic<SandboxOpResponse> responses = new LocalTopic<>();
 
         DistributedDataAccessService clientAccess = mock(DistributedDataAccessService.class);
