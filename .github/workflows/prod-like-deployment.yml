@@ -28,8 +28,8 @@ concurrency: ${{ github.event.inputs.environment_name }}
 env:
   # The single CI entry point that publishes the Artemis.war artifact (via ci-build.yml).
   build_workflow_name: ci.yml
-  # These runners reuse their workspace, so a sparse checkout there truncates the worktree for
-  # anything else using it. Keep helper checkouts in a per-run directory of their own.
+  # Self-hosted runners reuse their workspace; a sparse checkout there truncates it for every later
+  # job on that runner (actions/checkout#2249). Keep helper checkouts in a directory of their own.
   WORKFLOW_CHECKOUT_ROOT: .workflow-checkouts/${{ github.run_id }}-${{ github.run_attempt }}
 
 # Default-deny; each job opts into the minimum scope it needs.
@@ -38,6 +38,7 @@ permissions: {}
 jobs:
   check-build-status:
     runs-on: [self-hosted, artemis-prod-deployment]
+    timeout-minutes: 5
     permissions:
       contents: read
       actions: read
@@ -58,9 +59,7 @@ jobs:
           echo "Environment: $ENVIRONMENT_NAME"
           echo "Triggered by: $TRIGGERED_BY"
 
-      # Check out only the resolver script, from the workflow's own ref (Helios dispatches this
-      # workflow from the branch being deployed), into a directory of its own so the sparse
-      # checkout cannot truncate the shared workspace.
+      # Helios dispatches this workflow from the branch being deployed, so the default ref is right.
       - name: Check out resolver script
         uses: actions/checkout@v6
         with:
@@ -86,7 +85,10 @@ jobs:
 
       - name: Cleanup resolver checkout
         if: always()
-        run: rm -rf -- "${WORKFLOW_CHECKOUT_ROOT}/resolve-artifact-run"
+        run: |
+          set -Eeuo pipefail
+          : "${WORKFLOW_CHECKOUT_ROOT:?}"
+          rm -rf -- "${WORKFLOW_CHECKOUT_ROOT}/resolve-artifact-run"
 
   deploy:
     needs: check-build-status

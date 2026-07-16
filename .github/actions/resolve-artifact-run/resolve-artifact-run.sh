@@ -4,7 +4,17 @@
 # artifact lives on one run, and a commit can have several (synchronize, ready_for_review, a
 # superseded re-run). `.workflow_runs[0]` fails when an artifact-less run sorts first even though a
 # sibling has it (Helios#1196). Enumerate all runs for the SHA, newest first, return the first with
-# a non-expired copy. Inputs are documented in action.yml.
+# a non-expired copy.
+#
+# Inputs (env):
+#   REPO           owner/repo                                          (required)
+#   WORKFLOW       workflow file name, e.g. ci.yml                     (required)
+#   SHA            full 40-char commit SHA                             (required)
+#   ARTIFACT_NAME  artifact that must be present, e.g. Artemis.war     (required)
+#   BRANCH         branch filter; omitting it widens resolution to any
+#                  branch sharing the SHA                              (optional)
+#   GH_TOKEN       token with actions:read, read by `gh`               (required)
+# Output: run_id -> $GITHUB_OUTPUT
 set -Eeuo pipefail
 
 : "${REPO:?REPO is required}"

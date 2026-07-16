@@ -1,7 +1,13 @@
 #!/usr/bin/env bash
 # Verify a deployable image exists for an exact commit: the immutable `sha-<commit>` tag is the
 # source of truth (not a per-run `docker-tag` artifact), so a superseded/cancelled CI run for the
-# same commit can't cause a false negative (Helios#1196). Inputs are documented in action.yml.
+# same commit can't cause a false negative (Helios#1196).
+#
+# Inputs (env):
+#   IMAGE          fully-qualified image, e.g. ghcr.io/ls1intum/artemis   (required)
+#   SHA            full 40-char commit SHA                                (required)
+#   GH_TOKEN       token with packages:read; empty skips `docker login`   (optional)
+#   REGISTRY_USER  registry login user; defaults to github-actions        (optional)
 set -Eeuo pipefail
 
 : "${IMAGE:?IMAGE is required}"

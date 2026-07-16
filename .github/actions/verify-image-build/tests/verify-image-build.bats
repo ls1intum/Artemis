@@ -36,12 +36,13 @@ SHA_B=1111111111111111111111111111111111111111
   [[ "${output}" == *"No deployable image"* ]]
 }
 
-@test "rejects a value that is not a full commit SHA (tag injection + abbreviation guard)" {
-  run env IMAGE=ghcr.io/ls1intum/artemis SHA='latest 0-day' "${SCRIPT}"
+@test "rejects a SHA that is not a full 40-char commit" {
+  # The tag is the full sha-<commit>, so an abbreviated value looks up a tag that was never pushed.
+  run env IMAGE=ghcr.io/ls1intum/artemis SHA=da39a3e "${SCRIPT}"
   [ "${status}" -eq 1 ]
   [[ "${output}" == *"40-char commit SHA"* ]]
 
-  run env IMAGE=ghcr.io/ls1intum/artemis SHA=da39a3e "${SCRIPT}"
+  run env IMAGE=ghcr.io/ls1intum/artemis SHA='not a sha' "${SCRIPT}"
   [ "${status}" -eq 1 ]
   [[ "${output}" == *"40-char commit SHA"* ]]
 }

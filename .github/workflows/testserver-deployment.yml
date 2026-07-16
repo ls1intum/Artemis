@@ -32,6 +32,8 @@ permissions: {}
 
 env:
   IMAGE_NAME: ghcr.io/ls1intum/artemis
+  # Self-hosted runners reuse their workspace; a sparse checkout there truncates it for every later
+  # job on that runner (actions/checkout#2249). Keep helper checkouts in a directory of their own.
   WORKFLOW_CHECKOUT_ROOT: .workflow-checkouts/${{ github.run_id }}-${{ github.run_attempt }}
 
 # The registry is the source of truth: resolve the commit to deploy, verify its immutable
@@ -151,10 +153,8 @@ jobs:
       contents: read
       packages: read
     steps:
-      # Check out only the verify action, from the workflow's own ref (Helios dispatches this workflow
-      # from the branch being deployed). Keep it out of the root workspace: this job can run in
-      # parallel with the database approval check, and sparse checkouts mutate the worktree.
-      - name: Check out verify action
+      # Helios dispatches this workflow from the branch being deployed, so the default ref is right.
+      - name: Check out verify script
         uses: actions/checkout@v6
         with:
           sparse-checkout: .github/actions/verify-image-build
