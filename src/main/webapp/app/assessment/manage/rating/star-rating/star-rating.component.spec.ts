@@ -1,10 +1,8 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { StarRatingComponent } from 'app/assessment/manage/rating/star-rating/star-rating.component';
 
 describe('StarRatingComponent', () => {
-    setupTestBed({ zoneless: true });
     let component: StarRatingComponent;
     let fixture: ComponentFixture<StarRatingComponent>;
 

@@ -1,6 +1,5 @@
 import { Mocked, afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { BehaviorSubject, Subject } from 'rxjs';
 
 import {
@@ -16,7 +15,6 @@ import { BrowserFingerprintService } from 'app/account/fingerprint/browser-finge
 import { ReviewThreadSyncAction } from 'app/exercise/shared/entities/review/review-thread-sync-update.model';
 
 describe('ExerciseEditorSyncService', () => {
-    setupTestBed({ zoneless: true });
     let service: ExerciseEditorSyncService;
     let websocketService: Mocked<WebsocketService>;
     let receiveSubject: Subject<ExerciseEditorSyncEvent>;

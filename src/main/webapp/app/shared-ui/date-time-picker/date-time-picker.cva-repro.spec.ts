@@ -1,4 +1,3 @@
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
@@ -27,7 +26,6 @@ class HostComponent {
 }
 
 describe('date-time-picker as formControlName CVA in an OnPush parent (free-period repro)', () => {
-    setupTestBed({ zoneless: true });
     let fixture: ComponentFixture<HostComponent>;
     let host: HostComponent;
 

@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -14,11 +13,9 @@ import { generateClickSubmitButton } from 'test/helpers/sample/tutorialgroup/tut
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { runOnPushChangeDetection } from 'test/helpers/on-push-change-detection.helper';
 import dayjs from 'dayjs/esm';
-import { TranslateModule } from '@ngx-translate/core';
+import { provideTranslateService } from '@ngx-translate/core';
 
 describe('TutorialFreePeriodFormComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<TutorialGroupFreePeriodFormComponent>;
     let component: TutorialGroupFreePeriodFormComponent;
 
@@ -40,12 +37,12 @@ describe('TutorialFreePeriodFormComponent', () => {
             imports: [
                 ReactiveFormsModule,
                 FormsModule,
-                TranslateModule.forRoot(),
                 TutorialGroupFreePeriodFormComponent,
                 MockPipe(ArtemisTranslatePipe),
                 MockComponent(FaIconComponent),
                 MockPipe(ArtemisDatePipe),
             ],
+            providers: [provideTranslateService()],
         }).compileComponents();
 
         fixture = TestBed.createComponent(TutorialGroupFreePeriodFormComponent);

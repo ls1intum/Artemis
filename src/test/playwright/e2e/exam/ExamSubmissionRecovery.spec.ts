@@ -25,10 +25,12 @@ const quizSaveUrl = /\/api\/quiz\/exercises\/\d+\/submissions\/exam/;
 
 test.describe('Exam submission recovery after a failed save', { tag: '@slow' }, () => {
     // Block the Angular service worker for this test. The production WAR registers ngsw-worker.js, which handles the
-    // quiz exam-save fetch; Playwright's page.route does NOT intercept service-worker-handled requests (the default
-    // serviceWorkers: 'allow'), so the 503 outage we inject below was silently bypassed and the save reached the real
-    // server (200). Blocking the SW lets page.route intercept the save directly; the answer-restore-on-reload logic
-    // under test lives in the client (local storage), not the SW, so this does not change what the test verifies.
+    // quiz exam-save fetch; Playwright's page.route does NOT intercept service-worker-handled requests, so the 503
+    // outage we inject below was silently bypassed and the save reached the real server (200). Blocking the SW lets
+    // page.route intercept the save directly; the answer-restore-on-reload logic under test lives in the client
+    // (local storage), not the SW, so this does not change what the test verifies. serviceWorkers: 'block' is now
+    // also the global default in playwright.config.ts; this test keeps its own declaration because its route-based
+    // outage injection is correctness-critical, not merely flake mitigation.
     test.use({ serviceWorkers: 'block' });
 
     let exam: Exam;

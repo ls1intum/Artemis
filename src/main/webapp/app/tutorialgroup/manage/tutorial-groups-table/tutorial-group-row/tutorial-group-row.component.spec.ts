@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { generateExampleTutorialGroup } from 'test/helpers/sample/tutorialgroup/tutorialGroupExampleModels';
@@ -11,8 +10,6 @@ import dayjs from 'dayjs/esm';
 import { TutorialGroupSessionStatus } from 'app/tutorialgroup/shared/entities/tutorial-group-session.model';
 
 describe('TutorialGroupRowComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: TutorialGroupRowComponent;
     let fixture: ComponentFixture<TutorialGroupRowComponent>;
     let tutorialGroup: TutorialGroup;
