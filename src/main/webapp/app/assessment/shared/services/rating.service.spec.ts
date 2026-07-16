@@ -1,6 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { take } from 'rxjs/operators';
 import { RatingService } from 'app/assessment/shared/services/rating.service';
@@ -10,7 +9,6 @@ import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.mod
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 
 describe('Rating Service', () => {
-    setupTestBed({ zoneless: true });
     let service: RatingService;
     let httpMock: HttpTestingController;
 

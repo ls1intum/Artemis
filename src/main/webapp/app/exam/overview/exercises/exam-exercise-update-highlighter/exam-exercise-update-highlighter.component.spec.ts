@@ -7,13 +7,10 @@ import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/ex
 import { ExamExerciseUpdateHighlighterComponent } from 'app/exam/overview/exercises/exam-exercise-update-highlighter/exam-exercise-update-highlighter.component';
 import { htmlForMarkdown } from 'app/foundation/util/markdown.conversion.util';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('ExamExerciseUpdateHighlighterComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<ExamExerciseUpdateHighlighterComponent>;
     let component: ExamExerciseUpdateHighlighterComponent;
 

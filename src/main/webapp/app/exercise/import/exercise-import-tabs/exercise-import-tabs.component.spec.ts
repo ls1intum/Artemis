@@ -1,7 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockComponent } from 'ng-mocks';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 import { ExerciseImportTabsComponent } from 'app/exercise/import/exercise-import-tabs/exercise-import-tabs.component';
 import { ExerciseImportComponent } from 'app/exercise/import/exercise-import.component';
@@ -11,8 +10,6 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { TranslateService } from '@ngx-translate/core';
 
 describe('ExerciseImportTabsComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<ExerciseImportTabsComponent>;
     let comp: ExerciseImportTabsComponent;
 
