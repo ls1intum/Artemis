@@ -61,12 +61,15 @@ export class TumUiOverlayService {
     /**
      * Create an overlay anchored to `origin` that repositions on scroll. The caller attaches a
      * portal and is responsible for disposing the returned ref.
+     *
+     * @param options.hasBackdrop render a click-catching backdrop (needed for click-outside-to-close);
+     *   defaults to `false` (e.g. a tooltip, which must not steal pointer events).
      */
-    createConnectedOverlay(origin: ElementRef<HTMLElement> | HTMLElement, placement: TumUiOverlayPlacement, hasBackdrop = false): OverlayRef {
+    createConnectedOverlay(origin: ElementRef<HTMLElement> | HTMLElement, placement: TumUiOverlayPlacement, options: { hasBackdrop?: boolean } = {}): OverlayRef {
         return this.overlay.create({
             positionStrategy: this.positionStrategy(origin, placement),
             scrollStrategy: this.overlay.scrollStrategies.reposition(),
-            hasBackdrop,
+            hasBackdrop: options.hasBackdrop ?? false,
             // The kit owns the backdrop's structural CSS (.tum-ui-overlay-backdrop in global.scss): Artemis
             // does not import the CDK overlay-prebuilt stylesheet, so the stock `cdk-overlay-transparent-backdrop`
             // class alone has no size and never intercepts outside clicks (backdropClick() would not fire).
