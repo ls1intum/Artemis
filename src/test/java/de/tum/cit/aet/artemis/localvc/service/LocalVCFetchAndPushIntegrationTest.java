@@ -1395,15 +1395,16 @@ class LocalVCFetchAndPushIntegrationTest extends AbstractProgrammingIntegrationL
             exam.setTestExam(true);
             examRepository.save(exam);
 
-            // Create an instructor exam test run (not a student exam)
-            StudentExam instructorTestRunExam = examUtilService.addStudentExam(exam);
-            instructorTestRunExam.setUser(instructor1);
-            instructorTestRunExam.setExercises(List.of(examProgrammingExercise));
-            instructorTestRunExam.setTestRun(true);
-            // Don't set startedAndStartDate - let the conduction endpoint handle it
-            studentExamRepository.save(instructorTestRunExam);
+            // Create an instructor exam test run, including its participation and repository.
+            StudentExam testRunConfiguration = new StudentExam();
+            testRunConfiguration.setExam(exam);
+            testRunConfiguration.setExercises(List.of(examProgrammingExercise));
+            testRunConfiguration.setWorkingTime(3600);
+            StudentExam instructorTestRunExam = request.postWithResponseBody("/api/exam/courses/" + course.getId() + "/exams/" + exam.getId() + "/test-runs", testRunConfiguration,
+                    StudentExam.class, HttpStatus.OK);
 
-            // Start the test run via conduction endpoint - this creates the participation and repository
+            // Start the test run via conduction endpoint.
+            userUtilService.changeUser(instructor1.getLogin());
             request.get("/api/exam/courses/" + course.getId() + "/exams/" + exam.getId() + "/test-runs/" + instructorTestRunExam.getId() + "/conduction", HttpStatus.OK,
                     StudentExam.class);
 

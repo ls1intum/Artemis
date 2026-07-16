@@ -286,10 +286,10 @@ describe('CourseLectureDetailsComponent', () => {
         const downloadFileSpy = vi.spyOn(fileService, 'downloadFileByAttachmentName');
         const attachment = getAttachmentVideoUnit(lecture, 1, dayjs()).attachment!;
 
-        courseLecturesDetailsComponent.downloadAttachment(attachment.link, attachment.name);
+        courseLecturesDetailsComponent.downloadAttachment(attachment.link, attachment.name, attachment.version);
 
         expect(downloadFileSpy).toHaveBeenCalledTimes(1);
-        expect(downloadFileSpy).toHaveBeenCalledWith(attachment.link, attachment.name);
+        expect(downloadFileSpy).toHaveBeenCalledWith(attachment.link, attachment.name, attachment.version);
         expect(courseLecturesDetailsComponent.isDownloadingLink()).toBeUndefined();
     });
 
