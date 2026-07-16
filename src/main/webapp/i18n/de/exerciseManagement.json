@@ -19,7 +19,8 @@
             "noExercisesMatch": "Keine Aufgaben stimmen mit \"{{ search }}\" überein.",
             "selection": {
                 "count": "{{ count }} ausgewählt",
-                "deselectAll": "Auswahl aufheben"
+                "deselectAll": "Auswahl aufheben",
+                "editSelectedGroupLocked": "Aufgaben in einer Variantengruppe teilen sich die Zeitplanung der Gruppe. Bearbeite die Gruppe, um ihre Termine zu ändern."
             },
             "card": {
                 "all": "Alle Aufgaben",

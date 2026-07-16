@@ -219,6 +219,19 @@ describe('Course Management Exercises Component', () => {
             comp.onTableSelectionAllChange(card, false);
             expect(comp.selectedCount()).toBe(0);
         });
+
+        it('flags a selection that contains a variant-group member', () => {
+            comp.exercises.set([
+                { id: 1, title: 'Grouped', type: ExerciseType.PROGRAMMING, exerciseVariantGroup: { id: 9 } } as Exercise,
+                { id: 2, title: 'Ungrouped', type: ExerciseType.PROGRAMMING } as Exercise,
+            ]);
+
+            comp.toggleSelection(2);
+            expect(comp.selectionHasGroupMember()).toBe(false);
+
+            comp.toggleSelection(1);
+            expect(comp.selectionHasGroupMember()).toBe(true);
+        });
     });
 
     describe('changeExerciseGroup', () => {
@@ -352,6 +365,16 @@ describe('Course Management Exercises Component', () => {
             expect(openSpy).toHaveBeenCalledWith(ProgrammingExerciseEditSelectedComponent, expect.objectContaining({ size: 'xl' }));
             closed.next();
             expect(reloadSpy).toHaveBeenCalled();
+        });
+
+        it('does not open the edit-selected modal when a variant-group member is selected', () => {
+            comp.exercises.set([{ id: 1, title: 'Grouped', type: ExerciseType.PROGRAMMING, exerciseVariantGroup: { id: 9 } } as Exercise]);
+            const openSpy = vi.spyOn(modalService, 'open');
+            comp.toggleSelection(1);
+
+            comp.editSelectedExercises();
+
+            expect(openSpy).not.toHaveBeenCalled();
         });
 
         it('opens the consistency check dialog with the selected programming exercises', () => {

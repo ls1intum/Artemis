@@ -54,10 +54,21 @@
                         <div class="vr"></div>
                         <div class="d-flex align-items-center flex-wrap gap-2">
                             @if (allSelectedAreProgramming()) {
-                                <button pButton type="button" severity="warn" size="small" (click)="editSelectedExercises()">
-                                    <fa-icon [icon]="faWrench" />
-                                    <span jhiTranslate="entity.action.editSelected"></span>
-                                </button>
+                                @if (selectionHasGroupMember()) {
+                                    <!-- A variant-group member shares the group's timeline; editing it here would desync it, so the
+                                         timeline edit is disabled with an explanation. The other bulk actions below stay available. -->
+                                    <span [pTooltip]="'artemisApp.exerciseManagement.selection.editSelectedGroupLocked' | artemisTranslate" tooltipPosition="top">
+                                        <button pButton type="button" severity="warn" size="small" [disabled]="true">
+                                            <fa-icon [icon]="faWrench" />
+                                            <span jhiTranslate="entity.action.editSelected"></span>
+                                        </button>
+                                    </span>
+                                } @else {
+                                    <button pButton type="button" severity="warn" size="small" (click)="editSelectedExercises()">
+                                        <fa-icon [icon]="faWrench" />
+                                        <span jhiTranslate="entity.action.editSelected"></span>
+                                    </button>
+                                }
                                 <jhi-programming-assessment-repo-export [programmingExercises]="selectedProgrammingExercises()" />
                                 <button pButton type="button" severity="primary" [outlined]="true" size="small" (click)="consistencyCheckSelected()">
                                     <fa-icon [icon]="faCheckDouble" />

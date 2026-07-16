@@ -157,6 +157,14 @@ export class CourseManagementExercisesComponent implements OnInit {
         return t.size === 1 && t.has(ExerciseType.PROGRAMMING);
     });
 
+    /**
+     * Whether the current selection contains a variant-group member. The legacy edit-selected modal writes each
+     * exercise's timeline directly through its type endpoint, which would leave a member's dates diverging from the
+     * group's shared timeline — so bulk timeline editing is blocked while any group member is selected (edit the group
+     * instead). The other bulk actions (repo export, consistency check, delete) do not touch the timeline and stay available.
+     */
+    readonly selectionHasGroupMember = computed(() => this.selectedExercises().some((exercise) => exercise.exerciseVariantGroup?.id !== undefined));
+
     /** The currently selected exercises, resolved from {@link selectedIds} to the full exercise objects. */
     readonly selectedExercises = computed(() => {
         const ids = this.selectedIds();
@@ -351,6 +359,11 @@ export class CourseManagementExercisesComponent implements OnInit {
      * in the table and the week/group cards. Mirrors the develop programming-exercise list behaviour.
      */
     editSelectedExercises(): void {
+        // Defensive: the button is disabled in this case, but never route a variant-group member through the
+        // timeline-editing modal — it would desync the member from the group's shared timeline.
+        if (this.selectionHasGroupMember()) {
+            return;
+        }
         const modalRef = this.modalService.open(ProgrammingExerciseEditSelectedComponent, { size: 'xl', backdrop: 'static' });
         modalRef.componentInstance.selectedProgrammingExercises = this.selectedProgrammingExercises();
         modalRef.closed.subscribe(() => {

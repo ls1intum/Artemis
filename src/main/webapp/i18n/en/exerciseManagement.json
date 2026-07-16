@@ -19,7 +19,8 @@
             "noExercisesMatch": "No exercises match \"{{ search }}\".",
             "selection": {
                 "count": "{{ count }} selected",
-                "deselectAll": "Deselect all"
+                "deselectAll": "Deselect all",
+                "editSelectedGroupLocked": "Exercises in a variant group share the group's timeline. Edit the group to change their dates."
             },
             "card": {
                 "all": "All Exercises",
