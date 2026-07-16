@@ -32,6 +32,7 @@ import org.apache.pdfbox.cos.COSArray;
 import org.apache.pdfbox.cos.COSDictionary;
 import org.apache.pdfbox.cos.COSInteger;
 import org.apache.pdfbox.cos.COSName;
+import org.apache.pdfbox.cos.COSNull;
 import org.apache.pdfbox.multipdf.PDFMergerUtility;
 import org.apache.pdfbox.pdfparser.PDFStreamParser;
 import org.apache.pdfbox.pdmodel.PDDocument;
@@ -51,6 +52,9 @@ import org.apache.pdfbox.pdmodel.graphics.image.LosslessFactory;
 import org.apache.pdfbox.pdmodel.graphics.image.PDImageXObject;
 import org.apache.pdfbox.pdmodel.interactive.action.PDActionURI;
 import org.apache.pdfbox.pdmodel.interactive.annotation.PDAnnotationLink;
+import org.apache.pdfbox.pdmodel.interactive.annotation.PDAppearanceDictionary;
+import org.apache.pdfbox.pdmodel.interactive.annotation.PDAppearanceEntry;
+import org.apache.pdfbox.pdmodel.interactive.annotation.PDAppearanceStream;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -353,6 +357,10 @@ class FileUtilUnitTest {
             assertThat(link.getCOSObject().containsKey(COSName.STRUCT_PARENT)).isFalse();
             assertThat(link.getAction()).isInstanceOf(PDActionURI.class);
             assertThat(((PDActionURI) link.getAction()).getURI()).isEqualTo("https://example.com/lecture-slide");
+            PDAppearanceDictionary appearance = link.getAppearance();
+            assertAppearanceHasNoStructureParentReferences(appearance.getNormalAppearance());
+            assertAppearanceHasNoStructureParentReferences(appearance.getRolloverAppearance());
+            assertAppearanceHasNoStructureParentReferences(appearance.getDownAppearance());
 
             PDFormXObject outerForm = (PDFormXObject) mergedDocument.getPage(0).getResources().getXObject(COSName.getPDFName("OuterForm"));
             PDFormXObject innerForm = (PDFormXObject) outerForm.getResources().getXObject(COSName.getPDFName("InnerForm"));
@@ -430,6 +438,13 @@ class FileUtilUnitTest {
             PDActionURI action = new PDActionURI();
             action.setURI("https://example.com/lecture-slide");
             link.setAction(action);
+            PDAppearanceDictionary appearance = new PDAppearanceDictionary();
+            appearance.setNormalAppearance(createAppearanceStream(document, 5));
+            COSDictionary rolloverAppearances = new COSDictionary();
+            rolloverAppearances.setItem(COSName.getPDFName("Default"), createAppearanceStream(document, 6));
+            appearance.setRolloverAppearance(new PDAppearanceEntry(rolloverAppearances));
+            appearance.setDownAppearance(createAppearanceStream(document, 7));
+            link.setAppearance(appearance);
             document.getPage(0).getAnnotations().add(link);
 
             PDFormXObject innerForm = new PDFormXObject(document);
@@ -458,11 +473,39 @@ class FileUtilUnitTest {
 
             PDResources pageResources = new PDResources();
             pageResources.put(COSName.getPDFName("OuterForm"), outerForm);
+            COSDictionary xObjects = pageResources.getCOSObject().getCOSDictionary(COSName.XOBJECT);
+            xObjects.setItem(COSName.getPDFName("NullXObject"), COSNull.NULL);
+            COSDictionary unreadableXObject = new COSDictionary();
+            unreadableXObject.setItem(COSName.TYPE, COSName.XOBJECT);
+            xObjects.setItem(COSName.getPDFName("UnreadableXObject"), unreadableXObject);
             document.getPage(0).setResources(pageResources);
             try (PDPageContentStream contentStream = new PDPageContentStream(document, document.getPage(0))) {
                 contentStream.drawForm(outerForm);
             }
             document.save(path.toFile());
+        }
+    }
+
+    private static PDAppearanceStream createAppearanceStream(PDDocument document, int structureParent) throws IOException {
+        PDAppearanceStream appearanceStream = new PDAppearanceStream(document);
+        appearanceStream.setBBox(new PDRectangle(20, 20));
+        appearanceStream.setResources(new PDResources());
+        appearanceStream.setStructParents(structureParent);
+        try (PDPageContentStream contentStream = new PDPageContentStream(document, appearanceStream)) {
+            contentStream.addRect(2, 2, 5, 5);
+            contentStream.stroke();
+        }
+        return appearanceStream;
+    }
+
+    private static void assertAppearanceHasNoStructureParentReferences(PDAppearanceEntry appearanceEntry) throws IOException {
+        List<PDAppearanceStream> appearanceStreams = appearanceEntry.isStream() ? List.of(appearanceEntry.getAppearanceStream())
+                : List.copyOf(appearanceEntry.getSubDictionary().values());
+        assertThat(appearanceStreams).isNotEmpty();
+        for (PDAppearanceStream appearanceStream : appearanceStreams) {
+            assertThat(appearanceStream.getCOSObject().containsKey(COSName.STRUCT_PARENTS)).isFalse();
+            assertThat(new PDFStreamParser(appearanceStream).parse()).filteredOn(Operator.class::isInstance).extracting(token -> ((Operator) token).getName())
+                    .containsSubsequence("re", "S");
         }
     }
 

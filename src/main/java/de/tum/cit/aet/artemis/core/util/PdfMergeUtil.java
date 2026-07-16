@@ -20,6 +20,8 @@ import org.apache.pdfbox.pdmodel.PDDocumentInformation;
 import org.apache.pdfbox.pdmodel.PDResources;
 import org.apache.pdfbox.pdmodel.graphics.PDXObject;
 import org.apache.pdfbox.pdmodel.graphics.form.PDFormXObject;
+import org.apache.pdfbox.pdmodel.interactive.annotation.PDAppearanceDictionary;
+import org.apache.pdfbox.pdmodel.interactive.annotation.PDAppearanceEntry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -115,11 +117,37 @@ final class PdfMergeUtil {
                 page.getCOSObject().removeItem(COSName.STRUCT_PARENTS);
                 for (var annotation : page.getAnnotations()) {
                     annotation.getCOSObject().removeItem(COSName.STRUCT_PARENT);
+                    removeStructureParentReferences(annotation.getAppearance(), visitedXObjectStreams);
                 }
                 removeStructureParentReferences(page.getResources(), visitedXObjectStreams);
             }
             document.save(outputStream);
             return outputStream.toByteArray();
+        }
+    }
+
+    private static void removeStructureParentReferences(PDAppearanceDictionary appearance, Set<COSStream> visitedXObjectStreams) throws IOException {
+        if (appearance == null) {
+            return;
+        }
+
+        removeStructureParentReferences(appearance.getNormalAppearance(), visitedXObjectStreams);
+        removeStructureParentReferences(appearance.getRolloverAppearance(), visitedXObjectStreams);
+        removeStructureParentReferences(appearance.getDownAppearance(), visitedXObjectStreams);
+    }
+
+    private static void removeStructureParentReferences(PDAppearanceEntry appearanceEntry, Set<COSStream> visitedXObjectStreams) throws IOException {
+        if (appearanceEntry == null) {
+            return;
+        }
+
+        if (appearanceEntry.isStream()) {
+            removeStructureParentReferences(appearanceEntry.getAppearanceStream(), visitedXObjectStreams);
+        }
+        else if (appearanceEntry.isSubDictionary()) {
+            for (var appearanceStream : appearanceEntry.getSubDictionary().values()) {
+                removeStructureParentReferences(appearanceStream, visitedXObjectStreams);
+            }
         }
     }
 
@@ -129,16 +157,24 @@ final class PdfMergeUtil {
         }
 
         for (COSName xObjectName : resources.getXObjectNames()) {
-            PDXObject xObject = resources.getXObject(xObjectName);
-            if (!visitedXObjectStreams.add(xObject.getCOSObject())) {
-                continue;
+            try {
+                removeStructureParentReferences(resources.getXObject(xObjectName), visitedXObjectStreams);
             }
+            catch (IOException unreadableXObjectException) {
+                log.debug("Skipping unreadable XObject {} while removing structure parent references", xObjectName, unreadableXObjectException);
+            }
+        }
+    }
 
-            xObject.getCOSObject().removeItem(COSName.STRUCT_PARENT);
-            if (xObject instanceof PDFormXObject form) {
-                form.getCOSObject().removeItem(COSName.STRUCT_PARENTS);
-                removeStructureParentReferences(form.getResources(), visitedXObjectStreams);
-            }
+    private static void removeStructureParentReferences(PDXObject xObject, Set<COSStream> visitedXObjectStreams) throws IOException {
+        if (xObject == null || !visitedXObjectStreams.add(xObject.getCOSObject())) {
+            return;
+        }
+
+        xObject.getCOSObject().removeItem(COSName.STRUCT_PARENT);
+        if (xObject instanceof PDFormXObject form) {
+            form.getCOSObject().removeItem(COSName.STRUCT_PARENTS);
+            removeStructureParentReferences(form.getResources(), visitedXObjectStreams);
         }
     }
 }
