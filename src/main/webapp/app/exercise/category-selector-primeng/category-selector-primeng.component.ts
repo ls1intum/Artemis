@@ -39,13 +39,13 @@ export class CategorySelectorPrimengComponent {
     selectedCategory!: ExerciseCategory; // set in openColorSelector() before the color selector emits onSelectedColor()
 
     /**
-     * Suggestions shown in the p-autoComplete dropdown. Updated on every keystroke via {@link onComplete}.
+     * Suggestions shown in the p-autocomplete dropdown. Updated on every keystroke via {@link onComplete}.
      * Excludes already-selected categories.
      */
     readonly categorySuggestions = signal<string[]>([]);
 
     /**
-     * The labels of the selected categories. Used as the p-autoComplete `multiple` model so each category renders
+     * The labels of the selected categories. Used as the p-autocomplete `multiple` model so each category renders
      * as a removable chip token. The colored chip rendering is provided by the `selecteditem` template, which looks
      * the color up from {@link selectedCategoryItems} by label.
      */
@@ -73,7 +73,7 @@ export class CategorySelectorPrimengComponent {
      * Recompute the autocomplete suggestions for the current query. Mirrors the previous combineLatest logic:
      * filter the existing categories by the typed text (or show all when empty), de-duplicate, and drop categories
      * that are already selected.
-     * @param event the p-autoComplete complete event carrying the current query
+     * @param event the p-autocomplete complete event carrying the current query
      */
     onComplete(event: AutoCompleteCompleteEvent): void {
         const query = event.query;
@@ -125,7 +125,7 @@ export class CategorySelectorPrimengComponent {
 
     /**
      * Commits the typed free-text category on Enter, comma, or Tab — restoring the separator behaviour of the
-     * previous Material chip input (`separatorKeysCodes = [ENTER, COMMA, TAB]`). PrimeNG's p-autoComplete does not
+     * previous Material chip input (`separatorKeysCodes = [ENTER, COMMA, TAB]`). PrimeNG's p-autocomplete does not
      * add free text on these keys natively, so we wire it via a keydown handler. An empty field still tabs away.
      * @param event the keydown event coming from the input
      */
@@ -195,7 +195,7 @@ export class CategorySelectorPrimengComponent {
 
     /**
      * Adds the category picked from the autocomplete dropdown, reusing an existing category's color when available.
-     * @param event the p-autoComplete select event carrying the chosen suggestion label
+     * @param event the p-autocomplete select event carrying the chosen suggestion label
      */
     onItemSelect(event: AutoCompleteSelectEvent): void {
         const categoryString = (event.value || '').trim();
@@ -222,8 +222,8 @@ export class CategorySelectorPrimengComponent {
     }
 
     /**
-     * Removes the category whose chip token was removed via the built-in p-autoComplete remove icon.
-     * @param event the p-autoComplete unselect event carrying the removed label
+     * Removes the category whose chip token was removed via the built-in p-autocomplete remove icon.
+     * @param event the p-autocomplete unselect event carrying the removed label
      */
     onItemUnselect(event: AutoCompleteUnselectEvent): void {
         this.removeCategoryByLabel(event.value);

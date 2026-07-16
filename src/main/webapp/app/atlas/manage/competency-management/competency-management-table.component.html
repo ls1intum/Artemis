@@ -2,10 +2,10 @@
     <h2 [jhiTranslate]="'artemisApp.' + competencyType() + '.title'" class="me-3 mb-0"></h2>
     <div class="ms-auto d-flex align-items-center gap-2">
         @if (courseCompetencies().length) {
-            <p-iconField iconPosition="left">
-                <p-inputIcon>
+            <p-iconfield iconPosition="left">
+                <p-inputicon>
                     <fa-icon [icon]="faMagnifyingGlass" />
-                </p-inputIcon>
+                </p-inputicon>
                 <input
                     pInputText
                     type="text"
@@ -14,7 +14,7 @@
                     [value]="filterText()"
                     (input)="filterText.set($any($event.target).value)"
                 />
-            </p-iconField>
+            </p-iconfield>
         }
         <div ngbDropdown class="d-inline">
             <button id="importCompetenciesDropdown" class="btn btn-primary" ngbDropdownToggle>

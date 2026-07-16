@@ -21,10 +21,8 @@ import { Source } from 'app/atlas/shared/entities/standardized-competency.model'
 import { DocumentationButtonComponent } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
 import { StandardizedCompetencyService } from 'app/atlas/shared/standardized-competencies/standardized-competency.service';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('CourseImportStandardizedCompetenciesComponent', () => {
-    setupTestBed({ zoneless: true });
     let componentFixture: ComponentFixture<CourseImportStandardizedCompetenciesComponent>;
     let component: CourseImportStandardizedCompetenciesComponent;
     const courseId = 1;

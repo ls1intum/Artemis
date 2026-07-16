@@ -1,4 +1,3 @@
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { DebugElement } from '@angular/core';
@@ -6,7 +5,6 @@ import { TableEditableFieldComponent } from 'app/shared-ui/table/editable-field/
 import { vi } from 'vitest';
 
 describe('TableEditableFieldComponent', () => {
-    setupTestBed({ zoneless: true });
     let comp: TableEditableFieldComponent;
     let fixture: ComponentFixture<TableEditableFieldComponent>;
     let debugElement: DebugElement;

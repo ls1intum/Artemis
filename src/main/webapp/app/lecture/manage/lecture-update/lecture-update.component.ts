@@ -119,20 +119,7 @@ export class LectureUpdateComponent implements OnInit, OnDestroy, LectureUnsaved
     constructor() {
         effect(() => {
             if (this.selectedCreateLectureOption() === LectureCreationMode.SERIES) return;
-            const titleChannelNameComponent = this.titleSection()?.titleChannelNameComponent();
             const lecturePeriodSection = this.lecturePeriodSection();
-            if (titleChannelNameComponent) {
-                this.subscriptions.add(
-                    titleChannelNameComponent.titleChange.subscribe(() => {
-                        this.updateIsChangesMadeToTitleOrPeriodSection();
-                    }),
-                );
-                this.subscriptions.add(
-                    titleChannelNameComponent.channelNameChange.subscribe(() => {
-                        this.updateIsChangesMadeToTitleOrPeriodSection();
-                    }),
-                );
-            }
             if (lecturePeriodSection) {
                 lecturePeriodSection.periodSectionDatepickers().forEach((datepicker: FormDateTimePickerComponent) => {
                     const subscription = datepicker.valueChange.subscribe(() => {
@@ -140,6 +127,20 @@ export class LectureUpdateComponent implements OnInit, OnDestroy, LectureUnsaved
                     });
                     this.subscriptions.add(subscription);
                 });
+            }
+        });
+
+        // The title/channel-name fields are signal-based models without dedicated change outputs
+        // (the explicit titleChange/channelNameChange outputs were removed to resolve the Angular 22
+        // NG1054 model/output conflict). Track the model signals directly so the "changes made to
+        // title/period section" flag stays reactive to user edits.
+        effect(() => {
+            if (this.selectedCreateLectureOption() === LectureCreationMode.SERIES) return;
+            const titleChannelNameComponent = this.titleSection()?.titleChannelNameComponent();
+            if (titleChannelNameComponent) {
+                titleChannelNameComponent.title();
+                titleChannelNameComponent.channelName();
+                this.updateIsChangesMadeToTitleOrPeriodSection();
             }
         });
 

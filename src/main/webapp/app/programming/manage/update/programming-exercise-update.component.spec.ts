@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { HttpErrorResponse, HttpHeaders, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ActivatedRoute, Router, UrlSegment, convertToParamMap } from '@angular/router';
@@ -76,8 +75,6 @@ type ProgrammingExerciseUpdateInternals = ProgrammingExerciseUpdateComponent & {
 const internals = (c: ProgrammingExerciseUpdateComponent): ProgrammingExerciseUpdateInternals => c as ProgrammingExerciseUpdateInternals;
 
 describe('ProgrammingExerciseUpdateComponent', () => {
-    setupTestBed({ zoneless: true });
-
     const courseId = 1;
     const course = { id: courseId } as Course;
     const route = {
