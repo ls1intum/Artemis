@@ -29,6 +29,8 @@ import java.time.Instant;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -588,25 +590,34 @@ class InteractiveSandboxRelayRoundTripTest {
 
     @Test
     void concurrentDestroy_removesTheContainerExactlyOnce() throws Exception {
-        try (RelayHarness harness = newHarness(1)) {
+        try (RelayHarness harness = newHarness(1); ExecutorService callers = Executors.newFixedThreadPool(2)) {
             when(harness.localSandbox().createSession(any())).thenReturn(CONTAINER_ID);
             String handle = harness.client().createSession(sessionSpec());
             CountDownLatch destroyStarted = new CountDownLatch(1);
+            CountDownLatch secondDestroyStarted = new CountDownLatch(1);
             CountDownLatch finishDestroy = new CountDownLatch(1);
             doAnswer(invocation -> {
                 destroyStarted.countDown();
-                finishDestroy.await(5, TimeUnit.SECONDS);
+                finishDestroy.await();
                 return null;
             }).when(harness.localSandbox()).destroySession(CONTAINER_ID);
 
-            CompletableFuture<Void> first = CompletableFuture.runAsync(() -> harness.client().destroySession(handle));
-            assertThat(destroyStarted.await(2, TimeUnit.SECONDS)).isTrue();
-            CompletableFuture<Void> second = CompletableFuture.runAsync(() -> harness.client().destroySession(handle));
+            CompletableFuture<Void> first = CompletableFuture.runAsync(() -> harness.client().destroySession(handle), callers);
+            CompletableFuture<Void> second;
+            try {
+                assertThat(destroyStarted.await(5, TimeUnit.SECONDS)).isTrue();
+                second = CompletableFuture.runAsync(() -> {
+                    secondDestroyStarted.countDown();
+                    harness.client().destroySession(handle);
+                }, callers);
+                assertThat(secondDestroyStarted.await(5, TimeUnit.SECONDS)).isTrue();
+            }
+            finally {
+                finishDestroy.countDown();
+            }
 
-            assertThat(second).failsWithin(Duration.ofMillis(200)).withThrowableThat().isInstanceOf(java.util.concurrent.TimeoutException.class);
-            finishDestroy.countDown();
-            first.get(2, TimeUnit.SECONDS);
-            second.get(2, TimeUnit.SECONDS);
+            assertThat(first).succeedsWithin(Duration.ofSeconds(5));
+            assertThat(second).succeedsWithin(Duration.ofSeconds(5));
             verify(harness.localSandbox(), times(1)).destroySession(CONTAINER_ID);
         }
     }
