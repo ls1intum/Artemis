@@ -7,7 +7,7 @@ import { By } from '@angular/platform-browser';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { Course } from 'app/course/shared/entities/course.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
-import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
+import { ExamManagementService, ExamRegistrationResultDTO } from 'app/exam/manage/services/exam-management.service';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -102,6 +102,7 @@ describe('UsersImportDialogComponent', () => {
     it('should reset dialog when selecting csv file', async () => {
         component.usersToImport.set([{ registrationNumber: '1', lastName: 'lastName', firstName: 'firstName', login: 'login1', email: 'test@mail' }]);
         component.notFoundUsers = [{ registrationNumber: '2', lastName: 'lastName2', firstName: 'firstName2', login: 'login2', email: 'test@mail' }];
+        component.rejectedStaffUsers = [{ registrationNumber: '3', lastName: 'lastName3', firstName: 'firstName3', login: 'login3', email: 'staff@mail' }];
         component.hasImported.set(true);
 
         const event = { target: { files: [studentCsvColumns] } };
@@ -109,6 +110,7 @@ describe('UsersImportDialogComponent', () => {
 
         expect(component.usersToImport()).toHaveLength(0);
         expect(component.notFoundUsers).toHaveLength(0);
+        expect(component.rejectedStaffUsers).toHaveLength(0);
     });
 
     it('should read no students from csv file', async () => {
@@ -161,7 +163,9 @@ describe('UsersImportDialogComponent', () => {
         ];
         const studentsNotFound: ExamUserDTO[] = [{ registrationNumber: '2', firstName: 'Bob', lastName: 'Ross', login: 'login2', email: 'test@mail' }];
 
-        const fakeResponse = { body: studentsNotFound } as HttpResponse<ExamUserDTO[]>;
+        const fakeResponse = {
+            body: { notFoundStudents: studentsNotFound, rejectedStaffUsers: [] },
+        } as unknown as HttpResponse<ExamRegistrationResultDTO>;
         vi.spyOn(examManagementService, 'addStudentsToExam').mockReturnValue(of(fakeResponse));
 
         component.usersToImport.set(studentsToImport);
@@ -298,7 +302,9 @@ describe('UsersImportDialogComponent', () => {
         ];
         const notImportedStudents: ExamUserDTO[] = [{ registrationNumber: '3', firstName: 'Some', lastName: 'Dude', login: 'login3', email: '' }];
 
-        const fakeResponse = { body: notImportedStudents } as HttpResponse<ExamUserDTO[]>;
+        const fakeResponse = {
+            body: { notFoundStudents: notImportedStudents, rejectedStaffUsers: [] },
+        } as unknown as HttpResponse<ExamRegistrationResultDTO>;
         vi.spyOn(examManagementService, 'addStudentsToExam').mockReturnValue(of(fakeResponse));
 
         component.usersToImport.set(importedStudents.concat(notImportedStudents));
@@ -307,7 +313,7 @@ describe('UsersImportDialogComponent', () => {
         importedStudents.forEach((student) => expect(component.wasImported(student)).toBe(true));
         notImportedStudents.forEach((student) => expect(component.wasImported(student)).toBe(false));
         expect(component.numberOfUsersImported).toBe(importedStudents.length);
-        expect(component.numberOfUsersNotImported).toBe(notImportedStudents.length);
+        expect(component.numberOfUsersNotFound).toBe(notImportedStudents.length);
     });
 
     it('should invoke REST call on "Import" but not on "Finish"', () => {
@@ -318,7 +324,9 @@ describe('UsersImportDialogComponent', () => {
         ];
         const studentsNotFound: ExamUserDTO[] = [{ registrationNumber: '3', firstName: 'Some', lastName: 'Dude', login: 'login3', email: '' }];
 
-        const fakeResponse = { body: studentsNotFound } as HttpResponse<ExamUserDTO[]>;
+        const fakeResponse = {
+            body: { notFoundStudents: studentsNotFound, rejectedStaffUsers: [] },
+        } as unknown as HttpResponse<ExamRegistrationResultDTO>;
         vi.spyOn(examManagementService, 'addStudentsToExam').mockReturnValue(of(fakeResponse));
 
         component.open();
@@ -478,5 +486,85 @@ describe('UsersImportDialogComponent', () => {
         expect(alertSpy).toHaveBeenCalledWith('artemisApp.importUsers.genericErrorMessage');
         expect(component.isImporting()).toBe(false);
         expect(component.hasImported()).toBe(false);
+    });
+
+    it('should show staff rejection alert when bulk import rejects staff', () => {
+        fixture.componentRef.setInput('examUserMode', true);
+        const studentsToImport: ExamUserDTO[] = [
+            { registrationNumber: '1', firstName: 'Max', lastName: 'Mustermann', login: 'login1', email: '' },
+            { registrationNumber: '2', firstName: 'Edith', lastName: 'Editor', login: 'editor1', email: '' },
+            { registrationNumber: '3', firstName: 'Toni', lastName: 'Tutor', login: 'tutor1', email: '' },
+        ];
+        const rejectedStaff: ExamUserDTO[] = [
+            { registrationNumber: '2', firstName: 'Edith', lastName: 'Editor', login: 'editor1', email: '' },
+            { registrationNumber: '3', firstName: 'Toni', lastName: 'Tutor', login: 'tutor1', email: '' },
+        ];
+        const fakeResponse = {
+            body: { notFoundStudents: [], rejectedStaffUsers: rejectedStaff },
+        } as unknown as HttpResponse<ExamRegistrationResultDTO>;
+        vi.spyOn(examManagementService, 'addStudentsToExam').mockReturnValue(of(fakeResponse));
+
+        component.examUsersToImport.set(studentsToImport);
+        component.importUsers();
+
+        expect(component.notFoundUsers).toHaveLength(0);
+        expect(component.rejectedStaffUsers).toHaveLength(2);
+        rejectedStaff.forEach((student) => expect(component.wasNotFound(student)).toBe(false));
+        rejectedStaff.forEach((student) => expect(component.wasRejectedStaff(student)).toBe(true));
+        rejectedStaff.forEach((student) => expect(component.wasImported(student)).toBe(false));
+        expect(component.numberOfUsersNotFound).toBe(0);
+        expect(component.numberOfStaffRejected).toBe(2);
+        expect(component.numberOfUsersImported).toBe(1);
+    });
+
+    it('should not show staff rejection alert when no staff is rejected', () => {
+        fixture.componentRef.setInput('examUserMode', true);
+        const studentsToImport: ExamUserDTO[] = [{ registrationNumber: '1', firstName: 'Max', lastName: 'Mustermann', login: 'login1', email: '' }];
+        const fakeResponse = {
+            body: { notFoundStudents: [], rejectedStaffUsers: [] },
+        } as unknown as HttpResponse<ExamRegistrationResultDTO>;
+        vi.spyOn(examManagementService, 'addStudentsToExam').mockReturnValue(of(fakeResponse));
+        const alertService = TestBed.inject(AlertService);
+        const alertSpy = vi.spyOn(alertService, 'error');
+
+        component.examUsersToImport.set(studentsToImport);
+        component.importUsers();
+
+        expect(alertSpy).not.toHaveBeenCalled();
+    });
+
+    it('should count both not-found and rejected staff as not imported', () => {
+        fixture.componentRef.setInput('examUserMode', true);
+        const studentsToImport: ExamUserDTO[] = [
+            { registrationNumber: '1', firstName: 'Max', lastName: 'Mustermann', login: 'login1', email: '' },
+            { registrationNumber: '2', firstName: 'Edith', lastName: 'Editor', login: 'editor1', email: '' },
+            { registrationNumber: '3', firstName: 'Ghost', lastName: 'User', login: 'ghost1', email: '' },
+        ];
+        const notFoundStudents: ExamUserDTO[] = [{ registrationNumber: '3', firstName: 'Ghost', lastName: 'User', login: 'ghost1', email: '' }];
+        const rejectedStaff: ExamUserDTO[] = [{ registrationNumber: '2', firstName: 'Edith', lastName: 'Editor', login: 'editor1', email: '' }];
+        const fakeResponse = {
+            body: { notFoundStudents, rejectedStaffUsers: rejectedStaff },
+        } as unknown as HttpResponse<ExamRegistrationResultDTO>;
+        vi.spyOn(examManagementService, 'addStudentsToExam').mockReturnValue(of(fakeResponse));
+
+        component.examUsersToImport.set(studentsToImport);
+        component.importUsers();
+
+        expect(component.numberOfUsersImported).toBe(1);
+        expect(component.numberOfUsersNotFound).toBe(1);
+        expect(component.numberOfStaffRejected).toBe(1);
+        expect(component.wasImported(studentsToImport[0])).toBe(true);
+        expect(component.wasNotFound(studentsToImport[0])).toBe(false);
+        expect(component.wasRejectedStaff(studentsToImport[0])).toBe(false);
+
+        // This one was rejected staff
+        expect(component.wasNotFound(studentsToImport[1])).toBe(false);
+        expect(component.wasRejectedStaff(studentsToImport[1])).toBe(true);
+        expect(component.wasImported(studentsToImport[1])).toBe(false);
+
+        // This one was not found
+        expect(component.wasNotFound(studentsToImport[2])).toBe(true);
+        expect(component.wasRejectedStaff(studentsToImport[2])).toBe(false);
+        expect(component.wasImported(studentsToImport[2])).toBe(false);
     });
 });

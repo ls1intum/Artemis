@@ -30,10 +30,10 @@ export class EditTutorialGroupsConfigurationComponent implements OnInit, OnDestr
     ngUnsubscribe = new Subject<void>();
 
     readonly isLoading = signal(false);
-    tutorialGroupsConfiguration: TutorialGroupConfigurationDTO;
+    tutorialGroupsConfiguration!: TutorialGroupConfigurationDTO; // set from the server response in ngOnInit before any user-triggered read
     readonly formData = signal<TutorialGroupsConfigurationFormData>(undefined!);
     readonly course = signal<Course>(undefined!);
-    tutorialGroupConfigurationId: number;
+    tutorialGroupConfigurationId!: number; // set from the route param in ngOnInit before any user-triggered read
 
     ngOnInit(): void {
         this.isLoading.set(true);

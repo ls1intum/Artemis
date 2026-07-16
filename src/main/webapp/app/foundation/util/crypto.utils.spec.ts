@@ -1,6 +1,34 @@
-import { sha1Hex } from 'app/foundation/util/crypto.utils';
+import { generateUuid, sha1Hex } from 'app/foundation/util/crypto.utils';
+
+const UUID_V4 = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
 
 describe('CryptoUtils', () => {
+    describe('generateUuid', () => {
+        const realCrypto = window.crypto;
+
+        afterEach(() => {
+            vi.stubGlobal('crypto', realCrypto);
+            vi.restoreAllMocks();
+        });
+
+        it('should use crypto.randomUUID when available', () => {
+            const spy = vi.spyOn(window.crypto, 'randomUUID').mockReturnValue('11111111-1111-4111-8111-111111111111');
+            expect(generateUuid()).toBe('11111111-1111-4111-8111-111111111111');
+            expect(spy).toHaveBeenCalledOnce();
+        });
+
+        it('should return a valid v4 UUID when crypto.randomUUID is absent (insecure context, getRandomValues present)', () => {
+            // Reproduces the bootstrap failure over plain-HTTP origins: randomUUID is undefined, getRandomValues remains.
+            vi.stubGlobal('crypto', { getRandomValues: (array: Uint8Array) => realCrypto.getRandomValues(array) });
+            expect(generateUuid()).toMatch(UUID_V4);
+        });
+
+        it('should fall back to Math.random when no Web Crypto RNG exists at all', () => {
+            vi.stubGlobal('crypto', undefined);
+            expect(generateUuid()).toMatch(UUID_V4);
+        });
+    });
+
     describe('sha1Hex', () => {
         it('should compute Hash for "foo"', () => {
             expect(sha1Hex('foo')).toBe('0beec7b5ea3f0fdbc95d0dd47f3c5bc275da8a33');

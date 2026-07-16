@@ -23,9 +23,9 @@ export class EditOnlineUnitComponent implements OnInit {
     private alertService = inject(AlertService);
 
     readonly isLoading = signal(false);
-    onlineUnit: OnlineUnit;
+    onlineUnit!: OnlineUnit; // loaded in ngOnInit() before the form can trigger an update
     readonly formData = signal<OnlineUnitFormData>(undefined!);
-    lectureId: number;
+    lectureId!: number; // set in ngOnInit() from route params
 
     ngOnInit(): void {
         this.isLoading.set(true);

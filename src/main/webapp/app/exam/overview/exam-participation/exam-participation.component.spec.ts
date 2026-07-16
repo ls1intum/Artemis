@@ -569,6 +569,45 @@ describe('ExamParticipationComponent', () => {
             expect(ackSpy).toHaveBeenCalledExactlyOnceWith(event, false);
         });
 
+        it('should update the exam schedule and end date when the start date changes (issue #13071)', () => {
+            const newStartDate = startDate.add(30, 'minutes');
+            const newEndDate = newStartDate.add(comp.studentExam().workingTime!, 'seconds');
+            const event = {
+                newWorkingTime: comp.studentExam().workingTime,
+                newStartDate,
+                newEndDate,
+            } as any as ExamLiveEvent;
+            vi.spyOn(examParticipationLiveEventsService, 'observeNewEventsAsSystem').mockReturnValue(of(event));
+
+            comp.initIndividualEndDates(startDate);
+
+            // The exam start/end must reflect the pushed schedule so the pre-start countdown and start-based visibility recompute.
+            expect(comp.exam().startDate!.isSame(newStartDate)).toBe(true);
+            expect(comp.exam().endDate!.isSame(newEndDate)).toBe(true);
+            // The individual end date must be derived from the NEW start, not the stale one captured on subscription.
+            expect(comp.individualStudentEndDate()).toEqual(newStartDate.add(comp.studentExam().workingTime!, 'seconds'));
+        });
+
+        it('should keep the exam dates untouched when the event carries no schedule, e.g. a test exam (issue #13071)', () => {
+            // A test-exam working time update omits the schedule (the exam dates are only its availability window). The
+            // exam's own dates must be preserved and the end date derived from the student's start captured on subscription.
+            const originalStartDate = dayjs('2022-02-21T22:00:00+01:00');
+            const originalEndDate = originalStartDate.add(2, 'hours');
+            comp.exam.set({ ...comp.exam(), startDate: originalStartDate, endDate: originalEndDate });
+            const event = {
+                newWorkingTime: comp.studentExam().workingTime,
+            } as any as ExamLiveEvent;
+            vi.spyOn(examParticipationLiveEventsService, 'observeNewEventsAsSystem').mockReturnValue(of(event));
+
+            comp.initIndividualEndDates(startDate);
+
+            // The exam's own start/end must not be overwritten with the (per-student) subscription start.
+            expect(comp.exam().startDate!.isSame(originalStartDate)).toBe(true);
+            expect(comp.exam().endDate!.isSame(originalEndDate)).toBe(true);
+            // The individual end date is derived from the start captured on subscription (the student's start for test exams).
+            expect(comp.individualStudentEndDate()).toEqual(startDate.add(comp.studentExam().workingTime!, 'seconds'));
+        });
+
         it('should correctly increase working time to next day', () => {
             const event = {
                 newWorkingTime: 9001,
@@ -762,23 +801,24 @@ describe('ExamParticipationComponent', () => {
             expect(quizSpy).toHaveBeenCalledWith(11, quizSubmission);
         });
 
-        it('should keep answers unsynced and not send them when offline at resume so the autosave retries later', () => {
+        it('should force the recovery re-send even when the websocket is not (re)connected yet at resume', () => {
             const { studentExam, quizSubmission, textSubmission, modelingSubmission } = buildResumeStudentExam();
             comp.exam.set(studentExam.exam!);
-            comp.connected.set(false); // the websocket is not (re)connected yet at resume time
+            // Right after a reload the websocket often has not re-established yet (especially in a multi-node cluster),
+            // so `connected()` is false. The recovery re-send is a plain HTTP request that does not need the websocket,
+            // and it must fire regardless — otherwise the restored answers are silently deferred to the next autosave
+            // cycle, the answer-loss window this recovery path exists to close (regression: ExamSubmissionRecovery E2E).
+            comp.connected.set(false);
             const quizSpy = vi.spyOn(examParticipationService, 'updateQuizSubmission').mockReturnValue(of(quizSubmission));
             const textSpy = vi.spyOn(textSubmissionService, 'update').mockReturnValue(of(new HttpResponse({ body: textSubmission })));
             const modelingSpy = vi.spyOn(modelingSubmissionService, 'update').mockReturnValue(of(new HttpResponse({ body: modelingSubmission })));
 
             comp.examStarted(studentExam, true);
 
-            // Nothing is sent while offline, but the answers stay unsynced so the autosave re-sends them once reconnected.
-            expect(quizSpy).not.toHaveBeenCalled();
-            expect(textSpy).not.toHaveBeenCalled();
-            expect(modelingSpy).not.toHaveBeenCalled();
-            expect(quizSubmission.isSynced).toBe(false);
-            expect(textSubmission.isSynced).toBe(false);
-            expect(modelingSubmission.isSynced).toBe(false);
+            // All three restored answers are re-sent immediately, not deferred, despite the websocket being down.
+            expect(quizSpy).toHaveBeenCalledWith(11, quizSubmission);
+            expect(textSpy).toHaveBeenCalledWith(textSubmission, 12);
+            expect(modelingSpy).toHaveBeenCalledWith(modelingSubmission, 13);
         });
 
         it('should not show the restore notification on a normal (not failed) start', () => {
@@ -1100,6 +1140,56 @@ describe('ExamParticipationComponent', () => {
             comp.exam().startDate = startDate;
             const serverNowSpy = vi.spyOn(artemisServerDateService, 'now').mockReturnValue(date);
             expect(comp.isActive()).toBe(false);
+            expect(serverNowSpy).toHaveBeenCalledOnce();
+        });
+
+        it('should not be active if there is no exam and it is not a test run', () => {
+            comp.testRunId.set(0);
+            comp.exam.set(undefined!);
+            expect(comp.isActive()).toBe(false);
+        });
+    });
+
+    describe('isVisible without an exam', () => {
+        it('should not be visible if there is no exam and it is not a test run', () => {
+            comp.testRunId.set(0);
+            comp.exam.set(undefined!);
+            expect(comp.isVisible()).toBe(false);
+        });
+    });
+
+    describe('sidebar toggle', () => {
+        it('should register the sidebar toggle callback and invoke it', () => {
+            const toggle = vi.fn();
+            comp.setSidebarToggle(true, toggle);
+            expect(comp.isSidebarCollapsed()).toBe(true);
+
+            comp.toggleSidebar();
+            expect(toggle).toHaveBeenCalledOnce();
+        });
+
+        it('should not fail when toggling the sidebar before a callback is registered', () => {
+            expect(() => comp.toggleSidebar()).not.toThrow();
+        });
+    });
+
+    describe('isGracePeriodOver', () => {
+        it('should be falsy when the grace period end date is not set', () => {
+            comp.individualStudentEndDateWithGracePeriod.set(undefined!);
+            expect(comp.isGracePeriodOver()).toBeFalsy();
+        });
+
+        it('should be over when the grace period end date is before the server date', () => {
+            comp.individualStudentEndDateWithGracePeriod.set(dayjs().subtract(1, 'days'));
+            const serverNowSpy = vi.spyOn(artemisServerDateService, 'now').mockReturnValue(dayjs());
+            expect(comp.isGracePeriodOver()).toBe(true);
+            expect(serverNowSpy).toHaveBeenCalledOnce();
+        });
+
+        it('should not be over when the grace period end date is after the server date', () => {
+            comp.individualStudentEndDateWithGracePeriod.set(dayjs().add(1, 'days'));
+            const serverNowSpy = vi.spyOn(artemisServerDateService, 'now').mockReturnValue(dayjs());
+            expect(comp.isGracePeriodOver()).toBe(false);
             expect(serverNowSpy).toHaveBeenCalledOnce();
         });
     });

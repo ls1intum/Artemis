@@ -502,7 +502,15 @@ export class ExamResultSummaryComponent implements OnInit {
     getTextColorAndIconClassByExercise(exercise: Exercise) {
         const participation = exercise.studentParticipations![0];
         const showUngradedResults = false;
-        const result = getLatestResultOfStudentParticipation(participation, showUngradedResults);
+        let result = getLatestResultOfStudentParticipation(participation, showUngradedResults);
+
+        // The exam grade info holds the authoritative achieved score (e.g. updated after an accepted
+        // complaint), while the participation's result can be stale. Prefer that score so the color and
+        // icon stay consistent with the displayed achieved percentage.
+        const achievedScore = this.getExerciseResultByExerciseId(exercise.id)?.achievedScore;
+        if (result && achievedScore !== undefined) {
+            result = { ...result, score: achievedScore };
+        }
 
         const isBuilding = false;
         const templateStatus = evaluateTemplateStatus(exercise, participation, result, isBuilding);

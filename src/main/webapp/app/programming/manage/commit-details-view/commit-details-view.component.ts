@@ -20,9 +20,9 @@ export class CommitDetailsViewComponent implements OnDestroy, OnInit {
     private route = inject(ActivatedRoute);
     private diffRunId = 0;
 
-    exerciseId: number;
+    exerciseId!: number; // set in ngOnInit() from route params
     readonly repositoryId = signal<number | undefined>(undefined); // acts as both participationId (USER repositories) and repositoryId (AUXILIARY repositories), undefined for TEMPLATE, SOLUTION and TEST
-    commitHash: string;
+    commitHash!: string; // set in ngOnInit() from route params
     readonly isTemplate = signal(false);
 
     errorWhileFetching = false;
@@ -32,13 +32,13 @@ export class CommitDetailsViewComponent implements OnDestroy, OnInit {
     commits: CommitInfo[] = [];
     readonly currentCommit = signal<CommitInfo>(undefined!);
     readonly previousCommit = signal<CommitInfo>(undefined!);
-    repositoryType: RepositoryType;
+    repositoryType!: RepositoryType; // set in ngOnInit() from route params
     readonly diffReady = signal(false);
 
-    participationRepoFilesSubscription: Subscription;
+    participationRepoFilesSubscription?: Subscription;
 
-    paramSub: Subscription;
-    participationSub: Subscription;
+    paramSub?: Subscription;
+    participationSub?: Subscription;
 
     ngOnDestroy(): void {
         this.participationRepoFilesSubscription?.unsubscribe();

@@ -16,6 +16,7 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import dayjs, { Dayjs } from 'dayjs/esm';
 import { Lecture, LectureSeriesCreateLectureDTO } from 'app/lecture/shared/entities/lecture.model';
 import { isFirstDateAfterOrEqualSecond } from 'app/foundation/util/date.utils';
+import { generateUuid } from 'app/foundation/util/crypto.utils';
 
 interface InitialLecture {
     id: string;
@@ -173,7 +174,7 @@ export class LectureSeriesCreateComponent {
         const newDrafts: LectureDraft[] = [];
         lectureDates.forEach(([startDate, endDate]) => {
             newDrafts.push({
-                id: window.crypto.randomUUID(),
+                id: generateUuid(),
                 state: LectureDraftState.REGULAR,
                 dto: new LectureSeriesCreateLectureDTO('', startDate, endDate),
             });
@@ -290,7 +291,7 @@ export class LectureSeriesCreateComponent {
     }
 
     private createInitialLecture(): InitialLecture {
-        const id = window.crypto.randomUUID();
+        const id = generateUuid();
         const startDate = signal<Date | undefined>(undefined);
         const endDate = signal<Date | undefined>(undefined);
         const isStartDateInvalid = computed(() => isFirstDateAfterOrEqualSecond(startDate(), endDate()) || isFirstDateAfterOrEqualSecond(startDate(), this.seriesEndDate()));

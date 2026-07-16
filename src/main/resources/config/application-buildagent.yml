@@ -49,6 +49,8 @@ artemis:
         enabled: false
     iris:
         enabled: false
+    theia:
+        enabled: false # the online IDE is served by core nodes only, never by build agents
 
     checked-out-repos-path: ./checked-out-repos # The directory to which repositories temporarily get cloned for the build job execution
     repo-clone-path: ./repos
