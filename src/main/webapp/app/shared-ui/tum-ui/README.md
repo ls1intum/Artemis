@@ -63,9 +63,10 @@ both light and dark without a `dark:` variant.
 
 ## Testing
 
-Vitest with `setupTestBed({ zoneless: true })`, colocated with each component. Overlay geometry and
-real pointer interception are not headless-verifiable, so specs assert the wiring and the semantics;
-placement, z-order, and pointer capture are verified visually and in Playwright.
+Vitest, colocated with each component (the zoneless TestBed is initialized once globally, so specs call
+`TestBed.configureTestingModule(...)` directly). Overlay geometry and real pointer interception are not
+headless-verifiable, so specs assert the wiring and the semantics; placement, z-order, and pointer
+capture are verified visually and in Playwright.
 
 ## Adding a component
 

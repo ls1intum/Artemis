@@ -1,12 +1,9 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { vi } from 'vitest';
 import { By } from '@angular/platform-browser';
 import { TumUiTagComponent } from 'app/shared-ui/tum-ui/tag/tum-ui-tag.component';
 
 describe('TumUiTagComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<TumUiTagComponent>;
 
     beforeEach(() => {

@@ -1,6 +1,5 @@
 import { Component } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { vi } from 'vitest';
 import { By } from '@angular/platform-browser';
 import { TumUiPopoverComponent } from 'app/shared-ui/tum-ui/popover/tum-ui-popover.component';
@@ -16,8 +15,6 @@ import { TumUiPopoverTriggerDirective } from 'app/shared-ui/tum-ui/popover/tum-u
 class PopoverTriggerHostComponent {}
 
 describe('TumUiPopoverTriggerDirective', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<PopoverTriggerHostComponent>;
     let button: HTMLButtonElement;
 

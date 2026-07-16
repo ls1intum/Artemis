@@ -1,11 +1,8 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { vi } from 'vitest';
 import { TumUiPopoverComponent } from 'app/shared-ui/tum-ui/popover/tum-ui-popover.component';
 
 describe('TumUiPopoverComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: TumUiPopoverComponent;
     let fixture: ComponentFixture<TumUiPopoverComponent>;
     let origin: HTMLButtonElement;
