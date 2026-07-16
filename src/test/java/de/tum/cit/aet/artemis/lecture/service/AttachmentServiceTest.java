@@ -76,12 +76,19 @@ class AttachmentServiceTest extends AbstractSpringIntegrationIndependentBatchTes
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor", roles = "INSTRUCTOR")
     void testRegenerateStudentVersion_withHiddenSlides() {
+        Integer originalAttachmentVersion = testAttachment2.getVersion();
+
         attachmentService.regenerateStudentVersion(testAttachment2);
-        String originalPath = testAttachment2.getStudentVersion();
-        Path actualFilePath = FilePathConverter.fileSystemPathForExternalUri(URI.create(originalPath), FilePathType.STUDENT_VERSION_SLIDES);
+        String firstStudentVersionPath = testAttachment2.getStudentVersion();
+        Path actualFilePath = FilePathConverter.fileSystemPathForExternalUri(URI.create(firstStudentVersionPath), FilePathType.STUDENT_VERSION_SLIDES);
 
         assertThat(testAttachment2.getStudentVersion()).isNotNull();
         assertThat(Files.exists(actualFilePath)).isTrue();
+
+        attachmentService.regenerateStudentVersion(testAttachment2);
+
+        assertThat(testAttachment2.getStudentVersion()).isNotEqualTo(firstStudentVersionPath);
+        assertThat(testAttachment2.getVersion()).isEqualTo(originalAttachmentVersion);
     }
 
     @Test
