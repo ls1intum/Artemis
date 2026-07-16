@@ -617,7 +617,6 @@ class InteractiveSandboxRelayRoundTripTest {
             when(harness.localSandbox().createSession(any())).thenReturn(CONTAINER_ID);
             String handle = harness.client().createSession(sessionSpec());
             CountDownLatch destroyStarted = new CountDownLatch(1);
-            CountDownLatch secondDestroyStarted = new CountDownLatch(1);
             CountDownLatch finishDestroy = new CountDownLatch(1);
             doAnswer(invocation -> {
                 destroyStarted.countDown();
@@ -629,11 +628,9 @@ class InteractiveSandboxRelayRoundTripTest {
             CompletableFuture<Void> second;
             try {
                 assertThat(destroyStarted.await(5, TimeUnit.SECONDS)).isTrue();
-                second = CompletableFuture.runAsync(() -> {
-                    secondDestroyStarted.countDown();
-                    harness.client().destroySession(handle);
-                }, callers);
-                assertThat(secondDestroyStarted.await(5, TimeUnit.SECONDS)).isTrue();
+                second = CompletableFuture.runAsync(() -> harness.client().destroySession(handle), callers);
+                ThreadPoolExecutor relayWorkers = (ThreadPoolExecutor) ReflectionTestUtils.getField(harness.handler(), "workerExecutor");
+                await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> assertThat(relayWorkers.getActiveCount()).isEqualTo(2));
             }
             finally {
                 finishDestroy.countDown();
