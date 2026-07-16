@@ -15,9 +15,11 @@ the look, and we carry only a primitive (CDK) as a dependency. The same componen
 to be shared across TUM apps (Artemis, TumApply, and future Angular apps) so a TUM user learns each UI
 concept once.
 
-PrimeNG stays installed during the migration. These components are additive and use distinct
-`tum-ui-*` selectors, so they coexist with the existing PrimeNG and ng-bootstrap components that are
-still being migrated.
+**Bootstrap and PrimeNG are deprecated.** The long-term goal is to migrate the client entirely onto
+this owned kit and remove Bootstrap, PrimeNG, and ng-bootstrap. They stay installed only during the
+migration: these components are additive and use distinct `tum-ui-*` selectors, so they coexist with
+the PrimeNG and ng-bootstrap components still being migrated. Reach for a kit component first; fall
+back to PrimeNG only for widgets the kit does not provide yet.
 
 ## Principles
 
@@ -30,7 +32,8 @@ still being migrated.
   Dark mode comes for free because the tokens resolve per theme.
 - **Accessibility is part of the contract**: real semantics (`role`, `aria-*`), keyboard support, and
   focus management, verified in tests.
-- **No PrimeNG / Bootstrap / ng-bootstrap** imports. The only runtime UI dependency is `@angular/cdk`.
+- **No PrimeNG / Bootstrap / ng-bootstrap** imports. `@angular/cdk` is the only UI _component-library_
+  dependency (icon / date / utility libs like FontAwesome, `dayjs`, `lodash-es` are still used as needed).
 
 ## Components
 
@@ -55,7 +58,7 @@ they replace:
 
 - `bg-primary` / `text-primary` — the brand color (solid buttons fill it with `text-surface-0`).
 - `bg/text/border-state-*` (`danger`, `success`, `warning`, `info`) — status colors; e.g. a tag uses a
-  `bg-state-success/15` tint with a `text-state-success` label.
+  low-opacity `color-mix` tint of the state color (in its SCSS) with a state-colored label.
 - `bg-surface-*` / `text-surface-*` / `text-muted-color` — the neutral surface ramp.
 
 The `--danger` / `--success` / … custom properties differ per theme, so a single class is correct in

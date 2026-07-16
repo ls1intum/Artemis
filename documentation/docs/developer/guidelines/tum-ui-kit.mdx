@@ -44,8 +44,10 @@ Angular apps (Artemis, TumApply, and future apps) so a TUM user learns each UI c
 apps in the fleet mirror the same concepts with their own primitive stack.
 
 <Callout variant={CalloutVariant.warning}>
-    **Coexistence during migration.** PrimeNG and ng-bootstrap stay installed while the client migrates. The kit components are additive and use distinct `tum-ui-*` selectors, so
-    they never collide with the components they will eventually replace. Migrate screen by screen; do not rip out PrimeNG wholesale.
+    **Bootstrap and PrimeNG are deprecated.** The long-term goal is to migrate the client **entirely** onto this owned kit (Angular CDK + Tailwind tokens) and remove Bootstrap,
+    PrimeNG, and ng-bootstrap. They stay installed only for the duration of the migration: the kit components are additive and use distinct `tum-ui-*` selectors, so they coexist
+    without collisions. Do **not** add new Bootstrap or PrimeNG usage — reach for a kit component first and fall back to PrimeNG only for widgets the kit does not provide yet, then
+    migrate screen by screen (do not rip out PrimeNG wholesale).
 </Callout>
 
 ## Principles
@@ -57,7 +59,9 @@ apps in the fleet mirror the same concepts with their own primitive stack.
   Never raw palette colors, `--p-*` primitives, or Bootstrap classes.
 - **Accessibility is part of the contract** — correct roles and `aria-*`, keyboard support, and focus
   management, all verified in tests.
-- **Only `@angular/cdk`** as a runtime UI dependency. No PrimeNG / Bootstrap / ng-bootstrap imports.
+- **`@angular/cdk` is the only UI _component-library_ dependency** — no PrimeNG / Bootstrap /
+  ng-bootstrap imports. (Icon, date, and utility libraries — FontAwesome, `dayjs`, `lodash-es` — are
+  still used where needed; the rule is specifically that no third-party _component_ library is pulled in.)
 
 ## Architecture
 
@@ -94,7 +98,7 @@ uses the same tokens Artemis' PrimeNG theme exposes, so the components render li
 | Token                                                                              | Meaning                | Used by                                                                                    |
 | ---------------------------------------------------------------------------------- | ---------------------- | ------------------------------------------------------------------------------------------ |
 | `bg-primary` / `text-primary`                                                      | The brand color.       | Solid primary buttons (`bg-primary` + `text-surface-0`); outlined / text primary.          |
-| `--color-state-*` (`state-danger`, `state-success`, `state-warning`, `state-info`) | The status colors.     | Solid state buttons; tag tints (`bg-state-success/15`) with a `text-state-*` label; borders. |
+| `--color-state-*` (`state-danger`, `state-success`, `state-warning`, `state-info`) | The status colors.     | Solid state buttons; tag tints (a low-opacity `color-mix` of the state color, in the tag SCSS) with a state-colored label; borders. |
 | `bg-surface-*` / `text-surface-*` / `text-muted-color`                             | The neutral surface ramp. | Secondary / contrast variants, backgrounds, muted text.                                    |
 
 Dark mode is automatic: `--danger` / `--success` / … resolve to their per-theme values, so a single class
@@ -145,8 +149,10 @@ A native `<button>` with severity / size variants.
 
 ### Tag — `tum-ui-tag`
 
-A presentational status pill (no behavior). Colored severities use a tinted background (`bg-state-*/15`)
-with a `text-state-*` label; `secondary` / `contrast` use the surface ramp.
+A presentational status pill (no behavior). Colored severities (`success` / `info` / `warn` / `danger`)
+use a low-opacity state-color tint with a state-colored label, produced with `color-mix` in the
+component SCSS (matching PrimeNG's `--p-<color>-100` / `-700`), not a Tailwind opacity utility;
+`secondary` / `contrast` use the surface ramp from the variant map.
 
 <Shots light={TumuiTagLight} dark={TumuiTagDark} alt="tum-ui-tag severities" />
 

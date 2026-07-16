@@ -1,4 +1,4 @@
-import { ComponentRef, Directive, ElementRef, OnDestroy, inject, input } from '@angular/core';
+import { ComponentRef, Directive, ElementRef, OnDestroy, effect, inject, input } from '@angular/core';
 import { ComponentPortal } from '@angular/cdk/portal';
 import { FlexibleConnectedPositionStrategy, OverlayRef } from '@angular/cdk/overlay';
 import { Subscription } from 'rxjs';
@@ -45,6 +45,12 @@ export class TumUiTooltipDirective implements OnDestroy {
     // must not hide the tooltip). Without this, a single deactivation event would hide it prematurely.
     private hovered = false;
     private focused = false;
+
+    constructor() {
+        // Keep a currently-shown tooltip's text in sync when the content input changes mid-hover
+        // (pTooltip parity). No-op while hidden (contentRef is undefined).
+        effect(() => this.contentRef?.setInput('text', this.content()));
+    }
 
     protected onHoverStart(): void {
         this.hovered = true;
