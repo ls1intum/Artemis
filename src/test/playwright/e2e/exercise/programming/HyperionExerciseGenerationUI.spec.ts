@@ -6,7 +6,7 @@ import { Commands } from '../../../support/commands';
 import { admin, instructor, UserCredentials } from '../../../support/users';
 import { SEED_COURSES } from '../../../support/seedData';
 import { ExerciseMode, ProgrammingLanguage } from '../../../support/constants';
-import { fillDateTimePicker, generateUUID, newBrowserPage } from '../../../support/utils';
+import { fillDateTimePicker, generateUUID, newBrowserPage, readResponseJson } from '../../../support/utils';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import javaProgrammingExerciseTemplate from '../../../fixtures/exercise/programming/java/template.json';
 
@@ -145,7 +145,7 @@ test.describe('Hyperion exercise generation browser UI', { tag: '@slow' }, () =>
         await page.getByRole('button', { name: 'Generate Draft Problem Statement' }).click();
         const draftResponse = await draftResponsePromise;
         expect(draftResponse.ok()).toBeTruthy();
-        const draft = (await draftResponse.json()) as { draftProblemStatement?: string };
+        const draft = await readResponseJson<{ draftProblemStatement?: string }>(draftResponse);
         expect(draft.draftProblemStatement).toContain('# Temperature Alert Classification');
         await expect(page.getByText('Problem statement has been successfully generated.')).toBeVisible();
 
@@ -158,12 +158,12 @@ test.describe('Hyperion exercise generation browser UI', { tag: '@slow' }, () =>
         await page.locator('#generate-with-ai').click();
         const setupResponse = await setupResponsePromise;
         expect(setupResponse.ok()).toBeTruthy();
-        exercise = (await setupResponse.json()) as ProgrammingExercise;
+        exercise = await readResponseJson<ProgrammingExercise>(setupResponse);
         expect(exercise.id).toBeDefined();
         await expect(page).toHaveURL(new RegExp(`/programming-exercises/${exercise.id}/code-editor/TEMPLATE/`));
         const startResponse = await startResponsePromise;
         expect(startResponse.status()).toBe(202);
-        runningJobId = ((await startResponse.json()) as { jobId: string }).jobId;
+        runningJobId = (await readResponseJson<{ jobId: string }>(startResponse)).jobId;
         await expectRunningGenerationStatus(page, exercise.id!, runningJobId, 'GENERATE');
         await expect(page.getByTestId('hyperion-generation-persistence-state')).toContainText('Agent working copy — not saved');
     });
@@ -592,7 +592,7 @@ async function waitForGenerationStart(page: Page, exerciseId: number): Promise<{
     );
     expect(response.status()).toBe(202);
     const request = response.request().postDataJSON() as GenerationRequest;
-    const body = await response.json();
+    const body = await readResponseJson<{ jobId: string }>(response);
     expect(body.jobId).toBeTruthy();
     return { jobId: body.jobId, request };
 }
