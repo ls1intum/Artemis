@@ -7,6 +7,16 @@ import { AccountService } from 'app/core/auth/account.service';
 import { IdlePreloadScheduler } from 'app/core/config/idle-preload.scheduler';
 import { RoleAwarePreloadingStrategy, preloadTierForRoute } from 'app/core/config/role-aware-preloading.strategy';
 import { IS_AT_LEAST_ADMIN, IS_AT_LEAST_INSTRUCTOR, IS_AT_LEAST_STUDENT, IS_AT_LEAST_TUTOR } from 'app/foundation/constants/authority.constants';
+import routes from 'app/app.routes';
+
+/** Finds a top-level app route by its exact path (throws if the config no longer contains it). */
+function findAppRoute(path: string): Route {
+    const match = (routes as Route[]).find((route) => route.path === path);
+    if (!match) {
+        throw new Error(`Route '${path}' not found in app.routes`);
+    }
+    return match;
+}
 
 describe('RoleAwarePreloadingStrategy', () => {
     setupTestBed({ zoneless: true });
@@ -120,6 +130,22 @@ describe('RoleAwarePreloadingStrategy', () => {
         expect(loader).not.toHaveBeenCalled();
         expect(result).toBeNull();
     });
+
+    // Regression: the real `course-management` lazy parent (its access authorities live on its children) must warm
+    // for eligible staff so its loadChildren runs and Angular recurses into the management subtree. Before it
+    // declared preload-only authorities the strategy skipped it for everyone and the children were never enqueued.
+    it('warms the real course-management lazy parent for eligible staff at the management tier', () => {
+        accountStub.hasAnyAuthorityDirect.mockReturnValue(true);
+        expect(emitted(findAppRoute('course-management'))).toBeNull();
+        expect(enqueue).toHaveBeenCalledOnce();
+        expect(enqueue.mock.calls[0][1]).toBe(2);
+    });
+
+    it('prunes the real course-management lazy parent for a pure student', () => {
+        accountStub.hasAnyAuthorityDirect.mockReturnValue(false);
+        expect(emitted(findAppRoute('course-management'))).toBeNull();
+        expect(enqueue).not.toHaveBeenCalled();
+    });
 });
 
 describe('preloadTierForRoute', () => {
@@ -142,4 +168,23 @@ describe('preloadTierForRoute', () => {
     });
 
     it('puts admin-only routes in tier 3', () => expect(preloadTierForRoute(route({ authorities: IS_AT_LEAST_ADMIN }))).toBe(3));
+
+    it('assigns every management/student lazy parent in app.routes a defined preload tier (regression: no cold subtrees)', () => {
+        // Each of these lazy parents carries preload-only authorities (and no canActivate) so its subtree is
+        // discovered and warmed for eligible users. A regression that drops the authorities would make this
+        // return undefined and silently stop the whole subtree from ever being preloaded.
+        const expectedTierByPath: Record<string, number> = {
+            'course-management': 2,
+            'course-management/:courseId/exams': 2,
+            'course-management/:courseId/programming-exercises/:exerciseId/code-editor': 2,
+            courses: 1,
+            'courses/:courseId/exams/:examId/exercises/:exerciseId/repository': 1,
+        };
+        for (const [path, tier] of Object.entries(expectedTierByPath)) {
+            const parent = findAppRoute(path);
+            expect(parent.loadChildren, `${path} should be a lazy parent`).toBeDefined();
+            expect(parent.canActivate, `${path} authorities must be preload-only (no access guard)`).toBeUndefined();
+            expect(preloadTierForRoute(parent), `${path} preload tier`).toBe(tier);
+        }
+    });
 });

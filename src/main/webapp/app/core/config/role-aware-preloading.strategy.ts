@@ -59,9 +59,12 @@ export function preloadTierForRoute(route: Route): number | undefined {
  * ({@link file://../auth/user-route-access-service.ts}) remain authoritative. The required authorities are read
  * off `route.data['authorities']` the same way the guard reads them; for a route the user lacks access to,
  * returning `of(null)` stops Angular recursing through its `loadChildren`, so that lazily-loaded subtree is not
- * warmed. Routes without `authorities` are skipped entirely (not preloaded) unless they opt in via
- * `data: { preload: 'eager' }`, so lazy parents like `course-management` are never warmed for users who
- * lack the authorities declared on their children.
+ * warmed. A lazy parent therefore must declare a preload-only `authorities` set — the least-privileged authority
+ * any of its children requires — so eligible users warm it and Angular recurses into and warms its children,
+ * while ineligible users are pruned before the subtree is even discovered (e.g. a pure student never downloads
+ * the `course-management` subtree). Such a parent typically has no `canActivate`, so those `authorities` are read
+ * only here, not by the access guard. A parent with neither `authorities` nor `data: { preload: 'eager' }` is
+ * skipped entirely, which leaves its whole lazily-loaded subtree cold.
  *
  * Wired up via `withPreloading(RoleAwarePreloadingStrategy)` in {@link file://../../app.config.ts}.
  */
@@ -87,9 +90,10 @@ export class RoleAwarePreloadingStrategy implements PreloadingStrategy {
             return of(null);
         }
         const tier = preloadTierForRoute(route);
-        // Authority-less routes without an explicit preload hint are skipped: they are typically lazy route-config
-        // parents (e.g. course-management) whose real authorities live on their children. Warming them for every
-        // user would let a pure student download management or admin code they can never reach.
+        // Authority-less routes without an explicit preload hint are skipped. A lazy route-config parent whose real
+        // authorities live on its children must declare a preload-only `authorities` set (the least-privileged one
+        // its children require) so eligible users reach this branch and Angular recurses into the subtree; without
+        // it the parent is skipped and its children are never discovered, so nothing below it is ever warmed.
         if (tier === undefined) {
             return of(null);
         }
