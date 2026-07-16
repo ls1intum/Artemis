@@ -176,12 +176,14 @@ public class QuizSubmissionService extends AbstractQuizSubmissionService<QuizSub
         // save result to store score
         resultRepository.save(result);
 
-        // Recalculate the quiz statistics asynchronously: statistics are only relevant for instructors, so the student
-        // must not wait for them. Previously this ran synchronously and, for popular practice quizzes, iterated every
-        // participation of the quiz with several queries each, taking many seconds per submission. The async task loads
-        // the quiz freshly by id, so it never mutates the entities used to build this request's response.
+        // Update the quiz statistics asynchronously: statistics are only relevant for instructors, so the student must
+        // not wait for them. Previously this ran a full recalculation synchronously, iterating every participation of
+        // the quiz with several queries each, which took many seconds per submission on popular practice quizzes. The
+        // async task incrementally adds just this result (the same O(1) mechanism used for live and exam submissions),
+        // loading the quiz and result freshly by id so it never mutates the entities used to build this response.
+        long resultId = result.getId();
         long quizExerciseId = quizExercise.getId();
-        quizStatisticsExecutor.execute(() -> quizStatisticService.recalculateStatisticsForQuiz(quizExerciseId));
+        quizStatisticsExecutor.execute(() -> quizStatisticService.updateStatisticsForNewResult(quizExerciseId, resultId));
 
         log.debug("submit practice quiz finished: {}", quizSubmission);
         return result;

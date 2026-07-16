@@ -112,10 +112,10 @@ public class AsyncConfiguration implements AsyncConfigurer {
      * Executor for asynchronous quiz statistics updates (see {@code QuizSubmissionService}).
      * <p>
      * In production this is a dedicated, single-threaded executor rather than a delegate to the shared
-     * {@code taskExecutor}. Recomputing a quiz's statistics is relatively expensive; a single worker isolates that work
-     * from the shared pool and bounds its concurrency, so bursts of submissions cannot spawn many parallel (and largely
-     * redundant) recomputations. Statistics are only relevant for instructors, so the student's submission request does
-     * not wait for this work.
+     * {@code taskExecutor}. It isolates the statistics work from the shared pool and, by using a single worker,
+     * serializes all statistics updates on a node so same-node updates cannot race. The incremental update itself is
+     * the same mechanism used for live and exam quiz submissions. Statistics are only relevant for instructors, so the
+     * student's submission request does not wait for this work.
      * <p>
      * In the {@code test} profile it is a {@link SyncTaskExecutor} so the statistics update runs on the calling thread,
      * keeping tests that assert on quiz statistics deterministic.
