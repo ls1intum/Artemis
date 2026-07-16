@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TestBed } from '@angular/core/testing';
 import { ApplicationRef } from '@angular/core';
 import { Subject, of, throwError } from 'rxjs';
@@ -9,8 +8,6 @@ const START_DELAY_MS = 10_000;
 const IDLE_FALLBACK_MS = 300;
 
 describe('IdlePreloadScheduler', () => {
-    setupTestBed({ zoneless: true });
-
     let scheduler: IdlePreloadScheduler;
 
     function configure(): void {

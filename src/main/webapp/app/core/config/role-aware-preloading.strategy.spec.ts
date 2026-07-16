@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TestBed } from '@angular/core/testing';
 import { Route } from '@angular/router';
 import { Observable, of } from 'rxjs';
@@ -8,6 +7,7 @@ import { IdlePreloadScheduler } from 'app/core/config/idle-preload.scheduler';
 import { RoleAwarePreloadingStrategy, preloadTierForRoute } from 'app/core/config/role-aware-preloading.strategy';
 import { IS_AT_LEAST_ADMIN, IS_AT_LEAST_INSTRUCTOR, IS_AT_LEAST_STUDENT, IS_AT_LEAST_TUTOR } from 'app/foundation/constants/authority.constants';
 import routes from 'app/app.routes';
+import { courseManagementRoutes } from 'app/course/manage/course-management.route';
 
 /** Finds a top-level app route by its exact path (throws if the config no longer contains it). */
 function findAppRoute(path: string): Route {
@@ -18,9 +18,22 @@ function findAppRoute(path: string): Route {
     return match;
 }
 
-describe('RoleAwarePreloadingStrategy', () => {
-    setupTestBed({ zoneless: true });
+/** Recursively collects every route that declares a `loadChildren` (i.e. every lazy parent) within a route subtree. */
+function collectLazyParents(routeList: readonly Route[]): Route[] {
+    const lazyParents: Route[] = [];
+    const walk = (list: readonly Route[] | undefined): void => {
+        for (const route of list ?? []) {
+            if (route.loadChildren) {
+                lazyParents.push(route);
+            }
+            walk(route.children);
+        }
+    };
+    walk(routeList);
+    return lazyParents;
+}
 
+describe('RoleAwarePreloadingStrategy', () => {
     let strategy: RoleAwarePreloadingStrategy;
     const enqueue = vi.fn();
     const accountStub = { isAuthenticated: vi.fn(() => true), hasAnyAuthorityDirect: vi.fn(() => true) };
@@ -185,6 +198,21 @@ describe('preloadTierForRoute', () => {
             expect(parent.loadChildren, `${path} should be a lazy parent`).toBeDefined();
             expect(parent.canActivate, `${path} authorities must be preload-only (no access guard)`).toBeUndefined();
             expect(preloadTierForRoute(parent), `${path} preload tier`).toBe(tier);
+        }
+    });
+
+    it('assigns every nested lazy parent inside courseManagementRoutes a defined preload tier (regression: no cold management subtrees)', () => {
+        // Angular's preloader only recurses into a lazy parent's loadChildren once the parent itself warms. A nested
+        // management parent that resolves to `undefined` here is skipped, so its whole subtree stays cold even for
+        // eligible staff. Every lazy parent nested in courseManagementRoutes (lectures, tutorial-groups, plagiarism,
+        // exams, the exercise-management path:'' subtrees, ...) must therefore carry preload-only authorities and no
+        // access guard. A regression that drops the authorities from any of them fails here.
+        const lazyParents = collectLazyParents(courseManagementRoutes);
+        expect(lazyParents.length).toBeGreaterThan(0);
+        for (const parent of lazyParents) {
+            const label = parent.path ? parent.path : '(empty path)';
+            expect(preloadTierForRoute(parent), `${label} preload tier`).toBeDefined();
+            expect(parent.canActivate, `${label} authorities must be preload-only (no access guard)`).toBeUndefined();
         }
     });
 });
