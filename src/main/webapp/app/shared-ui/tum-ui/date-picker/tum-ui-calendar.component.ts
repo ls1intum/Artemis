@@ -29,12 +29,34 @@ export class TumUiCalendarComponent {
     protected readonly weekdayLabels = computed(() => this.weeks()[0].map((day) => day.format('dd')));
     protected readonly monthLabel = computed(() => this.activeMonth().format('MMMM YYYY'));
 
-    // Roving-tabindex focus. Derived from the grid + selection (resets when the month/selection changes) but
-    // also writable imperatively from onKeydown — linkedSignal covers both without writing a signal in an effect.
-    protected readonly focusedIndex = linkedSignal(() => {
+    // The day the roving keyboard cursor sits on — the single source of truth for focus. A linkedSignal so it
+    // (a) defaults to the selected day (or the month start) and follows a later selection change, (b) is
+    // writable imperatively by arrow navigation in onKeydown, and (c) preserves the day-of-month across a month
+    // change (PageUp/PageDown, prev/next) instead of snapping back to the 1st — clamping into shorter months
+    // (e.g. Jan 31 → Feb 28). Without (c) a PageDown from June 11 would land on July 1 rather than July 11.
+    protected readonly focusedDate = linkedSignal<{ month: dayjs.Dayjs; selected: dayjs.Dayjs | undefined }, dayjs.Dayjs>({
+        source: () => ({ month: this.activeMonth(), selected: this.selected() }),
+        computation: ({ month, selected }, previous) => {
+            const previousSelected = previous?.source.selected;
+            // A newly selected day pulls focus onto it. Compared against the previous source's selection (not the
+            // current cursor) so this fires only when the selection itself changed — not on a plain month change.
+            if (selected && (!previousSelected || !selected.isSame(previousSelected, 'day'))) {
+                return selected;
+            }
+            // Month changed with the selection unchanged: keep the cursor on the same day, clamped to the last
+            // day of a shorter target month.
+            if (previous) {
+                return month.date(Math.min(previous.value.date(), month.daysInMonth()));
+            }
+            // First render, nothing selected.
+            return month.startOf('month');
+        },
+    });
+
+    // The focused day's position in the flattened 6×7 grid, driving the roving tabindex and focus restoration.
+    protected readonly focusedIndex = computed(() => {
         const days = this.flatDays();
-        const target = this.selected() ?? this.activeMonth().startOf('month');
-        const index = days.findIndex((day) => day.isSame(target, 'day'));
+        const index = days.findIndex((day) => day.isSame(this.focusedDate(), 'day'));
         return index >= 0 ? index : 0;
     });
     private readonly today = dayjs();
@@ -104,7 +126,7 @@ export class TumUiCalendarComponent {
         const moveTo = (target: number): void => {
             event.preventDefault();
             const clamped = Math.max(0, Math.min(total - 1, target));
-            this.focusedIndex.set(clamped);
+            this.focusedDate.set(this.flatDays()[clamped]);
             this.dayButtons()[clamped]?.nativeElement.focus();
         };
         switch (event.key) {
