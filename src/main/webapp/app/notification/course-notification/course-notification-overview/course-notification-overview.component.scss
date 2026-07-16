@@ -142,18 +142,15 @@ $triangle-offset-right: 0.2rem;
 }
 
 // Bordered CSS triangle so the pointer stays visible in light and dark mode
-// (a single border-color fill is nearly invisible on --module-bg in light mode).
 .course-notification-overview-triangle {
     width: 0;
     height: 0;
     border-left: 9px solid transparent;
     border-right: 9px solid transparent;
-    // Mix body color into the edge so the tip stays readable in light mode.
-    border-bottom: 9px solid color-mix(in srgb, var(--bs-body-color) 35%, var(--bs-border-color));
+    border-bottom: 9px solid var(--secondary);
     position: absolute;
     bottom: 100%;
     right: $triangle-offset-right;
-    filter: drop-shadow(0 -1px 1px rgba(0, 0, 0, 0.18));
 
     &::after {
         content: '';
