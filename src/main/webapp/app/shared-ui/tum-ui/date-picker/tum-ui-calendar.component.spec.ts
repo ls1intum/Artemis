@@ -1,5 +1,4 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { vi } from 'vitest';
 import { By } from '@angular/platform-browser';
 import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
@@ -7,8 +6,6 @@ import dayjs from 'dayjs/esm';
 import { TumUiCalendarComponent } from 'app/shared-ui/tum-ui/date-picker/tum-ui-calendar.component';
 
 describe('TumUiCalendarComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: TumUiCalendarComponent;
     let fixture: ComponentFixture<TumUiCalendarComponent>;
 

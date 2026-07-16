@@ -16,7 +16,6 @@ import { NgClass } from '@angular/common';
 import { ExamResultSummaryExerciseCardHeaderComponent } from 'app/exam/overview/summary/exercises/header/exam-result-summary-exercise-card-header.component';
 import { ResultSummaryExerciseInfo } from 'app/exam/overview/summary/exam-result-summary.component';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 let fixture: ComponentFixture<ExamResultSummaryExerciseCardHeaderComponent>;
 let component: ExamResultSummaryExerciseCardHeaderComponent;
@@ -45,8 +44,6 @@ const programmingExercise = {
 } as ProgrammingExercise;
 
 describe('ExamResultSummaryExerciseCardHeaderComponent', () => {
-    setupTestBed({ zoneless: true });
-
     beforeEach(async () => {
         await TestBed.configureTestingModule({
             imports: [ExamResultSummaryExerciseCardHeaderComponent],

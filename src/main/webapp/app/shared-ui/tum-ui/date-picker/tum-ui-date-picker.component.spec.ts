@@ -1,6 +1,5 @@
 import { Component } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { vi } from 'vitest';
 import { By } from '@angular/platform-browser';
 import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
@@ -19,8 +18,6 @@ class TwoWayHostComponent {
 }
 
 describe('TumUiDatePickerComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: TumUiDatePickerComponent;
     let fixture: ComponentFixture<TumUiDatePickerComponent>;
 

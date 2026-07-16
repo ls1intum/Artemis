@@ -1,14 +1,11 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Router, provideRouter } from '@angular/router';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { DoughnutChartType } from 'app/course/manage/detail/course-detail.component';
 import { DoughnutChartComponent } from 'app/exercise/statistics/doughnut-chart/doughnut-chart.component';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 
 describe('DoughnutChartComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<DoughnutChartComponent>;
     let component: DoughnutChartComponent;
     let router: Router;

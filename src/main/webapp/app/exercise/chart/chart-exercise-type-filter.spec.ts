@@ -1,10 +1,8 @@
 import { ChartExerciseTypeFilter } from 'app/exercise/chart/chart-exercise-type-filter';
 import { TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 
 describe('ChartExerciseTypeFilter', () => {
-    setupTestBed({ zoneless: true });
     let exerciseTypeFilter: ChartExerciseTypeFilter;
     let results: any[];
 

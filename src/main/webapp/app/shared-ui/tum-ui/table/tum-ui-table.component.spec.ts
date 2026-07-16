@@ -1,5 +1,4 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { vi } from 'vitest';
 import { By } from '@angular/platform-browser';
 import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
@@ -23,8 +22,6 @@ const ROWS: Row[] = [
 ];
 
 describe('TumUiTableComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: TumUiTableComponent<Row>;
     let fixture: ComponentFixture<TumUiTableComponent<Row>>;
 

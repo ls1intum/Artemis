@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { Course } from 'app/course/shared/entities/course.model';
 import { ConsistencyCheckError, ErrorType } from 'app/programming/shared/entities/consistency-check-result.model';
@@ -15,8 +14,6 @@ import { ConsistencyCheckService } from 'app/programming/manage/consistency-chec
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('ConsistencyCheckComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: ConsistencyCheckComponent;
     let fixture: ComponentFixture<ConsistencyCheckComponent>;
     let service: ConsistencyCheckService;

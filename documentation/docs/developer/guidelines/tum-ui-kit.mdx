@@ -282,8 +282,9 @@ export class TumUiDatePickerComponent implements FormValueControl<dayjs.Dayjs | 
 
 ## Testing
 
-Use Vitest with `setupTestBed({ zoneless: true })`, colocated with the component (see
-[Client Tests](/developer/guidelines/client-tests)).
+Use Vitest, colocated with the component (see [Client Tests](/developer/guidelines/client-tests)). The
+client suite is zoneless and the Angular TestBed is initialized once globally (`vitest-test-setup.ts`),
+so a spec just calls `TestBed.configureTestingModule(...)` directly — no per-spec platform setup.
 
 - Assert **behavior and semantics** (roles, `aria-*`, emitted events, class outputs).
 - Overlay geometry, z-order, and real pointer interception are **not** headless-verifiable (jsdom does

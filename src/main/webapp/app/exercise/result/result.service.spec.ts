@@ -1,6 +1,5 @@
 import { expect, vi } from 'vitest';
 import { TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { HttpClient, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { TranslateService } from '@ngx-translate/core';
@@ -40,7 +39,6 @@ vi.mock('@sentry/angular', async () => {
 });
 
 describe('ResultService', () => {
-    setupTestBed({ zoneless: true });
     let resultService: ResultService;
     let translateService: TranslateService;
     let http: HttpClient;

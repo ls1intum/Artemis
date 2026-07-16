@@ -1,11 +1,8 @@
 import { TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { OverlayModule } from '@angular/cdk/overlay';
 import { TumUiOverlayPlacement, TumUiOverlayService } from 'app/shared-ui/tum-ui/overlay/tum-ui-overlay.service';
 
 describe('TumUiOverlayService', () => {
-    setupTestBed({ zoneless: true });
-
     let service: TumUiOverlayService;
     let origin: HTMLElement;
 

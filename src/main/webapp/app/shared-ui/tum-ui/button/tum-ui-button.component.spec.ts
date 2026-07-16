@@ -1,5 +1,4 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { vi } from 'vitest';
 import { By } from '@angular/platform-browser';
 import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
@@ -7,8 +6,6 @@ import { faCheck } from '@fortawesome/free-solid-svg-icons';
 import { TumUiButtonComponent } from 'app/shared-ui/tum-ui/button/tum-ui-button.component';
 
 describe('TumUiButtonComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: TumUiButtonComponent;
     let fixture: ComponentFixture<TumUiButtonComponent>;
 

@@ -4,7 +4,6 @@
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { of } from 'rxjs';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
@@ -27,8 +26,6 @@ import { StandardizedCompetencyDetailComponent } from 'app/atlas/shared/standard
 import { KnowledgeAreaTreeComponent } from 'app/atlas/shared/standardized-competencies/knowledge-area-tree.component';
 
 describe('AdminImportStandardizedCompetenciesComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let componentFixture: ComponentFixture<AdminImportStandardizedCompetenciesComponent>;
     let component: AdminImportStandardizedCompetenciesComponent;
 

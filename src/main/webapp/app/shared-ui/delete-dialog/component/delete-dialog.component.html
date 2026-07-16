@@ -9,7 +9,7 @@
         }
         @if (isLoadingSummary()) {
             <div class="summary-loading-container">
-                <p-progressSpinner [style]="{ width: '24px', height: '24px' }" strokeWidth="4" />
+                <p-progressspinner [style]="{ width: '24px', height: '24px' }" strokeWidth="4" />
                 <span class="ms-2" jhiTranslate="loading"></span>
             </div>
         } @else if (categorizedEntitySummary() && categorizedEntitySummary()!.length > 0) {

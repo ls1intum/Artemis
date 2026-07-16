@@ -1,6 +1,5 @@
 import { Component } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { vi } from 'vitest';
 import { By } from '@angular/platform-browser';
 import { TumUiTooltipDirective } from 'app/shared-ui/tum-ui/tooltip/tum-ui-tooltip.directive';
@@ -14,8 +13,6 @@ class TooltipHostComponent {
 }
 
 describe('TumUiTooltipDirective', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<TooltipHostComponent>;
     let button: HTMLButtonElement;
 

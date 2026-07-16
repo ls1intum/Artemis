@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CourseNotificationPresetPickerComponent } from 'app/notification/course-notification/course-notification-preset-picker/course-notification-preset-picker.component';
 import { CourseNotificationSettingPreset } from 'app/notification/shared/entities/course-notification/course-notification-setting-preset';
@@ -13,8 +12,6 @@ import { CourseNotificationSettingsMap } from 'app/notification/shared/entities/
 import { TranslateService } from '@ngx-translate/core';
 
 describe('CourseNotificationPresetPickerComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: CourseNotificationPresetPickerComponent;
     let fixture: ComponentFixture<CourseNotificationPresetPickerComponent>;
 
