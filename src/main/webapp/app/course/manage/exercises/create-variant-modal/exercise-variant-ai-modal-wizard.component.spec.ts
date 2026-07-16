@@ -15,7 +15,7 @@ import { VariantGenerationRequest } from 'app/openapi/model/variantGenerationReq
 /**
  * Vitest specs for the exam path of the AI variant wizard: exam exercises must place the variant into the
  * source's exam exercise group automatically (SAME_EXAM_GROUP, no placement step) and must NOT offer difficulty
- * adaptation — a per-student variant with a different difficulty would be unfair (instructor feedback, todo-d).
+ * adaptation — a per-student variant with a different difficulty would be unfair.
  */
 describe('ExerciseVariantAiModalWizardComponent (exam path)', () => {
     setupTestBed({ zoneless: true });

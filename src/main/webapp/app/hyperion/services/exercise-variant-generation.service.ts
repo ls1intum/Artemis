@@ -7,12 +7,11 @@ import { VariantJobDetail } from 'app/openapi/model/variantJobDetail';
 import { ExerciseVariantWebsocketService, VariantGenerationEvent, isTerminalVariantPhase } from 'app/hyperion/services/exercise-variant-websocket.service';
 
 /**
- * Client service for AI exercise-variant generation (plan Section 5.3, point 1).
- * Two responsibilities:
- * 1. REST access to the variant endpoints (plan Section 5.1) via the generated OpenAPI client.
- * 2. Signal-based job-tray state shared by the navbar tray and the wizard (plan Section 5.4): the `jobs`
- *    signal is the client-side copy of the user's job list, kept live by the per-job websocket topics and
- *    re-synced from REST on demand (events are fire-and-forget; the job record is authoritative).
+ * Client service for AI exercise-variant generation. Two responsibilities:
+ * 1. REST access to the variant endpoints via the generated OpenAPI client.
+ * 2. Signal-based job-tray state shared by the navbar tray and the wizard: the `jobs` signal is the
+ *    client-side copy of the user's job list, kept live by the per-job websocket topics and re-synced from
+ *    REST on demand (events are fire-and-forget; the server-side job record is authoritative).
  */
 @Injectable({ providedIn: 'root' })
 export class ExerciseVariantGenerationService {
@@ -24,10 +23,10 @@ export class ExerciseVariantGenerationService {
     /** All jobs of the current user (running + retained-finished), authoritative copy of GET /variant-jobs. */
     readonly jobs = signal<VariantJob[]>([]);
 
-    /** Running jobs drive the tray spinner ring + count badge (plan Section 5.4). */
+    /** Running jobs drive the tray spinner ring + count badge. */
     readonly runningJobs = computed(() => this.jobs().filter((job) => !isTerminalVariantPhase(job.phase)));
 
-    /** Tray button hidden when the user has no variant jobs at all (plan Section 5.4). */
+    /** Tray button hidden when the user has no variant jobs at all. */
     readonly hasJobs = computed(() => this.jobs().length > 0);
 
     /**
@@ -49,8 +48,8 @@ export class ExerciseVariantGenerationService {
     }
 
     /**
-     * Re-syncs the tray list from REST — called on login, tray open, and websocket reconnect
-     * (plan Section 5.4, "State handling"): events are fire-and-forget, the job record is authoritative.
+     * Re-syncs the tray list from REST — called on login, tray open, and websocket reconnect: events are
+     * fire-and-forget, so the server-side job record is authoritative.
      */
     loadJobs(): Observable<VariantJob[]> {
         return this.api.getJobsOfCurrentUser().pipe(
@@ -71,22 +70,22 @@ export class ExerciseVariantGenerationService {
         this.jobs.set([]);
     }
 
-    /** Full job detail incl. per-phase step outputs — reopening the modal in monitor mode (plan Section 5.4). */
+    /** Full job detail incl. per-phase step outputs — reopening the modal in monitor mode. */
     getJobDetail(jobId: string): Observable<VariantJobDetail> {
         return this.api.getJobDetail(jobId);
     }
 
     /**
-     * Requests cooperative cancellation (plan Section 5.2). The entry stays listed; it transitions to
-     * CANCELLED when the CANCELLED websocket event arrives (the clone cleanup happens server-side first).
+     * Requests cooperative cancellation. The entry stays listed; it transitions to CANCELLED when the
+     * CANCELLED websocket event arrives (the clone cleanup happens server-side first).
      */
     cancelJob(jobId: string): Observable<void> {
         return this.api.cancelJob(jobId);
     }
 
     /**
-     * Per-job event stream for the wizard's step timeline (plan Section 5.3, point 2). Also drives this
-     * service's tray state internally — subscribing here does not create a second websocket subscription.
+     * Per-job event stream for the wizard's step timeline. Also drives this service's tray state internally —
+     * subscribing here does not create a second websocket subscription.
      */
     jobEvents(jobId: string): Observable<VariantGenerationEvent> {
         this.attachToJob(jobId);
@@ -117,10 +116,10 @@ export class ExerciseVariantGenerationService {
             }),
         );
         if (event.type === 'DONE' || event.type === 'FAILED' || event.type === 'CANCELLED') {
-            // Deferred: this handler is the FIRST subscriber on the shared per-job subject, and detaching
-            // completes that subject — done synchronously it stops later subscribers (the wizard modal) before
-            // the subject's next() loop delivers this terminal event to them, freezing the modal in the last
-            // live phase. A microtask runs after all subscribers received the event.
+            // This handler is the FIRST subscriber on the shared per-job subject, and detaching completes that
+            // subject — done synchronously it would stop later subscribers (the wizard modal) before the
+            // subject's next() loop delivers this terminal event to them, freezing the modal in the last live
+            // phase. Detaching in a microtask lets every subscriber receive the event first.
             window.queueMicrotask(() => this.detachFromJob(jobId));
         }
     }

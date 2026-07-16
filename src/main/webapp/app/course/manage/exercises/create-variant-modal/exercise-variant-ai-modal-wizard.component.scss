@@ -357,7 +357,7 @@ $purple: #8b5cf6;
     }
 }
 
-// Full modal width (todo-d) so expanded step logs don't get squeezed into a narrow column.
+// Full modal width so expanded step logs don't get squeezed into a narrow column.
 .generation-steps {
     list-style: none;
     padding: 0;
@@ -366,7 +366,7 @@ $purple: #8b5cf6;
     text-align: left;
 }
 
-// Expanded step logs: full width, capped height, scrollable (todo-d).
+// Expanded step logs: full width, capped height, scrollable.
 .step-output-detail {
     width: 100%;
     max-height: 220px;
@@ -383,7 +383,7 @@ $purple: #8b5cf6;
     word-break: break-word;
 }
 
-// "What the AI did" summary on the result step (todo-d).
+// "What the AI did" summary on the result step.
 .step-summary {
     border: 1px solid var(--bs-border-color);
     border-radius: 0.75rem;
@@ -497,7 +497,7 @@ $purple: #8b5cf6;
     }
 }
 
-// "source → variant" flow card shown on the generating and result steps (todo-c).
+// "source → variant" flow card shown on the generating and result steps.
 .variant-flow-card {
     display: flex;
     align-items: center;

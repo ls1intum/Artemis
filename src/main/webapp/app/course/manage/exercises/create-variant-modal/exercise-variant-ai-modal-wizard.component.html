@@ -8,7 +8,7 @@
     [style]="{ width: '660px', maxWidth: '95vw' }"
     [draggable]="false"
 >
-    <!-- ── Step indicator (wizard flow only — monitor mode has no steps 1–3, todo-d) ── -->
+    <!-- ── Step indicator (wizard flow only — monitor mode has no steps 1–3) ── -->
     @if (!isMonitorMode()) {
         <div class="wizard-step-indicator mb-4">
             @for (step of wizardSteps; track step.label; let i = $index) {
@@ -25,7 +25,7 @@
         </div>
     }
 
-    <!-- ── Source → variant flow card + "what is being adapted" chips (steps 4 and 5, todo-c) ── -->
+    <!-- ── Source → variant flow card + "what is being adapted" chips (steps 4 and 5) ── -->
     @if (wizardStep() === 4 || wizardStep() === 5) {
         <div class="variant-flow-card mb-2" data-testid="variant-wizard-flow">
             @if (displayExerciseType(); as type) {
@@ -274,7 +274,7 @@
         </div>
     }
 
-    <!-- ── Step 4: Generating (live job timeline, plan Section 5.3, point 2) ──── -->
+    <!-- ── Step 4: Generating (live job timeline) ──── -->
     @if (wizardStep() === 4) {
         <div class="generating-panel" data-testid="variant-wizard-generating">
             <div class="generating-icon-wrapper">
@@ -307,7 +307,7 @@
                             }
                             @if (stepOutputs()[phase]; as stepOutput) {
                                 <!-- Expandable only once the full log detail arrived — an arrow with an empty body
-                                     behind it is worse than no arrow (todo-c). -->
+                                     behind it is worse than no arrow. -->
                                 @if (stepOutput.detail) {
                                     <a class="d-block small text-decoration-none pointer" (click)="toggleStepOutput(phase)" data-testid="variant-wizard-step-output-toggle">
                                         <fa-icon [icon]="expandedPhases()[phase] ? faChevronDown : faChevronRight" class="me-1" />
@@ -343,7 +343,7 @@
         </div>
     }
 
-    <!-- ── Step 5: Result (plan Sections 5.3 and 6) ───────────────────────────── -->
+    <!-- ── Step 5: Result ───────────────────────────── -->
     @if (wizardStep() === 5) {
         @if (jobPhase() === 'FAILED') {
             <div class="ai-warning mb-3" data-testid="variant-wizard-failed">
@@ -403,7 +403,7 @@
                 }}</p-button>
             </div>
         } @else {
-            <!-- Title/type live in the flow card above (todo-c); this row only adds the variant's key facts. -->
+            <!-- Title/type live in the flow card above; this row only adds the variant's key facts. -->
             @if (generatedVariant(); as variant) {
                 <div class="d-flex flex-wrap align-items-center gap-1 mb-3" data-testid="variant-wizard-result">
                     @if (variant.maxPoints) {
@@ -444,7 +444,7 @@
             </div>
         }
     }
-    <!-- ── "What the AI did" summary — shared by the failed and result views (todo-d) ── -->
+    <!-- ── "What the AI did" summary — shared by the failed and result views ── -->
     <ng-template #stepSummary>
         @if (recordedStepOutputs().length > 0) {
             <div class="step-summary mb-3" data-testid="variant-wizard-summary">

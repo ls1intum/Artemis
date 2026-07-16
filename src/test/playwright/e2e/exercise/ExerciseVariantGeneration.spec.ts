@@ -8,7 +8,7 @@ import { SEED_COURSES } from '../../support/seedData';
 import { ExerciseVariantAiWizard } from '../../support/pageobjects/exercises/ExerciseVariantAiWizard';
 
 /**
- * E2E tests for AI exercise-variant generation (plan Section 10, "E2E").
+ * E2E tests for AI exercise-variant generation.
  *
  * The whole stack is real (server, client, Hazelcast job map, quiz adapters/toolset, WebSocket) except the
  * LLM: Hyperion's Spring AI OpenAI client is pointed at a deterministic mock LLM
@@ -22,7 +22,7 @@ import { ExerciseVariantAiWizard } from '../../support/pageobjects/exercises/Exe
  * When Hyperion is NOT enabled (the default), the suite skips itself, so it is a no-op in normal CI runs.
  *
  * Note: one manual multi-node sanity run before the PR (the job map is Hazelcast-backed and the WebSocket
- * event must reach the user regardless of which node runs the job — plan Section 10, last bullet):
+ * event must reach the user regardless of which node runs the job):
  *     RUN_HYPERION=true ./run-e2e-tests-local-multinode-fast.sh --filter "Variant"
  */
 
@@ -141,7 +141,7 @@ test.describe('Exercise variant generation with AI', { tag: '@fast' }, () => {
         await wizard.chooseStandaloneAndGenerate();
         await wizard.expectGenerating();
 
-        // Closing the wizard detaches the UI but must not cancel the @Async job (plan Section 5.4).
+        // Closing the wizard detaches the UI but must not cancel the @Async job.
         await wizard.runInBackground();
         await expect(page.getByTestId('variant-tray-button')).toBeVisible();
         await expect(page.getByTestId('variant-tray-spinner')).toBeVisible();

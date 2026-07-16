@@ -53,8 +53,8 @@ const WIZARD_STEPS = [
 
 /**
  * Running pipeline phases in execution order — the wizard's step timeline is derived from VariantJobPhase
- * (single source of truth via the OpenAPI client, plan Section 5.2). REPAIRING is NOT a linear step: it renders
- * as a repeat visit on the VERIFYING step with the attempt counter (plan Section 5.3, point 2).
+ * (single source of truth via the OpenAPI client). REPAIRING is NOT a linear step: it renders as a repeat
+ * visit on the VERIFYING step with the attempt counter.
  */
 const GENERATION_PHASES: readonly VariantJobPhase[] = ['ANALYZING', 'PLANNING', 'PROVISIONING', 'TRANSFORMING', 'VERIFYING', 'FINALIZING'];
 
@@ -95,13 +95,13 @@ export class ExerciseVariantAiModalWizardComponent implements OnDestroy {
      * nested group object, so the explicit input is the reliable signal.
      */
     readonly examExercise = input<boolean>(false);
-    /** Monitor mode (plan Section 5.4): the tray reopens this modal for a running/finished job — skips steps 1–3. */
+    /** Monitor mode: the tray reopens this modal for a running/finished job — skips steps 1–3. */
     readonly monitorJobId = input<string | undefined>(undefined);
 
     readonly visibleChange = output<boolean>();
     readonly variantAdded = output<Exercise>();
 
-    /** Monitor mode skips the wizard chrome: no 5-step indicator, job-centric dialog title (todo-d). */
+    /** Monitor mode skips the wizard chrome: no 5-step indicator, job-centric dialog title. */
     readonly isMonitorMode = computed(() => !!this.monitorJobId());
     readonly headerKey = computed(() => (this.isMonitorMode() ? 'artemisApp.exerciseVariantGeneration.wizard.monitorTitle' : 'artemisApp.exerciseVariantGeneration.wizard.title'));
 
@@ -122,7 +122,7 @@ export class ExerciseVariantAiModalWizardComponent implements OnDestroy {
     readonly changeCustom = signal(false);
     readonly additionalInstructions = signal('');
 
-    // ── Live job state (plan Section 5.3, point 2) ────────────────────────────────────────────
+    // ── Live job state ────────────────────────────────────────────────────────────────────────
     readonly jobId = signal<string | undefined>(undefined);
     readonly jobPhase = signal<VariantJobPhase>('ANALYZING');
     readonly attempt = signal<number | undefined>(undefined);
@@ -137,7 +137,7 @@ export class ExerciseVariantAiModalWizardComponent implements OnDestroy {
     readonly failureDetail = signal<string | undefined>(undefined);
     /** AI-generated state-and-next-steps summary for failed jobs (server-side best effort, may stay empty). */
     readonly instructorSummary = signal<string | undefined>(undefined);
-    /** Job-record context for monitor mode, where no sourceExercise input exists (todo-c flow card). */
+    /** Job-record context for monitor mode, where no sourceExercise input exists (drives the flow card). */
     readonly monitorSourceTitle = signal<string | undefined>(undefined);
     readonly monitorExerciseType = signal<ExerciseType | undefined>(undefined);
     /** The planned variant title — available from PLANNING on, drives the "source → variant" display. */
@@ -150,11 +150,11 @@ export class ExerciseVariantAiModalWizardComponent implements OnDestroy {
 
     /**
      * The variant group the source exercise already belongs to, loaded from the course's variant groups on
-     * open — offers the "add to existing group" placement (plan Section 5.5; TODO resolved in todo-d).
+     * open — offers the "add to existing group" placement.
      */
     readonly sourceGroup = signal<ExerciseVariantGroupDTO | undefined>(undefined);
 
-    /** Exam exercises skip the placement step entirely — SAME_EXAM_GROUP is forced (plan Section 5.5). */
+    /** Exam exercises skip the placement step entirely — SAME_EXAM_GROUP is forced. */
     readonly isExamExercise = computed(() => this.examExercise() || !!this.sourceExercise()?.exerciseGroup);
 
     readonly availableDifficulties = computed<Array<{ value: DifficultyLevel; label: string }>>(() => {
@@ -186,12 +186,12 @@ export class ExerciseVariantAiModalWizardComponent implements OnDestroy {
 
     readonly isRunning = computed(() => this.jobId() !== undefined && !isTerminalVariantPhase(this.jobPhase()));
 
-    /** "source → variant" flow card (todo-c): wizard mode uses the input exercise, monitor mode the job record. */
+    /** "source → variant" flow card: wizard mode uses the input exercise, monitor mode the job record. */
     readonly displaySourceTitle = computed(() => this.sourceExercise()?.title ?? this.monitorSourceTitle());
     readonly displayExerciseType = computed(() => this.sourceExercise()?.type ?? this.monitorExerciseType());
     readonly displayVariantTitle = computed(() => this.generatedVariant()?.title ?? this.variantTitle());
 
-    /** "What is being adapted" chips (todo-c): the fetched request wins; a fresh wizard run uses the form state. */
+    /** "What is being adapted" chips: the fetched request wins; a fresh wizard run uses the form state. */
     readonly adaptations = computed<string[]>(() => {
         const request = this.monitorRequest();
         if (request) {
@@ -205,8 +205,8 @@ export class ExerciseVariantAiModalWizardComponent implements OnDestroy {
     });
 
     /**
-     * Recorded step outputs in pipeline order — the result step's "what the AI did" summary (todo-d:
-     * failed/warning summaries explain what was applied and where the instructor should continue).
+     * Recorded step outputs in pipeline order — the result step's "what the AI did" summary; failed/warning
+     * summaries explain what was applied and where the instructor should continue.
      */
     readonly recordedStepOutputs = computed<Array<{ phase: string; output: StepOutput }>>(() => {
         const outputs = this.stepOutputs();
@@ -261,9 +261,9 @@ export class ExerciseVariantAiModalWizardComponent implements OnDestroy {
     }
 
     /**
-     * Closing the dialog while generation is running must not cancel it (close ≠ cancel, plan Section 5.4): the
-     * job continues server-side, the tray keeps tracking it, and reopening the modal resumes via the `active`
-     * endpoint. Explicit cancellation is a separate action behind a confirmation.
+     * Closing the dialog while generation is running must not cancel it (close ≠ cancel): the job continues
+     * server-side, the tray keeps tracking it, and reopening the modal re-attaches via the job-detail endpoint.
+     * Explicit cancellation is a separate action behind a confirmation.
      */
     onClose(visible: boolean): void {
         if (visible) return;
@@ -337,7 +337,7 @@ export class ExerciseVariantAiModalWizardComponent implements OnDestroy {
         this.visibleChange.emit(false);
     }
 
-    /** Starts the real backend job (plan Section 5.3, point 2) — intents by field presence, no title input. */
+    /** Starts the real backend job — intents by field presence, no title input. */
     startGeneration(): void {
         const sourceExercise = this.sourceExercise();
         if (!sourceExercise?.id) return;
@@ -361,7 +361,7 @@ export class ExerciseVariantAiModalWizardComponent implements OnDestroy {
         });
     }
 
-    /** Explicit cooperative cancel while running — distinct from closing the dialog (plan Section 5.4). */
+    /** Explicit cooperative cancel while running — distinct from closing the dialog. */
     cancelGeneration(event: Event): void {
         const jobId = this.jobId();
         if (!jobId) return;
@@ -372,7 +372,7 @@ export class ExerciseVariantAiModalWizardComponent implements OnDestroy {
         });
     }
 
-    /** Emits the REAL fetched exercise — bound in exercise-actions.component.html (plan Section 5.3, point 4). */
+    /** Emits the REAL fetched exercise — bound in exercise-actions.component.html. */
     confirmVariant(): void {
         const variant = this.generatedVariant();
         if (!variant) return;
@@ -462,7 +462,7 @@ export class ExerciseVariantAiModalWizardComponent implements OnDestroy {
                     this.recordStepOutput(event.phase, { summary: event.detail });
                 }
                 // The event only carries the summary; the full log detail lives on the job record. Pull it right
-                // away — otherwise the step renders an expandable arrow with nothing behind it (todo-c).
+                // away — otherwise the step renders an expandable arrow with nothing behind it.
                 this.loadFullStepOutputs();
                 break;
             case 'DONE':
@@ -478,7 +478,7 @@ export class ExerciseVariantAiModalWizardComponent implements OnDestroy {
                 this.jobPhase.set('FAILED');
                 this.wizardStep.set(5);
                 // The event carries neither the kept clone id nor full step logs — pull the job detail so
-                // the failure summary can link into the editor and show complete logs (todo-d).
+                // the failure summary can link into the editor and show complete logs.
                 this.loadFullStepOutputs();
                 break;
             case 'CANCELLED':
@@ -536,7 +536,7 @@ export class ExerciseVariantAiModalWizardComponent implements OnDestroy {
         });
     }
 
-    /** Tray-triggered monitor mode: initialize from the job-detail endpoint and skip steps 1–3 (plan Section 5.4). */
+    /** Tray-triggered monitor mode: initialize from the job-detail endpoint and skip steps 1–3. */
     private openInMonitorMode(jobId: string): void {
         this.variantGenerationService.getJobDetail(jobId).subscribe({
             next: (detail) => {

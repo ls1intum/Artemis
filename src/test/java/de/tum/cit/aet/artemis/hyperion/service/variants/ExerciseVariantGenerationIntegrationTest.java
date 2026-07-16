@@ -61,20 +61,19 @@ import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.util.TextExerciseFactory;
 
 /**
- * Integration tests for the variant-generation pipeline (plan Section 10, "Server integration tests"):
- * real Spring context, real database, real Hazelcast job map, real quiz adapters/toolset — only the
+ * Integration tests for the variant-generation pipeline: real Spring context, real database, real Hazelcast
+ * job map, real quiz adapters/toolset — only the
  * {@code ChatModel} behind Hyperion's {@code ChatClient} is mocked (the established Hyperion test pattern,
  * see {@code HyperionQuizQuestionGenerationResourceTest}).
  *
  * The agent loop hands its toolset to Spring AI, whose internal tool-execution loop never runs against a
  * fully mocked model. The mock therefore drives the tools itself: the scripted {@code call(Prompt)} answer
  * pulls the {@link ToolCallback}s off the prompt's {@link ToolCallingChatOptions} and invokes them with
- * canned arguments — so the REAL tool implementations run against the REAL provisioned variant (stub item
- * "scripted agent-loop runs").
+ * canned arguments — so the REAL tool implementations run against the REAL provisioned variant.
  *
  * The quiz pipeline is the vehicle for all pipeline-level tests; the programming pipeline's CI-backed
- * verify path (runBuild, build verification, collision retry) needs real local CI builds and stays a
- * manual / E2E concern (see the commit's next steps).
+ * verify path (runBuild, build verification, collision retry) needs real local CI builds and is covered
+ * manually and via the E2E suite instead.
  */
 class ExerciseVariantGenerationIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCTest {
 
@@ -219,9 +218,8 @@ class ExerciseVariantGenerationIntegrationTest extends AbstractSpringIntegration
     }
 
     /**
-     * The canned happy-path agent round (stub item "scripted agent-loop runs", quiz analog of "repo edits
-     * land"): read the questions through the real getQuestions tool, re-title question 0, write it back
-     * through the real updateQuestion tool, and finish.
+     * The canned happy-path agent round: read the questions through the real getQuestions tool, re-title
+     * question 0, write it back through the real updateQuestion tool, and finish.
      */
     private String applyRetitleEdit(List<ToolCallback> tools) {
         try {
@@ -268,7 +266,7 @@ class ExerciseVariantGenerationIntegrationTest extends AbstractSpringIntegration
         return jobService.getJob(jobId, login).orElseThrow();
     }
 
-    // --- Happy path + job endpoints (stub items 1, 5, 6) -------------------------------------------------
+    // --- Happy path + job endpoints ---------------------------------------------------------------------
 
     @Test
     @WithMockUser(username = EDITOR_LOGIN, roles = "EDITOR")
@@ -313,7 +311,7 @@ class ExerciseVariantGenerationIntegrationTest extends AbstractSpringIntegration
         assertThat(detail.request().domainText()).isEqualTo("space station cargo bay");
         assertThat(detail.stepOutputs()).containsKey(VariantJobPhase.PLANNING);
 
-        // Terminal jobs can no longer be cancelled (plan Section 5.2).
+        // Terminal jobs can no longer be cancelled.
         request.delete("/api/hyperion/variant-jobs/" + jobId, HttpStatus.CONFLICT);
     }
 
@@ -333,7 +331,7 @@ class ExerciseVariantGenerationIntegrationTest extends AbstractSpringIntegration
         assertThat(firstJob.getVariantExerciseId()).isNotEqualTo(secondJob.getVariantExerciseId());
     }
 
-    // --- Failure paths (stub item 1) ----------------------------------------------------------------------
+    // --- Failure paths ------------------------------------------------------------------------------------
 
     @Test
     @WithMockUser(username = EDITOR_LOGIN, roles = "EDITOR")
@@ -346,7 +344,7 @@ class ExerciseVariantGenerationIntegrationTest extends AbstractSpringIntegration
         assertThat(job.getPhase()).isEqualTo(VariantJobPhase.FAILED);
         assertThat(job.getFailedInPhase()).isEqualTo(VariantJobPhase.PLANNING);
         assertThat(job.getFailureDetail()).contains("PLANNING");
-        // 1 initial + 2 re-prompts (plan Section 6, row 2), then the failure-summary call.
+        // 1 initial + 2 re-prompts, then the failure-summary call.
         assertThat(script.planningCalls()).hasValue(3);
         assertThat(script.failureSummaryCalls()).hasValue(1);
         assertThat(job.getInstructorSummary()).contains("AI post-mortem");
@@ -368,7 +366,7 @@ class ExerciseVariantGenerationIntegrationTest extends AbstractSpringIntegration
         String jobId = startJob(sourceQuiz.getId(), domainChangeRequest(standalonePlacement()));
         VariantJob job = awaitTerminal(jobId, EDITOR_LOGIN);
 
-        // Budget exhausted with red gates → flagged draft, never silent deletion (plan Sections 1 and 2.6).
+        // Budget exhausted with red gates → flagged draft, never silent deletion.
         assertThat(job.getPhase()).isEqualTo(VariantJobPhase.DRAFT_WITH_WARNINGS);
         assertThat(job.getWarnings()).isNotEmpty().anySatisfy(warning -> assertThat(warning).contains("QUIZ_CRITIQUE").contains("The requested domain change was not applied")
                 .contains("build logs omitted").doesNotContain("compiler output line"));
@@ -380,7 +378,7 @@ class ExerciseVariantGenerationIntegrationTest extends AbstractSpringIntegration
         assertThat(quizExerciseRepository.findById(job.getVariantExerciseId())).isPresent();
     }
 
-    // --- Cooperative cancellation (stub item 2) -----------------------------------------------------------
+    // --- Cooperative cancellation -------------------------------------------------------------------------
 
     @Test
     @WithMockUser(username = EDITOR_LOGIN, roles = "EDITOR")
@@ -399,13 +397,13 @@ class ExerciseVariantGenerationIntegrationTest extends AbstractSpringIntegration
         VariantJob job = awaitTerminal(jobId, EDITOR_LOGIN);
 
         assertThat(job.getPhase()).isEqualTo(VariantJobPhase.CANCELLED);
-        // The provisioned clone was deleted on the same cleanup path as hard failures (plan Section 6).
+        // The provisioned clone was deleted on the same cleanup path as hard failures.
         assertThat(job.getVariantExerciseId()).isNull();
         assertThat(provisionedExerciseId.get()).isNotNull();
         await().atMost(Duration.ofSeconds(30)).until(() -> quizExerciseRepository.findById(provisionedExerciseId.get()).isEmpty());
     }
 
-    // --- REST validation + per-user scoping (stub item 6) -------------------------------------------------
+    // --- REST validation + per-user scoping ---------------------------------------------------------------
 
     @Test
     @WithMockUser(username = EDITOR_LOGIN, roles = "EDITOR")
@@ -441,7 +439,7 @@ class ExerciseVariantGenerationIntegrationTest extends AbstractSpringIntegration
         assertThat(jobs).noneSatisfy(entry -> assertThat(entry.jobId()).isEqualTo(foreignJob.getJobId()));
     }
 
-    // --- Placement (stub item 7 + NEW_GROUP) ---------------------------------------------------------------
+    // --- Placement (NEW_GROUP + exam group) ---------------------------------------------------------------
 
     @Test
     @WithMockUser(username = EDITOR_LOGIN, roles = "EDITOR")

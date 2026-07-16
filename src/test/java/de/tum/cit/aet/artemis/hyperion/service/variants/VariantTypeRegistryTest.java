@@ -15,7 +15,7 @@ import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
 
 /**
- * Unit tests for the small pure pieces of the variants module (plan Section 10, "Unit tests").
+ * Unit tests for the small pure pieces of the variants module.
  * No Spring context — the registry is plain construction + {@code init()}.
  */
 class VariantTypeRegistryTest {

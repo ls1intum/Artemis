@@ -1,7 +1,7 @@
 // Visual language shared with the variant wizard (exercise-variant-ai-modal-wizard.component.scss).
 $purple: #8b5cf6;
 
-// ── Navbar button: base wand icon + notification-style status badge (todo-c) ──
+// ── Navbar button: base wand icon + notification-style status badge ──
 
 .variant-tray-status {
     position: absolute;
@@ -98,7 +98,7 @@ $purple: #8b5cf6;
     text-overflow: ellipsis;
 }
 
-// ── Per-entry step-dot timeline (mirrors the wizard's step indicator, todo-d) ──
+// ── Per-entry step-dot timeline (mirrors the wizard's step indicator) ──
 
 .variant-tray-steps {
     display: flex;

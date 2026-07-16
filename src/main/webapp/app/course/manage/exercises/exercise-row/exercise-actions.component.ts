@@ -250,7 +250,7 @@ export class ExerciseActionsComponent {
             });
         }
         // The AI variant button sits between the info/success-colored buttons above and the warning-colored
-        // edit buttons below, matching its own warning color (todo-e).
+        // edit buttons below, matching its own warning color.
         if (ex.isAtLeastEditor) {
             items.push({
                 id: 'create-variant-ai',

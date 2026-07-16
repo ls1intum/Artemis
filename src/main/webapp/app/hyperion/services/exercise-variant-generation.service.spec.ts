@@ -8,7 +8,7 @@ import { HyperionExerciseVariantApiService } from 'app/openapi/api/hyperionExerc
 import { VariantJob } from 'app/openapi/model/variantJob';
 
 /**
- * Vitest specs for ExerciseVariantGenerationService (plan Sections 5.2–5.4, 10).
+ * Vitest specs for ExerciseVariantGenerationService.
  */
 describe('ExerciseVariantGenerationService', () => {
     setupTestBed({ zoneless: true });
@@ -116,7 +116,7 @@ describe('ExerciseVariantGenerationService', () => {
 
         service.cancelJob('job-1').subscribe();
         expect(apiMock.cancelJob).toHaveBeenCalledWith('job-1');
-        // Entry stays until the server-side cleanup finished and the CANCELLED event arrives (plan Section 5.2).
+        // Entry stays until the server-side cleanup finished and the CANCELLED event arrives.
         expect(service.jobs()[0].phase).toBe('ANALYZING');
 
         eventSubjects.get('job-1')!.next({ type: 'CANCELLED', phase: 'CANCELLED' });

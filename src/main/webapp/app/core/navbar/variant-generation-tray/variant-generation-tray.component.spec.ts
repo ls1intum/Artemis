@@ -17,7 +17,7 @@ import { ExerciseVariantAiModalWizardComponent } from 'app/course/manage/exercis
 import { VariantJob } from 'app/openapi/model/variantJob';
 
 /**
- * Vitest specs for the navbar job tray (plan Sections 5.4 "State handling" and 10 "Client tests").
+ * Vitest specs for the navbar job tray.
  */
 describe('VariantGenerationTrayComponent', () => {
     setupTestBed({ zoneless: true });
@@ -110,7 +110,7 @@ describe('VariantGenerationTrayComponent', () => {
         fixture.detectChanges();
         expect(fixture.nativeElement.querySelector('[data-testid="variant-generation-tray"]')).not.toBeNull();
         expect(fixture.nativeElement.querySelector('[data-testid="variant-tray-spinner"]')).not.toBeNull();
-        // Icon-only button — no count badge (todo-d).
+        // Icon-only button — no count badge.
         expect(fixture.nativeElement.querySelector('[data-testid="variant-tray-count"]')).toBeNull();
     });
 
@@ -131,7 +131,7 @@ describe('VariantGenerationTrayComponent', () => {
         expect(fixture.nativeElement.querySelector('[data-testid="variant-tray-spinner"]')).not.toBeNull();
     });
 
-    it('always opens a clicked entry in the tray-hosted modal — running and finished alike (todo-c)', () => {
+    it('always opens a clicked entry in the tray-hosted modal — running and finished alike', () => {
         component.openJobEntry(runningJob);
         expect(component.monitorJobId()).toBe('job-1');
         expect(component.monitorVisible()).toBe(true);

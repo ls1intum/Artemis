@@ -8,7 +8,7 @@
             (click)="trayPopover.toggle($event)"
         >
             <fa-icon [icon]="faWandMagicSparkles" />
-            <!-- Status badge: small solid circle with a white glyph, like a notification badge (todo-c). -->
+            <!-- Status badge: small solid circle with a white glyph, like a notification badge. -->
             @switch (trayStatus()) {
                 @case ('running') {
                     <span class="variant-tray-status variant-tray-status--running" data-testid="variant-tray-spinner">
@@ -114,8 +114,8 @@
             </div>
         </p-popover>
         <p-confirmdialog />
-        <!-- Tray-hosted generation modal in monitor mode (plan Section 5.4): no source exercise, initialized
-             from the job-detail endpoint via monitorJobId. "Open in Editor" navigates like a finished entry. -->
+        <!-- Tray-hosted generation modal in monitor mode: no source exercise, initialized from the job-detail
+             endpoint via monitorJobId. "Open in Editor" navigates like a finished entry. -->
         <jhi-exercise-variant-ai-modal-wizard
             [visible]="monitorVisible()"
             (visibleChange)="monitorVisible.set($event)"

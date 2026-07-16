@@ -15,7 +15,7 @@ export type VariantJobPhase =
     | 'FAILED'
     | 'CANCELLED';
 
-/** Mirror of the server's VariantGenerationEventDTO (plan Section 5.2). */
+/** Mirror of the server's VariantGenerationEventDTO. */
 export interface VariantGenerationEvent {
     type: 'PHASE_CHANGED' | 'PROGRESS' | 'ATTEMPT' | 'STEP_OUTPUT' | 'DONE' | 'FAILED' | 'CANCELLED';
     phase?: VariantJobPhase;
@@ -36,7 +36,7 @@ type SubscribedJob = { wsSubscription: Subscription; subject: Subject<VariantGen
 
 /**
  * Per-job websocket subscriptions for variant-generation progress on
- * `/user/topic/hyperion/variant-generation/jobs/{jobId}` (plan Section 5.2). Same multiplexing pattern as
+ * `/user/topic/hyperion/variant-generation/jobs/{jobId}`. Same multiplexing pattern as
  * `HyperionWebsocketService.subscribeToJob`, kept separate because that service is bound to the
  * code-generation topic and is owned by another team.
  */

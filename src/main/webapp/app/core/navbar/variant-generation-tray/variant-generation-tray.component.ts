@@ -16,15 +16,15 @@ import { VariantJob } from 'app/openapi/model/variantJob';
 import { ExerciseVariantAiModalWizardComponent } from 'app/course/manage/exercises/create-variant-modal/exercise-variant-ai-modal-wizard.component';
 import { adaptationChips } from 'app/course/manage/exercises/create-variant-modal/exercise-variant-ai-modal.utils';
 
-/** Pipeline phases in execution order — drives the tray's per-entry step-dot timeline (plan Section 5.2). */
+/** Pipeline phases in execution order — drives the tray's per-entry step-dot timeline. */
 const RUNNING_PHASE_ORDER = ['ANALYZING', 'PLANNING', 'PROVISIONING', 'TRANSFORMING', 'VERIFYING', 'REPAIRING', 'FINALIZING'] as const;
 
-/** Aggregated tray-button state: spinner while anything runs, then checkmark or warning (todo-d). */
+/** Aggregated tray-button state: spinner while anything runs, then checkmark or warning. */
 type TrayStatus = 'running' | 'success' | 'attention';
 
 /**
- * Navbar job tray for background variant generation (plan Section 5.4).
- * Mounted in the navbar's right-side icon menu. Tray = state at a glance; the generation modal = full inspection.
+ * Navbar job tray for background variant generation, mounted in the navbar's right-side icon menu.
+ * Tray = state at a glance; the generation modal = full inspection.
  */
 @Component({
     selector: 'jhi-variant-generation-tray',
@@ -42,9 +42,8 @@ export class VariantGenerationTrayComponent {
     private readonly translateService = inject(TranslateService);
 
     /**
-     * Clicking a running/failed job entry opens the tray-hosted generation modal in monitor mode, initialized
-     * from the job-detail endpoint (plan Section 5.4). Finished entries with a variant deep-link straight to
-     * the exercise editor instead (todo-d: card click = navigate, modal only while running or for summaries).
+     * Clicking a job entry opens the tray-hosted generation modal in monitor mode, initialized from the
+     * job-detail endpoint; the modal's "Open in Editor" button is the only path that navigates to the variant.
      */
     readonly monitorJobId = signal<string | undefined>(undefined);
     readonly monitorVisible = signal(false);
@@ -52,8 +51,8 @@ export class VariantGenerationTrayComponent {
     private readonly trayPopover = viewChild<Popover>('trayPopover');
 
     /**
-     * Icon-only status of the tray button (todo-d): spinner while any job runs, warning once all finished
-     * but at least one needs attention (failed or draft with warnings), checkmark otherwise.
+     * Icon-only status of the tray button: spinner while any job runs, warning once all finished but at least
+     * one needs attention (failed or draft with warnings), checkmark otherwise.
      */
     readonly trayStatus = computed<TrayStatus>(() => {
         if (this.variantGenerationService.runningJobs().length > 0) {
@@ -82,7 +81,7 @@ export class VariantGenerationTrayComponent {
         // The navbar — and with it this tray — is instantiated BEFORE login, so a one-shot load in ngOnInit
         // ran unauthenticated, failed silently, and left the tray hidden even while jobs were running or had
         // failed in the background. Sync the job list whenever the authenticated user changes instead; the
-        // per-job websocket topics keep the list live afterwards (plan Section 5.4, "State handling").
+        // per-job websocket topics keep the list live afterwards.
         effect(() => {
             const login = this.accountService.userIdentity()?.login;
             untracked(() => {
@@ -99,7 +98,7 @@ export class VariantGenerationTrayComponent {
         });
     }
 
-    /** REST re-sync on tray open (plan Section 5.4, "State handling") — events don't carry title/request updates. */
+    /** REST re-sync on tray open — websocket events don't carry title/request updates. */
     refreshJobs(): void {
         this.variantGenerationService.loadJobs().subscribe({ error: () => {} });
     }
@@ -118,7 +117,7 @@ export class VariantGenerationTrayComponent {
         return job.phase === 'FAILED' || job.phase === 'DRAFT_WITH_WARNINGS';
     }
 
-    /** Cooperative cancel behind a confirmation — discards the LLM work and deletes the clone (plan Section 5.4). */
+    /** Cooperative cancel behind a confirmation — discards the LLM work and deletes the clone. */
     cancelJob(job: VariantJob, event: Event): void {
         event.stopPropagation();
         this.confirmationService.confirm({
@@ -133,8 +132,8 @@ export class VariantGenerationTrayComponent {
     }
 
     /**
-     * Card click always opens the generation modal (running: live timeline; finished: summary, todo-c) —
-     * navigation to the exercise happens via the modal's "Open in Editor" button only.
+     * Card click always opens the generation modal (running: live timeline; finished: summary) — navigation
+     * to the exercise happens via the modal's "Open in Editor" button only.
      */
     openJobEntry(job: VariantJob): void {
         if (!job.jobId) {

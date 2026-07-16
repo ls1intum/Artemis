@@ -472,7 +472,7 @@ export class CourseManagementExercisesComponent implements OnInit {
 
     /**
      * A generated AI variant was confirmed in the wizard. Placement (group assignment) happened server-side in
-     * FINALIZING, so the client simply reloads exercises and groups to reflect the true state (plan Section 5.3).
+     * FINALIZING, so the client simply reloads exercises and groups to reflect the true state.
      */
     onVariantAdded(): void {
         const courseId = this.courseId();
