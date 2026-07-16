@@ -223,6 +223,10 @@ const columns: ColumnDef<Organization>[] = [
 Standalone paginator (the table embeds one, but it is reusable). Inputs: `totalRecords`, `page`
 (0-based), `pageSize`, `pageSizeOptions`, `disabled`. Outputs: `pageChange`, `pageSizeChange`.
 
+```html
+<tum-ui-paginator [totalRecords]="total()" [page]="page()" [pageSize]="pageSize()" (pageChange)="page.set($event)" (pageSizeChange)="onPageSizeChange($event)" />
+```
+
 ### Date picker — `tum-ui-date-picker`
 
 A `dayjs`-backed date + time picker with a hand-built, keyboard-navigable calendar (roving tabindex,
