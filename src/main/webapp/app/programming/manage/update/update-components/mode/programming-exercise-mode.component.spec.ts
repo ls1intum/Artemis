@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
 import { of } from 'rxjs';
@@ -15,8 +14,6 @@ import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 import { provideHttpClient } from '@angular/common/http';
 
 describe('ProgrammingExerciseModeComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<ProgrammingExerciseModeComponent>;
     let comp: ProgrammingExerciseModeComponent;
     let profileService: ProfileService;

@@ -3,7 +3,7 @@ import { Exam } from 'app/exam/shared/entities/exam.model';
 import cBuildErrorSubmission from '../../../fixtures/exercise/programming/c/build_error/submission.json';
 import { Exercise, ExerciseType, ProgrammingLanguage } from '../../../support/constants';
 import { admin, instructor } from '../../../support/users';
-import { generateUUID } from '../../../support/utils';
+import { generateUUID, readResponseJson } from '../../../support/utils';
 import { test } from '../../../support/fixtures';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 import { expect } from '@playwright/test';
@@ -54,7 +54,7 @@ test.describe('Test exam test run', { tag: '@slow' }, () => {
         await examTestRun.setWorkingTimeMinutes(minutes);
         await examTestRun.setWorkingTimeSeconds(seconds);
         const testRunResponse = await examTestRun.confirmTestRun();
-        const testRun: StudentExam = await testRunResponse.json();
+        const testRun: StudentExam = await readResponseJson(testRunResponse);
 
         expect(testRunResponse.status()).toBe(200);
         expect(testRun.testRun).toBe(true);

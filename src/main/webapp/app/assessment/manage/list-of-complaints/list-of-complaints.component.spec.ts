@@ -1,6 +1,5 @@
 import { MockInstance, afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ActivatedRoute, Router } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateService } from '@ngx-translate/core';
@@ -30,7 +29,6 @@ import { MockTranslateService, TranslatePipeMock } from 'test/helpers/mocks/serv
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 
 describe('ListOfComplaintsComponent', () => {
-    setupTestBed({ zoneless: true });
     let fixture: ComponentFixture<ListOfComplaintsComponent>;
     let comp: ListOfComplaintsComponent;
 

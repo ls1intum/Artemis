@@ -15,7 +15,7 @@ import { ChipModule } from 'primeng/chip';
 import { ButtonModule } from 'primeng/button';
 import { DialogService } from 'primeng/dynamicdialog';
 import { PASSWORD_MAX_LENGTH, PASSWORD_MIN_LENGTH, PROFILE_JENKINS, USERNAME_MAX_LENGTH, USERNAME_MIN_LENGTH } from 'app/app.constants';
-import { faBan, faSave } from '@fortawesome/free-solid-svg-icons';
+import { faBan, faSave, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { AlertService, AlertType } from 'app/foundation/service/alert.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
@@ -72,6 +72,7 @@ export class UserManagementUpdateComponent implements OnInit {
 
     protected readonly faBan = faBan;
     protected readonly faSave = faSave;
+    protected readonly faTimes = faTimes;
 
     private readonly findLanguageFromKeyPipe = new FindLanguageFromKeyPipe();
 

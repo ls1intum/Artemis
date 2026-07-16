@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TestBed } from '@angular/core/testing';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { BehaviorSubject, Subject, distinctUntilChanged } from 'rxjs';
@@ -17,8 +16,6 @@ import { StudentParticipation } from 'app/exercise/shared/entities/participation
 import { AccountService } from 'app/core/auth/account.service';
 
 describe('ParticipationWebsocketService', () => {
-    setupTestBed({ zoneless: true });
-
     let websocketService: WebsocketService;
     let receiveParticipationSubject: Subject<Participation>;
     let receiveParticipation2Subject: Subject<Participation>;

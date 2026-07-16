@@ -28,7 +28,6 @@ import { TranslateService } from '@ngx-translate/core';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { MockDirective } from 'ng-mocks';
 
 let fixture: ComponentFixture<ExamResultOverviewComponent>;
@@ -134,8 +133,6 @@ const textExerciseResult = {
 } as ExerciseResult;
 
 describe('ExamResultOverviewComponent', () => {
-    setupTestBed({ zoneless: true });
-
     beforeEach(async () => {
         await TestBed.configureTestingModule({
             imports: [ExamResultOverviewComponent],

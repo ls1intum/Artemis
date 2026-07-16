@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TestBed } from '@angular/core/testing';
 import { CourseOverviewService } from 'app/course/overview/services/course-overview.service';
 import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
@@ -24,8 +23,6 @@ import { GroupChatDTO } from 'app/communication/shared/entities/conversation/gro
 import { OneToOneChatDTO } from 'app/communication/shared/entities/conversation/one-to-one-chat.model';
 
 describe('CourseOverviewService', () => {
-    setupTestBed({ zoneless: true });
-
     let courseOverviewService: CourseOverviewService;
     let localStorageService: LocalStorageService;
     let pastExercise: Exercise;

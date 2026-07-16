@@ -5,11 +5,8 @@ import { Feedback } from 'app/assessment/shared/entities/feedback.model';
 import { GradingInstruction } from 'app/exercise/structured-grading-criterion/grading-instruction.model';
 import { provideHttpClient } from '@angular/common/http';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('Structured Grading Criteria Service', () => {
-    setupTestBed({ zoneless: true });
-
     let service: StructuredGradingCriterionService;
     let httpMock: HttpTestingController;
     let feedbacks: Feedback[];
