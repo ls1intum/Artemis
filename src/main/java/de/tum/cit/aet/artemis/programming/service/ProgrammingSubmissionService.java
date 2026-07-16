@@ -217,11 +217,11 @@ public class ProgrammingSubmissionService extends SubmissionService {
     }
 
     /**
-     * For every student participation of a programming exercise, try to find a pending submission.
+     * For every student participation of a programming exercise, find its latest pending submission (if any).
      *
      * @param programmingExerciseId for which to search pending submissions
-     * @return a Map of {[participationId]: ProgrammingSubmission | null}. Will contain an entry for every student participation of the exercise and a submission object if a
-     *         pending submission exists or null if not.
+     * @return a list with one {@link PendingProgrammingSubmissionDTO} per student participation of the exercise; the
+     *         submission is populated if the participation's latest submission has no result yet, and {@code null} otherwise.
      */
     public List<PendingProgrammingSubmissionDTO> getLatestPendingSubmissionsForProgrammingExercise(Long programmingExerciseId) {
         // Only the latest submission per participation is fetched (with its results), instead of the exercise's entire

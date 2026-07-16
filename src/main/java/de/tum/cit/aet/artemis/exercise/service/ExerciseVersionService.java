@@ -128,7 +128,7 @@ public class ExerciseVersionService {
      * @param targetExercise The exercise to create a version of
      */
     public void createExerciseVersion(Exercise targetExercise) {
-        // Resolve the current user on the request thread: the async listener has no SecurityContext.
+        // Resolve the current user on the request thread: the async executor thread has no SecurityContext.
         User user = userRepository.getUser();
         createExerciseVersion(targetExercise, user);
     }

@@ -66,21 +66,20 @@ public class QuizStatisticService {
     }
 
     /**
-     * Incrementally updates the quiz statistics for a single newly created result, loading the quiz and result freshly
-     * by id. This is intended to be run off the request thread: the caller (e.g. a practice submission) does not need to
-     * wait for the statistics update, and because everything is loaded fresh here it never mutates entities the request
-     * thread still uses (notably {@link QuizExercise#filterForStatisticWebsocket()} inside {@link #updateStatistics}).
+     * Recalculates the statistics of the given quiz exercise, loading the quiz freshly by id. This is intended to be run
+     * off the request thread: the caller (e.g. a practice submission) does not need to wait for the statistics update.
+     * <p>
+     * It deliberately uses the full {@link #recalculateStatistics(QuizExercise)} (which resets the counters and rebuilds
+     * them from the persisted results) rather than an incremental update. The full recompute is idempotent and
+     * self-healing, so it stays correct even when it runs concurrently on multiple cluster nodes for the same quiz,
+     * whereas an incremental read-modify-write on the counters could lose updates across nodes. Loading the quiz freshly
+     * also means it never mutates entities the request thread still uses.
      *
-     * @param quizExerciseId the id of the quiz exercise
-     * @param resultId       the id of the newly created result to add to the statistics
+     * @param quizExerciseId the id of the quiz exercise whose statistics should be recalculated
      */
-    public void updateStatisticsForNewResult(long quizExerciseId, long resultId) {
-        Optional<Result> result = resultRepository.findResultWithSubmissionAndParticipationById(resultId);
-        if (result.isEmpty()) {
-            return;
-        }
+    public void recalculateStatisticsForQuiz(long quizExerciseId) {
         QuizExercise quizExercise = quizExerciseRepository.findByIdWithQuestionsAndStatisticsElseThrow(quizExerciseId);
-        updateStatistics(Set.of(result.get()), quizExercise);
+        recalculateStatistics(quizExercise);
     }
 
     /**
