@@ -1990,6 +1990,15 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void testGetAllExamsOnPage_asEditor_failsWithForbidden() throws Exception {
+        // Creating and importing exams is instructor-only, and this import-source endpoint is scoped to instructor
+        // courses, so editors must not be able to call it (otherwise they would always get an empty result).
+        final SearchTermPageableSearchDTO<String> search = pageableSearchUtilService.configureSearch("");
+        request.getSearchResult("/api/exam/exams", HttpStatus.FORBIDDEN, Exam.class, pageableSearchUtilService.searchMapping(search));
+    }
+
+    @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TUTOR")
     void testGetAllExamsOnPage_asTutor_failsWithForbidden() throws Exception {
         final SearchTermPageableSearchDTO<String> search = pageableSearchUtilService.configureSearch("");
