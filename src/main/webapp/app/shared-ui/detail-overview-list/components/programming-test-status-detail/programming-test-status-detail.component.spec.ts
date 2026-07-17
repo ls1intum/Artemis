@@ -1,5 +1,6 @@
 import { signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { By } from '@angular/platform-browser';
 import { RouterModule, provideRouter } from '@angular/router';
 import { MockComponent, MockDirective } from 'ng-mocks';
@@ -15,6 +16,7 @@ import { ProgrammingExerciseInstructorTriggerBuildButtonComponent } from 'app/pr
 import { ProgrammingExerciseInstructorStatusComponent } from 'app/programming/manage/status/programming-exercise-instructor-status.component';
 
 describe('ProgrammingTestStatusDetailComponent', () => {
+    setupTestBed({ zoneless: true });
     let fixture: ComponentFixture<ProgrammingTestStatusDetailComponent>;
 
     beforeEach(async () => {
