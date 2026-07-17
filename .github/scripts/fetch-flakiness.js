@@ -1,6 +1,16 @@
 const fs = require('fs');
 const https = require('https');
 
+// Thresholds mirror Helios' TestCaseStatisticsService (github.com/ls1intum/Helios) so CI and the
+// flaky-test dashboard classify identically — keep them in sync with that source. Upstream names:
+// 30 = LOW_FLAKINESS_THRESHOLD, 0.01 = MIN_FLAKY_RATE, 0.5 = MAX_FLAKY_RATE. At dfr >= 0.5 Helios'
+// score is <= 29.4 (< 30), so flakinessScore alone can never exonerate a test that broken — the
+// failure rate must. defaultBranchFailureRate is a lifetime cumulative rate (no window, no run count
+// in the API), so `broken` cannot be sample-size-gated and persists until Helios' history dilutes.
+const KNOWN_FLAKY_THRESHOLD = 30;
+const MIN_BASE_FAILURE_RATE = 0.01;
+const BROKEN_FAILURE_RATE = 0.5;
+
 /**
  * Parse JUnit XML to extract unique failed test cases.
  * @param {string} resultsFile - Path to the JUnit XML results file
@@ -47,7 +57,8 @@ function parseFailedTests(resultsFile) {
 }
 
 /**
- * Fetch flakiness scores from the Helios API.
+ * Fetch flakiness scores from the Helios API. Always resolves an array, so callers never see a
+ * non-array body (a 200 returning {} or null) and every error path degrades to [] (=> all real).
  * @param {Array<{testName: string, className: string, testSuiteName: string}>} failedTests
  * @param {string} heliosSecret - The Helios repo secret
  * @returns {Promise<Array>}
@@ -57,6 +68,7 @@ async function fetchFlakinessScores(failedTests, heliosSecret) {
     try {
         const payload = JSON.stringify({ testCases: failedTests });
         return await new Promise((resolve) => {
+            const done = (data) => resolve(Array.isArray(data) ? data : []);
             const req = https.request('https://helios.aet.cit.tum.de/api/tests/flakiness-scores', {
                 method: 'POST',
                 headers: {
@@ -71,22 +83,22 @@ async function fetchFlakinessScores(failedTests, heliosSecret) {
                 res.on('end', () => {
                     if (res.statusCode !== 200) {
                         console.log(`Helios API returned status ${res.statusCode}: ${data}`);
-                        return resolve([]);
+                        return done([]);
                     }
                     try {
-                        resolve(JSON.parse(data));
+                        done(JSON.parse(data));
                     } catch {
-                        resolve([]);
+                        done([]);
                     }
                 });
             });
             req.on('error', (e) => {
                 console.log('Helios API error:', e.message);
-                resolve([]);
+                done([]);
             });
             req.on('timeout', () => {
                 req.destroy();
-                resolve([]);
+                done([]);
             });
             req.write(payload);
             req.end();
@@ -98,7 +110,7 @@ async function fetchFlakinessScores(failedTests, heliosSecret) {
 }
 
 /**
- * Build a markdown flakiness table from Helios API results.
+ * Build a markdown flakiness table (score + failure rates) for the failed tests Helios recognises.
  * @param {Array} flakinessResults
  * @returns {string} Markdown table or empty string
  */
@@ -118,37 +130,34 @@ function buildFlakinessTable(flakinessResults) {
 }
 
 /**
- * Split failed tests into real regressions vs known-flaky, using Helios history.
- *
- * A failure is exonerated (treated as known-flaky, not a regression introduced by this change) when
- * EITHER signal from Helios says the test is unreliable independent of the change:
- *   - flakinessScore > scoreThreshold (Helios' own LOW_FLAKINESS_THRESHOLD, 30): it flakes; or
- *   - defaultBranchFailureRate >= baseFailureRate (Helios' own MIN_FLAKY_RATE, 0.01 = 1%): it also
- *     fails on the base branch, so the failure is not attributable to this change — the base-branch
- *     signal Datadog and Chromium's commit-queue use to distinguish a real regression from noise.
- * Everything else — tests Helios does not know, and tests reliable on the default branch — is a real
- * regression. Fail-safe: if Helios returns no data (e.g. unreachable), every failure is real, so the
- * run is never silently exonerated.
- *
+ * Split failed tests into { real, flaky, broken } using Helios history. `broken` (fails on the default
+ * branch too often to be a flake) is tested before `flaky` so such a test is never exonerated as flaky.
+ * Fail-safe: a test Helios has no data for is `real`, so a Helios outage never exonerates a failure.
  * @param {Array<{testName: string, className: string}>} failedTests
  * @param {Array} flakinessResults - Helios response (empty if unavailable)
- * @param {number} scoreThreshold - flakinessScore above which a test counts as known-flaky
- * @param {number} baseFailureRate - default-branch failure rate at/above which a failure is not a regression
- * @returns {{real: Array, flaky: Array}}
+ * @returns {{real: Array, flaky: Array, broken: Array}}
  */
-function classifyFailures(failedTests, flakinessResults, scoreThreshold, baseFailureRate) {
+function classifyFailures(failedTests, flakinessResults) {
     const byKey = new Map();
     for (const r of flakinessResults) {
         byKey.set(`${r.className}#${r.testName}`, r);
     }
     const real = [];
     const flaky = [];
+    const broken = [];
     for (const test of failedTests) {
         const stats = byKey.get(`${test.className}#${test.testName}`);
-        const knownFlaky = stats !== undefined && (stats.flakinessScore > scoreThreshold || stats.defaultBranchFailureRate >= baseFailureRate);
-        (knownFlaky ? flaky : real).push(test);
+        if (stats === undefined) {
+            real.push(test);
+        } else if (stats.defaultBranchFailureRate >= BROKEN_FAILURE_RATE) {
+            broken.push(test);
+        } else if (stats.flakinessScore > KNOWN_FLAKY_THRESHOLD || stats.defaultBranchFailureRate >= MIN_BASE_FAILURE_RATE) {
+            flaky.push(test);
+        } else {
+            real.push(test);
+        }
     }
-    return { real, flaky };
+    return { real, flaky, broken };
 }
 
 module.exports = { parseFailedTests, fetchFlakinessScores, buildFlakinessTable, classifyFailures };

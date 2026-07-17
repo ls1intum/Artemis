@@ -68,11 +68,15 @@ so it blocks only on genuine regressions rather than on noise:
 
 - **`e2e`.** E2E takes up to ~2 hours and is flaky enough that a naive required gate would block
   good PRs on noise. Instead, `report-results` classifies each surviving failure against Helios
-  history (`classify-failures.js`): a real (non-flaky) regression fails the job and **blocks
-  merge**, while a run whose only failures are known-flaky is **exonerated and passes green**. The
-  per-test detail (✅/⚪/❌ per phase, plus Helios flakiness scores) lives in the E2E PR comment. The
-  test steps are `continue-on-error`, so the honest verdict is decided once in `report-results`, not
-  by any single phase job.
+  history (`classify-failures.js`) into three buckets: **real** (a genuine regression) **blocks
+  merge**; **flaky** (known-flaky) is **exonerated and passes green**; **broken** (already failing
+  ≥ 50% of the time on develop) passes green on PRs, the merge queue, and release branches — none of
+  which caused the breakage — but reds **develop's own push**, which owns it. Keeping broken out of
+  the flaky bucket is the point: a test that always fails carries no signal, so exonerating it as
+  "flaky" would hide it forever. Bucket definitions and their limitations live in
+  `.github/scripts/fetch-flakiness.js` and `documentation/.../e2e-testing-playwright.mdx`. The test
+  steps are `continue-on-error`, so the honest verdict is decided once in `report-results`, not by
+  any single phase job.
 
 `codeql` is deliberately **advisory** (not in the gate's `needs:`): it runs for signal and reds the
 run on a genuine failure, but never blocks merge.

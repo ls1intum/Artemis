@@ -233,6 +233,10 @@ jobs:
         # separate Vitest config (rules/vitest.config.mjs, plain-Node env) so these .spec.mjs do
         # not run under the Angular jsdom/Vite environment of the client suite above.
         run: pnpm run test:rules
+      - name: CI Helper Script Tests
+        # Runs the plain-Node specs for .github/scripts (E2E flaky/broken classification), which
+        # decides the required E2E merge gate. Same isolated Vitest config rationale as the rules step.
+        run: pnpm run test:scripts
       - name: Per-Module Coverage Gate
         # Enforces the per-module client coverage thresholds (admin, etc.) defined in
         # supporting_scripts/code-coverage/module-coverage-client/check-client-module-coverage.mjs.

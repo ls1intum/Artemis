@@ -754,8 +754,8 @@ jobs:
           REMAINING_RESULT: ${{ needs.run-e2e-remaining.outputs.tests }}
           ALL_PR_RESULT: ${{ needs.run-e2e-all-pr.outputs.tests }}
           ALL_NON_PR_RESULT: ${{ needs.run-e2e-all-non-pr.outputs.tests }}
-          # Per-phase failure classification from classify-failures.js: real | flaky | clean (empty
-          # when skipped). `real` = a non-flaky test failed; `flaky` = failures, all known-flaky.
+          # Per-phase classification from classify-failures.js: real | broken | flaky | clean (empty
+          # when skipped). The shell below branches on these exact strings.
           RELEVANT_CLASS: ${{ needs.run-e2e-relevant.outputs.phase_result }}
           REMAINING_CLASS: ${{ needs.run-e2e-remaining.outputs.phase_result }}
           ALL_PR_CLASS: ${{ needs.run-e2e-all-pr.outputs.phase_result }}
@@ -767,6 +767,10 @@ jobs:
           REMAINING_JOB: ${{ needs.run-e2e-remaining.result }}
           ALL_PR_JOB: ${{ needs.run-e2e-all-pr.result }}
           ALL_NON_PR_JOB: ${{ needs.run-e2e-all-non-pr.result }}
+          # develop's own push owns develop's breakage; no other trigger (PR, merge queue, release/*,
+          # dispatch) does, so a broken-only run reds only here. Not `is_pr`: that is also false for
+          # merge_group, which would red-eject a broken PR the moment it enters the merge queue.
+          IS_DEFAULT_BRANCH_PUSH: ${{ github.event_name == 'push' && github.ref == 'refs/heads/develop' }}
         run: |
           set -Eeuo pipefail
           # `status` is the raw honest outcome (any `failure` wins; else the first `success`; else
@@ -782,10 +786,11 @@ jobs:
           done
           echo "status=$status" >> "$GITHUB_OUTPUT"
 
-          any_real=false; any_flaky=false
+          any_real=false; any_flaky=false; any_broken=false
           for c in "$RELEVANT_CLASS" "$REMAINING_CLASS" "$ALL_PR_CLASS" "$ALL_NON_PR_CLASS"; do
             [ "$c" = real ] && any_real=true
             [ "$c" = flaky ] && any_flaky=true
+            [ "$c" = broken ] && any_broken=true
           done
           # Treat ANY needed-job result other than `success` or `skipped` as a blocking infra verdict —
           # not just `failure`. A `cancelled` phase (e.g. Phase 2 timing out with no outputs) would
@@ -801,19 +806,26 @@ jobs:
             esac
           done
 
-          # The E2E verdict. `neutral` (exonerate) ONLY on positive proof of flakiness (a phase
-          # classified `flaky`, none `real`, and no job broke) — it maps to a passing (green) run.
-          # A real regression, an infra job failure, or a failure we could not classify (test step
-          # failed but produced no failure element — e.g. a global-setup crash) all become `failure`
-          # (red): the run must never go green on a failure it cannot explain. The gate step below
-          # turns `failure` into a non-zero exit; `success`/`neutral` pass. The comment renders all
-          # three states (✅ / ⚪ exonerated / ❌) so the flaky-vs-real nuance is never lost.
+          # Verdict, fail-closed: a real regression, an infra failure, or an unclassifiable failure (a
+          # test step failed but emitted no failure element, e.g. a global-setup crash) all go `failure`
+          # (red) — never green on a failure we cannot explain. `neutral` (green) needs positive proof:
+          # only-flaky, or only-broken off develop. `broken` reds solely on develop's own push, which
+          # owns the breakage; on any other trigger it stays neutral so a pre-existing develop breakage
+          # does not block the wrong author.
           if [ "$any_real" = true ]; then
             conclusion=failure
             description="E2E: real (non-flaky) test failure"
           elif [ "$status" = success ] && [ "$any_job_failed" = false ]; then
             conclusion=success
             description="E2E tests passed"
+          elif [ "$any_broken" = true ] && [ "$any_job_failed" = false ] && [ "$status" != error ]; then
+            if [ "$IS_DEFAULT_BRANCH_PUSH" = true ]; then
+              conclusion=failure
+              description="E2E: test(s) broken on develop"
+            else
+              conclusion=neutral
+              description="E2E: pre-existing develop breakage failed (not caused by this run)"
+            fi
           elif [ "$any_flaky" = true ] && [ "$any_job_failed" = false ] && [ "$status" != error ]; then
             conclusion=neutral
             description="E2E: only known-flaky tests failed (exonerated)"
@@ -916,8 +928,9 @@ jobs:
             }
 
       # Fail the job (reds the run) on a real/infra/unclassified verdict; pass on success or an
-      # exonerated flaky-only run. Runs last, after the PR comment finalises, and always. Fail-safe:
-      # any verdict other than success/neutral — including an empty one — reds the run.
+      # exonerated neutral run (known-flaky, or a pre-existing develop breakage off develop). Runs last,
+      # after the PR comment finalises, and always. Fail-safe: any verdict other than success/neutral —
+      # including an empty one — reds the run.
       - name: Gate the run (and the required merge check) on the E2E verdict
         if: always()
         env:

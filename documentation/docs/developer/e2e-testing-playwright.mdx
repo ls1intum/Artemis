@@ -571,8 +571,31 @@ Three outcomes are possible:
 
 After each phase, the pipeline queries the Helios API to retrieve flakiness scores for any failed tests.
 A **flakiness score** reflects how often a test has non-deterministically produced different results over recent CI runs.
-A high score suggests the failure may be a flake; a low score suggests a genuine regression. Scores appear in the
-PR comment alongside failed test names.
+Scores appear in the PR comment alongside failed test names.
+
+The score is **not** a simple "how often does this fail" measure — it peaks for tests that fail *occasionally* and
+decays back to 0 for tests that fail *most of the time*, because a test that almost always fails is not flaky, it is
+broken. Helios computes it from the default-branch failure rate, scoring 0 below `MIN_FLAKY_RATE` (1%), rising to its
+maximum just above it, and decaying to 0 again at `MAX_FLAKY_RATE` (50%).
+
+Each failed test therefore lands in one of three buckets (see `.github/scripts/fetch-flakiness.js`):
+
+| Bucket | Condition | Effect on the PR |
+|---|---|---|
+| **real** | Helios has no history for it, or it is reliable on the default branch | ❌ Blocks merge — a genuine regression |
+| **broken** | Fails ≥ 50% of the time on the default branch (`MAX_FLAKY_RATE`) | ⚪ Does not block — already failing on develop, not introduced here. Still reported, never counted as flaky |
+| **flaky** | Flakiness score > 30 (`LOW_FLAKINESS_THRESHOLD`), or fails ≥ 1% of the time on the default branch | ⚪ Exonerated, passes green |
+
+A **broken** test blocks nothing on a PR, the merge queue, or a release branch — none of those runs caused the
+breakage, so failing them would only block the wrong author. It turns the run red on **develop's own push**, which
+owns the failing statistic. The thresholds are Helios' own constants (`TestCaseStatisticsService`), reused so that CI
+and the flaky-test dashboard never disagree about what "flaky" means.
+
+**Limitations of the broken bucket.** Helios' failure rate is a lifetime cumulative rate with no time window, and the
+API exposes no run count, so the gate cannot require a minimum sample size: a test that failed its only two develop
+runs reads as 50% broken, and a test fixed today keeps a high rate until its history dilutes. The blast radius is
+small — off develop, `broken` and `flaky` are both neutral, so a misclassification only mislabels the report; it is
+load-bearing only on develop's own red run. A windowed or run-count-aware rate would need a change to the Helios API.
 
 ### Reports Dashboard
 
