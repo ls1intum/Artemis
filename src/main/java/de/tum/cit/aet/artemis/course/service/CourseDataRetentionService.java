@@ -81,8 +81,9 @@ public class CourseDataRetentionService {
         // Using the minimum (rather than assuming non-grade-relevant is shorter) stays correct even if the config is inverted.
         int shortestRetentionYears = Math.min(dataCleanupProperties.gradeRelevantRetentionYears(), dataCleanupProperties.nonGradeRelevantRetentionYears());
         ZonedDateTime candidateCutoff = now.minusYears(shortestRetentionYears);
-        return courseRepository.findAllWithCourseConfigurationByEndDateBefore(candidateCutoff).stream().filter(course -> !course.isTestCourse()).filter(this::notYetWarnedOrReset)
-                .filter(course -> isPastRetentionDeadline(course, now)).toList();
+        // A title is required to build the warning email; skip the (anomalous) title-less course rather than fail it forever.
+        return courseRepository.findAllWithCourseConfigurationByEndDateBefore(candidateCutoff).stream().filter(course -> course.getTitle() != null)
+                .filter(course -> !course.isTestCourse()).filter(this::notYetWarnedOrReset).filter(course -> isPastRetentionDeadline(course, now)).toList();
     }
 
     /**

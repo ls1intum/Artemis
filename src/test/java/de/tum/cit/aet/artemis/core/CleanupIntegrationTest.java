@@ -578,6 +578,62 @@ class CleanupIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCTest
 
     @Test
     @WithMockUser(roles = "ADMIN")
+    void testDeleteOldFeedbackKeepsLatestRatedAndNonRatedResultFeedback() throws Exception {
+        // One participation on the (old) course with a mixed rated/non-rated result history in creation (id) order:
+        // r1 non-rated, r2 rated, r3 non-rated (latest non-rated), r4 rated (latest rated AND overall newest id).
+        // This is the case that motivated the FeedbackCleanupRepository r2.rated=FALSE fix: because r4 (rated) is the
+        // overall newest result, a MAX(id)-over-all-results "keep" would wrongly delete the latest NON-rated result's
+        // feedback (r3). The age-based cleanup must keep the latest rated (r4) AND the latest non-rated (r3) feedback.
+        var oldExercise = textExerciseRepository.findByCourseIdWithCategories(oldCourse.getId()).getFirst();
+        var participation = participationUtilService.createAndSaveParticipationForExercise(oldExercise, student.getLogin());
+        var submission = participationUtilService.addSubmission(participation, ParticipationFactory.generateProgrammingSubmission(true));
+
+        var nonLatestNonRated = participationUtilService.generateResult(submission, instructor);
+        nonLatestNonRated.setRated(false);
+        var feedbackNonLatestNonRated = createFeedbackWithLinkedLongFeedback();
+        createTextBlockForFeedback(feedbackNonLatestNonRated);
+        participationUtilService.addFeedbackToResult(feedbackNonLatestNonRated, nonLatestNonRated);
+
+        var nonLatestRated = participationUtilService.generateResult(submission, instructor); // rated by default
+        var feedbackNonLatestRated = createFeedbackWithLinkedLongFeedback();
+        createTextBlockForFeedback(feedbackNonLatestRated);
+        participationUtilService.addFeedbackToResult(feedbackNonLatestRated, nonLatestRated);
+
+        var latestNonRated = participationUtilService.generateResult(submission, instructor);
+        latestNonRated.setRated(false);
+        var feedbackLatestNonRated = createFeedbackWithLinkedLongFeedback();
+        createTextBlockForFeedback(feedbackLatestNonRated);
+        participationUtilService.addFeedbackToResult(feedbackLatestNonRated, latestNonRated);
+
+        var latestRated = participationUtilService.generateResult(submission, instructor); // rated, overall newest id
+        var feedbackLatestRated = createFeedbackWithLinkedLongFeedback();
+        createTextBlockForFeedback(feedbackLatestRated);
+        participationUtilService.addFeedbackToResult(feedbackLatestRated, latestRated);
+
+        // Only the two non-latest results' feedback should be reported and then deleted.
+        var counts = request.get("/api/core/admin/cleanup/old-feedback/count", HttpStatus.OK, OldFeedbackCleanupCountDTO.class);
+        assertThat(counts).isNotNull();
+        assertThat(counts.feedback()).isEqualTo(2);
+
+        var responseBody = request.delete("/api/core/admin/cleanup/old-feedback", new LinkedMultiValueMap<>(), null, CleanupServiceExecutionRecordDTO.class, HttpStatus.OK);
+        assertThat(responseBody.jobType()).isEqualTo("deleteFeedback");
+        assertThat(responseBody.executionDate()).isNotNull();
+
+        // Non-latest results' feedback deleted
+        assertThat(feedbackRepository.findByResult(nonLatestNonRated)).isEmpty();
+        assertThat(feedbackRepository.findByResult(nonLatestRated)).isEmpty();
+        // Latest non-rated (r3) AND latest rated (r4) feedback kept; r3 being kept proves the r2.rated=FALSE fix.
+        assertThat(feedbackRepository.findByResult(latestNonRated)).isNotEmpty();
+        assertThat(feedbackRepository.findByResult(latestRated)).isNotEmpty();
+        // Results themselves are never deleted by this operation.
+        assertThat(resultRepository.existsById(nonLatestNonRated.getId())).isTrue();
+        assertThat(resultRepository.existsById(nonLatestRated.getId())).isTrue();
+        assertThat(resultRepository.existsById(latestNonRated.getId())).isTrue();
+        assertThat(resultRepository.existsById(latestRated.getId())).isTrue();
+    }
+
+    @Test
+    @WithMockUser(roles = "ADMIN")
     void testGetLastExecutions() throws Exception {
 
         var now = ZonedDateTime.now();

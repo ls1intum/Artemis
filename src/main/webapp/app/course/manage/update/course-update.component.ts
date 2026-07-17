@@ -355,7 +355,7 @@ export class CourseUpdateComponent implements OnInit {
         course.presentationScore = this.course.presentationScore;
 
         // Map the flat grade-relevance form control into the nested course configuration expected by the update DTO mapper.
-        course.courseConfiguration = { ...this.course.courseConfiguration, gradeRelevant: rawValue.gradeRelevant ?? true };
+        course.courseConfiguration = { id: this.course.courseConfiguration?.id, gradeRelevant: rawValue.gradeRelevant ?? true };
 
         if (this.communicationEnabled && this.messagingEnabled) {
             course.courseInformationSharingConfiguration = CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING;

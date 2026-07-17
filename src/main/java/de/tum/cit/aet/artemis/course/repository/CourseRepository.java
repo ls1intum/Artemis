@@ -109,6 +109,7 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long>, Jp
             FROM Course c
                 LEFT JOIN FETCH c.courseConfiguration cc
             WHERE cc.resetWarningSentDate IS NOT NULL
+                AND cc.studentDataResetDate IS NULL
             """)
     List<Course> findAllWithResetWarningSent();
 

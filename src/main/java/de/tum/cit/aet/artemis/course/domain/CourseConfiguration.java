@@ -74,6 +74,7 @@ public class CourseConfiguration extends DomainObject {
         this.gradeRelevant = gradeRelevant;
     }
 
+    @JsonIgnore
     public ZonedDateTime getResetWarningSentDate() {
         return resetWarningSentDate;
     }
@@ -82,6 +83,7 @@ public class CourseConfiguration extends DomainObject {
         this.resetWarningSentDate = resetWarningSentDate;
     }
 
+    @JsonIgnore
     public ZonedDateTime getStudentDataResetDate() {
         return studentDataResetDate;
     }
