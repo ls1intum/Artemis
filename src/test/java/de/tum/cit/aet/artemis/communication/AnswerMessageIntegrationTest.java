@@ -44,7 +44,7 @@ import de.tum.cit.aet.artemis.communication.dto.UpdatePostingDTO;
 import de.tum.cit.aet.artemis.communication.dto.VerifyAnswerMessageDTO;
 import de.tum.cit.aet.artemis.communication.repository.AnswerPostRepository;
 import de.tum.cit.aet.artemis.communication.repository.ConversationMessageRepository;
-import de.tum.cit.aet.artemis.communication.repository.SavedPostRepository;
+import de.tum.cit.aet.artemis.communication.test_repository.SavedPostTestRepository;
 import de.tum.cit.aet.artemis.communication.util.ConversationUtilService;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.domain.CourseInformationSharingConfiguration;
@@ -71,7 +71,7 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationIndependentT
     private ConversationMessageRepository conversationMessageRepository;
 
     @Autowired
-    private SavedPostRepository savedPostRepository;
+    private SavedPostTestRepository savedPostRepository;
 
     @Autowired
     private LectureUtilService lectureUtilService;
