@@ -32,26 +32,17 @@ export class ProgrammingDiffReportDetailComponent implements OnDestroy {
 
     detail = input.required<ProgrammingDiffReportDetail>();
 
-    private readonly detailData = computed(() => this.detail().data);
-
-    get addedLineCount(): number {
-        return this.detailData().repositoryDiffInformation?.totalLineChange?.addedLineCount ?? 0;
-    }
-
-    get removedLineCount(): number {
-        return this.detailData().repositoryDiffInformation?.totalLineChange?.removedLineCount ?? 0;
-    }
-
-    get lineChangesLoading(): boolean {
-        return this.detailData().lineChangesLoading ?? false;
-    }
+    private readonly repositoryDiffInformation = computed(() => this.detail().data.repositoryDiffInformation());
+    readonly addedLineCount = computed(() => this.repositoryDiffInformation()?.totalLineChange?.addedLineCount ?? 0);
+    readonly removedLineCount = computed(() => this.repositoryDiffInformation()?.totalLineChange?.removedLineCount ?? 0);
+    readonly lineChangesLoading = computed(() => this.detail().data.lineChangesLoading());
 
     ngOnDestroy() {
         this.dialogRef?.close();
     }
 
     showGitDiff() {
-        const repositoryDiffInformation = this.detailData().repositoryDiffInformation;
+        const repositoryDiffInformation = this.repositoryDiffInformation();
         if (!repositoryDiffInformation) {
             return;
         }
