@@ -205,10 +205,14 @@ export class Feedback implements BaseEntity {
             return undefined;
         }
         const indexOfLine = feedback.reference.lastIndexOf(this.PROGRAMMING_REFERENCE_LINE_SEPERATOR); // Split before "_line:"
+        const filePath = feedback.reference.substring(this.PROGRAMMING_REFERENCE_PREFIX.length, indexOfLine);
+        if (indexOfLine <= this.PROGRAMMING_REFERENCE_PREFIX.length || !filePath.trim()) {
+            return undefined;
+        }
         const lineRange = feedback.reference.substring(indexOfLine + this.PROGRAMMING_REFERENCE_LINE_SEPERATOR.length).match(/^(\d+)(?:-(\d+))?$/);
         const start = Number(lineRange?.[1]);
         const end = Number(lineRange?.[2] ?? lineRange?.[1]);
-        if (!lineRange || end < start) {
+        if (!lineRange || start <= 0 || end <= 0 || end < start) {
             return undefined;
         }
         return { start, end };
