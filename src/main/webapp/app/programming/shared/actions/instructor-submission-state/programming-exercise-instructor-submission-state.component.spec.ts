@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
@@ -33,8 +32,6 @@ import { DialogService } from 'primeng/dynamicdialog';
 import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
 
 describe('ProgrammingExerciseInstructorSubmissionStateComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let comp: ProgrammingExerciseInstructorSubmissionStateComponent;
     let fixture: ComponentFixture<ProgrammingExerciseInstructorSubmissionStateComponent>;
     let debugElement: DebugElement;

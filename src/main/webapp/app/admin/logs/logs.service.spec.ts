@@ -3,15 +3,12 @@
  */
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { LogsService } from 'app/admin/logs/logs.service';
 import { Log } from 'app/admin/logs/log.model';
 
 describe('LogsService', () => {
-    setupTestBed({ zoneless: true });
-
     let service: LogsService;
     let httpMock: HttpTestingController;
 

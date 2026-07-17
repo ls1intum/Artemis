@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Component } from '@angular/core';
 import { By } from '@angular/platform-browser';
@@ -18,8 +17,6 @@ import { LectureUnitFullscreenLayoutComponent } from './lecture-unit-fullscreen-
 class ProjectionHostComponent {}
 
 describe('LectureUnitFullscreenLayoutComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<LectureUnitFullscreenLayoutComponent>;
     let component: LectureUnitFullscreenLayoutComponent;
 
@@ -344,8 +341,6 @@ describe('LectureUnitFullscreenLayoutComponent', () => {
 });
 
 describe('LectureUnitFullscreenLayoutComponent content projection', () => {
-    setupTestBed({ zoneless: true });
-
     let hostFixture: ComponentFixture<ProjectionHostComponent>;
 
     beforeEach(async () => {

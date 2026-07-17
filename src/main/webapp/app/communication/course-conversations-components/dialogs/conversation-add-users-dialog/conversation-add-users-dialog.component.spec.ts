@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
@@ -30,8 +29,6 @@ const examples: ConversationDTO[] = [generateExampleGroupChatDTO({} as GroupChat
 
 examples.forEach((activeConversation) => {
     describe('ConversationAddUsersDialogComponent with ' + activeConversation.type, () => {
-        setupTestBed({ zoneless: true });
-
         let component: ConversationAddUsersDialogComponent;
         let fixture: ComponentFixture<ConversationAddUsersDialogComponent>;
         const course = { id: 1 } as Course;
@@ -57,7 +54,6 @@ examples.forEach((activeConversation) => {
         beforeEach(() => {
             fixture = TestBed.createComponent(ConversationAddUsersDialogComponent);
             component = fixture.componentInstance;
-            fixture.detectChanges();
             initializeDialog(component, fixture, { course, activeConversation });
         });
 
