@@ -7,7 +7,7 @@ $graded-color: #28a745;
 }
 
 // Shared icon + label layout inside the select button and the tag.
-.participation-mode-item {
+.participation-mode__item {
     display: inline-flex;
     align-items: center;
     gap: 4px;
@@ -46,27 +46,27 @@ $graded-color: #28a745;
 }
 
 .participation-mode--practice {
-    ::ng-deep .p-togglebutton-checked .participation-mode-item,
-    ::ng-deep .p-togglebutton-checked .participation-mode-item * {
+    ::ng-deep .p-togglebutton-checked .participation-mode__item,
+    ::ng-deep .p-togglebutton-checked .participation-mode__item * {
         color: $practice-color;
     }
 
     #participation-mode-badge,
-    #participation-mode-badge .participation-mode-item,
-    #participation-mode-badge .participation-mode-item * {
+    #participation-mode-badge .participation-mode__item,
+    #participation-mode-badge .participation-mode__item * {
         color: $practice-color;
     }
 }
 
 .participation-mode--graded {
-    ::ng-deep .p-togglebutton-checked .participation-mode-item,
-    ::ng-deep .p-togglebutton-checked .participation-mode-item * {
+    ::ng-deep .p-togglebutton-checked .participation-mode__item,
+    ::ng-deep .p-togglebutton-checked .participation-mode__item * {
         color: $graded-color;
     }
 
     #participation-mode-badge,
-    #participation-mode-badge .participation-mode-item,
-    #participation-mode-badge .participation-mode-item * {
+    #participation-mode-badge .participation-mode__item,
+    #participation-mode-badge .participation-mode__item * {
         color: $graded-color;
     }
 }

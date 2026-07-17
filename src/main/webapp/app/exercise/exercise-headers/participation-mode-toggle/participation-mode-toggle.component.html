@@ -16,7 +16,7 @@
                 size="small"
             >
                 <ng-template #item let-option>
-                    <span class="participation-mode-item" [attr.id]="option.value + '-mode-button'">
+                    <span class="participation-mode__item" [attr.id]="option.value + '-mode-button'">
                         <fa-icon [icon]="option.icon" />
                         <span [jhiTranslate]="option.label"></span>
                     </span>
@@ -24,7 +24,7 @@
             </p-selectButton>
         } @else {
             <p-tag id="participation-mode-badge" severity="secondary" [rounded]="true">
-                <span class="participation-mode-item">
+                <span class="participation-mode__item">
                     <fa-icon [icon]="hasPractice() ? faBook : faGraduationCap" />
                     @if (hasPractice()) {
                         <span jhiTranslate="artemisApp.exerciseActions.mode.practice"></span>
