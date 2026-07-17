@@ -74,7 +74,7 @@ type ComponentInternals = Omit<CodeEditorInstructorAndEditorContainerComponent, 
 const internals = (c: CodeEditorInstructorAndEditorContainerComponent): ComponentInternals => c as unknown as ComponentInternals;
 
 interface CodeEditorContainerStub {
-    actions?: () => { executeRefresh: ReturnType<typeof vi.fn>; onSave: ReturnType<typeof vi.fn> };
+    actions?: () => { refreshAfterExternalUpdate: ReturnType<typeof vi.fn>; onSave: ReturnType<typeof vi.fn> };
     canDeactivate?: () => boolean;
     selectedFile?: string;
     selectedRepository?: ReturnType<typeof vi.fn>;
@@ -886,7 +886,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
 
     it('saves and switches domains normally when exercise generation does not lock editing', () => {
         const onSave = vi.fn();
-        setCodeEditorContainer(comp, { actions: () => ({ onSave }) });
+        setCodeEditorContainer(comp, { actions: () => ({ refreshAfterExternalUpdate: vi.fn(), onSave }) });
         vi.spyOn(comp as any, 'isProblemStatementEditingLocked').mockReturnValue(false);
         const setDomain = TestBed.inject(DomainService).setDomain as ReturnType<typeof vi.fn>;
         const domain: DomainChange = [DomainType.TEST_REPOSITORY, comp.exercise];

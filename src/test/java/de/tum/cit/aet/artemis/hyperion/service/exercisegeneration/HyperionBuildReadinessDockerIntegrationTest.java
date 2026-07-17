@@ -9,6 +9,7 @@ import java.time.ZonedDateTime;
 import java.util.Optional;
 import java.util.stream.Stream;
 
+import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.condition.EnabledIf;
 import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
@@ -114,7 +115,7 @@ class HyperionBuildReadinessDockerIntegrationTest extends AbstractHyperionMocked
         Repository repository = gitService.getOrCheckoutRepository(uri, true, localVCLocalCITestService.getDefaultBranch(), true);
         Path path = repository.getLocalPath().resolve(relativePath);
         Files.createDirectories(path.getParent());
-        Files.writeString(path, "this is intentionally not Java", StandardCharsets.UTF_8);
+        FileUtils.writeStringToFile(path.toFile(), "this is intentionally not Java", StandardCharsets.UTF_8);
         gitService.stageAllChanges(repository);
         gitService.commitAndPush(repository, "Poison exercise sources for readiness isolation", false, null);
     }

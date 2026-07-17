@@ -82,22 +82,18 @@ public class GenerationJobService {
 
     private static final String REVERT_JOB_PREFIX = "revert-";
 
-    /** Pipeline id under which a generation run's model-call token usage is recorded. */
     static final String GENERATION_PIPELINE_ID = "HYPERION_EXERCISE_GENERATION";
 
     private static final int JOB_TTL_SECONDS = 7200;
 
-    /** How long a finished run's transcript stays retrievable so a reloading client can replay it after the slot is gone. */
     private static final int TRANSCRIPT_TTL_SECONDS = 900;
 
-    /** Cap on retained events per run so a chatty agent cannot grow the distributed map without bound; the oldest events are dropped first. */
     private static final int MAX_RETAINED_EVENTS = 500;
 
     private static final String USER_CANCELLATION_MESSAGE = "Generation was cancelled. Nothing was changed.";
 
     private static final String SYSTEM_CANCELLATION_MESSAGE = "Generation was cancelled by an administrator. Nothing was changed.";
 
-    /** Cap on retained file snapshots per run (latest-per-file), so many distinct files cannot grow the distributed map without bound; the eldest file is dropped first. */
     static final int MAX_RETAINED_SNAPSHOT_FILES = 300;
 
     private final HazelcastInstance hazelcastInstance;
@@ -165,9 +161,7 @@ public class GenerationJobService {
                 builder -> builder.withCourse(courseId).withExercise(exerciseId).withUser(userId));
     }
 
-    /**
-     * Initialises the Hazelcast-backed job, cancellation, transcript and snapshot maps with their TTL safety nets.
-     */
+    /** Initializes the distributed job state and local cancellation listener. */
     @PostConstruct
     public void init() {
         jobMap = hazelcastInstance.getMap(JOB_MAP_NAME);
@@ -180,15 +174,6 @@ public class GenerationJobService {
         localNodeId = hazelcastInstance.getCluster().getLocalMember().getUuid().toString();
     }
 
-    /**
-     * Starts a new whole-exercise generation job in an explicit mode, rejecting the request if one is already running for the exercise.
-     *
-     * @param user       the requesting instructor
-     * @param exercise   the target exercise
-     * @param userPrompt the generation brief or the feedback to address
-     * @param mode       the explicit run intent (generate vs. adapt), carried on the job model so the engine can branch its seed and prompt
-     * @return the started job id
-     */
     public String startJob(User user, ProgrammingExercise exercise, String userPrompt, GenerationMode mode) {
         return startJob(user, exercise, userPrompt, mode, null);
     }
@@ -681,25 +666,10 @@ public class GenerationJobService {
         return true;
     }
 
-    /**
-     * Checks whether a generation/adaptation job currently owns the exercise slot. Used by destructive operations, such as reverting an adaptation, to avoid interleaving a reset
-     * with a still-running persist.
-     *
-     * @param exerciseId the exercise id
-     * @return {@code true} if a job is currently active for the exercise
-     */
     public boolean hasActiveJob(long exerciseId) {
         return jobMap.get(key(exerciseId)) != null;
     }
 
-    /**
-     * Checks whether the given job id still owns the exercise slot. This is a cheap stale-event guard for async work that may start after the TTL expired or after a newer job
-     * claimed the slot.
-     *
-     * @param exerciseId the exercise id
-     * @param jobId      the job id
-     * @return {@code true} if the active slot belongs to {@code jobId}
-     */
     public boolean isActiveJob(long exerciseId, String jobId) {
         JobInfo job = jobMap.get(key(exerciseId));
         return job != null && job.jobId().equals(jobId);
@@ -788,12 +758,6 @@ public class GenerationJobService {
         }
     }
 
-    /**
-     * Registers a node-local interrupt (e.g. destroy the sandbox session) invoked when this job is cancelled, so a cancellation arriving during a long build aborts it promptly.
-     *
-     * @param jobId the running job id
-     * @param hook  the interrupt to run on cancellation
-     */
     public void registerCancelHook(String jobId, Runnable hook) {
         cancelHooks.put(jobId, hook);
         if (isCancelled(jobId) && cancelHooks.remove(jobId, hook)) {
@@ -801,28 +765,19 @@ public class GenerationJobService {
         }
     }
 
-    /**
-     * Removes a job's cancel hook once the run has finished (the session it would interrupt is gone).
-     *
-     * @param jobId the finished job id
-     */
     public void deregisterCancelHook(String jobId) {
         cancelHooks.remove(jobId);
     }
 
-    /**
-     * @param jobId the job id
-     * @return whether cancellation has been requested for the job
-     */
     public boolean isCancelled(String jobId) {
         return Boolean.TRUE.equals(cancellationMap.get(jobId));
     }
 
     /**
-     * Clears the slot and any cancellation flag once a job has finished.
+     * Releases a completed job while retaining its transcript and snapshots for reconnect replay.
      *
-     * @param exerciseId the exercise id
-     * @param jobId      the finished job id
+     * @param exerciseId the exercise whose job completed
+     * @param jobId      the completed job identifier
      */
     public void clearJob(long exerciseId, String jobId) {
         String key = key(exerciseId);
@@ -852,9 +807,7 @@ public class GenerationJobService {
         }
     }
 
-    /**
-     * Marks jobs without a recent owner heartbeat terminal. This keeps reconnecting clients from showing an indefinite running state after node death.
-     */
+    /** Cancels stale jobs whose owner or execution deadline has expired. */
     @Scheduled(fixedDelayString = "${artemis.hyperion.agent.stale-job-scan-ms:60000}")
     public void clearStaleJobs() {
         Instant now = Instant.now();
@@ -999,14 +952,10 @@ public class GenerationJobService {
         return startedAt.plus(maxJobDuration);
     }
 
-    /** The per-file snapshot map key for a file in one run. */
     static String fileKey(long exerciseId, String jobId, String path) {
         return exerciseId + "::" + jobId + "::" + path;
     }
 
-    /**
-     * Metadata for an active whole-exercise generation job (claimed slot owner and claim time).
-     */
     public record JobInfo(String jobId, String userLogin, long exerciseId, Instant startedAt, @Nullable Instant deadlineAt, @Nullable String ownerNodeId,
             @Nullable Instant lastHeartbeatAt, boolean cancellable, @Nullable String budgetReservationId) implements Serializable {
 
@@ -1032,16 +981,6 @@ public class GenerationJobService {
         private static final long serialVersionUID = 1L;
     }
 
-    /**
-     * The retained, replayable transcript of a generation run.
-     *
-     * @param jobId      the job id
-     * @param userLogin  the owner's login (transcripts are private to the instructor who started the run)
-     * @param exerciseId the exercise id
-     * @param mode       the explicit run intent (generate vs. adapt), carried so a reconnecting client can restore the header label and revert affordance
-     * @param events     the events produced so far, oldest first (bounded)
-     * @param done       whether the run has finished (so a reconnecting client knows whether to keep listening)
-     */
     public record JobTranscript(String jobId, String userLogin, long exerciseId, GenerationMode mode, List<ExerciseGenerationEventDTO> events, boolean done)
             implements Serializable {
 
@@ -1049,17 +988,6 @@ public class GenerationJobService {
         private static final long serialVersionUID = 1L;
     }
 
-    /**
-     * The small ordered index of a run's retained file snapshots. It holds only the write-ordered path list (bounded to {@link #MAX_RETAINED_SNAPSHOT_FILES}) plus the ownership
-     * guard; the whole-file snapshots themselves live one-per-key in the per-file snapshot map ({@code <exerciseId>::<jobId>::<path>}). Keeping the bulky content out of this value
-     * is what
-     * makes a write O(1) — it updates one file's key and, only for a genuinely new path, appends to this small list — instead of re-serializing the whole retained set on every
-     * write. Kept separate from {@link JobTranscript} so the write stream never bloats the replay transcript.
-     *
-     * @param jobId        the job id (snapshots from a superseded run are ignored)
-     * @param userLogin    the owner's login (snapshots are private to the instructor who started the run)
-     * @param orderedPaths the retained file paths in write (insertion) order; bounded to {@link #MAX_RETAINED_SNAPSHOT_FILES}, eldest evicted first
-     */
     public record JobFileSnapshotIndex(String jobId, String userLogin, List<String> orderedPaths) implements Serializable {
 
         @Serial
