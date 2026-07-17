@@ -1,6 +1,21 @@
 import { NgTemplateOutlet } from '@angular/common';
 import { CdkTable, CdkTableModule } from '@angular/cdk/table';
-import { ChangeDetectionStrategy, Component, DestroyRef, TemplateRef, afterNextRender, computed, effect, inject, input, output, signal, untracked, viewChild } from '@angular/core';
+import {
+    ChangeDetectionStrategy,
+    Component,
+    DestroyRef,
+    TemplateRef,
+    TrackByFunction,
+    afterNextRender,
+    computed,
+    effect,
+    inject,
+    input,
+    output,
+    signal,
+    untracked,
+    viewChild,
+} from '@angular/core';
 import { get } from 'lodash-es';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faMagnifyingGlass } from '@fortawesome/free-solid-svg-icons';
@@ -33,6 +48,12 @@ export class TumUiTableComponent<T> {
     readonly totalRecords = input(0);
     readonly loading = input(false);
     readonly rowActions = input<TemplateRef<{ $implicit: T }> | undefined>(undefined);
+    /**
+     * Row identity for CDK diffing. Without it a server reload hands CDK a fresh array of new objects and it
+     * rebuilds every row (losing DOM state / focus); pass a stable-id function (e.g. `(_, row) => row.id`) so
+     * unchanged rows are reused. Defaults to CDK's object-identity tracking when omitted.
+     */
+    readonly trackBy = input<TrackByFunction<T> | undefined>(undefined);
     readonly striped = input(false);
     readonly scrollable = input(false);
     readonly scrollHeight = input<string | undefined>(undefined);
@@ -60,6 +81,9 @@ export class TumUiTableComponent<T> {
 
     protected readonly effectivePageSize = computed(() => this.pageSizeState() ?? this.pageSize());
     protected readonly currentPage = computed(() => this.page());
+    // CdkTable's `trackBy` input is non-nullable, so fall back to identity tracking (CDK's own default) when no
+    // trackBy is provided.
+    protected readonly effectiveTrackBy = computed<TrackByFunction<T>>(() => this.trackBy() ?? ((_, item) => item));
 
     protected readonly displayedColumns = computed(() => {
         const names = this.columns().map((col, index) => this.columnName(col, index));
@@ -172,14 +196,11 @@ export class TumUiTableComponent<T> {
     }
 
     private emitDataRequest(): void {
-        const pageSize = this.effectivePageSize();
-        const sort = this.sortState();
         this.dataRequest.emit({
-            offset: this.page() * pageSize,
-            pageSize,
-            sortField: sort?.field,
-            sortDirection: sort?.direction,
-            globalFilter: this.searchTerm().trim() || undefined,
+            page: this.page(),
+            pageSize: this.effectivePageSize(),
+            sort: this.sortState(),
+            searchTerm: this.searchTerm().trim() || undefined,
         });
     }
 }

@@ -88,7 +88,7 @@ describe('CleanupServiceComponent date range integration', () => {
 
         // Overwrite the "from" field with garbage. This is the keepInvalid path: the picker does NOT emit
         // valueChange (so operation.deleteFrom keeps its stale valid date and datesValid stays true), but it
-        // DOES emit validChange(false). The Execute button must reflect that and disable — otherwise the admin
+        // DOES emit parseValidChange(false). The Execute button must reflect that and disable — otherwise the admin
         // could run the destructive cleanup against a stale range while the field shows unparseable text.
         const fromInput = row.query(By.css('[data-testid="delete-from-picker"] [data-testid="tum-ui-date-picker-input"]')).nativeElement as HTMLInputElement;
         fromInput.value = 'not a date';

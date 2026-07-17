@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, inject, signal, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, TrackByFunction, computed, inject, signal, viewChild } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { RouterLink } from '@angular/router';
 import { Organization } from 'app/admin/organization-management/organization.model';
@@ -55,6 +55,9 @@ export class OrganizationManagementComponent {
     ]);
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
+
+    // Row identity so the table reuses row DOM across reloads instead of rebuilding every row.
+    protected readonly trackByOrgId: TrackByFunction<Organization> = (_, organization) => organization.id;
 
     // Icons
     faPlus = faPlus;

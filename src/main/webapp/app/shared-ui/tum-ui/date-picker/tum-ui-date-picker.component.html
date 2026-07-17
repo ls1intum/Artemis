@@ -29,6 +29,7 @@
             [disabled]="disabled()"
             placeholder="dd.mm.yyyy hh:mm"
             [attr.aria-invalid]="showErrorBorder()"
+            [attr.aria-label]="ariaLabel()"
             aria-haspopup="dialog"
             [attr.aria-expanded]="isOpen() ? 'true' : 'false'"
             (input)="onInput(dateInput.value)"

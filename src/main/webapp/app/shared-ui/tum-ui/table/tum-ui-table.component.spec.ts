@@ -61,7 +61,7 @@ describe('TumUiTableComponent', () => {
         fixture.detectChanges();
         await fixture.whenStable();
         expect(spy).toHaveBeenCalledTimes(1);
-        expect(spy).toHaveBeenCalledWith(expect.objectContaining({ offset: 0, pageSize: 50 }));
+        expect(spy).toHaveBeenCalledWith(expect.objectContaining({ page: 0, pageSize: 50 }));
     });
 
     it('emits sort on a sortable header click and toggles asc/desc with aria-sort', async () => {
@@ -71,11 +71,11 @@ describe('TumUiTableComponent', () => {
         const sortButton: HTMLButtonElement = headerCells()[0].querySelector('button')!;
         sortButton.click();
         fixture.detectChanges();
-        expect(spy).toHaveBeenLastCalledWith(expect.objectContaining({ sortField: 'name', sortDirection: 'asc', offset: 0 }));
+        expect(spy).toHaveBeenLastCalledWith(expect.objectContaining({ sort: { field: 'name', direction: 'asc' }, page: 0 }));
         expect(headerCells()[0].getAttribute('aria-sort')).toBe('ascending');
         sortButton.click();
         fixture.detectChanges();
-        expect(spy).toHaveBeenLastCalledWith(expect.objectContaining({ sortField: 'name', sortDirection: 'desc' }));
+        expect(spy).toHaveBeenLastCalledWith(expect.objectContaining({ sort: { field: 'name', direction: 'desc' } }));
         expect(headerCells()[0].getAttribute('aria-sort')).toBe('descending');
     });
 
@@ -115,7 +115,7 @@ describe('TumUiTableComponent', () => {
         search.dispatchEvent(new Event('input'));
         expect(spy).not.toHaveBeenCalled();
         vi.advanceTimersByTime(300);
-        expect(spy).toHaveBeenCalledWith(expect.objectContaining({ globalFilter: 'alp', offset: 0 }));
+        expect(spy).toHaveBeenCalledWith(expect.objectContaining({ searchTerm: 'alp', page: 0 }));
         vi.useRealTimers();
     });
 
@@ -136,7 +136,7 @@ describe('TumUiTableComponent', () => {
         expect(fixture.debugElement.query(By.css('tr[role="row"] td[colspan], td[colspan]'))).toBeTruthy();
     });
 
-    it('emits dataRequest with the next page offset when the paginator advances', async () => {
+    it('emits dataRequest with the next page index when the paginator advances', async () => {
         fixture.componentRef.setInput('totalRecords', 130);
         fixture.detectChanges();
         await fixture.whenStable();
@@ -144,7 +144,7 @@ describe('TumUiTableComponent', () => {
         const next: HTMLButtonElement = fixture.debugElement.query(By.css('[data-testid="paginator-next"]')).nativeElement;
         next.click();
         fixture.detectChanges();
-        expect(spy).toHaveBeenLastCalledWith(expect.objectContaining({ offset: 50, pageSize: 50 }));
+        expect(spy).toHaveBeenLastCalledWith(expect.objectContaining({ page: 1, pageSize: 50 }));
     });
 
     it('clamps to the last valid page and re-emits when totalRecords shrinks below the current page', async () => {
@@ -159,6 +159,6 @@ describe('TumUiTableComponent', () => {
         fixture.componentRef.setInput('totalRecords', 30);
         fixture.detectChanges();
         await fixture.whenStable();
-        expect(spy).toHaveBeenLastCalledWith(expect.objectContaining({ offset: 0, pageSize: 50 }));
+        expect(spy).toHaveBeenLastCalledWith(expect.objectContaining({ page: 0, pageSize: 50 }));
     });
 });

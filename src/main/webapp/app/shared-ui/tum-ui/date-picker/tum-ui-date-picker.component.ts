@@ -82,15 +82,22 @@ export class TumUiDatePickerComponent implements FormValueControl<dayjs.Dayjs | 
     /** `id` of the inner `<input>` (and the label's `for`). Defaults to a unique per-instance id; set it explicitly when you need a stable, known id. */
     readonly inputId = input(`tum-ui-date-picker-${nextDatePickerId++}`);
     readonly labelName = input<string>();
+    /**
+     * Accessible name for the inner `<input>`, forwarded as `aria-label`. Set it when the field renders
+     * without a visible label (`hideLabelName`) so screen-reader users still hear which date it is
+     * (e.g. `"Delete from"`); otherwise the visible `<label for>` already names the input.
+     */
+    readonly ariaLabel = input<string>();
     readonly baseZIndex = input(1060);
 
     /**
-     * Emits whether the currently typed text parses to a valid date, on every validity change.
-     * Because an unparseable edit deliberately does NOT emit `valueChange` (keepInvalid), a consumer
-     * that must gate a destructive action on the field being parseable (e.g. disable a submit button)
-     * should listen here rather than infer validity from `valueChange`.
+     * Emits whether the currently typed text parses to a valid date, on every parse-validity change (NOT the
+     * combined {@link isValid}, which also folds in the external `[error]`). Because an unparseable edit
+     * deliberately does NOT emit `valueChange` (keepInvalid), a consumer that must gate a destructive action on
+     * the field being parseable (e.g. disable a submit button) should listen here rather than infer validity
+     * from `valueChange`. Mirror of the {@link hasValidInput} accessor as an output.
      */
-    readonly validChange = output<boolean>();
+    readonly parseValidChange = output<boolean>();
 
     protected readonly faCalendar = faCalendar;
     protected readonly faXmark = faXmark;
@@ -134,7 +141,7 @@ export class TumUiDatePickerComponent implements FormValueControl<dayjs.Dayjs | 
         this.destroyRef.onDestroy(() => this.overlayRef?.dispose());
         // Mirror parse-validity to consumers whenever it changes, so they can gate actions on
         // unparseable input (which by design does not emit valueChange). Emits the initial `true`.
-        effect(() => this.validChange.emit(this.isInputValid()));
+        effect(() => this.parseValidChange.emit(this.isInputValid()));
     }
 
     /**

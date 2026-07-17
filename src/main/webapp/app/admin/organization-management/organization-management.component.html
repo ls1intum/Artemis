@@ -11,6 +11,7 @@
             [columns]="columns()"
             [rows]="organizations()"
             [totalRecords]="totalCount()"
+            [trackBy]="trackByOrgId"
             (dataRequest)="loadOrganizations($event)"
             [rowActions]="organizationActions"
             [loading]="isLoading()"

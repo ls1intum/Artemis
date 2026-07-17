@@ -22,7 +22,7 @@
     [class.min-h-0]="scrollHeight() === 'flex'"
     [style.max-height]="scrollHeight() && scrollHeight() !== 'flex' ? scrollHeight() : null"
 >
-    <table cdk-table [dataSource]="rows()" [class]="tableClasses()" data-testid="tum-ui-table">
+    <table cdk-table [dataSource]="rows()" [trackBy]="effectiveTrackBy()" [class]="tableClasses()" data-testid="tum-ui-table">
         @for (col of columns(); track columnName(col, $index)) {
             <ng-container [cdkColumnDef]="columnName(col, $index)">
                 <th

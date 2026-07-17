@@ -5,8 +5,12 @@ import { TemplateRef } from '@angular/core';
  * A trimmed, PrimeNG-free copy of the legacy table-view ColumnDef (only the fields the owned table uses).
  */
 export interface ColumnDef<T> {
-    /** Top-level key of T (`'name'`) or dot-path to a nested field (`'owner.name'`), resolved via lodash `get`. */
-    field?: string;
+    /**
+     * Top-level key of `T` (`'name'`) or a dot-path to a nested field (`'owner.name'`), resolved via lodash `get`.
+     * Typed as `keyof T` so top-level keys autocomplete and typos are caught, while the `(string & {})` arm still
+     * accepts arbitrary dot-path strings (which cannot be expressed as `keyof T`).
+     */
+    field?: (keyof T & string) | (string & {});
     header?: string;
     headerKey?: string;
     width?: string;
@@ -39,14 +43,13 @@ export interface TumUiSortState {
  * feed the event into `buildDbQueryFromTableEvent` to get the standard Artemis paged-search shape.
  */
 export interface TumUiTableQueryEvent {
-    /** Zero-based index of the first row to load (page offset). */
-    offset: number;
+    /** Zero-based page index to load (matches the paginator's `page`, so no offset↔page conversion). */
+    page: number;
     /** Number of rows per page. */
     pageSize: number;
-    /** Column to sort by, or undefined when unsorted. */
-    sortField?: string;
-    /** Sort direction for {@link sortField}. */
-    sortDirection?: TumUiSortDirection;
+    /** Active sort (column + direction), or undefined when unsorted. The two travel together so a
+     *  direction can never be present without a field. */
+    sort?: TumUiSortState;
     /** Trimmed global search term, or undefined when empty. */
-    globalFilter?: string;
+    searchTerm?: string;
 }
