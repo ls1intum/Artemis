@@ -50,7 +50,7 @@ public class LLMTokenUsageService {
 
     private final Map<String, ModelCost> costs;
 
-    private final Map<String, ModelCost> costsByDashlessKey;
+    private final Map<String, ModelCost> costsByStrippedKey;
 
     public LLMTokenUsageService(LLMTokenUsageTraceRepository llmTokenUsageTraceRepository, LLMTokenUsageRequestRepository llmTokenUsageRequestRepository,
             LLMModelCostConfiguration costConfiguration) {
@@ -58,11 +58,11 @@ public class LLMTokenUsageService {
         this.llmTokenUsageRequestRepository = llmTokenUsageRequestRepository;
         this.costs = costConfiguration.getModelCosts().entrySet().stream()
                 .collect(Collectors.toMap(Map.Entry::getKey, e -> new ModelCost(e.getValue().getInputCostPerMillionEur(), e.getValue().getOutputCostPerMillionEur())));
-        this.costsByDashlessKey = costConfiguration.getModelCosts().entrySet().stream()
-                .collect(Collectors.toMap(entry -> entry.getKey().replace("-", ""),
-                        entry -> new DashlessModelCost(entry.getKey(), entry.getKey().replace("-", ""),
+        this.costsByStrippedKey = costConfiguration.getModelCosts().entrySet().stream()
+                .collect(Collectors.toMap(entry -> LLMModelCostConfiguration.stripToAlphanumeric(entry.getKey()),
+                        entry -> new StrippedModelCost(entry.getKey(), LLMModelCostConfiguration.stripToAlphanumeric(entry.getKey()),
                                 new ModelCost(entry.getValue().getInputCostPerMillionEur(), entry.getValue().getOutputCostPerMillionEur())),
-                        LLMTokenUsageService::throwOnDashlessCostCollision))
+                        LLMTokenUsageService::throwOnStrippedCostCollision))
                 .entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, entry -> entry.getValue().cost()));
     }
 
@@ -77,11 +77,11 @@ public class LLMTokenUsageService {
      */
     public LLMRequest buildLLMRequest(String model, int inputTokens, int outputTokens, String pipelineId) {
         String normalized = model != null ? DATE_SUFFIX_PATTERN.matcher(model).replaceAll("") : "";
-        String dashless = normalized.replace("-", "");
-        ModelCost cost = costs.getOrDefault(normalized, costsByDashlessKey.getOrDefault(dashless, ModelCost.ZERO));
+        String stripped = LLMModelCostConfiguration.stripToAlphanumeric(normalized);
+        ModelCost cost = costs.getOrDefault(normalized, costsByStrippedKey.getOrDefault(stripped, ModelCost.ZERO));
         if (cost == ModelCost.ZERO && inputTokens + outputTokens > 0) {
-            log.warn("No LLM cost configured for model '{}' (normalized '{}', dashless '{}') on pipeline [{}]; recording zero cost. Known cost keys: {}", model, normalized,
-                    dashless, pipelineId, costs.keySet());
+            log.warn("No LLM cost configured for model '{}' (normalized '{}', stripped '{}') on pipeline [{}]; recording zero cost. Known cost keys: {}", model, normalized,
+                    stripped, pipelineId, costs.keySet());
         }
         return new LLMRequest(model, inputTokens, cost.input(), outputTokens, cost.output(), pipelineId);
     }
@@ -91,12 +91,12 @@ public class LLMTokenUsageService {
         static final ModelCost ZERO = new ModelCost(0f, 0f);
     }
 
-    private record DashlessModelCost(String originalKey, String dashlessKey, ModelCost cost) {
+    private record StrippedModelCost(String originalKey, String strippedKey, ModelCost cost) {
     }
 
-    private static DashlessModelCost throwOnDashlessCostCollision(DashlessModelCost existing, DashlessModelCost replacement) {
+    private static StrippedModelCost throwOnStrippedCostCollision(StrippedModelCost existing, StrippedModelCost replacement) {
         String message = new StringBuilder("Conflicting LLM model cost keys '").append(existing.originalKey()).append("' and '").append(replacement.originalKey())
-                .append("' normalize to identical dashless key '").append(existing.dashlessKey()).append("'").toString();
+                .append("' normalize to identical stripped key '").append(existing.strippedKey()).append("'").toString();
         throw new IllegalStateException(message);
     }
 
