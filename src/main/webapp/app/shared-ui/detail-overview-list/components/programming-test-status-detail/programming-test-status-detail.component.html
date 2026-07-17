@@ -1,7 +1,7 @@
 @let data = detail().data;
 @if (data.participation) {
     <div class="d-flex align-items-center">
-        @if (!data.loading) {
+        @if (!data.loading()) {
             <jhi-updating-result
                 [exercise]="data.exercise"
                 [participation]="data.participation"
