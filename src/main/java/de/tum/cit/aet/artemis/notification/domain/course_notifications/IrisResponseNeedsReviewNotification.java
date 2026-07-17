@@ -78,6 +78,8 @@ public class IrisResponseNeedsReviewNotification extends CourseNotification {
 
     @Override
     public String getRelativeWebAppUrl() {
-        return "/courses/" + courseId + "/communication?conversationId=" + channelId + "&focusPostId=" + postId + "&openThreadOnFocus=1&messageId=" + replyId;
+        // messageId is the parent post that seeds the thread; focusReplyId highlights the pending Iris reply within it.
+        return "/courses/" + courseId + "/communication?conversationId=" + channelId + "&focusPostId=" + postId + "&openThreadOnFocus=1&messageId=" + postId + "&focusReplyId="
+                + replyId;
     }
 }
