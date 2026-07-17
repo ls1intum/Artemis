@@ -65,7 +65,7 @@ import { RepositoryType } from '../../shared/code-editor/model/code-editor.model
 import { ProgrammingExerciseSharingService } from '../services/programming-exercise-sharing.service';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { AtlasOrchestrationTriggerComponent } from 'app/atlas/manage/orchestration-trigger/atlas-orchestration-trigger.component';
-import { parseBuildPlanPhases } from 'app/programming/shared/entities/build-plan-phases.model';
+import { allPhases, effectiveContainers, parseBuildPlanPhases } from 'app/programming/shared/entities/build-plan-phases.model';
 
 @Component({
     selector: 'jhi-programming-exercise-detail',
@@ -504,6 +504,15 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
 
     getExerciseDetailsLanguageSection(exercise: ProgrammingExercise): DetailOverviewSection {
         const buildPlanPhases = parseBuildPlanPhases(exercise.buildConfig?.buildPlanConfiguration);
+        // a build plan can run several containers, each with its own image, so all of their images are listed here
+        const dockerImages = [
+            ...new Set(
+                effectiveContainers(buildPlanPhases)
+                    .map((container) => container.dockerImage)
+                    .filter(Boolean),
+            ),
+        ].join(', ');
+        const buildPhases = allPhases(buildPlanPhases);
         const diffReportDetail = this.getDiffReportDetail();
         return {
             headline: 'artemisApp.programmingExercise.wizardMode.detailedSteps.languageStepTitle',
@@ -605,23 +614,23 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                     },
                 },
                 diffReportDetail,
-                !!buildPlanPhases?.dockerImage && {
+                !!dockerImages && {
                     type: DetailType.Text,
                     title: 'artemisApp.programmingExercise.dockerImage',
-                    data: { text: buildPlanPhases?.dockerImage },
+                    data: { text: dockerImages },
                 },
                 !!exercise.buildConfig?.buildScript &&
-                    !!buildPlanPhases?.dockerImage && {
+                    !!dockerImages && {
                         type: DetailType.Markdown,
                         title: 'artemisApp.programmingExercise.script',
                         titleHelpText: 'artemisApp.programmingExercise.revertToTemplateBuildPlan',
                         data: { innerHtml: this.artemisMarkdown.safeHtmlForMarkdown('```bash\n' + exercise.buildConfig?.buildScript + '\n```') },
                     },
                 this.localCIEnabled() &&
-                    !!buildPlanPhases?.phases?.length && {
+                    !!buildPhases.length && {
                         type: DetailType.ProgrammingBuildPhases,
                         title: 'artemisApp.programmingExercise.buildPhasesEditor.title',
-                        data: { phases: buildPlanPhases.phases, isExamMode: this.isExamExercise() },
+                        data: { phases: buildPhases, isExamMode: this.isExamExercise() },
                     },
                 {
                     type: DetailType.Text,

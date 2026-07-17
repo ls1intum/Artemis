@@ -155,6 +155,25 @@
                 "buildPlanConfigurationTooLong": "The build plan configuration is too long. The maximum allowed size is 1 MB.",
                 "dockerFlagsTooLong": "The docker flags are too long. The maximum allowed size is 8 KB."
             },
+            "buildContainersEditor": {
+                "title": "Build Containers",
+                "help": "A build container runs its own Docker image and executes its build phases inside it. Containers are independent of each other, so a container can be given only the repositories its phases need, which keeps student code away from the instructor's test files.",
+                "addContainer": "Add Container",
+                "removeContainer": "Remove this container",
+                "containerName": "Container Name",
+                "containerNameHelp": "Use only letters, digits and underscores, and do not start with a digit. The name must be unique within the build plan.",
+                "containerNameInvalid": "Use only letters, digits and underscores, and do not start with a digit.",
+                "containerNameDuplicate": "Another container already uses this name.",
+                "scopeRepositories": "Check out only selected repositories",
+                "scopeRepositoriesHelp": "By default a container checks out the repositories configured on the exercise. Select the repositories explicitly to give this container access to a subset only, for example to run student-authored tests without the instructor's test repository.",
+                "repositoryTypes": {
+                    "TEMPLATE": "Template",
+                    "SOLUTION": "Solution",
+                    "TESTS": "Tests",
+                    "AUXILIARY": "Auxiliary",
+                    "USER": "Assignment"
+                }
+            },
             "buildPhasesEditor": {
                 "title": "Build Phases",
                 "help": "Before a build is executed, the scripts of all phases whose conditions are met are concatenated in order. If no result paths are configured, the script's exit code determines build success. Otherwise, success depends on whether test results are produced.",

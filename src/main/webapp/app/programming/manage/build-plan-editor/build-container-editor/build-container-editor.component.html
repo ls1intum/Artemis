@@ -1,0 +1,86 @@
+<div class="border rounded p-3 mb-3">
+    <div class="flex items-end gap-3 mb-2">
+        <div class="grow">
+            <label [for]="'field_container_name_' + container().name">
+                <span jhiTranslate="artemisApp.programmingExercise.buildContainersEditor.containerName"></span>
+            </label>
+            <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.buildContainersEditor.containerNameHelp" />
+            <input
+                type="text"
+                class="form-control"
+                [id]="'field_container_name_' + container().name"
+                [ngModel]="container().name"
+                (ngModelChange)="setName($event)"
+                [name]="'containerName_' + container().name"
+            />
+        </div>
+        <div class="grow">
+            <label [for]="'field_container_image_' + container().name">
+                <span jhiTranslate="artemisApp.programmingExercise.dockerImage"></span>
+            </label>
+            <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.customizeDockerImage" />
+            <input
+                type="text"
+                class="form-control"
+                [id]="'field_container_image_' + container().name"
+                [ngModel]="container().dockerImage ?? ''"
+                (ngModelChange)="setDockerImage($event)"
+                [name]="'containerImage_' + container().name"
+            />
+        </div>
+        @if (canRemove()) {
+            <p-button
+                severity="danger"
+                [outlined]="true"
+                (onClick)="remove.set()"
+                [pTooltip]="'artemisApp.programmingExercise.buildContainersEditor.removeContainer' | artemisTranslate"
+            >
+                <fa-icon [icon]="faTrash" />
+            </p-button>
+        }
+    </div>
+    @if (nameValidationMessageKey(); as messageKey) {
+        <!-- the message sits outside the row above so that showing it does not change the height of the row and shift the fields -->
+        <div class="text-state-danger mb-2" [jhiTranslate]="messageKey"></div>
+    }
+
+    <div class="mb-2">
+        <div class="form-check">
+            <input
+                class="form-check-input"
+                type="checkbox"
+                [id]="'field_container_scoped_' + container().name"
+                [ngModel]="scopesRepositories()"
+                (ngModelChange)="toggleRepositoryScoping($event)"
+                [name]="'containerScoped_' + container().name"
+            />
+            <label class="form-check-label" [for]="'field_container_scoped_' + container().name">
+                <span jhiTranslate="artemisApp.programmingExercise.buildContainersEditor.scopeRepositories"></span>
+            </label>
+            <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.buildContainersEditor.scopeRepositoriesHelp" />
+        </div>
+        @if (scopesRepositories()) {
+            <div class="flex flex-wrap gap-3 mt-1">
+                @for (repositoryType of repositoryTypes; track repositoryType) {
+                    <div class="form-check">
+                        <input
+                            class="form-check-input"
+                            type="checkbox"
+                            [id]="'field_container_repo_' + container().name + '_' + repositoryType"
+                            [ngModel]="isRepositorySelected(repositoryType)"
+                            (ngModelChange)="toggleRepository(repositoryType, $event)"
+                            [name]="'containerRepo_' + container().name + '_' + repositoryType"
+                        />
+                        <label class="form-check-label" [for]="'field_container_repo_' + container().name + '_' + repositoryType">
+                            {{ 'artemisApp.programmingExercise.buildContainersEditor.repositoryTypes.' + repositoryType | artemisTranslate }}
+                        </label>
+                    </div>
+                }
+            </div>
+        }
+    </div>
+
+    <label jhiTranslate="artemisApp.programmingExercise.buildPhasesEditor.title"></label>
+    <jhi-help-icon text="artemisApp.programmingExercise.buildPhasesEditor.help" />
+    <jhi-build-phases-editor [phases]="container().phases" (phasesChange)="setPhases($event)" [isExamMode]="isExamMode()" />
+</div>

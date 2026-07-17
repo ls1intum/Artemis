@@ -39,7 +39,6 @@ describe('ProgrammingExercise Docker Image', () => {
 
         profileService = TestBed.inject(ProfileService);
 
-        fixture.componentRef.setInput('dockerImage', 'testImage');
         fixture.componentRef.setInput('timeout', 10);
         fixture.componentRef.setInput('programmingExercise', programmingExercise);
     });
@@ -52,10 +51,6 @@ describe('ProgrammingExercise Docker Image', () => {
     });
 
     it('should update build values', () => {
-        expect(comp.dockerImage()).toBe('testImage');
-        comp.dockerImageChange.subscribe((value) => expect(value).toBe('newImage'));
-        comp.dockerImageChange.emit('newImage');
-
         expect(comp.timeout()).toBe(10);
         comp.timeoutChange.subscribe((value) => expect(value).toBe(20));
         comp.timeoutChange.emit(20);

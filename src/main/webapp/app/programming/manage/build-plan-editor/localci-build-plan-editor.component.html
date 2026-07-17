@@ -38,17 +38,23 @@
             <span jhiTranslate="artemisApp.editor.submit"></span>
         </tum-ui-button>
     </div>
-    <jhi-programming-exercise-build-configuration
-        [programmingExercise]="programmingExercise()!"
-        [dockerImage]="dockerImage()"
-        [dockerImagePlaceholder]="defaultDockerImage()"
-        (dockerImageChange)="dockerImage.set($event)"
-        [timeout]="timeout()"
-        (timeoutChange)="timeout.set($event)"
-    />
-    <label jhiTranslate="artemisApp.programmingExercise.buildPhasesEditor.title"></label>
-    <jhi-help-icon text="artemisApp.programmingExercise.buildPhasesEditor.help" />
-    <jhi-build-phases-editor [phases]="phases()" (phasesChange)="phases.set($event)" [isExamMode]="isExamMode()" />
+    <jhi-programming-exercise-build-configuration [programmingExercise]="programmingExercise()!" [timeout]="timeout()" (timeoutChange)="timeout.set($event)" />
+
+    <label jhiTranslate="artemisApp.programmingExercise.buildContainersEditor.title"></label>
+    <jhi-help-icon text="artemisApp.programmingExercise.buildContainersEditor.help" />
+    @for (container of containers(); track $index) {
+        <jhi-build-container-editor
+            [container]="container"
+            (containerChange)="updateContainer($index, $event)"
+            (remove)="removeContainer($index)"
+            [canRemove]="containers().length > 1"
+            [otherContainerNames]="otherContainerNames($index)"
+            [isExamMode]="isExamMode()"
+        />
+    }
+    <tum-ui-button id="add_container_button" variant="outlined" [icon]="faPlus" (clicked)="addContainer()">
+        <span jhiTranslate="artemisApp.programmingExercise.buildContainersEditor.addContainer"></span>
+    </tum-ui-button>
     @if (!arePhaseNamesValid()) {
         <div class="text-state-danger mt-1" jhiTranslate="artemisApp.programmingExercise.buildPhasesEditor.invalidPhaseNames"></div>
     }

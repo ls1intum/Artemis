@@ -97,7 +97,7 @@ describe('build-plan-phases.model', () => {
                 ],
             }),
         );
-        expect(parsed?.phases[0].resultPaths).toEqual([]);
+        expect(parsed?.phases?.[0].resultPaths).toEqual([]);
     });
 
     it('defaults undefined condition, forceRun, and resultPaths', () => {
@@ -112,9 +112,9 @@ describe('build-plan-phases.model', () => {
                 ],
             }),
         );
-        expect(parsed?.phases[0].condition).toBe('ALWAYS');
-        expect(parsed?.phases[0].forceRun).toBe(false);
-        expect(parsed?.phases[0].resultPaths).toStrictEqual([]);
+        expect(parsed?.phases?.[0].condition).toBe('ALWAYS');
+        expect(parsed?.phases?.[0].forceRun).toBe(false);
+        expect(parsed?.phases?.[0].resultPaths).toStrictEqual([]);
     });
 
     it('handles all optional fields missing simultaneously', () => {

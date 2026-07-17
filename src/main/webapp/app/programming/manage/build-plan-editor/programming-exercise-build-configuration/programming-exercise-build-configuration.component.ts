@@ -37,10 +37,6 @@ export class ProgrammingExerciseBuildConfigurationComponent implements OnInit {
     private profileService = inject(ProfileService);
 
     programmingExercise = input<ProgrammingExercise>();
-    dockerImage = input.required<string>();
-    // the language default image, shown as a placeholder while the field is empty instead of being written into it
-    dockerImagePlaceholder = input<string>('');
-    dockerImageChange = output<string>();
 
     timeout = input<number>();
     timeoutChange = output<number>();

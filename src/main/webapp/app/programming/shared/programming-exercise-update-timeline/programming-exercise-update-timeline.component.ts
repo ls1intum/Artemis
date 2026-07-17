@@ -19,7 +19,7 @@ import { NgStyle } from '@angular/common';
 import { TimelineComponent, TimelineItem, TimelineStatus } from 'app/shared-ui/timeline/timeline.component';
 import { ExerciseFeedbackSuggestionOptionsComponent } from 'app/exercise/feedback-suggestion/exercise-feedback-suggestion-options.component';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
-import { parseBuildPlanPhases } from 'app/programming/shared/entities/build-plan-phases.model';
+import { allPhases, parseBuildPlanPhases } from 'app/programming/shared/entities/build-plan-phases.model';
 import { isEqual } from 'lodash-es';
 import { findParamInRouteHierarchy } from 'app/foundation/util/navigation.utils';
 import { convertDateFromClient } from 'app/foundation/util/date.utils';
@@ -356,6 +356,7 @@ export class ProgrammingExerciseUpdateTimelineComponent implements OnInit {
             return undefined;
         }
 
-        return parsedBuildPlan.phases.some((phase) => phase.condition === 'AFTER_DUE_DATE');
+        // an after due date phase is relevant regardless of the container it runs in
+        return allPhases(parsedBuildPlan).some((phase) => phase.condition === 'AFTER_DUE_DATE');
     }
 }

@@ -26,7 +26,7 @@ import { MockAlertService } from 'test/helpers/mocks/service/mock-alert.service'
 import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { ProgrammingExercise, ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
-import { BuildPhase, BuildPlanPhases } from 'app/programming/shared/entities/build-plan-phases.model';
+import { BuildContainer, BuildPhase, BuildPlanPhases } from 'app/programming/shared/entities/build-plan-phases.model';
 
 /**
  * Lightweight stand-in for the build configuration child. It exposes the timeout bounds that the editor reads through its
@@ -40,10 +40,7 @@ import { BuildPhase, BuildPlanPhases } from 'app/programming/shared/entities/bui
 })
 class StubProgrammingExerciseBuildConfigurationComponent {
     readonly programmingExercise = input<ProgrammingExercise>();
-    readonly dockerImage = input<string>();
-    readonly dockerImagePlaceholder = input<string>();
     readonly timeout = input<number>();
-    readonly dockerImageChange = output<string>();
     readonly timeoutChange = output<number>();
     readonly timeoutMinValue = signal<number | undefined>(undefined);
     readonly timeoutMaxValue = signal<number | undefined>(undefined);
@@ -63,6 +60,7 @@ describe('LocalCIBuildPlanEditorComponent', () => {
 
     const phases: BuildPhase[] = [{ name: 'compile', script: 'echo compile', condition: 'ALWAYS', forceRun: false, resultPaths: [] }];
     const buildPlanConfiguration = JSON.stringify({ phases, dockerImage: 'some-image' });
+    const container = (name: string) => ({ name, dockerImage: 'some-image', phases });
 
     beforeEach(() => {
         // a controllable subject so a test can decide when (and whether) the requested template resolves
@@ -129,8 +127,8 @@ describe('LocalCIBuildPlanEditorComponent', () => {
 
         comp.ngOnInit();
 
-        expect(comp.phases()).toEqual(phases);
-        expect(comp.dockerImage()).toBe('some-image');
+        // a legacy build plan is normalized into a single container, so the editor only deals with containers
+        expect(comp.containers()).toEqual([{ name: 'default', dockerImage: 'some-image', phases }]);
         expect(comp.timeout()).toBe(90);
         expect(findStub).toHaveBeenCalledWith(7);
         expect(comp.loadingResults()).toBe(false);
@@ -163,14 +161,14 @@ describe('LocalCIBuildPlanEditorComponent', () => {
 
         // B is active with B's editing state before A's lookup returns
         expect(comp.programmingExercise()?.id).toBe(8);
-        expect(comp.phases()).toEqual(phasesB);
+        expect(comp.containers()).toEqual([{ name: 'default', dockerImage: 'image-b', phases: phasesB }]);
 
         // A's participation response arrives late; it must not replace the active exercise
         participationResponseA.next(new HttpResponse<ProgrammingExercise>({ body: { id: 7 } as ProgrammingExercise }));
         participationResponseA.complete();
 
         expect(comp.programmingExercise()?.id).toBe(8);
-        expect(comp.phases()).toEqual(phasesB);
+        expect(comp.containers()).toEqual([{ name: 'default', dockerImage: 'image-b', phases: phasesB }]);
     });
 
     it('should ignore a stale participation error once a different exercise is active', () => {
@@ -209,7 +207,7 @@ describe('LocalCIBuildPlanEditorComponent', () => {
         comp.ngOnInit();
 
         expect(comp.programmingExercise()).toBe(exercise);
-        expect(comp.phases()).toEqual(phases);
+        expect(comp.containers()).toEqual([{ name: 'default', dockerImage: 'some-image', phases }]);
         expect(comp.loadingResults()).toBe(false);
         expect(errorStub).toHaveBeenCalledWith('error.http.404');
     });
@@ -223,37 +221,11 @@ describe('LocalCIBuildPlanEditorComponent', () => {
 
         comp.ngOnInit();
 
-        expect(comp.phases()).toHaveLength(1);
-        expect(comp.phases()[0].name).toBe('script');
-        expect(comp.phases()[0].script).toContain('echo hello');
+        expect(comp.containers()).toHaveLength(1);
+        expect(comp.containers()[0].phases).toHaveLength(1);
+        expect(comp.containers()[0].phases[0].name).toBe('script');
+        expect(comp.containers()[0].phases[0].script).toContain('echo hello');
         expect(comp.timeout()).toBe(60);
-    });
-
-    it('should show the language default docker image as a placeholder without seeding the field when the exercise configured none', () => {
-        const exercise = {
-            id: 7,
-            programmingLanguage: ProgrammingLanguage.JAVA,
-            buildConfig: { buildPlanConfiguration: JSON.stringify({ phases }), timeoutSeconds: 60 },
-        } as unknown as ProgrammingExercise;
-        activatedRoute.data = of({ exercise });
-        vi.spyOn(programmingExerciseService, 'findWithTemplateAndSolutionParticipationAndLatestResults').mockReturnValue(
-            of(new HttpResponse<ProgrammingExercise>({ body: { id: 7 } as ProgrammingExercise })),
-        );
-
-        comp.ngOnInit();
-
-        // no image in the stored configuration, so the editor asks the template service for the language default
-        expect(getTemplateStub).toHaveBeenCalledWith(false, ProgrammingLanguage.JAVA, undefined, undefined, undefined);
-        expect(comp.dockerImage()).toBe('');
-
-        // once the template resolves, its default image is offered only as a placeholder so submit keeps sending no image
-        // and the exercise keeps following default bumps
-        getTemplateSubject.next({ phases, dockerImage: 'language-default-image' });
-
-        expect(comp.dockerImage()).toBe('');
-        expect(comp.defaultDockerImage()).toBe('language-default-image');
-        // an empty image alone never blocked submitting, so the button is enabled with a valid plan
-        expect(comp.canSubmit()).toBe(true);
     });
 
     it('should seed the default phases when the exercise stored no build plan configuration', () => {
@@ -270,13 +242,13 @@ describe('LocalCIBuildPlanEditorComponent', () => {
         comp.ngOnInit();
 
         // a null configuration builds on the language default, so the editor opens empty and asks for the template
-        expect(comp.phases()).toHaveLength(0);
+        expect(comp.containers()).toHaveLength(0);
         expect(getTemplateStub).toHaveBeenCalledWith(false, ProgrammingLanguage.JAVA, undefined, undefined, undefined);
 
         // the template's phases fill the editor so it shows the real default plan instead of an empty list
         getTemplateSubject.next({ phases, dockerImage: 'language-default-image' });
 
-        expect(comp.phases()).toEqual(phases);
+        expect(comp.containers()).toEqual([{ name: 'default', dockerImage: 'language-default-image', phases }]);
         expect(comp.defaultDockerImage()).toBe('language-default-image');
     });
 
@@ -322,8 +294,8 @@ describe('LocalCIBuildPlanEditorComponent', () => {
         comp.timeout.set(200);
         getTemplateSubject.next({ phases, dockerImage: 'language-default-image' });
 
-        // only the seeded phases may be folded into the baseline, so the timeout edit is still unsaved
-        expect(comp.phases()).toEqual(phases);
+        // only the seeded containers may be folded into the baseline, so the timeout edit is still unsaved
+        expect(comp.containers()).toEqual([{ name: 'default', dockerImage: 'language-default-image', phases }]);
         expect(comp.timeout()).toBe(200);
         expect(comp.canDeactivate()).toBe(false);
     });
@@ -341,12 +313,12 @@ describe('LocalCIBuildPlanEditorComponent', () => {
 
         comp.ngOnInit();
 
-        // the instructor authored a phase before the template came back, so seeding must not discard that work
-        const authoredPhases = [{ ...phases[0], name: 'authored' }];
-        comp.phases.set(authoredPhases);
+        // the instructor authored a container before the template came back, so seeding must not discard that work
+        const authoredContainers = [{ ...container('tests'), phases: [{ ...phases[0], name: 'authored' }] }];
+        comp.containers.set(authoredContainers);
         getTemplateSubject.next({ phases, dockerImage: 'language-default-image' });
 
-        expect(comp.phases()).toEqual(authoredPhases);
+        expect(comp.containers()).toEqual(authoredContainers);
     });
 
     it('should not apply a resolved template once a different exercise is open', () => {
@@ -385,8 +357,7 @@ describe('LocalCIBuildPlanEditorComponent', () => {
         comp.ngOnInit();
 
         // nothing is missing, so there is no reason to fetch the template
-        expect(comp.dockerImage()).toBe('some-image');
-        expect(comp.phases()).toEqual(phases);
+        expect(comp.containers()).toEqual([{ name: 'default', dockerImage: 'some-image', phases }]);
         expect(getTemplateStub).not.toHaveBeenCalled();
     });
 
@@ -416,8 +387,7 @@ describe('LocalCIBuildPlanEditorComponent', () => {
 
     it('should submit the build plan configuration and show a success alert', () => {
         comp.programmingExercise.set({ id: 7, buildConfig: { dockerFlags: '{"network":"none"}' } } as unknown as ProgrammingExercise);
-        comp.phases.set(phases);
-        comp.dockerImage.set('some-image');
+        comp.containers.set([container('student_tests')]);
         comp.timeout.set(120);
         const updateStub = vi.spyOn(buildPlanConfigurationService, 'updateBuildPlanConfiguration').mockReturnValue(of(new HttpResponse<object>({ body: {} })));
         const successStub = vi.spyOn(alertService, 'success');
@@ -425,7 +395,7 @@ describe('LocalCIBuildPlanEditorComponent', () => {
         comp.submit();
 
         expect(updateStub).toHaveBeenCalledWith(7, {
-            buildPlan: { phases, dockerImage: 'some-image' },
+            buildPlan: { containers: [container('student_tests')] },
             timeoutSeconds: 120,
             dockerFlags: '{"network":"none"}',
         });
@@ -433,23 +403,9 @@ describe('LocalCIBuildPlanEditorComponent', () => {
         expect(comp.isSaving()).toBe(false);
     });
 
-    it('should trim surrounding whitespace from the docker image before saving', () => {
-        comp.programmingExercise.set({ id: 7, buildConfig: {} } as unknown as ProgrammingExercise);
-        comp.phases.set(phases);
-        comp.dockerImage.set('  some-image  ');
-        comp.timeout.set(120);
-        const updateStub = vi.spyOn(buildPlanConfigurationService, 'updateBuildPlanConfiguration').mockReturnValue(of(new HttpResponse<object>({ body: {} })));
-
-        comp.submit();
-
-        // the image is validated trimmed, so the whitespace must not end up in the stored configuration
-        expect(updateStub).toHaveBeenCalledWith(7, expect.objectContaining({ buildPlan: { phases, dockerImage: 'some-image' } }));
-    });
-
     it('should ignore a second submit while the first is still in flight', () => {
         comp.programmingExercise.set({ id: 7, buildConfig: {} } as unknown as ProgrammingExercise);
-        comp.phases.set(phases);
-        comp.dockerImage.set('some-image');
+        comp.containers.set([container('tests')]);
         comp.timeout.set(120);
         // a subject that never emits keeps the first save in flight, so isSaving stays true across the second call
         const updateStub = vi.spyOn(buildPlanConfigurationService, 'updateBuildPlanConfiguration').mockReturnValue(new Subject<HttpResponse<object>>().asObservable());
@@ -464,8 +420,7 @@ describe('LocalCIBuildPlanEditorComponent', () => {
 
     it('should surface an error alert when saving fails', () => {
         comp.programmingExercise.set({ id: 7, buildConfig: {} } as unknown as ProgrammingExercise);
-        comp.phases.set(phases);
-        comp.dockerImage.set('some-image');
+        comp.containers.set([container('student_tests')]);
         vi.spyOn(buildPlanConfigurationService, 'updateBuildPlanConfiguration').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 400 })));
         const errorStub = vi.spyOn(alertService, 'error');
 
@@ -496,8 +451,7 @@ describe('LocalCIBuildPlanEditorComponent', () => {
         const buildConfiguration = (comp as unknown as { buildConfigurationComponent: () => StubProgrammingExerciseBuildConfigurationComponent }).buildConfigurationComponent();
         buildConfiguration.timeoutMinValue.set(10);
         buildConfiguration.timeoutMaxValue.set(240);
-        comp.phases.set(phases);
-        comp.dockerImage.set('some-image');
+        comp.containers.set([container('tests')]);
 
         const timeoutMessage = () => fixture.debugElement.query(By.css('[jhiTranslate="artemisApp.programmingExercise.timeout.outOfBounds"]'));
 
@@ -567,7 +521,7 @@ describe('LocalCIBuildPlanEditorComponent', () => {
         expect(comp.canDeactivate()).toBe(true);
 
         // an edit diverges from the baseline, so the guard must prompt
-        comp.phases.set([{ ...phases[0], name: 'renamed' }]);
+        comp.containers.set([{ ...container('tests'), phases: [{ ...phases[0], name: 'renamed' }] }]);
         expect(comp.canDeactivate()).toBe(false);
     });
 
@@ -600,7 +554,7 @@ describe('LocalCIBuildPlanEditorComponent', () => {
         expect(comp.unloadNotification(event)).toBe(true);
         expect(event.preventDefault).not.toHaveBeenCalled();
 
-        comp.phases.set([{ ...phases[0], name: 'renamed' }]);
+        comp.containers.set([{ ...container('tests'), phases: [{ ...phases[0], name: 'renamed' }] }]);
 
         expect(comp.unloadNotification(event)).toBe('pendingChanges');
         expect(event.preventDefault).toHaveBeenCalled();
@@ -608,8 +562,7 @@ describe('LocalCIBuildPlanEditorComponent', () => {
 
     it('should keep an edit made while the save is in flight unsaved', () => {
         comp.programmingExercise.set({ id: 7, buildConfig: {} } as unknown as ProgrammingExercise);
-        comp.phases.set(phases);
-        comp.dockerImage.set('some-image');
+        comp.containers.set([container('tests')]);
         comp.timeout.set(120);
         // a controllable response so the editor can be edited while the request is still running
         const response = new Subject<HttpResponse<object>>();
@@ -618,20 +571,19 @@ describe('LocalCIBuildPlanEditorComponent', () => {
         comp.submit();
 
         // the fields stay editable during the save, so this edit is never part of the request
-        const editedDuringSave = [{ ...phases[0], name: 'edited_during_save' }];
-        comp.phases.set(editedDuringSave);
+        const editedDuringSave = [{ ...container('tests'), phases: [{ ...phases[0], name: 'edited_during_save' }] }];
+        comp.containers.set(editedDuringSave);
         response.next(new HttpResponse<object>({ body: {} }));
         response.complete();
 
         // only the submitted state may become the baseline, otherwise this edit is silently discarded on navigation
-        expect(comp.phases()).toEqual(editedDuringSave);
+        expect(comp.containers()).toEqual(editedDuringSave);
         expect(comp.canDeactivate()).toBe(false);
     });
 
     it('should allow leaving again after a successful save', () => {
         comp.programmingExercise.set({ id: 7, buildConfig: {} } as unknown as ProgrammingExercise);
-        comp.phases.set(phases);
-        comp.dockerImage.set('some-image');
+        comp.containers.set([container('tests')]);
         comp.timeout.set(120);
         // nothing has been persisted as the baseline yet, so the unsaved state blocks leaving
         expect(comp.canDeactivate()).toBe(false);
@@ -662,17 +614,20 @@ describe('LocalCIBuildPlanEditorComponent', () => {
         expect(comp.canDeactivate()).toBe(true);
     });
 
-    const invalidConfigurations: [string, typeof phases, string][] = [
-        ['duplicate phase names', [phases[0], { ...phases[0], name: 'Compile' }], 'some-image'],
-        ['a reserved phase name', [{ ...phases[0], name: 'main' }], 'some-image'],
-        ['an invalid phase name', [{ ...phases[0], name: 'compile phase' }], 'some-image'],
-        ['no phases', [], 'some-image'],
+    const invalidConfigurations: [string, BuildContainer[]][] = [
+        ['duplicate phase names in a container', [{ ...container('tests'), phases: [phases[0], { ...phases[0], name: 'Compile' }] }]],
+        ['a reserved phase name', [{ ...container('tests'), phases: [{ ...phases[0], name: 'main' }] }]],
+        ['an invalid phase name', [{ ...container('tests'), phases: [{ ...phases[0], name: 'compile phase' }] }]],
+        ['a container without phases', [{ ...container('tests'), phases: [] }]],
+        ['no containers', []],
+        ['an empty docker image', [{ ...container('tests'), dockerImage: '   ' }]],
+        ['duplicate container names', [container('tests'), { ...container('Tests') }]],
+        ['an invalid container name', [container('student tests')]],
     ];
 
-    it.each(invalidConfigurations)('should not submit with %s', (_description, invalidPhases, dockerImage) => {
+    it.each(invalidConfigurations)('should not submit with %s', (_description, invalidContainers) => {
         comp.programmingExercise.set({ id: 7, buildConfig: {} } as unknown as ProgrammingExercise);
-        comp.phases.set(invalidPhases);
-        comp.dockerImage.set(dockerImage);
+        comp.containers.set(invalidContainers);
         const updateStub = vi.spyOn(buildPlanConfigurationService, 'updateBuildPlanConfiguration');
 
         comp.submit();
@@ -684,8 +639,7 @@ describe('LocalCIBuildPlanEditorComponent', () => {
     it('should not submit when the serialized build plan configuration exceeds the maximum length', () => {
         comp.programmingExercise.set({ id: 7, buildConfig: {} } as unknown as ProgrammingExercise);
         // one oversized script is enough to push the serialized plan past the server-side limit
-        comp.phases.set([{ ...phases[0], script: 'a'.repeat(BUILD_PLAN_CONFIGURATION_MAX_LENGTH) }]);
-        comp.dockerImage.set('some-image');
+        comp.containers.set([{ ...container('tests'), phases: [{ ...phases[0], script: 'a'.repeat(BUILD_PLAN_CONFIGURATION_MAX_LENGTH) }] }]);
         const updateStub = vi.spyOn(buildPlanConfigurationService, 'updateBuildPlanConfiguration');
 
         comp.submit();
@@ -697,8 +651,7 @@ describe('LocalCIBuildPlanEditorComponent', () => {
 
     it('should submit a build plan configuration that stays within the maximum length', () => {
         comp.programmingExercise.set({ id: 7, buildConfig: {} } as unknown as ProgrammingExercise);
-        comp.phases.set(phases);
-        comp.dockerImage.set('some-image');
+        comp.containers.set([container('tests')]);
 
         expect(comp.isBuildPlanConfigurationWithinSizeLimit()).toBe(true);
         expect(comp.canSubmit()).toBe(true);
@@ -709,13 +662,33 @@ describe('LocalCIBuildPlanEditorComponent', () => {
         ['a whitespace-only phase script', '   '],
     ])('should submit with %s, because the server accepts it and the phase just does nothing', (_description, blankScript) => {
         comp.programmingExercise.set({ id: 7, buildConfig: {} } as unknown as ProgrammingExercise);
-        comp.phases.set([{ ...phases[0], script: blankScript }]);
-        comp.dockerImage.set('some-image');
+        comp.containers.set([{ ...container('tests'), phases: [{ ...phases[0], script: blankScript }] }]);
         const updateStub = vi.spyOn(buildPlanConfigurationService, 'updateBuildPlanConfiguration').mockReturnValue(of(new HttpResponse<object>({ body: {} })));
 
         comp.submit();
 
         expect(comp.canSubmit()).toBe(true);
         expect(updateStub).toHaveBeenCalledOnce();
+    });
+
+    it('should allow the same phase name in different containers', () => {
+        // containers execute independently, so a phase name only has to be unique within its container
+        comp.containers.set([container('student_tests'), container('instructor_tests')]);
+
+        expect(comp.canSubmit()).toBe(true);
+    });
+
+    it('should add and remove containers', () => {
+        comp.containers.set([container('student_tests')]);
+
+        comp.addContainer();
+        expect(comp.containers()).toHaveLength(2);
+        // a new container reuses the image of the first one, as exercises usually build every container from one image
+        expect(comp.containers()[1].dockerImage).toBe('some-image');
+        // it checks out the repositories configured on the exercise until they are scoped explicitly
+        expect(comp.containers()[1].repositories).toBeUndefined();
+
+        comp.removeContainer(0);
+        expect(comp.containers()).toEqual([{ name: '', dockerImage: 'some-image', phases: [] }]);
     });
 });
