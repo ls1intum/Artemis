@@ -25,6 +25,7 @@ import de.tum.cit.aet.artemis.exercise.domain.ExerciseVersion;
 import de.tum.cit.aet.artemis.exercise.domain.IncludedInOverallScore;
 import de.tum.cit.aet.artemis.exercise.dto.versioning.ExerciseSnapshotDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseVersionTestRepository;
+import de.tum.cit.aet.artemis.exercise.service.ExerciseVersionCommitHashResolver;
 import de.tum.cit.aet.artemis.fileupload.repository.FileUploadExerciseRepository;
 import de.tum.cit.aet.artemis.localvc.service.GitService;
 import de.tum.cit.aet.artemis.modeling.test_repository.ModelingExerciseTestRepository;
@@ -163,7 +164,7 @@ public class ExerciseVersionUtilService {
         assertThat(version.getExerciseSnapshot()).isNotNull();
 
         // Verify snapshot contains exercise specific data
-        ExerciseSnapshotDTO expectedSnapshot = ExerciseSnapshotDTO.of(savedExercise, gitService);
+        ExerciseSnapshotDTO expectedSnapshot = ExerciseSnapshotDTO.of(savedExercise, ExerciseVersionCommitHashResolver.resolveForExercise(savedExercise, gitService));
         ExerciseSnapshotDTO actualSnapshot = version.getExerciseSnapshot();
         assertThat(actualSnapshot).usingRecursiveComparison().withEqualsForType(zonedDateTimeBiPredicate, ZonedDateTime.class).isEqualTo(expectedSnapshot);
 

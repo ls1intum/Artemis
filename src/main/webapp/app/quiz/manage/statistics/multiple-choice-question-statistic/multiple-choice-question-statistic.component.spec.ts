@@ -201,4 +201,29 @@ describe('QuizExercise Multiple Choice Question Statistic Component', () => {
             ]);
         });
     });
+
+    describe('tooltip labels', () => {
+        function labelFor(item: { dataIndex: number; parsed: { y: number } }): string {
+            return (comp.chartOptions().plugins as any).tooltip.callbacks.label(item);
+        }
+
+        it('uses the participant-share tooltip for answer-option bars, including the last one while the solution is hidden', () => {
+            comp.showSolution = false;
+            // four answer-option counters, no appended correct-solutions bar in the default view
+            comp.data = [2, 1, 1, 1];
+
+            expect(labelFor({ dataIndex: 0, parsed: { y: 2 } })).toContain('tooltip.participantShare');
+            expect(labelFor({ dataIndex: 3, parsed: { y: 1 } })).toContain('tooltip.participantShare');
+            expect(labelFor({ dataIndex: 3, parsed: { y: 1 } })).not.toContain('tooltip.correctOverall');
+        });
+
+        it('uses the correct-overall tooltip only for the appended summary bar in the solution view', () => {
+            comp.showSolution = true;
+            // four answer options + the appended "correct solutions" summary bar
+            comp.data = [2, 1, 1, 1, 3];
+
+            expect(labelFor({ dataIndex: 4, parsed: { y: 3 } })).toContain('tooltip.correctOverall');
+            expect(labelFor({ dataIndex: 0, parsed: { y: 2 } })).toContain('tooltip.participantShare');
+        });
+    });
 });
