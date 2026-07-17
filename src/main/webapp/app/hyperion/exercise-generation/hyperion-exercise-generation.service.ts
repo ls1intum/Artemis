@@ -13,7 +13,7 @@ import {
 
 /**
  * Drives the agentic whole-exercise generation/adaptation run for the editor: starting a run in an explicit mode, fetching the current run status for reconnect, subscribing to the
- * live progress + file-snapshot stream, requesting cancellation, and reverting the last generated change. One endpoint and one engine back both {@code GENERATE} and {@code ADAPT}.
+ * live progress + file-change stream, requesting cancellation, and reverting the last generated change. One endpoint and one engine back both {@code GENERATE} and {@code ADAPT}.
  */
 @Injectable({ providedIn: 'root' })
 export class HyperionExerciseGenerationService {
@@ -30,7 +30,7 @@ export class HyperionExerciseGenerationService {
     }
 
     /**
-     * Returns the current or most-recent run for the exercise so a (re)connecting client can replay the transcript, rehydrate the file preview, and decide whether to keep listening.
+     * Returns the current or most-recent run for the exercise so a (re)connecting client can replay the transcript, restore the changed-file list, and decide whether to keep listening.
      * A 204 (no retained run for this user) surfaces as a response with a `null`/absent body.
      * @param exerciseId the exercise id
      */
@@ -48,7 +48,7 @@ export class HyperionExerciseGenerationService {
     }
 
     /**
-     * Reverts the latest accepted generation or adaptation, restoring the exercise state captured before that run.
+     * Reverts the latest saved generation or adaptation, restoring the exercise state captured before that run.
      * @param exerciseId the exercise id
      */
     revertExerciseGeneration(exerciseId: number): Observable<ExerciseGenerationRevertResult> {
@@ -56,7 +56,7 @@ export class HyperionExerciseGenerationService {
     }
 
     /**
-     * Subscribes to the live stream (progress events + whole-file snapshots) for a job, delivered on the owner's private topic.
+     * Subscribes to the live stream (progress events and file-change metadata) for a job, delivered on the owner's private topic.
      * @param jobId the job id whose stream to subscribe to
      */
     subscribeToStream(jobId: string): Observable<HyperionGenerationMessage> {

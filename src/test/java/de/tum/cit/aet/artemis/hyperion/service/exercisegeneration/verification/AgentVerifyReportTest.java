@@ -27,11 +27,12 @@ class AgentVerifyReportTest {
     }
 
     @Test
-    void labelsPassingDifferentialAsMechanicalPrecheckRatherThanAcceptance() {
+    void describesMechanicalSaveEligibilityWithoutClaimingQualityAcceptance() {
         AgentVerifyReport report = new AgentVerifyReport(2, true, List.of(), List.of(), 2, true, true, List.of(), List.of(), List.of("a", "b"), List.of(), List.of(), true,
                 List.of());
 
-        assertThat(report.toObservation()).contains("MECHANICAL PRECHECK: PASS").contains("final post-loop integrity and semantic review decides acceptance")
-                .doesNotContain("would be ACCEPTED");
+        assertThat(report.toObservation()).contains("Template: all required gradable tests fail; build/configuration gates may pass.").contains(
+                "MECHANICAL PRECHECK: PASS — authoritative post-loop verification determines save eligibility; quality review may request repairs or flag instructor review.")
+                .doesNotContain("acceptance", "correctly fails all 2", "would be ACCEPTED");
     }
 }

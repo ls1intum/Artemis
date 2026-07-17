@@ -92,12 +92,36 @@ class ExerciseIntegrityGateTest {
     }
 
     @Test
+    void harness_rejectsAnAddedBuildManifest() {
+        var reasons = ExerciseIntegrityGate.harnessTamperingReasons("solution", map("src/Sorter.java", "class Sorter {}"),
+                map("src/Sorter.java", "class Sorter {}", "pom.xml", "<project/>"), false);
+
+        assertThat(reasons).singleElement().asString().contains("added", "solution/pom.xml");
+    }
+
+    @Test
+    void harness_rejectsSemanticYamlIndentationChanges() {
+        String seed = "steps:\n  test:\n    command: ./gradlew test\n";
+        String tampered = "steps:\n  test:\n  command: ./gradlew test\n";
+
+        assertThat(ExerciseIntegrityGate.harnessTamperingReasons("tests", map("build.yml", seed), map("build.yml", tampered), false)).hasSize(1);
+    }
+
+    @Test
     void harness_rejectsChangesToNonLayoutPlaceholderLines() {
         // The real Dart-class case: the agent/scaffold substituted a NON-layout creation-time placeholder (${packageName} -> test_package) that the sandbox does not substitute.
         // Even this is rejected now: harness files are graded verbatim, so only CI checkout-placeholder substitution is normalized.
         String seedPubspec = "name: ${packageName}\nenvironment:\n  sdk: '>=3.0.0 <4.0.0'\n";
         String producedPubspec = "name: test_package\nenvironment:\n  sdk: '>=3.0.0 <4.0.0'\n";
         assertThat(ExerciseIntegrityGate.harnessTamperingReasons(map("pubspec.yaml", seedPubspec), map("pubspec.yaml", producedPubspec), false)).hasSize(1);
+    }
+
+    @Test
+    void harness_rejectsWhitespaceChangesInsideQuotedArguments() {
+        String seed = "run: printf 'a  b\\n'\n";
+        String tampered = "run: printf 'a b\\n'\n";
+
+        assertThat(ExerciseIntegrityGate.harnessTamperingReasons(map("build.yml", seed), map("build.yml", tampered), false)).hasSize(1);
     }
 
     @Test
@@ -109,20 +133,8 @@ class ExerciseIntegrityGateTest {
     }
 
     @Test
-    void isBuildLayoutLine_flagsSourcePathDirectivesButNotPackageNames() {
-        assertThat(ExerciseIntegrityGate.isBuildLayoutLine("  hs-source-dirs: ${solutionWorkingDirectory}/src")).isTrue();
-        assertThat(ExerciseIntegrityGate.isBuildLayoutLine("  hs-source-dirs: assignment/solution/src")).isTrue();
-        assertThat(ExerciseIntegrityGate.isBuildLayoutLine("    <ProjectReference Include=\"../solution/assignment.csproj\"/>")).isTrue();
-        assertThat(ExerciseIntegrityGate.isBuildLayoutLine("      \"path\": \"${studentParentWorkingDirectoryName}\"")).isTrue();
-        assertThat(ExerciseIntegrityGate.isBuildLayoutLine("        \"assignment\"")).isFalse(); // a bare workspaces entry without a directive keyword is not matched
-        assertThat(ExerciseIntegrityGate.isBuildLayoutLine("name: ${packageName}")).isFalse();
-        assertThat(ExerciseIntegrityGate.isBuildLayoutLine("name: test_package")).isFalse();
-        assertThat(ExerciseIntegrityGate.isBuildLayoutLine("version: 0.1")).isFalse();
-    }
-
-    @Test
-    void harness_failsOpenWithoutSeedSnapshot() {
-        assertThat(ExerciseIntegrityGate.harnessTamperingReasons(Map.of(), map("test.cabal", "anything"), false)).isEmpty();
+    void harness_rejectsAddedManifestWithoutSeedSnapshot() {
+        assertThat(ExerciseIntegrityGate.harnessTamperingReasons(Map.of(), map("test.cabal", "anything"), false)).hasSize(1);
     }
 
     @Test

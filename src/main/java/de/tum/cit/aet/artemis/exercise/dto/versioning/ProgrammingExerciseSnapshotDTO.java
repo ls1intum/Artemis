@@ -4,6 +4,7 @@ import java.io.Serializable;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -22,6 +23,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTask;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.ProjectType;
+import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.StaticCodeAnalysisCategory;
 import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.SubmissionPenaltyPolicy;
 import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.SubmissionPolicy;
@@ -47,11 +49,22 @@ public record ProgrammingExerciseSnapshotDTO(String testRepositoryUri, List<Auxi
      * @return {@link ProgrammingExerciseSnapshotDTO}
      */
     public static ProgrammingExerciseSnapshotDTO of(ProgrammingExercise exercise, GitService gitService) {
-        var templateParticipation = exercise.getTemplateParticipation() != null ? new ParticipationSnapshotDTO(exercise.getTemplateParticipation().getId(),
-                exercise.getTemplateRepositoryUri(), exercise.getTemplateBuildPlanId(), getCommitHash(exercise.getVcsTemplateRepositoryUri(), gitService)) : null;
-        var solutionParticipation = exercise.getSolutionParticipation() != null ? new ParticipationSnapshotDTO(exercise.getSolutionParticipation().getId(),
-                exercise.getSolutionRepositoryUri(), exercise.getSolutionBuildPlanId(), getCommitHash(exercise.getVcsSolutionRepositoryUri(), gitService)) : null;
-        var testCommitHash = getCommitHash(exercise.getVcsTestRepositoryUri(), gitService);
+        return of(exercise, gitService, Map.of());
+    }
+
+    /**
+     * Creates a snapshot while using caller-captured commit IDs for repositories changed by the current operation. Other repository IDs are resolved normally.
+     */
+    public static ProgrammingExerciseSnapshotDTO of(ProgrammingExercise exercise, GitService gitService, Map<RepositoryType, String> repositoryCommitIds) {
+        var templateParticipation = exercise.getTemplateParticipation() != null
+                ? new ParticipationSnapshotDTO(exercise.getTemplateParticipation().getId(), exercise.getTemplateRepositoryUri(), exercise.getTemplateBuildPlanId(),
+                        getCommitHash(RepositoryType.TEMPLATE, exercise.getVcsTemplateRepositoryUri(), gitService, repositoryCommitIds))
+                : null;
+        var solutionParticipation = exercise.getSolutionParticipation() != null
+                ? new ParticipationSnapshotDTO(exercise.getSolutionParticipation().getId(), exercise.getSolutionRepositoryUri(), exercise.getSolutionBuildPlanId(),
+                        getCommitHash(RepositoryType.SOLUTION, exercise.getVcsSolutionRepositoryUri(), gitService, repositoryCommitIds))
+                : null;
+        var testCommitHash = getCommitHash(RepositoryType.TESTS, exercise.getVcsTestRepositoryUri(), gitService, repositoryCommitIds);
 
         var auxiliaryRepositories = CollectionUtil.nullIfEmpty(exercise.getAuxiliaryRepositories());
 
@@ -145,6 +158,10 @@ public record ProgrammingExerciseSnapshotDTO(String testRepositoryUri, List<Auxi
             log.warn("Could not retrieve the last commit hash for repoUri {} in ExerciseSnapshot", uri);
             return null;
         }
+    }
+
+    private static String getCommitHash(RepositoryType repositoryType, LocalVCRepositoryUri uri, GitService gitService, Map<RepositoryType, String> repositoryCommitIds) {
+        return repositoryCommitIds.containsKey(repositoryType) ? repositoryCommitIds.get(repositoryType) : getCommitHash(uri, gitService);
     }
 
     private static ZonedDateTime toUtc(ZonedDateTime zdt) {

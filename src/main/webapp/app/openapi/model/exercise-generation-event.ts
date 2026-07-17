@@ -16,6 +16,7 @@ export interface ExerciseGenerationEvent {
     completionStatus?: ExerciseGenerationEventCompletionStatusEnum;
     verdict?: ExerciseGenerationVerdict;
     liveExerciseChanged?: boolean;
+    savedRepositoryCommits?: { [key: string]: string };
     timestamp: string;
 }
 

@@ -17,6 +17,7 @@ import java.io.ByteArrayOutputStream;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
@@ -35,11 +36,15 @@ import com.github.dockerjava.api.command.ExecCreateCmdResponse;
 import com.github.dockerjava.api.command.ExecStartCmd;
 import com.github.dockerjava.api.command.InspectExecCmd;
 import com.github.dockerjava.api.command.InspectExecResponse;
+import com.github.dockerjava.api.command.InspectImageCmd;
+import com.github.dockerjava.api.command.InspectImageResponse;
 import com.github.dockerjava.api.command.ListContainersCmd;
 import com.github.dockerjava.api.command.RemoveContainerCmd;
+import com.github.dockerjava.api.command.RestartContainerCmd;
 import com.github.dockerjava.api.command.StartContainerCmd;
 import com.github.dockerjava.api.model.Capability;
 import com.github.dockerjava.api.model.Container;
+import com.github.dockerjava.api.model.ContainerConfig;
 import com.github.dockerjava.api.model.Frame;
 import com.github.dockerjava.api.model.HostConfig;
 import com.github.dockerjava.api.model.StreamType;
@@ -65,6 +70,10 @@ class InteractiveSandboxServiceHostConfigTest {
 
     private StartContainerCmd startContainerCmd;
 
+    private InspectImageCmd inspectImageCmd;
+
+    private InspectImageResponse inspectImageResponse;
+
     private final ArgumentCaptor<HostConfig> hostConfigCaptor = ArgumentCaptor.forClass(HostConfig.class);
 
     @BeforeEach
@@ -76,11 +85,15 @@ class InteractiveSandboxServiceHostConfigTest {
         CreateContainerResponse response = new CreateContainerResponse();
         response.setId("container-1");
         startContainerCmd = mock(StartContainerCmd.class);
+        inspectImageCmd = mock(InspectImageCmd.class);
+        inspectImageResponse = new InspectImageResponse().withConfig(new ContainerConfig());
 
         doReturn(true).when(buildAgentConfiguration).isDockerAvailable();
         doReturn(dockerClient).when(buildAgentConfiguration).getDockerClient();
-        doReturn(HostConfig.newHostConfig()).when(buildAgentConfiguration).hostConfig();
+        doReturn(limitedHostConfig()).when(buildAgentConfiguration).hostConfig();
         when(buildAgentDockerService.ensureDockerImageAvailable(IMAGE)).thenReturn(IMAGE_ID);
+        when(dockerClient.inspectImageCmd(IMAGE_ID)).thenReturn(inspectImageCmd);
+        when(inspectImageCmd.exec()).thenReturn(inspectImageResponse);
         when(dockerClient.createContainerCmd(anyString())).thenReturn(createContainerCmd);
         when(createContainerCmd.withName(anyString())).thenReturn(createContainerCmd);
         when(createContainerCmd.withHostConfig(any())).thenReturn(createContainerCmd);
@@ -120,6 +133,31 @@ class InteractiveSandboxServiceHostConfigTest {
     }
 
     @Test
+    void createSessionBoundsImageDeclaredVolumesWithTmpfs() {
+        inspectImageResponse.withConfig(new ContainerConfig().withVolumes(Map.of("/var/cache/compiler", Map.of())));
+        InteractiveSandboxService service = new InteractiveSandboxService(buildAgentConfiguration, buildAgentDockerService);
+
+        service.createSession(new SandboxSessionSpec(IMAGE, null));
+
+        verify(createContainerCmd).withHostConfig(hostConfigCaptor.capture());
+        assertThat(hostConfigCaptor.getValue().getTmpFs()).containsEntry("/var/cache/compiler", "rw,exec,nosuid,nodev,size=256m");
+    }
+
+    @Test
+    void createSessionRejectsMissingResourceLimits() {
+        doReturn(HostConfig.newHostConfig()).when(buildAgentConfiguration).hostConfig();
+        InteractiveSandboxService service = new InteractiveSandboxService(buildAgentConfiguration, buildAgentDockerService);
+
+        assertThatExceptionOfType(LocalCIException.class).isThrownBy(() -> service.createSession(new SandboxSessionSpec(IMAGE, null)))
+                .withMessageContaining("require positive CPU, memory, and PID limits");
+    }
+
+    private static HostConfig limitedHostConfig() {
+        return HostConfig.newHostConfig().withCpuQuota(200_000L).withCpuPeriod(100_000L).withMemory(2L * 1024 * 1024 * 1024).withMemorySwap(2L * 1024 * 1024 * 1024)
+                .withPidsLimit(1000L);
+    }
+
+    @Test
     void createSession_rejectsNetworkModesOtherThanNone() {
         InteractiveSandboxService service = new InteractiveSandboxService(buildAgentConfiguration, buildAgentDockerService);
 
@@ -138,6 +176,7 @@ class InteractiveSandboxServiceHostConfigTest {
         assertThatExceptionOfType(RuntimeException.class).isThrownBy(() -> service.createSession(new SandboxSessionSpec(IMAGE, null))).withMessage("start failed");
 
         verify(removeContainerCmd).withForce(true);
+        verify(removeContainerCmd).withRemoveVolumes(true);
         verify(removeContainerCmd).exec();
     }
 
@@ -167,6 +206,7 @@ class InteractiveSandboxServiceHostConfigTest {
 
         assertThat(removed).isOne();
         verify(dockerClient).removeContainerCmd("own-sandbox-id");
+        verify(removeContainerCmd).withRemoveVolumes(true);
     }
 
     @Test
@@ -202,6 +242,21 @@ class InteractiveSandboxServiceHostConfigTest {
         InOrder imageThenContainer = inOrder(buildAgentDockerService, dockerClient);
         imageThenContainer.verify(buildAgentDockerService).ensureDockerImageAvailable(IMAGE);
         imageThenContainer.verify(dockerClient).createContainerCmd(IMAGE_ID);
+    }
+
+    @Test
+    void resetSessionRestartsTheExistingContainer() {
+        RestartContainerCmd restartContainerCmd = mock(RestartContainerCmd.class);
+        when(dockerClient.restartContainerCmd("container-1")).thenReturn(restartContainerCmd);
+        when(restartContainerCmd.withTimeout(30)).thenReturn(restartContainerCmd);
+        InteractiveSandboxService service = new InteractiveSandboxService(buildAgentConfiguration, buildAgentDockerService);
+        service.markActive("container-1");
+
+        service.resetSession("container-1");
+
+        verify(restartContainerCmd).withTimeout(30);
+        verify(restartContainerCmd).exec();
+        assertThat(service.lastActivity("container-1")).isPresent();
     }
 
     @Test

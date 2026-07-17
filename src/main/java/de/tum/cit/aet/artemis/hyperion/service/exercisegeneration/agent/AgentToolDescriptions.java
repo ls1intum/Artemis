@@ -1,7 +1,7 @@
 package de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent;
 
 /**
- * Shared LLM-facing tool descriptions used by {@link SandboxAgentTools} and {@link FileSnapshotEmittingAgentTools} so their tool contracts remain identical.
+ * Shared LLM-facing tool descriptions used by {@link SandboxAgentTools} and {@link FileChangeEmittingAgentTools} so their tool contracts remain identical.
  */
 final class AgentToolDescriptions {
 
@@ -34,7 +34,7 @@ final class AgentToolDescriptions {
 
     static final String BASH_COMMAND = "the shell command to run, as ONE string (not a JSON array), e.g. 'sh verify.sh solution', 'ls -R', or 'grep -n sort tests/test/sorting/SortTest.java'";
 
-    static final String VERIFY = "Run the mechanical precheck: builds the solution and template, parses reports with the SAME production parser, and returns exact test names, pass/fail results, bounded failure evidence, binding problems, and mechanical gate results. Use the failure evidence to spot assertion, exception, or shared setup failures. A passing precheck does not prove semantic relevance; final post-loop integrity and semantic review decides acceptance. Call it after changes and iterate until the mechanical precheck passes before submitting. Each call re-runs both builds (no cache).";
+    static final String VERIFY = "Run the mechanical precheck: builds the solution and template, parses reports with the SAME production parser, and returns exact test names, pass/fail results, bounded failure evidence, binding problems, and mechanical gate results. Use the failure evidence to spot assertion, exception, or shared setup failures. A passing precheck does not prove semantic relevance; authoritative post-loop verification determines save eligibility, while quality review may request repairs or flag instructor review. Call it after changes and iterate until the mechanical precheck passes before submitting. Each call re-runs both builds (no cache).";
 
     static final String SUBMIT = "Submit the finished exercise for final post-loop integrity and semantic review and end the session. Only call this after the 'verify' mechanical precheck passes. Stop immediately after calling it.";
 

@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
 
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
@@ -217,6 +218,19 @@ class DifferentialVerificationServiceTest {
     }
 
     @Test
+    void authoritativeVerificationRestoresTheCapturedCandidateBeforeEachBuild() {
+        List<String> names = List.of("sortsUnsortedArray", "sortsArrayWithDuplicates");
+        ScriptedSandbox sandbox = new ScriptedSandbox(resultWithFails(0, names, List.of()), resultWithFails(1, names, names), PROBLEM_STATEMENT_WITH_TASK);
+        AtomicInteger restorations = new AtomicInteger();
+
+        VerificationResult result = newVerifier().verify(sandbox, "s", new ProgrammingExercise(),
+                new VerificationRequest(Map.of(), Map.of(), Map.of(), Map.of(), Set.of(), Set.of(), Set.of()), restorations::incrementAndGet);
+
+        assertThat(result.mechanicallyVerified()).isTrue();
+        assertThat(restorations).hasValue(2);
+    }
+
+    @Test
     void buildEnvironmentPreflightDoesNotExposeBuildOutput() {
         BuildReportSpec failedBuild = result(0, 0, 0, 1);
         InteractiveSandbox sandbox = new ScriptedSandbox(failedBuild, failedBuild, PROBLEM_STATEMENT_WITH_TASK,
@@ -379,7 +393,7 @@ class DifferentialVerificationServiceTest {
         List<String> names = List.of("sortsUnsortedArray", "sortsArrayWithDuplicates");
         PathDispatchingSandbox sandbox = new PathDispatchingSandbox(resultWithFails(0, names, List.of()), resultWithFails(1, names, names), PROBLEM_STATEMENT_WITH_TASK);
         VerificationResult result = verifyGenerate(newVerifier(), sandbox, new ProgrammingExercise());
-        assertThat(result.accepted()).isTrue();
+        assertThat(result.mechanicallyVerified()).isTrue();
         assertThat(sandbox.execCommands).filteredOn(c -> c.equals("sh -c find /opt/hyperion -mindepth 1 -delete")).hasSize(2);
         assertThat(sandbox.execCommands).anyMatch(c -> c.contains(SandboxBuildCommandService.PRISTINE_VERIFY_PATH + " solution"));
         assertThat(sandbox.execCommands).noneMatch(c -> c.contains("/workspace/verify.sh"));
@@ -393,7 +407,7 @@ class DifferentialVerificationServiceTest {
         VerificationResult result = newVerifier().verify(sandbox, "s", new ProgrammingExercise(),
                 new VerificationRequest(Map.of(), Map.of(), Map.of(), Map.of(), Set.of(), Set.of(), Set.of(), PROBLEM_STATEMENT_WITH_TASK));
 
-        assertThat(result.accepted()).isTrue();
+        assertThat(result.mechanicallyVerified()).isTrue();
     }
 
     @Test
@@ -401,7 +415,7 @@ class DifferentialVerificationServiceTest {
         // No JUnit report in the reports dir (compile failure produced none) -> tests=0 both runs -> rejection.
         PathDispatchingSandbox sandbox = new PathDispatchingSandbox(result(0, 0, 0, 0), result(0, 0, 0, 0), PROBLEM_STATEMENT_WITH_TASK);
         VerificationResult result = verifyGenerate(newVerifier(), sandbox, new ProgrammingExercise());
-        assertThat(result.accepted()).isFalse();
+        assertThat(result.mechanicallyVerified()).isFalse();
         assertThat(result.testCount()).isZero();
         assertThat(result.reasons()).anyMatch(r -> r.contains("No tests were detected"));
         assertThat(sandbox.execCommands).anyMatch(c -> c.contains(SandboxBuildCommandService.PRISTINE_VERIFY_PATH + " solution"));
@@ -410,7 +424,7 @@ class DifferentialVerificationServiceTest {
     @Test
     void shouldAcceptWhenSolutionPassesAndTemplateFailsSameTests() {
         VerificationResult result = verify(result(5, 0, 0, 0), result(5, 3, 0, 1));
-        assertThat(result.accepted()).isTrue();
+        assertThat(result.mechanicallyVerified()).isTrue();
         assertThat(result.solutionPassed()).isTrue();
         assertThat(result.templateFailed()).isTrue();
         assertThat(result.testCount()).isEqualTo(5);
@@ -422,7 +436,7 @@ class DifferentialVerificationServiceTest {
 
         VerificationResult result = verify(resultWithFails(0, names, List.of()), resultWithFails(1, names, names));
 
-        assertThat(result.accepted()).isFalse();
+        assertThat(result.mechanicallyVerified()).isFalse();
         assertThat(result.reasons()).anyMatch(reason -> reason.contains("Duplicate test names"));
     }
 
@@ -431,7 +445,7 @@ class DifferentialVerificationServiceTest {
         // Otherwise-valid exercise must still be rejected when student prose explains how the exercise is rigged.
         String leaky = PROBLEM_STATEMENT_WITH_TASK + "\nEach method should raise NotImplementedError in the template file to make the tests fail.";
         VerificationResult result = verify(result(5, 0, 0, 0), result(5, 3, 0, 1), leaky);
-        assertThat(result.accepted()).isFalse();
+        assertThat(result.mechanicallyVerified()).isFalse();
         assertThat(result.reasons()).anyMatch(reason -> reason.contains("leaks grader internals"));
     }
 
@@ -439,7 +453,7 @@ class DifferentialVerificationServiceTest {
     void shouldRejectWhenStudentProseLeaksRawTestNameMechanics() {
         String leaky = PROBLEM_STATEMENT_WITH_TASK + "\nYour method name must match the exact test name reported by the test runner.";
         VerificationResult result = verify(result(5, 0, 0, 0), result(5, 3, 0, 1), leaky);
-        assertThat(result.accepted()).isFalse();
+        assertThat(result.mechanicallyVerified()).isFalse();
         assertThat(result.reasons()).anyMatch(reason -> reason.contains("leaks grader internals"));
     }
 
@@ -448,7 +462,7 @@ class DifferentialVerificationServiceTest {
         // A bare "[tasks]" marker (not a real binding) is flagged while the real binding is left alone.
         String leaky = "## [tasks]\n" + PROBLEM_STATEMENT_WITH_TASK;
         VerificationResult result = verify(result(5, 0, 0, 0), result(5, 3, 0, 1), leaky);
-        assertThat(result.accepted()).isFalse();
+        assertThat(result.mechanicallyVerified()).isFalse();
         assertThat(result.reasons()).anyMatch(reason -> reason.contains("bare [task]"));
     }
 
@@ -457,7 +471,7 @@ class DifferentialVerificationServiceTest {
         // High-precision: ordinary wording that mentions testing must not trip the gate.
         String clean = PROBLEM_STATEMENT_WITH_TASK + "\nYour implementation is tested against several edge cases, including empty and single-element inputs.";
         VerificationResult result = verify(result(5, 0, 0, 0), result(5, 3, 0, 1), clean);
-        assertThat(result.accepted()).isTrue();
+        assertThat(result.mechanicallyVerified()).isTrue();
     }
 
     @Test
@@ -469,7 +483,7 @@ class DifferentialVerificationServiceTest {
         VerificationResult result = verify(result(5, 0, 0, 0), result(5, 3, 0, 1), clean);
         assertThat(result.reasons()).as("legitimate prose referencing the template file / failing tests must not be flagged as a leak")
                 .noneMatch(r -> r.contains("leaks grader internals"));
-        assertThat(result.accepted()).isTrue();
+        assertThat(result.mechanicallyVerified()).isTrue();
     }
 
     @Test
@@ -488,7 +502,7 @@ class DifferentialVerificationServiceTest {
         List<String> names = List.of("testBubbleSort()", "testMergeSort()");
         VerificationResult result = verify(resultWithFails(0, names, List.of()), resultWithFails(1, names, names), problemStatement);
         assertThat(result.reasons()).as("paren-bearing [task] bindings must resolve, not be flagged as unresolved").noneMatch(reason -> reason.contains("match no actual test"));
-        assertThat(result.accepted()).isTrue();
+        assertThat(result.mechanicallyVerified()).isTrue();
         assertThat(result.testCount()).isEqualTo(2);
     }
 
@@ -499,7 +513,7 @@ class DifferentialVerificationServiceTest {
         List<String> names = List.of("testBubbleSort()", "testMergeSort()");
         VerificationResult result = verify(resultWithFails(0, names, List.of()), resultWithFails(1, names, names), problemStatement);
         assertThat(result.reasons()).anyMatch(reason -> reason.contains("match no actual test"));
-        assertThat(result.accepted()).isFalse();
+        assertThat(result.mechanicallyVerified()).isFalse();
     }
 
     /** Runs verify with integrity-gate inputs in GENERATE mode, so the harness-immutability and solution-leak gates run alongside the differential. */
@@ -524,7 +538,7 @@ class DifferentialVerificationServiceTest {
         var seedTests = Map.of("test.cabal", SEED_CABAL);
         var producedTests = Map.of("test.cabal", SEED_CABAL.replace("${solutionWorkingDirectory}/src", "assignment/solution/src"));
         VerificationResult result = verifyWithFiles(result(5, 0, 0, 0), result(5, 3, 0, 1), seedTests, producedTests, Map.of(), Map.of());
-        assertThat(result.accepted()).isFalse();
+        assertThat(result.mechanicallyVerified()).isFalse();
         assertThat(result.reasons()).anyMatch(r -> r.contains("tests/test.cabal") && r.contains("harness is graded"));
     }
 
@@ -554,7 +568,7 @@ class DifferentialVerificationServiceTest {
         VerificationResult result = newVerifier().verify(new ScriptedSandbox(result(2, 0, 0, 0), result(2, 2, 0, 1), PROBLEM_STATEMENT_WITH_TASK), "s", exercise,
                 new VerificationRequest(producedTests, producedTests, Map.of(), Map.of(), Set.of(), Set.of(), Set.of()));
 
-        assertThat(result.accepted()).isFalse();
+        assertThat(result.mechanicallyVerified()).isFalse();
         assertThat(result.reasons()).anyMatch(r -> r.contains("artemis-java-test-sandbox"));
         assertThat(result.reasons()).anyMatch(r -> r.contains("@StrictTimeout"));
     }
@@ -590,7 +604,7 @@ class DifferentialVerificationServiceTest {
 
         VerificationResult result = newVerifier().verify(new ScriptedSandbox(result(2, 0, 0, 0), result(2, 2, 0, 1), PROBLEM_STATEMENT_WITH_TASK), "s", exercise, request);
 
-        assertThat(result.accepted()).isTrue();
+        assertThat(result.mechanicallyVerified()).isTrue();
         assertThat(result.reasons()).noneMatch(reason -> reason.contains("LegacyTest.java"));
     }
 
@@ -621,7 +635,7 @@ class DifferentialVerificationServiceTest {
         VerificationResult result = newVerifier().verify(new ScriptedSandbox(result(2, 0, 0, 0), result(2, 2, 0, 1), PROBLEM_STATEMENT_WITH_TASK), "s", exercise,
                 new VerificationRequest(Map.of("pom.xml", pom), tests, template, solution, Set.of(), Set.of(), Set.of()));
 
-        assertThat(result.accepted()).isFalse();
+        assertThat(result.mechanicallyVerified()).isFalse();
         assertThat(result.reasons()).anyMatch(reason -> reason.contains("canonical source roots") && reason.contains("FakeAres.java"));
     }
 
@@ -630,14 +644,14 @@ class DifferentialVerificationServiceTest {
         var producedTemplate = Map.of("src/Exercise.hs", "factorial _ = error \"todo: implement the factorial function here\"\n", "doc/reference_solution.hs", SOLUTION_BODY);
         var producedSolution = Map.of("src/Exercise.hs", SOLUTION_BODY);
         VerificationResult result = verifyWithFiles(result(5, 0, 0, 0), result(5, 3, 0, 1), Map.of(), Map.of(), producedTemplate, producedSolution);
-        assertThat(result.accepted()).isFalse();
+        assertThat(result.mechanicallyVerified()).isFalse();
         assertThat(result.reasons()).anyMatch(r -> r.contains("template leaks the reference solution"));
     }
 
     @Test
     void integrityGates_failOpenWhenNoFilesProvided() {
         VerificationResult result = verifyWithFiles(result(5, 0, 0, 0), result(5, 3, 0, 1), Map.of(), Map.of(), Map.of(), Map.of());
-        assertThat(result.accepted()).isTrue();
+        assertThat(result.mechanicallyVerified()).isTrue();
     }
 
     @Test
@@ -648,7 +662,7 @@ class DifferentialVerificationServiceTest {
         exercise.setProgrammingLanguage(ProgrammingLanguage.JAVA);
         VerificationResult result = newVerifier().verify(new ScriptedSandbox(result(5, 0, 0, 0), result(5, 3, 0, 1), PROBLEM_STATEMENT_WITH_TASK), "s", exercise,
                 new VerificationRequest(Map.of(), Map.of(), Map.of(), Map.of(), Set.of(), Set.of(), Set.of()));
-        assertThat(result.accepted()).as("an empty Java harness snapshot means the capture failed; fail closed").isFalse();
+        assertThat(result.mechanicallyVerified()).as("an empty Java harness snapshot means the capture failed; fail closed").isFalse();
         assertThat(result.reasons()).anyMatch(r -> r.contains("harness") && r.contains("snapshot"));
     }
 
@@ -659,7 +673,7 @@ class DifferentialVerificationServiceTest {
         exercise.setProgrammingLanguage(ProgrammingLanguage.PYTHON);
         VerificationResult result = newVerifier().verify(new ScriptedSandbox(result(5, 0, 0, 0), result(5, 3, 0, 1), PROBLEM_STATEMENT_WITH_TASK), "s", exercise,
                 new VerificationRequest(Map.of(), Map.of(), Map.of(), Map.of(), Set.of(), Set.of(), Set.of()));
-        assertThat(result.accepted()).as("a non-Java empty harness snapshot stays fail-open").isTrue();
+        assertThat(result.mechanicallyVerified()).as("a non-Java empty harness snapshot stays fail-open").isTrue();
     }
 
     private static final String SELF_COMPARISON_CABAL = "test-suite test\n  other-modules: Interface\n  mixins:\n    solution (Exercise as Solution)\n";
@@ -668,8 +682,8 @@ class DifferentialVerificationServiceTest {
     void integrityGates_rejectSelfComparisonHarnessThroughVerify_evenWhenTheDifferentialPasses() {
         // The differential passes, yet the tests compare the submission to ITSELF (Test.hs imports the bare submission as the reference); the gate must still reject.
         var producedTests = Map.of("test.cabal", SELF_COMPARISON_CABAL, "test/Test.hs", "module Test where\nimport qualified Interface as Sub\nimport qualified Exercise as Sol\n");
-        VerificationResult result = verifyWithFiles(result(5, 0, 0, 0), result(5, 3, 0, 1), Map.of(), producedTests, Map.of(), Map.of());
-        assertThat(result.accepted()).isFalse();
+        VerificationResult result = verifyWithFiles(result(5, 0, 0, 0), result(5, 3, 0, 1), Map.of("test.cabal", SELF_COMPARISON_CABAL), producedTests, Map.of(), Map.of());
+        assertThat(result.mechanicallyVerified()).isFalse();
         assertThat(result.reasons()).anyMatch(r -> r.contains("compares the submission against ITSELF"));
     }
 
@@ -677,8 +691,8 @@ class DifferentialVerificationServiceTest {
     void integrityGates_acceptCorrectRenamedReferenceHarnessThroughVerify() {
         // The correct harness (Sol = renamed reference module, Sub = student code via Interface) must still be accepted.
         var producedTests = Map.of("test.cabal", SELF_COMPARISON_CABAL, "test/Test.hs", "module Test where\nimport qualified Interface as Sub\nimport qualified Solution as Sol\n");
-        VerificationResult result = verifyWithFiles(result(5, 0, 0, 0), result(5, 3, 0, 1), Map.of(), producedTests, Map.of(), Map.of());
-        assertThat(result.accepted()).isTrue();
+        VerificationResult result = verifyWithFiles(result(5, 0, 0, 0), result(5, 3, 0, 1), Map.of("test.cabal", SELF_COMPARISON_CABAL), producedTests, Map.of(), Map.of());
+        assertThat(result.mechanicallyVerified()).isTrue();
     }
 
     @Test
@@ -686,7 +700,7 @@ class DifferentialVerificationServiceTest {
         List<String> names = List.of("stack_initially_empty", "push_then_pop", "size_tracks_elements");
         VerificationResult result = verify(resultWithFails(0, names, List.of()), resultWithFails(1, names, names),
                 "# Stack\n[task][Empty](stack_initially_empty)\n[task][Push/Pop](push_then_pop)\n[task][Size](size_tracks_elements)\n");
-        assertThat(result.accepted()).isTrue();
+        assertThat(result.mechanicallyVerified()).isTrue();
         assertThat(result.testCount()).isEqualTo(3);
         assertThat(result.templateFailed()).isTrue();
     }
@@ -695,7 +709,7 @@ class DifferentialVerificationServiceTest {
     void shouldAcceptWhenTemplateFailsButBuildExitCodeIsZero() {
         // Report-converter languages (Go's go-junit-report, Dart's tojunit) exit 0 even on test failure; the oracle must trust the JUnit failure counts, not the exit code.
         VerificationResult result = verify(result(14, 0, 0, 0), result(14, 14, 0, 0));
-        assertThat(result.accepted()).isTrue();
+        assertThat(result.mechanicallyVerified()).isTrue();
         assertThat(result.templateFailed()).isTrue();
     }
 
@@ -703,7 +717,7 @@ class DifferentialVerificationServiceTest {
     void shouldRejectWhenTemplateDoesNotCompile() {
         // No JUnit report for the template -> tests=0 -> did not compile.
         VerificationResult result = verify(result(5, 0, 0, 0), result(0, 0, 0, 1));
-        assertThat(result.accepted()).isFalse();
+        assertThat(result.mechanicallyVerified()).isFalse();
         assertThat(result.templateFailed()).isFalse();
         assertThat(result.reasons()).anyMatch(r -> r.contains("does not compile"));
     }
@@ -711,14 +725,14 @@ class DifferentialVerificationServiceTest {
     @Test
     void shouldRejectWhenTemplatePasses() {
         VerificationResult result = verify(result(5, 0, 0, 0), result(5, 0, 0, 0));
-        assertThat(result.accepted()).isFalse();
+        assertThat(result.mechanicallyVerified()).isFalse();
         assertThat(result.reasons()).anyMatch(r -> r.contains("passes the tests"));
     }
 
     @Test
     void shouldRejectWhenSolutionFails() {
         VerificationResult result = verify(result(5, 2, 0, 1), result(5, 5, 0, 1));
-        assertThat(result.accepted()).isFalse();
+        assertThat(result.mechanicallyVerified()).isFalse();
         assertThat(result.solutionPassed()).isFalse();
         assertThat(result.reasons()).anyMatch(r -> r.contains("does not pass its own tests"));
     }
@@ -726,7 +740,7 @@ class DifferentialVerificationServiceTest {
     @Test
     void shouldRejectWhenSolutionHasNoTests() {
         VerificationResult result = verify(result(0, 0, 0, 0), result(0, 0, 0, 1));
-        assertThat(result.accepted()).isFalse();
+        assertThat(result.mechanicallyVerified()).isFalse();
         assertThat(result.testCount()).isZero();
         assertThat(result.reasons()).anyMatch(r -> r.contains("No tests were detected"));
     }
@@ -735,7 +749,7 @@ class DifferentialVerificationServiceTest {
     void shouldRejectWhenTemplateRunsFewerTestsThanSolution() {
         // The solution and template suites must run an identical number of tests.
         VerificationResult result = verify(result(5, 0, 0, 0), result(3, 3, 0, 1));
-        assertThat(result.accepted()).isFalse();
+        assertThat(result.mechanicallyVerified()).isFalse();
         assertThat(result.reasons()).anyMatch(r -> r.contains("different number of tests"));
     }
 
@@ -744,7 +758,7 @@ class DifferentialVerificationServiceTest {
         // A template failing only 1 of 6 tests is nearly complete; it must fail at least half.
         List<String> names = List.of("t0", "t1", "t2", "t3", "t4", "t5");
         VerificationResult result = verify(resultWithFails(0, names, List.of()), resultWithFails(1, names, List.of("t0")), "# X\n[task][One](t0)\n[task][Two](t1)\n");
-        assertThat(result.accepted()).isFalse();
+        assertThat(result.mechanicallyVerified()).isFalse();
         assertThat(result.templateFailed()).isFalse();
         assertThat(result.reasons()).anyMatch(r -> r.contains("nearly complete"));
     }
@@ -752,7 +766,7 @@ class DifferentialVerificationServiceTest {
     @Test
     void shouldRejectWhenProblemStatementHasNoTaskBindings() {
         VerificationResult result = verify(result(4, 0, 0, 0), result(4, 4, 0, 1), "# Sort\nImplement the sort method. The tests will check correctness.\n");
-        assertThat(result.accepted()).isFalse();
+        assertThat(result.mechanicallyVerified()).isFalse();
         assertThat(result.reasons()).anyMatch(r -> r.contains("task bindings"));
     }
 
@@ -761,7 +775,7 @@ class DifferentialVerificationServiceTest {
         List<String> names = List.of("sortsUnsortedArray()", "sortsArrayWithDuplicates()");
         String problemStatement = "# Sort\n[task][Sort an array](sortsUnsortedArray(),sortsArrayWithDuplicates())\n";
         VerificationResult result = verify(resultWithFails(0, names, List.of()), resultWithFails(1, names, names), problemStatement);
-        assertThat(result.accepted()).isTrue();
+        assertThat(result.mechanicallyVerified()).isTrue();
     }
 
     // A near-miss keyword ([tasks]/[Task]/[TASK]) binds nothing and leaks the raw test name, even though one well-formed [task] line satisfies the "has a binding" gate. The
@@ -772,7 +786,7 @@ class DifferentialVerificationServiceTest {
         List<String> names = List.of("sortsUnsortedArray", "sortsArrayWithDuplicates");
         String problemStatement = "# Sort\n[task][Sort an array](sortsUnsortedArray)\n[" + wrongKeyword + "][Sort with duplicates](sortsArrayWithDuplicates)\n";
         VerificationResult result = verify(resultWithFails(0, names, List.of()), resultWithFails(1, names, names), problemStatement);
-        assertThat(result.accepted()).as("a [%s] near-miss must be rejected even though a valid [task] line is present", wrongKeyword).isFalse();
+        assertThat(result.mechanicallyVerified()).as("a [%s] near-miss must be rejected even though a valid [task] line is present", wrongKeyword).isFalse();
         assertThat(result.reasons()).anyMatch(r -> r.contains("wrong keyword") && r.contains(wrongKeyword));
     }
 
@@ -784,7 +798,7 @@ class DifferentialVerificationServiceTest {
                 + "[task][Sort with duplicates](sortsArrayWithDuplicates)\n";
         VerificationResult result = verify(resultWithFails(0, names, List.of()), resultWithFails(1, names, names), problemStatement);
         assertThat(result.reasons()).noneMatch(r -> r.contains("wrong keyword"));
-        assertThat(result.accepted()).isTrue();
+        assertThat(result.mechanicallyVerified()).isTrue();
     }
 
     @Test
@@ -793,7 +807,7 @@ class DifferentialVerificationServiceTest {
         String problemStatement = "# Sort\n[task][Sort an unsorted array](Sort an unsorted array)\n[task][Sort with duplicates](Sort with duplicates)\n";
         List<String> names = List.of("sortsUnsortedArray", "sortsArrayWithDuplicates");
         VerificationResult result = verify(resultWithFails(0, names, List.of()), resultWithFails(1, names, names), problemStatement);
-        assertThat(result.accepted()).isFalse();
+        assertThat(result.mechanicallyVerified()).isFalse();
         assertThat(result.reasons()).anyMatch(r -> r.contains("match no actual test"));
     }
 
@@ -811,8 +825,8 @@ class DifferentialVerificationServiceTest {
         assertThat(summary.testFailedNames()).as("the failing test is recorded by name").containsExactly("fails_b");
     }
 
-    // Strict per-test soundness gate: every [task]-bound test the solution passes must fail on the template, even when the count gate passes — a test the template accidentally
-    // satisfies hands the student a free point.
+    // A task must not be completely solved by the template. Structural checks may pass when the same task still contains a failing behavioural test, as in Artemis reference
+    // exercises such as Bubble Sort.
 
     @Test
     void shouldRejectWhenTaskBoundTestPassesOnTemplateRustFibonacciZero() {
@@ -823,8 +837,8 @@ class DifferentialVerificationServiceTest {
                 List.of("test_factorial_of_5", "test_factorial_of_20", "test_fibonacci_of_1", "test_fibonacci_of_10", "test_fibonacci_of_50", "test_factorial_of_0"));
         String ps = "# Factorial & Fibonacci\n[task][Factorial of 0](test_factorial_of_0)\n[task][Fibonacci of 0](test_fibonacci_of_0)\n[task][Fibonacci of 10](test_fibonacci_of_10)\n";
         VerificationResult result = verify(resultWithFails(0, all, List.of()), resultWithFails(1, all, failed2), ps);
-        assertThat(result.accepted()).isFalse();
-        assertThat(result.reasons()).anyMatch(r -> r.contains("PASS on the template") && r.contains("test_fibonacci_of_0"));
+        assertThat(result.mechanicallyVerified()).isFalse();
+        assertThat(result.reasons()).anyMatch(r -> r.contains("fully satisfied by the template") && r.contains("test_fibonacci_of_0"));
     }
 
     @Test
@@ -833,8 +847,8 @@ class DifferentialVerificationServiceTest {
         List<String> failedOnTemplate = List.of("Stack_push_pop_cycle", "Stack_peek_returns_top_without_removal", "Stack_isEmpty_behaviour");
         String ps = "# Stack\n[task][Push/pop](Stack_push_pop_cycle)\n[task][Pop on empty returns undefined](Stack_pop_on_empty_returns_undefined)\n";
         VerificationResult result = verify(resultWithFails(0, all, List.of()), resultWithFails(1, all, failedOnTemplate), ps);
-        assertThat(result.accepted()).isFalse();
-        assertThat(result.reasons()).anyMatch(r -> r.contains("PASS on the template") && r.contains("Stack_pop_on_empty_returns_undefined"));
+        assertThat(result.mechanicallyVerified()).isFalse();
+        assertThat(result.reasons()).anyMatch(r -> r.contains("fully satisfied by the template") && r.contains("Stack_pop_on_empty_returns_undefined"));
     }
 
     @Test
@@ -844,12 +858,10 @@ class DifferentialVerificationServiceTest {
         List<String> failedOnTemplate = List.of("stack_initially_empty", "stack_push_top", "stack_pop");
         String ps = "# Stack\n[task][Initially empty](stack_initially_empty)\n[task][Push/top](stack_push_top)\n[task][Pop](stack_pop)\n";
         VerificationResult result = verify(resultWithFails(0, all, List.of()), resultWithFails(1, all, failedOnTemplate), ps);
-        assertThat(result.accepted()).isTrue();
+        assertThat(result.mechanicallyVerified()).isTrue();
     }
 
-    // Production-parity gate: production grades EVERY discovered test, not only the [task]-bound subset, so an unbound test passing on the template gives a bare-template student
-    // >0%.
-    // The only legitimate exception is a build/compile/configure gate that passes on both.
+    // Every discovered gradable test must appear in the task checklist. Build/compile/configure gates are the only legitimate unbound exception.
 
     @Test
     void shouldRejectWhenUnboundBehaviourTestPassesOnTemplate() {
@@ -858,8 +870,8 @@ class DifferentialVerificationServiceTest {
         List<String> failedOnTemplate = List.of("reverse_non_empty", "is_palindrome_true", "is_palindrome_false");
         String ps = "# Strings\n[task][Reverse](reverse_non_empty)\n[task][Palindrome](is_palindrome_true)\n";
         VerificationResult result = verify(resultWithFails(0, all, List.of()), resultWithFails(1, all, failedOnTemplate), ps);
-        assertThat(result.accepted()).as("an unbound test passing on the template would give a bare-template student >0% in production").isFalse();
-        assertThat(result.reasons()).anyMatch(r -> r.contains("production grades EVERY discovered test") && r.contains("reverse_empty_string"));
+        assertThat(result.mechanicallyVerified()).as("an unbound test passing on the template would give a bare-template student >0% in production").isFalse();
+        assertThat(result.reasons()).anyMatch(r -> r.contains("not bound by any [task]") && r.contains("reverse_empty_string"));
     }
 
     @Test
@@ -868,7 +880,7 @@ class DifferentialVerificationServiceTest {
         List<String> failedOnTemplate = List.of("sorts_ascending", "sorts_with_duplicates", "stable_on_equal_keys");
         String ps = "# Sort\n[task][Ascending](sorts_ascending)\n[task][Duplicates](sorts_with_duplicates)\n[task][Stable](stable_on_equal_keys)\n";
         VerificationResult result = verify(resultWithFails(0, all, List.of()), resultWithFails(1, all, failedOnTemplate), ps);
-        assertThat(result.accepted()).as("build/configure gates legitimately pass on both; every behaviour test fails on the template").isTrue();
+        assertThat(result.mechanicallyVerified()).as("build/configure gates legitimately pass on both; every behaviour test fails on the template").isTrue();
     }
 
     @Test
@@ -880,8 +892,8 @@ class DifferentialVerificationServiceTest {
         List<String> failedOnTemplate = List.of("sorts_ascending", "sorts_with_duplicates");
         String ps = "# Sort\n[task][Ascending](sorts_ascending)\n[task][Duplicates](sorts_with_duplicates)\n";
         VerificationResult result = verify(resultWithFails(0, all, List.of()), resultWithFails(1, all, failedOnTemplate), ps);
-        assertThat(result.accepted()).as("the half-fail threshold must be computed over gradable tests only, so a build-gate-heavy exercise is not rejected as nearly complete")
-                .isTrue();
+        assertThat(result.mechanicallyVerified())
+                .as("the half-fail threshold must be computed over gradable tests only, so a build-gate-heavy exercise is not rejected as nearly complete").isTrue();
         assertThat(result.reasons()).noneMatch(r -> r.contains("nearly complete"));
         assertThat(result.templateFailed()).isTrue();
         assertThat(result.testCount()).isEqualTo(6);
@@ -895,7 +907,7 @@ class DifferentialVerificationServiceTest {
         List<String> failedOnTemplate = List.of("sort-test.empty_initial", "sort-test.push_top");
         String ps = "# Stack\n[task][Empty](sort-test.empty_initial)\n[task][Push/top](sort-test.push_top)\n";
         VerificationResult result = verify(multiSuiteSolution(all), multiSuiteTemplate(all, failedOnTemplate), ps);
-        assertThat(result.accepted()).as("a framework-prefixed build gate (GBS-Tester-1.36.TestConfigure/CompileSort) is exempted by its final segment").isTrue();
+        assertThat(result.mechanicallyVerified()).as("a framework-prefixed build gate (GBS-Tester-1.36.TestConfigure/CompileSort) is exempted by its final segment").isTrue();
     }
 
     @Test
@@ -904,8 +916,8 @@ class DifferentialVerificationServiceTest {
         List<String> failedOnTemplate = List.of("push_grows");
         String ps = "# Stack\n[task][Push](push_grows)\n";
         VerificationResult result = verify(resultWithFails(0, all, List.of()), resultWithFails(1, all, failedOnTemplate), ps);
-        assertThat(result.accepted()).isFalse();
-        assertThat(result.reasons()).anyMatch(r -> r.contains("production grades EVERY discovered test") && r.contains("peek_returns_top"));
+        assertThat(result.mechanicallyVerified()).isFalse();
+        assertThat(result.reasons()).anyMatch(r -> r.contains("not bound by any [task]") && r.contains("peek_returns_top"));
     }
 
     @Test
@@ -913,7 +925,7 @@ class DifferentialVerificationServiceTest {
         List<String> all = List.of("push_grows", "peek_returns_top");
         String ps = "# Stack\n[task][Push](push_grows)\n";
         VerificationResult result = verify(resultWithFails(0, all, List.of()), resultWithFails(1, all, all), ps);
-        assertThat(result.accepted()).as("every real gradable behaviour test must be visible in the Artemis task checklist").isFalse();
+        assertThat(result.mechanicallyVerified()).as("every real gradable behaviour test must be visible in the Artemis task checklist").isFalse();
         assertThat(result.reasons()).anyMatch(r -> r.contains("not bound by any [task]") && r.contains("peek_returns_top"));
     }
 
@@ -922,21 +934,22 @@ class DifferentialVerificationServiceTest {
         List<String> all = List.of("push_grows", "peek_returns_top");
         String ps = "# Stack\n[task][Push](push_grows)\n[task][Duplicate push](push_grows)\n[task][Peek](peek_returns_top)\n";
         VerificationResult result = verify(resultWithFails(0, all, List.of()), resultWithFails(1, all, all), ps);
-        assertThat(result.accepted()).as("duplicate [task] bindings make the student checklist ambiguous").isFalse();
+        assertThat(result.mechanicallyVerified()).as("duplicate [task] bindings make the student checklist ambiguous").isFalse();
         assertThat(result.reasons()).anyMatch(r -> r.contains("bound more than once") && r.contains("push_grows"));
     }
 
     @Test
-    void rejects_whenABoundStructuralTestPassesOnTemplate_rubyStackStructure() {
-        // A structural test (checks method existence/arity) passes on the template; because it is [task]-bound it is a free graded point and must be rejected.
+    void acceptsWhenAStructuralCheckPassesButItsTaskStillHasFailingBehaviour() {
         List<String> all = List.of("test_new_stack_is_empty", "test_push_makes_not_empty", "test_peek_returns_last_without_removing", "test_pop_returns_last_and_removes",
                 "test_pop_on_empty_raises", "test_peek_on_empty_raises", "test_stack_structure");
         List<String> behaviouralFailOnTemplate = List.of("test_new_stack_is_empty", "test_push_makes_not_empty", "test_peek_returns_last_without_removing",
                 "test_pop_returns_last_and_removes", "test_pop_on_empty_raises", "test_peek_on_empty_raises");
-        String ps = "# Stack\n[task][Empty](test_new_stack_is_empty)\n[task][Structure](test_stack_structure)\n";
+        String ps = "# Stack\n[task][Empty and structure](test_new_stack_is_empty,test_stack_structure)\n"
+                + "[task][Push](test_push_makes_not_empty)\n[task][Peek](test_peek_returns_last_without_removing)\n[task][Pop](test_pop_returns_last_and_removes)\n"
+                + "[task][Empty pop](test_pop_on_empty_raises)\n[task][Empty peek](test_peek_on_empty_raises)\n";
         VerificationResult result = verify(resultWithFails(0, all, List.of()), resultWithFails(1, all, behaviouralFailOnTemplate), ps);
-        assertThat(result.accepted()).isFalse();
-        assertThat(result.reasons()).anyMatch(r -> r.contains("PASS on the template") && r.contains("test_stack_structure"));
+        assertThat(result.mechanicallyVerified()).isTrue();
+        assertThat(result.reasons()).noneMatch(r -> r.contains("fully satisfied by the template"));
     }
 
     // Skipped-test parity: production's TestResultXmlParser drops a <testcase><skipped/></testcase> from both lists, and the verifier uses that same parser. The dangerous case — a
@@ -951,7 +964,7 @@ class DifferentialVerificationServiceTest {
         String ps = "# Stack\n[task][Push/Pop](push_then_pop)\n[task][Size](size_tracks_elements)\n";
         VerificationResult result = verify(solution, template, ps);
         assertThat(result.testCount()).as("the skipped solution test is not counted by the production parser").isEqualTo(2);
-        assertThat(result.accepted()).isFalse();
+        assertThat(result.mechanicallyVerified()).isFalse();
         assertThat(result.reasons()).anyMatch(r -> r.contains("different number of tests"));
     }
 
@@ -1121,7 +1134,7 @@ class DifferentialVerificationServiceTest {
             // The SpotBugs STYLE finding maps to the GRADED "Code Style" category, so production would dock the score.
             var categories = Set.of(category("Code Style", CategoryState.GRADED, 0.2));
             VerificationResult result = verifyScaExercise(50, true, categories, solutionWithScaReports(Map.of("spotbugsXml.xml", SPOTBUGS_STYLE)), failingTemplate());
-            assertThat(result.accepted()).as("a solution with a graded SCA violation must be rejected").isFalse();
+            assertThat(result.mechanicallyVerified()).as("a solution with a graded SCA violation must be rejected").isFalse();
             assertThat(result.reasons()).anyMatch(r -> r.contains("static-code-analysis findings that production would penalise"));
         }
 
@@ -1129,7 +1142,7 @@ class DifferentialVerificationServiceTest {
         void shouldAcceptWhenScaEnabledButSolutionIsScaClean() {
             var categories = Set.of(category("Code Style", CategoryState.GRADED, 0.2));
             VerificationResult result = verifyScaExercise(50, true, categories, solutionWithScaReports(Map.of()), failingTemplate());
-            assertThat(result.accepted()).as("a clean solution is still accepted when SCA is graded").isTrue();
+            assertThat(result.mechanicallyVerified()).as("a clean solution is still accepted when SCA is graded").isTrue();
             assertThat(result.reasons()).noneMatch(r -> r.contains("static-code-analysis"));
         }
 
@@ -1147,7 +1160,7 @@ class DifferentialVerificationServiceTest {
             VerificationResult result = newVerifier().verify(
                     new ScriptedSandbox(solutionWithScaReports(Map.of("spotbugsXml.xml", SPOTBUGS_STYLE)), failingTemplate(), PROBLEM_STATEMENT_WITH_TASK), "s", exercise,
                     new VerificationRequest(harness, harness, Map.of(), Map.of(), Set.of(), Set.of(), Set.of()));
-            assertThat(result.accepted()).as("the SCA gate fails open when the category repository is absent").isTrue();
+            assertThat(result.mechanicallyVerified()).as("the SCA gate fails open when the category repository is absent").isTrue();
             assertThat(result.reasons()).noneMatch(r -> r.contains("static-code-analysis"));
         }
 
@@ -1155,7 +1168,7 @@ class DifferentialVerificationServiceTest {
         void shouldAcceptWhenScaDisabledEvenIfFindingsLeakIntoOutput() {
             var categories = Set.of(category("Code Style", CategoryState.GRADED, 0.2));
             VerificationResult result = verifyScaExercise(50, false, categories, solutionWithScaReports(Map.of("spotbugsXml.xml", SPOTBUGS_STYLE)), failingTemplate());
-            assertThat(result.accepted()).as("SCA disabled => no SCA rejection").isTrue();
+            assertThat(result.mechanicallyVerified()).as("SCA disabled => no SCA rejection").isTrue();
             assertThat(result.reasons()).noneMatch(r -> r.contains("static-code-analysis"));
         }
 
@@ -1163,7 +1176,7 @@ class DifferentialVerificationServiceTest {
         void shouldAcceptWhenMaxPenaltyIsZeroSoScaCannotAffectTheScore() {
             var categories = Set.of(category("Code Style", CategoryState.GRADED, 0.2));
             VerificationResult result = verifyScaExercise(0, true, categories, solutionWithScaReports(Map.of("spotbugsXml.xml", SPOTBUGS_STYLE)), failingTemplate());
-            assertThat(result.accepted()).as("maxStaticCodeAnalysisPenalty == 0 => SCA penalty is disabled => no rejection").isTrue();
+            assertThat(result.mechanicallyVerified()).as("maxStaticCodeAnalysisPenalty == 0 => SCA penalty is disabled => no rejection").isTrue();
         }
 
         @Test
@@ -1171,7 +1184,7 @@ class DifferentialVerificationServiceTest {
             // The finding maps to "Code Style" (FEEDBACK); only "Security" is GRADED, so production would not penalise it.
             var categories = Set.of(category("Code Style", CategoryState.FEEDBACK, 0.2), category("Security", CategoryState.GRADED, 2.5));
             VerificationResult result = verifyScaExercise(50, true, categories, solutionWithScaReports(Map.of("spotbugsXml.xml", SPOTBUGS_STYLE)), failingTemplate());
-            assertThat(result.accepted()).as("a finding in a non-graded category must not be rejected").isTrue();
+            assertThat(result.mechanicallyVerified()).as("a finding in a non-graded category must not be rejected").isTrue();
             assertThat(result.reasons()).noneMatch(r -> r.contains("static-code-analysis"));
         }
 
@@ -1179,7 +1192,7 @@ class DifferentialVerificationServiceTest {
         void shouldAcceptWhenGradedCategoryHasZeroPenalty() {
             var categories = Set.of(category("Code Style", CategoryState.GRADED, 0.0));
             VerificationResult result = verifyScaExercise(50, true, categories, solutionWithScaReports(Map.of("spotbugsXml.xml", SPOTBUGS_STYLE)), failingTemplate());
-            assertThat(result.accepted()).as("a graded category with zero penalty deducts nothing => no rejection").isTrue();
+            assertThat(result.mechanicallyVerified()).as("a graded category with zero penalty deducts nothing => no rejection").isTrue();
         }
 
         @Test
@@ -1197,7 +1210,8 @@ class DifferentialVerificationServiceTest {
             var verifier = new DifferentialVerificationService(sandboxBuildCommandService(), Optional.of(repo));
             BuildReportSpec solution = BuildReportSpec.withScaReports(List.of(DEFAULT_BOUND_NAMES), List.of(), Map.of("ruff.sarif", RUFF_STYLE_SARIF), 0);
             VerificationResult result = verifyGenerate(verifier, new ScriptedSandbox(solution, failingTemplate(), PROBLEM_STATEMENT_WITH_TASK), exercise);
-            assertThat(result.accepted()).as("a SARIF finding in a non-graded derived category must not penalise (production category derivation, not a wildcard match)").isTrue();
+            assertThat(result.mechanicallyVerified())
+                    .as("a SARIF finding in a non-graded derived category must not penalise (production category derivation, not a wildcard match)").isTrue();
             assertThat(result.reasons()).noneMatch(r -> r.contains("static-code-analysis"));
         }
 
@@ -1230,7 +1244,7 @@ class DifferentialVerificationServiceTest {
             VerificationResult result = verifyWithSeededStructural(resultWithFails(0, allNames, List.of()), resultWithFails(1, allNames, allNames), problemStatement,
                     seededStructural);
             assertThat(result.reasons()).as("a structural-shaped binding must not be reported as unresolved").noneMatch(r -> r.contains("match no actual test"));
-            assertThat(result.accepted()).as("a structural binding/test must not block acceptance while the differential holds").isTrue();
+            assertThat(result.mechanicallyVerified()).as("a structural binding/test must not block acceptance while the differential holds").isTrue();
         }
 
         private static Stream<Arguments> structuralBindingAcceptCases() {
@@ -1245,29 +1259,43 @@ class DifferentialVerificationServiceTest {
             List<String> all = List.of("sortsUnsortedArray", "sortsArrayWithDuplicates");
             String ps = "# Sort\n[task][Sort](sortsUnsortedArray,sortsArrayWithDuplicates)\n[task][Mystery](aDisplayNameNotAMethodName)\n";
             VerificationResult result = verify(resultWithFails(0, all, List.of()), resultWithFails(1, all, all), ps);
-            assertThat(result.accepted()).isFalse();
+            assertThat(result.mechanicallyVerified()).isFalse();
             assertThat(result.reasons()).anyMatch(r -> r.contains("match no actual test") && r.contains("aDisplayNameNotAMethodName"));
         }
 
         @Test
         void forgeryResistance_aRealBehaviourTestNamedStructurallyThatPassesOnTemplate_isStillRejected() {
-            // The exemption only relaxes binding resolution; a real behaviour test named structurally that passes on the template is still rejected by the production-parity gate.
+            // A real behaviour test cannot gain the structural-binding exemption merely through its name. Its one-test task is still fully satisfied by the template.
             List<String> all = List.of("realBehaviour", "testClass[Evil]");
             List<String> failedOnTemplate = List.of("realBehaviour");
             String ps = "# X\n[task][Real](realBehaviour)\n[task][Disguised](testClass[Evil])\n";
             VerificationResult result = verify(resultWithFails(0, all, List.of()), resultWithFails(1, all, failedOnTemplate), ps);
-            assertThat(result.accepted()).as("a structurally-named real test that passes on the template must still be rejected by the differential").isFalse();
-            assertThat(result.reasons()).anyMatch(r -> r.contains("production grades EVERY discovered test") && r.contains("testClass[Evil]"));
+            assertThat(result.mechanicallyVerified()).as("a structurally-named real test whose whole task passes on the template must still be rejected").isFalse();
+            assertThat(result.reasons()).anyMatch(r -> r.contains("fully satisfied by the template") && r.contains("testClass[Evil]"));
         }
 
         @Test
-        void differentialStillEnforced_whenAnAutoSeededStructuralTestPassesOnTemplate() {
+        void acceptsWhenAnAutoSeededStructuralTestPassesButBehaviouralTasksStillFail() {
             List<String> all = List.of("sortsUnsortedArray", "sortsArrayWithDuplicates", "testClass[Sorter]");
             List<String> failedOnTemplate = List.of("sortsUnsortedArray", "sortsArrayWithDuplicates");
             VerificationResult result = verifyWithSeededStructural(resultWithFails(0, all, List.of()), resultWithFails(1, all, failedOnTemplate), PROBLEM_STATEMENT_WITH_TASK,
                     Set.of("testClass[Sorter]"));
-            assertThat(result.accepted()).as("a seeded structural test that passes on the template is a free point and must be rejected").isFalse();
-            assertThat(result.reasons()).anyMatch(r -> r.contains("production grades EVERY discovered test") && r.contains("testClass[Sorter]"));
+            assertThat(result.mechanicallyVerified()).as("a seeded structural check may pass when every student task still requires behaviour").isTrue();
+            assertThat(result.reasons()).noneMatch(r -> r.contains("testClass[Sorter]"));
+        }
+
+        @Test
+        void acceptsBubbleSortStyleTasksThatPairStructureWithFailingBehaviour() {
+            List<String> all = List.of("testClass[BubbleSort]", "testUseBubbleSortForSmallList", "testClass[MergeSort]", "testUseMergeSortForBigList");
+            List<String> failedOnTemplate = List.of("testUseBubbleSortForSmallList", "testUseMergeSortForBigList");
+            String problemStatement = "# Sorting\n[task][Bubble sort](testClass[BubbleSort],testUseBubbleSortForSmallList)\n"
+                    + "[task][Merge sort](testClass[MergeSort],testUseMergeSortForBigList)\n";
+
+            VerificationResult result = verifyWithSeededStructural(resultWithFails(0, all, List.of()), resultWithFails(1, all, failedOnTemplate), problemStatement,
+                    Set.of("testClass[BubbleSort]", "testClass[MergeSort]"));
+
+            assertThat(result.mechanicallyVerified()).isTrue();
+            assertThat(result.reasons()).noneMatch(r -> r.contains("fully satisfied by the template"));
         }
     }
 
@@ -1285,7 +1313,7 @@ class DifferentialVerificationServiceTest {
             assertThat(report.solutionTests()).isEqualTo(2);
             assertThat(report.templateCompiled()).isTrue();
             assertThat(report.templateWronglyPassing()).isEmpty();
-            assertThat(report.toObservation()).contains("Solution: 2/2 tests pass.").contains("Template: correctly fails all 2.").contains("MECHANICAL PRECHECK: PASS");
+            assertThat(report.toObservation()).contains("Solution: 2/2 tests pass.").contains("Template: all required gradable tests fail").contains("MECHANICAL PRECHECK: PASS");
         }
 
         @Test
@@ -1385,10 +1413,11 @@ class DifferentialVerificationServiceTest {
             List<String> names = List.of("sortsUnsortedArray", "sortsArrayWithDuplicates");
             BuildReportSpec solution = resultWithFails(0, names, List.of());
             BuildReportSpec template = resultWithFails(1, names, names);
-            assertThat(selfCheck(solution, template, PROBLEM_STATEMENT_WITH_TASK).wouldBeAccepted()).isEqualTo(verify(solution, template).accepted()).isTrue();
+            assertThat(selfCheck(solution, template, PROBLEM_STATEMENT_WITH_TASK).wouldBeAccepted()).isEqualTo(verify(solution, template).mechanicallyVerified()).isTrue();
 
             BuildReportSpec passingTemplate = resultWithFails(0, names, List.of());
-            assertThat(selfCheck(solution, passingTemplate, PROBLEM_STATEMENT_WITH_TASK).wouldBeAccepted()).isEqualTo(verify(solution, passingTemplate).accepted()).isFalse();
+            assertThat(selfCheck(solution, passingTemplate, PROBLEM_STATEMENT_WITH_TASK).wouldBeAccepted()).isEqualTo(verify(solution, passingTemplate).mechanicallyVerified())
+                    .isFalse();
         }
     }
 
@@ -1406,7 +1435,7 @@ class DifferentialVerificationServiceTest {
             String ps = "# Cache\n[task][A](brandNewTestA)\n[task][B](brandNewTestB)\n";
             VerificationResult result = verifyAdaptWithBaseline(resultWithFails(0, newNames, List.of()), resultWithFails(1, newNames, newNames), ps,
                     Set.of("evictsLeastRecentlyUsed", "capacityIsRespected"));
-            assertThat(result.accepted()).as("an adapt retaining none of the pre-adapt graded tests is a masqueraded from-scratch regeneration").isFalse();
+            assertThat(result.mechanicallyVerified()).as("an adapt retaining none of the pre-adapt graded tests is a masqueraded from-scratch regeneration").isFalse();
             assertThat(result.reasons()).anyMatch(r -> r.contains("retained NONE") && r.contains("previously-graded"));
         }
 
@@ -1417,7 +1446,7 @@ class DifferentialVerificationServiceTest {
             String ps = "# Cache\n[task][Evict](evictsLeastRecentlyUsed)\n[task][Resize](capacityAndResize)\n";
             VerificationResult result = verifyAdaptWithBaseline(resultWithFails(0, names, List.of()), resultWithFails(1, names, names), ps,
                     Set.of("evictsLeastRecentlyUsed", "capacityIsRespected"));
-            assertThat(result.accepted()).as("keeping at least one previously-graded test is a legitimate adapt, not a wipe").isTrue();
+            assertThat(result.mechanicallyVerified()).as("keeping at least one previously-graded test is a legitimate adapt, not a wipe").isTrue();
             assertThat(result.reasons()).noneMatch(r -> r.contains("retained NONE"));
         }
     }

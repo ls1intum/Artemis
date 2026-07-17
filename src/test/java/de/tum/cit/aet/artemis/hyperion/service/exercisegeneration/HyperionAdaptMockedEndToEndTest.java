@@ -221,7 +221,7 @@ class HyperionAdaptMockedEndToEndTest extends AbstractHyperionMockedLlmEndToEndT
             assertThat(outcome.verification().solutionPassed()).as("the solution passes after the adapt").isTrue();
             assertThat(outcome.verification().templateFailed()).as("the template still fails after the adapt").isTrue();
             assertThat(outcome.verification().testCount()).as("the two seeded tests and two added tests all run").isEqualTo(4);
-            assertThat(outcome.isAccepted()).as("the adapted exercise is accepted by the differential oracle").isTrue();
+            assertThat(outcome.isMechanicallyVerified()).as("the adapted exercise is accepted by the differential oracle").isTrue();
             assertThat(outcome.specFidelityReport().hasFindings()).as("the adapted mocked exercise has no deterministic quality findings").isFalse();
             assertThat(outcome.producedProblemStatement()).contains("[task][Add positive numbers](addsTwoNumbers)", "[task][Add negative numbers](addsNegativeNumbers)",
                     "[task][Subtract positive numbers](subtractsTwoNumbers)", "[task][Subtract to a negative result](subtractsToNegativeResult)");

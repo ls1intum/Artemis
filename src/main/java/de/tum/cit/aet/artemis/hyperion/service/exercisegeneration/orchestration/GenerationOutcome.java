@@ -107,8 +107,8 @@ public final class GenerationOutcome implements AutoCloseable {
     }
 
     /** @return whether the generated exercise passed the authoritative mechanical verification */
-    public boolean isAccepted() {
-        return verification != null && verification.accepted();
+    public boolean isMechanicallyVerified() {
+        return verification != null && verification.mechanicallyVerified();
     }
 
     public AgentLoopResult loopResult() {

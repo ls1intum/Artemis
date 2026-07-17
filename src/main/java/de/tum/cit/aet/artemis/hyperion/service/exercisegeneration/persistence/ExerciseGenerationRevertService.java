@@ -34,7 +34,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.Repository;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 
-/** Retains the pre-run state of the latest accepted generation or adaptation so an instructor can safely undo it. */
+/** Retains the pre-run state of the latest mechanically verified generation or adaptation so an instructor can safely undo it. */
 @Lazy
 @Service
 @Conditional(HyperionExerciseGenerationEnabled.class)
@@ -188,7 +188,7 @@ public class ExerciseGenerationRevertService {
     }
 
     /**
-     * Reverts the most recent accepted run: resets template/solution/tests back to the commits captured before persistence, then re-synchronises grading. Idempotent
+     * Reverts the most recent mechanically verified run: resets template/solution/tests back to the commits captured before persistence, then re-synchronises grading. Idempotent
      * against a missing baseline (returns {@code false}); the baseline is consumed on a successful revert so it is not offered twice.
      *
      * @param exercise the exercise to revert
@@ -200,7 +200,7 @@ public class ExerciseGenerationRevertService {
     }
 
     /**
-     * Reverts the most recent accepted run while aborting before durable mutations if this node no longer owns the job.
+     * Reverts the most recent mechanically verified run while aborting before durable mutations if this node no longer owns the job.
      *
      * @param exercise              the exercise to revert
      * @param user                  the instructor performing the revert (exercise-version author)

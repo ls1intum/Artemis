@@ -133,8 +133,9 @@ class AgentSystemPromptServiceTest {
         String prompt = systemPromptService.build(exerciseWithStatement("Implement a bounded counter."));
 
         assertThat(prompt)
-                .contains("primary source requirements", "MECHANICAL PRECHECK: PASS", "The produced statement documents the contract; it does not authorize new graded behavior")
-                .doesNotContain("derived contract", "authoritative compiled exercise contract", "verdict is ACCEPTED");
+                .contains("primary source requirements", "MECHANICAL PRECHECK: PASS", "post-loop verification determines save eligibility",
+                        "The produced statement documents the contract; it does not authorize new graded behavior")
+                .doesNotContain("post-loop review decides acceptance").doesNotContain("derived contract", "authoritative compiled exercise contract", "verdict is ACCEPTED");
     }
 
     @Test

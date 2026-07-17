@@ -235,7 +235,7 @@ class HyperionExerciseGenerationResourceTest {
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
         assertThat(response.getBody()).isNotNull();
         assertThat(response.getBody().fullyReverted()).isFalse();
-        verify(jobService).discardRetainedRun(1L, "adapt-job");
+        verify(jobService, never()).discardRetainedRun(1L, "adapt-job");
         verify(jobService).clearRevertSlot(1L, "revert-slot");
     }
 
@@ -263,20 +263,6 @@ class HyperionExerciseGenerationResourceTest {
 
         verify(generationRevertService, never()).revert(any(), any(), any());
         verify(jobService, never()).clearRevertSlot(eq(1L), any());
-    }
-
-    @Test
-    void generateExercise_withNullMode_defaultsToGenerate() {
-        ExerciseGenerationRequestDTO request = new ExerciseGenerationRequestDTO(null, null, null);
-        when(programmingExerciseRepository.findWithAllParticipationsAndBuildConfigById(1L)).thenReturn(Optional.of(testExercise));
-        when(agentSystemPromptService.isGenerationSupported(testExercise)).thenReturn(true);
-        when(userRepository.getUserWithGroupsAndAuthorities()).thenReturn(testUser);
-        when(agentSystemPromptService.resolvePrompt(request, testExercise)).thenReturn("RESOLVED");
-        when(jobService.startJob(testUser, testExercise, "RESOLVED", GenerationMode.GENERATE, null)).thenReturn("job-default");
-
-        resource.generateExercise(1L, request);
-
-        verify(jobService).startJob(testUser, testExercise, "RESOLVED", GenerationMode.GENERATE, null);
     }
 
     @Test
@@ -435,7 +421,7 @@ class HyperionExerciseGenerationResourceTest {
         assertThat(response.getBody().revertJobId()).isEqualTo("adapt-job");
         assertThat(response.getBody().revertMode()).isEqualTo(GenerationMode.ADAPT);
         assertThat(response.getBody().events()).isEmpty();
-        assertThat(response.getBody().fileSnapshots()).isEmpty();
+        assertThat(response.getBody().fileChanges()).isEmpty();
     }
 
     @Test

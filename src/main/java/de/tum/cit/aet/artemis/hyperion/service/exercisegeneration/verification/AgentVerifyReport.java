@@ -4,8 +4,8 @@ import java.util.List;
 import java.util.regex.Pattern;
 
 /**
- * Structured feedback returned by the agent's in-loop {@code verify} tool. This is a mechanical precheck only; independent post-loop integrity and semantic review remains the
- * acceptance authority.
+ * Structured feedback returned by the agent's in-loop {@code verify} tool. This is a mechanical precheck only; authoritative post-loop verification determines whether the
+ * candidate can be saved, while quality review can request repairs or flag the saved exercise for instructor review.
  *
  * @param solutionTests           the number of tests the solution ran (parser form, {@code <skipped>} excluded as production grades)
  * @param solutionPassed          whether the solution compiled, ran at least one test, and passed every test
@@ -19,7 +19,7 @@ import java.util.regex.Pattern;
  * @param exactTestNames          every parser-form test name (suite-prefixed, verbatim) the agent must copy into {@code [task]} bindings — never guessed
  * @param unresolvedTaskBindings  {@code [task]} bindings that reference a name matching no real test (the C++/Catch2 bare-name trap)
  * @param possiblyDeadFiles       best-effort, language-agnostic: workspace files no build phase appears to read (advisory only; empty when the probe is unavailable)
- * @param wouldBeAccepted         whether the in-loop differential + actionable mechanical gates currently hold; this does not establish semantic relevance or final acceptance
+ * @param wouldBeAccepted         whether the in-loop differential + actionable mechanical gates currently hold; this does not establish semantic quality or instructor approval
  * @param blockingReasons         the human-readable reasons the verdict would currently reject (empty when {@code wouldBeAccepted}); the same wording the post-loop reasons carry
  */
 public record AgentVerifyReport(int solutionTests, boolean solutionPassed, List<String> solutionFailedNames, List<TestFailureEvidence> solutionFailureEvidence, int templateTests,
@@ -103,7 +103,7 @@ public record AgentVerifyReport(int solutionTests, boolean solutionPassed, List<
             builder.append("Template does NOT fail enough tests (it is nearly complete or passes them) — strip its bodies to wrong placeholders so every test fails.\n");
         }
         else {
-            builder.append("Template: correctly fails all ").append(templateTests).append(".\n");
+            builder.append("Template: all required gradable tests fail; build/configuration gates may pass.\n");
         }
         appendFailureEvidence(builder, "Template", templateFailureEvidence);
 
@@ -125,10 +125,12 @@ public record AgentVerifyReport(int solutionTests, boolean solutionPassed, List<
         }
 
         if (wouldBeAccepted) {
-            builder.append("MECHANICAL PRECHECK: PASS — final post-loop integrity and semantic review decides acceptance.");
+            builder.append(
+                    "MECHANICAL PRECHECK: PASS — authoritative post-loop verification determines save eligibility; quality review may request repairs or flag instructor review.");
         }
         else {
-            builder.append("MECHANICAL PRECHECK: FAIL — fix the above, then run verify again. Final post-loop integrity and semantic review decides acceptance.");
+            builder.append(
+                    "MECHANICAL PRECHECK: FAIL — fix the above, then run verify again. Authoritative post-loop verification determines save eligibility; quality review may request repairs or flag instructor review.");
             if (!blockingReasons.isEmpty()) {
                 builder.append("\nWhy: - ").append(String.join("\n- ", blockingReasons));
             }

@@ -648,6 +648,35 @@ describe('CodeEditorFileSyncService', () => {
             expect(replacedState?.text.toString()).toBe('Late winning content');
             sub.unsubscribe();
         });
+
+        it('does not replace local edits made after initial sync finalized', () => {
+            service.init(EXERCISE_ID, TARGET);
+            const state = service.openFile(FILE_PATH, 'Fallback')!;
+            const requestCall = syncService.sendSynchronizationUpdate.mock.calls.find(
+                ([, msg]) => msg.eventType === ExerciseEditorSyncEventType.FILE_SYNC_FULL_CONTENT_REQUEST && (msg as any).filePath === FILE_PATH,
+            );
+            const requestId = (requestCall?.[1] as any).requestId as string;
+            vi.advanceTimersByTime(500);
+            state.text.insert(state.text.length, ' LOCAL');
+            let replacedState: ({ filePath: string } & FileSyncState) | undefined;
+            const sub = service.stateReplaced$.subscribe((replacement) => (replacedState = replacement));
+            const lateDoc = new Y.Doc();
+            lateDoc.getText('file-content').insert(0, 'Late winning content');
+
+            incomingMessages$.next({
+                eventType: ExerciseEditorSyncEventType.FILE_SYNC_FULL_CONTENT_RESPONSE,
+                target: TARGET,
+                filePath: FILE_PATH,
+                responseTo: requestId,
+                yjsUpdate: yjsUtils.encodeUint8ArrayToBase64(Y.encodeStateAsUpdate(lateDoc)),
+                leaderTimestamp: 1,
+                timestamp: 2,
+            });
+
+            expect(replacedState).toBeUndefined();
+            expect(state.text.toString()).toBe('Fallback LOCAL');
+            sub.unsubscribe();
+        });
     });
 
     describe('awareness', () => {

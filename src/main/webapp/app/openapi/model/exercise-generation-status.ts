@@ -8,7 +8,7 @@
  * NOTE: This file is auto-generated. Do not edit manually.
  */
 
-import type { ExerciseGenerationFileSnapshot } from './exercise-generation-file-snapshot';
+import type { ExerciseGenerationFileChange } from './exercise-generation-file-change';
 import type { ExerciseGenerationEvent } from './exercise-generation-event';
 
 export interface ExerciseGenerationStatus {
@@ -16,7 +16,7 @@ export interface ExerciseGenerationStatus {
     running: boolean;
     mode?: ExerciseGenerationStatusModeEnum;
     events: Array<ExerciseGenerationEvent>;
-    fileSnapshots: Array<ExerciseGenerationFileSnapshot>;
+    fileChanges: Array<ExerciseGenerationFileChange>;
     revertAvailable: boolean;
     revertJobId?: string;
     revertMode?: ExerciseGenerationStatusRevertModeEnum;

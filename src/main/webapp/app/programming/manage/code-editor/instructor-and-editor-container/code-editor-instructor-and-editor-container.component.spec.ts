@@ -1525,38 +1525,38 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Adapt with feedback'
         ['solution', 'solution/src/main/Solution.java', CommentThreadLocationType.SOLUTION_REPO, 'src/main/Solution.java'],
         ['template', 'template/src/main/Template.java', CommentThreadLocationType.TEMPLATE_REPO, 'src/main/Template.java'],
         ['tests', 'tests/src/test/ExerciseTest.java', CommentThreadLocationType.TEST_REPO, 'src/test/ExerciseTest.java'],
-    ] as const)('navigates a persisted %s snapshot through the authoritative editor', (repo, path, targetType, filePath) => {
+    ] as const)('navigates a persisted %s file change through the authoritative editor', (repo, path, targetType, filePath) => {
         const navigateSpy = vi.spyOn(internals(comp) as any, 'navigateToLocation');
-        (comp as any).generationActivity = () => ({ canNavigateSnapshots: () => true });
+        (comp as any).generationActivity = () => ({ canNavigateFileChange: () => true });
 
-        (comp as any).onHyperionSnapshotSelected({ repo, path });
+        (comp as any).onHyperionFileChangeSelected({ repo, path });
 
         expect(navigateSpy).toHaveBeenCalledExactlyOnceWith({ targetType, filePath });
     });
 
-    it('does not fake navigation for an unknown other snapshot', () => {
+    it('does not fake navigation for an unknown other file change', () => {
         const navigateSpy = vi.spyOn(internals(comp) as any, 'navigateToLocation');
-        (comp as any).generationActivity = () => ({ canNavigateSnapshots: () => true });
+        (comp as any).generationActivity = () => ({ canNavigateFileChange: () => true });
 
-        (comp as any).onHyperionSnapshotSelected({ repo: 'other', path: 'notes.txt' });
+        (comp as any).onHyperionFileChangeSelected({ repo: 'other', path: 'notes.txt' });
 
         expect(navigateSpy).not.toHaveBeenCalled();
     });
 
-    it('opens a persisted problem statement snapshot in the authoritative problem editor', () => {
+    it('opens a persisted problem statement file change in the authoritative problem editor', () => {
         const navigateSpy = vi.spyOn(internals(comp) as any, 'navigateToLocation');
-        (comp as any).generationActivity = () => ({ canNavigateSnapshots: () => true });
+        (comp as any).generationActivity = () => ({ canNavigateFileChange: () => true });
 
-        (comp as any).onHyperionSnapshotSelected({ repo: 'other', path: 'problem-statement.md' });
+        (comp as any).onHyperionFileChangeSelected({ repo: 'other', path: 'problem-statement.md' });
 
         expect(navigateSpy).toHaveBeenCalledExactlyOnceWith({ targetType: CommentThreadLocationType.PROBLEM_STATEMENT, filePath: 'problem-statement.md' });
     });
 
-    it('does not navigate a snapshot before the activity is terminal', () => {
+    it('does not navigate a file change before the activity is terminal', () => {
         const navigateSpy = vi.spyOn(internals(comp) as any, 'navigateToLocation');
-        (comp as any).generationActivity = () => ({ canNavigateSnapshots: () => false });
+        (comp as any).generationActivity = () => ({ canNavigateFileChange: () => false });
 
-        (comp as any).onHyperionSnapshotSelected({ repo: 'solution', path: 'solution/src/Main.java' });
+        (comp as any).onHyperionFileChangeSelected({ repo: 'solution', path: 'solution/src/Main.java' });
 
         expect(navigateSpy).not.toHaveBeenCalled();
     });
@@ -1594,6 +1594,26 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Adapt with feedback'
             RepositoryType.SOLUTION,
             'commit-history',
             'hyperion-hash',
+        ]);
+    });
+
+    it('opens the persisted commit hash without searching human-readable history', () => {
+        const historyService = TestBed.inject(ProgrammingExerciseParticipationService);
+        const retrieveSpy = vi.spyOn(historyService, 'retrieveCommitHistoryForTemplateSolutionOrTests');
+        const navigateSpy = vi.spyOn(TestBed.inject(Router), 'navigate');
+
+        (comp as any).onHyperionReviewRequested({ target: 'solution', jobId: 'job-42', commitHash: 'exact-solution-commit' });
+
+        expect(retrieveSpy).not.toHaveBeenCalled();
+        expect(navigateSpy).toHaveBeenCalledExactlyOnceWith([
+            '/course-management',
+            1,
+            'programming-exercises',
+            42,
+            'repository',
+            RepositoryType.SOLUTION,
+            'commit-history',
+            'exact-solution-commit',
         ]);
     });
 
@@ -1855,7 +1875,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Adapt with feedback'
         expect(warningSpy).toHaveBeenCalledWith('pendingChanges');
     });
 
-    it('refreshes editor content after an accepted generation completes', () => {
+    it('refreshes editor content after an mechanically verified generation completes', () => {
         const actions = createActions();
         setCodeEditorContainer(comp, { actions: () => actions });
         const fileSyncService = (comp as any).fileSyncService;
@@ -1870,7 +1890,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Adapt with feedback'
 
         (comp as any).onHyperionGenerationCompleted({
             mode: 'GENERATE',
-            verdict: { accepted: true, solutionPassed: true, templateFailed: true, testCount: 2 },
+            verdict: { mechanicallyVerified: true, solutionPassed: true, templateFailed: true, testCount: 2 },
             liveExerciseChanged: true,
             completedAt: '2026-07-10T20:00:00Z',
         });
@@ -1925,7 +1945,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Adapt with feedback'
 
         (comp as any).onHyperionGenerationCompleted({
             mode: 'GENERATE',
-            verdict: { accepted: true, solutionPassed: true, templateFailed: true, testCount: 2 },
+            verdict: { mechanicallyVerified: true, solutionPassed: true, templateFailed: true, testCount: 2 },
             liveExerciseChanged: true,
         });
 
@@ -1999,7 +2019,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Adapt with feedback'
 
         (comp as any).onHyperionGenerationCompleted({
             mode: 'GENERATE',
-            verdict: { accepted: true, solutionPassed: true, templateFailed: true, testCount: 2 },
+            verdict: { mechanicallyVerified: true, solutionPassed: true, templateFailed: true, testCount: 2 },
             liveExerciseChanged: true,
         });
         reload.next({ body: createMockExercise({ problemStatement: 'Server problem statement' }) });
@@ -2010,6 +2030,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Adapt with feedback'
         expect(acceptServerBaseline).not.toHaveBeenCalled();
         expect(comp.exercise.problemStatement).toBe('Implement the specified behavior and cover all required edge cases.');
         expect((comp as any).generationRefreshFailed()).toBe(true);
+        expect((comp as any).isProblemStatementEditingLocked()).toBe(false);
     });
 
     it('uses the server revert timestamp as the commit-alert suppression boundary', () => {
@@ -2060,7 +2081,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Adapt with feedback'
 
         (comp as any).onHyperionGenerationCompleted({
             mode: 'GENERATE',
-            verdict: { accepted: true, solutionPassed: true, templateFailed: true, testCount: 2 },
+            verdict: { mechanicallyVerified: true, solutionPassed: true, templateFailed: true, testCount: 2 },
             liveExerciseChanged: true,
         });
 
@@ -2102,7 +2123,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Adapt with feedback'
 
         (comp as any).onHyperionGenerationCompleted({
             mode: 'GENERATE',
-            verdict: { accepted: true, solutionPassed: true, templateFailed: true, testCount: 2 },
+            verdict: { mechanicallyVerified: true, solutionPassed: true, templateFailed: true, testCount: 2 },
             liveExerciseChanged: true,
         });
 
@@ -2120,7 +2141,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Adapt with feedback'
 
         (comp as any).onHyperionGenerationCompleted({
             mode: 'GENERATE',
-            verdict: { accepted: true, solutionPassed: true, templateFailed: true, testCount: 2 },
+            verdict: { mechanicallyVerified: true, solutionPassed: true, templateFailed: true, testCount: 2 },
             liveExerciseChanged: true,
         });
         comp.loadExercise(99).subscribe((exercise) => (comp.exercise = exercise));
@@ -2152,19 +2173,19 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Adapt with feedback'
         setCodeEditorContainer(comp, { actions: () => actions });
         const loadSpy = vi.spyOn(TestBed.inject(ProgrammingExerciseService), 'findWithTemplateAndSolutionParticipationAndResults');
 
-        (comp as any).onHyperionGenerationCompleted({ mode: 'ADAPT', verdict: { accepted: false, solutionPassed: false, templateFailed: true, testCount: 2 } });
+        (comp as any).onHyperionGenerationCompleted({ mode: 'ADAPT', verdict: { mechanicallyVerified: false, solutionPassed: false, templateFailed: true, testCount: 2 } });
 
         expect(actions.refreshAfterExternalUpdate).not.toHaveBeenCalled();
         expect(loadSpy).not.toHaveBeenCalled();
     });
 
-    it('does not infer persistence from an accepted verdict without the mutation outcome', () => {
+    it('does not infer persistence from an mechanically verified verdict without the mutation outcome', () => {
         const actions = createActions();
         setCodeEditorContainer(comp, { actions: () => actions });
 
         (comp as any).onHyperionGenerationCompleted({
             mode: 'GENERATE',
-            verdict: { accepted: true, solutionPassed: true, templateFailed: true, testCount: 2 },
+            verdict: { mechanicallyVerified: true, solutionPassed: true, templateFailed: true, testCount: 2 },
         });
 
         expect(actions.refreshAfterExternalUpdate).not.toHaveBeenCalled();
@@ -2178,7 +2199,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Adapt with feedback'
         (comp as any).onHyperionGenerationCompleted({
             mode: 'GENERATE',
             completionStatus: 'NEEDS_REVIEW',
-            verdict: { accepted: false, solutionPassed: false, templateFailed: true, testCount: 2 },
+            verdict: { mechanicallyVerified: false, solutionPassed: false, templateFailed: true, testCount: 2 },
             liveExerciseChanged: false,
         });
 
@@ -2198,7 +2219,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Adapt with feedback'
         (comp as any).onHyperionGenerationCompleted({
             mode: 'GENERATE',
             completionStatus: 'NEEDS_REVIEW',
-            verdict: { accepted: true, solutionPassed: true, templateFailed: true, testCount: 2 },
+            verdict: { mechanicallyVerified: true, solutionPassed: true, templateFailed: true, testCount: 2 },
             liveExerciseChanged: true,
             completedAt: '2026-07-17T12:00:00Z',
         });

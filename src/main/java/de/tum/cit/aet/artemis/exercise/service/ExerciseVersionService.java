@@ -153,6 +153,15 @@ public class ExerciseVersionService {
      * @param author         the user who created the version
      */
     public void createExerciseVersionOrThrow(Exercise targetExercise, User author) {
+        createExerciseVersionOrThrow(targetExercise, author, Map.of());
+    }
+
+    /**
+     * Creates an exercise version using exact commit IDs captured by the caller for repositories it just changed.
+     *
+     * @param repositoryCommitIds exact commit IDs keyed by repository type; missing entries are resolved normally
+     */
+    public void createExerciseVersionOrThrow(Exercise targetExercise, User author, Map<RepositoryType, String> repositoryCommitIds) {
         if (author == null) {
             throw new IllegalArgumentException("No active user during exercise version creation check");
         }
@@ -160,7 +169,7 @@ public class ExerciseVersionService {
             throw new IllegalArgumentException("createExerciseVersion called with null");
         }
         try {
-            createExerciseVersionUnchecked(targetExercise, author);
+            createExerciseVersionUnchecked(targetExercise, author, repositoryCommitIds);
         }
         catch (RuntimeException e) {
             throw e;
@@ -170,7 +179,7 @@ public class ExerciseVersionService {
         }
     }
 
-    private void createExerciseVersionUnchecked(Exercise targetExercise, User author) throws Exception {
+    private void createExerciseVersionUnchecked(Exercise targetExercise, User author, Map<RepositoryType, String> repositoryCommitIds) throws Exception {
         Exercise exercise = fetchExerciseEagerly(targetExercise);
         if (exercise == null) {
             throw new IllegalStateException("Exercise with id " + targetExercise.getId() + " not found");
@@ -178,7 +187,7 @@ public class ExerciseVersionService {
         ExerciseVersion exerciseVersion = new ExerciseVersion();
         exerciseVersion.setExerciseId(targetExercise.getId());
         exerciseVersion.setAuthorId(author.getId());
-        ExerciseSnapshotDTO rawSnapshot = ExerciseSnapshotDTO.of(exercise, gitService);
+        ExerciseSnapshotDTO rawSnapshot = ExerciseSnapshotDTO.of(exercise, gitService, repositoryCommitIds);
         // Normalize through JSON round-trip to ensure consistent null/empty list handling
         // (@JsonInclude(NON_EMPTY) causes empty lists to become null after deserialization)
         ExerciseSnapshotDTO exerciseSnapshot = objectMapper.readValue(objectMapper.writeValueAsString(rawSnapshot), ExerciseSnapshotDTO.class);
@@ -193,8 +202,13 @@ public class ExerciseVersionService {
         }
         exerciseVersion.setExerciseSnapshot(exerciseSnapshot);
         ExerciseVersion savedExerciseVersion = exerciseVersionRepository.save(exerciseVersion);
-        this.determineSynchronizationForActiveEditors(exercise.getId(), exerciseSnapshot, previousVersion.map(ExerciseVersion::getExerciseSnapshot).orElse(null), author,
-                savedExerciseVersion.getId());
+        try {
+            this.determineSynchronizationForActiveEditors(exercise.getId(), exerciseSnapshot, previousVersion.map(ExerciseVersion::getExerciseSnapshot).orElse(null), author,
+                    savedExerciseVersion.getId());
+        }
+        catch (RuntimeException ex) {
+            log.warn("Exercise version {} was saved, but active editor synchronization failed: {}", savedExerciseVersion.getId(), ex.getMessage());
+        }
         log.info("Exercise version {} has been created for exercise {}", savedExerciseVersion.getId(), exercise.getId());
         previousVersion.ifPresent(prev -> {
             try {
@@ -209,7 +223,12 @@ public class ExerciseVersionService {
             }
         });
         // Publish event to notify listeners (e.g., search indexing services)
-        eventPublisher.publishEvent(new ExerciseVersionCreatedEvent(exercise));
+        try {
+            eventPublisher.publishEvent(new ExerciseVersionCreatedEvent(exercise));
+        }
+        catch (RuntimeException ex) {
+            log.warn("Exercise version {} was saved, but its notification event failed: {}", savedExerciseVersion.getId(), ex.getMessage());
+        }
     }
 
     /**

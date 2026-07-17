@@ -65,6 +65,24 @@ final class ProblemStatementBindingChecker {
         return names;
     }
 
+    static List<List<String>> boundTestGroups(String problemStatement) {
+        List<List<String>> groups = new ArrayList<>();
+        Matcher matcher = TASK_BINDING.matcher(problemStatement);
+        while (matcher.find()) {
+            List<String> names = new ArrayList<>();
+            for (String rawName : matcher.group(1).split(",")) {
+                String name = rawName.trim();
+                if (!name.isEmpty()) {
+                    names.add(name);
+                }
+            }
+            if (!names.isEmpty()) {
+                groups.add(List.copyOf(names));
+            }
+        }
+        return groups;
+    }
+
     /** The distinct non-{@code [task]} keywords used on task-binding-shaped lines; empty when every such line uses {@code [task]}. See {@link #TASK_LIKE_BINDING}. */
     static List<String> malformedTaskKeywords(String problemStatement) {
         Matcher matcher = TASK_LIKE_BINDING.matcher(problemStatement);

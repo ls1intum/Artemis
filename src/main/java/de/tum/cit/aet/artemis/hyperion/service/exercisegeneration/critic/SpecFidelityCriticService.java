@@ -51,7 +51,8 @@ import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
  * into the student-facing problem statement.</li>
  * </ul>
  * It combines deterministic checks with two bounded, tool-free reviews of the complete generated artifact set: one for the student contract and one for the executable test
- * oracle. Contract-risk findings block persistence and feed the existing bounded repair loop; subjective presentation findings remain advisory.
+ * oracle. Contract-risk findings feed the bounded repair loop and, if unresolved, require instructor review after the mechanically valid exercise is saved. Subjective presentation
+ * findings remain advisory.
  * <p>
  * For adaptations, the contract pass also receives a compact baseline-to-candidate diff. Unresolved blocking findings are attached to a mechanically valid saved candidate for
  * instructor review.
@@ -302,7 +303,7 @@ public class SpecFidelityCriticService {
      * @param testNames        the task-bound test names produced for the exercise
      * @param artifacts        the generated repository files grouped by repository type
      * @param usageSink        receives the critic's {@code ChatResponse} for token accounting; {@code null} skips it (e.g. in isolated tests)
-     * @return the full-artifact report; contract-risk findings block persistence
+     * @return the full-artifact report; contract-risk findings request repair and require instructor review if they remain
      */
     public SpecFidelityReport critique(@Nullable String brief, @Nullable String problemStatement, List<String> testNames, Map<RepositoryType, Map<String, String>> artifacts,
             @Nullable Consumer<ChatResponse> usageSink) {
@@ -884,7 +885,7 @@ public class SpecFidelityCriticService {
                 builder.append("\n- Strengthen the tests so this specific wrong implementation fails: \"").append(finding.requirement()).append("\". ").append(finding.detail());
             case TEMPLATE_QUALITY_GAP -> builder.append("\n- Improve the starter so students can work incrementally and receive task-specific feedback: \"")
                     .append(finding.requirement()).append("\". ").append(finding.detail());
-            case QUALITY_REVIEW_UNAVAILABLE -> builder.append("\n- The full-artifact quality review was unavailable; do not claim acceptance without a complete review.");
+            case QUALITY_REVIEW_UNAVAILABLE -> builder.append("\n- The full-artifact quality review was unavailable; do not claim semantic quality without a complete review.");
         }
     }
 }

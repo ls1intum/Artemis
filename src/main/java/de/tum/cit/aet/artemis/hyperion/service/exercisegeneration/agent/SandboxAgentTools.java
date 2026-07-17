@@ -23,7 +23,8 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
  * The file, shell, and verification tools the exercise-generation agent calls, bound to one sandbox session. Created per session (holds the session id), so not a Spring bean.
  * <p>
  * The agent has a full shell safely because correctness is never judged from what these tools report. The {@code verify} tool runs the same differential as the authoritative
- * post-loop verifier (two fresh builds parsed with the production parsers) and returns structured feedback, but it is advisory only; the post-loop verifier decides acceptance.
+ * post-loop verifier (two fresh builds parsed with the production parsers) and returns structured feedback, but it is advisory only; the post-loop verifier decides mechanical
+ * validity.
  */
 public class SandboxAgentTools {
 
@@ -58,7 +59,7 @@ public class SandboxAgentTools {
 
     private final String sessionId;
 
-    /** The authoritative verifier, reused by the {@code verify} tool to run the same differential the post-loop acceptance gate runs; {@code null} disables the tool in tests. */
+    /** The authoritative verifier, reused by the {@code verify} tool to run the same differential as the post-loop mechanical gate; {@code null} disables the tool in tests. */
     @Nullable
     private final DifferentialVerificationService verifier;
 
@@ -293,7 +294,7 @@ public class SandboxAgentTools {
     }
 
     /**
-     * Signals that the exercise is complete. The agent loop ends the session when this is called, and the authoritative verifier then decides acceptance independently.
+     * Signals that the exercise is complete. The agent loop ends the session when this is called, and the authoritative verifier then decides mechanical validity independently.
      *
      * @param summary an optional one-line summary of what was created or changed
      * @return a confirmation that the work was submitted for verification

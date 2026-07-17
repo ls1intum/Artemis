@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration
 
 import java.time.Duration;
 import java.time.Instant;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -26,7 +27,7 @@ import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionExerciseGenerationEnabled;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationEventDTO;
-import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationFileSnapshotDTO;
+import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationFileChangeDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationVerdictDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.GenerationMode;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.persistence.ExerciseGenerationRevertService;
@@ -81,6 +82,15 @@ public class GenerationTaskService {
             @Qualifier("taskScheduler") TaskScheduler taskScheduler, @Value("${artemis.hyperion.agent.max-job-duration:PT30M}") Duration maxJobDuration,
             @Value("${artemis.hyperion.agent.max-tokens-per-job:3000000}") long maxTokensPerJob,
             @Value("${artemis.hyperion.agent.owner-heartbeat-interval:PT15S}") Duration ownerHeartbeatInterval) {
+        if (maxJobDuration == null || maxJobDuration.isZero() || maxJobDuration.isNegative()) {
+            throw new IllegalArgumentException("artemis.hyperion.agent.max-job-duration must be positive");
+        }
+        if (maxTokensPerJob <= 0) {
+            throw new IllegalArgumentException("artemis.hyperion.agent.max-tokens-per-job must be positive");
+        }
+        if (ownerHeartbeatInterval == null || ownerHeartbeatInterval.isZero() || ownerHeartbeatInterval.isNegative() || ownerHeartbeatInterval.compareTo(maxJobDuration) >= 0) {
+            throw new IllegalArgumentException("artemis.hyperion.agent.owner-heartbeat-interval must be positive and shorter than max-job-duration");
+        }
         this.orchestrator = orchestrator;
         this.persistenceService = persistenceService;
         this.reviewService = reviewService;
@@ -112,12 +122,10 @@ public class GenerationTaskService {
         String topic = TOPIC_PREFIX + jobId;
         GenerationProgressEmitter emitter = new GenerationProgressEmitter((progressEvent, terminal) -> jobService.recordEvent(exerciseId, jobId, progressEvent, terminal),
                 progressEvent -> websocket.send(login, topic, progressEvent));
-        // Whole-file snapshots are streamed to the owner on the same per-user topic as the progress events (told apart by their FILE_SNAPSHOT type) and retained latest-per-file
-        // for
-        // reconnect — kept out of the replay transcript so the write stream cannot bloat it.
-        Consumer<ExerciseGenerationFileSnapshotDTO> fileSnapshotSink = snapshot -> {
-            jobService.recordSnapshot(exerciseId, jobId, snapshot);
-            websocket.send(login, topic, snapshot);
+        // File changes share the progress topic and are retained latest-per-path for reconnect.
+        Consumer<ExerciseGenerationFileChangeDTO> fileChangeSink = change -> {
+            jobService.recordFileChange(exerciseId, jobId, change);
+            websocket.send(login, topic, change);
         };
         AtomicBoolean deadlineExceeded = new AtomicBoolean(false);
         AtomicBoolean tokenBudgetExceeded = new AtomicBoolean(false);
@@ -153,7 +161,7 @@ public class GenerationTaskService {
             emitter.milestone(ExerciseGenerationEventDTO.of(ExerciseGenerationEventDTO.Type.STARTED, "Starting exercise generation"));
             Consumer<ChatResponse> usageSink = budgetedUsageSink(jobService.tokenUsageSink(courseIdOf(exercise), exerciseId, user.getId()), jobId, tokenBudgetExceeded);
             try (GenerationOutcome outcome = orchestrator.generate(exercise, user, userPrompt, jobId, event.mode(),
-                    () -> jobService.isCancelled(jobId) || deadlineExceeded.get() || tokenBudgetExceeded.get() || heartbeatLost.get(), emitter::progress, fileSnapshotSink,
+                    () -> jobService.isCancelled(jobId) || deadlineExceeded.get() || tokenBudgetExceeded.get() || heartbeatLost.get(), emitter::progress, fileChangeSink,
                     usageSink)) {
                 switch (outcome.loopResult().status()) {
                     case CANCELLED -> emitter.milestone(ExerciseGenerationEventDTO.of(ExerciseGenerationEventDTO.Type.CANCELLED,
@@ -168,34 +176,40 @@ public class GenerationTaskService {
                         // Verification already captured every artifact needed below. Release the scarce build-agent sandbox before Git persistence and CI synchronization.
                         outcome.close();
                         ExerciseGenerationVerdictDTO verdict = toVerdict(outcome.verification());
-                        if (!outcome.isAccepted()) {
+                        if (!outcome.isMechanicallyVerified()) {
                             String report = outcome.verification() == null ? "No mechanical verification result was produced." : outcome.verification().report();
                             emitter.milestone(ExerciseGenerationEventDTO.of(ExerciseGenerationEventDTO.Type.ERROR,
                                     "Generation did not pass mechanical verification. Nothing was saved. " + conciseReason(report)));
                             break;
                         }
                         if (!jobService.enterNonCancellablePhase(exerciseId, jobId)) {
-                            emitter.milestone(ExerciseGenerationEventDTO.of(ExerciseGenerationEventDTO.Type.CANCELLED,
-                                    cancellationMessage(deadlineExceeded.get(), tokenBudgetExceeded.get(), heartbeatLost.get())));
+                            emitter.milestone(ExerciseGenerationEventDTO.of(ExerciseGenerationEventDTO.Type.ERROR,
+                                    "The generated exercise passed verification but could not be saved because job ownership was lost."));
                             return;
                         }
+                        // A verified candidate is now a save obligation. User cancellation and the generation deadline no longer discard it; Git, CI, and repository operations
+                        // retain their own bounded timeouts, while ownership and draft-state checks still fence every mutation.
+                        cancelScheduled(deadlineFuture);
+                        deadlineFuture = null;
                         emitter.progress("Checks passed. Saving the exercise.");
                         ProgrammingExercise exerciseToPersist;
                         GenerationPersistenceService.PersistResult persistResult;
                         try {
                             exerciseToPersist = reloadDraftExerciseBeforeLiveMutation(exerciseId);
                             persistResult = persistenceService.persist(exerciseToPersist, user, outcome, event.expectedProblemStatement(), event.expectedTitle(), jobId,
-                                    () -> canContinue(exerciseId, jobId, deadlineExceeded, heartbeatLost) && isStillDraftWithoutParticipations(exerciseId));
+                                    event.mode(), () -> canContinueSave(exerciseId, jobId, heartbeatLost) && isStillDraftWithoutParticipations(exerciseId));
                         }
                         catch (GenerationIncompleteException e) {
                             log.error("Persisting verified generated exercise {} left the save incomplete", exerciseId, e);
                             emitter.milestone(ExerciseGenerationEventDTO.done("Saving did not complete. Some changes may already have been saved; manual review is required.",
-                                    ExerciseGenerationEventDTO.CompletionStatus.PARTIAL, verdict, true));
+                                    ExerciseGenerationEventDTO.CompletionStatus.PARTIAL, verdict, e.liveExerciseChanged(),
+                                    e.savedRepositoryCommits().entrySet().stream().collect(java.util.stream.Collectors
+                                            .toUnmodifiableMap(entry -> entry.getKey().name().toLowerCase(java.util.Locale.ROOT), Map.Entry::getValue))));
                             return;
                         }
                         catch (RuntimeException e) {
                             log.error("Failed to persist generated exercise {}", exerciseId, e);
-                            if (!canContinue(exerciseId, jobId, deadlineExceeded, heartbeatLost)) {
+                            if (!canContinueSave(exerciseId, jobId, heartbeatLost)) {
                                 reportContinuationFailure(emitter);
                                 return;
                             }
@@ -203,14 +217,14 @@ public class GenerationTaskService {
                                     "The generated exercise passed verification but could not be saved. Nothing was changed."));
                             return;
                         }
-                        if (!canContinue(exerciseId, jobId, deadlineExceeded, heartbeatLost)) {
+                        if (!canContinueSave(exerciseId, jobId, heartbeatLost)) {
                             reportUncertainLiveSave(verdict, emitter);
                             return;
                         }
                         boolean revertUnavailable = !generationRevertService.recordBaseline(exerciseToPersist, jobId, event.mode(), persistResult.prePersistHeads(),
                                 persistResult.postPersistHeads(), event.expectedProblemStatement(), event.expectedTitle(), persistResult.persistedProblemStatement(),
                                 persistResult.persistedTitle(), persistResult.repositoryBranch());
-                        if (!canContinue(exerciseId, jobId, deadlineExceeded, heartbeatLost)) {
+                        if (!canContinueSave(exerciseId, jobId, heartbeatLost)) {
                             reportUncertainLiveSave(verdict, emitter);
                             return;
                         }
@@ -224,7 +238,7 @@ public class GenerationTaskService {
                         if (revertUnavailable) {
                             savedMessage += " Automatic revert is unavailable for this run.";
                         }
-                        if (!canContinue(exerciseId, jobId, deadlineExceeded, heartbeatLost)) {
+                        if (!canContinueSave(exerciseId, jobId, heartbeatLost)) {
                             reportUncertainLiveSave(verdict, emitter);
                             return;
                         }
@@ -234,7 +248,8 @@ public class GenerationTaskService {
                         }
                         emitter.milestone(ExerciseGenerationEventDTO.done(savedMessage + reviewNotes,
                                 instructorReviewRequired ? ExerciseGenerationEventDTO.CompletionStatus.NEEDS_REVIEW : ExerciseGenerationEventDTO.CompletionStatus.SUCCESS, verdict,
-                                true));
+                                true, persistResult.postPersistHeads().entrySet().stream().collect(
+                                        java.util.stream.Collectors.toUnmodifiableMap(entry -> entry.getKey().name().toLowerCase(java.util.Locale.ROOT), Map.Entry::getValue))));
                     }
                 }
             }
@@ -274,9 +289,8 @@ public class GenerationTaskService {
             return null;
         }
         return taskScheduler.schedule(() -> {
-            if (jobService.requestSystemCancellation(exerciseId, jobId, cancellationMessage(true, false, false))) {
-                deadlineExceeded.set(true);
-            }
+            deadlineExceeded.set(true);
+            jobService.requestSystemCancellation(exerciseId, jobId, cancellationMessage(true, false, false));
         }, effectiveDeadlineAt);
     }
 
@@ -311,8 +325,8 @@ public class GenerationTaskService {
         }
     }
 
-    private boolean canContinue(long exerciseId, String jobId, AtomicBoolean deadlineExceeded, AtomicBoolean heartbeatLost) {
-        return !deadlineExceeded.get() && stillOwnsMutationSlot(exerciseId, jobId, heartbeatLost);
+    private boolean canContinueSave(long exerciseId, String jobId, AtomicBoolean heartbeatLost) {
+        return stillOwnsMutationSlot(exerciseId, jobId, heartbeatLost);
     }
 
     private void markOwnershipLost(long exerciseId, String jobId, AtomicBoolean heartbeatLost) {
@@ -327,7 +341,7 @@ public class GenerationTaskService {
 
     private static void reportContinuationFailure(GenerationProgressEmitter emitter) {
         emitter.milestone(ExerciseGenerationEventDTO.of(ExerciseGenerationEventDTO.Type.ERROR,
-                "Generation stopped because its deadline or ownership could not be verified. Further changes were aborted."));
+                "Generation stopped because job ownership could not be verified. Further changes were aborted."));
     }
 
     private static void reportUncertainLiveSave(ExerciseGenerationVerdictDTO verdict, GenerationProgressEmitter emitter) {
@@ -397,7 +411,7 @@ public class GenerationTaskService {
         if (verification == null) {
             return null;
         }
-        return new ExerciseGenerationVerdictDTO(verification.accepted(), verification.solutionPassed(), verification.templateFailed(), verification.testCount(),
+        return new ExerciseGenerationVerdictDTO(verification.mechanicallyVerified(), verification.solutionPassed(), verification.templateFailed(), verification.testCount(),
                 verification.reasons());
     }
 

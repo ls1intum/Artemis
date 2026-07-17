@@ -16,7 +16,7 @@
                 "refreshingEditor": "Updating the editor with the saved exercise…",
                 "editorRefreshFailed": "The exercise was saved, but the editor could not be updated safely. Save or discard local edits, then retry.",
                 "retryEditorRefresh": "Retry editor update",
-                "statusUnavailable": "The generation status could not be verified. AI actions remain unavailable until the status check succeeds; manual editing is still available.",
+                "statusUnavailable": "The generation status could not be verified. AI actions and editing remain unavailable until the status check succeeds.",
                 "retryStatus": "Retry status check",
                 "cancel": "Cancel",
                 "cancelling": "Cancelling…",
@@ -48,7 +48,7 @@
                 },
                 "persistence": {
                     "workingCopy": "Agent working copy — not saved",
-                    "saved": "Saved to exercise",
+                    "saved": "Saved to exercise — ready for instructor review",
                     "savedNeedsReview": "Saved to exercise — instructor review required",
                     "notSaved": "Not saved",
                     "cancelled": "Not saved — cancelled",

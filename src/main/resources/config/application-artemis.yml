@@ -98,12 +98,11 @@ artemis:
       max-job-duration: PT30M # Admission-to-cooperative-cancellation deadline; keep provider/sandbox/repository timeouts bounded too.
       max-tokens-per-job: 3000000 # Post-response per-job spend guard; keep provider max-output/context limits aligned so one call cannot overshoot materially.
       token-budget-window: PT24H
-      in-flight-token-reservation-per-job: 3000000 # Worst-case tokens reserved against enabled rolling budgets while a job runs; TTL is crash-only fallback (max-job-duration + 5m).
-      admission-max-tokens-per-user: 0 # 0 disables this rolling user budget; when enabled, admission checks persisted usage + in-flight reservations.
-      admission-max-tokens-per-course: 0 # 0 disables this rolling course budget; when enabled, admission checks persisted usage + in-flight reservations.
-      admission-max-tokens-global: 0 # 0 disables this rolling global budget; when enabled, admission checks persisted usage + in-flight reservations.
+      admission-max-tokens-per-user: 12000000 # Four worst-case jobs per user within the rolling window; tune to provider pricing.
+      admission-max-tokens-per-course: 120000000 # Forty worst-case jobs per course within the rolling window.
+      admission-max-tokens-global: 600000000 # Fleet-wide rolling ceiling; 0 explicitly disables a budget.
       owner-heartbeat-interval: PT15S
-      stale-job-timeout: PT35M # Reclaims abandoned cancellable slots; keep above max-job-duration.
+      stale-job-timeout: PT35M # Recovers jobs whose owner left the cluster; keep above max-job-duration.
       stale-job-scan-ms: 60000 # Deadline/stale-slot cleanup interval.
       provider-hard-failure-cooldown: PT5M # Shared admission for agent-turn, contract, and critic calls after hard quota/auth/config failures; transient rate limits do not open it.
   llm:  # Shared LLM configuration for Spring AI-based services (Hyperion, Atlas)

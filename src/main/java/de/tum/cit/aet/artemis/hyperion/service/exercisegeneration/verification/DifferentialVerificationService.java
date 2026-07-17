@@ -156,7 +156,7 @@ public class DifferentialVerificationService {
     }
 
     /**
-     * Runs the differential verification and the sandbox-free integrity gates (harness immutability and solution-leak); the exercise is accepted only when both pass.
+     * Runs the differential verification and the sandbox-free integrity gates (harness immutability and solution-leak); mechanical verification passes only when both pass.
      * <p>
      * The authoritative pass wipes and re-seeds the verifier control directory, deletes pre-existing report XML, builds in fresh temporary directories, and counts only reports
      * written during the build. The integrity gates fail open on genuinely-empty inputs but fail closed when a repo seeded non-empty
@@ -166,12 +166,23 @@ public class DifferentialVerificationService {
      * @param sessionId the sandbox session id
      * @param exercise  the exercise being verified (drives the per-language build recipe)
      * @param request   the produced artifacts and integrity-gate inputs to decide on (see {@link VerificationRequest})
-     * @return the verdict (accepted, solution-passed, template-failed, test count, and the rejection reasons)
+     * @return the mechanical verdict (verified, solution-passed, template-failed, test count, and rejection reasons)
      */
     public VerificationResult verify(InteractiveSandbox sandbox, String sessionId, ProgrammingExercise exercise, VerificationRequest request) {
-        // The sandbox-dependent differential is computed by the same method the in-loop self-check uses, so the agent's `verify` tool and this acceptance decision cannot diverge.
+        return verify(sandbox, sessionId, exercise, request, () -> {
+        });
+    }
+
+    /**
+     * Runs authoritative verification after restoring the captured candidate independently before the solution and template builds. This prevents generated tests or detached
+     * processes from changing the second build's input and making the verifier approve a tree different from the one persistence receives.
+     *
+     * @param restoreCandidate resets the same sandbox container and materializes the exact captured candidate
+     */
+    public VerificationResult verify(InteractiveSandbox sandbox, String sessionId, ProgrammingExercise exercise, VerificationRequest request, Runnable restoreCandidate) {
+        // The sandbox-dependent differential is computed by the same method the in-loop self-check uses, so the agent's `verify` tool and this mechanical decision cannot diverge.
         // This call layers the sandbox-free integrity gates and the final verdict on top of that shared analysis.
-        DifferentialAnalysis analysis = runDifferential(sandbox, sessionId, exercise, request.seededStructuralTestNames(), request.producedProblemStatement());
+        DifferentialAnalysis analysis = runDifferential(sandbox, sessionId, exercise, request.seededStructuralTestNames(), request.producedProblemStatement(), restoreCandidate);
         BuildSummary solution = analysis.solution();
         BuildSummary template = analysis.template();
         List<String> reasons = new ArrayList<>(analysis.actionableReasons());
@@ -179,7 +190,10 @@ public class DifferentialVerificationService {
         // Integrity gates the build cannot see. Post-loop only (the self-check skips them): they need the seed snapshot and read-back files the agent loop lacks mid-session.
         // Adaptation may change test source files, but never the seeded build harness/manifest layout that production grading trusts verbatim.
         boolean harnessSnapshotRequired = exercise.getProgrammingLanguage() == ProgrammingLanguage.JAVA;
-        List<String> harnessTamperingReasons = ExerciseIntegrityGate.harnessTamperingReasons(request.seedTestsFiles(), request.producedTestsFiles(), harnessSnapshotRequired);
+        List<String> harnessTamperingReasons = new ArrayList<>();
+        harnessTamperingReasons.addAll(ExerciseIntegrityGate.harnessTamperingReasons("tests", request.seedTestsFiles(), request.producedTestsFiles(), harnessSnapshotRequired));
+        harnessTamperingReasons.addAll(ExerciseIntegrityGate.harnessTamperingReasons("template", request.seedTemplateFiles(), request.producedTemplateFiles(), false));
+        harnessTamperingReasons.addAll(ExerciseIntegrityGate.harnessTamperingReasons("solution", request.seedSolutionFiles(), request.producedSolutionFiles(), false));
         boolean harnessIntact = harnessTamperingReasons.isEmpty();
         reasons.addAll(harnessTamperingReasons);
         List<String> solutionLeakReasons = ExerciseIntegrityGate.solutionLeakReasons(request.producedTemplateFiles(), request.producedSolutionFiles());
@@ -209,16 +223,16 @@ public class DifferentialVerificationService {
         boolean noAdaptWipe = adaptWipeReasons.isEmpty();
         reasons.addAll(adaptWipeReasons);
 
-        boolean accepted = analysis.actionableGatesPass() && harnessIntact && noSolutionLeak && noSelfComparison && javaAresConventionsHold && javaSourceLayoutIntact
+        boolean mechanicallyVerified = analysis.actionableGatesPass() && harnessIntact && noSolutionLeak && noSelfComparison && javaAresConventionsHold && javaSourceLayoutIntact
                 && extractionSound && noAdaptWipe;
-        if (!accepted) {
+        if (!mechanicallyVerified) {
             log.info(
                     "Differential verification failed: solution[{}], template[{}], actionableGatesPass={}, harnessIntact={}, noSolutionLeak={}, noSelfComparison={}, "
                             + "javaAresConventionsHold={}, javaSourceLayoutIntact={}, extractionSound={}, noAdaptWipe={}",
                     solution, template, analysis.actionableGatesPass(), harnessIntact, noSolutionLeak, noSelfComparison, javaAresConventionsHold, javaSourceLayoutIntact,
                     extractionSound, noAdaptWipe);
         }
-        return new VerificationResult(accepted, analysis.solutionPassed(), analysis.templateFailed(), solution.tests(), reasons);
+        return new VerificationResult(mechanicallyVerified, analysis.solutionPassed(), analysis.templateFailed(), solution.tests(), reasons);
     }
 
     /**
@@ -226,7 +240,9 @@ public class DifferentialVerificationService {
      * returns an agent-readable {@link AgentVerifyReport} as a mechanical precheck before final post-loop integrity and semantic review.
      * <p>
      * It skips the sandbox-free integrity gates (they need the seed snapshot and read-back the agent loop lacks), so {@code wouldBeAccepted} reflects the differential + actionable
-     * gates only; it neither checks nor proves semantic relevance. Final post-loop integrity and semantic review remains the acceptance decision. Each call re-runs the two builds
+     * gates only; it neither checks nor proves semantic relevance. Final post-loop integrity checks determine mechanical validity; semantic review informs the instructor. Each
+     * call
+     * re-runs the two builds
      * (no stale cache).
      *
      * @param sandbox   the open sandbox session the pristine builds run in
@@ -250,14 +266,15 @@ public class DifferentialVerificationService {
      */
     public AgentVerifyReport selfCheck(InteractiveSandbox sandbox, String sessionId, ProgrammingExercise exercise, Map<String, String> seedTestsFiles, boolean adaptation) {
         // No authoritative seeded set: the agent cannot bind to structural tests seeded after it submits. The name-shape exemption still applies.
-        DifferentialAnalysis analysis = runDifferential(sandbox, sessionId, exercise, Set.of(), null);
+        String problemStatement = readProblemStatement(sandbox, sessionId);
+        DifferentialAnalysis analysis = runDifferential(sandbox, sessionId, exercise, Set.of(), problemStatement, () -> {
+        });
         BuildSummary solution = analysis.solution();
         BuildSummary template = analysis.template();
 
         boolean solutionPassed = analysis.solutionPassed();
         boolean templateCompiled = !template.timedOut() && template.tests() > 0;
-        // Reuse the production-parity gate's computation so the agent sees the tests that would block acceptance (the Go/no-exception zero-value-stub trap).
-        List<String> templateWronglyPassing = templateCompiled ? gradableTestsThatPassOnTemplate(solution, template) : List.of();
+        List<String> templateWronglyPassing = templateCompiled ? testsInFullyPassingTasks(problemStatement, solution, template) : List.of();
         List<String> reasons = new ArrayList<>(analysis.actionableReasons());
         boolean javaAresConventionsHold = true;
         if (exercise.getProgrammingLanguage() == ProgrammingLanguage.JAVA) {
@@ -354,14 +371,14 @@ public class DifferentialVerificationService {
      * @param seededStructuralTestNames the authoritative seeded structural test names exempt from binding resolution (empty for the self-check)
      */
     private DifferentialAnalysis runDifferential(InteractiveSandbox sandbox, String sessionId, ProgrammingExercise exercise, Set<String> seededStructuralTestNames,
-            @Nullable String producedProblemStatement) {
+            @Nullable String producedProblemStatement, Runnable restoreCandidate) {
         List<String> reasons = new ArrayList<>();
 
-        // Re-seed and invoke a pristine verify.sh outside /workspace, so any edit to the agent's own copy is irrelevant. It collects build-fresh reports into a verifier-owned dir
-        // we copyOut and parse with the production parsers (no marker scraping).
+        restoreCandidate.run();
         seedPristineVerifyScript(sandbox, sessionId, exercise);
         BuildSummary solution = runPristineBuild(sandbox, sessionId, sandboxBuildCommandService.pristineSolutionBuildCommand(),
                 GenerationWorkspaceService.directoryFor(RepositoryType.SOLUTION));
+        restoreCandidate.run();
         seedPristineVerifyScript(sandbox, sessionId, exercise);
         BuildSummary template = runPristineBuild(sandbox, sessionId, sandboxBuildCommandService.pristineTemplateBuildCommand(),
                 GenerationWorkspaceService.directoryFor(RepositoryType.TEMPLATE));
@@ -394,8 +411,7 @@ public class DifferentialVerificationService {
         boolean noDuplicateTaskBindings = checkNoDuplicateTaskBindings(duplicateTaskBindings, problemStatementHasTasks, reasons);
         List<String> unboundGradableTests = ProblemStatementBindingChecker.unboundGradableTestNames(problemStatement, solution.testNames(), testCount, seededStructuralTestNames);
         boolean allGradableTestsBound = checkAllGradableTestsBound(unboundGradableTests, problemStatementHasTasks, taskBindingsResolve, reasons);
-        boolean noTaskTestPassesTemplate = checkNoTaskBoundTestPassesTemplate(problemStatement, solution, template, problemStatementHasTasks, taskBindingsResolve, reasons);
-        boolean noGradableTestPassesTemplate = checkNoGradableTestPassesTemplate(solution, template, reasons);
+        boolean noTaskPassesTemplate = checkNoTaskPassesTemplate(problemStatement, solution, template, problemStatementHasTasks, taskBindingsResolve, reasons);
         boolean solutionScaClean = checkSolutionScaClean(exercise, solution, reasons);
 
         // Prose hygiene: the oracle is blind to what the student-facing statement exposes, so this gate blocks leaks of grader internals or bare task markers (with exact phrases).
@@ -408,8 +424,7 @@ public class DifferentialVerificationService {
         }
 
         boolean actionableGatesPass = solutionPassed && noDuplicateTestNames && templateFailed && testCount > 0 && problemStatementHasTasks && taskKeywordsWellFormed
-                && taskBindingsResolve && noDuplicateTaskBindings && allGradableTestsBound && noTaskTestPassesTemplate && noGradableTestPassesTemplate && solutionScaClean
-                && proseHygienic;
+                && taskBindingsResolve && noDuplicateTaskBindings && allGradableTestsBound && noTaskPassesTemplate && solutionScaClean && proseHygienic;
 
         List<String> possiblyDeadFiles = possiblyDeadWorkspaceFiles(sandbox, sessionId);
         return new DifferentialAnalysis(solution, template, solutionPassed, templateFailed, actionableGatesPass, reasons, unresolvedTaskBindings, possiblyDeadFiles);
@@ -589,41 +604,15 @@ public class DifferentialVerificationService {
         return allGradableTestsBound;
     }
 
-    /**
-     * The strict per-test differential gate: every {@code [task]}-bound test the solution passes must fail on the template. A graded test the template already satisfies (a
-     * {@code return 0} stub passing {@code fibonacci(0)==0}) hands the student a free point even if the count gate passed. Fails open when the name/fail sets are untrustworthy.
-     *
-     * @param taskBindingsResolve whether the bindings resolve (the gate reports only when they do)
-     */
-    private static boolean checkNoTaskBoundTestPassesTemplate(String problemStatement, BuildSummary solution, BuildSummary template, boolean problemStatementHasTasks,
+    private static boolean checkNoTaskPassesTemplate(String problemStatement, BuildSummary solution, BuildSummary template, boolean problemStatementHasTasks,
             boolean taskBindingsResolve, List<String> reasons) {
-        List<String> taskTestsPassingOnTemplate = taskBoundTestsThatPassOnTemplate(problemStatement, solution, template);
-        boolean noTaskTestPassesTemplate = taskTestsPassingOnTemplate.isEmpty();
-        if (problemStatementHasTasks && taskBindingsResolve && !noTaskTestPassesTemplate) {
-            reasons.add("These [task]-bound tests PASS on the template, which gives the student free points before doing any work: " + taskTestsPassingOnTemplate
-                    + ". Every graded ([task]-bound) test must FAIL on the template — the template's placeholder bodies must not accidentally satisfy a graded assertion (e.g. a "
-                    + "`return 0` stub must not pass an `expected == 0` test). Strip the template so every graded test fails, or make the test assert behaviour the placeholder cannot meet.");
+        List<String> testsInFullyPassingTasks = testsInFullyPassingTasks(problemStatement, solution, template);
+        boolean noTaskPassesTemplate = testsInFullyPassingTasks.isEmpty();
+        if (problemStatementHasTasks && taskBindingsResolve && !noTaskPassesTemplate) {
+            reasons.add("These [task] groups are already fully satisfied by the template: " + testsInFullyPassingTasks
+                    + ". A starter may pass structural or scaffolding checks, but every task must retain at least one failing behavioural test so students still have work to do.");
         }
-        return noTaskTestPassesTemplate;
-    }
-
-    /**
-     * The production-parity gate: production grades every discovered test, not only the {@code [task]}-bound subset, so an unbound test passing on the template still gives a
-     * bare-template student {@code >0%}. We require every solution-passing test to fail on the template, except the build/compile/configure gates ({@link #isBuildGateTest}) that
-     * legitimately pass on both. Fails open under the same guards as the {@code [task]} gate.
-     */
-    private static boolean checkNoGradableTestPassesTemplate(BuildSummary solution, BuildSummary template, List<String> reasons) {
-        List<String> gradableTestsPassingOnTemplate = gradableTestsThatPassOnTemplate(solution, template);
-        boolean noGradableTestPassesTemplate = gradableTestsPassingOnTemplate.isEmpty();
-        if (!noGradableTestPassesTemplate) {
-            reasons.add("These tests PASS on the template, but production grades EVERY discovered test (not only the [task]-bound ones), so a student submitting the bare template "
-                    + "would score above 0% on them: " + gradableTestsPassingOnTemplate
-                    + ". Every gradable test the solution passes must FAIL on the template — a student starting "
-                    + "from the template has implemented nothing, so their score must be exactly 0%. Make every test assert behaviour the template's placeholder bodies cannot "
-                    + "satisfy (do NOT leave an unbound test, or a too-lucky placeholder that accidentally returns the expected value). Build/compile/configure gate tests "
-                    + "(e.g. C++ TestConfigure/CompileSort, C Compile) are exempt because they only check that the code compiles, which the template does by design.");
-        }
-        return noGradableTestPassesTemplate;
+        return noTaskPassesTemplate;
     }
 
     /**
@@ -704,7 +693,7 @@ public class DifferentialVerificationService {
      * The {@code [task]}-bound test names that pass on the template (resolve to a real solution test but are not in the template's failed/errored set) — the accidental free points
      * the strict differential rejects. Fails open (empty) when the template emitted no fail lines or the solution name set is missing/short.
      */
-    private static List<String> taskBoundTestsThatPassOnTemplate(String problemStatement, BuildSummary solution, BuildSummary template) {
+    private static List<String> testsInFullyPassingTasks(String problemStatement, BuildSummary solution, BuildSummary template) {
         List<String> solutionNames = solution.testNames();
         if (solutionNames.isEmpty() || solutionNames.size() < solution.tests()) {
             return List.of();
@@ -715,10 +704,11 @@ public class DifferentialVerificationService {
         Set<String> solutionPassing = solutionNames.stream().map(ProblemStatementBindingChecker::normalizeTestName).collect(Collectors.toSet());
         Set<String> templateFailed = template.testFailedNames().stream().map(ProblemStatementBindingChecker::normalizeTestName).collect(Collectors.toSet());
         List<String> offending = new ArrayList<>();
-        for (String name : ProblemStatementBindingChecker.boundTestNames(problemStatement)) {
-            String normalized = ProblemStatementBindingChecker.normalizeTestName(name);
-            if (solutionPassing.contains(normalized) && !templateFailed.contains(normalized) && !offending.contains(name)) {
-                offending.add(name);
+        for (List<String> group : ProblemStatementBindingChecker.boundTestGroups(problemStatement)) {
+            boolean allResolveAndPass = group.stream().map(ProblemStatementBindingChecker::normalizeTestName)
+                    .allMatch(name -> solutionPassing.contains(name) && !templateFailed.contains(name));
+            if (allResolveAndPass) {
+                offending.add(String.join(",", group));
             }
         }
         return offending;
@@ -730,32 +720,6 @@ public class DifferentialVerificationService {
      */
     private static boolean isBuildGateTest(String normalizedName) {
         return BuildGateTestNames.isBuildGate(normalizedName);
-    }
-
-    /**
-     * Every solution-passing test that is not in the template's failed/errored set, excluding the build gates ({@link #isBuildGateTest}). Mirrors how production grades (every
-     * discovered test, not only the {@code [task]}-bound subset). Fails open under the same guards as {@link #taskBoundTestsThatPassOnTemplate}.
-     */
-    private static List<String> gradableTestsThatPassOnTemplate(BuildSummary solution, BuildSummary template) {
-        List<String> solutionNames = solution.testNames();
-        if (solutionNames.isEmpty() || solutionNames.size() < solution.tests()) {
-            return List.of();
-        }
-        if (template.testFailedNames().isEmpty()) {
-            return List.of();
-        }
-        Set<String> templateFailed = template.testFailedNames().stream().map(ProblemStatementBindingChecker::normalizeTestName).collect(Collectors.toSet());
-        List<String> offending = new ArrayList<>();
-        for (String rawName : solutionNames) {
-            String normalized = ProblemStatementBindingChecker.normalizeTestName(rawName);
-            if (isBuildGateTest(normalized)) {
-                continue;
-            }
-            if (!templateFailed.contains(normalized) && !offending.contains(normalized)) {
-                offending.add(normalized);
-            }
-        }
-        return offending;
     }
 
     /**

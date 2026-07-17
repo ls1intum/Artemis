@@ -253,6 +253,13 @@ public class RemoteInteractiveSandboxClient implements InteractiveSandbox {
     }
 
     @Override
+    public void resetSession(String sessionId) {
+        String targetAgent = agentOf(sessionId);
+        String containerId = containerOf(sessionId);
+        relay(SandboxOpRequest.reset(newCorrelationId(), targetAgent, containerId), controlOpTimeout);
+    }
+
+    @Override
     public void destroySession(String sessionId) {
         String targetAgent = agentOf(sessionId);
         String containerId = containerOf(sessionId);

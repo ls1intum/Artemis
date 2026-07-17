@@ -246,7 +246,7 @@ public class AgentLoopRunner {
                 emit(stepListener, "Cancelling generation…");
                 return new AgentLoopResult(AgentLoopResult.Status.CANCELLED, turn - 1, lastAssistantText);
             }
-            // Tag any out-of-band events the tools emit this turn (e.g. streamed file snapshots) with the current turn number.
+            // Tag any out-of-band events the tools emit this turn (e.g. streamed file changes) with the current turn number.
             if (tools instanceof TurnAware turnAware) {
                 turnAware.onTurn(turn);
             }
@@ -315,7 +315,7 @@ public class AgentLoopRunner {
             }
 
             if (submitRequested) {
-                // End the loop so the post-loop mechanical verifier (which does not trust the agent) can run before semantic review decides acceptance.
+                // End the loop so the authoritative post-loop verifier can determine save eligibility before the quality review optionally requests repairs.
                 emit(stepListener, "Submitting the exercise for verification.");
                 return new AgentLoopResult(AgentLoopResult.Status.COMPLETED, turn, lastAssistantText);
             }

@@ -27,14 +27,14 @@ import de.tum.cit.aet.artemis.programming.service.RepositoryCheckoutService;
 
 /**
  * Produces the single build recipe — {@code verify.sh} — that both the agent (to self-check) and the {@link DifferentialVerificationService} (to decide the verdict) run, so the
- * agent's view of "does it build?" is byte-for-byte the grader's.
+ * agent's view of "does it build?" uses the same build phases and report parsers as the grader.
  * <p>
  * The script reproduces the real Artemis CI layout: a fresh hermetic build tree with the tests checked out and the chosen assignment ({@code solution/} or {@code template/})
  * copied into {@code assignment/} next to them, then runs the exercise's real per-language build phases ({@link BuildPhasesTemplateService}).
  * <p>
- * The verdict is not parsed in the shell: the script only collects the build-fresh report files into a fixed, verifier-owned directory ({@link #REPORTS_DIR}); the Java verifier
- * copies that directory out and parses it with the same production code as the LocalCI pipeline ({@code TestResultXmlParser}, {@code ReportParser}) — parity by construction. The
- * script prints only a single non-authoritative {@code HYPERION_COLLECTED} liveness line.
+ * The verdict is not parsed in the shell: the script collects build-fresh report files into a fixed directory ({@link #REPORTS_DIR}); the Java verifier copies that directory out
+ * and parses it with the same production code as LocalCI ({@code TestResultXmlParser}, {@code ReportParser}). The script prints only a non-authoritative
+ * {@code HYPERION_COLLECTED} liveness line.
  */
 @Lazy
 @Service
@@ -45,13 +45,7 @@ public class SandboxBuildCommandService {
 
     public static final String VERIFY_SCRIPT_NAME = "verify.sh";
 
-    /**
-     * Verifier-owned directory OUTSIDE {@code /workspace} where the verifier re-seeds a pristine {@code verify.sh} per run and that script collects the reports. The
-     * {@code read_file}/{@code write_file}/{@code edit_file} tools are path-allowlisted to {@code /workspace}, but the {@code bash} tool is not, so an agent COULD write here — the
-     * protection is therefore wipe-on-invocation, not path isolation: the authoritative pass re-seeds the script before each assignment build and {@code rm -rf}s
-     * {@link #REPORTS_DIR} into a fresh {@code mktemp} build dir, then only counts reports {@code -newer} than a build-start marker. Statically planted scripts and reports are
-     * overwritten or ignored before grading.
-     */
+    /** Directory outside {@code /workspace} where the verifier re-seeds its script and collects reports. */
     public static final String PRISTINE_VERIFY_DIR = "/opt/hyperion";
 
     /** Absolute path of the pristine, verifier-controlled {@code verify.sh} (never the agent's {@code /workspace} copy). */
@@ -64,6 +58,9 @@ public class SandboxBuildCommandService {
      * Verifier-owned directory the script collects reports into and the verifier {@code copyOut}s from; wiped and rebuilt per authoritative run (see {@link #PRISTINE_VERIFY_DIR}).
      */
     static final String REPORTS_DIR = PRISTINE_VERIFY_DIR + "/reports";
+
+    /** Fresh Maven reporter output. Ares-generated tests may write only below {@code target}, not this path. */
+    static final String RAW_MAVEN_REPORTS_DIR = PRISTINE_VERIFY_DIR + "/maven-reports";
 
     /** Prefix of the non-authoritative liveness line {@code verify.sh} prints; the verdict is read from the collected files, not this line. */
     static final String COLLECTED_MARKER = "HYPERION_COLLECTED";
@@ -153,9 +150,12 @@ public class SandboxBuildCommandService {
         String assignmentDestination = "$BUILD_DIR/" + recipe.assignmentDir();
         String testDestination = recipe.testDir().isEmpty() ? "$BUILD_DIR" : "$BUILD_DIR/" + recipe.testDir();
         String phaseSection = buildPhaseSection(recipe.phases());
-        String javaSecurityManagerAllow = exercise.getProgrammingLanguage() == ProgrammingLanguage.JAVA
-                ? "export JAVA_TOOL_OPTIONS=\"${JAVA_TOOL_OPTIONS:-} -Djava.security.manager=allow\"\nexport MAVEN_OPTS=\"${MAVEN_OPTS:-} -Djava.security.manager=allow\"\nexport GRADLE_OPTS=\"${GRADLE_OPTS:-} -Djava.security.manager=allow\""
+        boolean java = exercise.getProgrammingLanguage() == ProgrammingLanguage.JAVA;
+        String javaSecurityManagerAllow = java
+                ? "export JAVA_TOOL_OPTIONS=\"${JAVA_TOOL_OPTIONS:-} -Djava.security.manager=allow\"\nexport GRADLE_OPTS=\"${GRADLE_OPTS:-} -Djava.security.manager=allow\""
                 : ": # no Java/Ares security-manager compatibility flags needed";
+        String junitSearchRoot = java ? "\"$RAW_MAVEN_REPORTS_DIR\"" : "\"$BUILD_DIR\"";
+        String junitFindExpression = java ? "-name '*.xml'" : findExpression;
         // CI placeholder values for the seeded harness, mapped to the real checkout layout. With no solution checkout the solution placeholder never appears, so its fallback is
         // moot.
         String solutionPlaceholderValue = recipe.solutionDir().isEmpty() ? "assignment" : recipe.solutionDir();
@@ -195,6 +195,7 @@ public class SandboxBuildCommandService {
                 fi
                 WORKSPACE="@@WORKSPACE@@"
                 REPORTS_DIR="@@REPORTS_DIR@@/$ASSIGNMENT"
+                RAW_MAVEN_REPORTS_DIR="@@RAW_MAVEN_REPORTS_DIR@@/$ASSIGNMENT"
                 BUILD_DIR=$(mktemp -d /tmp/hyperion-verify.XXXXXX) || exit 70
                 trap 'rm -rf "$BUILD_DIR"' EXIT
                 # Materialize the CI checkout layout (-a preserves exec bits and binaries).
@@ -222,16 +223,24 @@ public class SandboxBuildCommandService {
                         -e 's#${solutionWorkingDirectory}#@@SOLUTION_DIR@@#g' \\
                         -e 's#${testWorkingDirectory}#@@TEST_DIR@@#g' "$f" > "$f.hyp" 2>/dev/null && mv "$f.hyp" "$f" 2>/dev/null || rm -f "$f.hyp" 2>/dev/null
                 done
-                # Anti-forgery: delete every pre-existing report XML before the phases run (the agent can plant one in tests/ and cp -a preserves its mtime), so only reports written
-                # this run are collected.
+                # Remove every pre-existing report before the phases run. Java Maven reports are redirected outside the test JVM's Ares-whitelisted target tree; each phase gets a
+                # separate directory so structural and behaviour reports cannot overwrite one another.
                 find "$BUILD_DIR" -type f \\( @@REPORT_FIND@@ \\) -delete 2>/dev/null || true
-                # Reference marker; collection takes only reports NEWER than it, so a planted report that escaped the delete still cannot be collected.
+                rm -rf "$RAW_MAVEN_REPORTS_DIR" 2>/dev/null || true
+                mkdir -p "$RAW_MAVEN_REPORTS_DIR" || exit 70
+                # Reference marker; collection accepts only reports created by this build.
                 BUILD_START_MARKER="$BUILD_DIR/.hyperion-build-start"
                 : > "$BUILD_START_MARKER"
                 @@JAVA_SECURITY_MANAGER_ALLOW@@
                 # Run the exercise's real build phases, each from the build root. A non-zero exit (failing tests or a compile error) is expected for the template.
                 rc=0
+                phase_seq=0
                 run_phase() {
+                    phase_seq=$((phase_seq + 1))
+                    phase_reports="$RAW_MAVEN_REPORTS_DIR/$phase_seq"
+                    mkdir -p "$phase_reports" || exit 70
+                    MAVEN_OPTS="${MAVEN_OPTS:-} -Djava.security.manager=allow -Dsurefire.reportsDirectory=$phase_reports/surefire -Dfailsafe.reportsDirectory=$phase_reports/failsafe"
+                    export MAVEN_OPTS
                     ( cd "$BUILD_DIR" || exit 70; set -e; eval "$1" )
                     phase_rc=$?
                     if [ "$phase_rc" -ne 0 ] && [ "$rc" -eq 0 ]; then rc=$phase_rc; fi
@@ -252,7 +261,7 @@ public class SandboxBuildCommandService {
                 }
                 seq=0
                 junit_report_list=$(mktemp /tmp/hyperion-junit-reports.XXXXXX) || exit 70
-                find "$BUILD_DIR" -type f -newer "$BUILD_START_MARKER" \\( @@REPORT_FIND@@ \\) > "$junit_report_list" 2>/dev/null || true
+                find @@JUNIT_SEARCH_ROOT@@ -type f -newer "$BUILD_START_MARKER" \\( @@JUNIT_FIND@@ \\) > "$junit_report_list" 2>/dev/null || true
                 while IFS= read -r report; do
                     seq=$((seq + 1)); collect_one "$seq" "$report" "@@JUNIT_TOKEN@@"; collected_tests=$((collected_tests + 1))
                 done < "$junit_report_list"
@@ -267,7 +276,8 @@ public class SandboxBuildCommandService {
                 .replace("@@REPORT_FIND@@", findExpression).replace("@@JAVA_SECURITY_MANAGER_ALLOW@@", javaSecurityManagerAllow).replace("@@PHASES@@", phaseSection)
                 .replace("@@SCA_COLLECT@@", buildScaCollectSection(scaFindExpression)).replace("@@NAME_SEP@@", COLLECTED_NAME_SEPARATOR)
                 .replace("@@JUNIT_TOKEN@@", COLLECTED_JUNIT_TOKEN).replace("@@COLLECTED_MARKER@@", COLLECTED_MARKER).replace("@@READINESS_OVERLAY@@", readinessOverlay)
-                .replace("@@READINESS_FIXTURE@@", READINESS_FIXTURE_DIR);
+                .replace("@@READINESS_FIXTURE@@", READINESS_FIXTURE_DIR).replace("@@JUNIT_SEARCH_ROOT@@", junitSearchRoot).replace("@@JUNIT_FIND@@", junitFindExpression)
+                .replace("@@RAW_MAVEN_REPORTS_DIR@@", RAW_MAVEN_REPORTS_DIR);
     }
 
     /**

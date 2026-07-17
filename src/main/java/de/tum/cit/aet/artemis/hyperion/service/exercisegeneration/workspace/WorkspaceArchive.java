@@ -16,6 +16,7 @@ import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
@@ -41,6 +42,12 @@ public final class WorkspaceArchive {
     private static final int MAX_ARCHIVE_BYTES = 32 * 1024 * 1024;
 
     private static final int MAX_ARCHIVE_ENTRIES = 10_000;
+
+    private static final Set<String> CREDENTIAL_FILE_NAMES = Set.of(".env", ".npmrc", ".pypirc", ".netrc", ".git-credentials", "application_default_credentials.json",
+            "service-account.json", "id_rsa", "id_dsa", "id_ecdsa", "id_ed25519");
+
+    private static final Pattern HIGH_CONFIDENCE_SECRET = Pattern.compile(
+            "-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----|(?:^|[^A-Z0-9])AKIA[A-Z0-9]{16}(?:$|[^A-Z0-9])|(?:^|[^A-Za-z0-9])gh[pousr]_[A-Za-z0-9]{36,}(?:$|[^A-Za-z0-9])");
 
     private static final Path ARCHIVE_ROOT = Path.of("/workspace-archive");
 
@@ -80,6 +87,30 @@ public final class WorkspaceArchive {
 
     static InputStream buildWorkspaceTarStream(Map<String, String> textFiles, Map<String, Path> directoryTrees, Set<String> executableTextFiles) {
         return new ByteArrayInputStream(build(textFiles, directoryTrees, executableTextFiles));
+    }
+
+    static InputStream buildFilesTarStream(Map<String, String> textFiles, Map<String, byte[]> binaryFiles, Set<String> executableFiles) {
+        BoundedByteArrayOutputStream out = new BoundedByteArrayOutputStream(MAX_ARCHIVE_BYTES);
+        try (TarArchiveOutputStream tar = new TarArchiveOutputStream(out)) {
+            tar.setLongFileMode(TarArchiveOutputStream.LONGFILE_POSIX);
+            long total = 0;
+            int[] entryCount = { 0 };
+            for (Map.Entry<String, String> entry : textFiles.entrySet()) {
+                incrementEntryCount(entryCount);
+                byte[] content = entry.getValue().getBytes(StandardCharsets.UTF_8);
+                total = addToSeedTotal(total, content.length, entry.getKey());
+                writeFileEntry(tar, entry.getKey(), content, executableFiles.contains(entry.getKey()) ? MODE_EXECUTABLE : MODE_FILE);
+            }
+            for (Map.Entry<String, byte[]> entry : binaryFiles.entrySet()) {
+                incrementEntryCount(entryCount);
+                total = addToSeedTotal(total, entry.getValue().length, entry.getKey());
+                writeFileEntry(tar, entry.getKey(), entry.getValue(), executableFiles.contains(entry.getKey()) ? MODE_EXECUTABLE : MODE_FILE);
+            }
+        }
+        catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+        return new ByteArrayInputStream(out.toByteArray());
     }
 
     private static byte[] build(Map<String, String> textFiles, Map<String, Path> directoryTrees, Set<String> executableTextFiles) {
@@ -124,11 +155,23 @@ public final class WorkspaceArchive {
                 if (size > MAX_FILE_BYTES) {
                     throw new RejectedWorkspaceEntryException("Refusing an oversized workspace seed file (" + size + " bytes): " + entryName);
                 }
+                rejectCredentialMaterial(path, relative, entryName);
                 total = addToSeedTotal(total, size, entryName);
                 writeFileEntry(tar, entryName, path, size, mode);
             }
         }
         return total;
+    }
+
+    private static void rejectCredentialMaterial(Path path, String relative, String entryName) throws IOException {
+        String fileName = Path.of(relative).getFileName().toString().toLowerCase();
+        if (CREDENTIAL_FILE_NAMES.contains(fileName)) {
+            throw new RejectedWorkspaceEntryException("Refusing to send a credential file to the generation provider: " + entryName);
+        }
+        String content = new String(Files.readAllBytes(path), StandardCharsets.UTF_8);
+        if (HIGH_CONFIDENCE_SECRET.matcher(content).find()) {
+            throw new RejectedWorkspaceEntryException("Refusing to send credential material to the generation provider: " + entryName);
+        }
     }
 
     private static void incrementEntryCount(int[] entryCount) {

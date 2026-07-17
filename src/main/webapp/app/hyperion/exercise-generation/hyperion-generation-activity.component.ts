@@ -16,18 +16,18 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 import { AlertService } from 'app/foundation/service/alert.service';
 import { HyperionExerciseGenerationService } from 'app/hyperion/exercise-generation/hyperion-exercise-generation.service';
 import {
-    ExerciseGenerationFileSnapshot,
+    ExerciseGenerationFileChange,
     ExerciseGenerationRevertResult,
+    HyperionFileChangeRepo,
     HyperionGenerationCompletionStatus,
     HyperionGenerationEvent,
     HyperionGenerationMessage,
     HyperionGenerationMode,
     HyperionGenerationVerdict,
-    HyperionSnapshotRepo,
-    isFileSnapshot,
+    isFileChange,
 } from 'app/hyperion/exercise-generation/hyperion-generation-stream.model';
 
-const REPO_ORDER: HyperionSnapshotRepo[] = ['solution', 'template', 'tests', 'other'];
+const REPO_ORDER: HyperionFileChangeRepo[] = ['solution', 'template', 'tests', 'other'];
 const TERMINAL_EVENT_TYPES = new Set<HyperionGenerationEvent['type']>(['DONE', 'CANCELLED', 'ERROR']);
 const MAX_RETAINED_EVENTS = 50;
 const MAX_STATUS_LOAD_ATTEMPTS = 3;
@@ -37,8 +37,8 @@ const ACTIVE_STATUS_REFRESH_MS = 5_000;
 const IDLE_STATUS_REFRESH_MS = 15_000;
 
 interface RepoFileGroup {
-    repo: HyperionSnapshotRepo;
-    files: ExerciseGenerationFileSnapshot[];
+    repo: HyperionFileChangeRepo;
+    files: ExerciseGenerationFileChange[];
 }
 
 interface ActivityLiveStatus {
@@ -52,6 +52,7 @@ export type HyperionReviewTarget = 'problem-statement' | 'solution' | 'template'
 export interface HyperionReviewRequestedEvent {
     target: HyperionReviewTarget;
     jobId: string;
+    commitHash?: string;
 }
 
 export interface HyperionGenerationCompletedEvent {
@@ -84,7 +85,7 @@ export class HyperionGenerationActivityComponent implements OnDestroy {
     readonly editorRefreshRequested = output<void>();
     readonly generationReverted = output<string>();
     readonly generationCompleted = output<HyperionGenerationCompletedEvent>();
-    readonly snapshotSelected = output<ExerciseGenerationFileSnapshot>();
+    readonly fileChangeSelected = output<ExerciseGenerationFileChange>();
     readonly reviewRequested = output<HyperionReviewRequestedEvent>();
     readonly startRequested = output<HyperionGenerationMode | undefined>();
 
@@ -94,7 +95,7 @@ export class HyperionGenerationActivityComponent implements OnDestroy {
     readonly statusLoading = signal<boolean>(false);
     readonly statusLoadFailed = signal<boolean>(false);
     readonly events = signal<HyperionGenerationEvent[]>([]);
-    readonly snapshots = signal<ExerciseGenerationFileSnapshot[]>([]);
+    readonly fileChanges = signal<ExerciseGenerationFileChange[]>([]);
     readonly verdict = signal<HyperionGenerationVerdict | undefined>(undefined);
     readonly completionStatus = signal<HyperionGenerationCompletionStatus | undefined>(undefined);
     readonly liveExerciseChanged = signal<boolean | undefined>(undefined);
@@ -141,16 +142,16 @@ export class HyperionGenerationActivityComponent implements OnDestroy {
         this.effectiveRevertMode() === 'GENERATE' ? 'artemisApp.hyperion.generationActivity.generationUndone' : 'artemisApp.hyperion.generationActivity.adaptationUndone',
     );
 
-    readonly hasDetails = computed(() => this.snapshots().length > 0 || this.previousProgress().length > 0);
+    readonly hasDetails = computed(() => this.fileChanges().length > 0 || this.previousProgress().length > 0);
     readonly detailsLabelKey = computed(() => {
-        if (this.snapshots().length) {
+        if (this.fileChanges().length) {
             return this.detailsExpanded() ? 'artemisApp.hyperion.generationActivity.hideChangedFiles' : 'artemisApp.hyperion.generationActivity.showChangedFiles';
         }
         return this.detailsExpanded() ? 'artemisApp.hyperion.generationActivity.hideDetails' : 'artemisApp.hyperion.generationActivity.showDetails';
     });
 
     readonly filesByRepo = computed<RepoFileGroup[]>(() => {
-        const files = this.snapshots();
+        const files = this.fileChanges();
         return REPO_ORDER.map((repo) => ({
             repo,
             files: files.filter((file) => file.repo === repo).sort((first, second) => this.displayPath(first).localeCompare(this.displayPath(second))),
@@ -219,7 +220,7 @@ export class HyperionGenerationActivityComponent implements OnDestroy {
         }
         return undefined;
     });
-    readonly canNavigateSnapshots = computed(() => {
+    readonly canNavigateFileChanges = computed(() => {
         const terminalEvent = this.latestTerminalEvent(this.events());
         return terminalEvent?.type === 'DONE' && terminalEvent.liveExerciseChanged === true;
     });
@@ -227,23 +228,14 @@ export class HyperionGenerationActivityComponent implements OnDestroy {
         if (!this.reviewJobId()) {
             return [];
         }
-        const snapshots = this.snapshots();
-        if (!snapshots.length) {
-            return !this.running() && this.revertAvailable() ? ['problem-statement', 'solution', 'template', 'tests'] : [];
-        }
-        if (!this.canNavigateSnapshots()) {
-            return [];
-        }
-        return (['problem-statement', 'solution', 'template', 'tests'] as const).filter((target) =>
-            target === 'problem-statement'
-                ? snapshots.some((file) => file.repo === 'other' && file.path === 'problem-statement.md')
-                : snapshots.some((file) => file.repo === target),
-        );
+        const terminal = this.latestTerminalEvent(this.events());
+        const repositoryCommits = terminal?.savedRepositoryCommits;
+        return ['problem-statement', ...(['solution', 'template', 'tests'] as const).filter((repository) => repositoryCommits?.[repository])];
     });
-    readonly reviewJobId = computed(() => (this.canNavigateSnapshots() ? this.jobId() : this.revertAvailable() ? this.revertJobId() : undefined));
+    readonly reviewJobId = computed(() => (this.canNavigateFileChanges() ? this.jobId() : this.revertAvailable() ? this.revertJobId() : undefined));
 
-    canNavigateSnapshot(snapshot: ExerciseGenerationFileSnapshot): boolean {
-        return this.canNavigateSnapshots() && (snapshot.repo !== 'other' || snapshot.path === 'problem-statement.md');
+    canNavigateFileChange(fileChange: ExerciseGenerationFileChange): boolean {
+        return fileChange.action !== 'delete' && this.canNavigateFileChanges() && (fileChange.repo !== 'other' || fileChange.path === 'problem-statement.md');
     }
 
     protected readonly faSpinner = faSpinner;
@@ -344,14 +336,14 @@ export class HyperionGenerationActivityComponent implements OnDestroy {
         this.detailsExpanded.update((expanded) => !expanded);
     }
 
-    protected displayPath(snapshot: ExerciseGenerationFileSnapshot): string {
-        const prefix = `${snapshot.repo}/`;
-        return snapshot.path.startsWith(prefix) ? snapshot.path.slice(prefix.length) : snapshot.path;
+    protected displayPath(fileChange: ExerciseGenerationFileChange): string {
+        const prefix = `${fileChange.repo}/`;
+        return fileChange.path.startsWith(prefix) ? fileChange.path.slice(prefix.length) : fileChange.path;
     }
 
-    protected snapshotAccessibleLabel(snapshot: ExerciseGenerationFileSnapshot): string {
-        const repository = this.translateService.instant(`artemisApp.hyperion.generationActivity.repo.${snapshot.repo}`);
-        return `${repository}: ${this.displayPath(snapshot)}`;
+    protected fileChangeAccessibleLabel(fileChange: ExerciseGenerationFileChange): string {
+        const repository = this.translateService.instant(`artemisApp.hyperion.generationActivity.repo.${fileChange.repo}`);
+        return `${repository}: ${this.displayPath(fileChange)}`;
     }
 
     private revert(): void {
@@ -383,17 +375,19 @@ export class HyperionGenerationActivityComponent implements OnDestroy {
             });
     }
 
-    selectFile(snapshot: ExerciseGenerationFileSnapshot): void {
-        if (!this.canNavigateSnapshot(snapshot)) {
+    selectFile(fileChange: ExerciseGenerationFileChange): void {
+        if (!this.canNavigateFileChange(fileChange)) {
             return;
         }
-        this.snapshotSelected.emit(snapshot);
+        this.fileChangeSelected.emit(fileChange);
     }
 
     requestReview(target: HyperionReviewTarget): void {
         const currentJobId = this.reviewJobId();
         if (currentJobId && this.reviewTargets().includes(target)) {
-            this.reviewRequested.emit({ target, jobId: currentJobId });
+            const terminal = this.latestTerminalEvent(this.events());
+            const commitHash = terminal?.savedRepositoryCommits?.[target];
+            this.reviewRequested.emit(commitHash ? { target, jobId: currentJobId, commitHash } : { target, jobId: currentJobId });
         }
     }
 
@@ -524,9 +518,9 @@ export class HyperionGenerationActivityComponent implements OnDestroy {
                     this.cancellable.set(status.cancellable === true);
                     const events = this.mergeEvents(sameJob ? this.events() : [], status.events ?? []);
                     this.events.set(events);
-                    const fileSnapshots = status.fileSnapshots ?? [];
-                    const snapshots = this.mergeSnapshots(sameJob ? this.snapshots() : [], fileSnapshots);
-                    this.snapshots.set(snapshots);
+                    const retainedFileChanges = status.fileChanges ?? [];
+                    const mergedFileChanges = this.mergeFileChanges(sameJob ? this.fileChanges() : [], retainedFileChanges);
+                    this.fileChanges.set(mergedFileChanges);
                     const terminalEvent = this.latestTerminalEvent(events);
                     if (terminalEvent) {
                         this.cancelRequested.set(false);
@@ -634,8 +628,8 @@ export class HyperionGenerationActivityComponent implements OnDestroy {
 
     private handleMessage(message: HyperionGenerationMessage): void {
         this.clearStreamLossRefresh();
-        if (isFileSnapshot(message)) {
-            this.upsertSnapshot(message);
+        if (isFileChange(message)) {
+            this.upsertFileChange(message);
             return;
         }
         this.events.update((list) => [...list, message].slice(-MAX_RETAINED_EVENTS));
@@ -710,14 +704,14 @@ export class HyperionGenerationActivityComponent implements OnDestroy {
         }, 500);
     }
 
-    private upsertSnapshot(snapshot: ExerciseGenerationFileSnapshot): void {
-        this.snapshots.update((list) => {
-            const index = list.findIndex((file) => this.snapshotKey(file) === this.snapshotKey(snapshot));
+    private upsertFileChange(fileChange: ExerciseGenerationFileChange): void {
+        this.fileChanges.update((list) => {
+            const index = list.findIndex((file) => this.fileChangeKey(file) === this.fileChangeKey(fileChange));
             if (index < 0) {
-                return [...list, snapshot];
+                return [...list, fileChange];
             }
             const updated = list.slice();
-            updated[index] = this.newerSnapshot(updated[index], snapshot);
+            updated[index] = this.newerFileChange(updated[index], fileChange);
             return updated;
         });
     }
@@ -761,17 +755,17 @@ export class HyperionGenerationActivityComponent implements OnDestroy {
         return [...byKey.values()].slice(-MAX_RETAINED_EVENTS);
     }
 
-    private mergeSnapshots(current: ExerciseGenerationFileSnapshot[], retained: ExerciseGenerationFileSnapshot[]): ExerciseGenerationFileSnapshot[] {
-        const byPath = new Map<string, ExerciseGenerationFileSnapshot>();
-        for (const snapshot of [...retained, ...current]) {
-            const key = this.snapshotKey(snapshot)!;
+    private mergeFileChanges(current: ExerciseGenerationFileChange[], retained: ExerciseGenerationFileChange[]): ExerciseGenerationFileChange[] {
+        const byPath = new Map<string, ExerciseGenerationFileChange>();
+        for (const fileChange of [...retained, ...current]) {
+            const key = this.fileChangeKey(fileChange)!;
             const previous = byPath.get(key);
-            byPath.set(key, previous ? this.newerSnapshot(previous, snapshot) : snapshot);
+            byPath.set(key, previous ? this.newerFileChange(previous, fileChange) : fileChange);
         }
         return [...byPath.values()];
     }
 
-    private newerSnapshot(first: ExerciseGenerationFileSnapshot, second: ExerciseGenerationFileSnapshot): ExerciseGenerationFileSnapshot {
+    private newerFileChange(first: ExerciseGenerationFileChange, second: ExerciseGenerationFileChange): ExerciseGenerationFileChange {
         if (second.turn !== first.turn) {
             return second.turn > first.turn ? second : first;
         }
@@ -789,8 +783,6 @@ export class HyperionGenerationActivityComponent implements OnDestroy {
             this.revertPartialRepositories.set(repositories);
             this.verdict.set(undefined);
             this.completionStatus.set(undefined);
-            this.events.set([]);
-            this.clearSnapshots();
             this.alertService.error('artemisApp.hyperion.generationActivity.revertPartialFailed', { repositories });
             return;
         }
@@ -806,7 +798,7 @@ export class HyperionGenerationActivityComponent implements OnDestroy {
         this.completionStatus.set(undefined);
         this.liveExerciseChanged.set(undefined);
         this.events.set([]);
-        this.clearSnapshots();
+        this.clearFileChanges();
         this.generationReverted.emit(result.completedAt);
         this.alertService.success(
             this.effectiveRevertMode() === 'GENERATE'
@@ -968,17 +960,17 @@ export class HyperionGenerationActivityComponent implements OnDestroy {
         this.cancellable.set(false);
         this.cancelRequested.set(false);
         this.cancellationStatusChecks = 0;
-        this.clearSnapshots();
+        this.clearFileChanges();
     }
 
-    private clearSnapshots(): void {
-        this.snapshots.set([]);
+    private clearFileChanges(): void {
+        this.fileChanges.set([]);
     }
 
-    private snapshotKey(snapshot: Pick<ExerciseGenerationFileSnapshot, 'repo' | 'path'> | undefined): string | undefined {
-        if (!snapshot) {
+    private fileChangeKey(fileChange: Pick<ExerciseGenerationFileChange, 'repo' | 'path'> | undefined): string | undefined {
+        if (!fileChange) {
             return undefined;
         }
-        return `${snapshot.repo}\0${snapshot.path}`;
+        return `${fileChange.repo}\0${fileChange.path}`;
     }
 }

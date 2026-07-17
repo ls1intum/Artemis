@@ -65,6 +65,7 @@ export class ProblemStatementSyncService {
     private localLeaderTimestamp = Date.now();
     private activeLeaderTimestamp = Date.now();
     private activeLeaderSessionId?: string;
+    private hasLocalChanges = false;
     private fallbackInitialContent = '';
     private latestInitialSyncRequestId?: string;
     private queuedFullContentRequests: string[] = [];
@@ -160,6 +161,7 @@ export class ProblemStatementSyncService {
         this.fallbackInitialContent = '';
         this.latestInitialSyncRequestId = undefined;
         this.activeLeaderSessionId = undefined;
+        this.hasLocalChanges = false;
         this.queuedFullContentRequests = [];
         clearRemoteSelectionStyles();
     }
@@ -273,6 +275,7 @@ export class ProblemStatementSyncService {
             if (origin === ProblemStatementSyncOrigin.Remote || origin === ProblemStatementSyncOrigin.Seed) {
                 return;
             }
+            this.hasLocalChanges = true;
             const updateEvent: ProblemStatementSyncUpdateEvent = {
                 eventType: ExerciseEditorSyncEventType.PROBLEM_STATEMENT_SYNC_UPDATE,
                 target: ExerciseEditorSyncTarget.PROBLEM_STATEMENT,
@@ -313,6 +316,9 @@ export class ProblemStatementSyncService {
             return;
         }
         if (message.responseTo !== this.latestInitialSyncRequestId) {
+            return;
+        }
+        if (this.hasLocalChanges) {
             return;
         }
         if (!this.shouldReplaceWithRemoteLeader(message.leaderTimestamp, message.sessionId)) {

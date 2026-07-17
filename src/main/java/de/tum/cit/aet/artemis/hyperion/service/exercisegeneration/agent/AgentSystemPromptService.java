@@ -65,7 +65,7 @@ public class AgentSystemPromptService {
                         3. Make surgical edits only to the impacted artifacts. Do not delete or rename existing source files, public APIs, tests, task bindings, or instructor prose unless the
                         feedback requires it. Re-run `verify` after meaningful changes; raw shell exit codes are only debugging aids.
                         4. Before submission, re-read the feedback and every changed file. Confirm each change is required, every explicitly preserved artifact remains, the solution passes,
-                        and every task-bound test fails on the template. Run `verify` once more. Submit only after `MECHANICAL PRECHECK: PASS`; post-loop review decides acceptance.
+                        and every task-bound test fails on the template. Run `verify` once more. Submit only after `MECHANICAL PRECHECK: PASS`; authoritative post-loop verification determines save eligibility, and quality review may request repairs.
                         """
                 : """
                         1. Read the primary source requirements, then inspect the current problem statement, `solution`, `template`, and `tests`. The exercise source and test roots are clean;
@@ -77,7 +77,7 @@ public class AgentSystemPromptService {
                         authoritative evidence; raw shell exit codes are only debugging aids.
                         5. Before submission, compare statement promises with executable assertions in both directions, independently replay each worked example, and confirm the solution passes and
                         every task-bound test fails on the template for its intended reason. Keep routine files byte-identical; map every intentional solution/template diff hunk to a task. Remove
-                        abandoned sources and run `verify` once more. Submit only after `MECHANICAL PRECHECK: PASS`; post-loop review decides acceptance.
+                        abandoned sources and run `verify` once more. Submit only after `MECHANICAL PRECHECK: PASS`; authoritative post-loop verification determines save eligibility, and quality review may request repairs.
                         """;
         String testSourceGuidance = mode == GenerationMode.ADAPT ? "Edit only exercise-specific test sources required by the feedback; preserve all others."
                 : "Replace only exercise-specific test source files.";
@@ -259,7 +259,7 @@ public class AgentSystemPromptService {
         // starting point, preserved where the brief is silent. With no brief, the statement alone binds.
         boolean hasSpec = isNonTrivialProblemStatement(exercise.getProblemStatement());
         if (!brief.isBlank()) {
-            if (request.effectiveMode() == GenerationMode.ADAPT) {
+            if (request.mode() == GenerationMode.ADAPT) {
                 return "Apply this feedback as a targeted revision of the existing exercise. Preserve every statement requirement and artifact where the feedback is silent, and "
                         + "change only the statement, solution, template, tests, and task bindings that the feedback requires: " + brief;
             }

@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.exercise.dto.versioning;
 import java.io.Serializable;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -24,6 +25,7 @@ import de.tum.cit.aet.artemis.localvc.service.GitService;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismDetectionConfig;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 
@@ -53,13 +55,20 @@ public record ExerciseSnapshotDTO(
      * @return {@link ExerciseSnapshotDTO}
      */
     public static ExerciseSnapshotDTO of(Exercise exercise, GitService gitService) {
+        return of(exercise, gitService, Map.of());
+    }
+
+    /**
+     * Creates a snapshot with exact caller-captured commit IDs for repositories changed by the current operation.
+     */
+    public static ExerciseSnapshotDTO of(Exercise exercise, GitService gitService, Map<RepositoryType, String> repositoryCommitIds) {
 
         var competencyLinks = CollectionUtil.nullIfEmpty(exercise.getCompetencyLinks().stream().map(CompetencyExerciseLinkSnapshotDTO::of).collect(Collectors.toSet()));
         var gradingCriteria = CollectionUtil.nullIfEmpty(exercise.getGradingCriteria().stream().map(GradingCriterionDTO::of).collect(Collectors.toSet()));
         var categories = CollectionUtil.nullIfEmpty(exercise.getCategories());
         var plagiarismDetectionConfig = PlagiarismDetectionConfigSnapshotDTO.of(exercise.getPlagiarismDetectionConfig());
 
-        var programmingData = exercise instanceof ProgrammingExercise ? ProgrammingExerciseSnapshotDTO.of((ProgrammingExercise) exercise, gitService) : null;
+        var programmingData = exercise instanceof ProgrammingExercise ? ProgrammingExerciseSnapshotDTO.of((ProgrammingExercise) exercise, gitService, repositoryCommitIds) : null;
         var textData = exercise instanceof TextExercise ? TextExerciseSnapshotDTO.of((TextExercise) exercise) : null;
         var modelingData = exercise instanceof ModelingExercise ? ModelingExerciseSnapshotDTO.of((ModelingExercise) exercise) : null;
         var quizData = exercise instanceof QuizExercise ? QuizExerciseSnapshotDTO.of((QuizExercise) exercise) : null;

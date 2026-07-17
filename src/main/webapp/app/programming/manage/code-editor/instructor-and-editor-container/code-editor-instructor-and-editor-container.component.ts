@@ -77,7 +77,7 @@ import {
     HyperionGenerationCompletedEvent,
     HyperionReviewRequestedEvent,
 } from 'app/hyperion/exercise-generation/hyperion-generation-activity.component';
-import { ExerciseGenerationFileSnapshot, HyperionGenerationMode } from 'app/hyperion/exercise-generation/hyperion-generation-stream.model';
+import { ExerciseGenerationFileChange, HyperionGenerationMode } from 'app/hyperion/exercise-generation/hyperion-generation-stream.model';
 import { ProgrammingExerciseParticipationService } from 'app/programming/manage/services/programming-exercise-participation.service';
 import { Router } from '@angular/router';
 import { supportsHyperionExerciseGeneration } from 'app/hyperion/exercise-generation/hyperion-generation-support';
@@ -323,12 +323,12 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         }
     }
 
-    protected onHyperionSnapshotSelected(snapshot: ExerciseGenerationFileSnapshot): void {
-        if (!this.generationActivity()?.canNavigateSnapshots()) {
+    protected onHyperionFileChangeSelected(fileChange: ExerciseGenerationFileChange): void {
+        if (!this.generationActivity()?.canNavigateFileChange(fileChange)) {
             return;
         }
         let targetType: CommentThreadLocationType;
-        switch (snapshot.repo) {
+        switch (fileChange.repo) {
             case 'solution':
                 targetType = CommentThreadLocationType.SOLUTION_REPO;
                 break;
@@ -339,14 +339,14 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
                 targetType = CommentThreadLocationType.TEST_REPO;
                 break;
             case 'other':
-                if (snapshot.path !== 'problem-statement.md') {
+                if (fileChange.path !== 'problem-statement.md') {
                     return;
                 }
                 targetType = CommentThreadLocationType.PROBLEM_STATEMENT;
                 break;
         }
-        const prefix = `${snapshot.repo}/`;
-        const filePath = snapshot.path.startsWith(prefix) ? snapshot.path.slice(prefix.length) : snapshot.path;
+        const prefix = `${fileChange.repo}/`;
+        const filePath = fileChange.path.startsWith(prefix) ? fileChange.path.slice(prefix.length) : fileChange.path;
         this.navigateToLocation({ targetType, filePath });
     }
 
@@ -377,6 +377,13 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
             return;
         }
         this.reviewRequestsInFlight.add(requestKey);
+        if (request.commitHash) {
+            this.navigateToHyperionReview(
+                ['/course-management', courseId, 'programming-exercises', exerciseId, 'repository', repositoryType, 'commit-history', request.commitHash],
+                requestKey,
+            );
+            return;
+        }
         let navigationStarted = false;
         this.programmingExerciseParticipationService
             .retrieveCommitHistoryForTemplateSolutionOrTests(exerciseId, repositoryType)
@@ -391,8 +398,8 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
             )
             .subscribe({
                 next: (commits) => {
-                    const expectedMessage = `Generate exercise with Hyperion (${request.jobId})`;
-                    const matchingCommits = commits.filter((candidate) => candidate.hash && candidate.message === expectedMessage);
+                    const expectedMessages = new Set([`Generate exercise with Hyperion (${request.jobId})`, `Adapt exercise with Hyperion (${request.jobId})`]);
+                    const matchingCommits = commits.filter((candidate) => candidate.hash && candidate.message && expectedMessages.has(candidate.message));
                     if (matchingCommits.length !== 1) {
                         this.alertService.error('artemisApp.hyperion.generationActivity.reviewUnavailable');
                         return;
@@ -498,7 +505,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
                     }
                     const refreshFailed = !repositoryRefreshSucceeded || refreshedExercise === undefined || !safeToApply;
                     this.generationRefreshFailed.set(refreshFailed);
-                    this.generationRefreshBaselineUnknown.set(refreshFailed);
+                    this.generationRefreshBaselineUnknown.set(!repositoryRefreshSucceeded || refreshedExercise === undefined);
                 },
             });
     }

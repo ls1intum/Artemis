@@ -69,6 +69,7 @@ type FileSyncEntry = {
     activeLeaderTimestamp: number;
     activeLeaderSessionId?: string;
     latestRequestId?: string;
+    hasLocalChanges: boolean;
     fallbackInitialContent: string;
     queuedFullContentRequests: string[];
     pendingInitialSync?: {
@@ -252,6 +253,7 @@ export class CodeEditorFileSyncService {
             awaitingInitialSync: true,
             localLeaderTimestamp: now,
             activeLeaderTimestamp: now,
+            hasLocalChanges: false,
             fallbackInitialContent: initialContent ?? '',
             queuedFullContentRequests: [],
         };
@@ -545,6 +547,9 @@ export class CodeEditorFileSyncService {
         if (message.responseTo !== entry.latestRequestId) {
             return;
         }
+        if (entry.hasLocalChanges) {
+            return;
+        }
         if (!this.shouldReplaceWithRemoteLeader(entry, message.leaderTimestamp, message.sessionId)) {
             return;
         }
@@ -656,6 +661,7 @@ export class CodeEditorFileSyncService {
             activeLeaderTimestamp: leaderTimestamp,
             activeLeaderSessionId: sessionId,
             latestRequestId: oldEntry.latestRequestId,
+            hasLocalChanges: false,
             fallbackInitialContent: oldEntry.fallbackInitialContent,
             queuedFullContentRequests: [],
         };
@@ -684,6 +690,7 @@ export class CodeEditorFileSyncService {
             if (origin === FileSyncOrigin.Remote || origin === FileSyncOrigin.Seed) {
                 return;
             }
+            entry.hasLocalChanges = true;
             const updateEvent: FileSyncUpdateEvent = {
                 eventType: ExerciseEditorSyncEventType.FILE_SYNC_UPDATE,
                 target: this.currentTarget,

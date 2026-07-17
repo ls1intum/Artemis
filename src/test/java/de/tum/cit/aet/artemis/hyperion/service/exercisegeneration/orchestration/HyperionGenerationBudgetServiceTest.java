@@ -28,10 +28,10 @@ class HyperionGenerationBudgetServiceTest {
     private final LLMTokenUsageTraceTestRepository repository = mock(LLMTokenUsageTraceTestRepository.class);
 
     @Test
-    void configurationRejectsABudgetThatCannotAdmitOneReservation() {
+    void configurationRejectsABudgetBelowThePerJobMaximum() {
         assertThatIllegalArgumentException()
                 .isThrownBy(() -> new HyperionGenerationBudgetService(repository, mock(HazelcastInstance.class), Duration.ofHours(24), 99, 0, 0, 100, Duration.ofMinutes(35)))
-                .withMessageContaining("admission-max-tokens-per-user").withMessageContaining("in-flight-token-reservation-per-job");
+                .withMessageContaining("admission-max-tokens-per-user").withMessageContaining("max-tokens-per-job");
     }
 
     @Test

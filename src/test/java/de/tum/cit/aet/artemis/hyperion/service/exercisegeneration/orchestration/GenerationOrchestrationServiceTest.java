@@ -148,12 +148,13 @@ class GenerationOrchestrationServiceTest {
     @Test
     void rejectedThenAccepted_feedsReportIntoNextPromptAndAccepts() {
         when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(completed());
-        when(verifier.verify(any(), anyString(), any(), any(VerificationRequest.class))).thenReturn(rejected("template unexpectedly passed all tests"), accepted());
+        when(verifier.verify(any(), anyString(), any(), any(VerificationRequest.class), any(Runnable.class))).thenReturn(rejected("template unexpectedly passed all tests"),
+                accepted());
 
         ArgumentCaptor<String> promptCaptor = ArgumentCaptor.forClass(String.class);
 
         try (GenerationOutcome outcome = generate(() -> false)) {
-            assertThat(outcome.isAccepted()).as("the second, accepted attempt yields an accepted outcome").isTrue();
+            assertThat(outcome.isMechanicallyVerified()).as("the second, accepted attempt yields an accepted outcome").isTrue();
         }
 
         verify(agentLoopRunner, times(2)).run(anyString(), promptCaptor.capture(), any(), anyInt(), any(), any(), any());
@@ -175,7 +176,7 @@ class GenerationOrchestrationServiceTest {
         }
 
         verify(agentLoopRunner, never()).run(anyString(), anyString(), any(), anyInt(), any(), any(), any());
-        verify(verifier, never()).verify(any(), anyString(), any(), any(VerificationRequest.class));
+        verify(verifier, never()).verify(any(), anyString(), any(), any(VerificationRequest.class), any(Runnable.class));
         verify(sandbox).destroySession(SESSION_ID);
     }
 
@@ -209,28 +210,28 @@ class GenerationOrchestrationServiceTest {
     @Test
     void acceptedOnFirstAttempt_runsAgentExactlyOnce() {
         when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(completed());
-        when(verifier.verify(any(), anyString(), any(), any(VerificationRequest.class))).thenReturn(accepted());
+        when(verifier.verify(any(), anyString(), any(), any(VerificationRequest.class), any(Runnable.class))).thenReturn(accepted());
 
         try (GenerationOutcome outcome = generate(() -> false)) {
-            assertThat(outcome.isAccepted()).isTrue();
+            assertThat(outcome.isMechanicallyVerified()).isTrue();
         }
 
         verify(agentLoopRunner, times(1)).run(anyString(), anyString(), any(), anyInt(), any(), any(), any());
-        verify(verifier, times(1)).verify(any(), anyString(), any(), any(VerificationRequest.class));
+        verify(verifier, times(1)).verify(any(), anyString(), any(), any(VerificationRequest.class), any(Runnable.class));
     }
 
     @Test
     void adaptMode_passesThePersistedGradedTestNamesAsTheTotalWipeBaseline() {
         when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(completed());
-        when(verifier.verify(any(), anyString(), any(), any(VerificationRequest.class))).thenReturn(accepted());
+        when(verifier.verify(any(), anyString(), any(), any(VerificationRequest.class), any(Runnable.class))).thenReturn(accepted());
         when(testCaseRepository.findByExerciseId(42L)).thenReturn(Set.of(testCase("evictsLeastRecentlyUsed"), testCase("capacityIsRespected")));
 
         try (GenerationOutcome outcome = service.generate(exercise, user, "Tighten the eviction test.", JOB_ID, GenerationMode.ADAPT, () -> false, null, null, null)) {
-            assertThat(outcome.isAccepted()).isTrue();
+            assertThat(outcome.isMechanicallyVerified()).isTrue();
         }
 
         ArgumentCaptor<VerificationRequest> requestCaptor = ArgumentCaptor.forClass(VerificationRequest.class);
-        verify(verifier).verify(any(), anyString(), any(), requestCaptor.capture());
+        verify(verifier).verify(any(), anyString(), any(), requestCaptor.capture(), any(Runnable.class));
         verify(workspace).seedWorkspace(sandbox, SESSION_ID, exercise, GenerationMode.ADAPT);
         assertThat(requestCaptor.getValue().baselineGradedTestNames()).as("ADAPT hands the persisted graded test names to the total-wipe gate")
                 .containsExactlyInAnyOrder("evictsLeastRecentlyUsed", "capacityIsRespected");
@@ -239,16 +240,16 @@ class GenerationOrchestrationServiceTest {
     @Test
     void generateMode_passesAnEmptyTotalWipeBaselineAndDoesNotQueryPersistedTests() {
         when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(completed());
-        when(verifier.verify(any(), anyString(), any(), any(VerificationRequest.class))).thenReturn(accepted());
+        when(verifier.verify(any(), anyString(), any(), any(VerificationRequest.class), any(Runnable.class))).thenReturn(accepted());
 
         try (GenerationOutcome outcome = generate(() -> false)) {
-            assertThat(outcome.isAccepted()).isTrue();
+            assertThat(outcome.isMechanicallyVerified()).isTrue();
         }
 
         verify(workspace).seedWorkspace(sandbox, SESSION_ID, exercise, GenerationMode.GENERATE);
 
         ArgumentCaptor<VerificationRequest> requestCaptor = ArgumentCaptor.forClass(VerificationRequest.class);
-        verify(verifier).verify(any(), anyString(), any(), requestCaptor.capture());
+        verify(verifier).verify(any(), anyString(), any(), requestCaptor.capture(), any(Runnable.class));
         assertThat(requestCaptor.getValue().baselineGradedTestNames()).as("GENERATE has no pre-adapt baseline, so the total-wipe gate is inert").isEmpty();
         verify(testCaseRepository, never()).findByExerciseId(anyLong());
     }
@@ -262,14 +263,14 @@ class GenerationOrchestrationServiceTest {
     @Test
     void allAttemptsRejected_runsMaxAttemptsAndReturnsNotAccepted() {
         when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(completed());
-        when(verifier.verify(any(), anyString(), any(), any(VerificationRequest.class))).thenReturn(rejected("still failing"));
+        when(verifier.verify(any(), anyString(), any(), any(VerificationRequest.class), any(Runnable.class))).thenReturn(rejected("still failing"));
 
         try (GenerationOutcome outcome = generate(() -> false)) {
-            assertThat(outcome.isAccepted()).as("an exercise rejected on every attempt is not accepted").isFalse();
+            assertThat(outcome.isMechanicallyVerified()).as("an exercise rejected on every attempt is not accepted").isFalse();
         }
 
         verify(agentLoopRunner, times(MAX_GENERATION_ATTEMPTS)).run(anyString(), anyString(), any(), anyInt(), any(), any(), any());
-        verify(verifier, times(MAX_GENERATION_ATTEMPTS)).verify(any(), anyString(), any(), any(VerificationRequest.class));
+        verify(verifier, times(MAX_GENERATION_ATTEMPTS)).verify(any(), anyString(), any(), any(VerificationRequest.class), any(Runnable.class));
     }
 
     @Test
@@ -279,8 +280,8 @@ class GenerationOrchestrationServiceTest {
 
         GenerationOutcome outcome = generate(() -> false);
 
-        assertThat(outcome.isAccepted()).isFalse();
-        verify(verifier, never()).verify(any(), anyString(), any(), any(VerificationRequest.class));
+        assertThat(outcome.isMechanicallyVerified()).isFalse();
+        verify(verifier, never()).verify(any(), anyString(), any(), any(VerificationRequest.class), any(Runnable.class));
         verify(sandbox).destroySession(SESSION_ID);
     }
 
@@ -292,8 +293,8 @@ class GenerationOrchestrationServiceTest {
 
         GenerationOutcome outcome = generate(cancelled);
 
-        assertThat(outcome.isAccepted()).isFalse();
-        verify(verifier, never()).verify(any(), anyString(), any(), any(VerificationRequest.class));
+        assertThat(outcome.isMechanicallyVerified()).isFalse();
+        verify(verifier, never()).verify(any(), anyString(), any(), any(VerificationRequest.class), any(Runnable.class));
         org.mockito.Mockito.verifyNoInteractions(sandbox);
         org.mockito.Mockito.verifyNoInteractions(agentLoopRunner);
     }
@@ -306,7 +307,7 @@ class GenerationOrchestrationServiceTest {
         assertThatThrownBy(() -> generate(() -> false)).isInstanceOf(RuntimeException.class).hasMessageContaining("model exploded");
 
         verify(sandbox, atLeastOnce()).destroySession(SESSION_ID);
-        verify(verifier, never()).verify(any(), anyString(), any(), any(VerificationRequest.class));
+        verify(verifier, never()).verify(any(), anyString(), any(), any(VerificationRequest.class), any(Runnable.class));
     }
 
     @Test
@@ -364,12 +365,15 @@ class GenerationOrchestrationServiceTest {
     @Test
     void acceptedPath_seedsStructuralOracleBeforeVerification() {
         when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(completed());
-        when(verifier.verify(any(), anyString(), any(), any(VerificationRequest.class))).thenReturn(accepted());
+        when(verifier.verify(any(), anyString(), any(), any(VerificationRequest.class), any(Runnable.class))).thenAnswer(invocation -> {
+            invocation.getArgument(4, Runnable.class).run();
+            return accepted();
+        });
 
         try (GenerationOutcome ignored = generate(() -> false)) {
             InOrder inOrder = inOrder(structuralOracleSeeder, verifier);
             inOrder.verify(structuralOracleSeeder).seedIfStructuralDiff(eq(sandbox), eq(SESSION_ID), eq(exercise));
-            inOrder.verify(verifier).verify(any(), anyString(), any(), any(VerificationRequest.class));
+            inOrder.verify(verifier).verify(any(), anyString(), any(), any(VerificationRequest.class), any(Runnable.class));
         }
     }
 
@@ -393,17 +397,17 @@ class GenerationOrchestrationServiceTest {
 
         boolean expectedBlocking = expectedBlockingKinds.contains(kind);
         assertThat(report.hasBlockingFindings()).isEqualTo(expectedBlocking);
-        assertThat(outcome.isAccepted()).isTrue();
+        assertThat(outcome.isMechanicallyVerified()).isTrue();
     }
 
     @Test
     void acceptedWithAdvisoryPresentationFinding_doesNotSpendRetryOrFlipVerdict() {
         when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(completed());
-        when(verifier.verify(any(), anyString(), any(), any(VerificationRequest.class))).thenReturn(accepted());
+        when(verifier.verify(any(), anyString(), any(), any(VerificationRequest.class), any(Runnable.class))).thenReturn(accepted());
         when(specFidelityCritic.critique(any(), any(), any(), any(), any())).thenReturn(advisoryReportWith("state rollback"));
 
         try (GenerationOutcome outcome = generate(() -> false)) {
-            assertThat(outcome.isAccepted()).as("an oracle-accepted exercise stays accepted with advisory findings").isTrue();
+            assertThat(outcome.isMechanicallyVerified()).as("an oracle-accepted exercise stays accepted with advisory findings").isTrue();
             assertThat(outcome.specFidelityReport().hasFindings()).isTrue();
         }
         verify(agentLoopRunner).run(anyString(), anyString(), any(), anyInt(), any(), any(), any());
@@ -412,13 +416,13 @@ class GenerationOrchestrationServiceTest {
     @Test
     void acceptedAdaptationWithOnlyAdvisoryFindings_staysAccepted() {
         when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(completed());
-        when(verifier.verify(any(), anyString(), any(), any(VerificationRequest.class))).thenReturn(accepted());
+        when(verifier.verify(any(), anyString(), any(), any(VerificationRequest.class), any(Runnable.class))).thenReturn(accepted());
         when(specFidelityCritic.critiqueAdaptation(any(), any(), any(), any(), any(), any())).thenReturn(advisoryReportWith("rollback interaction"));
 
         try (GenerationOutcome outcome = service.generate(exercise, user, "Change remove only and preserve everything else", "job", GenerationMode.ADAPT, () -> false, null, null,
                 response -> {
                 })) {
-            assertThat(outcome.isAccepted()).isTrue();
+            assertThat(outcome.isMechanicallyVerified()).isTrue();
             assertThat(outcome.specFidelityReport().hasFindings()).isTrue();
         }
         verify(agentLoopRunner).run(anyString(), anyString(), any(), anyInt(), any(), any(), any());
@@ -429,13 +433,13 @@ class GenerationOrchestrationServiceTest {
         SpecFidelityReport scopeDrift = new SpecFidelityReport(List.of(new SpecFidelityReport.Finding(SpecFidelityReport.Kind.UNREQUESTED_ADAPTATION_CHANGE,
                 "solution/src/Inventory.java removed displayName(String)", "The feedback explicitly required preserving it.")));
         when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(completed());
-        when(verifier.verify(any(), anyString(), any(), any(VerificationRequest.class))).thenReturn(accepted());
+        when(verifier.verify(any(), anyString(), any(), any(VerificationRequest.class), any(Runnable.class))).thenReturn(accepted());
         when(specFidelityCritic.critiqueAdaptation(any(), any(), any(), any(), any(), any())).thenReturn(scopeDrift);
 
         try (GenerationOutcome outcome = service.generate(exercise, user, "Change only remove; preserve displayName", "job", GenerationMode.ADAPT, () -> false, null, null,
                 response -> {
                 })) {
-            assertThat(outcome.isAccepted()).as("mechanically valid work is saved canonically so the instructor can review the scope finding").isTrue();
+            assertThat(outcome.isMechanicallyVerified()).as("mechanically valid work is saved canonically so the instructor can review the scope finding").isTrue();
             assertThat(outcome.specFidelityReport().hasBlockingFindings()).isTrue();
         }
         verify(agentLoopRunner, times(MAX_GENERATION_ATTEMPTS)).run(anyString(), anyString(), any(), anyInt(), any(), any(), any());
@@ -447,13 +451,13 @@ class GenerationOrchestrationServiceTest {
         SpecFidelityReport missingChange = new SpecFidelityReport(List.of(new SpecFidelityReport.Finding(SpecFidelityReport.Kind.REQUESTED_ADAPTATION_CHANGE_MISSING,
                 "reject zero quantities", "The candidate does not add the requested validation.")));
         when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(completed(), completed());
-        when(verifier.verify(any(), anyString(), any(), any(VerificationRequest.class))).thenReturn(accepted(), accepted());
+        when(verifier.verify(any(), anyString(), any(), any(VerificationRequest.class), any(Runnable.class))).thenReturn(accepted(), accepted());
         when(specFidelityCritic.critiqueAdaptation(any(), any(), any(), any(), any(), any())).thenReturn(missingChange, SpecFidelityReport.empty());
 
         ArgumentCaptor<String> promptCaptor = ArgumentCaptor.forClass(String.class);
         try (GenerationOutcome outcome = service.generate(exercise, user, feedback, "job", GenerationMode.ADAPT, () -> false, null, null, response -> {
         })) {
-            assertThat(outcome.isAccepted()).isTrue();
+            assertThat(outcome.isMechanicallyVerified()).isTrue();
         }
 
         verify(agentLoopRunner, times(2)).run(anyString(), promptCaptor.capture(), any(), anyInt(), any(), any(), any());
@@ -464,12 +468,12 @@ class GenerationOrchestrationServiceTest {
     void unchangedAdaptationIsRejectedAsMissingTheRequestedChange() {
         when(exercise.getProblemStatement()).thenReturn("PROBLEM STATEMENT");
         when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(completed());
-        when(verifier.verify(any(), anyString(), any(), any(VerificationRequest.class))).thenReturn(accepted());
+        when(verifier.verify(any(), anyString(), any(), any(VerificationRequest.class), any(Runnable.class))).thenReturn(accepted());
         when(specFidelityCritic.critiqueAdaptation(any(), any(), any(), any(), any(), any())).thenReturn(new SpecFidelityReport(
                 List.of(new SpecFidelityReport.Finding(SpecFidelityReport.Kind.REQUESTED_ADAPTATION_CHANGE_MISSING, "Change one method only", "The candidate is unchanged."))));
 
         try (GenerationOutcome outcome = service.generate(exercise, user, "Change one method only", JOB_ID, GenerationMode.ADAPT, () -> false, null, null, null)) {
-            assertThat(outcome.isAccepted()).isTrue();
+            assertThat(outcome.isMechanicallyVerified()).isTrue();
             assertThat(outcome.specFidelityReport().findings()).singleElement()
                     .satisfies(finding -> assertThat(finding.kind()).isEqualTo(SpecFidelityReport.Kind.REQUESTED_ADAPTATION_CHANGE_MISSING));
         }
@@ -483,14 +487,14 @@ class GenerationOrchestrationServiceTest {
     @Test
     void adaptationCriticExceptionOrTruncatedEvidenceRequiresInstructorReview() {
         when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(completed());
-        when(verifier.verify(any(), anyString(), any(), any(VerificationRequest.class))).thenReturn(accepted());
+        when(verifier.verify(any(), anyString(), any(), any(VerificationRequest.class), any(Runnable.class))).thenReturn(accepted());
         when(workspace.seedWorkspace(any(), anyString(), any(), any())).thenReturn(
                 new GenerationWorkspaceService.WorkspaceSeed(Map.of(), Map.of(), Map.of(), Map.of(RepositoryType.SOLUTION, Map.of("src/Huge.java", "x".repeat(30_000)))));
         when(specFidelityCritic.critiqueAdaptation(any(), any(), any(), any(), any(), any())).thenThrow(new RuntimeException("critic plumbing failed"));
 
         try (GenerationOutcome outcome = service.generate(exercise, user, "Change one method only", "job", GenerationMode.ADAPT, () -> false, null, null, response -> {
         })) {
-            assertThat(outcome.isAccepted()).isTrue();
+            assertThat(outcome.isMechanicallyVerified()).isTrue();
             assertThat(outcome.specFidelityReport().hasBlockingFindings()).isTrue();
         }
     }
@@ -498,7 +502,7 @@ class GenerationOrchestrationServiceTest {
     @Test
     void mechanicalRejectionIsRepairedBeforeSpendingAQualityReviewCall() {
         when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(completed());
-        when(verifier.verify(any(), anyString(), any(), any(VerificationRequest.class))).thenReturn(rejected("template passed a test"), accepted());
+        when(verifier.verify(any(), anyString(), any(), any(VerificationRequest.class), any(Runnable.class))).thenReturn(rejected("template passed a test"), accepted());
         when(specFidelityCritic.critique(any(), any(), any(), any(), any())).thenReturn(SpecFidelityReport.empty());
 
         ArgumentCaptor<String> promptCaptor = ArgumentCaptor.forClass(String.class);
@@ -515,16 +519,17 @@ class GenerationOrchestrationServiceTest {
     @Test
     void acceptedCandidateWithContractBlockerRetriesAndAcceptsTheRepair() {
         when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(completed());
-        when(verifier.verify(any(), anyString(), any(), any(VerificationRequest.class))).thenReturn(accepted());
+        when(verifier.verify(any(), anyString(), any(), any(VerificationRequest.class), any(Runnable.class))).thenReturn(accepted());
         when(specFidelityCritic.critique(any(), any(), any(), any(), any())).thenReturn(reportWith("emoji"), SpecFidelityReport.empty());
 
         ArgumentCaptor<String> promptCaptor = ArgumentCaptor.forClass(String.class);
         try (GenerationOutcome outcome = generate(() -> false)) {
-            assertThat(outcome.isAccepted()).isTrue();
+            assertThat(outcome.isMechanicallyVerified()).isTrue();
         }
 
         verify(agentLoopRunner, times(2)).run(anyString(), promptCaptor.capture(), any(), anyInt(), any(), any(), any());
-        assertThat(promptCaptor.getAllValues().get(1)).contains("automated full-artifact review", "Exercise-quality issues", "emoji");
+        assertThat(promptCaptor.getAllValues().get(1)).contains("automated full-artifact review", "review blockers", "Exercise-quality issues", "emoji")
+                .doesNotContain("acceptance blockers");
     }
 
     @Test
@@ -532,13 +537,13 @@ class GenerationOrchestrationServiceTest {
         String startingStatement = "# Checkout summaries\n\nKeep due dates, return dates, invalid-duration handling, and per-member fee summaries.";
         when(exercise.getProblemStatement()).thenReturn(startingStatement);
         when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(completed());
-        when(verifier.verify(any(), anyString(), any(), any(VerificationRequest.class))).thenReturn(accepted());
+        when(verifier.verify(any(), anyString(), any(), any(VerificationRequest.class), any(Runnable.class))).thenReturn(accepted());
         when(specFidelityCritic.critique(any(), any(), any(), any(), any())).thenReturn(reportWith("invalid durations"));
 
         ArgumentCaptor<String> reviewBrief = ArgumentCaptor.forClass(String.class);
         ArgumentCaptor<String> agentPrompt = ArgumentCaptor.forClass(String.class);
         try (GenerationOutcome outcome = generate(() -> false)) {
-            assertThat(outcome.isAccepted()).isTrue();
+            assertThat(outcome.isMechanicallyVerified()).isTrue();
         }
 
         verify(specFidelityCritic, times(MAX_GENERATION_ATTEMPTS)).critique(reviewBrief.capture(), any(), any(), any(), any());
@@ -552,13 +557,13 @@ class GenerationOrchestrationServiceTest {
         SpecFidelityReport contractBlocker = new SpecFidelityReport(List.of(new SpecFidelityReport.Finding(SpecFidelityReport.Kind.CONTRACT_CONTRADICTION, "invalid events",
                 "The statement and tests disagree about whether invalid events are ignored.")));
         when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(completed());
-        when(verifier.verify(any(), anyString(), any(), any(VerificationRequest.class))).thenReturn(accepted(), rejected("repair no longer compiles"),
+        when(verifier.verify(any(), anyString(), any(), any(VerificationRequest.class), any(Runnable.class))).thenReturn(accepted(), rejected("repair no longer compiles"),
                 rejected("repair still does not compile"));
         when(specFidelityCritic.critique(any(), any(), any(), any(), any())).thenReturn(contractBlocker);
         when(workspace.extractProblemStatement(any(), anyString())).thenReturn("# Mechanically verified candidate", "# Broken repair", "# Still broken repair");
 
         try (GenerationOutcome outcome = generate(() -> false)) {
-            assertThat(outcome.isAccepted()).isTrue();
+            assertThat(outcome.isMechanicallyVerified()).isTrue();
             assertThat(outcome.verification()).isEqualTo(accepted());
             assertThat(outcome.producedProblemStatement()).isEqualTo("# Mechanically verified candidate");
             assertThat(outcome.specFidelityReport()).isEqualTo(contractBlocker);
@@ -570,14 +575,31 @@ class GenerationOrchestrationServiceTest {
         SpecFidelityReport contractBlocker = new SpecFidelityReport(List.of(new SpecFidelityReport.Finding(SpecFidelityReport.Kind.CONTRACT_CONTRADICTION, "invalid events",
                 "The statement and tests disagree about whether invalid events are ignored.")));
         when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(completed());
-        when(verifier.verify(any(), anyString(), any(), any(VerificationRequest.class))).thenReturn(accepted());
+        when(verifier.verify(any(), anyString(), any(), any(VerificationRequest.class), any(Runnable.class))).thenReturn(accepted());
         when(specFidelityCritic.critique(any(), any(), any(), any(), any())).thenReturn(contractBlocker);
         when(workspace.extractProblemStatement(any(), anyString())).thenReturn("# Mechanically verified candidate");
         when(structuralOracleSeeder.seedIfStructuralDiff(any(), anyString(), any())).thenReturn(Set.of()).thenThrow(new IllegalStateException("repair extraction failed"));
 
         try (GenerationOutcome outcome = generate(() -> false)) {
-            assertThat(outcome.isAccepted()).isTrue();
+            assertThat(outcome.isMechanicallyVerified()).isTrue();
             assertThat(outcome.verification()).isEqualTo(accepted());
+            assertThat(outcome.producedProblemStatement()).isEqualTo("# Mechanically verified candidate");
+            assertThat(outcome.specFidelityReport()).isEqualTo(contractBlocker);
+        }
+    }
+
+    @Test
+    void cancellationDuringSemanticRepairReturnsTheLastMechanicallyVerifiedCandidate() {
+        SpecFidelityReport contractBlocker = reportWith("invalid events");
+        AgentLoopResult cancelledRepair = new AgentLoopResult(AgentLoopResult.Status.CANCELLED, 2, "cancelled");
+        when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(completed(), cancelledRepair);
+        when(verifier.verify(any(), anyString(), any(), any(VerificationRequest.class), any(Runnable.class))).thenReturn(accepted());
+        when(specFidelityCritic.critique(any(), any(), any(), any(), any())).thenReturn(contractBlocker);
+        when(workspace.extractProblemStatement(any(), anyString())).thenReturn("# Mechanically verified candidate");
+
+        try (GenerationOutcome outcome = generate(() -> false)) {
+            assertThat(outcome.isMechanicallyVerified()).isTrue();
+            assertThat(outcome.loopResult()).isEqualTo(completed());
             assertThat(outcome.producedProblemStatement()).isEqualTo("# Mechanically verified candidate");
             assertThat(outcome.specFidelityReport()).isEqualTo(contractBlocker);
         }
@@ -586,11 +608,11 @@ class GenerationOrchestrationServiceTest {
     @Test
     void criticThrows_runFailsClosedWithoutRetryingAnUnchangedCandidate() {
         when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(completed());
-        when(verifier.verify(any(), anyString(), any(), any(VerificationRequest.class))).thenReturn(accepted());
+        when(verifier.verify(any(), anyString(), any(), any(VerificationRequest.class), any(Runnable.class))).thenReturn(accepted());
         when(specFidelityCritic.critique(any(), any(), any(), any(), any())).thenThrow(new RuntimeException("critic exploded"));
 
         try (GenerationOutcome outcome = generate(() -> false)) {
-            assertThat(outcome.isAccepted()).isTrue();
+            assertThat(outcome.isMechanicallyVerified()).isTrue();
             assertThat(outcome.specFidelityReport().findings()).singleElement()
                     .satisfies(finding -> assertThat(finding.kind()).isEqualTo(SpecFidelityReport.Kind.QUALITY_REVIEW_UNAVAILABLE));
         }
@@ -604,11 +626,11 @@ class GenerationOrchestrationServiceTest {
                         new SpecFidelityReport.Finding(SpecFidelityReport.Kind.QUALITY_REVIEW_UNAVAILABLE, "Exercise quality could not be verified",
                                 "The test-oracle reviewer returned no verdict.")));
         when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(completed());
-        when(verifier.verify(any(), anyString(), any(), any(VerificationRequest.class))).thenReturn(accepted());
+        when(verifier.verify(any(), anyString(), any(), any(VerificationRequest.class), any(Runnable.class))).thenReturn(accepted());
         when(specFidelityCritic.critique(any(), any(), any(), any(), any())).thenReturn(partialReview, SpecFidelityReport.empty());
 
         try (GenerationOutcome outcome = generate(() -> false)) {
-            assertThat(outcome.isAccepted()).isTrue();
+            assertThat(outcome.isMechanicallyVerified()).isTrue();
         }
         verify(agentLoopRunner, times(2)).run(anyString(), anyString(), any(), anyInt(), any(), any(), any());
     }
@@ -619,7 +641,7 @@ class GenerationOrchestrationServiceTest {
                 List.of(new SpecFidelityReport.Finding(SpecFidelityReport.Kind.WEAK_TEST_ORACLE, "boundary", "no boundary assertion"),
                         new SpecFidelityReport.Finding(SpecFidelityReport.Kind.MISSING_WORKED_EXAMPLE, "workflow", "an example would help")));
         when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(completed());
-        when(verifier.verify(any(), anyString(), any(), any(VerificationRequest.class))).thenReturn(accepted());
+        when(verifier.verify(any(), anyString(), any(), any(VerificationRequest.class), any(Runnable.class))).thenReturn(accepted());
         when(specFidelityCritic.critique(any(), any(), any(), any(), any())).thenReturn(mixedReview);
         List<String> progress = new java.util.ArrayList<>();
 
@@ -633,7 +655,7 @@ class GenerationOrchestrationServiceTest {
     @Test
     void critic_isFedTaskBoundTestNamesAndTheExactVerifiedArtifacts() {
         when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(completed());
-        when(verifier.verify(any(), anyString(), any(), any(VerificationRequest.class))).thenReturn(accepted());
+        when(verifier.verify(any(), anyString(), any(), any(VerificationRequest.class), any(Runnable.class))).thenReturn(accepted());
         when(workspace.extractProblemStatement(any(), anyString())).thenReturn("Intro.\n[task][Sort](test_sort,test_empty)\n[task][Edge](test_negative)");
         when(workspace.extractRepository(any(), anyString(), eq(RepositoryType.SOLUTION), any()))
                 .thenReturn(new GenerationWorkspaceService.RepositoryExtraction(Map.of("src/Sort.java", "solution"), false));
@@ -677,7 +699,8 @@ class GenerationOrchestrationServiceTest {
     void seededLayout_isOnTheFirstPromptOnly_andNotReplayedOnRetry() {
         when(workspace.probeWorkspaceLayout(any(), anyString())).thenReturn("--- ls -R solution template tests ---\nsolution:\nsrc");
         when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(completed());
-        when(verifier.verify(any(), anyString(), any(), any(VerificationRequest.class))).thenReturn(rejected("template unexpectedly passed all tests"), accepted());
+        when(verifier.verify(any(), anyString(), any(), any(VerificationRequest.class), any(Runnable.class))).thenReturn(rejected("template unexpectedly passed all tests"),
+                accepted());
 
         ArgumentCaptor<String> promptCaptor = ArgumentCaptor.forClass(String.class);
         try (GenerationOutcome ignored = generate(() -> false)) {
@@ -710,14 +733,17 @@ class GenerationOrchestrationServiceTest {
     @Test
     void authoritativeVerify_runsInTheGenerationSession() {
         when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(completed());
-        when(verifier.verify(any(), anyString(), any(), any(VerificationRequest.class))).thenReturn(accepted());
+        when(verifier.verify(any(), anyString(), any(), any(VerificationRequest.class), any(Runnable.class))).thenAnswer(invocation -> {
+            invocation.getArgument(4, Runnable.class).run();
+            return accepted();
+        });
 
         try (GenerationOutcome outcome = generate(() -> false)) {
-            assertThat(outcome.isAccepted()).isTrue();
+            assertThat(outcome.isMechanicallyVerified()).isTrue();
         }
 
-        verify(verifier).verify(eq(sandbox), eq(SESSION_ID), eq(exercise), any(VerificationRequest.class));
-        verify(workspace).materializeRepositoryFiles(eq(sandbox), eq(SESSION_ID), any(), any());
+        verify(verifier).verify(eq(sandbox), eq(SESSION_ID), eq(exercise), any(VerificationRequest.class), any(Runnable.class));
+        verify(workspace).materializeRepositoryFiles(eq(sandbox), eq(SESSION_ID), any(), any(), any());
         verify(sandbox, times(1)).createSession(any());
     }
 
@@ -726,7 +752,7 @@ class GenerationOrchestrationServiceTest {
         AtomicBoolean cancelled = new AtomicBoolean(false);
         when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(completed());
         when(workspace.extractProblemStatement(any(), anyString())).thenReturn("");
-        when(verifier.verify(any(), anyString(), any(), any(VerificationRequest.class))).thenAnswer(invocation -> {
+        when(verifier.verify(any(), anyString(), any(), any(VerificationRequest.class), any(Runnable.class))).thenAnswer(invocation -> {
             cancelled.set(true);
             return accepted();
         });
@@ -734,7 +760,7 @@ class GenerationOrchestrationServiceTest {
         try (GenerationOutcome outcome = generate(cancelled::get)) {
             assertThat(outcome.loopResult().status()).isEqualTo(AgentLoopResult.Status.COMPLETED);
             assertThat(outcome.verification()).isEqualTo(accepted());
-            assertThat(outcome.isAccepted()).isTrue();
+            assertThat(outcome.isMechanicallyVerified()).isTrue();
             assertThat(outcome.specFidelityReport().hasBlockingFindings()).isTrue();
         }
         verify(specFidelityCritic, never()).critique(any(), any(), any(), any(), any());
@@ -763,7 +789,7 @@ class GenerationOrchestrationServiceTest {
         when(workspace.extractProblemStatement(any(), anyString())).thenReturn("Improved statement");
         when(workspace.extractRepository(any(), anyString(), eq(RepositoryType.SOLUTION), any()))
                 .thenReturn(new GenerationWorkspaceService.RepositoryExtraction(Map.of("src/Library.java", "class Library {}"), false));
-        when(verifier.verify(any(), anyString(), any(), any(VerificationRequest.class)))
+        when(verifier.verify(any(), anyString(), any(), any(VerificationRequest.class), any(Runnable.class)))
                 .thenThrow(DifferentialVerificationService.VerificationInfrastructureException.reportRejected("invalid reports archive", new IOException("linked entry")));
 
         try (GenerationOutcome outcome = generate(() -> false)) {
@@ -773,22 +799,22 @@ class GenerationOrchestrationServiceTest {
         }
 
         verify(agentLoopRunner).run(anyString(), anyString(), any(), anyInt(), any(), any(), any());
-        verify(verifier).verify(any(), anyString(), any(), any(VerificationRequest.class));
+        verify(verifier).verify(any(), anyString(), any(), any(VerificationRequest.class), any(Runnable.class));
     }
 
     @Test
     void transientVerifierInfrastructureFailureRetriesTheSameCandidateWithoutAnotherProviderCall() {
         when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(completed());
-        when(verifier.verify(any(), anyString(), any(), any(VerificationRequest.class)))
+        when(verifier.verify(any(), anyString(), any(), any(VerificationRequest.class), any(Runnable.class)))
                 .thenThrow(new DifferentialVerificationService.VerificationInfrastructureException("temporary report transport failure", new IOException("transport")))
                 .thenReturn(accepted());
 
         try (GenerationOutcome outcome = generate(() -> false)) {
-            assertThat(outcome.isAccepted()).isTrue();
+            assertThat(outcome.isMechanicallyVerified()).isTrue();
         }
 
         verify(agentLoopRunner).run(anyString(), anyString(), any(), anyInt(), any(), any(), any());
-        verify(verifier, times(2)).verify(any(), anyString(), any(), any(VerificationRequest.class));
+        verify(verifier, times(2)).verify(any(), anyString(), any(), any(VerificationRequest.class), any(Runnable.class));
     }
 
     @Test
@@ -798,7 +824,7 @@ class GenerationOrchestrationServiceTest {
         when(workspace.extractProblemStatement(any(), anyString())).thenReturn("Improved statement");
         when(workspace.extractRepository(any(), anyString(), eq(RepositoryType.SOLUTION), any()))
                 .thenReturn(new GenerationWorkspaceService.RepositoryExtraction(Map.of("src/Library.java", "class Library {}"), false));
-        when(verifier.verify(any(), anyString(), any(), any(VerificationRequest.class)))
+        when(verifier.verify(any(), anyString(), any(), any(VerificationRequest.class), any(Runnable.class)))
                 .thenThrow(DifferentialVerificationService.VerificationInfrastructureException.sessionLost("sandbox deadline exceeded"));
 
         try (GenerationOutcome outcome = generate(() -> false)) {
@@ -808,27 +834,27 @@ class GenerationOrchestrationServiceTest {
         }
 
         verify(agentLoopRunner).run(anyString(), anyString(), any(), anyInt(), any(), any(), any());
-        verify(verifier).verify(any(), anyString(), any(), any(VerificationRequest.class));
+        verify(verifier).verify(any(), anyString(), any(), any(VerificationRequest.class), any(Runnable.class));
     }
 
     @Test
     void budgetExhaustedLoop_stillRunsAuthoritativeVerificationInTheGenerationSession() {
         when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any()))
                 .thenReturn(new AgentLoopResult(AgentLoopResult.Status.BUDGET_EXHAUSTED, 100, "ran out of turns"));
-        when(verifier.verify(any(), anyString(), any(), any(VerificationRequest.class))).thenReturn(rejected("template passed a graded test"));
+        when(verifier.verify(any(), anyString(), any(), any(VerificationRequest.class), any(Runnable.class))).thenReturn(rejected("template passed a graded test"));
 
         try (GenerationOutcome outcome = generate(() -> false)) {
             assertThat(outcome.loopResult().status()).isEqualTo(AgentLoopResult.Status.BUDGET_EXHAUSTED);
-            assertThat(outcome.isAccepted()).as("a rejected budget-exhausted run is not accepted").isFalse();
+            assertThat(outcome.isMechanicallyVerified()).as("a rejected budget-exhausted run is not accepted").isFalse();
         }
 
-        verify(verifier, atLeastOnce()).verify(eq(sandbox), eq(SESSION_ID), any(), any(VerificationRequest.class));
+        verify(verifier, atLeastOnce()).verify(eq(sandbox), eq(SESSION_ID), any(), any(VerificationRequest.class), any(Runnable.class));
     }
 
     @Test
     void acceptedOutcome_reusesVerificationExtractions_soPersistDoesNotReReadTheSandbox() {
         when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(completed());
-        when(verifier.verify(any(), anyString(), any(), any(VerificationRequest.class))).thenReturn(accepted());
+        when(verifier.verify(any(), anyString(), any(), any(VerificationRequest.class), any(Runnable.class))).thenReturn(accepted());
         when(workspace.extractRepository(sandbox, SESSION_ID, RepositoryType.TESTS, GenerationWorkspaceService.RepositorySeedMetadata.EMPTY))
                 .thenReturn(new GenerationWorkspaceService.RepositoryExtraction(Map.of("tests/T.java", "t ${testWorkingDirectory}"), false));
         when(workspace.extractRepository(sandbox, SESSION_ID, RepositoryType.TEMPLATE, GenerationWorkspaceService.RepositorySeedMetadata.EMPTY))
@@ -838,7 +864,7 @@ class GenerationOrchestrationServiceTest {
         when(workspace.extractProblemStatement(sandbox, SESSION_ID)).thenReturn("  # Title\n\nStatement  \n");
 
         try (GenerationOutcome outcome = generate(() -> false)) {
-            assertThat(outcome.isAccepted()).isTrue();
+            assertThat(outcome.isMechanicallyVerified()).isTrue();
             assertThat(outcome.producedFiles(RepositoryType.TESTS)).containsExactlyEntriesOf(Map.of("tests/T.java", "t tests"));
             assertThat(outcome.producedFiles(RepositoryType.TEMPLATE)).containsExactlyEntriesOf(Map.of("template/M.java", "m"));
             assertThat(outcome.producedFiles(RepositoryType.SOLUTION)).containsExactlyEntriesOf(Map.of("solution/S.java", "s"));
@@ -850,7 +876,13 @@ class GenerationOrchestrationServiceTest {
         verify(workspace, times(1)).extractRepository(sandbox, SESSION_ID, RepositoryType.SOLUTION, GenerationWorkspaceService.RepositorySeedMetadata.EMPTY);
         verify(workspace, never()).extractRepositoryFiles(any(), anyString(), any());
         ArgumentCaptor<VerificationRequest> request = ArgumentCaptor.forClass(VerificationRequest.class);
-        verify(verifier).verify(eq(sandbox), eq(SESSION_ID), eq(exercise), request.capture());
+        ArgumentCaptor<Runnable> restoreCandidate = ArgumentCaptor.forClass(Runnable.class);
+        verify(verifier).verify(eq(sandbox), eq(SESSION_ID), eq(exercise), request.capture(), restoreCandidate.capture());
         assertThat(request.getValue().producedProblemStatement()).isEqualTo("# Title\n\nStatement");
+
+        restoreCandidate.getValue().run();
+        InOrder resetThenMaterialize = inOrder(sandbox, workspace);
+        resetThenMaterialize.verify(sandbox).resetSession(SESSION_ID);
+        resetThenMaterialize.verify(workspace).materializeRepositoryFiles(eq(sandbox), eq(SESSION_ID), any(), any(), any());
     }
 }

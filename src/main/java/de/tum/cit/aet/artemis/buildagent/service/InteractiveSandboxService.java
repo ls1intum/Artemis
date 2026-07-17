@@ -10,6 +10,7 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -71,6 +72,10 @@ public class InteractiveSandboxService implements InteractiveSandbox {
 
     private static final Map<String, String> WRITABLE_FILESYSTEMS = Map.of(WORKING_DIRECTORY, "rw,exec,nosuid,nodev,size=512m", "/tmp", "rw,exec,nosuid,nodev,size=512m",
             "/opt/hyperion", "rw,exec,nosuid,nodev,size=256m", "/opt/hyperion-readiness-fixture", "rw,exec,nosuid,nodev,size=64m");
+
+    private static final String IMAGE_VOLUME_TMPFS_OPTIONS = "rw,exec,nosuid,nodev,size=256m";
+
+    private static final int MAX_IMAGE_VOLUME_COUNT = 16;
 
     /** Cap on captured stdout/stderr returned to the caller; longer output is truncated to the tail (where compiler/test failures appear) to bound the agent's context. */
     private static final int MAX_CAPTURED_OUTPUT_CHARS = 50_000;
@@ -252,6 +257,7 @@ public class InteractiveSandboxService implements InteractiveSandbox {
         RuntimeException firstFailure = null;
         for (Container container : previousSessions) {
             try (final var removeCommand = dockerClient.removeContainerCmd(container.getId()).withForce(true)) {
+                removeCommand.withRemoveVolumes(true);
                 removeCommand.exec();
                 forgetActivity(container.getId());
                 removed++;
@@ -279,13 +285,13 @@ public class InteractiveSandboxService implements InteractiveSandbox {
         }
         String containerName = containerNamePrefix() + UUID.randomUUID();
         DockerClient dockerClient = buildAgentConfiguration.getDockerClient();
-        HostConfig hostConfig = hardenedHostConfig();
         if (spec.runConfig() != null && spec.runConfig().network() != null && !spec.runConfig().network().isBlank()) {
             if (!"none".equals(spec.runConfig().network())) {
                 throw new LocalCIException("Interactive sandbox sessions only allow Docker network mode 'none'.");
             }
         }
         String immutableImageId = buildAgentDockerService.ensureDockerImageAvailable(spec.image());
+        HostConfig hostConfig = hardenedHostConfig(dockerClient, immutableImageId);
         try (final var createCommand = dockerClient.createContainerCmd(immutableImageId)) {
             // The main process only keeps the container warm; the session is driven by separate `docker exec` calls and removed explicitly at teardown.
             var response = createCommand.withName(containerName).withHostConfig(hostConfig).withEntrypoint()
@@ -298,6 +304,7 @@ public class InteractiveSandboxService implements InteractiveSandbox {
             }
             catch (RuntimeException startFailure) {
                 try (final var removeCommand = dockerClient.removeContainerCmd(containerId).withForce(true)) {
+                    removeCommand.withRemoveVolumes(true);
                     removeCommand.exec();
                 }
                 catch (RuntimeException cleanupFailure) {
@@ -322,9 +329,42 @@ public class InteractiveSandboxService implements InteractiveSandbox {
      * <li>makes the image filesystem read-only and puts every required writable path on a bounded tmpfs so a runaway build cannot exhaust the build-agent host disk.</li>
      * </ul>
      */
-    private HostConfig hardenedHostConfig() {
-        return buildAgentConfiguration.hostConfig().withAutoRemove(false).withNetworkMode("none").withSecurityOpts(List.of("no-new-privileges")).withCapDrop(Capability.ALL)
-                .withReadonlyRootfs(true).withTmpFs(WRITABLE_FILESYSTEMS);
+    private HostConfig hardenedHostConfig(DockerClient dockerClient, String immutableImageId) {
+        Map<String, String> tmpFs = new LinkedHashMap<>(WRITABLE_FILESYSTEMS);
+        try (var inspectImage = dockerClient.inspectImageCmd(immutableImageId)) {
+            var image = inspectImage.exec();
+            if (image.getConfig() != null && image.getConfig().getVolumes() != null) {
+                if (image.getConfig().getVolumes().size() > MAX_IMAGE_VOLUME_COUNT) {
+                    throw new LocalCIException("Interactive sandbox image declares too many volume paths");
+                }
+                for (String volumePath : image.getConfig().getVolumes().keySet()) {
+                    if (isUnsafeImageVolume(volumePath)) {
+                        throw new LocalCIException("Interactive sandbox image declares an unsafe volume path: " + volumePath);
+                    }
+                    tmpFs.putIfAbsent(volumePath, IMAGE_VOLUME_TMPFS_OPTIONS);
+                }
+            }
+        }
+        HostConfig hostConfig = buildAgentConfiguration.hostConfig();
+        requireResourceLimits(hostConfig);
+        return hostConfig.withAutoRemove(false).withNetworkMode("none").withSecurityOpts(List.of("no-new-privileges")).withCapDrop(Capability.ALL).withReadonlyRootfs(true)
+                .withTmpFs(Map.copyOf(tmpFs));
+    }
+
+    private static boolean isUnsafeImageVolume(String path) {
+        return path == null || !path.startsWith("/") || "/".equals(path) || path.equals("/proc") || path.startsWith("/proc/") || path.equals("/sys") || path.startsWith("/sys/")
+                || path.equals("/dev") || path.startsWith("/dev/");
+    }
+
+    private static void requireResourceLimits(HostConfig hostConfig) {
+        long cpuQuota = Optional.ofNullable(hostConfig.getCpuQuota()).orElse(0L);
+        long memory = Optional.ofNullable(hostConfig.getMemory()).orElse(0L);
+        long memorySwap = Optional.ofNullable(hostConfig.getMemorySwap()).orElse(0L);
+        long pidsLimit = Optional.ofNullable(hostConfig.getPidsLimit()).orElse(0L);
+        if (cpuQuota <= 0 || memory <= 0 || memorySwap != memory || pidsLimit <= 0) {
+            throw new LocalCIException(
+                    "Interactive sandboxes require positive CPU, memory, and PID limits, with memory-swap equal to memory so generated code cannot exhaust the host");
+        }
     }
 
     String containerNamePrefix() {
@@ -602,9 +642,33 @@ public class InteractiveSandboxService implements InteractiveSandbox {
         }
     }
 
+    @Override
+    public void resetSession(String sessionId) {
+        if (!buildAgentConfiguration.isDockerAvailable()) {
+            throw new LocalCIException("Cannot reset interactive sandbox session " + sessionId + " because Docker is unavailable");
+        }
+        lifecycleLock.writeLock().lock();
+        try {
+            if (!sessionStates.containsKey(sessionId)) {
+                throw new LocalCIException("Interactive sandbox session " + sessionId + " is not active on this build agent");
+            }
+            try (var restartCommand = buildAgentConfiguration.getDockerClient().restartContainerCmd(sessionId).withTimeout(30)) {
+                restartCommand.exec();
+            }
+            markActive(sessionId);
+        }
+        catch (RuntimeException e) {
+            throw new LocalCIException("Failed to reset interactive sandbox session " + sessionId, e);
+        }
+        finally {
+            lifecycleLock.writeLock().unlock();
+        }
+    }
+
     private void removeSession(String sessionId) {
         DockerClient dockerClient = buildAgentConfiguration.getDockerClient();
         try (final var removeCommand = dockerClient.removeContainerCmd(sessionId).withForce(true)) {
+            removeCommand.withRemoveVolumes(true);
             removeCommand.exec();
             forgetActivity(sessionId);
         }

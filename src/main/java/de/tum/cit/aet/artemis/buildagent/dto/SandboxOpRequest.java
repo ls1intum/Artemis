@@ -49,6 +49,11 @@ public record SandboxOpRequest(String correlationId, String targetAgentShortName
         return new SandboxOpRequest(correlationId, targetAgentShortName, SandboxOp.COPY_OUT, sessionId, null, null, 0L, workspacePath, 0L);
     }
 
+    /** A {@link SandboxOp#RESET} request restarting an existing session container. */
+    public static SandboxOpRequest reset(String correlationId, String targetAgentShortName, String sessionId) {
+        return new SandboxOpRequest(correlationId, targetAgentShortName, SandboxOp.RESET, sessionId, null, null, 0L, null, 0L);
+    }
+
     /** A {@link SandboxOp#DESTROY} request tearing down an existing session. */
     public static SandboxOpRequest destroy(String correlationId, String targetAgentShortName, String sessionId) {
         return new SandboxOpRequest(correlationId, targetAgentShortName, SandboxOp.DESTROY, sessionId, null, null, 0L, null, 0L);

@@ -323,10 +323,12 @@ class GenerationWorkspaceServiceTest {
     void materializeRepositoryFiles_writesTheCanonicalFilesBackToTheWorkspace() {
         InteractiveSandbox sandbox = mock(InteractiveSandbox.class);
         Map<String, String> expected = Map.of("solution/gradlew", "#!/bin/sh\n", "solution/src/Main.java", "class Main {}", "tests/test/MainTest.java", "class MainTest {}");
+        byte[] binary = { 0, 1, 2, 3 };
         doAnswer(invocation -> {
             try (TarArchiveInputStream tar = new TarArchiveInputStream(invocation.getArgument(2))) {
                 WorkspaceArchive.ArchiveContents contents = WorkspaceArchive.readTarContents(tar, "");
                 assertThat(contents.textFiles()).containsExactlyInAnyOrderEntriesOf(expected);
+                assertThat(contents.binaryDigests()).containsEntry("solution/tool.bin", WorkspaceArchive.sha256(binary));
                 assertThat(contents.executableFiles()).containsExactly("solution/gradlew");
             }
             return null;
@@ -336,7 +338,8 @@ class GenerationWorkspaceServiceTest {
         service.materializeRepositoryFiles(sandbox, "session",
                 Map.of(RepositoryType.SOLUTION, Map.of("gradlew", "#!/bin/sh\n", "src/Main.java", "class Main {}"), RepositoryType.TESTS,
                         Map.of("test/MainTest.java", "class MainTest {}")),
-                Map.of(RepositoryType.SOLUTION, new GenerationWorkspaceService.RepositorySeedMetadata(Map.of(), Set.of("gradlew"))));
+                Map.of(RepositoryType.SOLUTION, new GenerationWorkspaceService.RepositorySeedMetadata(Map.of("tool.bin", WorkspaceArchive.sha256(binary)), Set.of("gradlew"))),
+                Map.of(RepositoryType.SOLUTION, Map.of("tool.bin", new GenerationWorkspaceService.BinarySeedFile(binary))));
     }
 
     @Test

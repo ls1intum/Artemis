@@ -142,11 +142,11 @@
 
         @if (verdict(); as currentVerdict) {
             <div class="hyperion-activity-verification" data-testid="hyperion-generation-verdict">
-                <span [class]="currentVerdict.accepted ? 'hyperion-verification-success' : 'hyperion-verification-danger'">
-                    <fa-icon [icon]="currentVerdict.accepted ? faCircleCheck : faCircleXmark" />
+                <span [class]="currentVerdict.mechanicallyVerified ? 'hyperion-verification-success' : 'hyperion-verification-danger'">
+                    <fa-icon [icon]="currentVerdict.mechanicallyVerified ? faCircleCheck : faCircleXmark" />
                     <strong
                         [jhiTranslate]="
-                            currentVerdict.accepted
+                            currentVerdict.mechanicallyVerified
                                 ? 'artemisApp.hyperion.generationActivity.verdict.consistencyChecksPassed'
                                 : 'artemisApp.hyperion.generationActivity.verdict.consistencyChecksFailed'
                         "
@@ -182,7 +182,7 @@
                     ></span>
                 </span>
             </div>
-            @if (!currentVerdict.accepted && currentVerdict.reasons.length) {
+            @if (!currentVerdict.mechanicallyVerified && currentVerdict.reasons.length) {
                 <p-message severity="error" class="hyperion-activity-message" [closable]="false">
                     <ul class="hyperion-activity-verdict-reasons" data-testid="hyperion-generation-verdict-reasons">
                         @for (reason of currentVerdict.reasons; track $index) {
@@ -218,21 +218,21 @@
 
         @if (jobId() && hasDetails()) {
             <div id="hyperion-generation-details" class="hyperion-activity-body" [hidden]="!detailsExpanded()" data-testid="hyperion-generation-details">
-                @if (snapshots().length) {
+                @if (fileChanges().length) {
                     <section class="hyperion-activity-files" aria-labelledby="hyperion-changed-files-title" data-testid="hyperion-changed-files">
                         <h4 id="hyperion-changed-files-title" jhiTranslate="artemisApp.hyperion.generationActivity.changedFiles"></h4>
                         @for (group of filesByRepo(); track group.repo) {
                             <div class="hyperion-activity-repo" data-testid="hyperion-generation-repo">
                                 <div class="hyperion-activity-repo-label" [jhiTranslate]="'artemisApp.hyperion.generationActivity.repo.' + group.repo"></div>
                                 @for (file of group.files; track file.repo + ':' + file.path) {
-                                    @if (canNavigateSnapshot(file)) {
+                                    @if (canNavigateFileChange(file)) {
                                         <p-button
                                             class="hyperion-activity-file"
                                             size="small"
                                             severity="secondary"
                                             [text]="true"
                                             [fluid]="true"
-                                            [ariaLabel]="snapshotAccessibleLabel(file)"
+                                            [ariaLabel]="fileChangeAccessibleLabel(file)"
                                             [pTooltip]="file.path"
                                             tooltipPosition="right"
                                             (onClick)="selectFile(file)"
@@ -241,7 +241,11 @@
                                             <span class="hyperion-activity-file-path">{{ displayPath(file) }}</span>
                                         </p-button>
                                     } @else {
-                                        <div class="hyperion-activity-file-static" [attr.aria-label]="snapshotAccessibleLabel(file)" data-testid="hyperion-generation-file-static">
+                                        <div
+                                            class="hyperion-activity-file-static"
+                                            [attr.aria-label]="fileChangeAccessibleLabel(file)"
+                                            data-testid="hyperion-generation-file-static"
+                                        >
                                             {{ displayPath(file) }}
                                         </div>
                                     }

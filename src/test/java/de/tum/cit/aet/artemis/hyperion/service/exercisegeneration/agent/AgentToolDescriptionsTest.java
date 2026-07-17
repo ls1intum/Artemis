@@ -8,8 +8,8 @@ class AgentToolDescriptionsTest {
 
     @Test
     void verifyIsDescribedAsAMechanicalPrecheckNotSemanticAcceptance() {
-        assertThat(AgentToolDescriptions.VERIFY)
-                .contains("mechanical precheck", "failure evidence", "does not prove semantic relevance", "final post-loop integrity and semantic review decides acceptance")
-                .doesNotContain("authoritative self-check");
+        assertThat(AgentToolDescriptions.VERIFY).contains("mechanical precheck", "failure evidence", "does not prove semantic relevance",
+                "post-loop verification determines save eligibility", "quality review may request repairs or flag instructor review")
+                .doesNotContain("authoritative self-check", "decides acceptance");
     }
 }

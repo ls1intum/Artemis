@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.hyperion.dto;
 import java.io.Serial;
 import java.io.Serializable;
 import java.time.Instant;
+import java.util.Map;
 
 import org.jspecify.annotations.Nullable;
 
@@ -16,13 +17,15 @@ import io.swagger.v3.oas.annotations.media.Schema;
  * <p>
  * {@link Serializable} because it is retained (inside {@code JobTranscript}) in a distributed Hazelcast map for reconnect/replay.
  *
- * @param type                the event kind
- * @param message             a human-readable progress or result message (already localised-agnostic; the client decides presentation)
- * @param completionStatus    on a terminal {@code DONE} event, whether the run succeeded, needs review, or partially completed; otherwise {@code null}
- * @param verdict             on a terminal event with a verification result, the structured verdict (which gates passed/failed) so the client can render scannable chips; else
- *                                {@code null}
- * @param liveExerciseChanged on a terminal event, whether the live exercise repositories/problem statement were changed and an open editor should refresh; otherwise {@code null}
- * @param timestamp           the moment the event was produced
+ * @param type                   the event kind
+ * @param message                a human-readable progress or result message (already localised-agnostic; the client decides presentation)
+ * @param completionStatus       on a terminal {@code DONE} event, whether the run succeeded, needs review, or partially completed; otherwise {@code null}
+ * @param verdict                on a terminal event with a verification result, the structured verdict (which gates passed/failed) so the client can render scannable chips; else
+ *                                   {@code null}
+ * @param liveExerciseChanged    on a terminal event, whether the live exercise repositories/problem statement were changed and an open editor should refresh; otherwise
+ *                                   {@code null}
+ * @param savedRepositoryCommits exact commit hashes saved by repository name on a successful terminal event; otherwise {@code null}
+ * @param timestamp              the moment the event was produced
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 @Schema(description = "A progress event streamed to the instructor while an agentic whole-exercise generation or adaptation runs")
@@ -31,6 +34,7 @@ public record ExerciseGenerationEventDTO(@Schema(description = "The event kind")
         @Schema(description = "On a terminal DONE event, whether the run succeeded, needs review, or partially completed") @Nullable CompletionStatus completionStatus,
         @Schema(description = "On a terminal event, the structured verification verdict") @Nullable ExerciseGenerationVerdictDTO verdict,
         @Schema(description = "On a terminal event, whether the live exercise changed and open editors should refresh") @Nullable Boolean liveExerciseChanged,
+        @Schema(description = "Exact saved commit hashes keyed by repository name") @Nullable Map<String, String> savedRepositoryCommits,
         @Schema(description = "The moment the event was produced") Instant timestamp) implements Serializable {
 
     @Serial
@@ -61,7 +65,7 @@ public record ExerciseGenerationEventDTO(@Schema(description = "The event kind")
     }
 
     public static ExerciseGenerationEventDTO of(Type type, @Nullable String message) {
-        return new ExerciseGenerationEventDTO(type, message, null, null, null, Instant.now());
+        return new ExerciseGenerationEventDTO(type, message, null, null, null, null, Instant.now());
     }
 
     public static ExerciseGenerationEventDTO done(@Nullable String message, CompletionStatus completionStatus, @Nullable ExerciseGenerationVerdictDTO verdict) {
@@ -70,6 +74,12 @@ public record ExerciseGenerationEventDTO(@Schema(description = "The event kind")
 
     public static ExerciseGenerationEventDTO done(@Nullable String message, CompletionStatus completionStatus, @Nullable ExerciseGenerationVerdictDTO verdict,
             boolean liveExerciseChanged) {
-        return new ExerciseGenerationEventDTO(Type.DONE, message, completionStatus, verdict, liveExerciseChanged, Instant.now());
+        return done(message, completionStatus, verdict, liveExerciseChanged, null);
+    }
+
+    public static ExerciseGenerationEventDTO done(@Nullable String message, CompletionStatus completionStatus, @Nullable ExerciseGenerationVerdictDTO verdict,
+            boolean liveExerciseChanged, @Nullable Map<String, String> savedRepositoryCommits) {
+        return new ExerciseGenerationEventDTO(Type.DONE, message, completionStatus, verdict, liveExerciseChanged,
+                savedRepositoryCommits == null ? null : Map.copyOf(savedRepositoryCommits), Instant.now());
     }
 }

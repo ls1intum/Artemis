@@ -34,12 +34,12 @@ import de.tum.cit.aet.artemis.buildagent.service.InteractiveSandbox;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionExerciseGenerationEnabled;
-import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationFileSnapshotDTO;
+import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationFileChangeDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.GenerationMode;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.AgentLoopResult;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.AgentLoopRunner;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.AgentSystemPromptService;
-import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.FileSnapshotEmittingAgentTools;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.FileChangeEmittingAgentTools;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.SandboxAgentTools;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.critic.SpecFidelityCriticService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.critic.SpecFidelityReport;
@@ -95,7 +95,7 @@ public class GenerationOrchestrationService {
 
     private final StructuralOracleSeedingService structuralOracleSeeder;
 
-    // Reviews brief coverage and, for adaptations, blocks acceptance when unrelated changes cannot be ruled out.
+    // Reviews brief coverage and, for adaptations, requests repair when unrelated changes cannot be ruled out.
     private final SpecFidelityCriticService specFidelityCritic;
 
     // Used to register a node-local cancel hook that destroys the sandbox session, so a cancellation during a long build interrupts promptly rather than at the next between-turn
@@ -110,6 +110,9 @@ public class GenerationOrchestrationService {
             DifferentialVerificationService verifier, AgentSystemPromptService systemPromptService, StructuralOracleSeedingService structuralOracleSeeder,
             SpecFidelityCriticService specFidelityCritic, GenerationJobService jobService, Optional<ProgrammingExerciseTestCaseRepository> testCaseRepository,
             @Value("${artemis.hyperion.agent.max-turns:40}") int maxTurns) {
+        if (maxTurns <= 0) {
+            throw new IllegalArgumentException("artemis.hyperion.agent.max-turns must be positive");
+        }
         this.maxTurns = maxTurns;
         this.interactiveSandbox = interactiveSandbox;
         this.workspace = workspace;
@@ -129,23 +132,23 @@ public class GenerationOrchestrationService {
     }
 
     /**
-     * Runs one generation/adaptation session, streaming a whole-file snapshot to {@code fileSnapshotSink} on every successful {@code write_file}/{@code edit_file} so the
+     * Runs one generation/adaptation session, streaming a file change to {@code fileChangeSink} on every successful {@code write_file}/{@code edit_file} so the
      * triggering
-     * instructor's editor can render a live preview of what the agent produces.
+     * instructor's editor can show which files the agent changes.
      *
-     * @param exercise         the exercise to generate or adapt (its repositories must already be scaffolded)
-     * @param user             the instructor performing the generation, recorded with the LLM token-usage trace
-     * @param userPrompt       the instruction for this run (a generation brief, or the feedback to address)
-     * @param jobId            the job id, used to register a node-local cancel hook
-     * @param mode             the explicit run intent (generate vs. adapt)
-     * @param cancelled        polled cooperatively; if it returns {@code true} the session is aborted
-     * @param progress         receives short human-readable progress lines for the live transcript; may be {@code null}
-     * @param fileSnapshotSink receives a whole-file snapshot on every successful write for live streaming; {@code null} disables snapshot streaming
-     * @param usageSink        receives token usage for every model call; {@code null} uses the default persisted run sink
+     * @param exercise       the exercise to generate or adapt (its repositories must already be scaffolded)
+     * @param user           the instructor performing the generation, recorded with the LLM token-usage trace
+     * @param userPrompt     the instruction for this run (a generation brief, or the feedback to address)
+     * @param jobId          the job id, used to register a node-local cancel hook
+     * @param mode           the explicit run intent (generate vs. adapt)
+     * @param cancelled      polled cooperatively; if it returns {@code true} the session is aborted
+     * @param progress       receives short human-readable progress lines for the live transcript; may be {@code null}
+     * @param fileChangeSink receives a file change on every successful write for live streaming; {@code null} disables file-change streaming
+     * @param usageSink      receives token usage for every model call; {@code null} uses the default persisted run sink
      * @return the outcome including the verification verdict and the produced files
      */
     public GenerationOutcome generate(ProgrammingExercise exercise, User user, String userPrompt, String jobId, GenerationMode mode, BooleanSupplier cancelled,
-            Consumer<String> progress, @Nullable Consumer<ExerciseGenerationFileSnapshotDTO> fileSnapshotSink, @Nullable Consumer<ChatResponse> usageSink) {
+            Consumer<String> progress, @Nullable Consumer<ExerciseGenerationFileChangeDTO> fileChangeSink, @Nullable Consumer<ChatResponse> usageSink) {
         // Snapshot the pre-adapt graded test names so the verifier can reject a destructive total wipe (an adapt that retains none of them = a from-scratch regeneration mislabeled
         // as an adapt). Empty for GENERATE, which leaves the total-wipe gate inert.
         Set<String> baselineGradedTestNames = mode == GenerationMode.ADAPT ? captureBaselineGradedTestNames(exercise) : Set.of();
@@ -197,17 +200,18 @@ public class GenerationOrchestrationService {
 
             String systemPrompt = systemPromptService.build(exercise, mode);
             // The agent's `verify` tool runs the same differential as the post-loop gate so it sees the verdict in-loop (pass/fail tests, exact [task] names); the post-loop
-            // verify(...) below stays the acceptance decision.
+            // verify(...) below stays the mechanical-verification decision.
             SandboxAgentTools baseTools = new SandboxAgentTools(sandbox, sessionId, verifier, exercise, testsSeedSnapshot, mode == GenerationMode.ADAPT);
-            // Wrap the tools in the snapshot-emitting decorator when a sink is supplied, so each successful write streams the whole file to the instructor's editor. The decorator
+            // Wrap the tools in the file-change decorator when a sink is supplied, so each successful write streams the whole file to the instructor's editor. The decorator
             // re-exposes the same @Tool surface (the model sees the same tools) and only adds emission.
-            Object tools = fileSnapshotSink != null ? new FileSnapshotEmittingAgentTools(baseTools, fileSnapshotSink) : baseTools;
+            Object tools = fileChangeSink != null ? new FileChangeEmittingAgentTools(baseTools, fileChangeSink) : baseTools;
 
             // Free turn-0 observation of the seeded layout so the agent need not `ls -R`. Best-effort (empty probe leaves the prompt unchanged) and first-attempt only — retries
             // already operate on a workspace the agent has explored.
             String firstPrompt = prependWorkspaceLayout(workspace.probeWorkspaceLayout(sandbox, sessionId), authoringBrief);
 
-            // On rejection, feed the verifier's reasons back and retry up to a small bound. The verifier enforces rules the agent's own verify.sh cannot show (template must fail a
+            // On mechanical rejection, feed the verifier's reasons back and retry up to a small bound. The verifier enforces rules the agent's own verify.sh cannot show (template
+            // must fail a
             // meaningful fraction; problem statement must bind tasks), so this loop turns a "builds but not quite right" first attempt into an accepted exercise.
             String currentPrompt = firstPrompt;
             AgentLoopResult loopResult = null;
@@ -223,13 +227,14 @@ public class GenerationOrchestrationService {
                 log.info("Exercise generation attempt {} took {} turn(s)", attempt, loopResult.turns());
 
                 if (loopResult.status() == AgentLoopResult.Status.CANCELLED) {
+                    if (lastMechanicallyVerifiedCandidate != null) {
+                        return preserveCandidate(lastMechanicallyVerifiedCandidate, sandbox, sessionId, workspaceSeed);
+                    }
                     return stopOrPreserve(sandbox, sessionId, workspaceSeed, placeholderReplacements, baselineRepositoryFiles, baselineProblemStatement, loopResult);
                 }
                 if (loopResult.status() == AgentLoopResult.Status.ERROR) {
                     if (lastMechanicallyVerifiedCandidate != null) {
-                        return new GenerationOutcome(lastMechanicallyVerifiedCandidate.loopResult(), lastMechanicallyVerifiedCandidate.verification(), sessionId, this, sandbox,
-                                lastMechanicallyVerifiedCandidate.producedFiles(), lastMechanicallyVerifiedCandidate.problemStatement(),
-                                lastMechanicallyVerifiedCandidate.reviewReport(), workspaceSeed.repositoryHeads());
+                        return preserveCandidate(lastMechanicallyVerifiedCandidate, sandbox, sessionId, workspaceSeed);
                     }
                     Map<RepositoryType, Map<String, String>> erroredFiles = changedCapturedRepositoryFiles(baselineRepositoryFiles,
                             captureRepositoryFiles(sandbox, sessionId, workspaceSeed, placeholderReplacements));
@@ -245,6 +250,9 @@ public class GenerationOrchestrationService {
                 }
                 // The loop only polls cancellation between turns; honour a cancel that arrived during the last turn before spending minutes on the verification build.
                 if (cancelled.getAsBoolean()) {
+                    if (lastMechanicallyVerifiedCandidate != null) {
+                        return preserveCandidate(lastMechanicallyVerifiedCandidate, sandbox, sessionId, workspaceSeed);
+                    }
                     return stopOrPreserve(sandbox, sessionId, workspaceSeed, placeholderReplacements, baselineRepositoryFiles, baselineProblemStatement,
                             cancelledResult(loopResult));
                 }
@@ -253,6 +261,9 @@ public class GenerationOrchestrationService {
                 // [task] bound to one from the binding-resolution gate (the agent could not bind tests seeded after it ran) while still requiring solution-pass/template-fail.
                 Set<String> seededStructuralTestNames = structuralOracleSeeder.seedIfStructuralDiff(sandbox, sessionId, exercise);
                 if (cancelled.getAsBoolean()) {
+                    if (lastMechanicallyVerifiedCandidate != null) {
+                        return preserveCandidate(lastMechanicallyVerifiedCandidate, sandbox, sessionId, workspaceSeed);
+                    }
                     return stopOrPreserve(sandbox, sessionId, workspaceSeed, placeholderReplacements, baselineRepositoryFiles, baselineProblemStatement,
                             cancelledResult(loopResult));
                 }
@@ -281,7 +292,6 @@ public class GenerationOrchestrationService {
                 addIfExtractionFailed(extractionFailed, producedTemplate, RepositoryType.TEMPLATE);
                 addIfExtractionFailed(extractionFailed, producedSolution, RepositoryType.SOLUTION);
                 if (extractionFailed.isEmpty()) {
-                    workspace.materializeRepositoryFiles(sandbox, sessionId, producedFilesByType, workspaceSeed.repositoryMetadata());
                     if (hasProducedChanges(baselineRepositoryFiles, producedFilesByType, baselineProblemStatement, producedProblemStatement)) {
                         lastExtractedCandidate = new ExtractedCandidate(loopResult, copyProducedFiles(producedFilesByType), producedProblemStatement);
                     }
@@ -290,21 +300,30 @@ public class GenerationOrchestrationService {
                         baselineRepositoryFiles.getOrDefault(RepositoryType.SOLUTION, Map.of()), producedTests.files(), producedTemplate.files(), producedSolution.files(),
                         extractionFailed, seededStructuralTestNames, baselineGradedTestNames, producedProblemStatement, mode == GenerationMode.ADAPT);
                 if (cancelled.getAsBoolean()) {
+                    if (lastMechanicallyVerifiedCandidate != null) {
+                        return preserveCandidate(lastMechanicallyVerifiedCandidate, sandbox, sessionId, workspaceSeed);
+                    }
                     return stopOrPreserve(sandbox, sessionId, workspaceSeed, placeholderReplacements, baselineRepositoryFiles, baselineProblemStatement,
                             cancelledResult(loopResult));
                 }
                 // The authoritative pass re-seeds its pristine script, discards old reports, and builds from fresh temporary directories before parsing the result independently.
-                verification = verifyWithInfrastructureRetry(sandbox, sessionId, exercise, verificationRequest, cancelled, progress);
+                InteractiveSandbox activeSandbox = sandbox;
+                GenerationWorkspaceService.WorkspaceSeed activeWorkspaceSeed = workspaceSeed;
+                Map<RepositoryType, Map<String, String>> candidateFiles = copyProducedFiles(producedFilesByType);
+                Runnable restoreCandidate = () -> {
+                    activeSandbox.resetSession(activeSessionId);
+                    workspace.materializeRepositoryFiles(activeSandbox, activeSessionId, candidateFiles, activeWorkspaceSeed.repositoryMetadata(),
+                            activeWorkspaceSeed.repositoryBinaryFiles());
+                };
+                verification = verifyWithInfrastructureRetry(sandbox, sessionId, exercise, verificationRequest, restoreCandidate, cancelled, progress);
                 emit(progress, verification.report());
-                if (verification.accepted()) {
+                if (verification.mechanicallyVerified()) {
                     lastMechanicallyVerifiedCandidate = new CandidateSnapshot(loopResult, verification, copyProducedFiles(producedFilesByType), producedProblemStatement,
                             SpecFidelityReport.qualityReviewUnavailable("Generation stopped before the mechanically verified candidate received its full-artifact review."));
                 }
                 if (cancelled.getAsBoolean()) {
                     if (lastMechanicallyVerifiedCandidate != null) {
-                        return new GenerationOutcome(lastMechanicallyVerifiedCandidate.loopResult(), lastMechanicallyVerifiedCandidate.verification(), sessionId, this, sandbox,
-                                lastMechanicallyVerifiedCandidate.producedFiles(), lastMechanicallyVerifiedCandidate.problemStatement(),
-                                lastMechanicallyVerifiedCandidate.reviewReport(), workspaceSeed.repositoryHeads());
+                        return preserveCandidate(lastMechanicallyVerifiedCandidate, sandbox, sessionId, workspaceSeed);
                     }
                     return stopOrPreserve(sandbox, sessionId, workspaceSeed, placeholderReplacements, baselineRepositoryFiles, baselineProblemStatement,
                             cancelledResult(loopResult));
@@ -312,7 +331,7 @@ public class GenerationOrchestrationService {
 
                 // Run the expensive semantic review only after the deterministic mechanical gate passes. Reviewing a candidate that cannot build or grade wastes provider quota and
                 // produces findings against artifacts the next attempt must replace anyway.
-                if (verification.accepted()) {
+                if (verification.mechanicallyVerified()) {
                     @Nullable
                     String adaptationChanges = mode == GenerationMode.ADAPT
                             ? renderAdaptationChanges(baselineProblemStatement, producedProblemStatement, baselineRepositoryFiles, producedFilesByType)
@@ -322,22 +341,20 @@ public class GenerationOrchestrationService {
                     lastMechanicallyVerifiedCandidate = new CandidateSnapshot(loopResult, verification, copyProducedFiles(producedFilesByType), producedProblemStatement,
                             specFidelityReport);
                     if (cancelled.getAsBoolean()) {
-                        return new GenerationOutcome(lastMechanicallyVerifiedCandidate.loopResult(), lastMechanicallyVerifiedCandidate.verification(), sessionId, this, sandbox,
-                                lastMechanicallyVerifiedCandidate.producedFiles(), lastMechanicallyVerifiedCandidate.problemStatement(),
-                                lastMechanicallyVerifiedCandidate.reviewReport(), workspaceSeed.repositoryHeads());
+                        return preserveCandidate(lastMechanicallyVerifiedCandidate, sandbox, sessionId, workspaceSeed);
                     }
                 }
                 else {
                     specFidelityReport = SpecFidelityReport.empty();
                 }
 
-                if (verification.accepted() && !specFidelityReport.hasBlockingFindings()) {
+                if (verification.mechanicallyVerified() && !specFidelityReport.hasBlockingFindings()) {
                     break;
                 }
                 if (attempt == MAX_GENERATION_ATTEMPTS) {
                     break;
                 }
-                if (verification.accepted()) {
+                if (verification.mechanicallyVerified()) {
                     boolean reviewUnavailable = specFidelityReport.findings().stream()
                             .anyMatch(finding -> finding.kind() == SpecFidelityReport.Kind.ADAPTATION_SCOPE_REVIEW_UNAVAILABLE
                                     || finding.kind() == SpecFidelityReport.Kind.QUALITY_REVIEW_UNAVAILABLE);
@@ -349,7 +366,7 @@ public class GenerationOrchestrationService {
                     }
                     emit(progress, "Mechanical verification passed, but the exercise review found requirements or quality issues; asking the AI to correct them.");
                     String scopeGuidance = mode == GenerationMode.ADAPT ? " Preserve all content outside the requested adaptation." : "";
-                    currentPrompt = "Your previous attempt passed mechanical verification, but the automated full-artifact review found acceptance blockers." + scopeGuidance
+                    currentPrompt = "Your previous attempt passed mechanical verification, but the automated full-artifact review found review blockers." + scopeGuidance
                             + " Preserve the mechanically correct work: do not restart or rewrite unrelated files. Re-read the cited artifacts and repair them to match the source requirements and "
                             + "remove unsupported candidate choices identified by the review. Make the smallest coherent repair across the statement, solution, template, and tests. Keep every unaffected "
                             + "requirement, API, test, and example. Re-run `sh verify.sh solution` and `sh verify.sh template`, then call submit again.\n\nThe instructor "
@@ -367,7 +384,7 @@ public class GenerationOrchestrationService {
 
             // A semantic repair can accidentally break a candidate that already built and graded correctly. Never discard that more useful checkpoint in favour of a later
             // mechanically broken tree; return the last buildable candidate and its unresolved review findings.
-            if ((verification == null || !verification.accepted()) && lastMechanicallyVerifiedCandidate != null) {
+            if ((verification == null || !verification.mechanicallyVerified()) && lastMechanicallyVerifiedCandidate != null) {
                 loopResult = lastMechanicallyVerifiedCandidate.loopResult();
                 verification = lastMechanicallyVerifiedCandidate.verification();
                 producedFilesByType = lastMechanicallyVerifiedCandidate.producedFiles();
@@ -381,6 +398,9 @@ public class GenerationOrchestrationService {
         catch (RuntimeException e) {
             // A build interrupted by the cancel hook surfaces as a throw; report it as a clean cancellation.
             if (cancelled.getAsBoolean()) {
+                if (lastMechanicallyVerifiedCandidate != null && workspaceSeed != null) {
+                    return preserveCandidate(lastMechanicallyVerifiedCandidate, sandbox, sessionId, workspaceSeed);
+                }
                 return stopOrPreserve(sandbox, sessionId, workspaceSeed, placeholderReplacements, baselineRepositoryFiles, baselineProblemStatement,
                         new AgentLoopResult(AgentLoopResult.Status.CANCELLED, 0, ""));
             }
@@ -420,6 +440,11 @@ public class GenerationOrchestrationService {
     }
 
     private record ExtractedCandidate(AgentLoopResult loopResult, Map<RepositoryType, Map<String, String>> producedFiles, String problemStatement) {
+    }
+
+    private GenerationOutcome preserveCandidate(CandidateSnapshot candidate, InteractiveSandbox sandbox, String sessionId, GenerationWorkspaceService.WorkspaceSeed workspaceSeed) {
+        return new GenerationOutcome(candidate.loopResult(), candidate.verification(), sessionId, this, sandbox, candidate.producedFiles(), candidate.problemStatement(),
+                candidate.reviewReport(), workspaceSeed.repositoryHeads());
     }
 
     private static Map<RepositoryType, Map<String, String>> copyProducedFiles(Map<RepositoryType, Map<String, String>> producedFiles) {
@@ -781,9 +806,9 @@ public class GenerationOrchestrationService {
     }
 
     private VerificationResult verifyWithInfrastructureRetry(InteractiveSandbox sandbox, String sessionId, ProgrammingExercise exercise, VerificationRequest request,
-            BooleanSupplier cancelled, Consumer<String> progress) {
+            Runnable restoreCandidate, BooleanSupplier cancelled, Consumer<String> progress) {
         try {
-            return verifier.verify(sandbox, sessionId, exercise, request);
+            return verifier.verify(sandbox, sessionId, exercise, request, restoreCandidate);
         }
         catch (DifferentialVerificationService.VerificationInfrastructureException exception) {
             if (cancelled.getAsBoolean() || !exception.isRetryableInSameSession()) {
@@ -792,7 +817,7 @@ public class GenerationOrchestrationService {
             log.warn("Exercise verification infrastructure failed once for exercise {} ({}); retrying the same candidate without another provider call", exercise.getId(),
                     exception.getClass().getSimpleName());
             emit(progress, "The verification infrastructure failed; retrying the same exercise without asking the AI to regenerate it.");
-            return verifier.verify(sandbox, sessionId, exercise, request);
+            return verifier.verify(sandbox, sessionId, exercise, request, restoreCandidate);
         }
     }
 

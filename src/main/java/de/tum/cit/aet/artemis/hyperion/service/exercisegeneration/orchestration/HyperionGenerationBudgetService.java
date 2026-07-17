@@ -58,7 +58,7 @@ public class HyperionGenerationBudgetService {
 
     private final long maxTokensGlobal;
 
-    private final long reservedTokensPerJob;
+    private final long maxTokensPerJob;
 
     private final Duration reservationTtl;
 
@@ -67,39 +67,39 @@ public class HyperionGenerationBudgetService {
     @Autowired
     public HyperionGenerationBudgetService(LLMTokenUsageTraceRepository tokenUsageTraceRepository, @Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance,
             @Value("${artemis.hyperion.agent.token-budget-window:PT24H}") Duration budgetWindow,
-            @Value("${artemis.hyperion.agent.admission-max-tokens-per-user:0}") long maxTokensPerUser,
-            @Value("${artemis.hyperion.agent.admission-max-tokens-per-course:0}") long maxTokensPerCourse,
-            @Value("${artemis.hyperion.agent.admission-max-tokens-global:0}") long maxTokensGlobal,
-            @Value("${artemis.hyperion.agent.in-flight-token-reservation-per-job:3000000}") long reservedTokensPerJob,
+            @Value("${artemis.hyperion.agent.admission-max-tokens-per-user:12000000}") long maxTokensPerUser,
+            @Value("${artemis.hyperion.agent.admission-max-tokens-per-course:120000000}") long maxTokensPerCourse,
+            @Value("${artemis.hyperion.agent.admission-max-tokens-global:600000000}") long maxTokensGlobal,
+            @Value("${artemis.hyperion.agent.max-tokens-per-job:3000000}") long maxTokensPerJob,
             @Value("${artemis.hyperion.agent.max-job-duration:PT30M}") Duration maxJobDuration) {
-        validateConfiguration(budgetWindow, maxTokensPerUser, maxTokensPerCourse, maxTokensGlobal, reservedTokensPerJob);
+        validateConfiguration(budgetWindow, maxTokensPerUser, maxTokensPerCourse, maxTokensGlobal, maxTokensPerJob);
         this.tokenUsageTraceRepository = tokenUsageTraceRepository;
         this.hazelcastInstance = hazelcastInstance;
         this.budgetWindow = budgetWindow;
         this.maxTokensPerUser = maxTokensPerUser;
         this.maxTokensPerCourse = maxTokensPerCourse;
         this.maxTokensGlobal = maxTokensGlobal;
-        this.reservedTokensPerJob = reservedTokensPerJob;
+        this.maxTokensPerJob = maxTokensPerJob;
         this.reservationTtl = reservationTtl(maxJobDuration);
     }
 
-    private static void validateConfiguration(Duration budgetWindow, long maxTokensPerUser, long maxTokensPerCourse, long maxTokensGlobal, long reservedTokensPerJob) {
-        if (maxTokensPerUser < 0 || maxTokensPerCourse < 0 || maxTokensGlobal < 0 || reservedTokensPerJob < 0) {
-            throw new IllegalArgumentException("Hyperion token budgets and reservations must not be negative");
+    private static void validateConfiguration(Duration budgetWindow, long maxTokensPerUser, long maxTokensPerCourse, long maxTokensGlobal, long maxTokensPerJob) {
+        if (maxTokensPerUser < 0 || maxTokensPerCourse < 0 || maxTokensGlobal < 0 || maxTokensPerJob <= 0) {
+            throw new IllegalArgumentException("Hyperion token budgets must not be negative and max-tokens-per-job must be positive");
         }
         boolean budgetEnabled = maxTokensPerUser > 0 || maxTokensPerCourse > 0 || maxTokensGlobal > 0;
         if (budgetEnabled && (budgetWindow == null || budgetWindow.isZero() || budgetWindow.isNegative())) {
             throw new IllegalArgumentException("artemis.hyperion.agent.token-budget-window must be positive when an admission budget is enabled");
         }
-        validateReservationFits("admission-max-tokens-per-user", maxTokensPerUser, reservedTokensPerJob);
-        validateReservationFits("admission-max-tokens-per-course", maxTokensPerCourse, reservedTokensPerJob);
-        validateReservationFits("admission-max-tokens-global", maxTokensGlobal, reservedTokensPerJob);
+        validateBudgetFitsOneJob("admission-max-tokens-per-user", maxTokensPerUser, maxTokensPerJob);
+        validateBudgetFitsOneJob("admission-max-tokens-per-course", maxTokensPerCourse, maxTokensPerJob);
+        validateBudgetFitsOneJob("admission-max-tokens-global", maxTokensGlobal, maxTokensPerJob);
     }
 
-    private static void validateReservationFits(String budgetName, long budget, long reservedTokensPerJob) {
-        if (budget > 0 && (reservedTokensPerJob <= 0 || reservedTokensPerJob > budget)) {
-            throw new IllegalArgumentException(
-                    "artemis.hyperion.agent." + budgetName + " must be at least artemis.hyperion.agent.in-flight-token-reservation-per-job so one generation can be admitted");
+    private static void validateBudgetFitsOneJob(String budgetName, long budget, long maxTokensPerJob) {
+        if (budget > 0 && maxTokensPerJob > budget) {
+            throw new IllegalArgumentException("artemis.hyperion.agent." + budgetName
+                    + " must be at least artemis.hyperion.agent.max-tokens-per-job so one generation can be admitted without under-reserving its allowed usage");
         }
     }
 
@@ -111,7 +111,7 @@ public class HyperionGenerationBudgetService {
         this.maxTokensPerUser = maxTokensPerUser;
         this.maxTokensPerCourse = maxTokensPerCourse;
         this.maxTokensGlobal = maxTokensGlobal;
-        this.reservedTokensPerJob = 0;
+        this.maxTokensPerJob = 0;
         this.reservationTtl = Duration.ZERO;
     }
 
@@ -143,7 +143,7 @@ public class HyperionGenerationBudgetService {
         if (maxTokensPerUser <= 0 && maxTokensPerCourse <= 0 && maxTokensGlobal <= 0) {
             return BudgetReservation.none();
         }
-        if (reservationMap == null || reservedTokensPerJob <= 0) {
+        if (reservationMap == null || maxTokensPerJob <= 0) {
             assertWithinBudgets(userId, courseId);
             return BudgetReservation.none();
         }
@@ -153,10 +153,10 @@ public class HyperionGenerationBudgetService {
             if (!locked) {
                 throw admissionBusy();
             }
-            assertWithinBudgets(userId, courseId, reservedTokensPerJob);
+            assertWithinBudgets(userId, courseId, maxTokensPerJob);
             String id = UUID.randomUUID().toString();
             long ttlSeconds = Math.max(1L, reservationTtl.toSeconds());
-            reservationMap.set(id, new TokenBudgetReservation(userId, courseId, reservedTokensPerJob), ttlSeconds, TimeUnit.SECONDS);
+            reservationMap.set(id, new TokenBudgetReservation(userId, courseId, maxTokensPerJob), ttlSeconds, TimeUnit.SECONDS);
             return new BudgetReservation(id);
         }
         catch (InterruptedException e) {

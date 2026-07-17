@@ -10,7 +10,7 @@
 
 
 export interface ExerciseGenerationRequest {
-    mode?: ExerciseGenerationRequestModeEnum;
+    mode: ExerciseGenerationRequestModeEnum;
     prompt?: string;
     selectedFeedbackThreadIds?: Array<number>;
 }

@@ -75,6 +75,32 @@ class SandboxBuildCommandServiceTest {
     }
 
     @Test
+    void verifyScript_java_searchesTheRedirectedMavenReportsDirForJunitReports_notTheBuildDir() {
+        // Maven Surefire/Failsafe reports are redirected to $RAW_MAVEN_REPORTS_DIR (outside the Ares-whitelisted $BUILD_DIR/target tree, see the run_phase MAVEN_OPTS wiring), so
+        // the JUnit collection step must search there instead of $BUILD_DIR for Java — searching $BUILD_DIR would deterministically collect zero reports.
+        ProgrammingExercise java = new ProgrammingExercise();
+        java.setProgrammingLanguage(ProgrammingLanguage.JAVA);
+        String script = new SandboxBuildCommandService(Optional.empty(), Optional.empty()).verifyScriptContent(java);
+
+        assertThat(script).contains("RAW_MAVEN_REPORTS_DIR=\"/opt/hyperion/maven-reports/$ASSIGNMENT\"")
+                .contains("find \"$RAW_MAVEN_REPORTS_DIR\" -type f -newer \"$BUILD_START_MARKER\"").contains("-name '*.xml'")
+                .doesNotContain("find \"$BUILD_DIR\" -type f -newer \"$BUILD_START_MARKER\" \\( -name '*.xml' \\)");
+    }
+
+    @Test
+    void verifyScript_neverLeavesAnUnsubstitutedTemplateToken() {
+        // Regression guard for tokens like @@RAW_MAVEN_REPORTS_DIR@@, which were previously computed/interpolated into the raw variable assignment but never registered in the
+        // final .replace(...) chain, so the shell script silently carried the literal placeholder text instead of the real path.
+        String defaultScript = new SandboxBuildCommandService(Optional.empty(), Optional.empty()).verifyScriptContent(new ProgrammingExercise());
+        assertThat(defaultScript).doesNotContain("@@");
+
+        ProgrammingExercise java = new ProgrammingExercise();
+        java.setProgrammingLanguage(ProgrammingLanguage.JAVA);
+        String javaScript = new SandboxBuildCommandService(Optional.empty(), Optional.empty()).verifyScriptContent(java);
+        assertThat(javaScript).doesNotContain("@@");
+    }
+
+    @Test
     void verifyScript_escapesSingleQuotesInReportGlobs_soAQuotedCheckoutPathCannotBreakTheShell() {
         // A report glob derived from an instructor-configured checkout path can contain a single quote. Escape it with the POSIX '\'' idiom rather than letting it close the
         // single-quoted `find -path '...'` predicate and inject shell.
@@ -166,8 +192,12 @@ class SandboxBuildCommandServiceTest {
         java.setProgrammingLanguage(ProgrammingLanguage.JAVA);
         String script = new SandboxBuildCommandService(Optional.empty(), Optional.empty()).verifyScriptContent(java);
 
+        // MAVEN_OPTS is not exported at the top level: it carries the same security-manager flag, but set fresh per phase (run_phase) alongside the per-phase
+        // Surefire/Failsafe reportsDirectory redirection, so it cannot be a single static top-level export.
         assertThat(script).contains("export JAVA_TOOL_OPTIONS=\"${JAVA_TOOL_OPTIONS:-} -Djava.security.manager=allow\"")
-                .contains("export MAVEN_OPTS=\"${MAVEN_OPTS:-} -Djava.security.manager=allow\"").contains("export GRADLE_OPTS=\"${GRADLE_OPTS:-} -Djava.security.manager=allow\"");
+                .contains("export GRADLE_OPTS=\"${GRADLE_OPTS:-} -Djava.security.manager=allow\"")
+                .contains("MAVEN_OPTS=\"${MAVEN_OPTS:-} -Djava.security.manager=allow -Dsurefire.reportsDirectory=$phase_reports/surefire "
+                        + "-Dfailsafe.reportsDirectory=$phase_reports/failsafe\"");
     }
 
     @Test
@@ -348,6 +378,24 @@ class SandboxBuildCommandServiceTest {
 
             assertThat(collected).hasSize(1);
             assertThat(collected.keySet().iterator().next()).endsWith(SandboxBuildCommandService.COLLECTED_NAME_SEPARATOR + SandboxBuildCommandService.COLLECTED_JUNIT_TOKEN);
+        }
+
+        @Test
+        void collectsMavenReportsFromTheRedirectedRawReportsDir_forJavaExercises(@TempDir Path tempDir) throws Exception {
+            // Java Surefire/Failsafe reports land under $RAW_MAVEN_REPORTS_DIR/<phase_seq>/<surefire|failsafe>/..., never under $BUILD_DIR; this proves the live collect snippet
+            // finds them there (the bug this test guards against: searching $BUILD_DIR would collect nothing for Java).
+            ProgrammingExercise java = new ProgrammingExercise();
+            java.setProgrammingLanguage(ProgrammingLanguage.JAVA);
+            Map<String, String> collected = VerifyScriptTestHarness.collect(factory(), java, tempDir, "java-maven", Map.of(), Map.of("1/surefire/TEST-StackTest.xml", SUREFIRE));
+
+            assertThat(collected).hasSize(1);
+            assertThat(collected.keySet().iterator().next()).endsWith(SandboxBuildCommandService.COLLECTED_NAME_SEPARATOR + SandboxBuildCommandService.COLLECTED_JUNIT_TOKEN);
+            String collectedXml = collected.values().iterator().next();
+            List<LocalCITestJobDTO> failed = new ArrayList<>();
+            List<LocalCITestJobDTO> ok = new ArrayList<>();
+            TestResultXmlParser.processTestResultFile(collectedXml, failed, ok);
+            assertThat(ok.stream().map(LocalCITestJobDTO::name)).containsExactlyInAnyOrder("stack_initially_empty", "push_then_pop");
+            assertThat(failed.stream().map(LocalCITestJobDTO::name)).containsExactly("size_tracks_elements");
         }
 
         @Test

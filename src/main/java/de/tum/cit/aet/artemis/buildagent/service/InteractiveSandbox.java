@@ -56,6 +56,15 @@ public interface InteractiveSandbox {
     TarArchiveInputStream copyOut(String sessionId, String path);
 
     /**
+     * Restarts the existing container, clearing its writable tmpfs mounts and terminating every process started by prior agent commands.
+     *
+     * @param sessionId the session handle
+     */
+    default void resetSession(String sessionId) {
+        throw new UnsupportedOperationException("This interactive sandbox does not support session reset");
+    }
+
+    /**
      * Stops and removes the session container, releasing its resources. Safe to call more than once.
      *
      * @param sessionId the session handle

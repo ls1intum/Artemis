@@ -42,6 +42,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
+import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentInformation;
 import de.tum.cit.aet.artemis.buildagent.dto.GenerationSandboxSessionDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.SandboxExecResult;
 import de.tum.cit.aet.artemis.buildagent.dto.SandboxOpRequest;
@@ -114,6 +115,10 @@ public class InteractiveSandboxRelayHandler {
 
     private UUID requestListenerId;
 
+    private UUID connectionStateListenerId;
+
+    private boolean startupReconciled;
+
     private ExecutorService workerExecutor;
 
     private final AtomicBoolean shuttingDown = new AtomicBoolean();
@@ -143,58 +148,103 @@ public class InteractiveSandboxRelayHandler {
         ExecutorService executor = new ThreadPoolExecutor(workerCount, workerCount, 0L, TimeUnit.MILLISECONDS, new SynchronousQueue<>(), namedDaemonThreadFactory(),
                 new ThreadPoolExecutor.AbortPolicy());
         this.workerExecutor = executor;
-        try {
-            int removedPreviousSessions = interactiveSandboxService().removeSessionsForCurrentAgent();
-            if (removedPreviousSessions > 0) {
-                log.info("Removed {} leftover interactive sandbox session(s) before advertising generation capacity on build agent '{}'.", removedPreviousSessions,
-                        buildAgentShortName);
+        this.connectionStateListenerId = distributedDataAccessService.addConnectionStateListener(this::onClusterConnected);
+        if (distributedDataAccessService.isConnectedToCluster()) {
+            initializeHosting();
+        }
+    }
+
+    private void onClusterConnected(boolean initialConnection) {
+        if (!initialConnection) {
+            synchronized (this) {
+                requestListenerId = null;
+                requestsTopic = null;
+                responsesTopic = null;
             }
         }
-        catch (RuntimeException e) {
-            workerExecutor.shutdownNow();
-            workerExecutor = null;
-            sandboxSlotPermits.acquireUninterruptibly(maxGenerationSandboxSlots);
-            buildAgentInformationService.updateGenerationSandboxSlotState(maxGenerationSandboxSlots, maxGenerationSandboxSlots);
-            buildAgentInformationService.refreshLocalBuildAgentInformationPreservingFailures(sharedQueueProcessingService.isPaused());
-            log.error("Interactive sandbox relay hosting stays disabled on build agent '{}' because previous sessions could not be reconciled.", buildAgentShortName, e);
+        initializeHosting();
+    }
+
+    private synchronized void initializeHosting() {
+        if (shuttingDown.get() || workerExecutor == null || requestListenerId != null || !distributedDataAccessService.isConnectedToCluster()) {
             return;
         }
-        // Publish the cap (0 active) so admins see "0 / N" on an opted-in-but-idle agent, distinct from "0 / 0" on an agent that never hosts.
-        buildAgentInformationService.updateGenerationSandboxSlotState(0, maxGenerationSandboxSlots);
-        this.requestsTopic = distributedDataAccessService.getHyperionSandboxRequestsTopic();
-        this.responsesTopic = distributedDataAccessService.getHyperionSandboxResponsesTopic();
-        this.requestListenerId = requestsTopic.addMessageListener(request -> {
-            if (!buildAgentShortName.equals(request.targetAgentShortName())) {
-                return;
-            }
-            if (shuttingDown.get()) {
-                publishResponse(SandboxOpResponse.failure(request.correlationId(), "Build agent '" + buildAgentShortName + "' " + DRAINING_REFUSAL_MARKER + "."));
-                return;
-            }
-            RequestClaim claim = claimRequest(request);
-            if (claim.completedResponse() != null) {
-                publishResponse(claim.completedResponse());
-                return;
-            }
-            if (!claim.accepted()) {
-                log.debug("Ignoring retried sandbox request {} ({}) while the original operation is still running", request.correlationId(), request.op());
-                return;
-            }
-            try {
-                executor.submit(() -> handle(request));
-            }
-            catch (RejectedExecutionException ignored) {
-                boolean draining = shuttingDown.get();
-                if (!draining) {
-                    log.warn("Interactive sandbox relay rejected request {} because its bounded worker queue is full", request.correlationId());
+        try {
+            if (!startupReconciled) {
+                int removedPreviousSessions = interactiveSandboxService().removeSessionsForCurrentAgent();
+                if (removedPreviousSessions > 0) {
+                    log.info("Removed {} leftover interactive sandbox session(s) before advertising generation capacity on build agent '{}'.", removedPreviousSessions,
+                            buildAgentShortName);
                 }
-                String refusal = draining ? DRAINING_REFUSAL_MARKER : OVERLOAD_REFUSAL_MARKER;
-                SandboxOpResponse response = SandboxOpResponse.failure(request.correlationId(), "Build agent '" + buildAgentShortName + "' " + refusal + ".");
-                rememberCompletedResponse(response);
-                publishResponse(response);
+                startupReconciled = true;
             }
-        });
-        log.info("InteractiveSandboxRelayHandler initialized for build agent '{}' (max generation sandbox slots: {})", buildAgentShortName, maxGenerationSandboxSlots);
+            this.requestsTopic = distributedDataAccessService.getHyperionSandboxRequestsTopic();
+            this.responsesTopic = distributedDataAccessService.getHyperionSandboxResponsesTopic();
+            ExecutorService executor = workerExecutor;
+            this.requestListenerId = requestsTopic.addMessageListener(request -> {
+                if (!buildAgentShortName.equals(request.targetAgentShortName())) {
+                    return;
+                }
+                if (!isAdvertisedInstance()) {
+                    return;
+                }
+                if (shuttingDown.get()) {
+                    publishResponse(SandboxOpResponse.failure(request.correlationId(), "Build agent '" + buildAgentShortName + "' " + DRAINING_REFUSAL_MARKER + "."));
+                    return;
+                }
+                RequestClaim claim = claimRequest(request);
+                if (claim.completedResponse() != null) {
+                    publishResponse(claim.completedResponse());
+                    return;
+                }
+                if (!claim.accepted()) {
+                    log.debug("Ignoring retried sandbox request {} ({}) while the original operation is still running", request.correlationId(), request.op());
+                    return;
+                }
+                try {
+                    executor.submit(() -> handle(request));
+                }
+                catch (RejectedExecutionException ignored) {
+                    boolean draining = shuttingDown.get();
+                    if (!draining) {
+                        log.warn("Interactive sandbox relay rejected request {} because its bounded worker queue is full", request.correlationId());
+                    }
+                    String refusal = draining ? DRAINING_REFUSAL_MARKER : OVERLOAD_REFUSAL_MARKER;
+                    SandboxOpResponse response = SandboxOpResponse.failure(request.correlationId(), "Build agent '" + buildAgentShortName + "' " + refusal + ".");
+                    rememberCompletedResponse(response);
+                    publishResponse(response);
+                }
+            });
+            // Advertise only after the request listener is live.
+            buildAgentInformationService.updateGenerationSandboxSlotState(0, maxGenerationSandboxSlots);
+            log.info("InteractiveSandboxRelayHandler initialized for build agent '{}' (max generation sandbox slots: {})", buildAgentShortName, maxGenerationSandboxSlots);
+        }
+        catch (RuntimeException e) {
+            if (!startupReconciled) {
+                workerExecutor.shutdownNow();
+                workerExecutor = null;
+                sandboxSlotPermits.acquireUninterruptibly(maxGenerationSandboxSlots);
+                buildAgentInformationService.updateGenerationSandboxSlotState(maxGenerationSandboxSlots, maxGenerationSandboxSlots);
+                buildAgentInformationService.refreshLocalBuildAgentInformationPreservingFailures(sharedQueueProcessingService.isPaused());
+                log.error("Interactive sandbox relay hosting stays disabled on build agent '{}' because previous sessions could not be reconciled.", buildAgentShortName, e);
+            }
+            else {
+                if (requestListenerId != null && requestsTopic != null) {
+                    requestsTopic.removeMessageListener(requestListenerId);
+                }
+                requestListenerId = null;
+                log.warn("Interactive sandbox relay could not register on build agent '{}'; it will retry after the next cluster connection.", buildAgentShortName, e);
+            }
+        }
+    }
+
+    private boolean isAdvertisedInstance() {
+        String localAddress = distributedDataAccessService.getLocalMemberAddress();
+        if (localAddress == null || localAddress.isBlank()) {
+            return true;
+        }
+        BuildAgentInformation advertised = distributedDataAccessService.getBuildAgentInformationMap().get(buildAgentShortName);
+        return advertised != null && advertised.buildAgent() != null && localAddress.equals(advertised.buildAgent().memberAddress());
     }
 
     /**
@@ -204,6 +254,15 @@ public class InteractiveSandboxRelayHandler {
     public void shutdown() {
         if (!shuttingDown.compareAndSet(false, true)) {
             return;
+        }
+        if (connectionStateListenerId != null) {
+            try {
+                distributedDataAccessService.removeConnectionStateListener(connectionStateListenerId);
+            }
+            catch (RuntimeException e) {
+                log.debug("Could not remove the sandbox relay connection listener during shutdown: {}", e.getMessage());
+            }
+            connectionStateListenerId = null;
         }
         if (requestListenerId != null && requestsTopic != null) {
             requestsTopic.removeMessageListener(requestListenerId);
@@ -267,6 +326,7 @@ public class InteractiveSandboxRelayHandler {
                     case EXEC -> handleExec(request);
                     case COPY_IN -> handleCopyIn(request);
                     case COPY_OUT -> handleCopyOut(request);
+                    case RESET -> handleReset(request);
                     case LIST -> handleList(request);
                     case DESTROY -> handleDestroy(request);
                 };
@@ -471,6 +531,18 @@ public class InteractiveSandboxRelayHandler {
         }
         catch (IOException e) {
             return SandboxOpResponse.failure(request.correlationId(), "Failed to buffer copy-out archive: " + e.getMessage());
+        }
+        catch (RuntimeException e) {
+            reconcileMissingSessionAfterFailure(request.sessionId(), e);
+            throw e;
+        }
+    }
+
+    private SandboxOpResponse handleReset(SandboxOpRequest request) {
+        requireOwnedSession(request.sessionId());
+        try {
+            interactiveSandboxService().resetSession(request.sessionId());
+            return SandboxOpResponse.ok(request.correlationId(), request.sessionId());
         }
         catch (RuntimeException e) {
             reconcileMissingSessionAfterFailure(request.sessionId(), e);

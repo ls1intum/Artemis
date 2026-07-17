@@ -235,6 +235,33 @@ describe('ProblemStatementSyncService', () => {
         subscription.unsubscribe();
     });
 
+    it('does not replace local edits made after initial sync finalized', () => {
+        const state = service.init(14, 'Fallback statement');
+        const requestCall = syncService.sendSynchronizationUpdate.mock.calls.find(
+            ([, message]) => message.eventType === ExerciseEditorSyncEventType.PROBLEM_STATEMENT_SYNC_FULL_CONTENT_REQUEST,
+        );
+        const requestId = requestCall?.[1].requestId as string;
+        vi.advanceTimersByTime(500);
+        state.text.insert(state.text.length, ' LOCAL');
+        let replacedState: ProblemStatementSyncState | undefined;
+        const subscription = service.stateReplaced$.subscribe((replacement) => (replacedState = replacement));
+        const lateLeaderDoc = new Y.Doc();
+        lateLeaderDoc.getText('problem-statement').insert(0, 'Late winning leader');
+
+        incomingMessages$.next({
+            eventType: ExerciseEditorSyncEventType.PROBLEM_STATEMENT_SYNC_FULL_CONTENT_RESPONSE,
+            target: ExerciseEditorSyncTarget.PROBLEM_STATEMENT,
+            responseTo: requestId,
+            yjsUpdate: yjsUtils.encodeUint8ArrayToBase64(Y.encodeStateAsUpdate(lateLeaderDoc)),
+            leaderTimestamp: 1,
+            timestamp: 2,
+        });
+
+        expect(replacedState).toBeUndefined();
+        expect(state.text.toString()).toBe('Fallback statement LOCAL');
+        subscription.unsubscribe();
+    });
+
     it('seeds fallback content without rebroadcasting seed as sync update', () => {
         const state = service.init(13, 'Fallback statement');
         syncService.sendSynchronizationUpdate.mockClear();

@@ -213,7 +213,7 @@ class HyperionExerciseGenerationMockedEndToEndTest extends AbstractHyperionMocke
             assertThat(outcome.verification().solutionPassed()).as("the solution passes its own tests").isTrue();
             assertThat(outcome.verification().templateFailed()).as("the template compiles but fails the tests").isTrue();
             assertThat(outcome.verification().testCount()).as("all four behavior tests were discovered").isEqualTo(4);
-            assertThat(outcome.isAccepted()).as("the differential oracle accepts the exercise").isTrue();
+            assertThat(outcome.isMechanicallyVerified()).as("the differential oracle accepts the exercise").isTrue();
             assertThat(outcome.specFidelityReport().hasFindings()).as("the accepted mocked exercise has no deterministic quality findings").isFalse();
             assertThat(outcome.producedProblemStatement()).contains("[task][Start at zero](startsAtZeroAndExposesValue)", "[task][Increment up to maximum](incrementsUntilMaximum)",
                     "[task][Decrement down to zero](decrementNeverDropsBelowZero)", "[task][Reject invalid maximum](rejectsNonPositiveMaximum)");
@@ -236,7 +236,7 @@ class HyperionExerciseGenerationMockedEndToEndTest extends AbstractHyperionMocke
             log.info("=== VERIFICATION (bad binding) ===\n{}", outcome.verification().report());
             assertThat(outcome.verification().solutionPassed()).as("the code is otherwise valid").isTrue();
             assertThat(outcome.verification().templateFailed()).as("the template still fails the tests").isTrue();
-            assertThat(outcome.isAccepted()).as("unresolved task bindings are rejected even when builds pass").isFalse();
+            assertThat(outcome.isMechanicallyVerified()).as("unresolved task bindings are rejected even when builds pass").isFalse();
             assertThat(outcome.verification().reasons()).anyMatch(reason -> reason.contains("match no actual test") && reason.contains("incrementAtUpperBound"));
         }
     }
@@ -256,7 +256,7 @@ class HyperionExerciseGenerationMockedEndToEndTest extends AbstractHyperionMocke
             log.info("=== VERIFICATION (failing solution) ===\n{}", outcome.verification().report());
             assertThat(outcome.verification().solutionPassed()).as("a broken reference solution is rejected").isFalse();
             assertThat(outcome.verification().testCount()).as("the verifier still discovered the behavior tests").isEqualTo(4);
-            assertThat(outcome.isAccepted()).as("the differential oracle rejects exercises whose solution fails").isFalse();
+            assertThat(outcome.isMechanicallyVerified()).as("the differential oracle rejects exercises whose solution fails").isFalse();
         }
     }
 

@@ -40,6 +40,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
 
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
@@ -47,6 +48,7 @@ import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -112,6 +114,7 @@ class InteractiveSandboxRelayRoundTripTest {
         when(handlerAccess.getHyperionSandboxRequestsTopic()).thenReturn(requestsTopic);
         when(handlerAccess.getHyperionSandboxResponsesTopic()).thenReturn(responsesTopic);
         when(handlerAccess.getHyperionSandboxPayloads()).thenReturn(payloads);
+        when(handlerAccess.isConnectedToCluster()).thenReturn(true);
 
         localSandbox = mock(InteractiveSandboxService.class);
 
@@ -285,6 +288,15 @@ class InteractiveSandboxRelayRoundTripTest {
 
             assertThat(harness.client().createSession(sessionSpec("replacement-job"))).isEqualTo(AGENT_SHORT_NAME + "::" + replacementContainer);
         }
+    }
+
+    @Test
+    void resetSessionRestartsTheOwnedContainerThroughTheRelay() {
+        String handle = createOwnedHandle();
+
+        client.resetSession(handle);
+
+        verify(localSandbox).resetSession(CONTAINER_ID);
     }
 
     @Test
@@ -696,6 +708,7 @@ class InteractiveSandboxRelayRoundTripTest {
         when(access.getHyperionSandboxRequestsTopic()).thenReturn(requests);
         when(access.getHyperionSandboxResponsesTopic()).thenReturn(droppingResponses);
         when(access.getBuildAgentInformation()).thenReturn(List.of(idleAgent(AGENT_SHORT_NAME, 0, 1)));
+        when(access.isConnectedToCluster()).thenReturn(true);
         InteractiveSandboxService sandbox = mock(InteractiveSandboxService.class);
         when(sandbox.createSession(any())).thenReturn(CONTAINER_ID);
         RemoteInteractiveSandboxClient retryingClient = new RemoteInteractiveSandboxClient(access);
@@ -799,12 +812,40 @@ class InteractiveSandboxRelayRoundTripTest {
     }
 
     @Test
+    void startupBeforeClusterConnection_defersHostingUntilConnected() {
+        DistributedDataAccessService access = mock(DistributedDataAccessService.class);
+        when(access.isConnectedToCluster()).thenReturn(false);
+        when(access.getHyperionSandboxRequestsTopic()).thenReturn(requestsTopic);
+        when(access.getHyperionSandboxResponsesTopic()).thenReturn(responsesTopic);
+        InteractiveSandboxService sandbox = mock(InteractiveSandboxService.class);
+        InteractiveSandboxRelayHandler deferred = new InteractiveSandboxRelayHandler(applicationContext(sandbox), access, queueProcessingService,
+                mock(BuildAgentInformationService.class));
+        ReflectionTestUtils.setField(deferred, "buildAgentShortName", AGENT_SHORT_NAME);
+        ReflectionTestUtils.setField(deferred, "maxGenerationSandboxSlots", 2);
+        ArgumentCaptor<Consumer<Boolean>> connectionListener = ArgumentCaptor.forClass(Consumer.class);
+
+        deferred.registerRequestListener();
+
+        verify(access).addConnectionStateListener(connectionListener.capture());
+        assertThat(ReflectionTestUtils.getField(deferred, "requestListenerId")).isNull();
+        verify(sandbox, never()).removeSessionsForCurrentAgent();
+
+        when(access.isConnectedToCluster()).thenReturn(true);
+        connectionListener.getValue().accept(true);
+
+        assertThat(ReflectionTestUtils.getField(deferred, "requestListenerId")).isNotNull();
+        verify(sandbox).removeSessionsForCurrentAgent();
+        deferred.shutdown();
+    }
+
+    @Test
     void startupCleanupFailure_disablesHostingWithoutSubscribing() {
         InteractiveSandboxService sandbox = mock(InteractiveSandboxService.class);
         when(sandbox.removeSessionsForCurrentAgent()).thenThrow(new LocalCIException("cleanup failed"));
         BuildAgentInformationService informationService = mock(BuildAgentInformationService.class);
-        InteractiveSandboxRelayHandler disabled = new InteractiveSandboxRelayHandler(applicationContext(sandbox), mock(DistributedDataAccessService.class), queueProcessingService,
-                informationService);
+        DistributedDataAccessService access = mock(DistributedDataAccessService.class);
+        when(access.isConnectedToCluster()).thenReturn(true);
+        InteractiveSandboxRelayHandler disabled = new InteractiveSandboxRelayHandler(applicationContext(sandbox), access, queueProcessingService, informationService);
         ReflectionTestUtils.setField(disabled, "buildAgentShortName", AGENT_SHORT_NAME);
         ReflectionTestUtils.setField(disabled, "maxGenerationSandboxSlots", 2);
 
@@ -813,6 +854,27 @@ class InteractiveSandboxRelayRoundTripTest {
         assertThat(ReflectionTestUtils.getField(disabled, "requestListenerId")).isNull();
         assertThat(ReflectionTestUtils.getField(disabled, "workerExecutor")).isNull();
         verify(informationService).updateGenerationSandboxSlotState(2, 2);
+    }
+
+    @Test
+    void replacedAgentInstanceIgnoresRequestsForTheSharedShortName() {
+        DistributedDataAccessService access = mock(DistributedDataAccessService.class);
+        when(access.isConnectedToCluster()).thenReturn(true);
+        when(access.getLocalMemberAddress()).thenReturn("old-instance:5701");
+        when(access.getBuildAgentInformationMap()).thenReturn(Map.of(AGENT_SHORT_NAME, idleAgent(AGENT_SHORT_NAME, "new-instance:5701", 0, 2)));
+        when(access.getHyperionSandboxRequestsTopic()).thenReturn(requestsTopic);
+        when(access.getHyperionSandboxResponsesTopic()).thenReturn(responsesTopic);
+        InteractiveSandboxService sandbox = mock(InteractiveSandboxService.class);
+        InteractiveSandboxRelayHandler replaced = new InteractiveSandboxRelayHandler(applicationContext(sandbox), access, queueProcessingService,
+                mock(BuildAgentInformationService.class));
+        ReflectionTestUtils.setField(replaced, "buildAgentShortName", AGENT_SHORT_NAME);
+        ReflectionTestUtils.setField(replaced, "maxGenerationSandboxSlots", 2);
+        replaced.registerRequestListener();
+
+        requestsTopic.publish(SandboxOpRequest.create("correlation", AGENT_SHORT_NAME, sessionSpec()));
+
+        verify(sandbox, never()).createSession(any());
+        replaced.shutdown();
     }
 
     @Test
@@ -1153,6 +1215,7 @@ class InteractiveSandboxRelayRoundTripTest {
         when(access.getHyperionSandboxRequestsTopic()).thenReturn(requests);
         when(access.getHyperionSandboxResponsesTopic()).thenReturn(responses);
         when(access.getHyperionSandboxPayloads()).thenReturn(payloads);
+        when(access.isConnectedToCluster()).thenReturn(true);
         InteractiveSandboxRelayHandler handler = new InteractiveSandboxRelayHandler(applicationContext(sandbox), access, availableQueueProcessingService(),
                 mock(BuildAgentInformationService.class));
         ReflectionTestUtils.setField(handler, "buildAgentShortName", shortName);
@@ -1189,6 +1252,7 @@ class InteractiveSandboxRelayRoundTripTest {
         when(handlerAccess.getHyperionSandboxRequestsTopic()).thenReturn(requests);
         when(handlerAccess.getHyperionSandboxResponsesTopic()).thenReturn(responses);
         when(handlerAccess.getHyperionSandboxPayloads()).thenReturn(payloads);
+        when(handlerAccess.isConnectedToCluster()).thenReturn(true);
 
         InteractiveSandboxService localSandbox = mock(InteractiveSandboxService.class);
         BuildAgentInformationService informationService = mock(BuildAgentInformationService.class);
@@ -1245,7 +1309,11 @@ class InteractiveSandboxRelayRoundTripTest {
     }
 
     private static BuildAgentInformation idleAgent(String name, int currentJobs, int maxJobs) {
-        return new BuildAgentInformation(new BuildAgentDTO(name, "127.0.0.1:5701", name), maxJobs, currentJobs, List.of(), BuildAgentStatus.IDLE, "", null, 0, 0, 2);
+        return idleAgent(name, "127.0.0.1:5701", currentJobs, maxJobs);
+    }
+
+    private static BuildAgentInformation idleAgent(String name, String memberAddress, int currentJobs, int maxJobs) {
+        return new BuildAgentInformation(new BuildAgentDTO(name, memberAddress, name), maxJobs, currentJobs, List.of(), BuildAgentStatus.IDLE, "", null, 0, 0, 2);
     }
 
     private static byte[] tarWithSingleFile(String name, String content) {

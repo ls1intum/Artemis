@@ -102,7 +102,7 @@ public class HyperionExerciseGenerationResource {
     @PostMapping("programming-exercises/{exerciseId}/generate-exercise")
     @EnforceAtLeastEditorInExercise
     public ResponseEntity<ExerciseGenerationJobStartDTO> generateExercise(@PathVariable long exerciseId, @Valid @RequestBody ExerciseGenerationRequestDTO request) {
-        log.debug("REST request to run agentic exercise generation ({}) for exercise [{}]", request.effectiveMode(), exerciseId);
+        log.debug("REST request to run agentic exercise generation ({}) for exercise [{}]", request.mode(), exerciseId);
         validateSelectedFeedbackThreadIds(request.selectedFeedbackThreadIds());
         ProgrammingExercise exercise = loadExercise(exerciseId);
         validateDraftExercise(exercise);
@@ -122,13 +122,13 @@ public class HyperionExerciseGenerationResource {
         HyperionGenerationBudgetService.BudgetReservation budgetReservation = generationBudgetService.reserveGenerationBudget(user.getId(), courseId);
         String jobId;
         try {
-            jobId = jobService.startJob(user, exercise, prompt, request.effectiveMode(), budgetReservation.id());
+            jobId = jobService.startJob(user, exercise, prompt, request.mode(), budgetReservation.id());
         }
         catch (RuntimeException e) {
             generationBudgetService.releaseReservation(budgetReservation.id());
             throw e;
         }
-        log.info("Started agentic exercise generation job [{}] ({}) for exercise [{}]", jobId, request.effectiveMode(), exerciseId);
+        log.info("Started agentic exercise generation job [{}] ({}) for exercise [{}]", jobId, request.mode(), exerciseId);
         return ResponseEntity.accepted().body(new ExerciseGenerationJobStartDTO(jobId));
     }
 
@@ -164,7 +164,7 @@ public class HyperionExerciseGenerationResource {
         Optional<ExerciseGenerationStatusDTO> retainedStatus = jobService.getStatus(user, exercise);
         if (retainedStatus.isPresent()) {
             ExerciseGenerationStatusDTO status = retainedStatus.get();
-            return ResponseEntity.ok(new ExerciseGenerationStatusDTO(status.jobId(), status.running(), status.mode(), status.events(), status.fileSnapshots(),
+            return ResponseEntity.ok(new ExerciseGenerationStatusDTO(status.jobId(), status.running(), status.mode(), status.events(), status.fileChanges(),
                     revertibleRun.isPresent(), revertibleRun.map(ExerciseGenerationRevertService.RevertibleRun::jobId).orElse(null),
                     revertibleRun.map(ExerciseGenerationRevertService.RevertibleRun::mode).orElse(null), status.ownedByCaller(), status.cancellable()));
         }
@@ -212,7 +212,7 @@ public class HyperionExerciseGenerationResource {
         String revertSlot = jobService.claimRevertSlot(user, exerciseId);
         try {
             return generationRevertService.revert(exercise, user, () -> jobService.isOwnedActiveJob(exerciseId, revertSlot)).map(result -> {
-                if (result.fullyReverted() || !result.revertedRepositories().isEmpty()) {
+                if (result.fullyReverted()) {
                     revertibleJobId.ifPresent(jobId -> jobService.discardRetainedRun(exerciseId, jobId));
                 }
                 ExerciseGenerationRevertResultDTO body = new ExerciseGenerationRevertResultDTO(result.fullyReverted(),
@@ -234,7 +234,7 @@ public class HyperionExerciseGenerationResource {
      * @return the prompt with the rendered feedback appended when applicable
      */
     private String withSelectedFeedback(String basePrompt, long exerciseId, ExerciseGenerationRequestDTO request) {
-        if (request.effectiveMode() != GenerationMode.ADAPT || request.selectedFeedbackThreadIds() == null || request.selectedFeedbackThreadIds().isEmpty()) {
+        if (request.mode() != GenerationMode.ADAPT || request.selectedFeedbackThreadIds() == null || request.selectedFeedbackThreadIds().isEmpty()) {
             return basePrompt;
         }
         String feedback = reviewCommentContextRenderer.renderWholeExerciseSelectedFeedback(exerciseId, request.selectedFeedbackThreadIds());

@@ -16,7 +16,7 @@
                 "refreshingEditor": "Der Editor wird mit der gespeicherten Aufgabe aktualisiert…",
                 "editorRefreshFailed": "Die Aufgabe wurde gespeichert, aber der Editor konnte nicht sicher aktualisiert werden. Speichere oder verwirf lokale Änderungen und versuche es erneut.",
                 "retryEditorRefresh": "Editor-Aktualisierung wiederholen",
-                "statusUnavailable": "Der Generierungsstatus konnte nicht geprüft werden. KI-Aktionen bleiben bis zu einer erfolgreichen Prüfung nicht verfügbar; die manuelle Bearbeitung ist weiterhin möglich.",
+                "statusUnavailable": "Der Generierungsstatus konnte nicht geprüft werden. KI-Aktionen und Bearbeitung bleiben bis zu einer erfolgreichen Prüfung nicht verfügbar.",
                 "retryStatus": "Statusprüfung wiederholen",
                 "cancel": "Abbrechen",
                 "cancelling": "Wird abgebrochen…",
@@ -48,7 +48,7 @@
                 },
                 "persistence": {
                     "workingCopy": "Arbeitskopie des Agenten — nicht gespeichert",
-                    "saved": "In der Aufgabe gespeichert",
+                    "saved": "In der Aufgabe gespeichert — bereit zur Prüfung durch Lehrende",
                     "savedNeedsReview": "In der Aufgabe gespeichert — Prüfung durch Lehrende erforderlich",
                     "notSaved": "Nicht gespeichert",
                     "cancelled": "Nicht gespeichert — abgebrochen",

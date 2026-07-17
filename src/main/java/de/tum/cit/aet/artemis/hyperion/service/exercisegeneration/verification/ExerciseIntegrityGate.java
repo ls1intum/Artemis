@@ -111,42 +111,14 @@ public final class ExerciseIntegrityGate {
         return (base.endsWith(".yml") || base.endsWith(".yaml")) && !path.contains("/");
     }
 
-    /**
-     * Normalizes a harness line for build-layout comparison: collapses whitespace and applies the same CI directory-placeholder substitution the pipeline applies, so an unchanged
-     * seed (still carrying raw {@code ${…}} placeholders) compares equal to a produced file the pipeline already substituted. Mirrors
-     * {@code SandboxBuildCommandService.verifyScriptContent}.
-     *
-     * @param line the raw line
-     * @return the normalized line
-     */
+    /** Applies only the checkout-placeholder substitutions performed by the build pipeline. */
     static String normalizeLayoutLine(String line) {
         return line.replace("${studentWorkingDirectory}", "/assignment/src").replace("${studentParentWorkingDirectoryName}", "assignment")
-                .replace("${solutionWorkingDirectory}", "assignment").replace("${testWorkingDirectory}", ".").replaceAll("\\s+", " ").strip();
+                .replace("${solutionWorkingDirectory}", "assignment").replace("${testWorkingDirectory}", ".");
     }
 
     /**
-     * Whether a harness line controls the source checkout layout, either through a CI directory placeholder or a recognized source-path directive.
-     *
-     * @param line the raw harness line
-     * @return {@code true} if the line defines build layout
-     */
-    static boolean isBuildLayoutLine(String line) {
-        String lower = line.toLowerCase(Locale.ROOT);
-        if (lower.contains("${studentworkingdirectory}") || lower.contains("${studentparentworkingdirectoryname}") || lower.contains("${solutionworkingdirectory}")
-                || lower.contains("${testworkingdirectory}")) {
-            return true;
-        }
-        boolean referencesCheckoutDir = lower.contains("assignment") || lower.contains("solution") || lower.contains("template");
-        if (!referencesCheckoutDir) {
-            return false;
-        }
-        return lower.contains("hs-source-dirs") || lower.contains("source-dirs") || lower.contains("sourcedirectory") || lower.contains("projectreference")
-                || lower.contains("workspaces") || lower.contains("\"path\"") || lower.contains("path:") || lower.contains("include=") || lower.contains("srcdir")
-                || lower.contains("add_subdirectory") || lower.contains("include_directories");
-    }
-
-    /**
-     * Splits content into normalized lines (CRLF folded, whitespace collapsed, placeholders substituted), preserving order and blank lines so indices line up across seed/produced.
+     * Splits content into normalized lines (CRLF folded and checkout placeholders substituted), preserving every other byte.
      */
     private static List<String> normalizedLines(String content) {
         List<String> lines = new ArrayList<>();
@@ -167,31 +139,41 @@ public final class ExerciseIntegrityGate {
      * @return one rejection reason per offending file (empty when the harness layout is intact or the gate is disabled)
      */
     static List<String> harnessTamperingReasons(Map<String, String> seedTestsFiles, Map<String, String> producedTestsFiles, boolean requireNonEmptySnapshot) {
-        if (seedTestsFiles == null || seedTestsFiles.isEmpty()) {
+        return harnessTamperingReasons("tests", seedTestsFiles, producedTestsFiles, requireNonEmptySnapshot);
+    }
+
+    static List<String> harnessTamperingReasons(String repository, Map<String, String> seedFiles, Map<String, String> producedFiles, boolean requireNonEmptySnapshot) {
+        if (seedFiles == null || seedFiles.isEmpty()) {
             if (requireNonEmptySnapshot) {
                 return List.of("the seeded test-harness snapshot is empty, so harness immutability could not be verified. This language always ships a build harness "
                         + "(e.g. pom.xml/build.gradle), so an empty snapshot means the tests repository was not captured — a failed read-back, not a harness-free exercise. "
                         + "Fail closed rather than accept on that doubt; this is usually transient, so retry the generation.");
             }
-            return List.of();
         }
         List<String> reasons = new ArrayList<>();
-        for (Map.Entry<String, String> seed : seedTestsFiles.entrySet()) {
+        for (Map.Entry<String, String> seed : seedFiles == null ? Map.<String, String>of().entrySet() : seedFiles.entrySet()) {
             String path = seed.getKey();
             if (!isHarnessFile(path)) {
                 continue;
             }
-            String produced = producedTestsFiles == null ? null : producedTestsFiles.get(path);
+            String produced = producedFiles == null ? null : producedFiles.get(path);
             if (produced == null) {
-                reasons.add("you deleted the seeded test harness file tests/" + path + "; the harness is graded verbatim in production — restore it unchanged.");
+                reasons.add("you deleted the seeded harness file " + repository + "/" + path + "; restore it unchanged.");
                 continue;
             }
             List<String> seedNormalized = normalizedLines(seed.getValue());
             List<String> producedNormalized = normalizedLines(produced);
             if (!seedNormalized.equals(producedNormalized)) {
-                reasons.add("you modified the seeded test harness file tests/" + path
+                reasons.add("you modified the seeded harness file " + repository + "/" + path
                         + "; the harness is graded verbatim in production, so changing dependencies, plugins, scripts, lockfiles, or build layout can make verified results differ "
-                        + "from real grading — revert tests/" + path + " to the seed and edit only the test source files.");
+                        + "from real grading — restore " + repository + "/" + path + " to the seed.");
+            }
+        }
+        if (producedFiles != null) {
+            for (String path : producedFiles.keySet()) {
+                if (isHarnessFile(path) && (seedFiles == null || !seedFiles.containsKey(path))) {
+                    reasons.add("you added the harness file " + repository + "/" + path + "; build manifests and scripts are fixed by the seeded exercise scaffold.");
+                }
             }
         }
         return reasons;

@@ -258,6 +258,32 @@ class WorkspaceArchiveTest {
     }
 
     @Test
+    void buildWorkspaceTar_rejectsCredentialFilesBeforeProviderAccess(@TempDir Path repo) throws Exception {
+        FileUtils.writeStringToFile(repo.resolve(".env").toFile(), "API_TOKEN=secret\n", StandardCharsets.UTF_8);
+
+        assertThatExceptionOfType(WorkspaceArchive.RejectedWorkspaceEntryException.class)
+                .isThrownBy(() -> WorkspaceArchive.buildWorkspaceTarStream(Map.of(), Map.of("solution", repo))).withMessageContaining("credential file")
+                .withMessageContaining("solution/.env");
+    }
+
+    @Test
+    void buildWorkspaceTar_rejectsPrivateKeysRegardlessOfFileName(@TempDir Path repo) throws Exception {
+        FileUtils.writeStringToFile(repo.resolve("fixture.txt").toFile(), "-----BEGIN PRIVATE KEY-----\nsecret\n", StandardCharsets.UTF_8);
+
+        assertThatExceptionOfType(WorkspaceArchive.RejectedWorkspaceEntryException.class)
+                .isThrownBy(() -> WorkspaceArchive.buildWorkspaceTarStream(Map.of(), Map.of("tests", repo))).withMessageContaining("credential material")
+                .withMessageContaining("tests/fixture.txt");
+    }
+
+    @Test
+    void buildWorkspaceTar_scansTheWholeBoundedFileForPrivateKeys(@TempDir Path repo) throws Exception {
+        FileUtils.writeStringToFile(repo.resolve("fixture.txt").toFile(), "x".repeat(300_000) + "\n-----BEGIN PRIVATE KEY-----\nsecret\n", StandardCharsets.UTF_8);
+
+        assertThatExceptionOfType(WorkspaceArchive.RejectedWorkspaceEntryException.class)
+                .isThrownBy(() -> WorkspaceArchive.buildWorkspaceTarStream(Map.of(), Map.of("tests", repo))).withMessageContaining("credential material");
+    }
+
+    @Test
     void buildWorkspaceTar_rejectsOversizedSeedFileBeforePacking(@TempDir Path repo) throws Exception {
         FileUtils.writeByteArrayToFile(repo.resolve("Huge.java").toFile(), new byte[(int) WorkspaceArchive.MAX_FILE_BYTES + 1]);
 

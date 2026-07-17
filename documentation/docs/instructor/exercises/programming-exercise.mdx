@@ -1,7 +1,7 @@
-import Callout from "../../../src/components/Callout/Callout";
-import {CalloutVariant} from "../../../src/components/Callout/Callout.types";
-import Image, {ImageSize} from "../../../src/components/Image/Image";
-import TumLiveVideo from "../../../src/components/TumLiveVideo/TumLiveVideo";
+import Callout from '../../../src/components/Callout/Callout';
+import { CalloutVariant } from '../../../src/components/Callout/Callout.types';
+import Image, { ImageSize } from '../../../src/components/Image/Image';
+import TumLiveVideo from '../../../src/components/TumLiveVideo/TumLiveVideo';
 
 import courseManagement from './assets/general/course-management.png';
 import courseDashboard from './assets/general/course-management-course-dashboard-exercises.png';
@@ -109,14 +109,14 @@ Conducting a programming exercise consists of the following main steps:
 
 <Callout variant={CalloutVariant.info}>
 
-  The workflow diagram above shows the detailed steps from the student perspective.
+The workflow diagram above shows the detailed steps from the student perspective.
 For a complete step-by-step guide on how students participate in programming exercises, see the <a href="/student/exercises/programming-exercise">Programming Exercise Student Guide</a>.
 
 </Callout>
 
 <Callout variant={CalloutVariant.info}>
 
-  Artemis supports a wide range of programming languages and is independent of specific version control and continuous integration systems.
+Artemis supports a wide range of programming languages and is independent of specific version control and continuous integration systems.
 Instructors have significant freedom in defining the test environment.
 
 </Callout>
@@ -132,27 +132,27 @@ Instructors can still use those templates to generate programming exercises and 
 The following table provides an overview of supported programming languages and their corresponding templates:
 
 | No. | Programming Language | Local CI | Jenkins | Build System/Notes     | Docker Image                                                                                 |
-|-----|----------------------|----------|---------|------------------------|----------------------------------------------------------------------------------------------|
-| 1   | Java                 | ✅        | ✅       | Gradle, Maven, DejaGnu | [artemis-maven-docker](https://github.com/ls1intum/artemis-maven-docker)                     |
-| 2   | Python               | ✅        | ✅       | pip                    | [artemis-python-docker](https://github.com/ls1intum/artemis-python-docker)                   |
-| 3   | C                    | ✅        | ✅       | Makefile, FACT, GCC    | [artemis-c-docker](https://github.com/ls1intum/artemis-c-docker)                             |
-| 4   | Haskell              | ✅        | ✅       | Stack                  | [artemis-haskell](https://github.com/uni-passau-artemis/artemis-haskell)                     |
-| 5   | Kotlin               | ✅        | ✅       | Maven                  | [artemis-maven-docker](https://github.com/ls1intum/artemis-maven-docker)                     |
-| 6   | VHDL                 | ✅        | ❌       | Makefile               | [artemis-vhdl-docker](https://github.com/ls1intum/artemis-vhdl-docker)                       |
-| 7   | Assembler            | ✅        | ❌       | Makefile               | [artemis-assembler-docker](https://github.com/ls1intum/artemis-assembler-docker)             |
-| 8   | Swift                | ✅        | ✅       | SwiftPM                | [artemis-swift-swiftlint-docker](https://github.com/ls1intum/artemis-swift-swiftlint-docker) |
-| 9   | OCaml                | ✅        | ❌       | Dune                   | [artemis-ocaml-docker](https://github.com/ls1intum/artemis-ocaml-docker)                     |
-| 10  | Rust                 | ✅        | ✅       | cargo                  | [artemis-rust-docker](https://github.com/ls1intum/artemis-rust-docker)                       |
-| 11  | JavaScript           | ✅        | ✅       | npm                    | [artemis-javascript-docker](https://github.com/ls1intum/artemis-javascript-docker)           |
-| 12  | R                    | ✅        | ✅       | built-in               | [artemis-r-docker](https://github.com/ls1intum/artemis-r-docker)                             |
-| 13  | C++                  | ✅        | ✅       | CMake                  | [artemis-cpp-docker](https://github.com/ls1intum/artemis-cpp-docker)                         |
-| 14  | TypeScript           | ✅        | ✅       | npm                    | [artemis-javascript-docker](https://github.com/ls1intum/artemis-javascript-docker)           |
-| 15  | C#                   | ✅        | ✅       | dotnet                 | [artemis-csharp-docker](https://github.com/ls1intum/artemis-csharp-docker)                   |
-| 16  | Go                   | ✅        | ✅       | built-in               | [artemis-go-docker](https://github.com/ls1intum/artemis-go-docker)                           |
-| 17  | Bash                 | ✅        | ✅       | built-in               | [artemis-bash-docker](https://github.com/ls1intum/artemis-bash-docker)                       |
-| 18  | MATLAB               | ✅        | ❌       | built-in               | [matlab](https://hub.docker.com/r/mathworks/matlab)                                          |
-| 19  | Ruby                 | ✅        | ✅       | Rake                   | [artemis-ruby-docker](https://github.com/ls1intum/artemis-ruby-docker)                       |
-| 20  | Dart                 | ✅        | ✅       | built-in               | [artemis-dart-docker](https://github.com/ls1intum/artemis-dart-docker)                       |
+| --- | -------------------- | -------- | ------- | ---------------------- | -------------------------------------------------------------------------------------------- |
+| 1   | Java                 | ✅       | ✅      | Gradle, Maven, DejaGnu | [artemis-maven-docker](https://github.com/ls1intum/artemis-maven-docker)                     |
+| 2   | Python               | ✅       | ✅      | pip                    | [artemis-python-docker](https://github.com/ls1intum/artemis-python-docker)                   |
+| 3   | C                    | ✅       | ✅      | Makefile, FACT, GCC    | [artemis-c-docker](https://github.com/ls1intum/artemis-c-docker)                             |
+| 4   | Haskell              | ✅       | ✅      | Stack                  | [artemis-haskell](https://github.com/uni-passau-artemis/artemis-haskell)                     |
+| 5   | Kotlin               | ✅       | ✅      | Maven                  | [artemis-maven-docker](https://github.com/ls1intum/artemis-maven-docker)                     |
+| 6   | VHDL                 | ✅       | ❌      | Makefile               | [artemis-vhdl-docker](https://github.com/ls1intum/artemis-vhdl-docker)                       |
+| 7   | Assembler            | ✅       | ❌      | Makefile               | [artemis-assembler-docker](https://github.com/ls1intum/artemis-assembler-docker)             |
+| 8   | Swift                | ✅       | ✅      | SwiftPM                | [artemis-swift-swiftlint-docker](https://github.com/ls1intum/artemis-swift-swiftlint-docker) |
+| 9   | OCaml                | ✅       | ❌      | Dune                   | [artemis-ocaml-docker](https://github.com/ls1intum/artemis-ocaml-docker)                     |
+| 10  | Rust                 | ✅       | ✅      | cargo                  | [artemis-rust-docker](https://github.com/ls1intum/artemis-rust-docker)                       |
+| 11  | JavaScript           | ✅       | ✅      | npm                    | [artemis-javascript-docker](https://github.com/ls1intum/artemis-javascript-docker)           |
+| 12  | R                    | ✅       | ✅      | built-in               | [artemis-r-docker](https://github.com/ls1intum/artemis-r-docker)                             |
+| 13  | C++                  | ✅       | ✅      | CMake                  | [artemis-cpp-docker](https://github.com/ls1intum/artemis-cpp-docker)                         |
+| 14  | TypeScript           | ✅       | ✅      | npm                    | [artemis-javascript-docker](https://github.com/ls1intum/artemis-javascript-docker)           |
+| 15  | C#                   | ✅       | ✅      | dotnet                 | [artemis-csharp-docker](https://github.com/ls1intum/artemis-csharp-docker)                   |
+| 16  | Go                   | ✅       | ✅      | built-in               | [artemis-go-docker](https://github.com/ls1intum/artemis-go-docker)                           |
+| 17  | Bash                 | ✅       | ✅      | built-in               | [artemis-bash-docker](https://github.com/ls1intum/artemis-bash-docker)                       |
+| 18  | MATLAB               | ✅       | ❌      | built-in               | [matlab](https://hub.docker.com/r/mathworks/matlab)                                          |
+| 19  | Ruby                 | ✅       | ✅      | Rake                   | [artemis-ruby-docker](https://github.com/ls1intum/artemis-ruby-docker)                       |
+| 20  | Dart                 | ✅       | ✅      | built-in               | [artemis-dart-docker](https://github.com/ls1intum/artemis-dart-docker)                       |
 
 ### Feature Support by Language
 
@@ -186,6 +186,7 @@ When available, instructors can view differences between student code and the re
 ##### Auxiliary Repositories
 
 Auxiliary repositories are additional repositories beyond the standard template, solution, and test repositories. They can be used to:
+
 - Provide additional resources needed during testing
 - Include libraries or dependencies
 - Overwrite template source code in testing scenarios
@@ -194,7 +195,6 @@ Each auxiliary repository has a name, checkout directory, and description.
 They are created during exercise setup and added to the build plan automatically.
 For more details, see the [Auxiliary Repositories configuration section](/instructor/exercises/programming-exercise#auxiliary-repositories-details) in Exercise Creation.
 
-
 #### Feature Support by Language Matrix
 
 Not all templates support the same feature set. The table below provides an overview of supported features for each language:
@@ -202,37 +202,38 @@ Not all templates support the same feature set. The table below provides an over
 **L** = Local CI, **J** = Jenkins
 
 | No. | Language   | [Sequential Test Runs](#sequential-test-runs) | [Static Code Analysis](#configure-static-code-analysis) | [Plagiarism Check](../assessment-grading/plagiarism-check) | [Package Name](#package-name) | Project Type           | [Solution Repository Checkout](#solution-repository-checkout) | [Auxiliary Repositories](#auxiliary-repositories) |
-|:---:|:-----------|:---------------------------------------------:|:-------------------------------------------------------:|:---------------------------------------:|:-----------------------------:|:-----------------------|:-------------------------------------------------------------:|:-------------------------------------------------:|
-|  1  | Java       |                       ✅                       |                            ✅                            |                    ✅                    |               ✅               | Gradle, Maven, DejaGnu |                               ❌                               |                  L: ✅<br />J: ❌                   |
-|  2  | Python     |                L: ✅<br />J: ❌                 |                     L: ✅<br />J: ❌                      |                    ✅                    |               ❌               | n/a                    |                               ❌                               |                  L: ✅<br />J: ❌                   |
-|  3  | C          |                       ❌                       |                     L: ✅<br />J: ❌                      |                    ✅                    |               ❌               | FACT, GCC              |                               ❌                               |                  L: ✅<br />J: ❌                   |
-|  4  | Haskell    |                L: ✅<br />J: ❌                 |                            ❌                            |                    ❌                    |               ❌               | n/a                    |                        L: ✅<br />J: ❌                         |                  L: ✅<br />J: ❌                   |
-|  5  | Kotlin     |                       ✅                       |                            ❌                            |                    ✅                    |               ✅               | n/a                    |                               ❌                               |                  L: ✅<br />J: ❌                   |
-|  6  | VHDL       |                       ❌                       |                            ❌                            |                    ❌                    |               ❌               | n/a                    |                               ❌                               |                  L: ✅<br />J: ❌                   |
-|  7  | Assembler  |                       ❌                       |                            ❌                            |                    ❌                    |               ❌               | n/a                    |                               ❌                               |                  L: ✅<br />J: ❌                   |
-|  8  | Swift      |                       ❌                       |                            ✅                            |                    ✅                    |               ✅               | Plain                  |                               ❌                               |                  L: ✅<br />J: ❌                   |
-|  9  | OCaml      |                       ❌                       |                            ❌                            |                    ❌                    |               ❌               | n/a                    |                               ✅                               |                  L: ✅<br />J: ❌                   |
-| 10  | Rust       |                       ❌                       |                     L: ✅<br />J: ❌                      |                    ✅                    |               ❌               | n/a                    |                               ❌                               |                  L: ✅<br />J: ❌                   |
-| 11  | JavaScript |                       ❌                       |                     L: ✅<br />J: ❌                      |                    ✅                    |               ❌               | n/a                    |                               ❌                               |                  L: ✅<br />J: ❌                   |
-| 12  | R          |                       ❌                       |                     L: ✅<br />J: ❌                      |                    ✅                    |               ❌               | n/a                    |                               ❌                               |                  L: ✅<br />J: ❌                   |
-| 13  | C++        |                       ❌                       |                     L: ✅<br />J: ❌                      |                    ✅                    |               ❌               | n/a                    |                               ❌                               |                  L: ✅<br />J: ❌                   |
-| 14  | TypeScript |                       ❌                       |                     L: ✅<br />J: ❌                      |                    ✅                    |               ❌               | n/a                    |                               ❌                               |                  L: ✅<br />J: ❌                   |
-| 15  | C#         |                       ❌                       |                            ❌                            |                    ✅                    |               ❌               | n/a                    |                               ❌                               |                  L: ✅<br />J: ❌                   |
-| 16  | Go         |                       ❌                       |                            ❌                            |                    ✅                    |               ✅               | n/a                    |                               ❌                               |                  L: ✅<br />J: ❌                   |
-| 17  | Bash       |                       ❌                       |                            ❌                            |                    ❌                    |               ❌               | n/a                    |                               ❌                               |                  L: ✅<br />J: ❌                   |
-| 18  | MATLAB     |                       ❌                       |                            ❌                            |                    ❌                    |               ❌               | n/a                    |                               ❌                               |                  L: ✅<br />J: ❌                   |
-| 19  | Ruby       |                       ❌                       |                     L: ✅<br />J: ❌                      |                    ❌                    |               ❌               | n/a                    |                               ❌                               |                  L: ✅<br />J: ❌                   |
-| 20  | Dart       |                       ❌                       |                     L: ✅<br />J: ❌                      |                    ❌                    |               ❌               | n/a                    |                               ❌                               |                  L: ✅<br />J: ❌                   |
+| :-: | :--------- | :-------------------------------------------: | :-----------------------------------------------------: | :--------------------------------------------------------: | :---------------------------: | :--------------------- | :-----------------------------------------------------------: | :-----------------------------------------------: |
+|  1  | Java       |                      ✅                       |                           ✅                            |                             ✅                             |              ✅               | Gradle, Maven, DejaGnu |                              ❌                               |                 L: ✅<br />J: ❌                  |
+|  2  | Python     |               L: ✅<br />J: ❌                |                    L: ✅<br />J: ❌                     |                             ✅                             |              ❌               | n/a                    |                              ❌                               |                 L: ✅<br />J: ❌                  |
+|  3  | C          |                      ❌                       |                    L: ✅<br />J: ❌                     |                             ✅                             |              ❌               | FACT, GCC              |                              ❌                               |                 L: ✅<br />J: ❌                  |
+|  4  | Haskell    |               L: ✅<br />J: ❌                |                           ❌                            |                             ❌                             |              ❌               | n/a                    |                       L: ✅<br />J: ❌                        |                 L: ✅<br />J: ❌                  |
+|  5  | Kotlin     |                      ✅                       |                           ❌                            |                             ✅                             |              ✅               | n/a                    |                              ❌                               |                 L: ✅<br />J: ❌                  |
+|  6  | VHDL       |                      ❌                       |                           ❌                            |                             ❌                             |              ❌               | n/a                    |                              ❌                               |                 L: ✅<br />J: ❌                  |
+|  7  | Assembler  |                      ❌                       |                           ❌                            |                             ❌                             |              ❌               | n/a                    |                              ❌                               |                 L: ✅<br />J: ❌                  |
+|  8  | Swift      |                      ❌                       |                           ✅                            |                             ✅                             |              ✅               | Plain                  |                              ❌                               |                 L: ✅<br />J: ❌                  |
+|  9  | OCaml      |                      ❌                       |                           ❌                            |                             ❌                             |              ❌               | n/a                    |                              ✅                               |                 L: ✅<br />J: ❌                  |
+| 10  | Rust       |                      ❌                       |                    L: ✅<br />J: ❌                     |                             ✅                             |              ❌               | n/a                    |                              ❌                               |                 L: ✅<br />J: ❌                  |
+| 11  | JavaScript |                      ❌                       |                    L: ✅<br />J: ❌                     |                             ✅                             |              ❌               | n/a                    |                              ❌                               |                 L: ✅<br />J: ❌                  |
+| 12  | R          |                      ❌                       |                    L: ✅<br />J: ❌                     |                             ✅                             |              ❌               | n/a                    |                              ❌                               |                 L: ✅<br />J: ❌                  |
+| 13  | C++        |                      ❌                       |                    L: ✅<br />J: ❌                     |                             ✅                             |              ❌               | n/a                    |                              ❌                               |                 L: ✅<br />J: ❌                  |
+| 14  | TypeScript |                      ❌                       |                    L: ✅<br />J: ❌                     |                             ✅                             |              ❌               | n/a                    |                              ❌                               |                 L: ✅<br />J: ❌                  |
+| 15  | C#         |                      ❌                       |                           ❌                            |                             ✅                             |              ❌               | n/a                    |                              ❌                               |                 L: ✅<br />J: ❌                  |
+| 16  | Go         |                      ❌                       |                           ❌                            |                             ✅                             |              ✅               | n/a                    |                              ❌                               |                 L: ✅<br />J: ❌                  |
+| 17  | Bash       |                      ❌                       |                           ❌                            |                             ❌                             |              ❌               | n/a                    |                              ❌                               |                 L: ✅<br />J: ❌                  |
+| 18  | MATLAB     |                      ❌                       |                           ❌                            |                             ❌                             |              ❌               | n/a                    |                              ❌                               |                 L: ✅<br />J: ❌                  |
+| 19  | Ruby       |                      ❌                       |                    L: ✅<br />J: ❌                     |                             ❌                             |              ❌               | n/a                    |                              ❌                               |                 L: ✅<br />J: ❌                  |
+| 20  | Dart       |                      ❌                       |                    L: ✅<br />J: ❌                     |                             ❌                             |              ❌               | n/a                    |                              ❌                               |                 L: ✅<br />J: ❌                  |
+
 <Callout variant={CalloutVariant.info}>
 
-  <strong>Note:</strong> Only some templates for Local CI support Sequential Test Runs. Static Code Analysis for some exercises is also only supported for Local CI.
-Instructors can still extend the generated programming exercises with additional features that are not available in a specific template.
+<strong>Note:</strong> Only some templates for Local CI support Sequential Test Runs. Static Code Analysis for some exercises is also only supported for Local CI. Instructors can
+still extend the generated programming exercises with additional features that are not available in a specific template.
 
 </Callout>
 
 <Callout variant={CalloutVariant.success}>
-  We encourage instructors to contribute improvements to the existing templates or to provide new templates.
-  Please contact [Stephan Krusche](https://www.professoren.tum.de/krusche-stephan) and/or create Pull Requests in the [GitHub repository](https://github.com/ls1intum/Artemis).
+    We encourage instructors to contribute improvements to the existing templates or to provide new templates. Please contact [Stephan
+    Krusche](https://www.professoren.tum.de/krusche-stephan) and/or create Pull Requests in the [GitHub repository](https://github.com/ls1intum/Artemis).
 </Callout>
 
 ## Exercise Creation
@@ -259,14 +260,11 @@ Click on **Generate new programming exercise**.
 
 <Callout variant={CalloutVariant.info}>
 
-  The guided mode has been removed. Artemis now provides a validation bar to navigate through sections and help validate the form. Watch the screencast below for more information.
+The guided mode has been removed. Artemis now provides a validation bar to navigate through sections and help validate the form. Watch the screencast below for more information.
 
 </Callout>
 
-<TumLiveVideo
-    src="45966"
-    title="Video tutorial for creating a new programming exercise on TUM-Live"
-/>
+<TumLiveVideo src="45966" title="Video tutorial for creating a new programming exercise on TUM-Live" />
 
 Artemis provides various options to customize programming exercises:
 
@@ -290,7 +288,7 @@ Artemis provides various options to customize programming exercises:
 
 <Callout variant={CalloutVariant.info}>
 
-  Auxiliary repositories are checked out to the specified directory during automatic testing if a checkout directory is set.
+Auxiliary repositories are checked out to the specified directory during automatic testing if a checkout directory is set.
 This can be used for providing additional resources or overwriting template source code in testing exercises.
 
 </Callout>
@@ -320,7 +318,7 @@ This can be used for providing additional resources or overwriting template sour
 
 <Callout variant={CalloutVariant.warning}>
 
-  At least one of <strong>Allow Offline IDE</strong> or <strong>Allow Online Editor</strong> must be active.
+At least one of <strong>Allow Offline IDE</strong> or <strong>Allow Online Editor</strong> must be active.
 
 </Callout>
 
@@ -350,7 +348,7 @@ This can be used for providing additional resources or overwriting template sour
 
 <Callout variant={CalloutVariant.warning}>
 
-  Artemis does not show custom branches in the UI and offers no merge support. Pushing to non-default branches does not trigger builds or create submissions.
+Artemis does not show custom branches in the UI and offers no merge support. Pushing to non-default branches does not trigger builds or create submissions.
 Students are fully responsible for managing their branches. Only activate if absolutely necessary!
 
 </Callout>
@@ -365,20 +363,20 @@ Students are fully responsible for managing their branches. Only activate if abs
 <Image src={programmingOptionsScore} alt="Programming Options Score" size={ImageSize.large} caption="Score Configuration" />
 
 - **Should this exercise be included in the course/exam score calculation?**
-  - **Yes**: Define maximum **Points** and **Bonus points**. Total points count toward course/exam score
-  - **Bonus**: Achieved **Points** count as bonus toward course/exam score
-  - **No**: Achieved **Points** do not count toward course/exam score
+    - **Yes**: Define maximum **Points** and **Bonus points**. Total points count toward course/exam score
+    - **Bonus**: Achieved **Points** count as bonus toward course/exam score
+    - **No**: Achieved **Points** do not count toward course/exam score
 
 - **Submission Policy**: Configure initial submission policy. Choose between:
-  - **None**: Unlimited submissions
-  - **Lock Repository**: Limit submissions; lock repository when limit is reached
-  - **Submission Penalty**: Unlimited submissions with point deductions after limit
+    - **None**: Unlimited submissions
+    - **Lock Repository**: Limit submissions; lock repository when limit is reached
+    - **Submission Penalty**: Unlimited submissions with point deductions after limit
 
-  See Submission Policy Configuration section for details.
+    See Submission Policy Configuration section for details.
 
 <Callout variant={CalloutVariant.info}>
 
-  Submission policies can only be edited on the Grading Page after initial exercise generation.
+Submission policies can only be edited on the Grading Page after initial exercise generation.
 
 </Callout>
 
@@ -411,7 +409,7 @@ Students are fully responsible for managing their branches. Only activate if abs
 
 <Callout variant={CalloutVariant.info}>
 
-  Using practice mode, students can still commit code and receive feedback after the due date. These results are not rated.
+Using practice mode, students can still commit code and receive feedback after the due date. These results are not rated.
 
 </Callout>
 
@@ -431,7 +429,7 @@ Students are fully responsible for managing their branches. Only activate if abs
 
 <Callout variant={CalloutVariant.info}>
 
-  <strong>Example:</strong> Given an exercise with 10 Points and Max Static Code Analysis Penalty of 20%, at most 2 points will be deducted for code quality issues.
+<strong>Example:</strong> Given an exercise with 10 Points and Max Static Code Analysis Penalty of 20%, at most 2 points will be deducted for code quality issues.
 
 </Callout>
 
@@ -475,8 +473,8 @@ You have two alternatives to update the exercise code:
 
 1. Clone the 3 repositories and adapt the code on your local computer in your preferred IDE
 2. To execute tests locally:
-   - Copy template (or solution) code into an **assignment** folder (location depends on language)
-   - Execute tests (e.g., using `mvn clean test` for Java)
+    - Copy template (or solution) code into an **assignment** folder (location depends on language)
+    - Execute tests (e.g., using `mvn clean test` for Java)
 3. Commit and push your changes via Git
 
 <details>
@@ -576,6 +574,7 @@ You can switch between different repositories and <img src={submitButton} alt="S
 <Callout variant={CalloutVariant.info}>
 
     The online code editor supports real-time collaborative editing. Multiple instructors or editors can edit the same
+
 file simultaneously with automatic conflict resolution and cursor awareness.
 
 </Callout>
@@ -593,7 +592,12 @@ To start collaborating, have a second instructor or editor open the same exercis
 
 When someone pushes a commit to a repository (e.g., via Git CLI, an IDE, or "Submit" button) while the online code editor is open, a **new commit alert** is displayed. This advises you to save your work by clicking <img src={submitButton} alt="Submit" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} /> and refresh the page to incorporate the new changes. The alert only appears for the repository that received the new commit.
 
-<Image src={collaborativeCodeEditor} alt="Two instructors editing the same file with visible cursors" size={ImageSize.large} caption="Live collaborative code editing with cursor awareness" />
+<Image
+    src={collaborativeCodeEditor}
+    alt="Two instructors editing the same file with visible cursors"
+    size={ImageSize.large}
+    caption="Live collaborative code editing with cursor awareness"
+/>
 
 <Image src={collaborativeNewCommitAlert} alt="New commit alert notification" size={ImageSize.large} caption="Alert shown when an external commit is detected" />
 
@@ -601,7 +605,12 @@ When someone pushes a commit to a repository (e.g., via Git CLI, an IDE, or "Sub
 
 **Problem Statement Synchronization:** The markdown problem statement editor supports the same real-time collaboration with cursor awareness. This works both in the online code editor (<img src={editInEditor} alt="Edit in Editor" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} />) and on the edit page (<img src={edit} alt="Edit" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} />).
 
-<Image src={collaborativeProblemStatement} alt="Two instructors editing the problem statement simultaneously" size={ImageSize.large} caption="Live collaborative problem statement editing" />
+<Image
+    src={collaborativeProblemStatement}
+    alt="Two instructors editing the problem statement simultaneously"
+    size={ImageSize.large}
+    caption="Live collaborative problem statement editing"
+/>
 
 **Exercise Settings Synchronization:** On the edit page (<img src={edit} alt="Edit" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} />), changes to exercise settings (title, points, dates, grading criteria, etc.) are synchronized to other users when saved. Non-conflicting changes are applied automatically. If both instructors modified the same fields, a merge conflict modal lets you choose which values to keep.
 
@@ -619,6 +628,7 @@ When someone pushes a commit to a repository (e.g., via Git CLI, an IDE, or "Sub
         <li>Unsaved/unsubmitted content is not preserved on the server. When all users close the page, unsaved content is lost. </li>
         <li>Binary files are not synchronized through the collaborative editor.</li>
     </ul>
+
 </Callout>
 
 ### AI-Assisted Problem Statement Authoring
@@ -640,27 +650,52 @@ The AI-assisted authoring features are organized into two areas:
 
 When creating a new exercise, the **Problem** step provides a requirements input field. Enter a textual prompt describing the desired exercise (up to 1,000 characters) and click **Generate Draft Problem Statement**. The system inserts a student-facing Markdown draft into the editor for review. Final task-to-test annotations are added only during whole-exercise generation, after tests exist.
 
-<Image src={hyperionGenerate} alt="Problem statement generation interface" size={ImageSize.large} caption="AI-assisted problem statement generation with requirements input, character counter, and the generated draft in the Markdown editor" />
+<Image
+    src={hyperionGenerate}
+    alt="Problem statement generation interface"
+    size={ImageSize.large}
+    caption="AI-assisted problem statement generation with requirements input, character counter, and the generated draft in the Markdown editor"
+/>
 
 #### Refine Problem Statement
 
 Once a problem statement exists in the editor, the same input field accepts a refinement instruction. Click **Refine Problem Statement** to revise the entire document based on the instruction. The system produces a revised version and presents the changes in a diff view.
 
-<Image src={hyperionRefinement} alt="Problem statement refinement interface" size={ImageSize.large} caption="Global refinement mode — the action changes to 'Refine Problem Statement' when the editor already contains content" />
+<Image
+    src={hyperionRefinement}
+    alt="Problem statement refinement interface"
+    size={ImageSize.large}
+    caption="Global refinement mode — the action changes to 'Refine Problem Statement' when the editor already contains content"
+/>
 
 #### Targeted Refinement
 
 To modify a specific portion of the problem statement, select a text region in the Markdown editor. A **Refine Selection** button appears next to the selection. Click it to open an inline instruction field (up to 500 characters), then enter a description of the desired change. The system produces a localized revision affecting only the selected region.
 
-<Image src={hyperionTargetedRefinementButton} alt="Refine Selection button next to selected text" size={ImageSize.large} caption="Targeted refinement entry point — the button appears when text is selected in the editor" />
+<Image
+    src={hyperionTargetedRefinementButton}
+    alt="Refine Selection button next to selected text"
+    size={ImageSize.large}
+    caption="Targeted refinement entry point — the button appears when text is selected in the editor"
+/>
 
-<Image src={hyperionTargetedRefinementPrompt} alt="Inline instruction field for targeted refinement" size={ImageSize.large} caption="Inline instruction field for describing the desired change to the selected region" />
+<Image
+    src={hyperionTargetedRefinementPrompt}
+    alt="Inline instruction field for targeted refinement"
+    size={ImageSize.large}
+    caption="Inline instruction field for describing the desired change to the selected region"
+/>
 
 #### Diff View
 
 AI-assisted problem-statement refinements, quality fixes, and difficulty adaptations are presented in a diff view before application. Whole-exercise generation uses a separate informed confirmation, saves only after automated build and grading checks, and then offers exact saved-change review and undo actions in the editor. In the problem-statement diff, the left column shows deletions in red and the right column shows additions in green. You can accept, discard, or toggle between split and inline views.
 
-<Image src={hyperionDiffView} alt="Diff view comparing original and AI suggestion" size={ImageSize.large} caption="Diff view for reviewing AI-suggested modifications — accept or discard before changes are applied" />
+<Image
+    src={hyperionDiffView}
+    alt="Diff view comparing original and AI suggestion"
+    size={ImageSize.large}
+    caption="Diff view for reviewing AI-suggested modifications — accept or discard before changes are applied"
+/>
 
 #### Instructor Checklist
 
@@ -674,17 +709,37 @@ Click **Analyze Problem Statement** in the checklist panel to run all three anal
 
 **Quality Assessment:** Displays a radar chart with percentage scores for clarity, coherence, and completeness. Detected issues appear with category badges, severity levels, descriptions, suggested fixes, and impact assessments. Use **Fix** to apply an AI-generated correction for a single issue, or **Fix All Issues** for batch correction. Both actions present proposed changes in the diff view.
 
-<Image src={hyperionChecklistQuality} alt="Quality assessment panel with radar chart and detected issues" size={ImageSize.large} caption="Quality assessment panel showing scores, detected issues, and controls for individual or batch correction" />
+<Image
+    src={hyperionChecklistQuality}
+    alt="Quality assessment panel with radar chart and detected issues"
+    size={ImageSize.large}
+    caption="Quality assessment panel showing scores, detected issues, and controls for individual or batch correction"
+/>
 
 **Difficulty Assessment:** Shows the suggested difficulty level alongside the declared level. When a mismatch exists, an arrow indicator and descriptive text alert you. Task and test counts summarize the exercise structure, and a detailed explanation describes the reasoning. Click an **Adapt to** button (Easy, Medium, or Hard) to generate a revised problem statement adjusted to the target difficulty, presented in the diff view.
 
-<Image src={hyperionDifficultyAssessment} alt="Difficulty assessment panel showing mismatch indicator" size={ImageSize.large} caption="Difficulty assessment with suggested level, mismatch indicator, reasoning, and adaptation controls" />
+<Image
+    src={hyperionDifficultyAssessment}
+    alt="Difficulty assessment panel showing mismatch indicator"
+    size={ImageSize.large}
+    caption="Difficulty assessment with suggested level, mismatch indicator, reasoning, and adaptation controls"
+/>
 
 **Learning Goal Estimation:** Presents estimated learning goals, each tagged with a knowledge area badge (e.g., AL for Algorithms, SE for Software Engineering), a taxonomy level (e.g., APPLY, ANALYZE), and a "Linked" indicator when the goal matches an existing course competency. Each entry includes textual evidence from the problem statement. Select individual goals or use **Select All**, then click **Apply All** to link them to the course's competencies. The system checks whether suitable competencies already exist, links matching ones directly, and creates new competencies only where no match is found.
 
-<Image src={hyperionLearningGoals} alt="Learning goal estimation panel with knowledge area badges" size={ImageSize.large} caption="Estimated learning goals with knowledge area badges, taxonomy levels, evidence, and competency linking controls" />
+<Image
+    src={hyperionLearningGoals}
+    alt="Learning goal estimation panel with knowledge area badges"
+    size={ImageSize.large}
+    caption="Estimated learning goals with knowledge area badges, taxonomy levels, evidence, and competency linking controls"
+/>
 
-<Image src={hyperionLinkedCompetencies} alt="Linked Competencies section populated from estimated goals" size={ImageSize.large} caption="Linked Competencies section showing course competencies created from the estimated learning goals" />
+<Image
+    src={hyperionLinkedCompetencies}
+    alt="Linked Competencies section populated from estimated goals"
+    size={ImageSize.large}
+    caption="Linked Competencies section showing course competencies created from the estimated learning goals"
+/>
 
 ### AI-Assisted Exercise Generation
 
@@ -694,7 +749,7 @@ Click **Analyze Problem Statement** in the checklist panel to run all three anal
 
 </Callout>
 
-Hyperion can generate or adapt a complete Java Maven or Gradle programming exercise: problem statement, template, solution, and tests. The action is limited to supported unreleased draft exercises without student participations. Output is saved automatically only after mechanical verification and the automated full-artifact review complete without blocking findings. Treat every result as a draft and review every artifact before release.
+Hyperion can generate or adapt a complete Java Maven programming exercise: problem statement, template, solution, and tests. The action is limited to supported unreleased draft exercises without student participations. Output is saved to the exercise's normal repositories after mechanical verification. If automated quality review still finds concerns after the repair attempts, Artemis saves the mechanically valid exercise as **Needs review** instead of discarding the instructor's draft. Review every artifact before release; use review comments and **Adapt exercise** for follow-up changes.
 
 There are two entry points:
 
@@ -718,9 +773,9 @@ Use **Apply with AI** on active consistency-review threads to include them in th
 
 <Image src={hyperionRemoveSelection} alt="Remove Selection button in a selected review thread" size={ImageSize.large} caption="Remove Selection action for selected feedback" />
 
-Before a manually started generation or adaptation, Artemis explains that accepted output is saved automatically. The activity panel streams progress and changed-file previews. After persistence, **Review saved changes** opens the problem-statement version history or the exact Hyperion commit diff for each touched repository. A reload reconnects to the retained job state. You can cancel a running job; cancellation is cooperative and can take effect after the current model or build operation returns.
+Before a manually started generation or adaptation, Artemis explains that mechanically verified output is saved automatically. The activity panel streams progress and changed-file paths. After persistence, **Review saved changes** opens the problem-statement version history or the exact Hyperion commit diff for each touched repository. A reload reconnects to the retained job state. You can cancel while Hyperion is authoring or checking the exercise; once mechanical verification has completed, Artemis finishes saving the verified work instead of discarding it.
 
-Hyperion accepts generated content only after an authoritative mechanical verification run confirms that the solution passes, the template fails the required tests, task bindings resolve, and protected test infrastructure remains unchanged. These checks do not establish pedagogical quality or semantic completeness; instructor review remains required. Only accepted output can update the live exercise. A rejected but recoverable draft can instead be saved to isolated review branches; review and merge all three repositories with an external Git client because Artemis does not expose custom branches. A `PARTIAL` result means that live persistence was incomplete or that recoverable output exists only on isolated recovery branches. It is not fully saved, requires manual review, and cannot be reverted automatically.
+Hyperion saves generated content to the exercise's normal branch only after an authoritative mechanical verification run confirms that the solution passes, the template fails the required tests, task bindings resolve, and protected test infrastructure remains unchanged. These checks do not establish pedagogical quality or semantic completeness. Quality findings are shown as **Needs review**, but the mechanically valid result remains available in the exercise so the instructor can inspect it, leave review comments, adapt it again, or revert the generation. A `PARTIAL` result means that saving across the exercise repositories did not complete and requires manual inspection before further editing.
 
 A successfully persisted generation or adaptation offers **Undo generation** or **Undo adaptation** while its in-memory baseline remains available, provided the repositories have not changed again. Undo restores the captured pre-run commits and problem statement. The action is not crash-durable: a server restart or conflicting repository change can make it unavailable. Review and undo promptly when needed.
 
@@ -734,10 +789,7 @@ A successfully persisted generation or adaptation offers **Undo generation** or 
 
 During exercise creation, instructors and editors can use review comments to discuss specific lines directly in the online editor. Review comments are meant for coordinating exercise authors before releasing or updating an exercise. They are not student feedback and are only visible to users who can edit the exercise.
 
-<TumLiveVideo
-    src="https://live.rbg.tum.de/w/artemisintro/73628"
-    title="Video tutorial for review comments in programming exercises on TUM-Live"
-/>
+<TumLiveVideo src="https://live.rbg.tum.de/w/artemisintro/73628" title="Video tutorial for review comments in programming exercises on TUM-Live" />
 
 To add a review comment, open the exercise with <img src={editInEditor} alt="Edit in Editor" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} />, hover next to the relevant line, and use the comment action. If Artemis asks you to submit first, click <img src={submitButton} alt="Submit" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} /> so the comment can be attached to the current saved version of the file or problem statement.
 
@@ -759,7 +811,12 @@ Each review comment starts a thread at the selected location. Other instructors 
 
 **Consistency Check Comments:** Hyperion's consistency check can create review comments for potential mismatches between the problem statement and the exercise repositories. These AI-created threads are labelled as consistency issues and show their severity and category. If one issue affects multiple artifacts, the related locations are grouped, and you can jump between them from the review comment. The issue navigator in the editor toolbar lets you move through the current consistency findings.
 
-<Image src={reviewConsistencyThreadWidget} alt="AI-created consistency issue review comment with severity and category labels" size={ImageSize.large} caption="Consistency check result shown as a review comment" />
+<Image
+    src={reviewConsistencyThreadWidget}
+    alt="AI-created consistency issue review comment with severity and category labels"
+    size={ImageSize.large}
+    caption="Consistency check result shown as a review comment"
+/>
 
 Some consistency check comments may include a suggested inline fix. This suggested change is intended for simple, local corrections, such as aligning a name, signature, or small code fragment. Review the suggested change before applying it. For complex or ambiguous issues, Artemis may leave the suggested fix empty and only keep the explanatory review comment.
 
@@ -774,7 +831,7 @@ Some consistency check comments may include a suggested inline fix. This suggest
 Write test cases in the Test repository using language-specific frameworks:
 
 | No. | Language   | Package Manager | Build System   | Testing Framework                                                                        |
-|-----|------------|-----------------|----------------|------------------------------------------------------------------------------------------|
+| --- | ---------- | --------------- | -------------- | ---------------------------------------------------------------------------------------- |
 | 1   | Java       | Maven / Gradle  | Maven / Gradle | [JUnit 5](https://junit.org/junit5/) with [Ares](https://github.com/ls1intum/Ares)       |
 | 2   | Python     | pip             | pip            | [pytest](https://docs.pytest.org/)                                                       |
 | 3   | C          | -               | Makefile       | Python scripts / [FACT](https://fact.readthedocs.io/)                                    |
@@ -803,7 +860,7 @@ Check the build plan results:
 
 <Callout variant={CalloutVariant.warning}>
 
-  <strong>Hint:</strong> Test cases should only reference code available in the template repository. If this is not possible, try the <strong>Sequential Test Runs</strong> option.
+<strong>Hint:</strong> Test cases should only reference code available in the template repository. If this is not possible, try the <strong>Sequential Test Runs</strong> option.
 
 </Callout>
 
@@ -811,8 +868,9 @@ Check the build plan results:
 
 <Callout variant={CalloutVariant.warning}>
 
-  <strong>Important for Java and Kotlin exercises:</strong> Maven Central rate-limits download requests. Because all builds of an Artemis instance originate from the same IP addresses, builds can suddenly fail with <strong>HTTP 429 (Too Many Requests)</strong> errors — especially during high-load periods such as exams, when many students submit at the same time.
-We strongly recommend configuring a Maven repository mirror as the <strong>first</strong> repository in the test repository's build configuration, as described below.
+<strong>Important for Java and Kotlin exercises:</strong> Maven Central rate-limits download requests. Because all builds of an Artemis instance originate from the same IP
+addresses, builds can suddenly fail with <strong>HTTP 429 (Too Many Requests)</strong> errors — especially during high-load periods such as exams, when many students submit at the
+same time. We strongly recommend configuring a Maven repository mirror as the <strong>first</strong> repository in the test repository's build configuration, as described below.
 
 </Callout>
 
@@ -857,7 +915,8 @@ repositories {
 
 <Callout variant={CalloutVariant.warning}>
 
-  <strong>The repository order matters:</strong> Repositories are queried in the order they are declared. The mirror must come <strong>before</strong> Maven Central so that all dependencies are resolved from the mirror and Maven Central is not contacted at all. If the mirror is declared after Maven Central, builds will still hit the rate limit.
+<strong>The repository order matters:</strong> Repositories are queried in the order they are declared. The mirror must come <strong>before</strong> Maven Central so that all
+dependencies are resolved from the mirror and Maven Central is not contacted at all. If the mirror is declared after Maven Central, builds will still hit the rate limit.
 
 </Callout>
 
@@ -867,7 +926,6 @@ Alternatively, the mirror can be baked into the Docker image used for the build 
 
 - While the mirror has been stable so far, its availability cannot be guaranteed. If it ever becomes unavailable, changing a single entry in the test repository (e.g., via the online code editor) takes seconds and immediately applies to all subsequent builds.
 - Switching or rebuilding a Docker image is much slower and must be repeated for every exercise that uses the image.
-
 
 ### Adapt Build Phases (Optional)
 
@@ -899,7 +957,7 @@ Before a build runs, any phases where the inclusion condition is not met are dro
 
 **Common Test Setup Scenarios:**
 
-Controlling when tests *run* (via build-phase inclusion conditions) is separate from controlling when results are *visible* to students (via test-case visibility in the grading page). To achieve the desired outcome, both must be configured accordingly:
+Controlling when tests _run_ (via build-phase inclusion conditions) is separate from controlling when results are _visible_ to students (via test-case visibility in the grading page). To achieve the desired outcome, both must be configured accordingly:
 
 1. **Immediate Full Feedback:** Set all build phases to `Always` and configure the corresponding test cases to always be visible. Tests execute on every commit, and all results are shown immediately after submission.
 2. **Build Status Only:** Remove all phases that expect tests. Students only see if their code compiled successfully based on the build's exit status. Test-case visibility is irrelevant since no tests are executed.
@@ -907,11 +965,13 @@ Controlling when tests *run* (via build-phase inclusion conditions) is separate 
 4. **Partial Immediate Feedback:** Set specific test phases (e.g., static code analysis) to `Always`, and other test phases to `After due date`. For tests running immediately, set their visibility to `Always`. For tests running after the due date, visibility technically does not matter, but can be set to `After Due Date` for consistency. Students receive immediate feedback on some aspects and delayed feedback on others.
 
 **Default behavior:**
+
 - **Creating a course programming exercise**: Phases are set to always run. Test results are set to always be visible.
 - **Creating a programming exercise in exam mode**: Phases that expect tests are automatically set to run after the due date. This means phases without expected test results remain active during the exam. Tests will run after the exam concludes.
 - **Importing a programming exercise in exam mode**: Tests are automatically set to only show after the release date of results. However, the build plan is imported as-is. This prevents situations where, for example, a build plan with only a single phase is unintentionally set to run `After due date`.
 
 You can also use a custom Docker image. Make sure to:
+
 - Publish the image in a publicly available repository (e.g., DockerHub)
 - Build for both amd64 and arm64 architectures
 - Keep the image size small (build agents download before execution)
@@ -919,7 +979,7 @@ You can also use a custom Docker image. Make sure to:
 
 <Callout variant={CalloutVariant.info}>
 
-  Test custom exercises locally before publishing Docker images and uploading to Artemis for better development experience.
+Test custom exercises locally before publishing Docker images and uploading to Artemis for better development experience.
 
 </Callout>
 
@@ -941,7 +1001,7 @@ Update the build plan accordingly (see the [Adapt Build Phases](#adapt-build-pha
 
 <Callout variant={CalloutVariant.warning}>
 
-  <strong>Important:</strong>
+<strong>Important:</strong>
 
   <ul>
     <li>Checkout paths can only be changed during exercise creation, not after</li>
@@ -990,7 +1050,7 @@ We plan to add more options to the container configuration in the future.
 
 If static code analysis was activated, the **Test** repository contains configuration files.
 
-For Java exercises, the *staticCodeAnalysisConfig* folder contains configuration files for each tool.
+For Java exercises, the _staticCodeAnalysisConfig_ folder contains configuration files for each tool.
 Artemis generates default configurations with predefined rules. Instructors can freely customize these files.
 
 On exercise import, configurations are copied from the imported exercise.
@@ -998,101 +1058,123 @@ On exercise import, configurations are copied from the imported exercise.
 #### Supported Static Code Analysis Tools
 
 <table>
-  <thead>
-    <tr>
-      <th>No.</th>
-      <th>Language</th>
-      <th>Supported Tools</th>
-      <th>Configuration File</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td rowSpan={4}>1</td>
-      <td rowSpan={4}>Java</td>
-      <td><a href="https://spotbugs.github.io/">Spotbugs</a></td>
-      <td>spotbugs-exclusions.xml</td>
-    </tr>
-    <tr>
-      <td><a href="https://checkstyle.org/">Checkstyle</a></td>
-      <td>checkstyle-configuration.xml</td>
-    </tr>
-    <tr>
-      <td><a href="https://pmd.github.io/">PMD</a></td>
-      <td>pmd-configuration.xml</td>
-    </tr>
-    <tr>
-      <td>PMD CPD</td>
-      <td>(via PMD plugin)</td>
-    </tr>
-    <tr>
-      <td>2</td>
-      <td>Python</td>
-      <td><a href="https://docs.astral.sh/ruff/">Ruff</a></td>
-      <td>ruff-student.toml</td>
-    </tr>
-    <tr>
-      <td>3</td>
-      <td>C</td>
-      <td>GCC</td>
-      <td>(via compiler flags)</td>
-    </tr>
-    <tr>
-      <td>8</td>
-      <td>Swift</td>
-      <td><a href="https://realm.github.io/SwiftLint/">SwiftLint</a></td>
-      <td>.swiftlint.yml</td>
-    </tr>
-    <tr>
-      <td>10</td>
-      <td>Rust</td>
-      <td><a href="https://doc.rust-lang.org/clippy/">Clippy</a></td>
-      <td>clippy.toml</td>
-    </tr>
-    <tr>
-      <td>11/14</td>
-      <td>JavaScript/TypeScript</td>
-      <td><a href="https://eslint.org/">ESLint</a></td>
-      <td>eslint.config.mjs</td>
-    </tr>
-    <tr>
-      <td>12</td>
-      <td>R</td>
-      <td><a href="https://lintr.r-lib.org/">lintr</a></td>
-      <td>.lintr</td>
-    </tr>
-    <tr>
-      <td>13</td>
-      <td>C++</td>
-      <td><a href="https://clang.llvm.org/extra/clang-tidy/">Clang-Tidy</a></td>
-      <td>.clang-tidy</td>
-    </tr>
-    <tr>
-      <td>19</td>
-      <td>Ruby</td>
-      <td><a href="https://rubocop.org/">Rubocop</a></td>
-      <td>.rubocop.yml</td>
-    </tr>
-    <tr>
-      <td>20</td>
-      <td>Dart</td>
-      <td><a href="https://dart.dev/tools/analysis">dart analyze</a></td>
-      <td>analysis_options.yaml</td>
-    </tr>
-  </tbody>
+    <thead>
+        <tr>
+            <th>No.</th>
+            <th>Language</th>
+            <th>Supported Tools</th>
+            <th>Configuration File</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td rowSpan={4}>1</td>
+            <td rowSpan={4}>Java</td>
+            <td>
+                <a href="https://spotbugs.github.io/">Spotbugs</a>
+            </td>
+            <td>spotbugs-exclusions.xml</td>
+        </tr>
+        <tr>
+            <td>
+                <a href="https://checkstyle.org/">Checkstyle</a>
+            </td>
+            <td>checkstyle-configuration.xml</td>
+        </tr>
+        <tr>
+            <td>
+                <a href="https://pmd.github.io/">PMD</a>
+            </td>
+            <td>pmd-configuration.xml</td>
+        </tr>
+        <tr>
+            <td>PMD CPD</td>
+            <td>(via PMD plugin)</td>
+        </tr>
+        <tr>
+            <td>2</td>
+            <td>Python</td>
+            <td>
+                <a href="https://docs.astral.sh/ruff/">Ruff</a>
+            </td>
+            <td>ruff-student.toml</td>
+        </tr>
+        <tr>
+            <td>3</td>
+            <td>C</td>
+            <td>GCC</td>
+            <td>(via compiler flags)</td>
+        </tr>
+        <tr>
+            <td>8</td>
+            <td>Swift</td>
+            <td>
+                <a href="https://realm.github.io/SwiftLint/">SwiftLint</a>
+            </td>
+            <td>.swiftlint.yml</td>
+        </tr>
+        <tr>
+            <td>10</td>
+            <td>Rust</td>
+            <td>
+                <a href="https://doc.rust-lang.org/clippy/">Clippy</a>
+            </td>
+            <td>clippy.toml</td>
+        </tr>
+        <tr>
+            <td>11/14</td>
+            <td>JavaScript/TypeScript</td>
+            <td>
+                <a href="https://eslint.org/">ESLint</a>
+            </td>
+            <td>eslint.config.mjs</td>
+        </tr>
+        <tr>
+            <td>12</td>
+            <td>R</td>
+            <td>
+                <a href="https://lintr.r-lib.org/">lintr</a>
+            </td>
+            <td>.lintr</td>
+        </tr>
+        <tr>
+            <td>13</td>
+            <td>C++</td>
+            <td>
+                <a href="https://clang.llvm.org/extra/clang-tidy/">Clang-Tidy</a>
+            </td>
+            <td>.clang-tidy</td>
+        </tr>
+        <tr>
+            <td>19</td>
+            <td>Ruby</td>
+            <td>
+                <a href="https://rubocop.org/">Rubocop</a>
+            </td>
+            <td>.rubocop.yml</td>
+        </tr>
+        <tr>
+            <td>20</td>
+            <td>Dart</td>
+            <td>
+                <a href="https://dart.dev/tools/analysis">dart analyze</a>
+            </td>
+            <td>analysis_options.yaml</td>
+        </tr>
+    </tbody>
 </table>
 
 <Callout variant={CalloutVariant.info}>
 
-  Maven plugins for Java static code analysis tools provide additional configuration options. GCC can be configured by passing flags in the tasks. See <a href="https://gcc.gnu.org/onlinedocs/gcc-11.1.0/gcc/Static-Analyzer-Options.html">GCC Documentation</a>.
+Maven plugins for Java static code analysis tools provide additional configuration options. GCC can be configured by passing flags in the tasks. See <a href="https://gcc.gnu.org/onlinedocs/gcc-11.1.0/gcc/Static-Analyzer-Options.html">GCC Documentation</a>.
 
 </Callout>
 
 <Callout variant={CalloutVariant.info}>
 
-  Instructors can completely disable specific tools by removing the plugin/dependency from the build file (pom.xml or build.gradle) or by altering the task/script that executes the tools in the build plan.
+Instructors can completely disable specific tools by removing the plugin/dependency from the build file (pom.xml or build.gradle) or by altering the task/script that executes the tools in the build plan.
 
-  <strong>Special case:</strong> PMD and PMD CPD share a common plugin. To disable one or the other, instructors must delete the execution of the specific tool from the build plan.
+<strong>Special case:</strong> PMD and PMD CPD share a common plugin. To disable one or the other, instructors must delete the execution of the specific tool from the build plan.
 
 </Callout>
 
@@ -1101,6 +1183,7 @@ On exercise import, configurations are copied from the imported exercise.
 Click <img src={edit} alt="Edit" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} /> on the programming exercise or navigate to <img src={editInEditor} alt="Edit in Editor" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} /> and adapt the interactive problem statement. When multiple instructors edit the problem statement simultaneously, changes are synchronized in real time. See <a href="#collaborative-editing">Collaborative Editing</a> for details on real-time collaboration features.
 
 The initial example shows how to:
+
 - Integrate tasks
 - Link tests
 - Integrate interactive UML diagrams
@@ -1113,14 +1196,18 @@ The grading configuration determines how test cases contribute to the overall sc
 
 <Image src={configureGradingUpdateInformation} alt="Configure Grading Update Information" size={ImageSize.large} caption="Grading Configuration Update Information" />
 
-- <img src={gradingSave} alt="Save" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} /> **Save**: Save current grading configuration
-- <img src={gradingReset} alt="Reset" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} /> **Reset**: Reset the current grading configuration of the open tab to the default values. For Test Case Tab, all test cases are set to weight 1, bonus multiplier 1, and bonus points 0. For the Code Analysis Tab, the default configuration depends on the selected programming language.
-- <img src={gradingReevaluateAll} alt="Re-evaluate All" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} /> **Re-evaluate All**: Re-evaluate scores using currently saved settings and existing feedback
-- <img src={gradingTriggerAll} alt="Trigger All" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} /> **Trigger All**: Trigger all build plans to create new results with updated configuration
+- <img src={gradingSave} alt="Save" style={{ display: 'inline', verticalAlign: 'middle', height: '2rem' }} /> **Save**: Save current grading configuration
+- <img src={gradingReset} alt="Reset" style={{ display: 'inline', verticalAlign: 'middle', height: '2rem' }} /> **Reset**: Reset the current grading configuration of the open tab
+  to the default values. For Test Case Tab, all test cases are set to weight 1, bonus multiplier 1, and bonus points 0. For the Code Analysis Tab, the default configuration depends
+  on the selected programming language.
+- <img src={gradingReevaluateAll} alt="Re-evaluate All" style={{ display: 'inline', verticalAlign: 'middle', height: '2rem' }} /> **Re-evaluate All**: Re-evaluate scores using
+  currently saved settings and existing feedback
+- <img src={gradingTriggerAll} alt="Trigger All" style={{ display: 'inline', verticalAlign: 'middle', height: '2rem' }} /> **Trigger All**: Trigger all build plans to create new
+  results with updated configuration
 
 <Callout variant={CalloutVariant.warning}>
 
-  Artemis always grades new submissions with the latest configuration, but existing submissions might use outdated configuration. Artemis warns about grading inconsistencies with the <strong>Updated grading</strong> badge.
+Artemis always grades new submissions with the latest configuration, but existing submissions might use outdated configuration. Artemis warns about grading inconsistencies with the <strong>Updated grading</strong> badge.
 
 </Callout>
 
@@ -1128,22 +1215,19 @@ The grading configuration determines how test cases contribute to the overall sc
 
 Adapt test case contribution to the overall score or set grading based on tasks.
 
-<TumLiveVideo
-    src="40748"
-    title="Video tutorial for configuring test case grading on TUM-Live"
-/>
+<TumLiveVideo src="40748" title="Video tutorial for configuring test case grading on TUM-Live" />
 
 <Image src={configureGradingTestCases} alt="Configure Grading Test Cases" size={ImageSize.large} caption="Test Case Grading Configuration" />
 
 <Callout variant={CalloutVariant.info}>
 
-  Artemis registers tasks and test cases from the <strong>Test</strong> repository using results from the <strong>Solution</strong> build plan. Test cases only appear after the first Solution build plan execution.
+Artemis registers tasks and test cases from the <strong>Test</strong> repository using results from the <strong>Solution</strong> build plan. Test cases only appear after the first Solution build plan execution.
 
 </Callout>
 
 <Callout variant={CalloutVariant.warning}>
 
-  If your problem statement does not contain tasks, task-based grading is not available. You can still configure grading based on individual test cases.
+If your problem statement does not contain tasks, task-based grading is not available. You can still configure grading based on individual test cases.
 
 </Callout>
 
@@ -1154,20 +1238,20 @@ Left side configuration options:
 - **Bonus multiplier**: Multiply points for passing a test without affecting other test points. For tasks, multiplier applies to all contained tests
 - **Bonus points**: Add flat point bonus for passing a test. For tasks, bonus points are evenly distributed across test cases
 - **Visibility**: Control feedback visibility:
-  - **Always**: Feedback visible immediately after grading
-  - **After Due Date**: Feedback visible only after due date (or individual due dates)
-  - **Never**: Feedback never visible to students. Not considered in score calculation
+    - **Always**: Feedback visible immediately after grading
+    - **After Due Date**: Feedback visible only after due date (or individual due dates)
+    - **Never**: Feedback never visible to students. Not considered in score calculation
 - **Passed %**: Statistics showing percentage of students passing/failing the test
 
 <Callout variant={CalloutVariant.warning}>
 
-  Bonus points (score &gt; 100%) are only achievable if at least one bonus multiplier &gt; 1 or bonus points are given for a test case.
+Bonus points (score &gt; 100%) are only achievable if at least one bonus multiplier &gt; 1 or bonus points are given for a test case.
 
 </Callout>
 
 <Callout variant={CalloutVariant.warning}>
 
-  For manual assessments, all feedback details are visible to students even if the due date hasn't passed for others. Set an appropriate <strong>assessment due date</strong> to prevent information leakage.
+For manual assessments, all feedback details are visible to students even if the due date hasn't passed for others. Set an appropriate <strong>assessment due date</strong> to prevent information leakage.
 
 </Callout>
 
@@ -1175,19 +1259,25 @@ Left side configuration options:
 
 <Callout variant={CalloutVariant.info}>
 
-  <strong>Example 1:</strong> Given an exercise with 3 test cases, maximum points of 10 and 10 achievable bonus points. The highest achievable score is 200%. Test Case (TC) A has weight 2, TC B and TC C have weight 1 (bonus multipliers 1 and bonus points 0 for all test cases). A student that only passes TC A will receive 50% of the maximum points (5 points).
+<strong>Example 1:</strong> Given an exercise with 3 test cases, maximum points of 10 and 10 achievable bonus points. The highest achievable score is 200%. Test Case (TC) A has
+weight 2, TC B and TC C have weight 1 (bonus multipliers 1 and bonus points 0 for all test cases). A student that only passes TC A will receive 50% of the maximum points (5
+points).
 
 </Callout>
 
 <Callout variant={CalloutVariant.info}>
 
-  <strong>Example 2:</strong> Given the configuration of Example 1 with an additional bonus multiplier of 2 for TC A. Passing TC A accounts for (2 × 2) / (2 + 1 + 1) × 100 = 100% of the maximum points (10). Passing TC B or TC C accounts for 1/4 × 100 = 25% of the maximum points (2.5). If the student passes all test cases they will receive a score of 150%, which amounts to 10 points and 5 bonus points.
+<strong>Example 2:</strong> Given the configuration of Example 1 with an additional bonus multiplier of 2 for TC A. Passing TC A accounts for (2 × 2) / (2 + 1 + 1) × 100 = 100% of
+the maximum points (10). Passing TC B or TC C accounts for 1/4 × 100 = 25% of the maximum points (2.5). If the student passes all test cases they will receive a score of 150%,
+which amounts to 10 points and 5 bonus points.
 
 </Callout>
 
 <Callout variant={CalloutVariant.info}>
 
-  <strong>Example 3:</strong> Given the configuration of Example 2 with additional bonus points of 5 for TC B. The points achieved for passing TC A and TC C do not change. Passing TC B now accounts for 2.5 points plus 5 bonus points (7.5). If the student passes all test cases they will receive 10 (TC A) + 7.5 (TC B) + 2.5 (TC C) points, which amounts to 10 points and 10 bonus points and a score of 200%.
+<strong>Example 3:</strong> Given the configuration of Example 2 with additional bonus points of 5 for TC B. The points achieved for passing TC A and TC C do not change. Passing TC
+B now accounts for 2.5 points plus 5 bonus points (7.5). If the student passes all test cases they will receive 10 (TC A) + 7.5 (TC B) + 2.5 (TC C) points, which amounts to 10
+points and 10 bonus points and a score of 200%.
 
 </Callout>
 
@@ -1204,14 +1294,14 @@ Configure visibility and grading of code quality issues by category.
 
 <Callout variant={CalloutVariant.info}>
 
-  The Code Analysis tab is only available if static code analysis is enabled for the exercise.
+The Code Analysis tab is only available if static code analysis is enabled for the exercise.
 
 </Callout>
 
 Issues are grouped into categories. The following table shows the category mappings for Java, Swift, and C:
 
 | Category            | Description                                                                                                              | Java                                                                                                  | Swift                 | C               |
-|---------------------|--------------------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------|-----------------------|-----------------|
+| ------------------- | ------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------- | --------------------- | --------------- |
 | **Bad Practice**    | Code that violates recommended and essential coding practices                                                            | Spotbugs BAD_PRACTICE<br/>Spotbugs I18N<br/>PMD Best Practices                                        |                       | GCC BadPractice |
 | **Code Style**      | Code that is confusing and hard to maintain                                                                              | Spotbugs STYLE<br/>Checkstyle blocks<br/>Checkstyle coding<br/>Checkstyle modifier<br/>PMD Code Style | Swiftlint (all rules) |                 |
 | **Potential Bugs**  | Coding mistakes, error-prone code or threading errors                                                                    | Spotbugs CORRECTNESS<br/>Spotbugs MT_CORRECTNESS<br/>PMD Error Prone<br/>PMD Multithreading           |                       | GCC Memory      |
@@ -1226,13 +1316,13 @@ Issues are grouped into categories. The following table shows the category mappi
 
 <Callout variant={CalloutVariant.info}>
 
-  For Swift, only the category <strong>Code Style</strong> can contain code quality issues currently. All other categories displayed on the grading page are dummies.
+For Swift, only the category <strong>Code Style</strong> can contain code quality issues currently. All other categories displayed on the grading page are dummies.
 
 </Callout>
 
 <Callout variant={CalloutVariant.info}>
 
-  The GCC SCA option for C does not offer categories by default. The issues were categorized during parsing with respect to the rules. For details on the default configuration and active rules, see the <a href="#c">GCC - Static Code Analysis Default Configuration</a> section below.
+The GCC SCA option for C does not offer categories by default. The issues were categorized during parsing with respect to the rules. For details on the default configuration and active rules, see the <a href="#c">GCC - Static Code Analysis Default Configuration</a> section below.
 
 </Callout>
 
@@ -1240,13 +1330,13 @@ Other languages use categories defined by their static code analysis tool:
 
 - **JavaScript, TypeScript, C++, R**: Only use the `Lint` category
 - **Dart**: Dart's analyzer can generate these categories:
-  - `TODO`
-  - `HINT`
-  - `COMPILE_TIME_ERROR`
-  - `CHECKED_MODE_COMPILE_TIME_ERROR`
-  - `STATIC_WARNING`
-  - `SYNTACTIC_ERROR`
-  - `LINT`
+    - `TODO`
+    - `HINT`
+    - `COMPILE_TIME_ERROR`
+    - `CHECKED_MODE_COMPILE_TIME_ERROR`
+    - `STATIC_WARNING`
+    - `SYNTACTIC_ERROR`
+    - `LINT`
 - **Python**: Uses [Ruff's tool names](https://docs.astral.sh/ruff/rules/)
 - **Ruby**: Uses [Rubocop's Department names](https://docs.rubocop.org/rubocop/cops.html)
 - **Rust**: Uses [Clippy's lint groups](https://rust-lang.github.io/rust-clippy/stable/index.html)
@@ -1255,9 +1345,9 @@ On the left side of the page, instructors can configure the static code analysis
 
 - **Category**: The name of the category defined by Artemis
 - **State**:
-  - `INACTIVE`: Code quality issues of an inactive category are not shown to students and do not influence the score calculation
-  - `FEEDBACK`: Code quality issues of a feedback category are shown to students but do not influence the score calculation
-  - `GRADED`: Code quality issues of a graded category are shown to students and deduct points according to the Penalty and Max Penalty configuration
+    - `INACTIVE`: Code quality issues of an inactive category are not shown to students and do not influence the score calculation
+    - `FEEDBACK`: Code quality issues of a feedback category are shown to students but do not influence the score calculation
+    - `GRADED`: Code quality issues of a graded category are shown to students and deduct points according to the Penalty and Max Penalty configuration
 - **Penalty**: Artemis deducts the selected amount of points for each code quality issue from points achieved by passing test cases
 - **Max Penalty**: Limits the amount of points deducted for code quality issues belonging to this category
 - **Detected Issues**: Visualizes how many students encountered a specific number of issues in this category
@@ -1269,12 +1359,13 @@ Open the <img src={view} alt="View" style={{display: 'inline', verticalAlign: 'm
 <Image src={solutionTemplateResult} alt="Solution Template Result" size={ImageSize.large} caption="Template and Solution Results" />
 
 Verify:
+
 - **Template result**: Score 0% with "0 of X passed" (or "0 of X passed, 0 issues" with SCA)
 - **Solution result**: Score 100% with "X of X passed" (or "X of X passed, 0 issues" with SCA)
 
 <Callout variant={CalloutVariant.info}>
 
-  If static code analysis finds issues in template/solution, improve the code or disable the problematic rule.
+If static code analysis finds issues in template/solution, improve the code or disable the problematic rule.
 
 </Callout>
 
@@ -1291,6 +1382,7 @@ Click the <img src={reviewChangesButton} alt="Review Changes" style={{display: '
 #### Verify Problem Statement Integration
 
 Click <img src={edit} alt="Edit" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} />. Below the problem statement, verify:
+
 - **Test cases**: OK
 - **Hints**: OK
 
@@ -1313,32 +1405,32 @@ After verifying the exercise configuration, the **Feedback Analysis** feature he
 
 1. **Filtering and Sorting**
 
-   Filter by tasks, test cases, error categories, and occurrence frequency. Sort based on count or relevance.
+    Filter by tasks, test cases, error categories, and occurrence frequency. Sort based on count or relevance.
 
-   <Image src={feedbackAnalysisFilters} alt="Feedback Analysis Filters" size={ImageSize.large} caption="Filtering Options" />
+    <Image src={feedbackAnalysisFilters} alt="Feedback Analysis Filters" size={ImageSize.large} caption="Filtering Options" />
 
 2. **Affected Students Overview**
 
-   View students affected by specific feedback and access their repositories for review.
+    View students affected by specific feedback and access their repositories for review.
 
-   <Image src={feedbackAnalysisAffectedStudents} alt="Feedback Analysis Affected Students" size={ImageSize.large} caption="Affected Students View" />
+    <Image src={feedbackAnalysisAffectedStudents} alt="Feedback Analysis Affected Students" size={ImageSize.large} caption="Affected Students View" />
 
 3. **Aggregated Feedback**
 
-   - To avoid many single entries in case of testcases using random values and generating similar feedback, **Groups similar feedback** messages together all feedback to highlight frequently occurring errors.
-   - Displays grouped **occurrence counts** and **relative frequencies** to help instructors prioritize common issues.
+    - To avoid many single entries in case of testcases using random values and generating similar feedback, **Groups similar feedback** messages together all feedback to highlight frequently occurring errors.
+    - Displays grouped **occurrence counts** and **relative frequencies** to help instructors prioritize common issues.
 
 4. **Detailed Inspection**
 
-   Click feedback entries to view full details in a modal window.
+    Click feedback entries to view full details in a modal window.
 
-   <Image src={feedbackAnalysisDetail} alt="Feedback Analysis Detail" size={ImageSize.large} caption="Detailed Feedback View" />
+    <Image src={feedbackAnalysisDetail} alt="Feedback Analysis Detail" size={ImageSize.large} caption="Detailed Feedback View" />
 
 5. **Communication & Collaboration**
 
-   Create discussion channels directly from the feedback analysis view for collaborative grading.
+    Create discussion channels directly from the feedback analysis view for collaborative grading.
 
-   <Image src={feedbackAnalysisChannel} alt="Feedback Analysis Channel" size={ImageSize.large} caption="Creating a Feedback Discussion Channel" />
+    <Image src={feedbackAnalysisChannel} alt="Feedback Analysis Channel" size={ImageSize.large} caption="Creating a Feedback Discussion Channel" />
 
 <TumLiveVideo src="https://live.rbg.tum.de/w/artemisintro/56245" title="Video tutorial for feedback analysis" />
 
@@ -1357,249 +1449,289 @@ All tool categories and their rules are active by default except for the `NOISE`
 This table contains all rules that are activated by default when creating a new programming exercise. You can suppress a complete category by changing its visibility in the grading settings. For a more fine-granular configuration, you can add or remove rules by editing the `checkstyle-configuration.xml` file. For a description of the rules refer to the [Checkstyle documentation](https://checkstyle.sourceforge.io/).
 
 <table>
-  <thead>
-    <tr>
-      <th>Category (Tool/Artemis)</th>
-      <th>Rule</th>
-      <th>Properties</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td rowSpan={12}><strong><a href="https://checkstyle.org/checks/coding/index.html">Coding</a> / Code Style</strong></td>
-      <td>EmptyStatement</td>
-      <td></td>
-    </tr>
-    <tr>
-      <td>EqualsHashCode</td>
-      <td></td>
-    </tr>
-    <tr>
-      <td>HiddenField</td>
-      <td>ignoreConstructorParameter="true"</td>
-    </tr>
-    <tr>
-      <td></td>
-      <td>ignoreSetter="true"</td>
-    </tr>
-    <tr>
-      <td></td>
-      <td>setterCanReturnItsClass="true"</td>
-    </tr>
-    <tr>
-      <td>IllegalInstantiation</td>
-      <td></td>
-    </tr>
-    <tr>
-      <td>InnerAssignment</td>
-      <td></td>
-    </tr>
-    <tr>
-      <td>MagicNumber</td>
-      <td></td>
-    </tr>
-    <tr>
-      <td>MissingSwitchDefault</td>
-      <td></td>
-    </tr>
-    <tr>
-      <td>MultipleVariableDeclarations</td>
-      <td></td>
-    </tr>
-    <tr>
-      <td>SimplifyBooleanExpression</td>
-      <td></td>
-    </tr>
-    <tr>
-      <td>SimplifyBooleanReturn</td>
-      <td></td>
-    </tr>
-    <tr>
-      <td rowSpan={4}><strong><a href="https://checkstyle.org/checks/design/index.html">Class Design</a> / Design</strong></td>
-      <td>FinalClass</td>
-      <td></td>
-    </tr>
-    <tr>
-      <td>HideUtilityClassConstructor</td>
-      <td></td>
-    </tr>
-    <tr>
-      <td>InterfaceIsType</td>
-      <td></td>
-    </tr>
-    <tr>
-      <td>VisibilityModifier</td>
-      <td></td>
-    </tr>
-    <tr>
-      <td rowSpan={3}><strong><a href="https://checkstyle.org/checks/blocks/index.html">Block Checks</a> / Code Style</strong></td>
-      <td>AvoidNestedBlocks</td>
-      <td></td>
-    </tr>
-    <tr>
-      <td>EmptyBlock</td>
-      <td></td>
-    </tr>
-    <tr>
-      <td>NeedBraces</td>
-      <td></td>
-    </tr>
-    <tr>
-      <td rowSpan={2}><strong><a href="https://checkstyle.org/checks/modifier/index.html">Modifiers</a> / Code Style</strong></td>
-      <td>ModifierOrder</td>
-      <td></td>
-    </tr>
-    <tr>
-      <td>RedundantModifier</td>
-      <td></td>
-    </tr>
-    <tr>
-      <td rowSpan={4}><strong><a href="https://checkstyle.org/checks/sizes/index.html">Size Violations</a> / Code Metrics</strong></td>
-      <td>MethodLength</td>
-      <td></td>
-    </tr>
-    <tr>
-      <td>ParameterNumber</td>
-      <td></td>
-    </tr>
-    <tr>
-      <td>FileLength</td>
-      <td></td>
-    </tr>
-    <tr>
-      <td>LineLength</td>
-      <td>max="120"</td>
-    </tr>
-    <tr>
-      <td rowSpan={3}><strong><a href="https://checkstyle.org/checks/imports/index.html">Imports</a> / Naming &amp; Formatting</strong></td>
-      <td>IllegalImport</td>
-      <td></td>
-    </tr>
-    <tr>
-      <td>RedundantImport</td>
-      <td></td>
-    </tr>
-    <tr>
-      <td>UnusedImports</td>
-      <td>processJavadoc="false"</td>
-    </tr>
-    <tr>
-      <td rowSpan={7}><strong><a href="https://checkstyle.org/checks/naming/index.html">Naming Conventions</a> / Naming &amp; Formatting</strong></td>
-      <td>ConstantName</td>
-      <td></td>
-    </tr>
-    <tr>
-      <td>LocalFinalVariableName</td>
-      <td></td>
-    </tr>
-    <tr>
-      <td>LocalVariableName</td>
-      <td></td>
-    </tr>
-    <tr>
-      <td>MemberName</td>
-      <td></td>
-    </tr>
-    <tr>
-      <td>MethodName</td>
-      <td></td>
-    </tr>
-    <tr>
-      <td>ParameterName</td>
-      <td></td>
-    </tr>
-    <tr>
-      <td>TypeName</td>
-      <td></td>
-    </tr>
-    <tr>
-      <td rowSpan={10}><strong><a href="https://checkstyle.org/checks/whitespace/index.html">Whitespace</a> / Naming &amp; Formatting</strong></td>
-      <td>EmptyForIteratorPad</td>
-      <td></td>
-    </tr>
-    <tr>
-      <td>GenericWhitespace</td>
-      <td></td>
-    </tr>
-    <tr>
-      <td>MethodParamPad</td>
-      <td></td>
-    </tr>
-    <tr>
-      <td>NoWhitespaceAfter</td>
-      <td></td>
-    </tr>
-    <tr>
-      <td>NoWhitespaceBefore</td>
-      <td></td>
-    </tr>
-    <tr>
-      <td>OperatorWrap</td>
-      <td></td>
-    </tr>
-    <tr>
-      <td>ParenPad</td>
-      <td></td>
-    </tr>
-    <tr>
-      <td>TypecastParenPad</td>
-      <td></td>
-    </tr>
-    <tr>
-      <td>WhitespaceAfter</td>
-      <td></td>
-    </tr>
-    <tr>
-      <td>WhitespaceAround</td>
-      <td></td>
-    </tr>
-    <tr>
-      <td rowSpan={7}><strong><a href="https://checkstyle.org/checks/javadoc/index.html">Javadoc Comments</a> / Documentation</strong></td>
-      <td>InvalidJavadocPosition</td>
-      <td></td>
-    </tr>
-    <tr>
-      <td>JavadocMethod</td>
-      <td></td>
-    </tr>
-    <tr>
-      <td>JavadocType</td>
-      <td></td>
-    </tr>
-    <tr>
-      <td>JavadocStyle</td>
-      <td></td>
-    </tr>
-    <tr>
-      <td>MissingJavadocMethod</td>
-      <td>allowMissingPropertyJavadoc="true"</td>
-    </tr>
-    <tr>
-      <td></td>
-      <td>allowedAnnotations="Override,Test"</td>
-    </tr>
-    <tr>
-      <td></td>
-      <td>tokens="METHOD_DEF,ANNOTATION_FIELD_DEF,COMPACT_CTOR_DEF"</td>
-    </tr>
-    <tr>
-      <td rowSpan={4}><strong><a href="https://checkstyle.org/checks/misc/index.html">Miscellaneous</a> / Miscellaneous</strong></td>
-      <td>ArrayTypeStyle</td>
-      <td></td>
-    </tr>
-    <tr>
-      <td>UpperEll</td>
-      <td></td>
-    </tr>
-    <tr>
-      <td>NewlineAtEndOfFile</td>
-      <td></td>
-    </tr>
-    <tr>
-      <td>Translation</td>
-      <td></td>
-    </tr>
-  </tbody>
+    <thead>
+        <tr>
+            <th>Category (Tool/Artemis)</th>
+            <th>Rule</th>
+            <th>Properties</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td rowSpan={12}>
+                <strong>
+                    <a href="https://checkstyle.org/checks/coding/index.html">Coding</a> / Code Style
+                </strong>
+            </td>
+            <td>EmptyStatement</td>
+            <td></td>
+        </tr>
+        <tr>
+            <td>EqualsHashCode</td>
+            <td></td>
+        </tr>
+        <tr>
+            <td>HiddenField</td>
+            <td>ignoreConstructorParameter="true"</td>
+        </tr>
+        <tr>
+            <td></td>
+            <td>ignoreSetter="true"</td>
+        </tr>
+        <tr>
+            <td></td>
+            <td>setterCanReturnItsClass="true"</td>
+        </tr>
+        <tr>
+            <td>IllegalInstantiation</td>
+            <td></td>
+        </tr>
+        <tr>
+            <td>InnerAssignment</td>
+            <td></td>
+        </tr>
+        <tr>
+            <td>MagicNumber</td>
+            <td></td>
+        </tr>
+        <tr>
+            <td>MissingSwitchDefault</td>
+            <td></td>
+        </tr>
+        <tr>
+            <td>MultipleVariableDeclarations</td>
+            <td></td>
+        </tr>
+        <tr>
+            <td>SimplifyBooleanExpression</td>
+            <td></td>
+        </tr>
+        <tr>
+            <td>SimplifyBooleanReturn</td>
+            <td></td>
+        </tr>
+        <tr>
+            <td rowSpan={4}>
+                <strong>
+                    <a href="https://checkstyle.org/checks/design/index.html">Class Design</a> / Design
+                </strong>
+            </td>
+            <td>FinalClass</td>
+            <td></td>
+        </tr>
+        <tr>
+            <td>HideUtilityClassConstructor</td>
+            <td></td>
+        </tr>
+        <tr>
+            <td>InterfaceIsType</td>
+            <td></td>
+        </tr>
+        <tr>
+            <td>VisibilityModifier</td>
+            <td></td>
+        </tr>
+        <tr>
+            <td rowSpan={3}>
+                <strong>
+                    <a href="https://checkstyle.org/checks/blocks/index.html">Block Checks</a> / Code Style
+                </strong>
+            </td>
+            <td>AvoidNestedBlocks</td>
+            <td></td>
+        </tr>
+        <tr>
+            <td>EmptyBlock</td>
+            <td></td>
+        </tr>
+        <tr>
+            <td>NeedBraces</td>
+            <td></td>
+        </tr>
+        <tr>
+            <td rowSpan={2}>
+                <strong>
+                    <a href="https://checkstyle.org/checks/modifier/index.html">Modifiers</a> / Code Style
+                </strong>
+            </td>
+            <td>ModifierOrder</td>
+            <td></td>
+        </tr>
+        <tr>
+            <td>RedundantModifier</td>
+            <td></td>
+        </tr>
+        <tr>
+            <td rowSpan={4}>
+                <strong>
+                    <a href="https://checkstyle.org/checks/sizes/index.html">Size Violations</a> / Code Metrics
+                </strong>
+            </td>
+            <td>MethodLength</td>
+            <td></td>
+        </tr>
+        <tr>
+            <td>ParameterNumber</td>
+            <td></td>
+        </tr>
+        <tr>
+            <td>FileLength</td>
+            <td></td>
+        </tr>
+        <tr>
+            <td>LineLength</td>
+            <td>max="120"</td>
+        </tr>
+        <tr>
+            <td rowSpan={3}>
+                <strong>
+                    <a href="https://checkstyle.org/checks/imports/index.html">Imports</a> / Naming &amp; Formatting
+                </strong>
+            </td>
+            <td>IllegalImport</td>
+            <td></td>
+        </tr>
+        <tr>
+            <td>RedundantImport</td>
+            <td></td>
+        </tr>
+        <tr>
+            <td>UnusedImports</td>
+            <td>processJavadoc="false"</td>
+        </tr>
+        <tr>
+            <td rowSpan={7}>
+                <strong>
+                    <a href="https://checkstyle.org/checks/naming/index.html">Naming Conventions</a> / Naming &amp; Formatting
+                </strong>
+            </td>
+            <td>ConstantName</td>
+            <td></td>
+        </tr>
+        <tr>
+            <td>LocalFinalVariableName</td>
+            <td></td>
+        </tr>
+        <tr>
+            <td>LocalVariableName</td>
+            <td></td>
+        </tr>
+        <tr>
+            <td>MemberName</td>
+            <td></td>
+        </tr>
+        <tr>
+            <td>MethodName</td>
+            <td></td>
+        </tr>
+        <tr>
+            <td>ParameterName</td>
+            <td></td>
+        </tr>
+        <tr>
+            <td>TypeName</td>
+            <td></td>
+        </tr>
+        <tr>
+            <td rowSpan={10}>
+                <strong>
+                    <a href="https://checkstyle.org/checks/whitespace/index.html">Whitespace</a> / Naming &amp; Formatting
+                </strong>
+            </td>
+            <td>EmptyForIteratorPad</td>
+            <td></td>
+        </tr>
+        <tr>
+            <td>GenericWhitespace</td>
+            <td></td>
+        </tr>
+        <tr>
+            <td>MethodParamPad</td>
+            <td></td>
+        </tr>
+        <tr>
+            <td>NoWhitespaceAfter</td>
+            <td></td>
+        </tr>
+        <tr>
+            <td>NoWhitespaceBefore</td>
+            <td></td>
+        </tr>
+        <tr>
+            <td>OperatorWrap</td>
+            <td></td>
+        </tr>
+        <tr>
+            <td>ParenPad</td>
+            <td></td>
+        </tr>
+        <tr>
+            <td>TypecastParenPad</td>
+            <td></td>
+        </tr>
+        <tr>
+            <td>WhitespaceAfter</td>
+            <td></td>
+        </tr>
+        <tr>
+            <td>WhitespaceAround</td>
+            <td></td>
+        </tr>
+        <tr>
+            <td rowSpan={7}>
+                <strong>
+                    <a href="https://checkstyle.org/checks/javadoc/index.html">Javadoc Comments</a> / Documentation
+                </strong>
+            </td>
+            <td>InvalidJavadocPosition</td>
+            <td></td>
+        </tr>
+        <tr>
+            <td>JavadocMethod</td>
+            <td></td>
+        </tr>
+        <tr>
+            <td>JavadocType</td>
+            <td></td>
+        </tr>
+        <tr>
+            <td>JavadocStyle</td>
+            <td></td>
+        </tr>
+        <tr>
+            <td>MissingJavadocMethod</td>
+            <td>allowMissingPropertyJavadoc="true"</td>
+        </tr>
+        <tr>
+            <td></td>
+            <td>allowedAnnotations="Override,Test"</td>
+        </tr>
+        <tr>
+            <td></td>
+            <td>tokens="METHOD_DEF,ANNOTATION_FIELD_DEF,COMPACT_CTOR_DEF"</td>
+        </tr>
+        <tr>
+            <td rowSpan={4}>
+                <strong>
+                    <a href="https://checkstyle.org/checks/misc/index.html">Miscellaneous</a> / Miscellaneous
+                </strong>
+            </td>
+            <td>ArrayTypeStyle</td>
+            <td></td>
+        </tr>
+        <tr>
+            <td>UpperEll</td>
+            <td></td>
+        </tr>
+        <tr>
+            <td>NewlineAtEndOfFile</td>
+            <td></td>
+        </tr>
+        <tr>
+            <td>Translation</td>
+            <td></td>
+        </tr>
+    </tbody>
 </table>
 
 #### PMD
@@ -1607,147 +1739,161 @@ This table contains all rules that are activated by default when creating a new 
 For a description of the rules refer to the [PMD documentation](https://pmd.github.io/).
 
 <table>
-  <thead>
-    <tr>
-      <th>Category (Tool/Artemis)</th>
-      <th>Rule</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td rowSpan={7}><strong>Best Practices / Bad Practice</strong></td>
-      <td>AvoidUsingHardCodedIP</td>
-    </tr>
-    <tr>
-      <td>CheckResultSet</td>
-    </tr>
-    <tr>
-      <td>UnusedFormalParameter</td>
-    </tr>
-    <tr>
-      <td>UnusedLocalVariable</td>
-    </tr>
-    <tr>
-      <td>UnusedPrivateField</td>
-    </tr>
-    <tr>
-      <td>UnusedPrivateMethod</td>
-    </tr>
-    <tr>
-      <td>PrimitiveWrapperInstantiation</td>
-    </tr>
-    <tr>
-      <td rowSpan={10}><strong>Code Style / Code Style</strong></td>
-      <td>UnnecessaryImport</td>
-    </tr>
-    <tr>
-      <td>ExtendsObject</td>
-    </tr>
-    <tr>
-      <td>ForLoopShouldBeWhileLoop</td>
-    </tr>
-    <tr>
-      <td>TooManyStaticImports</td>
-    </tr>
-    <tr>
-      <td>UnnecessaryFullyQualifiedName</td>
-    </tr>
-    <tr>
-      <td>UnnecessaryModifier</td>
-    </tr>
-    <tr>
-      <td>UnnecessaryReturn</td>
-    </tr>
-    <tr>
-      <td>UselessParentheses</td>
-    </tr>
-    <tr>
-      <td>UselessQualifiedThis</td>
-    </tr>
-    <tr>
-      <td>EmptyControlStatement</td>
-    </tr>
-    <tr>
-      <td rowSpan={3}><strong>Design / Design</strong></td>
-      <td>CollapsibleIfStatements</td>
-    </tr>
-    <tr>
-      <td>SimplifiedTernary</td>
-    </tr>
-    <tr>
-      <td>UselessOverridingMethod</td>
-    </tr>
-    <tr>
-      <td rowSpan={17}><strong>Error Prone / Potential Bugs</strong></td>
-      <td>AvoidBranchingStatementAsLastInLoop</td>
-    </tr>
-    <tr>
-      <td>AvoidDecimalLiteralsInBigDecimalConstructor</td>
-    </tr>
-    <tr>
-      <td>AvoidMultipleUnaryOperators</td>
-    </tr>
-    <tr>
-      <td>AvoidUsingOctalValues</td>
-    </tr>
-    <tr>
-      <td>BrokenNullCheck</td>
-    </tr>
-    <tr>
-      <td>CheckSkipResult</td>
-    </tr>
-    <tr>
-      <td>ClassCastExceptionWithToArray</td>
-    </tr>
-    <tr>
-      <td>DontUseFloatTypeForLoopIndices</td>
-    </tr>
-    <tr>
-      <td>ImportFromSamePackage</td>
-    </tr>
-    <tr>
-      <td>JumbledIncrementer</td>
-    </tr>
-    <tr>
-      <td>MisplacedNullCheck</td>
-    </tr>
-    <tr>
-      <td>OverrideBothEqualsAndHashcode</td>
-    </tr>
-    <tr>
-      <td>ReturnFromFinallyBlock</td>
-    </tr>
-    <tr>
-      <td>UnconditionalIfStatement</td>
-    </tr>
-    <tr>
-      <td>UnnecessaryConversionTemporary</td>
-    </tr>
-    <tr>
-      <td>UnusedNullCheckInEquals</td>
-    </tr>
-    <tr>
-      <td>UselessOperationOnImmutable</td>
-    </tr>
-    <tr>
-      <td rowSpan={3}><strong>Multithreading / Potential Bugs</strong></td>
-      <td>AvoidThreadGroup</td>
-    </tr>
-    <tr>
-      <td>DontCallThreadRun</td>
-    </tr>
-    <tr>
-      <td>DoubleCheckedLocking</td>
-    </tr>
-    <tr>
-      <td rowSpan={1}><strong>Performance / Performance</strong></td>
-      <td>BigIntegerInstantiation</td>
-    </tr>
-    <tr>
-      <td rowSpan={1}><strong>Security / Security</strong></td>
-      <td>All rules</td>
-    </tr>
-  </tbody>
+    <thead>
+        <tr>
+            <th>Category (Tool/Artemis)</th>
+            <th>Rule</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td rowSpan={7}>
+                <strong>Best Practices / Bad Practice</strong>
+            </td>
+            <td>AvoidUsingHardCodedIP</td>
+        </tr>
+        <tr>
+            <td>CheckResultSet</td>
+        </tr>
+        <tr>
+            <td>UnusedFormalParameter</td>
+        </tr>
+        <tr>
+            <td>UnusedLocalVariable</td>
+        </tr>
+        <tr>
+            <td>UnusedPrivateField</td>
+        </tr>
+        <tr>
+            <td>UnusedPrivateMethod</td>
+        </tr>
+        <tr>
+            <td>PrimitiveWrapperInstantiation</td>
+        </tr>
+        <tr>
+            <td rowSpan={10}>
+                <strong>Code Style / Code Style</strong>
+            </td>
+            <td>UnnecessaryImport</td>
+        </tr>
+        <tr>
+            <td>ExtendsObject</td>
+        </tr>
+        <tr>
+            <td>ForLoopShouldBeWhileLoop</td>
+        </tr>
+        <tr>
+            <td>TooManyStaticImports</td>
+        </tr>
+        <tr>
+            <td>UnnecessaryFullyQualifiedName</td>
+        </tr>
+        <tr>
+            <td>UnnecessaryModifier</td>
+        </tr>
+        <tr>
+            <td>UnnecessaryReturn</td>
+        </tr>
+        <tr>
+            <td>UselessParentheses</td>
+        </tr>
+        <tr>
+            <td>UselessQualifiedThis</td>
+        </tr>
+        <tr>
+            <td>EmptyControlStatement</td>
+        </tr>
+        <tr>
+            <td rowSpan={3}>
+                <strong>Design / Design</strong>
+            </td>
+            <td>CollapsibleIfStatements</td>
+        </tr>
+        <tr>
+            <td>SimplifiedTernary</td>
+        </tr>
+        <tr>
+            <td>UselessOverridingMethod</td>
+        </tr>
+        <tr>
+            <td rowSpan={17}>
+                <strong>Error Prone / Potential Bugs</strong>
+            </td>
+            <td>AvoidBranchingStatementAsLastInLoop</td>
+        </tr>
+        <tr>
+            <td>AvoidDecimalLiteralsInBigDecimalConstructor</td>
+        </tr>
+        <tr>
+            <td>AvoidMultipleUnaryOperators</td>
+        </tr>
+        <tr>
+            <td>AvoidUsingOctalValues</td>
+        </tr>
+        <tr>
+            <td>BrokenNullCheck</td>
+        </tr>
+        <tr>
+            <td>CheckSkipResult</td>
+        </tr>
+        <tr>
+            <td>ClassCastExceptionWithToArray</td>
+        </tr>
+        <tr>
+            <td>DontUseFloatTypeForLoopIndices</td>
+        </tr>
+        <tr>
+            <td>ImportFromSamePackage</td>
+        </tr>
+        <tr>
+            <td>JumbledIncrementer</td>
+        </tr>
+        <tr>
+            <td>MisplacedNullCheck</td>
+        </tr>
+        <tr>
+            <td>OverrideBothEqualsAndHashcode</td>
+        </tr>
+        <tr>
+            <td>ReturnFromFinallyBlock</td>
+        </tr>
+        <tr>
+            <td>UnconditionalIfStatement</td>
+        </tr>
+        <tr>
+            <td>UnnecessaryConversionTemporary</td>
+        </tr>
+        <tr>
+            <td>UnusedNullCheckInEquals</td>
+        </tr>
+        <tr>
+            <td>UselessOperationOnImmutable</td>
+        </tr>
+        <tr>
+            <td rowSpan={3}>
+                <strong>Multithreading / Potential Bugs</strong>
+            </td>
+            <td>AvoidThreadGroup</td>
+        </tr>
+        <tr>
+            <td>DontCallThreadRun</td>
+        </tr>
+        <tr>
+            <td>DoubleCheckedLocking</td>
+        </tr>
+        <tr>
+            <td rowSpan={1}>
+                <strong>Performance / Performance</strong>
+            </td>
+            <td>BigIntegerInstantiation</td>
+        </tr>
+        <tr>
+            <td rowSpan={1}>
+                <strong>Security / Security</strong>
+            </td>
+            <td>All rules</td>
+        </tr>
+    </tbody>
 </table>
 
 #### PMD CPD
@@ -1772,84 +1918,94 @@ If activated, most tokens will be ignored, so minimumTokens must be lowered sign
 For a description of the rules/warnings refer to the [GCC Documentation](https://gcc.gnu.org/onlinedocs/gcc-11.1.0/gcc/Static-Analyzer-Options.html). For readability reasons the rule/warning prefix `-Wanalyzer-` is omitted.
 
 <table>
-  <thead>
-    <tr>
-      <th>Category (Tool/Artemis)</th>
-      <th>Rule</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td rowSpan={4}><strong>Memory Management / Potential Bugs</strong></td>
-      <td>free-of-non-heap</td>
-    </tr>
-    <tr>
-      <td>malloc-leak</td>
-    </tr>
-    <tr>
-      <td>file-leak</td>
-    </tr>
-    <tr>
-      <td>mismatching-deallocation</td>
-    </tr>
-    <tr>
-      <td rowSpan={8}><strong>Undefined Behavior / Potential Bugs</strong></td>
-      <td>double-free</td>
-    </tr>
-    <tr>
-      <td>null-argument</td>
-    </tr>
-    <tr>
-      <td>use-after-free</td>
-    </tr>
-    <tr>
-      <td>use-of-uninitialized-value</td>
-    </tr>
-    <tr>
-      <td>write-to-const</td>
-    </tr>
-    <tr>
-      <td>write-to-string-literal</td>
-    </tr>
-    <tr>
-      <td>possible-null-argument</td>
-    </tr>
-    <tr>
-      <td>possible-null-dereference</td>
-    </tr>
-    <tr>
-      <td rowSpan={3}><strong>Bad Practice / Bad Practice</strong></td>
-      <td>double-fclose</td>
-    </tr>
-    <tr>
-      <td>too-complex</td>
-    </tr>
-    <tr>
-      <td>stale-setjmp-buffer</td>
-    </tr>
-    <tr>
-      <td rowSpan={4}><strong>Security / Security</strong></td>
-      <td>exposure-through-output-file</td>
-    </tr>
-    <tr>
-      <td>unsafe-call-within-signal-handler</td>
-    </tr>
-    <tr>
-      <td>use-of-pointer-in-stale-stack-frame</td>
-    </tr>
-    <tr>
-      <td>tainted-array-index</td>
-    </tr>
-    <tr>
-      <td rowSpan={1}><strong>Miscellaneous / Miscellaneous</strong></td>
-      <td>Rules not matching to above categories</td>
-    </tr>
-  </tbody>
+    <thead>
+        <tr>
+            <th>Category (Tool/Artemis)</th>
+            <th>Rule</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td rowSpan={4}>
+                <strong>Memory Management / Potential Bugs</strong>
+            </td>
+            <td>free-of-non-heap</td>
+        </tr>
+        <tr>
+            <td>malloc-leak</td>
+        </tr>
+        <tr>
+            <td>file-leak</td>
+        </tr>
+        <tr>
+            <td>mismatching-deallocation</td>
+        </tr>
+        <tr>
+            <td rowSpan={8}>
+                <strong>Undefined Behavior / Potential Bugs</strong>
+            </td>
+            <td>double-free</td>
+        </tr>
+        <tr>
+            <td>null-argument</td>
+        </tr>
+        <tr>
+            <td>use-after-free</td>
+        </tr>
+        <tr>
+            <td>use-of-uninitialized-value</td>
+        </tr>
+        <tr>
+            <td>write-to-const</td>
+        </tr>
+        <tr>
+            <td>write-to-string-literal</td>
+        </tr>
+        <tr>
+            <td>possible-null-argument</td>
+        </tr>
+        <tr>
+            <td>possible-null-dereference</td>
+        </tr>
+        <tr>
+            <td rowSpan={3}>
+                <strong>Bad Practice / Bad Practice</strong>
+            </td>
+            <td>double-fclose</td>
+        </tr>
+        <tr>
+            <td>too-complex</td>
+        </tr>
+        <tr>
+            <td>stale-setjmp-buffer</td>
+        </tr>
+        <tr>
+            <td rowSpan={4}>
+                <strong>Security / Security</strong>
+            </td>
+            <td>exposure-through-output-file</td>
+        </tr>
+        <tr>
+            <td>unsafe-call-within-signal-handler</td>
+        </tr>
+        <tr>
+            <td>use-of-pointer-in-stale-stack-frame</td>
+        </tr>
+        <tr>
+            <td>tainted-array-index</td>
+        </tr>
+        <tr>
+            <td rowSpan={1}>
+                <strong>Miscellaneous / Miscellaneous</strong>
+            </td>
+            <td>Rules not matching to above categories</td>
+        </tr>
+    </tbody>
 </table>
 
 <Callout variant={CalloutVariant.info}>
 
-  GCC output can still contain normal warnings and compilation errors. These will also be added to the Miscellaneous category. Usually it's best to disable this category, as it contains errors not related to the SCA. Therefore, if the warning/error does not belong to the first four categories above, it is not an SCA issue as of GCC 11.1.0.
+GCC output can still contain normal warnings and compilation errors. These will also be added to the Miscellaneous category. Usually it's best to disable this category, as it contains errors not related to the SCA. Therefore, if the warning/error does not belong to the first four categories above, it is not an SCA issue as of GCC 11.1.0.
 
 </Callout>
 
@@ -1861,48 +2017,47 @@ Exercise import copies repositories, build plans, interactive problem statement,
 
 1. **Open Course Management**
 
-   Open <img src={courseManagement} alt="Course Management" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} /> and navigate to **Exercises** of your preferred course.
+    Open <img src={courseManagement} alt="Course Management" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} /> and navigate to **Exercises** of your preferred course.
 
-   <Image src={courseDashboard} alt="Course Dashboard" size={ImageSize.large} caption="Course Management - Exercises" />
+    <Image src={courseDashboard} alt="Course Dashboard" size={ImageSize.large} caption="Course Management - Exercises" />
 
 2. **Import Programming Exercise**
 
-   Click **Import Programming Exercise**.
+    Click **Import Programming Exercise**.
 
-   <Image src={courseManagementExerciseDashboardImport} alt="Import Programming Exercise" size={ImageSize.large} caption="Import Programming Exercise Button" />
+    <Image src={courseManagementExerciseDashboardImport} alt="Import Programming Exercise" size={ImageSize.large} caption="Import Programming Exercise Button" />
 
-   Select an exercise to import.
+    Select an exercise to import.
 
-   <Image src={courseManagementExerciseDashboardImportModal} alt="Import Modal" size={ImageSize.large} caption="Exercise Selection Modal" />
+    <Image src={courseManagementExerciseDashboardImportModal} alt="Import Modal" size={ImageSize.large} caption="Exercise Selection Modal" />
 
-   <Callout variant={CalloutVariant.info}>
+    <Callout variant={CalloutVariant.info}>
 
-     Instructors can import exercises from courses where they are registered as instructors.
+    Instructors can import exercises from courses where they are registered as instructors.
 
-   </Callout>
+    </Callout>
 
 3. **Configure Import Options**
 
-   <Image src={programmingImportOptions} alt="Import Options" size={ImageSize.large} caption="Import Options" />
+    <Image src={programmingImportOptions} alt="Import Options" size={ImageSize.large} caption="Import Options" />
+    - **Recreate Build Plans**: Create new build plans instead of copying from imported exercise
+    - **Update Template**: Update template files in repositories. Useful for outdated exercises. For Java, replaces JUnit4 with Ares (JUnit5) and updates dependencies. May require test case adaptation
 
-   - **Recreate Build Plans**: Create new build plans instead of copying from imported exercise
-   - **Update Template**: Update template files in repositories. Useful for outdated exercises. For Java, replaces JUnit4 with Ares (JUnit5) and updates dependencies. May require test case adaptation
+    <Callout variant={CalloutVariant.info}>
 
-   <Callout variant={CalloutVariant.info}>
+    **Recreate Build Plans** and **Update Template** are automatically set if the static code analysis option changes compared to the imported exercise. The plugins, dependencies, and static code analysis tool configurations are added/deleted/copied depending on the new and the original state of this option.
 
-     **Recreate Build Plans** and **Update Template** are automatically set if the static code analysis option changes compared to the imported exercise. The plugins, dependencies, and static code analysis tool configurations are added/deleted/copied depending on the new and the original state of this option.
-
-   </Callout>
+    </Callout>
 
 4. **Complete Import**
 
-   Fill mandatory values and click <img src={programmingExerciseImportButton} alt="Import" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} />.
+    Fill mandatory values and click <img src={programmingExerciseImportButton} alt="Import" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} />.
 
-   <Callout variant={CalloutVariant.info}>
+    <Callout variant={CalloutVariant.info}>
 
-     The interactive problem statement can be edited after import. Some options like <strong>Sequential Test Runs</strong> cannot be changed on import.
+    The interactive problem statement can be edited after import. Some options like <strong>Sequential Test Runs</strong> cannot be changed on import.
 
-   </Callout>
+    </Callout>
 
 ## Manual Assessment
 
@@ -1923,6 +2078,7 @@ Add feedback directly in source code by hovering over a line and clicking <img s
 <Image src={onlineEditorFeedback} alt="Online Editor Feedback" size={ImageSize.large} caption="Editing Feedback in Online Editor" />
 
 After clicking <img src={onlineEditorAddFeedbackButton} alt="Add Feedback" style={{display: 'inline', verticalAlign: 'middle', height: '1.5rem'}} />:
+
 - Enter feedback comment and score
 - Or drag structured assessment criteria from instructions to feedback area
 - Click <img src={saveButton} alt="Save" style={{display: 'inline', verticalAlign: 'middle', height: '1.5rem'}} /> to save
@@ -1936,7 +2092,7 @@ Save changes with <img src={saveButton} alt="Save" style={{display: 'inline', ve
 
 <Callout variant={CalloutVariant.info}>
 
-  You can save multiple times before submitting. Once submitted, you cannot make changes unless you are an instructor.
+You can save multiple times before submitting. Once submitted, you cannot make changes unless you are an instructor.
 
 </Callout>
 
@@ -1949,7 +2105,7 @@ The following sections explain repository types and access rights for different 
 ### Repository Types
 
 | Repository Type               | Description                                                                                                  |
-|-------------------------------|--------------------------------------------------------------------------------------------------------------|
+| ----------------------------- | ------------------------------------------------------------------------------------------------------------ |
 | Base                          | Repositories set up during exercise creation (template, solution, tests, auxiliary repositories)             |
 | Student Assignment            | Student's assignment repository copied from template. Includes team assignments                              |
 | Teaching Assistant Assignment | Assignment repository created by a Teaching Assistant for themselves                                         |
@@ -1962,7 +2118,7 @@ The following sections explain repository types and access rights for different 
 ### User Roles
 
 | Role               | Description       |
-|--------------------|-------------------|
+| ------------------ | ----------------- |
 | Student            | Course student    |
 | Teaching Assistant | Course tutor      |
 | Editor             | Course editor     |
@@ -1970,7 +2126,7 @@ The following sections explain repository types and access rights for different 
 
 <Callout variant={CalloutVariant.info}>
 
-  Editors and instructors have the same access rights in the table below.
+Editors and instructors have the same access rights in the table below.
 
 </Callout>
 
@@ -1982,7 +2138,7 @@ The following sections explain repository types and access rights for different 
 
 <Callout variant={CalloutVariant.info}>
 
-  For Instructor Exam Test Run, "Before start" is the test run start date and "After due" is the test run end date (both before exam start).
+For Instructor Exam Test Run, "Before start" is the test run start date and "After due" is the test run end date (both before exam start).
 
 </Callout>
 
@@ -1992,7 +2148,7 @@ The following sections explain repository types and access rights for different 
 ### Access Rights Table
 
 | Repository Type               | Role               | Time Period  | Access |
-|-------------------------------|--------------------|--------------|--------|
+| ----------------------------- | ------------------ | ------------ | ------ |
 | Base                          | Student            | all          | none   |
 |                               | Teaching Assistant | all          | R      |
 |                               | Instructor         | all          | R/W    |
@@ -2044,7 +2200,7 @@ The following sections explain repository types and access rights for different 
 
 <Callout variant={CalloutVariant.info}>
 
-  Practice repositories, Teaching Assistant assignment, and instructor assignment repositories only exist for course exercises.
+Practice repositories, Teaching Assistant assignment, and instructor assignment repositories only exist for course exercises.
 
 </Callout>
 
@@ -2072,6 +2228,7 @@ The following sections describe best practices for writing test cases. Examples 
 <summary><strong>Write Meaningful Comments for Tests</strong></summary>
 
 Comments should contain:
+
 - What is tested specifically
 - Which task from problem statement is addressed
 - How many points the test is worth
@@ -2126,7 +2283,7 @@ public void test_LinkedList_add() {
 
 <Callout variant={CalloutVariant.info}>
 
-  For Java: If all test methods are in a single class, this is unnecessary (compiler won't allow duplicate methods).
+For Java: If all test methods are in a single class, this is unnecessary (compiler won't allow duplicate methods).
 
 </Callout>
 
@@ -2149,7 +2306,7 @@ Can also be applied to entire test class.
 
 <Callout variant={CalloutVariant.warning}>
 
-  Remember tests run on CI servers (build agents). Tests execute slower than on local machines.
+Remember tests run on CI servers (build agents). Tests execute slower than on local machines.
 
 </Callout>
 
@@ -2268,7 +2425,7 @@ public void testRunServiceInTranslationServer() {
 
 <Callout variant={CalloutVariant.warning}>
 
-  Handle students making classes/methods final via problem statement or tests to avoid compilation errors.
+Handle students making classes/methods final via problem statement or tests to avoid compilation errors.
 
 </Callout>
 
@@ -2361,13 +2518,14 @@ Compilation errors are transformed into errors thrown where code doesn't compile
 
 <Callout variant={CalloutVariant.warning}>
 
-  <strong>Important:</strong> Only method/class bodies should fail to compile, not complete test classes. Anything outside method/nested class bodies must compile, including method signatures, return types, parameter types, and lambdas. Use nested classes for fields/methods with student class types that might not compile.
+<strong>Important:</strong> Only method/class bodies should fail to compile, not complete test classes. Anything outside method/nested class bodies must compile, including method
+signatures, return types, parameter types, and lambdas. Use nested classes for fields/methods with student class types that might not compile.
 
 </Callout>
 
 <Callout variant={CalloutVariant.info}>
 
-  The Eclipse Compiler may not support the latest Java version. You can compile student code with the latest Java and test code with the previous version.
+The Eclipse Compiler may not support the latest Java version. You can compile student code with the latest Java and test code with the previous version.
 
 </Callout>
 
@@ -2389,7 +2547,8 @@ Submission policies define the effect of a submission on participant progress. A
 
 <Callout variant={CalloutVariant.info}>
 
-  <strong>Definition:</strong> One submission = one push to the exercise repository by the participant that triggers automatic tests resulting in feedback. Automatic test runs triggered by instructors are not counted as submissions.
+<strong>Definition:</strong> One submission = one push to the exercise repository by the participant that triggers automatic tests resulting in feedback. Automatic test runs
+triggered by instructors are not counted as submissions.
 
 </Callout>
 
@@ -2413,13 +2572,13 @@ With the example configuration shown above, participants can submit 5 times. Aft
 
 <Callout variant={CalloutVariant.warning}>
 
-  If locking fails and the participant submits again, Artemis attempts to lock again and sets the new result to <img src={notGradedLabel} alt="Not Graded" style={{display: 'inline', verticalAlign: 'middle', height: '1.5rem'}} />.
+If locking fails and the participant submits again, Artemis attempts to lock again and sets the new result to <img src={notGradedLabel} alt="Not Graded" style={{display: 'inline', verticalAlign: 'middle', height: '1.5rem'}} />.
 
 </Callout>
 
 <Callout variant={CalloutVariant.info}>
 
-  The participant may still work on their solution locally, but cannot submit it to Artemis to receive feedback.
+The participant may still work on their solution locally, but cannot submit it to Artemis to receive feedback.
 
 </Callout>
 
@@ -2430,6 +2589,7 @@ Participants can submit as often as they want. For each submission exceeding the
 <Image src={submissionPolicySubmissionPenaltyForm} alt="Submission Policy Submission Penalty" size={ImageSize.large} caption="Submission Penalty Policy Configuration" />
 
 With the example configuration above:
+
 - First 3 submissions: no penalty
 - 4th submission: 1.5 points deducted
 - 5th submission: 3 points deducted (1.5 × 2 submissions exceeding limit)
@@ -2473,12 +2633,14 @@ For advanced courses, this is a downside: students cannot make their own structu
 [DejaGnu](https://www.gnu.org/software/dejagnu/) enables blackbox tests for command line interfaces. Tests are written in Expect Script (extension of Tcl). Expect is a Unix utility for automatic interaction with programs exposing text terminal interfaces in a robust way.
 
 Test scripts:
+
 - Start the program as a separate process (possibly several times)
 - Interact via textual inputs (standard input)
 - Read outputs and make assertions (exact or regex matching)
 - Decide next inputs based on output, simulating user interaction
 
 For exercises, only specify:
+
 - Command line interface syntax
 - Rough output format guidance
 

@@ -29,10 +29,10 @@ type GenerationStatus = {
         type: 'STARTED' | 'PROGRESS' | 'DONE' | 'CANCELLED' | 'ERROR';
         message?: string;
         completionStatus?: 'SUCCESS' | 'NEEDS_REVIEW' | 'PARTIAL';
-        verdict?: { accepted?: boolean; solutionPassed?: boolean; templateFailed?: boolean; testCount?: number };
+        verdict?: { mechanicallyVerified?: boolean; solutionPassed?: boolean; templateFailed?: boolean; testCount?: number };
         liveExerciseChanged?: boolean;
     }[];
-    fileSnapshots?: { path: string; repo: string; action: string; content: string }[];
+    fileChanges?: { path: string; repo: string; action: string }[];
 };
 
 type BuildAgentSlots = {
@@ -55,6 +55,8 @@ const correctedSeedStatementMarker = 'more than 5 dates';
 const policyPath = 'src/de/test/Policy.java';
 const policyThresholdBeforeAdaptation = 'DATES_SIZE_THRESHOLD = 10';
 const policyThresholdAfterAdaptation = 'DATES_SIZE_THRESHOLD = 5';
+const bubbleSortDiagnostic = 'choosing bubble sort!';
+const contradictoryQuickSortDiagnostic = 'choosing quick sort!';
 const sortingTestPath = 'test/de/test/SortingExampleBehaviorTest.java';
 const sortingTestBeforeAdaptation = 'for (int i = 0; i < 11; i++)';
 const sortingTestAfterAdaptation = 'for (int i = 0; i < 6; i++)';
@@ -64,9 +66,6 @@ const boundaryTestBeforeAdaptation = 'for (int i = 0; i < 3; i++)';
 const boundaryTestAfterAdaptation = 'for (int i = 0; i < 5; i++)';
 const boundaryTestMessageBeforeAdaptation = 'less or equal than 10 dates';
 const boundaryTestMessageAfterAdaptation = 'less or equal than 5 dates';
-const verifierSafeJavaProblemStatement = javaProgrammingExerciseTemplate.problemStatement
-    .replace('(testClass[MergeSort],testUseMergeSortForBigList)', '(testUseMergeSortForBigList)')
-    .replace('(testClass[BubbleSort],testUseBubbleSortForSmallList)', '(testUseBubbleSortForSmallList)');
 
 test.describe('Hyperion exercise generation browser UI', { tag: ['@slow', '@hyperion'] }, () => {
     test.skip(process.env.HYPERION_LLM_MODE !== 'mock', 'Mocked Hyperion UI tests require HYPERION_LLM_MODE=mock.');
@@ -86,7 +85,7 @@ test.describe('Hyperion exercise generation browser UI', { tag: ['@slow', '@hype
             releaseDate: dayjs().add(2, 'days'),
             dueDate: dayjs().add(3, 'days'),
             assessmentDate: dayjs().add(4, 'days'),
-            problemStatement: verifierSafeJavaProblemStatement,
+            problemStatement: javaProgrammingExerciseTemplate.problemStatement,
             title: `hyperion-ui-${generateUUID()}`,
         });
         expect(exercise.id).toBeDefined();
@@ -277,7 +276,7 @@ test.describe('Hyperion exercise generation browser UI', { tag: ['@slow', '@hype
         runningJobId = undefined;
     });
 
-    test('rehydrates real retained file snapshots after reload and from a fresh page', async ({ browser, page, login }) => {
+    test('rehydrates real retained file changes after reload and from a fresh page', async ({ browser, page, login }) => {
         test.setTimeout(180_000);
         const initialLlmRequests = await getHyperionLlmMockRequestCount(page);
         await openEditor(page, login, exercise!);
@@ -294,9 +293,9 @@ test.describe('Hyperion exercise generation browser UI', { tag: ['@slow', '@hype
         const activity = page.getByTestId('hyperion-generation-activity');
         await expect(activity).toBeVisible();
         await expect(activity).toContainText('HyperionPreview.java', { timeout: 60_000 });
-        await expectSnapshotNavigationDisabled(page, 'HyperionPreview.java');
+        await expectFileChangeNavigationDisabled(page, 'HyperionPreview.java');
         await expectHyperionLlmMockRequestsIncreased(page, initialLlmRequests);
-        await expectFileSnapshotStatus(page, exercise!.id!, jobId);
+        await expectFileChangeStatus(page, exercise!.id!, jobId);
         await expectRehydratedActivityOnFreshPage(browser, exercise!);
 
         await page.reload();
@@ -307,11 +306,11 @@ test.describe('Hyperion exercise generation browser UI', { tag: ['@slow', '@hype
         await expect(rehydratedActivity).toBeVisible();
         await expect(rehydratedActivity).toContainText('Starting exercise generation');
         await expect(rehydratedActivity).toContainText('HyperionPreview.java');
-        await expectSnapshotNavigationDisabled(page, 'HyperionPreview.java');
-        await expectFileSnapshotStatus(page, exercise!.id!, jobId);
+        await expectFileChangeNavigationDisabled(page, 'HyperionPreview.java');
+        await expectFileChangeStatus(page, exercise!.id!, jobId);
 
         await cancelRunningJobFromUi(page, exercise!.id!, jobId);
-        await expectSnapshotNavigationDisabled(page, 'HyperionPreview.java');
+        await expectFileChangeNavigationDisabled(page, 'HyperionPreview.java');
         runningJobId = undefined;
     });
 
@@ -350,7 +349,7 @@ test.describe('Hyperion exercise generation browser UI', { tag: ['@slow', '@hype
             const observerStatus = (await observerStatusResponse.json()) as GenerationStatus;
             expect(observerStatus).toMatchObject({ jobId, running: true, ownedByCaller: false, cancellable: false });
             expect(observerStatus.events).toEqual([]);
-            expect(observerStatus.fileSnapshots ?? []).toEqual([]);
+            expect(observerStatus.fileChanges ?? []).toEqual([]);
 
             const observerCancel = await observerPage.request.delete(`api/hyperion/programming-exercises/${exercise!.id}/generate-exercise/jobs/${jobId}`);
             expect(observerCancel.status()).toBe(404);
@@ -502,7 +501,7 @@ test.describe('Hyperion exercise generation browser UI', { tag: ['@slow', '@hype
         await expect.poll(() => getExerciseVersionCount(page, exercise!.id!)).toBe(initialVersionCount + 1);
         await expectAdminGenerationSandboxSlots(browser, '0 / 1');
 
-        await revertAcceptedAdaptationFromUi(page, exercise!.id!);
+        await revertMechanicallyVerifiedAdaptationFromUi(page, exercise!.id!);
         await expect.poll(() => getExerciseProblemStatement(page, exercise!.id!), { timeout: 60_000 }).toBe(initialProblemStatement);
         await expectSemanticAdaptation(page, exercise!.id!, false, initialTemplateFiles);
         await expect.poll(() => getExerciseVersionCount(page, exercise!.id!)).toBe(initialVersionCount + 2);
@@ -710,7 +709,7 @@ async function selectTabWithKeyboard(currentTab: Locator, targetTab: Locator, ar
     await expect(targetTab).toHaveAttribute('aria-selected', 'true');
 }
 
-async function expectSnapshotNavigationDisabled(page: Page, fileName: string) {
+async function expectFileChangeNavigationDisabled(page: Page, fileName: string) {
     const activity = page.getByTestId('hyperion-generation-activity');
     const fileRow = activity.getByTestId('hyperion-generation-file-static').filter({ hasText: fileName });
     const detailsToggle = activity.getByTestId('hyperion-generation-details-toggle');
@@ -802,18 +801,17 @@ async function expectRunningGenerationStatus(page: Page, exerciseId: number, job
         .toEqual({ jobId, mode, running: true, hasStarted: true });
 }
 
-async function expectFileSnapshotStatus(page: Page, exerciseId: number, jobId: string) {
+async function expectFileChangeStatus(page: Page, exerciseId: number, jobId: string) {
     await expect
         .poll(async () => {
             const status = await getGenerationStatus(page, exerciseId);
-            const snapshot = status.fileSnapshots?.find((candidate) => candidate.path.endsWith('HyperionPreview.java'));
+            const change = status.fileChanges?.find((candidate) => candidate.path.endsWith('HyperionPreview.java'));
             return {
                 jobId: status.jobId,
                 mode: status.mode,
-                path: snapshot?.path,
-                repo: snapshot?.repo,
-                action: snapshot?.action,
-                hasContent: snapshot?.content.includes('retained-preview') ?? false,
+                path: change?.path,
+                repo: change?.repo,
+                action: change?.action,
             };
         })
         .toEqual({
@@ -821,8 +819,7 @@ async function expectFileSnapshotStatus(page: Page, exerciseId: number, jobId: s
             mode: 'ADAPT',
             path: 'solution/src/de/test/HyperionPreview.java',
             repo: 'solution',
-            action: 'create',
-            hasContent: true,
+            action: 'write',
         });
 }
 
@@ -861,7 +858,7 @@ async function expectSuccessfulGenerationStatus(
                     mode: status.mode,
                     running: status.running,
                     completionStatus: terminal?.completionStatus,
-                    accepted: terminal?.verdict?.accepted,
+                    mechanicallyVerified: terminal?.verdict?.mechanicallyVerified,
                     solutionPassed: terminal?.verdict?.solutionPassed,
                     templateFailed: terminal?.verdict?.templateFailed,
                     testCount: terminal?.verdict?.testCount,
@@ -875,7 +872,7 @@ async function expectSuccessfulGenerationStatus(
             mode,
             running: false,
             completionStatus: expectedCompletionStatus,
-            accepted: true,
+            mechanicallyVerified: true,
             solutionPassed: true,
             templateFailed: true,
             testCount: expectedTestCount,
@@ -1037,6 +1034,18 @@ async function expectSemanticAdaptation(page: Page, exerciseId: number, adapted:
                     policyPath,
                     stalePolicyThreshold,
                 ),
+                solutionDiagnosticUpdated: await repositoryFileContains(
+                    page,
+                    `api/programming/programming-exercises/${exerciseId}/solution-files-content?omitBinaries=true`,
+                    policyPath,
+                    bubbleSortDiagnostic,
+                ),
+                solutionDiagnosticStale: await repositoryFileContains(
+                    page,
+                    `api/programming/programming-exercises/${exerciseId}/solution-files-content?omitBinaries=true`,
+                    policyPath,
+                    contradictoryQuickSortDiagnostic,
+                ),
                 templateUnchanged: repositoryFilesEqual(
                     await getRepositoryFiles(page, `api/programming/programming-exercises/${exerciseId}/template-files-content?omitBinaries=true`),
                     initialTemplateFiles,
@@ -1055,6 +1064,8 @@ async function expectSemanticAdaptation(page: Page, exerciseId: number, adapted:
         .toEqual({
             solutionUpdated: true,
             solutionStale: false,
+            solutionDiagnosticUpdated: true,
+            solutionDiagnosticStale: false,
             templateUnchanged: true,
             testLoopUpdated: true,
             testLoopStale: false,
@@ -1101,7 +1112,7 @@ async function testRepositoryFileContains(page: Page, exerciseId: number, path: 
     return (await response.text()).includes(expectedContent);
 }
 
-async function revertAcceptedAdaptationFromUi(page: Page, exerciseId: number) {
+async function revertMechanicallyVerifiedAdaptationFromUi(page: Page, exerciseId: number) {
     await expect(page.getByTestId('hyperion-generation-revert')).toBeVisible({ timeout: 60_000 });
     let revertRequests = 0;
     const countRevertRequest = (request: Request) => {
@@ -1161,8 +1172,8 @@ async function expectLateProviderResponseFenced(page: Page, exerciseId: number, 
         await new Promise((resolve) => setTimeout(resolve, delay));
         const currentStatus = await getGenerationStatus(page, exerciseId);
         expect(currentStatus.events).toEqual(terminalStatus.events);
-        expect(currentStatus.fileSnapshots ?? []).toEqual(terminalStatus.fileSnapshots ?? []);
-        expect(currentStatus.fileSnapshots ?? []).not.toEqual(expect.arrayContaining([expect.objectContaining({ path: expect.stringContaining('LateAfterCancellation.java') })]));
+        expect(currentStatus.fileChanges ?? []).toEqual(terminalStatus.fileChanges ?? []);
+        expect(currentStatus.fileChanges ?? []).not.toEqual(expect.arrayContaining([expect.objectContaining({ path: expect.stringContaining('LateAfterCancellation.java') })]));
         const solutionFiles = await getRepositoryFiles(page, `api/programming/programming-exercises/${exerciseId}/solution-files-content?omitBinaries=true`);
         expect(solutionFiles['src/de/test/LateAfterCancellation.java']).toBeUndefined();
     }
@@ -1298,7 +1309,7 @@ async function expectRehydratedActivityOnFreshPage(browser: Browser, programming
         await expect(activity).toBeVisible({ timeout: 60_000 });
         await expect(activity).toContainText('HyperionPreview.java');
         await expectNativeEditorIntegration(freshPage);
-        await expectSnapshotNavigationDisabled(freshPage, 'HyperionPreview.java');
+        await expectFileChangeNavigationDisabled(freshPage, 'HyperionPreview.java');
         await expect(freshPage.getByTestId('hyperion-ai-menu')).toBeEnabled();
         await expect(freshPage.getByTestId('hyperion-generation-cancel')).toBeVisible();
     } finally {

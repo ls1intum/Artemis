@@ -10,7 +10,7 @@
 
 
 export interface ExerciseGenerationVerdict {
-    accepted: boolean;
+    mechanicallyVerified: boolean;
     solutionPassed: boolean;
     templateFailed: boolean;
     testCount: number;

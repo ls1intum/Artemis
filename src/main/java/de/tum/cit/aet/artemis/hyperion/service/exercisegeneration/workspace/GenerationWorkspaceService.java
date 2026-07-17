@@ -147,6 +147,7 @@ public class GenerationWorkspaceService {
         Map<RepositoryType, String> repositoryHeads = new LinkedHashMap<>();
         Map<RepositoryType, RepositorySeedMetadata> repositoryMetadata = new LinkedHashMap<>();
         Map<RepositoryType, Map<String, String>> repositoryTextFiles = new LinkedHashMap<>();
+        Map<RepositoryType, Map<String, BinarySeedFile>> repositoryBinaryFiles = new LinkedHashMap<>();
         Map<String, String> testsSeedSnapshot = Map.of();
         List<SeededRepository> temporaryCheckouts = new ArrayList<>();
         try {
@@ -156,7 +157,9 @@ public class GenerationWorkspaceService {
                 prepareRepositoryForMode(seededRepository.workingTree(), repositoryType, mode);
                 repositoryTrees.put(directoryFor(repositoryType), seededRepository.workingTree());
                 repositoryHeads.put(repositoryType, seededRepository.headHash());
-                repositoryMetadata.put(repositoryType, readWorkingTreeMetadata(seededRepository.workingTree()));
+                RepositorySeedContent seedContent = readWorkingTreeSeedContent(seededRepository.workingTree());
+                repositoryMetadata.put(repositoryType, seedContent.metadata());
+                repositoryBinaryFiles.put(repositoryType, seedContent.binaryFiles());
                 Map<String, String> textSnapshot = Map.copyOf(readWorkingTreeTextFiles(seededRepository.workingTree()));
                 repositoryTextFiles.put(repositoryType, textSnapshot);
                 if (repositoryType == RepositoryType.TESTS) {
@@ -167,7 +170,8 @@ public class GenerationWorkspaceService {
             textFiles.putAll(referenceSample);
             sandbox.copyIn(sessionId, WORKSPACE, WorkspaceArchive.buildWorkspaceTarStream(textFiles, repositoryTrees));
             log.info("Seeded generation workspace for exercise {} ({} repositories, {} reference files)", exercise.getId(), repositoryTrees.size(), referenceSample.size());
-            return new WorkspaceSeed(testsSeedSnapshot, Map.copyOf(repositoryHeads), Map.copyOf(repositoryMetadata), Map.copyOf(repositoryTextFiles));
+            return new WorkspaceSeed(testsSeedSnapshot, Map.copyOf(repositoryHeads), Map.copyOf(repositoryMetadata), Map.copyOf(repositoryTextFiles),
+                    Map.copyOf(repositoryBinaryFiles));
         }
         finally {
             temporaryCheckouts.forEach(GenerationWorkspaceService::closeAndDeleteTemporaryCheckout);
@@ -190,20 +194,40 @@ public class GenerationWorkspaceService {
     }
 
     public record WorkspaceSeed(Map<String, String> testsSeedSnapshot, Map<RepositoryType, String> repositoryHeads, Map<RepositoryType, RepositorySeedMetadata> repositoryMetadata,
-            Map<RepositoryType, Map<String, String>> repositoryTextFiles) {
+            Map<RepositoryType, Map<String, String>> repositoryTextFiles, Map<RepositoryType, Map<String, BinarySeedFile>> repositoryBinaryFiles) {
 
         public WorkspaceSeed(Map<String, String> testsSeedSnapshot, Map<RepositoryType, String> repositoryHeads) {
-            this(testsSeedSnapshot, repositoryHeads, Map.of(), Map.of());
+            this(testsSeedSnapshot, repositoryHeads, Map.of(), Map.of(), Map.of());
         }
 
         public WorkspaceSeed(Map<String, String> testsSeedSnapshot, Map<RepositoryType, String> repositoryHeads, Map<RepositoryType, RepositorySeedMetadata> repositoryMetadata) {
-            this(testsSeedSnapshot, repositoryHeads, repositoryMetadata, Map.of());
+            this(testsSeedSnapshot, repositoryHeads, repositoryMetadata, Map.of(), Map.of());
+        }
+
+        public WorkspaceSeed(Map<String, String> testsSeedSnapshot, Map<RepositoryType, String> repositoryHeads, Map<RepositoryType, RepositorySeedMetadata> repositoryMetadata,
+                Map<RepositoryType, Map<String, String>> repositoryTextFiles) {
+            this(testsSeedSnapshot, repositoryHeads, repositoryMetadata, repositoryTextFiles, Map.of());
         }
     }
 
     public record RepositorySeedMetadata(Map<String, String> binaryDigests, Set<String> executableFiles) {
 
         public static final RepositorySeedMetadata EMPTY = new RepositorySeedMetadata(Map.of(), Set.of());
+    }
+
+    public record BinarySeedFile(byte[] content) {
+
+        public BinarySeedFile {
+            content = content.clone();
+        }
+
+        @Override
+        public byte[] content() {
+            return content.clone();
+        }
+    }
+
+    private record RepositorySeedContent(RepositorySeedMetadata metadata, Map<String, BinarySeedFile> binaryFiles) {
     }
 
     /**
@@ -437,8 +461,9 @@ public class GenerationWorkspaceService {
         return files;
     }
 
-    private static RepositorySeedMetadata readWorkingTreeMetadata(Path workingTree) {
+    private static RepositorySeedContent readWorkingTreeSeedContent(Path workingTree) {
         Map<String, String> digests = new LinkedHashMap<>();
+        Map<String, BinarySeedFile> binaryFiles = new LinkedHashMap<>();
         Set<String> executableFiles = new LinkedHashSet<>();
         try (var paths = Files.walk(workingTree)) {
             for (Path path : (Iterable<Path>) paths.filter(path -> Files.isRegularFile(path, LinkOption.NOFOLLOW_LINKS))::iterator) {
@@ -455,13 +480,14 @@ public class GenerationWorkspaceService {
                 byte[] content = Files.readAllBytes(path);
                 if (BinaryContent.isBinary(content)) {
                     digests.put(relative, WorkspaceArchive.sha256(content));
+                    binaryFiles.put(relative, new BinarySeedFile(content));
                 }
             }
         }
         catch (IOException | RuntimeException e) {
             throw new IllegalStateException("Could not fingerprint the seeded repository binaries", e);
         }
-        return new RepositorySeedMetadata(Map.copyOf(digests), Set.copyOf(executableFiles));
+        return new RepositorySeedContent(new RepositorySeedMetadata(Map.copyOf(digests), Set.copyOf(executableFiles)), Map.copyOf(binaryFiles));
     }
 
     /**
@@ -483,12 +509,15 @@ public class GenerationWorkspaceService {
      * @param repositoryMetadata seeded file metadata used to preserve executable modes
      */
     public void materializeRepositoryFiles(InteractiveSandbox sandbox, String sessionId, Map<RepositoryType, Map<String, String>> filesByRepository,
-            Map<RepositoryType, RepositorySeedMetadata> repositoryMetadata) {
+            Map<RepositoryType, RepositorySeedMetadata> repositoryMetadata, Map<RepositoryType, Map<String, BinarySeedFile>> repositoryBinaryFiles) {
         Map<String, String> workspaceFiles = new LinkedHashMap<>();
+        Map<String, byte[]> workspaceBinaryFiles = new LinkedHashMap<>();
         Set<String> executableFiles = new LinkedHashSet<>();
         filesByRepository.forEach((repositoryType, files) -> files.forEach((path, content) -> workspaceFiles.put(directoryFor(repositoryType) + "/" + path, content)));
+        repositoryBinaryFiles
+                .forEach((repositoryType, files) -> files.forEach((path, file) -> workspaceBinaryFiles.put(directoryFor(repositoryType) + "/" + path, file.content())));
         repositoryMetadata.forEach((repositoryType, metadata) -> metadata.executableFiles().forEach(path -> executableFiles.add(directoryFor(repositoryType) + "/" + path)));
-        sandbox.copyIn(sessionId, WORKSPACE, WorkspaceArchive.buildWorkspaceTarStream(workspaceFiles, Map.of(), executableFiles));
+        sandbox.copyIn(sessionId, WORKSPACE, WorkspaceArchive.buildFilesTarStream(workspaceFiles, workspaceBinaryFiles, executableFiles));
     }
 
     /**

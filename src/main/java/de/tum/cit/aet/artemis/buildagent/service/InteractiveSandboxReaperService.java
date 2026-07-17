@@ -71,6 +71,9 @@ public class InteractiveSandboxReaperService {
     @Value("${artemis.continuous-integration.build-agent.generation-sandbox-cleanup-interval-minutes:15}")
     private int sandboxCleanupScheduleMinutes;
 
+    @Value("${artemis.continuous-integration.build-agent.max-generation-sandbox-slots:0}")
+    private int maxGenerationSandboxSlots;
+
     public InteractiveSandboxReaperService(BuildAgentConfiguration buildAgentConfiguration, ApplicationContext applicationContext, InteractiveSandboxRelayHandler relayHandler,
             @Qualifier("taskScheduler") TaskScheduler taskScheduler) {
         this.buildAgentConfiguration = buildAgentConfiguration;
@@ -79,10 +82,23 @@ public class InteractiveSandboxReaperService {
         this.taskScheduler = taskScheduler;
     }
 
-    // EventListener cannot be used here, as the bean is lazy
-    // https://docs.spring.io/spring-framework/reference/core/beans/context-introduction.html#context-functionality-events-annotation
     @PostConstruct
     public void scheduleCleanup() {
+        if (sandboxContainerExpiryMinutes <= 0 || sandboxCleanupScheduleMinutes <= 0) {
+            throw new IllegalArgumentException("Generation sandbox cleanup interval and idle timeout must be positive");
+        }
+        if (maxGenerationSandboxSlots <= 0) {
+            try {
+                int removed = interactiveSandboxService().removeSessionsForCurrentAgent();
+                if (removed > 0) {
+                    log.info("Removed {} leftover interactive sandbox container(s) while generation hosting is disabled", removed);
+                }
+            }
+            catch (RuntimeException e) {
+                log.warn("Could not remove leftover interactive sandbox containers while generation hosting is disabled: {}", e.getMessage());
+            }
+            return;
+        }
         taskScheduler.scheduleAtFixedRate(this::reapOrphanedSessions, Instant.now().plusSeconds(30), Duration.ofMinutes(sandboxCleanupScheduleMinutes));
     }
 
