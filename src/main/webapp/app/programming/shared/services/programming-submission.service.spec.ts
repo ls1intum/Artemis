@@ -59,6 +59,13 @@ type SubmissionServicePrivates = {
 
 const priv = (service: ProgrammingSubmissionService): SubmissionServicePrivates => service as unknown as SubmissionServicePrivates;
 
+/**
+ * Converts an internal {participationId -> submission} map into the list shape the latest-pending-submissions endpoint
+ * returns (one entry per participation, submission undefined when there is no pending submission).
+ */
+const toPendingSubmissionList = (state: { [participationId: number]: ProgrammingSubmission | undefined }): { participationId: number; submission?: ProgrammingSubmission }[] =>
+    Object.entries(state).map(([participationId, submission]) => ({ participationId: parseInt(participationId, 10), submission }));
+
 describe('ProgrammingSubmissionService', () => {
     let websocketService: WebsocketService;
     let httpService: HttpClient;
@@ -453,7 +460,10 @@ describe('ProgrammingSubmissionService', () => {
         const participation3 = { id: 4 } as StudentParticipation;
         let submissionState, submission;
 
-        const pendingSubmissions = { [participation1.id!]: currentSubmission, [participation2.id!]: currentSubmission2 };
+        const pendingSubmissions = [
+            { participationId: participation1.id!, submission: currentSubmission },
+            { participationId: participation2.id!, submission: currentSubmission2 },
+        ];
 
         const fetchLatestPendingSubmissionSpy = vi.spyOn(priv(submissionService), 'fetchLatestPendingSubmissionByParticipationId');
 
@@ -491,7 +501,7 @@ describe('ProgrammingSubmissionService', () => {
         const exerciseId = 10;
         const submissionState: ExerciseSubmissionState = {};
         const fetchLatestPendingSubmissionsByExerciseIdSpy = vi.spyOn(priv(submissionService), 'fetchLatestPendingSubmissionsByExerciseId');
-        httpGetStub.mockReturnValue(of(submissionState));
+        httpGetStub.mockReturnValue(of([]));
 
         let receivedSubmissionState: ExerciseSubmissionState = {};
         submissionService.getSubmissionStateOfExercise(exerciseId).subscribe((state) => (receivedSubmissionState = state));
@@ -510,7 +520,7 @@ describe('ProgrammingSubmissionService', () => {
             2: { submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, submission: undefined, participationId: 2 },
         };
         const fetchLatestPendingSubmissionsByExerciseIdSpy = vi.spyOn(priv(submissionService), 'fetchLatestPendingSubmissionsByExerciseId');
-        httpGetStub.mockReturnValue(of(submissionState));
+        httpGetStub.mockReturnValue(of(toPendingSubmissionList(submissionState)));
 
         let receivedSubmissionState: ExerciseSubmissionState = {};
         submissionService.getSubmissionStateOfExercise(exerciseId).subscribe((state) => (receivedSubmissionState = state));
@@ -536,7 +546,7 @@ describe('ProgrammingSubmissionService', () => {
             {},
         );
         const fetchLatestPendingSubmissionsByExerciseIdSpy = vi.spyOn(priv(submissionService), 'fetchLatestPendingSubmissionsByExerciseId');
-        httpGetStub.mockReturnValue(of(submissionState));
+        httpGetStub.mockReturnValue(of(toPendingSubmissionList(submissionState)));
 
         let receivedSubmissionState: ExerciseSubmissionState = {};
         submissionService.getSubmissionStateOfExercise(exerciseId).subscribe((state) => (receivedSubmissionState = state));

@@ -42,7 +42,8 @@ public class FileUploadImportApi extends AbstractFileModuleApi {
     }
 
     public Optional<FileUploadExercise> importFileUploadExercise(final long exerciseToCopyId, final FileUploadExercise importedExercise) {
-        final Optional<FileUploadExercise> optionalFileUploadExercise = fileUploadExerciseRepository.findById(exerciseToCopyId);
+        final Optional<FileUploadExercise> optionalFileUploadExercise = fileUploadExerciseRepository
+                .findByIdWithExampleSubmissionsAndResultsAndCompetenciesAndGradingCriteria(exerciseToCopyId);
         return optionalFileUploadExercise.map(templateExercise -> fileUploadExerciseImportService.importFileUploadExercise(templateExercise, importedExercise));
     }
 }
