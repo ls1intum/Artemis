@@ -150,8 +150,10 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     readonly baseResource = signal<string>(undefined!);
     readonly shortBaseResource = signal<string>(undefined!);
     readonly teamBaseResource = signal<string>(undefined!);
-    loadingTemplateParticipationResults = true;
-    loadingSolutionParticipationResults = true;
+    // Signal-backed so the child ProgrammingTestStatusDetailComponent re-renders when the participation
+    // results finish loading; a plain field mutated in the async pipe would not schedule change detection.
+    readonly loadingTemplateParticipationResults = signal(true);
+    readonly loadingSolutionParticipationResults = signal(true);
     diffReady = false;
     lineChangesLoading = false;
 
@@ -281,8 +283,8 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                     // Only update the template and solution participations, preserving all other exercise properties
                     this.programmingExercise().templateParticipation = exerciseWithParticipations.body!.templateParticipation;
                     this.programmingExercise().solutionParticipation = exerciseWithParticipations.body!.solutionParticipation;
-                    this.loadingTemplateParticipationResults = false;
-                    this.loadingSolutionParticipationResults = false;
+                    this.loadingTemplateParticipationResults.set(false);
+                    this.loadingSolutionParticipationResults.set(false);
                 }),
                 tap(() => {
                     this.localCIEnabled.set(this.profileService.isProfileActive(PROFILE_LOCALCI));
