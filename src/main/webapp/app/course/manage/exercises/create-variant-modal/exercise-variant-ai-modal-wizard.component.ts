@@ -8,6 +8,7 @@ import {
     faArrowLeft,
     faArrowRight,
     faBan,
+    faBookOpen,
     faCheck,
     faChevronDown,
     faChevronRight,
@@ -25,6 +26,7 @@ import {
 import { Subscription } from 'rxjs';
 import { ConfirmationService } from 'primeng/api';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
+import { TooltipModule } from 'primeng/tooltip';
 import { DialogModule } from 'primeng/dialog';
 import { ButtonModule } from 'primeng/button';
 import { RadioButtonModule } from 'primeng/radiobutton';
@@ -59,6 +61,18 @@ const WIZARD_STEPS: ReadonlyArray<{ step: WizardStep; label: string; icon: IconD
 ];
 
 /**
+ * The storytelling options offered in the Configure step — a strength scale from plain technical wording to
+ * fully creative storytelling, in ascending order. The tooltip carries the description; not selecting the
+ * Storytelling card at all means "stay consistent with the source exercise's narrative" (server-side default).
+ */
+const NARRATIVE_STYLES: ReadonlyArray<{ value: VariantGenerationRequest.NarrativeStyleEnum; label: string; description: string }> = [
+    { value: 'TECHNICAL', label: 'Technical', description: 'No story — a plain, concise focus on the technical concepts.' },
+    { value: 'REALISTIC', label: 'Realistic', description: 'A short real-world scenario introduces the task — the rest stays technical.' },
+    { value: 'CREATIVE', label: 'Creative', description: 'A story carries the task — themed setting, named actors, story-driven examples.' },
+    { value: 'IMAGINATIVE', label: 'Imaginative', description: 'Fully creative storytelling — the entire exercise is told inside a rich narrative world.' },
+];
+
+/**
  * Running pipeline phases in execution order — the wizard's step timeline is derived from VariantJobPhase
  * (single source of truth via the OpenAPI client). REPAIRING is NOT a linear step: it renders as a repeat
  * visit on the VERIFYING step with the attempt counter.
@@ -77,6 +91,7 @@ const GENERATION_PHASES: readonly VariantJobPhase[] = ['ANALYZING', 'PLANNING', 
         InputTextModule,
         TextareaModule,
         ConfirmDialogModule,
+        TooltipModule,
         FormsModule,
         FaIconComponent,
         ArtemisTranslatePipe,
@@ -127,6 +142,8 @@ export class ExerciseVariantAiModalWizardComponent implements OnDestroy {
     readonly targetDifficulty = signal<DifficultyLevel>(DifficultyLevel.MEDIUM);
     readonly changeDomain = signal(false);
     readonly domainText = signal('');
+    readonly changeNarrative = signal(false);
+    readonly narrativeStyle = signal<VariantGenerationRequest.NarrativeStyleEnum>('TECHNICAL');
     readonly changeCustom = signal(false);
     readonly additionalInstructions = signal('');
 
@@ -195,11 +212,14 @@ export class ExerciseVariantAiModalWizardComponent implements OnDestroy {
             .map((d) => ({ value: d, label: difficultyLabel(d) }));
     });
 
-    readonly anyCardSelected = computed(() => this.changeDifficulty() || this.changeDomain() || this.changeCustom());
+    readonly anyCardSelected = computed(() => this.changeDifficulty() || this.changeDomain() || this.changeNarrative() || this.changeCustom());
 
     readonly canProceedToPlacement = computed(() => {
         if (!this.anyCardSelected()) return false;
-        if (this.changeCustom() && this.additionalInstructions().trim().length === 0 && !this.changeDifficulty() && !this.changeDomain()) return false;
+        // Custom instructions are the only selection that needs non-empty configuration to mean anything.
+        if (this.changeCustom() && this.additionalInstructions().trim().length === 0 && !this.changeDifficulty() && !this.changeDomain() && !this.changeNarrative()) {
+            return false;
+        }
         return true;
     });
 
@@ -231,6 +251,7 @@ export class ExerciseVariantAiModalWizardComponent implements OnDestroy {
         return adaptationChips({
             targetDifficulty: this.changeDifficulty() ? this.targetDifficulty() : undefined,
             domainText: this.changeDomain() ? this.domainText().trim() : undefined,
+            narrativeStyle: this.changeNarrative() ? this.narrativeStyle() : undefined,
             additionalInstructions: this.changeCustom() ? this.additionalInstructions().trim() : undefined,
         });
     });
@@ -245,6 +266,7 @@ export class ExerciseVariantAiModalWizardComponent implements OnDestroy {
     });
 
     readonly generationPhases = GENERATION_PHASES;
+    readonly narrativeStyles = NARRATIVE_STYLES;
 
     /**
      * The steps the indicator shows. Exam variants are always placed in the source's exam exercise group, so the
@@ -262,6 +284,7 @@ export class ExerciseVariantAiModalWizardComponent implements OnDestroy {
     protected readonly faChevronRight = faChevronRight;
     protected readonly faGaugeHigh = faGaugeHigh;
     protected readonly faEarthAmericas = faEarthAmericas;
+    protected readonly faBookOpen = faBookOpen;
     protected readonly faPenToSquare = faPenToSquare;
     protected readonly faArrowLeft = faArrowLeft;
     protected readonly faArrowRight = faArrowRight;
@@ -319,6 +342,10 @@ export class ExerciseVariantAiModalWizardComponent implements OnDestroy {
         this.changeDomain.set(!this.changeDomain());
     }
 
+    toggleNarrative(): void {
+        this.changeNarrative.set(!this.changeNarrative());
+    }
+
     toggleCustom(): void {
         this.changeCustom.set(!this.changeCustom());
     }
@@ -370,6 +397,8 @@ export class ExerciseVariantAiModalWizardComponent implements OnDestroy {
         this.changeDifficulty.set(false);
         this.changeDomain.set(false);
         this.domainText.set('');
+        this.changeNarrative.set(false);
+        this.narrativeStyle.set('TECHNICAL');
         this.changeCustom.set(false);
         this.additionalInstructions.set('');
         this.visibleChange.emit(false);
@@ -382,6 +411,7 @@ export class ExerciseVariantAiModalWizardComponent implements OnDestroy {
         const request: VariantGenerationRequest = {
             targetDifficulty: this.changeDifficulty() ? this.targetDifficulty() : undefined,
             domainText: this.changeDomain() && this.domainText().trim() ? this.domainText().trim() : undefined,
+            narrativeStyle: this.changeNarrative() ? this.narrativeStyle() : undefined,
             additionalInstructions: this.changeCustom() && this.additionalInstructions().trim() ? this.additionalInstructions().trim() : undefined,
             placement: this.buildPlacement(),
         };

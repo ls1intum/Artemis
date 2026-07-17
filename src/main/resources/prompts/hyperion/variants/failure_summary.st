@@ -11,6 +11,7 @@ Facts about the failed run:
 What the instructor originally requested (fields marked "unchanged"/"none" were not requested):
 - Target difficulty: {{targetDifficulty}}
 - New application domain / theme: {{domainText}}
+- Narrative style: {{narrativeStyle}}
 - Additional instructions: {{additionalInstructions}}
 
 The change plan the AI was executing:

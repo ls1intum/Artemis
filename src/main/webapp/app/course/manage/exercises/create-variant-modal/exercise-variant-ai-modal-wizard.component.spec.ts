@@ -225,3 +225,97 @@ describe('ExerciseVariantAiModalWizardComponent (new-group placement availabilit
         expect(placementOption('variant-placement-new-group')).toBeNull();
     });
 });
+
+/**
+ * Storytelling: the narrative-style adaptation option. Unselected means "stay consistent with the source's
+ * narrative" (server-side default), so the request must carry the style only when the card is selected.
+ */
+describe('ExerciseVariantAiModalWizardComponent (storytelling)', () => {
+    setupTestBed({ zoneless: true });
+
+    let fixture: ComponentFixture<ExerciseVariantAiModalWizardComponent>;
+    let component: ExerciseVariantAiModalWizardComponent;
+    let generationServiceMock: { startGeneration: ReturnType<typeof vi.fn> };
+
+    beforeEach(async () => {
+        generationServiceMock = { startGeneration: vi.fn().mockReturnValue(of('job-1')) };
+
+        await TestBed.configureTestingModule({
+            imports: [ExerciseVariantAiModalWizardComponent],
+            providers: [
+                {
+                    provide: ExerciseVariantGenerationService,
+                    useValue: {
+                        ...generationServiceMock,
+                        jobEvents: vi.fn().mockReturnValue(of()),
+                        getJobDetail: vi.fn().mockReturnValue(of({ job: undefined, stepOutputs: {}, request: undefined })),
+                        cancelJob: vi.fn().mockReturnValue(of(undefined)),
+                    },
+                },
+                { provide: ExerciseVariantGroupService, useValue: { getGroupsForCourse: vi.fn().mockReturnValue(of([])) } },
+                { provide: ExerciseService, useValue: { find: vi.fn().mockReturnValue(of({ body: undefined })) } },
+                {
+                    provide: TranslateService,
+                    useValue: { instant: (key: string) => key, get: (key: string) => of(key), onLangChange: of(), onTranslationChange: of(), onDefaultLangChange: of() },
+                },
+            ],
+        })
+            .overrideComponent(ExerciseVariantAiModalWizardComponent, {
+                remove: { imports: [ArtemisTranslatePipe] },
+                add: { imports: [MockPipe(ArtemisTranslatePipe, (key) => key)] },
+            })
+            .compileComponents();
+
+        fixture = TestBed.createComponent(ExerciseVariantAiModalWizardComponent);
+        component = fixture.componentInstance;
+        fixture.componentRef.setInput('sourceExercise', { id: 1, title: 'Sorting', type: ExerciseType.PROGRAMMING } as Exercise);
+        fixture.componentRef.setInput('courseId', 7);
+        fixture.componentRef.setInput('visible', true);
+        fixture.detectChanges();
+    });
+
+    afterEach(() => {
+        fixture.destroy();
+        TestBed.resetTestingModule();
+    });
+
+    it('offers the storytelling option card and accepts it as the only selection', () => {
+        expect(document.body.querySelector('[data-testid="variant-option-narrative"]')).not.toBeNull();
+
+        component.toggleNarrative();
+
+        expect(component.anyCardSelected()).toBe(true);
+        expect(component.canProceedToPlacement()).toBe(true);
+    });
+
+    it('renders all narrative styles with a tooltip description in the configure step', () => {
+        component.toggleNarrative();
+        component.goToStep2();
+        fixture.detectChanges();
+
+        for (const style of component.narrativeStyles) {
+            expect(document.body.querySelector(`[data-testid="variant-narrative-${style.value}"]`)).not.toBeNull();
+            expect(style.description.length).toBeGreaterThan(0);
+        }
+    });
+
+    it('sends the selected narrative style with the request', () => {
+        component.changeNarrative.set(true);
+        component.narrativeStyle.set('IMAGINATIVE');
+
+        component.startGeneration();
+
+        const request = generationServiceMock.startGeneration.mock.calls[0][1] as VariantGenerationRequest;
+        expect(request.narrativeStyle).toBe('IMAGINATIVE');
+    });
+
+    it('omits the narrative style when the card is not selected (consistent-with-source default)', () => {
+        component.changeDomain.set(true);
+        component.domainText.set('banking');
+
+        component.startGeneration();
+
+        const request = generationServiceMock.startGeneration.mock.calls[0][1] as VariantGenerationRequest;
+        expect(request.narrativeStyle).toBeUndefined();
+    });
+});

@@ -147,7 +147,8 @@ $purple: #8b5cf6;
 
 .option-cards {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    // Four cards (Difficulty, Domain, Storytelling, Custom) in one row — the dialog is widened to 820px for this.
+    grid-template-columns: repeat(4, 1fr);
     gap: 0.75rem;
 }
 
@@ -271,7 +272,7 @@ $purple: #8b5cf6;
     gap: 1rem;
     border: 1px solid rgba($purple, 0.2);
     border-radius: 0.75rem;
-    padding: 1rem 1rem 0.25rem;
+    padding: 1rem;
     background: rgba($purple, 0.02);
 }
 

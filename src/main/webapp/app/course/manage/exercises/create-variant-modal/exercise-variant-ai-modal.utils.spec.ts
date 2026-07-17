@@ -1,7 +1,7 @@
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { QuizQuestionType } from 'app/quiz/shared/entities/quiz-question.model';
-import { supportsAiVariantGeneration } from './exercise-variant-ai-modal.utils';
+import { adaptationChips, supportsAiVariantGeneration } from './exercise-variant-ai-modal.utils';
 
 describe('supportsAiVariantGeneration', () => {
     const exerciseOfType = (type: ExerciseType) => ({ id: 1, type }) as Exercise;
@@ -46,5 +46,15 @@ describe('supportsAiVariantGeneration', () => {
     it('should support a quiz with neither the flag nor loaded questions', () => {
         // Nothing indicates drag-and-drop; the server still rejects it if it turns out to have some.
         expect(supportsAiVariantGeneration(quizWith({}))).toBe(true);
+    });
+});
+
+describe('adaptationChips', () => {
+    it('should include a storytelling chip when a narrative style is requested', () => {
+        expect(adaptationChips({ narrativeStyle: 'IMAGINATIVE' })).toEqual(['Story: Imaginative']);
+    });
+
+    it('should omit the storytelling chip when no narrative style is requested', () => {
+        expect(adaptationChips({ domainText: 'banking' })).toEqual(['Domain: banking']);
     });
 });

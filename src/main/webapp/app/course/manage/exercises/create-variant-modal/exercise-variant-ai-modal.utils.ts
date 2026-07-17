@@ -40,6 +40,11 @@ export function difficultyLabel(d: DifficultyLevel): string {
     return d.charAt(0) + d.slice(1).toLowerCase();
 }
 
+/** Human-readable label for a narrative style, e.g. WORKPLACE → "Workplace". */
+export function narrativeStyleLabel(style: string): string {
+    return style.charAt(0) + style.slice(1).toLowerCase();
+}
+
 /** "What is being adapted" chips derived from a generation request — shared by the wizard modal and the tray cards. */
 export function adaptationChips(request: VariantGenerationRequest | undefined): string[] {
     if (!request) {
@@ -51,6 +56,9 @@ export function adaptationChips(request: VariantGenerationRequest | undefined): 
     }
     if (request.domainText) {
         items.push(`Domain: ${request.domainText}`);
+    }
+    if (request.narrativeStyle) {
+        items.push(`Story: ${narrativeStyleLabel(request.narrativeStyle)}`);
     }
     if (request.additionalInstructions) {
         items.push(request.additionalInstructions.length > 80 ? `Custom: ${request.additionalInstructions.slice(0, 80)}…` : `Custom: ${request.additionalInstructions}`);

@@ -9,6 +9,7 @@ any changes yourself — you produce a precise, binding change plan that a separ
 Requested changes (fields marked "unchanged"/"none" must NOT drive any modification):
 - Target difficulty: {{targetDifficulty}}
 - New application domain / theme: {{domainText}}
+- Narrative style: {{narrativeStyle}}
 - Additional instructions: {{additionalInstructions}}
 
 Source exercise (problem statement and the template, solution, and test repositories):
@@ -39,6 +40,23 @@ Produce a change plan with:
    "grading-relevant method signatures keep their names unless listed in intendedChanges", "the build tooling and
    the dependency set stay unchanged", "the solution repository passes all tests", "the template repository still
    compiles but fails the tests".
+
+Narrative style (storytelling):
+The requested narrative style is a STRENGTH SCALE — how creatively the task is written, from plain technical
+wording to full storytelling:
+- TECHNICAL: no story — a plain, concise focus on the technical concepts.
+- REALISTIC: a short real-world scenario introduces the task (one or two framing sentences); the rest stays technical.
+- CREATIVE: a story carries the task — themed setting, named actors, story-driven examples and identifiers.
+- IMAGINATIVE: fully creative storytelling — the entire exercise (statement, examples, identifier naming where
+  natural) is told inside a rich narrative world.
+- "consistent with the source": keep the source's current narrative strength and setting (adapting names/setting
+  if the domain changes). If the source has no narrative at all and a domain change needs framing, default to a
+  story about a developer working in a company solving the task; otherwise keep the statement plain.
+Story theme: build on the requested domain if one is given, otherwise on the source's existing theme. If a
+narrative beyond TECHNICAL is requested but the source is purely technical (no narrative, no domain theme to
+build on) and NO new domain is requested, theme the story around GREEK MYTHOLOGY (Athena, Artemis, Iris,
+Hyperion, Zeus, the Odyssey, ...).
+The narrative must never change the grading structure, task markers, or test semantics.
 
 Build files:
 Build files (build.gradle, settings.gradle, pom.xml, ...) are editable. A domain re-theme that renames packages or

@@ -248,7 +248,7 @@ class ExerciseVariantGenerationIntegrationTest extends AbstractSpringIntegration
     // --- Helpers ----------------------------------------------------------------------------------------
 
     private static VariantGenerationRequestDTO domainChangeRequest(VariantPlacementDTO placement) {
-        return new VariantGenerationRequestDTO(null, "space station cargo bay", null, placement);
+        return new VariantGenerationRequestDTO(null, "space station cargo bay", null, null, placement);
     }
 
     private static VariantPlacementDTO standalonePlacement() {
@@ -410,7 +410,7 @@ class ExerciseVariantGenerationIntegrationTest extends AbstractSpringIntegration
     void shouldRejectInvalidGenerationRequests() throws Exception {
         // No intent on any dimension.
         request.postWithResponseBody("/api/hyperion/exercises/" + sourceQuiz.getId() + "/generate-variant",
-                new VariantGenerationRequestDTO(null, null, null, standalonePlacement()), VariantJobStartDTO.class, HttpStatus.BAD_REQUEST);
+                new VariantGenerationRequestDTO(null, null, null, null, standalonePlacement()), VariantJobStartDTO.class, HttpStatus.BAD_REQUEST);
         // SAME_EXAM_GROUP is only valid for exam exercises.
         request.postWithResponseBody("/api/hyperion/exercises/" + sourceQuiz.getId() + "/generate-variant",
                 domainChangeRequest(new VariantPlacementDTO(VariantPlacementDTO.PlacementType.SAME_EXAM_GROUP, null, null)), VariantJobStartDTO.class, HttpStatus.BAD_REQUEST);

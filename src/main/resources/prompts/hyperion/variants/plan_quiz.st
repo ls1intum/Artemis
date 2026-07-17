@@ -9,6 +9,7 @@ plan that a separate transformation agent executes question by question.
 Requested changes (fields marked "unchanged"/"none" must NOT drive any modification):
 - Target difficulty: {{targetDifficulty}}
 - New application domain / theme: {{domainText}}
+- Narrative style: {{narrativeStyle}}
 - Additional instructions: {{additionalInstructions}}
 
 Source quiz (serialized questions with answer options, mappings, spots/solutions, and scoring types):
@@ -28,6 +29,22 @@ Produce a change plan with:
    stay unchanged", "the number of correct options per question stays unchanged" (unless the difficulty change
    explicitly requires otherwise), "question order and question types stay unchanged", "drag-and-drop background
    images and picture files are carried over unchanged — only texts and mappings may be edited".
+
+Narrative style (storytelling):
+The requested narrative style is a STRENGTH SCALE — how creatively the questions are written, from plain
+technical wording to full storytelling:
+- TECHNICAL: no story — plain, concise question wording focused on the tested concepts.
+- REALISTIC: a short real-world scenario frames the questions; the wording itself stays technical.
+- CREATIVE: a story carries the quiz — themed setting, named actors, story-driven question texts and options.
+- IMAGINATIVE: fully creative storytelling — every question is told inside a rich narrative world.
+- "consistent with the source": keep the source's current narrative strength and setting (adapting names/setting
+  if the domain changes). If the source has no narrative at all and a domain change needs framing, default to a
+  story about a developer working in a company; otherwise keep the wording plain.
+Story theme: build on the requested domain if one is given, otherwise on the source's existing theme. If a
+narrative beyond TECHNICAL is requested but the source is purely technical (no narrative, no domain theme to
+build on) and NO new domain is requested, theme the story around GREEK MYTHOLOGY (Athena, Artemis, Iris,
+Hyperion, Zeus, the Odyssey, ...).
+The narrative must never change which answers are correct, the scoring, or the question structure.
 
 Planning rules:
 - Transform, do not reinvent: unchanged questions stay untouched; changed questions keep their type, structure,

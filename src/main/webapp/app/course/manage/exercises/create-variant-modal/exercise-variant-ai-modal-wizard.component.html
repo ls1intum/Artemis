@@ -5,7 +5,7 @@
     [modal]="true"
     appendTo="body"
     [baseZIndex]="2000"
-    [style]="{ width: '660px', maxWidth: '95vw' }"
+    [style]="{ width: '820px', maxWidth: '95vw' }"
     [draggable]="false"
 >
     <!-- ── Step indicator (wizard flow only — monitor mode has no steps 1–3) ── -->
@@ -94,6 +94,19 @@
                     }
                 </span>
             </div>
+            <div class="option-card" [class.option-card--selected]="changeNarrative()" (click)="toggleNarrative()" data-testid="variant-option-narrative">
+                @if (changeNarrative()) {
+                    <span class="option-card__check"><fa-icon [icon]="faCheck" /></span>
+                }
+                <div class="option-card__icon"><fa-icon [icon]="faBookOpen" /></div>
+                <h6>Storytelling</h6>
+                <p>Choose the narrative style of the task</p>
+                <span class="option-card__cta">
+                    @if (changeNarrative()) {
+                        ✓ Selected
+                    }
+                </span>
+            </div>
             <div class="option-card" [class.option-card--selected]="changeCustom()" (click)="toggleCustom()">
                 @if (changeCustom()) {
                     <span class="option-card__check"><fa-icon [icon]="faCheck" /></span>
@@ -140,6 +153,25 @@
                 <div class="field-group">
                     <p class="field-group__label">New domain</p>
                     <input pInputText class="w-100" [ngModel]="domainText()" (ngModelChange)="domainText.set($event)" placeholder="e.g. space exploration, cooking, banking…" />
+                </div>
+            }
+            @if (changeNarrative()) {
+                <div class="field-group">
+                    <p class="field-group__label">Narrative style</p>
+                    <div class="d-flex gap-3 flex-wrap">
+                        @for (style of narrativeStyles; track style.value) {
+                            <div class="radio-item" [pTooltip]="style.description" tooltipPosition="top" [attr.data-testid]="'variant-narrative-' + style.value">
+                                <p-radiobutton
+                                    [inputId]="'wiz-narrative-' + style.value"
+                                    name="wiz-narrative"
+                                    [value]="style.value"
+                                    [ngModel]="narrativeStyle()"
+                                    (ngModelChange)="narrativeStyle.set($event)"
+                                />
+                                <label [for]="'wiz-narrative-' + style.value">{{ style.label }}</label>
+                            </div>
+                        }
+                    </div>
                 </div>
             }
             @if (changeCustom()) {

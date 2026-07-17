@@ -16,6 +16,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
+import de.tum.cit.aet.artemis.hyperion.dto.VariantGenerationRequestDTO;
+import de.tum.cit.aet.artemis.hyperion.dto.VariantNarrativeStyle;
+import de.tum.cit.aet.artemis.hyperion.dto.VariantPlacementDTO;
 
 /**
  * Unit tests for the small pure pieces of the variants module.
@@ -86,6 +89,14 @@ class VariantTypeRegistryTest {
         VariantTypeRegistry registry = new VariantTypeRegistry(List.of(bundleFor(ExerciseType.QUIZ), bundleFor(ExerciseType.QUIZ)));
 
         assertThatThrownBy(registry::init).isInstanceOf(IllegalStateException.class).hasMessageContaining("Duplicate");
+    }
+
+    @Test
+    void narrativeStyleAloneShouldCountAsAnIntent() {
+        var placement = new VariantPlacementDTO(VariantPlacementDTO.PlacementType.STANDALONE, null, null);
+
+        assertThat(new VariantGenerationRequestDTO(null, null, VariantNarrativeStyle.CREATIVE, null, placement).hasAnyIntent()).isTrue();
+        assertThat(new VariantGenerationRequestDTO(null, null, null, null, placement).hasAnyIntent()).isFalse();
     }
 
     @Test

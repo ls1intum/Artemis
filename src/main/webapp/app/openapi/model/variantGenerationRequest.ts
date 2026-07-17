@@ -13,6 +13,7 @@ import { VariantPlacement } from './variantPlacement';
 export interface VariantGenerationRequest { 
     targetDifficulty?: VariantGenerationRequest.TargetDifficultyEnum | null;
     domainText?: string | null;
+    narrativeStyle?: VariantGenerationRequest.NarrativeStyleEnum | null;
     additionalInstructions?: string | null;
     placement?: VariantPlacement;
 }
@@ -23,6 +24,13 @@ export namespace VariantGenerationRequest {
         Hard: 'HARD'
     } as const;
     export type TargetDifficultyEnum = typeof TargetDifficultyEnum[keyof typeof TargetDifficultyEnum];
+    export const NarrativeStyleEnum = {
+        Technical: 'TECHNICAL',
+        Realistic: 'REALISTIC',
+        Creative: 'CREATIVE',
+        Imaginative: 'IMAGINATIVE'
+    } as const;
+    export type NarrativeStyleEnum = typeof NarrativeStyleEnum[keyof typeof NarrativeStyleEnum];
 }
 
 

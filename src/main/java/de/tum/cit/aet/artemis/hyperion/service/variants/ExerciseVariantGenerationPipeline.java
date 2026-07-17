@@ -289,6 +289,7 @@ public class ExerciseVariantGenerationPipeline {
             variables.put("failureDetail", orDefault(failureMessage, "(no detail)"));
             variables.put("targetDifficulty", job.getRequest().targetDifficulty() != null ? job.getRequest().targetDifficulty().name() : "unchanged");
             variables.put("domainText", orDefault(job.getRequest().domainText(), "unchanged"));
+            variables.put("narrativeStyle", job.getRequest().narrativeStyle() != null ? job.getRequest().narrativeStyle().name() : "consistent with the source");
             variables.put("additionalInstructions", orDefault(job.getRequest().additionalInstructions(), "none"));
             variables.put("changePlan", currentJob.getChangePlan() != null ? renderPlan(currentJob.getChangePlan()) : "No change plan was produced yet.");
             variables.put("stepOutputs", renderStepOutputs(currentJob));
@@ -348,6 +349,7 @@ public class ExerciseVariantGenerationPipeline {
         variables.put("sourceContext", sourceContext);
         variables.put("targetDifficulty", job.getRequest().targetDifficulty() != null ? job.getRequest().targetDifficulty().name() : "unchanged");
         variables.put("domainText", orDefault(job.getRequest().domainText(), "unchanged"));
+        variables.put("narrativeStyle", job.getRequest().narrativeStyle() != null ? job.getRequest().narrativeStyle().name() : "consistent with the source");
         variables.put("additionalInstructions", orDefault(job.getRequest().additionalInstructions(), "none"));
         return variables;
     }
