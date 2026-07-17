@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -44,6 +45,31 @@ public abstract class ExerciseImportService {
     }
 
     protected void copyExerciseBasis(final Exercise newExercise, final Exercise importedExercise, final Map<Long, GradingInstruction> gradingInstructionCopyTracker) {
+        copyExerciseBasis(newExercise, importedExercise, importedExercise, gradingInstructionCopyTracker);
+        // When source and target are the same object, copy competency links (standalone REST import path).
+        // The 4-param overload clears them because cross-course import cannot safely reference foreign competencies.
+        Set<CompetencyExerciseLink> copiedLinks = new HashSet<>();
+        for (CompetencyExerciseLink link : importedExercise.getCompetencyLinks()) {
+            copiedLinks.add(new CompetencyExerciseLink(link.getCompetency(), newExercise, link.getWeight()));
+        }
+        newExercise.setCompetencyLinks(copiedLinks);
+    }
+
+    /**
+     * Copies exercise fields from two sources: structural context from {@code importedExercise} (target course/group,
+     * possible title/points overrides) and content from {@code templateExercise} (the original exercise with all fields).
+     * <p>
+     * This overload exists because exam-import and course-material-import create a skeleton {@code importedExercise}
+     * carrying only destination context + optional overrides, while the original exercise data lives in {@code templateExercise}.
+     *
+     * @param newExercise                   the fresh entity being built
+     * @param importedExercise              skeleton with target course/exerciseGroup and optional title/points overrides
+     * @param templateExercise              the original exercise providing content fields
+     * @param gradingInstructionCopyTracker tracker for deep-copying grading instructions
+     */
+    protected void copyExerciseBasis(final Exercise newExercise, final Exercise importedExercise, final Exercise templateExercise,
+            final Map<Long, GradingInstruction> gradingInstructionCopyTracker) {
+        // Structural context: always from importedExercise (the target destination)
         if (importedExercise.isCourseExercise()) {
             newExercise.setCourse(importedExercise.getCourseViaExerciseGroupOrCourseMember());
             newExercise.setPresentationScoreEnabled(importedExercise.getPresentationScoreEnabled());
@@ -52,41 +78,46 @@ public abstract class ExerciseImportService {
             newExercise.setExerciseGroup(importedExercise.getExerciseGroup());
         }
 
-        newExercise.setTitle(importedExercise.getTitle());
-        newExercise.setMaxPoints(importedExercise.getMaxPoints());
-        newExercise.setBonusPoints(importedExercise.getBonusPoints());
-        newExercise.setIncludedInOverallScore(importedExercise.getIncludedInOverallScore());
-        newExercise.setAssessmentType(importedExercise.getAssessmentType());
-        newExercise.setProblemStatement(importedExercise.getProblemStatement());
-        newExercise.setStartDate(importedExercise.getStartDate());
-        newExercise.setReleaseDate(importedExercise.getReleaseDate());
-        newExercise.setDueDate(importedExercise.getDueDate());
-        newExercise.setAssessmentDueDate(importedExercise.getAssessmentDueDate());
+        // Overridable fields: use importedExercise if set, fall back to templateExercise
+        newExercise.setTitle(importedExercise.getTitle() != null ? importedExercise.getTitle() : templateExercise.getTitle());
+        newExercise.setMaxPoints(importedExercise.getMaxPoints() != null ? importedExercise.getMaxPoints() : templateExercise.getMaxPoints());
+        newExercise.setBonusPoints(importedExercise.getBonusPoints() != null ? importedExercise.getBonusPoints() : templateExercise.getBonusPoints());
+
+        // Content fields: always from templateExercise (the original exercise)
+        newExercise.setIncludedInOverallScore(templateExercise.getIncludedInOverallScore());
+        newExercise.setAssessmentType(templateExercise.getAssessmentType());
+        newExercise.setProblemStatement(templateExercise.getProblemStatement());
+        newExercise.setStartDate(templateExercise.getStartDate());
+        newExercise.setReleaseDate(templateExercise.getReleaseDate());
+        newExercise.setDueDate(templateExercise.getDueDate());
+        newExercise.setAssessmentDueDate(templateExercise.getAssessmentDueDate());
         newExercise.setExampleSolutionPublicationDate(null); // This should not be imported as the client might serve the original date as the default.
         newExercise.validateDates();
-        newExercise.setDifficulty(importedExercise.getDifficulty());
-        newExercise.setGradingInstructions(importedExercise.getGradingInstructions());
-        newExercise.setGradingCriteria(importedExercise.copyGradingCriteria(gradingInstructionCopyTracker));
-        // Copy competency links as NEW unmanaged objects (not sharing managed entities from the template)
-        Set<CompetencyExerciseLink> copiedLinks = new HashSet<>();
-        for (CompetencyExerciseLink link : importedExercise.getCompetencyLinks()) {
-            // Create a new link with just the competency reference and weight (exercise will be set later)
-            copiedLinks.add(new CompetencyExerciseLink(link.getCompetency(), newExercise, link.getWeight()));
+        newExercise.setDifficulty(templateExercise.getDifficulty());
+        newExercise.setGradingInstructions(templateExercise.getGradingInstructions());
+        if (Hibernate.isInitialized(templateExercise.getGradingCriteria())) {
+            newExercise.setGradingCriteria(templateExercise.copyGradingCriteria(gradingInstructionCopyTracker));
         }
-        newExercise.setCompetencyLinks(copiedLinks);
 
-        if (importedExercise.getPlagiarismDetectionConfig() != null) {
-            newExercise.setPlagiarismDetectionConfig(new PlagiarismDetectionConfig(importedExercise.getPlagiarismDetectionConfig()));
+        // Competency links are not copied cross-course (the competencies may not exist in the target course).
+        // Callers that need them handle them separately via competencyExerciseLinkService.
+        newExercise.setCompetencyLinks(new HashSet<>());
+
+        if (Hibernate.isPropertyInitialized(templateExercise, "plagiarismDetectionConfig") && templateExercise.getPlagiarismDetectionConfig() != null) {
+            newExercise.setPlagiarismDetectionConfig(new PlagiarismDetectionConfig(templateExercise.getPlagiarismDetectionConfig()));
         }
 
         if (newExercise.getExerciseGroup() != null) {
             newExercise.setMode(ExerciseMode.INDIVIDUAL);
         }
         else {
-            newExercise.setCategories(importedExercise.getCategories());
-            newExercise.setMode(importedExercise.getMode());
-            if (newExercise.getMode() == ExerciseMode.TEAM) {
-                newExercise.setTeamAssignmentConfig(importedExercise.getTeamAssignmentConfig().copyTeamAssignmentConfig());
+            if (Hibernate.isInitialized(templateExercise.getCategories())) {
+                newExercise.setCategories(templateExercise.getCategories());
+            }
+            newExercise.setMode(templateExercise.getMode());
+            if (newExercise.getMode() == ExerciseMode.TEAM && Hibernate.isPropertyInitialized(templateExercise, "teamAssignmentConfig")
+                    && templateExercise.getTeamAssignmentConfig() != null) {
+                newExercise.setTeamAssignmentConfig(templateExercise.getTeamAssignmentConfig().copyTeamAssignmentConfig());
             }
         }
     }

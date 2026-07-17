@@ -298,7 +298,7 @@ public class CourseMaterialImportService {
     }
 
     private Optional<QuizExercise> importQuizExercise(QuizExercise exercise, Course targetCourse) {
-        var optionalOriginal = quizExerciseRepository.findById(exercise.getId());
+        var optionalOriginal = quizExerciseRepository.findWithEagerQuestionsAndStatisticsAndCompetenciesAndBatchesAndGradingCriteriaById(exercise.getId());
         if (optionalOriginal.isEmpty()) {
             return Optional.empty();
         }
