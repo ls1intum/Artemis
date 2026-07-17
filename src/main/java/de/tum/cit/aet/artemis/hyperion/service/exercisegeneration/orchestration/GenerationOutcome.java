@@ -97,6 +97,10 @@ public final class GenerationOutcome implements AutoCloseable {
         return new GenerationOutcome(loopResult, "The agent loop ended with an error.");
     }
 
+    static GenerationOutcome error(AgentLoopResult loopResult, String errorMessage) {
+        return new GenerationOutcome(loopResult, errorMessage);
+    }
+
     /**
      * @return the spec-fidelity and adaptation-scope report; never {@code null}
      */

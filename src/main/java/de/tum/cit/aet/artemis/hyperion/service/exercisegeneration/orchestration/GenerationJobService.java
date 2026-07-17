@@ -93,6 +93,10 @@ public class GenerationJobService {
     /** Cap on retained events per run so a chatty agent cannot grow the distributed map without bound; the oldest events are dropped first. */
     private static final int MAX_RETAINED_EVENTS = 500;
 
+    private static final String USER_CANCELLATION_MESSAGE = "Generation was cancelled. Nothing was changed.";
+
+    private static final String SYSTEM_CANCELLATION_MESSAGE = "Generation was cancelled by an administrator. Nothing was changed.";
+
     /** Cap on retained file snapshots per run (latest-per-file), so many distinct files cannot grow the distributed map without bound; the eldest file is dropped first. */
     static final int MAX_RETAINED_SNAPSHOT_FILES = 300;
 
@@ -252,8 +256,9 @@ public class GenerationJobService {
             }
             Instant now = Instant.now();
             if (shouldClearAsStale(existing, staleBefore(now))) {
-                stopActiveJob(key, existing, now);
-                return;
+                if (reclaimStaleJob(key, existing, now)) {
+                    return;
+                }
             }
             throw new ConflictException("Exercise generation is already running for this exercise", ENTITY_NAME, "exerciseGenerationRunning");
         }
@@ -318,7 +323,9 @@ public class GenerationJobService {
             if (existing != null) {
                 Instant now = Instant.now();
                 if (shouldClearAsStale(existing, staleBefore(now))) {
-                    stopActiveJob(key, existing, now);
+                    if (!reclaimStaleJob(key, existing, now)) {
+                        throw new ConflictException(conflictMessage, ENTITY_NAME, errorKey);
+                    }
                 }
                 else {
                     throw new ConflictException(conflictMessage, ENTITY_NAME, errorKey);
@@ -397,7 +404,7 @@ public class GenerationJobService {
         jobMap.lock(exerciseKey);
         try {
             JobFileSnapshotIndex index = snapshotIndexMap.get(exerciseKey);
-            if (index == null || !index.jobId().equals(jobId) || !isActiveJob(exerciseId, jobId)) {
+            if (index == null || !index.jobId().equals(jobId) || !isActiveJob(exerciseId, jobId) || isCancelled(jobId)) {
                 // No active snapshot store for this run (never started, already cleared/stale, or a stale/older run whose index was overwritten): drop the snapshot.
                 return;
             }
@@ -441,15 +448,28 @@ public class GenerationJobService {
             if (active != null) {
                 boolean ownedByCaller = active.userLogin().equals(user.getLogin());
                 GenerationMode mode = transcript != null && transcript.jobId().equals(active.jobId()) ? transcript.mode() : null;
+                if (!ownedByCaller && transcript != null && transcript.jobId().equals(active.jobId()) && transcript.done()) {
+                    ExerciseGenerationEventDTO terminal = sanitizedTerminalOutcome(transcript);
+                    return terminal == null ? Optional.empty()
+                            : Optional.of(
+                                    new ExerciseGenerationStatusDTO(transcript.jobId(), false, transcript.mode(), List.of(terminal), List.of(), false, null, null, false, false));
+                }
                 if (!ownedByCaller || transcript == null || !transcript.jobId().equals(active.jobId()) || !transcript.userLogin().equals(user.getLogin())) {
                     return Optional.of(new ExerciseGenerationStatusDTO(active.jobId(), true, mode, List.of(), List.of(), false, null, null, ownedByCaller,
                             ownedByCaller && active.cancellable()));
                 }
                 return Optional.of(new ExerciseGenerationStatusDTO(transcript.jobId(), !transcript.done(), transcript.mode(), transcript.events(),
-                        latestSnapshotsFor(exercise.getId(), transcript.jobId()), false, null, null, true, active.cancellable()));
+                        latestSnapshotsFor(exercise.getId(), transcript.jobId()), false, null, null, true, !transcript.done() && active.cancellable()));
             }
-            if (transcript == null || !transcript.userLogin().equals(user.getLogin())) {
+            if (transcript == null) {
                 return Optional.empty();
+            }
+            if (!transcript.userLogin().equals(user.getLogin())) {
+                ExerciseGenerationEventDTO terminal = sanitizedTerminalOutcome(transcript);
+                if (terminal == null) {
+                    return Optional.empty();
+                }
+                return Optional.of(new ExerciseGenerationStatusDTO(transcript.jobId(), false, transcript.mode(), List.of(terminal), List.of(), false, null, null, false, false));
             }
             return Optional.of(new ExerciseGenerationStatusDTO(transcript.jobId(), false, transcript.mode(), transcript.events(),
                     latestSnapshotsFor(exercise.getId(), transcript.jobId()), false, null, null, true, false));
@@ -457,6 +477,18 @@ public class GenerationJobService {
         finally {
             jobMap.unlock(exerciseKey);
         }
+    }
+
+    @Nullable
+    private ExerciseGenerationEventDTO sanitizedTerminalOutcome(JobTranscript transcript) {
+        for (int index = transcript.events().size() - 1; index >= 0; index--) {
+            ExerciseGenerationEventDTO event = transcript.events().get(index);
+            if (event.type() == ExerciseGenerationEventDTO.Type.DONE || event.type() == ExerciseGenerationEventDTO.Type.CANCELLED
+                    || event.type() == ExerciseGenerationEventDTO.Type.ERROR) {
+                return new ExerciseGenerationEventDTO(event.type(), null, event.completionStatus(), null, event.liveExerciseChanged(), event.timestamp());
+            }
+        }
+        return null;
     }
 
     /**
@@ -508,9 +540,10 @@ public class GenerationJobService {
     }
 
     /**
-     * Requests cooperative cancellation of the running job — but only by the instructor who started it. The owner check matters because the jobId is not a secret (returned to the
-     * client and embedded in the websocket topic path), so without it any same-course editor who observes the id could abort a colleague's run. A non-owner gets {@code false}
-     * (404).
+     * Cancels the running job — but only for the instructor who started it. Cancellation closes the transcript before interrupting the disposable sandbox, so clients receive a
+     * terminal result even when a synchronous provider request cannot be aborted at the transport layer. The live slot remains claimed until the worker actually returns; this
+     * prevents a late provider response from overlapping a replacement job or escaping in-flight admission accounting. The owner check matters because the job id is observable
+     * in the client and websocket topic.
      *
      * @param exerciseId the exercise id
      * @param jobId      the job id to cancel
@@ -519,6 +552,7 @@ public class GenerationJobService {
      */
     public boolean requestCancellation(long exerciseId, String jobId, User user) {
         String key = key(exerciseId);
+        boolean cancelled;
         jobMap.lock(key);
         try {
             JobInfo job = jobMap.get(key);
@@ -529,37 +563,66 @@ public class GenerationJobService {
             if (transcript == null || !transcript.jobId().equals(jobId) || !transcript.userLogin().equals(user.getLogin())) {
                 return false;
             }
-            cancellationMap.set(jobId, Boolean.TRUE, JOB_TTL_SECONDS, TimeUnit.SECONDS);
+            cancelled = terminalizeCancellation(key, job, transcript, USER_CANCELLATION_MESSAGE);
         }
         finally {
             jobMap.unlock(key);
+        }
+        if (!cancelled) {
+            return false;
         }
         interruptCluster(jobId);
         return true;
     }
 
     /**
-     * Requests cancellation for server-side safety controls such as deadlines and token budgets. The caller already owns the job id from the running task, so no user ownership
-     * check is required.
+     * Cancels a job for server-side safety controls such as deadlines and token budgets. This uses the same atomic terminalization and late-response fence as user cancellation.
+     * The
+     * caller already owns the job id from the running task, so no user ownership check is required.
      *
      * @param exerciseId the exercise id whose job should be cancelled
      * @param jobId      the running job id
      * @return true if cancellation was recorded
      */
     public boolean requestSystemCancellation(long exerciseId, String jobId) {
+        return requestSystemCancellation(exerciseId, jobId, SYSTEM_CANCELLATION_MESSAGE);
+    }
+
+    boolean requestSystemCancellation(long exerciseId, String jobId, String message) {
         String key = key(exerciseId);
+        boolean cancelled;
         jobMap.lock(key);
         try {
             JobInfo job = jobMap.get(key);
             if (job == null || !job.jobId().equals(jobId) || !job.cancellable()) {
                 return false;
             }
-            cancellationMap.set(jobId, Boolean.TRUE, JOB_TTL_SECONDS, TimeUnit.SECONDS);
+            JobTranscript transcript = transcriptMap.get(key);
+            cancelled = terminalizeCancellation(key, job, transcript, message);
         }
         finally {
             jobMap.unlock(key);
         }
+        if (!cancelled) {
+            return false;
+        }
         interruptCluster(jobId);
+        return true;
+    }
+
+    private boolean terminalizeCancellation(String key, JobInfo job, @Nullable JobTranscript transcript, String message) {
+        if (transcript == null || !transcript.jobId().equals(job.jobId()) || transcript.done()) {
+            return false;
+        }
+        cancellationMap.set(job.jobId(), Boolean.TRUE, JOB_TTL_SECONDS, TimeUnit.SECONDS);
+        List<ExerciseGenerationEventDTO> events = new ArrayList<>(transcript.events());
+        events.add(ExerciseGenerationEventDTO.of(ExerciseGenerationEventDTO.Type.CANCELLED, message));
+        while (events.size() > MAX_RETAINED_EVENTS) {
+            events.remove(1);
+        }
+        transcriptMap.set(key, new JobTranscript(transcript.jobId(), transcript.userLogin(), transcript.exerciseId(), transcript.mode(), events, true), TRANSCRIPT_TTL_SECONDS,
+                TimeUnit.SECONDS);
+        retainSnapshotsForTerminalReplay(job.exerciseId(), job.jobId());
         return true;
     }
 
@@ -678,6 +741,9 @@ public class GenerationJobService {
                 return false;
             }
             jobMap.set(key, job.withHeartbeat(Instant.now()), JOB_TTL_SECONDS, TimeUnit.SECONDS);
+            if (generationBudgetService != null) {
+                generationBudgetService.refreshReservation(job.budgetReservationId());
+            }
             return true;
         }
         finally {
@@ -805,11 +871,50 @@ public class GenerationJobService {
                 if (current == null || !current.jobId().equals(job.jobId()) || !shouldClearAsStale(current, staleBefore)) {
                     continue;
                 }
-                stopActiveJob(key, current, Instant.now());
+                reclaimStaleJob(key, current, Instant.now());
             }
             finally {
                 jobMap.unlock(key);
             }
+        }
+    }
+
+    /**
+     * Reclaims a stale slot only after Hazelcast confirms that its owner left the cluster. A stale heartbeat from a live member can be a scheduler pause while a provider request
+     * is
+     * still draining, so it requests cancellation but keeps both the per-exercise slot and its token reservation until the worker exits.
+     *
+     * @return {@code true} when the slot was reclaimed
+     */
+    private boolean reclaimStaleJob(String key, JobInfo current, Instant now) {
+        if (ownerMemberIsPresent(current)) {
+            signalStaleLiveOwner(current, now);
+            return false;
+        }
+        stopActiveJob(key, current, now);
+        return true;
+    }
+
+    private boolean ownerMemberIsPresent(JobInfo job) {
+        if (job.ownerNodeId() == null) {
+            return true;
+        }
+        try {
+            return hazelcastInstance.getCluster().getMembers().stream().anyMatch(member -> member.getUuid().toString().equals(job.ownerNodeId()));
+        }
+        catch (RuntimeException e) {
+            log.warn("Could not determine whether the owner of stale generation job {} is still a cluster member; retaining its slot", job.jobId(), e);
+            return true;
+        }
+    }
+
+    private void signalStaleLiveOwner(JobInfo current, Instant now) {
+        boolean alreadyCancelled = Boolean.TRUE.equals(cancellationMap.get(current.jobId()));
+        cancellationMap.set(current.jobId(), Boolean.TRUE, JOB_TTL_SECONDS, TimeUnit.SECONDS);
+        markStoppedTranscript(current.exerciseId(), current.jobId(), stoppedMessage(current, now));
+        retainSnapshotsForTerminalReplay(current.exerciseId(), current.jobId());
+        if (!alreadyCancelled) {
+            interruptCluster(current.jobId());
         }
     }
 

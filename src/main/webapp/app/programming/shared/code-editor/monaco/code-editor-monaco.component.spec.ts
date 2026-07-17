@@ -313,6 +313,97 @@ describe('CodeEditorMonacoComponent', () => {
         });
     });
 
+    it('should mark a user edit dirty after a same-content state replacement', () => {
+        const filePath = 'src/Main.java';
+        const initialSyncFinalized$ = new Subject<any>();
+        const stateReplaced$ = new Subject<any>();
+        const fileSyncServiceMock = {
+            isInitialized: vi.fn(() => true),
+            isFileOpen: vi.fn(() => true),
+            isFileAwaitingInitialSync: vi.fn(() => false),
+            initialSyncFinalized$: initialSyncFinalized$.asObservable(),
+            stateReplaced$: stateReplaced$.asObservable(),
+        } as any;
+        const onFileContentChangeSpy = vi.fn();
+        comp.onFileContentChange.subscribe(onFileContentChangeSpy);
+        vi.spyOn(comp, 'selectFileInEditor').mockResolvedValue(undefined);
+        fixture.componentRef.setInput('fileSyncService', fileSyncServiceMock);
+        fixture.componentRef.setInput('selectedFile', filePath);
+        fixture.detectChanges();
+        comp.fileSession.set({
+            [filePath]: { code: 'unchanged', cursor: { lineNumber: 1, column: 1 }, loadingError: false, scrollTop: 0 },
+        });
+
+        stateReplaced$.next({ filePath, text: { toJSON: () => 'unchanged' } });
+        comp.onFileTextChanged({ fileName: filePath, text: 'genuine user edit' });
+
+        expect(onFileContentChangeSpy).toHaveBeenCalledExactlyOnceWith({ fileName: filePath, text: 'genuine user edit' });
+    });
+
+    it('should suppress a changed state replacement echo and mark the next user edit dirty', () => {
+        const filePath = 'src/Main.java';
+        const initialSyncFinalized$ = new Subject<any>();
+        const stateReplaced$ = new Subject<any>();
+        const fileSyncServiceMock = {
+            isInitialized: vi.fn(() => true),
+            isFileOpen: vi.fn(() => true),
+            isFileAwaitingInitialSync: vi.fn(() => false),
+            initialSyncFinalized$: initialSyncFinalized$.asObservable(),
+            stateReplaced$: stateReplaced$.asObservable(),
+        } as any;
+        const onFileContentChangeSpy = vi.fn();
+        comp.onFileContentChange.subscribe(onFileContentChangeSpy);
+        vi.spyOn(comp, 'selectFileInEditor').mockResolvedValue(undefined);
+        fixture.componentRef.setInput('fileSyncService', fileSyncServiceMock);
+        fixture.componentRef.setInput('selectedFile', filePath);
+        fixture.detectChanges();
+        comp.fileSession.set({
+            [filePath]: { code: 'initial', cursor: { lineNumber: 1, column: 1 }, loadingError: false, scrollTop: 0 },
+        });
+
+        stateReplaced$.next({ filePath, text: { toJSON: () => 'remote replacement' } });
+        comp.onFileTextChanged({ fileName: filePath, text: 'remote replacement' });
+
+        expect(onFileContentChangeSpy).not.toHaveBeenCalled();
+
+        comp.onFileTextChanged({ fileName: filePath, text: 'local edit after replacement' });
+
+        expect(onFileContentChangeSpy).toHaveBeenCalledExactlyOnceWith({ fileName: filePath, text: 'local edit after replacement' });
+    });
+
+    it('should mark a user edit dirty when finalized content already matches the hydrated model', () => {
+        const filePath = 'src/Main.java';
+        const initialSyncFinalized$ = new Subject<{ filePath: string; contentDivergedFromFallback: boolean; finalContent: string }>();
+        const stateReplaced$ = new Subject<any>();
+        const isAwaitingInitialSync = vi.fn(() => true);
+        const fileSyncServiceMock = {
+            isInitialized: vi.fn(() => true),
+            isFileOpen: vi.fn(() => true),
+            isFileAwaitingInitialSync: isAwaitingInitialSync,
+            initialSyncFinalized$: initialSyncFinalized$.asObservable(),
+            stateReplaced$: stateReplaced$.asObservable(),
+        } as any;
+        const onFileContentChangeSpy = vi.fn();
+        comp.onFileContentChange.subscribe(onFileContentChangeSpy);
+        vi.spyOn(comp, 'selectFileInEditor').mockResolvedValue(undefined);
+        fixture.componentRef.setInput('fileSyncService', fileSyncServiceMock);
+        fixture.componentRef.setInput('selectedFile', filePath);
+        fixture.detectChanges();
+        comp.fileSession.set({
+            [filePath]: { code: 'server content', cursor: { lineNumber: 1, column: 1 }, loadingError: false, scrollTop: 0 },
+        });
+
+        comp.onFileTextChanged({ fileName: filePath, text: '' });
+        isAwaitingInitialSync.mockReturnValue(false);
+        initialSyncFinalized$.next({ filePath, contentDivergedFromFallback: false, finalContent: 'line 1\r\nline 2' });
+        comp.onFileTextChanged({ fileName: filePath, text: 'line 1\nline 2' });
+        expect(onFileContentChangeSpy).not.toHaveBeenCalled();
+
+        comp.onFileTextChanged({ fileName: filePath, text: 'genuine user edit' });
+
+        expect(onFileContentChangeSpy).toHaveBeenCalledExactlyOnceWith({ fileName: filePath, text: 'genuine user edit' });
+    });
+
     it('should suppress initial hydration change after initial sync finalizes and emit only user changes afterwards', () => {
         const filePath = 'src/Main.java';
         const initialSyncFinalized$ = new Subject<{ filePath: string; contentDivergedFromFallback: boolean; finalContent: string }>();
@@ -1067,7 +1158,7 @@ describe('CodeEditorMonacoComponent', () => {
         fixture.changeDetectorRef.detectChanges();
 
         renderReviewCommentWidgetsSpy.mockClear();
-        stateReplaced$.next({ filePath: selectedFile });
+        stateReplaced$.next({ filePath: selectedFile, text: { toJSON: () => '' } });
 
         expect(renderReviewCommentWidgetsSpy).toHaveBeenCalledOnce();
     });
@@ -1100,7 +1191,7 @@ describe('CodeEditorMonacoComponent', () => {
         await new Promise(process.nextTick);
 
         // Replacement arrives for a background file while A is selected.
-        stateReplaced$.next({ filePath: fileB });
+        stateReplaced$.next({ filePath: fileB, text: { toJSON: () => 'B0' } });
 
         // Switch to B and perform first user edit.
         fixture.componentRef.setInput('selectedFile', fileB);

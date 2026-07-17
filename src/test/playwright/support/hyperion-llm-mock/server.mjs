@@ -3,11 +3,15 @@ import http from 'node:http';
 
 const port = Number(process.env.HYPERION_LLM_MOCK_PORT ?? 1234);
 let requestCount = 0;
-const requests = [];
+let completedHeldProviderResponseCount = 0;
+const pendingLateFailures = new Set();
+const pendingProviderResponses = new Set();
+let holdUnmatchedRequests = false;
 const failMarker = 'HYPERION_E2E_FAIL_LLM';
 const recoveryFilePath = 'solution/src/de/test/HyperionRecovery.java';
 const writeSnapshotMarker = 'HYPERION_E2E_WRITE_SNAPSHOT';
 const submitSeedMarker = 'HYPERION_E2E_SUBMIT_SEEDED_EXERCISE';
+const submitNewExerciseMarker = 'HYPERION_E2E_SUBMIT_NEW_EXERCISE';
 const correctedSeedStatementMarker = 'more than 5 dates';
 const adaptedPolicyMarker = 'DATES_SIZE_THRESHOLD = 5';
 const adaptedTestLoopMarker = 'for (int i = 0; i < 6; i++)';
@@ -38,6 +42,94 @@ Create a small Java program that classifies temperature readings. The exercise f
 
 - \`[-1, 0, 26]\` produces \`[FREEZING, NORMAL, HOT]\`.
 - \`[]\` produces \`[]\`.
+`;
+const generatedProblemStatement = `# Temperature Alert Classification
+
+Implement \`TemperatureClassifier.classify(List<Integer>)\`. Return one label for each reading in input order: \`FREEZING\` below 0, \`NORMAL\` from 0 through 25, and \`HOT\` above 25. Reject null readings without returning a partial result. An empty list produces an empty list.
+
+## Tasks
+
+1. [task][Classify temperatures](testRepresentativeTemperatures)
+2. [task][Handle boundaries and empty input](testBoundariesAndEmptyInput)
+3. [task][Reject missing readings atomically](testMissingReadingIsRejected)
+`;
+const correctedGeneratedProblemStatement = generatedProblemStatement
+    .replace('testRepresentativeTemperatures)', 'testRepresentativeTemperatures())')
+    .replace('testBoundariesAndEmptyInput)', 'testBoundariesAndEmptyInput())')
+    .replace('testMissingReadingIsRejected)', 'testMissingReadingIsRejected())');
+const generatedSolution = `package de.tum.cit.aet.temperature;
+
+import java.util.ArrayList;
+import java.util.List;
+
+public final class TemperatureClassifier {
+    private TemperatureClassifier() {
+    }
+
+    public static List<String> classify(List<Integer> readings) {
+        List<String> labels = new ArrayList<>();
+        for (Integer reading : readings) {
+            if (reading == null) {
+                throw new IllegalArgumentException("readings must not contain null");
+            }
+            labels.add(reading < 0 ? "FREEZING" : reading <= 25 ? "NORMAL" : "HOT");
+        }
+        return labels;
+    }
+}
+`;
+const generatedTemplate = `package de.tum.cit.aet.temperature;
+
+import java.util.List;
+
+public final class TemperatureClassifier {
+    private TemperatureClassifier() {
+    }
+
+    public static List<String> classify(List<Integer> readings) {
+        // TODO: Implement the classification rules.
+        throw new UnsupportedOperationException("Not implemented");
+    }
+}
+`;
+const generatedTests = `package de.tum.cit.aet.temperature;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+
+import java.util.Arrays;
+import java.util.List;
+
+import org.junit.jupiter.api.Test;
+
+import de.tum.in.test.api.BlacklistPath;
+import de.tum.in.test.api.StrictTimeout;
+import de.tum.in.test.api.WhitelistPath;
+import de.tum.in.test.api.jupiter.Public;
+
+@Public
+@WhitelistPath("target")
+@BlacklistPath("target/test-classes")
+class TemperatureClassifierTest {
+    @Test
+    @StrictTimeout(1)
+    void testRepresentativeTemperatures() {
+        assertEquals(List.of("FREEZING", "NORMAL", "HOT"), TemperatureClassifier.classify(List.of(-4, 12, 30)), "Each reading should receive its matching label");
+    }
+
+    @Test
+    @StrictTimeout(1)
+    void testBoundariesAndEmptyInput() {
+        assertEquals(List.of("NORMAL", "NORMAL"), TemperatureClassifier.classify(List.of(0, 25)), "Both inclusive boundary values should be normal");
+        assertEquals(List.of(), TemperatureClassifier.classify(List.of()), "An empty input should produce an empty result");
+    }
+
+    @Test
+    @StrictTimeout(1)
+    void testMissingReadingIsRejected() {
+        assertThrows(IllegalArgumentException.class, () -> TemperatureClassifier.classify(Arrays.asList(-1, null, 26)), "A null reading should reject the complete input");
+    }
+}
 `;
 const correctedSeedProblemStatement = `In this exercise, we want to implement sorting algorithms and choose them based on runtime specific variables.
 
@@ -78,44 +170,22 @@ Create and implement a \`Policy\` class following the below class diagram with a
 4. Complete the \`Client\` class which demonstrates switching between two strategies at runtime.
 `;
 
-function summarizeRequest(rawBody) {
-    try {
-        const parsed = JSON.parse(rawBody);
-        const messages = Array.isArray(parsed.messages) ? parsed.messages : [];
-        const toolNames = Array.isArray(parsed.tools) ? parsed.tools.map((tool) => tool?.function?.name).filter(Boolean) : [];
-        const calledTools = new Map(
-            messages
-                .flatMap((message) => message?.tool_calls ?? [])
-                .map((toolCall) => [toolCall?.id, toolCall?.function?.name])
-                .filter(([id, name]) => id && name),
-        );
-        const acknowledgedToolNames = messages
-            .filter((message) => message?.role === 'tool' && calledTools.has(message?.tool_call_id))
-            .map((message) => calledTools.get(message.tool_call_id));
-        return {
-            messageCount: messages.length,
-            roles: messages.map((message) => message?.role).filter(Boolean),
-            promptText: messages.map((message) => (typeof message?.content === 'string' ? message.content : JSON.stringify(message?.content ?? ''))).join('\n'),
-            toolNames,
-            acknowledgedToolNames,
-        };
-    } catch (error) {
-        return { parseError: String(error), rawBodyPrefix: rawBody.slice(0, 500) };
-    }
-}
-
-function hasToolCall(rawBody, toolName, expectedArguments) {
+function hasAcknowledgedToolCall(rawBody, toolName, expectedArguments) {
     try {
         const messages = JSON.parse(rawBody).messages;
         return (
             Array.isArray(messages) &&
-            messages.some((message) =>
+            messages.some((message, messageIndex) =>
                 message?.tool_calls?.some((toolCall) => {
                     if (toolCall?.function?.name !== toolName || typeof toolCall.function.arguments !== 'string') {
                         return false;
                     }
                     try {
-                        return expectedArguments(JSON.parse(toolCall.function.arguments));
+                        return (
+                            expectedArguments(JSON.parse(toolCall.function.arguments)) &&
+                            typeof toolCall.id === 'string' &&
+                            messages.slice(messageIndex + 1).some((candidate) => candidate?.role === 'tool' && candidate.tool_call_id === toolCall.id)
+                        );
                     } catch {
                         return false;
                     }
@@ -138,8 +208,30 @@ function currentCandidateContains(rawBody, expectedContent) {
 }
 
 function jsonResponse(res, status, body) {
+    if (res.destroyed || res.writableEnded) {
+        return;
+    }
     res.writeHead(status, { 'content-type': 'application/json' });
     res.end(JSON.stringify(body));
+}
+
+function failPendingResponses(pendingResponses, message) {
+    let released = 0;
+    for (const pendingResponse of pendingResponses) {
+        pendingResponses.delete(pendingResponse);
+        jsonResponse(pendingResponse, 400, { error: { message } });
+        released++;
+    }
+    return released;
+}
+
+function resetScenario() {
+    const releasedLateFailures = failPendingResponses(pendingLateFailures, 'Hyperion E2E scenario reset released a pending failure response');
+    const releasedProviderResponses = failPendingResponses(pendingProviderResponses, 'Hyperion E2E scenario reset released a held provider response');
+    requestCount = 0;
+    completedHeldProviderResponseCount = 0;
+    holdUnmatchedRequests = false;
+    return { releasedLateFailures, releasedProviderResponses };
 }
 
 function toolCallResponse(requestNumber, toolName, args) {
@@ -185,12 +277,69 @@ function textResponse(requestNumber, content) {
 
 const server = http.createServer((req, res) => {
     if (req.method === 'GET' && req.url === '/health') {
-        jsonResponse(res, 200, { ok: true, requestCount });
+        jsonResponse(res, 200, {
+            ok: true,
+            requestCount,
+            completedHeldProviderResponseCount,
+            pendingLateFailureCount: pendingLateFailures.size,
+            pendingProviderResponseCount: pendingProviderResponses.size,
+            holdUnmatchedRequests,
+        });
         return;
     }
 
-    if (req.method === 'GET' && req.url === '/requests') {
-        jsonResponse(res, 200, { requests });
+    if (req.method === 'POST' && req.url === '/release-late-failure') {
+        if (pendingLateFailures.size !== 1) {
+            jsonResponse(res, 409, { error: { message: `Expected one pending late failure, found ${pendingLateFailures.size}` } });
+            return;
+        }
+        failPendingResponses(pendingLateFailures, 'Hyperion E2E requested LLM failure after producing recoverable work');
+        jsonResponse(res, 200, { released: 1 });
+        return;
+    }
+
+    if (req.method === 'POST' && req.url === '/release-held-provider-response') {
+        if (pendingProviderResponses.size !== 1) {
+            jsonResponse(res, 409, { error: { message: `Expected one held provider response, found ${pendingProviderResponses.size}` } });
+            return;
+        }
+        for (const pendingResponse of pendingProviderResponses) {
+            pendingProviderResponses.delete(pendingResponse);
+            pendingResponse.once('finish', () => completedHeldProviderResponseCount++);
+            jsonResponse(
+                pendingResponse,
+                200,
+                toolCallResponse(requestCount, 'write_file', {
+                    path: 'solution/src/de/test/LateAfterCancellation.java',
+                    content: 'package de.test;\n\nfinal class LateAfterCancellation {}\n',
+                }),
+            );
+        }
+        jsonResponse(res, 200, { released: 1 });
+        return;
+    }
+
+    if (req.method === 'POST' && req.url === '/reset') {
+        jsonResponse(res, 200, resetScenario());
+        return;
+    }
+
+    if (req.method === 'POST' && req.url === '/scenario') {
+        const chunks = [];
+        req.on('data', (chunk) => chunks.push(chunk));
+        req.on('end', () => {
+            try {
+                const scenario = JSON.parse(Buffer.concat(chunks).toString('utf8'));
+                if (typeof scenario.holdUnmatchedRequests !== 'boolean') {
+                    jsonResponse(res, 400, { error: { message: 'holdUnmatchedRequests must be a boolean' } });
+                    return;
+                }
+                holdUnmatchedRequests = scenario.holdUnmatchedRequests;
+                jsonResponse(res, 200, { holdUnmatchedRequests });
+            } catch {
+                jsonResponse(res, 400, { error: { message: 'Scenario body must be valid JSON' } });
+            }
+        });
         return;
     }
 
@@ -201,14 +350,12 @@ const server = http.createServer((req, res) => {
             requestCount++;
             const requestNumber = requestCount;
             const body = Buffer.concat(chunks).toString('utf8');
-            const requestSummary = summarizeRequest(body);
-            requests.push(requestSummary);
             if (body.includes(draftPromptMarker)) {
                 jsonResponse(res, 200, textResponse(requestNumber, draftProblemStatement));
                 return;
             }
             if (body.includes(failMarker)) {
-                if (!hasToolCall(body, 'write_file', (args) => args.path === recoveryFilePath)) {
+                if (!hasAcknowledgedToolCall(body, 'write_file', (args) => args.path === recoveryFilePath)) {
                     jsonResponse(
                         res,
                         200,
@@ -220,7 +367,8 @@ const server = http.createServer((req, res) => {
                     );
                     return;
                 }
-                jsonResponse(res, 400, { error: { message: 'Hyperion E2E requested LLM failure after producing recoverable work' } });
+                pendingLateFailures.add(res);
+                res.once('close', () => pendingLateFailures.delete(res));
                 return;
             }
             if (body.includes(criticPromptMarker)) {
@@ -239,6 +387,28 @@ const server = http.createServer((req, res) => {
                 );
                 return;
             }
+            if (body.includes(submitNewExerciseMarker) || body.includes('# Temperature Alert Classification')) {
+                if (
+                    body.includes('These [task] bindings reference names that match no actual test') &&
+                    !hasAcknowledgedToolCall(body, 'write_file', (args) => args.path === 'problem-statement.md' && args.content?.includes('testRepresentativeTemperatures()'))
+                ) {
+                    jsonResponse(res, 200, toolCallResponse(requestNumber, 'write_file', { path: 'problem-statement.md', content: correctedGeneratedProblemStatement }));
+                    return;
+                }
+                const files = [
+                    ['solution/src/de/tum/cit/aet/temperature/TemperatureClassifier.java', generatedSolution],
+                    ['template/src/de/tum/cit/aet/temperature/TemperatureClassifier.java', generatedTemplate],
+                    ['tests/test/de/tum/cit/aet/temperature/TemperatureClassifierTest.java', generatedTests],
+                    ['problem-statement.md', generatedProblemStatement],
+                ];
+                const nextFile = files.find(([file]) => !hasAcknowledgedToolCall(body, 'write_file', (args) => args.path === file));
+                if (nextFile) {
+                    jsonResponse(res, 200, toolCallResponse(requestNumber, 'write_file', { path: nextFile[0], content: nextFile[1] }));
+                    return;
+                }
+                jsonResponse(res, 200, toolCallResponse(requestNumber, 'submit', { summary: 'Submitted the generated temperature exercise for deterministic E2E verification.' }));
+                return;
+            }
             if (body.includes(writeSnapshotMarker) && !body.includes('HyperionPreview.java')) {
                 jsonResponse(
                     res,
@@ -253,7 +423,11 @@ const server = http.createServer((req, res) => {
             if (
                 body.includes(submitSeedMarker) &&
                 body.includes('threshold of 4') &&
-                !hasToolCall(body, 'edit_file', (args) => args.path === 'tests/test/de/test/SortingExampleBehaviorTest.java' && args.newText === adaptedBoundaryTestLoopMarker)
+                !hasAcknowledgedToolCall(
+                    body,
+                    'edit_file',
+                    (args) => args.path === 'tests/test/de/test/SortingExampleBehaviorTest.java' && args.newText === adaptedBoundaryTestLoopMarker,
+                )
             ) {
                 jsonResponse(
                     res,
@@ -269,7 +443,11 @@ const server = http.createServer((req, res) => {
             if (
                 body.includes(submitSeedMarker) &&
                 body.includes('threshold of 4') &&
-                !hasToolCall(body, 'edit_file', (args) => args.path === 'tests/test/de/test/SortingExampleBehaviorTest.java' && args.newText === adaptedBoundaryTestMessageMarker)
+                !hasAcknowledgedToolCall(
+                    body,
+                    'edit_file',
+                    (args) => args.path === 'tests/test/de/test/SortingExampleBehaviorTest.java' && args.newText === adaptedBoundaryTestMessageMarker,
+                )
             ) {
                 jsonResponse(
                     res,
@@ -284,14 +462,14 @@ const server = http.createServer((req, res) => {
             }
             if (
                 body.includes(submitSeedMarker) &&
-                !hasToolCall(body, 'write_file', (args) => args.path === 'problem-statement.md' && args.content?.includes(correctedSeedStatementMarker))
+                !hasAcknowledgedToolCall(body, 'write_file', (args) => args.path === 'problem-statement.md' && args.content?.includes(correctedSeedStatementMarker))
             ) {
                 jsonResponse(res, 200, toolCallResponse(requestNumber, 'write_file', { path: 'problem-statement.md', content: correctedSeedProblemStatement }));
                 return;
             }
             if (
                 body.includes(submitSeedMarker) &&
-                !hasToolCall(body, 'edit_file', (args) => args.path === 'solution/src/de/test/Policy.java' && args.newText === adaptedPolicyMarker)
+                !hasAcknowledgedToolCall(body, 'edit_file', (args) => args.path === 'solution/src/de/test/Policy.java' && args.newText === adaptedPolicyMarker)
             ) {
                 jsonResponse(
                     res,
@@ -306,7 +484,7 @@ const server = http.createServer((req, res) => {
             }
             if (
                 body.includes(submitSeedMarker) &&
-                !hasToolCall(body, 'edit_file', (args) => args.path === 'tests/test/de/test/SortingExampleBehaviorTest.java' && args.newText === adaptedTestLoopMarker)
+                !hasAcknowledgedToolCall(body, 'edit_file', (args) => args.path === 'tests/test/de/test/SortingExampleBehaviorTest.java' && args.newText === adaptedTestLoopMarker)
             ) {
                 jsonResponse(
                     res,
@@ -321,7 +499,11 @@ const server = http.createServer((req, res) => {
             }
             if (
                 body.includes(submitSeedMarker) &&
-                !hasToolCall(body, 'edit_file', (args) => args.path === 'tests/test/de/test/SortingExampleBehaviorTest.java' && args.newText === adaptedTestMessageMarker)
+                !hasAcknowledgedToolCall(
+                    body,
+                    'edit_file',
+                    (args) => args.path === 'tests/test/de/test/SortingExampleBehaviorTest.java' && args.newText === adaptedTestMessageMarker,
+                )
             ) {
                 jsonResponse(
                     res,
@@ -335,11 +517,17 @@ const server = http.createServer((req, res) => {
                 return;
             }
             if (body.includes(submitSeedMarker)) {
-                requestSummary.responseToolName = 'submit';
                 jsonResponse(res, 200, toolCallResponse(requestNumber, 'submit', { summary: 'Submitted the seeded Java exercise for deterministic E2E verification.' }));
                 return;
             }
-            jsonResponse(res, 200, toolCallResponse(requestNumber, 'bash', { command: 'sleep 30' }));
+            if (holdUnmatchedRequests) {
+                pendingProviderResponses.add(res);
+                res.once('close', () => pendingProviderResponses.delete(res));
+                return;
+            }
+            jsonResponse(res, 400, {
+                error: { message: 'Unhandled Hyperion E2E LLM request. Configure holdUnmatchedRequests only for scenarios that intentionally cancel a running provider call.' },
+            });
         });
         return;
     }
@@ -351,5 +539,11 @@ server.listen(port, '127.0.0.1', () => {
     console.log(`Hyperion E2E LLM mock listening on http://127.0.0.1:${port}`);
 });
 
-process.on('SIGTERM', () => server.close(() => process.exit(0)));
-process.on('SIGINT', () => server.close(() => process.exit(0)));
+function shutDown() {
+    failPendingResponses(pendingLateFailures, 'Hyperion E2E mock is shutting down');
+    failPendingResponses(pendingProviderResponses, 'Hyperion E2E mock is shutting down');
+    server.close(() => process.exit(0));
+}
+
+process.on('SIGTERM', shutDown);
+process.on('SIGINT', shutDown);

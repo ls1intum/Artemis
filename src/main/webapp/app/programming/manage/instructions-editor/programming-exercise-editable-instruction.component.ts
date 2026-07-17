@@ -119,7 +119,7 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     private problemStatementSyncState?: ProblemStatementSyncState;
     private problemStatementBinding?: MonacoBinding;
     private problemStatementBindingDestroyed = false;
-    private suppressUnsavedForNextProblemStatementChange = false;
+    private problemStatementChangeToSuppress?: string;
     private dirtySignalSuppressedDuringInitialSync = false;
 
     readonly markdownEditorMonaco = viewChild(MarkdownEditorMonacoComponent);
@@ -249,6 +249,9 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     }
 
     private persistProblemStatement(): Observable<void> {
+        if (this.isGeneratingOrRefining()) {
+            return EMPTY;
+        }
         this.savingInstructions.set(true);
         const currentProblemStatement = this.getCurrentContent() ?? this.exercise().problemStatement;
         const problemStatementToSave = currentProblemStatement?.trim() || undefined;
@@ -292,12 +295,14 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
             if (this.problemStatementSyncService.isAwaitingInitialSync() && problemStatement.trim().length === 0) {
                 return;
             }
-            if (this.suppressUnsavedForNextProblemStatementChange) {
-                this.suppressUnsavedForNextProblemStatementChange = false;
-            } else if (this.shouldMarkProblemStatementAsUnsaved()) {
-                this.unsavedChanges = true;
-            } else {
-                this.dirtySignalSuppressedDuringInitialSync = true;
+            const suppressUnsaved = this.problemStatementChangeToSuppress === problemStatement;
+            this.problemStatementChangeToSuppress = undefined;
+            if (!suppressUnsaved) {
+                if (this.shouldMarkProblemStatementAsUnsaved()) {
+                    this.unsavedChanges = true;
+                } else {
+                    this.dirtySignalSuppressedDuringInitialSync = true;
+                }
             }
             // parent component should update `problemStatement` in `exercise`
             this.instructionChange.emit(problemStatement);
@@ -584,7 +589,7 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
             return;
         }
         this.teardownProblemStatementSync();
-        this.suppressUnsavedForNextProblemStatementChange = false;
+        this.problemStatementChangeToSuppress = undefined;
         this.dirtySignalSuppressedDuringInitialSync = false;
         // Keep fallback content LF-only before seeding Yjs. If a Windows client seeds CRLF,
         // Monaco/Yjs offsets diverge by one char per line break on LF peers.
@@ -594,9 +599,9 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
         this.enforceLfEol(model);
         this.createProblemStatementBinding(this.problemStatementSyncState, model, editorInstance);
         this.problemStatementInitialSyncFinalizedSubscription = this.problemStatementSyncService.initialSyncFinalized$.subscribe(
-            ({ contentChangedDuringFinalize, contentDivergedFromFallback }) => {
+            ({ contentChangedDuringFinalize, contentDivergedFromFallback, finalContent }) => {
                 if (contentChangedDuringFinalize && this.dirtySignalSuppressedDuringInitialSync) {
-                    this.suppressUnsavedForNextProblemStatementChange = true;
+                    this.problemStatementChangeToSuppress = finalContent;
                 }
                 if (contentDivergedFromFallback) {
                     this.unsavedChanges = true;
@@ -611,10 +616,14 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
             this.problemStatementBinding?.destroy();
             this.problemStatementBinding = undefined;
             // Force model content to the replacement Yjs state to avoid merge/appending when rebinding.
-            this.suppressUnsavedForNextProblemStatementChange = true;
             // Late leader replacement can carry content originally seeded from Windows peers.
             // Normalize + enforce LF to keep local model offsets consistent with Y.Text.
             const replacedText = this.normalizeLineEndings(syncState.text.toJSON());
+            const contentChanged = model.getValue() !== replacedText;
+            this.problemStatementChangeToSuppress = contentChanged ? replacedText : undefined;
+            if (contentChanged) {
+                this.unsavedChanges = true;
+            }
             model.setValue(replacedText);
             this.enforceLfEol(model);
             this.createProblemStatementBinding(syncState, model, editorInstance);
@@ -643,7 +652,7 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
         this.problemStatementBinding = undefined;
         this.problemStatementBindingDestroyed = false;
         this.problemStatementSyncState = undefined;
-        this.suppressUnsavedForNextProblemStatementChange = false;
+        this.problemStatementChangeToSuppress = undefined;
         this.dirtySignalSuppressedDuringInitialSync = false;
         this.problemStatementSyncService.reset();
     }

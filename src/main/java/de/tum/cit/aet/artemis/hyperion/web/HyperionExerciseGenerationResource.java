@@ -175,7 +175,9 @@ public class HyperionExerciseGenerationResource {
     }
 
     /**
-     * DELETE programming-exercises/{exerciseId}/generate-exercise/jobs/{jobId} : requests cooperative cancellation of a running generation job.
+     * DELETE programming-exercises/{exerciseId}/generate-exercise/jobs/{jobId} : cancels a running generation job and immediately exposes its terminal status. An in-flight
+     * provider
+     * request may finish at the transport layer, but its response is fenced from tool execution and completion publication.
      *
      * @param exerciseId the programming exercise id
      * @param jobId      the job id to cancel

@@ -19,6 +19,7 @@ import de.tum.cit.aet.artemis.localci.service.BuildPhasesTemplateService;
 import de.tum.cit.aet.artemis.localci.service.BuildScriptProviderService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
+import de.tum.cit.aet.artemis.programming.domain.ProjectType;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.StaticCodeAnalysisTool;
 import de.tum.cit.aet.artemis.programming.dto.BuildPhaseDTO;
@@ -55,6 +56,9 @@ public class SandboxBuildCommandService {
 
     /** Absolute path of the pristine, verifier-controlled {@code verify.sh} (never the agent's {@code /workspace} copy). */
     public static final String PRISTINE_VERIFY_PATH = PRISTINE_VERIFY_DIR + "/" + VERIFY_SCRIPT_NAME;
+
+    /** Verifier-owned executable fixture used only by the pre-provider readiness build. It is outside the agent workspace and consumed before the agent can run shell commands. */
+    public static final String READINESS_FIXTURE_DIR = "/opt/hyperion-readiness-fixture";
 
     /**
      * Verifier-owned directory the script collects reports into and the verifier {@code copyOut}s from; wiped and rebuilt per authoritative run (see {@link #PRISTINE_VERIFY_DIR}).
@@ -100,6 +104,15 @@ public class SandboxBuildCommandService {
     }
 
     /**
+     * Runs the real solution build with the curated fixture overlaid in the disposable build tree. The verifier parses the resulting reports with the production parser.
+     *
+     * @return the readiness build command
+     */
+    public String buildEnvironmentPreflightCommand() {
+        return pristineSolutionBuildCommand();
+    }
+
+    /**
      * The verifier-owned directory the pristine script collected the reports for an assignment into, which the verifier copies out and parses.
      *
      * @param assignment the assignment directory name ({@code solution} or {@code template})
@@ -120,6 +133,20 @@ public class SandboxBuildCommandService {
      * @return the full shell script (POSIX {@code sh}); it takes one argument, {@code solution} or {@code template}
      */
     public String verifyScriptContent(ProgrammingExercise exercise) {
+        return verifyScriptContent(exercise, false);
+    }
+
+    /**
+     * Renders the pristine verifier script used for the pre-provider canonical-fixture build.
+     *
+     * @param exercise the exercise whose build configuration the script mirrors
+     * @return the readiness verifier script
+     */
+    public String readinessVerifyScriptContent(ProgrammingExercise exercise) {
+        return verifyScriptContent(exercise, true);
+    }
+
+    private String verifyScriptContent(ProgrammingExercise exercise, boolean readinessProbe) {
         BuildRecipe recipe = resolveBuildRecipe(exercise);
         String findExpression = buildFindExpression(recipe.reportGlobs());
         String scaFindExpression = buildScaFindExpression(recipe.scaReportFiles());
@@ -142,6 +169,18 @@ public class SandboxBuildCommandService {
                 ? "mkdir -p \"$BUILD_DIR/" + recipe.solutionDir() + "\"\n                cp -a \"$WORKSPACE/solution/.\" \"$BUILD_DIR/" + recipe.solutionDir()
                         + "\"/ 2>/dev/null || true"
                 : ": # this language's harness references no sibling solution/";
+        String readinessOverlay = readinessProbe ? """
+                # Keep the exercise's immutable build harness, but remove every exercise-owned Java source before installing the trusted readiness fixture.
+                rm -rf "$TEST_DEST/test" "$TEST_DEST/structural/test" "$TEST_DEST/behavior/test" "$ASSIGNMENT_DEST"
+                mkdir -p "$ASSIGNMENT_DEST"
+                if [ ! -d "@@READINESS_FIXTURE@@/tests" ] || [ ! -d "@@READINESS_FIXTURE@@/solution" ]; then
+                    echo "build-readiness fixture is unavailable" >&2
+                    exit 66
+                fi
+                cp -a "@@READINESS_FIXTURE@@/tests/." "$TEST_DEST"/ || exit 74
+                cp -a "@@READINESS_FIXTURE@@/solution/." "$ASSIGNMENT_DEST"/ || exit 74
+                find "@@READINESS_FIXTURE@@" -mindepth 1 -delete
+                """ : "";
         // Plain POSIX sh (some of the ~20 language images have no bash). Rendered by @@TOKEN@@ name, not positional %s, so substitution is order-independent and a repeated value
         // (the find-expression, the JUnit token) is written once.
         String script = """
@@ -165,6 +204,7 @@ public class SandboxBuildCommandService {
                 ASSIGNMENT_DEST="@@ASSIGNMENT_DEST@@"
                 mkdir -p "$ASSIGNMENT_DEST"
                 cp -a "$WORKSPACE/$ASSIGNMENT/." "$ASSIGNMENT_DEST"/ 2>/dev/null || true
+                @@READINESS_OVERLAY@@
                 @@SOLUTION_COPY@@
                 # The standard Gradle tests scaffold applies the Teamscale coverage-upload plugin. LocalCI resolves it with network access, while generation sandboxes are
                 # intentionally network-isolated. Remove only that plugin declaration from this disposable build-tree copy; the immutable tests repository and all test sources
@@ -226,7 +266,8 @@ public class SandboxBuildCommandService {
                 .replace("@@SOLUTION_COPY@@", solutionCopySection).replace("@@SOLUTION_DIR@@", solutionPlaceholderValue).replace("@@TEST_DIR@@", testPlaceholderValue)
                 .replace("@@REPORT_FIND@@", findExpression).replace("@@JAVA_SECURITY_MANAGER_ALLOW@@", javaSecurityManagerAllow).replace("@@PHASES@@", phaseSection)
                 .replace("@@SCA_COLLECT@@", buildScaCollectSection(scaFindExpression)).replace("@@NAME_SEP@@", COLLECTED_NAME_SEPARATOR)
-                .replace("@@JUNIT_TOKEN@@", COLLECTED_JUNIT_TOKEN).replace("@@COLLECTED_MARKER@@", COLLECTED_MARKER);
+                .replace("@@JUNIT_TOKEN@@", COLLECTED_JUNIT_TOKEN).replace("@@COLLECTED_MARKER@@", COLLECTED_MARKER).replace("@@READINESS_OVERLAY@@", readinessOverlay)
+                .replace("@@READINESS_FIXTURE@@", READINESS_FIXTURE_DIR);
     }
 
     /**
@@ -375,13 +416,30 @@ public class SandboxBuildCommandService {
         if (!phaseScripts.isEmpty()) {
             return new BuildRecipe(phaseScripts, reportGlobs, assignmentDir, testDir, solutionDir, checkoutSolution, scaReportFiles);
         }
-        // Generic fallback: prefer a Gradle wrapper, then Maven, then a system Gradle.
-        String fallback = """
-                if [ -x ./gradlew ]; then ./gradlew clean test --no-daemon;
+        return new BuildRecipe(fallbackBuildPhases(exercise), reportGlobs, assignmentDir, testDir, solutionDir, checkoutSolution, scaReportFiles);
+    }
+
+    /** Conventional Java phases used when LocalCI has no project-type-specific template, including the two sequential test layouts. */
+    private static List<String> fallbackBuildPhases(ProgrammingExercise exercise) {
+        boolean sequential = exercise.getBuildConfig() != null && exercise.getBuildConfig().hasSequentialTestRuns();
+        ProjectType projectType = exercise.getProjectType();
+        if (exercise.getProgrammingLanguage() == ProgrammingLanguage.JAVA && ProjectType.isMavenProject(projectType)) {
+            if (sequential) {
+                return List.of("cd structural\nmvn -B clean compile", "cd behavior\nmvn -B clean compile", "cd structural\nmvn -B test", "cd behavior\nmvn -B test");
+            }
+            return List.of("mvn -B clean compile", "mvn -B test");
+        }
+        if (exercise.getProgrammingLanguage() == ProgrammingLanguage.JAVA && projectType != null && projectType.isGradle()) {
+            if (sequential) {
+                return List.of("chmod +x ./gradlew\n./gradlew clean compileJava compileTestJava", "./gradlew structuralTests", "./gradlew behaviorTests");
+            }
+            return List.of("chmod +x ./gradlew\n./gradlew clean compileJava compileTestJava", "./gradlew test");
+        }
+        return List.of("""
+                if [ -f ./gradlew ]; then chmod +x ./gradlew && ./gradlew clean test --no-daemon;
                 elif [ -f pom.xml ]; then mvn clean test;
                 elif [ -f build.gradle ]; then gradle clean test --no-daemon;
-                else echo 'No recognized build system' >&2; exit 2; fi""";
-        return new BuildRecipe(List.of(fallback), reportGlobs, assignmentDir, testDir, solutionDir, checkoutSolution, scaReportFiles);
+                else echo 'No recognized build system' >&2; exit 2; fi""");
     }
 
     /** Canonical SCA report file names for the exercise's language, or empty when SCA is disabled or the language has no SCA tools. */

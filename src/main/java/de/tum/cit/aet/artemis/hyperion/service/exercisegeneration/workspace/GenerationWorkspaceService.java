@@ -14,6 +14,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Predicate;
 
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.apache.commons.io.FileUtils;
@@ -24,6 +25,7 @@ import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
+import org.springframework.web.util.UriUtils;
 
 import de.tum.cit.aet.artemis.buildagent.dto.DockerRunConfig;
 import de.tum.cit.aet.artemis.buildagent.dto.SandboxExecResult;
@@ -39,6 +41,7 @@ import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.E
 import de.tum.cit.aet.artemis.localvc.service.GitService;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.Repository;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 
@@ -66,11 +69,25 @@ public class GenerationWorkspaceService {
 
     private static final Duration BUILD_OUTPUT_CLEANUP_TIMEOUT = Duration.ofSeconds(30);
 
+    private static final Duration FIXTURE_STAGE_TIMEOUT = Duration.ofSeconds(30);
+
     /** Upper bound on the turn-0 layout observation so a deeply nested tree cannot blow up the prompt. */
     private static final int LAYOUT_PROBE_MAX_CHARS = 6_000;
 
-    /** Sandbox directory holding the read-only worked-sample reference; never extracted or persisted. */
+    /** Sandbox directory holding the worked-sample reference; never extracted or persisted. */
     static final String REFERENCE_DIR = "reference";
+
+    private static final String REFERENCE_SOURCE_DIR = "hyperion/reference/java";
+
+    private static final String READINESS_SOURCE_DIR = "hyperion/readiness/java";
+
+    private static final String REFERENCE_GUIDE = """
+            # Worked exercise reference
+
+            Study how the problem statement, starter, solution, tests, and task bindings fit together. Reuse Artemis and Ares conventions, not the exercise topic or design.
+            Do not copy names, APIs, literal inputs, or implementation choices. Scale the design to the primary source requirements instead of treating this small example as a required shape.
+            Before authoring, inspect the statement, compare template with solution, and then inspect the tests.
+            """;
 
     /** Per-file and total caps on the seeded reference payload, so a large template cannot bloat the workspace tar. */
     private static final int MAX_REFERENCE_FILE_BYTES = 64_000;
@@ -146,7 +163,7 @@ public class GenerationWorkspaceService {
                     testsSeedSnapshot = textSnapshot;
                 }
             }
-            Map<String, String> referenceSample = readReferenceSample(exercise);
+            Map<String, String> referenceSample = mode == GenerationMode.GENERATE ? readReferenceSample(exercise) : Map.of();
             textFiles.putAll(referenceSample);
             sandbox.copyIn(sessionId, WORKSPACE, WorkspaceArchive.buildWorkspaceTarStream(textFiles, repositoryTrees));
             log.info("Seeded generation workspace for exercise {} ({} repositories, {} reference files)", exercise.getId(), repositoryTrees.size(), referenceSample.size());
@@ -190,32 +207,82 @@ public class GenerationWorkspaceService {
     }
 
     /**
-     * Reads the language's worked-sample TEXT files (example tests + example solution) from the classpath templates, keyed {@code reference/<path>}, so the agent always has a
-     * complete working example of this language's test-framework conventions even when the working repositories were stripped clean. Best-effort: binary/oversized/unreadable files
-     * are skipped and the total payload is bounded.
+     * Reads one compact, complete Java worked example from the classpath templates. The reference includes its statement, starter, solution, and behavioral tests, but excludes
+     * redundant structural tests, build manifests, and generic harness implementation.
      *
-     * @param exercise the exercise whose language (and, as a fallback, project type) selects the template tree
+     * @param exercise the exercise whose language selects the reference
      * @return the reference files keyed by their archive-relative path under {@code reference/}, or empty if none could be read
      */
     Map<String, String> readReferenceSample(ProgrammingExercise exercise) {
-        if (exercise.getProgrammingLanguage() == null) {
+        if (exercise.getProgrammingLanguage() != ProgrammingLanguage.JAVA) {
             return Map.of();
         }
-        String languageDir = exercise.getProgrammingLanguage().name().toLowerCase(Locale.ROOT);
         Map<String, String> reference = new LinkedHashMap<>();
+        int[] remainingBytes = { MAX_REFERENCE_TOTAL_BYTES - REFERENCE_GUIDE.getBytes(StandardCharsets.UTF_8).length };
+        reference.put(REFERENCE_DIR + "/README.md", REFERENCE_GUIDE);
+        addReferenceStatement(reference, remainingBytes);
+        addReferenceArea(reference, REFERENCE_SOURCE_DIR + "/template", "template", path -> path.endsWith(".java"), remainingBytes);
+        addReferenceArea(reference, REFERENCE_SOURCE_DIR + "/solution", "solution", path -> path.endsWith(".java"), remainingBytes);
+        addReferenceArea(reference, REFERENCE_SOURCE_DIR + "/tests/test", "tests/test", path -> path.endsWith(".java"), remainingBytes);
+        boolean complete = reference.containsKey(REFERENCE_DIR + "/problem-statement.md") && hasReferenceArea(reference, "template") && hasReferenceArea(reference, "solution")
+                && hasReferenceArea(reference, "tests/test");
+        return complete ? reference : Map.of();
+    }
+
+    Map<String, String> readBuildReadinessFixture(ProgrammingExercise exercise) {
+        if (exercise.getProgrammingLanguage() != ProgrammingLanguage.JAVA) {
+            return Map.of();
+        }
+        Map<String, String> sources = new LinkedHashMap<>();
         int[] remainingBytes = { MAX_REFERENCE_TOTAL_BYTES };
-        for (String area : List.of("test", "solution")) {
-            addReferenceArea(reference, languageDir, area, remainingBytes);
-        }
-        // Languages whose templates live only under a project-type subdirectory (e.g. C: templates/c/{gcc,fact}) have no language-level test/solution; fall back to the project
-        // type.
-        if (reference.isEmpty() && exercise.getProjectType() != null) {
-            String projectTypeRelativeBase = languageDir + "/" + exercise.getProjectType().name().toLowerCase(Locale.ROOT);
-            for (String area : List.of("test", "solution")) {
-                addReferenceArea(reference, projectTypeRelativeBase, area, remainingBytes);
+        addReferenceArea(sources, READINESS_SOURCE_DIR + "/solution", "solution", path -> path.endsWith(".java"), remainingBytes);
+        addReferenceArea(sources, READINESS_SOURCE_DIR + "/tests/behavior", "behavior", path -> path.endsWith(".java"), remainingBytes);
+        addReferenceArea(sources, READINESS_SOURCE_DIR + "/tests/structural", "structural", path -> path.endsWith(".java"), remainingBytes);
+        boolean sequential = exercise.getBuildConfig() != null && exercise.getBuildConfig().hasSequentialTestRuns();
+        Map<String, String> fixture = new LinkedHashMap<>();
+        sources.forEach((path, content) -> {
+            if (path.startsWith(REFERENCE_DIR + "/solution/")) {
+                fixture.put(path.substring((REFERENCE_DIR + "/").length()), content);
             }
+            else if (path.startsWith(REFERENCE_DIR + "/behavior/")) {
+                String relativeTestPath = path.substring((REFERENCE_DIR + "/behavior/").length());
+                fixture.put(sequential ? "tests/behavior/test/" + relativeTestPath : "tests/test/" + relativeTestPath, content);
+            }
+            else if (path.startsWith(REFERENCE_DIR + "/structural/")) {
+                String relativeTestPath = path.substring((REFERENCE_DIR + "/structural/").length());
+                fixture.put(sequential ? "tests/structural/test/" + relativeTestPath : "tests/test/" + relativeTestPath, content);
+            }
+        });
+        return fixture;
+    }
+
+    /**
+     * Stages the server-owned fixture immediately before the pre-provider readiness build. The readiness script removes it before the agent starts.
+     *
+     * @param sandbox   the sandbox receiving the fixture
+     * @param sessionId the target sandbox session
+     * @param exercise  the exercise whose build layout the fixture must match
+     */
+    public void stageBuildReadinessFixture(InteractiveSandbox sandbox, String sessionId, ProgrammingExercise exercise) {
+        SandboxExecResult preparation = sandbox.exec(sessionId, FIXTURE_STAGE_TIMEOUT, "sh", "-c",
+                "find " + SandboxBuildCommandService.READINESS_FIXTURE_DIR + " -mindepth 1 -delete");
+        if (!preparation.isSuccess()) {
+            throw new IllegalStateException("Could not prepare the build-readiness fixture directory: " + preparation.combinedOutput());
         }
-        return reference;
+        sandbox.copyIn(sessionId, SandboxBuildCommandService.READINESS_FIXTURE_DIR, WorkspaceArchive.buildWorkspaceTarStream(readBuildReadinessFixture(exercise), Map.of()));
+    }
+
+    private static boolean hasReferenceArea(Map<String, String> reference, String area) {
+        String prefix = REFERENCE_DIR + "/" + area + "/";
+        return reference.keySet().stream().anyMatch(path -> path.startsWith(prefix));
+    }
+
+    private void addReferenceStatement(Map<String, String> reference, int[] remainingBytes) {
+        Resource resource = resourceLoaderService.getResource(Path.of("templates", REFERENCE_SOURCE_DIR, "problem-statement.md"));
+        String content = readReferenceResource(resource, remainingBytes);
+        if (content != null) {
+            reference.put(REFERENCE_DIR + "/problem-statement.md", content);
+        }
     }
 
     /**
@@ -223,36 +290,69 @@ public class GenerationWorkspaceService {
      * language
      * template root), respecting the remaining byte budget. Robust across filesystem and jar resources via the {@code /templates/<languageRelativeBase>/} URI marker.
      */
-    private void addReferenceArea(Map<String, String> reference, String languageRelativeBase, String area, int[] remainingBytes) {
-        String marker = "/templates/" + languageRelativeBase + "/";
-        Resource[] resources = resourceLoaderService.getFileResources(Path.of("templates").resolve(languageRelativeBase).resolve(area));
+    private void addReferenceArea(Map<String, String> reference, String sourceArea, String targetArea, Predicate<String> include, int[] remainingBytes) {
+        String marker = "/templates/" + sourceArea + "/";
+        Resource[] resources = resourceLoaderService.getFileResources(Path.of("templates").resolve(sourceArea));
         for (Resource resource : resources) {
             if (remainingBytes[0] <= 0) {
                 return;
             }
             try {
-                String uri = resource.getURI().toString().replace('\\', '/');
+                String uri = UriUtils.decode(resource.getURI().toString(), StandardCharsets.UTF_8).replace('\\', '/');
                 int markerIndex = uri.indexOf(marker);
                 if (markerIndex < 0) {
                     continue;
                 }
-                String relativePath = uri.substring(markerIndex + marker.length());
-                if (relativePath.isEmpty() || relativePath.endsWith("/")) {
+                String relativePath = normalizeReferencePath(uri.substring(markerIndex + marker.length()));
+                if (relativePath == null || !include.test(relativePath)) {
                     continue;
                 }
-                byte[] content;
-                try (var input = resource.getInputStream()) {
-                    content = input.readAllBytes();
+                String content = readReferenceResource(resource, remainingBytes);
+                if (content != null) {
+                    reference.put(REFERENCE_DIR + "/" + targetArea + "/" + relativePath, content);
                 }
-                if (content.length == 0 || content.length > MAX_REFERENCE_FILE_BYTES || content.length > remainingBytes[0] || BinaryContent.isBinary(content)) {
-                    continue;
-                }
-                reference.put(REFERENCE_DIR + "/" + relativePath, new String(content, StandardCharsets.UTF_8));
-                remainingBytes[0] -= content.length;
             }
             catch (IOException | RuntimeException e) {
                 log.debug("Skipping reference sample resource {}: {}", resource, e.getMessage());
             }
+        }
+    }
+
+    private static @Nullable String normalizeReferencePath(String relativePath) {
+        try {
+            Path path = Path.of(relativePath);
+            if (path.isAbsolute() || relativePath.indexOf('\\') >= 0) {
+                return null;
+            }
+            for (Path segment : path) {
+                if (segment.toString().equals("..")) {
+                    return null;
+                }
+            }
+            String normalized = path.normalize().toString().replace('\\', '/');
+            return normalized.isEmpty() ? null : normalized;
+        }
+        catch (RuntimeException e) {
+            return null;
+        }
+    }
+
+    private @Nullable String readReferenceResource(Resource resource, int[] remainingBytes) {
+        int maxBytes = Math.min(MAX_REFERENCE_FILE_BYTES, remainingBytes[0]);
+        if (maxBytes <= 0) {
+            return null;
+        }
+        try (var input = resource.getInputStream()) {
+            byte[] content = input.readNBytes(maxBytes + 1);
+            if (content.length == 0 || content.length > maxBytes || BinaryContent.isBinary(content)) {
+                return null;
+            }
+            remainingBytes[0] -= content.length;
+            return new String(content, StandardCharsets.UTF_8);
+        }
+        catch (IOException | RuntimeException e) {
+            log.debug("Skipping reference sample resource {}: {}", resource, e.getMessage());
+            return null;
         }
     }
 
@@ -275,7 +375,7 @@ public class GenerationWorkspaceService {
                 + "2>/dev/null | sort); do\n" + "  echo; echo \"--- head -40 $f ---\"; head -40 \"$f\" 2>/dev/null\n" + "done\n"
                 // Surface the reference dir so the agent discovers it (it is not a repository dir, so the listing above misses it).
                 + "if [ -d " + REFERENCE_DIR + " ]; then echo; echo '--- ls -R " + REFERENCE_DIR
-                + " (read-only worked example: study it for this language test-framework conventions; do not edit or copy it) ---'; ls -R " + REFERENCE_DIR
+                + " (non-persisted worked example: study its language and test-framework conventions; do not edit or copy it) ---'; ls -R " + REFERENCE_DIR
                 + " 2>/dev/null | head -c 1500; fi\n";
         try {
             SandboxExecResult result = sandbox.exec(sessionId, LAYOUT_PROBE_TIMEOUT, "sh", "-c", script);

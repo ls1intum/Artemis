@@ -16,11 +16,11 @@
         </div>
     </nav>
 }
-@if (exercise) {
+@if (exercise && loadingState() !== LOADING_STATE.INITIALIZING && loadingState() !== LOADING_STATE.FETCHING_FAILED) {
     <div class="module-bg p-3 pt-1">
         <jhi-code-editor-container
             [participation]="selectedParticipation!"
-            [editable]="!isExerciseGenerationRunning()"
+            [editable]="!isProblemStatementEditingLocked()"
             [buildable]="selectedRepository !== RepositoryType.TESTS"
             [selectedRepository]="selectedRepository"
             [selectedAuxiliaryRepositoryId]="selectedRepository === RepositoryType.AUXILIARY ? selectedRepositoryId : undefined"
@@ -28,7 +28,7 @@
             [allowHiddenFiles]="true"
             [fileSyncService]="fileSyncService"
             [enableExerciseReviewComments]="true"
-            [adaptReviewCommentThreadEnabled]="canAdaptWithFeedback()"
+            [adaptReviewCommentThreadEnabled]="canAdaptWithFeedback() && !isExerciseGenerationActionBlocked()"
             [editorBottomPanelTitle]="showGenerationActivity() ? 'artemisApp.hyperion.generationActivity.panelTitle' : undefined"
             (onFileLoad)="onFileLoad($event)"
             (onRepositoryFilesLoaded)="onRepositoryFilesLoaded()"
@@ -58,12 +58,18 @@
                 />
                 <!-- repository select -->
                 <div ngbDropdown class="d-inline-block me-2">
-                    <button class="btn btn-outline-primary" id="dropdownBasic1" ngbDropdownToggle>
+                    <button class="btn btn-outline-primary" id="dropdownBasic1" ngbDropdownToggle [disabled]="isExerciseGenerationActionBlocked()">
                         {{ selectedRepository === RepositoryType.AUXILIARY ? selectedAuxiliaryRepositoryName : selectedRepository }}
                     </button>
                     <div ngbDropdownMenu aria-labelledby="dropdownBasic1">
                         <button
-                            [disabled]="!exercise || !exercise.templateParticipation || !exercise.templateParticipation.id || !exercise.templateParticipation.repositoryUri"
+                            [disabled]="
+                                isExerciseGenerationActionBlocked() ||
+                                !exercise ||
+                                !exercise.templateParticipation ||
+                                !exercise.templateParticipation.id ||
+                                !exercise.templateParticipation.repositoryUri
+                            "
                             (click)="selectTemplateParticipation()"
                             ngbDropdownItem
                             [style.background-color]="selectedRepository === RepositoryType.TEMPLATE ? 'var(--link-color)' : 'transparent'"
@@ -71,7 +77,13 @@
                             <span jhiTranslate="artemisApp.editor.repoSelect.templateRepo"></span>
                         </button>
                         <button
-                            [disabled]="!exercise || !exercise.solutionParticipation || !exercise.solutionParticipation.id || !exercise.solutionParticipation.repositoryUri"
+                            [disabled]="
+                                isExerciseGenerationActionBlocked() ||
+                                !exercise ||
+                                !exercise.solutionParticipation ||
+                                !exercise.solutionParticipation.id ||
+                                !exercise.solutionParticipation.repositoryUri
+                            "
                             (click)="selectSolutionParticipation()"
                             ngbDropdownItem
                             [style.background-color]="selectedRepository === RepositoryType.SOLUTION ? 'var(--link-color)' : 'transparent'"
@@ -84,6 +96,7 @@
                                 class="flex-grow-1 text-start"
                                 ngbDropdownItem
                                 [disabled]="
+                                    isExerciseGenerationActionBlocked() ||
                                     loadingState() === LOADING_STATE.CREATING_ASSIGNMENT_REPO ||
                                     loadingState() === LOADING_STATE.DELETING_ASSIGNMENT_REPO ||
                                     !exercise.studentParticipations ||
@@ -102,7 +115,7 @@
                                     class="flex-shrink-1 w-auto px-2"
                                     ngbDropdownItem
                                     (click)="createAssignmentParticipation()"
-                                    [disabled]="isCreateAssignmentRepoDisabled || loadingState() === LOADING_STATE.CREATING_ASSIGNMENT_REPO"
+                                    [disabled]="isExerciseGenerationActionBlocked() || isCreateAssignmentRepoDisabled || loadingState() === LOADING_STATE.CREATING_ASSIGNMENT_REPO"
                                     [ngbTooltip]="
                                         isCreateAssignmentRepoDisabled
                                             ? ('artemisApp.editor.repoSelect.createAssignmentRepoDisabledTooltip' | artemisTranslate)
@@ -123,7 +136,7 @@
                                     class="flex-shrink-1 w-auto px-2 text-danger"
                                     ngbDropdownItem
                                     (click)="deleteAssignmentParticipation()"
-                                    [disabled]="loadingState() !== LOADING_STATE.CLEAR"
+                                    [disabled]="isExerciseGenerationActionBlocked() || loadingState() !== LOADING_STATE.CLEAR"
                                     [ngbTooltip]="'artemisApp.editor.repoSelect.deleteAssignmentRepo' | artemisTranslate"
                                 >
                                     @if (loadingState() === LOADING_STATE.DELETING_ASSIGNMENT_REPO) {
@@ -135,7 +148,7 @@
                             }
                         </div>
                         <button
-                            [disabled]="!exercise"
+                            [disabled]="isExerciseGenerationActionBlocked() || !exercise"
                             (click)="selectTestRepository()"
                             ngbDropdownItem
                             [style.background-color]="selectedRepository === RepositoryType.TESTS ? 'var(--link-color)' : 'transparent'"
@@ -144,7 +157,7 @@
                         @for (auxiliaryRepository of exercise.auxiliaryRepositories; track auxiliaryRepository.id ?? i; let i = $index) {
                             @if (auxiliaryRepository.id) {
                                 <button
-                                    [disabled]="!exercise"
+                                    [disabled]="isExerciseGenerationActionBlocked() || !exercise"
                                     (click)="selectAuxiliaryRepository(auxiliaryRepository.id)"
                                     ngbDropdownItem
                                     [style.background-color]="
@@ -232,7 +245,12 @@
                                     }
                                     @if (exercise.isAtLeastEditor) {
                                         <!-- Problem Statement Refinement -->
-                                        <button class="ai-menu-item" (click)="toggleRefinementPopover($event, aiDropdownToggle); aiMenuPopover.hide()" [disabled]="isAiApplying()">
+                                        <button
+                                            class="ai-menu-item"
+                                            (click)="toggleRefinementPopover($event, aiDropdownToggle); aiMenuPopover.hide()"
+                                            [disabled]="isAiApplying() || isExerciseGenerationActionBlocked()"
+                                            data-testid="hyperion-refine-problem-statement"
+                                        >
                                             <fa-icon [icon]="facArtemisIntelligence" class="me-2" />
                                             <span
                                                 [jhiTranslate]="
@@ -249,7 +267,8 @@
                                                 <button
                                                     class="ai-menu-item flex-grow-1"
                                                     (click)="checkConsistencies(exercise); aiMenuPopover.hide()"
-                                                    [disabled]="isCheckingConsistency()"
+                                                    [disabled]="isCheckingConsistency() || isExerciseGenerationActionBlocked()"
+                                                    data-testid="hyperion-check-consistency"
                                                 >
                                                     <fa-icon [icon]="faCheckDouble" class="me-2" />
                                                     <span jhiTranslate="artemisApp.hyperion.consistencyCheck.button"></span>
@@ -261,7 +280,12 @@
                                                 </button>
                                             </div>
                                         } @else {
-                                            <button class="ai-menu-item" (click)="checkConsistencies(exercise); aiMenuPopover.hide()" [disabled]="isCheckingConsistency()">
+                                            <button
+                                                class="ai-menu-item"
+                                                (click)="checkConsistencies(exercise); aiMenuPopover.hide()"
+                                                [disabled]="isCheckingConsistency() || isExerciseGenerationActionBlocked()"
+                                                data-testid="hyperion-check-consistency"
+                                            >
                                                 <fa-icon [icon]="faCheckDouble" class="me-2" />
                                                 <span jhiTranslate="artemisApp.hyperion.consistencyCheck.button"></span>
                                             </button>
@@ -304,7 +328,7 @@
                                     cdkTrapFocusAutoCapture
                                     [attr.aria-label]="'artemisApp.programmingExercise.problemStatement.yourRequirements' | artemisTranslate"
                                     [placeholder]="'artemisApp.programmingExercise.problemStatement.yourRequirements' | artemisTranslate"
-                                    [disabled]="isAiApplying()"
+                                    [disabled]="isAiApplying() || isExerciseGenerationActionBlocked()"
                                     [attr.maxlength]="MAX_USER_PROMPT_LENGTH"
                                 ></textarea>
                                 <div class="text-end small mt-1" [class.text-danger]="isPromptNearLimit()" [class.text-muted]="!isPromptNearLimit()">
@@ -312,7 +336,13 @@
                                 </div>
                             </div>
                             <div class="d-flex justify-content-end p-3 refinement-popup-footer">
-                                <button pButton type="button" size="small" [disabled]="!refinementPrompt().trim() || isAiApplying()" (click)="submitRefinement()">
+                                <button
+                                    pButton
+                                    type="button"
+                                    size="small"
+                                    [disabled]="!refinementPrompt().trim() || isAiApplying() || isExerciseGenerationActionBlocked()"
+                                    (click)="submitRefinement()"
+                                >
                                     <fa-icon [icon]="faPaperPlane" class="me-1" />
                                     <span
                                         [jhiTranslate]="
@@ -388,7 +418,7 @@
                         class="me-2"
                     />
                 }
-                @if (selectedRepository !== RepositoryType.TESTS) {
+                @if (selectedRepository !== RepositoryType.TESTS && !isExerciseGenerationActionBlocked()) {
                     <jhi-programming-exercise-student-trigger-build-button [exercise]="exercise" [participation]="selectedParticipation!" [btnSize]="ButtonSize.MEDIUM" />
                 }
             </div>
@@ -417,7 +447,7 @@
                                 type="button"
                                 severity="secondary"
                                 size="small"
-                                [disabled]="isAiApplying() || isExerciseGenerationRunning()"
+                                [disabled]="isAiApplying() || isExerciseGenerationActionBlocked()"
                                 [pTooltip]="'artemisApp.programmingExercise.problemStatement.revertAllTooltip' | artemisTranslate"
                                 tooltipPosition="bottom"
                                 (click)="revertAllRefinement()"
@@ -437,7 +467,7 @@
                                 type="button"
                                 severity="success"
                                 size="small"
-                                [disabled]="isAiApplying() || isExerciseGenerationRunning()"
+                                [disabled]="isAiApplying() || isExerciseGenerationActionBlocked()"
                                 [pTooltip]="'artemisApp.programmingExercise.problemStatement.doneReviewingTooltip' | artemisTranslate"
                                 tooltipPosition="bottom"
                                 (click)="closeDiff()"
@@ -457,7 +487,7 @@
                         [enableResize]="false"
                         [showPreview]="false"
                         [enableExerciseReviewComments]="true"
-                        [isGeneratingOrRefining]="isGeneratingOrRefining() || isExerciseGenerationRunning()"
+                        [isGeneratingOrRefining]="isGeneratingOrRefining() || isProblemStatementEditingLocked()"
                         [mode]="showDiff() ? 'diff' : 'normal'"
                         [renderSideBySide]="allowSplitView()"
                         (diffLineChange)="onDiffLineChange($event)"

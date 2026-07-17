@@ -1,6 +1,5 @@
 package de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent;
 
-import java.io.IOException;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Locale;
@@ -10,8 +9,6 @@ import java.util.regex.Pattern;
 
 import org.jspecify.annotations.Nullable;
 
-import com.openai.errors.OpenAIIoException;
-import com.openai.errors.OpenAIRetryableException;
 import com.openai.errors.OpenAIServiceException;
 
 /** Shared guard that lets Hyperion fail fast while a provider outage/quota/auth failure is cooling down. */
@@ -58,29 +55,6 @@ public interface ProviderFailureCooldown {
      */
     static String keyForModel(@Nullable String configuredModel) {
         return configuredModel == null || configuredModel.isBlank() ? "default" : configuredModel;
-    }
-
-    /**
-     * Determines whether an exhausted provider call is worth a small outer retry.
-     *
-     * @param error provider failure
-     * @return whether another outer attempt can plausibly succeed
-     */
-    static boolean isRetryable(Throwable error) {
-        if (error instanceof ProviderInCooldownException || isQuotaOrConfigurationFailure(error)) {
-            return false;
-        }
-        Throwable cause = error;
-        for (int depth = 0; cause != null && depth < 16; depth++, cause = cause.getCause()) {
-            if (cause instanceof OpenAIServiceException serviceException) {
-                return isTransientStatus(serviceException.statusCode());
-            }
-            if (cause instanceof OpenAIIoException || cause instanceof OpenAIRetryableException || cause instanceof IOException) {
-                return true;
-            }
-        }
-        Integer status = firstHttpStatusInMessage(error);
-        return status == null || isTransientStatus(status);
     }
 
     /**
@@ -132,10 +106,6 @@ public interface ProviderFailureCooldown {
             }
         }
         return messages.toString().toLowerCase(Locale.ROOT);
-    }
-
-    private static boolean isTransientStatus(int status) {
-        return status == 408 || status == 409 || status == 429 || status >= 500;
     }
 
     @Nullable

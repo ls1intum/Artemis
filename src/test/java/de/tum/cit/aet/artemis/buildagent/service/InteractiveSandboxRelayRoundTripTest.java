@@ -27,10 +27,13 @@ import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -86,6 +89,10 @@ class InteractiveSandboxRelayRoundTripTest {
 
     private DistributedDataAccessService clientAccess;
 
+    private DistributedDataAccessService handlerAccess;
+
+    private LocalMap<String, byte[]> payloads;
+
     @BeforeEach
     void setUp() {
         // One shared request topic and one shared response topic stand in for the cluster-wide distributed topics; LocalTopic delivers synchronously in-JVM. The keyed payload map
@@ -93,7 +100,7 @@ class InteractiveSandboxRelayRoundTripTest {
         // agent→client).
         requestsTopic = new LocalTopic<>();
         responsesTopic = new LocalTopic<>();
-        LocalMap<String, byte[]> payloads = new LocalMap<>();
+        payloads = new LocalMap<>();
 
         clientAccess = mock(DistributedDataAccessService.class);
         when(clientAccess.getHyperionSandboxRequestsTopic()).thenReturn(requestsTopic);
@@ -101,7 +108,7 @@ class InteractiveSandboxRelayRoundTripTest {
         when(clientAccess.getHyperionSandboxPayloads()).thenReturn(payloads);
         when(clientAccess.getBuildAgentInformation()).thenReturn(List.of(idleAgent(AGENT_SHORT_NAME, 0, 4)));
 
-        DistributedDataAccessService handlerAccess = mock(DistributedDataAccessService.class);
+        handlerAccess = mock(DistributedDataAccessService.class);
         when(handlerAccess.getHyperionSandboxRequestsTopic()).thenReturn(requestsTopic);
         when(handlerAccess.getHyperionSandboxResponsesTopic()).thenReturn(responsesTopic);
         when(handlerAccess.getHyperionSandboxPayloads()).thenReturn(payloads);
@@ -136,6 +143,7 @@ class InteractiveSandboxRelayRoundTripTest {
             context.getEnvironment().setActiveProfiles(PROFILE_CORE, PROFILE_LOCALCI, PROFILE_BUILDAGENT);
             context.registerBean(DistributedDataAccessService.class, () -> clientAccess);
             context.registerBean(de.tum.cit.aet.artemis.buildagent.BuildAgentConfiguration.class, () -> mock(de.tum.cit.aet.artemis.buildagent.BuildAgentConfiguration.class));
+            context.registerBean(BuildAgentDockerService.class, () -> mock(BuildAgentDockerService.class));
             context.register(RemoteInteractiveSandboxClient.class, InteractiveSandboxService.class);
 
             context.refresh();
@@ -263,6 +271,23 @@ class InteractiveSandboxRelayRoundTripTest {
     }
 
     @Test
+    void copyFailureAfterTheContainerWasInvalidatedReleasesItsSlot() {
+        try (RelayHarness harness = newHarness(1)) {
+            String replacementContainer = "replacement-container";
+            when(harness.localSandbox().createSession(any())).thenReturn(CONTAINER_ID, replacementContainer);
+            String handle = harness.client().createSession(sessionSpec("failed-copy-job"));
+            doThrow(new LocalCIException("copy timed out")).when(harness.localSandbox()).copyIn(eq(CONTAINER_ID), eq("/workspace"), any());
+            when(harness.localSandbox().sessionExists(CONTAINER_ID)).thenReturn(false);
+
+            assertThatExceptionOfType(LocalCIException.class)
+                    .isThrownBy(() -> harness.client().copyIn(handle, "/workspace", new ByteArrayInputStream(tarWithSingleFile("file.txt", "content"))))
+                    .withMessageContaining("copy timed out");
+
+            assertThat(harness.client().createSession(sessionSpec("replacement-job"))).isEqualTo(AGENT_SHORT_NAME + "::" + replacementContainer);
+        }
+    }
+
+    @Test
     void copyOut_roundTripsTarBytesBackToCaller() throws Exception {
         byte[] tar = tarWithSingleFile("result.txt", "produced output");
         when(localSandbox.copyOut(eq(CONTAINER_ID), eq("/workspace/out"))).thenReturn(new TarArchiveInputStream(new ByteArrayInputStream(tar)));
@@ -301,7 +326,7 @@ class InteractiveSandboxRelayRoundTripTest {
     }
 
     @Test
-    void createSessionsUseAvailableSlotsConcurrently() throws Exception {
+    void sameHandlerCreateSessionsUseAvailableSlotsConcurrently() throws Exception {
         try (RelayHarness harness = newHarness(2)) {
             CountDownLatch createsStarted = new CountDownLatch(2);
             CountDownLatch releaseCreates = new CountDownLatch(1);
@@ -312,8 +337,8 @@ class InteractiveSandboxRelayRoundTripTest {
                 return "container-" + containerSequence.incrementAndGet();
             });
 
-            CompletableFuture<String> first = CompletableFuture.supplyAsync(() -> harness.client().createSession(sessionSpec()));
-            CompletableFuture<String> second = CompletableFuture.supplyAsync(() -> harness.client().createSession(sessionSpec()));
+            CompletableFuture<String> first = CompletableFuture.supplyAsync(() -> harness.client().createSession(sessionSpec("job-1")));
+            CompletableFuture<String> second = CompletableFuture.supplyAsync(() -> harness.client().createSession(sessionSpec("job-2")));
             try {
                 assertThat(createsStarted.await(2, TimeUnit.SECONDS)).isTrue();
             }
@@ -324,6 +349,44 @@ class InteractiveSandboxRelayRoundTripTest {
             assertThat(first.get(5, TimeUnit.SECONDS)).startsWith(AGENT_SHORT_NAME + "::container-");
             assertThat(second.get(5, TimeUnit.SECONDS)).startsWith(AGENT_SHORT_NAME + "::container-");
         }
+    }
+
+    @Test
+    void sameHandlerConcurrentDuplicateCreatesForTheSameJobReuseOneContainerAndSlot() throws Exception {
+        try (RelayHarness harness = newHarness(2)) {
+            CountDownLatch createStarted = new CountDownLatch(1);
+            CountDownLatch finishCreate = new CountDownLatch(1);
+            when(harness.localSandbox().createSession(any())).thenAnswer(invocation -> {
+                createStarted.countDown();
+                finishCreate.await(5, TimeUnit.SECONDS);
+                return CONTAINER_ID;
+            }).thenReturn(CONTAINER_ID + "-2");
+
+            CompletableFuture<String> firstCreate = CompletableFuture.supplyAsync(() -> harness.client().createSession(sessionSpec("job-1")));
+            assertThat(createStarted.await(2, TimeUnit.SECONDS)).isTrue();
+            CompletableFuture<String> duplicateCreate = CompletableFuture.supplyAsync(() -> harness.client().createSession(sessionSpec("job-1")));
+            finishCreate.countDown();
+
+            String first = firstCreate.get(5, TimeUnit.SECONDS);
+            String duplicate = duplicateCreate.get(5, TimeUnit.SECONDS);
+            String otherJob = harness.client().createSession(sessionSpec("job-2"));
+
+            assertThat(duplicate).isEqualTo(first);
+            assertThat(otherJob).isEqualTo(AGENT_SHORT_NAME + "::" + CONTAINER_ID + "-2");
+            verify(harness.localSandbox(), times(2)).createSession(any());
+        }
+    }
+
+    @Test
+    void sameHandlerDuplicateCreateWithDifferentSessionSpecFails() {
+        when(localSandbox.createSession(any())).thenReturn(CONTAINER_ID);
+        String firstHandle = client.createSession(sessionSpec("job-1", "image-1"));
+
+        assertThatExceptionOfType(LocalCIException.class).isThrownBy(() -> client.createSession(sessionSpec("job-1", "image-2")))
+                .withMessageContaining("different sandbox specification");
+
+        assertThat(firstHandle).isEqualTo(AGENT_SHORT_NAME + "::" + CONTAINER_ID);
+        verify(localSandbox, times(1)).createSession(any());
     }
 
     @Test
@@ -397,7 +460,7 @@ class InteractiveSandboxRelayRoundTripTest {
     }
 
     @Test
-    void duplicateCorrelationId_replaysResponseWithoutRepeatingCreate() throws Exception {
+    void sameHandlerDuplicateCorrelationIdReplaysResponseWithoutRepeatingCreate() throws Exception {
         String correlationId = "corr-dup";
         CountDownLatch firstResponseReceived = new CountDownLatch(1);
         AtomicInteger matchingResponses = new AtomicInteger();
@@ -454,7 +517,163 @@ class InteractiveSandboxRelayRoundTripTest {
     }
 
     @Test
-    void responsePublicationFailureIsRecoveredByReplayingTheCompletedResultWithoutRepeatingCreate() {
+    void sameHandlerCreatesForHashCollidingJobIdsDoNotBlockEachOther() throws Exception {
+        // "Aa" and "BB" intentionally collide under String.hashCode(), but represent unrelated jobs on this handler.
+        assertThat("Aa".hashCode()).isEqualTo("BB".hashCode());
+        CountDownLatch firstCreateStarted = new CountDownLatch(1);
+        CountDownLatch finishFirstCreate = new CountDownLatch(1);
+        CountDownLatch secondCreateStarted = new CountDownLatch(1);
+        when(localSandbox.createSession(any())).thenAnswer(invocation -> {
+            SandboxSessionSpec spec = invocation.getArgument(0);
+            if (spec.context().jobId().equals("Aa")) {
+                firstCreateStarted.countDown();
+                finishFirstCreate.await(5, TimeUnit.SECONDS);
+                return CONTAINER_ID;
+            }
+            secondCreateStarted.countDown();
+            return CONTAINER_ID + "-2";
+        });
+        CompletableFuture<String> first = CompletableFuture.supplyAsync(() -> client.createSession(sessionSpec("Aa")));
+        assertThat(firstCreateStarted.await(2, TimeUnit.SECONDS)).isTrue();
+        CompletableFuture<String> second = CompletableFuture.supplyAsync(() -> client.createSession(sessionSpec("BB")));
+        try {
+            assertThat(secondCreateStarted.await(2, TimeUnit.SECONDS)).isTrue();
+        }
+        finally {
+            finishFirstCreate.countDown();
+        }
+
+        assertThat(first.get(5, TimeUnit.SECONDS)).isEqualTo(AGENT_SHORT_NAME + "::" + CONTAINER_ID);
+        assertThat(second.get(5, TimeUnit.SECONDS)).isEqualTo(AGENT_SHORT_NAME + "::" + CONTAINER_ID + "-2");
+        assertThat((Map<?, ?>) ReflectionTestUtils.getField(handler, "jobCoordinations")).isEmpty();
+    }
+
+    @Test
+    void sameHandlerCreateDestroysAContainerThatFinishesAfterTheRequestDeadline() throws Exception {
+        CountDownLatch createStarted = new CountDownLatch(1);
+        CountDownLatch finishCreate = new CountDownLatch(1);
+        when(localSandbox.createSession(any())).thenAnswer(invocation -> {
+            createStarted.countDown();
+            finishCreate.await(5, TimeUnit.SECONDS);
+            return CONTAINER_ID;
+        });
+        SandboxOpRequest request = SandboxOpRequest.create("corr-late-create", AGENT_SHORT_NAME, sessionSpec()).withDeadline(Duration.ofMillis(100));
+        BlockingQueue<SandboxOpResponse> matchingResponses = responsesFor(request.correlationId());
+
+        requestsTopic.publish(request);
+        assertThat(createStarted.await(2, TimeUnit.SECONDS)).isTrue();
+        await().atMost(Duration.ofSeconds(2)).until(() -> System.currentTimeMillis() > request.deadlineEpochMillis());
+        finishCreate.countDown();
+
+        SandboxOpResponse response = matchingResponses.poll(2, TimeUnit.SECONDS);
+        assertThat(response).isNotNull();
+        assertThat(response.success()).isFalse();
+        assertThat(response.errorMessage()).contains("deadline expired");
+        verify(localSandbox).destroySession(CONTAINER_ID);
+        assertThat(handler.ownedSessionIdsSnapshot()).doesNotContain(CONTAINER_ID);
+    }
+
+    @Test
+    void sameHandlerLateCreateWithFailedRollbackReturnsAndReplaysCreated() throws Exception {
+        String correlationId = "corr-late-create-failed-rollback";
+        CountDownLatch createStarted = new CountDownLatch(1);
+        CountDownLatch finishCreate = new CountDownLatch(1);
+        when(localSandbox.createSession(any())).thenAnswer(invocation -> {
+            createStarted.countDown();
+            finishCreate.await(5, TimeUnit.SECONDS);
+            return CONTAINER_ID;
+        });
+        doThrow(new LocalCIException("rollback failed")).when(localSandbox).destroySession(CONTAINER_ID);
+        when(localSandbox.sessionExists(CONTAINER_ID)).thenReturn(true);
+        SandboxOpRequest request = SandboxOpRequest.create(correlationId, AGENT_SHORT_NAME, sessionSpec()).withDeadline(Duration.ofMillis(100));
+        BlockingQueue<SandboxOpResponse> matchingResponses = responsesFor(correlationId);
+
+        requestsTopic.publish(request);
+        assertThat(createStarted.await(2, TimeUnit.SECONDS)).isTrue();
+        await().atMost(Duration.ofSeconds(2)).until(() -> System.currentTimeMillis() > request.deadlineEpochMillis());
+        finishCreate.countDown();
+
+        SandboxOpResponse firstResponse = matchingResponses.poll(2, TimeUnit.SECONDS);
+        assertThat(firstResponse).isNotNull();
+        assertThat(firstResponse.success()).isTrue();
+        assertThat(firstResponse.sessionId()).isEqualTo(CONTAINER_ID);
+        requestsTopic.publish(request);
+        SandboxOpResponse replay = matchingResponses.poll(2, TimeUnit.SECONDS);
+        assertThat(replay).isEqualTo(firstResponse);
+        verify(localSandbox, times(1)).createSession(any());
+        verify(localSandbox, times(1)).destroySession(CONTAINER_ID);
+        assertThat(handler.ownedSessionIdsSnapshot()).containsExactly(CONTAINER_ID);
+        assertThat(((Semaphore) ReflectionTestUtils.getField(handler, "sandboxSlotPermits")).availablePermits()).isEqualTo(1);
+    }
+
+    @Test
+    void lateCopyOutDoesNotStageAPayloadAfterTheRequestDeadline() throws Exception {
+        when(localSandbox.createSession(any())).thenReturn(CONTAINER_ID);
+        client.createSession(sessionSpec());
+        CountDownLatch copyOutStarted = new CountDownLatch(1);
+        CountDownLatch finishCopyOut = new CountDownLatch(1);
+        byte[] tar = tarWithSingleFile("result.txt", "late output");
+        when(localSandbox.copyOut(CONTAINER_ID, "/workspace/out")).thenAnswer(invocation -> {
+            copyOutStarted.countDown();
+            finishCopyOut.await(5, TimeUnit.SECONDS);
+            return new TarArchiveInputStream(new ByteArrayInputStream(tar));
+        });
+        SandboxOpRequest request = SandboxOpRequest.copyOut("corr-late-copy-out", AGENT_SHORT_NAME, CONTAINER_ID, "/workspace/out").withDeadline(Duration.ofMillis(100));
+        BlockingQueue<SandboxOpResponse> matchingResponses = responsesFor(request.correlationId());
+
+        requestsTopic.publish(request);
+        assertThat(copyOutStarted.await(2, TimeUnit.SECONDS)).isTrue();
+        await().atMost(Duration.ofSeconds(2)).until(() -> System.currentTimeMillis() > request.deadlineEpochMillis());
+        finishCopyOut.countDown();
+
+        SandboxOpResponse response = matchingResponses.poll(2, TimeUnit.SECONDS);
+        assertThat(response).isNotNull();
+        assertThat(response.success()).isFalse();
+        assertThat(response.errorMessage()).contains("deadline expired");
+        assertThat(payloads.get(request.correlationId())).isNull();
+    }
+
+    @Test
+    void copyOutRemovesPayloadWhenDeadlineExpiresDuringDistributedPut() throws Exception {
+        when(localSandbox.createSession(any())).thenReturn(CONTAINER_ID);
+        client.createSession(sessionSpec());
+        CountDownLatch payloadStored = new CountDownLatch(1);
+        CountDownLatch finishPut = new CountDownLatch(1);
+        LocalMap<String, byte[]> expiringDuringPutPayloads = new LocalMap<>() {
+
+            @Override
+            public void put(String key, byte[] value) {
+                super.put(key, value);
+                payloadStored.countDown();
+                try {
+                    finishPut.await(5, TimeUnit.SECONDS);
+                }
+                catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    throw new IllegalStateException(e);
+                }
+            }
+        };
+        when(handlerAccess.getHyperionSandboxPayloads()).thenReturn(expiringDuringPutPayloads);
+        byte[] tar = tarWithSingleFile("result.txt", "late output");
+        when(localSandbox.copyOut(CONTAINER_ID, "/workspace/out")).thenReturn(new TarArchiveInputStream(new ByteArrayInputStream(tar)));
+        SandboxOpRequest request = SandboxOpRequest.copyOut("corr-expired-during-put", AGENT_SHORT_NAME, CONTAINER_ID, "/workspace/out").withDeadline(Duration.ofMillis(100));
+        BlockingQueue<SandboxOpResponse> matchingResponses = responsesFor(request.correlationId());
+
+        requestsTopic.publish(request);
+        assertThat(payloadStored.await(2, TimeUnit.SECONDS)).isTrue();
+        await().atMost(Duration.ofSeconds(2)).until(() -> System.currentTimeMillis() > request.deadlineEpochMillis());
+        finishPut.countDown();
+
+        SandboxOpResponse response = matchingResponses.poll(2, TimeUnit.SECONDS);
+        assertThat(response).isNotNull();
+        assertThat(response.success()).isFalse();
+        assertThat(response.errorMessage()).contains("deadline expired");
+        assertThat(expiringDuringPutPayloads.get(request.correlationId())).isNull();
+    }
+
+    @Test
+    void sameHandlerResponsePublicationFailureIsRecoveredByReplayingTheCompletedResultWithoutRepeatingCreate() {
         LocalTopic<SandboxOpRequest> requests = new LocalTopic<>();
         LocalTopic<SandboxOpResponse> deliveredResponses = new LocalTopic<>();
         @SuppressWarnings("unchecked")
@@ -537,10 +756,10 @@ class InteractiveSandboxRelayRoundTripTest {
     void thirdCreate_atCapacity_isRefused() {
         try (RelayHarness harness = newHarness(2)) {
             when(harness.localSandbox().createSession(any())).thenReturn(CONTAINER_ID, CONTAINER_ID + "-2");
-            assertThat(harness.client().createSession(sessionSpec())).isEqualTo(AGENT_SHORT_NAME + "::" + CONTAINER_ID);
-            assertThat(harness.client().createSession(sessionSpec())).isEqualTo(AGENT_SHORT_NAME + "::" + CONTAINER_ID + "-2");
+            assertThat(harness.client().createSession(sessionSpec("job-1"))).isEqualTo(AGENT_SHORT_NAME + "::" + CONTAINER_ID);
+            assertThat(harness.client().createSession(sessionSpec("job-2"))).isEqualTo(AGENT_SHORT_NAME + "::" + CONTAINER_ID + "-2");
 
-            assertThatExceptionOfType(LocalCIException.class).isThrownBy(() -> harness.client().createSession(sessionSpec()))
+            assertThatExceptionOfType(LocalCIException.class).isThrownBy(() -> harness.client().createSession(sessionSpec("job-3")))
                     .withMessageContaining("generation sandbox slot capacity");
         }
     }
@@ -552,7 +771,7 @@ class InteractiveSandboxRelayRoundTripTest {
             doThrow(new LocalCIException("state store unavailable")).when(harness.informationService()).updateGenerationSandboxSlotState(1, 1);
 
             assertThat(harness.client().createSession(sessionSpec())).isEqualTo(AGENT_SHORT_NAME + "::" + CONTAINER_ID);
-            assertThatExceptionOfType(LocalCIException.class).isThrownBy(() -> harness.client().createSession(sessionSpec()))
+            assertThatExceptionOfType(LocalCIException.class).isThrownBy(() -> harness.client().createSession(sessionSpec("other-job")))
                     .withMessageContaining("generation sandbox slot capacity");
         }
     }
@@ -607,7 +826,7 @@ class InteractiveSandboxRelayRoundTripTest {
 
             String reCreated = harness.client().createSession(sessionSpec());
             assertThat(reCreated).isEqualTo(AGENT_SHORT_NAME + "::" + CONTAINER_ID);
-            assertThatExceptionOfType(LocalCIException.class).isThrownBy(() -> harness.client().createSession(sessionSpec()))
+            assertThatExceptionOfType(LocalCIException.class).isThrownBy(() -> harness.client().createSession(sessionSpec("other-job")))
                     .withMessageContaining("generation sandbox slot capacity");
         }
     }
@@ -655,6 +874,90 @@ class InteractiveSandboxRelayRoundTripTest {
     }
 
     @Test
+    void destroyOfOneJobDoesNotBlockDestroyOfAnotherJob() throws Exception {
+        try (RelayHarness harness = newHarness(2); ExecutorService callers = Executors.newFixedThreadPool(2)) {
+            String otherContainer = "container-2";
+            when(harness.localSandbox().createSession(any())).thenReturn(CONTAINER_ID, otherContainer);
+            String firstHandle = harness.client().createSession(sessionSpec("job-1"));
+            String secondHandle = harness.client().createSession(sessionSpec("job-2"));
+            CountDownLatch firstDestroyStarted = new CountDownLatch(1);
+            CountDownLatch finishFirstDestroy = new CountDownLatch(1);
+            CountDownLatch secondDestroyFinished = new CountDownLatch(1);
+            doAnswer(invocation -> {
+                if (CONTAINER_ID.equals(invocation.getArgument(0))) {
+                    firstDestroyStarted.countDown();
+                    finishFirstDestroy.await();
+                }
+                return null;
+            }).when(harness.localSandbox()).destroySession(anyString());
+
+            CompletableFuture<Void> first = CompletableFuture.runAsync(() -> harness.client().destroySession(firstHandle), callers);
+            CompletableFuture<Void> second = null;
+            boolean secondCompletedWhileFirstWasBlocked;
+            try {
+                assertThat(firstDestroyStarted.await(5, TimeUnit.SECONDS)).isTrue();
+                second = CompletableFuture.runAsync(() -> {
+                    harness.client().destroySession(secondHandle);
+                    secondDestroyFinished.countDown();
+                }, callers);
+                secondCompletedWhileFirstWasBlocked = secondDestroyFinished.await(2, TimeUnit.SECONDS);
+            }
+            finally {
+                finishFirstDestroy.countDown();
+            }
+
+            assertThat(secondCompletedWhileFirstWasBlocked).isTrue();
+            assertThat(first).succeedsWithin(Duration.ofSeconds(5));
+            assertThat(second).isNotNull().succeedsWithin(Duration.ofSeconds(5));
+            verify(harness.localSandbox()).destroySession(CONTAINER_ID);
+            verify(harness.localSandbox()).destroySession(otherContainer);
+        }
+    }
+
+    @Test
+    void createForTheSameJobWaitsUntilDestroyCompletes() throws Exception {
+        AtomicInteger createRequests = new AtomicInteger();
+        CountDownLatch replacementCreatePublished = new CountDownLatch(1);
+        LocalTopic<SandboxOpRequest> observedRequests = new LocalTopic<>() {
+
+            @Override
+            public void publish(SandboxOpRequest request) {
+                super.publish(request);
+                if (request.op() == SandboxOp.CREATE && createRequests.incrementAndGet() == 2) {
+                    replacementCreatePublished.countDown();
+                }
+            }
+        };
+        try (RelayHarness harness = newHarness(1, observedRequests); ExecutorService callers = Executors.newFixedThreadPool(2)) {
+            when(harness.localSandbox().createSession(any())).thenReturn(CONTAINER_ID, "replacement-container");
+            String handle = harness.client().createSession(sessionSpec());
+            CountDownLatch destroyStarted = new CountDownLatch(1);
+            CountDownLatch finishDestroy = new CountDownLatch(1);
+            doAnswer(invocation -> {
+                destroyStarted.countDown();
+                finishDestroy.await();
+                return null;
+            }).when(harness.localSandbox()).destroySession(CONTAINER_ID);
+
+            CompletableFuture<Void> destroy = CompletableFuture.runAsync(() -> harness.client().destroySession(handle), callers);
+            assertThat(destroyStarted.await(5, TimeUnit.SECONDS)).isTrue();
+            CompletableFuture<String> replacement = CompletableFuture.supplyAsync(() -> harness.client().createSession(sessionSpec()), callers);
+            try {
+                assertThat(replacementCreatePublished.await(5, TimeUnit.SECONDS)).isTrue();
+                assertThat(replacement).isNotDone();
+                verify(harness.localSandbox(), times(1)).createSession(any());
+            }
+            finally {
+                finishDestroy.countDown();
+            }
+
+            assertThat(destroy).succeedsWithin(Duration.ofSeconds(5));
+            assertThat(replacement).succeedsWithin(Duration.ofSeconds(5)).isEqualTo(AGENT_SHORT_NAME + "::replacement-container");
+            verify(harness.localSandbox(), times(2)).createSession(any());
+        }
+    }
+
+    @Test
     void failedDestroy_keepsTheSandboxPermitReserved() {
         try (RelayHarness harness = newHarness(1)) {
             when(harness.localSandbox().createSession(any())).thenReturn(CONTAINER_ID);
@@ -663,7 +966,7 @@ class InteractiveSandboxRelayRoundTripTest {
             when(harness.localSandbox().sessionExists(CONTAINER_ID)).thenReturn(true);
 
             assertThatExceptionOfType(LocalCIException.class).isThrownBy(() -> harness.client().destroySession(handle)).withMessageContaining("remove failed");
-            assertThatExceptionOfType(LocalCIException.class).isThrownBy(() -> harness.client().createSession(sessionSpec()))
+            assertThatExceptionOfType(LocalCIException.class).isThrownBy(() -> harness.client().createSession(sessionSpec("other-job")))
                     .withMessageContaining("generation sandbox slot capacity");
         }
     }
@@ -873,15 +1176,18 @@ class InteractiveSandboxRelayRoundTripTest {
 
     private static RelayHarness newHarness(int maxGenerationSandboxSlots, LocalTopic<SandboxOpRequest> requests) {
         LocalTopic<SandboxOpResponse> responses = new LocalTopic<>();
+        LocalMap<String, byte[]> payloads = new LocalMap<>();
 
         DistributedDataAccessService clientAccess = mock(DistributedDataAccessService.class);
         when(clientAccess.getHyperionSandboxRequestsTopic()).thenReturn(requests);
         when(clientAccess.getHyperionSandboxResponsesTopic()).thenReturn(responses);
+        when(clientAccess.getHyperionSandboxPayloads()).thenReturn(payloads);
         when(clientAccess.getBuildAgentInformation()).thenReturn(List.of(idleAgent(AGENT_SHORT_NAME, 0, 4)));
 
         DistributedDataAccessService handlerAccess = mock(DistributedDataAccessService.class);
         when(handlerAccess.getHyperionSandboxRequestsTopic()).thenReturn(requests);
         when(handlerAccess.getHyperionSandboxResponsesTopic()).thenReturn(responses);
+        when(handlerAccess.getHyperionSandboxPayloads()).thenReturn(payloads);
 
         InteractiveSandboxService localSandbox = mock(InteractiveSandboxService.class);
         BuildAgentInformationService informationService = mock(BuildAgentInformationService.class);
@@ -897,7 +1203,15 @@ class InteractiveSandboxRelayRoundTripTest {
     }
 
     private static SandboxSessionSpec sessionSpec() {
-        return new SandboxSessionSpec("some-image", null, sessionContext());
+        return sessionSpec("job");
+    }
+
+    private static SandboxSessionSpec sessionSpec(String jobId) {
+        return sessionSpec(jobId, "some-image");
+    }
+
+    private static SandboxSessionSpec sessionSpec(String jobId, String image) {
+        return new SandboxSessionSpec(image, null, new SandboxSessionContext(jobId, 1L, "Sorting exercise", 2L, "instructor", "GENERATE"));
     }
 
     private static SharedQueueProcessingService availableQueueProcessingService() {
@@ -917,6 +1231,16 @@ class InteractiveSandboxRelayRoundTripTest {
     private String createOwnedHandle() {
         when(localSandbox.createSession(any())).thenReturn(CONTAINER_ID);
         return client.createSession(sessionSpec());
+    }
+
+    private BlockingQueue<SandboxOpResponse> responsesFor(String correlationId) {
+        BlockingQueue<SandboxOpResponse> responses = new LinkedBlockingQueue<>();
+        responsesTopic.addMessageListener(response -> {
+            if (correlationId.equals(response.correlationId())) {
+                responses.add(response);
+            }
+        });
+        return responses;
     }
 
     private static BuildAgentInformation idleAgent(String name, int currentJobs, int maxJobs) {

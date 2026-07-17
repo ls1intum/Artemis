@@ -164,6 +164,120 @@ describe('HyperionGenerationActivityComponent', () => {
         expect(fixture.componentInstance.statusLoading()).toBe(true);
     });
 
+    it('keeps known authoring state available after one transient background status failure', () => {
+        vi.useFakeTimers();
+        const fixture = createWith(null);
+        service.getStatus = vi
+            .fn()
+            .mockReturnValueOnce(throwError(() => new HttpErrorResponse({ status: 503 })))
+            .mockReturnValueOnce(of(new HttpResponse<HyperionGenerationStatus>({ body: null })));
+
+        vi.advanceTimersByTime(15_000);
+
+        expect(service.getStatus).toHaveBeenCalledOnce();
+        expect(fixture.componentInstance.statusLoadFailed()).toBe(false);
+        expect(fixture.componentInstance.idle()).toBe(true);
+
+        vi.advanceTimersByTime(15_000);
+
+        expect(service.getStatus).toHaveBeenCalledTimes(2);
+        expect(fixture.componentInstance.statusLoadFailed()).toBe(false);
+        expect(fixture.componentInstance.idle()).toBe(true);
+    });
+
+    it('fails closed after repeated background status failures make the last known idle state stale', () => {
+        vi.useFakeTimers();
+        const fixture = createWith(null);
+        service.getStatus = vi.fn(() => throwError(() => new HttpErrorResponse({ status: 503 })));
+
+        vi.advanceTimersByTime(45_000);
+
+        expect(service.getStatus).toHaveBeenCalledTimes(3);
+        expect(fixture.componentInstance.statusLoadFailed()).toBe(true);
+    });
+
+    it('retries an authoritative status request that fails after live progress arrives', () => {
+        vi.useFakeTimers();
+        createWith({ jobId: 'j1', running: true, events: [], fileSnapshots: [] });
+        const pendingStatus = new Subject<HttpResponse<HyperionGenerationStatus>>();
+        service.getStatus = vi.fn().mockReturnValueOnce(pendingStatus).mockReturnValue(EMPTY);
+
+        vi.advanceTimersByTime(5_000);
+        expect(service.getStatus).toHaveBeenCalledOnce();
+
+        service.stream$.next({ type: 'PROGRESS', message: 'Still running' });
+        pendingStatus.error(new Error('late status failure'));
+        vi.advanceTimersByTime(5_000);
+
+        expect(service.getStatus).toHaveBeenCalledTimes(2);
+    });
+
+    it('does not let a terminal stream event cancel an in-flight authoritative status request', () => {
+        vi.useFakeTimers();
+        createWith({ jobId: 'j1', running: true, events: [], fileSnapshots: [] });
+        const pendingStatus = new Subject<HttpResponse<HyperionGenerationStatus>>();
+        service.getStatus = vi.fn().mockReturnValueOnce(pendingStatus).mockReturnValue(EMPTY);
+
+        vi.advanceTimersByTime(5_000);
+        expect(pendingStatus.observed).toBe(true);
+
+        service.stream$.next({ type: 'DONE', completionStatus: 'SUCCESS', liveExerciseChanged: true });
+
+        expect(pendingStatus.observed).toBe(true);
+    });
+
+    it('does not let live progress cancel a scheduled authoritative status retry', () => {
+        vi.useFakeTimers();
+        const fixture = createWith(null);
+        service.getStatus = vi.fn(() => throwError(() => new Error('authoritative status unavailable')));
+
+        fixture.componentInstance.attachToJob('j1', 'ADAPT');
+        expect(service.getStatus).toHaveBeenCalledOnce();
+
+        service.stream$.next({ type: 'PROGRESS', message: 'Still running' });
+        vi.advanceTimersByTime(1_000);
+
+        expect(service.getStatus).toHaveBeenCalledTimes(2);
+    });
+
+    it('keeps polling after progress without globally locking known ownership', () => {
+        vi.useFakeTimers();
+        const runningStatus = normalizeStatus({ jobId: 'j1', running: true, events: [], fileSnapshots: [] });
+        const fixture = createWith(runningStatus);
+        service.getStatus = vi
+            .fn()
+            .mockReturnValueOnce(throwError(() => new Error('background poll failed')))
+            .mockReturnValueOnce(of(new HttpResponse({ body: runningStatus })));
+
+        vi.advanceTimersByTime(5_000);
+        expect(fixture.componentInstance.statusLoadFailed()).toBe(false);
+
+        service.stream$.next({ type: 'PROGRESS', message: 'Still running' });
+        expect(fixture.componentInstance.statusLoadFailed()).toBe(false);
+
+        vi.advanceTimersByTime(5_000);
+        expect(service.getStatus).toHaveBeenCalledTimes(2);
+        expect(fixture.componentInstance.statusLoadFailed()).toBe(false);
+    });
+
+    it('does not globally lock a caller-owned run after status retries are exhausted', () => {
+        vi.useFakeTimers();
+        const fixture = createWith(null);
+        service.getStatus = vi.fn(() => throwError(() => new Error('authoritative status unavailable')));
+
+        fixture.componentInstance.attachToJob('j1', 'ADAPT');
+        expect(fixture.componentInstance.statusLoadFailed()).toBe(false);
+
+        vi.advanceTimersByTime(1_000);
+        expect(fixture.componentInstance.statusLoadFailed()).toBe(false);
+
+        vi.advanceTimersByTime(2_000);
+        expect(fixture.componentInstance.statusLoadFailed()).toBe(false);
+
+        service.stream$.next({ type: 'PROGRESS', message: 'Still running' });
+        expect(fixture.componentInstance.statusLoadFailed()).toBe(false);
+    });
+
     it('releases the manual editor lock when retained-status requests never respond', () => {
         vi.useFakeTimers();
         service.getStatus = vi.fn(() => new Subject<HttpResponse<HyperionGenerationStatus>>());
@@ -176,13 +290,13 @@ describe('HyperionGenerationActivityComponent', () => {
         expect(fixture.componentInstance.statusLoadFailed()).toBe(true);
     });
 
-    it('clears a status-load failure when the live stream succeeds', () => {
+    it('does not globally lock a caller-owned terminal event when status remains unavailable', () => {
         vi.useFakeTimers();
         const fixture = createWith(null);
         service.getStatus = vi.fn(() => throwError(() => new Error('temporary failure')));
         fixture.componentInstance.attachToJob('j1', 'ADAPT');
         vi.advanceTimersByTime(3_000);
-        expect(fixture.componentInstance.statusLoadFailed()).toBe(true);
+        expect(fixture.componentInstance.statusLoadFailed()).toBe(false);
 
         service.stream$.next({
             type: 'DONE',
@@ -194,7 +308,7 @@ describe('HyperionGenerationActivityComponent', () => {
         expect(fixture.componentInstance.statusLoading()).toBe(false);
     });
 
-    it('ignores a late status error after a terminal live event', () => {
+    it('keeps caller-owned terminal state usable when its authoritative refresh fails', () => {
         const fixture = createWith(null);
         const pendingStatus = new Subject<HttpResponse<HyperionGenerationStatus>>();
         service.getStatus = vi.fn(() => pendingStatus);
@@ -209,6 +323,32 @@ describe('HyperionGenerationActivityComponent', () => {
 
         expect(fixture.componentInstance.statusLoadFailed()).toBe(false);
         expect(fixture.componentInstance.running()).toBe(false);
+    });
+
+    it('clears any status failure when a matched terminal refresh succeeds', () => {
+        const fixture = createWith({ jobId: 'j1', mode: 'ADAPT', running: true, events: [], fileSnapshots: [] });
+        const terminalStatus = new Subject<HttpResponse<HyperionGenerationStatus>>();
+        const revertStatus = new Subject<HttpResponse<HyperionGenerationStatus>>();
+        service.getStatus = vi.fn().mockReturnValueOnce(terminalStatus).mockReturnValueOnce(revertStatus);
+
+        service.stream$.next({ type: 'DONE', completionStatus: 'SUCCESS', liveExerciseChanged: true });
+        terminalStatus.error(new Error('terminal reconciliation failed'));
+        fixture.componentInstance.statusLoadFailed.set(true);
+
+        revertStatus.next(
+            new HttpResponse({
+                body: normalizeStatus({
+                    jobId: 'j1',
+                    mode: 'ADAPT',
+                    running: false,
+                    events: [{ type: 'DONE', completionStatus: 'SUCCESS', liveExerciseChanged: true }],
+                    fileSnapshots: [],
+                    revertAvailable: true,
+                }),
+            }),
+        );
+
+        expect(fixture.componentInstance.statusLoadFailed()).toBe(false);
     });
 
     it('does not update status after the component is destroyed', () => {
@@ -334,6 +474,17 @@ describe('HyperionGenerationActivityComponent', () => {
         expect(status.textContent).toContain('generationActivity.persistence.saved');
     });
 
+    it('does not allow undo while the editor is applying the completed generation', () => {
+        const fixture = createWith({ jobId: 'j1', running: false, revertAvailable: true, events: [{ type: 'DONE', liveExerciseChanged: true }], fileSnapshots: [] });
+
+        expect(fixture.componentInstance.canRevert()).toBe(true);
+        fixture.componentRef.setInput('refreshingEditor', true);
+        fixture.detectChanges();
+
+        expect(fixture.componentInstance.canRevert()).toBe(false);
+        expect(fixture.nativeElement.querySelector('[data-testid="hyperion-generation-revert"]')).toBeNull();
+    });
+
     it('announces when the saved exercise could not be loaded into the editor', () => {
         const fixture = createWith({ jobId: 'j1', running: false, events: [{ type: 'DONE', liveExerciseChanged: true }], fileSnapshots: [] });
         const refreshRequested = vi.fn();
@@ -348,6 +499,16 @@ describe('HyperionGenerationActivityComponent', () => {
 
         fixture.nativeElement.querySelector('[data-testid="hyperion-editor-refresh-retry"] button').click();
         expect(refreshRequested).toHaveBeenCalledOnce();
+    });
+
+    it('keeps refresh recovery visible after retained activity has been cleared', () => {
+        const fixture = createWith(null);
+        fixture.componentRef.setInput('editorRefreshFailed', true);
+        fixture.detectChanges();
+
+        expect(fixture.componentInstance.idle()).toBe(false);
+        expect(fixture.nativeElement.querySelector('[data-testid="hyperion-editor-refresh-retry"]')).not.toBeNull();
+        expect(fixture.nativeElement.querySelector('[data-testid="hyperion-generation-empty"]')).toBeNull();
     });
 
     it('gives same-path files unique repository-qualified accessible names', () => {
@@ -886,19 +1047,27 @@ describe('HyperionGenerationActivityComponent', () => {
         expect(service.cancelCalls).toEqual([]);
     });
 
-    it('requests an editor refresh before clearing a sanitized run that disappears', () => {
+    it('uses a sanitized terminal outcome instead of inferring that another instructor changed the exercise', () => {
         vi.useFakeTimers();
         const fixture = createWith({ jobId: 'other-job', mode: 'GENERATE', running: true, ownedByCaller: false, events: [], fileSnapshots: [] });
-        const completed = vi.fn(() => expect(fixture.componentInstance.running()).toBe(true));
+        const completed = vi.fn();
         fixture.componentInstance.generationCompleted.subscribe(completed);
         expect(fixture.componentInstance.running()).toBe(true);
 
-        service.status = null;
+        service.status = {
+            jobId: 'other-job',
+            mode: 'GENERATE',
+            running: false,
+            ownedByCaller: false,
+            events: [{ type: 'DONE', completionStatus: 'SUCCESS', liveExerciseChanged: false }],
+            fileSnapshots: [],
+        };
         vi.advanceTimersByTime(5_000);
 
-        expect(completed).toHaveBeenCalledExactlyOnceWith({ mode: 'GENERATE', liveExerciseChanged: true });
+        expect(completed).toHaveBeenCalledOnce();
+        expect(completed.mock.calls[0][0]).toMatchObject({ mode: 'GENERATE', completionStatus: 'SUCCESS', liveExerciseChanged: false });
         expect(fixture.componentInstance.running()).toBe(false);
-        expect(fixture.componentInstance.jobId()).toBeUndefined();
+        expect(fixture.componentInstance.jobId()).toBe('other-job');
     });
 
     it('treats missing ownership fields as non-owned and non-cancellable', () => {
@@ -922,7 +1091,7 @@ describe('HyperionGenerationActivityComponent', () => {
         expect(service.cancelCalls).toEqual([]);
     });
 
-    it('subscribes before a second authoritative status read closes the reload race', () => {
+    it('queues the authoritative status read until an asynchronous initial request completes', async () => {
         const running = normalizeStatus({ jobId: 'j1', mode: 'GENERATE', running: true, events: [], fileSnapshots: [] });
         const done = normalizeStatus({
             jobId: 'j1',
@@ -931,13 +1100,17 @@ describe('HyperionGenerationActivityComponent', () => {
             events: [{ type: 'DONE', completionStatus: 'SUCCESS', liveExerciseChanged: true }],
             fileSnapshots: [],
         });
+        const initialStatus = new Subject<HttpResponse<HyperionGenerationStatus>>();
         service.getStatus = vi
             .fn()
-            .mockReturnValueOnce(of(new HttpResponse({ body: running })))
+            .mockReturnValueOnce(initialStatus)
             .mockReturnValueOnce(of(new HttpResponse({ body: done })));
         const subscribeToStream = vi.spyOn(service, 'subscribeToStream');
 
         const fixture = createWith(null);
+        initialStatus.next(new HttpResponse({ body: running }));
+        initialStatus.complete();
+        await Promise.resolve();
 
         expect(subscribeToStream).toHaveBeenCalledOnce();
         expect(service.getStatus).toHaveBeenCalledTimes(2);

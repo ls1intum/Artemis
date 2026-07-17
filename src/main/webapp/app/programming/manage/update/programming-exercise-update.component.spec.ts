@@ -516,6 +516,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
         it('should only show for java when hyperion is enabled', () => {
             const entity = new ProgrammingExercise(course, undefined);
             entity.programmingLanguage = ProgrammingLanguage.JAVA;
+            entity.projectType = ProjectType.PLAIN_MAVEN;
 
             comp.programmingExercise = entity;
             comp.hyperionEnabled = true;
@@ -528,6 +529,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
 
             const kotlinExercise = new ProgrammingExercise(course, undefined);
             kotlinExercise.programmingLanguage = ProgrammingLanguage.KOTLIN;
+            kotlinExercise.projectType = ProjectType.PLAIN_MAVEN;
             comp.programmingExercise = kotlinExercise;
 
             expect(comp.showGenerateWithAi()).toBe(false);
@@ -536,6 +538,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
         it('should still show when id is null', () => {
             const entity = new ProgrammingExercise(course, undefined);
             entity.programmingLanguage = ProgrammingLanguage.JAVA;
+            entity.projectType = ProjectType.PLAIN_MAVEN;
             entity.id = null as unknown as number;
 
             comp.programmingExercise = entity;

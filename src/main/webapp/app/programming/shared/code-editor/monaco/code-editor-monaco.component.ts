@@ -167,7 +167,7 @@ export class CodeEditorMonacoComponent implements OnDestroy {
     private pendingLoadFileName?: string;
     private fileSyncReadySubscription?: Subscription;
     private fileSyncStateReplacedSubscription?: Subscription;
-    private suppressNextDirtySignal = new Set<string>();
+    private dirtySignalContentToSuppress = new Map<string, string>();
     private dirtySignalSuppressedDuringInitialSync = new Set<string>();
 
     // Consolidated snapshot of previous tracked-input values for the cascade effect.
@@ -250,7 +250,7 @@ export class CodeEditorMonacoComponent implements OnDestroy {
                 return;
             }
             this.fileSyncReadySubscription = syncService.initialSyncFinalized$.subscribe((event) => this.onFileInitialSyncFinalized(event));
-            this.fileSyncStateReplacedSubscription = syncService.stateReplaced$.subscribe(({ filePath }) => this.onFileSyncStateReplaced(filePath));
+            this.fileSyncStateReplacedSubscription = syncService.stateReplaced$.subscribe(({ filePath, text }) => this.onFileSyncStateReplaced(filePath, text.toJSON()));
         });
 
         effect(() => {
@@ -447,7 +447,7 @@ export class CodeEditorMonacoComponent implements OnDestroy {
                     },
                 });
 
-                if (!this.shouldSuppressDirtySignal(fileName)) {
+                if (!this.shouldSuppressDirtySignal(fileName, text)) {
                     this.onFileContentChange.emit({ fileName, text });
                 }
             }
@@ -691,11 +691,11 @@ export class CodeEditorMonacoComponent implements OnDestroy {
      * Handles late leader replacement for an already opened file.
      *
      * The replacement updates model content via the binding and must not be interpreted as a
-     * local user edit, so the next dirty signal for this file is suppressed.
+     * local user edit, so only the matching dirty signal for this file is suppressed.
      */
-    private onFileSyncStateReplaced(filePath: string): void {
+    private onFileSyncStateReplaced(filePath: string, replacementContent: string): void {
         if (this.selectedFile() === filePath) {
-            this.suppressNextDirtySignal.add(filePath);
+            this.dirtySignalContentToSuppress.set(filePath, replacementContent.replace(/\r\n/g, '\n'));
             this.dirtySignalSuppressedDuringInitialSync.delete(filePath);
             this.selectedFileAwaitingInitialSync.set(false);
         }
@@ -728,7 +728,7 @@ export class CodeEditorMonacoComponent implements OnDestroy {
         // post-finalize change so hydration does not mark the file as locally dirty.
         if (isSelectedFile && this.dirtySignalSuppressedDuringInitialSync.has(filePath)) {
             this.dirtySignalSuppressedDuringInitialSync.delete(filePath);
-            this.suppressNextDirtySignal.add(filePath);
+            this.dirtySignalContentToSuppress.set(filePath, finalContent.replace(/\r\n/g, '\n'));
         }
         if (isSelectedFile) {
             this.selectedFileAwaitingInitialSync.set(false);
@@ -786,13 +786,16 @@ export class CodeEditorMonacoComponent implements OnDestroy {
      * Decides whether the current text-change event should be treated as local dirty input.
      *
      * Suppresses:
-     * - the next change after state replacement/finalize handoff,
+     * - the matching change after state replacement/finalize handoff,
      * - any change while initial sync is still pending.
      */
-    private shouldSuppressDirtySignal(filePath: string): boolean {
-        if (this.suppressNextDirtySignal.has(filePath)) {
-            this.suppressNextDirtySignal.delete(filePath);
-            return true;
+    private shouldSuppressDirtySignal(filePath: string, content: string): boolean {
+        const contentToSuppress = this.dirtySignalContentToSuppress.get(filePath);
+        if (contentToSuppress !== undefined) {
+            this.dirtySignalContentToSuppress.delete(filePath);
+            if (contentToSuppress === content) {
+                return true;
+            }
         }
         const syncService = this.fileSyncService();
         if (!syncService?.isInitialized() || !syncService.isFileOpen(filePath)) {

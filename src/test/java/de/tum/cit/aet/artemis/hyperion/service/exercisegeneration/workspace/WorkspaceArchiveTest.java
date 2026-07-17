@@ -185,13 +185,16 @@ class WorkspaceArchiveTest {
 
     @Test
     void readTar_rejectsGitMetadata() throws Exception {
-        Map<String, String> files = new LinkedHashMap<>();
-        files.put("A.java", "a");
-        files.put(".git/config", "should be skipped");
-
-        try (TarArchiveInputStream tar = new TarArchiveInputStream(WorkspaceArchive.buildWorkspaceTarStream(files, Map.of()))) {
+        try (TarArchiveInputStream tar = new TarArchiveInputStream(
+                packTar(Map.of("A.java", "a".getBytes(StandardCharsets.UTF_8), ".git/config", "should be skipped".getBytes(StandardCharsets.UTF_8))))) {
             assertThatExceptionOfType(WorkspaceArchive.RejectedWorkspaceEntryException.class).isThrownBy(() -> WorkspaceArchive.readTar(tar, ""));
         }
+    }
+
+    @Test
+    void buildWorkspaceTarRejectsASeedPathOutsideTheWorkspace() {
+        assertThatExceptionOfType(WorkspaceArchive.RejectedWorkspaceEntryException.class)
+                .isThrownBy(() -> WorkspaceArchive.buildWorkspaceTarStream(Map.of("../opt/hyperion/verify.sh", "tampered"), Map.of()));
     }
 
     @Test

@@ -16,6 +16,8 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.function.Consumer;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import jakarta.annotation.PostConstruct;
@@ -128,6 +130,8 @@ public class BuildAgentDockerService {
     private static final String AMD64_ARCHITECTURE = "amd64";
 
     private static final String ARM64_ARCHITECTURE = "arm64";
+
+    private static final Pattern IMMUTABLE_IMAGE_ID = Pattern.compile("sha256:[0-9a-fA-F]{64}");
 
     public BuildAgentDockerService(BuildAgentConfiguration buildAgentConfiguration, DistributedDataAccessService distributedDataAccessService,
             BuildJobContainerService buildJobContainerService, @Qualifier("taskScheduler") TaskScheduler taskScheduler) {
@@ -263,6 +267,29 @@ public class BuildAgentDockerService {
      */
     public void pullDockerImage(BuildJobQueueItem buildJob, BuildLogsMap buildLogsMap) {
         final String imageName = buildJob.buildConfig().dockerImage();
+        ensureDockerImageAvailable(imageName, message -> buildLogsMap.appendBuildLogEntry(buildJob.id(), message));
+    }
+
+    /**
+     * Makes an image available on this build agent and resolves it to the immutable local image ID used by Docker CREATE.
+     *
+     * @param imageName configured image reference
+     * @return the immutable local Docker image ID
+     */
+    public String ensureDockerImageAvailable(String imageName) {
+        if (imageName == null || imageName.isBlank()) {
+            throw new LocalCIException("Docker image name must not be blank.");
+        }
+        InspectImageResponse image = ensureDockerImageAvailable(imageName, ignored -> {
+        });
+        String imageId = image.getId();
+        if (imageId == null || !IMMUTABLE_IMAGE_ID.matcher(imageId).matches()) {
+            throw new LocalCIException("Docker did not return an immutable image ID for " + imageName + ".");
+        }
+        return imageId;
+    }
+
+    private InspectImageResponse ensureDockerImageAvailable(String imageName, Consumer<String> buildLog) {
         if (dockerClientNotAvailable("Cannot pull Docker image.")) {
             throw new LocalCIException("Docker is not available. Cannot pull image " + imageName);
         }
@@ -271,9 +298,10 @@ public class BuildAgentDockerService {
             // First check if the image is already available
             String msg = "~~~~~~~~~~~~~~~~~~~~ Inspecting docker image " + imageName + " ~~~~~~~~~~~~~~~~~~~~";
             log.info(msg);
-            buildLogsMap.appendBuildLogEntry(buildJob.id(), msg);
+            buildLog.accept(msg);
             var inspectImageResponse = inspectImageCommand.exec();
-            checkImageArchitecture(imageName, inspectImageResponse, buildJob, buildLogsMap);
+            checkImageArchitecture(imageName, inspectImageResponse, buildLog);
+            return inspectImageResponse;
         }
         catch (NotFoundException | BadRequestException e) {
             lock.lock();
@@ -282,9 +310,12 @@ public class BuildAgentDockerService {
             try {
                 String msg = "~~~~~~~~~~~~~~~~~~~~ Inspecting docker image " + imageName + " again with a lock due to error " + e.getMessage() + " ~~~~~~~~~~~~~~~~~~~~";
                 log.info(msg);
-                buildLogsMap.appendBuildLogEntry(buildJob.id(), msg);
-                var inspectImageResponse = dockerClient.inspectImageCmd(imageName).exec();
-                checkImageArchitecture(imageName, inspectImageResponse, buildJob, buildLogsMap);
+                buildLog.accept(msg);
+                try (var inspectImageCommand = dockerClient.inspectImageCmd(imageName)) {
+                    var inspectImageResponse = inspectImageCommand.exec();
+                    checkImageArchitecture(imageName, inspectImageResponse, buildLog);
+                    return inspectImageResponse;
+                }
             }
             catch (NotFoundException | BadRequestException e2) {
                 checkUsableDiskSpaceThenCleanUp();
@@ -292,8 +323,9 @@ public class BuildAgentDockerService {
                 long start = System.nanoTime();
                 String msg = "~~~~~~~~~~~~~~~~~~~~ Pulling docker image " + imageName + " with a lock after error " + e.getMessage() + " ~~~~~~~~~~~~~~~~~~~~";
                 log.info(msg);
-                buildLogsMap.appendBuildLogEntry(buildJob.id(), msg);
+                buildLog.accept(msg);
 
+                InspectImageResponse pulledImage;
                 try {
                     // Only pull the image if the inspect command failed
                     var command = dockerClient.pullImageCmd(imageName).withPlatform(imageArchitecture);
@@ -301,10 +333,13 @@ public class BuildAgentDockerService {
                     exec.awaitCompletion();
 
                     // Check if the image is compatible with the current architecture
-                    var inspectImageResponse = dockerClient.inspectImageCmd(imageName).exec();
-                    checkImageArchitecture(imageName, inspectImageResponse, buildJob, buildLogsMap);
+                    try (var inspectImageCommand = dockerClient.inspectImageCmd(imageName)) {
+                        pulledImage = inspectImageCommand.exec();
+                        checkImageArchitecture(imageName, pulledImage, buildLog);
+                    }
                 }
                 catch (InterruptedException ie) {
+                    Thread.currentThread().interrupt();
                     throw new LocalCIException("Interrupted while pulling docker image " + imageName, ie);
                 }
                 catch (Exception ex) {
@@ -312,7 +347,7 @@ public class BuildAgentDockerService {
                     if (isMacOS() && ARM64_ARCHITECTURE.equals(imageArchitecture) && isNoMatchingManifestError(ex)) {
                         String fallbackMsg = "~~~~~~~~~~~~~~~~~~~~ No ARM image available for " + imageName + ", falling back to amd64 (Rosetta emulation) ~~~~~~~~~~~~~~~~~~~~";
                         log.warn(fallbackMsg);
-                        buildLogsMap.appendBuildLogEntry(buildJob.id(), fallbackMsg);
+                        buildLog.accept(fallbackMsg);
 
                         try {
                             var fallbackCommand = dockerClient.pullImageCmd(imageName).withPlatform(AMD64_ARCHITECTURE);
@@ -320,10 +355,13 @@ public class BuildAgentDockerService {
                             fallbackExec.awaitCompletion();
 
                             // Verify the fallback image was pulled successfully
-                            var inspectImageResponse = dockerClient.inspectImageCmd(imageName).exec();
-                            checkImageArchitecture(imageName, inspectImageResponse, buildJob, buildLogsMap);
+                            try (var inspectImageCommand = dockerClient.inspectImageCmd(imageName)) {
+                                pulledImage = inspectImageCommand.exec();
+                                checkImageArchitecture(imageName, pulledImage, buildLog);
+                            }
                         }
                         catch (InterruptedException ie) {
+                            Thread.currentThread().interrupt();
                             throw new LocalCIException("Interrupted while pulling docker image " + imageName + " with amd64 fallback", ie);
                         }
                         catch (Exception fallbackEx) {
@@ -336,7 +374,8 @@ public class BuildAgentDockerService {
                 }
                 String msg2 = "~~~~~~~~~~~~~~~~~~~~ Pulling docker image " + imageName + " done after " + TimeLogUtil.formatDurationFrom(start) + " ~~~~~~~~~~~~~~~~~~~~";
                 log.info(msg2);
-                buildLogsMap.appendBuildLogEntry(buildJob.id(), msg2);
+                buildLog.accept(msg2);
+                return pulledImage;
             }
             catch (Exception ex) {
                 if (DockerUtil.isDockerNotAvailable(ex)) {
@@ -357,10 +396,9 @@ public class BuildAgentDockerService {
      *
      * @param imageName            the name of the Docker image
      * @param inspectImageResponse the response from the inspect image command
-     * @param buildJob             the build job that includes the configuration with the name of the Docker image
-     * @param buildLogsMap         a map for appending log entries related to the build process
+     * @param buildLog             destination for build-visible log messages
      */
-    private void checkImageArchitecture(String imageName, InspectImageResponse inspectImageResponse, BuildJobQueueItem buildJob, BuildLogsMap buildLogsMap) {
+    private void checkImageArchitecture(String imageName, InspectImageResponse inspectImageResponse, Consumer<String> buildLog) {
         String actualArch = inspectImageResponse.getArch();
         // Skip check if the image doesn't report its architecture (empty or null)
         // This can happen with some multi-arch images or when architecture metadata is missing
@@ -378,7 +416,7 @@ public class BuildAgentDockerService {
         if (!imageArchitecture.equals(actualArch)) {
             var msg = "Docker image " + imageName + " is not compatible with the current architecture. Needed 'linux/" + imageArchitecture + "', but got '" + actualArch + "'";
             log.error(msg);
-            buildLogsMap.appendBuildLogEntry(buildJob.id(), msg);
+            buildLog.accept(msg);
             throw new LocalCIException(msg);
         }
     }

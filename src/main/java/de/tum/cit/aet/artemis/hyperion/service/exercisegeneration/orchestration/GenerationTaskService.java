@@ -175,7 +175,7 @@ public class GenerationTaskService {
                             break;
                         }
                         emitter.progress("The agent stopped before verification. Preserving its partial work for review.");
-                        recoverOrReportPartial(exercise, user, exerciseId, jobId, outcome, null, emitter);
+                        recoverOrReportPartial(exercise, user, exerciseId, jobId, outcome, null, emitter, deadlineExceeded, heartbeatLost);
                     }
                     // A budget-exhausted run is still verified: it may have produced an acceptable exercise before the turn cap, or a recoverable near-miss.
                     case COMPLETED, BUDGET_EXHAUSTED -> {
@@ -196,22 +196,37 @@ public class GenerationTaskService {
                                 String originalProblemStatement = event.expectedProblemStatement();
                                 String originalTitle = event.expectedTitle();
                                 persistResult = persistenceService.persist(exerciseToPersist, user, outcome, originalProblemStatement, originalTitle, jobId,
-                                        () -> !deadlineExceeded.get() && !heartbeatLost.get() && jobService.isOwnedActiveJob(exerciseId, jobId)
-                                                && isStillDraftWithoutParticipations(exerciseId));
+                                        () -> canContinue(exerciseId, jobId, deadlineExceeded, heartbeatLost) && isStillDraftWithoutParticipations(exerciseId));
                             }
                             catch (GenerationIncompleteException e) {
                                 log.error("Persisting verified generated exercise {} left the save incomplete", exerciseId, e);
-                                preserveVerifiedCandidateAfterSaveFailure(exercise, user, exerciseId, jobId, outcome, verdict, emitter, true);
+                                if (!canContinue(exerciseId, jobId, deadlineExceeded, heartbeatLost)) {
+                                    reportUncertainLiveSave(verdict, emitter);
+                                    return;
+                                }
+                                preserveVerifiedCandidateAfterSaveFailure(exercise, user, exerciseId, jobId, outcome, verdict, emitter, true, deadlineExceeded, heartbeatLost);
                                 return;
                             }
                             catch (RuntimeException e) {
                                 log.error("Failed to persist generated exercise {}", exerciseId, e);
-                                preserveVerifiedCandidateAfterSaveFailure(exercise, user, exerciseId, jobId, outcome, verdict, emitter, false);
+                                if (!canContinue(exerciseId, jobId, deadlineExceeded, heartbeatLost)) {
+                                    reportContinuationFailure(emitter);
+                                    return;
+                                }
+                                preserveVerifiedCandidateAfterSaveFailure(exercise, user, exerciseId, jobId, outcome, verdict, emitter, false, deadlineExceeded, heartbeatLost);
+                                return;
+                            }
+                            if (!canContinue(exerciseId, jobId, deadlineExceeded, heartbeatLost)) {
+                                reportUncertainLiveSave(verdict, emitter);
                                 return;
                             }
                             boolean revertUnavailable = !generationRevertService.recordBaseline(exerciseToPersist, jobId, event.mode(), persistResult.prePersistHeads(),
                                     persistResult.postPersistHeads(), event.expectedProblemStatement(), event.expectedTitle(), persistResult.persistedProblemStatement(),
                                     persistResult.persistedTitle(), persistResult.repositoryBranch());
+                            if (!canContinue(exerciseId, jobId, deadlineExceeded, heartbeatLost)) {
+                                reportUncertainLiveSave(verdict, emitter);
+                                return;
+                            }
                             int advisoryCount = recoveryService.surfaceAdvisoryFindings(exerciseToPersist, user, outcome.specFidelityReport());
                             String advisory = advisoryCount == 1 ? " 1 review note was added for your attention."
                                     : advisoryCount > 1 ? " " + advisoryCount + " review notes were added for your attention." : "";
@@ -220,10 +235,14 @@ public class GenerationTaskService {
                             if (revertUnavailable) {
                                 savedMessage += " Automatic revert is unavailable for this run.";
                             }
+                            if (!canContinue(exerciseId, jobId, deadlineExceeded, heartbeatLost)) {
+                                reportUncertainLiveSave(verdict, emitter);
+                                return;
+                            }
                             emitter.milestone(ExerciseGenerationEventDTO.done(savedMessage + advisory, ExerciseGenerationEventDTO.CompletionStatus.SUCCESS, verdict, true));
                         }
                         else {
-                            recoverOrReportPartial(exercise, user, exerciseId, jobId, outcome, verdict, emitter);
+                            recoverOrReportPartial(exercise, user, exerciseId, jobId, outcome, verdict, emitter, deadlineExceeded, heartbeatLost);
                         }
                     }
                 }
@@ -241,9 +260,10 @@ public class GenerationTaskService {
     }
 
     private void preserveVerifiedCandidateAfterSaveFailure(ProgrammingExercise exercise, User user, long exerciseId, String jobId, GenerationOutcome outcome,
-            ExerciseGenerationVerdictDTO verdict, GenerationProgressEmitter emitter, boolean liveStateMayBePartial) {
+            ExerciseGenerationVerdictDTO verdict, GenerationProgressEmitter emitter, boolean liveStateMayBePartial, AtomicBoolean deadlineExceeded, AtomicBoolean heartbeatLost) {
         try {
-            GenerationRecoveryService.RecoveryResult result = recoveryService.recover(exercise, user, outcome, jobId, () -> jobService.isOwnedActiveJob(exerciseId, jobId));
+            GenerationRecoveryService.RecoveryResult result = recoveryService.recover(exercise, user, outcome, jobId,
+                    () -> canContinue(exerciseId, jobId, deadlineExceeded, heartbeatLost));
             String repositories = result.savedRepositories().stream().sorted().map(RepositoryType::getName).collect(Collectors.joining(", "));
             boolean statementChanged = problemStatementChanged(exercise, outcome);
             String preserved = repositories.isEmpty()
@@ -296,7 +316,7 @@ public class GenerationTaskService {
      * @param emitter    the progress emitter for the live transcript
      */
     private void recoverOrReportPartial(ProgrammingExercise exercise, User user, long exerciseId, String jobId, GenerationOutcome outcome, ExerciseGenerationVerdictDTO verdict,
-            GenerationProgressEmitter emitter) {
+            GenerationProgressEmitter emitter, AtomicBoolean deadlineExceeded, AtomicBoolean heartbeatLost) {
         boolean reviewBlocked = outcome.specFidelityReport().hasBlockingFindings();
         boolean verificationAccepted = outcome.verification() != null && outcome.verification().accepted();
         String reviewReason = outcome.specFidelityReport().findings().stream().filter(SpecFidelityReport.Finding::isBlocking).map(SpecFidelityReport.Finding::detail)
@@ -310,7 +330,8 @@ public class GenerationTaskService {
                     verificationAccepted && reviewBlocked ? "Build and grading checks passed, but the exercise-quality review requires manual review. Saving an isolated draft."
                             : "Verification did not pass. Saving the best-effort draft and recording what to review."
                                     + (reviewBlocked ? " The exercise-quality review also found an issue." : ""));
-            GenerationRecoveryService.RecoveryResult result = recoveryService.recover(exercise, user, outcome, jobId, () -> jobService.isOwnedActiveJob(exerciseId, jobId));
+            GenerationRecoveryService.RecoveryResult result = recoveryService.recover(exercise, user, outcome, jobId,
+                    () -> canContinue(exerciseId, jobId, deadlineExceeded, heartbeatLost));
             int issueCount = result.reviewThreadCount();
             // Rejected drafts are isolated from the live exercise, regardless of whether this was a new generation or an adaptation. The instructor can inspect the draft branch
             // without accidentally publishing unverified code.
@@ -359,8 +380,9 @@ public class GenerationTaskService {
             return null;
         }
         return taskScheduler.schedule(() -> {
-            deadlineExceeded.set(true);
-            jobService.requestSystemCancellation(exerciseId, jobId);
+            if (jobService.requestSystemCancellation(exerciseId, jobId, cancellationMessage(true, false, false))) {
+                deadlineExceeded.set(true);
+            }
         }, effectiveDeadlineAt);
     }
 
@@ -370,15 +392,54 @@ public class GenerationTaskService {
         }
         return taskScheduler.scheduleWithFixedDelay(() -> {
             try {
-                if (!jobService.heartbeat(exerciseId, jobId)) {
-                    heartbeatLost.set(true);
-                    jobService.requestSystemCancellation(exerciseId, jobId);
+                if (jobService.heartbeat(exerciseId, jobId)) {
+                    return;
                 }
             }
             catch (RuntimeException e) {
-                log.warn("Could not refresh the owner heartbeat for generation job {}; the next scheduled heartbeat will retry", jobId, e);
+                log.warn("Could not prove ownership while refreshing the heartbeat for generation job {}; aborting the run while heartbeat retries continue", jobId, e);
             }
+            markOwnershipLost(exerciseId, jobId, heartbeatLost);
         }, ownerHeartbeatInterval);
+    }
+
+    private boolean stillOwnsMutationSlot(long exerciseId, String jobId, AtomicBoolean heartbeatLost) {
+        if (heartbeatLost.get()) {
+            return false;
+        }
+        try {
+            return jobService.isOwnedActiveJob(exerciseId, jobId);
+        }
+        catch (RuntimeException e) {
+            log.warn("Could not validate ownership of the mutation slot for generation job {}; aborting further side effects", jobId, e);
+            markOwnershipLost(exerciseId, jobId, heartbeatLost);
+            return false;
+        }
+    }
+
+    private boolean canContinue(long exerciseId, String jobId, AtomicBoolean deadlineExceeded, AtomicBoolean heartbeatLost) {
+        return !deadlineExceeded.get() && stillOwnsMutationSlot(exerciseId, jobId, heartbeatLost);
+    }
+
+    private void markOwnershipLost(long exerciseId, String jobId, AtomicBoolean heartbeatLost) {
+        heartbeatLost.set(true);
+        try {
+            jobService.requestSystemCancellation(exerciseId, jobId, cancellationMessage(false, false, true));
+        }
+        catch (RuntimeException e) {
+            log.warn("Could not publish system cancellation after generation job {} lost ownership; the local cancellation guard remains closed", jobId, e);
+        }
+    }
+
+    private static void reportContinuationFailure(GenerationProgressEmitter emitter) {
+        emitter.milestone(ExerciseGenerationEventDTO.of(ExerciseGenerationEventDTO.Type.ERROR,
+                "Generation stopped because its deadline or ownership could not be verified. Further changes were aborted."));
+    }
+
+    private static void reportUncertainLiveSave(ExerciseGenerationVerdictDTO verdict, GenerationProgressEmitter emitter) {
+        emitter.milestone(ExerciseGenerationEventDTO.done(
+                "The live save may be incomplete or the save may already have completed, but the job could not safely continue; manual review is required. No further durable side effects were started after the stop was detected.",
+                ExerciseGenerationEventDTO.CompletionStatus.PARTIAL, verdict, true));
     }
 
     private Consumer<ChatResponse> budgetedUsageSink(Consumer<ChatResponse> delegate, String jobId, AtomicBoolean tokenBudgetExceeded) {

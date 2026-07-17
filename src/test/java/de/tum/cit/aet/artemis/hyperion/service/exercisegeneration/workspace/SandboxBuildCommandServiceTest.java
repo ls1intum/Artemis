@@ -30,6 +30,7 @@ import de.tum.cit.aet.artemis.localci.service.BuildScriptProviderService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
+import de.tum.cit.aet.artemis.programming.domain.ProjectType;
 import de.tum.cit.aet.artemis.programming.dto.BuildPhaseDTO;
 
 /**
@@ -132,6 +133,34 @@ class SandboxBuildCommandServiceTest {
     }
 
     @Test
+    void verifyScript_fallbackSupportsSequentialMavenHarness() {
+        ProgrammingExercise exercise = new ProgrammingExercise();
+        exercise.setProgrammingLanguage(ProgrammingLanguage.JAVA);
+        exercise.setProjectType(ProjectType.MAVEN_MAVEN);
+        ProgrammingExerciseBuildConfig buildConfig = new ProgrammingExerciseBuildConfig();
+        buildConfig.setSequentialTestRuns(true);
+        exercise.setBuildConfig(buildConfig);
+
+        String script = new SandboxBuildCommandService(Optional.empty(), Optional.empty()).verifyScriptContent(exercise);
+
+        assertThat(script).contains("cd structural\nmvn -B clean compile", "cd behavior\nmvn -B clean compile", "cd structural\nmvn -B test", "cd behavior\nmvn -B test");
+    }
+
+    @Test
+    void verifyScript_fallbackSupportsSequentialGradleHarnessWithoutRelyingOnExecutableArchiveMode() {
+        ProgrammingExercise exercise = new ProgrammingExercise();
+        exercise.setProgrammingLanguage(ProgrammingLanguage.JAVA);
+        exercise.setProjectType(ProjectType.GRADLE_GRADLE);
+        ProgrammingExerciseBuildConfig buildConfig = new ProgrammingExerciseBuildConfig();
+        buildConfig.setSequentialTestRuns(true);
+        exercise.setBuildConfig(buildConfig);
+
+        String script = new SandboxBuildCommandService(Optional.empty(), Optional.empty()).verifyScriptContent(exercise);
+
+        assertThat(script).contains("chmod +x ./gradlew\n./gradlew clean compileJava compileTestJava", "./gradlew structuralTests", "./gradlew behaviorTests");
+    }
+
+    @Test
     void verifyScript_setsJavaSecurityManagerAllowForForkedJavaTestRunners() {
         ProgrammingExercise java = new ProgrammingExercise();
         java.setProgrammingLanguage(ProgrammingLanguage.JAVA);
@@ -147,7 +176,20 @@ class SandboxBuildCommandServiceTest {
         // The verifier runs the PRISTINE copy outside /workspace (unreachable by the agent's tools).
         assertThat(factory.pristineSolutionBuildCommand()).isEqualTo("sh /opt/hyperion/verify.sh solution");
         assertThat(factory.pristineTemplateBuildCommand()).isEqualTo("sh /opt/hyperion/verify.sh template");
+        assertThat(factory.buildEnvironmentPreflightCommand()).isEqualTo("sh /opt/hyperion/verify.sh solution");
         assertThat(SandboxBuildCommandService.reportsDirectoryFor("solution")).isEqualTo("/opt/hyperion/reports/solution");
+    }
+
+    @Test
+    void verifyScript_isolatesTheCanonicalFixtureOnlyInThePristineReadinessVariant() {
+        SandboxBuildCommandService service = new SandboxBuildCommandService(Optional.empty(), Optional.empty());
+        String agentScript = service.verifyScriptContent(new ProgrammingExercise());
+        String readinessScript = service.readinessVerifyScriptContent(new ProgrammingExercise());
+
+        assertThat(agentScript).doesNotContain("hyperion-readiness-fixture", "[reference]");
+        assertThat(readinessScript).contains("rm -rf \"$TEST_DEST/test\" \"$TEST_DEST/structural/test\" \"$TEST_DEST/behavior/test\" \"$ASSIGNMENT_DEST\"",
+                "cp -a \"/opt/hyperion-readiness-fixture/tests/.\" \"$TEST_DEST\"/", "cp -a \"/opt/hyperion-readiness-fixture/solution/.\" \"$ASSIGNMENT_DEST\"/",
+                "find \"/opt/hyperion-readiness-fixture\" -mindepth 1 -delete");
     }
 
     @Test

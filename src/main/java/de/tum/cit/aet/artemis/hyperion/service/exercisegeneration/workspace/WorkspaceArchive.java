@@ -142,6 +142,7 @@ public final class WorkspaceArchive {
     }
 
     private static void writeFileEntry(TarArchiveOutputStream tar, String name, byte[] content, int mode) throws IOException {
+        validateSeedEntryName(name);
         TarArchiveEntry entry = new TarArchiveEntry(name);
         entry.setSize(content.length);
         entry.setMode(mode);
@@ -151,6 +152,7 @@ public final class WorkspaceArchive {
     }
 
     private static void writeFileEntry(TarArchiveOutputStream tar, String name, Path file, long size, int mode) throws IOException {
+        validateSeedEntryName(name);
         TarArchiveEntry entry = new TarArchiveEntry(name);
         entry.setSize(size);
         entry.setMode(mode);
@@ -159,6 +161,20 @@ public final class WorkspaceArchive {
             input.transferTo(tar);
         }
         tar.closeArchiveEntry();
+    }
+
+    private static void validateSeedEntryName(String name) {
+        if (name == null || name.isEmpty() || name.contains("\\")) {
+            throw new RejectedWorkspaceEntryException("Refusing a non-canonical workspace seed path: " + name);
+        }
+        Path resolvedPath = ARCHIVE_ROOT.resolve(name).normalize();
+        String canonicalName = resolvedPath.startsWith(ARCHIVE_ROOT) ? ARCHIVE_ROOT.relativize(resolvedPath).toString().replace('\\', '/') : "";
+        if (!resolvedPath.startsWith(ARCHIVE_ROOT) || !canonicalName.equals(name)) {
+            throw new RejectedWorkspaceEntryException("Refusing a workspace seed path outside the archive root: " + name);
+        }
+        if (name.equals(".git") || name.startsWith(".git/") || name.endsWith("/.git") || name.contains("/.git/")) {
+            throw new RejectedWorkspaceEntryException("Refusing workspace Git metadata: " + name);
+        }
     }
 
     private static long addToSeedTotal(long total, long size, String name) {

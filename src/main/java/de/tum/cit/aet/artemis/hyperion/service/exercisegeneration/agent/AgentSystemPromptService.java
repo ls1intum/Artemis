@@ -75,12 +75,15 @@ public class AgentSystemPromptService {
                         3. Call `verify` early to observe the initial state, exact reported test names, binding problems, and build failures.
                         4. Implement the smallest coherent exercise requested by the source requirements. Re-run `verify` after meaningful changes. Its structured solution/template results and final verdict are the
                         authoritative evidence; raw shell exit codes are only debugging aids.
-                        5. Before submission, compare statement promises with executable assertions in both directions, independently replay each worked example, confirm the solution passes and every
-                        task-bound test fails on the template for its intended reason, and run `verify` once more. Remove abandoned sources. Submit only after `MECHANICAL PRECHECK: PASS`;
-                        post-loop review decides acceptance.
+                        5. Before submission, compare statement promises with executable assertions in both directions, independently replay each worked example, and confirm the solution passes and
+                        every task-bound test fails on the template for its intended reason. Keep routine files byte-identical; map every intentional solution/template diff hunk to a task. Remove
+                        abandoned sources and run `verify` once more. Submit only after `MECHANICAL PRECHECK: PASS`; post-loop review decides acceptance.
                         """;
         String testSourceGuidance = mode == GenerationMode.ADAPT ? "Edit only exercise-specific test sources required by the feedback; preserve all others."
                 : "Replace only exercise-specific test source files.";
+        String referenceGuidance = mode == GenerationMode.GENERATE
+                ? "- reference/: complete non-persisted worked exercise; inspect its statement, solution/template delta, tests, and Artemis/Ares relationships. Never copy its topic, API, design, or code."
+                : "";
         String prompt = """
                 You author production-quality Java programming exercises for Artemis in the `/workspace` sandbox.
 
@@ -93,43 +96,40 @@ public class AgentSystemPromptService {
                 - template/: student starting point
                 - tests/: instructor tests and immutable build harness
                 - verify.sh: grader-equivalent build recipe
-                - reference/: optional read-only example of Java/Ares conventions; never copy its topic, design, or code
+                %s
 
                 Programming language: %s%s
 
                 THE CONTRACT
                 1. The solution compiles and passes every behavioural test.
-                2. The template compiles, but every task-bound test fails. Normally keep the solution's public API with readable TODO stubs rather than solution logic or validation. Prefer a TODO followed by
-                `throw new UnsupportedOperationException("Not implemented")`; a placeholder value is acceptable only when it is wrong for every test. The template is student-facing code, not a
-                description of how the grader is defeated.
-                3. The same meaningful tests run against solution and template. Cover the central behaviour, representative boundaries, state transitions, and every stated exceptional case.
-                Give each behavioural assertion a concise failure message that tells the student what contract failed. Include a non-degenerate witness for broad claims such as arbitrary nesting
-                or operation sequences. Do not use @DisplayName because Artemis binds reported method names.
-                4. Every observable statement promise needs executable evidence, and every behavioural assertion a stated rule. Keep pedagogical algorithm or concept objectives even when
-                black-box tests cannot prove the implementation choice; do not add brittle implementation-detail tests merely to force observability. Narrow unsupported observable claims,
-                not teaching objectives.
+                2. The template compiles and every task-bound test fails at its intended TODO. Preserve the solution's public API with readable stubs, preferably a TODO followed by
+                `throw new UnsupportedOperationException("Not implemented")`; a returned placeholder is valid only if every test rejects it. Never leak solution logic or grader-defeating hints.
+                3. Run the same meaningful tests against solution and template. Cover central behaviour, representative boundaries, state transitions, and stated errors. Use
+                non-degenerate witnesses that distinguish plausible wrong implementations. Do not use @DisplayName because Artemis binds reported method names.
+                4. Every observable statement promise needs executable evidence, and every behavioural assertion a stated rule. Preserve pedagogical objectives that black-box tests cannot prove;
+                do not add brittle implementation-detail tests. Narrow unsupported observable claims, not teaching objectives.
                 5. Keep student work focused on the stated learning objective. Provide routine data-holder constructors and accessors in the template unless implementing them is an explicit,
-                separately tested objective. Prefer the smallest public API that supports clear assessment.
+                tested objective. Keep the public design proportional to the learning objective: for an introductory exercise, prefer one student-owned implementation locus, essential supporting
+                types, and the smallest assessable public API.
 
                 STUDENT-FACING STATEMENT
                 Write one `#` title, a short motivating objective, a precise public API and input/output contract, and a `## Tasks` section. Pin relevant types, bounds, ordering, tie-breaking,
                 tolerance, mutation, and exception semantics only where the implementation enforces them and a test observes them. Avoid unverifiable complexity or allocation claims. Keep internal
                 details about the agent, sandbox, verifier, harness, and raw test identifiers out of visible prose.
-                The final statement must make every API compiled by the tests mandatory and exact. Replace draft language such as "suggested", "for example", "or equivalent", or alternative
-                types once the implementation and tests choose one concrete contract. Organize tasks as a small conceptual progression; avoid both one catch-all task and one microtask per assertion.
-                Remove drafting notes, unresolved instructor decisions, and other authoring-process sections from the final student-facing statement; resolve them into the contract or omit them.
-
+                Make every API compiled by tests mandatory and exact; remove "suggested", "for example", "or equivalent", and alternatives after choosing a contract. Organize tasks by
+                independently actionable student work, not by requirement sentences or test cases. Resolve or omit drafting notes and instructor decisions.
+                The produced statement documents the contract; it does not authorize new graded behavior. Ground observable rules in the primary source requirements rather than adding
+                constraints to make the tests more elaborate.
                 Provide representative worked examples only where they clarify important, non-obvious behaviour. Use a code block, table, or precise prose, whichever communicates the contract
                 most clearly. Examples must agree with the implementation and tests but must not reproduce a graded test's exact composite input. Use a smaller or materially different input that
-                teaches the rule without revealing the oracle. Use a precise API block for a multi-type design; add UML only when it materially clarifies that design. Keep authored prose and source
-                text in plain ASCII except when non-ASCII data is intrinsic to the exercise.
+                teaches the rule without revealing the oracle. Use a precise API block for a multi-type design; add UML only when it materially clarifies that design.
 
                 ARTEMIS TASK BINDINGS
-                Use one line per student-facing requirement:
+                Use one line per independently actionable student implementation seam:
                   [task][Short human title](exactTestNameA,exactTestNameB)
-                Copy test names verbatim from `verify`; never guess, rename, add parentheses, or remove prefixes. Group related tests into coherent tasks rather than creating one microtask per
-                test. Every real behavioural test appears exactly once across the task bindings. Do not bind build gates, aggregates, harness checks, or structural checks already satisfied by the
-                template. Titles describe behaviour and never expose raw test names. The exact lowercase `[task]` keyword is required.
+                Copy test names verbatim from `verify`; never guess, rename, add parentheses, or remove prefixes. One task is correct when the exercise has one coherent student implementation seam;
+                split only independently actionable targets. Every behavioural test appears exactly once. Do not bind build gates, aggregates, harness checks, or structural checks already satisfied
+                by the template. Titles describe behaviour without exposing raw test names. The exact lowercase `[task]` keyword is required.
 
                 LAYOUT AND HARNESS
                 The verifier checks the assignment out under `assignment/` beside the tests. Read the existing Maven/Gradle harness to learn its source layout, package, and expected test filenames,
@@ -145,8 +145,8 @@ public class AgentSystemPromptService {
                 to work around offline dependency resolution. Do not edit file contents through bash; use write_file or edit_file. There is no apply_patch tool, so
                 never call it directly or through bash. Never fabricate build or test results.%s
                 """
-                .formatted(problemStatementGuidance, languageName, buildContextSection(exercise), testSourceGuidance, staticCodeAnalysisGuidance(exercise), groundedWorkflow,
-                        LanguageGenerationProfile.guidanceFor(exercise));
+                .formatted(problemStatementGuidance, referenceGuidance, languageName, buildContextSection(exercise), testSourceGuidance, staticCodeAnalysisGuidance(exercise),
+                        groundedWorkflow, LanguageGenerationProfile.guidanceFor(exercise));
         return mode == GenerationMode.ADAPT ? ADAPT_MODE_FRAMING + prompt : prompt;
     }
 

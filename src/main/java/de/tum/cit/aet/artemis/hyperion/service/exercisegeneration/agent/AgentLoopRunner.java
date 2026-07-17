@@ -109,18 +109,13 @@ public class AgentLoopRunner {
 
             The workspace files on disk are the source of truth — the agent can always re-read any file. Keep the whole summary under ~400 words.""";
 
-    /**
-     * Bounded attempts for a single model call before giving up. Only <em>transient</em> failures (see {@link #isRetryable}) and empty responses consume attempts: a fresh sample
-     * of a transient blip usually succeeds, so one should not abort a whole generation. Deterministic 4xx rejections do not retry at all — they fail fast. The OpenAI SDK already
-     * retries transport failures internally; this small outer allowance covers an exhausted SDK call or a successful-but-empty response without multiplying one logical turn into
-     * an excessive request storm.
-     */
-    private static final int MODEL_CALL_ATTEMPTS = 2;
+    /** One re-sample for a successful response that contains neither text nor tool calls. Transport failures use only the provider SDK's retry policy. */
+    private static final int EMPTY_RESPONSE_SAMPLES = 2;
 
-    /** Exponential-backoff base/cap (ms) between model-call retries; instance fields so a test can shrink them to assert retry behaviour without real waits. */
-    private long modelCallRetryBaseMillis = 1_500L;
+    /** Backoff base/cap (ms) before re-sampling an empty response; instance fields keep tests deterministic. */
+    private long emptyResponseRetryBaseMillis = 1_500L;
 
-    private long modelCallRetryCapMillis = 20_000L;
+    private long emptyResponseRetryCapMillis = 20_000L;
 
     private final Duration providerHardFailureCooldown;
 
@@ -257,7 +252,7 @@ public class AgentLoopRunner {
             }
 
             messagesAtLastCall = conversation.size();
-            ChatResponse response = callModelWithRetries(prompt, turn, cancelled, usageSink, stepListener);
+            ChatResponse response = callModel(prompt, turn, cancelled, usageSink, stepListener);
             if (response == null) {
                 if (cancelled.getAsBoolean()) {
                     return new AgentLoopResult(AgentLoopResult.Status.CANCELLED, turn, lastAssistantText);
@@ -437,30 +432,24 @@ public class AgentLoopRunner {
     }
 
     /**
-     * Test hook: shrink the model-call retry backoff (base and cap, in milliseconds) so retry behaviour can be asserted deterministically without real waits.
+     * Test hook: shrink the empty-response re-sampling backoff so tests do not wait.
      *
      * @param baseMillis the backoff base
      * @param capMillis  the backoff cap
      */
-    void setModelCallRetryTimingForTests(long baseMillis, long capMillis) {
-        this.modelCallRetryBaseMillis = baseMillis;
-        this.modelCallRetryCapMillis = capMillis;
+    void setEmptyResponseRetryTimingForTests(long baseMillis, long capMillis) {
+        this.emptyResponseRetryBaseMillis = baseMillis;
+        this.emptyResponseRetryCapMillis = capMillis;
     }
 
     /**
-     * Calls the model, re-sampling only the failures where a fresh attempt can plausibly succeed: a transient transport error (HTTP 429, any 5xx, connection/read timeouts, IO —
-     * see
-     * {@link #isRetryable}) or an empty/no-usable-content response. A deterministic 4xx rejection (400/401/403/404/422) fails fast without retrying, because an identical re-send
-     * will
-     * be rejected the same way. Returns {@code null} when a call fails permanently or every attempt is exhausted without usable content. The caller turns a {@code null} into an
-     * ERROR outcome.
+     * Calls the model and re-samples only a successful response with no usable content. The OpenAI SDK already retries transport failures; retrying those again here would multiply
+     * one logical turn into a request storm. Returns {@code null} when the SDK call fails or both samples are empty.
      */
     @Nullable
-    private ChatResponse callModelWithRetries(Prompt prompt, int turn, BooleanSupplier cancelled, @Nullable Consumer<ChatResponse> usageSink,
-            @Nullable Consumer<String> stepListener) {
-        RuntimeException lastError = null;
+    private ChatResponse callModel(Prompt prompt, int turn, BooleanSupplier cancelled, @Nullable Consumer<ChatResponse> usageSink, @Nullable Consumer<String> stepListener) {
         String providerFailureKey = ProviderFailureCooldown.keyForModel(configuredModel());
-        for (int attempt = 1; attempt <= MODEL_CALL_ATTEMPTS; attempt++) {
+        for (int sample = 1; sample <= EMPTY_RESPONSE_SAMPLES; sample++) {
             if (cancelled.getAsBoolean()) {
                 return null;
             }
@@ -471,64 +460,44 @@ public class AgentLoopRunner {
                     return response;
                 }
                 // No tool calls and no text: a genuinely-flaky empty sample. Re-sample rather than treat it as a silent completion.
-                lastError = null;
-                log.warn("Agent loop model call returned an empty response on turn {} (attempt {}/{})", turn, attempt, MODEL_CALL_ATTEMPTS);
-                if (attempt < MODEL_CALL_ATTEMPTS) {
+                log.warn("Agent loop model call returned an empty response on turn {} (sample {}/{})", turn, sample, EMPTY_RESPONSE_SAMPLES);
+                if (sample < EMPTY_RESPONSE_SAMPLES) {
                     emit(stepListener, "Model returned an empty response; retrying.");
-                    if (!backOffBeforeRetry(attempt, turn, cancelled)) {
-                        // Interrupted mid-backoff: surface cancellation as ERROR (null), symmetric with the error path below — do not hand a benign empty response to the loop as a
-                        // completion.
+                    if (!backOffBeforeEmptyResponseRetry(sample, turn, cancelled)) {
                         return null;
                     }
                 }
             }
             catch (RuntimeException e) {
-                if (!isRetryable(e)) {
-                    // Deterministic failure (e.g. 400/401/403/422): re-sending the identical request cannot help, so fail fast with a clear message instead of burning the ladder.
-                    log.error("Agent loop model call failed on turn {} with a non-retryable error; not retrying", turn, e);
-                    emit(stepListener, "The AI service could not complete the request.");
-                    return null;
-                }
-                lastError = e;
-                log.warn("Agent loop model call failed on turn {} (attempt {}/{})", turn, attempt, MODEL_CALL_ATTEMPTS, e);
-                if (attempt < MODEL_CALL_ATTEMPTS) {
-                    emit(stepListener, "The AI service is temporarily unavailable. Retrying.");
-                    if (!backOffBeforeRetry(attempt, turn, cancelled)) {
-                        return null;
-                    }
-                }
+                log.error("Agent loop model call failed on turn {} after the provider retry policy was exhausted", turn, e);
+                emit(stepListener, "The AI service could not complete the request.");
+                return null;
             }
         }
-        if (lastError == null) {
-            log.warn("Agent loop model call returned an empty response on turn {} after {} attempts", turn, MODEL_CALL_ATTEMPTS);
-            emit(stepListener, "The AI service returned no usable response.");
-            return null;
-        }
-        log.error("Agent loop model call failed on turn {} after {} attempts", turn, MODEL_CALL_ATTEMPTS, lastError);
-        emit(stepListener, "The AI service could not complete the request.");
+        log.warn("Agent loop model call returned an empty response on turn {} after {} samples", turn, EMPTY_RESPONSE_SAMPLES);
+        emit(stepListener, "The AI service returned no usable response.");
         return null;
     }
 
     /**
-     * Sleeps the exponential backoff (with jitter) before the next model-call retry.
+     * Sleeps with jitter before re-sampling an empty response.
      *
-     * @return {@code true} to continue retrying, {@code false} if the thread was interrupted (the caller must stop and let the null become an ERROR outcome)
+     * @return {@code true} to continue, {@code false} if cancellation or interruption was observed
      */
-    private boolean backOffBeforeRetry(int attempt, int turn, BooleanSupplier cancelled) {
-        // Exponential backoff with jitter so retries spread across time instead of re-hitting the same failure burst.
-        long backoff = Math.min(modelCallRetryCapMillis, modelCallRetryBaseMillis * (1L << (attempt - 1)));
+    private boolean backOffBeforeEmptyResponseRetry(int sample, int turn, BooleanSupplier cancelled) {
+        long backoff = Math.min(emptyResponseRetryCapMillis, emptyResponseRetryBaseMillis * (1L << (sample - 1)));
         if (backoff <= 0) {
             return !cancelled.getAsBoolean();
         }
-        backoff += ThreadLocalRandom.current().nextLong(modelCallRetryBaseMillis + 1);
+        backoff += ThreadLocalRandom.current().nextLong(emptyResponseRetryBaseMillis + 1);
         try {
             Thread.sleep(backoff);
             return !cancelled.getAsBoolean();
         }
         catch (InterruptedException ie) {
-            // Honour the interrupt instead of swallowing it: stop retrying.
+            // Honour the interrupt instead of swallowing it.
             Thread.currentThread().interrupt();
-            log.warn("Interrupted while backing off before a model-call retry on turn {}", turn);
+            log.warn("Interrupted while backing off before re-sampling an empty model response on turn {}", turn);
             return false;
         }
     }
@@ -542,16 +511,6 @@ public class AgentLoopRunner {
         boolean hasToolCalls = output.getToolCalls() != null && !output.getToolCalls().isEmpty();
         String text = output.getText();
         return !hasToolCalls && (text == null || text.isBlank());
-    }
-
-    /**
-     * Whether a failed model call is worth re-sending. Transient failures — HTTP 429, any 5xx, connection/read timeouts and other IO errors — plus any error whose nature we cannot
-     * determine are retryable, because an identical re-send can succeed. Deterministic 4xx rejections (400/401/403/404/422) are not: the same request fails the same way, so the
-     * loop
-     * fails fast. Prefers the typed openai-java exceptions (authoritative) and falls back to an HTTP status parsed from the message only when no typed signal is present.
-     */
-    static boolean isRetryable(Throwable error) {
-        return ProviderFailureCooldown.isRetryable(error);
     }
 
     /**

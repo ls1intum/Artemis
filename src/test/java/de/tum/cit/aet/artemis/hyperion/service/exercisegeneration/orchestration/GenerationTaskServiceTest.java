@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -22,6 +23,8 @@ import java.util.function.Consumer;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 import org.mockito.stubbing.Answer;
@@ -54,6 +57,10 @@ class GenerationTaskServiceTest {
     private static final String JOB_ID = "job-1";
 
     private static final String SESSION_ID = "sess-1";
+
+    private enum PostSaveStop {
+        HEARTBEAT_BEFORE_BASELINE, OWNERSHIP_BEFORE_BASELINE, HEARTBEAT_BEFORE_SUCCESS
+    }
 
     private GenerationOrchestrationService orchestrator;
 
@@ -108,6 +115,7 @@ class GenerationTaskServiceTest {
         exercise.setReleaseDate(ZonedDateTime.now().plusDays(1));
         when(programmingExerciseRepository.findWithAllParticipationsAndBuildConfigById(EXERCISE_ID)).thenReturn(Optional.of(exercise));
         when(jobService.isActiveJob(EXERCISE_ID, JOB_ID)).thenReturn(true);
+        when(jobService.isOwnedActiveJob(EXERCISE_ID, JOB_ID)).thenReturn(true);
         when(jobService.enterNonCancellablePhase(EXERCISE_ID, JOB_ID)).thenReturn(true);
         when(jobService.tokenUsageSink(any(), any(), any())).thenReturn(response -> {
         });
@@ -200,7 +208,7 @@ class GenerationTaskServiceTest {
     }
 
     @Test
-    void transientHeartbeatFailure_doesNotSuppressLaterHeartbeatAttempts() {
+    void heartbeatFailure_doesNotSuppressLaterHeartbeatAttempts() {
         ArgumentCaptor<Runnable> heartbeat = ArgumentCaptor.forClass(Runnable.class);
         when(jobService.heartbeat(EXERCISE_ID, JOB_ID)).thenThrow(new IllegalStateException("cluster temporarily unavailable")).thenReturn(true);
         run(GenerationMode.GENERATE, outcomeWith(AgentLoopResult.Status.CANCELLED, null));
@@ -210,7 +218,131 @@ class GenerationTaskServiceTest {
         assertThatCode(heartbeat.getValue()::run).doesNotThrowAnyException();
 
         verify(jobService, Mockito.times(2)).heartbeat(EXERCISE_ID, JOB_ID);
-        verify(jobService, never()).requestSystemCancellation(EXERCISE_ID, JOB_ID);
+        verify(jobService).requestSystemCancellation(eq(EXERCISE_ID), eq(JOB_ID), argThat(message -> message.contains("lost ownership")));
+    }
+
+    @Test
+    void heartbeatOwnershipValidationException_abortsBeforePersistenceOrRecovery() {
+        ArgumentCaptor<Runnable> heartbeat = ArgumentCaptor.forClass(Runnable.class);
+        when(jobService.heartbeat(EXERCISE_ID, JOB_ID)).thenThrow(new IllegalStateException("cluster temporarily unavailable"));
+        when(orchestrator.generate(any(), any(), any(), any(), any(), any(), any(), any(), any())).thenAnswer((Answer<GenerationOutcome>) invocation -> {
+            verify(taskScheduler).scheduleWithFixedDelay(heartbeat.capture(), any(java.time.Duration.class));
+            heartbeat.getValue().run();
+            BooleanSupplier shouldCancel = invocation.getArgument(5);
+            assertThat(shouldCancel.getAsBoolean()).isTrue();
+            return GenerationOutcome.cancelled(new AgentLoopResult(AgentLoopResult.Status.CANCELLED, 1, ""));
+        });
+
+        taskService.runAsync(new GenerationStartedEvent(JOB_ID, user, exercise, "make it", GenerationMode.GENERATE));
+
+        ExerciseGenerationEventDTO terminal = sentEvents().getLast();
+        assertThat(terminal.type()).isEqualTo(ExerciseGenerationEventDTO.Type.CANCELLED);
+        assertThat(terminal.message()).contains("lost ownership");
+        verify(jobService).requestSystemCancellation(eq(EXERCISE_ID), eq(JOB_ID), argThat(message -> message.contains("lost ownership")));
+        verify(persistenceService, never()).persist(any(), any(), any(), any(), any(), anyString(), any());
+        verify(recoveryService, never()).recover(any(), any(), any(), anyString(), any());
+        verify(generationRevertService, never()).recordBaseline(any(), anyString(), any(), any(), any(), any(), any(), any(), any(), anyString());
+    }
+
+    @Test
+    void persistenceOwnershipValidationException_abortsWithoutStartingRecovery() {
+        when(jobService.isOwnedActiveJob(EXERCISE_ID, JOB_ID)).thenThrow(new IllegalStateException("cluster temporarily unavailable"));
+        when(orchestrator.generate(any(), any(), any(), any(), any(), any(), any(), any(), any()))
+                .thenReturn(outcomeWith(AgentLoopResult.Status.COMPLETED, new VerificationResult(true, true, true, 3, List.of())));
+        when(persistenceService.persist(any(), any(), any(), any(), any(), anyString(), any())).thenAnswer(invocation -> {
+            BooleanSupplier stillOwnsMutationSlot = invocation.getArgument(6);
+            assertThat(stillOwnsMutationSlot.getAsBoolean()).isFalse();
+            throw new IllegalStateException("ownership guard closed");
+        });
+
+        taskService.runAsync(new GenerationStartedEvent(JOB_ID, user, exercise, "make it", GenerationMode.GENERATE));
+
+        ExerciseGenerationEventDTO terminal = sentEvents().getLast();
+        assertThat(terminal.type()).isEqualTo(ExerciseGenerationEventDTO.Type.ERROR);
+        assertThat(terminal.message()).contains("ownership");
+        verify(jobService).requestSystemCancellation(eq(EXERCISE_ID), eq(JOB_ID), argThat(message -> message.contains("lost ownership")));
+        verify(recoveryService, never()).recover(any(), any(), any(), anyString(), any());
+        verify(generationRevertService, never()).recordBaseline(any(), anyString(), any(), any(), any(), any(), any(), any(), any(), anyString());
+    }
+
+    @Test
+    void incompletePersistenceWithOwnershipLoss_reportsPartialAndSkipsRecovery() {
+        ArgumentCaptor<Runnable> heartbeat = ArgumentCaptor.forClass(Runnable.class);
+        when(jobService.heartbeat(EXERCISE_ID, JOB_ID)).thenThrow(new IllegalStateException("cluster temporarily unavailable"));
+        when(programmingExerciseRepository.isUnreleasedAndWithoutStudentParticipations(EXERCISE_ID)).thenReturn(true);
+        when(orchestrator.generate(any(), any(), any(), any(), any(), any(), any(), any(), any())).thenAnswer((Answer<GenerationOutcome>) invocation -> {
+            verify(taskScheduler).scheduleWithFixedDelay(heartbeat.capture(), any(java.time.Duration.class));
+            return outcomeWith(AgentLoopResult.Status.COMPLETED, new VerificationResult(true, true, true, 3, List.of()));
+        });
+        when(persistenceService.persist(any(), any(), any(), any(), any(), anyString(), any())).thenAnswer(invocation -> {
+            BooleanSupplier stillOwnsMutationSlot = invocation.getArgument(6);
+            assertThat(stillOwnsMutationSlot.getAsBoolean()).isTrue();
+            heartbeat.getValue().run();
+            throw new GenerationIncompleteException("live save did not complete", new IllegalStateException());
+        });
+
+        taskService.runAsync(new GenerationStartedEvent(JOB_ID, user, exercise, "make it", GenerationMode.GENERATE));
+
+        ExerciseGenerationEventDTO terminal = sentEvents().getLast();
+        assertThat(terminal.type()).isEqualTo(ExerciseGenerationEventDTO.Type.DONE);
+        assertThat(terminal.completionStatus()).isEqualTo(ExerciseGenerationEventDTO.CompletionStatus.PARTIAL);
+        assertThat(terminal.liveExerciseChanged()).isTrue();
+        assertThat(terminal.message()).contains("live save may be incomplete", "manual review is required");
+        verify(recoveryService, never()).recover(any(), any(), any(), anyString(), any());
+        verify(generationRevertService, never()).recordBaseline(any(), anyString(), any(), any(), any(), any(), any(), any(), any(), anyString());
+        verify(recoveryService, never()).surfaceAdvisoryFindings(any(), any(), any());
+    }
+
+    @ParameterizedTest(name = "post-save continuation stops at {0}")
+    @EnumSource(PostSaveStop.class)
+    void postSaveContinuationLoss_stopsLaterSideEffectsAndRequiresManualReview(PostSaveStop stop) {
+        ArgumentCaptor<Runnable> heartbeat = ArgumentCaptor.forClass(Runnable.class);
+        ArgumentCaptor<Runnable> deadline = ArgumentCaptor.forClass(Runnable.class);
+        when(programmingExerciseRepository.isUnreleasedAndWithoutStudentParticipations(EXERCISE_ID)).thenReturn(true);
+        if (stop == PostSaveStop.OWNERSHIP_BEFORE_BASELINE) {
+            when(jobService.isOwnedActiveJob(EXERCISE_ID, JOB_ID)).thenReturn(true, false);
+        }
+        if (stop == PostSaveStop.HEARTBEAT_BEFORE_BASELINE || stop == PostSaveStop.HEARTBEAT_BEFORE_SUCCESS) {
+            when(jobService.heartbeat(EXERCISE_ID, JOB_ID)).thenThrow(new IllegalStateException("cluster temporarily unavailable"));
+        }
+        when(orchestrator.generate(any(), any(), any(), any(), any(), any(), any(), any(), any())).thenAnswer((Answer<GenerationOutcome>) invocation -> {
+            verify(taskScheduler).schedule(deadline.capture(), any(java.time.Instant.class));
+            verify(taskScheduler).scheduleWithFixedDelay(heartbeat.capture(), any(java.time.Duration.class));
+            return outcomeWith(AgentLoopResult.Status.COMPLETED, new VerificationResult(true, true, true, 3, List.of()));
+        });
+        when(persistenceService.persist(any(), any(), any(), any(), any(), anyString(), any())).thenAnswer(invocation -> {
+            BooleanSupplier stillOwnsMutationSlot = invocation.getArgument(6);
+            assertThat(stillOwnsMutationSlot.getAsBoolean()).isTrue();
+            if (stop == PostSaveStop.HEARTBEAT_BEFORE_BASELINE) {
+                heartbeat.getValue().run();
+            }
+            return new GenerationPersistenceService.PersistResult(Map.of(), Map.of(), exercise.getProblemStatement(), exercise.getTitle(), "main");
+        });
+        when(generationRevertService.recordBaseline(any(), anyString(), any(), any(), any(), any(), any(), any(), any(), anyString())).thenReturn(true);
+        when(recoveryService.surfaceAdvisoryFindings(any(), any(), any())).thenAnswer(invocation -> {
+            if (stop == PostSaveStop.HEARTBEAT_BEFORE_SUCCESS) {
+                heartbeat.getValue().run();
+            }
+            return 0;
+        });
+
+        taskService.runAsync(new GenerationStartedEvent(JOB_ID, user, exercise, "make it", GenerationMode.GENERATE));
+
+        ExerciseGenerationEventDTO terminal = sentEvents().getLast();
+        assertThat(terminal.type()).isEqualTo(ExerciseGenerationEventDTO.Type.DONE);
+        assertThat(terminal.completionStatus()).isEqualTo(ExerciseGenerationEventDTO.CompletionStatus.PARTIAL);
+        assertThat(terminal.liveExerciseChanged()).isTrue();
+        assertThat(terminal.message()).contains("save may already have completed", "manual review is required");
+        switch (stop) {
+            case HEARTBEAT_BEFORE_BASELINE, OWNERSHIP_BEFORE_BASELINE -> {
+                verify(generationRevertService, never()).recordBaseline(any(), anyString(), any(), any(), any(), any(), any(), any(), any(), anyString());
+                verify(recoveryService, never()).surfaceAdvisoryFindings(any(), any(), any());
+            }
+            case HEARTBEAT_BEFORE_SUCCESS -> {
+                verify(generationRevertService).recordBaseline(any(), anyString(), any(), any(), any(), any(), any(), any(), any(), anyString());
+                verify(recoveryService).surfaceAdvisoryFindings(any(), any(), any());
+            }
+        }
     }
 
     @Test
@@ -493,6 +625,7 @@ class GenerationTaskServiceTest {
     @Test
     void deadlineExceeded_stopsCooperativelyAndEmitsSpecificTerminalMessage() {
         ArgumentCaptor<Runnable> deadline = ArgumentCaptor.forClass(Runnable.class);
+        when(jobService.requestSystemCancellation(eq(EXERCISE_ID), eq(JOB_ID), anyString())).thenReturn(true);
         when(orchestrator.generate(any(), any(), any(), any(), any(), any(), any(), any(), any())).thenAnswer((Answer<GenerationOutcome>) invocation -> {
             verify(taskScheduler).schedule(deadline.capture(), any(java.time.Instant.class));
             deadline.getValue().run();
@@ -504,12 +637,13 @@ class GenerationTaskServiceTest {
         ExerciseGenerationEventDTO terminal = sentEvents().getLast();
         assertThat(terminal.type()).isEqualTo(ExerciseGenerationEventDTO.Type.CANCELLED);
         assertThat(terminal.message()).contains("time limit");
-        verify(jobService).requestSystemCancellation(EXERCISE_ID, JOB_ID);
+        verify(jobService).requestSystemCancellation(eq(EXERCISE_ID), eq(JOB_ID), argThat(message -> message.contains("time limit")));
     }
 
     @Test
-    void deadlineExceededDuringPersistence_closesTheMutationGuard() {
+    void deadlineAfterPersistenceStarts_doesNotCloseTheMutationGuardOrMisreportTheSave() {
         ArgumentCaptor<Runnable> deadline = ArgumentCaptor.forClass(Runnable.class);
+        when(programmingExerciseRepository.isUnreleasedAndWithoutStudentParticipations(EXERCISE_ID)).thenReturn(true);
         when(orchestrator.generate(any(), any(), any(), any(), any(), any(), any(), any(), any())).thenAnswer((Answer<GenerationOutcome>) invocation -> {
             verify(taskScheduler).schedule(deadline.capture(), any(java.time.Instant.class));
             return outcomeWith(AgentLoopResult.Status.COMPLETED, new VerificationResult(true, true, true, 3, List.of()));
@@ -517,13 +651,13 @@ class GenerationTaskServiceTest {
         when(persistenceService.persist(any(), any(), any(), any(), any(), anyString(), any())).thenAnswer(invocation -> {
             deadline.getValue().run();
             BooleanSupplier mutationGuard = invocation.getArgument(6);
-            assertThat(mutationGuard.getAsBoolean()).isFalse();
-            throw new GenerationIncompleteException("deadline closed the mutation guard", new IllegalStateException());
+            assertThat(mutationGuard.getAsBoolean()).isTrue();
+            return new GenerationPersistenceService.PersistResult(Map.of(), Map.of(), exercise.getProblemStatement(), exercise.getTitle(), "main");
         });
 
         taskService.runAsync(new GenerationStartedEvent(JOB_ID, user, exercise, "make it", GenerationMode.GENERATE));
 
-        assertThat(sentEvents().getLast().completionStatus()).isEqualTo(ExerciseGenerationEventDTO.CompletionStatus.PARTIAL);
+        assertThat(sentEvents().getLast().completionStatus()).isEqualTo(ExerciseGenerationEventDTO.CompletionStatus.SUCCESS);
     }
 
     @Test

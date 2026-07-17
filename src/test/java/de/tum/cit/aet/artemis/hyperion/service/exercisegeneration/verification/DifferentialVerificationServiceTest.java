@@ -1,8 +1,11 @@
 package de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.when;
 
 import java.io.ByteArrayInputStream;
@@ -29,16 +32,22 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
+import org.slf4j.LoggerFactory;
 
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.read.ListAppender;
 import de.tum.cit.aet.artemis.assessment.domain.CategoryState;
 import de.tum.cit.aet.artemis.buildagent.dto.SandboxExecResult;
 import de.tum.cit.aet.artemis.buildagent.dto.SandboxSessionSpec;
 import de.tum.cit.aet.artemis.buildagent.service.InteractiveSandbox;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.profile.LanguageGenerationProfile;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.workspace.SandboxBuildCommandService;
 import de.tum.cit.aet.artemis.localci.service.BuildPhasesTemplateService;
 import de.tum.cit.aet.artemis.localci.service.BuildScriptProviderService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
+import de.tum.cit.aet.artemis.programming.domain.ProjectType;
 import de.tum.cit.aet.artemis.programming.domain.StaticCodeAnalysisCategory;
 import de.tum.cit.aet.artemis.programming.repository.StaticCodeAnalysisCategoryRepository;
 
@@ -148,10 +157,17 @@ class DifferentialVerificationServiceTest {
 
         private final String problemStatement;
 
+        private final String buildOutput;
+
         private ScriptedSandbox(BuildReportSpec solution, BuildReportSpec template, String problemStatement) {
+            this(solution, template, problemStatement, "build ran");
+        }
+
+        private ScriptedSandbox(BuildReportSpec solution, BuildReportSpec template, String problemStatement, String buildOutput) {
             this.solution = solution;
             this.template = template;
             this.problemStatement = problemStatement;
+            this.buildOutput = buildOutput;
         }
 
         @Override
@@ -164,7 +180,7 @@ class DifferentialVerificationServiceTest {
                 return new SandboxExecResult(0, "", "", false);
             }
             BuildReportSpec spec = joined.contains("solution") ? solution : template;
-            return new SandboxExecResult(spec.exitCode(), "build ran", "", spec.timedOut());
+            return new SandboxExecResult(spec.exitCode(), buildOutput, "", spec.timedOut());
         }
 
         @Override
@@ -198,6 +214,91 @@ class DifferentialVerificationServiceTest {
 
     private static VerificationResult verify(BuildReportSpec solution, BuildReportSpec template, String problemStatement) {
         return verifyGenerate(newVerifier(), new ScriptedSandbox(solution, template, problemStatement), new ProgrammingExercise());
+    }
+
+    @Test
+    void buildEnvironmentPreflightDoesNotExposeBuildOutput() {
+        BuildReportSpec failedBuild = result(0, 0, 0, 1);
+        InteractiveSandbox sandbox = new ScriptedSandbox(failedBuild, failedBuild, PROBLEM_STATEMENT_WITH_TASK,
+                "Could not resolve all files for configuration ':testRuntimeClasspath'. https://user:secret@example.invalid/repository");
+
+        Optional<String> failure = newVerifier().checkBuildEnvironment(sandbox, "session", new ProgrammingExercise());
+
+        assertThat(failure).hasValueSatisfying(message -> assertThat(message).contains("readiness probe", "authoring agent was not started").doesNotContain("user:secret"));
+    }
+
+    @Test
+    void buildEnvironmentPreflightLogsBoundedRedactedOutputForOperators() {
+        Logger logger = (Logger) LoggerFactory.getLogger(DifferentialVerificationService.class);
+        ListAppender<ILoggingEvent> appender = new ListAppender<>();
+        appender.start();
+        logger.addAppender(appender);
+        try {
+            String buildOutput = "Gradle could not resolve testRuntimeClasspath\nAuthorization: Bearer bearer-secret\n"
+                    + "https://repo-user:repo-password@example.invalid/maven\npassword=plain-secret\n" + "diagnostic ".repeat(1_000);
+            BuildReportSpec failedBuild = result(0, 0, 0, 1);
+
+            Optional<String> failure = newVerifier().checkBuildEnvironment(new ScriptedSandbox(failedBuild, failedBuild, PROBLEM_STATEMENT_WITH_TASK, buildOutput), "session",
+                    new ProgrammingExercise());
+
+            assertThat(failure).hasValueSatisfying(message -> assertThat(message).doesNotContain("Gradle could not resolve", "bearer-secret", "repo-password", "plain-secret"));
+            assertThat(appender.list).hasSize(1);
+            String diagnostic = appender.list.getFirst().getFormattedMessage();
+            assertThat(diagnostic).contains("Gradle could not resolve testRuntimeClasspath", "[REDACTED]", "[truncated]")
+                    .doesNotContain("bearer-secret", "repo-user", "repo-password", "plain-secret").hasSizeLessThanOrEqualTo(4_500);
+        }
+        finally {
+            logger.detachAppender(appender);
+        }
+    }
+
+    @Test
+    void productionProfileRejectsGradleUntilADedicatedOfflineImageIsConfigured() {
+        for (ProjectType projectType : List.of(ProjectType.PLAIN_GRADLE, ProjectType.GRADLE_GRADLE)) {
+            ProgrammingExercise exercise = new ProgrammingExercise();
+            exercise.setProgrammingLanguage(ProgrammingLanguage.JAVA);
+            exercise.setProjectType(projectType);
+
+            assertThat(LanguageGenerationProfile.isSupported(exercise)).as("%s must not fall back to the Maven-only production image", projectType).isFalse();
+            assertThat(LanguageGenerationProfile.guidanceFor(exercise)).isEmpty();
+        }
+    }
+
+    @Test
+    void buildEnvironmentPreflightConvertsBuildExecFailureIntoASafeError() {
+        InteractiveSandbox sandbox = mock(InteractiveSandbox.class);
+        when(sandbox.exec(anyString(), any(), any(String[].class))).thenReturn(new SandboxExecResult(0, "", "", false)).thenThrow(new IllegalStateException("Bearer secret-value"));
+
+        Optional<String> failure = newVerifier().checkBuildEnvironment(sandbox, "session", new ProgrammingExercise());
+
+        assertThat(failure).hasValueSatisfying(message -> assertThat(message).contains("could not be prepared", "authoring agent was not started").doesNotContain("secret-value"));
+        org.mockito.Mockito.verify(sandbox, times(2)).exec(anyString(), any(), any(String[].class));
+    }
+
+    @Test
+    void authoritativeBuildTimeoutIsADeadSessionInsteadOfAModelRepairSignal() {
+        assertThatThrownBy(() -> verifyGenerate(newVerifier(), new ScriptedSandbox(BuildReportSpec.timedOutBuild(), result(4, 4, 0, 1), PROBLEM_STATEMENT_WITH_TASK),
+                new ProgrammingExercise())).isInstanceOfSatisfying(DifferentialVerificationService.VerificationInfrastructureException.class,
+                        exception -> assertThat(exception.isRetryableInSameSession()).isFalse());
+    }
+
+    @Test
+    void buildEnvironmentPreflightAcceptsOnlyAParsedPassingTestRun() {
+        BuildReportSpec readinessPass = resultWithFails(0, List.of("testPublicApi", "testRepresentativeScores", "testBoundaryScores", "testEmptyInput"), List.of());
+        assertThat(newVerifier().checkBuildEnvironment(new ScriptedSandbox(readinessPass, result(0, 0, 0, 1), PROBLEM_STATEMENT_WITH_TASK), "session", new ProgrammingExercise()))
+                .isEmpty();
+
+        assertThat(
+                newVerifier().checkBuildEnvironment(new ScriptedSandbox(result(3, 0, 0, 0), result(0, 0, 0, 1), PROBLEM_STATEMENT_WITH_TASK), "session", new ProgrammingExercise()))
+                .hasValueSatisfying(message -> assertThat(message).contains("readiness probe"));
+
+        BuildReportSpec gradleReadinessPass = resultWithFails(0, List.of("testPublicApi()", "testRepresentativeScores()", "testBoundaryScores()", "testEmptyInput()"), List.of());
+        assertThat(newVerifier().checkBuildEnvironment(new ScriptedSandbox(gradleReadinessPass, result(0, 0, 0, 1), PROBLEM_STATEMENT_WITH_TASK), "session",
+                new ProgrammingExercise())).isEmpty();
+
+        BuildReportSpec malformed = BuildReportSpec.withJunitXml("not xml", 0);
+        assertThat(newVerifier().checkBuildEnvironment(new ScriptedSandbox(malformed, malformed, PROBLEM_STATEMENT_WITH_TASK), "session", new ProgrammingExercise()))
+                .hasValueSatisfying(message -> assertThat(message).contains("could not be prepared", "authoring agent was not started"));
     }
 
     /** Invokes the full production verify(...) in GENERATE mode with empty integrity-gate inputs, so the tests never depend on a test-only convenience overload. */
@@ -279,7 +380,7 @@ class DifferentialVerificationServiceTest {
         PathDispatchingSandbox sandbox = new PathDispatchingSandbox(resultWithFails(0, names, List.of()), resultWithFails(1, names, names), PROBLEM_STATEMENT_WITH_TASK);
         VerificationResult result = verifyGenerate(newVerifier(), sandbox, new ProgrammingExercise());
         assertThat(result.accepted()).isTrue();
-        assertThat(sandbox.execCommands).filteredOn(c -> c.equals("sh -c rm -rf /opt/hyperion && mkdir -p /opt/hyperion")).hasSize(2);
+        assertThat(sandbox.execCommands).filteredOn(c -> c.equals("sh -c find /opt/hyperion -mindepth 1 -delete")).hasSize(2);
         assertThat(sandbox.execCommands).anyMatch(c -> c.contains(SandboxBuildCommandService.PRISTINE_VERIFY_PATH + " solution"));
         assertThat(sandbox.execCommands).noneMatch(c -> c.contains("/workspace/verify.sh"));
     }
@@ -639,13 +740,6 @@ class DifferentialVerificationServiceTest {
     }
 
     @Test
-    void shouldRejectWhenSolutionTimesOut() {
-        VerificationResult result = verify(BuildReportSpec.timedOutBuild(), result(5, 5, 0, 1));
-        assertThat(result.accepted()).isFalse();
-        assertThat(result.reasons()).anyMatch(r -> r.contains("timed out"));
-    }
-
-    @Test
     void shouldRejectWhenTemplateFailsTooFewTests() {
         // A template failing only 1 of 6 tests is nearly complete; it must fail at least half.
         List<String> names = List.of("t0", "t1", "t2", "t3", "t4", "t5");
@@ -913,8 +1007,7 @@ class DifferentialVerificationServiceTest {
         return BuildReportSpec.withJunitXml(sb.toString(), failedDotPrefixed.isEmpty() ? 0 : 1);
     }
 
-    // Hardened copyOut: a reports tar rejected by the hardened reader (symlinked/escaping/oversize entry) is treated as no tests (fail-closed) so the differential rejects rather
-    // than trusting partial input. Per-shape rejections are covered by CollectedReportsTest.
+    // Hardened copyOut: a reports tar rejected by the hardened reader is classified as verifier infrastructure/integrity failure rather than a model-repairable exercise defect.
 
     @Test
     void shouldRejectWhenTheReportsArchiveContainsASymlinkedEntry() {
@@ -950,9 +1043,8 @@ class DifferentialVerificationServiceTest {
             public void destroySession(String sessionId) {
             }
         };
-        VerificationResult result = verifyGenerate(newVerifier(), sandbox, new ProgrammingExercise());
-        assertThat(result.accepted()).as("a reports archive with a symlinked entry must be rejected, not parsed").isFalse();
-        assertThat(result.testCount()).isZero();
+        assertThatThrownBy(() -> verifyGenerate(newVerifier(), sandbox, new ProgrammingExercise()))
+                .isInstanceOf(DifferentialVerificationService.VerificationInfrastructureException.class).hasMessageContaining("rejected the solution reports archive");
     }
 
     /** A reports tar carrying a single symlinked entry under the given assignment prefix. */

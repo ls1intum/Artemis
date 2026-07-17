@@ -31,12 +31,18 @@ import org.springframework.scheduling.TaskScheduler;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import com.github.dockerjava.api.DockerClient;
-import com.github.dockerjava.api.command.CopyArchiveToContainerCmd;
+import com.github.dockerjava.api.async.ResultCallback;
+import com.github.dockerjava.api.command.ExecCreateCmd;
+import com.github.dockerjava.api.command.ExecCreateCmdResponse;
+import com.github.dockerjava.api.command.ExecStartCmd;
 import com.github.dockerjava.api.command.InspectContainerCmd;
+import com.github.dockerjava.api.command.InspectExecCmd;
+import com.github.dockerjava.api.command.InspectExecResponse;
 import com.github.dockerjava.api.command.ListContainersCmd;
 import com.github.dockerjava.api.command.RemoveContainerCmd;
 import com.github.dockerjava.api.exception.NotFoundException;
 import com.github.dockerjava.api.model.Container;
+import com.github.dockerjava.api.model.Frame;
 
 import de.tum.cit.aet.artemis.buildagent.BuildAgentConfiguration;
 import de.tum.cit.aet.artemis.localci.service.DistributedDataAccessService;
@@ -66,7 +72,7 @@ class InteractiveSandboxReaperServiceTest {
         doReturn(true).when(buildAgentConfiguration).isDockerAvailable();
         doReturn(dockerClient).when(buildAgentConfiguration).getDockerClient();
 
-        interactiveSandboxService = new InteractiveSandboxService(buildAgentConfiguration);
+        interactiveSandboxService = new InteractiveSandboxService(buildAgentConfiguration, mock(BuildAgentDockerService.class));
         ReflectionTestUtils.setField(interactiveSandboxService, "buildAgentShortName", "agent");
         ApplicationContext applicationContext = mock(ApplicationContext.class);
         when(applicationContext.getBean(InteractiveSandboxService.class)).thenReturn(interactiveSandboxService);
@@ -150,25 +156,15 @@ class InteractiveSandboxReaperServiceTest {
             return null;
         }).when(removeCommand).exec();
 
-        CountDownLatch copyStarted = new CountDownLatch(1);
-        CopyArchiveToContainerCmd copyCommand = mock(CopyArchiveToContainerCmd.class);
-        when(dockerClient.copyArchiveToContainerCmd("orphan-id")).thenReturn(copyCommand);
-        when(copyCommand.withTarInputStream(any())).thenReturn(copyCommand);
-        when(copyCommand.withRemotePath("/workspace")).thenReturn(copyCommand);
-        doAnswer(invocation -> {
-            copyStarted.countDown();
-            return null;
-        }).when(copyCommand).exec();
-
         CompletableFuture<Void> reaping = CompletableFuture.runAsync(reaperService::reapOrphanedSessions);
         assertThat(removalStarted.await(5, TimeUnit.SECONDS)).isTrue();
         CompletableFuture<Void> copying = CompletableFuture.runAsync(() -> interactiveSandboxService.copyIn("orphan-id", "/workspace", new ByteArrayInputStream(new byte[0])));
 
-        assertThat(copyStarted.await(200, TimeUnit.MILLISECONDS)).isFalse();
+        verify(dockerClient, never()).execCreateCmd("orphan-id");
         allowRemoval.countDown();
         reaping.get(5, TimeUnit.SECONDS);
         assertThatThrownBy(copying::join).hasRootCauseInstanceOf(de.tum.cit.aet.artemis.localci.exception.LocalCIException.class);
-        verify(copyCommand, never()).exec();
+        verify(dockerClient, never()).execCreateCmd("orphan-id");
         assertThat(interactiveSandboxService.lastActivity("orphan-id")).isEmpty();
     }
 
@@ -180,15 +176,14 @@ class InteractiveSandboxReaperServiceTest {
 
         CountDownLatch copyStarted = new CountDownLatch(1);
         CountDownLatch allowCopy = new CountDownLatch(1);
-        CopyArchiveToContainerCmd copyCommand = mock(CopyArchiveToContainerCmd.class);
-        when(dockerClient.copyArchiveToContainerCmd("active-id")).thenReturn(copyCommand);
-        when(copyCommand.withTarInputStream(any())).thenReturn(copyCommand);
-        when(copyCommand.withRemotePath("/workspace")).thenReturn(copyCommand);
+        ExecStartCmd copyCommand = givenCopyInCommand("active-id");
         doAnswer(invocation -> {
             copyStarted.countDown();
             assertThat(allowCopy.await(5, TimeUnit.SECONDS)).isTrue();
-            return null;
-        }).when(copyCommand).exec();
+            ResultCallback<Frame> callback = invocation.getArgument(0);
+            callback.onComplete();
+            return callback;
+        }).when(copyCommand).exec(any());
 
         CompletableFuture<Void> copying = CompletableFuture.runAsync(() -> interactiveSandboxService.copyIn("active-id", "/workspace", new ByteArrayInputStream(new byte[0])));
         assertThat(copyStarted.await(5, TimeUnit.SECONDS)).isTrue();
@@ -198,6 +193,28 @@ class InteractiveSandboxReaperServiceTest {
         verify(dockerClient, never()).removeContainerCmd("active-id");
         allowCopy.countDown();
         copying.get(5, TimeUnit.SECONDS);
+    }
+
+    private ExecStartCmd givenCopyInCommand(String containerId) {
+        ExecCreateCmd createCommand = mock(ExecCreateCmd.class);
+        ExecCreateCmdResponse createResponse = mock(ExecCreateCmdResponse.class);
+        ExecStartCmd startCommand = mock(ExecStartCmd.class);
+        InspectExecCmd inspectCommand = mock(InspectExecCmd.class);
+        InspectExecResponse inspectResponse = mock(InspectExecResponse.class);
+        when(dockerClient.execCreateCmd(containerId)).thenReturn(createCommand);
+        when(createCommand.withAttachStdin(true)).thenReturn(createCommand);
+        when(createCommand.withAttachStdout(true)).thenReturn(createCommand);
+        when(createCommand.withAttachStderr(true)).thenReturn(createCommand);
+        when(createCommand.withCmd(any(String[].class))).thenReturn(createCommand);
+        when(createCommand.exec()).thenReturn(createResponse);
+        when(createResponse.getId()).thenReturn("copy-exec");
+        when(dockerClient.execStartCmd("copy-exec")).thenReturn(startCommand);
+        when(startCommand.withDetach(false)).thenReturn(startCommand);
+        when(startCommand.withStdIn(any())).thenReturn(startCommand);
+        when(dockerClient.inspectExecCmd("copy-exec")).thenReturn(inspectCommand);
+        when(inspectCommand.exec()).thenReturn(inspectResponse);
+        when(inspectResponse.getExitCodeLong()).thenReturn(0L);
+        return startCommand;
     }
 
     @Test

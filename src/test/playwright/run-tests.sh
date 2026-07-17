@@ -7,9 +7,9 @@ TEST_PATHS=("$@")
 FAILED=0
 REPORTER_FAILED=0
 
-# Clean up stale markers/logs from previous runs (self-hosted runners have persistent workspaces)
+# Clean up stale markers, logs, and reports from previous runs (self-hosted runners have persistent workspaces)
 mkdir -p ./test-reports
-rm -f ./test-reports/.reporter-failed ./test-reports/pw-output-*.log ./test-reports/e2e-counts.env
+rm -f ./test-reports/.reporter-failed ./test-reports/pw-output-*.log ./test-reports/e2e-counts.env ./test-reports/results*.xml
 
 if [ ${#TEST_PATHS[@]} -eq 0 ] && [ -n "$PLAYWRIGHT_TEST_PATHS" ]; then
     read -r -a TEST_PATHS <<< "$PLAYWRIGHT_TEST_PATHS"
@@ -37,11 +37,16 @@ check_test_results() {
     return 0
 }
 
-# Run a playwright test command and evaluate the result.
-# Sets FAILED=1 on real test failures, REPORTER_FAILED=1 on reporter-only failures.
+# Run a Playwright command and preserve its exit status. JUnit inspection only
+# adds diagnostics; it must never turn a crashed or incomplete run green.
 run_playwright() {
     local test_type="$1"
+    local junit_file="./test-reports/results-${test_type}.xml"
     shift
+
+    # A crash before the JUnit reporter starts must not be diagnosed from a
+    # clean report left behind by an earlier invocation on a persistent runner.
+    rm -f "$junit_file"
 
     # Raise the runner heap headroom: the single "run all" CI job executes the whole ~316-test suite in
     # one Playwright process, and its per-run accumulation (results, coverage, attachments) hit the old
@@ -57,18 +62,16 @@ run_playwright() {
     local exit_code=${PIPESTATUS[0]}
 
     if [ "$exit_code" -ne 0 ]; then
-        local junit_file="./test-reports/results-${test_type}.xml"
         check_test_results "$junit_file"
         local check_result=$?
         if [ $check_result -eq 0 ]; then
             echo "WARNING: Playwright exited with code $exit_code but JUnit XML shows no test failures."
-            echo "This likely indicates a reporter failure (e.g., monocart OOM). Tests themselves passed."
+            echo "This may indicate a reporter or worker failure; the run remains failed."
             REPORTER_FAILED=1
         elif [ $check_result -eq 2 ]; then
-            echo "INFO: No tests found for project type '$test_type'. This is expected when filtered test paths don't match this project."
-        else
-            FAILED=1
+            echo "ERROR: Playwright exited with code $exit_code and produced no complete JUnit test results for '$test_type'."
         fi
+        FAILED=1
     fi
 }
 
@@ -77,15 +80,15 @@ echo "=== Running Playwright Tests ==="
 if [ ${#TEST_PATHS[@]} -gt 0 ]; then
     echo "Running filtered tests: ${TEST_PATHS[*]}"
 
-    # Run parallel tests (fast and slow projects)
+    # Run fast/slow tests plus the isolated one-worker Hyperion project.
     echo "--- Running parallel tests ---"
-    run_playwright parallel --project=fast-tests --project=slow-tests "${TEST_PATHS[@]}"
+    run_playwright parallel --project=fast-tests --project=slow-tests --project=hyperion-tests "${TEST_PATHS[@]}"
 else
     echo "Running all tests"
 
-    # Run parallel tests (fast and slow projects)
+    # Run fast/slow tests plus the isolated one-worker Hyperion project.
     echo "--- Running parallel tests ---"
-    run_playwright parallel e2e --project=fast-tests --project=slow-tests
+    run_playwright parallel e2e --project=fast-tests --project=slow-tests --project=hyperion-tests
 fi
 
 # Run the @multi-node project only when the surrounding stack opts in via env var. The multi-node
@@ -135,11 +138,31 @@ echo "E2E counts: ${E2E_PASSED} passed, ${E2E_FLAKY} flaky, ${E2E_FAILED} failed
 echo "--- Finalizing test reports ---"
 rm -f ./test-reports/results.xml
 if [ -f ./test-reports/results-parallel.xml ] && [ -f ./test-reports/results-multinode.xml ]; then
-    pnpm exec junit-merge ./test-reports/results-parallel.xml ./test-reports/results-multinode.xml -o ./test-reports/results.xml
+    if ! pnpm exec junit-merge ./test-reports/results-parallel.xml ./test-reports/results-multinode.xml -o ./test-reports/results.xml; then
+        echo "ERROR: Failed to merge Playwright JUnit reports."
+        FAILED=1
+    fi
 elif [ -f ./test-reports/results-parallel.xml ]; then
-    mv ./test-reports/results-parallel.xml ./test-reports/results.xml
+    if ! mv ./test-reports/results-parallel.xml ./test-reports/results.xml; then
+        echo "ERROR: Failed to finalize the Playwright JUnit report."
+        FAILED=1
+    fi
 elif [ -f ./test-reports/results-multinode.xml ]; then
-    mv ./test-reports/results-multinode.xml ./test-reports/results.xml
+    if ! mv ./test-reports/results-multinode.xml ./test-reports/results.xml; then
+        echo "ERROR: Failed to finalize the Playwright JUnit report."
+        FAILED=1
+    fi
+else
+    echo "ERROR: Playwright produced no JUnit report."
+    FAILED=1
+fi
+if [ -f ./test-reports/results.xml ]; then
+    check_test_results ./test-reports/results.xml
+    report_status=$?
+    if [ "$report_status" -ne 0 ]; then
+        echo "ERROR: Final Playwright JUnit report is incomplete or contains failures."
+        FAILED=1
+    fi
 fi
 pnpm run merge-coverage-reports || true
 
@@ -188,10 +211,9 @@ if [ -n "$PLAYWRIGHT_REPORT_SERVER_URL" ] && [ -n "$PLAYWRIGHT_REPORT_TOKEN" ]; 
     fi
 fi
 
-# Write marker file if reporter failed but tests passed (picked up by execute.sh for CI reporting).
-# When tests also fail, the test failure is the primary signal — no need to add reporter noise.
-if [ "$REPORTER_FAILED" -eq 1 ] && [ "$FAILED" -eq 0 ]; then
-    echo "Reporter process failed (likely monocart OOM). Test results were not affected." > ./test-reports/.reporter-failed
+# Write a marker for CI diagnostics when Playwright failed despite clean JUnit testcases.
+if [ "$REPORTER_FAILED" -eq 1 ]; then
+    echo "Playwright failed even though completed JUnit testcases were clean; the run is incomplete." > ./test-reports/.reporter-failed
     echo "WARNING: Reporter failure detected. See ./test-reports/.reporter-failed"
 fi
 

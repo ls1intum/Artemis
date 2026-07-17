@@ -1,10 +1,10 @@
 import { Component, OnDestroy, OnInit, inject, signal, viewChild } from '@angular/core';
 import { CodeEditorContainerComponent } from 'app/programming/manage/code-editor/container/code-editor-container.component';
-import { Observable, Subscription, of, throwError } from 'rxjs';
+import { EMPTY, Observable, Subject, Subscription, of, throwError } from 'rxjs';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Location } from '@angular/common';
 import { AlertService } from 'app/foundation/service/alert.service';
-import { catchError, filter, map, tap } from 'rxjs/operators';
+import { catchError, filter, map, switchMap, tap } from 'rxjs/operators';
 import { ParticipationService } from 'app/exercise/participation/participation.service';
 import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
 import { ButtonSize } from 'app/shared-ui/components/buttons/button/button.component';
@@ -19,7 +19,6 @@ import { DomainChange, DomainType, RepositoryType } from 'app/programming/shared
 import { Course } from 'app/course/shared/entities/course.model';
 import { CourseExerciseService } from 'app/exercise/course-exercises/course-exercise.service';
 import { isExamExercise } from 'app/foundation/util/utils';
-import { Subject } from 'rxjs';
 import { debounceTime, shareReplay } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { CodeEditorFileSyncService, FileSyncState } from 'app/exercise/synchronization/services/code-editor-file-sync.service';
@@ -114,67 +113,74 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
         if (this.paramSub) {
             this.paramSub.unsubscribe();
         }
-        this.paramSub = this.route.params.subscribe((params) => {
-            const exerciseId = Number(params['exerciseId']);
-            const repositoryType = params['repositoryType'];
-            const repositoryId = Number(params['repositoryId']);
-            this.loadingState.set(LOADING_STATE.INITIALIZING);
-            this.loadExercise(exerciseId)
-                .pipe(
-                    catchError(() => throwError(() => new Error('exerciseNotFound'))),
-                    tap((exercise) => {
-                        this.exercise = exercise;
-                        this.course = exercise.course! ?? exercise.exerciseGroup!.exam!.course!;
-                        if (exercise.id) {
-                            this.exerciseEditorSyncService.connect(exercise.id);
-                        }
-                        // Emit initial markdown to drive the preview after loading the exercise
-                        if (exercise.problemStatement != undefined) {
-                            this.problemStatementChanges$.next(exercise.problemStatement);
-                        }
-                    }),
-                    // Set selected participation
-                    tap(() => {
-                        if (repositoryType === RepositoryType.TESTS) {
-                            this.saveChangesAndSelectDomain([DomainType.TEST_REPOSITORY, this.exercise]);
-                        } else if (repositoryType === RepositoryType.AUXILIARY) {
-                            const auxiliaryRepo = this.exercise.auxiliaryRepositories?.find((repo) => repo.id === repositoryId);
-                            if (auxiliaryRepo) {
-                                this.selectedAuxiliaryRepositoryName = auxiliaryRepo.name;
-                                this.saveChangesAndSelectDomain([DomainType.AUXILIARY_REPOSITORY, auxiliaryRepo]);
+        this.paramSub = this.route.params
+            .pipe(
+                tap(() => this.loadingState.set(LOADING_STATE.INITIALIZING)),
+                switchMap((params) => {
+                    const exerciseId = Number(params['exerciseId']);
+                    const repositoryType = params['repositoryType'];
+                    const repositoryId = Number(params['repositoryId']);
+                    return this.loadExercise(exerciseId).pipe(
+                        map((exercise) => {
+                            if (exercise.id !== exerciseId) {
+                                throw new Error('exerciseNotFound');
                             }
-                        } else {
-                            const nextAvailableParticipation = this.getNextAvailableParticipation(repositoryId);
-                            if (nextAvailableParticipation) {
-                                this.selectParticipationDomainById(nextAvailableParticipation.id!);
-
-                                // Show a consistent route in the browser
-                                if (nextAvailableParticipation.id !== repositoryId) {
-                                    const parentUrl = this.router.url.substring(0, this.router.url.lastIndexOf('/'));
-                                    this.location.replaceState(parentUrl + `/${nextAvailableParticipation.id}`);
+                            return exercise;
+                        }),
+                        tap((exercise) => {
+                            this.exercise = exercise;
+                            this.course = exercise.course! ?? exercise.exerciseGroup!.exam!.course!;
+                            if (exercise.id) {
+                                this.exerciseEditorSyncService.connect(exercise.id);
+                            }
+                            // Emit initial markdown to drive the preview after loading the exercise
+                            if (exercise.problemStatement != undefined) {
+                                this.problemStatementChanges$.next(exercise.problemStatement);
+                            }
+                        }),
+                        // Set selected participation
+                        tap(() => {
+                            if (repositoryType === RepositoryType.TESTS) {
+                                this.saveChangesAndSelectDomain([DomainType.TEST_REPOSITORY, this.exercise]);
+                            } else if (repositoryType === RepositoryType.AUXILIARY) {
+                                const auxiliaryRepo = this.exercise.auxiliaryRepositories?.find((repo) => repo.id === repositoryId);
+                                if (auxiliaryRepo) {
+                                    this.selectedAuxiliaryRepositoryName = auxiliaryRepo.name;
+                                    this.saveChangesAndSelectDomain([DomainType.AUXILIARY_REPOSITORY, auxiliaryRepo]);
                                 }
                             } else {
-                                throwError(() => new Error('participationNotFound'));
+                                const nextAvailableParticipation = this.getNextAvailableParticipation(repositoryId);
+                                if (nextAvailableParticipation) {
+                                    this.selectParticipationDomainById(nextAvailableParticipation.id!);
+
+                                    // Show a consistent route in the browser
+                                    if (nextAvailableParticipation.id !== repositoryId) {
+                                        const parentUrl = this.router.url.substring(0, this.router.url.lastIndexOf('/'));
+                                        this.location.replaceState(parentUrl + `/${nextAvailableParticipation.id}`);
+                                    }
+                                } else {
+                                    throw new Error('participationNotFound');
+                                }
                             }
-                        }
-                    }),
-                    tap(() => {
-                        if (!this.domainChangeSubscription) {
-                            this.domainChangeSubscription = this.subscribeToDomainChange();
-                        }
-                    }),
-                )
-                .subscribe({
-                    next: () => {
-                        this.loadingState.set(LOADING_STATE.CLEAR);
-                        this.isCreateAssignmentRepoDisabled = this.loadingState() !== this.LOADING_STATE.CLEAR || isExamExercise(this.exercise);
-                    },
-                    error: (err: Error) => {
-                        this.loadingState.set(LOADING_STATE.FETCHING_FAILED);
-                        this.onError(err.message);
-                    },
-                });
-        });
+                        }),
+                        tap(() => {
+                            if (!this.domainChangeSubscription) {
+                                this.domainChangeSubscription = this.subscribeToDomainChange();
+                            }
+                        }),
+                        catchError((error: unknown) => {
+                            const message = error instanceof Error && error.message === 'participationNotFound' ? 'participationNotFound' : 'exerciseNotFound';
+                            this.loadingState.set(LOADING_STATE.FETCHING_FAILED);
+                            this.onError(message);
+                            return EMPTY;
+                        }),
+                    );
+                }),
+            )
+            .subscribe(() => {
+                this.loadingState.set(LOADING_STATE.CLEAR);
+                this.isCreateAssignmentRepoDisabled = isExamExercise(this.exercise);
+            });
     }
     /** Called by the center editor on every markdown change */
     onInstructionChanged(markdown: string) {

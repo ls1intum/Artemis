@@ -12,6 +12,8 @@ import org.junit.jupiter.api.condition.EnabledIf;
 import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.junit.jupiter.api.parallel.Isolated;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.prompt.Prompt;
@@ -192,18 +194,21 @@ class HyperionExerciseGenerationMockedEndToEndTest extends AbstractHyperionMocke
         return TEST_PREFIX;
     }
 
-    @Test
+    @ParameterizedTest
+    @ValueSource(booleans = { false, true })
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void generatesValidExercise_deterministic_endToEnd() throws Exception {
-        ProgrammingExercise exercise = scaffoldEmptyJavaExercise("HGMOK");
+    void generatesValidExercise_deterministic_endToEnd(boolean sequentialTestRuns) throws Exception {
+        ProgrammingExercise exercise = scaffoldEmptyJavaExercise(sequentialTestRuns ? "HGMOKS" : "HGMOK", sequentialTestRuns);
+        String testPath = sequentialTestRuns ? "tests/behavior/test/de/test/BoundedCounterTest.java" : TEST_PATH;
         when(azureOpenAiChatModel.call(any(Prompt.class))).thenReturn(HyperionMockedLlmE2eSupport.writeFile(PROBLEM_STATEMENT_PATH, PROBLEM_STATEMENT),
                 HyperionMockedLlmE2eSupport.writeFile(SOLUTION_PATH, SOLUTION_BOUNDED_COUNTER), HyperionMockedLlmE2eSupport.writeFile(TEMPLATE_PATH, TEMPLATE_BOUNDED_COUNTER),
-                HyperionMockedLlmE2eSupport.writeFile(TEST_PATH, BOUNDED_COUNTER_TEST), HyperionMockedLlmE2eSupport.verify(), HyperionMockedLlmE2eSupport.submit("Bounded counter"),
+                HyperionMockedLlmE2eSupport.writeFile(testPath, BOUNDED_COUNTER_TEST), HyperionMockedLlmE2eSupport.verify(), HyperionMockedLlmE2eSupport.submit("Bounded counter"),
                 HyperionMockedLlmE2eSupport.cleanQualityReview(), HyperionMockedLlmE2eSupport.cleanQualityReview());
 
-        try (GenerationOutcome outcome = orchestrator.generate(exercise, instructor(), "Create a bounded counter exercise.", "mock-generate-valid", GenerationMode.GENERATE,
-                () -> false, line -> log.info("[mock-generate] {}", line), null, null)) {
-            assertThat(outcome.verification()).as("verification ran").isNotNull();
+        try (GenerationOutcome outcome = orchestrator.generate(exercise, instructor(), "Create a bounded counter exercise.",
+                sequentialTestRuns ? "mock-generate-valid-sequential" : "mock-generate-valid", GenerationMode.GENERATE, () -> false, line -> log.info("[mock-generate] {}", line),
+                null, null)) {
+            assertThat(outcome.verification()).as("verification ran; outcome error: %s", outcome.errorMessage()).isNotNull();
             log.info("=== VERIFICATION (valid) ===\n{}", outcome.verification().report());
             assertThat(outcome.verification().solutionPassed()).as("the solution passes its own tests").isTrue();
             assertThat(outcome.verification().templateFailed()).as("the template compiles but fails the tests").isTrue();
@@ -227,7 +232,7 @@ class HyperionExerciseGenerationMockedEndToEndTest extends AbstractHyperionMocke
 
         try (GenerationOutcome outcome = orchestrator.generate(exercise, instructor(), "Create a bounded counter exercise.", "mock-generate-bad", GenerationMode.GENERATE,
                 () -> false, line -> log.info("[mock-generate-bad] {}", line), null, null)) {
-            assertThat(outcome.verification()).as("verification ran").isNotNull();
+            assertThat(outcome.verification()).as("verification ran; outcome error: %s", outcome.errorMessage()).isNotNull();
             log.info("=== VERIFICATION (bad binding) ===\n{}", outcome.verification().report());
             assertThat(outcome.verification().solutionPassed()).as("the code is otherwise valid").isTrue();
             assertThat(outcome.verification().templateFailed()).as("the template still fails the tests").isTrue();
@@ -247,7 +252,7 @@ class HyperionExerciseGenerationMockedEndToEndTest extends AbstractHyperionMocke
 
         try (GenerationOutcome outcome = orchestrator.generate(exercise, instructor(), "Create a bounded counter exercise.", "mock-generate-failing-solution",
                 GenerationMode.GENERATE, () -> false, line -> log.info("[mock-generate-failing] {}", line), null, null)) {
-            assertThat(outcome.verification()).as("verification ran").isNotNull();
+            assertThat(outcome.verification()).as("verification ran; outcome error: %s", outcome.errorMessage()).isNotNull();
             log.info("=== VERIFICATION (failing solution) ===\n{}", outcome.verification().report());
             assertThat(outcome.verification().solutionPassed()).as("a broken reference solution is rejected").isFalse();
             assertThat(outcome.verification().testCount()).as("the verifier still discovered the behavior tests").isEqualTo(4);
@@ -256,10 +261,15 @@ class HyperionExerciseGenerationMockedEndToEndTest extends AbstractHyperionMocke
     }
 
     private ProgrammingExercise scaffoldEmptyJavaExercise(String shortName) throws Exception {
+        return scaffoldEmptyJavaExercise(shortName, false);
+    }
+
+    private ProgrammingExercise scaffoldEmptyJavaExercise(String shortName, boolean sequentialTestRuns) throws Exception {
         Course course = courseUtilService.addEmptyCourse();
         ProgrammingExercise exercise = ProgrammingExerciseFactory.generateProgrammingExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(7), course,
                 ProgrammingLanguage.JAVA);
         exercise.setProjectType(ProjectType.PLAIN_MAVEN);
+        exercise.getBuildConfig().setSequentialTestRuns(sequentialTestRuns);
         exercise.setShortName(shortName);
         exercise.setTitle("Hyperion Mocked E2E " + shortName);
         exercise.setChannelName("hyp-mock-" + shortName.toLowerCase());

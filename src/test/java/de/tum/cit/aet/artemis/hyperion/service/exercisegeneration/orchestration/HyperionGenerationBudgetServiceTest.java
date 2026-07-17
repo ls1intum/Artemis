@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
+import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
@@ -25,6 +26,13 @@ import de.tum.cit.aet.artemis.core.test_repository.LLMTokenUsageTraceTestReposit
 class HyperionGenerationBudgetServiceTest {
 
     private final LLMTokenUsageTraceTestRepository repository = mock(LLMTokenUsageTraceTestRepository.class);
+
+    @Test
+    void configurationRejectsABudgetThatCannotAdmitOneReservation() {
+        assertThatIllegalArgumentException()
+                .isThrownBy(() -> new HyperionGenerationBudgetService(repository, mock(HazelcastInstance.class), Duration.ofHours(24), 99, 0, 0, 100, Duration.ofMinutes(35)))
+                .withMessageContaining("admission-max-tokens-per-user").withMessageContaining("in-flight-token-reservation-per-job");
+    }
 
     @Test
     void assertWithinBudgets_whenAllLimitsDisabled_doesNotQueryRepository() {

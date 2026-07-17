@@ -24,7 +24,9 @@ import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
 import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.Test;
+import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.Resource;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import de.tum.cit.aet.artemis.buildagent.dto.SandboxExecResult;
 import de.tum.cit.aet.artemis.buildagent.service.InteractiveSandbox;
@@ -120,7 +122,7 @@ class GenerationWorkspaceServiceTest {
         ResourceLoaderService resourceLoaderService = mock(ResourceLoaderService.class);
         Resource resource = mock(Resource.class);
         TrackingInputStream input = new TrackingInputStream("class Example {}".getBytes(StandardCharsets.UTF_8));
-        when(resource.getURI()).thenReturn(java.net.URI.create("file:/templates/java/test/Example.java"));
+        when(resource.getURI()).thenReturn(java.net.URI.create("file:/templates/hyperion/reference/java/tests/test/Example.java"));
         when(resource.getInputStream()).thenReturn(input);
         when(resourceLoaderService.getFileResources(any(Path.class))).thenAnswer(invocation -> {
             Path path = invocation.getArgument(0);
@@ -128,10 +130,134 @@ class GenerationWorkspaceServiceTest {
         });
         ProgrammingExercise exercise = new ProgrammingExercise();
         exercise.setProgrammingLanguage(ProgrammingLanguage.JAVA);
+        exercise.setProjectType(ProjectType.PLAIN_MAVEN);
         GenerationWorkspaceService service = new GenerationWorkspaceService(mock(), mock(), mock(), resourceLoaderService, tempFileUtilService());
 
-        assertThat(service.readReferenceSample(exercise)).containsEntry("reference/test/Example.java", "class Example {}");
+        service.readReferenceSample(exercise);
         assertThat(input.closed).isTrue();
+    }
+
+    @Test
+    void readReferenceSample_buildsACompleteCuratedJavaExercise() throws Exception {
+        ResourceLoaderService resourceLoaderService = mock(ResourceLoaderService.class);
+        Resource statement = resource("file:/templates/hyperion/reference/java/problem-statement.md", "Problem statement");
+        when(resourceLoaderService.getResource(Path.of("templates/hyperion/reference/java/problem-statement.md"))).thenReturn(statement);
+        when(resourceLoaderService.getFileResources(any(Path.class))).thenAnswer(invocation -> switch (invocation.<Path>getArgument(0).toString()) {
+            case "templates/hyperion/reference/java/template" -> resources("file:/templates/hyperion/reference/java/template/src/example/ScoreCalculator.java", "starter algorithm",
+                    "file:/templates/hyperion/reference/java/template/.gitignore", "ignored", "file:/templates/hyperion/reference/java/template/../solution/Evil.java", "escaped");
+            case "templates/hyperion/reference/java/solution" ->
+                resources("file:/templates/hyperion/reference/java/solution/src/example/ScoreCalculator.java", "solution algorithm");
+            case "templates/hyperion/reference/java/tests/test" ->
+                resources("file:/templates/hyperion/reference/java/tests/test/de/tum/cit/aet/reference/ScoreCalculatorTest.java", "behavior tests");
+            default -> new Resource[0];
+        });
+        ProgrammingExercise exercise = new ProgrammingExercise();
+        exercise.setProgrammingLanguage(ProgrammingLanguage.JAVA);
+        exercise.setProjectType(ProjectType.PLAIN_MAVEN);
+        GenerationWorkspaceService service = new GenerationWorkspaceService(mock(), mock(), mock(), resourceLoaderService, tempFileUtilService());
+
+        Map<String, String> reference = service.readReferenceSample(exercise);
+
+        assertThat(reference).containsEntry("reference/problem-statement.md", "Problem statement")
+                .containsEntry("reference/template/src/example/ScoreCalculator.java", "starter algorithm")
+                .containsEntry("reference/solution/src/example/ScoreCalculator.java", "solution algorithm")
+                .containsEntry("reference/tests/test/de/tum/cit/aet/reference/ScoreCalculatorTest.java", "behavior tests").containsKey("reference/README.md");
+        assertThat(reference).doesNotContainKeys("reference/template/.gitignore", "reference/template/../solution/Evil.java", "reference/tests/structural/test.json");
+    }
+
+    @Test
+    void readReferenceSample_loadsTheDedicatedClasspathExerciseWithoutProjectType() {
+        ResourceLoaderService resourceLoaderService = new ResourceLoaderService(new DefaultResourceLoader(), mock());
+        ReflectionTestUtils.setField(resourceLoaderService, "templateFileSystemPath", Optional.empty());
+        ProgrammingExercise exercise = new ProgrammingExercise();
+        exercise.setProgrammingLanguage(ProgrammingLanguage.JAVA);
+
+        Map<String, String> reference = new GenerationWorkspaceService(mock(), mock(), mock(), resourceLoaderService, tempFileUtilService()).readReferenceSample(exercise);
+
+        assertThat(reference).containsKeys("reference/problem-statement.md", "reference/template/src/de/tum/cit/aet/reference/ScoreCalculator.java",
+                "reference/solution/src/de/tum/cit/aet/reference/ScoreCalculator.java", "reference/tests/test/de/tum/cit/aet/reference/ScoreCalculatorTest.java");
+        assertThat(reference).doesNotContainKey("reference/tests/structural/test.json");
+        assertThat(reference.values()).noneMatch(content -> content.contains("${packageName"));
+        String statement = reference.get("reference/problem-statement.md");
+        String tests = reference.get("reference/tests/test/de/tum/cit/aet/reference/ScoreCalculatorTest.java");
+        assertThat(statement).contains("[task][Count passing scores](testRepresentativeScores,testBoundaryScores,testEmptyInput)");
+        assertThat(tests).contains("representative scores should count every value at or above 50", "a score of exactly 50 should pass",
+                "an empty score list should have no passing scores");
+    }
+
+    @Test
+    void buildReadinessFixture_isVerifierOwnedAndSupportsRegularAndSequentialHarnessLayouts() {
+        ResourceLoaderService resourceLoaderService = new ResourceLoaderService(new DefaultResourceLoader(), mock());
+        ReflectionTestUtils.setField(resourceLoaderService, "templateFileSystemPath", Optional.empty());
+        ProgrammingExercise exercise = new ProgrammingExercise();
+        exercise.setProgrammingLanguage(ProgrammingLanguage.JAVA);
+        exercise.setBuildConfig(new de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig());
+        GenerationWorkspaceService service = new GenerationWorkspaceService(mock(), mock(), mock(), resourceLoaderService, tempFileUtilService());
+
+        Map<String, String> regular = service.readBuildReadinessFixture(exercise);
+        assertThat(regular).containsKeys("solution/src/de/tum/cit/aet/reference/ScoreCalculator.java", "tests/test/de/tum/cit/aet/reference/ScoreCalculatorTest.java",
+                "tests/test/de/tum/cit/aet/reference/ScoreCalculatorStructureTest.java");
+        assertThat(regular.keySet()).noneMatch(path -> path.startsWith("reference/"));
+
+        exercise.getBuildConfig().setSequentialTestRuns(true);
+        Map<String, String> sequential = service.readBuildReadinessFixture(exercise);
+        assertThat(sequential)
+                .containsKeys("tests/structural/test/de/tum/cit/aet/reference/ScoreCalculatorStructureTest.java",
+                        "tests/behavior/test/de/tum/cit/aet/reference/ScoreCalculatorTest.java")
+                .doesNotContainKeys("tests/test/de/tum/cit/aet/reference/ScoreCalculatorTest.java", "tests/structural/test/de/tum/cit/aet/reference/ScoreCalculatorTest.java");
+    }
+
+    @Test
+    void readReferenceSample_boundsInputBeforeRejectingAnOversizedResource() throws Exception {
+        ResourceLoaderService resourceLoaderService = mock(ResourceLoaderService.class);
+        Resource resource = mock(Resource.class);
+        CountingInputStream input = new CountingInputStream(new byte[100_000]);
+        when(resource.getURI()).thenReturn(java.net.URI.create("file:/templates/hyperion/reference/java/tests/test/Oversized.java"));
+        when(resource.getInputStream()).thenReturn(input);
+        when(resourceLoaderService.getFileResources(any(Path.class)))
+                .thenAnswer(invocation -> invocation.<Path>getArgument(0).endsWith("test") ? new Resource[] { resource } : new Resource[0]);
+        ProgrammingExercise exercise = new ProgrammingExercise();
+        exercise.setProgrammingLanguage(ProgrammingLanguage.JAVA);
+        exercise.setProjectType(ProjectType.PLAIN_MAVEN);
+
+        new GenerationWorkspaceService(mock(), mock(), mock(), resourceLoaderService, tempFileUtilService()).readReferenceSample(exercise);
+
+        assertThat(input.bytesRead).isLessThanOrEqualTo(64_001);
+        assertThat(input.closed).isTrue();
+    }
+
+    @Test
+    void readReferenceSample_omitsAnIncompleteWorkedExercise() throws Exception {
+        ResourceLoaderService resourceLoaderService = mock(ResourceLoaderService.class);
+        Resource statement = resource("file:/templates/hyperion/reference/java/problem-statement.md", "Problem statement");
+        when(resourceLoaderService.getResource(Path.of("templates/hyperion/reference/java/problem-statement.md"))).thenReturn(statement);
+        when(resourceLoaderService.getFileResources(any(Path.class))).thenAnswer(invocation -> switch (invocation.<Path>getArgument(0).toString()) {
+            case "templates/hyperion/reference/java/template" -> resources("file:/templates/hyperion/reference/java/template/src/example/ScoreCalculator.java", "starter");
+            case "templates/hyperion/reference/java/solution" -> resources("file:/templates/hyperion/reference/java/solution/src/example/ScoreCalculator.java", "solution");
+            default -> new Resource[0];
+        });
+        ProgrammingExercise exercise = new ProgrammingExercise();
+        exercise.setProgrammingLanguage(ProgrammingLanguage.JAVA);
+        exercise.setProjectType(ProjectType.PLAIN_MAVEN);
+
+        Map<String, String> reference = new GenerationWorkspaceService(mock(), mock(), mock(), resourceLoaderService, tempFileUtilService()).readReferenceSample(exercise);
+
+        assertThat(reference).isEmpty();
+    }
+
+    private static Resource[] resources(String... uriAndContent) throws Exception {
+        Resource[] resources = new Resource[uriAndContent.length / 2];
+        for (int i = 0; i < uriAndContent.length; i += 2) {
+            Resource resource = mock(Resource.class);
+            when(resource.getURI()).thenReturn(java.net.URI.create(uriAndContent[i]));
+            when(resource.getInputStream()).thenReturn(new ByteArrayInputStream(uriAndContent[i + 1].getBytes(StandardCharsets.UTF_8)));
+            resources[i / 2] = resource;
+        }
+        return resources;
+    }
+
+    private static Resource resource(String uri, String content) throws Exception {
+        return resources(uri, content)[0];
     }
 
     @Test
@@ -272,6 +398,40 @@ class GenerationWorkspaceServiceTest {
         public void close() throws IOException {
             closed = true;
             super.close();
+        }
+    }
+
+    private static final class CountingInputStream extends java.io.InputStream {
+
+        private final byte[] content;
+
+        private int bytesRead;
+
+        private boolean closed;
+
+        private CountingInputStream(byte[] content) {
+            this.content = content;
+        }
+
+        @Override
+        public int read() {
+            return bytesRead < content.length ? content[bytesRead++] & 0xff : -1;
+        }
+
+        @Override
+        public int read(byte[] bytes, int offset, int length) {
+            if (bytesRead >= content.length) {
+                return -1;
+            }
+            int count = Math.min(length, content.length - bytesRead);
+            System.arraycopy(content, bytesRead, bytes, offset, count);
+            bytesRead += count;
+            return count;
+        }
+
+        @Override
+        public void close() {
+            closed = true;
         }
     }
 }

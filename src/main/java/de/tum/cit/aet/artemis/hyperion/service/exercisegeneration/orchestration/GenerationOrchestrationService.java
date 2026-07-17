@@ -150,6 +150,9 @@ public class GenerationOrchestrationService {
         // as an adapt). Empty for GENERATE, which leaves the total-wipe gate inert.
         Set<String> baselineGradedTestNames = mode == GenerationMode.ADAPT ? captureBaselineGradedTestNames(exercise) : Set.of();
         String baselineProblemStatement = exercise.getProblemStatement();
+        String sourceBrief = renderReviewBrief(mode, userPrompt, baselineProblemStatement);
+        Long courseId = courseIdOf(exercise);
+        Consumer<ChatResponse> effectiveUsageSink = usageSink != null ? usageSink : jobService.tokenUsageSink(courseId, exercise.getId(), user.getId());
         InteractiveSandbox sandbox = requireSandbox();
         String sessionId = null;
         GenerationWorkspaceService.WorkspaceSeed workspaceSeed = null;
@@ -157,14 +160,14 @@ public class GenerationOrchestrationService {
         Map<RepositoryType, Map<String, String>> baselineRepositoryFiles = Map.of();
         CandidateSnapshot lastMechanicallyVerifiedCandidate = null;
         ExtractedCandidate lastExtractedCandidate = null;
-        Long courseId = courseIdOf(exercise);
         SandboxSessionSpec sessionSpec = workspace.sessionSpec(exercise,
                 new SandboxSessionContext(jobId, exercise.getId(), exercise.getTitle(), courseId, user.getLogin(), mode.name()));
-        Consumer<ChatResponse> effectiveUsageSink = usageSink != null ? usageSink : jobService.tokenUsageSink(courseId, exercise.getId(), user.getId());
         try {
+            if (cancelled.getAsBoolean()) {
+                return GenerationOutcome.cancelled(new AgentLoopResult(AgentLoopResult.Status.CANCELLED, 0, ""));
+            }
             emit(progress, "Setting up the build environment");
             sessionId = sandbox.createSession(sessionSpec);
-            // Node-local interrupt so a cancellation during a long build aborts the in-flight exec; destroySession is idempotent, safe alongside the orchestrator's own teardown.
             String activeSessionId = sessionId;
             jobService.registerCancelHook(jobId, () -> sandbox.destroySession(activeSessionId));
 
@@ -179,9 +182,18 @@ public class GenerationOrchestrationService {
                         new AgentLoopResult(AgentLoopResult.Status.CANCELLED, 0, ""));
             }
 
-            emit(progress, "Preparing the exercise requirements");
-            String sourceBrief = renderReviewBrief(mode, userPrompt, baselineProblemStatement);
+            emit(progress, "Checking the build environment");
+            Optional<String> buildEnvironmentFailure = checkBuildEnvironment(sandbox, sessionId, exercise);
+            if (cancelled.getAsBoolean()) {
+                return stopOrPreserve(sandbox, sessionId, workspaceSeed, placeholderReplacements, baselineRepositoryFiles, baselineProblemStatement,
+                        new AgentLoopResult(AgentLoopResult.Status.CANCELLED, 0, ""));
+            }
+            if (buildEnvironmentFailure.isPresent()) {
+                destroyQuietly(sandbox, sessionId);
+                return GenerationOutcome.error(new AgentLoopResult(AgentLoopResult.Status.ERROR, 0, ""), buildEnvironmentFailure.get());
+            }
             String reviewBrief = sourceBrief;
+            String authoringBrief = renderAuthoringBrief(sourceBrief);
 
             String systemPrompt = systemPromptService.build(exercise, mode);
             // The agent's `verify` tool runs the same differential as the post-loop gate so it sees the verdict in-loop (pass/fail tests, exact [task] names); the post-loop
@@ -193,7 +205,7 @@ public class GenerationOrchestrationService {
 
             // Free turn-0 observation of the seeded layout so the agent need not `ls -R`. Best-effort (empty probe leaves the prompt unchanged) and first-attempt only — retries
             // already operate on a workspace the agent has explored.
-            String firstPrompt = prependWorkspaceLayout(workspace.probeWorkspaceLayout(sandbox, sessionId), renderAuthoringBrief(sourceBrief));
+            String firstPrompt = prependWorkspaceLayout(workspace.probeWorkspaceLayout(sandbox, sessionId), authoringBrief);
 
             // On rejection, feed the verifier's reasons back and retry up to a small bound. The verifier enforces rules the agent's own verify.sh cannot show (template must fail a
             // meaningful fraction; problem statement must bind tasks), so this loop turns a "builds but not quite right" first attempt into an accepted exercise.
@@ -219,12 +231,11 @@ public class GenerationOrchestrationService {
                                 lastMechanicallyVerifiedCandidate.producedFiles(), lastMechanicallyVerifiedCandidate.problemStatement(),
                                 lastMechanicallyVerifiedCandidate.reviewReport(), workspaceSeed.repositoryHeads());
                     }
-                    CapturedRepositories erroredRepositories = captureRepositoryFiles(sandbox, sessionId, workspaceSeed, placeholderReplacements);
-                    Map<RepositoryType, Map<String, String>> erroredFiles = erroredRepositories.complete() ? erroredRepositories.files() : Map.of();
+                    Map<RepositoryType, Map<String, String>> erroredFiles = changedCapturedRepositoryFiles(baselineRepositoryFiles,
+                            captureRepositoryFiles(sandbox, sessionId, workspaceSeed, placeholderReplacements));
                     String erroredStatement = workspace.extractProblemStatement(sandbox, sessionId).trim();
                     boolean statementChanged = !java.util.Objects.equals(baselineProblemStatement == null ? "" : baselineProblemStatement.trim(), erroredStatement);
-                    if (statementChanged
-                            || (erroredRepositories.complete() && hasProducedChanges(baselineRepositoryFiles, erroredFiles, baselineProblemStatement, erroredStatement))) {
+                    if (statementChanged || !erroredFiles.isEmpty()) {
                         return new GenerationOutcome(loopResult, null, sessionId, this, sandbox, erroredFiles, erroredStatement,
                                 SpecFidelityReport.qualityReviewUnavailable("The agent stopped before verification; the partial candidate requires manual review."),
                                 workspaceSeed.repositoryHeads());
@@ -283,7 +294,7 @@ public class GenerationOrchestrationService {
                             cancelledResult(loopResult));
                 }
                 // The authoritative pass re-seeds its pristine script, discards old reports, and builds from fresh temporary directories before parsing the result independently.
-                verification = verifier.verify(sandbox, sessionId, exercise, verificationRequest);
+                verification = verifyWithInfrastructureRetry(sandbox, sessionId, exercise, verificationRequest, cancelled, progress);
                 emit(progress, verification.report());
                 if (verification.accepted()) {
                     lastMechanicallyVerifiedCandidate = new CandidateSnapshot(loopResult, verification, copyProducedFiles(producedFilesByType), producedProblemStatement,
@@ -342,7 +353,7 @@ public class GenerationOrchestrationService {
                             + " Preserve the mechanically correct work: do not restart or rewrite unrelated files. Re-read the cited artifacts and repair them to match the source requirements and "
                             + "remove unsupported candidate choices identified by the review. Make the smallest coherent repair across the statement, solution, template, and tests. Keep every unaffected "
                             + "requirement, API, test, and example. Re-run `sh verify.sh solution` and `sh verify.sh template`, then call submit again.\n\nThe instructor "
-                            + "specification is:\n" + reviewBrief + specFidelityCritic.renderForRetryPrompt(specFidelityReport);
+                            + "source requirements are:\n" + authoringBrief + specFidelityCritic.renderForRetryPrompt(specFidelityReport);
                     continue;
                 }
                 emit(progress, "Verification rejected the exercise; asking the agent to fix the issues and try again.");
@@ -350,8 +361,8 @@ public class GenerationOrchestrationService {
                 currentPrompt = "Your previous attempt was rejected by the differential verifier:\n" + verification.report()
                         + "\n\nThe workspace still contains all your files. Read the relevant files, fix exactly these issues, re-run `sh verify.sh solution` and "
                         + "`sh verify.sh template` to confirm, then call submit again. If a reason names a forbidden, duplicate, or abandoned path, delete it; replacing it with a "
-                        + "placeholder does not remove the violation. Preserve the source requirements below while repairing the mechanical issue.\n\n" + reviewBrief
-                        + specFidelityCritic.renderForRetryPrompt(specFidelityReport);
+                        + "placeholder does not remove the violation. Make the smallest coherent repair, leave unrelated files unchanged, and preserve the source requirements below.\n\n"
+                        + authoringBrief + specFidelityCritic.renderForRetryPrompt(specFidelityReport);
             }
 
             // A semantic repair can accidentally break a candidate that already built and graded correctly. Never discard that more useful checkpoint in favour of a later
@@ -374,13 +385,15 @@ public class GenerationOrchestrationService {
                         new AgentLoopResult(AgentLoopResult.Status.CANCELLED, 0, ""));
             }
             if (lastMechanicallyVerifiedCandidate != null && workspaceSeed != null) {
-                log.warn("Exercise generation failed while repairing a mechanically verified candidate for exercise {}; preserving the verified checkpoint", exercise.getId(), e);
+                log.warn("Exercise generation failed while repairing a mechanically verified candidate for exercise {}; preserving the verified checkpoint ({})", exercise.getId(),
+                        e.getClass().getSimpleName());
                 return new GenerationOutcome(lastMechanicallyVerifiedCandidate.loopResult(), lastMechanicallyVerifiedCandidate.verification(), sessionId, this, sandbox,
                         lastMechanicallyVerifiedCandidate.producedFiles(), lastMechanicallyVerifiedCandidate.problemStatement(), lastMechanicallyVerifiedCandidate.reviewReport(),
                         workspaceSeed.repositoryHeads());
             }
             if (lastExtractedCandidate != null && workspaceSeed != null) {
-                log.warn("Exercise generation failed while verifying an extracted candidate for exercise {}; preserving the captured work", exercise.getId(), e);
+                log.warn("Exercise generation failed while verifying an extracted candidate for exercise {}; preserving the captured work ({})", exercise.getId(),
+                        e.getClass().getSimpleName());
                 AgentLoopResult stopped = new AgentLoopResult(AgentLoopResult.Status.ERROR, lastExtractedCandidate.loopResult().turns(),
                         "Generation stopped before verification completed.");
                 return new GenerationOutcome(stopped, null, sessionId, this, sandbox, lastExtractedCandidate.producedFiles(), lastExtractedCandidate.problemStatement(),
@@ -389,12 +402,13 @@ public class GenerationOrchestrationService {
             GenerationOutcome recoveredError = captureUnexpectedFailure(sandbox, sessionId, workspaceSeed, placeholderReplacements, baselineRepositoryFiles,
                     baselineProblemStatement);
             if (recoveredError != null) {
-                log.warn("Exercise generation failed after producing recoverable work for exercise {}; preserving it as an isolated review draft", exercise.getId(), e);
+                log.warn("Exercise generation failed after producing recoverable work for exercise {}; preserving it as an isolated review draft ({})", exercise.getId(),
+                        e.getClass().getSimpleName());
                 return recoveredError;
             }
             // No usable outcome exists for the caller to close.
             destroyQuietly(sandbox, sessionId);
-            log.error("Exercise generation failed for exercise {}", exercise.getId(), e);
+            log.error("Exercise generation failed for exercise {} ({})", exercise.getId(), e.getClass().getSimpleName());
             throw e;
         }
         finally {
@@ -413,9 +427,6 @@ public class GenerationOrchestrationService {
         Map<RepositoryType, Map<String, String>> copy = new EnumMap<>(RepositoryType.class);
         producedFiles.forEach((type, files) -> copy.put(type, Map.copyOf(files)));
         return Map.copyOf(copy);
-    }
-
-    private record CapturedRepositories(Map<RepositoryType, Map<String, String>> files, boolean complete) {
     }
 
     private GenerationOutcome stopOrPreserve(InteractiveSandbox sandbox, @Nullable String sessionId, GenerationWorkspaceService.@Nullable WorkspaceSeed workspaceSeed,
@@ -442,13 +453,8 @@ public class GenerationOrchestrationService {
             log.debug("Could not clean transient outputs before generation recovery: {}", cleanupFailure.getMessage());
         }
         Map<RepositoryType, Map<String, String>> files = Map.of();
-        boolean repositoriesComplete = false;
         try {
-            CapturedRepositories captured = captureRepositoryFiles(sandbox, sessionId, workspaceSeed, placeholderReplacements);
-            if (captured.complete()) {
-                files = captured.files();
-                repositoriesComplete = true;
-            }
+            files = changedCapturedRepositoryFiles(baselineRepositoryFiles, captureRepositoryFiles(sandbox, sessionId, workspaceSeed, placeholderReplacements));
         }
         catch (RuntimeException extractionFailure) {
             log.debug("Could not extract every repository after generation failed: {}", extractionFailure.getMessage());
@@ -461,7 +467,7 @@ public class GenerationOrchestrationService {
             statement = baselineProblemStatement == null ? "" : baselineProblemStatement.trim();
         }
         boolean statementChanged = !java.util.Objects.equals(baselineProblemStatement == null ? "" : baselineProblemStatement.trim(), statement);
-        if (!statementChanged && (!repositoriesComplete || !hasProducedChanges(baselineRepositoryFiles, files, baselineProblemStatement, statement))) {
+        if (!statementChanged && files.isEmpty()) {
             return null;
         }
         AgentLoopResult loopResult = new AgentLoopResult(AgentLoopResult.Status.ERROR, 0, "Generation stopped unexpectedly before verification completed.");
@@ -469,21 +475,17 @@ public class GenerationOrchestrationService {
                 SpecFidelityReport.qualityReviewUnavailable("Generation stopped before the candidate could be fully verified."), workspaceSeed.repositoryHeads());
     }
 
-    private CapturedRepositories captureRepositoryFiles(InteractiveSandbox sandbox, String sessionId, GenerationWorkspaceService.WorkspaceSeed workspaceSeed,
+    private Map<RepositoryType, Map<String, String>> captureRepositoryFiles(InteractiveSandbox sandbox, String sessionId, GenerationWorkspaceService.WorkspaceSeed workspaceSeed,
             Map<String, String> placeholderReplacements) {
         Map<RepositoryType, Map<String, String>> captured = new EnumMap<>(RepositoryType.class);
-        boolean complete = true;
         for (RepositoryType type : List.of(RepositoryType.SOLUTION, RepositoryType.TEMPLATE, RepositoryType.TESTS)) {
             GenerationWorkspaceService.RepositoryExtraction extraction = workspace.extractRepository(sandbox, sessionId, type,
                     workspaceSeed.repositoryMetadata().getOrDefault(type, GenerationWorkspaceService.RepositorySeedMetadata.EMPTY));
-            if (extraction.extractionFailed()) {
-                complete = false;
-            }
-            else {
+            if (!extraction.extractionFailed()) {
                 captured.put(type, replacePlaceholders(extraction, placeholderReplacements).files());
             }
         }
-        return new CapturedRepositories(Map.copyOf(captured), complete);
+        return Map.copyOf(captured);
     }
 
     private static boolean hasProducedChanges(Map<RepositoryType, Map<String, String>> baselineFiles, Map<RepositoryType, Map<String, String>> producedFiles,
@@ -493,6 +495,17 @@ public class GenerationOrchestrationService {
         }
         return List.of(RepositoryType.SOLUTION, RepositoryType.TEMPLATE, RepositoryType.TESTS).stream()
                 .anyMatch(type -> !baselineFiles.getOrDefault(type, Map.of()).equals(producedFiles.getOrDefault(type, Map.of())));
+    }
+
+    private static Map<RepositoryType, Map<String, String>> changedCapturedRepositoryFiles(Map<RepositoryType, Map<String, String>> baselineFiles,
+            Map<RepositoryType, Map<String, String>> capturedFiles) {
+        Map<RepositoryType, Map<String, String>> changed = new EnumMap<>(RepositoryType.class);
+        capturedFiles.forEach((type, files) -> {
+            if (!baselineFiles.getOrDefault(type, Map.of()).equals(files)) {
+                changed.put(type, files);
+            }
+        });
+        return Map.copyOf(changed);
     }
 
     static String renderReviewBrief(GenerationMode mode, String runInstruction, @Nullable String startingProblemStatement) {
@@ -559,7 +572,7 @@ public class GenerationOrchestrationService {
             return report;
         }
         catch (RuntimeException e) {
-            log.warn("Spec-fidelity critic could not run for exercise: {}", e.getMessage());
+            log.warn("Spec-fidelity critic could not run for exercise ({})", e.getClass().getSimpleName());
             return adaptationChanges == null ? SpecFidelityReport.qualityReviewUnavailable("The full-artifact reviewer failed before it could assess the candidate.")
                     : SpecFidelityReport.adaptationScopeUnavailable("The adaptation-scope reviewer failed before it could assess every changed line.");
         }
@@ -752,6 +765,35 @@ public class GenerationOrchestrationService {
 
     GenerationWorkspaceService workspace() {
         return workspace;
+    }
+
+    private Optional<String> checkBuildEnvironment(InteractiveSandbox sandbox, String sessionId, ProgrammingExercise exercise) {
+        try {
+            workspace.stageBuildReadinessFixture(sandbox, sessionId, exercise);
+            return verifier.checkBuildEnvironment(sandbox, sessionId, exercise);
+        }
+        catch (RuntimeException exception) {
+            log.warn("Could not prepare the sandbox build-environment readiness probe for exercise {} ({}): {}", exercise.getId(), exception.getClass().getSimpleName(),
+                    DifferentialVerificationService.boundedReadinessDiagnostic(exception.getMessage()));
+            return Optional.of("The sandbox build environment could not be prepared before authoring began. Fix the build image or sandbox runtime; the authoring agent was not "
+                    + "started.");
+        }
+    }
+
+    private VerificationResult verifyWithInfrastructureRetry(InteractiveSandbox sandbox, String sessionId, ProgrammingExercise exercise, VerificationRequest request,
+            BooleanSupplier cancelled, Consumer<String> progress) {
+        try {
+            return verifier.verify(sandbox, sessionId, exercise, request);
+        }
+        catch (DifferentialVerificationService.VerificationInfrastructureException exception) {
+            if (cancelled.getAsBoolean() || !exception.isRetryableInSameSession()) {
+                throw exception;
+            }
+            log.warn("Exercise verification infrastructure failed once for exercise {} ({}); retrying the same candidate without another provider call", exercise.getId(),
+                    exception.getClass().getSimpleName());
+            emit(progress, "The verification infrastructure failed; retrying the same exercise without asking the AI to regenerate it.");
+            return verifier.verify(sandbox, sessionId, exercise, request);
+        }
     }
 
     void destroyQuietly(@Nullable InteractiveSandbox sandbox, @Nullable String sessionId) {

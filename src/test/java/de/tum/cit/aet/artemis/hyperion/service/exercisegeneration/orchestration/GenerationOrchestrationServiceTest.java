@@ -9,6 +9,7 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.contains;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -16,6 +17,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.io.IOException;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
@@ -30,9 +32,13 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InOrder;
+import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.read.ListAppender;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.buildagent.service.InteractiveSandbox;
 import de.tum.cit.aet.artemis.hyperion.dto.GenerationMode;
@@ -100,6 +106,7 @@ class GenerationOrchestrationServiceTest {
         when(workspace.extractRepository(any(), anyString(), any(), any())).thenReturn(new GenerationWorkspaceService.RepositoryExtraction(Map.of(), false));
         when(workspace.extractProblemStatement(any(), anyString())).thenReturn("PROBLEM STATEMENT");
         when(workspace.seedWorkspace(any(), anyString(), any(), any())).thenReturn(new GenerationWorkspaceService.WorkspaceSeed(Map.of(), Map.of()));
+        when(verifier.checkBuildEnvironment(any(), anyString(), any())).thenReturn(Optional.empty());
         when(specFidelityCritic.critique(any(), any(), any(), any(), any())).thenReturn(SpecFidelityReport.empty());
         when(specFidelityCritic.critiqueAdaptation(any(), any(), any(), any(), any(), any())).thenReturn(SpecFidelityReport.empty());
         SpecFidelityCriticService renderingDelegate = new SpecFidelityCriticService(null, new ObjectMapper());
@@ -151,10 +158,52 @@ class GenerationOrchestrationServiceTest {
 
         verify(agentLoopRunner, times(2)).run(anyString(), promptCaptor.capture(), any(), anyInt(), any(), any(), any());
         List<String> prompts = promptCaptor.getAllValues();
-        assertThat(prompts.get(0)).as("the first prompt carries the instructor's source requirements without a model-invented intermediary")
-                .contains("PRIMARY SOURCE REQUIREMENTS", "Build a bubble sort exercise.").doesNotContain("DERIVED EXERCISE CONTRACT", "Use BubbleSort.sort(int[] values).");
+        assertThat(prompts.get(0)).as("the first prompt carries the instructor's source requirements without a model-invented intermediary").contains("PRIMARY SOURCE REQUIREMENTS",
+                "Build a bubble sort exercise.");
         assertThat(prompts.get(1)).as("the second prompt carries the verifier's rejection report so the agent can fix exactly those issues")
-                .contains("template unexpectedly passed all tests").contains("rejected by the differential verifier").doesNotContain("resolved contract");
+                .contains("template unexpectedly passed all tests", "rejected by the differential verifier", "PRIMARY SOURCE REQUIREMENTS", "Build a bubble sort exercise.")
+                .contains("smallest coherent repair");
+    }
+
+    @Test
+    void buildEnvironmentFailureStopsBeforeTheFirstProviderAttempt() {
+        when(verifier.checkBuildEnvironment(sandbox, SESSION_ID, exercise)).thenReturn(Optional.of("The sandbox image is not offline-ready."));
+
+        try (GenerationOutcome outcome = generate(() -> false)) {
+            assertThat(outcome.loopResult().status()).isEqualTo(AgentLoopResult.Status.ERROR);
+            assertThat(outcome.errorMessage()).contains("not offline-ready");
+        }
+
+        verify(agentLoopRunner, never()).run(anyString(), anyString(), any(), anyInt(), any(), any(), any());
+        verify(verifier, never()).verify(any(), anyString(), any(), any(VerificationRequest.class));
+        verify(sandbox).destroySession(SESSION_ID);
+    }
+
+    @Test
+    void buildEnvironmentFixtureStagingFailureStopsBeforeTheFirstProviderAttempt() {
+        doThrow(new IllegalStateException("Could not create /opt/hyperion-readiness-fixture; Authorization: Bearer secret-value " + "details ".repeat(1_000))).when(workspace)
+                .stageBuildReadinessFixture(sandbox, SESSION_ID, exercise);
+        Logger logger = (Logger) LoggerFactory.getLogger(GenerationOrchestrationService.class);
+        ListAppender<ILoggingEvent> appender = new ListAppender<>();
+        appender.start();
+        logger.addAppender(appender);
+        try {
+            try (GenerationOutcome outcome = generate(() -> false)) {
+                assertThat(outcome.loopResult().status()).isEqualTo(AgentLoopResult.Status.ERROR);
+                assertThat(outcome.errorMessage()).contains("could not be prepared", "authoring agent was not started").doesNotContain("secret-value");
+            }
+
+            assertThat(appender.list).hasSize(1);
+            assertThat(appender.list.getFirst().getFormattedMessage()).contains("Could not create /opt/hyperion-readiness-fixture", "[REDACTED]", "[truncated]")
+                    .doesNotContain("secret-value").hasSizeLessThanOrEqualTo(4_500);
+        }
+        finally {
+            logger.detachAppender(appender);
+        }
+
+        verify(agentLoopRunner, never()).run(anyString(), anyString(), any(), anyInt(), any(), any(), any());
+        verify(verifier, never()).checkBuildEnvironment(any(), anyString(), any());
+        verify(sandbox).destroySession(SESSION_ID);
     }
 
     @Test
@@ -236,7 +285,7 @@ class GenerationOrchestrationServiceTest {
     }
 
     @Test
-    void cancellationBetweenTurns_skipsVerificationAndDestroysSession() {
+    void cancellationBeforeSandboxCreation_skipsProviderAndSandboxWork() {
         when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(completed());
         when(workspace.extractProblemStatement(any(), anyString())).thenReturn("");
         BooleanSupplier cancelled = () -> true;
@@ -245,7 +294,8 @@ class GenerationOrchestrationServiceTest {
 
         assertThat(outcome.isAccepted()).isFalse();
         verify(verifier, never()).verify(any(), anyString(), any(), any(VerificationRequest.class));
-        verify(sandbox).destroySession(SESSION_ID);
+        org.mockito.Mockito.verifyNoInteractions(sandbox);
+        org.mockito.Mockito.verifyNoInteractions(agentLoopRunner);
     }
 
     @Test
@@ -280,19 +330,19 @@ class GenerationOrchestrationServiceTest {
     }
 
     @Test
-    void erroredLoop_doesNotTreatFailedRepositoryExtractionAsAnEmptyGeneratedTree() {
+    void erroredLoop_preservesSuccessfulRepositoryExtractionsWhenAnotherRepositoryCannotBeRead() {
         when(exercise.getProblemStatement()).thenReturn("Original statement");
         when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any()))
                 .thenReturn(new AgentLoopResult(AgentLoopResult.Status.ERROR, 4, "Provider stopped responding"));
-        when(workspace.extractProblemStatement(any(), anyString())).thenReturn("Improved draft statement");
+        when(workspace.extractProblemStatement(any(), anyString())).thenReturn("Original statement");
         when(workspace.extractRepository(any(), anyString(), eq(RepositoryType.SOLUTION), any()))
                 .thenReturn(new GenerationWorkspaceService.RepositoryExtraction(Map.of("src/Library.java", "class Library {}"), false));
         when(workspace.extractRepository(any(), anyString(), eq(RepositoryType.TEMPLATE), any())).thenReturn(new GenerationWorkspaceService.RepositoryExtraction(Map.of(), true));
 
         try (GenerationOutcome outcome = generate(() -> false)) {
             assertThat(outcome.hasRecoverableDraft()).isTrue();
-            assertThat(outcome.producedProblemStatement()).isEqualTo("Improved draft statement");
-            assertThat(outcome.producedFiles(RepositoryType.SOLUTION)).isEmpty();
+            assertThat(outcome.producedProblemStatement()).isEqualTo("Original statement");
+            assertThat(outcome.producedFiles(RepositoryType.SOLUTION)).containsEntry("src/Library.java", "class Library {}");
             assertThat(outcome.producedFiles(RepositoryType.TEMPLATE)).isEmpty();
         }
     }
@@ -707,19 +757,58 @@ class GenerationOrchestrationServiceTest {
     }
 
     @Test
-    void verifierInfrastructureFailure_preservesTheAlreadyExtractedCandidate() {
+    void deterministicVerifierReportRejectionPreservesTheCandidateWithoutRetrying() {
         when(exercise.getProblemStatement()).thenReturn("Original statement");
         when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(completed());
         when(workspace.extractProblemStatement(any(), anyString())).thenReturn("Improved statement");
         when(workspace.extractRepository(any(), anyString(), eq(RepositoryType.SOLUTION), any()))
                 .thenReturn(new GenerationWorkspaceService.RepositoryExtraction(Map.of("src/Library.java", "class Library {}"), false));
-        when(verifier.verify(any(), anyString(), any(), any(VerificationRequest.class))).thenThrow(new RuntimeException("verifier unavailable"));
+        when(verifier.verify(any(), anyString(), any(), any(VerificationRequest.class)))
+                .thenThrow(DifferentialVerificationService.VerificationInfrastructureException.reportRejected("invalid reports archive", new IOException("linked entry")));
 
         try (GenerationOutcome outcome = generate(() -> false)) {
             assertThat(outcome.loopResult().status()).isEqualTo(AgentLoopResult.Status.ERROR);
             assertThat(outcome.hasRecoverableDraft()).isTrue();
             assertThat(outcome.producedFiles(RepositoryType.SOLUTION)).containsKey("src/Library.java");
         }
+
+        verify(agentLoopRunner).run(anyString(), anyString(), any(), anyInt(), any(), any(), any());
+        verify(verifier).verify(any(), anyString(), any(), any(VerificationRequest.class));
+    }
+
+    @Test
+    void transientVerifierInfrastructureFailureRetriesTheSameCandidateWithoutAnotherProviderCall() {
+        when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(completed());
+        when(verifier.verify(any(), anyString(), any(), any(VerificationRequest.class)))
+                .thenThrow(new DifferentialVerificationService.VerificationInfrastructureException("temporary report transport failure", new IOException("transport")))
+                .thenReturn(accepted());
+
+        try (GenerationOutcome outcome = generate(() -> false)) {
+            assertThat(outcome.isAccepted()).isTrue();
+        }
+
+        verify(agentLoopRunner).run(anyString(), anyString(), any(), anyInt(), any(), any(), any());
+        verify(verifier, times(2)).verify(any(), anyString(), any(), any(VerificationRequest.class));
+    }
+
+    @Test
+    void lostSandboxSessionPreservesTheCandidateWithoutRetryingOrCallingTheProviderAgain() {
+        when(exercise.getProblemStatement()).thenReturn("Original statement");
+        when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(completed());
+        when(workspace.extractProblemStatement(any(), anyString())).thenReturn("Improved statement");
+        when(workspace.extractRepository(any(), anyString(), eq(RepositoryType.SOLUTION), any()))
+                .thenReturn(new GenerationWorkspaceService.RepositoryExtraction(Map.of("src/Library.java", "class Library {}"), false));
+        when(verifier.verify(any(), anyString(), any(), any(VerificationRequest.class)))
+                .thenThrow(DifferentialVerificationService.VerificationInfrastructureException.sessionLost("sandbox deadline exceeded"));
+
+        try (GenerationOutcome outcome = generate(() -> false)) {
+            assertThat(outcome.loopResult().status()).isEqualTo(AgentLoopResult.Status.ERROR);
+            assertThat(outcome.hasRecoverableDraft()).isTrue();
+            assertThat(outcome.producedFiles(RepositoryType.SOLUTION)).containsKey("src/Library.java");
+        }
+
+        verify(agentLoopRunner).run(anyString(), anyString(), any(), anyInt(), any(), any(), any());
+        verify(verifier).verify(any(), anyString(), any(), any(VerificationRequest.class));
     }
 
     @Test

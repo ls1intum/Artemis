@@ -3,8 +3,8 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { TranslateService } from '@ngx-translate/core';
-import { catchError, switchMap, tap } from 'rxjs/operators';
-import { Observable, Subscription, of, throwError } from 'rxjs';
+import { catchError, map, switchMap, tap } from 'rxjs/operators';
+import { EMPTY, Observable, Subscription, of, throwError } from 'rxjs';
 import { isEmpty as _isEmpty } from 'lodash-es';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';
@@ -20,7 +20,7 @@ import { getLocalRepositoryLink } from 'app/foundation/util/navigation.utils';
 import { CodeEditorRepositoryFileService, CodeEditorRepositoryService, ConnectionError } from 'app/programming/shared/code-editor/services/code-editor-repository.service';
 import { CodeEditorConflictStateService } from 'app/programming/shared/code-editor/services/code-editor-conflict-state.service';
 import { CodeEditorSubmissionService } from 'app/programming/shared/code-editor/services/code-editor-submission.service';
-import { CommitState, EditorState, FileSubmission, FileSubmissionError, GitConflictState } from '../model/code-editor.model';
+import { CommitState, DomainChange, EditorState, FileSubmission, FileSubmissionError, GitConflictState } from '../model/code-editor.model';
 import { CodeEditorConfirmRefreshModalComponent } from 'app/programming/shared/code-editor/actions/refresh-modal/code-editor-confirm-refresh-modal.component';
 import { CodeEditorResolveConflictModalComponent } from 'app/programming/shared/code-editor/actions/conflict-modal/code-editor-resolve-conflict-modal.component';
 
@@ -174,6 +174,9 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy {
     }
 
     onRefresh() {
+        if (this.disableActions()) {
+            return;
+        }
         if (this.editorState() !== EditorState.CLEAN) {
             this.refreshModalRef =
                 this.dialogService.open(CodeEditorConfirmRefreshModalComponent, {
@@ -185,42 +188,59 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy {
                     dismissableMask: false,
                 }) ?? undefined;
             this.refreshModalRef?.onClose.subscribe((confirmed: boolean | undefined) => {
-                if (confirmed) {
-                    this.executeRefresh();
+                if (confirmed && !this.disableActions()) {
+                    this.executeRefresh().subscribe();
                 }
             });
         } else {
-            this.executeRefresh();
+            this.executeRefresh().subscribe();
         }
     }
 
-    executeRefresh(onComplete?: (succeeded: boolean) => void) {
+    executeRefresh(): Observable<boolean> {
+        if (this.disableActions()) {
+            return EMPTY;
+        }
+        return this.refreshRepository();
+    }
+
+    refreshAfterExternalUpdate(domain?: DomainChange): Observable<boolean> {
+        return this.refreshRepository(domain);
+    }
+
+    private refreshRepository(domain?: DomainChange): Observable<boolean> {
         this.editorState.set(EditorState.REFRESHING);
-        this.repositoryService.pull().subscribe({
-            next: () => {
+        return this.repositoryService.pull(domain).pipe(
+            map(() => {
                 this.onRefreshFiles.emit();
                 this.editorState.set(EditorState.CLEAN);
-                onComplete?.(true);
-            },
-            error: (error: Error) => {
+                return true;
+            }),
+            catchError((error: Error) => {
                 this.editorState.set(EditorState.UNSAVED_CHANGES);
                 if (error.message === ConnectionError.message) {
                     this.onError.emit('refreshFailed' + error.message);
                 } else {
                     this.onError.emit('refreshFailed');
                 }
-                onComplete?.(false);
-            },
-        });
+                return of(false);
+            }),
+        );
     }
 
     onSave() {
+        if (this.disableActions()) {
+            return;
+        }
         this.saveChangedFiles()
             .pipe(catchError(() => of()))
             .subscribe();
     }
 
     saveChangedFiles(andCommit = false): Observable<FileSubmission | FileSubmissionError | undefined> {
+        if (this.disableActions()) {
+            return EMPTY;
+        }
         const unsavedFilesValue = this.unsavedFiles();
         if (!_isEmpty(unsavedFilesValue)) {
             this.editorState.set(EditorState.SAVING);
@@ -246,7 +266,7 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy {
     }
 
     commit() {
-        if (this.commitState() === CommitState.COMMITTING) {
+        if (this.disableActions() || this.commitState() === CommitState.COMMITTING) {
             return;
         }
         of(undefined)
@@ -296,6 +316,9 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy {
     }
 
     resetRepository() {
+        if (this.disableActions()) {
+            return;
+        }
         this.conflictModalRef =
             this.dialogService.open(CodeEditorResolveConflictModalComponent, {
                 header: this.translateService.instant('artemisApp.editor.conflict.conflictExplanationShort'),
@@ -306,13 +329,13 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy {
                 dismissableMask: false,
             }) ?? undefined;
         this.conflictModalRef?.onClose.subscribe((confirmed: boolean | undefined) => {
-            if (!confirmed) {
+            if (!confirmed || this.disableActions()) {
                 return;
             }
             this.repositoryService.resetRepository().subscribe({
                 next: () => {
                     this.conflictService.notifyConflictState(GitConflictState.OK);
-                    this.executeRefresh();
+                    this.executeRefresh().subscribe();
                 },
                 error: () => {
                     this.onError.emit('resetFailed');

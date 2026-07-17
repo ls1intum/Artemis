@@ -2,14 +2,26 @@ package de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Set;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
+import org.springframework.core.io.ClassPathResource;
 
 class ProblemStatementBindingCheckerTest {
+
+    @Test
+    void javaReferenceProblemStatementUsesResolvableProductionTaskBindings() throws IOException {
+        String statement = new ClassPathResource("templates/hyperion/reference/java/problem-statement.md").getContentAsString(StandardCharsets.UTF_8);
+
+        assertThat(ProblemStatementBindingChecker.boundTestNames(statement)).containsExactly("testRepresentativeScores", "testBoundaryScores", "testEmptyInput");
+        assertThat(ProblemStatementBindingChecker.unresolvedTaskBindings(statement, List.of("testPublicApi", "testRepresentativeScores", "testBoundaryScores", "testEmptyInput"), 4,
+                Set.of())).isEmpty();
+    }
 
     @Test
     void hasTaskBindings_trueWhenAWellFormedBindingIsPresent() {

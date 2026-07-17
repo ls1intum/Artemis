@@ -10,10 +10,10 @@ vi.mock('y-monaco', () => {
 });
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Provider, Signal, WritableSignal, signal } from '@angular/core';
-import { Subject, of, throwError } from 'rxjs';
+import { Observable, Subject, of, throwError } from 'rxjs';
 import { FileSyncState } from 'app/exercise/synchronization/services/code-editor-file-sync.service';
 import { CodeEditorInstructorAndEditorContainerComponent } from 'app/programming/manage/code-editor/instructor-and-editor-container/code-editor-instructor-and-editor-container.component';
-import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
+import { DomainChange, DomainType, RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { CodeEditorRepositoryFileService, CodeEditorRepositoryService } from 'app/programming/shared/code-editor/services/code-editor-repository.service';
@@ -97,8 +97,12 @@ function setEditableInstructions(comp: CodeEditorInstructorAndEditorContainerCom
     internals(comp).editableInstructions = (() => stub) as unknown as Signal<any>;
 }
 
+function createActions(repositoryRefresh: Observable<boolean> = of(true)) {
+    return { refreshAfterExternalUpdate: vi.fn(() => repositoryRefresh), onSave: vi.fn() };
+}
+
 function createDefaultContainerStub(): CodeEditorContainerStub {
-    const actions = { executeRefresh: vi.fn(), onSave: vi.fn() };
+    const actions = createActions();
     const monacoEditor = { clearReviewCommentDrafts: vi.fn() };
     return {
         actions: () => actions,
@@ -120,6 +124,9 @@ function createMockExercise(overrides: Partial<ProgrammingExercise> = {}): Progr
     const exercise = new ProgrammingExercise(mockCourse, undefined);
     exercise.id = 42;
     exercise.problemStatement = 'Test problem statement';
+    exercise.projectType = ProjectType.PLAIN_MAVEN;
+    exercise.templateParticipation!.id = 420;
+    exercise.solutionParticipation!.id = 421;
 
     return Object.assign(exercise, overrides);
 }
@@ -138,7 +145,7 @@ function getBaseProviders(additionalProviders: Provider[] = []): Provider[] {
         { provide: ActivatedRoute, useValue: { params: of({}) } },
         { provide: NgbModal, useValue: { open: vi.fn(() => ({ componentInstance: {}, result: Promise.resolve() })) } },
         { provide: DialogService, useValue: { open: vi.fn(() => ({ onClose: of({ confirmed: true }) })) } },
-        { provide: ConfirmationService, useValue: { confirm: vi.fn() } },
+        { provide: ConfirmationService, useValue: { confirm: vi.fn(), close: vi.fn() } },
         { provide: CodeEditorRepositoryService, useValue: { pull: vi.fn(() => of(void 0)) } },
         { provide: CodeEditorRepositoryFileService, useValue: { getRepositoryContent: vi.fn(() => of({})) } },
         { provide: TranslateService, useClass: MockTranslateService },
@@ -396,6 +403,24 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
             expect(clearInstructionDraftsSpy).toHaveBeenCalledOnce();
             expect(reviewCommentService.reloadThreads).toHaveBeenCalledOnce();
         });
+    });
+
+    it('ignores a stale exercise response after navigating to another exercise', () => {
+        const routeParams = new Subject<Record<string, string>>();
+        (TestBed.inject(ActivatedRoute) as any).params = routeParams;
+        const firstLoad = new Subject<ProgrammingExercise>();
+        const secondLoad = new Subject<ProgrammingExercise>();
+        vi.spyOn(comp, 'loadExercise').mockImplementation((exerciseId) => (exerciseId === 41 ? firstLoad : secondLoad));
+        vi.spyOn(comp, 'saveChangesAndSelectDomain').mockImplementation(() => undefined);
+
+        comp.ngOnInit();
+        routeParams.next({ exerciseId: '41', repositoryType: RepositoryType.TESTS, repositoryId: '0' });
+        routeParams.next({ exerciseId: '42', repositoryType: RepositoryType.TESTS, repositoryId: '0' });
+        secondLoad.next(createMockExercise({ id: 42, title: 'Current exercise' }));
+        firstLoad.next(createMockExercise({ id: 41, title: 'Stale exercise' }));
+
+        expect(comp.exercise.id).toBe(42);
+        expect(comp.exercise.title).toBe('Current exercise');
     });
 
     describe('Consistency Checks', () => {
@@ -837,6 +862,40 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
             expect(comp.selectedIssue()).toBeUndefined();
         });
     });
+
+    it('initializes the route domain while generation status is still hydrating', () => {
+        setCodeEditorContainer(comp, undefined);
+        vi.spyOn(comp as any, 'isProblemStatementEditingLocked').mockReturnValue(true);
+        const setDomain = TestBed.inject(DomainService).setDomain as ReturnType<typeof vi.fn>;
+        const domain: DomainChange = [DomainType.TEST_REPOSITORY, comp.exercise];
+
+        comp.saveChangesAndSelectDomain(domain);
+
+        expect(setDomain).toHaveBeenCalledExactlyOnceWith(domain);
+    });
+
+    it('does not navigate to another repository while exercise generation locks editing', async () => {
+        vi.spyOn(comp as any, 'isExerciseGenerationActionBlocked').mockReturnValue(true);
+        const router = TestBed.inject(Router);
+        const navigate = vi.spyOn(router, 'navigate');
+
+        await comp.selectTemplateParticipation();
+
+        expect(navigate).not.toHaveBeenCalled();
+    });
+
+    it('saves and switches domains normally when exercise generation does not lock editing', () => {
+        const onSave = vi.fn();
+        setCodeEditorContainer(comp, { actions: () => ({ onSave }) });
+        vi.spyOn(comp as any, 'isProblemStatementEditingLocked').mockReturnValue(false);
+        const setDomain = TestBed.inject(DomainService).setDomain as ReturnType<typeof vi.fn>;
+        const domain: DomainChange = [DomainType.TEST_REPOSITORY, comp.exercise];
+
+        comp.saveChangesAndSelectDomain(domain);
+
+        expect(onSave).toHaveBeenCalledOnce();
+        expect(setDomain).toHaveBeenCalledExactlyOnceWith(domain);
+    });
 });
 
 describe('CodeEditorInstructorAndEditorContainerComponent - Diff Editor', () => {
@@ -916,6 +975,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Problem Statement Re
 
     afterEach(() => {
         fixture?.destroy();
+        vi.useRealTimers();
         vi.clearAllMocks();
     });
 
@@ -942,6 +1002,24 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Problem Statement Re
         comp.refinementPrompt.set('Some prompt');
         // The prompt signal should persist since there's no onHide handler clearing it
         expect(comp.refinementPrompt()).toBe('Some prompt');
+    });
+
+    it('blocks competing AI mutations while exercise generation is running', () => {
+        const toggle = vi.fn();
+        const consistencyService = TestBed.inject(ConsistencyCheckService);
+        (comp as any).refinementPopover = () => ({ toggle, hide: vi.fn() });
+        (comp as any).generationStartPending.set(true);
+        comp.refinementPrompt.set('Improve clarity');
+
+        comp.toggleRefinementPopover(new Event('click'));
+        comp.submitRefinement();
+        comp.onInlineRefinement({ instruction: 'Improve this', startLine: 1, endLine: 2, startColumn: 1, endColumn: 10 });
+        comp.checkConsistencies(comp.exercise!);
+
+        expect(toggle).not.toHaveBeenCalled();
+        expect(problemStatementService.refineGlobally).not.toHaveBeenCalled();
+        expect(problemStatementService.refineTargeted).not.toHaveBeenCalled();
+        expect(consistencyService.checkConsistencyForProgrammingExercise).not.toHaveBeenCalled();
     });
 
     it('should delegate global refinement to service and show diff on success', () => {
@@ -1267,7 +1345,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Adapt with feedback'
             { provide: ExerciseReviewCommentService, useValue: reviewCommentService },
             { provide: HyperionExerciseGenerationService, useValue: generationService },
             { provide: DialogService, useValue: { open: dialogOpen } },
-            { provide: ConfirmationService, useValue: { confirm } },
+            { provide: ConfirmationService, useValue: { confirm, close: vi.fn() } },
         ]);
 
         const adaptProfileService = TestBed.inject(ProfileService);
@@ -1335,7 +1413,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Adapt with feedback'
         comp.exercise = createMockExercise({
             problemStatement: 'Implement the specified behavior and cover all required edge cases.',
             programmingLanguage: ProgrammingLanguage.JAVA,
-            projectType: ProjectType.PLAIN_GRADLE,
+            projectType: ProjectType.PLAIN_MAVEN,
             isAtLeastEditor: true,
             releaseDate: dayjs().add(1, 'day'),
         });
@@ -1385,16 +1463,13 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Adapt with feedback'
         expect(generationService.generate).not.toHaveBeenCalled();
     });
 
-    it.each([undefined, null, ProjectType.MAVEN_MAVEN, ProjectType.PLAIN_MAVEN, ProjectType.PLAIN_GRADLE, ProjectType.GRADLE_GRADLE])(
-        'supports Java generation for project type %s',
-        (projectType) => {
-            comp.exercise.projectType = projectType as ProjectType | undefined;
+    it.each([undefined, null, ProjectType.MAVEN_MAVEN, ProjectType.PLAIN_MAVEN])('supports Java generation for project type %s', (projectType) => {
+        comp.exercise.projectType = projectType as ProjectType | undefined;
 
-            expect((comp as any).canGenerateExercise()).toBe(true);
-        },
-    );
+        expect((comp as any).canGenerateExercise()).toBe(true);
+    });
 
-    it.each([ProjectType.MAVEN_BLACKBOX, ProjectType.PLAIN, ProjectType.XCODE, ProjectType.FACT, ProjectType.GCC])(
+    it.each([ProjectType.PLAIN_GRADLE, ProjectType.GRADLE_GRADLE, ProjectType.MAVEN_BLACKBOX, ProjectType.PLAIN, ProjectType.XCODE, ProjectType.FACT, ProjectType.GCC])(
         'blocks Java generation for unsupported project type %s',
         (projectType) => {
             comp.exercise.projectType = projectType;
@@ -1424,6 +1499,26 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Adapt with feedback'
 
         expect(generationService.generate).not.toHaveBeenCalled();
         expect(warningSpy).toHaveBeenCalledWith('pendingChanges');
+    });
+
+    it('does not generate the initiating exercise after navigating away from its confirmation', () => {
+        confirm.mockImplementation(() => undefined);
+
+        (comp as any).startGeneration();
+        comp.exercise = createMockExercise({ id: 84 });
+        confirm.mock.calls[0][0].accept();
+
+        expect(generationService.generate).not.toHaveBeenCalled();
+    });
+
+    it('does not generate after the editor is destroyed with confirmation open', () => {
+        confirm.mockImplementation(() => undefined);
+
+        (comp as any).startGeneration();
+        fixture.destroy();
+        confirm.mock.calls[0][0].accept();
+
+        expect(generationService.generate).not.toHaveBeenCalled();
     });
 
     it.each([
@@ -1658,19 +1753,80 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Adapt with feedback'
         expect(generationService.generate).toHaveBeenCalledOnce();
     });
 
+    it('ignores a generation start response after navigating to another exercise', () => {
+        const pending = new Subject<{ jobId: string }>();
+        generationService.generate.mockReturnValue(pending);
+        vi.spyOn(CodeEditorInstructorBaseContainerComponent.prototype, 'loadExercise').mockReturnValue(of(createMockExercise({ id: 84 })));
+
+        (comp as any).startGeneration();
+        comp.loadExercise(84).subscribe();
+        pending.next({ jobId: 'job-for-previous-exercise' });
+        pending.complete();
+
+        expect(pending.observed).toBe(false);
+        expect(attachToJob).not.toHaveBeenCalled();
+        expect(openEditorBottomPanel).not.toHaveBeenCalled();
+    });
+
+    it('ignores a generation start failure after navigating to another exercise', () => {
+        const pending = new Subject<{ jobId: string }>();
+        generationService.generate.mockReturnValue(pending);
+        const errorSpy = vi.spyOn(TestBed.inject(AlertService), 'error');
+
+        (comp as any).startGeneration();
+        comp.exercise = createMockExercise({ id: 84 });
+        pending.error(new Error('late failure'));
+
+        expect(errorSpy).not.toHaveBeenCalled();
+    });
+
+    it('unsubscribes a pending generation start when the editor is destroyed', () => {
+        const pending = new Subject<{ jobId: string }>();
+        generationService.generate.mockReturnValue(pending);
+
+        (comp as any).startGeneration();
+        fixture.destroy();
+        pending.next({ jobId: 'job-after-destroy' });
+
+        expect(attachToJob).not.toHaveBeenCalled();
+        expect(openEditorBottomPanel).not.toHaveBeenCalled();
+    });
+
     it('keeps the editor locked while generation status is hydrating', () => {
         (comp as any).generationActivity = () => ({ attachToJob, running: () => false, statusLoading: () => true, statusLoadFailed: () => false });
 
         expect((comp as any).isExerciseGenerationRunning()).toBe(true);
     });
 
-    it('keeps AI actions blocked without locking manual editing when generation status could not be verified', () => {
+    it('keeps all exercise editing locked when generation status could not be verified', () => {
         (comp as any).generationActivity = () => ({ attachToJob, running: () => false, statusLoading: () => false, statusLoadFailed: () => true });
 
         expect((comp as any).isExerciseGenerationRunning()).toBe(false);
+        expect((comp as any).isProblemStatementEditingLocked()).toBe(true);
 
         (comp as any).startGeneration();
 
+        expect(generationService.generate).not.toHaveBeenCalled();
+    });
+
+    it.each([
+        ['status is loading', { statusLoading: true, statusLoadFailed: false }],
+        ['status loading failed', { statusLoading: false, statusLoadFailed: true }],
+    ])('disables and guards Adapt with feedback while generation %s', (_description, status) => {
+        (comp as any).generationActivity = () => ({
+            attachToJob,
+            running: () => false,
+            statusLoading: () => status.statusLoading,
+            statusLoadFailed: () => status.statusLoadFailed,
+        });
+
+        expect((comp as any).isExerciseGenerationActionBlocked()).toBe(true);
+
+        (comp as any).adaptFromThread(9);
+        (comp as any).openAdaptDialog();
+
+        expect(reviewCommentService.selectThreadAsFeedback).not.toHaveBeenCalled();
+        expect(dialogOpen).not.toHaveBeenCalled();
         expect(generationService.generate).not.toHaveBeenCalled();
     });
 
@@ -1700,7 +1856,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Adapt with feedback'
     });
 
     it('refreshes editor content after an accepted generation completes', () => {
-        const actions = { executeRefresh: vi.fn(), onSave: vi.fn() };
+        const actions = createActions();
         setCodeEditorContainer(comp, { actions: () => actions });
         const fileSyncService = (comp as any).fileSyncService;
         const beginExpectedUpdateSpy = vi.spyOn(fileSyncService, 'beginExpectedRepositoryUpdate');
@@ -1715,20 +1871,52 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Adapt with feedback'
         (comp as any).onHyperionGenerationCompleted({
             mode: 'GENERATE',
             verdict: { accepted: true, solutionPassed: true, templateFailed: true, testCount: 2 },
+            liveExerciseChanged: true,
             completedAt: '2026-07-10T20:00:00Z',
         });
 
-        expect(actions.executeRefresh).toHaveBeenCalledExactlyOnceWith(expect.any(Function));
+        expect(actions.refreshAfterExternalUpdate).toHaveBeenCalledOnce();
         expect(beginExpectedUpdateSpy).toHaveBeenCalledExactlyOnceWith(Date.parse('2026-07-10T20:00:00Z'));
-        actions.executeRefresh.mock.calls[0][0](true);
         expect(endExpectedUpdateSpy).toHaveBeenCalledOnce();
         expect(loadSpy).toHaveBeenCalledWith(42);
         expect(acceptServerBaseline).toHaveBeenCalledWith(expect.objectContaining({ problemStatement: 'Updated problem statement' }));
         expect(comp.exercise.problemStatement).toBe('Updated problem statement');
     });
 
+    it('refreshes the selected template repository from the exercise when the participation field is transiently unset', () => {
+        const actions = createActions();
+        setCodeEditorContainer(comp, { actions: () => actions });
+        setEditableInstructions(comp, { acceptServerBaseline: vi.fn(), unsavedChangesValue: () => false });
+        comp.selectedRepository = RepositoryType.TEMPLATE;
+        comp.selectedParticipation = undefined;
+        vi.spyOn(TestBed.inject(ProgrammingExerciseService), 'findWithTemplateAndSolutionParticipationAndResults').mockReturnValue(
+            of({ body: createMockExercise({ problemStatement: 'Updated problem statement' }) } as any),
+        );
+
+        (comp as any).onHyperionGenerationCompleted({ mode: 'GENERATE', liveExerciseChanged: true });
+
+        expect(actions.refreshAfterExternalUpdate).toHaveBeenCalledExactlyOnceWith([DomainType.PARTICIPATION, comp.exercise.templateParticipation]);
+    });
+
+    it('rejects an incomplete post-generation exercise refresh without replacing valid editor routing state', () => {
+        const actions = createActions();
+        setCodeEditorContainer(comp, { actions: () => actions });
+        setEditableInstructions(comp, { acceptServerBaseline: vi.fn(), unsavedChangesValue: () => false });
+        const originalProblemStatement = comp.exercise.problemStatement;
+        const incompleteExercise = createMockExercise({ problemStatement: 'Incomplete refresh' });
+        incompleteExercise.solutionParticipation!.id = undefined;
+        vi.spyOn(TestBed.inject(ProgrammingExerciseService), 'findWithTemplateAndSolutionParticipationAndResults').mockReturnValue(of({ body: incompleteExercise } as any));
+
+        (comp as any).onHyperionGenerationCompleted({ mode: 'GENERATE', liveExerciseChanged: true });
+
+        expect(comp.exercise.solutionParticipation!.id).toBe(421);
+        expect(comp.exercise.problemStatement).toBe(originalProblemStatement);
+        expect((comp as any).generationRefreshFailed()).toBe(true);
+    });
+
     it('keeps editing locked and commit alerts suppressed until both Hyperion refreshes complete', () => {
-        const actions = { executeRefresh: vi.fn(), onSave: vi.fn() };
+        const repositoryRefresh = new Subject<boolean>();
+        const actions = createActions(repositoryRefresh);
         setCodeEditorContainer(comp, { actions: () => actions });
         const reload = new Subject<{ body: ProgrammingExercise }>();
         vi.spyOn(TestBed.inject(ProgrammingExerciseService), 'findWithTemplateAndSolutionParticipationAndResults').mockReturnValue(reload as any);
@@ -1738,10 +1926,12 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Adapt with feedback'
         (comp as any).onHyperionGenerationCompleted({
             mode: 'GENERATE',
             verdict: { accepted: true, solutionPassed: true, templateFailed: true, testCount: 2 },
+            liveExerciseChanged: true,
         });
 
         expect((comp as any).isExerciseGenerationRunning()).toBe(true);
-        actions.executeRefresh.mock.calls[0][0](true);
+        repositoryRefresh.next(true);
+        repositoryRefresh.complete();
         expect((comp as any).isExerciseGenerationRunning()).toBe(true);
         expect(endExpectedUpdateSpy).not.toHaveBeenCalled();
 
@@ -1753,7 +1943,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Adapt with feedback'
     });
 
     it('does not apply the exercise reload when the repository refresh fails', () => {
-        const actions = { executeRefresh: vi.fn(), onSave: vi.fn() };
+        const actions = createActions(of(false));
         setCodeEditorContainer(comp, { actions: () => actions });
         const acceptServerBaseline = vi.fn();
         setEditableInstructions(comp, { acceptServerBaseline, unsavedChangesValue: () => false });
@@ -1763,43 +1953,43 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Adapt with feedback'
         const endExpectedUpdateSpy = vi.spyOn((comp as any).fileSyncService, 'endExpectedRepositoryUpdate');
 
         (comp as any).onHyperionGenerationCompleted({ mode: 'GENERATE', liveExerciseChanged: true });
-        actions.executeRefresh.mock.calls[0][0](false);
 
         expect(acceptServerBaseline).not.toHaveBeenCalled();
         expect(comp.exercise.problemStatement).toBe('Implement the specified behavior and cover all required edge cases.');
         expect((comp as any).isExerciseGenerationRunning()).toBe(false);
         expect((comp as any).generationRefreshFailed()).toBe(true);
+        expect((comp as any).isProblemStatementEditingLocked()).toBe(true);
         expect(endExpectedUpdateSpy).toHaveBeenCalledOnce();
     });
 
     it('clears the refresh lock and commit suppression when the exercise reload fails', () => {
-        const actions = { executeRefresh: vi.fn(), onSave: vi.fn() };
+        const actions = createActions();
         setCodeEditorContainer(comp, { actions: () => actions });
         const reload = new Subject<{ body: ProgrammingExercise }>();
         const loadSpy = vi.spyOn(TestBed.inject(ProgrammingExerciseService), 'findWithTemplateAndSolutionParticipationAndResults').mockReturnValue(reload as any);
         const endExpectedUpdateSpy = vi.spyOn((comp as any).fileSyncService, 'endExpectedRepositoryUpdate');
 
         (comp as any).onHyperionGenerationCompleted({ mode: 'GENERATE', liveExerciseChanged: true });
-        actions.executeRefresh.mock.calls[0][0](true);
         const errorSpy = vi.spyOn(TestBed.inject(AlertService), 'error');
         reload.error(new Error('reload failed'));
 
         expect((comp as any).isExerciseGenerationRunning()).toBe(false);
         expect((comp as any).generationRefreshFailed()).toBe(true);
+        expect((comp as any).isProblemStatementEditingLocked()).toBe(true);
         expect(endExpectedUpdateSpy).toHaveBeenCalledOnce();
         expect(comp.exercise.problemStatement).toBe('Implement the specified behavior and cover all required edge cases.');
         expect(errorSpy).toHaveBeenCalledWith('artemisApp.editor.errors.refreshFailed', { connectionIssue: '' });
 
         loadSpy.mockReturnValue(of({ body: createMockExercise({ problemStatement: 'Updated after retry' }) } as any));
         (comp as any).retryHyperionRefresh();
-        actions.executeRefresh.mock.calls[1][0](true);
 
         expect(comp.exercise.problemStatement).toBe('Updated after retry');
         expect((comp as any).generationRefreshFailed()).toBe(false);
     });
 
     it('does not overwrite problem statement edits made while the Hyperion refresh was in flight', () => {
-        const actions = { executeRefresh: vi.fn(), onSave: vi.fn() };
+        const repositoryRefresh = new Subject<boolean>();
+        const actions = createActions(repositoryRefresh);
         setCodeEditorContainer(comp, { actions: () => actions, canDeactivate: () => true });
         const reload = new Subject<{ body: ProgrammingExercise }>();
         vi.spyOn(TestBed.inject(ProgrammingExerciseService), 'findWithTemplateAndSolutionParticipationAndResults').mockReturnValue(reload as any);
@@ -1810,10 +2000,12 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Adapt with feedback'
         (comp as any).onHyperionGenerationCompleted({
             mode: 'GENERATE',
             verdict: { accepted: true, solutionPassed: true, templateFailed: true, testCount: 2 },
+            liveExerciseChanged: true,
         });
         reload.next({ body: createMockExercise({ problemStatement: 'Server problem statement' }) });
         reload.complete();
-        actions.executeRefresh.mock.calls[0][0](true);
+        repositoryRefresh.next(true);
+        repositoryRefresh.complete();
 
         expect(acceptServerBaseline).not.toHaveBeenCalled();
         expect(comp.exercise.problemStatement).toBe('Implement the specified behavior and cover all required edge cases.');
@@ -1821,7 +2013,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Adapt with feedback'
     });
 
     it('uses the server revert timestamp as the commit-alert suppression boundary', () => {
-        const actions = { executeRefresh: vi.fn(), onSave: vi.fn() };
+        const actions = createActions();
         setCodeEditorContainer(comp, { actions: () => actions });
         const beginExpectedUpdateSpy = vi.spyOn((comp as any).fileSyncService, 'beginExpectedRepositoryUpdate');
         vi.spyOn(TestBed.inject(ProgrammingExerciseService), 'findWithTemplateAndSolutionParticipationAndResults').mockReturnValue(of({ body: createMockExercise() } as any));
@@ -1829,78 +2021,170 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Adapt with feedback'
         (comp as any).onHyperionGenerationReverted('2026-07-10T20:01:00Z');
 
         expect(beginExpectedUpdateSpy).toHaveBeenCalledExactlyOnceWith(Date.parse('2026-07-10T20:01:00Z'));
-        expect(actions.executeRefresh).toHaveBeenCalledExactlyOnceWith(expect.any(Function));
+        expect(actions.refreshAfterExternalUpdate).toHaveBeenCalledOnce();
     });
 
-    it('does not auto-refresh after Hyperion when the editor has unsaved local changes', () => {
-        const actions = { executeRefresh: vi.fn(), onSave: vi.fn() };
+    it('queues a revert refresh that arrives while the completion refresh is still running', () => {
+        const firstRepositoryRefresh = new Subject<boolean>();
+        const actions = {
+            refreshAfterExternalUpdate: vi.fn().mockReturnValueOnce(firstRepositoryRefresh).mockReturnValueOnce(of(true)),
+            onSave: vi.fn(),
+        };
+        setCodeEditorContainer(comp, { actions: () => actions });
+        const firstReload = new Subject<{ body: ProgrammingExercise }>();
+        vi.spyOn(TestBed.inject(ProgrammingExerciseService), 'findWithTemplateAndSolutionParticipationAndResults')
+            .mockReturnValueOnce(firstReload as any)
+            .mockReturnValueOnce(of({ body: createMockExercise({ problemStatement: 'Reverted problem statement' }) } as any));
+        const beginExpectedUpdateSpy = vi.spyOn((comp as any).fileSyncService, 'beginExpectedRepositoryUpdate');
+
+        (comp as any).onHyperionGenerationCompleted({ mode: 'GENERATE', liveExerciseChanged: true, completedAt: '2026-07-10T20:00:00Z' });
+        (comp as any).onHyperionGenerationReverted('2026-07-10T20:01:00Z');
+
+        expect(actions.refreshAfterExternalUpdate).toHaveBeenCalledOnce();
+        firstReload.next({ body: createMockExercise({ problemStatement: 'Generated problem statement' }) });
+        firstReload.complete();
+        firstRepositoryRefresh.next(true);
+        firstRepositoryRefresh.complete();
+
+        expect(actions.refreshAfterExternalUpdate).toHaveBeenCalledTimes(2);
+        expect(beginExpectedUpdateSpy).toHaveBeenLastCalledWith(Date.parse('2026-07-10T20:01:00Z'));
+        expect(comp.exercise.problemStatement).toBe('Reverted problem statement');
+    });
+
+    it('keeps editor actions available to resolve local changes before retrying the Hyperion refresh', () => {
+        const actions = createActions();
         setCodeEditorContainer(comp, { actions: () => actions, canDeactivate: () => false });
         const loadSpy = vi.spyOn(TestBed.inject(ProgrammingExerciseService), 'findWithTemplateAndSolutionParticipationAndResults');
         const alertService = TestBed.inject(AlertService);
         const warningSpy = vi.spyOn(alertService, 'warning');
 
-        (comp as any).onHyperionGenerationCompleted({ mode: 'GENERATE', verdict: { accepted: true, solutionPassed: true, templateFailed: true, testCount: 2 } });
+        (comp as any).onHyperionGenerationCompleted({
+            mode: 'GENERATE',
+            verdict: { accepted: true, solutionPassed: true, templateFailed: true, testCount: 2 },
+            liveExerciseChanged: true,
+        });
 
-        expect(actions.executeRefresh).not.toHaveBeenCalled();
+        expect(actions.refreshAfterExternalUpdate).not.toHaveBeenCalled();
         expect(loadSpy).not.toHaveBeenCalled();
         expect(warningSpy).toHaveBeenCalledWith('pendingChanges');
+        expect((comp as any).generationRefreshFailed()).toBe(true);
+        expect((comp as any).isExerciseGenerationActionBlocked()).toBe(true);
+        expect((comp as any).isProblemStatementEditingLocked()).toBe(false);
+
+        (comp as any).startGeneration();
+
+        expect(generationService.generate).not.toHaveBeenCalled();
+    });
+
+    it('bounds a terminal refresh whose repository refresh never completes', () => {
+        vi.useFakeTimers();
+        const actions = createActions(new Observable<boolean>(() => undefined));
+        setCodeEditorContainer(comp, { actions: () => actions });
+        vi.spyOn(TestBed.inject(ProgrammingExerciseService), 'findWithTemplateAndSolutionParticipationAndResults').mockReturnValue(
+            of({ body: createMockExercise({ problemStatement: 'Updated problem statement' }) } as any),
+        );
+        const endExpectedUpdateSpy = vi.spyOn((comp as any).fileSyncService, 'endExpectedRepositoryUpdate');
+
+        (comp as any).onHyperionGenerationCompleted({ mode: 'GENERATE', liveExerciseChanged: true });
+        vi.runAllTimers();
+
+        expect((comp as any).generationRefreshPending()).toBe(false);
+        expect((comp as any).generationRefreshFailed()).toBe(true);
+        expect(endExpectedUpdateSpy).toHaveBeenCalledOnce();
+        vi.useRealTimers();
     });
 
     it('does not auto-refresh after Hyperion when the problem statement has unsaved local changes', () => {
-        const actions = { executeRefresh: vi.fn(), onSave: vi.fn() };
+        const actions = createActions();
         setCodeEditorContainer(comp, { actions: () => actions, canDeactivate: () => true });
         setEditableInstructions(comp, { unsavedChangesValue: () => true });
         const loadSpy = vi.spyOn(TestBed.inject(ProgrammingExerciseService), 'findWithTemplateAndSolutionParticipationAndResults');
 
-        (comp as any).onHyperionGenerationCompleted({ mode: 'GENERATE', verdict: { accepted: true, solutionPassed: true, templateFailed: true, testCount: 2 } });
+        (comp as any).onHyperionGenerationCompleted({
+            mode: 'GENERATE',
+            verdict: { accepted: true, solutionPassed: true, templateFailed: true, testCount: 2 },
+            liveExerciseChanged: true,
+        });
 
-        expect(actions.executeRefresh).not.toHaveBeenCalled();
+        expect(actions.refreshAfterExternalUpdate).not.toHaveBeenCalled();
         expect(loadSpy).not.toHaveBeenCalled();
     });
 
     it('ignores a stale Hyperion refresh response after navigating to another exercise', () => {
-        const actions = { executeRefresh: vi.fn(), onSave: vi.fn() };
+        const repositoryRefresh = new Subject<boolean>();
+        const actions = createActions(repositoryRefresh);
         setCodeEditorContainer(comp, { actions: () => actions });
         const reload = new Subject<{ body: ProgrammingExercise }>();
         vi.spyOn(TestBed.inject(ProgrammingExerciseService), 'findWithTemplateAndSolutionParticipationAndResults').mockReturnValue(reload as any);
+        vi.spyOn(CodeEditorInstructorBaseContainerComponent.prototype, 'loadExercise').mockReturnValue(of(createMockExercise({ id: 99, problemStatement: 'Current exercise' })));
 
-        (comp as any).onHyperionGenerationCompleted({ mode: 'GENERATE', verdict: { accepted: true, solutionPassed: true, templateFailed: true, testCount: 2 } });
-        comp.exercise = createMockExercise({ id: 99, problemStatement: 'Current exercise', programmingLanguage: ProgrammingLanguage.JAVA, isAtLeastEditor: true });
+        (comp as any).onHyperionGenerationCompleted({
+            mode: 'GENERATE',
+            verdict: { accepted: true, solutionPassed: true, templateFailed: true, testCount: 2 },
+            liveExerciseChanged: true,
+        });
+        comp.loadExercise(99).subscribe((exercise) => (comp.exercise = exercise));
         reload.next({ body: createMockExercise({ id: 42, problemStatement: 'Stale problem statement' }) });
-        actions.executeRefresh.mock.calls[0][0](true);
+        repositoryRefresh.next(true);
 
         expect(comp.exercise.problemStatement).toBe('Current exercise');
+        expect(reload.observed).toBe(false);
+        expect((comp as any).generationRefreshPending()).toBe(false);
+    });
+
+    it('cancels the repository pull when navigation cancels the post-generation refresh', () => {
+        const repositoryRefreshTeardown = vi.fn();
+        const actions = createActions(new Observable<boolean>(() => repositoryRefreshTeardown));
+        setCodeEditorContainer(comp, { actions: () => actions });
+        const reload = new Subject<{ body: ProgrammingExercise }>();
+        vi.spyOn(TestBed.inject(ProgrammingExerciseService), 'findWithTemplateAndSolutionParticipationAndResults').mockReturnValue(reload as any);
+        vi.spyOn(CodeEditorInstructorBaseContainerComponent.prototype, 'loadExercise').mockReturnValue(of(createMockExercise({ id: 99 })));
+
+        (comp as any).onHyperionGenerationCompleted({ mode: 'GENERATE', liveExerciseChanged: true });
+        comp.loadExercise(99).subscribe((exercise) => (comp.exercise = exercise));
+
+        expect(repositoryRefreshTeardown).toHaveBeenCalledOnce();
+        expect(reload.observed).toBe(false);
     });
 
     it('does not refresh editor content after a rejected generation completes', () => {
-        const actions = { executeRefresh: vi.fn(), onSave: vi.fn() };
+        const actions = createActions();
         setCodeEditorContainer(comp, { actions: () => actions });
         const loadSpy = vi.spyOn(TestBed.inject(ProgrammingExerciseService), 'findWithTemplateAndSolutionParticipationAndResults');
 
         (comp as any).onHyperionGenerationCompleted({ mode: 'ADAPT', verdict: { accepted: false, solutionPassed: false, templateFailed: true, testCount: 2 } });
 
-        expect(actions.executeRefresh).not.toHaveBeenCalled();
+        expect(actions.refreshAfterExternalUpdate).not.toHaveBeenCalled();
         expect(loadSpy).not.toHaveBeenCalled();
     });
 
-    it('refreshes editor content after a needs-review generation changed the live exercise', () => {
-        const actions = { executeRefresh: vi.fn(), onSave: vi.fn() };
+    it('does not infer persistence from an accepted verdict without the mutation outcome', () => {
+        const actions = createActions();
         setCodeEditorContainer(comp, { actions: () => actions });
-        const loadSpy = vi
-            .spyOn(TestBed.inject(ProgrammingExerciseService), 'findWithTemplateAndSolutionParticipationAndResults')
-            .mockReturnValue(of({ body: createMockExercise({ problemStatement: 'Draft problem statement' }) } as any));
+
+        (comp as any).onHyperionGenerationCompleted({
+            mode: 'GENERATE',
+            verdict: { accepted: true, solutionPassed: true, templateFailed: true, testCount: 2 },
+        });
+
+        expect(actions.refreshAfterExternalUpdate).not.toHaveBeenCalled();
+    });
+
+    it('reloads review threads without refreshing editor content after a needs-review generation', () => {
+        const actions = createActions();
+        setCodeEditorContainer(comp, { actions: () => actions });
+        const loadSpy = vi.spyOn(TestBed.inject(ProgrammingExerciseService), 'findWithTemplateAndSolutionParticipationAndResults');
 
         (comp as any).onHyperionGenerationCompleted({
             mode: 'GENERATE',
             completionStatus: 'NEEDS_REVIEW',
             verdict: { accepted: false, solutionPassed: false, templateFailed: true, testCount: 2 },
-            liveExerciseChanged: true,
+            liveExerciseChanged: false,
         });
 
-        expect(actions.executeRefresh).toHaveBeenCalledOnce();
-        expect(loadSpy).toHaveBeenCalledWith(42);
-        actions.executeRefresh.mock.calls[0][0](true);
-        expect(comp.exercise.problemStatement).toBe('Draft problem statement');
+        expect(reviewCommentService.reloadThreads).toHaveBeenCalledOnce();
+        expect(actions.refreshAfterExternalUpdate).not.toHaveBeenCalled();
+        expect(loadSpy).not.toHaveBeenCalled();
     });
 
     it('filters non-consistency, resolved, and outdated review threads out of the adapt count, dialog, and ADAPT payload', () => {
@@ -1955,6 +2239,33 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Adapt with feedback'
         expect(generationService.generate).not.toHaveBeenCalled();
     });
 
+    it('does not dispatch adaptation when the dialog closes after editor destruction', () => {
+        const dialogResult = new Subject<{ instructions: string }>();
+        const close = vi.fn();
+        dialogOpen.mockReturnValue({ onClose: dialogResult, close });
+
+        (comp as any).openAdaptDialog();
+        fixture.destroy();
+        dialogResult.next({ instructions: 'late adaptation' });
+
+        expect(close).toHaveBeenCalledOnce();
+        expect(generationService.generate).not.toHaveBeenCalled();
+    });
+
+    it('does not dispatch adaptation when the dialog closes after navigating to another exercise', () => {
+        const dialogResult = new Subject<{ instructions: string }>();
+        const close = vi.fn();
+        dialogOpen.mockReturnValue({ onClose: dialogResult, close });
+
+        (comp as any).openAdaptDialog();
+        (comp as any).invalidateHyperionLifecycleState();
+        comp.exercise = createMockExercise({ id: 84 });
+        dialogResult.next({ instructions: 'late adaptation' });
+
+        expect(close).toHaveBeenCalledOnce();
+        expect(generationService.generate).not.toHaveBeenCalled();
+    });
+
     it('surfaces an alert and does not attach when starting the ADAPT run fails', () => {
         generationService.generate.mockReturnValue(throwError(() => new Error('boom')));
         const alertService = TestBed.inject(AlertService);
@@ -1978,6 +2289,32 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Adapt with feedback'
         pending.next({ jobId: 'job-adapt-pending' });
         pending.complete();
         expect(attachToJob).toHaveBeenCalledExactlyOnceWith('job-adapt-pending', 'ADAPT');
+    });
+
+    it('ignores an adaptation start response after navigating to another exercise', () => {
+        const pending = new Subject<{ jobId: string }>();
+        generationService.generate.mockReturnValue(pending);
+
+        (comp as any).startAdaptation('tighten tests');
+        comp.exercise = createMockExercise({ id: 84 });
+        pending.next({ jobId: 'adapt-for-previous-exercise' });
+        pending.complete();
+
+        expect(reviewCommentService.clearSelectedFeedback).not.toHaveBeenCalled();
+        expect(attachToJob).not.toHaveBeenCalled();
+        expect(openEditorBottomPanel).not.toHaveBeenCalled();
+    });
+
+    it('ignores an adaptation start failure after navigating to another exercise', () => {
+        const pending = new Subject<{ jobId: string }>();
+        generationService.generate.mockReturnValue(pending);
+        const errorSpy = vi.spyOn(TestBed.inject(AlertService), 'error');
+
+        (comp as any).startAdaptation('tighten tests');
+        comp.exercise = createMockExercise({ id: 84 });
+        pending.error(new Error('late failure'));
+
+        expect(errorSpy).not.toHaveBeenCalled();
     });
 
     it('does not start ADAPT when local changes are unsaved', () => {

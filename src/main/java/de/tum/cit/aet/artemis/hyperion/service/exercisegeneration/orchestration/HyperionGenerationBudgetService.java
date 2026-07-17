@@ -72,6 +72,7 @@ public class HyperionGenerationBudgetService {
             @Value("${artemis.hyperion.agent.admission-max-tokens-global:0}") long maxTokensGlobal,
             @Value("${artemis.hyperion.agent.in-flight-token-reservation-per-job:3000000}") long reservedTokensPerJob,
             @Value("${artemis.hyperion.agent.max-job-duration:PT30M}") Duration maxJobDuration) {
+        validateConfiguration(budgetWindow, maxTokensPerUser, maxTokensPerCourse, maxTokensGlobal, reservedTokensPerJob);
         this.tokenUsageTraceRepository = tokenUsageTraceRepository;
         this.hazelcastInstance = hazelcastInstance;
         this.budgetWindow = budgetWindow;
@@ -80,6 +81,26 @@ public class HyperionGenerationBudgetService {
         this.maxTokensGlobal = maxTokensGlobal;
         this.reservedTokensPerJob = reservedTokensPerJob;
         this.reservationTtl = reservationTtl(maxJobDuration);
+    }
+
+    private static void validateConfiguration(Duration budgetWindow, long maxTokensPerUser, long maxTokensPerCourse, long maxTokensGlobal, long reservedTokensPerJob) {
+        if (maxTokensPerUser < 0 || maxTokensPerCourse < 0 || maxTokensGlobal < 0 || reservedTokensPerJob < 0) {
+            throw new IllegalArgumentException("Hyperion token budgets and reservations must not be negative");
+        }
+        boolean budgetEnabled = maxTokensPerUser > 0 || maxTokensPerCourse > 0 || maxTokensGlobal > 0;
+        if (budgetEnabled && (budgetWindow == null || budgetWindow.isZero() || budgetWindow.isNegative())) {
+            throw new IllegalArgumentException("artemis.hyperion.agent.token-budget-window must be positive when an admission budget is enabled");
+        }
+        validateReservationFits("admission-max-tokens-per-user", maxTokensPerUser, reservedTokensPerJob);
+        validateReservationFits("admission-max-tokens-per-course", maxTokensPerCourse, reservedTokensPerJob);
+        validateReservationFits("admission-max-tokens-global", maxTokensGlobal, reservedTokensPerJob);
+    }
+
+    private static void validateReservationFits(String budgetName, long budget, long reservedTokensPerJob) {
+        if (budget > 0 && (reservedTokensPerJob <= 0 || reservedTokensPerJob > budget)) {
+            throw new IllegalArgumentException(
+                    "artemis.hyperion.agent." + budgetName + " must be at least artemis.hyperion.agent.in-flight-token-reservation-per-job so one generation can be admitted");
+        }
     }
 
     public HyperionGenerationBudgetService(LLMTokenUsageTraceRepository tokenUsageTraceRepository, Duration budgetWindow, long maxTokensPerUser, long maxTokensPerCourse,
@@ -175,6 +196,23 @@ public class HyperionGenerationBudgetService {
         }
         catch (RuntimeException e) {
             log.warn("Could not release Hyperion generation budget reservation {}; TTL cleanup will release it later: {}", reservationId, e.getMessage());
+        }
+    }
+
+    /**
+     * Refreshes an active reservation's crash-only TTL while its owning worker is still heartbeating.
+     *
+     * @param reservationId the reservation id to refresh, or null when no reservation was made
+     */
+    public void refreshReservation(@Nullable String reservationId) {
+        if (reservationId == null || reservationMap == null) {
+            return;
+        }
+        try {
+            reservationMap.setTtl(reservationId, Math.max(1L, reservationTtl.toSeconds()), TimeUnit.SECONDS);
+        }
+        catch (RuntimeException e) {
+            log.warn("Could not refresh Hyperion generation budget reservation {}; its existing TTL remains in effect: {}", reservationId, e.getMessage());
         }
     }
 

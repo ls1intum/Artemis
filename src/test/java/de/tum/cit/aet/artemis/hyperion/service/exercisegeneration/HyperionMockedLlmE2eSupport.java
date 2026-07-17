@@ -28,7 +28,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProjectType;
 /** Docker setup, Java build-image override, and scripted model turns for the deterministic mocked-LLM end-to-end tests. */
 final class HyperionMockedLlmE2eSupport {
 
-    static final String JAVA_BUILD_IMAGE = "ls1tum/artemis-maven-template:java17-25";
+    static final String JAVA_BUILD_IMAGE = System.getenv().getOrDefault("HYPERION_TEST_JAVA_BUILD_IMAGE", "ls1tum/artemis-maven-template:java17-25");
 
     private HyperionMockedLlmE2eSupport() {
     }
@@ -48,6 +48,10 @@ final class HyperionMockedLlmE2eSupport {
         catch (Exception e) {
             return false;
         }
+    }
+
+    static boolean isReadinessMatrixConfigured() {
+        return System.getenv("HYPERION_TEST_JAVA_BUILD_IMAGE") != null && isDockerAvailable();
     }
 
     /**

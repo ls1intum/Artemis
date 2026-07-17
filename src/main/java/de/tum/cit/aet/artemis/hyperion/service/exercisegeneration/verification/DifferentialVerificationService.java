@@ -14,6 +14,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
@@ -58,9 +59,23 @@ public class DifferentialVerificationService {
 
     private static final Duration VERIFY_TIMEOUT = Duration.ofMinutes(10);
 
+    private static final Set<String> READINESS_TEST_NAMES = Set.of("testPublicApi", "testRepresentativeScores", "testBoundaryScores", "testEmptyInput");
+
     private static final Duration READ_TIMEOUT = Duration.ofSeconds(30);
 
     private static final int PRISTINE_SCRIPT_MODE = 0755;
+
+    private static final int MAX_READINESS_DIAGNOSTIC_CHARS = 4_000;
+
+    private static final Pattern URI_CREDENTIALS = Pattern.compile("(?i)(https?://)[^\\s/@]+@");
+
+    private static final Pattern AUTHORIZATION_CREDENTIALS = Pattern.compile("(?i)(authorization\\s*[:=]\\s*)(?:basic|bearer)?\\s*[^\\s,;]+");
+
+    private static final Pattern BEARER_CREDENTIALS = Pattern.compile("(?i)\\bbearer\\s+[^\\s,;]+");
+
+    private static final Pattern NAMED_CREDENTIALS = Pattern.compile("(?i)\\b(password|passwd|token|secret|api[-_]?key)\\s*[:=]\\s*[^\\s,;]+");
+
+    private static final Pattern ANSI_ESCAPE = Pattern.compile("\\x1B\\[[0-?]*[ -/]*[@-~]");
 
     private final SandboxBuildCommandService sandboxBuildCommandService;
 
@@ -259,6 +274,68 @@ public class DifferentialVerificationService {
                 analysis.possiblyDeadFiles(), analysis.actionableGatesPass() && javaAresConventionsHold, reasons);
     }
 
+    /**
+     * Validates the immutable build harness and offline sandbox image before any provider call. This runs the same pristine script and production build phases used by final
+     * verification, preventing source-generation retries from spending tokens on an environment defect they cannot repair.
+     *
+     * @param sandbox   the sandbox that will host the generation job
+     * @param sessionId its active session id
+     * @param exercise  the exercise whose immutable build harness and phases are checked
+     * @return an operator-actionable failure, or empty when the build emitted a JUnit report successfully
+     */
+    public Optional<String> checkBuildEnvironment(InteractiveSandbox sandbox, String sessionId, ProgrammingExercise exercise) {
+        try {
+            seedPristineVerifyScript(sandbox, sessionId, sandboxBuildCommandService.readinessVerifyScriptContent(exercise));
+            PristineBuildExecution execution = runPristineBuildWithExecution(sandbox, sessionId, sandboxBuildCommandService.buildEnvironmentPreflightCommand(),
+                    GenerationWorkspaceService.directoryFor(RepositoryType.SOLUTION));
+            BuildSummary result = execution.summary();
+            boolean trustedTestsRan = READINESS_TEST_NAMES.stream().allMatch(expected -> result.testNames().stream().anyMatch(name -> readinessNameMatches(name, expected)));
+            if (!result.timedOut() && result.exitCode() == 0 && result.failures() == 0 && trustedTestsRan) {
+                return Optional.empty();
+            }
+            log.warn("Sandbox build-environment readiness probe failed for project type {} (exit {}, parsed tests {}, failures {}). Build output: {}", exercise.getProjectType(),
+                    result.exitCode(), result.tests(), result.failures(), boundedReadinessDiagnostic(execution.process().combinedOutput()));
+            if (result.timedOut()) {
+                return Optional.of("The sandbox build-environment readiness probe timed out before authoring began. Fix the build image or exercise scaffold; the authoring agent "
+                        + "was not started.");
+            }
+            return Optional.of("The configured sandbox image and immutable exercise build harness failed the readiness probe before authoring began (exit " + result.exitCode()
+                    + ", " + result.tests() + " parsed tests, " + result.failures() + " failures). Fix the build image or exercise scaffold; the authoring agent was not started.");
+        }
+        catch (RuntimeException exception) {
+            log.warn("Could not run the sandbox build-environment readiness probe for project type {} ({}): {}", exercise.getProjectType(), exception.getClass().getSimpleName(),
+                    boundedReadinessDiagnostic(exception.getMessage()));
+            return Optional.of("The sandbox build environment could not be prepared before authoring began. Fix the build image or sandbox runtime; the authoring agent was not "
+                    + "started.");
+        }
+    }
+
+    /**
+     * Redacts common credential forms and caps a readiness diagnostic before it reaches protected server logs. User-facing errors must remain generic and must not use this text.
+     *
+     * @param diagnostic raw build or exception output
+     * @return bounded diagnostic text safe for protected logs
+     */
+    public static String boundedReadinessDiagnostic(@Nullable String diagnostic) {
+        if (diagnostic == null || diagnostic.isBlank()) {
+            return "[no diagnostic output]";
+        }
+        String redacted = URI_CREDENTIALS.matcher(diagnostic).replaceAll("$1[REDACTED]@");
+        redacted = AUTHORIZATION_CREDENTIALS.matcher(redacted).replaceAll("$1[REDACTED]");
+        redacted = BEARER_CREDENTIALS.matcher(redacted).replaceAll("Bearer [REDACTED]");
+        redacted = NAMED_CREDENTIALS.matcher(redacted).replaceAll("$1=[REDACTED]");
+        redacted = ANSI_ESCAPE.matcher(redacted).replaceAll("").replace('\r', ' ');
+        if (redacted.length() <= MAX_READINESS_DIAGNOSTIC_CHARS) {
+            return redacted;
+        }
+        return redacted.substring(0, MAX_READINESS_DIAGNOSTIC_CHARS) + " ... [truncated]";
+    }
+
+    private static boolean readinessNameMatches(String actual, String expected) {
+        String normalized = actual.endsWith("()") ? actual.substring(0, actual.length() - 2) : actual;
+        return normalized.equals(expected) || normalized.endsWith("." + expected);
+    }
+
     private static Map<String, String> readTestsRepositoryFiles(InteractiveSandbox sandbox, String sessionId) {
         try (TarArchiveInputStream tar = sandbox.copyOut(sessionId, GenerationWorkspaceService.WORKSPACE + "/" + GenerationWorkspaceService.directoryFor(RepositoryType.TESTS))) {
             return tar == null ? Map.of() : WorkspaceArchive.readTar(tar, GenerationWorkspaceService.directoryFor(RepositoryType.TESTS));
@@ -359,9 +436,20 @@ public class DifferentialVerificationService {
      * @param assignmentName the assignment directory name ({@code solution}/{@code template}); also the reports subdir name and the copyOut prefix
      */
     private BuildSummary runPristineBuild(InteractiveSandbox sandbox, String sessionId, String buildCommand, String assignmentName) {
-        SandboxExecResult run = sandbox.exec(sessionId, VERIFY_TIMEOUT, "sh", "-c", buildCommand);
+        return runPristineBuildWithExecution(sandbox, sessionId, buildCommand, assignmentName).summary();
+    }
+
+    private PristineBuildExecution runPristineBuildWithExecution(InteractiveSandbox sandbox, String sessionId, String buildCommand, String assignmentName) {
+        SandboxExecResult run;
+        try {
+            run = sandbox.exec(sessionId, VERIFY_TIMEOUT, "sh", "-c", buildCommand);
+        }
+        catch (RuntimeException exception) {
+            throw new VerificationInfrastructureException("The verifier could not execute the " + assignmentName + " build", exception);
+        }
         if (run.timedOut()) {
-            return BuildSummary.timedOut(run.exitCode());
+            // InteractiveSandbox destroys a session whose command exceeds its deadline. Continuing or retrying in that session would only spend another provider/verifier call.
+            throw VerificationInfrastructureException.sessionLost("The " + assignmentName + " build exceeded its sandbox deadline");
         }
         Map<String, byte[]> reports;
         try (TarArchiveInputStream tar = sandbox.copyOut(sessionId, SandboxBuildCommandService.reportsDirectoryFor(assignmentName))) {
@@ -369,15 +457,19 @@ public class DifferentialVerificationService {
             reports = tar == null ? Map.of() : CollectedReports.read(tar, assignmentName);
         }
         catch (CollectedReports.RejectedReportException e) {
-            // A linked/escaping/oversize entry is a hard integrity failure: treat as a non-compiling build rather than parsing partial input.
-            log.warn("Rejected the verifier reports archive for the {} build: {}", assignmentName, e.getMessage());
-            return BuildSummary.unparseable(run.exitCode());
+            throw VerificationInfrastructureException.reportRejected("The verifier rejected the " + assignmentName + " reports archive", e);
         }
         catch (IOException e) {
-            log.warn("Could not read the verifier reports archive for the {} build: {}", assignmentName, e.getMessage());
-            return BuildSummary.unparseable(run.exitCode());
+            throw new VerificationInfrastructureException("The verifier could not read the " + assignmentName + " reports archive", e);
         }
-        return BuildSummary.fromReports(reports, run.exitCode());
+        catch (RuntimeException e) {
+            throw new VerificationInfrastructureException(
+                    "The verifier could not retrieve the " + assignmentName + " reports archive; build process: " + boundedReadinessDiagnostic(run.combinedOutput()), e);
+        }
+        return new PristineBuildExecution(BuildSummary.fromReports(reports, run.exitCode()), run);
+    }
+
+    private record PristineBuildExecution(BuildSummary summary, SandboxExecResult process) {
     }
 
     /** The solution gate: the solution must compile, run at least one test, and pass every test. Appends a rejection reason to {@code reasons} otherwise. */
@@ -569,14 +661,24 @@ public class DifferentialVerificationService {
      * authoritative pass.
      */
     private void seedPristineVerifyScript(InteractiveSandbox sandbox, String sessionId, ProgrammingExercise exercise) {
-        String script = sandboxBuildCommandService.verifyScriptContent(exercise);
-        // Docker's copy-to-container requires the destination directory to already exist.
-        SandboxExecResult preparation = sandbox.exec(sessionId, READ_TIMEOUT, "sh", "-c",
-                "rm -rf " + SandboxBuildCommandService.PRISTINE_VERIFY_DIR + " && mkdir -p " + SandboxBuildCommandService.PRISTINE_VERIFY_DIR);
-        if (!preparation.isSuccess()) {
-            throw new IllegalStateException("Could not prepare the verifier workspace: " + preparation.combinedOutput());
+        seedPristineVerifyScript(sandbox, sessionId, sandboxBuildCommandService.verifyScriptContent(exercise));
+    }
+
+    private void seedPristineVerifyScript(InteractiveSandbox sandbox, String sessionId, String script) {
+        try {
+            // Docker's copy-to-container requires the destination directory to already exist.
+            SandboxExecResult preparation = sandbox.exec(sessionId, READ_TIMEOUT, "sh", "-c", "find " + SandboxBuildCommandService.PRISTINE_VERIFY_DIR + " -mindepth 1 -delete");
+            if (!preparation.isSuccess()) {
+                throw new VerificationInfrastructureException("The verifier could not prepare its script directory", null);
+            }
+            sandbox.copyIn(sessionId, SandboxBuildCommandService.PRISTINE_VERIFY_DIR, singleFileTar(SandboxBuildCommandService.VERIFY_SCRIPT_NAME, script));
         }
-        sandbox.copyIn(sessionId, SandboxBuildCommandService.PRISTINE_VERIFY_DIR, singleFileTar(SandboxBuildCommandService.VERIFY_SCRIPT_NAME, script));
+        catch (VerificationInfrastructureException exception) {
+            throw exception;
+        }
+        catch (RuntimeException exception) {
+            throw new VerificationInfrastructureException("The verifier could not install its pristine script", exception);
+        }
     }
 
     /** Builds a one-entry tar carrying {@code name} with the given UTF-8 content and an executable mode, for {@link InteractiveSandbox#copyIn}. */
@@ -689,11 +791,6 @@ public class DifferentialVerificationService {
             return new BuildSummary(0, 0, exitCode, true, List.of(), List.of(), List.of(), List.of());
         }
 
-        /** Reports archive unreadable or rejected (linked/escaping/oversize entry): treat as a non-compiling build (no tests) so the oracle rejects (fail-closed). */
-        static BuildSummary unparseable(int exitCode) {
-            return new BuildSummary(0, 0, exitCode == 0 ? 1 : exitCode, false, List.of(), List.of(), List.of(), List.of());
-        }
-
         static BuildSummary fromReports(Map<String, byte[]> reports, int exitCode) {
             List<LocalCITestJobDTO> failed = new ArrayList<>();
             List<LocalCITestJobDTO> successful = new ArrayList<>();
@@ -706,14 +803,11 @@ public class DifferentialVerificationService {
                         TestResultXmlParser.processTestResultFile(content, failed, successful);
                     }
                     catch (IOException | RuntimeException e) {
-                        log.warn("Rejecting an unparseable JUnit report ({}): {}", report.getKey(), e.getMessage());
-                        return BuildSummary.unparseable(exitCode);
+                        throw VerificationInfrastructureException.reportRejected("The verifier could not parse JUnit report " + report.getKey(), e);
                     }
                 }
                 else {
-                    if (!parseScaReport(content, canonical, scaFindings)) {
-                        return BuildSummary.unparseable(exitCode);
-                    }
+                    parseScaReport(content, canonical, scaFindings);
                 }
             }
             List<String> testNames = new ArrayList<>();
@@ -730,25 +824,22 @@ public class DifferentialVerificationService {
                     List.copyOf(scaFindings));
         }
 
-        private static boolean parseScaReport(String content, String canonicalFileName, List<ScaPenaltyParity.ScaFinding> scaFindings) {
+        private static void parseScaReport(String content, String canonicalFileName, List<ScaPenaltyParity.ScaFinding> scaFindings) {
             try {
                 StaticCodeAnalysisReportDTO report = ReportParser.getReport(content, canonicalFileName);
                 if (report == null || report.issues() == null || report.tool() == null) {
-                    return true;
+                    return;
                 }
                 String tool = report.tool().name();
                 for (StaticCodeAnalysisIssue issue : report.issues()) {
                     scaFindings.add(new ScaPenaltyParity.ScaFinding(tool, issue.category()));
                 }
-                return true;
             }
             catch (UnsupportedToolException e) {
                 log.debug("No SCA parser for collected report {}: {}", canonicalFileName, e.getMessage());
-                return true;
             }
             catch (RuntimeException e) {
-                log.warn("Rejecting an unparseable SCA report ({}): {}", canonicalFileName, e.getMessage());
-                return false;
+                throw VerificationInfrastructureException.reportRejected("The verifier could not parse SCA report " + canonicalFileName, e);
             }
         }
 
@@ -756,6 +847,33 @@ public class DifferentialVerificationService {
         private static String canonicalToken(String collectedName) {
             int sep = collectedName.indexOf(SandboxBuildCommandService.COLLECTED_NAME_SEPARATOR);
             return sep < 0 ? collectedName : collectedName.substring(sep + SandboxBuildCommandService.COLLECTED_NAME_SEPARATOR.length());
+        }
+    }
+
+    /** Signals a verifier transport, archive-integrity, or report-parsing failure that authoring cannot repair reliably. */
+    public static final class VerificationInfrastructureException extends RuntimeException {
+
+        private final boolean retryableInSameSession;
+
+        public VerificationInfrastructureException(String message, Throwable cause) {
+            this(message, cause, true);
+        }
+
+        private VerificationInfrastructureException(String message, Throwable cause, boolean retryableInSameSession) {
+            super(message, cause);
+            this.retryableInSameSession = retryableInSameSession;
+        }
+
+        public static VerificationInfrastructureException sessionLost(String message) {
+            return new VerificationInfrastructureException(message, null, false);
+        }
+
+        public static VerificationInfrastructureException reportRejected(String message, Throwable cause) {
+            return new VerificationInfrastructureException(message, cause, false);
+        }
+
+        public boolean isRetryableInSameSession() {
+            return retryableInSameSession;
         }
     }
 }

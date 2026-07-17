@@ -18,6 +18,7 @@ export default defineConfig({
     testDir: './',
     /* Run tests in files in parallel */
     fullyParallel: true,
+    forbidOnly: !!process.env.CI,
     timeout: (parseNumber(process.env.TEST_TIMEOUT_SECONDS) ?? 3 * 60) * 1000,
     retries: parseNumber(process.env.TEST_RETRIES) ?? 2,
     workers: parseNumber(process.env.TEST_WORKER_PROCESSES) ?? 5,
@@ -111,7 +112,21 @@ export default defineConfig({
         {
             name: 'slow-tests',
             grep: /@slow/,
+            grepInvert: /@multi-node|@hyperion/,
+            timeout: (parseNumber(process.env.SLOW_TEST_TIMEOUT_SECONDS) ?? 90) * 1000,
+            use: {
+                browserName: 'chromium',
+                viewport: { width: 1920, height: 1080 },
+            },
+        },
+        // Hyperion uses one shared mock provider and intentionally exercises the application's single generation slot.
+        // A dedicated worker keeps that state isolated without serial mode's whole-suite retry cascade.
+        {
+            name: 'hyperion-tests',
+            grep: /@hyperion/,
             grepInvert: /@multi-node/,
+            fullyParallel: false,
+            workers: 1,
             timeout: (parseNumber(process.env.SLOW_TEST_TIMEOUT_SECONDS) ?? 90) * 1000,
             use: {
                 browserName: 'chromium',

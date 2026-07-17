@@ -2,8 +2,9 @@ package de.tum.cit.aet.artemis.buildagent.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_BUILDAGENT;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.Closeable;
-import java.io.FilterInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
@@ -16,6 +17,7 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
@@ -47,8 +49,8 @@ import de.tum.cit.aet.artemis.localci.exception.LocalCIException;
  * Build-agent-side {@link InteractiveSandbox}: a warm, resource-limited Docker container an exercise-Hyperion sandbox drives through many cheap operations.
  * <p>
  * Reuses the build-agent Docker client and {@link BuildAgentConfiguration#hostConfig()} so isolation matches a CI build container (same CPU/memory/PID limits; runs untrusted
- * code but holds no credentials or database access), and applies a build-safe hardening delta on top ({@code no-new-privileges} and dropping Linux capabilities)
- * capability). A session spec may further restrict Docker networking; Hyperion generation uses {@code network=none} by default so generated code cannot reach the network.
+ * code but holds no credentials or database access), and adds {@code no-new-privileges}, dropped Linux capabilities, and a bounded workspace. A session spec may further
+ * restrict Docker networking; Hyperion generation uses {@code network=none} by default so generated code cannot reach the network.
  * Unlike the regular build path it captures and returns each command's stdout/stderr as agent observations. Containers carry the {@value #SANDBOX_CONTAINER_PREFIX} prefix so
  * {@link InteractiveSandboxReaperService} never reaps a live session as if it were a CI build container.
  */
@@ -67,12 +69,19 @@ public class InteractiveSandboxService implements InteractiveSandbox {
 
     private static final String WORKING_DIRECTORY = "/workspace";
 
-    private static final String STOP_SENTINEL = WORKING_DIRECTORY + "/.stop_sandbox";
+    private static final Map<String, String> WRITABLE_FILESYSTEMS = Map.of(WORKING_DIRECTORY, "rw,exec,nosuid,nodev,size=512m", "/tmp", "rw,exec,nosuid,nodev,size=512m",
+            "/opt/hyperion", "rw,exec,nosuid,nodev,size=256m", "/opt/hyperion-readiness-fixture", "rw,exec,nosuid,nodev,size=64m");
 
     /** Cap on captured stdout/stderr returned to the caller; longer output is truncated to the tail (where compiler/test failures appear) to bound the agent's context. */
     private static final int MAX_CAPTURED_OUTPUT_CHARS = 50_000;
 
+    private static final int MAX_CAPTURED_OUTPUT_BYTES = MAX_CAPTURED_OUTPUT_CHARS * 4;
+
+    private static final Duration COPY_TIMEOUT = Duration.ofMinutes(2);
+
     private final BuildAgentConfiguration buildAgentConfiguration;
+
+    private final BuildAgentDockerService buildAgentDockerService;
 
     /**
      * Wall-clock of the last operation driven against each live session, keyed by container id. {@link InteractiveSandboxReaperService} reads this to tell a long-but-healthy
@@ -95,6 +104,32 @@ public class InteractiveSandboxService implements InteractiveSandbox {
 
         private SessionState(Instant lastActivity) {
             this.lastActivity = lastActivity;
+        }
+    }
+
+    static final class BoundedOutput {
+
+        private final byte[] bytes = new byte[MAX_CAPTURED_OUTPUT_BYTES];
+
+        private int size;
+
+        synchronized void append(byte[] payload) {
+            if (payload.length >= bytes.length) {
+                System.arraycopy(payload, payload.length - bytes.length, bytes, 0, bytes.length);
+                size = bytes.length;
+                return;
+            }
+            int overflow = Math.max(0, size + payload.length - bytes.length);
+            if (overflow > 0) {
+                System.arraycopy(bytes, overflow, bytes, 0, size - overflow);
+                size -= overflow;
+            }
+            System.arraycopy(payload, 0, bytes, size, payload.length);
+            size += payload.length;
+        }
+
+        synchronized String snapshot() {
+            return truncateTail(new String(bytes, 0, size, StandardCharsets.UTF_8));
         }
     }
 
@@ -123,8 +158,9 @@ public class InteractiveSandboxService implements InteractiveSandbox {
         }
     }
 
-    public InteractiveSandboxService(BuildAgentConfiguration buildAgentConfiguration) {
+    public InteractiveSandboxService(BuildAgentConfiguration buildAgentConfiguration, BuildAgentDockerService buildAgentDockerService) {
         this.buildAgentConfiguration = buildAgentConfiguration;
+        this.buildAgentDockerService = buildAgentDockerService;
     }
 
     /** Stamps the given session as active now, so the reaper does not mistake a long-running healthy session for an orphan. */
@@ -249,10 +285,11 @@ public class InteractiveSandboxService implements InteractiveSandbox {
                 throw new LocalCIException("Interactive sandbox sessions only allow Docker network mode 'none'.");
             }
         }
-        try (final var createCommand = dockerClient.createContainerCmd(spec.image())) {
-            // Main process is an idle wait-loop keeping the container warm until the stop sentinel appears; the session is driven entirely by separate `docker exec` calls.
+        String immutableImageId = buildAgentDockerService.ensureDockerImageAvailable(spec.image());
+        try (final var createCommand = dockerClient.createContainerCmd(immutableImageId)) {
+            // The main process only keeps the container warm; the session is driven by separate `docker exec` calls and removed explicitly at teardown.
             var response = createCommand.withName(containerName).withHostConfig(hostConfig).withEntrypoint()
-                    .withCmd("sh", "-c", "mkdir -p " + WORKING_DIRECTORY + "; while [ ! -f " + STOP_SENTINEL + " ]; do sleep 0.5; done").exec();
+                    .withCmd("sh", "-c", "mkdir -p " + WORKING_DIRECTORY + "; while :; do sleep 3600; done").exec();
             String containerId = response.getId();
             try {
                 try (final var startCommand = dockerClient.startContainerCmd(containerId)) {
@@ -282,10 +319,12 @@ public class InteractiveSandboxService implements InteractiveSandbox {
      * <li>disables auto-remove — the container is torn down explicitly by {@link #destroySession}; auto-remove would race that and could delete it under an in-flight exec;</li>
      * <li>adds {@code no-new-privileges} so no exec inside the container can gain privileges via setuid binaries;</li>
      * <li>drops all Linux capabilities; the Java toolchain does not require privileged kernel operations.</li>
+     * <li>makes the image filesystem read-only and puts every required writable path on a bounded tmpfs so a runaway build cannot exhaust the build-agent host disk.</li>
      * </ul>
      */
     private HostConfig hardenedHostConfig() {
-        return buildAgentConfiguration.hostConfig().withAutoRemove(false).withNetworkMode("none").withSecurityOpts(List.of("no-new-privileges")).withCapDrop(Capability.ALL);
+        return buildAgentConfiguration.hostConfig().withAutoRemove(false).withNetworkMode("none").withSecurityOpts(List.of("no-new-privileges")).withCapDrop(Capability.ALL)
+                .withReadonlyRootfs(true).withTmpFs(WRITABLE_FILESYSTEMS);
     }
 
     String containerNamePrefix() {
@@ -324,8 +363,8 @@ public class InteractiveSandboxService implements InteractiveSandbox {
                 ExecCreateCmdResponse execCreateResponse = execCreateCommand.exec();
                 String execId = execCreateResponse.getId();
 
-                StringBuilder stdout = new StringBuilder();
-                StringBuilder stderr = new StringBuilder();
+                BoundedOutput stdout = new BoundedOutput();
+                BoundedOutput stderr = new BoundedOutput();
                 CountDownLatch latch = new CountDownLatch(1);
                 AtomicReference<Throwable> errorRef = new AtomicReference<>();
 
@@ -337,12 +376,11 @@ public class InteractiveSandboxService implements InteractiveSandbox {
 
                     @Override
                     public void onNext(Frame item) {
-                        String payload = new String(item.getPayload(), StandardCharsets.UTF_8);
                         if (item.getStreamType() == StreamType.STDERR) {
-                            appendBounded(stderr, payload);
+                            stderr.append(item.getPayload());
                         }
                         else {
-                            appendBounded(stdout, payload);
+                            stdout.append(item.getPayload());
                         }
                     }
 
@@ -365,27 +403,38 @@ public class InteractiveSandboxService implements InteractiveSandbox {
                     }
                     catch (InterruptedException e) {
                         Thread.currentThread().interrupt();
-                        throw new LocalCIException("Interrupted while executing sandbox command: " + String.join(" ", command), e);
+                        LocalCIException failure = new LocalCIException("Interrupted while executing sandbox command: " + String.join(" ", command), e);
+                        invalidateSessionAfterOperationFailure(sessionId, callback, failure);
+                        throw failure;
                     }
 
                     if (!completed) {
                         destroySession(sessionId);
                         closeQuietly(callback);
-                        return new SandboxExecResult(-1, snapshotTail(stdout), snapshotTail(stderr), true);
+                        return new SandboxExecResult(-1, stdout.snapshot(), stderr.snapshot(), true);
                     }
 
                     Throwable execError = errorRef.get();
                     if (execError != null) {
-                        throw new LocalCIException("Sandbox command failed: " + String.join(" ", command), execError);
+                        LocalCIException failure = new LocalCIException("Sandbox command failed: " + String.join(" ", command), execError);
+                        invalidateSessionAfterOperationFailure(sessionId, callback, failure);
+                        throw failure;
                     }
 
                     int exitCode;
-                    try (final var inspectCommand = dockerClient.inspectExecCmd(execId)) {
-                        InspectExecResponse inspectResponse = inspectCommand.exec();
-                        Long exitCodeLong = inspectResponse.getExitCodeLong();
-                        exitCode = exitCodeLong != null ? exitCodeLong.intValue() : -1;
+                    try {
+                        try (final var inspectCommand = dockerClient.inspectExecCmd(execId)) {
+                            InspectExecResponse inspectResponse = inspectCommand.exec();
+                            Long exitCodeLong = inspectResponse.getExitCodeLong();
+                            exitCode = exitCodeLong != null ? exitCodeLong.intValue() : -1;
+                        }
                     }
-                    return new SandboxExecResult(exitCode, snapshotTail(stdout), snapshotTail(stderr), false);
+                    catch (RuntimeException inspectFailure) {
+                        LocalCIException failure = new LocalCIException("Could not inspect sandbox command: " + String.join(" ", command), inspectFailure);
+                        invalidateSessionAfterOperationFailure(sessionId, callback, failure);
+                        throw failure;
+                    }
+                    return new SandboxExecResult(exitCode, stdout.snapshot(), stderr.snapshot(), false);
                 }
                 finally {
                     // Release the client-side stream/connection back to the shared pool on every path; failing to close would leak a connection also used by CI builds.
@@ -398,42 +447,144 @@ public class InteractiveSandboxService implements InteractiveSandbox {
     @Override
     public void copyIn(String sessionId, String destinationPath, InputStream tarArchive) {
         try (OperationLease ignored = beginOperation(sessionId)) {
+            byte[] archive;
+            try {
+                archive = tarArchive.readNBytes(RemoteInteractiveSandboxClient.MAX_PAYLOAD_BYTES + 1);
+            }
+            catch (IOException e) {
+                throw new LocalCIException("Could not read files for sandbox session " + sessionId, e);
+            }
+            if (archive.length > RemoteInteractiveSandboxClient.MAX_PAYLOAD_BYTES) {
+                throw new LocalCIException("Sandbox copy-in archive exceeds the " + RemoteInteractiveSandboxClient.MAX_PAYLOAD_BYTES + " byte relay limit.");
+            }
             DockerClient dockerClient = buildAgentConfiguration.getDockerClient();
-            try (final var copyCommand = dockerClient.copyArchiveToContainerCmd(sessionId).withTarInputStream(tarArchive).withRemotePath(destinationPath)) {
-                copyCommand.exec();
+            String copyCommand = "head -c \"$1\" | tar -xf - -C \"$2\"";
+            try (final var createCommand = dockerClient.execCreateCmd(sessionId).withAttachStdin(true).withAttachStdout(true).withAttachStderr(true).withCmd("sh", "-c",
+                    copyCommand, "sandbox-copy-in", Integer.toString(archive.length), destinationPath)) {
+                String execId = createCommand.exec().getId();
+                BoundedOutput stderr = new BoundedOutput();
+                AtomicReference<Throwable> errorRef = new AtomicReference<>();
+                ResultCallback.Adapter<Frame> callback = dockerClient.execStartCmd(execId).withDetach(false).withStdIn(new ByteArrayInputStream(archive))
+                        .exec(new ResultCallback.Adapter<>() {
+
+                            @Override
+                            public void onNext(Frame frame) {
+                                if (frame.getStreamType() == StreamType.STDERR) {
+                                    stderr.append(frame.getPayload());
+                                }
+                            }
+
+                            @Override
+                            public void onError(Throwable throwable) {
+                                errorRef.set(throwable);
+                                super.onError(throwable);
+                            }
+                        });
+                try {
+                    if (!callback.awaitCompletion(COPY_TIMEOUT.toMillis(), TimeUnit.MILLISECONDS)) {
+                        throw new LocalCIException("Timed out while copying files into sandbox session " + sessionId);
+                    }
+                    if (errorRef.get() != null) {
+                        throw new LocalCIException("Could not copy files into sandbox session " + sessionId, errorRef.get());
+                    }
+                    try (final var inspectCommand = dockerClient.inspectExecCmd(execId)) {
+                        Long exitCode = inspectCommand.exec().getExitCodeLong();
+                        if (exitCode == null || exitCode != 0) {
+                            throw new LocalCIException("Could not extract files into sandbox session " + sessionId + ": " + stderr.snapshot());
+                        }
+                    }
+                }
+                catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    LocalCIException failure = new LocalCIException("Interrupted while copying files into sandbox session " + sessionId, e);
+                    invalidateSessionAfterOperationFailure(sessionId, callback, failure);
+                    throw failure;
+                }
+                catch (RuntimeException failure) {
+                    invalidateSessionAfterOperationFailure(sessionId, callback, failure);
+                    throw failure;
+                }
+                finally {
+                    closeQuietly(callback);
+                }
             }
         }
     }
 
     @Override
     public TarArchiveInputStream copyOut(String sessionId, String path) {
-        OperationLease lease = beginOperation(sessionId);
-        DockerClient dockerClient = buildAgentConfiguration.getDockerClient();
-        try (final var copyCommand = dockerClient.copyArchiveFromContainerCmd(sessionId, path)) {
-            InputStream archiveStream = copyCommand.exec();
-            InputStream leasedStream = new FilterInputStream(archiveStream) {
+        try (OperationLease ignored = beginOperation(sessionId)) {
+            DockerClient dockerClient = buildAgentConfiguration.getDockerClient();
+            String copyCommand = "parent=${1%/*}; name=${1##*/}; [ \"$parent\" != \"$1\" ] || parent=.; tar -cf - -C \"$parent\" \"$name\"";
+            try (final var createCommand = dockerClient.execCreateCmd(sessionId).withAttachStdout(true).withAttachStderr(true).withCmd("sh", "-c", copyCommand, "sandbox-copy-out",
+                    path)) {
+                String execId = createCommand.exec().getId();
+                ByteArrayOutputStream archive = new ByteArrayOutputStream();
+                BoundedOutput stderr = new BoundedOutput();
+                CountDownLatch latch = new CountDownLatch(1);
+                AtomicBoolean oversized = new AtomicBoolean();
+                AtomicReference<Throwable> errorRef = new AtomicReference<>();
+                ResultCallback.Adapter<Frame> callback = dockerClient.execStartCmd(execId).withDetach(false).exec(new ResultCallback.Adapter<>() {
 
-                @Override
-                public void close() throws IOException {
-                    try {
-                        super.close();
+                    @Override
+                    public void onNext(Frame frame) {
+                        if (frame.getStreamType() == StreamType.STDERR) {
+                            stderr.append(frame.getPayload());
+                        }
+                        else if (!oversized.get()) {
+                            byte[] payload = frame.getPayload();
+                            if (archive.size() + payload.length > RemoteInteractiveSandboxClient.MAX_PAYLOAD_BYTES) {
+                                oversized.set(true);
+                            }
+                            else {
+                                archive.writeBytes(payload);
+                            }
+                        }
                     }
-                    finally {
-                        lease.close();
+
+                    @Override
+                    public void onError(Throwable throwable) {
+                        errorRef.set(throwable);
+                        latch.countDown();
                     }
+
+                    @Override
+                    public void onComplete() {
+                        latch.countDown();
+                    }
+                });
+                try {
+                    if (!latch.await(COPY_TIMEOUT.toMillis(), TimeUnit.MILLISECONDS)) {
+                        throw new LocalCIException("Timed out while copying files from sandbox session " + sessionId);
+                    }
+                    if (errorRef.get() != null) {
+                        throw new LocalCIException("Could not copy files from sandbox session " + sessionId, errorRef.get());
+                    }
+                    if (oversized.get()) {
+                        throw new LocalCIException("Sandbox copy-out archive exceeds the " + RemoteInteractiveSandboxClient.MAX_PAYLOAD_BYTES + " byte relay limit.");
+                    }
+                    try (final var inspectCommand = dockerClient.inspectExecCmd(execId)) {
+                        Long exitCode = inspectCommand.exec().getExitCodeLong();
+                        if (exitCode == null || exitCode != 0) {
+                            throw new LocalCIException("Could not archive files from sandbox session " + sessionId + ": " + stderr.snapshot());
+                        }
+                    }
+                    return new TarArchiveInputStream(new ByteArrayInputStream(archive.toByteArray()));
                 }
-            };
-            try {
-                return new TarArchiveInputStream(leasedStream);
+                catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    LocalCIException failure = new LocalCIException("Interrupted while copying files from sandbox session " + sessionId, e);
+                    invalidateSessionAfterOperationFailure(sessionId, callback, failure);
+                    throw failure;
+                }
+                catch (RuntimeException failure) {
+                    invalidateSessionAfterOperationFailure(sessionId, callback, failure);
+                    throw failure;
+                }
+                finally {
+                    closeQuietly(callback);
+                }
             }
-            catch (RuntimeException e) {
-                closeQuietly(leasedStream); // do not leak the Docker response stream or operation lease if the wrapper cannot be constructed
-                throw e;
-            }
-        }
-        catch (RuntimeException e) {
-            lease.close();
-            throw e;
         }
     }
 
@@ -495,24 +646,13 @@ public class InteractiveSandboxService implements InteractiveSandbox {
         }
     }
 
-    static void appendBounded(StringBuilder builder, String payload) {
-        synchronized (builder) {
-            int retainedCharacters = MAX_CAPTURED_OUTPUT_CHARS * 2;
-            if (payload.length() >= retainedCharacters) {
-                builder.setLength(0);
-                builder.append(payload, payload.length() - retainedCharacters, payload.length());
-                return;
-            }
-            builder.append(payload);
-            if (builder.length() > retainedCharacters) {
-                builder.delete(0, builder.length() - retainedCharacters);
-            }
+    private void invalidateSessionAfterOperationFailure(String sessionId, Closeable callback, RuntimeException failure) {
+        closeQuietly(callback);
+        try {
+            destroySession(sessionId);
         }
-    }
-
-    private static String snapshotTail(StringBuilder builder) {
-        synchronized (builder) {
-            return truncateTail(builder.toString());
+        catch (RuntimeException cleanupFailure) {
+            failure.addSuppressed(cleanupFailure);
         }
     }
 

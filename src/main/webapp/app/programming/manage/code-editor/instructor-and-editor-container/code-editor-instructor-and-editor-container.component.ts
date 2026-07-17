@@ -31,17 +31,17 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ProgrammingExerciseInstructorExerciseStatusComponent } from '../../status/programming-exercise-instructor-exercise-status.component';
 import { NgbDropdown, NgbDropdownItem, NgbDropdownMenu, NgbDropdownToggle, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { DomainChange, RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
+import { DomainChange, DomainType, RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { facArtemisIntelligence } from 'app/foundation/icons/icons';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { Observable, finalize, from, map, take, tap } from 'rxjs';
+import { Observable, Subject, catchError, finalize, forkJoin, from, map, of, take, takeUntil, tap, timeout } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ProblemStatementAiOperationsHelper } from 'app/programming/manage/shared/problem-statement-ai-operations.helper';
 import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
-import { DialogService } from 'primeng/dynamicdialog';
+import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { ConfirmationService } from 'primeng/api';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ConsistencyCheckService } from 'app/programming/manage/consistency-check/consistency-check.service';
@@ -90,6 +90,7 @@ const SEVERITY_ORDER: Record<ConsistencyIssueSeverityEnum, number> = {
 
 const AUTO_START_EXERCISE_GENERATION_STATE = 'autoStartExerciseGeneration';
 const MIN_MEANINGFUL_SPEC_LENGTH = 40;
+const HYPERION_EDITOR_REFRESH_TIMEOUT_MS = 30_000;
 interface ConsistencyIssueNavigationIssue {
     threadId: number;
     targetType: CommentThreadLocationType;
@@ -193,6 +194,13 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     readonly generationStartPending = signal(false);
     readonly generationRefreshPending = signal(false);
     readonly generationRefreshFailed = signal(false);
+    readonly generationRefreshBaselineUnknown = signal(false);
+    private generationStartSequence = 0;
+    private generationRefreshSequence = 0;
+    private activeAdaptDialogRef?: DynamicDialogRef<ReviewAdaptExerciseDialogComponent>;
+    private pendingGenerationRefreshCompletedAt?: number;
+    private generationRefreshQueued = false;
+    private readonly exerciseChanged = new Subject<void>();
     private shouldAutoStartExerciseGeneration = window.history.state?.[AUTO_START_EXERCISE_GENERATION_STATE] === true;
 
     // Icons
@@ -270,6 +278,9 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     }
 
     override loadExercise(exerciseId: number): Observable<ProgrammingExercise> {
+        if (this.exercise?.id !== undefined && this.exercise.id !== exerciseId) {
+            this.invalidateHyperionLifecycleState();
+        }
         return super.loadExercise(exerciseId).pipe(
             tap((exercise) => {
                 if (exercise.id) {
@@ -304,7 +315,11 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     }
 
     protected onHyperionGenerationCompleted(event: HyperionGenerationCompletedEvent): void {
-        if (event.liveExerciseChanged ?? event.verdict?.accepted) {
+        if (event.completionStatus === 'NEEDS_REVIEW') {
+            this.exerciseReviewCommentService.reloadThreads();
+            return;
+        }
+        if (event.liveExerciseChanged === true) {
             this.refreshAfterHyperionRepositoryChange(event.completedAt ? Date.parse(event.completedAt) : undefined);
         }
     }
@@ -428,57 +443,100 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
 
     private refreshAfterHyperionRepositoryChange(operationCompletedAt?: number): void {
         const exerciseId = this.exercise?.id;
-        if (exerciseId === undefined || this.generationRefreshPending()) {
+        if (exerciseId === undefined) {
+            return;
+        }
+        if (operationCompletedAt !== undefined) {
+            this.pendingGenerationRefreshCompletedAt = operationCompletedAt;
+        }
+        if (this.generationRefreshPending()) {
+            this.generationRefreshQueued = true;
             return;
         }
         if (!this.canRefreshAfterHyperionRepositoryChange()) {
+            this.generationRefreshFailed.set(true);
             this.alertService.warning('pendingChanges');
             return;
         }
+        const refreshSequence = ++this.generationRefreshSequence;
         const actions = this.codeEditorContainer()?.actions();
         this.generationRefreshFailed.set(false);
+        this.generationRefreshBaselineUnknown.set(false);
         this.generationRefreshPending.set(true);
-        this.fileSyncService.beginExpectedRepositoryUpdate(operationCompletedAt);
-        let repositoryRefreshComplete = actions === undefined;
-        let repositoryRefreshSucceeded = actions === undefined;
-        let exerciseRefreshComplete = false;
-        let refreshedExercise: ProgrammingExercise | undefined;
-        const finishRefresh = () => {
-            if (repositoryRefreshComplete && exerciseRefreshComplete) {
-                const safeToApply = this.exercise?.id === exerciseId && this.canRefreshAfterHyperionRepositoryChange();
-                if (repositoryRefreshSucceeded && refreshedExercise && safeToApply) {
-                    this.editableInstructions()?.acceptServerBaseline(refreshedExercise);
-                    this.exercise = refreshedExercise;
-                    this.onInstructionChanged(refreshedExercise.problemStatement ?? '');
-                }
-                this.generationRefreshFailed.set(!repositoryRefreshSucceeded || refreshedExercise === undefined || !safeToApply);
-                this.fileSyncService.endExpectedRepositoryUpdate();
-                this.generationRefreshPending.set(false);
-            }
-        };
-        if (actions) {
-            actions.executeRefresh((succeeded) => {
-                repositoryRefreshSucceeded = succeeded;
-                repositoryRefreshComplete = true;
-                finishRefresh();
-            });
-        }
-        this.reloadExerciseFromServer(exerciseId)
+        this.fileSyncService.beginExpectedRepositoryUpdate(this.pendingGenerationRefreshCompletedAt);
+
+        const repositoryRefresh = actions
+            ? actions.refreshAfterExternalUpdate(this.currentRepositoryDomain()).pipe(
+                  timeout(HYPERION_EDITOR_REFRESH_TIMEOUT_MS),
+                  catchError(() => of(false)),
+              )
+            : of(true);
+        const exerciseRefresh = this.reloadExerciseFromServer(exerciseId).pipe(
+            timeout(HYPERION_EDITOR_REFRESH_TIMEOUT_MS),
+            catchError(() => {
+                this.alertService.error('artemisApp.editor.errors.refreshFailed', { connectionIssue: '' });
+                return of(undefined);
+            }),
+        );
+
+        forkJoin({ repositoryRefresh, exerciseRefresh })
             .pipe(
                 take(1),
-                finalize(() => {
-                    exerciseRefreshComplete = true;
-                    finishRefresh();
-                }),
+                takeUntil(this.exerciseChanged),
+                takeUntilDestroyed(this.editorDestroyRef),
+                finalize(() => this.finishHyperionRefresh(refreshSequence)),
             )
             .subscribe({
-                next: (exercise) => (refreshedExercise = exercise),
-                error: () => this.alertService.error('artemisApp.editor.errors.refreshFailed', { connectionIssue: '' }),
+                next: ({ repositoryRefresh: repositoryRefreshSucceeded, exerciseRefresh: refreshedExercise }) => {
+                    if (refreshSequence !== this.generationRefreshSequence || this.exercise?.id !== exerciseId) {
+                        return;
+                    }
+                    const safeToApply = this.canRefreshAfterHyperionRepositoryChange();
+                    if (repositoryRefreshSucceeded && refreshedExercise && safeToApply) {
+                        this.editableInstructions()?.acceptServerBaseline(refreshedExercise);
+                        this.exercise = refreshedExercise;
+                        this.onInstructionChanged(refreshedExercise.problemStatement ?? '');
+                    }
+                    const refreshFailed = !repositoryRefreshSucceeded || refreshedExercise === undefined || !safeToApply;
+                    this.generationRefreshFailed.set(refreshFailed);
+                    this.generationRefreshBaselineUnknown.set(refreshFailed);
+                },
             });
     }
 
+    private currentRepositoryDomain(): DomainChange | undefined {
+        switch (this.selectedRepository) {
+            case RepositoryType.TEMPLATE:
+                return this.exercise.templateParticipation ? [DomainType.PARTICIPATION, this.exercise.templateParticipation] : undefined;
+            case RepositoryType.SOLUTION:
+                return this.exercise.solutionParticipation ? [DomainType.PARTICIPATION, this.exercise.solutionParticipation] : undefined;
+            case RepositoryType.TESTS:
+                return [DomainType.TEST_REPOSITORY, this.exercise];
+            case RepositoryType.AUXILIARY: {
+                const repository = this.exercise.auxiliaryRepositories?.find((candidate) => candidate.id === this.selectedRepositoryId);
+                return repository ? [DomainType.AUXILIARY_REPOSITORY, repository] : undefined;
+            }
+            default:
+                return this.selectedParticipation ? [DomainType.PARTICIPATION, this.selectedParticipation] : undefined;
+        }
+    }
+
     protected retryHyperionRefresh(): void {
-        this.refreshAfterHyperionRepositoryChange();
+        this.refreshAfterHyperionRepositoryChange(this.pendingGenerationRefreshCompletedAt);
+    }
+
+    private finishHyperionRefresh(refreshSequence: number): void {
+        if (refreshSequence !== this.generationRefreshSequence) {
+            return;
+        }
+        this.fileSyncService.endExpectedRepositoryUpdate();
+        this.generationRefreshPending.set(false);
+        if (this.generationRefreshQueued) {
+            this.generationRefreshQueued = false;
+            this.refreshAfterHyperionRepositoryChange(this.pendingGenerationRefreshCompletedAt);
+        } else if (!this.generationRefreshFailed()) {
+            this.pendingGenerationRefreshCompletedAt = undefined;
+        }
     }
 
     private canRefreshAfterHyperionRepositoryChange(): boolean {
@@ -488,7 +546,14 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     }
 
     private reloadExerciseFromServer(exerciseId: number): Observable<ProgrammingExercise> {
-        return this.programmingExerciseService.findWithTemplateAndSolutionParticipationAndResults(exerciseId).pipe(map(({ body }) => body!));
+        return this.programmingExerciseService.findWithTemplateAndSolutionParticipationAndResults(exerciseId).pipe(
+            map(({ body }) => {
+                if (body?.id !== exerciseId || body.templateParticipation?.id === undefined || body.solutionParticipation?.id === undefined) {
+                    throw new Error('The refreshed programming exercise is missing its setup participations.');
+                }
+                return body;
+            }),
+        );
     }
 
     protected startGeneration(skipConfirmation = false): void {
@@ -525,26 +590,40 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     }
 
     private dispatchGeneration(exerciseId: number): void {
-        if (this.isExerciseGenerationActionBlocked()) {
+        if (this.editorDestroyRef.destroyed || this.exercise?.id !== exerciseId || this.isExerciseGenerationActionBlocked()) {
             return;
         }
         if (!this.canRefreshAfterHyperionRepositoryChange()) {
             this.alertService.warning('pendingChanges');
             return;
         }
+        const requestSequence = ++this.generationStartSequence;
         this.generationStartPending.set(true);
         this.generationService
             .generate(exerciseId, { mode: 'GENERATE' })
             .pipe(
                 take(1),
-                finalize(() => this.generationStartPending.set(false)),
+                takeUntil(this.exerciseChanged),
+                takeUntilDestroyed(this.editorDestroyRef),
+                finalize(() => {
+                    if (requestSequence === this.generationStartSequence) {
+                        this.generationStartPending.set(false);
+                    }
+                }),
             )
             .subscribe({
                 next: ({ jobId }) => {
+                    if (requestSequence !== this.generationStartSequence || this.exercise?.id !== exerciseId) {
+                        return;
+                    }
                     this.generationActivity()?.attachToJob(jobId, 'GENERATE');
                     this.openHyperionPanel();
                 },
-                error: () => this.alertService.error('artemisApp.hyperion.generationActivity.startFailed'),
+                error: () => {
+                    if (requestSequence === this.generationStartSequence && this.exercise?.id === exerciseId) {
+                        this.alertService.error('artemisApp.hyperion.generationActivity.startFailed');
+                    }
+                },
             });
     }
 
@@ -565,7 +644,16 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
 
     protected isExerciseGenerationActionBlocked(): boolean {
         const activity = this.generationActivity();
-        return this.isExerciseGenerationRunning() || (this.showGenerationActivity() && (activity === undefined || activity.statusLoadFailed()));
+        return this.isExerciseGenerationRunning() || this.generationRefreshFailed() || (this.showGenerationActivity() && (activity === undefined || activity.statusLoadFailed()));
+    }
+
+    protected isProblemStatementEditingLocked(): boolean {
+        const activity = this.generationActivity();
+        return (
+            this.isExerciseGenerationRunning() ||
+            this.generationRefreshBaselineUnknown() ||
+            (this.showGenerationActivity() && (activity === undefined || activity.statusLoadFailed()))
+        );
     }
 
     protected showGenerationActivity(): boolean {
@@ -582,7 +670,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     }
 
     protected adaptFromThread(threadId: number): void {
-        if (!this.canAdaptWithFeedback()) {
+        if (!this.canAdaptWithFeedback() || this.isExerciseGenerationActionBlocked()) {
             return;
         }
         const wasAlreadySelected = this.exerciseReviewCommentService.selectedFeedbackThreadIds().includes(threadId);
@@ -591,7 +679,11 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     }
 
     protected openAdaptDialog(onCancel?: () => void): void {
-        if (!this.canAdaptWithFeedback()) {
+        if (!this.canAdaptWithFeedback() || this.isExerciseGenerationActionBlocked()) {
+            return;
+        }
+        const exerciseId = this.exercise?.id;
+        if (exerciseId === undefined) {
             return;
         }
         if (!this.canRefreshAfterHyperionRepositoryChange()) {
@@ -608,13 +700,31 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
             breakpoints: { '640px': 'calc(100vw - 2rem)' },
             data: { findings } satisfies ReviewAdaptExerciseDialogData,
         });
-        dialogRef?.onClose.pipe(take(1)).subscribe((result?: ReviewAdaptExerciseDialogResult) => {
-            if (!result) {
-                onCancel?.();
-                return;
-            }
-            this.startAdaptation(result.instructions);
-        });
+        if (!dialogRef) {
+            return;
+        }
+        this.activeAdaptDialogRef = dialogRef;
+        dialogRef.onClose
+            .pipe(
+                take(1),
+                takeUntil(this.exerciseChanged),
+                takeUntilDestroyed(this.editorDestroyRef),
+                finalize(() => {
+                    if (this.activeAdaptDialogRef === dialogRef) {
+                        this.activeAdaptDialogRef = undefined;
+                    }
+                }),
+            )
+            .subscribe((result?: ReviewAdaptExerciseDialogResult) => {
+                if (this.exercise?.id !== exerciseId) {
+                    return;
+                }
+                if (!result) {
+                    onCancel?.();
+                    return;
+                }
+                this.startAdaptation(result.instructions);
+            });
     }
 
     private startAdaptation(instructions?: string): void {
@@ -627,6 +737,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
             return;
         }
         const selectedFeedbackThreadIds = this.selectedAdaptFeedbackThreadIds();
+        const requestSequence = ++this.generationStartSequence;
         this.generationStartPending.set(true);
         this.generationService
             .generate(exerciseId, {
@@ -636,16 +747,49 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
             })
             .pipe(
                 take(1),
-                finalize(() => this.generationStartPending.set(false)),
+                takeUntil(this.exerciseChanged),
+                takeUntilDestroyed(this.editorDestroyRef),
+                finalize(() => {
+                    if (requestSequence === this.generationStartSequence) {
+                        this.generationStartPending.set(false);
+                    }
+                }),
             )
             .subscribe({
                 next: ({ jobId }) => {
+                    if (requestSequence !== this.generationStartSequence || this.exercise?.id !== exerciseId) {
+                        return;
+                    }
                     this.exerciseReviewCommentService.clearSelectedFeedback();
                     this.generationActivity()?.attachToJob(jobId, 'ADAPT');
                     this.openHyperionPanel();
                 },
-                error: () => this.alertService.error('artemisApp.hyperion.generationActivity.adaptStartFailed'),
+                error: () => {
+                    if (requestSequence === this.generationStartSequence && this.exercise?.id === exerciseId) {
+                        this.alertService.error('artemisApp.hyperion.generationActivity.adaptStartFailed');
+                    }
+                },
             });
+    }
+
+    override selectTemplateParticipation(): Promise<boolean> {
+        return this.isExerciseGenerationActionBlocked() ? Promise.resolve(false) : super.selectTemplateParticipation();
+    }
+
+    override selectSolutionParticipation(): Promise<boolean> {
+        return this.isExerciseGenerationActionBlocked() ? Promise.resolve(false) : super.selectSolutionParticipation();
+    }
+
+    override selectAssignmentParticipation(): Promise<boolean> {
+        return this.isExerciseGenerationActionBlocked() ? Promise.resolve(false) : super.selectAssignmentParticipation();
+    }
+
+    override selectTestRepository(): Promise<boolean> {
+        return this.isExerciseGenerationActionBlocked() ? Promise.resolve(false) : super.selectTestRepository();
+    }
+
+    override selectAuxiliaryRepository(repositoryId: number): Promise<boolean> {
+        return this.isExerciseGenerationActionBlocked() ? Promise.resolve(false) : super.selectAuxiliaryRepository(repositoryId);
     }
 
     /**
@@ -679,8 +823,34 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     }
 
     override ngOnDestroy() {
+        this.closeHyperionOverlays();
+        this.exerciseChanged.next();
+        this.exerciseChanged.complete();
         this.aiOps.destroy();
         super.ngOnDestroy();
+    }
+
+    private invalidateHyperionLifecycleState(): void {
+        this.generationStartSequence++;
+        this.generationRefreshSequence++;
+        this.closeHyperionOverlays();
+        this.exerciseChanged.next();
+        if (this.generationRefreshPending()) {
+            this.fileSyncService.endExpectedRepositoryUpdate();
+        }
+        this.generationStartPending.set(false);
+        this.generationRefreshPending.set(false);
+        this.generationRefreshFailed.set(false);
+        this.generationRefreshBaselineUnknown.set(false);
+        this.generationRefreshQueued = false;
+        this.pendingGenerationRefreshCompletedAt = undefined;
+    }
+
+    private closeHyperionOverlays(): void {
+        this.confirmationService.close();
+        this.activeAdaptDialogRef?.close();
+        this.activeAdaptDialogRef = undefined;
+        this.refinementPopover()?.hide();
     }
 
     /**
@@ -702,6 +872,10 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
      * @param {ProgrammingExercise} exercise - The exercise to check.
      */
     checkConsistencies(exercise: ProgrammingExercise) {
+        if (this.isExerciseGenerationActionBlocked()) {
+            this.openHyperionPanel();
+            return;
+        }
         this.selectedIssue.set(undefined);
         this.showConsistencyIssuesToolbar.set(false);
         const existingConsistencyThreadIds = new Set(
@@ -801,6 +975,10 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
      * Toggles the refinement prompt popover visibility.
      */
     toggleRefinementPopover(event: Event, target?: HTMLElement): void {
+        if (this.isExerciseGenerationActionBlocked()) {
+            this.openHyperionPanel();
+            return;
+        }
         this.refinementPopover()?.toggle(event, target);
     }
 
@@ -809,6 +987,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
      * Hides the popover, then delegates to the shared AI operations helper.
      */
     submitRefinement(): void {
+        if (this.isExerciseGenerationActionBlocked()) return;
         const prompt = this.refinementPrompt().trim();
         if (!prompt || !this.exercise) return;
 
@@ -820,6 +999,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
      * Handles inline refinement request from editor selection.
      */
     onInlineRefinement(event: InlineRefinementEvent): void {
+        if (this.isExerciseGenerationActionBlocked()) return;
         this.aiOps.onInlineRefinement(this.exercise, this.editableInstructions(), event);
     }
 

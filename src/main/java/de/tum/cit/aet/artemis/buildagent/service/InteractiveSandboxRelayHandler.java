@@ -25,6 +25,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import jakarta.annotation.PostConstruct;
@@ -46,6 +47,7 @@ import de.tum.cit.aet.artemis.buildagent.dto.SandboxExecResult;
 import de.tum.cit.aet.artemis.buildagent.dto.SandboxOpRequest;
 import de.tum.cit.aet.artemis.buildagent.dto.SandboxOpResponse;
 import de.tum.cit.aet.artemis.buildagent.dto.SandboxSessionContext;
+import de.tum.cit.aet.artemis.buildagent.dto.SandboxSessionSpec;
 import de.tum.cit.aet.artemis.localci.exception.LocalCIException;
 import de.tum.cit.aet.artemis.localci.service.DistributedDataAccessService;
 import de.tum.cit.aet.artemis.localci.service.distributed.api.topic.DistributedTopic;
@@ -99,6 +101,12 @@ public class InteractiveSandboxRelayHandler {
     private final Set<String> ownedSessionIds = ConcurrentHashMap.newKeySet();
 
     private final Map<String, ActiveSession> activeSessions = new ConcurrentHashMap<>();
+
+    private final Map<String, JobCoordination> jobCoordinations = new ConcurrentHashMap<>();
+
+    private final Map<String, String> sessionIdsByJobId = new ConcurrentHashMap<>();
+
+    private final Map<String, String> jobIdsBySessionId = new ConcurrentHashMap<>();
 
     private DistributedTopic<SandboxOpRequest> requestsTopic;
 
@@ -234,6 +242,8 @@ public class InteractiveSandboxRelayHandler {
             }
             ownedSessionIds.clear();
             activeSessions.clear();
+            sessionIdsByJobId.clear();
+            jobIdsBySessionId.clear();
         }
         finally {
             cleanupLock.unlock();
@@ -247,6 +257,9 @@ public class InteractiveSandboxRelayHandler {
         try {
             if (shuttingDown.get()) {
                 response = SandboxOpResponse.failure(request.correlationId(), "Build agent '" + buildAgentShortName + "' " + DRAINING_REFUSAL_MARKER + ".");
+            }
+            else if (isDeadlineExpired(request)) {
+                response = deadlineExpiredResponse(request);
             }
             else {
                 response = switch (request.op()) {
@@ -279,7 +292,7 @@ public class InteractiveSandboxRelayHandler {
                 return new RequestClaim(false, completedResponse.response());
             }
             long requestDeadline = request.deadlineEpochMillis() > 0 ? request.deadlineEpochMillis() : now + UNDATED_REQUEST_RETENTION_MILLIS;
-            if (requestDeadline < now) {
+            if (requestDeadline <= now) {
                 return new RequestClaim(false, SandboxOpResponse.failure(request.correlationId(), "Interactive sandbox request deadline expired before execution."));
             }
             if (inFlightCorrelationIds.containsKey(request.correlationId())) {
@@ -322,40 +335,75 @@ public class InteractiveSandboxRelayHandler {
         if (request.sessionSpec() == null || request.sessionSpec().context() == null) {
             return SandboxOpResponse.failure(request.correlationId(), "Generation sandbox CREATE requires an observability context.");
         }
-        if (!sharedQueueProcessingService.tryAcquireGenerationAdmission()) {
-            return SandboxOpResponse.failure(request.correlationId(), "Build agent '" + buildAgentShortName + "' " + DRAINING_REFUSAL_MARKER + ".");
+        SandboxSessionContext context = request.sessionSpec().context();
+        if (context.jobId() == null || context.jobId().isBlank()) {
+            return SandboxOpResponse.failure(request.correlationId(), "Generation sandbox CREATE requires a job id.");
         }
+        JobCoordination jobCoordination = acquireJobCoordination(context.jobId());
         try {
-            if (!sandboxSlotPermits.tryAcquire()) {
-                return SandboxOpResponse.failure(request.correlationId(),
-                        "Build agent '" + buildAgentShortName + "' " + CAPACITY_REFUSAL_MARKER + " (" + maxGenerationSandboxSlots + ").");
+            if (isDeadlineExpired(request)) {
+                return deadlineExpiredResponse(request);
             }
-            boolean created = false;
+            String existingSessionId = sessionIdsByJobId.get(context.jobId());
+            if (existingSessionId != null && ownsSession(existingSessionId)) {
+                ActiveSession existingSession = activeSessions.get(existingSessionId);
+                if (existingSession == null || !existingSession.sessionSpec().equals(request.sessionSpec())) {
+                    return SandboxOpResponse.failure(request.correlationId(), "Generation job " + context.jobId() + " is already bound to a different sandbox specification.");
+                }
+                return SandboxOpResponse.created(request.correlationId(), existingSessionId);
+            }
+
+            if (!sharedQueueProcessingService.tryAcquireGenerationAdmission()) {
+                return SandboxOpResponse.failure(request.correlationId(), "Build agent '" + buildAgentShortName + "' " + DRAINING_REFUSAL_MARKER + ".");
+            }
             try {
-                String containerId = interactiveSandboxService().createSession(request.sessionSpec());
-                ownedSessionIds.add(containerId);
-                registerSession(containerId, request.sessionSpec().context());
-                created = true;
+                if (!sandboxSlotPermits.tryAcquire()) {
+                    return SandboxOpResponse.failure(request.correlationId(),
+                            "Build agent '" + buildAgentShortName + "' " + CAPACITY_REFUSAL_MARKER + " (" + maxGenerationSandboxSlots + ").");
+                }
+                boolean created = false;
                 try {
-                    publishSessionState();
+                    if (isDeadlineExpired(request)) {
+                        return deadlineExpiredResponse(request);
+                    }
+                    String containerId = interactiveSandboxService().createSession(request.sessionSpec());
+                    if (isDeadlineExpired(request)) {
+                        created = retainExpiredContainerWhenCleanupFails(containerId, request.sessionSpec());
+                        if (created) {
+                            // The originating core may already have timed out. Cache CREATED so a retry on this handler recovers the retained container instead of replaying a
+                            // false failure that could trigger duplicate placement.
+                            return SandboxOpResponse.created(request.correlationId(), containerId);
+                        }
+                        return deadlineExpiredResponse(request);
+                    }
+                    registerSession(containerId, request.sessionSpec());
+                    ownedSessionIds.add(containerId);
+                    created = true;
+                    try {
+                        publishSessionState();
+                    }
+                    catch (RuntimeException e) {
+                        // The container already exists. Returning a retryable CREATE failure could place the same job on another agent, so observability refresh is best-effort
+                        // here.
+                        log.warn("Could not publish generation sandbox slot state after creating session {}: {}", containerId, e.getMessage());
+                    }
+                    return SandboxOpResponse.created(request.correlationId(), containerId);
                 }
                 catch (RuntimeException e) {
-                    // The container already exists. Returning a retryable CREATE failure could place the same job on another agent, so observability refresh is best-effort here.
-                    log.warn("Could not publish generation sandbox slot state after creating session {}: {}", containerId, e.getMessage());
+                    return SandboxOpResponse.failure(request.correlationId(), e.getMessage());
                 }
-                return SandboxOpResponse.created(request.correlationId(), containerId);
-            }
-            catch (RuntimeException e) {
-                return SandboxOpResponse.failure(request.correlationId(), e.getMessage());
+                finally {
+                    if (!created) {
+                        sandboxSlotPermits.release();
+                    }
+                }
             }
             finally {
-                if (!created) {
-                    sandboxSlotPermits.release();
-                }
+                sharedQueueProcessingService.releaseGenerationAdmission();
             }
         }
         finally {
-            sharedQueueProcessingService.releaseGenerationAdmission();
+            releaseJobCoordination(context.jobId(), jobCoordination);
         }
     }
 
@@ -396,6 +444,10 @@ public class InteractiveSandboxRelayHandler {
         catch (IOException e) {
             return SandboxOpResponse.failure(request.correlationId(), "Failed to read copy-in payload: " + e.getMessage());
         }
+        catch (RuntimeException e) {
+            reconcileMissingSessionAfterFailure(request.sessionId(), e);
+            throw e;
+        }
         return SandboxOpResponse.ok(request.correlationId(), request.sessionId());
     }
 
@@ -403,15 +455,75 @@ public class InteractiveSandboxRelayHandler {
         requireOwnedSession(request.sessionId());
         try (TarArchiveInputStream tar = interactiveSandboxService().copyOut(request.sessionId(), request.workspacePath())) {
             byte[] payload = repackTar(tar);
+            if (isDeadlineExpired(request)) {
+                return deadlineExpiredResponse(request);
+            }
             // Stage the repacked archive in the keyed map rather than on the response topic, so only the originating core node fetches the bytes instead of every response
             // subscriber
             // deserializing them on its event thread. The client reads and removes the entry.
-            distributedDataAccessService.getHyperionSandboxPayloads().put(request.correlationId(), payload);
+            var payloads = distributedDataAccessService.getHyperionSandboxPayloads();
+            payloads.put(request.correlationId(), payload);
+            if (isDeadlineExpired(request)) {
+                payloads.remove(request.correlationId());
+                return deadlineExpiredResponse(request);
+            }
             return SandboxOpResponse.copiedOut(request.correlationId(), request.sessionId());
         }
         catch (IOException e) {
             return SandboxOpResponse.failure(request.correlationId(), "Failed to buffer copy-out archive: " + e.getMessage());
         }
+        catch (RuntimeException e) {
+            reconcileMissingSessionAfterFailure(request.sessionId(), e);
+            throw e;
+        }
+    }
+
+    private void reconcileMissingSessionAfterFailure(String sessionId, RuntimeException failure) {
+        try {
+            if (!interactiveSandboxService().sessionExists(sessionId)) {
+                releaseOwnedPermit(sessionId);
+            }
+        }
+        catch (RuntimeException reconciliationFailure) {
+            failure.addSuppressed(reconciliationFailure);
+        }
+    }
+
+    private boolean retainExpiredContainerWhenCleanupFails(String containerId, SandboxSessionSpec sessionSpec) {
+        try {
+            interactiveSandboxService().destroySession(containerId);
+            return false;
+        }
+        catch (RuntimeException cleanupFailure) {
+            try {
+                if (!interactiveSandboxService().sessionExists(containerId)) {
+                    log.info("Sandbox session {} was already absent after its expired CREATE cleanup failed.", containerId);
+                    return false;
+                }
+            }
+            catch (RuntimeException reconciliationFailure) {
+                cleanupFailure.addSuppressed(reconciliationFailure);
+            }
+            registerSession(containerId, sessionSpec);
+            ownedSessionIds.add(containerId);
+            try {
+                publishSessionState();
+            }
+            catch (RuntimeException publicationFailure) {
+                cleanupFailure.addSuppressed(publicationFailure);
+            }
+            log.warn("Could not remove sandbox session {} after its CREATE deadline expired; retaining ownership for duplicate recovery and orphan reaping.", containerId,
+                    cleanupFailure);
+            return true;
+        }
+    }
+
+    private static boolean isDeadlineExpired(SandboxOpRequest request) {
+        return request.deadlineEpochMillis() > 0 && request.deadlineEpochMillis() <= System.currentTimeMillis();
+    }
+
+    private static SandboxOpResponse deadlineExpiredResponse(SandboxOpRequest request) {
+        return SandboxOpResponse.failure(request.correlationId(), "Interactive sandbox request deadline expired before execution completed.");
     }
 
     /** Re-packs a decoded tar stream for bounded transport through the relay. */
@@ -497,7 +609,21 @@ public class InteractiveSandboxRelayHandler {
         }
     }
 
-    private synchronized SandboxOpResponse handleDestroy(SandboxOpRequest request) {
+    private SandboxOpResponse handleDestroy(SandboxOpRequest request) {
+        String jobId = jobIdsBySessionId.get(request.sessionId());
+        if (jobId == null) {
+            return destroyOwnedSession(request);
+        }
+        JobCoordination jobCoordination = acquireJobCoordination(jobId);
+        try {
+            return destroyOwnedSession(request);
+        }
+        finally {
+            releaseJobCoordination(jobId, jobCoordination);
+        }
+    }
+
+    private SandboxOpResponse destroyOwnedSession(SandboxOpRequest request) {
         if (!ownsSession(request.sessionId())) {
             return SandboxOpResponse.ok(request.correlationId(), request.sessionId());
         }
@@ -511,7 +637,7 @@ public class InteractiveSandboxRelayHandler {
             }
             log.info("Sandbox session {} was already absent after an ambiguous destroy failure; releasing its slot.", request.sessionId());
         }
-        releaseOwnedPermit(request.sessionId());
+        releaseOwnedPermitLocked(request.sessionId());
         return SandboxOpResponse.ok(request.correlationId(), request.sessionId());
     }
 
@@ -521,10 +647,11 @@ public class InteractiveSandboxRelayHandler {
         return SandboxOpResponse.sessions(request.correlationId(), sessions);
     }
 
-    private void registerSession(String containerId, SandboxSessionContext context) {
-        if (context != null) {
-            activeSessions.put(containerId, new ActiveSession(context, Instant.now()));
-        }
+    private void registerSession(String containerId, SandboxSessionSpec sessionSpec) {
+        SandboxSessionContext context = sessionSpec.context();
+        activeSessions.put(containerId, new ActiveSession(sessionSpec, Instant.now()));
+        sessionIdsByJobId.put(context.jobId(), containerId);
+        jobIdsBySessionId.put(containerId, context.jobId());
     }
 
     private void requireOwnedSession(String sessionId) {
@@ -547,8 +674,30 @@ public class InteractiveSandboxRelayHandler {
     }
 
     private void releaseOwnedPermit(String containerId) {
+        String jobId = jobIdsBySessionId.get(containerId);
+        if (jobId == null) {
+            releaseOwnedPermitLocked(containerId);
+            return;
+        }
+        JobCoordination jobCoordination = acquireJobCoordination(jobId);
+        try {
+            releaseOwnedPermitLocked(containerId);
+        }
+        finally {
+            releaseJobCoordination(jobId, jobCoordination);
+        }
+    }
+
+    private void releaseOwnedPermitLocked(String containerId) {
         if (ownedSessionIds.remove(containerId)) {
-            activeSessions.remove(containerId);
+            ActiveSession removedSession = activeSessions.remove(containerId);
+            String jobId = jobIdsBySessionId.remove(containerId);
+            if (jobId != null) {
+                sessionIdsByJobId.remove(jobId, containerId);
+            }
+            else if (removedSession != null) {
+                sessionIdsByJobId.remove(removedSession.sessionSpec().context().jobId(), containerId);
+            }
             sandboxSlotPermits.release();
             try {
                 publishSessionState();
@@ -578,9 +727,39 @@ public class InteractiveSandboxRelayHandler {
         };
     }
 
-    private record ActiveSession(SandboxSessionContext context, Instant startedAt) {
+    private JobCoordination acquireJobCoordination(String jobId) {
+        JobCoordination coordination = jobCoordinations.compute(jobId, (ignored, current) -> {
+            JobCoordination retained = current == null ? new JobCoordination() : current;
+            retained.users++;
+            return retained;
+        });
+        coordination.lock.lock();
+        return coordination;
+    }
+
+    private void releaseJobCoordination(String jobId, JobCoordination coordination) {
+        coordination.lock.unlock();
+        jobCoordinations.compute(jobId, (ignored, current) -> {
+            if (current != coordination) {
+                throw new IllegalStateException("Generation job coordination changed while in use for " + jobId);
+            }
+            coordination.users--;
+            return coordination.users == 0 ? null : coordination;
+        });
+    }
+
+    private static final class JobCoordination {
+
+        private final ReentrantLock lock = new ReentrantLock();
+
+        /** Accessed only from {@link ConcurrentHashMap#compute(Object, java.util.function.BiFunction)} for this job id. */
+        private int users;
+    }
+
+    private record ActiveSession(SandboxSessionSpec sessionSpec, Instant startedAt) {
 
         GenerationSandboxSessionDTO toDto(String containerId, java.util.Optional<Instant> lastActivity) {
+            SandboxSessionContext context = sessionSpec.context();
             return new GenerationSandboxSessionDTO(containerId, context.jobId(), context.exerciseId(), context.exerciseTitle(), context.courseId(), context.userLogin(),
                     context.mode(), startedAt, lastActivity.orElse(startedAt));
         }
