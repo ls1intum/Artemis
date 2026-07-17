@@ -678,14 +678,20 @@ public class ExamResource {
     }
 
     /**
-     * GET /exams : Find all exams the user is allowed to access
+     * GET /exams : Find all exams the user is allowed to access for import
+     *
+     * <p>
+     * This endpoint backs the exam / exercise-group import dialogs, which let a user pick a source exam to import from.
+     * Creating and importing exams is instructor-only (see {@link #createExam} and {@link #importExamWithExercises}), and
+     * the results are scoped to courses where the user is an instructor, so this endpoint requires the instructor role to
+     * keep the permission model consistent (an editor would otherwise pass the check but always receive an empty result).
      *
      * @param withExercises if only exams with at least one exercise Groups should be considered
      * @param search        Pageable with all relevant information
      * @return the ResponseEntity with status 200 (OK) and a list of exams. The list can be empty
      */
     @GetMapping("exams")
-    @EnforceAtLeastEditor
+    @EnforceAtLeastInstructor
     public ResponseEntity<SearchResultPageDTO<Exam>> getAllExamsOnPage(@RequestParam(defaultValue = "false") boolean withExercises, SearchTermPageableSearchDTO<String> search) {
         final var user = userRepository.getUserWithGroupsAndAuthorities();
         return ResponseEntity.ok(examService.getAllOnPageWithSize(search, user, withExercises));
