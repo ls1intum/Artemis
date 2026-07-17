@@ -68,7 +68,14 @@ Key principles:
 - Prefer `OnPush` change detection for components: https://blog.angular-university.io/onpush-change-detection-how-it-works
 - See the migration example: https://github.com/ls1intum/Artemis/pull/9299
 
-**UI Component Library: PrimeNG**
+**UI Component Library: our own `tum-ui` kit (PrimeNG and Bootstrap are deprecated)**
+
+<Callout variant={CalloutVariant.danger}>
+    **Bootstrap and PrimeNG are deprecated.** The long-term direction is to migrate the client **entirely** onto our own [tum-ui component kit](/developer/guidelines/tum-ui-kit)
+    (built on Angular CDK + Tailwind tokens) and drop Bootstrap, PrimeNG, and ng-bootstrap. They coexist only for the duration of the migration: **prefer a `tum-ui-*` component when one
+    exists**, and use PrimeNG only for widgets the kit does not provide yet. The PrimeNG guidance in this section applies to that shrinking fallback set — do not read it as "PrimeNG is
+    the end target". Never introduce new Bootstrap.
+</Callout>
 
 <Callout variant={CalloutVariant.danger}>
     **`@ng-bootstrap/ng-bootstrap` is deprecated.** Do not use `NgbModal`, `NgbActiveModal`, `NgbModalRef`, `NgbTooltip`, `NgbDropdown`, or any other ng-bootstrap component in new
