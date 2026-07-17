@@ -175,6 +175,20 @@ describe('UpdatingResultComponent', () => {
         expect(comp.resultSubscription).toBeUndefined();
     });
 
+    it('releases the shared submission-service state when the participation becomes undefined', () => {
+        fixture.componentRef.setInput('exercise', { id: 99, type: ExerciseType.PROGRAMMING } as Exercise);
+        cleanInitializeGraded(); // registers submission state for participation id 1
+        const unsubscribeSharedSpy = vi.spyOn(programmingSubmissionService, 'unsubscribeForLatestSubmissionOfParticipation');
+
+        fixture.componentRef.setInput('participation', undefined);
+        fixture.detectChanges();
+
+        // The valid→undefined transition must release the shared ProgrammingSubmissionService state for the
+        // previous participation (subject, mapping, timers), not just the local observer, or it leaks until logout.
+        expect(unsubscribeSharedSpy).toHaveBeenCalledWith(initialParticipation.id);
+        expect(comp.submissionSubscription).toBeUndefined();
+    });
+
     it('should subscribe to fetching the latest pending submission when the exerciseType is PROGRAMMING', () => {
         fixture.componentRef.setInput('exercise', { id: 99, type: ExerciseType.PROGRAMMING } as Exercise);
         cleanInitializeGraded();

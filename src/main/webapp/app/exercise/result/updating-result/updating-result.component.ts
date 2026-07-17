@@ -62,6 +62,10 @@ export class UpdatingResultComponent implements OnInit, OnDestroy {
     readonly missingResultInfo = signal(MissingResultInformation.NONE);
     public resultSubscription?: Subscription;
     public submissionSubscription?: Subscription;
+    // Participation id whose shared submission state (subject, participation/exercise mapping, queue-estimation
+    // timers) is currently registered in ProgrammingSubmissionService, so it can be released even after the
+    // participation input has already changed to another id or to undefined.
+    private submissionParticipationId?: number;
 
     isLocalCIEnabled = true;
 
@@ -86,8 +90,7 @@ export class UpdatingResultComponent implements OnInit, OnDestroy {
                     // longer mutate state, and so ngOnDestroy does not later dereference an undefined participation.
                     this.resultSubscription?.unsubscribe();
                     this.resultSubscription = undefined;
-                    this.submissionSubscription?.unsubscribe();
-                    this.submissionSubscription = undefined;
+                    this.tearDownSubmissionSubscription();
                     return;
                 }
                 this.result.set(getLatestResultOfStudentParticipation(participation, this.showUngradedResults(), true));
@@ -123,12 +126,24 @@ export class UpdatingResultComponent implements OnInit, OnDestroy {
             this.participationWebsocketService.unsubscribeForLatestResultOfParticipation(participation.id!, this.exercise());
             this.resultSubscription.unsubscribe();
         }
-        if (this.submissionSubscription) {
-            // Release this component's subscription first, so the service only sees remaining observers
-            // (e.g. the exercise header and the code editor show the same participation simultaneously)
-            // when deciding whether the shared websocket state may be torn down.
-            this.submissionSubscription.unsubscribe();
-            this.submissionService.unsubscribeForLatestSubmissionOfParticipation(participation.id!);
+        this.tearDownSubmissionSubscription();
+    }
+
+    /**
+     * Releases both this component's local submission observer AND the shared {@link ProgrammingSubmissionService}
+     * state registered by {@link getLatestPendingSubmissionByParticipationId} (subject, participation/exercise
+     * mapping, queue-estimation timers). The two must be released together and in this order — the local
+     * unsubscribe first, so the service only sees the remaining observers (e.g. the exercise header and the code
+     * editor showing the same participation) when deciding whether the shared state may be torn down. Dropping only
+     * the local subscription (as a valid→undefined or valid→valid participation change otherwise would) leaks the
+     * shared state until logout.
+     */
+    private tearDownSubmissionSubscription() {
+        this.submissionSubscription?.unsubscribe();
+        this.submissionSubscription = undefined;
+        if (this.submissionParticipationId !== undefined) {
+            this.submissionService.unsubscribeForLatestSubmissionOfParticipation(this.submissionParticipationId);
+            this.submissionParticipationId = undefined;
         }
     }
 
@@ -172,16 +187,19 @@ export class UpdatingResultComponent implements OnInit, OnDestroy {
      * Will emit a null value when no build is running / the current build has stopped running.
      */
     subscribeForNewSubmissions() {
-        if (this.submissionSubscription) {
-            this.submissionSubscription.unsubscribe();
-        }
+        // Release any previously registered submission state (local observer + shared service state) before
+        // (re)subscribing, so a valid→valid participation change does not leak the previous participation's
+        // shared service state.
+        this.tearDownSubmissionSubscription();
+        const participationId = this.participation().id!;
         this.submissionSubscription = this.submissionService
-            .getLatestPendingSubmissionByParticipationId(this.participation().id!, this.exercise().id!, this.personalParticipation())
+            .getLatestPendingSubmissionByParticipationId(participationId, this.exercise().id!, this.personalParticipation())
             .pipe(
                 filter(({ submission }) => this.shouldUpdateSubmissionState(submission)),
                 tap(({ submissionState, buildTimingInfo, submission }) => this.updateSubmissionState(submissionState, buildTimingInfo, submission?.submissionDate)),
             )
             .subscribe();
+        this.submissionParticipationId = participationId;
     }
 
     private generateMissingResultInfoForFailedProgrammingExerciseSubmission() {
