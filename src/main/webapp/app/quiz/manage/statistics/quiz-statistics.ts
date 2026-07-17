@@ -1,4 +1,5 @@
 import { Component, computed, inject, signal } from '@angular/core';
+import { TooltipItem } from 'chart.js';
 import ChartDataLabels from 'chartjs-plugin-datalabels';
 import { round } from 'app/foundation/util/utils';
 import { QuizStatistic } from 'app/quiz/shared/entities/quiz-statistic.model';
@@ -22,7 +23,6 @@ export abstract class AbstractQuizStatisticComponent {
     participants = 0;
 
     chartLabels: string[] = [];
-    totalParticipants = 0;
 
     /** The current bar entries; updated via {@link updateChartData}. */
     protected chartEntries = signal<ChartSeriesEntry[]>([]);
@@ -39,7 +39,7 @@ export abstract class AbstractQuizStatisticComponent {
         barChartOptions({
             xAxis: { label: this.xAxisLabel() },
             yAxis: { label: this.yAxisLabel(), max: this.maxScale() },
-            tooltip: false,
+            tooltip: { label: (item) => this.formatTooltipLabel(item) },
             dataLabels: { formatter: (value) => this.formatDataLabel(value) },
         }),
     );
@@ -91,10 +91,36 @@ export abstract class AbstractQuizStatisticComponent {
      * @returns string of the following pattern: absolute value (relative value)
      */
     protected formatDataLabel(absoluteValue: number): string {
-        if (!this.totalParticipants || !this.participants) {
-            return absoluteValue + ' (0%)';
-        }
-        return absoluteValue + ' (' + round((absoluteValue / this.participants) * 100, 1) + '%)';
+        return absoluteValue + ' (' + this.percentageOfParticipants(absoluteValue) + '%)';
+    }
+
+    /**
+     * Returns the given value as a percentage of the current participants, rounded to one decimal.
+     * Falls back to 0 when there are no participants (avoids division by zero).
+     * @param value the absolute value represented by a bar
+     */
+    private percentageOfParticipants(value: number): number {
+        return this.participants ? round((value / this.participants) * 100, 1) : 0;
+    }
+
+    /**
+     * Builds the explanatory tooltip line for a hovered bar. The default states how many of the
+     * participants a bar represents; subclasses override it to describe their specific metric
+     * (e.g. correct answers, point ranges).
+     * @param item the hovered bar, as provided by chart.js
+     */
+    protected formatTooltipLabel(item: TooltipItem<'bar'>): string {
+        return this.tooltipLine('artemisApp.showStatistic.tooltip.participantShare', item.parsed.y ?? 0);
+    }
+
+    /**
+     * Resolves a tooltip translation key, filling in the bar's absolute value, the participant count,
+     * and the value's percentage of the participants.
+     * @param key the translation key of the tooltip line
+     * @param value the absolute value represented by the bar
+     */
+    protected tooltipLine(key: string, value: number): string {
+        return this.translateService.instant(key, { count: value, participants: this.participants, percent: this.percentageOfParticipants(value) });
     }
 
     /**
