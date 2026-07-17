@@ -12,7 +12,6 @@
  */
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { of, throwError } from 'rxjs';
 import dayjs from 'dayjs/esm';
 import { TranslateService } from '@ngx-translate/core';
@@ -26,8 +25,6 @@ import { AdminDataExport, DataExportState } from 'app/admin/admin-data-exports/d
 import { PageableResult } from 'app/foundation/pagination/pageable-table';
 
 describe('AdminDataExportsComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: AdminDataExportsComponent;
     let fixture: ComponentFixture<AdminDataExportsComponent>;
     let adminDataExportsService: AdminDataExportsService;

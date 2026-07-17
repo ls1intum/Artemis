@@ -3,6 +3,7 @@ import { StudentParticipation } from 'app/exercise/shared/entities/participation
 import { UserCredentials } from '../../../users';
 import { Commands } from '../../../commands';
 import { CourseOverviewPage } from '../../course/CourseOverviewPage';
+import { readResponseJson } from '../../../utils';
 import { BUILD_RESULT_TIMEOUT, POLLING_INTERVAL } from '../../../timeouts';
 
 export class ProgrammingExerciseOverviewPage {
@@ -70,7 +71,7 @@ export class ProgrammingExerciseOverviewPage {
         );
         await startButton.click();
         const response = await responsePromise;
-        const participation = await response.json();
+        const participation = await readResponseJson(response);
         if (!participation?.id) {
             throw new Error(`[startParticipation] Participation response missing id for exercise ${exerciseId}. Response: ${JSON.stringify(participation)}`);
         }

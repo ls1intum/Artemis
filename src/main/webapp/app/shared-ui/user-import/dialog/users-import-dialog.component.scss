@@ -12,36 +12,19 @@
     margin-bottom: 0.1rem;
 }
 
-.import-success,
-.import-fail {
-    position: relative;
-
-    &:nth-child(odd)::before {
-        content: '';
-        pointer-events: none;
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background: rgba(0, 0, 0, 0.03);
-    }
+tr.import-success {
+    background-color: color-mix(in srgb, var(--success) 12%, transparent) !important;
+    color: var(--success) !important;
 }
 
-.import-success {
-    td,
-    th {
-        color: var(--color-state-success);
-        background-color: color-mix(in srgb, var(--color-state-success) 12%, transparent);
-    }
+tr.import-not-found {
+    background-color: color-mix(in srgb, var(--danger) 12%, transparent) !important;
+    color: var(--danger) !important;
 }
 
-.import-fail {
-    td,
-    th {
-        color: var(--color-state-danger);
-        background-color: color-mix(in srgb, var(--color-state-danger) 12%, transparent);
-    }
+tr.import-warning {
+    background-color: color-mix(in srgb, var(--warning) 12%, transparent) !important;
+    color: var(--warning) !important;
 }
 
 .header-fixed {

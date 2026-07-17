@@ -26,10 +26,8 @@ import { LocalStorageService } from 'app/foundation/service/local-storage.servic
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
 import { MockMetisConversationService } from 'test/helpers/mocks/service/mock-metis-conversation.service';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('LearningPathLectureUnitComponent', () => {
-    setupTestBed({ zoneless: true });
     let component: LearningPathLectureUnitComponent;
     let fixture: ComponentFixture<LearningPathLectureUnitComponent>;
 

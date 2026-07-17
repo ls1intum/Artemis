@@ -8,9 +8,8 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ActivatedRoute, Params, provideRouter } from '@angular/router';
 import { BehaviorSubject, Subscription, of, throwError } from 'rxjs';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { TranslateModule } from '@ngx-translate/core';
+import { provideTranslateService } from '@ngx-translate/core';
 import { MockComponent } from 'ng-mocks';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 import 'app/foundation/util/array.extension';
 
@@ -34,8 +33,6 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 
 describe('FileUploadExerciseDetailComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: FileUploadExerciseDetailComponent;
     let fixture: ComponentFixture<FileUploadExerciseDetailComponent>;
     let fileUploadExerciseService: FileUploadExerciseService;
@@ -81,7 +78,7 @@ describe('FileUploadExerciseDetailComponent', () => {
         routeParams$ = new BehaviorSubject<Params>({ exerciseId: 456 });
 
         await TestBed.configureTestingModule({
-            imports: [FileUploadExerciseDetailComponent, TranslateModule.forRoot()],
+            imports: [FileUploadExerciseDetailComponent],
             providers: [
                 provideHttpClient(),
                 provideHttpClientTesting(),
@@ -106,6 +103,7 @@ describe('FileUploadExerciseDetailComponent', () => {
                     },
                 },
                 { provide: ProfileService, useClass: MockProfileService },
+                provideTranslateService(),
             ],
         })
             .overrideComponent(FileUploadExerciseDetailComponent, {

@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import dayjs from 'dayjs/esm';
 import { OnlineUnitFormComponent, OnlineUnitFormData } from 'app/lecture/manage/lecture-units/online-unit-form/online-unit-form.component';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
@@ -21,8 +20,6 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 
 describe('OnlineUnitFormComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let onlineUnitFormComponentFixture: ComponentFixture<OnlineUnitFormComponent>;
     let onlineUnitFormComponent: OnlineUnitFormComponent;
 

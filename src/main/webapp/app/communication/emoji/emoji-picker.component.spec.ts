@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Theme, ThemeService } from 'app/core/theme/shared/theme.service';
 import { PickerComponent } from '@ctrl/ngx-emoji-mart';
@@ -11,8 +10,6 @@ import { MockThemeService } from 'test/helpers/mocks/service/mock-theme.service'
 import { EmojiPickerComponent } from 'app/communication/emoji/emoji-picker.component';
 
 describe('EmojiPickerComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<EmojiPickerComponent>;
     let comp: EmojiPickerComponent;
     let mockThemeService: ThemeService;

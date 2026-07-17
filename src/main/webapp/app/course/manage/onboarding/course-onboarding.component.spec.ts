@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -27,8 +26,6 @@ import { OnboardingAssessmentAiComponent } from './pages/onboarding-assessment-a
 import { OnboardingExploreComponent } from './pages/onboarding-explore.component';
 
 describe('CourseOnboardingComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let comp: CourseOnboardingComponent;
     let fixture: ComponentFixture<CourseOnboardingComponent>;
     let courseManagementService: CourseManagementService;
