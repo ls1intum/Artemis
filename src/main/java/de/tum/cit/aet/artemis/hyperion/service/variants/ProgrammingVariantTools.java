@@ -53,11 +53,13 @@ class ProgrammingVariantTools implements VariantToolset {
 
     private static final Logger log = LoggerFactory.getLogger(ProgrammingVariantTools.class);
 
-    /** Writes in template/solution repos are confined to this prefix (same whitelist as Hyperion codegen). */
-    private static final String SOURCE_PATH_PREFIX = "src/";
-
-    /** Writes in the test repo are confined to this prefix (same whitelist as Hyperion codegen). */
-    private static final String TEST_PATH_PREFIX = "test/";
+    /**
+     * The only path segment the agent may never write to: git's own metadata directory. Everything else in the
+     * repository — including build files (build.gradle, settings.gradle, pom.xml) and dotfiles — is editable,
+     * because a domain re-theme legitimately has to rename the build's project/artifact name, and a generation
+     * that cannot do so fails the build it is judged by.
+     */
+    private static final String GIT_METADATA_SEGMENT = ".git";
 
     private static final int MAX_FILE_CONTENT_LENGTH = 100_000;
 
@@ -263,7 +265,7 @@ class ProgrammingVariantTools implements VariantToolset {
     @Tool(description = "Apply a search-and-replace edit to an EXISTING file in one of the variant's repositories. "
             + "The search text must occur exactly once in the file; otherwise the edit is rejected and you must make the search text more specific. "
             + "Prefer small, targeted edits over rewriting whole files — unchanged code must stay identical to the source. "
-            + "Paths are restricted to src/ (TEMPLATE, SOLUTION) or test/ (TESTS).")
+            + "Every file in the repository is editable, including build files (build.gradle, settings.gradle, pom.xml); only git's own .git directory is off limits.")
     public String applyEdit(@ToolParam(description = "the repository: TEMPLATE, SOLUTION, or TESTS") String repository,
             @ToolParam(description = "the file path relative to the repository root") String path,
             @ToolParam(description = "the exact text to search for; must match exactly one occurrence") String search,
@@ -276,13 +278,9 @@ class ProgrammingVariantTools implements VariantToolset {
         if (repositoryType == null) {
             return invalidRepositoryMessage(repository);
         }
-        // Same write whitelist as writeFile (and Hyperion codegen): edits outside the source root could corrupt
-        // build/config files (pom.xml, build.gradle, CI config) the agent must not touch.
-        String normalizedPath = normalizeWritablePath(path, repositoryType);
+        String normalizedPath = normalizeWritablePath(path);
         if (normalizedPath == null) {
-            String prefix = repositoryType == RepositoryType.TESTS ? TEST_PATH_PREFIX : SOURCE_PATH_PREFIX;
-            return "Error: '" + path + "' is not an editable path for the " + repositoryType + " repository. Paths must be relative, must not contain '..' or hidden "
-                    + "segments, and must start with '" + prefix + "'.";
+            return unwritablePathMessage(path, repositoryType, "editable");
         }
         try {
             Repository checkout = checkout(repositoryType);
@@ -312,10 +310,9 @@ class ProgrammingVariantTools implements VariantToolset {
 
     @Tool(description = "Create a new file (or fully overwrite an existing one) in one of the variant's repositories. "
             + "Only use this for NEW files or complete rewrites; prefer applyEdit for changes to existing files. "
-            + "Paths are restricted to src/ (TEMPLATE, SOLUTION) or test/ (TESTS).")
+            + "Every path in the repository is writable except git's own .git directory.")
     public String writeFile(@ToolParam(description = "the repository: TEMPLATE, SOLUTION, or TESTS") String repository,
-            @ToolParam(description = "the file path relative to the repository root; must start with src/ (TEMPLATE, SOLUTION) or test/ (TESTS)") String path,
-            @ToolParam(description = "the full new file content") String content) {
+            @ToolParam(description = "the file path relative to the repository root") String path, @ToolParam(description = "the full new file content") String content) {
         String stop = stopNotice();
         if (stop != null) {
             return stop;
@@ -324,11 +321,9 @@ class ProgrammingVariantTools implements VariantToolset {
         if (repositoryType == null) {
             return invalidRepositoryMessage(repository);
         }
-        String normalizedPath = normalizeWritablePath(path, repositoryType);
+        String normalizedPath = normalizeWritablePath(path);
         if (normalizedPath == null) {
-            String prefix = repositoryType == RepositoryType.TESTS ? TEST_PATH_PREFIX : SOURCE_PATH_PREFIX;
-            return "Error: '" + path + "' is not a writable path for the " + repositoryType + " repository. Paths must be relative, must not contain '..' or hidden "
-                    + "segments, and must start with '" + prefix + "'.";
+            return unwritablePathMessage(path, repositoryType, "writable");
         }
         try {
             Repository checkout = checkout(repositoryType);
@@ -342,7 +337,7 @@ class ProgrammingVariantTools implements VariantToolset {
     }
 
     @Tool(description = "Delete an existing file in one of the variant's repositories. Only use this for files the plan removes "
-            + "(e.g. a test class dropped when making the exercise easier). Paths are restricted to src/ (TEMPLATE, SOLUTION) or test/ (TESTS).")
+            + "(e.g. a test class dropped when making the exercise easier). Every path in the repository is deletable except git's own .git directory.")
     public String deleteFile(@ToolParam(description = "the repository: TEMPLATE, SOLUTION, or TESTS") String repository,
             @ToolParam(description = "the file path relative to the repository root") String path) {
         String stop = stopNotice();
@@ -353,12 +348,9 @@ class ProgrammingVariantTools implements VariantToolset {
         if (repositoryType == null) {
             return invalidRepositoryMessage(repository);
         }
-        // Same whitelist as writeFile/applyEdit: deletions outside the source root could remove build/config files.
-        String normalizedPath = normalizeWritablePath(path, repositoryType);
+        String normalizedPath = normalizeWritablePath(path);
         if (normalizedPath == null) {
-            String prefix = repositoryType == RepositoryType.TESTS ? TEST_PATH_PREFIX : SOURCE_PATH_PREFIX;
-            return "Error: '" + path + "' is not a deletable path for the " + repositoryType + " repository. Paths must be relative, must not contain '..' or hidden "
-                    + "segments, and must start with '" + prefix + "'.";
+            return unwritablePathMessage(path, repositoryType, "deletable");
         }
         try {
             Repository checkout = checkout(repositoryType);
@@ -565,7 +557,19 @@ class ProgrammingVariantTools implements VariantToolset {
         return "Error: unknown repository '" + repository + "'. Valid values are TEMPLATE, SOLUTION, and TESTS.";
     }
 
-    private static String normalizeWritablePath(String rawPath, RepositoryType repositoryType) {
+    private static String unwritablePathMessage(String path, RepositoryType repositoryType, String verb) {
+        return "Error: '" + path + "' is not " + (verb.equals("editable") ? "an " : "a ") + verb + " path for the " + repositoryType
+                + " repository. Paths must be relative to the repository root, must not contain '..', and must not point into the '.git' directory.";
+    }
+
+    /**
+     * Normalizes a model-supplied path and rejects anything that would escape the repository working copy or
+     * corrupt its git metadata. Every remaining path inside the repository is writable — see
+     * {@link #GIT_METADATA_SEGMENT}.
+     *
+     * @return the normalized repository-relative path, or {@code null} when the path is not writable
+     */
+    private static String normalizeWritablePath(String rawPath) {
         if (rawPath == null || rawPath.isBlank()) {
             return null;
         }
@@ -579,14 +583,15 @@ class ProgrammingVariantTools implements VariantToolset {
                 return null;
             }
             String normalized = normalizedPath.toString().replace('\\', '/');
-            // Reject hidden segments (src/.env, test/.gitignore, ...) — same policy as Hyperion codegen.
+            if (normalized.isEmpty()) {
+                return null;
+            }
             for (String segment : normalized.split("/")) {
-                if (segment.startsWith(".")) {
+                if (GIT_METADATA_SEGMENT.equals(segment)) {
                     return null;
                 }
             }
-            String prefix = repositoryType == RepositoryType.TESTS ? TEST_PATH_PREFIX : SOURCE_PATH_PREFIX;
-            return normalized.startsWith(prefix) && normalized.length() > prefix.length() ? normalized : null;
+            return normalized;
         }
         catch (InvalidPathException e) {
             return null;

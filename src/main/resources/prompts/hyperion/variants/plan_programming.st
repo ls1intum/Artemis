@@ -36,9 +36,15 @@ Produce a change plan with:
    no problem_statement.md); if the statement needs a follow-up (e.g. renamed test names), phrase it as "update
    the exercise problem statement".
 4. invariants — properties the transformation must NOT break, e.g. "the number of test cases stays identical",
-   "grading-relevant method signatures keep their names unless listed in intendedChanges", "build configuration,
-   project layout, and dependencies stay untouched", "the solution repository passes all tests", "the template
-   repository still compiles but fails the tests".
+   "grading-relevant method signatures keep their names unless listed in intendedChanges", "the build tooling and
+   the dependency set stay unchanged", "the solution repository passes all tests", "the template repository still
+   compiles but fails the tests".
+
+Build files:
+Build files (build.gradle, settings.gradle, pom.xml, ...) are editable. A domain re-theme that renames packages or
+classes usually also has to update the build's project/artifact name and any source/main-class references, so list
+those edits explicitly as intended changes — a build file left pointing at the old names breaks the build. Do NOT
+change the build tooling itself, the dependency set, or the plugin configuration.
 
 Planning rules:
 - Transform, do not reinvent: anything not covered by an intended change must stay byte-identical to the source.

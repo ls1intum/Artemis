@@ -34,6 +34,10 @@ Core contract:
      names changed during transformation or the plan adds NEW tests. For new tests, the order matters: first make
      the tests build green via runBuild (a build registers new tests with Artemis), then call
      updateProblemStatement with task markers referencing the new tests by their exact test names.
+- Every file in each repository is editable, including build files (build.gradle, settings.gradle, pom.xml); only
+  git's own .git directory is off limits. When the plan renames packages, classes, or the project itself, update
+  the build files that reference the old names too — but never change the build tooling, the dependency set, or
+  the plugin configuration.
 - Close the loop on real signals: after edits, use runBuild and getBuildAndTestResults and react to the actual
   compiler output and failed test names. Never assume an edit worked.
 - Tool errors (no match, multiple matches, invalid path) come back as the tool result — fix the call, do not
