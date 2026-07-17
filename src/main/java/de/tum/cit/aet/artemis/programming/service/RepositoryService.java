@@ -14,12 +14,14 @@ import java.time.ZonedDateTime;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.text.StringEscapeUtils;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.errors.MissingObjectException;
+import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.FileMode;
 import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.revwalk.RevCommit;
@@ -133,6 +135,22 @@ public class RepositoryService {
     }
 
     /**
+     * Retrieves only the requested files at a specific commit.
+     *
+     * @param commitId      the commit identifier
+     * @param participation the participation owning the repository
+     * @param filePaths     repository-relative paths to retrieve
+     * @return a map containing the requested files that exist and are text files
+     * @throws IOException if the repository cannot be read
+     */
+    public Map<String, String> getFilesContentAtCommit(String commitId, ProgrammingExerciseParticipation participation, Set<String> filePaths) throws IOException {
+        log.debug("Getting files {} at commit {} for participation {}", filePaths, commitId, participation.getId());
+        try (Repository repository = gitService.getBareRepository(participation.getVcsRepositoryUri(), false)) {
+            return getFilesContentFromBareRepository(repository, commitId, filePaths);
+        }
+    }
+
+    /**
      * Retrieves a mapping of file paths to their contents within a specified repository.
      * This method filters out all non-file type entries and reads the content of each file.
      * Note: If an I/O error occurs reading any file, this exception is caught internally and logged.
@@ -178,6 +196,68 @@ public class RepositoryService {
             return Map.of();
         }
         return getFileContentFromBareRepositoryForCommitId(repository, commitId);
+    }
+
+    /**
+     * Retrieves only the requested text files from a commit in a bare repository.
+     *
+     * @param repository the bare repository
+     * @param commitHash the commit identifier
+     * @param filePaths  repository-relative paths to retrieve
+     * @return a map containing the requested files that exist and are text files
+     * @throws IOException if the repository cannot be read
+     */
+    public Map<String, String> getFilesContentFromBareRepository(org.eclipse.jgit.lib.Repository repository, @NonNull String commitHash, Set<String> filePaths) throws IOException {
+        ObjectId commitId = repository.resolve(commitHash + "^{commit}");
+        if (commitId == null) {
+            log.warn("Cannot resolve {} in the repository {}", commitHash, repository.getDirectory());
+            return Map.of();
+        }
+
+        Map<String, String> filesWithContent = new HashMap<>();
+        try (RevWalk revWalk = new RevWalk(repository)) {
+            RevCommit commit = revWalk.parseCommit(commitId);
+            for (String filePath : filePaths) {
+                if (isBinaryFile(filePath)) {
+                    continue;
+                }
+                try (TreeWalk treeWalk = TreeWalk.forPath(repository, filePath, commit.getTree())) {
+                    if (treeWalk == null || treeWalk.getFileMode(0) == FileMode.SYMLINK || treeWalk.getFileMode(0).getObjectType() != Constants.OBJ_BLOB) {
+                        continue;
+                    }
+                    filesWithContent.put(filePath, new String(repository.open(treeWalk.getObjectId(0)).getBytes(), StandardCharsets.UTF_8));
+                }
+            }
+        }
+        return filesWithContent;
+    }
+
+    /**
+     * Retrieves one raw blob as UTF-8 text from a commit in a bare repository.
+     * This method deliberately does not classify the file by extension. Callers that export collections of files must apply their own binary-file policy.
+     *
+     * @param repository the bare repository
+     * @param commitHash the commit identifier
+     * @param filePath   repository-relative path to retrieve
+     * @return the file content, or empty if the commit or blob does not exist
+     * @throws IOException if the repository cannot be read
+     */
+    public Optional<String> getFileContentFromBareRepository(org.eclipse.jgit.lib.Repository repository, @NonNull String commitHash, String filePath) throws IOException {
+        ObjectId commitId = repository.resolve(commitHash + "^{commit}");
+        if (commitId == null) {
+            log.warn("Cannot resolve {} in the repository {}", commitHash, repository.getDirectory());
+            return Optional.empty();
+        }
+
+        try (RevWalk revWalk = new RevWalk(repository)) {
+            RevCommit commit = revWalk.parseCommit(commitId);
+            try (TreeWalk treeWalk = TreeWalk.forPath(repository, filePath, commit.getTree())) {
+                if (treeWalk == null || treeWalk.getFileMode(0).getObjectType() != Constants.OBJ_BLOB) {
+                    return Optional.empty();
+                }
+                return Optional.of(new String(repository.open(treeWalk.getObjectId(0)).getBytes(), StandardCharsets.UTF_8));
+            }
+        }
     }
 
     /**

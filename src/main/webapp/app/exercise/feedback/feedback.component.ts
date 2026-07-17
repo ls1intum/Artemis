@@ -46,6 +46,9 @@ import { Participation, getLatestSubmission } from 'app/exercise/shared/entities
 import { FeedbackItem } from 'app/exercise/feedback/item/feedback-item';
 import { ProgrammingExerciseParticipationService } from 'app/programming/manage/services/programming-exercise-participation.service';
 
+const CODE_REFERENCE_CONTEXT_LINES = 2;
+const MAX_DISPLAYED_CODE_REFERENCE_LINES = 50;
+
 // Modal -> Result details view
 @Component({
     selector: 'jhi-result-detail',
@@ -296,13 +299,13 @@ export class FeedbackComponent implements OnInit, OnChanges {
         const exerciseId = this.resolvedExercise()?.id;
         const participationId = participation.id;
         const commitHash = (this.result().submission as ProgrammingSubmission)?.commitHash;
-        const hasCodeReferences = feedbackItems.some((item) => item.codeReference);
-        if (this.exerciseType() !== ExerciseType.PROGRAMMING || exerciseId === undefined || participationId === undefined || !commitHash || !hasCodeReferences) {
+        const referencedFilePaths = [...new Set(feedbackItems.flatMap((item) => (item.codeReference ? [item.codeReference.filePath] : [])))];
+        if (this.exerciseType() !== ExerciseType.PROGRAMMING || exerciseId === undefined || participationId === undefined || !commitHash || referencedFilePaths.length === 0) {
             return;
         }
 
         this.programmingExerciseParticipationService
-            .getParticipationRepositoryFilesWithContentAtCommitForCommitDetailsView(exerciseId, participationId, commitHash)
+            .getSelectedParticipationRepositoryFilesAtCommit(exerciseId, participationId, commitHash, referencedFilePaths)
             .pipe(
                 take(1),
                 catchError(() => EMPTY),
@@ -323,10 +326,9 @@ export class FeedbackComponent implements OnInit, OnChanges {
     }
 
     private getReferencedLines(fileContent: string, lineStart: number, lineEnd: number): { line: number; code: string; referenced: boolean }[] {
-        const context = 2;
         const lines = fileContent.split(/\r?\n/);
-        const firstLine = Math.max(1, lineStart - context);
-        const lastLine = Math.min(lines.length, lineEnd + context);
+        const firstLine = Math.max(1, lineStart - CODE_REFERENCE_CONTEXT_LINES);
+        const lastLine = Math.min(lines.length, lineEnd + CODE_REFERENCE_CONTEXT_LINES, firstLine + MAX_DISPLAYED_CODE_REFERENCE_LINES - 1);
         return lines.slice(firstLine - 1, lastLine).map((code, index) => {
             const line = firstLine + index;
             return { line, code, referenced: line >= lineStart && line <= lineEnd };
