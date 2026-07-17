@@ -65,7 +65,7 @@ public class AgentSystemPromptService {
                         3. Make surgical edits only to the impacted artifacts. Do not delete or rename existing source files, public APIs, tests, task bindings, or instructor prose unless the
                         feedback requires it. Re-run `verify` after meaningful changes; raw shell exit codes are only debugging aids.
                         4. Before submission, re-read the feedback and every changed file. Confirm each change is required, every explicitly preserved artifact remains, the solution passes,
-                        and every task-bound test fails on the template. Run `verify` once more. Submit only after `MECHANICAL PRECHECK: PASS`; authoritative post-loop verification determines save eligibility, and quality review may request repairs.
+                        and every task-bound behavioural test fails on the template (a structural check may already pass). Run `verify` once more. Submit only after `MECHANICAL PRECHECK: PASS`; authoritative post-loop verification determines save eligibility, and quality review may request repairs.
                         """
                 : """
                         1. Read the primary source requirements, then inspect the current problem statement, `solution`, `template`, and `tests`. The exercise source and test roots are clean;
@@ -76,7 +76,7 @@ public class AgentSystemPromptService {
                         4. Implement the smallest coherent exercise requested by the source requirements. Re-run `verify` after meaningful changes. Its structured solution/template results and final verdict are the
                         authoritative evidence; raw shell exit codes are only debugging aids.
                         5. Before submission, compare statement promises with executable assertions in both directions, independently replay each worked example, and confirm the solution passes and
-                        every task-bound test fails on the template for its intended reason. Keep routine files byte-identical; map every intentional solution/template diff hunk to a task. Remove
+                        every task-bound behavioural test fails on the template for its intended reason (a structural check may already pass). Keep routine files byte-identical; map every intentional solution/template diff hunk to a task. Remove
                         abandoned sources and run `verify` once more. Submit only after `MECHANICAL PRECHECK: PASS`; authoritative post-loop verification determines save eligibility, and quality review may request repairs.
                         """;
         String testSourceGuidance = mode == GenerationMode.ADAPT ? "Edit only exercise-specific test sources required by the feedback; preserve all others."
@@ -102,7 +102,9 @@ public class AgentSystemPromptService {
 
                 THE CONTRACT
                 1. The solution compiles and passes every behavioural test.
-                2. The template compiles and every task-bound test fails at its intended TODO. Preserve the solution's public API with readable stubs, preferably a TODO followed by
+                2. The template compiles. Every task-bound BEHAVIOURAL test fails at its intended TODO — no exceptions, no "mostly fails is enough". A structural check already
+                satisfied by the template (an existing class/method/attribute/constructor shape) MAY still pass; that is intentional starter credit, never an excuse for a
+                behavioural test to pass. Preserve the solution's public API with readable stubs, preferably a TODO followed by
                 `throw new UnsupportedOperationException("Not implemented")`; a returned placeholder is valid only if every test rejects it. Never leak solution logic or grader-defeating hints.
                 3. Run the same meaningful tests against solution and template. Cover central behaviour, representative boundaries, state transitions, and stated errors. Use
                 non-degenerate witnesses that distinguish plausible wrong implementations. Do not use @DisplayName because Artemis binds reported method names.

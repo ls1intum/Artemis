@@ -313,6 +313,64 @@ class ExerciseIntegrityGateTest {
     }
 
     @Test
+    void javaAresConvention_acceptsTheBoundedStrictTimeoutArtemisItselfSeedsForStructuralTests() {
+        // Regression: Artemis's own seeded structural test classes (ClassTest/MethodTest/AttributeTest/ConstructorTest, seeded by StructuralOracleSeedingService for a missing
+        // public class) carry @StrictTimeout(10), not the exact @StrictTimeout(1) the gate used to demand. The gate's purpose is bounding an unbounded test, not pinning one
+        // constant, so any value within the trusted bounded range must be accepted.
+        String test = """
+                package de.test;
+
+                import org.junit.jupiter.api.TestFactory;
+                import de.tum.in.test.api.BlacklistPath;
+                import de.tum.in.test.api.StrictTimeout;
+                import de.tum.in.test.api.WhitelistPath;
+                import de.tum.in.test.api.jupiter.Public;
+
+                @Public
+                @WhitelistPath("target")
+                @BlacklistPath("target/test-classes")
+                class ClassTest {
+
+                    @TestFactory
+                    @StrictTimeout(10)
+                    Object generateTestsForAllClasses() {
+                        return null;
+                    }
+                }
+                """;
+
+        assertThat(ExerciseIntegrityGate.javaAresConventionReasons(map("pom.xml", aresPom(), "test/de/test/ClassTest.java", test))).isEmpty();
+    }
+
+    @Test
+    void javaAresConvention_rejectsARealStrictTimeoutValueAboveTheTrustedBound() {
+        // A genuinely-imported (not shadowed) @StrictTimeout whose value is absurdly large defeats the timeout's purpose just as a missing one would.
+        String test = """
+                package de.test;
+
+                import org.junit.jupiter.api.Test;
+                import de.tum.in.test.api.BlacklistPath;
+                import de.tum.in.test.api.StrictTimeout;
+                import de.tum.in.test.api.WhitelistPath;
+                import de.tum.in.test.api.jupiter.Public;
+
+                @Public
+                @WhitelistPath("target")
+                @BlacklistPath("target/test-classes")
+                class CalculatorTest {
+
+                    @Test
+                    @StrictTimeout(9999)
+                    void addsNumbers() {
+                    }
+                }
+                """;
+
+        assertThat(ExerciseIntegrityGate.javaAresConventionReasons(map("pom.xml", aresPom(), "test/de/test/CalculatorTest.java", test)))
+                .anyMatch(reason -> reason.contains("@StrictTimeout") && reason.contains("bounded"));
+    }
+
+    @Test
     void javaAresConvention_rejectsCommentSpoofedAnnotationsAndGeneratedBuildOutput() {
         String pom = aresPom();
         String test = """

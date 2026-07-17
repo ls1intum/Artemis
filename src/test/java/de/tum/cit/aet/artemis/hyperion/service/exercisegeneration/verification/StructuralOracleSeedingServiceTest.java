@@ -87,6 +87,59 @@ class StructuralOracleSeedingServiceTest {
         assertThat(seededNames).containsExactlyInAnyOrder("testClass[MergeSort]", "testMethods[MergeSort]", "testAttributes[MergeSort]", "testConstructors[MergeSort]");
     }
 
+    /** A minimal Ares-compliant Maven pom, matching what the harness-convention gate demands, so the composed test isolates the timeout/annotation check under test. */
+    private static final String ARES_POM = """
+            <project>
+                <dependencies>
+                    <dependency>
+                        <groupId>de.tum.in.ase</groupId>
+                        <artifactId>artemis-java-test-sandbox</artifactId>
+                    </dependency>
+                </dependencies>
+                <build><plugins><plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-enforcer-plugin</artifactId>
+                    <configuration><rules><requireFilesDontExist><files>
+                        <file>${project.build.outputDirectory}/de/tum/in/test/api/</file>
+                        <file>${project.build.outputDirectory}/org/junit/</file>
+                    </files></requireFilesDontExist></rules></configuration>
+                </plugin></plugins></build>
+            </project>
+            """;
+
+    @Test
+    void seededStructuralTestClasses_passTheJavaAresConventionIntegrityGate() throws Exception {
+        // Composed test: production wires this seeder and ExerciseIntegrityGate together (GenerationOrchestrationService seeds structural tests, then the read-back tests
+        // repository is checked by the Java/Ares convention gate), but they were previously only exercised in isolation. The seeded structural classes carry @StrictTimeout(10)
+        // (see ClassTest.java etc.), not the exact @StrictTimeout(1) the gate used to demand — a whole-missing-class seed must not be rejected by the gate it is composed with.
+        InteractiveSandbox sandbox = mock(InteractiveSandbox.class);
+        Map<String, String> solution = Map.of("src/sorting/Sorter.java", "package sorting;\npublic interface Sorter { int[] sort(int[] a); }", "src/sorting/MergeSort.java",
+                "package sorting;\npublic class MergeSort implements Sorter {\n    public int[] sort(int[] a){ return a; }\n}");
+        Map<String, String> template = Map.of("src/sorting/Sorter.java", "package sorting;\npublic interface Sorter { int[] sort(int[] a); }");
+        Map<String, String> tests = Map.of("test/sorting/SortTest.java", "package sorting;\nclass SortTest {}");
+
+        seederWith(sandbox, solution, template, tests).seedIfStructuralDiff(sandbox, "s", javaExercise());
+
+        ArgumentCaptor<InputStream> tarCaptor = ArgumentCaptor.forClass(InputStream.class);
+        verify(sandbox).copyIn(eq("s"), eq("/workspace"), tarCaptor.capture());
+        Map<String, String> seeded = readTar(tarCaptor.getValue());
+
+        // Re-key from workspace-relative ("tests/test/sorting/ClassTest.java") to tests-repo-relative ("test/sorting/ClassTest.java"), as the gate expects.
+        String workspaceTestsPrefix = GenerationWorkspaceService.directoryFor(RepositoryType.TESTS) + "/";
+        Map<String, String> producedTestsFiles = new LinkedHashMap<>();
+        producedTestsFiles.put("pom.xml", ARES_POM);
+        seeded.forEach((path, content) -> {
+            if (path.startsWith(workspaceTestsPrefix)) {
+                producedTestsFiles.put(path.substring(workspaceTestsPrefix.length()), content);
+            }
+        });
+        assertThat(producedTestsFiles).containsKeys("test/sorting/ClassTest.java", "test/sorting/MethodTest.java", "test/sorting/AttributeTest.java",
+                "test/sorting/ConstructorTest.java");
+
+        assertThat(ExerciseIntegrityGate.javaAresConventionReasons(producedTestsFiles))
+                .as("the seeder's own @StrictTimeout(10) structural test classes must pass the integrity gate they are composed with in production").isEmpty();
+    }
+
     @Test
     void seedsNothing_whenOnlyAPrivateHelperDiffers() {
         InteractiveSandbox sandbox = mock(InteractiveSandbox.class);

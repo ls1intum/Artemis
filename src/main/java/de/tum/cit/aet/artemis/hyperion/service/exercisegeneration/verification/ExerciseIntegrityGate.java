@@ -385,8 +385,10 @@ public final class ExerciseIntegrityGate {
                     + "@BlacklistPath(\"target/test-classes\"); missing or shadowed in " + sampleNames(new LinkedHashSet<>(missingClassAnnotations)) + ".");
         }
         if (!missingTimeouts.isEmpty()) {
-            reasons.add("Every Java @Test method must carry the trusted de.tum.in.test.api.StrictTimeout as @StrictTimeout(1) so an infinite loop cannot hang grading; missing, "
-                    + "shadowed, or set to another value in " + sampleNames(new LinkedHashSet<>(missingTimeouts)) + ".");
+            reasons.add("Every Java @Test method must carry the trusted de.tum.in.test.api.StrictTimeout, set to a bounded number of seconds between " + MIN_STRICT_TIMEOUT_SECONDS
+                    + " and " + MAX_STRICT_TIMEOUT_SECONDS
+                    + " inclusive (e.g. @StrictTimeout(1)), so an infinite loop cannot hang grading and a generous but still-bounded structural check is not falsely rejected; "
+                    + "missing, shadowed, or out of that range in " + sampleNames(new LinkedHashSet<>(missingTimeouts)) + ".");
         }
         return reasons;
     }
@@ -608,8 +610,37 @@ public final class ExerciseIntegrityGate {
                 && hasTrustedAnnotation(annotations, imports, "de.tum.in.test.api.BlacklistPath", "BlacklistPath", "\"target/test-classes\"");
     }
 
+    /**
+     * The trusted {@code @StrictTimeout} bound, in seconds. The gate exists to prevent an UNBOUNDED test (e.g. an infinite loop) from hanging grading, not to pin one magic
+     * constant: Artemis's own seeded structural test classes ({@code templates/java/test/testFiles/structural/ClassTest.java} and its three siblings) carry
+     * {@code @StrictTimeout(10)} for {@link StructuralOracleSeedingService}'s reflection-heavy generated tests, which a gate demanding exactly {@code 1} would reject as soon as a
+     * missing public class is seeded — a false rejection of Artemis's own trusted output. Any value in this bounded range is accepted; only an unset, shadowed, or unbounded
+     * timeout is rejected.
+     */
+    private static final int MIN_STRICT_TIMEOUT_SECONDS = 1;
+
+    private static final int MAX_STRICT_TIMEOUT_SECONDS = 15;
+
     private static boolean hasStrictTimeout(String annotations, Set<String> imports) {
-        return hasTrustedAnnotation(annotations, imports, "de.tum.in.test.api.StrictTimeout", "StrictTimeout", "1");
+        return hasBoundedStrictTimeout(annotations, "de.tum.in.test.api.StrictTimeout")
+                || (imports.contains("de.tum.in.test.api.StrictTimeout") && hasBoundedStrictTimeout(annotations, "StrictTimeout"));
+    }
+
+    /** Whether {@code annotations} carries an {@code @<name>(<seconds>)} annotation whose numeric argument falls within the trusted bounded range. */
+    private static boolean hasBoundedStrictTimeout(String annotations, String name) {
+        Matcher matcher = Pattern.compile("@" + Pattern.quote(name) + "\\s*\\(\\s*(\\d+)\\s*\\)").matcher(annotations);
+        while (matcher.find()) {
+            try {
+                long seconds = Long.parseLong(matcher.group(1));
+                if (seconds >= MIN_STRICT_TIMEOUT_SECONDS && seconds <= MAX_STRICT_TIMEOUT_SECONDS) {
+                    return true;
+                }
+            }
+            catch (NumberFormatException e) {
+                // An unrepresentably large literal is certainly out of the trusted range; keep scanning any further match on the same annotated element.
+            }
+        }
+        return false;
     }
 
     private static boolean hasTrustedAnnotation(String annotations, Set<String> imports, String qualifiedName, String simpleName, String argument) {

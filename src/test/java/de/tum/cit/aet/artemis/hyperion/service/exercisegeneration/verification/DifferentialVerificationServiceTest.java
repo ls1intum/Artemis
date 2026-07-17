@@ -726,7 +726,7 @@ class DifferentialVerificationServiceTest {
     void shouldRejectWhenTemplatePasses() {
         VerificationResult result = verify(result(5, 0, 0, 0), result(5, 0, 0, 0));
         assertThat(result.mechanicallyVerified()).isFalse();
-        assertThat(result.reasons()).anyMatch(r -> r.contains("passes the tests"));
+        assertThat(result.reasons()).anyMatch(r -> r.contains("must fail") && r.contains("sortsUnsortedArray") && r.contains("sortsArrayWithDuplicates"));
     }
 
     @Test
@@ -754,13 +754,15 @@ class DifferentialVerificationServiceTest {
     }
 
     @Test
-    void shouldRejectWhenTemplateFailsTooFewTests() {
-        // A template failing only 1 of 6 tests is nearly complete; it must fail at least half.
-        List<String> names = List.of("t0", "t1", "t2", "t3", "t4", "t5");
-        VerificationResult result = verify(resultWithFails(0, names, List.of()), resultWithFails(1, names, List.of("t0")), "# X\n[task][One](t0)\n[task][Two](t1)\n");
+    void shouldRejectWhenSomeBehaviouralTestsPassOnTemplateNamingEachOne() {
+        // Defect regression: the OLD aggregate gate required only `gradableTestCount / 2` failures (integer division let 2-of-5 failing pass as "half of 5"). The new policy has
+        // no "at least half" leniency: every non-structural gradable test must fail on the template, and the 3 that don't are named exactly so the retry prompt is actionable.
+        List<String> names = List.of("t0", "t1", "t2", "t3", "t4");
+        String ps = "# X\n[task][Zero](t0)\n[task][One](t1)\n[task][Two](t2)\n[task][Three](t3)\n[task][Four](t4)\n";
+        VerificationResult result = verify(resultWithFails(0, names, List.of()), resultWithFails(1, names, List.of("t0", "t1")), ps);
         assertThat(result.mechanicallyVerified()).isFalse();
         assertThat(result.templateFailed()).isFalse();
-        assertThat(result.reasons()).anyMatch(r -> r.contains("nearly complete"));
+        assertThat(result.reasons()).anyMatch(r -> r.contains("must fail") && r.contains("t2") && r.contains("t3") && r.contains("t4") && !r.contains("t0"));
     }
 
     @Test
@@ -838,7 +840,7 @@ class DifferentialVerificationServiceTest {
         String ps = "# Factorial & Fibonacci\n[task][Factorial of 0](test_factorial_of_0)\n[task][Fibonacci of 0](test_fibonacci_of_0)\n[task][Fibonacci of 10](test_fibonacci_of_10)\n";
         VerificationResult result = verify(resultWithFails(0, all, List.of()), resultWithFails(1, all, failed2), ps);
         assertThat(result.mechanicallyVerified()).isFalse();
-        assertThat(result.reasons()).anyMatch(r -> r.contains("fully satisfied by the template") && r.contains("test_fibonacci_of_0"));
+        assertThat(result.reasons()).anyMatch(r -> r.contains("must fail") && r.contains("test_fibonacci_of_0"));
     }
 
     @Test
@@ -848,7 +850,7 @@ class DifferentialVerificationServiceTest {
         String ps = "# Stack\n[task][Push/pop](Stack_push_pop_cycle)\n[task][Pop on empty returns undefined](Stack_pop_on_empty_returns_undefined)\n";
         VerificationResult result = verify(resultWithFails(0, all, List.of()), resultWithFails(1, all, failedOnTemplate), ps);
         assertThat(result.mechanicallyVerified()).isFalse();
-        assertThat(result.reasons()).anyMatch(r -> r.contains("fully satisfied by the template") && r.contains("Stack_pop_on_empty_returns_undefined"));
+        assertThat(result.reasons()).anyMatch(r -> r.contains("must fail") && r.contains("Stack_pop_on_empty_returns_undefined"));
     }
 
     @Test
@@ -885,16 +887,15 @@ class DifferentialVerificationServiceTest {
 
     @Test
     void shouldAcceptBuildGateHeavyExerciseWhereTemplateFailsEveryBehaviourTestButFewerThanHalfOfAllTests() {
-        // Regression for the compile-heavy false-reject (C/C++ FACT harness): 4 build/compile/configure gate tests + 2 behaviour tests. The gates legitimately pass on BOTH builds,
-        // so the template can only ever fail the 2 behaviour tests. The old "must fail at least half of ALL tests" heuristic required max(1, 6/2) = 3 failures and rejected this
-        // valid exercise as "nearly complete"; computing the threshold over the GRADABLE (non-gate) tests only (max(1, 2/2) = 1) accepts it.
+        // Regression for the compile-heavy false-reject (C/C++ FACT harness): 4 build/compile/configure gate tests + 2 behaviour tests. The gates legitimately pass on BOTH builds
+        // by design and are exempt; every non-gate (gradable) test still fails on the template, so the exercise must be accepted even though only 2 of the 6 total tests fail.
         List<String> all = List.of("TestConfigure", "CompileSort", "ConfigureDebug", "BuildTests", "sorts_ascending", "sorts_with_duplicates");
         List<String> failedOnTemplate = List.of("sorts_ascending", "sorts_with_duplicates");
         String ps = "# Sort\n[task][Ascending](sorts_ascending)\n[task][Duplicates](sorts_with_duplicates)\n";
         VerificationResult result = verify(resultWithFails(0, all, List.of()), resultWithFails(1, all, failedOnTemplate), ps);
-        assertThat(result.mechanicallyVerified())
-                .as("the half-fail threshold must be computed over gradable tests only, so a build-gate-heavy exercise is not rejected as nearly complete").isTrue();
-        assertThat(result.reasons()).noneMatch(r -> r.contains("nearly complete"));
+        assertThat(result.mechanicallyVerified()).as("build-gate tests are exempt, so a build-gate-heavy exercise is not rejected just because most of its total tests pass")
+                .isTrue();
+        assertThat(result.reasons()).noneMatch(r -> r.contains("must fail"));
         assertThat(result.templateFailed()).isTrue();
         assertThat(result.testCount()).isEqualTo(6);
     }
@@ -939,7 +940,11 @@ class DifferentialVerificationServiceTest {
     }
 
     @Test
-    void acceptsWhenAStructuralCheckPassesButItsTaskStillHasFailingBehaviour() {
+    void shouldRejectWhenATaskBoundTestPassesOnTemplateEvenIfASiblingInTheSameTaskFails() {
+        // Defect regression: the OLD task-group gate rejected a [task] only when EVERY test in it passed on the template, so a task with a MIX (one fails, one still passes)
+        // was wrongly accepted — a "one test per task" leniency. test_stack_structure is a plain test name, not a member of the authoritative seeded-structural set (this test
+        // calls the no-seeded-structural verify() overload), so it is an ordinary behavioural test and must fail on the template on its own, regardless of its sibling
+        // test_new_stack_is_empty in the same [task] correctly failing.
         List<String> all = List.of("test_new_stack_is_empty", "test_push_makes_not_empty", "test_peek_returns_last_without_removing", "test_pop_returns_last_and_removes",
                 "test_pop_on_empty_raises", "test_peek_on_empty_raises", "test_stack_structure");
         List<String> behaviouralFailOnTemplate = List.of("test_new_stack_is_empty", "test_push_makes_not_empty", "test_peek_returns_last_without_removing",
@@ -948,8 +953,9 @@ class DifferentialVerificationServiceTest {
                 + "[task][Push](test_push_makes_not_empty)\n[task][Peek](test_peek_returns_last_without_removing)\n[task][Pop](test_pop_returns_last_and_removes)\n"
                 + "[task][Empty pop](test_pop_on_empty_raises)\n[task][Empty peek](test_peek_on_empty_raises)\n";
         VerificationResult result = verify(resultWithFails(0, all, List.of()), resultWithFails(1, all, behaviouralFailOnTemplate), ps);
-        assertThat(result.mechanicallyVerified()).isTrue();
-        assertThat(result.reasons()).noneMatch(r -> r.contains("fully satisfied by the template"));
+        assertThat(result.mechanicallyVerified()).as("a non-structural test passing on the template must be rejected even though a sibling test in the same [task] fails")
+                .isFalse();
+        assertThat(result.reasons()).anyMatch(r -> r.contains("must fail") && r.contains("test_stack_structure"));
     }
 
     // Skipped-test parity: production's TestResultXmlParser drops a <testcase><skipped/></testcase> from both lists, and the verifier uses that same parser. The dangerous case — a
@@ -1265,13 +1271,13 @@ class DifferentialVerificationServiceTest {
 
         @Test
         void forgeryResistance_aRealBehaviourTestNamedStructurallyThatPassesOnTemplate_isStillRejected() {
-            // A real behaviour test cannot gain the structural-binding exemption merely through its name. Its one-test task is still fully satisfied by the template.
+            // A real behaviour test cannot gain the structural exemption merely through its name — only the authoritative seeded set (empty here) exempts a test.
             List<String> all = List.of("realBehaviour", "testClass[Evil]");
             List<String> failedOnTemplate = List.of("realBehaviour");
             String ps = "# X\n[task][Real](realBehaviour)\n[task][Disguised](testClass[Evil])\n";
             VerificationResult result = verify(resultWithFails(0, all, List.of()), resultWithFails(1, all, failedOnTemplate), ps);
-            assertThat(result.mechanicallyVerified()).as("a structurally-named real test whose whole task passes on the template must still be rejected").isFalse();
-            assertThat(result.reasons()).anyMatch(r -> r.contains("fully satisfied by the template") && r.contains("testClass[Evil]"));
+            assertThat(result.mechanicallyVerified()).as("a structurally-named real test that passes on the template must still be rejected").isFalse();
+            assertThat(result.reasons()).anyMatch(r -> r.contains("must fail") && r.contains("testClass[Evil]"));
         }
 
         @Test
@@ -1395,16 +1401,16 @@ class DifferentialVerificationServiceTest {
         }
 
         @Test
-        void doesNotClaimTheTemplateCorrectlyFailsWhenItPassesEveryTest() {
-            // A template that passes EVERY test leaves no failed names (the wrongly-passing list fails open and is empty); the observation must flag "does not fail enough", not
-            // read
-            // "correctly fails all N".
+        void namesEveryTestThatWronglyPassesWhenTheTemplatePassesEveryTest() {
+            // A template that passes EVERY test must not be reported with the vague "does not fail enough" fallback: the per-test gate names each offending test exactly, so the
+            // observation must never read "correctly fails all N" and must list both test names as wrongly passing.
             List<String> names = List.of("sortsUnsortedArray", "sortsArrayWithDuplicates");
             AgentVerifyReport report = selfCheck(resultWithFails(0, names, List.of()), resultWithFails(0, names, List.of()), PROBLEM_STATEMENT_WITH_TASK);
             assertThat(report.templateCompiled()).isTrue();
             assertThat(report.templateFailed()).isFalse();
             assertThat(report.wouldBeAccepted()).isFalse();
-            assertThat(report.toObservation()).doesNotContain("correctly fails all").contains("Template does NOT fail enough tests");
+            assertThat(report.templateWronglyPassing()).containsExactlyInAnyOrder("sortsUnsortedArray", "sortsArrayWithDuplicates");
+            assertThat(report.toObservation()).doesNotContain("correctly fails all").contains("Template WRONGLY PASSES").contains("sortsUnsortedArray", "sortsArrayWithDuplicates");
         }
 
         @Test

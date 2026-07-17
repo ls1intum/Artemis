@@ -47,8 +47,12 @@ import de.tum.cit.aet.artemis.programming.dto.StaticCodeAnalysisReportDTO;
 import de.tum.cit.aet.artemis.programming.repository.StaticCodeAnalysisCategoryRepository;
 
 /**
- * Independently verifies generated exercises by building solution and template from a pristine script and parsing verifier-owned reports with the normal LocalCI parsers. The
- * solution must pass; the template must compile, run the same tests, and fail every gradable test.
+ * Independently verifies generated exercises by building solution and template from a pristine script and parsing verifier-owned reports with the normal LocalCI parsers.
+ * <p>
+ * The enforced starter-credit policy: the solution must pass every test. The template must compile and run the same tests; every non-structural gradable test must fail on it
+ * (build/compile/configure gate tests are exempt because they only gate compilation, and structural tests seeded by {@link StructuralOracleSeedingService} may legitimately pass
+ * — Artemis's own reference exercises, such as BubbleSort, give early "structural" credit for a correctly-shaped stub while the behavioural tests still fail). There is no
+ * "at least half" or "at least one per task" leniency: every individual non-structural gradable test that passes on the template is an actionable rejection naming that test.
  */
 @Lazy
 @Service
@@ -279,7 +283,7 @@ public class DifferentialVerificationService {
 
         boolean solutionPassed = analysis.solutionPassed();
         boolean templateCompiled = !template.timedOut() && template.tests() > 0;
-        List<String> templateWronglyPassing = templateCompiled ? testsInFullyPassingTasks(problemStatement, solution, template) : List.of();
+        List<String> templateWronglyPassing = analysis.gradableTestsPassingOnTemplate();
         List<String> reasons = new ArrayList<>(analysis.actionableReasons());
         boolean javaAresConventionsHold = true;
         if (exercise.getProgrammingLanguage() == ProgrammingLanguage.JAVA) {
@@ -391,7 +395,9 @@ public class DifferentialVerificationService {
         int testCount = solution.tests();
         boolean solutionPassed = checkSolutionPasses(solution, reasons);
         boolean noDuplicateTestNames = checkNoDuplicateTestNames(solution, reasons);
-        boolean templateFailed = checkTemplateFails(solution, template, reasons);
+        boolean templateBuildSound = checkTemplateBuildSound(solution, template, reasons);
+        List<String> gradableTestsPassingOnTemplate = templateBuildSound ? gradableTestsPassingOnTemplate(solution, template, seededStructuralTestNames) : List.of();
+        boolean templateFailed = templateBuildSound && checkNoGradableTestPassesTemplate(gradableTestsPassingOnTemplate, reasons);
 
         // The exercise must bind its tests to the problem statement via [task][title](testNames), else the student sees no task checklist.
         String problemStatement = producedProblemStatement != null ? producedProblemStatement : readProblemStatement(sandbox, sessionId);
@@ -416,7 +422,6 @@ public class DifferentialVerificationService {
         boolean noDuplicateTaskBindings = checkNoDuplicateTaskBindings(duplicateTaskBindings, problemStatementHasTasks, reasons);
         List<String> unboundGradableTests = ProblemStatementBindingChecker.unboundGradableTestNames(problemStatement, solution.testNames(), testCount, seededStructuralTestNames);
         boolean allGradableTestsBound = checkAllGradableTestsBound(unboundGradableTests, problemStatementHasTasks, taskBindingsResolve, reasons);
-        boolean noTaskPassesTemplate = checkNoTaskPassesTemplate(problemStatement, solution, template, problemStatementHasTasks, taskBindingsResolve, reasons);
         boolean solutionScaClean = checkSolutionScaClean(exercise, solution, reasons);
 
         // Prose hygiene: the oracle is blind to what the student-facing statement exposes, so this gate blocks leaks of grader internals or bare task markers (with exact phrases).
@@ -429,10 +434,11 @@ public class DifferentialVerificationService {
         }
 
         boolean actionableGatesPass = solutionPassed && noDuplicateTestNames && templateFailed && testCount > 0 && problemStatementHasTasks && taskKeywordsWellFormed
-                && taskBindingsResolve && noDuplicateTaskBindings && allGradableTestsBound && noTaskPassesTemplate && solutionScaClean && proseHygienic;
+                && taskBindingsResolve && noDuplicateTaskBindings && allGradableTestsBound && solutionScaClean && proseHygienic;
 
         List<String> possiblyDeadFiles = possiblyDeadWorkspaceFiles(sandbox, sessionId);
-        return new DifferentialAnalysis(solution, template, solutionPassed, templateFailed, actionableGatesPass, reasons, unresolvedTaskBindings, possiblyDeadFiles);
+        return new DifferentialAnalysis(solution, template, solutionPassed, templateFailed, actionableGatesPass, reasons, unresolvedTaskBindings, possiblyDeadFiles,
+                gradableTestsPassingOnTemplate);
     }
 
     /**
@@ -440,13 +446,16 @@ public class DifferentialVerificationService {
      * adds
      * the integrity gates and verdict) and the in-loop {@link #selfCheck} (which renders the agent observation).
      *
-     * @param actionableGatesPass    whether every sandbox-dependent gate held (the integrity gates are layered on top by {@link #verify})
-     * @param actionableReasons      the reasons any sandbox-dependent gate failed (empty when all hold); the same wording {@link #verify} surfaces
-     * @param unresolvedTaskBindings the {@code [task]} bindings referencing no real test (surfaced to the agent verbatim)
-     * @param possiblyDeadFiles      best-effort workspace files no build phase appears to read (advisory; empty when unavailable)
+     * @param actionableGatesPass            whether every sandbox-dependent gate held (the integrity gates are layered on top by {@link #verify})
+     * @param actionableReasons              the reasons any sandbox-dependent gate failed (empty when all hold); the same wording {@link #verify} surfaces
+     * @param unresolvedTaskBindings         the {@code [task]} bindings referencing no real test (surfaced to the agent verbatim)
+     * @param possiblyDeadFiles              best-effort workspace files no build phase appears to read (advisory; empty when unavailable)
+     * @param gradableTestsPassingOnTemplate the exact, non-structural, non-build-gate solution test names that pass on the template (empty when the template did not build
+     *                                           soundly, or none pass); consumed both by the actionable gate and by {@link #selfCheck}'s agent-facing report so the two never
+     *                                           diverge
      */
     private record DifferentialAnalysis(BuildSummary solution, BuildSummary template, boolean solutionPassed, boolean templateFailed, boolean actionableGatesPass,
-            List<String> actionableReasons, List<String> unresolvedTaskBindings, List<String> possiblyDeadFiles) {
+            List<String> actionableReasons, List<String> unresolvedTaskBindings, List<String> possiblyDeadFiles, List<String> gradableTestsPassingOnTemplate) {
     }
 
     /**
@@ -528,50 +537,65 @@ public class DifferentialVerificationService {
     }
 
     /**
-     * The template gate: the template must compile and run the same tests as the solution but fail at least half of the gradable ones (a near-complete template is not a real
-     * starting point; {@code tests()==0} means it did not compile). Both the threshold and the failure count exclude the build/compile/configure gate tests
-     * ({@link BuildGateTestNames}) — they legitimately pass on both repos, so counting them would false-reject a compile-heavy exercise (e.g. 4 gate tests + 2 behaviour tests:
-     * half
-     * of 6 is 3, but only the 2 behaviour tests can fail). A subset of {@link #checkNoGradableTestPassesTemplate} (which requires every gradable test to fail) — a cheaper early
-     * signal that can never contradict it. Appends a rejection reason otherwise.
+     * The template's build-level sanity: it must compile (a non-empty test count) and run exactly the same tests as the solution, without timing out. This is a prerequisite for
+     * {@link #gradableTestsPassingOnTemplate}, which decides the per-test starter-credit policy; a template that fails this cannot be meaningfully checked test-by-test. Appends a
+     * rejection reason otherwise.
      *
      * @param solution the solution build summary (its test count is the reference)
      */
-    private static boolean checkTemplateFails(BuildSummary solution, BuildSummary template, List<String> reasons) {
-        int testCount = solution.tests();
-        int templateFailing = template.failures();
-        // Build/compile/configure gate tests pass on both builds by design, so the template can never fail them; count the "must fail at least half" threshold and the actual
-        // template failures over the gradable (non-gate) tests only — the same population checkNoGradableTestPassesTemplate requires to fail in full.
-        int gradableTestCount = testCount - (int) solution.testNames().stream().filter(name -> isBuildGateTest(ProblemStatementBindingChecker.normalizeTestName(name))).count();
-        int gradableTemplateFailures = (int) template.testFailedNames().stream().filter(name -> !isBuildGateTest(ProblemStatementBindingChecker.normalizeTestName(name))).count();
-        int requiredTemplateFailures = Math.max(1, gradableTestCount / 2);
+    private static boolean checkTemplateBuildSound(BuildSummary solution, BuildSummary template, List<String> reasons) {
         if (template.timedOut()) {
             reasons.add("The template build timed out; it must compile and fail the tests quickly.");
+            return false;
         }
-        else if (template.tests() == 0) {
+        if (template.tests() == 0) {
             reasons.add("The template does not compile (the tests never ran). The template must compile and only fail because the student's work is missing — use placeholder "
                     + "method bodies (returning null, 0, false) with the same signatures as the solution.");
+            return false;
         }
-        else if (solution.tests() > 0 && template.tests() != solution.tests()) {
+        if (solution.tests() > 0 && template.tests() != solution.tests()) {
             // A differing count means the template silently dropped tests, letting a vacuous template "fail" without the tests discriminating.
             reasons.add("The template runs a different number of tests (" + template.tests() + ") than the solution (" + solution.tests()
                     + "). Both must run the same tests; the template must differ only in its (unimplemented) method bodies, not in which tests compile and run.");
+            return false;
         }
-        else if (templateFailing == 0) {
-            reasons.add("The template passes the tests, but it must fail them (a student starting from the template has not implemented the solution yet). Make the tests assert "
-                    + "behaviour the template's placeholder implementations cannot satisfy.");
+        return true;
+    }
+
+    /**
+     * The starter-credit policy (see class javadoc): the exact solution test names that are neither a build/compile/configure gate ({@link BuildGateTestNames}, which legitimately
+     * passes on both builds by design) nor a seeded structural test ({@code seededStructuralTestNames}, the authoritative names {@link StructuralOracleSeedingService} just
+     * injected — never a name-shape guess, so a real behaviour test cannot gain the exemption merely by being named like one) yet still pass on the template. Every one of these is
+     * accidental free credit for a student who has not started; the caller must reject on any non-empty result.
+     *
+     * @return the exact, parser-form test names that must fail on the template but do not (empty when every one of them correctly fails)
+     */
+    private static List<String> gradableTestsPassingOnTemplate(BuildSummary solution, BuildSummary template, Set<String> seededStructuralTestNames) {
+        Set<String> structural = seededStructuralTestNames == null ? Set.of()
+                : seededStructuralTestNames.stream().map(ProblemStatementBindingChecker::normalizeTestName).collect(Collectors.toSet());
+        Set<String> templateFailed = template.testFailedNames().stream().map(ProblemStatementBindingChecker::normalizeTestName).collect(Collectors.toSet());
+        List<String> passing = new ArrayList<>();
+        for (String rawName : solution.testNames()) {
+            String normalized = ProblemStatementBindingChecker.normalizeTestName(rawName);
+            if (isBuildGateTest(normalized) || structural.contains(normalized)) {
+                continue;
+            }
+            if (!templateFailed.contains(normalized)) {
+                passing.add(rawName);
+            }
         }
-        else if (gradableTemplateFailures < requiredTemplateFailures) {
-            reasons.add("The template fails only " + gradableTemplateFailures + " of " + gradableTestCount
-                    + " gradable tests, so it is nearly complete. A meaningful starting template should fail at least " + requiredTemplateFailures
-                    + " of them — strip its implementations to placeholders and make sure the tests check the behaviour the student must implement. (Build/compile/configure gate "
-                    + "tests are ignored here: they only check that the code compiles, which the template does by design, so they pass on both builds.)");
-        }
-        else {
-            // Correctly-failing template. Trust the JUnit failure/error counts, not the exit code: some report converters (Go's go-junit-report, Dart's tojunit) exit 0 even on
-            // failure.
+        return passing;
+    }
+
+    /** Appends a rejection reason naming every offending test when {@code gradableTestsPassingOnTemplate} is non-empty; returns whether the gate holds. */
+    private static boolean checkNoGradableTestPassesTemplate(List<String> gradableTestsPassingOnTemplate, List<String> reasons) {
+        if (gradableTestsPassingOnTemplate.isEmpty()) {
             return true;
         }
+        reasons.add("These non-structural gradable tests pass on the template but must fail: " + gradableTestsPassingOnTemplate
+                + ". Starter credit is allowed only for structural tests seeded by the exercise scaffold (checking a class/method/attribute/constructor shape exists) — every other "
+                + "test is behavioural and a student who has not started must not pass it. Strip the template's implementation to a wrong placeholder for each of these until it "
+                + "fails.");
         return false;
     }
 
@@ -607,17 +631,6 @@ public class DifferentialVerificationService {
                     + ". Add each non-build-gate test to exactly one [task][Title](testName) binding, or remove/rename tests that should not be graded.");
         }
         return allGradableTestsBound;
-    }
-
-    private static boolean checkNoTaskPassesTemplate(String problemStatement, BuildSummary solution, BuildSummary template, boolean problemStatementHasTasks,
-            boolean taskBindingsResolve, List<String> reasons) {
-        List<String> testsInFullyPassingTasks = testsInFullyPassingTasks(problemStatement, solution, template);
-        boolean noTaskPassesTemplate = testsInFullyPassingTasks.isEmpty();
-        if (problemStatementHasTasks && taskBindingsResolve && !noTaskPassesTemplate) {
-            reasons.add("These [task] groups are already fully satisfied by the template: " + testsInFullyPassingTasks
-                    + ". A starter may pass structural or scaffolding checks, but every task must retain at least one failing behavioural test so students still have work to do.");
-        }
-        return noTaskPassesTemplate;
     }
 
     /**
@@ -692,31 +705,6 @@ public class DifferentialVerificationService {
             throw new UncheckedIOException(e);
         }
         return new ByteArrayInputStream(out.toByteArray());
-    }
-
-    /**
-     * The {@code [task]}-bound test names that pass on the template (resolve to a real solution test but are not in the template's failed/errored set) — the accidental free points
-     * the strict differential rejects. Fails open (empty) when the template emitted no fail lines or the solution name set is missing/short.
-     */
-    private static List<String> testsInFullyPassingTasks(String problemStatement, BuildSummary solution, BuildSummary template) {
-        List<String> solutionNames = solution.testNames();
-        if (solutionNames.isEmpty() || solutionNames.size() < solution.tests()) {
-            return List.of();
-        }
-        if (template.testFailedNames().isEmpty()) {
-            return List.of();
-        }
-        Set<String> solutionPassing = solutionNames.stream().map(ProblemStatementBindingChecker::normalizeTestName).collect(Collectors.toSet());
-        Set<String> templateFailed = template.testFailedNames().stream().map(ProblemStatementBindingChecker::normalizeTestName).collect(Collectors.toSet());
-        List<String> offending = new ArrayList<>();
-        for (List<String> group : ProblemStatementBindingChecker.boundTestGroups(problemStatement)) {
-            boolean allResolveAndPass = group.stream().map(ProblemStatementBindingChecker::normalizeTestName)
-                    .allMatch(name -> solutionPassing.contains(name) && !templateFailed.contains(name));
-            if (allResolveAndPass) {
-                offending.add(String.join(",", group));
-            }
-        }
-        return offending;
     }
 
     /**
