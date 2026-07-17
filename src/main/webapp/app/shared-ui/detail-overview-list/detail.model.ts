@@ -108,7 +108,9 @@ export interface ProgrammingTestStatusDetail extends DetailBase {
     type: DetailType.ProgrammingTestStatus;
     data: {
         participation?: TemplateProgrammingExerciseParticipation | SolutionProgrammingExerciseParticipation;
-        loading?: boolean;
+        // Signal-backed so that the participation results finishing to load (asynchronously, after the detail
+        // sections render) schedules change detection in the zoneless app instead of leaving the view stale.
+        loading: Signal<boolean>;
         exercise: ProgrammingExercise;
         onParticipationChange: () => void;
         type: ProgrammingExerciseParticipationType;
