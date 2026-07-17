@@ -51,4 +51,7 @@ export const COMMUNICATION_MARKDOWN_EDITOR_OPTIONS = new MonacoEditorOptionPrese
     ...defaultMarkdownOptions,
     // Separates the editor suggest widget from the editor's layout. It will stick to the page, but it won't interfere with other elements.
     fixedOverflowWidgets: true,
+    // Explicitly enable suggestions while typing regular text: the emoji completion relies on quick suggestions
+    // to reopen the suggest widget for the first letter typed after ':'. Comments and strings are excluded on purpose.
+    quickSuggestions: { other: 'on', comments: 'off', strings: 'off' },
 });
