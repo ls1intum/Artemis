@@ -22,6 +22,9 @@ import { RouterLink } from '@angular/router';
     imports: [FaIconComponent, ProfilePictureComponent, TranslateDirective, CommonModule, RouterLink],
     templateUrl: './course-notification.component.html',
     styleUrls: ['./course-notification.component.scss'],
+    // Mirror the `fluid` input onto the host so the (inline by default) host and its inline-block
+    // child can be made block-level in fluid mode, giving `width: 100%` a definite containing block.
+    host: { '[class.fluid]': 'fluid()' },
 })
 export class CourseNotificationComponent {
     private readonly courseNotificationService: CourseNotificationService = inject(CourseNotificationService);
