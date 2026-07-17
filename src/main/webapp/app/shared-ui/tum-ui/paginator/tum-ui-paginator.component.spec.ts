@@ -10,16 +10,13 @@ describe('TumUiPaginatorComponent', () => {
     let component: TumUiPaginatorComponent;
     let fixture: ComponentFixture<TumUiPaginatorComponent>;
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
             imports: [TumUiPaginatorComponent, FontAwesomeTestingModule],
             providers: [{ provide: TranslateService, useClass: MockTranslateService }],
-        })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(TumUiPaginatorComponent);
-                component = fixture.componentInstance;
-            });
+        }).compileComponents();
+        fixture = TestBed.createComponent(TumUiPaginatorComponent);
+        component = fixture.componentInstance;
     });
 
     afterEach(() => vi.restoreAllMocks());

@@ -14,11 +14,10 @@
 // travel with the sticky <th> cells).
 // Cell borders are set here (not via Tailwind `border-b` utilities): Artemis ships no Tailwind Preflight,
 // and the `border-b` width utility is not reliably emitted for this component, so the separators would not
-// render. The values mirror PrimeNG's p-table exactly — a strong header rule (surface-700 light / surface-0
-// dark) over lighter row separators (surface-200 light / surface-800 dark).
-// Only the border WIDTH/STYLE lives here; the border COLOR comes from `border-surface-*` token utilities on
-// the cells in the template (theme-aware, no --p-* primitive in scss). The Tailwind `border-b` WIDTH utility
-// is not reliably emitted for this component without Preflight, so the 1px is set here instead.
+// render. Only the border WIDTH/STYLE lives here; the border COLOR comes from `border-surface-*` token
+// utilities on the cells in the template (theme-aware, no --p-* primitive in scss). A uniform subtle 1px
+// separator (surface-200 light / surface-800 dark) for both the header and the rows, matching PrimeNG's
+// p-table content border (an earlier strong header rule read as a stark white line in dark mode).
 // NB: CdkTable injects the <thead>/<tbody> wrappers itself, so they carry no Angular encapsulation attribute
 // and `thead`/`tbody` selectors would not match — the <th>/<td> cells come from this component's template, so
 // target them directly.

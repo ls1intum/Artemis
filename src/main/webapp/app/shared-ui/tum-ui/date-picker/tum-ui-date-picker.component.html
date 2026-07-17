@@ -30,6 +30,7 @@
             placeholder="dd.mm.yyyy hh:mm"
             [attr.aria-invalid]="showErrorBorder()"
             [attr.aria-label]="ariaLabel()"
+            [attr.aria-describedby]="!hideValidationMessage() && showErrorBorder() ? inputId() + '-error' : null"
             aria-haspopup="dialog"
             [attr.aria-expanded]="isOpen() ? 'true' : 'false'"
             (input)="onInput(dateInput.value)"
@@ -63,7 +64,7 @@
     </div>
 
     @if (!hideValidationMessage() && showErrorBorder()) {
-        <span class="text-sm text-state-danger" jhiTranslate="global.datePicker.invalid" data-testid="tum-ui-date-picker-error"></span>
+        <span [id]="inputId() + '-error'" role="alert" class="text-sm text-state-danger" jhiTranslate="global.datePicker.invalid" data-testid="tum-ui-date-picker-error"></span>
     }
 </div>
 
@@ -83,7 +84,7 @@
                     #timeInput
                     type="time"
                     [value]="timeText()"
-                    (input)="onTimeChange(timeInput.value)"
+                    (input)="onTimeChange(timeInput)"
                     class="rounded-md border border-surface bg-surface-0 px-2 py-1 text-surface-900 dark:bg-surface-800 dark:text-surface-0"
                     data-testid="tum-ui-date-picker-time"
                 />

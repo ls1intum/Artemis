@@ -1,3 +1,4 @@
+import { Component } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { vi } from 'vitest';
 import { By } from '@angular/platform-browser';
@@ -21,13 +22,28 @@ const ROWS: Row[] = [
     { name: 'Beta', count: 7 },
 ];
 
+// Host that renders the table with a real row-actions template, to verify the actions column.
+@Component({
+    imports: [TumUiTableComponent],
+    template: `
+        <tum-ui-table [columns]="columns" [rows]="rows" [totalRecords]="2" [rowActions]="actions" />
+        <ng-template #actions let-row>
+            <button type="button" data-testid="row-action">Edit {{ row.name }}</button>
+        </ng-template>
+    `,
+})
+class ActionsHostComponent {
+    columns = COLUMNS;
+    rows = ROWS;
+}
+
 describe('TumUiTableComponent', () => {
     let component: TumUiTableComponent<Row>;
     let fixture: ComponentFixture<TumUiTableComponent<Row>>;
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [TumUiTableComponent, FontAwesomeTestingModule],
+            imports: [TumUiTableComponent, ActionsHostComponent, FontAwesomeTestingModule],
             providers: [{ provide: TranslateService, useClass: MockTranslateService }],
         }).compileComponents();
         fixture = TestBed.createComponent<TumUiTableComponent<Row>>(TumUiTableComponent);
@@ -37,7 +53,11 @@ describe('TumUiTableComponent', () => {
         fixture.componentRef.setInput('totalRecords', 2);
     });
 
-    afterEach(() => vi.restoreAllMocks());
+    afterEach(() => {
+        // Restore real timers too, so a fake-timer test that exits early (failed assertion) cannot leak them.
+        vi.useRealTimers();
+        vi.restoreAllMocks();
+    });
 
     function headerCells(): HTMLElement[] {
         return fixture.debugElement.queryAll(By.css('th[cdk-header-cell]')).map((d) => d.nativeElement);
@@ -119,14 +139,23 @@ describe('TumUiTableComponent', () => {
         vi.useRealTimers();
     });
 
-    it('renders an actions column when rowActions is set', async () => {
-        const tpl = fixture.debugElement.query(By.css('table'));
-        // set a simple actions template via a host would be heavier; assert the sentinel column count instead
-        fixture.componentRef.setInput('rowActions', null);
+    it('renders an actions column with the provided template when rowActions is set', async () => {
+        const host = TestBed.createComponent(ActionsHostComponent);
+        host.detectChanges();
+        await host.whenStable();
+        host.detectChanges();
+        // Two data columns + the appended actions column.
+        expect(host.debugElement.queryAll(By.css('th[cdk-header-cell]')).length).toBe(3);
+        // The row-actions template is rendered per row (two rows → two action buttons).
+        const actions = host.debugElement.queryAll(By.css('[data-testid="row-action"]'));
+        expect(actions.length).toBe(2);
+        expect(actions[0].nativeElement.textContent).toContain('Edit Alpha');
+    });
+
+    it('renders no actions column when rowActions is unset', async () => {
         fixture.detectChanges();
         await fixture.whenStable();
         expect(headerCells().length).toBe(2);
-        expect(tpl).toBeTruthy();
     });
 
     it('shows the empty row when there are no rows', async () => {

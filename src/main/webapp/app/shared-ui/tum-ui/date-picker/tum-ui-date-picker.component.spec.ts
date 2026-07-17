@@ -22,6 +22,10 @@ describe('TumUiDatePickerComponent', () => {
     let fixture: ComponentFixture<TumUiDatePickerComponent>;
 
     beforeEach(async () => {
+        // Freeze only the clock (not setTimeout / rAF) so `dayjs()`-based assertions (e.g. the "today" fallback)
+        // are deterministic and can't flake across midnight, while overlay/focus timing stays real.
+        vi.useFakeTimers({ toFake: ['Date'] });
+        vi.setSystemTime(new Date('2026-07-15T12:00:00'));
         await TestBed.configureTestingModule({
             imports: [TumUiDatePickerComponent, FontAwesomeTestingModule],
             providers: [{ provide: TranslateService, useClass: MockTranslateService }],
@@ -31,7 +35,10 @@ describe('TumUiDatePickerComponent', () => {
         fixture.detectChanges();
     });
 
-    afterEach(() => vi.restoreAllMocks());
+    afterEach(() => {
+        vi.useRealTimers();
+        vi.restoreAllMocks();
+    });
 
     function input(): HTMLInputElement {
         return fixture.debugElement.query(By.css('[data-testid="tum-ui-date-picker-input"]')).nativeElement;

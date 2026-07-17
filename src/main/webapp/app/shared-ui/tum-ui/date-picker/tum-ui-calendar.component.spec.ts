@@ -10,6 +10,10 @@ describe('TumUiCalendarComponent', () => {
     let fixture: ComponentFixture<TumUiCalendarComponent>;
 
     beforeEach(async () => {
+        // Freeze only the clock (not setTimeout / rAF, so afterRenderEffect-driven focus tests keep working) so
+        // the component's `today` and any `dayjs()` assertion are deterministic and can't flake across midnight.
+        vi.useFakeTimers({ toFake: ['Date'] });
+        vi.setSystemTime(new Date('2026-07-15T12:00:00'));
         await TestBed.configureTestingModule({ imports: [TumUiCalendarComponent, FontAwesomeTestingModule] }).compileComponents();
         fixture = TestBed.createComponent(TumUiCalendarComponent);
         component = fixture.componentInstance;
@@ -17,7 +21,10 @@ describe('TumUiCalendarComponent', () => {
         fixture.detectChanges();
     });
 
-    afterEach(() => vi.restoreAllMocks());
+    afterEach(() => {
+        vi.useRealTimers();
+        vi.restoreAllMocks();
+    });
 
     function dayButtons(): HTMLButtonElement[] {
         return fixture.debugElement.queryAll(By.css('td[role="gridcell"] button')).map((d) => d.nativeElement);

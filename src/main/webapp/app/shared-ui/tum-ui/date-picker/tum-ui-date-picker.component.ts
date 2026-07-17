@@ -185,12 +185,16 @@ export class TumUiDatePickerComponent implements FormValueControl<dayjs.Dayjs | 
         }
     }
 
-    protected onTimeChange(raw: string): void {
-        const trimmed = raw.trim();
+    protected onTimeChange(input: HTMLInputElement): void {
+        const trimmed = input.value.trim();
         if (!TIME_REGEX.test(trimmed)) {
-            // Invalid or cleared time (the native time field emits '' when cleared): re-sync the field to the
-            // committed value so the time sub-field and the main text input never silently disagree.
-            this.timeText.set(this.value()?.format('HH:mm') ?? '');
+            // Invalid or cleared time (the native time field emits '' when cleared): re-sync to the committed
+            // value so the time sub-field and the main text input never silently disagree. Write the native
+            // element directly as well — if timeText already holds the committed string the signal does not
+            // change, so the `[value]` binding would not re-run and the field would stay visually cleared.
+            const committedTime = this.value()?.format('HH:mm') ?? '';
+            this.timeText.set(committedTime);
+            input.value = committedTime;
             return;
         }
         const [hour, minute] = trimmed.split(':').map(Number);
