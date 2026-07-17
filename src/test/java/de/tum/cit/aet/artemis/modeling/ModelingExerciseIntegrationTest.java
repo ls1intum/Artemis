@@ -492,6 +492,42 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void importModelingExercise_standaloneImportHonorsEditedFieldsAndResetsDates() throws Exception {
+        // Regression test: the standalone (course-to-course) import must persist the fields the user edited in the
+        // import form (problem statement, example solution) and keep the dates the client cleared, rather than falling
+        // back to the source exercise's values.
+        var now = ZonedDateTime.now();
+        Course source = courseUtilService.addEmptyCourse();
+        Course target = courseUtilService.addEmptyCourse();
+        ModelingExercise sourceExercise = ModelingExerciseFactory.generateModelingExercise(now.minusDays(10), now.minusDays(8), now.minusDays(6), DiagramType.ClassDiagram, source);
+        sourceExercise.setProblemStatement("SOURCE PROBLEM STATEMENT");
+        sourceExercise.setMaxPoints(42.0);
+        modelingExerciseTestRepository.save(sourceExercise);
+
+        // Emulate the client edit form: edited problem statement and example solution, cleared dates (resetForImport), target course.
+        ModelingExercise body = modelingExerciseTestRepository.findByIdElseThrow(sourceExercise.getId());
+        body.setProblemStatement("EDITED PROBLEM STATEMENT");
+        body.setExampleSolutionExplanation("EDITED EXAMPLE SOLUTION");
+        body.setReleaseDate(null);
+        body.setStartDate(null);
+        body.setDueDate(null);
+        body.setAssessmentDueDate(null);
+        body.setCourse(target);
+        body.setChannelName("edited-import-" + UUID.randomUUID().toString().substring(0, 8));
+
+        var imported = request.postWithResponseBody("/api/modeling/modeling-exercises/import?sourceExerciseId=" + sourceExercise.getId(), body, ModelingExercise.class,
+                HttpStatus.CREATED);
+
+        assertThat(imported.getProblemStatement()).as("edited problem statement should survive the standalone import").isEqualTo("EDITED PROBLEM STATEMENT");
+        assertThat(imported.getExampleSolutionExplanation()).as("edited example solution should survive the standalone import").isEqualTo("EDITED EXAMPLE SOLUTION");
+        assertThat(imported.getMaxPoints()).as("points should survive the standalone import").isEqualTo(42.0);
+        assertThat(imported.getReleaseDate()).as("cleared release date should stay cleared").isNull();
+        assertThat(imported.getDueDate()).as("cleared due date should stay cleared").isNull();
+        assertThat(imported.getAssessmentDueDate()).as("cleared assessment due date should stay cleared").isNull();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void importModelingExerciseFromCourseToCourse() throws Exception {
         var now = ZonedDateTime.now();
         Course course1 = courseUtilService.addEmptyCourse();
