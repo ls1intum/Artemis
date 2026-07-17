@@ -124,7 +124,7 @@ class RepositoryServiceIntegrationTest extends AbstractProgrammingIntegrationLoc
 
     private String commitAndPushSelectedFiles() throws Exception {
         localRepository.workingCopyGitRepo.add().addFilepattern(".").call();
-        var commit = GitService.commit(localRepository.workingCopyGitRepo).setMessage("add selected files").call();
+        var commit = de.tum.cit.aet.artemis.localvc.service.GitService.commit(localRepository.workingCopyGitRepo).setMessage("add selected files").call();
         localRepository.workingCopyGitRepo.push().setRemote("origin").call();
         return commit.getName();
     }
