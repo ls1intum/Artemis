@@ -34,6 +34,7 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 import { DifficultyLevel, Exercise, ExerciseType, getIcon } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { ExerciseVariantGroupDTO, ExerciseVariantGroupService } from 'app/course/manage/exercises/exercise-variant-group.service';
+import { QuizExercise, QuizMode } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { ExerciseVariantGenerationService } from 'app/hyperion/services/exercise-variant-generation.service';
 import { VariantGenerationEvent, VariantJobPhase, isTerminalVariantPhase } from 'app/hyperion/services/exercise-variant-websocket.service';
 import { VariantGenerationRequest } from 'app/openapi/model/variantGenerationRequest';
@@ -156,6 +157,29 @@ export class ExerciseVariantAiModalWizardComponent implements OnDestroy {
 
     /** Exam exercises skip the placement step entirely — SAME_EXAM_GROUP is forced. */
     readonly isExamExercise = computed(() => this.examExercise() || !!this.sourceExercise()?.exerciseGroup);
+
+    /**
+     * Whether the source exercise itself can join a freshly created group — that is the whole promise of the
+     * NEW_GROUP placement ("group the variant WITH its source"). Mirrors the server's rules in
+     * `VariantPlacementService.assignSourceToNewGroup` / `ExerciseVariantGroupService.assignExerciseToGroup`,
+     * which skip the source with a warning when it cannot legally be a member. Offering the option for those
+     * sources would silently produce a group holding only the variant, so it is hidden instead.
+     */
+    readonly canGroupSourceWithVariant = computed(() => {
+        const source = this.sourceExercise();
+        if (!source || this.isExamExercise()) {
+            return false;
+        }
+        // Already grouped: the server keeps the source in its current group, so use "add to existing group".
+        if (this.sourceGroup()) {
+            return false;
+        }
+        // Synchronized/batched quizzes have a single shared run and cannot share a group timeline.
+        if (source.type === ExerciseType.QUIZ) {
+            return (source as QuizExercise).quizMode === QuizMode.INDIVIDUAL;
+        }
+        return true;
+    });
 
     readonly availableDifficulties = computed<Array<{ value: DifficultyLevel; label: string }>>(() => {
         const current = this.sourceExercise()?.difficulty;
@@ -310,7 +334,8 @@ export class ExerciseVariantAiModalWizardComponent implements OnDestroy {
         this.newGroupStartDate.set(this.fmtDate(src.startDate));
         this.newGroupDueDate.set(this.fmtDate(src.dueDate));
         this.newGroupAssessmentDueDate.set(this.fmtDate(src.assessmentDueDate));
-        this.placementChoice.set(this.sourceGroup() ? 'existing-group' : 'new-group');
+        // Never preselect a hidden option: a source that cannot join a new group falls back to standalone.
+        this.placementChoice.set(this.sourceGroup() ? 'existing-group' : this.canGroupSourceWithVariant() ? 'new-group' : 'standalone');
         this.wizardStep.set(3);
     }
 

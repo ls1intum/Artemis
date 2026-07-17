@@ -185,70 +185,74 @@
                         </div>
                     </label>
                 }
-                <label class="placement-option" [class.placement-option--selected]="placementChoice() === 'new-group'">
-                    <p-radiobutton inputId="wiz-place-new" name="wiz-placement" value="new-group" [ngModel]="placementChoice()" (ngModelChange)="placementChoice.set($event)" />
-                    <div class="placement-option__body">
-                        <span class="placement-option__title">Create new group with original</span>
-                        <span class="placement-option__hint">Groups the source exercise and this variant together</span>
-                        @if (placementChoice() === 'new-group') {
-                            <div class="new-group-settings" (click)="$event.stopPropagation()">
-                                <div class="d-flex flex-wrap gap-2 align-items-end mt-2">
-                                    <div class="flex-grow-1" style="min-width: 120px">
-                                        <div class="new-group-settings__label">Group title</div>
-                                        <input type="text" [ngModel]="newGroupTitle()" (ngModelChange)="newGroupTitle.set($event)" class="form-control form-control-sm" />
+                <!-- Only offered when the source itself can join the new group — otherwise the server would skip it
+                     and the "with original" promise would silently produce a group holding just the variant. -->
+                @if (canGroupSourceWithVariant()) {
+                    <label class="placement-option" [class.placement-option--selected]="placementChoice() === 'new-group'" data-testid="variant-placement-new-group">
+                        <p-radiobutton inputId="wiz-place-new" name="wiz-placement" value="new-group" [ngModel]="placementChoice()" (ngModelChange)="placementChoice.set($event)" />
+                        <div class="placement-option__body">
+                            <span class="placement-option__title">Create new group with original</span>
+                            <span class="placement-option__hint">Groups the source exercise and this variant together</span>
+                            @if (placementChoice() === 'new-group') {
+                                <div class="new-group-settings" (click)="$event.stopPropagation()">
+                                    <div class="d-flex flex-wrap gap-2 align-items-end mt-2">
+                                        <div class="flex-grow-1" style="min-width: 120px">
+                                            <div class="new-group-settings__label">Group title</div>
+                                            <input type="text" [ngModel]="newGroupTitle()" (ngModelChange)="newGroupTitle.set($event)" class="form-control form-control-sm" />
+                                        </div>
+                                        <div>
+                                            <div class="new-group-settings__label">Max points</div>
+                                            <input
+                                                type="number"
+                                                [ngModel]="newGroupMaxPoints()"
+                                                (ngModelChange)="newGroupMaxPoints.set($event !== '' ? +$event : undefined)"
+                                                class="form-control form-control-sm new-group-settings__pts"
+                                            />
+                                        </div>
                                     </div>
-                                    <div>
-                                        <div class="new-group-settings__label">Max points</div>
-                                        <input
-                                            type="number"
-                                            [ngModel]="newGroupMaxPoints()"
-                                            (ngModelChange)="newGroupMaxPoints.set($event !== '' ? +$event : undefined)"
-                                            class="form-control form-control-sm new-group-settings__pts"
-                                        />
+                                    <div class="d-flex flex-wrap gap-2 mt-2">
+                                        <div>
+                                            <div class="new-group-settings__label">Release</div>
+                                            <input
+                                                type="datetime-local"
+                                                [ngModel]="newGroupReleaseDate()"
+                                                (ngModelChange)="newGroupReleaseDate.set($event)"
+                                                class="form-control form-control-sm new-group-settings__date"
+                                            />
+                                        </div>
+                                        <div>
+                                            <div class="new-group-settings__label">Start</div>
+                                            <input
+                                                type="datetime-local"
+                                                [ngModel]="newGroupStartDate()"
+                                                (ngModelChange)="newGroupStartDate.set($event)"
+                                                class="form-control form-control-sm new-group-settings__date"
+                                            />
+                                        </div>
+                                        <div>
+                                            <div class="new-group-settings__label">Due</div>
+                                            <input
+                                                type="datetime-local"
+                                                [ngModel]="newGroupDueDate()"
+                                                (ngModelChange)="newGroupDueDate.set($event)"
+                                                class="form-control form-control-sm new-group-settings__date"
+                                            />
+                                        </div>
+                                        <div>
+                                            <div class="new-group-settings__label">Feedback due</div>
+                                            <input
+                                                type="datetime-local"
+                                                [ngModel]="newGroupAssessmentDueDate()"
+                                                (ngModelChange)="newGroupAssessmentDueDate.set($event)"
+                                                class="form-control form-control-sm new-group-settings__date"
+                                            />
+                                        </div>
                                     </div>
                                 </div>
-                                <div class="d-flex flex-wrap gap-2 mt-2">
-                                    <div>
-                                        <div class="new-group-settings__label">Release</div>
-                                        <input
-                                            type="datetime-local"
-                                            [ngModel]="newGroupReleaseDate()"
-                                            (ngModelChange)="newGroupReleaseDate.set($event)"
-                                            class="form-control form-control-sm new-group-settings__date"
-                                        />
-                                    </div>
-                                    <div>
-                                        <div class="new-group-settings__label">Start</div>
-                                        <input
-                                            type="datetime-local"
-                                            [ngModel]="newGroupStartDate()"
-                                            (ngModelChange)="newGroupStartDate.set($event)"
-                                            class="form-control form-control-sm new-group-settings__date"
-                                        />
-                                    </div>
-                                    <div>
-                                        <div class="new-group-settings__label">Due</div>
-                                        <input
-                                            type="datetime-local"
-                                            [ngModel]="newGroupDueDate()"
-                                            (ngModelChange)="newGroupDueDate.set($event)"
-                                            class="form-control form-control-sm new-group-settings__date"
-                                        />
-                                    </div>
-                                    <div>
-                                        <div class="new-group-settings__label">Feedback due</div>
-                                        <input
-                                            type="datetime-local"
-                                            [ngModel]="newGroupAssessmentDueDate()"
-                                            (ngModelChange)="newGroupAssessmentDueDate.set($event)"
-                                            class="form-control form-control-sm new-group-settings__date"
-                                        />
-                                    </div>
-                                </div>
-                            </div>
-                        }
-                    </div>
-                </label>
+                            }
+                        </div>
+                    </label>
+                }
                 <label class="placement-option" [class.placement-option--selected]="placementChoice() === 'standalone'">
                     <p-radiobutton
                         inputId="wiz-place-standalone"

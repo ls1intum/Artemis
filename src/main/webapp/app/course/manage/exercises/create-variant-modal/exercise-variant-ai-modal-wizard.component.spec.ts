@@ -3,14 +3,15 @@ import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TranslateService } from '@ngx-translate/core';
 import { of } from 'rxjs';
 import { MockPipe } from 'ng-mocks';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ExerciseVariantAiModalWizardComponent } from 'app/course/manage/exercises/create-variant-modal/exercise-variant-ai-modal-wizard.component';
 import { ExerciseVariantGenerationService } from 'app/hyperion/services/exercise-variant-generation.service';
-import { ExerciseVariantGroupService } from 'app/course/manage/exercises/exercise-variant-group.service';
+import { ExerciseVariantGroupDTO, ExerciseVariantGroupService } from 'app/course/manage/exercises/exercise-variant-group.service';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { DifficultyLevel, Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { VariantGenerationRequest } from 'app/openapi/model/variantGenerationRequest';
+import { QuizExercise, QuizMode } from 'app/quiz/shared/entities/quiz-exercise.model';
 
 /**
  * Vitest specs for the exam path of the AI variant wizard: exam exercises must place the variant into the
@@ -76,7 +77,7 @@ describe('ExerciseVariantAiModalWizardComponent (exam path)', () => {
 
     it('hides the difficulty adaptation option for exam exercises', () => {
         fixture.detectChanges();
-        expect(fixture.nativeElement.querySelector('[data-testid="variant-option-difficulty"]')).toBeNull();
+        expect(document.body.querySelector('[data-testid="variant-option-difficulty"]')).toBeNull();
     });
 
     it('skips the placement step and starts generation with SAME_EXAM_GROUP', () => {
@@ -106,5 +107,105 @@ describe('ExerciseVariantAiModalWizardComponent (exam path)', () => {
         const request = generationServiceMock.startGeneration.mock.calls[0][1] as VariantGenerationRequest;
         expect(request.targetDifficulty).toBeUndefined();
         expect(request.domainText).toBe('banking');
+    });
+});
+
+/**
+ * The NEW_GROUP placement promises to group the variant WITH its source. The server skips the source when it
+ * cannot legally join (already grouped, or a non-individual quiz whose single shared run cannot adopt a group
+ * timeline), which would silently leave a group holding only the variant — so the option must not be offered.
+ */
+describe('ExerciseVariantAiModalWizardComponent (new-group placement availability)', () => {
+    setupTestBed({ zoneless: true });
+
+    let fixture: ComponentFixture<ExerciseVariantAiModalWizardComponent>;
+    let component: ExerciseVariantAiModalWizardComponent;
+    let groupServiceMock: { getGroupsForCourse: ReturnType<typeof vi.fn> };
+
+    const createWizard = async (source: Exercise, groups: ExerciseVariantGroupDTO[] = []) => {
+        groupServiceMock = { getGroupsForCourse: vi.fn().mockReturnValue(of(groups)) };
+
+        await TestBed.configureTestingModule({
+            imports: [ExerciseVariantAiModalWizardComponent],
+            providers: [
+                {
+                    provide: ExerciseVariantGenerationService,
+                    useValue: {
+                        startGeneration: vi.fn().mockReturnValue(of('job-1')),
+                        jobEvents: vi.fn().mockReturnValue(of()),
+                        getJobDetail: vi.fn().mockReturnValue(of({ job: undefined, stepOutputs: {}, request: undefined })),
+                        cancelJob: vi.fn().mockReturnValue(of(undefined)),
+                    },
+                },
+                { provide: ExerciseVariantGroupService, useValue: groupServiceMock },
+                { provide: ExerciseService, useValue: { find: vi.fn().mockReturnValue(of({ body: undefined })) } },
+                {
+                    provide: TranslateService,
+                    useValue: { instant: (key: string) => key, get: (key: string) => of(key), onLangChange: of(), onTranslationChange: of(), onDefaultLangChange: of() },
+                },
+            ],
+        })
+            .overrideComponent(ExerciseVariantAiModalWizardComponent, {
+                remove: { imports: [ArtemisTranslatePipe] },
+                add: { imports: [MockPipe(ArtemisTranslatePipe, (key) => key)] },
+            })
+            .compileComponents();
+
+        fixture = TestBed.createComponent(ExerciseVariantAiModalWizardComponent);
+        component = fixture.componentInstance;
+        fixture.componentRef.setInput('sourceExercise', source);
+        fixture.componentRef.setInput('courseId', 7);
+        fixture.componentRef.setInput('visible', true);
+        fixture.detectChanges();
+    };
+
+    const programmingExercise = { id: 1, title: 'Sorting', type: ExerciseType.PROGRAMMING } as Exercise;
+
+    /** The dialog renders with appendTo="body", so its content is outside the fixture's own element tree. */
+    const placementOption = (testId: string) => document.body.querySelector(`[data-testid="${testId}"]`);
+
+    afterEach(() => {
+        fixture.destroy();
+        TestBed.resetTestingModule();
+    });
+
+    it('offers the new-group placement for an ungrouped programming exercise', async () => {
+        await createWizard(programmingExercise);
+
+        component.goToPlacement();
+        fixture.detectChanges();
+
+        expect(component.canGroupSourceWithVariant()).toBe(true);
+        expect(component.placementChoice()).toBe('new-group');
+        expect(placementOption('variant-placement-new-group')).not.toBeNull();
+    });
+
+    it('offers the new-group placement for an individual-mode quiz', async () => {
+        await createWizard({ id: 2, title: 'Quiz', type: ExerciseType.QUIZ, quizMode: QuizMode.INDIVIDUAL } as QuizExercise);
+
+        expect(component.canGroupSourceWithVariant()).toBe(true);
+    });
+
+    it.each([QuizMode.SYNCHRONIZED, QuizMode.BATCHED])('hides the new-group placement for a %s quiz and falls back to standalone', async (quizMode) => {
+        await createWizard({ id: 3, title: 'Quiz', type: ExerciseType.QUIZ, quizMode } as QuizExercise);
+
+        component.goToPlacement();
+        fixture.detectChanges();
+
+        expect(component.canGroupSourceWithVariant()).toBe(false);
+        expect(component.placementChoice()).toBe('standalone');
+        expect(placementOption('variant-placement-new-group')).toBeNull();
+    });
+
+    it('hides the new-group placement when the source already belongs to a group', async () => {
+        await createWizard(programmingExercise, [{ id: 9, title: 'Sorting variants', exerciseIds: [1] } as ExerciseVariantGroupDTO]);
+
+        component.goToPlacement();
+        fixture.detectChanges();
+
+        // The source keeps its current group, so "add to existing group" is the meaningful choice here.
+        expect(component.canGroupSourceWithVariant()).toBe(false);
+        expect(component.placementChoice()).toBe('existing-group');
+        expect(placementOption('variant-placement-new-group')).toBeNull();
     });
 });
