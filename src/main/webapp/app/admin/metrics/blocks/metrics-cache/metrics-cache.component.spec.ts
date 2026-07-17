@@ -4,7 +4,6 @@
  */
 import { beforeEach, describe, expect, it } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentRef } from '@angular/core';
 
 import { MetricsCacheComponent } from 'app/admin/metrics/blocks/metrics-cache/metrics-cache.component';
@@ -12,8 +11,6 @@ import { CacheMetrics } from 'app/admin/metrics/metrics.model';
 import { filterNaN } from 'app/admin/metrics/filterNaN-util';
 
 describe('MetricsCacheComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: MetricsCacheComponent;
     let componentRef: ComponentRef<MetricsCacheComponent>;
     let fixture: ComponentFixture<MetricsCacheComponent>;

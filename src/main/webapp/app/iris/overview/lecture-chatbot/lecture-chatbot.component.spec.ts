@@ -1,13 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockProvider } from 'ng-mocks';
 import { LectureChatbotComponent } from './lecture-chatbot.component';
 import { ChatServiceMode, IrisChatService } from 'app/iris/overview/services/iris-chat.service';
 
 describe('LectureChatbotComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<LectureChatbotComponent>;
     let component: LectureChatbotComponent;
     let irisChatService: IrisChatService;

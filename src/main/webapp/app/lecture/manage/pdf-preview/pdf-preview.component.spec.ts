@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse, provideHttpClient } from '@angular/common/http';
@@ -17,8 +16,6 @@ import { MockPdfEngineService } from 'test/helpers/mocks/service/mock-pdf-engine
 import { OrderedPage, PdfPreviewComponent } from 'app/lecture/manage/pdf-preview/pdf-preview.component';
 
 describe('PdfPreviewComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: PdfPreviewComponent;
     let fixture: ComponentFixture<PdfPreviewComponent>;
     let engineService: MockPdfEngineService;

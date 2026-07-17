@@ -6,8 +6,9 @@ import { LocalStorageService } from 'app/foundation/service/local-storage.servic
 
 // `@sentry/angular` re-exports the public Sentry API but not the bare `Integration` type
 // (that lives in `@sentry/core`, which we intentionally do not depend on directly).
-// Derive it from an integration factory's return type instead of importing `@sentry/core`.
-type Integration = ReturnType<typeof dedupeIntegration>;
+// Derive it from an integration factory's return type, widening the narrow `name` literal
+// (e.g. "Dedupe") back to `string` so a mixed integration array stays assignable.
+type Integration = Omit<ReturnType<typeof dedupeIntegration>, 'name'> & { name: string };
 
 @Injectable({ providedIn: 'root' })
 export class SentryErrorHandler extends ErrorHandler {

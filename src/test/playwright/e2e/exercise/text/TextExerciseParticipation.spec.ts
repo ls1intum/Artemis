@@ -6,6 +6,7 @@ import { Fixtures } from '../../../fixtures/fixtures';
 import { expect } from '@playwright/test';
 import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
 import { SEED_COURSES } from '../../../support/seedData';
+import { readResponseJson } from '../../../support/utils';
 
 const course = { id: SEED_COURSES.exerciseParticipation.id } as any;
 
@@ -33,7 +34,7 @@ test.describe('Text exercise participation', { tag: '@fast' }, () => {
         await textExerciseEditor.shouldShowNumberOfWords(74);
         await textExerciseEditor.shouldShowNumberOfCharacters(451);
         const response = await courseOverview.submitExercise('api/text/exercises/*/text-submissions');
-        const textSubmission: TextSubmission = await response.json();
+        const textSubmission: TextSubmission = await readResponseJson(response);
         expect(textSubmission.text).toBe(submission);
         expect(textSubmission.submitted).toBe(true);
         expect(response.status()).toBe(200);

@@ -4,10 +4,8 @@ import { CourseCompetenciesRelationGraphComponent } from 'app/atlas/manage/cours
 import { CompetencyRelationDTO, CompetencyRelationType, CourseCompetency, CourseCompetencyType } from 'app/atlas/shared/entities/competency.model';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('CourseCompetenciesRelationGraphComponent', () => {
-    setupTestBed({ zoneless: true });
     let component: CourseCompetenciesRelationGraphComponent;
     let fixture: ComponentFixture<CourseCompetenciesRelationGraphComponent>;
 

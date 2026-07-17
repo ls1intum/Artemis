@@ -1,5 +1,4 @@
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
@@ -61,8 +60,6 @@ const PLACEHOLDER_CYCLE_INTERVAL_MS = 5000;
 const PLACEHOLDER_FADE_DURATION_MS = 300;
 
 describe('IrisBaseChatbotComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: IrisBaseChatbotComponent;
     let fixture: ComponentFixture<IrisBaseChatbotComponent>;
 

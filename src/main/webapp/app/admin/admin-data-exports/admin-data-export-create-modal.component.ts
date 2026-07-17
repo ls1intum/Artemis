@@ -53,7 +53,7 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
                 </div>
                 <small class="text-muted-color" jhiTranslate="artemisApp.dataExport.admin.executeNowDescription"></small>
             </div>
-            <ng-template pTemplate="footer">
+            <ng-template #footer>
                 <div class="flex justify-end gap-2">
                     <button pButton size="small" severity="secondary" (click)="cancel()" jhiTranslate="entity.action.cancel" data-testid="cancel-btn"></button>
                     <button pButton size="small" [disabled]="!selectedUserLogin() || isSubmitting()" (click)="submit()" data-testid="submit-btn">

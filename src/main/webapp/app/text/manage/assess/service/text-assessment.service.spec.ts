@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { take } from 'rxjs/operators';
@@ -27,7 +26,6 @@ import { NewStudentParticipationResolver, StudentParticipationResolver } from 'a
  * feedback data retrieval, and student participation resolvers.
  */
 describe('TextAssessment Service', () => {
-    setupTestBed({ zoneless: true });
     let service: TextAssessmentService;
     let httpMock: HttpTestingController;
     const textSubmission = new TextSubmission();
