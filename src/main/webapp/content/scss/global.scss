@@ -757,6 +757,19 @@ code.password:hover {
     height: calc(100% - 20px);
 }
 
+// tum-aet-ui kit: structural styles for CDK overlay backdrops (popover, and later menu/select).
+// Artemis intentionally does not import the CDK overlay-prebuilt stylesheet, and the minimal
+// .cdk-overlay-container override above provides none of the backdrop rules. Without a full-viewport,
+// pointer-capturing backdrop the transparent click-catcher collapses to zero size, so clicks pass
+// through to the page and OverlayRef.backdropClick() never fires (the popover stays open). `fixed` +
+// `inset: 0` covers the viewport regardless of the (statically positioned) container; the overlay pane
+// is a later sibling and therefore stacks above this backdrop, so in-panel clicks keep working.
+.tum-ui-overlay-backdrop {
+    position: fixed;
+    inset: 0;
+    pointer-events: auto;
+}
+
 .not-allowed {
     cursor: not-allowed;
 }
