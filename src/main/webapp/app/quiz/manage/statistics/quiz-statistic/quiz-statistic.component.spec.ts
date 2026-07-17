@@ -289,7 +289,6 @@ describe('QuizStatisticComponent', () => {
     it('should format correctly', () => {
         fixture = TestBed.createComponent(QuizStatisticComponent);
         comp = fixture.componentInstance;
-        comp.totalParticipants = 100;
         comp.participants = 100;
 
         // the data label formatter is wired into the chart options
@@ -297,8 +296,20 @@ describe('QuizStatisticComponent', () => {
 
         expect(formatter(30)).toBe('30 (30%)');
 
-        comp.totalParticipants = 0;
+        // without participants the percentage cannot be computed and falls back to 0%
+        comp.participants = 0;
 
-        expect(formatter(0)).toBe('0 (0%)');
+        expect(formatter(30)).toBe('30 (0%)');
+    });
+
+    it('uses the correct-solutions tooltip for question bars and the average tooltip for the last bar', () => {
+        fixture = TestBed.createComponent(QuizStatisticComponent);
+        comp = fixture.componentInstance;
+        // two question bars plus the trailing average bar
+        comp.data = [10, 20, 15];
+        const label = (comp.chartOptions().plugins as any).tooltip.callbacks.label;
+
+        expect(label({ dataIndex: 0, parsed: { y: 10 } })).toContain('tooltip.correctSolutions');
+        expect(label({ dataIndex: 2, parsed: { y: 15 } })).toContain('tooltip.average');
     });
 });
