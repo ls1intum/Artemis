@@ -23,6 +23,7 @@ import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.domain.QuizPointStatistic;
 import de.tum.cit.aet.artemis.quiz.domain.QuizQuestion;
 import de.tum.cit.aet.artemis.quiz.domain.QuizQuestionStatistic;
+import de.tum.cit.aet.artemis.quiz.repository.QuizExerciseRepository;
 import de.tum.cit.aet.artemis.quiz.repository.QuizPointStatisticRepository;
 import de.tum.cit.aet.artemis.quiz.repository.QuizQuestionStatisticRepository;
 import de.tum.cit.aet.artemis.quiz.repository.QuizSubmissionRepository;
@@ -44,20 +45,47 @@ public class QuizStatisticService {
 
     private final QuizSubmissionRepository quizSubmissionRepository;
 
+    private final QuizExerciseRepository quizExerciseRepository;
+
     private final WebsocketMessagingService websocketMessagingService;
 
     private final Optional<LtiApi> ltiApi;
 
     public QuizStatisticService(StudentParticipationRepository studentParticipationRepository, ResultRepository resultRepository,
             WebsocketMessagingService websocketMessagingService, QuizPointStatisticRepository quizPointStatisticRepository,
-            QuizQuestionStatisticRepository quizQuestionStatisticRepository, QuizSubmissionRepository quizSubmissionRepository, Optional<LtiApi> ltiApi) {
+            QuizQuestionStatisticRepository quizQuestionStatisticRepository, QuizSubmissionRepository quizSubmissionRepository, QuizExerciseRepository quizExerciseRepository,
+            Optional<LtiApi> ltiApi) {
         this.studentParticipationRepository = studentParticipationRepository;
         this.resultRepository = resultRepository;
         this.quizPointStatisticRepository = quizPointStatisticRepository;
         this.quizQuestionStatisticRepository = quizQuestionStatisticRepository;
         this.websocketMessagingService = websocketMessagingService;
         this.quizSubmissionRepository = quizSubmissionRepository;
+        this.quizExerciseRepository = quizExerciseRepository;
         this.ltiApi = ltiApi;
+    }
+
+    /**
+     * Incrementally adds a single newly created result to the quiz statistics, loading the quiz and result freshly by
+     * id. This is intended to be run off the request thread: the caller (e.g. a practice submission) does not need to
+     * wait for the statistics update.
+     * <p>
+     * This is the same O(1) incremental mechanism used for live and exam quiz submissions (see
+     * {@link #updateStatistics}), rather than a full recompute, which iterates every participation of the quiz and is
+     * far too expensive to run per submission. Loading the quiz and result freshly means the update never mutates
+     * entities the request thread still uses (notably {@link QuizExercise#filterForStatisticWebsocket()} inside
+     * {@link #updateStatistics}).
+     *
+     * @param quizExerciseId the id of the quiz exercise
+     * @param resultId       the id of the newly created result to add to the statistics
+     */
+    public void updateStatisticsForNewResult(long quizExerciseId, long resultId) {
+        Optional<Result> result = resultRepository.findResultWithSubmissionAndParticipationById(resultId);
+        if (result.isEmpty()) {
+            return;
+        }
+        QuizExercise quizExercise = quizExerciseRepository.findByIdWithQuestionsAndStatisticsElseThrow(quizExerciseId);
+        updateStatistics(Set.of(result.get()), quizExercise);
     }
 
     /**
@@ -140,7 +168,16 @@ public class QuizStatisticService {
                 // check if the result is rated
                 // NOTE: there is never an old Result if the new result is rated
                 if (!result.isRated()) {
-                    quiz.removeResultFromAllStatistics(getPreviousResult(result));
+                    Result previousResult = getPreviousResult(result);
+                    if (previousResult != null && previousResult.getSubmission() != null) {
+                        // Attach the previous submission with its eagerly loaded submitted answers before removing it from the
+                        // statistics: removeResultFromAllStatistics reads the submitted answers, which are lazy on the result
+                        // returned by getPreviousResult. This method may run without an open session (e.g. the asynchronous
+                        // practice-statistics update on a repeated practice submission), where a lazy access would otherwise
+                        // fail with a LazyInitializationException.
+                        previousResult.setSubmission(quizSubmissionRepository.findWithEagerSubmittedAnswersById(previousResult.getSubmission().getId()));
+                    }
+                    quiz.removeResultFromAllStatistics(previousResult);
                 }
                 var quizSubmission = quizSubmissionRepository.findWithEagerSubmittedAnswersById(result.getSubmission().getId());
                 quiz.addResultToAllStatistics(result, quizSubmission);
