@@ -29,9 +29,11 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.dto.LoginOptionsDTO;
 import de.tum.cit.aet.artemis.account.repository.PasskeyCredentialsRepository;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.account.service.AccountService;
+import de.tum.cit.aet.artemis.account.service.LoginOptionsService;
 import de.tum.cit.aet.artemis.account.service.user.UserService;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.dto.UserDTO;
@@ -85,14 +87,17 @@ public class PublicAccountResource {
 
     private final TokenProvider tokenProvider;
 
+    private final LoginOptionsService loginOptionsService;
+
     public PublicAccountResource(AccountService accountService, UserService userService, MailService mailService, UserRepository userRepository,
-            Optional<PasskeyCredentialsRepository> passkeyCredentialsRepository, TokenProvider tokenProvider) {
+            Optional<PasskeyCredentialsRepository> passkeyCredentialsRepository, TokenProvider tokenProvider, LoginOptionsService loginOptionsService) {
         this.accountService = accountService;
         this.userService = userService;
         this.mailService = mailService;
         this.userRepository = userRepository;
         this.passkeyCredentialsRepository = passkeyCredentialsRepository;
         this.tokenProvider = tokenProvider;
+        this.loginOptionsService = loginOptionsService;
     }
 
     /**
@@ -217,6 +222,22 @@ public class PublicAccountResource {
         userDTO.setLoggedInWithPasskey(isLoggedInWithPasskey);
         userDTO.setPasskeySuperAdminApproved(isPasskeySuperAdminApproved);
         return userDTO;
+    }
+
+    /**
+     * {@code GET /login-options} : determine the login options for a given username or email.
+     * <p>
+     * This endpoint is public and is used during the first step of the identifier-first login flow
+     * to determine if the user should enter their local password or redirect to an external identity provider.
+     *
+     * @param usernameOrEmail the login or email address entered by the user
+     * @return the {@link ResponseEntity} with status {@code 200 (OK)} and with body the {@link LoginOptionsDTO}
+     */
+    @GetMapping("login-options")
+    @EnforceNothing
+    public ResponseEntity<LoginOptionsDTO> getLoginOptions(@RequestParam("usernameOrEmail") String usernameOrEmail) {
+        LoginOptionsDTO loginOptions = loginOptionsService.getLoginOptions(usernameOrEmail);
+        return ResponseEntity.ok(loginOptions);
     }
 
     /**
