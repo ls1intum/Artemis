@@ -26,6 +26,8 @@ export interface TextEditorCompleter<ItemType> {
      * Maps a completion item to a text editor completion item.
      * @param item The completion item to map.
      * @param range The range in the editor where the completion item should be inserted.
+     * @param searchTerm The term the user has typed after the trigger character, used e.g. to build a filter text.
+     * @param index The position of the item in the search results, used e.g. to build a sort text that preserves the result order.
      */
-    mapCompletionItem(item: ItemType, range: TextEditorRange): TextEditorCompletionItem;
+    mapCompletionItem(item: ItemType, range: TextEditorRange, searchTerm: string, index: number): TextEditorCompletionItem;
 }

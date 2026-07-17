@@ -81,7 +81,9 @@ export class MonacoTextEditorAdapter implements TextEditor {
                 if (triggerCharacter && sequenceUntilPosition.word !== triggerCharacter && beforeWord !== triggerCharacter) {
                     return undefined;
                 }
-                const items = (await completer.searchItems(sequenceUntilPosition.word)).map((item) => completer.mapCompletionItem(item, this.fromMonacoRange(range)));
+                const items = (await completer.searchItems(sequenceUntilPosition.word)).map((item, index) =>
+                    completer.mapCompletionItem(item, this.fromMonacoRange(range), sequenceUntilPosition.word, index),
+                );
 
                 return {
                     suggestions: items.map((item) => {
@@ -91,6 +93,8 @@ export class MonacoTextEditorAdapter implements TextEditor {
                             insertText: item.getInsertText(),
                             range: this.toMonacoRange(item.getRange()),
                             detail: item.getDetailText(),
+                            filterText: item.getFilterText(),
+                            sortText: item.getSortText(),
                         };
                     }),
                     incomplete: completer.incomplete,
