@@ -97,6 +97,15 @@ describe('TumUiTableComponent', () => {
         expect(headerCells()[1].getAttribute('aria-sort')).toBeNull();
     });
 
+    it('exposes aria-sort="none" on a sortable-but-unsorted column (announced as sortable) and none on a non-sortable one', async () => {
+        fixture.detectChanges();
+        await fixture.whenStable();
+        // 'name' is sortable but not the active sort → aria-sort="none" so AT announces it as sortable.
+        expect(headerCells()[0].getAttribute('aria-sort')).toBe('none');
+        // 'count' is not sortable → no aria-sort attribute at all.
+        expect(headerCells()[1].getAttribute('aria-sort')).toBeNull();
+    });
+
     it('debounces the global search and resets the page', async () => {
         vi.useFakeTimers();
         fixture.detectChanges();

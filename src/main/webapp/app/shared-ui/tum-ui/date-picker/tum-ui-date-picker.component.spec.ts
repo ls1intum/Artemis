@@ -81,6 +81,22 @@ describe('TumUiDatePickerComponent', () => {
         expect(input().value).toBe('13.06.2026 08:30');
     });
 
+    it('does not wipe in-progress invalid text when the value is re-supplied as an equal-but-fresh instance', () => {
+        fixture.componentRef.setInput('value', dayjs('2026-06-13T08:30'));
+        fixture.detectChanges();
+        // User is mid-edit and the text is momentarily unparseable (the keepInvalid window).
+        input().value = '13.06.2026 08:30xx';
+        input().dispatchEvent(new Event('input'));
+        expect(component.isValid()).toBe(false);
+        // A concurrent change detection re-supplies [value] as a NEW dayjs of the SAME instant — the churn a
+        // consumer causes with [value]="dayjs(x)". Because the fields key on a minute-precision identity (not the
+        // object reference), this must NOT re-seed the input and destroy the edit + error state.
+        fixture.componentRef.setInput('value', dayjs('2026-06-13T08:30'));
+        fixture.detectChanges();
+        expect(component.isValid()).toBe(false);
+        expect(input().value).toBe('13.06.2026 08:30xx');
+    });
+
     it('shows the error border and is invalid when [error] is set', () => {
         fixture.componentRef.setInput('error', true);
         fixture.detectChanges();

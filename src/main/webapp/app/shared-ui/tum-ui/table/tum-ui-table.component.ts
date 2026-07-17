@@ -117,10 +117,15 @@ export class TumUiTableComponent<T> {
         return { data: row, col, value: this.resolveValue(row, col), rowIndex };
     }
 
-    protected ariaSortFor(col: ColumnDef<T>): 'ascending' | 'descending' | undefined {
+    protected ariaSortFor(col: ColumnDef<T>): 'ascending' | 'descending' | 'none' | undefined {
+        // Non-sortable columns get no aria-sort at all; sortable ones always expose it ('none' when not the
+        // active sort) so assistive tech announces them as sortable (parity with PrimeNG's pSortableColumn).
+        if (!col.sort || !col.field) {
+            return undefined;
+        }
         const sort = this.sortState();
         if (!sort || sort.field !== col.field) {
-            return undefined;
+            return 'none';
         }
         return sort.direction === 'asc' ? 'ascending' : 'descending';
     }

@@ -102,20 +102,26 @@ export class TumUiDatePickerComponent implements FormValueControl<dayjs.Dayjs | 
         return Intl.DateTimeFormat().resolvedOptions().timeZone;
     }
 
-    // Reset to true whenever `value()` changes from the outside (or via a commit), so a stale error border
+    // Minute-precision string identity of the value. Angular's model() has no `equal` option, so an
+    // equal-but-fresh dayjs instance (e.g. a consumer binding [value]="dayjs(x)", a new reference on every
+    // change detection) would otherwise re-seed the two linkedSignals below on an unrelated CD pass and wipe
+    // in-progress keepInvalid text. Keying them on this primitive — stable under Object.is for equal instants —
+    // makes them re-seed only when the value's displayed minute actually changes.
+    private readonly valueKey = computed(() => {
+        const current = this.value();
+        return current ? formatDisplay(current) : '';
+    });
+    // Reset to true whenever the value's minute changes (external set or commit), so a stale error border
     // does not linger over a freshly-supplied valid date. Stays false while the user types unparseable text
-    // (value() unchanged), which is exactly the keepInvalid window.
+    // (value unchanged), which is exactly the keepInvalid window.
     private readonly isInputValid = linkedSignal(() => {
-        this.value();
+        this.valueKey();
         return true;
     });
     protected readonly isOpen = signal(false);
     protected readonly activeMonth = signal(dayjs().startOf('month'));
     protected readonly timeText = signal('');
-    protected readonly inputText = linkedSignal(() => {
-        const current = this.value();
-        return current ? formatDisplay(current) : '';
-    });
+    protected readonly inputText = linkedSignal(() => this.valueKey());
 
     private readonly panel = viewChild.required('panel', { read: TemplateRef });
     private readonly triggerWrapper = viewChild.required<ElementRef<HTMLElement>>('triggerWrapper');
