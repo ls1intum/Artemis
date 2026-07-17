@@ -1,3 +1,4 @@
+import { Signal } from '@angular/core';
 import { GradingCriterion } from 'app/exercise/structured-grading-criterion/grading-criterion.model';
 import { TemplateProgrammingExerciseParticipation } from 'app/exercise/shared/entities/participation/template-programming-exercise-participation.model';
 import { SolutionProgrammingExerciseParticipation } from 'app/exercise/shared/entities/participation/solution-programming-exercise-participation.model';
@@ -116,11 +117,16 @@ export interface ProgrammingTestStatusDetail extends DetailBase {
 }
 export interface ProgrammingDiffReportDetail extends DetailBase {
     type: DetailType.ProgrammingDiffReport;
+    /**
+     * The diff report is populated asynchronously after the detail sections have already been rendered.
+     * The fields are therefore signals so that late updates schedule change detection in the zoneless app
+     * (in-place mutation of a plain object would leave the view spinning until an unrelated event triggers CD).
+     */
     data: {
-        repositoryDiffInformation?: RepositoryDiffInformation;
-        templateFileContentByPath: Map<string, string>;
-        solutionFileContentByPath: Map<string, string>;
-        lineChangesLoading?: boolean;
+        repositoryDiffInformation: Signal<RepositoryDiffInformation | undefined>;
+        templateFileContentByPath: Signal<Map<string, string>>;
+        solutionFileContentByPath: Signal<Map<string, string>>;
+        lineChangesLoading: Signal<boolean>;
     };
 }
 
