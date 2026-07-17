@@ -111,6 +111,7 @@ class CourseDataRetentionServiceTest {
         when(courseRepository.findAllWithCourseConfigurationByEndDateBefore(any())).thenReturn(List.of(due));
         when(courseRepository.findByIdWithExercisesAndExerciseDetailsAndLecturesElseThrow(1L)).thenReturn(due);
         when(courseArchiveService.archiveCourseSynchronously(due)).thenReturn(true);
+        when(mailSendingService.isMailConfigured()).thenReturn(true);
         User instructor = new User();
         instructor.setLogin("instructor1");
         instructor.setEmail("instructor1@artemis.test");
@@ -126,6 +127,45 @@ class CourseDataRetentionServiceTest {
         verify(courseRepository).save(due);
         assertThat(due.getCourseConfiguration()).isNotNull();
         assertThat(due.getCourseConfiguration().getResetWarningSentDate()).isNotNull();
+    }
+
+    @Test
+    void doesNotAdvanceLifecycleWhenMailIsDisabled() {
+        ZonedDateTime now = ZonedDateTime.now();
+        Course due = course(1, now.minusYears(2), false, false, null, null);
+        when(courseRepository.findAllWithCourseConfigurationByEndDateBefore(any())).thenReturn(List.of(due));
+        when(courseRepository.findByIdWithExercisesAndExerciseDetailsAndLecturesElseThrow(1L)).thenReturn(due);
+        when(courseArchiveService.archiveCourseSynchronously(due)).thenReturn(true);
+        when(mailSendingService.isMailConfigured()).thenReturn(false);
+
+        int warned = service().warnAndArchiveDueCourses();
+
+        // Nobody could be warned, so the course must stay retryable and NOT be scheduled for a reset.
+        assertThat(warned).isZero();
+        verify(courseRepository, never()).save(any());
+        assertThat(due.getCourseConfiguration() == null || due.getCourseConfiguration().getResetWarningSentDate() == null).isTrue();
+    }
+
+    @Test
+    void doesNotAdvanceLifecycleWhenNoEligibleInstructor() {
+        ZonedDateTime now = ZonedDateTime.now();
+        Course due = course(1, now.minusYears(2), false, false, null, null);
+        when(courseRepository.findAllWithCourseConfigurationByEndDateBefore(any())).thenReturn(List.of(due));
+        when(courseRepository.findByIdWithExercisesAndExerciseDetailsAndLecturesElseThrow(1L)).thenReturn(due);
+        when(courseArchiveService.archiveCourseSynchronously(due)).thenReturn(true);
+        when(mailSendingService.isMailConfigured()).thenReturn(true);
+        // instructor is not activated -> not eligible, so no warning is dispatched
+        User instructor = new User();
+        instructor.setLogin("instructor1");
+        instructor.setEmail("instructor1@artemis.test");
+        instructor.setActivated(false);
+        when(userRepository.getInstructors(due)).thenReturn(Set.of(instructor));
+
+        int warned = service().warnAndArchiveDueCourses();
+
+        assertThat(warned).isZero();
+        verify(mailSendingService, never()).buildAndSendAsync(any(), any(), anyList(), any(), anyMap());
+        verify(courseRepository, never()).save(any());
     }
 
     @Test

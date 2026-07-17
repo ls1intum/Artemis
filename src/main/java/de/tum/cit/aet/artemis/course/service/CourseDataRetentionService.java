@@ -121,7 +121,15 @@ public class CourseDataRetentionService {
                     log.warn("Could not archive course {} for the data-privacy warning; it will be retried on the next run", dueCourse.getId());
                     continue;
                 }
-                notifyInstructorsAboutUpcomingReset(dueCourse);
+                // Only advance the lifecycle once at least one instructor was actually warned. If mail is disabled or the
+                // course has no eligible instructor (activated, with an email), leave it retryable and do NOT schedule a
+                // reset, so student data is never deleted without its instructors having been warned.
+                int notifiedInstructors = notifyInstructorsAboutUpcomingReset(dueCourse);
+                if (notifiedInstructors == 0) {
+                    log.warn("No instructor of course {} could be warned (mail disabled or no eligible recipient); leaving it retryable and not scheduling a reset",
+                            dueCourse.getId());
+                    continue;
+                }
                 // Persist the warning timestamp on the config-bearing instance (dueCourse has the configuration fetched),
                 // syncing the archive path set during archiving so saving this instance does not clobber it.
                 CourseConfiguration configuration = dueCourse.getCourseConfiguration();
@@ -182,10 +190,23 @@ public class CourseDataRetentionService {
         return course.isGradeRelevant() ? dataCleanupProperties.gradeRelevantRetentionYears() : dataCleanupProperties.nonGradeRelevantRetentionYears();
     }
 
-    private void notifyInstructorsAboutUpcomingReset(Course course) {
+    /**
+     * Emails every eligible instructor (activated, with an email address) of the course the upcoming-reset warning with a
+     * download link to the archived backup.
+     *
+     * @param course the course whose instructors should be warned
+     * @return the number of instructors a warning was dispatched to; {@code 0} if mail is disabled globally or the course
+     *         has no eligible instructor (in which case the caller must not advance the reset lifecycle)
+     */
+    private int notifyInstructorsAboutUpcomingReset(Course course) {
+        // Cannot warn anyone if mail is not configured, so the reset lifecycle must not advance.
+        if (!mailSendingService.isMailConfigured()) {
+            return 0;
+        }
         Set<User> instructors = userRepository.getInstructors(course);
         Map<String, Object> contextVariables = Map.of("courseTitle", course.getTitle(), "courseId", course.getId(), "gracePeriodDays",
                 dataCleanupProperties.resetWarningGracePeriodDays());
+        int notified = 0;
         for (User instructor : instructors) {
             if (!instructor.getActivated() || instructor.getEmail() == null) {
                 continue;
@@ -193,10 +214,12 @@ public class CourseDataRetentionService {
             try {
                 mailSendingService.buildAndSendAsync(MailRecipientDTO.from(instructor), RESET_WARNING_EMAIL_SUBJECT_KEY, List.of(course.getTitle()), RESET_WARNING_EMAIL_TEMPLATE,
                         contextVariables);
+                notified++;
             }
             catch (Exception ex) {
                 log.error("Failed to send student-data reset warning email to instructor {} for course {}", instructor.getLogin(), course.getId(), ex);
             }
         }
+        return notified;
     }
 }
