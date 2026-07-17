@@ -265,4 +265,14 @@ describe('QuizExercise Point Statistic Component', () => {
             expect(loadQuizSucessMock).toHaveBeenCalledWith(quizExercise);
         });
     });
+
+    describe('tooltip labels', () => {
+        it('uses the point-range tooltip for every bar', () => {
+            comp.data = [3, 0, 2];
+            const label = (comp.chartOptions().plugins as any).tooltip.callbacks.label;
+
+            expect(label({ dataIndex: 0, parsed: { y: 3 } })).toContain('tooltip.pointRange');
+            expect(label({ dataIndex: 2, parsed: { y: 2 } })).toContain('tooltip.pointRange');
+        });
+    });
 });
