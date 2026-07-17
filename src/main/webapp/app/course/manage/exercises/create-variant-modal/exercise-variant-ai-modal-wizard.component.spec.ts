@@ -81,6 +81,15 @@ describe('ExerciseVariantAiModalWizardComponent (exam path)', () => {
         expect(document.body.querySelector('[data-testid="variant-option-difficulty"]')).not.toBeNull();
     });
 
+    it('drops the placement step from the indicator for exam exercises', () => {
+        fixture.detectChanges();
+
+        // Placement is forced to SAME_EXAM_GROUP, so advertising the step would promise a choice that never comes.
+        expect(component.wizardSteps().map((step) => step.label)).toEqual(['Select', 'Configure', 'Generating', 'Result']);
+        expect(document.body.querySelector('[data-testid="variant-wizard-indicator-Placement"]')).toBeNull();
+        expect(document.body.querySelector('[data-testid="variant-wizard-indicator-Configure"]')).not.toBeNull();
+    });
+
     it('skips the placement step and starts generation with SAME_EXAM_GROUP', () => {
         fixture.detectChanges();
         component.changeDomain.set(true);
@@ -167,6 +176,13 @@ describe('ExerciseVariantAiModalWizardComponent (new-group placement availabilit
     afterEach(() => {
         fixture.destroy();
         TestBed.resetTestingModule();
+    });
+
+    it('keeps the placement step in the indicator for course exercises', async () => {
+        await createWizard(programmingExercise);
+
+        expect(component.wizardSteps().map((step) => step.label)).toEqual(['Select', 'Configure', 'Placement', 'Generating', 'Result']);
+        expect(document.body.querySelector('[data-testid="variant-wizard-indicator-Placement"]')).not.toBeNull();
     });
 
     it('offers the new-group placement for an ungrouped programming exercise', async () => {

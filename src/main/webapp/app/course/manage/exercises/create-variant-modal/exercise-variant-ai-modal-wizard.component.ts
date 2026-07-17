@@ -3,6 +3,7 @@ import { NgTemplateOutlet } from '@angular/common';
 import dayjs from 'dayjs/esm';
 import { FormsModule } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
 import {
     faArrowLeft,
     faArrowRight,
@@ -44,12 +45,17 @@ import { PlacementChoice, adaptationChips, difficultyBadgeClass, difficultyLabel
 
 type WizardStep = 1 | 2 | 3 | 4 | 5;
 
-const WIZARD_STEPS = [
-    { label: 'Select', icon: faWandMagicSparkles },
-    { label: 'Configure', icon: faGears },
-    { label: 'Placement', icon: faLayerGroup },
-    { label: 'Generating', icon: faRobot },
-    { label: 'Result', icon: faCircleCheck },
+/**
+ * The wizard's step indicator. `step` is the WizardStep the entry represents — carried explicitly rather than
+ * derived from the array index, because the Placement step is dropped for exam exercises (see `wizardSteps`)
+ * while the remaining steps keep their numbers.
+ */
+const WIZARD_STEPS: ReadonlyArray<{ step: WizardStep; label: string; icon: IconDefinition }> = [
+    { step: 1, label: 'Select', icon: faWandMagicSparkles },
+    { step: 2, label: 'Configure', icon: faGears },
+    { step: 3, label: 'Placement', icon: faLayerGroup },
+    { step: 4, label: 'Generating', icon: faRobot },
+    { step: 5, label: 'Result', icon: faCircleCheck },
 ];
 
 /**
@@ -239,7 +245,13 @@ export class ExerciseVariantAiModalWizardComponent implements OnDestroy {
     });
 
     readonly generationPhases = GENERATION_PHASES;
-    readonly wizardSteps = WIZARD_STEPS;
+
+    /**
+     * The steps the indicator shows. Exam variants are always placed in the source's exam exercise group, so the
+     * wizard never visits Placement (see `goToPlacement`) — advertising a step that is silently skipped reads as
+     * "you will be asked where to place this", which is exactly what exam mode must not do.
+     */
+    readonly wizardSteps = computed(() => WIZARD_STEPS.filter((step) => !(step.step === 3 && this.isExamExercise())));
 
     protected readonly faRobot = faRobot;
     protected readonly faInfoCircle = faInfoCircle;

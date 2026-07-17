@@ -10,16 +10,21 @@
 >
     <!-- ── Step indicator (wizard flow only — monitor mode has no steps 1–3) ── -->
     @if (!isMonitorMode()) {
-        <div class="wizard-step-indicator mb-4">
-            @for (step of wizardSteps; track step.label; let i = $index) {
-                <div class="wiz-step-item" [class.wiz-step-item--active]="wizardStep() === i + 1" [class.wiz-step-item--completed]="wizardStep() > i + 1">
+        <div class="wizard-step-indicator mb-4" data-testid="variant-wizard-step-indicator">
+            @for (step of wizardSteps(); track step.step; let i = $index) {
+                <div
+                    class="wiz-step-item"
+                    [class.wiz-step-item--active]="wizardStep() === step.step"
+                    [class.wiz-step-item--completed]="wizardStep() > step.step"
+                    [attr.data-testid]="'variant-wizard-indicator-' + step.label"
+                >
                     <div class="wiz-step-circle">
                         <fa-icon [icon]="step.icon" />
                     </div>
                     <div class="wiz-step-label">{{ step.label }}</div>
                 </div>
-                @if (i < wizardSteps.length - 1) {
-                    <div class="wiz-step-line" [class.wiz-step-line--completed]="wizardStep() > i + 1"></div>
+                @if (i < wizardSteps().length - 1) {
+                    <div class="wiz-step-line" [class.wiz-step-line--completed]="wizardStep() > step.step"></div>
                 }
             }
         </div>
