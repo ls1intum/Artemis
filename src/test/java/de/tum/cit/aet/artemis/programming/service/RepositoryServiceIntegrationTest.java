@@ -6,7 +6,9 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 import org.apache.commons.io.FileUtils;
@@ -86,5 +88,44 @@ class RepositoryServiceIntegrationTest extends AbstractProgrammingIntegrationLoc
 
         assertThat(filesAfterDeadline).containsEntry(seededFilePath, seededContent);
         assertThat(filesBeforeDeadline).isEmpty();
+    }
+
+    @Test
+    void getSelectedFilesContentSkipsBlobAbovePerFileLimit() throws Exception {
+        String smallFilePath = "src/Small.java";
+        String largeFilePath = "src/Large.java";
+        Files.writeString(localRepository.workingCopyGitRepoFile.toPath().resolve(smallFilePath), "class Small {}", StandardCharsets.UTF_8);
+        Files.write(localRepository.workingCopyGitRepoFile.toPath().resolve(largeFilePath), new byte[(int) RepositoryService.MAX_SELECTED_FILE_SIZE_BYTES + 1]);
+        String commitHash = commitAndPushSelectedFiles();
+
+        Map<String, String> files = repositoryService.getFilesContentFromBareRepository(localRepository.remoteBareGitRepo.getRepository(), commitHash,
+                Set.of(smallFilePath, largeFilePath));
+
+        assertThat(files).containsOnlyKeys(smallFilePath);
+    }
+
+    @Test
+    void getSelectedFilesContentEnforcesAggregateLimit() throws Exception {
+        Set<String> filePaths = new HashSet<>();
+        byte[] content = new byte[(int) RepositoryService.MAX_SELECTED_FILE_SIZE_BYTES];
+        for (int i = 0; i < 6; i++) {
+            String filePath = "src/File" + i + ".java";
+            Files.write(localRepository.workingCopyGitRepoFile.toPath().resolve(filePath), content);
+            filePaths.add(filePath);
+        }
+        String commitHash = commitAndPushSelectedFiles();
+
+        Map<String, String> files = repositoryService.getFilesContentFromBareRepository(localRepository.remoteBareGitRepo.getRepository(), commitHash, filePaths);
+
+        assertThat(files).hasSize(5);
+        assertThat(files.values().stream().mapToLong(value -> value.getBytes(StandardCharsets.UTF_8).length).sum())
+                .isEqualTo(RepositoryService.MAX_SELECTED_FILES_TOTAL_SIZE_BYTES);
+    }
+
+    private String commitAndPushSelectedFiles() throws Exception {
+        localRepository.workingCopyGitRepo.add().addFilepattern(".").call();
+        var commit = GitService.commit(localRepository.workingCopyGitRepo).setMessage("add selected files").call();
+        localRepository.workingCopyGitRepo.push().setRemote("origin").call();
+        return commit.getName();
     }
 }

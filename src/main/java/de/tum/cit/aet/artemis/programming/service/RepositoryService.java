@@ -72,6 +72,10 @@ public class RepositoryService {
 
     private static final Logger log = LoggerFactory.getLogger(RepositoryService.class);
 
+    static final long MAX_SELECTED_FILE_SIZE_BYTES = 1024 * 1024;
+
+    static final long MAX_SELECTED_FILES_TOTAL_SIZE_BYTES = 5 * 1024 * 1024;
+
     public RepositoryService(GitService gitService, Optional<VcsAccessLogService> vcsAccessLogService) {
         this.gitService = gitService;
         this.vcsAccessLogService = vcsAccessLogService;
@@ -215,6 +219,7 @@ public class RepositoryService {
         }
 
         Map<String, String> filesWithContent = new HashMap<>();
+        long totalSize = 0;
         try (RevWalk revWalk = new RevWalk(repository)) {
             RevCommit commit = revWalk.parseCommit(commitId);
             for (String filePath : filePaths) {
@@ -225,7 +230,13 @@ public class RepositoryService {
                     if (treeWalk == null || treeWalk.getFileMode(0) == FileMode.SYMLINK || treeWalk.getFileMode(0).getObjectType() != Constants.OBJ_BLOB) {
                         continue;
                     }
-                    filesWithContent.put(filePath, new String(repository.open(treeWalk.getObjectId(0)).getBytes(), StandardCharsets.UTF_8));
+                    var blobLoader = repository.open(treeWalk.getObjectId(0));
+                    long blobSize = blobLoader.getSize();
+                    if (blobSize > MAX_SELECTED_FILE_SIZE_BYTES || blobSize > MAX_SELECTED_FILES_TOTAL_SIZE_BYTES - totalSize) {
+                        continue;
+                    }
+                    filesWithContent.put(filePath, new String(blobLoader.getBytes(), StandardCharsets.UTF_8));
+                    totalSize += blobSize;
                 }
             }
         }

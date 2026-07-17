@@ -87,6 +87,8 @@ public class ProgrammingExerciseParticipationResource {
 
     private static final String ENTITY_NAME = "programmingExerciseParticipation";
 
+    private static final int MAX_SELECTED_FILE_PATHS = 100;
+
     @Value("${artemis.version-control.url}")
     private URI localVCBaseUri;
 
@@ -569,6 +571,10 @@ public class ProgrammingExerciseParticipationResource {
     @EnforceAtLeastStudent
     public ResponseEntity<Map<String, String>> getSelectedParticipationRepositoryFilesAtCommit(@PathVariable long exerciseId, @RequestParam String commitId,
             @RequestParam long participationId, @RequestBody Set<String> filePaths) {
+        if (filePaths != null && filePaths.size() > MAX_SELECTED_FILE_PATHS) {
+            throw new BadRequestAlertException("Too many selected file paths", ENTITY_NAME, "tooManySelectedFilePaths");
+        }
+
         Set<String> validFilePaths = new HashSet<>();
         if (filePaths != null) {
             ObjectChecker objectChecker = new ObjectChecker();

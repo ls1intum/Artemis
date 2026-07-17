@@ -7,6 +7,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -1134,6 +1135,19 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
 
             assertThat(files).hasSize(1);
             assertThat(files.get("student/Example.java")).isEqualTo("class StudentExample {}\n");
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void shouldRejectTooManySelectedFiles() throws Exception {
+            var path = "/api/programming/programming-exercises/" + programmingExercise.getId() + "/files-content-commit-details/selected?commitId=" + studentCommitHash
+                    + "&participationId=" + participation.getId();
+            Set<String> filePaths = new HashSet<>();
+            for (int i = 0; i <= 100; i++) {
+                filePaths.add("student/File" + i + ".java");
+            }
+
+            request.postWithResponseBody(path, filePaths, Map.class, HttpStatus.BAD_REQUEST);
         }
 
         @Test
