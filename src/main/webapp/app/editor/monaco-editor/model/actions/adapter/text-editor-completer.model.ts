@@ -17,6 +17,20 @@ export interface TextEditorCompleter<ItemType> {
     incomplete: boolean;
 
     /**
+     * If true, completions are only provided when the trigger character sits at the start of a line
+     * or directly after whitespace. This prevents completions inside words, numbers (e.g. 10:30), or URLs.
+     * Off by default.
+     */
+    requireWordBoundaryBeforeTrigger?: boolean;
+
+    /**
+     * How many characters before the cursor are scanned to locate the trigger character
+     * (including the trigger character itself). Defaults to 25. Raise this for completers whose
+     * typed sequences can be longer, e.g. emoji shortcodes.
+     */
+    scanLengthLimit?: number;
+
+    /**
      * Searches for completion items based on the given search string.
      * @param searchTerm The text input to use to search for completion items.
      */

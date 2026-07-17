@@ -103,4 +103,56 @@ describe('MonacoTextEditorAdapter', () => {
         expect(mapSpy.mock.calls[0][3]).toBe(0);
         expect(mapSpy.mock.calls[1][3]).toBe(1);
     });
+
+    describe('word boundary before trigger', () => {
+        it('should not provide completions inside a word when the boundary is required', async () => {
+            adapter.addCompleter(createCompleter({ requireWordBoundaryBeforeTrigger: true }));
+            const result = await provideCompletions('foo:jo', 7);
+            expect(result).toBeUndefined();
+        });
+
+        it('should not provide completions inside a number when the boundary is required', async () => {
+            const searchItems = vi.fn().mockResolvedValue([]);
+            adapter.addCompleter(createCompleter({ requireWordBoundaryBeforeTrigger: true, searchItems }));
+            const result = await provideCompletions('10:30', 6);
+            expect(result).toBeUndefined();
+            expect(searchItems).not.toHaveBeenCalled();
+        });
+
+        it('should provide completions at the start of a line', async () => {
+            adapter.addCompleter(createCompleter({ requireWordBoundaryBeforeTrigger: true }));
+            const result = (await provideCompletions(':jo', 4)) as monaco.languages.CompletionList;
+            expect(result.suggestions).toHaveLength(1);
+        });
+
+        it('should provide completions after whitespace', async () => {
+            adapter.addCompleter(createCompleter({ requireWordBoundaryBeforeTrigger: true }));
+            const result = (await provideCompletions('hello :jo', 10)) as monaco.languages.CompletionList;
+            expect(result.suggestions).toHaveLength(1);
+        });
+
+        it('should keep providing completions inside a word when the boundary is not required', async () => {
+            adapter.addCompleter(createCompleter());
+            const result = (await provideCompletions('foo:jo', 7)) as monaco.languages.CompletionList;
+            expect(result.suggestions).toHaveLength(1);
+        });
+    });
+
+    describe('scan length limit', () => {
+        const longTerm = 'a'.repeat(30);
+
+        it('should find trigger characters beyond 25 characters with a raised limit', async () => {
+            const searchItems = vi.fn().mockResolvedValue(['joy']);
+            adapter.addCompleter(createCompleter({ scanLengthLimit: 128, searchItems }));
+            const result = (await provideCompletions(`:${longTerm}`, longTerm.length + 2)) as monaco.languages.CompletionList;
+            expect(result.suggestions).toHaveLength(1);
+            expect(searchItems).toHaveBeenCalledWith(longTerm);
+        });
+
+        it('should not find trigger characters beyond 25 characters with the default limit', async () => {
+            adapter.addCompleter(createCompleter());
+            const result = await provideCompletions(`:${longTerm}`, longTerm.length + 2);
+            expect(result).toBeUndefined();
+        });
+    });
 });
