@@ -82,6 +82,10 @@ public class InteractiveSandboxReaperService {
         this.taskScheduler = taskScheduler;
     }
 
+    /**
+     * Validates the configured thresholds and schedules the periodic sweep. When generation hosting is disabled ({@code maxGenerationSandboxSlots <= 0}), this instead removes
+     * this agent's leftover sandbox containers once, since no periodic sweep is needed if new sandboxes can never be created.
+     */
     @PostConstruct
     public void scheduleCleanup() {
         if (sandboxContainerExpiryMinutes <= 0 || sandboxCleanupScheduleMinutes <= 0) {

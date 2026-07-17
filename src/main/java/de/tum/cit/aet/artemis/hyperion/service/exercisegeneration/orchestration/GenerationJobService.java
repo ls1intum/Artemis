@@ -504,10 +504,14 @@ public class GenerationJobService {
      * prevents a late provider response from overlapping a replacement job or escaping in-flight admission accounting. The owner check matters because the job id is observable
      * in the client and websocket topic.
      *
+     * Also refuses to record a cancellation once {@link #enterNonCancellablePhase(long, String)} has already flipped the job to persisting: at that point durable Git/DB
+     * mutations may already be underway and cannot be safely interrupted, so this returns {@code false} (surfaced by the REST layer as "cannot cancel") rather than reporting
+     * the dishonest "cancelled, nothing changed" outcome.
+     *
      * @param exerciseId the exercise id
      * @param jobId      the job id to cancel
      * @param user       the requesting user; must be the instructor who started the job
-     * @return {@code true} if a matching active job owned by {@code user} was found and marked for cancellation
+     * @return {@code true} if a matching active, still-cancellable job owned by {@code user} was found and marked for cancellation
      */
     public boolean requestCancellation(long exerciseId, String jobId, User user) {
         String key = key(exerciseId);
@@ -515,7 +519,11 @@ public class GenerationJobService {
         jobMap.lock(key);
         try {
             JobInfo job = jobMap.get(key);
-            if (job == null || !job.jobId().equals(jobId) || !job.cancellable()) {
+            if (job == null || !job.jobId().equals(jobId)) {
+                return false;
+            }
+            if (!job.cancellable()) {
+                log.debug("Ignored cancellation request for job {}: it already entered the non-cancellable persistence phase", jobId);
                 return false;
             }
             JobTranscript transcript = transcriptMap.get(key);
@@ -539,6 +547,9 @@ public class GenerationJobService {
      * The
      * caller already owns the job id from the running task, so no user ownership check is required.
      *
+     * Like {@link #requestCancellation(long, String, User)}, this refuses once the job already entered the non-cancellable persistence phase, so a deadline or budget trip that
+     * loses the race against {@link #enterNonCancellablePhase(long, String)} never claims to have stopped a save that is already underway.
+     *
      * @param exerciseId the exercise id whose job should be cancelled
      * @param jobId      the running job id
      * @return true if cancellation was recorded
@@ -553,7 +564,11 @@ public class GenerationJobService {
         jobMap.lock(key);
         try {
             JobInfo job = jobMap.get(key);
-            if (job == null || !job.jobId().equals(jobId) || !job.cancellable()) {
+            if (job == null || !job.jobId().equals(jobId)) {
+                return false;
+            }
+            if (!job.cancellable()) {
+                log.debug("Ignored system cancellation request for job {}: it already entered the non-cancellable persistence phase", jobId);
                 return false;
             }
             JobTranscript transcript = transcriptMap.get(key);
@@ -612,12 +627,17 @@ public class GenerationJobService {
      * Marks the job as past the cancellation point and returns whether it may continue into durable persistence.
      * <p>
      * Cancellation is meaningful while the agent is still in the disposable sandbox: the cancel hook can destroy the session and no live repository has been touched. Once the
-     * task starts saving verified output, accepting a new cancellation would be misleading because the repository operation cannot be safely interrupted. The same
-     * distributed job-map lock is used by {@link #requestCancellation(long, String, User)} so a cancel cannot race with this transition across core nodes.
+     * task starts saving verified output, accepting a new cancellation would be misleading because the repository operation cannot be safely interrupted. This transition and
+     * {@link #requestCancellation(long, String, User)} (and {@link #requestSystemCancellation(long, String, String)}) both hold the same distributed job-map lock for the same
+     * key, so exactly one of the two ever wins for a given job: if a cancellation was already recorded for {@code jobId} when this method acquires the lock, it returns
+     * {@code false} here so the caller never persists a run the user (or the system) was already told was cancelled; conversely, once this method has flipped the job to
+     * non-cancellable, a later {@link #requestCancellation(long, String, User)} observes {@code cancellable() == false} and refuses the cancel instead of falsely reporting
+     * that nothing was changed.
      *
      * @param exerciseId the exercise id
      * @param jobId      the job id
-     * @return {@code true} when this node still owns the job and may proceed; {@code false} when ownership was lost
+     * @return {@code true} when this node still owns the job, no cancellation has been recorded for it, and it may proceed into persistence; {@code false} when ownership was
+     *         lost or cancellation already won the race
      */
     public boolean enterNonCancellablePhase(long exerciseId, String jobId) {
         String key = key(exerciseId);
@@ -625,6 +645,11 @@ public class GenerationJobService {
         try {
             JobInfo job = jobMap.get(key);
             if (job == null || !job.jobId().equals(jobId) || localNodeId == null || (job.ownerNodeId() != null && !job.ownerNodeId().equals(localNodeId))) {
+                return false;
+            }
+            if (isCancelled(jobId)) {
+                // Cancellation already won this job under the same lock (recorded by requestCancellation/requestSystemCancellation): the run is terminal as CANCELLED, so this
+                // must not flip the job non-cancellable or allow the caller to persist.
                 return false;
             }
             jobMap.set(key, job.withHeartbeat(Instant.now()).withCancellable(false), JOB_TTL_SECONDS, TimeUnit.SECONDS);

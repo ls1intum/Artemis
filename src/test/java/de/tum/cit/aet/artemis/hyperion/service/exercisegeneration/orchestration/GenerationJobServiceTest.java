@@ -504,14 +504,32 @@ class GenerationJobServiceTest {
     }
 
     @Test
-    void enterNonCancellablePhase_whenCancellationAlreadyRequested_preservesVerifiedSaveObligation() {
+    void enterNonCancellablePhase_whenCancellationAlreadyRequested_refusesToEnterAndLeavesTheRunCancelled() {
         long exerciseId = 14L;
         String jobId = jobService.startJob(user("owner"), exercise(exerciseId), "go", GenerationMode.GENERATE);
 
         assertThat(jobService.requestCancellation(exerciseId, jobId, user("owner"))).isTrue();
 
-        assertThat(jobService.enterNonCancellablePhase(exerciseId, jobId)).isTrue();
+        // Cancellation already won this job under the job-map lock: the caller must not be allowed to persist, and the run stays cancelled — never both.
+        assertThat(jobService.enterNonCancellablePhase(exerciseId, jobId)).isFalse();
         assertThat(jobService.isCancelled(jobId)).isTrue();
+        ExerciseGenerationStatusDTO status = jobService.getStatus(user("owner"), exercise(exerciseId)).orElseThrow();
+        assertThat(status.events()).extracting(ExerciseGenerationEventDTO::type).containsExactly(ExerciseGenerationEventDTO.Type.CANCELLED);
+    }
+
+    @Test
+    void requestCancellation_afterEnteringNonCancellablePhase_refusesAndDoesNotOverwriteTheSaveObligation() {
+        long exerciseId = 141L;
+        String jobId = jobService.startJob(user("owner"), exercise(exerciseId), "go", GenerationMode.GENERATE);
+
+        // Persistence already won this job under the job-map lock: a later cancel request must not succeed or retroactively claim "nothing was changed".
+        assertThat(jobService.enterNonCancellablePhase(exerciseId, jobId)).isTrue();
+
+        assertThat(jobService.requestCancellation(exerciseId, jobId, user("owner"))).isFalse();
+        assertThat(jobService.isCancelled(jobId)).isFalse();
+        ExerciseGenerationStatusDTO status = jobService.getStatus(user("owner"), exercise(exerciseId)).orElseThrow();
+        assertThat(status.events()).isEmpty();
+        assertThat(status.cancellable()).isFalse();
     }
 
     @Test

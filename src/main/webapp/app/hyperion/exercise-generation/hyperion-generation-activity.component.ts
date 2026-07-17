@@ -532,7 +532,11 @@ export class HyperionGenerationActivityComponent implements OnDestroy {
                         if (!sameJob) {
                             this.detailsExpanded.set(false);
                         }
-                        if (wasActivelyObserved) {
+                        // A retained terminal event for a job this component never actively watched (e.g. the page was opened while
+                        // generation was finalizing) must still trigger a refresh when it reports that the live exercise actually
+                        // changed - otherwise a newly-opened editor that already fetched the pre-save exercise would never reload.
+                        // emitGenerationCompleted() itself dedupes per jobId, so this cannot double-refresh across repeated polls.
+                        if (wasActivelyObserved || terminalEvent.liveExerciseChanged) {
                             this.emitGenerationCompleted(status.jobId, terminalEvent);
                         }
                         this.scheduleIdleStatusRefresh(exerciseId);
@@ -784,6 +788,11 @@ export class HyperionGenerationActivityComponent implements OnDestroy {
             this.verdict.set(undefined);
             this.completionStatus.set(undefined);
             this.alertService.error('artemisApp.hyperion.generationActivity.revertPartialFailed', { repositories });
+            // Even a partial revert may have reset one or more repositories (or the problem statement) on the server. The editor must not keep
+            // showing pre-revert content for those, so trigger the same conservative refresh a full revert would, in addition to the error alert.
+            if (result.revertedRepositories.length > 0) {
+                this.generationReverted.emit(result.completedAt);
+            }
             return;
         }
         this.revertPartialRepositories.set(undefined);

@@ -177,7 +177,12 @@ public class DifferentialVerificationService {
      * Runs authoritative verification after restoring the captured candidate independently before the solution and template builds. This prevents generated tests or detached
      * processes from changing the second build's input and making the verifier approve a tree different from the one persistence receives.
      *
-     * @param restoreCandidate resets the same sandbox container and materializes the exact captured candidate
+     * @param sandbox          the open sandbox session the pristine builds run in
+     * @param sessionId        the sandbox session id
+     * @param exercise         the exercise being verified (drives the per-language build recipe)
+     * @param request          the produced artifacts and integrity-gate inputs to decide on (see {@link VerificationRequest})
+     * @param restoreCandidate resets the same sandbox container and materializes the exact captured candidate before each of the two builds
+     * @return the mechanical verdict (verified, solution-passed, template-failed, test count, and rejection reasons)
      */
     public VerificationResult verify(InteractiveSandbox sandbox, String sessionId, ProgrammingExercise exercise, VerificationRequest request, Runnable restoreCandidate) {
         // The sandbox-dependent differential is computed by the same method the in-loop self-check uses, so the agent's `verify` tool and this mechanical decision cannot diverge.

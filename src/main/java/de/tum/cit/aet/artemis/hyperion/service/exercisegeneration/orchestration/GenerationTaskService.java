@@ -183,8 +183,16 @@ public class GenerationTaskService {
                             break;
                         }
                         if (!jobService.enterNonCancellablePhase(exerciseId, jobId)) {
-                            emitter.milestone(ExerciseGenerationEventDTO.of(ExerciseGenerationEventDTO.Type.ERROR,
-                                    "The generated exercise passed verification but could not be saved because job ownership was lost."));
+                            // enterNonCancellablePhase returns false for exactly two reasons, resolved atomically under the same distributed job-map lock as
+                            // requestCancellation/requestSystemCancellation: either a cancellation already won the race (the transcript is already terminal as CANCELLED, so
+                            // this run must be reported the same way, never as a save failure), or ownership of the job was genuinely lost.
+                            if (jobService.isCancelled(jobId)) {
+                                emitter.milestone(ExerciseGenerationEventDTO.of(ExerciseGenerationEventDTO.Type.CANCELLED, "Generation was cancelled. Nothing was changed."));
+                            }
+                            else {
+                                emitter.milestone(ExerciseGenerationEventDTO.of(ExerciseGenerationEventDTO.Type.ERROR,
+                                        "The generated exercise passed verification but could not be saved because job ownership was lost."));
+                            }
                             return;
                         }
                         // A verified candidate is now a save obligation. User cancellation and the generation deadline no longer discard it; Git, CI, and repository operations

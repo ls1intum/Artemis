@@ -525,6 +525,23 @@ class GenerationTaskServiceTest {
     }
 
     @Test
+    void completedRun_thatWasAlreadyCancelledWhenEnteringTheNonCancellablePhase_reportsCancelledAndDoesNotSave() {
+        // enterNonCancellablePhase returns false for two different reasons; when the job-map lock resolved a cancel-first race (jobService.isCancelled() true), the run must be
+        // reported as cancelled — never as a save failure — because the user (or system) was already told nothing would be changed.
+        when(jobService.enterNonCancellablePhase(EXERCISE_ID, JOB_ID)).thenReturn(false);
+        when(jobService.isCancelled(JOB_ID)).thenReturn(true);
+
+        run(GenerationMode.GENERATE, outcomeWith(AgentLoopResult.Status.COMPLETED, new VerificationResult(true, true, true, 3, List.of())));
+
+        ExerciseGenerationEventDTO terminal = sentEvents().getLast();
+        assertThat(terminal.type()).isEqualTo(ExerciseGenerationEventDTO.Type.CANCELLED);
+        assertThat(terminal.message()).contains("cancelled", "Nothing was changed");
+        verify(persistenceService, never()).persist(any(), any(), any(), any(), any(), anyString(), any(), any());
+        verify(reviewService, never()).attachFindings(any(), any(), any());
+        verify(jobService).clearJob(EXERCISE_ID, JOB_ID);
+    }
+
+    @Test
     void staleAsyncWorkerStart_emitsCancelledWithoutReloadingOrSettingUpSandbox() {
         when(jobService.isActiveJob(EXERCISE_ID, JOB_ID)).thenReturn(false);
 

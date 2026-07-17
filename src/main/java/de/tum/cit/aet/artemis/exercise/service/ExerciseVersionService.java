@@ -159,6 +159,8 @@ public class ExerciseVersionService {
     /**
      * Creates an exercise version using exact commit IDs captured by the caller for repositories it just changed.
      *
+     * @param targetExercise      the exercise to create a version of
+     * @param author              the user who created the version
      * @param repositoryCommitIds exact commit IDs keyed by repository type; missing entries are resolved normally
      */
     public void createExerciseVersionOrThrow(Exercise targetExercise, User author, Map<RepositoryType, String> repositoryCommitIds) {

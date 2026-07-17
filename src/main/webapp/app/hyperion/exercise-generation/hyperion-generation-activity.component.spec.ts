@@ -528,8 +528,8 @@ describe('HyperionGenerationActivityComponent', () => {
         ]);
     });
 
-    it('does not report retained terminal history as a newly completed generation', () => {
-        service.status = { jobId: 'j1', running: false, events: [{ type: 'DONE', liveExerciseChanged: true }], fileChanges: [] };
+    it('does not report retained terminal history as a newly completed generation when the live exercise did not change', () => {
+        service.status = { jobId: 'j1', running: false, events: [{ type: 'DONE', liveExerciseChanged: false }], fileChanges: [] };
         const fixture = TestBed.createComponent(HyperionGenerationActivityComponent);
         const completed = vi.fn();
         fixture.componentInstance.generationCompleted.subscribe(completed);
@@ -538,6 +538,26 @@ describe('HyperionGenerationActivityComponent', () => {
         fixture.detectChanges();
 
         expect(completed).not.toHaveBeenCalled();
+    });
+
+    it('reports a retained terminal event that changed the live exercise so a newly-opened editor refreshes exactly once', () => {
+        // Simulates a page opened while generation is finalizing: the component never actively observed the job (it was never `running`
+        // here), but the retained status already carries a DONE event with liveExerciseChanged=true - the editor must still refresh,
+        // otherwise it would keep showing the exercise as it was before the save.
+        service.status = { jobId: 'j1', running: false, events: [{ type: 'DONE', liveExerciseChanged: true }], fileChanges: [] };
+        const fixture = TestBed.createComponent(HyperionGenerationActivityComponent);
+        const completed = vi.fn();
+        fixture.componentInstance.generationCompleted.subscribe(completed);
+
+        fixture.componentRef.setInput('exerciseId', 42);
+        fixture.detectChanges();
+
+        expect(completed).toHaveBeenCalledOnce();
+        expect(completed.mock.calls[0][0]).toMatchObject({ liveExerciseChanged: true });
+
+        // A subsequent background poll of the same terminal status must not emit a second refresh for the same job.
+        (fixture.componentInstance as any).loadStatus(42, undefined, true);
+        expect(completed).toHaveBeenCalledOnce();
     });
 
     it('does not show a disclosure when there is no hidden content', () => {
@@ -1211,7 +1231,7 @@ describe('HyperionGenerationActivityComponent', () => {
         expect(component.canRevert()).toBe(false);
     });
 
-    it('retains diagnostic events and fileChanges with a persistent warning when undo is partial', () => {
+    it('retains diagnostic events and fileChanges with a persistent warning when undo is partial, and still refreshes the editor', () => {
         const fixture = createWith(null);
         const component = fixture.componentInstance;
         const reverted = vi.fn();
@@ -1252,8 +1272,44 @@ describe('HyperionGenerationActivityComponent', () => {
         expect(component.verdict()).toBeUndefined();
         fixture.detectChanges();
         expect(fixture.nativeElement.querySelector('[data-testid="hyperion-generation-revert-partial"]')).not.toBeNull();
-        expect(reverted).not.toHaveBeenCalled();
+        // A partial revert still reset the TEMPLATE repository on the server, so the editor must be refreshed - otherwise it would keep
+        // showing the pre-revert template content even though the error alert (asserted above) already told the instructor something failed.
+        expect(reverted).toHaveBeenCalledExactlyOnceWith('2026-07-10T20:00:00Z');
         expect(component.canRevert()).toBe(true);
+    });
+
+    it('does not refresh the editor when a partial revert reset no repositories', () => {
+        const fixture = createWith(null);
+        const component = fixture.componentInstance;
+        const reverted = vi.fn();
+        component.generationReverted.subscribe(reverted);
+        service.revertExerciseGeneration = (exerciseId: number) => {
+            service.revertCalls.push(exerciseId);
+            return throwError(() => new HttpErrorResponse({ status: 409, error: { fullyReverted: false, revertedRepositories: [], completedAt: '2026-07-10T20:00:00Z' } }));
+        };
+
+        component.attachToJob('j9', 'ADAPT');
+        service.status = {
+            jobId: 'j9',
+            running: false,
+            mode: 'ADAPT',
+            events: [],
+            fileChanges: [],
+            revertAvailable: true,
+        };
+        service.stream$.next({
+            type: 'DONE',
+            completionStatus: 'SUCCESS',
+            verdict: { mechanicallyVerified: true, solutionPassed: true, templateFailed: true, testCount: 3, reasons: [] },
+            liveExerciseChanged: true,
+        });
+
+        const confirm = vi.spyOn(fixture.debugElement.injector.get(ConfirmationService), 'confirm');
+        component.confirmRevert();
+        confirm.mock.calls[0][0].accept?.();
+
+        expect(service.revertCalls).toEqual([42]);
+        expect(reverted).not.toHaveBeenCalled();
     });
 
     it('restores the adapt mode on reconnect so the revert affordance survives a reload', () => {

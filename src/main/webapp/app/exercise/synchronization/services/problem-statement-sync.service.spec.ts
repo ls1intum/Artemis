@@ -1,9 +1,10 @@
 import { Mocked, afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { Injector, runInInjectionContext } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { Subject } from 'rxjs';
 import * as Y from 'yjs';
 import { Awareness, encodeAwarenessUpdate } from 'y-protocols/awareness';
-import { ProblemStatementSyncService, ProblemStatementSyncState } from 'app/exercise/synchronization/services/problem-statement-sync.service';
+import { DETERMINISTIC_SEED_CLIENT_ID, ProblemStatementSyncService, ProblemStatementSyncState } from 'app/exercise/synchronization/services/problem-statement-sync.service';
 import { AccountService } from 'app/core/auth/account.service';
 import {
     ExerciseEditorSyncEvent,
@@ -12,6 +13,67 @@ import {
     ExerciseEditorSyncTarget,
 } from 'app/exercise/synchronization/services/exercise-editor-sync.service';
 import * as yjsUtils from 'app/exercise/synchronization/services/yjs-utils';
+
+/**
+ * Find the requestId of the most recently sent PROBLEM_STATEMENT_SYNC_FULL_CONTENT_REQUEST on a
+ * mocked ExerciseEditorSyncService's `sendSynchronizationUpdate` spy.
+ */
+function captureRequestId(mock: { sendSynchronizationUpdate: ReturnType<typeof vi.fn> }): string {
+    const call = mock.sendSynchronizationUpdate.mock.calls.find(
+        ([, message]: [number, any]) => message.eventType === ExerciseEditorSyncEventType.PROBLEM_STATEMENT_SYNC_FULL_CONTENT_REQUEST,
+    );
+    return call?.[1].requestId as string;
+}
+
+/**
+ * Seed a standalone Y.Doc exactly the way ProblemStatementSyncService seeds a fresh document when
+ * no peer answers in time: using the same deterministic client id for the single seed
+ * transaction. Used to simulate "another peer that also timed out and seeded identically".
+ */
+function seedPeerDocLikeProduction(content: string): Y.Doc {
+    const doc = new Y.Doc();
+    const text = doc.getText('problem-statement');
+    const realClientId = doc.clientID;
+    doc.clientID = DETERMINISTIC_SEED_CLIENT_ID;
+    doc.transact(() => text.insert(0, content));
+    doc.clientID = realClientId;
+    return doc;
+}
+
+/**
+ * A second, fully independent ProblemStatementSyncService instance with its own mocked transport,
+ * used to simulate a second real editor session joining the same exercise concurrently.
+ */
+type SyncPeer = {
+    svc: ProblemStatementSyncService;
+    incoming: Subject<ExerciseEditorSyncEvent>;
+    mockSync: {
+        subscribeToUpdates: ReturnType<typeof vi.fn>;
+        sendSynchronizationUpdate: ReturnType<typeof vi.fn>;
+        connect: ReturnType<typeof vi.fn>;
+        disconnect: ReturnType<typeof vi.fn>;
+        sessionId: string | undefined;
+    };
+};
+
+function createPeer(sessionId: string): SyncPeer {
+    const incoming = new Subject<ExerciseEditorSyncEvent>();
+    const mockSync = {
+        subscribeToUpdates: vi.fn().mockReturnValue(incoming.asObservable()),
+        sendSynchronizationUpdate: vi.fn(),
+        connect: vi.fn(),
+        disconnect: vi.fn(),
+        sessionId,
+    };
+    const injector = Injector.create({
+        providers: [
+            { provide: ExerciseEditorSyncService, useValue: mockSync },
+            { provide: AccountService, useValue: { userIdentity: vi.fn().mockReturnValue(undefined) } },
+        ],
+    });
+    const svc = runInInjectionContext(injector, () => new ProblemStatementSyncService());
+    return { svc, incoming, mockSync };
+}
 
 describe('ProblemStatementSyncService', () => {
     let service: ProblemStatementSyncService;
@@ -203,12 +265,9 @@ describe('ProblemStatementSyncService', () => {
         );
     });
 
-    it('replaces the yjs state when a late winning full-content response arrives', () => {
+    it('merges a late full-content response into the local doc instead of replacing it', () => {
         const state = service.init(14, 'Fallback statement');
-        const requestCall = (syncService.sendSynchronizationUpdate as ReturnType<typeof vi.fn>).mock.calls.find(
-            ([, message]) => message.eventType === ExerciseEditorSyncEventType.PROBLEM_STATEMENT_SYNC_FULL_CONTENT_REQUEST,
-        );
-        const requestId = requestCall?.[1].requestId as string;
+        const requestId = captureRequestId(syncServiceMock);
         expect(requestId).toBeDefined();
 
         let replacedState: ProblemStatementSyncState | undefined;
@@ -219,44 +278,51 @@ describe('ProblemStatementSyncService', () => {
         vi.advanceTimersByTime(500);
         expect(state.text.toString()).toBe('Fallback statement');
 
-        const lateLeaderDoc = new Y.Doc();
-        lateLeaderDoc.getText('problem-statement').insert(0, 'Late winning leader');
+        // Simulate a peer that forked from the same deterministic seed (see
+        // DETERMINISTIC_SEED_CLIENT_ID) and additionally appended its own edit on top of it. Its
+        // full state arrives late, after this client already finalized via its own seed.
+        const peerDoc = seedPeerDocLikeProduction('Fallback statement');
+        peerDoc.getText('problem-statement').insert(peerDoc.getText('problem-statement').length, ' from peer');
+
         incomingMessages$.next({
             eventType: ExerciseEditorSyncEventType.PROBLEM_STATEMENT_SYNC_FULL_CONTENT_RESPONSE,
             target: ExerciseEditorSyncTarget.PROBLEM_STATEMENT,
             responseTo: requestId,
-            yjsUpdate: yjsUtils.encodeUint8ArrayToBase64(Y.encodeStateAsUpdate(lateLeaderDoc)),
+            yjsUpdate: yjsUtils.encodeUint8ArrayToBase64(Y.encodeStateAsUpdate(peerDoc)),
             leaderTimestamp: 1,
             timestamp: 2,
         });
 
-        expect(replacedState).toBeDefined();
-        expect(replacedState?.text.toString()).toBe('Late winning leader');
+        // The peer's additional content is merged in (not discarded, and not used to replace the
+        // local doc/text identity — stateReplaced$ never fires under the merge-based design).
+        expect(state.text.toString()).toBe('Fallback statement from peer');
+        expect(replacedState).toBeUndefined();
         subscription.unsubscribe();
     });
 
-    it('does not replace local edits made after initial sync finalized', () => {
+    it('does not wipe local edits made after initial sync finalized when a late full state merges in', () => {
         const state = service.init(14, 'Fallback statement');
-        const requestCall = syncService.sendSynchronizationUpdate.mock.calls.find(
-            ([, message]) => message.eventType === ExerciseEditorSyncEventType.PROBLEM_STATEMENT_SYNC_FULL_CONTENT_REQUEST,
-        );
-        const requestId = requestCall?.[1].requestId as string;
+        const requestId = captureRequestId(syncServiceMock);
         vi.advanceTimersByTime(500);
         state.text.insert(state.text.length, ' LOCAL');
         let replacedState: ProblemStatementSyncState | undefined;
         const subscription = service.stateReplaced$.subscribe((replacement) => (replacedState = replacement));
-        const lateLeaderDoc = new Y.Doc();
-        lateLeaderDoc.getText('problem-statement').insert(0, 'Late winning leader');
+
+        // A peer that seeded the identical fallback content independently (same deterministic
+        // seed client id) and made no further edits of its own is only now, late, echoing that
+        // state back. Merging it is a structural no-op for the shared seed.
+        const peerDoc = seedPeerDocLikeProduction('Fallback statement');
 
         incomingMessages$.next({
             eventType: ExerciseEditorSyncEventType.PROBLEM_STATEMENT_SYNC_FULL_CONTENT_RESPONSE,
             target: ExerciseEditorSyncTarget.PROBLEM_STATEMENT,
             responseTo: requestId,
-            yjsUpdate: yjsUtils.encodeUint8ArrayToBase64(Y.encodeStateAsUpdate(lateLeaderDoc)),
+            yjsUpdate: yjsUtils.encodeUint8ArrayToBase64(Y.encodeStateAsUpdate(peerDoc)),
             leaderTimestamp: 1,
             timestamp: 2,
         });
 
+        // The local doc is never replaced, and the local edit survives untouched.
         expect(replacedState).toBeUndefined();
         expect(state.text.toString()).toBe('Fallback statement LOCAL');
         subscription.unsubscribe();
@@ -423,51 +489,48 @@ describe('ProblemStatementSyncService', () => {
         expect(state.text.toString()).toBe('Response 2');
     });
 
-    it('replaces state when late response has better sessionId with same timestamp', () => {
+    it('merges multiple late full-content responses regardless of leaderTimestamp/sessionId ordering', () => {
         const state = service.init(21, 'Fallback');
-        const requestCall = (syncService.sendSynchronizationUpdate as ReturnType<typeof vi.fn>).mock.calls.find(
-            ([, message]) => message.eventType === ExerciseEditorSyncEventType.PROBLEM_STATEMENT_SYNC_FULL_CONTENT_REQUEST,
-        );
-        const requestId = requestCall?.[1].requestId as string;
+        const requestId = captureRequestId(syncServiceMock);
         expect(requestId).toBeDefined();
 
-        // Initial response with higher sessionId
-        const initialDoc = new Y.Doc();
-        initialDoc.getText('problem-statement').insert(0, 'Initial content');
+        vi.advanceTimersByTime(500);
+        expect(state.text.toString()).toBe('Fallback');
+
+        // peerA forks from the same deterministic seed as this client and appends '-A'.
+        const peerADoc = seedPeerDocLikeProduction('Fallback');
+        peerADoc.getText('problem-statement').insert(peerADoc.getText('problem-statement').length, '-A');
+
+        // peerB continues from peerA's already-edited state (causally after '-A') and appends '-B'.
+        const peerBDoc = new Y.Doc();
+        Y.applyUpdate(peerBDoc, Y.encodeStateAsUpdate(peerADoc));
+        const peerBText = peerBDoc.getText('problem-statement');
+        peerBText.insert(peerBText.length, '-B');
+
+        // The first late response carries a WORSE (higher) leaderTimestamp and sessionId than the
+        // second — under the old leader-election gate this ordering would have caused the second,
+        // "better", response to win and the first to be rejected outright. Under the merge-based
+        // design both must be merged in, regardless of ordering.
         incomingMessages$.next({
             eventType: ExerciseEditorSyncEventType.PROBLEM_STATEMENT_SYNC_FULL_CONTENT_RESPONSE,
             target: ExerciseEditorSyncTarget.PROBLEM_STATEMENT,
             responseTo: requestId,
-            yjsUpdate: yjsUtils.encodeUint8ArrayToBase64(Y.encodeStateAsUpdate(initialDoc)),
-            leaderTimestamp: 100,
+            yjsUpdate: yjsUtils.encodeUint8ArrayToBase64(Y.encodeStateAsUpdate(peerADoc)),
+            leaderTimestamp: 999,
             sessionId: 'session-zzz',
             timestamp: 1,
         });
-
-        vi.advanceTimersByTime(500);
-        expect(state.text.toString()).toBe('Initial content');
-
-        let replacedState: ProblemStatementSyncState | undefined;
-        const subscription = service.stateReplaced$.subscribe((nextState) => {
-            replacedState = nextState;
-        });
-
-        // Late response with same timestamp but better sessionId
-        const lateDoc = new Y.Doc();
-        lateDoc.getText('problem-statement').insert(0, 'Late better content');
         incomingMessages$.next({
             eventType: ExerciseEditorSyncEventType.PROBLEM_STATEMENT_SYNC_FULL_CONTENT_RESPONSE,
             target: ExerciseEditorSyncTarget.PROBLEM_STATEMENT,
             responseTo: requestId,
-            yjsUpdate: yjsUtils.encodeUint8ArrayToBase64(Y.encodeStateAsUpdate(lateDoc)),
-            leaderTimestamp: 100,
-            sessionId: 'session-aaa', // Lexicographically smaller
+            yjsUpdate: yjsUtils.encodeUint8ArrayToBase64(Y.encodeStateAsUpdate(peerBDoc)),
+            leaderTimestamp: 1,
+            sessionId: 'session-aaa',
             timestamp: 2,
         });
 
-        expect(replacedState).toBeDefined();
-        expect(replacedState?.text.toString()).toBe('Late better content');
-        subscription.unsubscribe();
+        expect(state.text.toString()).toBe('Fallback-A-B');
     });
 
     it('clears activeLeaderSessionId on reset so stale state does not persist across init cycles', () => {
@@ -530,5 +593,62 @@ describe('ProblemStatementSyncService', () => {
         expect(clearRemoteStylesSpy).toHaveBeenCalledOnce();
         vi.advanceTimersByTime(500);
         clearRemoteStylesSpy.mockRestore();
+    });
+
+    describe('concurrent-join convergence (two real peers)', () => {
+        it('converges when two peers join simultaneously, both time out and independently seed identical content, then edit concurrently', () => {
+            // Two fully independent ProblemStatementSyncService instances, each with its own
+            // mocked transport, simulate two editors opening the same exercise at nearly the
+            // same moment. Neither answers the other's full-content request in time.
+            const peerA = createPeer('peer-a');
+            const peerB = createPeer('peer-b');
+
+            const stateA = peerA.svc.init(50, 'Base');
+            const stateB = peerB.svc.init(50, 'Base');
+
+            const requestIdA = captureRequestId(peerA.mockSync);
+            const requestIdB = captureRequestId(peerB.mockSync);
+            expect(requestIdA).toBeDefined();
+            expect(requestIdB).toBeDefined();
+
+            // Both peers time out with no answer and independently seed the identical fallback
+            // content into their own, structurally distinct Y.Doc instances.
+            vi.advanceTimersByTime(500);
+            expect(stateA.text.toString()).toBe('Base');
+            expect(stateB.text.toString()).toBe('Base');
+
+            // Each peer then edits locally, before either has heard from the other.
+            stateA.text.insert(stateA.text.length, '-A');
+            stateB.text.insert(stateB.text.length, '-B');
+
+            // The network eventually catches up: each peer's full current state (seed + its own
+            // edit) is delivered to the other as a late full-content response, as if the
+            // original request had finally been answered.
+            peerB.incoming.next({
+                eventType: ExerciseEditorSyncEventType.PROBLEM_STATEMENT_SYNC_FULL_CONTENT_RESPONSE,
+                target: ExerciseEditorSyncTarget.PROBLEM_STATEMENT,
+                responseTo: requestIdB,
+                yjsUpdate: yjsUtils.encodeUint8ArrayToBase64(Y.encodeStateAsUpdate(stateA.doc)),
+                leaderTimestamp: 1,
+                timestamp: 1,
+            });
+            peerA.incoming.next({
+                eventType: ExerciseEditorSyncEventType.PROBLEM_STATEMENT_SYNC_FULL_CONTENT_RESPONSE,
+                target: ExerciseEditorSyncTarget.PROBLEM_STATEMENT,
+                responseTo: requestIdA,
+                yjsUpdate: yjsUtils.encodeUint8ArrayToBase64(Y.encodeStateAsUpdate(stateB.doc)),
+                leaderTimestamp: 1,
+                timestamp: 1,
+            });
+
+            // Both documents must converge to the exact same final text, and neither peer's edit
+            // may have been silently lost.
+            expect(stateA.text.toString()).toBe(stateB.text.toString());
+            expect(stateA.text.toString()).toContain('-A');
+            expect(stateA.text.toString()).toContain('-B');
+
+            peerA.svc.reset();
+            peerB.svc.reset();
+        });
     });
 });
