@@ -63,23 +63,19 @@
         <p class="text-muted small mb-3">Select one or more aspects you'd like the AI to change.</p>
 
         <div class="option-cards mb-4">
-            <!-- Difficulty adaptation is hidden for exam exercises: variants are distributed one-per-student, so a
-                 differing difficulty would be unfair — every student must get an equally hard exercise. -->
-            @if (!isExamExercise()) {
-                <div class="option-card" [class.option-card--selected]="changeDifficulty()" (click)="toggleDifficulty()" data-testid="variant-option-difficulty">
+            <div class="option-card" [class.option-card--selected]="changeDifficulty()" (click)="toggleDifficulty()" data-testid="variant-option-difficulty">
+                @if (changeDifficulty()) {
+                    <span class="option-card__check"><fa-icon [icon]="faCheck" /></span>
+                }
+                <div class="option-card__icon"><fa-icon [icon]="faGaugeHigh" /></div>
+                <h6>Difficulty</h6>
+                <p>Change how hard the exercise is</p>
+                <span class="option-card__cta">
                     @if (changeDifficulty()) {
-                        <span class="option-card__check"><fa-icon [icon]="faCheck" /></span>
+                        ✓ Selected
                     }
-                    <div class="option-card__icon"><fa-icon [icon]="faGaugeHigh" /></div>
-                    <h6>Difficulty</h6>
-                    <p>Change how hard the exercise is</p>
-                    <span class="option-card__cta">
-                        @if (changeDifficulty()) {
-                            ✓ Selected
-                        }
-                    </span>
-                </div>
-            }
+                </span>
+            </div>
             <div class="option-card" [class.option-card--selected]="changeDomain()" (click)="toggleDomain()">
                 @if (changeDomain()) {
                     <span class="option-card__check"><fa-icon [icon]="faCheck" /></span>

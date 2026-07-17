@@ -90,8 +90,9 @@ export class ExerciseVariantAiModalWizardComponent implements OnDestroy {
     readonly courseId = input<number | undefined>(undefined);
     /**
      * Set by exam hosts (the exam exercise-group management row): the source is an exam exercise, so placement is
-     * forced to the source's exam exercise group (SAME_EXAM_GROUP, no placement step) and difficulty adaptation is
-     * disallowed — a variant with a different difficulty would be unfair across the students who each receive one.
+     * forced to the source's exam exercise group (SAME_EXAM_GROUP, no placement step). All adaptation options,
+     * including difficulty, stay available — e.g. an instructor importing an old exam may deliberately generate a
+     * harder variant of a too-easy exercise and delete the easy one afterwards.
      * A populated `sourceExercise().exerciseGroup` also flags this, but exam rows pass only the group id, not the
      * nested group object, so the explicit input is the reliable signal.
      */
@@ -367,8 +368,7 @@ export class ExerciseVariantAiModalWizardComponent implements OnDestroy {
         const sourceExercise = this.sourceExercise();
         if (!sourceExercise?.id) return;
         const request: VariantGenerationRequest = {
-            // Never adapt difficulty for exam exercises (unfair across per-student variants); the option is hidden.
-            targetDifficulty: this.changeDifficulty() && !this.isExamExercise() ? this.targetDifficulty() : undefined,
+            targetDifficulty: this.changeDifficulty() ? this.targetDifficulty() : undefined,
             domainText: this.changeDomain() && this.domainText().trim() ? this.domainText().trim() : undefined,
             additionalInstructions: this.changeCustom() && this.additionalInstructions().trim() ? this.additionalInstructions().trim() : undefined,
             placement: this.buildPlacement(),

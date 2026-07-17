@@ -15,8 +15,9 @@ import { QuizExercise, QuizMode } from 'app/quiz/shared/entities/quiz-exercise.m
 
 /**
  * Vitest specs for the exam path of the AI variant wizard: exam exercises must place the variant into the
- * source's exam exercise group automatically (SAME_EXAM_GROUP, no placement step) and must NOT offer difficulty
- * adaptation — a per-student variant with a different difficulty would be unfair.
+ * source's exam exercise group automatically (SAME_EXAM_GROUP, no placement step). All adaptation options,
+ * including difficulty, stay available — an instructor may deliberately generate a harder variant of a
+ * too-easy exam exercise and delete the easy one afterwards.
  */
 describe('ExerciseVariantAiModalWizardComponent (exam path)', () => {
     setupTestBed({ zoneless: true });
@@ -75,9 +76,9 @@ describe('ExerciseVariantAiModalWizardComponent (exam path)', () => {
         expect(groupServiceMock.getGroupsForCourse).not.toHaveBeenCalled();
     });
 
-    it('hides the difficulty adaptation option for exam exercises', () => {
+    it('keeps the difficulty adaptation option for exam exercises', () => {
         fixture.detectChanges();
-        expect(document.body.querySelector('[data-testid="variant-option-difficulty"]')).toBeNull();
+        expect(document.body.querySelector('[data-testid="variant-option-difficulty"]')).not.toBeNull();
     });
 
     it('skips the placement step and starts generation with SAME_EXAM_GROUP', () => {
@@ -94,9 +95,8 @@ describe('ExerciseVariantAiModalWizardComponent (exam path)', () => {
         expect(request.placement).toEqual({ type: 'SAME_EXAM_GROUP' });
     });
 
-    it('never sends a target difficulty for an exam exercise even if the flag is somehow set', () => {
+    it('sends the selected target difficulty for an exam exercise', () => {
         fixture.detectChanges();
-        // Defensive: the option is hidden, but a stale flag must not leak into the request.
         component.changeDifficulty.set(true);
         component.targetDifficulty.set(DifficultyLevel.EASY);
         component.changeDomain.set(true);
@@ -105,7 +105,7 @@ describe('ExerciseVariantAiModalWizardComponent (exam path)', () => {
         component.startGeneration();
 
         const request = generationServiceMock.startGeneration.mock.calls[0][1] as VariantGenerationRequest;
-        expect(request.targetDifficulty).toBeUndefined();
+        expect(request.targetDifficulty).toBe(DifficultyLevel.EASY);
         expect(request.domainText).toBe('banking');
     });
 });
