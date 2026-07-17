@@ -69,9 +69,7 @@ export class TutorialGroupDetailData {
 }
 
 export type TutorialGroupRegisterStudentRequest =
-    | { login: undefined; registrationNumber: string }
-    | { login: string; registrationNumber: undefined }
-    | { login: string; registrationNumber: string };
+    { login: undefined; registrationNumber: string } | { login: string; registrationNumber: undefined } | { login: string; registrationNumber: string };
 
 export interface TutorialGroupTutor {
     id: number;
