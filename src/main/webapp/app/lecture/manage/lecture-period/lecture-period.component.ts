@@ -1,32 +1,36 @@
-import { Component, computed, input, viewChildren } from '@angular/core';
-import { Lecture } from 'app/lecture/shared/entities/lecture.model';
-import { FormDateTimePickerComponent } from 'app/shared-ui/date-time-picker/date-time-picker.component';
+import { Component, computed, model, output, signal } from '@angular/core';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { FormsModule } from '@angular/forms';
-import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { ExerciseTimelineComponent, ExerciseTimelineStatus, TimelineItem } from 'app/exercise/exercise-timeline/exercise-timeline.component';
+import { Dayjs } from 'dayjs/esm';
 
 @Component({
     selector: 'jhi-lecture-update-period',
     templateUrl: './lecture-period.component.html',
-    imports: [TranslateDirective, FormDateTimePickerComponent, FormsModule, ArtemisTranslatePipe],
+    imports: [TranslateDirective, ExerciseTimelineComponent],
     styleUrl: './lecture-period.component.scss',
 })
 export class LectureUpdatePeriodComponent {
-    validateDatesFunction = input.required<() => void>();
-    lecture = input.required<Lecture>();
-    periodSectionDatepickers = viewChildren(FormDateTimePickerComponent);
-    isPeriodSectionValid = computed(() => this.computeIsPeriodSectionValid());
+    private timelineStatus = signal<ExerciseTimelineStatus>({ valid: true, empty: true });
 
-    onDateChange() {
-        this.validateDatesFunction()();
-    }
+    startDate = model<Dayjs | undefined>();
+    endDate = model<Dayjs | undefined>();
+    timelineStatusChange = output<ExerciseTimelineStatus>();
+    timelineItems: TimelineItem[] = [
+        {
+            kind: 'optional',
+            labelStringKey: 'artemisApp.lecture.startDate',
+            date: this.startDate,
+        },
+        {
+            kind: 'optional',
+            labelStringKey: 'artemisApp.lecture.endDate',
+            date: this.endDate,
+        },
+    ];
+    isPeriodSectionValid = computed(() => this.timelineStatus().valid);
 
-    private computeIsPeriodSectionValid(): boolean {
-        for (const periodSectionDatepicker of this.periodSectionDatepickers()) {
-            if (!periodSectionDatepicker.isValid()) {
-                return false;
-            }
-        }
-        return true;
+    onTimelineStatusChange(status: ExerciseTimelineStatus) {
+        this.timelineStatus.set(status);
+        this.timelineStatusChange.emit(status);
     }
 }

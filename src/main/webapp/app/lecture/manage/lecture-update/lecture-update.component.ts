@@ -1,6 +1,6 @@
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { Component, OnDestroy, OnInit, computed, effect, inject, signal, viewChild } from '@angular/core';
-import { Observable, Subscription } from 'rxjs';
+import { Component, OnInit, computed, effect, inject, signal, viewChild } from '@angular/core';
+import { Observable } from 'rxjs';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -14,7 +14,6 @@ import { getCurrentLocaleSignal, onError } from 'app/foundation/util/global.util
 import dayjs, { Dayjs } from 'dayjs/esm';
 import cloneDeep from 'lodash-es/cloneDeep';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { FormDateTimePickerComponent } from 'app/shared-ui/date-time-picker/date-time-picker.component';
 import { FormSectionStatus, FormStatusBarComponent } from 'app/shared-ui/form/form-status-bar/form-status-bar.component';
 import { LectureTitleChannelNameComponent } from '../lecture-title-channel-name/lecture-title-channel-name.component';
 import { LectureSeriesCreateComponent } from 'app/lecture/manage/lecture-series-create/lecture-series-create.component';
@@ -67,7 +66,7 @@ interface CreateLectureOption {
         CourseTitleBarTitleDirective,
     ],
 })
-export class LectureUpdateComponent implements OnInit, OnDestroy, LectureUnsavedChangesComponent {
+export class LectureUpdateComponent implements OnInit, LectureUnsavedChangesComponent {
     protected readonly documentationType: DocumentationType = 'Lecture';
     protected readonly faQuestionCircle = faQuestionCircle;
     protected readonly faSave = faSave;
@@ -86,7 +85,6 @@ export class LectureUpdateComponent implements OnInit, OnDestroy, LectureUnsaved
     private readonly translateService = inject(TranslateService);
     private readonly router = inject(Router);
 
-    private subscriptions = new Subscription();
     private currentLocale = getCurrentLocaleSignal(this.translateService);
 
     titleSection = viewChild(LectureTitleChannelNameComponent);
@@ -117,19 +115,6 @@ export class LectureUpdateComponent implements OnInit, OnDestroy, LectureUnsaved
     tutorialLectureTooltip = computed<string>(() => this.computeTutorialLectureTooltip());
 
     constructor() {
-        effect(() => {
-            if (this.selectedCreateLectureOption() === LectureCreationMode.SERIES) return;
-            const lecturePeriodSection = this.lecturePeriodSection();
-            if (lecturePeriodSection) {
-                lecturePeriodSection.periodSectionDatepickers().forEach((datepicker: FormDateTimePickerComponent) => {
-                    const subscription = datepicker.valueChange.subscribe(() => {
-                        this.updateIsChangesMadeToTitleOrPeriodSection();
-                    });
-                    this.subscriptions.add(subscription);
-                });
-            }
-        });
-
         // The title/channel-name fields are signal-based models without dedicated change outputs
         // (the explicit titleChange/channelNameChange outputs were removed to resolve the Angular 22
         // NG1054 model/output conflict). Track the model signals directly so the "changes made to
@@ -152,13 +137,6 @@ export class LectureUpdateComponent implements OnInit, OnDestroy, LectureUnsaved
             if (this.unitSection() && this.isNewlyCreatedExercise) {
                 this.isNewlyCreatedExercise = false;
                 this.formStatusBar()?.scrollToHeadline('artemisApp.lecture.sections.period');
-            }
-        });
-
-        effect(() => {
-            if (this.selectedCreateLectureOption() === LectureCreationMode.SERIES) {
-                this.subscriptions.unsubscribe();
-                this.subscriptions = new Subscription();
             }
         });
 
@@ -194,10 +172,6 @@ export class LectureUpdateComponent implements OnInit, OnDestroy, LectureUnsaved
 
         const existingLectures = (this.router.currentNavigation()?.extras.state?.['existingLectures'] ?? []) as Lecture[];
         this.existingLectures.set(existingLectures);
-    }
-
-    ngOnDestroy() {
-        this.subscriptions.unsubscribe();
     }
 
     updateFormStatusBar() {
@@ -356,16 +330,6 @@ export class LectureUpdateComponent implements OnInit, OnDestroy, LectureUnsaved
             onError(this.alertService, errorRes);
         }
     }
-
-    onDatesValuesChanged = () => {
-        const startDate = this.lecture().startDate;
-        const endDate = this.lecture().endDate;
-
-        // Prevent endDate from being before startDate, if both dates are set
-        if (endDate && startDate?.isAfter(endDate)) {
-            this.lecture().endDate = startDate.clone();
-        }
-    };
 
     onLectureChange(updatedLecture: Lecture): void {
         this.lecture.set(updatedLecture);

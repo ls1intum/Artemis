@@ -48,7 +48,11 @@
                             <fa-icon [pTooltip]="tutorialLectureTooltip()" [icon]="faCircleInfo" />
                         </div>
                     </div>
-                    <jhi-lecture-update-period [lecture]="lecture()" [validateDatesFunction]="onDatesValuesChanged" />
+                    <jhi-lecture-update-period
+                        [(startDate)]="lecture().startDate"
+                        [(endDate)]="lecture().endDate"
+                        (timelineStatusChange)="updateIsChangesMadeToTitleOrPeriodSection()"
+                    />
                     <div class="flex-grow-1 d-flex justify-content-end">
                         <button type="button" id="cancel-save" class="btn btn-secondary" (click)="previousState()">
                             <fa-icon [icon]="faBan" class="me-1" /><span jhiTranslate="entity.action.cancel"></span>

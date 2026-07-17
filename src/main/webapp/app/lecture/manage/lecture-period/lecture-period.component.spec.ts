@@ -1,13 +1,11 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { FormDateTimePickerComponent } from 'app/shared-ui/date-time-picker/date-time-picker.component';
-import { MockComponent, MockPipe } from 'ng-mocks';
-import { Lecture } from 'app/lecture/shared/entities/lecture.model';
-import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { By } from '@angular/platform-browser';
+import { MockComponent } from 'ng-mocks';
 import { LectureUpdatePeriodComponent } from 'app/lecture/manage/lecture-period/lecture-period.component';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
+import { ExerciseTimelineComponent } from 'app/exercise/exercise-timeline/exercise-timeline.component';
 
 describe('LectureWizardPeriodComponent', () => {
     let fixture: ComponentFixture<LectureUpdatePeriodComponent>;
@@ -15,15 +13,15 @@ describe('LectureWizardPeriodComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [LectureUpdatePeriodComponent, MockPipe(ArtemisTranslatePipe), MockComponent(FormDateTimePickerComponent), FontAwesomeModule],
+            imports: [LectureUpdatePeriodComponent],
             providers: [{ provide: TranslateService, useClass: MockTranslateService }],
-        }).compileComponents();
+        })
+            .overrideComponent(LectureUpdatePeriodComponent, { set: { imports: [MockComponent(ExerciseTimelineComponent)] } })
+            .compileComponents();
 
         fixture = TestBed.createComponent(LectureUpdatePeriodComponent);
         component = fixture.componentInstance;
 
-        fixture.componentRef.setInput('lecture', new Lecture());
-        fixture.componentRef.setInput('validateDatesFunction', vi.fn());
         await fixture.whenStable();
     });
 
@@ -35,29 +33,21 @@ describe('LectureWizardPeriodComponent', () => {
         expect(component).not.toBeNull();
     });
 
-    it('should call validateDatesFunction on date change', () => {
-        const validateSpy = vi.fn();
-        fixture.componentRef.setInput('validateDatesFunction', validateSpy);
-        fixture.detectChanges();
-        component.onDateChange();
-        expect(validateSpy).toHaveBeenCalledTimes(1);
+    it('should expose the lecture dates in chronological order', () => {
+        expect(component.timelineItems.map((item) => item.labelStringKey)).toEqual(['artemisApp.lecture.startDate', 'artemisApp.lecture.endDate']);
+        expect(component.timelineItems.map((item) => item.date)).toEqual([component.startDate, component.endDate]);
+        expect(component.timelineItems.every((item) => item.kind === 'optional')).toBe(true);
     });
 
-    it('should compute isPeriodSectionValid correctly when all children valid', () => {
+    it('should forward the timeline status and expose its validity', () => {
         fixture.detectChanges();
-        const pickers = component.periodSectionDatepickers();
-        pickers[0].isValid = vi.fn(() => true) as any;
-        pickers[1].isValid = vi.fn(() => true) as any;
-        const result = component.isPeriodSectionValid();
-        expect(result).toBe(true);
-    });
+        const emitSpy = vi.spyOn(component.timelineStatusChange, 'emit');
+        const timeline = fixture.debugElement.query(By.directive(ExerciseTimelineComponent)).componentInstance as ExerciseTimelineComponent;
+        const status = { valid: false, empty: false };
 
-    it('should compute isPeriodSectionValid correctly when any child invalid', () => {
-        fixture.detectChanges();
-        const pickers = component.periodSectionDatepickers();
-        pickers[0].isValid = vi.fn(() => true) as any;
-        pickers[1].isValid = vi.fn(() => false) as any;
-        const result = component.isPeriodSectionValid();
-        expect(result).toBe(false);
+        timeline.timelineStatusChange.emit(status);
+
+        expect(emitSpy).toHaveBeenCalledExactlyOnceWith(status);
+        expect(component.isPeriodSectionValid()).toBe(false);
     });
 });

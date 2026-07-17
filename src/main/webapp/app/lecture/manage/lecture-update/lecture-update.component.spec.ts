@@ -283,49 +283,6 @@ describe('LectureUpdateComponent', () => {
         expect(onFileChangeStub).toHaveBeenCalledTimes(1);
     });
 
-    it('should set lecture start date and end date correctly', async () => {
-        await configureActiveRouteMockAndCompileComponents({ course: { id: 1 }, lecture: { id: 6 } });
-
-        await lectureUpdateComponentFixture.whenStable();
-        lectureUpdateComponent.lecture.set({ id: 6, title: 'test1Updated' } as Lecture);
-
-        const setDatesSpy = vi.spyOn(lectureUpdateComponent, 'onDatesValuesChanged');
-
-        lectureUpdateComponent.lecture().startDate = dayjs().year(2022).month(3).date(5);
-        lectureUpdateComponent.lecture().endDate = dayjs().year(2022).month(3).date(1);
-
-        lectureUpdateComponent.onDatesValuesChanged();
-
-        expect(setDatesSpy).toHaveBeenCalledTimes(1);
-        // endDate was before startDate, so endDate gets corrected to equal startDate
-        expect(lectureUpdateComponent.lecture().endDate).toEqual(lectureUpdateComponent.lecture().startDate);
-
-        await lectureUpdateComponentFixture.whenStable();
-
-        lectureUpdateComponent.lecture().startDate = undefined;
-        lectureUpdateComponent.lecture().endDate = undefined;
-
-        lectureUpdateComponent.onDatesValuesChanged();
-
-        expect(setDatesSpy).toHaveBeenCalledTimes(2);
-        expect(lectureUpdateComponent.lecture().startDate).toBeUndefined();
-        expect(lectureUpdateComponent.lecture().endDate).toBeUndefined();
-
-        await lectureUpdateComponentFixture.whenStable();
-
-        lectureUpdateComponent.lecture().startDate = dayjs().year(2022).month(1).date(2);
-        lectureUpdateComponent.lecture().endDate = dayjs().year(2022).month(1).date(3);
-
-        lectureUpdateComponent.onDatesValuesChanged();
-
-        expect(setDatesSpy).toHaveBeenCalledTimes(3);
-        if (lectureUpdateComponent.lecture().startDate && lectureUpdateComponent.lecture().endDate) {
-            expect(lectureUpdateComponent.lecture().startDate!.toDate() < lectureUpdateComponent.lecture().endDate!.toDate()).toBe(true);
-        } else {
-            throw new Error('startDate and endDate should not be undefined');
-        }
-    });
-
     describe('isChangeMadeToTitleSection', () => {
         it('should detect changes made to the title section', async () => {
             await configureActiveRouteMockAndCompileComponents();
