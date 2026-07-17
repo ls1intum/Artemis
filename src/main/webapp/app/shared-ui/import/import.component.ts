@@ -123,6 +123,13 @@ export abstract class ImportComponent<T extends BaseEntity> implements OnInit {
 
         this.performSearch(this.sort, 0);
         this.performSearch(this.search, 300);
+
+        // Trigger an initial load so the table is populated as soon as the dialog opens. The jhiSort
+        // directive used to emit its initial predicate/ascending on init (which triggered `sort.next()`),
+        // but after its migration to signal `model()` inputs it no longer emits on parent-set, which left
+        // the table empty by default. Kick off the first search explicitly via the immediate (0 ms) `sort`
+        // subject so opening any import dialog shows the available entities right away.
+        this.sort.next();
     }
 
     sortRows() {

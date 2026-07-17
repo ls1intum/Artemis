@@ -22,6 +22,9 @@ import { RouterLink } from '@angular/router';
     imports: [FaIconComponent, ProfilePictureComponent, TranslateDirective, CommonModule, RouterLink],
     templateUrl: './course-notification.component.html',
     styleUrls: ['./course-notification.component.scss'],
+    // Mirror the `fluid` input onto the host so the (inline by default) host and its inline-block
+    // child can be made block-level in fluid mode, giving `width: 100%` a definite containing block.
+    host: { '[class.fluid]': 'fluid()' },
 })
 export class CourseNotificationComponent {
     private readonly courseNotificationService: CourseNotificationService = inject(CourseNotificationService);
@@ -36,6 +39,9 @@ export class CourseNotificationComponent {
     readonly isHideTime = input<boolean>(false);
     readonly isRedirectToUrl = input<boolean>(false);
     readonly displayTimeInMilliseconds = input<number | undefined>(undefined);
+    // When true, the card fills the available width and grows in height (used in the overview
+    // overlay). The transient popup toast keeps the default fixed size.
+    readonly fluid = input<boolean>(false);
 
     protected readonly faIcon = signal<IconDefinition>(undefined!);
     protected readonly notificationParameters = signal<{ [key: string]: unknown }>(undefined!);

@@ -8,6 +8,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { BehaviorSubject, of, throwError } from 'rxjs';
 import { ActivatedRoute, Router } from '@angular/router';
 import { PaginatorState } from 'primeng/paginator';
+import { SortEvent } from 'primeng/api';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { TranslateService } from '@ngx-translate/core';
@@ -191,6 +192,53 @@ describe('SystemNotificationManagementComponent', () => {
             component.onPageChange({ page: 2 } as PaginatorState);
 
             expect(loadPageSpy).toHaveBeenCalledWith(3);
+        });
+    });
+
+    describe('onTableSort (PrimeNG table)', () => {
+        it('ignores events without a field', () => {
+            const transitionSpy = vi.spyOn(component, 'transition');
+
+            component.onTableSort({} as SortEvent);
+
+            expect(transitionSpy).not.toHaveBeenCalled();
+        });
+
+        it('does not reload when the sort is unchanged (breaks the infinite-fetch loop, issue #13263)', () => {
+            // PrimeNG re-emits onSort with the current sort whenever the table value changes.
+            component.predicate.set('id');
+            component.reverse.set(true);
+            const transitionSpy = vi.spyOn(component, 'transition');
+
+            component.onTableSort({ field: 'id', order: 1 } as SortEvent);
+
+            expect(transitionSpy).not.toHaveBeenCalled();
+            expect(component.predicate()).toBe('id');
+            expect(component.reverse()).toBe(true);
+        });
+
+        it('reloads when the sort field changes', () => {
+            component.predicate.set('id');
+            component.reverse.set(true);
+            const transitionSpy = vi.spyOn(component, 'transition').mockImplementation(() => {});
+
+            component.onTableSort({ field: 'title', order: 1 } as SortEvent);
+
+            expect(component.predicate()).toBe('title');
+            expect(component.reverse()).toBe(true);
+            expect(transitionSpy).toHaveBeenCalledOnce();
+        });
+
+        it('reloads when only the sort order changes', () => {
+            component.predicate.set('id');
+            component.reverse.set(true);
+            const transitionSpy = vi.spyOn(component, 'transition').mockImplementation(() => {});
+
+            component.onTableSort({ field: 'id', order: -1 } as SortEvent);
+
+            expect(component.predicate()).toBe('id');
+            expect(component.reverse()).toBe(false);
+            expect(transitionSpy).toHaveBeenCalledOnce();
         });
     });
 

@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.quiz;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.EXERCISE_TOPIC_ROOT;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -55,6 +56,7 @@ import de.tum.cit.aet.artemis.quiz.domain.DragItem;
 import de.tum.cit.aet.artemis.quiz.domain.DropLocation;
 import de.tum.cit.aet.artemis.quiz.domain.MultipleChoiceQuestion;
 import de.tum.cit.aet.artemis.quiz.domain.MultipleChoiceSubmittedAnswer;
+import de.tum.cit.aet.artemis.quiz.domain.PointCounter;
 import de.tum.cit.aet.artemis.quiz.domain.QuizBatch;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.domain.QuizMode;
@@ -438,6 +440,128 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
             assertThat(question.getQuizQuestionStatistic().getParticipantsUnrated()).isEqualTo(NUMBER_OF_STUDENTS);
             assertThat(question.getQuizQuestionStatistic().getParticipantsRated()).isZero();
         }
+    }
+
+    /**
+     * Practice submissions now update the quiz statistics incrementally and asynchronously via
+     * {@link QuizStatisticService#updateStatisticsForNewResult}, instead of running a full {@code recalculateStatistics}
+     * synchronously per submission. Under the {@code test} profile the executor is synchronous, so the statistics already
+     * reflect the submission by the time each POST returns. Unlike {@link #testQuizSubmitPractice} (which recalculates
+     * afterwards and therefore never exercises the incremental path), this test reads the statistics directly and asserts
+     * (a) they reflect every practice submission and (b) they are identical to what the authoritative full recomputation
+     * produces.
+     */
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
+    @EnumSource(QuizMode.class)
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testQuizSubmitPracticeUpdatesStatisticsIncrementally(QuizMode quizMode) throws Exception {
+        QuizExercise quizExercise = quizExerciseUtilService.createQuiz(ZonedDateTime.now().minusSeconds(10), ZonedDateTime.now().minusSeconds(8), quizMode);
+        quizExercise.setDuration(2);
+        quizExerciseService.save(quizExercise);
+
+        // Statistics start empty: nobody has submitted yet.
+        QuizExercise before = quizExerciseTestRepository.findByIdWithQuestionsAndStatisticsElseThrow(quizExercise.getId());
+        assertThat(before.getQuizPointStatistic().getParticipantsRated()).isZero();
+        assertThat(before.getQuizPointStatistic().getParticipantsUnrated()).isZero();
+        assertThat(before.getQuizPointStatistic().getPointCounters()).allSatisfy(pointCounter -> {
+            assertThat(pointCounter.getRatedCounter()).isZero();
+            assertThat(pointCounter.getUnRatedCounter()).isZero();
+        });
+
+        // Submit practice once for every student.
+        for (int i = 1; i <= NUMBER_OF_STUDENTS; i++) {
+            QuizSubmission quizSubmission = QuizExerciseFactory.generateSubmissionForThreeQuestions(quizExercise, i, true, null);
+            userUtilService.changeUser(TEST_PREFIX + "student" + i);
+            QuizSubmissionFromStudentDTO quizSubmissionDTO = QuizSubmissionFromStudentDTO.of(quizSubmission);
+            request.postWithResponseBody("/api/quiz/exercises/" + quizExercise.getId() + "/submissions/practice", quizSubmissionDTO, Result.class, HttpStatus.OK);
+        }
+
+        // Read the statistics directly, WITHOUT calling recalculateStatistics: they must already reflect the incremental update.
+        QuizExercise afterIncremental = quizExerciseTestRepository.findByIdWithQuestionsAndStatisticsElseThrow(quizExercise.getId());
+
+        // Practice produces unrated results only, one per student.
+        assertThat(afterIncremental.getQuizPointStatistic().getParticipantsRated()).isZero();
+        assertThat(afterIncremental.getQuizPointStatistic().getParticipantsUnrated()).isEqualTo(NUMBER_OF_STUDENTS);
+
+        // Every participant lands in exactly one point bucket, so the unrated point counters sum to the number of students,
+        // and no rated counter is touched.
+        int totalUnratedInPointCounters = afterIncremental.getQuizPointStatistic().getPointCounters().stream().mapToInt(PointCounter::getUnRatedCounter).sum();
+        assertThat(totalUnratedInPointCounters).isEqualTo(NUMBER_OF_STUDENTS);
+        assertThat(afterIncremental.getQuizPointStatistic().getPointCounters()).noneMatch(pointCounter -> pointCounter.getRatedCounter() > 0);
+
+        // Every question saw all participants as unrated, none as rated, and the correct counters stay within bounds.
+        for (var question : afterIncremental.getQuizQuestions()) {
+            var statistic = question.getQuizQuestionStatistic();
+            assertThat(statistic.getParticipantsUnrated()).isEqualTo(NUMBER_OF_STUDENTS);
+            assertThat(statistic.getParticipantsRated()).isZero();
+            assertThat(statistic.getRatedCorrectCounter()).isZero();
+            assertThat(statistic.getUnRatedCorrectCounter()).isBetween(0, NUMBER_OF_STUDENTS);
+        }
+
+        // The incremental statistics must be identical to the authoritative full recomputation over all results.
+        Map<Double, Integer> incrementalUnratedByPoints = afterIncremental.getQuizPointStatistic().getPointCounters().stream()
+                .collect(Collectors.toMap(PointCounter::getPoints, PointCounter::getUnRatedCounter));
+        QuizExercise recalculated = quizExerciseTestRepository.findByIdWithQuestionsAndStatisticsElseThrow(quizExercise.getId());
+        quizStatisticService.recalculateStatistics(recalculated);
+        Map<Double, Integer> recalculatedUnratedByPoints = recalculated.getQuizPointStatistic().getPointCounters().stream()
+                .collect(Collectors.toMap(PointCounter::getPoints, PointCounter::getUnRatedCounter));
+        assertThat(incrementalUnratedByPoints).isEqualTo(recalculatedUnratedByPoints);
+    }
+
+    /**
+     * Practice can be submitted repeatedly. Each new practice submission produces a new unrated result, and the incremental
+     * statistics update must REPLACE the participant's previous unrated result rather than counting it twice. This exercises
+     * {@link QuizStatisticService}'s "remove previous unrated result, add new one" path, which navigates
+     * result &rarr; submission &rarr; participation. The new {@code findResultWithSubmissionAndParticipationById} query loads
+     * exactly that path, so a query that failed to load the participation would either throw or double-count here.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testRepeatedPracticeSubmissionReplacesPreviousUnratedResultInStatistics() throws Exception {
+        QuizExercise quizExercise = quizExerciseUtilService.createQuiz(ZonedDateTime.now().minusSeconds(10), ZonedDateTime.now().minusSeconds(8), QuizMode.SYNCHRONIZED);
+        quizExercise.setDuration(2);
+        quizExerciseService.save(quizExercise);
+
+        // First practice submission by student1.
+        QuizSubmission first = QuizExerciseFactory.generateSubmissionForThreeQuestions(quizExercise, 1, true, null);
+        request.postWithResponseBody("/api/quiz/exercises/" + quizExercise.getId() + "/submissions/practice", QuizSubmissionFromStudentDTO.of(first), Result.class, HttpStatus.OK);
+
+        QuizExercise afterFirst = quizExerciseTestRepository.findByIdWithQuestionsAndStatisticsElseThrow(quizExercise.getId());
+        assertThat(afterFirst.getQuizPointStatistic().getParticipantsUnrated()).isEqualTo(1);
+        assertThat(afterFirst.getQuizPointStatistic().getPointCounters().stream().mapToInt(PointCounter::getUnRatedCounter).sum()).isEqualTo(1);
+
+        // Second practice submission by the SAME student produces a second unrated result for the same participation.
+        QuizSubmission second = QuizExerciseFactory.generateSubmissionForThreeQuestions(quizExercise, 2, true, null);
+        request.postWithResponseBody("/api/quiz/exercises/" + quizExercise.getId() + "/submissions/practice", QuizSubmissionFromStudentDTO.of(second), Result.class, HttpStatus.OK);
+
+        // There are now two submissions for student1, but the statistics still count the participant exactly once.
+        assertThat(quizSubmissionTestRepository.findByParticipation_Exercise_Id(quizExercise.getId())).hasSize(2);
+        QuizExercise afterSecond = quizExerciseTestRepository.findByIdWithQuestionsAndStatisticsElseThrow(quizExercise.getId());
+        assertThat(afterSecond.getQuizPointStatistic().getParticipantsUnrated()).isEqualTo(1);
+        assertThat(afterSecond.getQuizPointStatistic().getPointCounters().stream().mapToInt(PointCounter::getUnRatedCounter).sum()).isEqualTo(1);
+        for (var question : afterSecond.getQuizQuestions()) {
+            assertThat(question.getQuizQuestionStatistic().getParticipantsUnrated()).isEqualTo(1);
+        }
+    }
+
+    /**
+     * {@link QuizStatisticService#updateStatisticsForNewResult} loads the result freshly by id and must simply do nothing
+     * (rather than throw or corrupt the statistics) when the id does not resolve to a result, e.g. because the result was
+     * deleted between scheduling and running the async task.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testUpdateStatisticsForNewResultIgnoresUnknownResultId() {
+        QuizExercise quizExercise = quizExerciseUtilService.createQuiz(ZonedDateTime.now().minusSeconds(10), ZonedDateTime.now().minusSeconds(8), QuizMode.SYNCHRONIZED);
+        quizExercise.setDuration(2);
+        quizExerciseService.save(quizExercise);
+
+        long nonExistentResultId = Long.MAX_VALUE;
+        assertThatCode(() -> quizStatisticService.updateStatisticsForNewResult(quizExercise.getId(), nonExistentResultId)).doesNotThrowAnyException();
+
+        QuizExercise after = quizExerciseTestRepository.findByIdWithQuestionsAndStatisticsElseThrow(quizExercise.getId());
+        assertThat(after.getQuizPointStatistic().getParticipantsRated()).isZero();
+        assertThat(after.getQuizPointStatistic().getParticipantsUnrated()).isZero();
     }
 
     @Test
