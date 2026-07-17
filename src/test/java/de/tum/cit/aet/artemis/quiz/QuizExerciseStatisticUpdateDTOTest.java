@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.quiz;
 
+import static de.tum.cit.aet.artemis.quiz.util.QuizJsonNodeTestUtil.findQuestionByType;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import org.junit.jupiter.api.Test;
@@ -77,14 +78,5 @@ class QuizExerciseStatisticUpdateDTOTest {
         ShortAnswerQuestionStatistic shortAnswerStatistic = (ShortAnswerQuestionStatistic) shortAnswerQuestion.getQuizQuestionStatistic();
         shortAnswerQuestion.getSpots().forEach(shortAnswerStatistic::addSpot);
         return quizExercise;
-    }
-
-    private static JsonNode findQuestionByType(JsonNode questions, String type) {
-        for (JsonNode question : questions) {
-            if (type.equals(question.path("type").asText())) {
-                return question;
-            }
-        }
-        throw new AssertionError("Missing quiz question of type " + type);
     }
 }

@@ -8,11 +8,13 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Course } from 'app/course/shared/entities/course.model';
-import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
+import { QuizExercise, QuizExerciseStatisticUpdate } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { of } from 'rxjs';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { QuizQuestion } from 'app/quiz/shared/entities/quiz-question.model';
+import { MultipleChoiceQuestion } from 'app/quiz/shared/entities/multiple-choice-question.model';
+import { AnswerOption } from 'app/quiz/shared/entities/answer-option.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { QuizStatisticComponent } from 'app/quiz/manage/statistics/quiz-statistic/quiz-statistic.component';
@@ -36,6 +38,7 @@ describe('QuizStatisticComponent', () => {
     let accountService: AccountService;
     let accountSpy: MockInstance<AccountService['hasAnyAuthorityDirect']>;
     let router: Router;
+    let websocketService: MockWebsocketService;
     let quizServiceFindSpy: MockInstance<QuizExerciseService['find']>;
 
     beforeEach(async () => {
@@ -58,6 +61,7 @@ describe('QuizStatisticComponent', () => {
         quizService = TestBed.inject(QuizExerciseService);
         accountService = TestBed.inject(AccountService);
         router = TestBed.inject(Router);
+        websocketService = TestBed.inject(WebsocketService) as unknown as MockWebsocketService;
     });
 
     afterEach(() => {
@@ -111,6 +115,48 @@ describe('QuizStatisticComponent', () => {
             // check
             expect(accountSpy).toHaveBeenCalled();
             expect(quizServiceFindSpy).not.toHaveBeenCalled();
+        });
+
+        it('should merge websocket statistics without refetching or discarding instructor question data', async () => {
+            const answerOption = { id: 5, text: 'Answer', isCorrect: true, explanation: 'Explanation' } as AnswerOption;
+            const multipleChoiceQuestion = {
+                id: 1,
+                title: 'Instructor question',
+                points: 5,
+                answerOptions: [answerOption],
+                quizQuestionStatistic: quizQuestionStatOne,
+            } as MultipleChoiceQuestion;
+            quizExercise.quizQuestions = [multipleChoiceQuestion];
+            quizExercise.quizPointStatistic = { participantsRated: 42 };
+            const updatedStatistic = { ratedCorrectCounter: 7, unRatedCorrectCounter: 8 };
+            const update = {
+                id: 42,
+                quizQuestions: [
+                    {
+                        id: 1,
+                        answerOptions: [{ id: 5, text: 'Answer' }],
+                        quizQuestionStatistic: updatedStatistic,
+                    } as MultipleChoiceQuestion,
+                ],
+                quizPointStatistic: { participantsRated: 43 },
+            } as QuizExerciseStatisticUpdate;
+            accountSpy = vi.spyOn(accountService, 'hasAnyAuthorityDirect').mockReturnValue(true);
+
+            comp.ngOnInit();
+            await fixture.whenStable();
+            quizServiceFindSpy.mockClear();
+            websocketService.emit('/topic/statistic/42', update);
+
+            expect(quizServiceFindSpy).not.toHaveBeenCalled();
+            expect(comp.ratedData).toEqual([7, 7]);
+            expect(comp.unratedData).toEqual([8, 8]);
+            expect(comp.quizExercise().quizPointStatistic).toBe(update.quizPointStatistic);
+            const mergedQuestion = comp.quizExercise().quizQuestions![0] as MultipleChoiceQuestion;
+            expect(mergedQuestion.title).toBe('Instructor question');
+            expect(mergedQuestion.quizQuestionStatistic).toBe(updatedStatistic);
+            expect(mergedQuestion.answerOptions).toEqual([answerOption]);
+            expect(mergedQuestion.answerOptions![0].isCorrect).toBe(true);
+            expect(mergedQuestion.answerOptions![0].explanation).toBe('Explanation');
         });
     });
 

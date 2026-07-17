@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.quiz;
 
+import static de.tum.cit.aet.artemis.quiz.util.QuizJsonNodeTestUtil.findQuestionByType;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.nio.file.Files;
@@ -97,7 +98,9 @@ class QuizExerciseExportIntegrationTest extends AbstractSpringIntegrationIndepen
         JsonNode exerciseJson = objectMapper.readTree(exerciseDetails.toFile());
         JsonNode questions = exerciseJson.path("quizQuestions");
         assertThat(questions).hasSize(3);
-        for (JsonNode answerOption : findQuestionByType(questions, "multiple-choice").path("answerOptions")) {
+        JsonNode answerOptions = findQuestionByType(questions, "multiple-choice").path("answerOptions");
+        assertThat(answerOptions).isNotEmpty();
+        for (JsonNode answerOption : answerOptions) {
             assertThat(answerOption.path("id").isIntegralNumber()).as("answer option ID should be an integral number").isTrue();
         }
         assertThat(findQuestionByType(questions, "drag-and-drop").path("dragItems")).isNotEmpty();
@@ -122,14 +125,5 @@ class QuizExerciseExportIntegrationTest extends AbstractSpringIntegrationIndepen
         try (var files = Files.walk(exportDirectory)) {
             return files.filter(Files::isRegularFile).filter(path -> path.getFileName().toString().contains(namePart)).findFirst().orElseThrow();
         }
-    }
-
-    private static JsonNode findQuestionByType(JsonNode questions, String type) {
-        for (JsonNode question : questions) {
-            if (type.equals(question.path("type").asText())) {
-                return question;
-            }
-        }
-        throw new AssertionError("Missing quiz question of type " + type);
     }
 }

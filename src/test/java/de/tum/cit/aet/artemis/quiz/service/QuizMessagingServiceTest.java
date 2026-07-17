@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.quiz.service;
 
+import static de.tum.cit.aet.artemis.quiz.util.QuizJsonNodeTestUtil.findQuestionByType;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
@@ -66,14 +67,5 @@ class QuizMessagingServiceTest {
         QuizExerciseFactory.addQuestionsToQuizExercise(quizExercise);
         quizExercise.setId(11L);
         return quizExercise;
-    }
-
-    private static JsonNode findQuestionByType(JsonNode questions, String type) {
-        for (JsonNode question : questions) {
-            if (type.equals(question.path("type").asText())) {
-                return question;
-            }
-        }
-        throw new AssertionError("Missing quiz question of type " + type);
     }
 }

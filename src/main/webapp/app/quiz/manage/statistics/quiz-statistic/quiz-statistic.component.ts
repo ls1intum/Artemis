@@ -4,7 +4,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { HttpResponse } from '@angular/common/http';
 import { AccountService } from 'app/core/auth/account.service';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
-import { QuizExercise, QuizExerciseStatisticUpdate } from 'app/quiz/shared/entities/quiz-exercise.model';
+import { QuizExercise, QuizExerciseStatisticUpdate, mergeQuizExerciseStatisticUpdate } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { QuizExerciseService } from 'app/quiz/manage/service/quiz-exercise.service';
 import { AbstractQuizStatisticComponent } from 'app/quiz/manage/statistics/quiz-statistics';
 import { faSync } from '@fortawesome/free-solid-svg-icons';
@@ -67,12 +67,11 @@ export class QuizStatisticComponent extends AbstractQuizStatisticComponent imple
             // subscribe websocket for new statistical data
             this.websocketChannelForData = '/topic/statistic/' + params['exerciseId'];
 
-            // ask for new Data if the websocket for new statistical data was notified
-            this.websocketSubscription = this.websocketService.subscribe<QuizExerciseStatisticUpdate>(this.websocketChannelForData).subscribe(() => {
-                if (this.accountService.isAtLeastTutor()) {
-                    this.quizExerciseService.find(params['exerciseId']).subscribe((res) => {
-                        this.loadQuizSuccess(res.body!);
-                    });
+            // apply new statistical data to the full instructor quiz loaded above
+            this.websocketSubscription = this.websocketService.subscribe<QuizExerciseStatisticUpdate>(this.websocketChannelForData).subscribe((update) => {
+                const quizExercise = this.quizExercise();
+                if (this.accountService.isAtLeastTutor() && quizExercise) {
+                    this.loadQuizSuccess(mergeQuizExerciseStatisticUpdate(quizExercise, update));
                 }
             });
         });

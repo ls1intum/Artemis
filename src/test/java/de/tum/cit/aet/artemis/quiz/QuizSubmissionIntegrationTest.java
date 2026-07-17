@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.quiz;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.EXERCISE_TOPIC_ROOT;
+import static de.tum.cit.aet.artemis.quiz.util.QuizJsonNodeTestUtil.findQuestionByType;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.awaitility.Awaitility.await;
@@ -1166,15 +1167,6 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
         String topic = EXERCISE_TOPIC_ROOT + exercise.getId() + "/newResults";
         verify(websocketMessagingService, never()).sendMessage(eq(topic), any());
         verify(websocketMessagingService, never()).sendMessageToUser(any(), eq(topic), any());
-    }
-
-    private static JsonNode findQuestionByType(JsonNode questions, String type) {
-        for (JsonNode question : questions) {
-            if (type.equals(question.path("type").asText())) {
-                return question;
-            }
-        }
-        throw new AssertionError("Missing quiz question of type " + type);
     }
 
     private static JsonNode findSubmittedAnswerByType(JsonNode submittedAnswers, String type) {
