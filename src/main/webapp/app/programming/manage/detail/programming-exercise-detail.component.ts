@@ -155,11 +155,13 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     diffReady = false;
     lineChangesLoading = false;
 
-    private diffDetailData: ProgrammingDiffReportDetail['data'] = {
-        repositoryDiffInformation: undefined,
-        templateFileContentByPath: new Map<string, string>(),
-        solutionFileContentByPath: new Map<string, string>(),
-        lineChangesLoading: false,
+    // Signal-backed so that late updates (the diff is computed asynchronously after the detail sections render)
+    // schedule change detection in the zoneless app. The child detail component reads these signals reactively.
+    private readonly diffDetailData = {
+        repositoryDiffInformation: signal<RepositoryDiffInformation | undefined>(undefined),
+        templateFileContentByPath: signal<Map<string, string>>(new Map<string, string>()),
+        solutionFileContentByPath: signal<Map<string, string>>(new Map<string, string>()),
+        lineChangesLoading: signal<boolean>(false),
     };
 
     courseId!: number; // set in handleRouteData() from the loaded exercise before any read
@@ -351,10 +353,10 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
         this.repositoryDiffInformation = undefined;
         this.lineChangesLoading = true;
 
-        this.diffDetailData.repositoryDiffInformation = undefined;
-        this.diffDetailData.lineChangesLoading = true;
-        this.diffDetailData.templateFileContentByPath = new Map<string, string>();
-        this.diffDetailData.solutionFileContentByPath = new Map<string, string>();
+        this.diffDetailData.repositoryDiffInformation.set(undefined);
+        this.diffDetailData.lineChangesLoading.set(true);
+        this.diffDetailData.templateFileContentByPath.set(new Map<string, string>());
+        this.diffDetailData.solutionFileContentByPath.set(new Map<string, string>());
 
         this.ensureExerciseDetailsInitialized();
 
@@ -388,7 +390,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                         return;
                     }
                     this.lineChangesLoading = false;
-                    this.diffDetailData.lineChangesLoading = false;
+                    this.diffDetailData.lineChangesLoading.set(false);
                 },
             });
     }
@@ -414,10 +416,10 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
 
     private getDiffReportDetail(): ProgrammingDiffReportDetail | undefined {
         const showDiffReport =
-            this.diffDetailData.lineChangesLoading ||
-            !!this.diffDetailData.repositoryDiffInformation ||
-            this.diffDetailData.templateFileContentByPath.size > 0 ||
-            this.diffDetailData.solutionFileContentByPath.size > 0;
+            this.diffDetailData.lineChangesLoading() ||
+            !!this.diffDetailData.repositoryDiffInformation() ||
+            this.diffDetailData.templateFileContentByPath().size > 0 ||
+            this.diffDetailData.solutionFileContentByPath().size > 0;
 
         if (!showDiffReport) {
             return undefined;
@@ -845,11 +847,11 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                 this.templateFileContentByPath = new Map<string, string>();
                 this.solutionFileContentByPath = new Map<string, string>();
                 this.repositoryDiffInformation = undefined;
-                this.diffDetailData.templateFileContentByPath = new Map<string, string>();
-                this.diffDetailData.solutionFileContentByPath = new Map<string, string>();
-                this.diffDetailData.repositoryDiffInformation = undefined;
+                this.diffDetailData.templateFileContentByPath.set(new Map<string, string>());
+                this.diffDetailData.solutionFileContentByPath.set(new Map<string, string>());
+                this.diffDetailData.repositoryDiffInformation.set(undefined);
                 this.lineChangesLoading = false;
-                this.diffDetailData.lineChangesLoading = false;
+                this.diffDetailData.lineChangesLoading.set(false);
             }
             return;
         }
@@ -859,12 +861,12 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
 
         this.diffReady = false;
         this.repositoryDiffInformation = undefined;
-        this.diffDetailData.repositoryDiffInformation = undefined;
+        this.diffDetailData.repositoryDiffInformation.set(undefined);
 
         this.lineChangesLoading = true;
-        this.diffDetailData.templateFileContentByPath = templateFiles;
-        this.diffDetailData.solutionFileContentByPath = solutionFiles;
-        this.diffDetailData.lineChangesLoading = true;
+        this.diffDetailData.templateFileContentByPath.set(templateFiles);
+        this.diffDetailData.solutionFileContentByPath.set(solutionFiles);
+        this.diffDetailData.lineChangesLoading.set(true);
 
         this.ensureExerciseDetailsInitialized();
 
@@ -878,7 +880,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
             if (runId !== this.diffRunId) {
                 return;
             }
-            this.diffDetailData.repositoryDiffInformation = this.repositoryDiffInformation;
+            this.diffDetailData.repositoryDiffInformation.set(this.repositoryDiffInformation);
             this.diffReady = true;
         } catch (error) {
             if (runId !== this.diffRunId) {
@@ -893,11 +895,11 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                     removedLineCount: 0,
                 },
             };
-            this.diffDetailData.repositoryDiffInformation = this.repositoryDiffInformation;
+            this.diffDetailData.repositoryDiffInformation.set(this.repositoryDiffInformation);
         } finally {
             if (runId === this.diffRunId) {
                 this.lineChangesLoading = false;
-                this.diffDetailData.lineChangesLoading = false;
+                this.diffDetailData.lineChangesLoading.set(false);
             }
         }
     }
