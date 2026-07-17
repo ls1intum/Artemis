@@ -90,8 +90,9 @@ public class FileUploadExerciseImportService extends ExerciseImportService {
         FileUploadExercise newExercise = new FileUploadExercise();
         super.copyExerciseBasis(newExercise, importedExercise, templateExercise, new HashMap<>());
         newExercise.setAssessmentType(AssessmentType.MANUAL);
-        newExercise.setFilePattern(templateExercise.getFilePattern());
-        newExercise.setExampleSolution(templateExercise.getExampleSolution());
+        // Prefer the intended exercise (honours edits from the standalone import form), fall back to the source content.
+        newExercise.setFilePattern(firstNonNull(importedExercise.getFilePattern(), templateExercise.getFilePattern()));
+        newExercise.setExampleSolution(firstNonNull(importedExercise.getExampleSolution(), templateExercise.getExampleSolution()));
         return newExercise;
     }
 

@@ -103,9 +103,11 @@ public class ModelingExerciseImportService extends ExerciseImportService {
         ModelingExercise newExercise = new ModelingExercise();
         super.copyExerciseBasis(newExercise, importedExercise, templateExercise, gradingInstructionCopyTracker);
 
-        newExercise.setDiagramType(templateExercise.getDiagramType());
-        newExercise.setExampleSolutionModel(templateExercise.getExampleSolutionModel());
-        newExercise.setExampleSolutionExplanation(templateExercise.getExampleSolutionExplanation());
+        // Prefer the intended exercise (honours edits from the standalone import form), fall back to the source content.
+        ModelingExercise imported = (ModelingExercise) importedExercise;
+        newExercise.setDiagramType(firstNonNull(imported.getDiagramType(), templateExercise.getDiagramType()));
+        newExercise.setExampleSolutionModel(firstNonNull(imported.getExampleSolutionModel(), templateExercise.getExampleSolutionModel()));
+        newExercise.setExampleSolutionExplanation(firstNonNull(imported.getExampleSolutionExplanation(), templateExercise.getExampleSolutionExplanation()));
         return newExercise;
     }
 

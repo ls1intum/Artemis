@@ -106,10 +106,13 @@ public class QuizExerciseImportService extends ExerciseImportService {
     }
 
     /**
-     * This helper method copies all attributes of the {@code importedExercise} into a new exercise.
-     * Here we ignore all external entities as well as the start-, end-, and asseessment due date.
+     * Copies the exercise basis into a new exercise. Structural context (target course/group) comes from
+     * {@code importedExercise}; the quiz content and settings come from {@code templateExercise} (the original exercise),
+     * with {@code importedExercise} taking precedence where it carries a value. The start-, end-, and assessment due
+     * dates are intentionally not copied here.
      *
-     * @param importedExercise The exercise from which to copy the basis
+     * @param importedExercise the intended exercise (full for standalone import, a destination skeleton for bulk import)
+     * @param templateExercise the original exercise providing the quiz content and settings
      * @return the cloned QuizExercise basis
      */
     @NonNull
