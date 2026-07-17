@@ -10,13 +10,13 @@
         @for (preset of availableCourseSettingPresets(); track preset) {
             <div
                 class="course-notification-preset-picker-item"
-                [class.is-selected]="selectedCourseSettingPreset() && selectedCourseSettingPreset()!.identifier === preset.identifier"
+                [class.is-selected]="selectedCourseSettingPreset()?.identifier === preset.identifier"
                 ngbDropdownItem
                 (click)="presetSelected(preset.typeId)"
             >
                 <div class="course-notification-preset-picker-item-title">
                     <fa-icon [icon]="getPresetIcon(preset.identifier)" class="course-notification-preset-picker-item-icon" />
-                    @if (selectedCourseSettingPreset() && selectedCourseSettingPreset()!.identifier === preset.identifier) {
+                    @if (selectedCourseSettingPreset()?.identifier === preset.identifier) {
                         <strong [jhiTranslate]="'artemisApp.courseNotification.preset.' + preset.identifier + '.title'"></strong>
                     } @else {
                         <span [jhiTranslate]="'artemisApp.courseNotification.preset.' + preset.identifier + '.title'"></span>

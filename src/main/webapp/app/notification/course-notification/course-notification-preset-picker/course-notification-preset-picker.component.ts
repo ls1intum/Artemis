@@ -26,7 +26,7 @@ export class CourseNotificationPresetPickerComponent {
     readonly onPresetSelected = output<number>();
 
     // Custom preset (no `identifier`) falls back to the sliders icon; unknown identifiers use the default bell.
-    private static readonly PRESET_ICONS: Record<string, IconDefinition> = {
+    private static readonly presetIcons: Record<string, IconDefinition> = {
         defaultUserCourseNotificationSettingPreset: faBell,
         allActivityUserCourseNotificationSettingPreset: faBullhorn,
         ignoreUserCourseNotificationSettingPreset: faBellSlash,
@@ -55,7 +55,7 @@ export class CourseNotificationPresetPickerComponent {
      * @returns The FontAwesome icon representing the preset
      */
     protected getPresetIcon(identifier: string | undefined): IconDefinition {
-        return CourseNotificationPresetPickerComponent.PRESET_ICONS[identifier ?? 'customUserCourseNotificationSettingPreset'] ?? faBell;
+        return CourseNotificationPresetPickerComponent.presetIcons[identifier ?? 'customUserCourseNotificationSettingPreset'] ?? faBell;
     }
 
     /**
