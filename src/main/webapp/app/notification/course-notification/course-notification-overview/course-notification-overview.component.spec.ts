@@ -351,6 +351,23 @@ describe('CourseNotificationOverviewComponent', () => {
         vi.useRealTimers();
     });
 
+    it('should restore the saved pagination position on a loading (pagination) update, not the live (0) position', () => {
+        vi.useFakeTimers();
+        // During pagination the list is replaced by the loading spinner, so the live scrollTop reads 0.
+        const scrollElement = { scrollTop: 0 };
+        componentAsAny.scrollContainer = () => ({ nativeElement: scrollElement });
+        componentAsAny.isShown.set(true);
+        componentAsAny.isLoading.set(true); // a pagination fetch is in progress
+        componentAsAny.pagesFinished = true; // ensures we reach the restore (else) branch
+        componentAsAny.savedScrollPosition = 500; // position captured when pagination was triggered
+
+        componentAsAny.handleNotificationsUpdate([createMockNotification(1, 101, CourseNotificationCategory.GENERAL)]);
+        vi.runAllTimers();
+
+        expect(scrollElement.scrollTop).toBe(500);
+        vi.useRealTimers();
+    });
+
     it('should update unseen notifications to seen on client side', () => {
         const unseenNotification1 = createMockNotification(1, 101, CourseNotificationCategory.COMMUNICATION);
         const unseenNotification2 = createMockNotification(2, 101, CourseNotificationCategory.COMMUNICATION);
