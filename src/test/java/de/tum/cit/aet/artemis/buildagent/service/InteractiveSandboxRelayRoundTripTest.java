@@ -1025,7 +1025,7 @@ class InteractiveSandboxRelayRoundTripTest {
 
     @Test
     void relayFailsFastInsteadOfQueuingRequestsWithoutBound() throws Exception {
-        try (RelayHarness harness = newHarness(1)) {
+        try (RelayHarness harness = newHarness(1); ExecutorService callers = Executors.newFixedThreadPool(3)) {
             when(harness.localSandbox().createSession(any())).thenReturn(CONTAINER_ID);
             String handle = harness.client().createSession(sessionSpec());
             CountDownLatch workersStarted = new CountDownLatch(2);
@@ -1036,13 +1036,14 @@ class InteractiveSandboxRelayRoundTripTest {
                 return new SandboxExecResult(0, "", "", false);
             });
 
-            List<CompletableFuture<SandboxExecResult>> running = List.of(CompletableFuture.supplyAsync(() -> harness.client().exec(handle, Duration.ofSeconds(10), "true")),
-                    CompletableFuture.supplyAsync(() -> harness.client().exec(handle, Duration.ofSeconds(10), "true")));
+            List<CompletableFuture<SandboxExecResult>> running = List.of(
+                    CompletableFuture.supplyAsync(() -> harness.client().exec(handle, Duration.ofSeconds(10), "true"), callers),
+                    CompletableFuture.supplyAsync(() -> harness.client().exec(handle, Duration.ofSeconds(10), "true"), callers));
             assertThat(workersStarted.await(2, TimeUnit.SECONDS)).isTrue();
             ThreadPoolExecutor executor = (ThreadPoolExecutor) ReflectionTestUtils.getField(harness.handler(), "workerExecutor");
             assertThat(executor.getQueue()).isEmpty();
 
-            CompletableFuture<SandboxExecResult> rejected = CompletableFuture.supplyAsync(() -> harness.client().exec(handle, Duration.ofSeconds(10), "true"));
+            CompletableFuture<SandboxExecResult> rejected = CompletableFuture.supplyAsync(() -> harness.client().exec(handle, Duration.ofSeconds(10), "true"), callers);
             assertThat(rejected).failsWithin(Duration.ofSeconds(2)).withThrowableThat().withCauseInstanceOf(LocalCIException.class).withMessageContaining("overloaded");
 
             releaseWorkers.countDown();
