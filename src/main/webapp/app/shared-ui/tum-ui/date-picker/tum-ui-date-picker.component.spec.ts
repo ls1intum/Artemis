@@ -175,6 +175,17 @@ describe('TumUiDatePickerComponent', () => {
         expect(document.querySelector('tum-ui-calendar')).toBeNull();
     });
 
+    it('closes the overlay when the control is disabled while the panel is open', () => {
+        fixture.debugElement.query(By.css('[data-testid="tum-ui-date-picker-trigger"]')).nativeElement.click();
+        fixture.detectChanges();
+        expect(document.querySelector('tum-ui-calendar')).not.toBeNull();
+        // Disabling mid-open (e.g. a Signal Forms disable) must close the panel so a now-disabled control
+        // can no longer commit values from the calendar / time field.
+        fixture.componentRef.setInput('disabled', true);
+        fixture.detectChanges();
+        expect(document.querySelector('tum-ui-calendar')).toBeNull();
+    });
+
     it('bases the date on today, not the 1st of the month, when the time is set on an empty picker', () => {
         // Regression: with no value yet, editing the time must not silently commit the 1st of the current
         // month (activeMonth is always month-start). It should fall back to today, like a day selection.

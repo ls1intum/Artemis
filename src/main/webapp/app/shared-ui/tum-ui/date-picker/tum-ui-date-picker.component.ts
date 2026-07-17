@@ -142,6 +142,15 @@ export class TumUiDatePickerComponent implements FormValueControl<dayjs.Dayjs | 
         // Mirror parse-validity to consumers whenever it changes, so they can gate actions on
         // unparseable input (which by design does not emit valueChange). Emits the initial `true`.
         effect(() => this.parseValidChange.emit(this.isInputValid()));
+        // Close the overlay if the control is disabled while its panel is open (e.g. a Signal Forms
+        // disable). open() guards on disabled(), but that only covers opening — without this, an
+        // already-open calendar / time field would stay interactive and could still commit values on a
+        // now-disabled control. close() no-ops when already closed.
+        effect(() => {
+            if (this.disabled()) {
+                this.close();
+            }
+        });
     }
 
     /**
