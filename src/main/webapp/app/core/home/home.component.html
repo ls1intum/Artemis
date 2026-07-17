@@ -5,30 +5,31 @@
             <p class="lead" jhiTranslate="home.subtitle"></p>
         </div>
     </div>
+
     <div class="row row-divided my-4 justify-content-center">
-        @if (!isPasswordLoginDisabled()) {
-            <div class="login-col col-12 col-xl-5 h-100">
-                <!-- Traditional Authentication -->
+        <div class="login-col col-12 col-xl-5 h-100">
+            @if (currentStage() === 1) {
                 @if (!accountName()) {
-                    <div [jhiTranslate]="'home.login.traditional.pleaseSignIn'" class="lead text-center">Please sign in with your account.</div>
+                    <div [jhiTranslate]="'home.login.traditional.pleaseSignIn'" class="lead text-center mb-4">Please sign in with your account.</div>
                 } @else {
                     <div [jhiTranslate]="'home.login.traditional.pleaseSignInAccount'" [translateValues]="{ account: accountName() }" class="lead text-center mb-4">
                         Sign in with your account.
                     </div>
                 }
-                <div class="login-form">
-                    <div class="mb-5">
-                        <form (change)="inputChange($event)" (ngSubmit)="login()" name="loginForm" role="form">
-                            <div class="form-group">
-                                @if (authenticationError()) {
-                                    <div class="alert alert-danger my-3" jhiTranslate="home.errors.failedToLogin">
-                                        <span class="bold">Failed to sign in!</span> Please check your login and password and try again.
-                                    </div>
-                                }
-                            </div>
+            } @else if (currentStage() === 2 && loginMethod() === 'PASSWORD') {
+                <div class="lead text-center mb-4" [jhiTranslate]="'home.login.form.loggingInAs'" [translateValues]="{ username: username }"></div>
+            } @else if (currentStage() === 2 && (loginMethod() === 'OIDC' || loginMethod() === 'SAML2')) {
+                <div class="lead text-center mb-4" [jhiTranslate]="'home.login.form.signInWithProvider'" [translateValues]="{ provider: externalIdpName() }"></div>
+            }
+
+            <div class="login-form">
+                <div class="mb-5">
+                    @if (currentStage() === 1) {
+                        <form (change)="inputChange($event)" (ngSubmit)="onContinue()" name="identifierForm" role="form">
                             <div class="form-group pb-2">
-                                <label class="mb-2" for="username" jhiTranslate="global.form.username"></label>
+                                <label class="mb-2" for="username" jhiTranslate="global.form.username">Login or email</label>
                                 <input
+                                    #usernameInput
                                     #usernameForm="ngModel"
                                     [(ngModel)]="username"
                                     [ngModelOptions]="{ updateOn: 'change' }"
@@ -40,26 +41,75 @@
                                     [placeholder]="usernamePlaceholderTranslated()"
                                     [minlength]="USERNAME_MIN_LENGTH"
                                     [maxLength]="USERNAME_MAX_LENGTH"
-                                    (ngModelChange)="checkFormValidity()"
-                                    (blur)="usernameTouched = true"
+                                    (ngModelChange)="checkIdentifierValidity()"
                                     type="text"
                                     tabindex="1"
                                 />
-                                @if (usernameForm.errors && (usernameForm.dirty || usernameForm.touched) && usernameTouched) {
+                                @if (usernameForm.errors && (usernameForm.dirty || usernameForm.touched)) {
                                     <span class="mt-1 text-danger small" [jhiTranslate]="errorMessageUsername()"></span>
                                 }
                             </div>
+
+                            <div class="btn-toolbar">
+                                <button [disabled]="isCheckingIdentifier() || !isIdentifierValid()" class="btn btn-primary w-100" id="continue-button" type="submit" tabindex="2">
+                                    @if (isCheckingIdentifier()) {
+                                        <span class="me-1"><fa-icon [icon]="faCircleNotch" animation="spin" /></span>
+                                    }
+                                    <span jhiTranslate="entity.action.continue">Continue</span>
+                                </button>
+                            </div>
+                        </form>
+
+                        @if (isPasskeyEnabled()) {
+                            <div class="d-flex align-items-center my-3">
+                                <div class="flex-grow-1 border-top"></div>
+                                <span class="mx-3 text-muted" jhiTranslate="login.divider"></span>
+                                <div class="flex-grow-1 border-top"></div>
+                            </div>
+
+                            <div class="d-flex flex-column gap-2">
+                                <jhi-button
+                                    class="d-block w-100"
+                                    id="passkey-login-button"
+                                    [btnType]="ButtonType.PRIMARY_OUTLINE"
+                                    [fullWidth]="true"
+                                    [icon]="faKey"
+                                    title="global.menu.account.loginWithPasskey"
+                                    type="button"
+                                    (onClick)="loginWithPasskey()"
+                                />
+                            </div>
+                        }
+
+                        @if (isRegistrationEnabled()) {
+                            <div class="text-center mt-4">
+                                <span jhiTranslate="global.messages.info.register.noaccount"></span>&nbsp;
+                                <a class="text-primary" jhiTranslate="global.messages.info.register.link" routerLink="/account/register"></a>
+                            </div>
+                        }
+                    }
+
+                    @if (currentStage() === 2 && loginMethod() === 'PASSWORD') {
+                        <form (change)="inputChange($event)" (ngSubmit)="login()" name="loginForm" role="form">
                             <div class="form-group">
+                                @if (authenticationError()) {
+                                    <div class="alert alert-danger my-3" jhiTranslate="home.errors.failedToLogin">
+                                        <span class="bold">Failed to sign in!</span> Please check your login and password and try again.
+                                    </div>
+                                }
+                            </div>
+
+                            <div class="form-group pb-2">
                                 <div class="d-flex mb-2">
-                                    <label for="password" jhiTranslate="login.form.password"></label>
+                                    <label for="password" jhiTranslate="login.form.password">Password</label>
                                     <div class="ms-auto">
                                         <a class="text-primary small" jhiTranslate="login.password.forgot" routerLink="/account/reset/request" tabindex="4"></a>
                                     </div>
                                 </div>
                                 <input
+                                    #passwordInput
                                     #passwordForm="ngModel"
                                     [(ngModel)]="password"
-                                    [ngModelOptions]="{ updateOn: 'change' }"
                                     autocomplete="current-password webauthn"
                                     class="form-control"
                                     id="password"
@@ -67,14 +117,10 @@
                                     type="password"
                                     [minlength]="PASSWORD_MIN_LENGTH"
                                     [maxLength]="PASSWORD_MAX_LENGTH"
-                                    (ngModelChange)="checkFormValidity()"
-                                    (blur)="passwordTouched = true"
-                                    tabindex="2"
+                                    tabindex="1"
                                 />
-                                @if (passwordForm.errors && (passwordForm.dirty || passwordForm.touched) && passwordTouched) {
-                                    <span class="mt-1 text-danger small" jhiTranslate="home.errors.passwordIncorrect"></span>
-                                }
                             </div>
+
                             <div class="form-group">
                                 <div class="form-check">
                                     <label class="form-check-label" for="rememberMe">
@@ -91,110 +137,111 @@
                                     </div>
                                 }
                             </div>
-                            <div class="btn-toolbar">
+
+                            <div class="d-flex justify-content-between align-items-center gap-3 mt-4">
+                                <button (click)="goBack()" class="btn btn-outline-secondary w-50" type="button" tabindex="3">
+                                    <fa-icon [icon]="faArrowLeft" class="me-1" />
+                                    <span jhiTranslate="entity.action.back">Back</span>
+                                </button>
+
                                 <button
-                                    [disabled]="isSubmittingLogin() || (!userAcceptedTerms && needsToAcceptTerms()) || !isFormValid()"
-                                    class="btn btn-primary w-100"
+                                    [disabled]="isSubmittingLogin() || (!userAcceptedTerms && needsToAcceptTerms()) || !password"
+                                    class="btn btn-primary w-50"
                                     id="login-button"
                                     type="submit"
-                                    tabindex="3"
+                                    tabindex="2"
                                 >
                                     @if (isSubmittingLogin()) {
                                         <span class="me-1"><fa-icon [icon]="faCircleNotch" animation="spin" /></span>
                                     }
-                                    <span jhiTranslate="login.form.button"></span>
+                                    <span jhiTranslate="login.form.button">Sign in</span>
                                 </button>
                             </div>
                         </form>
-                        @if (isPasskeyEnabled() || isOidcEnabled()) {
-                            <div class="d-flex align-items-center my-3">
-                                <div class="flex-grow-1 border-top"></div>
-                                <span class="mx-3 text-muted" jhiTranslate="login.divider"></span>
-                                <div class="flex-grow-1 border-top"></div>
-                            </div>
-
-                            <div class="d-flex flex-column gap-2">
-                                @if (isOidcEnabled()) {
-                                    <jhi-button
-                                        class="d-block w-100"
-                                        id="oidc-login-button"
-                                        [btnType]="ButtonType.PRIMARY"
-                                        [fullWidth]="true"
-                                        [disabled]="isSubmittingLogin() || (!userAcceptedTerms && needsToAcceptTerms())"
-                                        title="global.menu.account.loginWithOidc"
-                                        type="button"
-                                        (onClick)="loginWithOidc()"
-                                    />
-                                }
-
-                                @if (isPasskeyEnabled()) {
-                                    <jhi-button
-                                        class="d-block w-100"
-                                        id="passkey-login-button"
-                                        [btnType]="ButtonType.PRIMARY_OUTLINE"
-                                        [fullWidth]="true"
-                                        [icon]="faKey"
-                                        title="global.menu.account.loginWithPasskey"
-                                        type="button"
-                                        (onClick)="loginWithPasskey()"
-                                    />
-                                }
-                            </div>
-                        }
-                    </div>
-                    <div class="text-center">
-                        @if (isRegistrationEnabled()) {
-                            <div>
-                                <span jhiTranslate="global.messages.info.register.noaccount"></span>&nbsp;
-                                <a class="text-primary" jhiTranslate="global.messages.info.register.link" routerLink="/account/register"></a>
-                            </div>
-                        }
-                    </div>
-                </div>
-            </div>
-        }
-        @if (!isPasswordLoginDisabled() && !!profileInfo()?.saml2) {
-            <div class="col-12 col-xl-2 py-5 h-100">
-                <div class="d-none d-xl-block vertical-divider" jhiTranslate="login.divider"></div>
-                <div class="d-xl-none horizontal-divider" jhiTranslate="login.divider"></div>
-            </div>
-        }
-        @if (!!profileInfo()?.saml2) {
-            <div class="login-col col-12 col-xl-5">
-                <!-- SAML2 Authentication -->
-                <div class="h-100 d-flex flex-column align-items-center justify-content-center">
-                    @if (!profileInfo().saml2!.identityProviderName) {
-                        <div [jhiTranslate]="'home.login.saml2.pleaseSignIn'" class="lead text-center">Please sign in via Single Sign-on.</div>
                     }
-                    @if (profileInfo().saml2!.identityProviderName) {
-                        <div
-                            [jhiTranslate]="'home.login.saml2.pleaseSignInProvider'"
-                            [translateValues]="{ provider: profileInfo().saml2!.identityProviderName }"
-                            class="lead text-center"
-                        >
-                            Please sign in.
-                        </div>
-                    }
-                    <div class="saml2-center d-flex flex-column align-items-center justify-content-center flex-grow-1">
+
+                    @if (currentStage() === 2 && loginMethod() === 'OIDC') {
                         <div class="form-group">
+                            <div class="form-check">
+                                <label class="form-check-label" for="rememberMeOidc">
+                                    <input [(ngModel)]="rememberMe" checked class="form-check-input" id="rememberMeOidc" name="rememberMe" type="checkbox" />
+                                    <span jhiTranslate="login.form.rememberme">Remember me</span>
+                                </label>
+                            </div>
                             @if (needsToAcceptTerms()) {
-                                <div class="form-check">
-                                    <label class="form-check-label" for="acceptTerms">
-                                        <input [(ngModel)]="userAcceptedTerms" class="form-check-input" type="checkbox" />
-                                        <a [routerLink]="['/privacy']" jhiTranslate="login.form.acceptTerms"></a>
+                                <div class="form-check mt-2">
+                                    <label class="form-check-label" for="acceptTermsOidc">
+                                        <input [(ngModel)]="userAcceptedTerms" checked class="form-check-input" id="acceptTermsOidc" name="acceptTerms" type="checkbox" />
+                                        <a [routerLink]="['/privacy']" jhiTranslate="login.form.acceptTerms">I accept the terms of use</a>
                                     </label>
                                 </div>
                             }
                         </div>
-                        <jhi-saml2-login
-                            [acceptedTerms]="!needsToAcceptTerms() || userAcceptedTerms"
-                            [rememberMe]="rememberMe"
-                            [saml2Profile]="profileInfo().saml2!"
-                            class="d-block text-center"
-                        />
-                    </div>
+
+                        <div class="d-flex flex-column gap-3 mt-4">
+                            <button
+                                [disabled]="isSubmittingLogin() || (!userAcceptedTerms && needsToAcceptTerms())"
+                                class="btn btn-primary w-100 py-2"
+                                id="oidc-login-button"
+                                type="button"
+                                (click)="loginWithOidc()"
+                            >
+                                @if (isSubmittingLogin()) {
+                                    <span class="me-1"><fa-icon [icon]="faCircleNotch" animation="spin" /></span>
+                                }
+                                <span [jhiTranslate]="'home.login.form.signInWithProvider'" [translateValues]="{ provider: externalIdpName() || 'OIDC' }">
+                                    Sign in with {{ externalIdpName() || 'OIDC' }}
+                                </span>
+                            </button>
+
+                            <button (click)="goBack()" class="btn btn-outline-secondary w-100" type="button">
+                                <fa-icon [icon]="faArrowLeft" class="me-1" />
+                                <span jhiTranslate="entity.action.back">Back</span>
+                            </button>
+                        </div>
+                    }
+
+                    @if (currentStage() === 2 && loginMethod() === 'SAML2') {
+                        <div class="form-group">
+                            <div class="form-check">
+                                <label class="form-check-label" for="rememberMeSaml">
+                                    <input [(ngModel)]="rememberMe" checked class="form-check-input" id="rememberMeSaml" name="rememberMe" type="checkbox" />
+                                    <span jhiTranslate="login.form.rememberme">Remember me</span>
+                                </label>
+                            </div>
+                            @if (needsToAcceptTerms()) {
+                                <div class="form-check mt-2">
+                                    <label class="form-check-label" for="acceptTermsSaml">
+                                        <input [(ngModel)]="userAcceptedTerms" checked class="form-check-input" id="acceptTermsSaml" name="acceptTerms" type="checkbox" />
+                                        <a [routerLink]="['/privacy']" jhiTranslate="login.form.acceptTerms">I accept the terms of use</a>
+                                    </label>
+                                </div>
+                            }
+                        </div>
+
+                        <div class="saml2-center d-flex flex-column align-items-center gap-3 mt-4">
+                            @if (profileInfo()?.saml2) {
+                                <jhi-saml2-login
+                                    [acceptedTerms]="!needsToAcceptTerms() || userAcceptedTerms"
+                                    [rememberMe]="rememberMe"
+                                    [saml2Profile]="profileInfo().saml2!"
+                                    class="d-block w-100"
+                                />
+                            } @else {
+                                <button [disabled]="true" class="btn btn-primary w-100" id="saml2-fallback-button" type="button">
+                                    <span [jhiTranslate]="'home.login.form.signInWithProvider'" [translateValues]="{ provider: externalIdpName() || 'SAML2' }">
+                                        Sign in with {{ externalIdpName() || 'SAML2 Login' }}
+                                    </span>
+                                </button>
+                            }
+                            <button (click)="goBack()" class="btn btn-outline-secondary w-100" type="button">
+                                <fa-icon [icon]="faArrowLeft" class="me-1" />
+                                <span jhiTranslate="entity.action.back">Back</span>
+                            </button>
+                        </div>
+                    }
                 </div>
             </div>
-        }
+        </div>
     </div>
 </div>
