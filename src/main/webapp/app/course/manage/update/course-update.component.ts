@@ -141,6 +141,7 @@ export class CourseUpdateComponent implements OnInit {
     /** Snapshot of the organization ids loaded from the server, used to diff add/remove on save. */
     private initialOrganizationIds = new Set<number>();
     readonly isAdmin = signal(false);
+    readonly isAtLeastInstructor = signal(false);
 
     communicationEnabled = true;
     messagingEnabled = true;
@@ -310,6 +311,7 @@ export class CourseUpdateComponent implements OnInit {
         }
 
         this.isAdmin.set(this.accountService.isAdmin());
+        this.isAtLeastInstructor.set(this.accountService.isAtLeastInstructorInCourse(this.course));
     }
     tzResultFormatter = (timeZone: string) => timeZone;
     tzInputFormatter = (timeZone: string) => timeZone;

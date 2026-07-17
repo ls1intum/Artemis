@@ -154,12 +154,6 @@ public class CourseUpdateResource {
             if (existingCourse.getStudentCourseAnalyticsDashboardEnabled() != courseUpdateDTO.studentCourseAnalyticsDashboardEnabled()) {
                 throw new BadRequestAlertException("You are not allowed to change the dashboard settings of a course", Course.ENTITY_NAME, "dashboardSettingsCannotChange", true);
             }
-            // instructors are not allowed to change the Athena AI feedback configuration
-            if (existingCourse.isAthenaGradingFeedbackEnabled() != courseUpdateDTO.athenaGradingFeedbackEnabled()
-                    || existingCourse.isAthenaFormativeFeedbackEnabled() != courseUpdateDTO.athenaFormativeFeedbackEnabled()) {
-                throw new BadRequestAlertException("You are not allowed to change the Athena AI feedback settings of a course", Course.ENTITY_NAME, "athenaConfigCannotChange",
-                        true);
-            }
         }
 
         if (courseUpdateDTO.title().length() > MAX_TITLE_LENGTH) {

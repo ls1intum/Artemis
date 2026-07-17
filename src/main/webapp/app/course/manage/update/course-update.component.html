@@ -386,7 +386,7 @@
                         </div>
                     </div>
                 }
-                @if (isAdmin() && isAthenaEnabled()) {
+                @if (isAtLeastInstructor() && isAthenaEnabled()) {
                     <div class="nested-form-group-head form-check">
                         <input
                             type="checkbox"
