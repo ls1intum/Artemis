@@ -94,8 +94,9 @@ class RepositoryServiceIntegrationTest extends AbstractProgrammingIntegrationLoc
     void getSelectedFilesContentSkipsBlobAbovePerFileLimit() throws Exception {
         String smallFilePath = "src/Small.java";
         String largeFilePath = "src/Large.java";
-        Files.writeString(localRepository.workingCopyGitRepoFile.toPath().resolve(smallFilePath), "class Small {}", StandardCharsets.UTF_8);
-        Files.write(localRepository.workingCopyGitRepoFile.toPath().resolve(largeFilePath), new byte[(int) RepositoryService.MAX_SELECTED_FILE_SIZE_BYTES + 1]);
+        FileUtils.writeStringToFile(localRepository.workingCopyGitRepoFile.toPath().resolve(smallFilePath).toFile(), "class Small {}", StandardCharsets.UTF_8);
+        FileUtils.writeByteArrayToFile(localRepository.workingCopyGitRepoFile.toPath().resolve(largeFilePath).toFile(),
+                new byte[(int) RepositoryService.MAX_SELECTED_FILE_SIZE_BYTES + 1]);
         String commitHash = commitAndPushSelectedFiles();
 
         Map<String, String> files = repositoryService.getFilesContentFromBareRepository(localRepository.remoteBareGitRepo.getRepository(), commitHash,
@@ -110,7 +111,7 @@ class RepositoryServiceIntegrationTest extends AbstractProgrammingIntegrationLoc
         byte[] content = new byte[(int) RepositoryService.MAX_SELECTED_FILE_SIZE_BYTES];
         for (int i = 0; i < 6; i++) {
             String filePath = "src/File" + i + ".java";
-            Files.write(localRepository.workingCopyGitRepoFile.toPath().resolve(filePath), content);
+            FileUtils.writeByteArrayToFile(localRepository.workingCopyGitRepoFile.toPath().resolve(filePath).toFile(), content);
             filePaths.add(filePath);
         }
         String commitHash = commitAndPushSelectedFiles();
