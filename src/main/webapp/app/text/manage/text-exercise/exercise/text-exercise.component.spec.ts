@@ -3,7 +3,6 @@
  * Verifies the component's behavior for managing text exercises in a course.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
@@ -29,7 +28,6 @@ import { EventManager } from 'app/foundation/service/event-manager.service';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 
 describe('TextExercise Management Component', () => {
-    setupTestBed({ zoneless: true });
     let comp: TextExerciseComponent;
     let fixture: ComponentFixture<TextExerciseComponent>;
     let courseExerciseService: CourseExerciseService;

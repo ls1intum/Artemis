@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { TutorialGroupsCourseInformationComponent } from 'app/tutorialgroup/manage/tutorial-groups-management/tutorial-groups-course-information/tutorial-groups-course-information.component';
@@ -16,8 +15,6 @@ class MockSidePanelComponent {
 }
 
 describe('TutorialGroupsCourseInformationComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: TutorialGroupsCourseInformationComponent;
     let fixture: ComponentFixture<TutorialGroupsCourseInformationComponent>;
 

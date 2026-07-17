@@ -126,7 +126,7 @@ export class ExamScoresAverageScoresGraphComponent implements OnInit {
      * Delegates the user to the scores page of the specific exam exercise if the corresponding bar is clicked
      * @param event the event that is fired by p-chart
      */
-    onSelect(event: { element?: { datasetIndex: number; index: number } }) {
+    onSelect(event: { element?: unknown }) {
         const selected = toChartSelectEvent(event, this.chartData());
         if (!selected?.label) {
             return;
