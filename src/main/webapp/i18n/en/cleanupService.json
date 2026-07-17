@@ -13,7 +13,11 @@
             "deleteNonRatedResults": "Delete feedback of old non-rated results",
             "deleteOldRatedResults": "Delete feedback of old rated results",
             "deleteOldSubmissionVersions": "Delete old submission versions",
-            "deleteOldFeedback": "Delete old feedback versions"
+            "deleteOldFeedback": "Delete feedback of non-latest results (old courses)",
+            "warnOldCoursesReset": "Warn instructors of old courses (archive + email)",
+            "resetOldCourses": "Reset student data of old courses",
+            "deleteOldCourseSubmissionVersions": "Delete submission versions of old courses",
+            "deleteNotEnrolledUsers": "Delete users not enrolled in any course"
         },
         "tooltip": {
             "deleteOrphans": "Deletes orphaned entities that are no longer associated with valid results or participations. This includes feedback, text blocks, and scores that reference null results, participations, or submissions.",
@@ -21,7 +25,11 @@
             "deleteNonRatedResults": "Deletes non-rated results, excluding the latest non-rated result for each participation (to be able to compute Competencies Scores), within the specified date range, along with associated long feedback texts, text blocks, feedback items, and participant scores.",
             "deleteOldRatedResults": "Deletes rated results, excluding the latest rated result for each participation, for courses conducted within the specified date range. Also deletes associated long feedback texts, text blocks, feedback items, and participant scores.",
             "deleteOldSubmissionVersions": "Deletes old submission versions. The last submission will not be deleted, as it is always stored in the corresponding Submission subclass.",
-            "deleteOldFeedback": "Delete old feedback versions"
+            "deleteOldFeedback": "Deletes the feedback (feedback, long feedback texts, text blocks) of non-latest results for courses that ended before the configured cutoff. The results themselves and the feedback of the latest rated and latest non-rated result per participation are kept.",
+            "warnOldCoursesReset": "Archives every old course whose data-retention period has elapsed (1 year for non-grade-relevant, 5 years for grade-relevant courses) and emails its instructors a download link plus a notice that the student data will be deleted after a grace period. Course material is kept.",
+            "resetOldCourses": "Deletes all student data of old courses that are past the reset grace period (and were already archived), while keeping the course material. This action cannot be undone.",
+            "deleteOldCourseSubmissionVersions": "Deletes the submission versions (editor keystroke history) of courses that ended before the configured cutoff.",
+            "deleteNotEnrolledUsers": "Soft-deletes and anonymizes users who are enrolled in no course and have been inactive beyond the configured guard period. Administrators are not affected."
         },
         "execute": {
             "question": "Are you sure you want to execute the operation <strong>{{ operationName }}</strong> for the period from {{deleteFrom}} to {{deleteTo}}? This action cannot be undone!",
@@ -54,7 +62,9 @@
             "longFeedbackText": "Long feedback text",
             "textBlock": "Text block",
             "feedback": "Feedback",
-            "submissionVersions": "Submission versions"
+            "submissionVersions": "Submission versions",
+            "courses": "Courses",
+            "users": "Users"
         },
         "button": {
             "execute": "Execute",

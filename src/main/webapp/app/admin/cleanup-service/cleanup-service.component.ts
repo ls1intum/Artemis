@@ -59,6 +59,10 @@ export class CleanupServiceComponent implements OnInit {
         deleteOldRatedResults: 'deleteRatedResults',
         deleteOldSubmissionVersions: 'deleteSubmissionVersions',
         deleteOldFeedback: 'deleteFeedback',
+        warnOldCoursesReset: 'warnOldCoursesReset',
+        resetOldCourses: 'resetOldCourses',
+        deleteOldCourseSubmissionVersions: 'deleteOldCourseSubmissionVersions',
+        deleteNotEnrolledUsers: 'deleteNotEnrolledUsers',
     };
     protected readonly DateTimePickerType = DateTimePickerType;
 
@@ -76,6 +80,7 @@ export class CleanupServiceComponent implements OnInit {
             deleteTo: dayjs().subtract(6, 'months'),
             lastExecuted: undefined,
             datesValid: signal(true),
+            ageBased: true,
         },
         {
             name: 'deletePlagiarismComparisons',
@@ -104,6 +109,47 @@ export class CleanupServiceComponent implements OnInit {
             deleteTo: dayjs().subtract(6, 'months'),
             lastExecuted: undefined,
             datesValid: signal(true),
+        },
+        // Age-based operations: no admin-picked date range, driven by configurable server-side cutoffs.
+        {
+            name: 'warnOldCoursesReset',
+            deleteFrom: undefined,
+            deleteTo: undefined,
+            lastExecuted: undefined,
+            datesValid: signal(true),
+            ageBased: true,
+        },
+        {
+            name: 'resetOldCourses',
+            deleteFrom: undefined,
+            deleteTo: undefined,
+            lastExecuted: undefined,
+            datesValid: signal(true),
+            ageBased: true,
+        },
+        {
+            name: 'deleteOldFeedback',
+            deleteFrom: undefined,
+            deleteTo: undefined,
+            lastExecuted: undefined,
+            datesValid: signal(true),
+            ageBased: true,
+        },
+        {
+            name: 'deleteOldCourseSubmissionVersions',
+            deleteFrom: undefined,
+            deleteTo: undefined,
+            lastExecuted: undefined,
+            datesValid: signal(true),
+            ageBased: true,
+        },
+        {
+            name: 'deleteNotEnrolledUsers',
+            deleteFrom: undefined,
+            deleteTo: undefined,
+            lastExecuted: undefined,
+            datesValid: signal(true),
+            ageBased: true,
         },
     ]);
 

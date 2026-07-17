@@ -208,6 +208,8 @@ describe('Course Management Update Component', () => {
             const entity = new Course();
             entity.courseInformationSharingConfiguration = CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING;
             entity.id = 123;
+            // save() maps the grade-relevance form control into the course configuration (defaults to grade-relevant)
+            entity.courseConfiguration = { gradeRelevant: true };
             const updateStub = vi.spyOn(courseManagementService, 'update').mockReturnValue(of(new HttpResponse({ body: entity })));
             comp.course = entity;
             comp.courseForm = new FormGroup({
@@ -244,6 +246,8 @@ describe('Course Management Update Component', () => {
             // GIVEN
             const entity = new Course();
             entity.courseInformationSharingConfiguration = CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING;
+            // save() maps the grade-relevance form control into the course configuration (defaults to grade-relevant)
+            entity.courseConfiguration = { gradeRelevant: true };
             const createStub = vi.spyOn(courseAdminService, 'create').mockReturnValue(of(new HttpResponse({ body: entity })));
             comp.course = entity;
             comp.courseForm = new FormGroup({
@@ -273,6 +277,29 @@ describe('Course Management Update Component', () => {
             expect(createStub).toHaveBeenCalledOnce();
             expect(createStub).toHaveBeenCalledWith(entity, undefined);
             expect(comp.isSaving()).toBe(false);
+        });
+
+        it('should map the grade-relevance form control into the course configuration on save', async () => {
+            // GIVEN
+            const entity = new Course();
+            entity.id = 123;
+            comp.course = entity;
+            const updateStub = vi.spyOn(courseManagementService, 'update').mockReturnValue(of(new HttpResponse({ body: entity })));
+            comp.courseForm = new FormGroup({
+                id: new FormControl(entity.id),
+                // instructor opted out of grade relevance
+                gradeRelevant: new FormControl(false),
+            });
+
+            // WHEN
+            comp.save();
+            fixture.detectChanges();
+            await Promise.resolve();
+
+            // THEN
+            expect(updateStub).toHaveBeenCalledOnce();
+            const savedCourse = updateStub.mock.calls[0][1];
+            expect(savedCourse.courseConfiguration?.gradeRelevant).toBe(false);
         });
 
         it('should broadcast course modification on delete', async () => {

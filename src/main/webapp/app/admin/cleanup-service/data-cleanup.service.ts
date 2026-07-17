@@ -49,6 +49,20 @@ export interface SubmissionVersionsCleanupCountDTO extends CleanupCount {
     submissionVersions: number;
 }
 
+export interface OldCoursesCleanupCountDTO extends CleanupCount {
+    courses: number;
+}
+
+export interface OldFeedbackCleanupCountDTO extends CleanupCount {
+    longFeedbackText: number;
+    textBlock: number;
+    feedback: number;
+}
+
+export interface NotEnrolledUsersCleanupCountDTO extends CleanupCount {
+    users: number;
+}
+
 @Injectable({ providedIn: 'root' })
 export class DataCleanupService {
     private readonly adminResourceUrl = 'api/admin/cleanup';
@@ -118,6 +132,41 @@ export class DataCleanupService {
             params: { deleteFrom: deleteFromString, deleteTo: deleteToString },
             observe: 'response',
         });
+    }
+
+    /**
+     * Send POST request to archive old courses due for a student-data reset and warn their instructors.
+     */
+    warnOldCoursesReset(): Observable<HttpResponse<CleanupServiceExecutionRecordDTO>> {
+        return this.http.post<CleanupServiceExecutionRecordDTO>(`${this.adminResourceUrl}/old-courses/warn`, undefined, { observe: 'response' });
+    }
+
+    /**
+     * Send DELETE request to reset the student data of old courses that are past the reset grace period.
+     */
+    resetOldCourses(): Observable<HttpResponse<CleanupServiceExecutionRecordDTO>> {
+        return this.http.delete<CleanupServiceExecutionRecordDTO>(`${this.adminResourceUrl}/old-courses/reset`, { observe: 'response' });
+    }
+
+    /**
+     * Send DELETE request to delete the feedback of non-latest results of old courses.
+     */
+    deleteOldFeedback(): Observable<HttpResponse<CleanupServiceExecutionRecordDTO>> {
+        return this.http.delete<CleanupServiceExecutionRecordDTO>(`${this.adminResourceUrl}/old-feedback`, { observe: 'response' });
+    }
+
+    /**
+     * Send DELETE request to delete the submission versions of old courses.
+     */
+    deleteOldCourseSubmissionVersions(): Observable<HttpResponse<CleanupServiceExecutionRecordDTO>> {
+        return this.http.delete<CleanupServiceExecutionRecordDTO>(`${this.adminResourceUrl}/old-course-submission-versions`, { observe: 'response' });
+    }
+
+    /**
+     * Send DELETE request to soft-delete users who are enrolled in no course and inactive beyond the guard period.
+     */
+    deleteNotEnrolledUsers(): Observable<HttpResponse<CleanupServiceExecutionRecordDTO>> {
+        return this.http.delete<CleanupServiceExecutionRecordDTO>(`${this.adminResourceUrl}/not-enrolled-users`, { observe: 'response' });
     }
 
     /**
@@ -198,5 +247,40 @@ export class DataCleanupService {
             params: { deleteFrom: deleteFromString, deleteTo: deleteToString },
             observe: 'response',
         });
+    }
+
+    /**
+     * Send GET request to count old courses due for a student-data reset warning.
+     */
+    countOldCoursesResetWarning(): Observable<HttpResponse<OldCoursesCleanupCountDTO>> {
+        return this.http.get<OldCoursesCleanupCountDTO>(`${this.adminResourceUrl}/old-courses/warn/count`, { observe: 'response' });
+    }
+
+    /**
+     * Send GET request to count old courses due for a student-data reset.
+     */
+    countOldCoursesReset(): Observable<HttpResponse<OldCoursesCleanupCountDTO>> {
+        return this.http.get<OldCoursesCleanupCountDTO>(`${this.adminResourceUrl}/old-courses/reset/count`, { observe: 'response' });
+    }
+
+    /**
+     * Send GET request to count the feedback of non-latest results of old courses.
+     */
+    countOldFeedback(): Observable<HttpResponse<OldFeedbackCleanupCountDTO>> {
+        return this.http.get<OldFeedbackCleanupCountDTO>(`${this.adminResourceUrl}/old-feedback/count`, { observe: 'response' });
+    }
+
+    /**
+     * Send GET request to count the submission versions of old courses.
+     */
+    countOldCourseSubmissionVersions(): Observable<HttpResponse<SubmissionVersionsCleanupCountDTO>> {
+        return this.http.get<SubmissionVersionsCleanupCountDTO>(`${this.adminResourceUrl}/old-course-submission-versions/count`, { observe: 'response' });
+    }
+
+    /**
+     * Send GET request to count the users that would be soft-deleted by the not-enrolled-user cleanup.
+     */
+    countNotEnrolledUsers(): Observable<HttpResponse<NotEnrolledUsersCleanupCountDTO>> {
+        return this.http.get<NotEnrolledUsersCleanupCountDTO>(`${this.adminResourceUrl}/not-enrolled-users/count`, { observe: 'response' });
     }
 }

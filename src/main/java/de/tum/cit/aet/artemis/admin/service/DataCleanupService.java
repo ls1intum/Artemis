@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.admin.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
+import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.Arrays;
 import java.util.List;
@@ -12,11 +13,18 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.repository.UserRepository;
+import de.tum.cit.aet.artemis.account.service.user.UserService;
+import de.tum.cit.aet.artemis.admin.config.DataCleanupProperties;
 import de.tum.cit.aet.artemis.admin.domain.CleanupJobExecution;
 import de.tum.cit.aet.artemis.admin.domain.CleanupJobType;
 import de.tum.cit.aet.artemis.admin.dto.CleanupServiceExecutionRecordDTO;
 import de.tum.cit.aet.artemis.admin.dto.NonLatestNonRatedResultsCleanupCountDTO;
 import de.tum.cit.aet.artemis.admin.dto.NonLatestRatedResultsCleanupCountDTO;
+import de.tum.cit.aet.artemis.admin.dto.NotEnrolledUsersCleanupCountDTO;
+import de.tum.cit.aet.artemis.admin.dto.OldCoursesCleanupCountDTO;
+import de.tum.cit.aet.artemis.admin.dto.OldFeedbackCleanupCountDTO;
 import de.tum.cit.aet.artemis.admin.dto.OrphanCleanupCountDTO;
 import de.tum.cit.aet.artemis.admin.dto.PlagiarismComparisonCleanupCountDTO;
 import de.tum.cit.aet.artemis.admin.dto.SubmissionVersionsCleanupCountDTO;
@@ -30,6 +38,8 @@ import de.tum.cit.aet.artemis.assessment.repository.cleanup.StudentScoreCleanupR
 import de.tum.cit.aet.artemis.assessment.repository.cleanup.SubmissionVersionCleanupRepository;
 import de.tum.cit.aet.artemis.assessment.repository.cleanup.TeamScoreCleanupRepository;
 import de.tum.cit.aet.artemis.assessment.repository.cleanup.TextBlockCleanupRepository;
+import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.course.service.CourseDataRetentionService;
 
 @Profile(PROFILE_CORE)
 @Lazy
@@ -58,11 +68,24 @@ public class DataCleanupService {
 
     private final SubmissionVersionCleanupRepository submissionVersionCleanupRepository;
 
+    private final DataCleanupProperties dataCleanupProperties;
+
+    private final CourseDataRetentionService courseDataRetentionService;
+
+    private final UserService userService;
+
+    private final UserRepository userRepository;
+
+    // A date safely before any real course start date, used to convert the existing "course date range" feedback cleanup
+    // queries (which filter startDate > deleteFrom AND endDate < deleteTo) into an age-only ("ended before X") cleanup.
+    private static final ZonedDateTime FAR_PAST = ZonedDateTime.of(1900, 1, 1, 0, 0, 0, 0, ZoneOffset.UTC);
+
     public DataCleanupService(CleanupJobExecutionRepository cleanupJobExecutionRepository, PlagiarismComparisonCleanupRepository plagiarismComparisonCleanupRepository,
             ResultCleanupRepository resultCleanupRepository, RatingCleanupRepository ratingCleanupRepository, FeedbackCleanupRepository feedbackCleanupRepository,
             TextBlockCleanupRepository textBlockCleanupRepository, LongFeedbackTextCleanupRepository longFeedbackTextCleanupRepository,
             StudentScoreCleanupRepository studentScoreCleanupRepository, TeamScoreCleanupRepository teamScoreCleanupRepository,
-            SubmissionVersionCleanupRepository submissionVersionCleanupRepository) {
+            SubmissionVersionCleanupRepository submissionVersionCleanupRepository, DataCleanupProperties dataCleanupProperties,
+            CourseDataRetentionService courseDataRetentionService, UserService userService, UserRepository userRepository) {
         this.resultCleanupRepository = resultCleanupRepository;
         this.ratingCleanupRepository = ratingCleanupRepository;
         this.feedbackCleanupRepository = feedbackCleanupRepository;
@@ -73,6 +96,10 @@ public class DataCleanupService {
         this.cleanupJobExecutionRepository = cleanupJobExecutionRepository;
         this.plagiarismComparisonCleanupRepository = plagiarismComparisonCleanupRepository;
         this.submissionVersionCleanupRepository = submissionVersionCleanupRepository;
+        this.dataCleanupProperties = dataCleanupProperties;
+        this.courseDataRetentionService = courseDataRetentionService;
+        this.userService = userService;
+        this.userRepository = userRepository;
     }
 
     /**
@@ -276,6 +303,162 @@ public class DataCleanupService {
     public SubmissionVersionsCleanupCountDTO countSubmissionVersions(ZonedDateTime deleteFrom, ZonedDateTime deleteTo) {
         int submissionVersionsCount = this.submissionVersionCleanupRepository.countSubmissionVersionsByCreatedDateRange(deleteFrom.toInstant(), deleteTo.toInstant());
         return new SubmissionVersionsCleanupCountDTO(submissionVersionsCount);
+    }
+
+    /**
+     * Phase 1 of the old-course cleanup: archives every old course due for a student-data reset and warns its instructors
+     * (see {@link CourseDataRetentionService#warnAndArchiveDueCourses()}).
+     *
+     * @return a {@link CleanupServiceExecutionRecordDTO} representing the execution record of the cleanup job
+     */
+    public CleanupServiceExecutionRecordDTO warnOldCoursesReset() {
+        int warned = courseDataRetentionService.warnAndArchiveDueCourses();
+        log.info("Warned instructors of {} old course(s) about the upcoming student-data reset", warned);
+        return CleanupServiceExecutionRecordDTO.of(createCleanupJobExecution(CleanupJobType.OLD_COURSES_RESET_WARNING, null, null));
+    }
+
+    /**
+     * Counts the old courses that are due for a student-data reset warning (retention elapsed, not yet archived).
+     *
+     * @return an {@link OldCoursesCleanupCountDTO} with the affected course count and titles
+     */
+    public OldCoursesCleanupCountDTO countOldCoursesResetWarning() {
+        return toOldCoursesCleanupCountDTO(courseDataRetentionService.findCoursesDueForWarning());
+    }
+
+    /**
+     * Phase 2 of the old-course cleanup: resets the student data of every old course past the grace period, keeping the
+     * course material intact (see {@link CourseDataRetentionService#resetDueCourses()}).
+     *
+     * @return a {@link CleanupServiceExecutionRecordDTO} representing the execution record of the cleanup job
+     */
+    public CleanupServiceExecutionRecordDTO resetOldCourses() {
+        int reset = courseDataRetentionService.resetDueCourses();
+        log.info("Reset the student data of {} old course(s)", reset);
+        return CleanupServiceExecutionRecordDTO.of(createCleanupJobExecution(CleanupJobType.OLD_COURSES_RESET, null, null));
+    }
+
+    /**
+     * Counts the old courses that are due for a student-data reset (retention plus grace elapsed, already archived).
+     *
+     * @return an {@link OldCoursesCleanupCountDTO} with the affected course count and titles
+     */
+    public OldCoursesCleanupCountDTO countOldCoursesReset() {
+        return toOldCoursesCleanupCountDTO(courseDataRetentionService.findCoursesDueForReset());
+    }
+
+    /**
+     * Deletes the feedback (feedback entries, long feedback texts, text blocks) of non-latest results for all courses that
+     * ended before the configured cutoff. Only the feedback of non-latest results is removed; the results themselves and
+     * the feedback of the latest rated and latest non-rated result per participation are kept. Runs both the rated and
+     * non-rated variants of the existing course-date-range cleanup with an open (far-past) lower bound.
+     *
+     * @return a {@link CleanupServiceExecutionRecordDTO} representing the execution record of the cleanup job
+     */
+    public CleanupServiceExecutionRecordDTO deleteFeedbackOfNonLatestResultsOfOldCourses() {
+        ZonedDateTime cutoff = ZonedDateTime.now().minusWeeks(dataCleanupProperties.oldFeedbackCutoffWeeks());
+
+        // Rated: delete referencing rows (long feedback texts, text blocks) before the feedback they belong to.
+        int ratedLongFeedbackTexts = longFeedbackTextCleanupRepository.deleteLongFeedbackTextForRatedResultsWhereCourseDateBetween(FAR_PAST, cutoff);
+        int ratedTextBlocks = textBlockCleanupRepository.deleteTextBlockForRatedResultsWhereCourseDateBetween(FAR_PAST, cutoff);
+        int ratedFeedback = feedbackCleanupRepository.deleteOldFeedbackThatAreNotLatestRatedResultsWhereCourseDateBetween(FAR_PAST, cutoff);
+
+        // Non-rated
+        int nonRatedLongFeedbackTexts = longFeedbackTextCleanupRepository.deleteLongFeedbackTextForNonRatedResultsWhereCourseDateBetween(FAR_PAST, cutoff);
+        int nonRatedTextBlocks = textBlockCleanupRepository.deleteTextBlockForNonRatedResultsWhereCourseDateBetween(FAR_PAST, cutoff);
+        int nonRatedFeedback = feedbackCleanupRepository.deleteOldNonRatedFeedbackWhereCourseDateBetween(FAR_PAST, cutoff);
+
+        log.info("Deleted feedback of non-latest results of old courses (ended before {}): {} long feedback texts, {} text blocks, {} feedback entries", cutoff,
+                ratedLongFeedbackTexts + nonRatedLongFeedbackTexts, ratedTextBlocks + nonRatedTextBlocks, ratedFeedback + nonRatedFeedback);
+        return CleanupServiceExecutionRecordDTO.of(createCleanupJobExecution(CleanupJobType.FEEDBACK, null, null));
+    }
+
+    /**
+     * Counts the feedback (feedback entries, long feedback texts, text blocks) of non-latest results that would be deleted
+     * for courses that ended before the configured cutoff.
+     *
+     * @return an {@link OldFeedbackCleanupCountDTO} with the combined rated and non-rated counts
+     */
+    public OldFeedbackCleanupCountDTO countFeedbackOfNonLatestResultsOfOldCourses() {
+        ZonedDateTime cutoff = ZonedDateTime.now().minusWeeks(dataCleanupProperties.oldFeedbackCutoffWeeks());
+        int longFeedbackText = longFeedbackTextCleanupRepository.countLongFeedbackTextForRatedResultsWhereCourseDateBetween(FAR_PAST, cutoff)
+                + longFeedbackTextCleanupRepository.countLongFeedbackTextForNonRatedResultsWhereCourseDateBetween(FAR_PAST, cutoff);
+        int textBlock = textBlockCleanupRepository.countTextBlockForRatedResultsWhereCourseDateBetween(FAR_PAST, cutoff)
+                + textBlockCleanupRepository.countTextBlockForNonRatedResultsWhereCourseDateBetween(FAR_PAST, cutoff);
+        int feedback = feedbackCleanupRepository.countOldFeedbackThatAreNotLatestRatedResultsWhereCourseDateBetween(FAR_PAST, cutoff)
+                + feedbackCleanupRepository.countOldNonRatedFeedbackWhereCourseDateBetween(FAR_PAST, cutoff);
+        return new OldFeedbackCleanupCountDTO(longFeedbackText, textBlock, feedback);
+    }
+
+    /**
+     * Deletes the submission versions (editor keystroke history) of all courses that ended before the configured cutoff.
+     *
+     * @return a {@link CleanupServiceExecutionRecordDTO} representing the execution record of the cleanup job
+     */
+    public CleanupServiceExecutionRecordDTO deleteOldCourseSubmissionVersions() {
+        ZonedDateTime cutoff = ZonedDateTime.now().minusWeeks(dataCleanupProperties.oldSubmissionVersionsCutoffWeeks());
+        int deleted = submissionVersionCleanupRepository.deleteSubmissionVersionsWhereCourseEndDateBefore(cutoff);
+        log.info("Deleted {} submission versions of courses that ended before {}", deleted, cutoff);
+        return CleanupServiceExecutionRecordDTO.of(createCleanupJobExecution(CleanupJobType.OLD_COURSE_SUBMISSION_VERSIONS, null, null));
+    }
+
+    /**
+     * Counts the submission versions of courses that ended before the configured cutoff and would be deleted.
+     *
+     * @return a {@link SubmissionVersionsCleanupCountDTO} with the affected count
+     */
+    public SubmissionVersionsCleanupCountDTO countOldCourseSubmissionVersions() {
+        ZonedDateTime cutoff = ZonedDateTime.now().minusWeeks(dataCleanupProperties.oldSubmissionVersionsCutoffWeeks());
+        return new SubmissionVersionsCleanupCountDTO(submissionVersionCleanupRepository.countSubmissionVersionsWhereCourseEndDateBefore(cutoff));
+    }
+
+    /**
+     * Soft-deletes (and anonymizes) all users who are enrolled in no course and have been inactive beyond the configured
+     * guard period. The Iris bot is never deleted; admins and super-admins are already excluded by the repository query.
+     *
+     * @return a {@link CleanupServiceExecutionRecordDTO} representing the execution record of the cleanup job
+     */
+    public CleanupServiceExecutionRecordDTO deleteNotEnrolledUsers() {
+        List<String> logins = notEnrolledUserLogins();
+        log.info("Soft-deleting {} not-enrolled, inactive user(s)", logins.size());
+        logins.forEach(login -> {
+            try {
+                userService.softDeleteUser(login);
+            }
+            catch (Exception e) {
+                log.error("Failed to soft-delete not-enrolled user {}", login, e);
+            }
+        });
+        return CleanupServiceExecutionRecordDTO.of(createCleanupJobExecution(CleanupJobType.NOT_ENROLLED_USERS, null, null));
+    }
+
+    /**
+     * Counts the users who are enrolled in no course and inactive beyond the guard period and would be soft-deleted.
+     *
+     * @return a {@link NotEnrolledUsersCleanupCountDTO} with the affected user count
+     */
+    public NotEnrolledUsersCleanupCountDTO countNotEnrolledUsers() {
+        return new NotEnrolledUsersCleanupCountDTO(notEnrolledUserLogins().size());
+    }
+
+    /**
+     * Resolves the logins of users enrolled in no course and inactive beyond the configured guard period.
+     * <p>
+     * NOTE: inactivity is approximated by {@code User.lastModifiedDate} because Artemis has no dedicated last-login /
+     * last-activity field. This is only a reliable "active" signal in deployments where authentication updates the user
+     * row (e.g. internal auth). In setups where login does not write the user (some LDAP/SAML group-sync setups), a
+     * regularly-logging-in but course-less user could still be selected. The operation is admin-only and has a
+     * count-preview endpoint, so an admin can review the affected users before confirming the (irreversible) soft delete.
+     *
+     * @return the logins to soft-delete, excluding the Iris bot (admins/super-admins are already excluded by the query)
+     */
+    private List<String> notEnrolledUserLogins() {
+        var modifiedBefore = ZonedDateTime.now().minusMonths(dataCleanupProperties.notEnrolledUsersInactivityMonths()).toInstant();
+        return userRepository.findAllNotEnrolledUsersModifiedBefore(modifiedBefore).stream().filter(login -> !User.IRIS_BOT_LOGIN.equals(login)).toList();
+    }
+
+    private OldCoursesCleanupCountDTO toOldCoursesCleanupCountDTO(List<Course> courses) {
+        return new OldCoursesCleanupCountDTO(courses.size());
     }
 
     /**

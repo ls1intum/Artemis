@@ -116,6 +116,12 @@ public class Course extends DomainObject {
     @JoinColumn(name = "online_course_configuration_id")
     private OnlineCourseConfiguration onlineCourseConfiguration;
 
+    // Lazy on purpose: the course table is already wide and these values are only needed in specific flows (course
+    // settings form, data-privacy cleanup). Do NOT add this to eager course queries or entity graphs.
+    @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @JoinColumn(name = "course_configuration_id")
+    private CourseConfiguration courseConfiguration;
+
     @Enumerated(EnumType.ORDINAL)
     @Column(name = "info_sharing_config", nullable = false)
     private CourseInformationSharingConfiguration courseInformationSharingConfiguration = CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING; // default value
@@ -490,6 +496,28 @@ public class Course extends DomainObject {
 
     public void setOnlineCourseConfiguration(OnlineCourseConfiguration onlineCourseConfiguration) {
         this.onlineCourseConfiguration = onlineCourseConfiguration;
+    }
+
+    public CourseConfiguration getCourseConfiguration() {
+        return Hibernate.isInitialized(courseConfiguration) ? courseConfiguration : null;
+    }
+
+    public void setCourseConfiguration(CourseConfiguration courseConfiguration) {
+        this.courseConfiguration = courseConfiguration;
+    }
+
+    /**
+     * Whether the course is grade-relevant, driving how long its student data is retained before the GDPR cleanup resets
+     * it. A course without an explicit {@link CourseConfiguration} (i.e. one that was never edited) is treated as
+     * grade-relevant, matching the safe default. This is null-safe with respect to the lazy association: it only reflects
+     * the flag when the configuration has been initialized.
+     *
+     * @return {@code true} if the course is grade-relevant or has no explicit configuration, {@code false} if an
+     *         instructor opted out
+     */
+    public boolean isGradeRelevant() {
+        CourseConfiguration configuration = getCourseConfiguration();
+        return configuration == null || configuration.isGradeRelevant();
     }
 
     public Integer getMaxComplaints() {

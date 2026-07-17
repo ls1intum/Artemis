@@ -243,6 +243,7 @@ export class CourseUpdateComponent implements OnInit {
                 endDate: new FormControl(this.course.endDate),
                 semester: new FormControl(this.course.semester),
                 testCourse: new FormControl(this.course.testCourse),
+                gradeRelevant: new FormControl(this.course.courseConfiguration?.gradeRelevant ?? true),
                 learningPathsEnabled: new FormControl(this.course.learningPathsEnabled),
                 studentCourseAnalyticsDashboardEnabled: new FormControl(this.course.studentCourseAnalyticsDashboardEnabled),
                 onlineCourse: new FormControl(this.course.onlineCourse),
@@ -347,10 +348,14 @@ export class CourseUpdateComponent implements OnInit {
             file = base64StringToBlob(base64Data, 'image/*');
         }
 
-        const course = this.courseForm.getRawValue() as Course;
+        const rawValue = this.courseForm.getRawValue();
+        const course = rawValue as Course;
         // NOTE: prevent overriding this value accidentally
         // TODO: move presentationScore to gradingScale to avoid this
         course.presentationScore = this.course.presentationScore;
+
+        // Map the flat grade-relevance form control into the nested course configuration expected by the update DTO mapper.
+        course.courseConfiguration = { ...this.course.courseConfiguration, gradeRelevant: rawValue.gradeRelevant ?? true };
 
         if (this.communicationEnabled && this.messagingEnabled) {
             course.courseInformationSharingConfiguration = CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING;

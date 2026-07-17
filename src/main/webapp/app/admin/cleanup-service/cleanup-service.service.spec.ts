@@ -246,4 +246,66 @@ describe('DataCleanupService', () => {
         expect(req.request.method).toBe('GET');
         req.flush(mockSubmissionVersionsCount);
     });
+
+    it('should send POST request to warn old courses reset', () => {
+        service.warnOldCoursesReset().subscribe((res) => {
+            expect(res.body).toEqual(mockExecutionRecord);
+        });
+
+        const req = httpMock.expectOne({ method: 'POST', url: 'api/admin/cleanup/old-courses/warn' });
+        req.flush(mockExecutionRecord);
+    });
+
+    it('should send DELETE request to reset old courses', () => {
+        service.resetOldCourses().subscribe((res) => {
+            expect(res.body).toEqual(mockExecutionRecord);
+        });
+
+        const req = httpMock.expectOne({ method: 'DELETE', url: 'api/admin/cleanup/old-courses/reset' });
+        req.flush(mockExecutionRecord);
+    });
+
+    it('should send DELETE request to delete old feedback', () => {
+        service.deleteOldFeedback().subscribe((res) => {
+            expect(res.body).toEqual(mockExecutionRecord);
+        });
+
+        const req = httpMock.expectOne({ method: 'DELETE', url: 'api/admin/cleanup/old-feedback' });
+        req.flush(mockExecutionRecord);
+    });
+
+    it('should send DELETE request to delete old course submission versions', () => {
+        service.deleteOldCourseSubmissionVersions().subscribe((res) => {
+            expect(res.body).toEqual(mockExecutionRecord);
+        });
+
+        const req = httpMock.expectOne({ method: 'DELETE', url: 'api/admin/cleanup/old-course-submission-versions' });
+        req.flush(mockExecutionRecord);
+    });
+
+    it('should send DELETE request to delete not-enrolled users', () => {
+        service.deleteNotEnrolledUsers().subscribe((res) => {
+            expect(res.body).toEqual(mockExecutionRecord);
+        });
+
+        const req = httpMock.expectOne({ method: 'DELETE', url: 'api/admin/cleanup/not-enrolled-users' });
+        req.flush(mockExecutionRecord);
+    });
+
+    it('should send GET requests to count the new data-privacy operations', () => {
+        service.countOldCoursesResetWarning().subscribe((res) => expect(res.body).toEqual({ courses: 2 }));
+        httpMock.expectOne({ method: 'GET', url: 'api/admin/cleanup/old-courses/warn/count' }).flush({ courses: 2 });
+
+        service.countOldCoursesReset().subscribe((res) => expect(res.body).toEqual({ courses: 1 }));
+        httpMock.expectOne({ method: 'GET', url: 'api/admin/cleanup/old-courses/reset/count' }).flush({ courses: 1 });
+
+        service.countOldFeedback().subscribe((res) => expect(res.body).toEqual({ longFeedbackText: 1, textBlock: 2, feedback: 3 }));
+        httpMock.expectOne({ method: 'GET', url: 'api/admin/cleanup/old-feedback/count' }).flush({ longFeedbackText: 1, textBlock: 2, feedback: 3 });
+
+        service.countOldCourseSubmissionVersions().subscribe((res) => expect(res.body).toEqual(mockSubmissionVersionsCount));
+        httpMock.expectOne({ method: 'GET', url: 'api/admin/cleanup/old-course-submission-versions/count' }).flush(mockSubmissionVersionsCount);
+
+        service.countNotEnrolledUsers().subscribe((res) => expect(res.body).toEqual({ users: 5 }));
+        httpMock.expectOne({ method: 'GET', url: 'api/admin/cleanup/not-enrolled-users/count' }).flush({ users: 5 });
+    });
 });

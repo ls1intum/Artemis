@@ -11,6 +11,7 @@ import static de.tum.cit.aet.artemis.account.repository.UserSpecs.notSoftDeleted
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
 
+import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.Collection;
 import java.util.HashSet;
@@ -879,6 +880,27 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
             ORDER BY user.login
             """)
     List<String> findAllNotEnrolledUsers();
+
+    /**
+     * Get all logins of users that are not enrolled in any course and have not been modified since the given cutoff,
+     * excluding administrators (which are normally not enrolled in any course). Used by the data-privacy cleanup to avoid
+     * deleting freshly-created accounts that simply have not been added to a course group yet. Users with no last
+     * modification date are not returned.
+     *
+     * @param modifiedBefore only users whose last modification date is strictly before this are returned
+     * @return all logins of not enrolled, inactive users as a sorted list (not admins)
+     */
+    @Query("""
+            SELECT user.login
+            FROM User user
+            WHERE user.groups IS EMPTY AND NOT user.deleted
+                AND user.lastModifiedDate IS NOT NULL
+                AND user.lastModifiedDate < :modifiedBefore
+                AND NOT :#{T(de.tum.cit.aet.artemis.account.domain.Authority).ADMIN_AUTHORITY} MEMBER OF user.authorities
+                AND NOT :#{T(de.tum.cit.aet.artemis.account.domain.Authority).SUPER_ADMIN_AUTHORITY} MEMBER OF user.authorities
+            ORDER BY user.login
+            """)
+    List<String> findAllNotEnrolledUsersModifiedBefore(@Param("modifiedBefore") Instant modifiedBefore);
 
     /**
      * Get all managed users

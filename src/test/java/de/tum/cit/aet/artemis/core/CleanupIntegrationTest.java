@@ -23,6 +23,9 @@ import de.tum.cit.aet.artemis.admin.domain.CleanupJobType;
 import de.tum.cit.aet.artemis.admin.dto.CleanupServiceExecutionRecordDTO;
 import de.tum.cit.aet.artemis.admin.dto.NonLatestNonRatedResultsCleanupCountDTO;
 import de.tum.cit.aet.artemis.admin.dto.NonLatestRatedResultsCleanupCountDTO;
+import de.tum.cit.aet.artemis.admin.dto.NotEnrolledUsersCleanupCountDTO;
+import de.tum.cit.aet.artemis.admin.dto.OldCoursesCleanupCountDTO;
+import de.tum.cit.aet.artemis.admin.dto.OldFeedbackCleanupCountDTO;
 import de.tum.cit.aet.artemis.admin.dto.OrphanCleanupCountDTO;
 import de.tum.cit.aet.artemis.admin.dto.PlagiarismComparisonCleanupCountDTO;
 import de.tum.cit.aet.artemis.admin.dto.SubmissionVersionsCleanupCountDTO;
@@ -611,7 +614,30 @@ class CleanupIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCTest
         request.delete("/api/core/admin/cleanup/old-submission-versions", HttpStatus.FORBIDDEN, CleanupServiceExecutionRecordDTO.class);
         request.get("/api/core/admin/cleanup/old-submission-versions/count", HttpStatus.FORBIDDEN, SubmissionVersionsCleanupCountDTO.class);
 
+        // new data-privacy cleanup endpoints
+        request.postWithoutResponseBody("/api/core/admin/cleanup/old-courses/warn", null, HttpStatus.FORBIDDEN);
+        request.get("/api/core/admin/cleanup/old-courses/warn/count", HttpStatus.FORBIDDEN, OldCoursesCleanupCountDTO.class);
+        request.delete("/api/core/admin/cleanup/old-courses/reset", HttpStatus.FORBIDDEN, CleanupServiceExecutionRecordDTO.class);
+        request.get("/api/core/admin/cleanup/old-courses/reset/count", HttpStatus.FORBIDDEN, OldCoursesCleanupCountDTO.class);
+        request.delete("/api/core/admin/cleanup/old-feedback", HttpStatus.FORBIDDEN, CleanupServiceExecutionRecordDTO.class);
+        request.get("/api/core/admin/cleanup/old-feedback/count", HttpStatus.FORBIDDEN, OldFeedbackCleanupCountDTO.class);
+        request.delete("/api/core/admin/cleanup/old-course-submission-versions", HttpStatus.FORBIDDEN, CleanupServiceExecutionRecordDTO.class);
+        request.get("/api/core/admin/cleanup/old-course-submission-versions/count", HttpStatus.FORBIDDEN, SubmissionVersionsCleanupCountDTO.class);
+        request.delete("/api/core/admin/cleanup/not-enrolled-users", HttpStatus.FORBIDDEN, CleanupServiceExecutionRecordDTO.class);
+        request.get("/api/core/admin/cleanup/not-enrolled-users/count", HttpStatus.FORBIDDEN, NotEnrolledUsersCleanupCountDTO.class);
+
         request.get("/api/core/admin/cleanup/last-executions", HttpStatus.FORBIDDEN, List.class);
+    }
+
+    @Test
+    @WithMockUser(roles = "ADMIN")
+    void testCountNewDataPrivacyOperationsAsAdmin() throws Exception {
+        // the count (preview) endpoints are read-only and must be wired, authorized for admins, and serialize correctly
+        assertThat(request.get("/api/core/admin/cleanup/old-courses/warn/count", HttpStatus.OK, OldCoursesCleanupCountDTO.class)).isNotNull();
+        assertThat(request.get("/api/core/admin/cleanup/old-courses/reset/count", HttpStatus.OK, OldCoursesCleanupCountDTO.class)).isNotNull();
+        assertThat(request.get("/api/core/admin/cleanup/old-feedback/count", HttpStatus.OK, OldFeedbackCleanupCountDTO.class)).isNotNull();
+        assertThat(request.get("/api/core/admin/cleanup/old-course-submission-versions/count", HttpStatus.OK, SubmissionVersionsCleanupCountDTO.class)).isNotNull();
+        assertThat(request.get("/api/core/admin/cleanup/not-enrolled-users/count", HttpStatus.OK, NotEnrolledUsersCleanupCountDTO.class)).isNotNull();
     }
 
     private Feedback createFeedbackWithLinkedLongFeedback() {

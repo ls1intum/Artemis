@@ -80,6 +80,38 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long>, Jp
             """)
     List<Course> findAllActive(@Param("now") ZonedDateTime now);
 
+    /**
+     * Finds all courses that ended before the given date, eagerly loading their (otherwise lazy) course configuration so
+     * grade-relevance can be evaluated without extra queries. Used by the data-privacy retention cleanup to determine
+     * which old courses are due for a student-data reset.
+     *
+     * @param endDateBefore only courses whose end date is non-null and strictly before this are returned
+     * @return the matching courses with their course configuration initialized
+     */
+    @Query("""
+            SELECT c
+            FROM Course c
+                LEFT JOIN FETCH c.courseConfiguration
+            WHERE c.endDate IS NOT NULL
+                AND c.endDate < :endDateBefore
+            """)
+    List<Course> findAllWithCourseConfigurationByEndDateBefore(@Param("endDateBefore") ZonedDateTime endDateBefore);
+
+    /**
+     * Finds all courses whose data-privacy reset warning has already been sent (i.e. their configuration has a non-null
+     * reset warning date), eagerly loading the configuration. Used by the retention cleanup to determine which warned
+     * courses are past the grace period and due for a student-data reset.
+     *
+     * @return the matching courses with their course configuration initialized
+     */
+    @Query("""
+            SELECT c
+            FROM Course c
+                LEFT JOIN FETCH c.courseConfiguration cc
+            WHERE cc.resetWarningSentDate IS NOT NULL
+            """)
+    List<Course> findAllWithResetWarningSent();
+
     @Query("""
             SELECT DISTINCT c
             FROM Course c
@@ -130,7 +162,14 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long>, Jp
     @EntityGraph(type = LOAD, attributePaths = { "exercises", "exercises.plagiarismDetectionConfig", "exercises.teamAssignmentConfig", "lectures", "lectures.attachments" })
     Optional<Course> findWithEagerExercisesAndExerciseDetailsAndLecturesById(long courseId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "organizations", "competencies", "prerequisites", "tutorialGroupsConfiguration", "onlineCourseConfiguration" })
+    // Like the archive fetch above but also loads the (lazy) course configuration, so the data-privacy warn phase can
+    // archive the course and persist the reset-warning timestamp on a single managed instance.
+    @EntityGraph(type = LOAD, attributePaths = { "exercises", "exercises.plagiarismDetectionConfig", "exercises.teamAssignmentConfig", "lectures", "lectures.attachments",
+            "courseConfiguration" })
+    Optional<Course> findWithEagerExercisesAndExerciseDetailsAndLecturesAndConfigById(long courseId);
+
+    @EntityGraph(type = LOAD, attributePaths = { "organizations", "competencies", "prerequisites", "tutorialGroupsConfiguration", "onlineCourseConfiguration",
+            "courseConfiguration" })
     Optional<Course> findForUpdateById(long courseId);
 
     @Query("""
@@ -169,7 +208,8 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long>, Jp
             """)
     Optional<Course> findWithEagerOrganizationsAndCompetenciesAndPrerequisitesAndLearningPaths(@Param("courseId") long courseId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "onlineCourseConfiguration", "tutorialGroupsConfiguration" })
+    // courseConfiguration is fetched here so the (instructor) course management view exposes grade-relevance for editing.
+    @EntityGraph(type = LOAD, attributePaths = { "onlineCourseConfiguration", "tutorialGroupsConfiguration", "courseConfiguration" })
     Course findWithEagerOnlineCourseConfigurationAndTutorialGroupConfigurationById(long courseId);
 
     @EntityGraph(type = LOAD, attributePaths = { "onlineCourseConfiguration" })
@@ -550,6 +590,11 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long>, Jp
     @NonNull
     default Course findByIdWithExercisesAndExerciseDetailsAndLecturesElseThrow(long courseId) {
         return getValueElseThrow(findWithEagerExercisesAndExerciseDetailsAndLecturesById(courseId), courseId);
+    }
+
+    @NonNull
+    default Course findByIdWithExercisesAndExerciseDetailsAndLecturesAndConfigElseThrow(long courseId) {
+        return getValueElseThrow(findWithEagerExercisesAndExerciseDetailsAndLecturesAndConfigById(courseId), courseId);
     }
 
     @NonNull

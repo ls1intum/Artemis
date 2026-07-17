@@ -17,7 +17,7 @@
                 <jhi-help-icon class="ps-1" text="{{ 'cleanupService.tooltip.' + operation.name }}" />
             </td>
             <td>
-                @if (operation.name !== 'deleteOrphans') {
+                @if (!operation.ageBased) {
                     <jhi-date-time-picker
                         #deleteFromPicker
                         [inputId]="'deleteFromDate-' + operation.name"
@@ -35,7 +35,7 @@
                 }
             </td>
             <td>
-                @if (operation.name !== 'deleteOrphans') {
+                @if (!operation.ageBased) {
                     <jhi-date-time-picker
                         #deleteToPicker
                         [inputId]="'deleteToDate-' + operation.name"

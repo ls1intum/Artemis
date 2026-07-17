@@ -13,6 +13,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.core.domain.Language;
 import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.course.domain.CourseConfiguration;
 import de.tum.cit.aet.artemis.course.domain.CourseInformationSharingConfiguration;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 
@@ -59,7 +60,11 @@ public record CourseUpdateDTO(
 
         // Course features
         boolean learningPathsEnabled, boolean studentCourseAnalyticsDashboardEnabled, Integer presentationScore, Integer maxPoints, @Min(0) @Max(5) Integer accuracyOfScores,
-        boolean restrictedAthenaModulesAccess, String timeZone, CourseInformationSharingConfiguration courseInformationSharingConfiguration, boolean onboardingDone) {
+        boolean restrictedAthenaModulesAccess, String timeZone, CourseInformationSharingConfiguration courseInformationSharingConfiguration, boolean onboardingDone,
+
+        // Data-privacy / retention: whether the course is grade-relevant (drives how long student data is retained).
+        // Boxed so an omitted value fails safe to grade-relevant (the longer retention), not to earlier deletion.
+        Boolean gradeRelevant) {
 
     /**
      * Applies the DTO values to an existing Course entity.
@@ -127,6 +132,17 @@ public record CourseUpdateDTO(
             course.setOnboardingDone(true);
         }
 
+        // Data-privacy / retention: update the grade-relevance flag on the course's configuration, creating it if absent.
+        // The course must be loaded with its (lazy) configuration for this to update in place instead of creating a duplicate.
+        CourseConfiguration configuration = course.getCourseConfiguration();
+        if (configuration == null) {
+            configuration = new CourseConfiguration();
+            configuration.setCourse(course);
+            course.setCourseConfiguration(configuration);
+        }
+        // Fail safe to grade-relevant (longer retention) when the client omits the flag.
+        configuration.setGradeRelevant(gradeRelevant == null || gradeRelevant);
+
         return course;
     }
 
@@ -145,6 +161,6 @@ public record CourseUpdateDTO(
                 course.isEnrollmentEnabled(), course.getEnrollmentConfirmationMessage(), course.isUnenrollmentEnabled(), course.getCourseInformationSharingMessagingCodeOfConduct(),
                 course.getLearningPathsEnabled(), course.getStudentCourseAnalyticsDashboardEnabled(), course.getPresentationScore(), course.getMaxPoints(),
                 course.getAccuracyOfScores(), course.getRestrictedAthenaModulesAccess(), course.getTimeZone(), course.getCourseInformationSharingConfiguration(),
-                course.isOnboardingDone());
+                course.isOnboardingDone(), course.isGradeRelevant());
     }
 }

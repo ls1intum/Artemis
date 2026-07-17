@@ -1,0 +1,199 @@
+package de.tum.cit.aet.artemis.course.service;
+
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+
+import java.time.ZonedDateTime;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.context.annotation.Profile;
+import org.springframework.stereotype.Service;
+
+import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.repository.UserRepository;
+import de.tum.cit.aet.artemis.admin.config.DataCleanupProperties;
+import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.course.domain.CourseConfiguration;
+import de.tum.cit.aet.artemis.course.repository.CourseRepository;
+import de.tum.cit.aet.artemis.notification.dto.MailRecipientDTO;
+import de.tum.cit.aet.artemis.notification.service.notifications.MailSendingService;
+
+/**
+ * Drives the two-phase, data-privacy (GDPR) retention workflow for old courses:
+ * <ol>
+ * <li><b>Warn:</b> once a course's retention period has elapsed (see {@link #retentionYears(Course)}), archive it (so
+ * instructors keep a downloadable backup) and email the instructors that the student data will be deleted after a grace
+ * period.</li>
+ * <li><b>Reset:</b> once the grace period after the retention deadline has also elapsed, delete all student data via
+ * {@link CourseResetService#resetStudentData(long)} while keeping the course material intact.</li>
+ * </ol>
+ * The retention deadline is derived from the course end date and the {@link DataCleanupProperties} cutoffs. The warning
+ * event and the reset are recorded per course on the {@link CourseConfiguration} ({@code resetWarningSentDate} /
+ * {@code studentDataResetDate}), giving a one-shot lifecycle: not warned → warned → reset. The grace period is measured
+ * from the actual warning ({@code resetWarningSentDate}), so it is always honored regardless of scheduling/backlog, and a
+ * course is never reset before its instructors were warned and given a backup.
+ * <p>
+ * Test courses and courses without an end date are always skipped. Courses are never deleted, only reset.
+ */
+@Service
+@Profile(PROFILE_CORE)
+@Lazy
+public class CourseDataRetentionService {
+
+    private static final Logger log = LoggerFactory.getLogger(CourseDataRetentionService.class);
+
+    private static final String RESET_WARNING_EMAIL_TEMPLATE = "mail/courseStudentDataResetWarningEmail";
+
+    private static final String RESET_WARNING_EMAIL_SUBJECT_KEY = "email.courseStudentDataResetWarning.title";
+
+    private final CourseRepository courseRepository;
+
+    private final CourseArchiveService courseArchiveService;
+
+    private final CourseResetService courseResetService;
+
+    private final UserRepository userRepository;
+
+    private final MailSendingService mailSendingService;
+
+    private final DataCleanupProperties dataCleanupProperties;
+
+    public CourseDataRetentionService(CourseRepository courseRepository, CourseArchiveService courseArchiveService, CourseResetService courseResetService,
+            UserRepository userRepository, MailSendingService mailSendingService, DataCleanupProperties dataCleanupProperties) {
+        this.courseRepository = courseRepository;
+        this.courseArchiveService = courseArchiveService;
+        this.courseResetService = courseResetService;
+        this.userRepository = userRepository;
+        this.mailSendingService = mailSendingService;
+        this.dataCleanupProperties = dataCleanupProperties;
+    }
+
+    /**
+     * @return the courses whose retention period has elapsed and that have not yet been warned or reset
+     */
+    public List<Course> findCoursesDueForWarning() {
+        ZonedDateTime now = ZonedDateTime.now();
+        // Broadest candidate cutoff: a course can be due at the earliest after the (shorter) non-grade-relevant retention.
+        // NOTE: this pre-filter assumes gradeRelevantRetentionYears >= nonGradeRelevantRetentionYears (true for the legal
+        // defaults 5 >= 1); if inverted via config, due grade-relevant courses would be missed (fails safe toward retention).
+        ZonedDateTime candidateCutoff = now.minusYears(dataCleanupProperties.nonGradeRelevantRetentionYears());
+        return courseRepository.findAllWithCourseConfigurationByEndDateBefore(candidateCutoff).stream().filter(course -> !course.isTestCourse()).filter(this::notYetWarnedOrReset)
+                .filter(course -> isPastRetentionDeadline(course, now)).toList();
+    }
+
+    /**
+     * @return the courses that were warned (and archived), whose grace period has elapsed, and that have not yet been
+     *         reset. The grace is measured from the actual warning event ({@code resetWarningSentDate}), not the course
+     *         end date, so it is always honored and a course can never be reset before its instructors were warned.
+     */
+    public List<Course> findCoursesDueForReset() {
+        ZonedDateTime now = ZonedDateTime.now();
+        long graceDays = dataCleanupProperties.resetWarningGracePeriodDays();
+        return courseRepository.findAllWithResetWarningSent().stream().filter(course -> !course.isTestCourse()).filter(course -> {
+            CourseConfiguration configuration = course.getCourseConfiguration();
+            return configuration != null && configuration.getStudentDataResetDate() == null && configuration.getResetWarningSentDate() != null
+                    && configuration.getResetWarningSentDate().plusDays(graceDays).isBefore(now);
+        }).toList();
+    }
+
+    /**
+     * Phase 1: for every course due for warning, ensure an archive exists (instructor backup), email the instructors a
+     * download link plus a notice that the student data will be deleted after the grace period, and stamp the warning
+     * timestamp on the course configuration. Each course is handled independently: an archive failure or per-course error
+     * is logged and skipped so the rest of the batch still runs, and the course is retried on the next run.
+     *
+     * @return the number of courses whose instructors were warned
+     */
+    public int warnAndArchiveDueCourses() {
+        List<Course> dueCourses = findCoursesDueForWarning();
+        log.info("Found {} old course(s) due for a student-data reset warning", dueCourses.size());
+        int warned = 0;
+        for (Course dueCourse : dueCourses) {
+            try {
+                // Load with exercises/lectures (for the archive export) AND the config, so the archive path and the
+                // warning timestamp are persisted on a single managed instance (avoiding a stale double-save).
+                Course course = courseRepository.findByIdWithExercisesAndExerciseDetailsAndLecturesAndConfigElseThrow(dueCourse.getId());
+                if (!course.hasCourseArchive() && !courseArchiveService.archiveCourseSynchronously(course)) {
+                    log.warn("Could not archive course {} for the data-privacy warning; it will be retried on the next run", course.getId());
+                    continue;
+                }
+                notifyInstructorsAboutUpcomingReset(course);
+                CourseConfiguration configuration = course.getCourseConfiguration();
+                if (configuration == null) {
+                    configuration = new CourseConfiguration();
+                    configuration.setCourse(course);
+                    course.setCourseConfiguration(configuration);
+                }
+                configuration.setResetWarningSentDate(ZonedDateTime.now());
+                courseRepository.save(course);
+                warned++;
+            }
+            catch (Exception e) {
+                log.error("Failed to warn and archive course {} for the data-privacy reset", dueCourse.getId(), e);
+            }
+        }
+        return warned;
+    }
+
+    /**
+     * Phase 2: reset the student data of every course whose grace period after the warning has elapsed, keeping the
+     * course material intact, and stamp the reset timestamp so the course is not reset again. Each course is handled
+     * independently so a per-course failure does not abort the batch.
+     *
+     * @return the number of courses whose student data was reset
+     */
+    public int resetDueCourses() {
+        List<Course> dueCourses = findCoursesDueForReset();
+        log.info("Found {} old course(s) due for a student-data reset", dueCourses.size());
+        int reset = 0;
+        for (Course course : dueCourses) {
+            try {
+                log.info("Resetting student data of old course {} for data-privacy reasons", course.getId());
+                courseResetService.resetStudentData(course.getId());
+                CourseConfiguration configuration = course.getCourseConfiguration();
+                configuration.setStudentDataResetDate(ZonedDateTime.now());
+                courseRepository.save(course);
+                reset++;
+            }
+            catch (Exception e) {
+                log.error("Failed to reset the student data of course {}", course.getId(), e);
+            }
+        }
+        return reset;
+    }
+
+    private boolean notYetWarnedOrReset(Course course) {
+        CourseConfiguration configuration = course.getCourseConfiguration();
+        return configuration == null || (configuration.getResetWarningSentDate() == null && configuration.getStudentDataResetDate() == null);
+    }
+
+    private boolean isPastRetentionDeadline(Course course, ZonedDateTime now) {
+        return course.getEndDate() != null && course.getEndDate().isBefore(now.minusYears(retentionYears(course)));
+    }
+
+    private int retentionYears(Course course) {
+        return course.isGradeRelevant() ? dataCleanupProperties.gradeRelevantRetentionYears() : dataCleanupProperties.nonGradeRelevantRetentionYears();
+    }
+
+    private void notifyInstructorsAboutUpcomingReset(Course course) {
+        Set<User> instructors = userRepository.getInstructors(course);
+        Map<String, Object> contextVariables = Map.of("courseTitle", course.getTitle(), "courseId", course.getId(), "gracePeriodDays",
+                dataCleanupProperties.resetWarningGracePeriodDays());
+        for (User instructor : instructors) {
+            if (!instructor.getActivated() || instructor.getEmail() == null) {
+                continue;
+            }
+            try {
+                mailSendingService.buildAndSendAsync(MailRecipientDTO.from(instructor), RESET_WARNING_EMAIL_SUBJECT_KEY, List.of(course.getTitle()), RESET_WARNING_EMAIL_TEMPLATE,
+                        contextVariables);
+            }
+            catch (Exception ex) {
+                log.error("Failed to send student-data reset warning email to instructor {} for course {}", instructor.getLogin(), course.getId(), ex);
+            }
+        }
+    }
+}
