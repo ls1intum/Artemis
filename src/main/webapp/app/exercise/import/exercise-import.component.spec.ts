@@ -146,6 +146,10 @@ describe('ExerciseImportComponent', () => {
         searchStub.mockReturnValue(of({ numberOfPages: 3 } as SearchResult<TextExercise>));
 
         fixture.detectChanges();
+        // Flush and ignore the initial load performed on init (see the ImportComponent regression test),
+        // then assert the debounced search behavior triggered by the search term.
+        vi.advanceTimersByTime(300);
+        searchStub.mockClear();
 
         const expectedSearchTerm = 'search term';
         comp.searchTerm = expectedSearchTerm;
@@ -261,6 +265,9 @@ describe('ExerciseImportComponent', () => {
         fixture.detectChanges();
         expect(comp.isCourseFilter()).toBe(true);
         expect(comp.isExamFilter()).toBe(true);
+        // Flush and ignore the initial load performed on init before asserting the filter-triggered search.
+        vi.advanceTimersByTime(300);
+        searchStub.mockClear();
 
         comp.onCourseFilterChange();
         comp.onExamFilterChange();

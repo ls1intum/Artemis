@@ -1,7 +1,7 @@
-@if (quizExercise) {
+@if (quizExercise()) {
     <div class="row">
         <div class="col-md-8 offset-md-2 text-center">
-            <h3>{{ quizExercise.title }}</h3>
+            <h3>{{ quizExercise().title }}</h3>
             <div class="row">
                 @if (question) {
                     <div class="col">
