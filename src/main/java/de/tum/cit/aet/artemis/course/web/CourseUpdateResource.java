@@ -41,6 +41,7 @@ import de.tum.cit.aet.artemis.core.util.FileUtil;
 import de.tum.cit.aet.artemis.course.config.CourseLegacyRestPaths;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.dto.CourseUpdateDTO;
+import de.tum.cit.aet.artemis.course.repository.CourseConfigurationRepository;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.CourseSearchableEntityDTO;
 import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityWeaviateService;
@@ -79,6 +80,8 @@ public class CourseUpdateResource {
 
     private final CourseRepository courseRepository;
 
+    private final CourseConfigurationRepository courseConfigurationRepository;
+
     private final UserRepository userRepository;
 
     private final Optional<SearchableEntityWeaviateService> searchableEntityWeaviateService;
@@ -86,7 +89,7 @@ public class CourseUpdateResource {
     public CourseUpdateResource(Optional<LtiApi> ltiApi, AuthorizationCheckService authCheckService, FileService fileService,
             Optional<TutorialGroupChannelManagementApi> tutorialGroupChannelManagementApi, Optional<LearningPathApi> learningPathApi,
             ConductAgreementService conductAgreementService, Optional<AthenaApi> athenaApi, Optional<LearnerProfileApi> learnerProfileApi, CourseRepository courseRepository,
-            UserRepository userRepository, Optional<SearchableEntityWeaviateService> searchableEntityWeaviateService) {
+            CourseConfigurationRepository courseConfigurationRepository, UserRepository userRepository, Optional<SearchableEntityWeaviateService> searchableEntityWeaviateService) {
         this.ltiApi = ltiApi;
         this.authCheckService = authCheckService;
         this.fileService = fileService;
@@ -96,6 +99,7 @@ public class CourseUpdateResource {
         this.athenaApi = athenaApi;
         this.learnerProfileApi = learnerProfileApi;
         this.courseRepository = courseRepository;
+        this.courseConfigurationRepository = courseConfigurationRepository;
         this.userRepository = userRepository;
         this.searchableEntityWeaviateService = searchableEntityWeaviateService;
     }
@@ -172,6 +176,10 @@ public class CourseUpdateResource {
         // Save values that are checked AFTER applyTo mutates the entity
         boolean oldLearningPathsEnabled = existingCourse.getLearningPathsEnabled();
         String oldCodeOfConduct = existingCourse.getCourseInformationSharingMessagingCodeOfConduct();
+
+        // Attach the (lazily-stored) course configuration so applyTo updates the grade-relevance flag in place instead of
+        // creating a duplicate. Fetched via its own repository to keep the course update entity graph small.
+        existingCourse.setCourseConfiguration(courseConfigurationRepository.findByCourseId(courseId).orElse(null));
 
         // Apply DTO values to the existing course entity - this preserves all relationships
         courseUpdateDTO.applyTo(existingCourse);

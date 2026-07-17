@@ -231,7 +231,7 @@
             },
             "gradeRelevant": {
                 "title": "Grade-relevant course",
-                "description": "Grade-relevant courses (e.g. their results count towards official grades or exam records) keep student data for the legally required retention period (5 years). Deactivate this for courses that are not grade-relevant, so their student data is deleted earlier (after 1 year), following data-privacy law."
+                "description": "Grade-relevant courses (e.g. their results count towards official grades or exam records) keep student data for the legally required retention period (by default 5 years). Deactivate this for courses that are not grade-relevant, so their student data is deleted earlier (by default after 1 year), following data-privacy law."
             },
             "accessGroups": "Access Groups",
             "learningPaths": {

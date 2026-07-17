@@ -231,7 +231,7 @@
             },
             "gradeRelevant": {
                 "title": "Notenrelevanter Kurs",
-                "description": "Bei notenrelevanten Kursen (deren Ergebnisse z. B. in offizielle Noten oder Prüfungsunterlagen einfließen) werden die Studierendendaten für die gesetzlich vorgeschriebene Aufbewahrungsfrist (5 Jahre) gespeichert. Deaktiviere dies für nicht notenrelevante Kurse, damit deren Studierendendaten gemäß Datenschutzrecht früher (nach 1 Jahr) gelöscht werden."
+                "description": "Bei notenrelevanten Kursen (deren Ergebnisse z. B. in offizielle Noten oder Prüfungsunterlagen einfließen) werden die Studierendendaten für die gesetzlich vorgeschriebene Aufbewahrungsfrist (standardmäßig 5 Jahre) gespeichert. Deaktiviere dies für nicht notenrelevante Kurse, damit deren Studierendendaten gemäß Datenschutzrecht früher (standardmäßig nach 1 Jahr) gelöscht werden."
             },
             "accessGroups": "Zugriffsrechte",
             "learningPaths": {

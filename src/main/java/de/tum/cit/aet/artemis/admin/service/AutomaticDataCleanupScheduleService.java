@@ -7,6 +7,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.admin.config.DataCleanupProperties;
@@ -42,9 +44,8 @@ public class AutomaticDataCleanupScheduleService {
         if (!dataCleanupProperties.oldCoursesWarningScheduleEnabled()) {
             return;
         }
-        prepareSecurityContext();
         log.info("Scheduled data-privacy cleanup: warning instructors of old courses due for a student-data reset");
-        dataCleanupService.warnOldCoursesReset();
+        runAsSystem(dataCleanupService::warnOldCoursesReset);
     }
 
     /**
@@ -55,9 +56,8 @@ public class AutomaticDataCleanupScheduleService {
         if (!dataCleanupProperties.oldCoursesResetScheduleEnabled()) {
             return;
         }
-        prepareSecurityContext();
         log.info("Scheduled data-privacy cleanup: resetting the student data of old courses");
-        dataCleanupService.resetOldCourses();
+        runAsSystem(dataCleanupService::resetOldCourses);
     }
 
     /**
@@ -68,9 +68,8 @@ public class AutomaticDataCleanupScheduleService {
         if (!dataCleanupProperties.oldFeedbackScheduleEnabled()) {
             return;
         }
-        prepareSecurityContext();
         log.info("Scheduled data-privacy cleanup: deleting feedback of non-latest results of old courses");
-        dataCleanupService.deleteFeedbackOfNonLatestResultsOfOldCourses();
+        runAsSystem(dataCleanupService::deleteFeedbackOfNonLatestResultsOfOldCourses);
     }
 
     /**
@@ -81,9 +80,8 @@ public class AutomaticDataCleanupScheduleService {
         if (!dataCleanupProperties.oldSubmissionVersionsScheduleEnabled()) {
             return;
         }
-        prepareSecurityContext();
         log.info("Scheduled data-privacy cleanup: deleting submission versions of old courses");
-        dataCleanupService.deleteOldCourseSubmissionVersions();
+        runAsSystem(dataCleanupService::deleteOldCourseSubmissionVersions);
     }
 
     /**
@@ -94,14 +92,25 @@ public class AutomaticDataCleanupScheduleService {
         if (!dataCleanupProperties.notEnrolledUsersScheduleEnabled()) {
             return;
         }
-        prepareSecurityContext();
         log.info("Scheduled data-privacy cleanup: soft-deleting not-enrolled, inactive users");
-        dataCleanupService.deleteNotEnrolledUsers();
+        runAsSystem(dataCleanupService::deleteNotEnrolledUsers);
     }
 
-    private void prepareSecurityContext() {
-        if (!SecurityUtils.isAuthenticated()) {
+    /**
+     * Runs the given cleanup job with a synthetic system authorization, restoring the previous security context
+     * afterwards so the mutated thread-local state cannot leak to unrelated work on the reused scheduler thread.
+     *
+     * @param job the cleanup job to run
+     */
+    private void runAsSystem(Runnable job) {
+        SecurityContext previousContext = SecurityContextHolder.getContext();
+        try {
+            SecurityContextHolder.clearContext();
             SecurityUtils.setAuthorizationObject();
+            job.run();
+        }
+        finally {
+            SecurityContextHolder.setContext(previousContext);
         }
     }
 }

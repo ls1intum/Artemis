@@ -162,14 +162,7 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long>, Jp
     @EntityGraph(type = LOAD, attributePaths = { "exercises", "exercises.plagiarismDetectionConfig", "exercises.teamAssignmentConfig", "lectures", "lectures.attachments" })
     Optional<Course> findWithEagerExercisesAndExerciseDetailsAndLecturesById(long courseId);
 
-    // Like the archive fetch above but also loads the (lazy) course configuration, so the data-privacy warn phase can
-    // archive the course and persist the reset-warning timestamp on a single managed instance.
-    @EntityGraph(type = LOAD, attributePaths = { "exercises", "exercises.plagiarismDetectionConfig", "exercises.teamAssignmentConfig", "lectures", "lectures.attachments",
-            "courseConfiguration" })
-    Optional<Course> findWithEagerExercisesAndExerciseDetailsAndLecturesAndConfigById(long courseId);
-
-    @EntityGraph(type = LOAD, attributePaths = { "organizations", "competencies", "prerequisites", "tutorialGroupsConfiguration", "onlineCourseConfiguration",
-            "courseConfiguration" })
+    @EntityGraph(type = LOAD, attributePaths = { "organizations", "competencies", "prerequisites", "tutorialGroupsConfiguration", "onlineCourseConfiguration" })
     Optional<Course> findForUpdateById(long courseId);
 
     @Query("""
@@ -590,11 +583,6 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long>, Jp
     @NonNull
     default Course findByIdWithExercisesAndExerciseDetailsAndLecturesElseThrow(long courseId) {
         return getValueElseThrow(findWithEagerExercisesAndExerciseDetailsAndLecturesById(courseId), courseId);
-    }
-
-    @NonNull
-    default Course findByIdWithExercisesAndExerciseDetailsAndLecturesAndConfigElseThrow(long courseId) {
-        return getValueElseThrow(findWithEagerExercisesAndExerciseDetailsAndLecturesAndConfigById(courseId), courseId);
     }
 
     @NonNull

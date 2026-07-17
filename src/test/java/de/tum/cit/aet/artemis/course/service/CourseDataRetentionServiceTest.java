@@ -109,7 +109,7 @@ class CourseDataRetentionServiceTest {
         ZonedDateTime now = ZonedDateTime.now();
         Course due = course(1, now.minusYears(2), false, false, null, null);
         when(courseRepository.findAllWithCourseConfigurationByEndDateBefore(any())).thenReturn(List.of(due));
-        when(courseRepository.findByIdWithExercisesAndExerciseDetailsAndLecturesAndConfigElseThrow(1L)).thenReturn(due);
+        when(courseRepository.findByIdWithExercisesAndExerciseDetailsAndLecturesElseThrow(1L)).thenReturn(due);
         when(courseArchiveService.archiveCourseSynchronously(due)).thenReturn(true);
         User instructor = new User();
         instructor.setLogin("instructor1");
@@ -133,7 +133,7 @@ class CourseDataRetentionServiceTest {
         ZonedDateTime now = ZonedDateTime.now();
         Course due = course(1, now.minusYears(2), false, false, null, null);
         when(courseRepository.findAllWithCourseConfigurationByEndDateBefore(any())).thenReturn(List.of(due));
-        when(courseRepository.findByIdWithExercisesAndExerciseDetailsAndLecturesAndConfigElseThrow(1L)).thenReturn(due);
+        when(courseRepository.findByIdWithExercisesAndExerciseDetailsAndLecturesElseThrow(1L)).thenReturn(due);
         when(courseArchiveService.archiveCourseSynchronously(due)).thenReturn(false);
 
         int warned = service().warnAndArchiveDueCourses();

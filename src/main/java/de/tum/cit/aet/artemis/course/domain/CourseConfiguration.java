@@ -4,6 +4,7 @@ import java.time.ZonedDateTime;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 
@@ -27,7 +28,7 @@ public class CourseConfiguration extends DomainObject {
 
     public static final String ENTITY_NAME = "courseConfiguration";
 
-    @OneToOne(mappedBy = "courseConfiguration")
+    @OneToOne(mappedBy = "courseConfiguration", fetch = FetchType.LAZY)
     @JsonIgnore
     private Course course;
 

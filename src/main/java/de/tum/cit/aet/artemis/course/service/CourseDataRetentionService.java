@@ -77,10 +77,10 @@ public class CourseDataRetentionService {
      */
     public List<Course> findCoursesDueForWarning() {
         ZonedDateTime now = ZonedDateTime.now();
-        // Broadest candidate cutoff: a course can be due at the earliest after the (shorter) non-grade-relevant retention.
-        // NOTE: this pre-filter assumes gradeRelevantRetentionYears >= nonGradeRelevantRetentionYears (true for the legal
-        // defaults 5 >= 1); if inverted via config, due grade-relevant courses would be missed (fails safe toward retention).
-        ZonedDateTime candidateCutoff = now.minusYears(dataCleanupProperties.nonGradeRelevantRetentionYears());
+        // Broadest candidate cutoff: a course can be due at the earliest after the shorter of the two retention periods.
+        // Using the minimum (rather than assuming non-grade-relevant is shorter) stays correct even if the config is inverted.
+        int shortestRetentionYears = Math.min(dataCleanupProperties.gradeRelevantRetentionYears(), dataCleanupProperties.nonGradeRelevantRetentionYears());
+        ZonedDateTime candidateCutoff = now.minusYears(shortestRetentionYears);
         return courseRepository.findAllWithCourseConfigurationByEndDateBefore(candidateCutoff).stream().filter(course -> !course.isTestCourse()).filter(this::notYetWarnedOrReset)
                 .filter(course -> isPastRetentionDeadline(course, now)).toList();
     }
@@ -114,22 +114,25 @@ public class CourseDataRetentionService {
         int warned = 0;
         for (Course dueCourse : dueCourses) {
             try {
-                // Load with exercises/lectures (for the archive export) AND the config, so the archive path and the
-                // warning timestamp are persisted on a single managed instance (avoiding a stale double-save).
-                Course course = courseRepository.findByIdWithExercisesAndExerciseDetailsAndLecturesAndConfigElseThrow(dueCourse.getId());
-                if (!course.hasCourseArchive() && !courseArchiveService.archiveCourseSynchronously(course)) {
-                    log.warn("Could not archive course {} for the data-privacy warning; it will be retried on the next run", course.getId());
+                // Archive on a course loaded with exercises/lectures (required by the export); the archive path is stored
+                // on that instance.
+                Course courseWithExercises = courseRepository.findByIdWithExercisesAndExerciseDetailsAndLecturesElseThrow(dueCourse.getId());
+                if (!courseWithExercises.hasCourseArchive() && !courseArchiveService.archiveCourseSynchronously(courseWithExercises)) {
+                    log.warn("Could not archive course {} for the data-privacy warning; it will be retried on the next run", dueCourse.getId());
                     continue;
                 }
-                notifyInstructorsAboutUpcomingReset(course);
-                CourseConfiguration configuration = course.getCourseConfiguration();
+                notifyInstructorsAboutUpcomingReset(dueCourse);
+                // Persist the warning timestamp on the config-bearing instance (dueCourse has the configuration fetched),
+                // syncing the archive path set during archiving so saving this instance does not clobber it.
+                CourseConfiguration configuration = dueCourse.getCourseConfiguration();
                 if (configuration == null) {
                     configuration = new CourseConfiguration();
-                    configuration.setCourse(course);
-                    course.setCourseConfiguration(configuration);
+                    configuration.setCourse(dueCourse);
+                    dueCourse.setCourseConfiguration(configuration);
                 }
                 configuration.setResetWarningSentDate(ZonedDateTime.now());
-                courseRepository.save(course);
+                dueCourse.setCourseArchivePath(courseWithExercises.getCourseArchivePath());
+                courseRepository.save(dueCourse);
                 warned++;
             }
             catch (Exception e) {
