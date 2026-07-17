@@ -208,14 +208,16 @@ class HyperionExerciseGenerationResourceTest {
         when(jobService.claimRevertSlot(testUser, 1L)).thenReturn("revert-slot");
         when(generationRevertService.findRevertibleJobId(1L)).thenReturn(Optional.of("adapt-job"));
         when(generationRevertService.revert(eq(testExercise), eq(testUser), any(BooleanSupplier.class)))
-                .thenReturn(Optional.of(new ExerciseGenerationRevertService.RevertResult(true, List.of(RepositoryType.SOLUTION))));
+                .thenReturn(Optional.of(new ExerciseGenerationRevertService.RevertResult(true, List.of(RepositoryType.TEMPLATE, RepositoryType.SOLUTION, RepositoryType.TESTS))));
 
         ResponseEntity<ExerciseGenerationRevertResultDTO> response = resource.revertExerciseGeneration(1L);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(response.getBody()).isNotNull();
         assertThat(response.getBody().fullyReverted()).isTrue();
-        assertThat(response.getBody().revertedRepositories()).containsExactly("solution");
+        // The Hyperion-facing label (matching the "template"/"solution"/"tests" vocabulary already used by file-change events), not RepositoryType#getName()'s LocalVC-facing
+        // "exercise" for TEMPLATE.
+        assertThat(response.getBody().revertedRepositories()).containsExactly("template", "solution", "tests");
         assertThat(response.getBody().completedAt()).isNotNull();
         verify(jobService).discardRetainedRun(1L, "adapt-job");
         verify(jobService).clearRevertSlot(1L, "revert-slot");

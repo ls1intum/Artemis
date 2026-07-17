@@ -90,6 +90,8 @@ public class GenerationPersistenceService {
 
     private final ProgrammingExerciseTaskService programmingExerciseTaskService;
 
+    private final ProblemStatementMetadataUpdateService problemStatementMetadataUpdateService;
+
     private final TempFileUtilService tempFileUtilService;
 
     private final Duration testCaseSyncTimeout;
@@ -101,18 +103,19 @@ public class GenerationPersistenceService {
             ProgrammingExerciseParticipationService participationService, ContinuousIntegrationTriggerService continuousIntegrationTriggerService,
             ProgrammingSubmissionService programmingSubmissionService, ExerciseVersionService exerciseVersionService, ProgrammingExerciseTestCaseRepository testCaseRepository,
             ResultRepository resultRepository, ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingExerciseTaskService programmingExerciseTaskService,
-            TempFileUtilService tempFileUtilService) {
+            ProblemStatementMetadataUpdateService problemStatementMetadataUpdateService, TempFileUtilService tempFileUtilService) {
         this(defaultBranch, gitService, repositoryService, participationService, continuousIntegrationTriggerService, programmingSubmissionService, exerciseVersionService,
-                testCaseRepository, resultRepository, programmingExerciseRepository, programmingExerciseTaskService, tempFileUtilService, TEST_CASE_SYNC_TIMEOUT,
-                TEST_CASE_SYNC_POLL);
+                testCaseRepository, resultRepository, programmingExerciseRepository, programmingExerciseTaskService, problemStatementMetadataUpdateService, tempFileUtilService,
+                TEST_CASE_SYNC_TIMEOUT, TEST_CASE_SYNC_POLL);
     }
 
     // Package-private so tests can inject a shrunken sync wait and exercise the build-completion wait without sleeping for seconds.
     GenerationPersistenceService(String defaultBranch, GitService gitService, RepositoryService repositoryService, ProgrammingExerciseParticipationService participationService,
             ContinuousIntegrationTriggerService continuousIntegrationTriggerService, ProgrammingSubmissionService programmingSubmissionService,
             ExerciseVersionService exerciseVersionService, ProgrammingExerciseTestCaseRepository testCaseRepository, ResultRepository resultRepository,
-            ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingExerciseTaskService programmingExerciseTaskService, TempFileUtilService tempFileUtilService,
-            Duration testCaseSyncTimeout, Duration testCaseSyncPoll) {
+            ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingExerciseTaskService programmingExerciseTaskService,
+            ProblemStatementMetadataUpdateService problemStatementMetadataUpdateService, TempFileUtilService tempFileUtilService, Duration testCaseSyncTimeout,
+            Duration testCaseSyncPoll) {
         this.defaultBranch = defaultBranch;
         this.gitService = gitService;
         this.repositoryService = repositoryService;
@@ -124,9 +127,22 @@ public class GenerationPersistenceService {
         this.resultRepository = resultRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.programmingExerciseTaskService = programmingExerciseTaskService;
+        this.problemStatementMetadataUpdateService = problemStatementMetadataUpdateService;
         this.tempFileUtilService = tempFileUtilService;
         this.testCaseSyncTimeout = testCaseSyncTimeout;
         this.testCaseSyncPoll = testCaseSyncPoll;
+    }
+
+    // Package-private convenience constructor for tests that do not exercise the narrow-transactional metadata/task-rebuild path directly (they mock this service instead).
+    GenerationPersistenceService(String defaultBranch, GitService gitService, RepositoryService repositoryService, ProgrammingExerciseParticipationService participationService,
+            ContinuousIntegrationTriggerService continuousIntegrationTriggerService, ProgrammingSubmissionService programmingSubmissionService,
+            ExerciseVersionService exerciseVersionService, ProgrammingExerciseTestCaseRepository testCaseRepository, ResultRepository resultRepository,
+            ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingExerciseTaskService programmingExerciseTaskService, TempFileUtilService tempFileUtilService,
+            Duration testCaseSyncTimeout, Duration testCaseSyncPoll) {
+        this(defaultBranch, gitService, repositoryService, participationService, continuousIntegrationTriggerService, programmingSubmissionService, exerciseVersionService,
+                testCaseRepository, resultRepository, programmingExerciseRepository, programmingExerciseTaskService,
+                new ProblemStatementMetadataUpdateService(programmingExerciseRepository, programmingExerciseTaskService), tempFileUtilService, testCaseSyncTimeout,
+                testCaseSyncPoll);
     }
 
     private static final RepositoryType[] PERSIST_ORDER = { RepositoryType.TEMPLATE, RepositoryType.SOLUTION, RepositoryType.TESTS };
@@ -137,8 +153,24 @@ public class GenerationPersistenceService {
 
     private static final Duration TEST_CASE_SYNC_POLL = Duration.ofSeconds(3);
 
+    /**
+     * @param prePersistHeads           repository heads captured before this run's commits, keyed by the repositories it actually changed
+     * @param postPersistHeads          repository heads captured after this run's commits; empty when no repository needed a commit
+     * @param persistedProblemStatement the problem statement persisted after this run (unchanged from before the run when {@code metadataChanged} is {@code false})
+     * @param persistedTitle            the title persisted after this run (unchanged from before the run when {@code metadataChanged} is {@code false})
+     * @param repositoryBranch          the repository branch this run persisted against
+     * @param metadataChanged           whether the problem statement/title was actually written by this run
+     * @param savedExerciseVersionId    the id of the {@code ExerciseVersion} row created by this run, or {@code null} when no new version was recorded (e.g. a no-op run, or the
+     *                                      version service judged the snapshot unchanged)
+     */
     public record PersistResult(Map<RepositoryType, String> prePersistHeads, Map<RepositoryType, String> postPersistHeads, String persistedProblemStatement, String persistedTitle,
-            String repositoryBranch) {
+            String repositoryBranch, boolean metadataChanged, Long savedExerciseVersionId) {
+
+        // Convenience constructor for call sites (mostly tests) that do not care about the no-op / exact-version-identity fields this task added.
+        public PersistResult(Map<RepositoryType, String> prePersistHeads, Map<RepositoryType, String> postPersistHeads, String persistedProblemStatement, String persistedTitle,
+                String repositoryBranch) {
+            this(prePersistHeads, postPersistHeads, persistedProblemStatement, persistedTitle, repositoryBranch, true, null);
+        }
     }
 
     /**
@@ -263,18 +295,40 @@ public class GenerationPersistenceService {
         catch (RuntimeException e) {
             // Compensation: revert the already-committed repositories to their captured pre-persist commit so no publishable half-generated tree survives on the default branch.
             boolean fullyReverted = compensateAndResyncBaseline(exercise, user, repositoryBranch, committed, prePersistHashes, postPersistHashes);
-            String state = fullyReverted ? "the already-committed repositories were reverted to their previous state"
+            // An ambiguous push (the local commit call reported failure, but the remote branch had already moved and reconciliation could not prove it back out) is never
+            // compensated by compensateAndResyncBaseline: that helper only walks `committed`, which this repository was never added to because commitRepository threw before
+            // returning a commit hash. Treat it conservatively: the live exercise MAY have changed, and the best-known (not confirmed) commit hash is surfaced rather than
+            // silently reporting an empty, falsely-reassuring commit map.
+            boolean ambiguousRemoteState = e instanceof AmbiguousCommitFailure;
+            boolean liveExerciseChanged = ambiguousRemoteState || !fullyReverted;
+            // EnumMap's Map-argument constructor throws IllegalArgumentException on an empty source map (it cannot infer the key type), so build it directly with the enum class
+            // and populate conditionally instead of trying to wrap a possibly-empty map.
+            Map<RepositoryType, String> reportedCommits = new EnumMap<>(RepositoryType.class);
+            if (!fullyReverted) {
+                reportedCommits.putAll(postPersistHashes);
+            }
+            String ambiguityNote = "";
+            if (ambiguousRemoteState) {
+                AmbiguousCommitFailure ambiguousFailure = (AmbiguousCommitFailure) e;
+                if (ambiguousFailure.possiblyPushedCommitHash() != null) {
+                    reportedCommits.put(ambiguousFailure.repositoryType(), ambiguousFailure.possiblyPushedCommitHash());
+                }
+                ambiguityNote = " The remote state of the " + ambiguousFailure.repositoryType()
+                        + " repository could not be verified after its push reported failure; treat the exercise as changed until a maintainer confirms the actual remote commit.";
+            }
+            String state = fullyReverted && !ambiguousRemoteState ? "the already-committed repositories were reverted to their previous state"
                     : "compensation could not fully revert every repository (" + committed + "); manual review is required before using the exercise";
             throw new GenerationIncompleteException("Saving the generated exercise failed after committing " + committed
-                    + "; the generation is INCOMPLETE and must not be published. " + state + ". Cause: " + e.getMessage(), e, !fullyReverted,
-                    fullyReverted ? Map.of() : postPersistHashes);
+                    + "; the generation is INCOMPLETE and must not be published. " + state + ambiguityNote + ". Cause: " + e.getMessage(), e, liveExerciseChanged,
+                    Map.copyOf(reportedCommits));
         }
 
         if (shouldSaveProblemStatement) {
             try {
                 assertStillOwnsMutationSlot(stillOwnsMutationSlot);
+                // The metadata write and the task rebuild it drives are one narrow @Transactional database unit (see ProblemStatementMetadataUpdateService): either both land or
+                // neither does, so a task-rebuild failure never leaves a committed problem statement paired with a half-rebuilt task set.
                 saveProblemStatementIfUnchanged(exercise, producedProblemStatement, targetTitle, originalProblemStatement, originalTitle);
-                programmingExerciseTaskService.updateTasksFromProblemStatement(exercise);
             }
             catch (RuntimeException e) {
                 throw new GenerationIncompleteException("Saving the generated exercise failed while updating the problem statement after committing " + committed
@@ -295,8 +349,10 @@ public class GenerationPersistenceService {
             assertRepositoryHeadsStillMatch(exercise, repositoryBranch, outcome.seedRepositoryHeads(), postPersistHashes);
             persistedMetadata.set(assertMetadataMatches(exercise, expectedFinalProblemStatement, expectedFinalTitle));
         };
+        Long savedExerciseVersionId;
         try {
-            syncTestCasesAndRecordVersion(exercise, user, testsCommitHash != null ? testsBuildSignal : null, true, finalizationGuard, persistedRepositoryHeads);
+            savedExerciseVersionId = syncTestCasesAndRecordVersion(exercise, user, testsCommitHash != null ? testsBuildSignal : null, true, finalizationGuard,
+                    persistedRepositoryHeads);
         }
         catch (RuntimeException e) {
             throw new GenerationIncompleteException("Saving the generated exercise failed while recording the exercise version after committing " + committed
@@ -306,7 +362,8 @@ public class GenerationPersistenceService {
         log.info("Persisted generated exercise {} after test-case synchronisation completed", exercise.getId());
         prePersistHashes.keySet().retainAll(postPersistHashes.keySet());
         MetadataSnapshot metadata = persistedMetadata.get();
-        return new PersistResult(nonNullCopy(prePersistHashes), nonNullCopy(postPersistHashes), metadata.problemStatement(), metadata.title(), repositoryBranch);
+        return new PersistResult(nonNullCopy(prePersistHashes), nonNullCopy(postPersistHashes), metadata.problemStatement(), metadata.title(), repositoryBranch,
+                shouldSaveProblemStatement, savedExerciseVersionId);
     }
 
     private boolean compensateAndResyncBaseline(ProgrammingExercise exercise, User user, String repositoryBranch, List<RepositoryType> committed,
@@ -402,12 +459,16 @@ public class GenerationPersistenceService {
         return currentMetadataMatchingExpectedOrTarget(exercise, expectedProblemStatement, expectedTitle, problemStatement, title).isPresent();
     }
 
-    private void syncTestCasesAndRecordVersion(ProgrammingExercise exercise, User user, TestsBuildSignal testsBuildSignal, boolean failOnFinalizationFailure) {
-        syncTestCasesAndRecordVersion(exercise, user, testsBuildSignal, failOnFinalizationFailure, () -> {
+    private Long syncTestCasesAndRecordVersion(ProgrammingExercise exercise, User user, TestsBuildSignal testsBuildSignal, boolean failOnFinalizationFailure) {
+        return syncTestCasesAndRecordVersion(exercise, user, testsBuildSignal, failOnFinalizationFailure, () -> {
         }, Map.of());
     }
 
-    private void syncTestCasesAndRecordVersion(ProgrammingExercise exercise, User user, TestsBuildSignal testsBuildSignal, boolean failOnFinalizationFailure,
+    /**
+     * @return the id of the {@code ExerciseVersion} row created for this save, or {@code null} when no new version was recorded (a tolerated failure with
+     *         {@code failOnFinalizationFailure == false}, or the version service judged the snapshot unchanged from the previous version)
+     */
+    private Long syncTestCasesAndRecordVersion(ProgrammingExercise exercise, User user, TestsBuildSignal testsBuildSignal, boolean failOnFinalizationFailure,
             Runnable finalizationGuard, Map<RepositoryType, String> repositoryCommitIds) {
         finalizationGuard.run();
         if (testsBuildSignal != null) {
@@ -416,18 +477,15 @@ public class GenerationPersistenceService {
         }
         finalizationGuard.run();
         try {
-            if (repositoryCommitIds.isEmpty()) {
-                exerciseVersionService.createExerciseVersionOrThrow(exercise, user);
-            }
-            else {
-                exerciseVersionService.createExerciseVersionOrThrow(exercise, user, repositoryCommitIds);
-            }
+            return repositoryCommitIds.isEmpty() ? exerciseVersionService.createExerciseVersionOrThrow(exercise, user)
+                    : exerciseVersionService.createExerciseVersionOrThrow(exercise, user, repositoryCommitIds);
         }
         catch (RuntimeException e) {
             if (failOnFinalizationFailure) {
                 throw e;
             }
             log.warn("Failed to create exercise version for exercise {}: {}", exercise.getId(), e.getMessage());
+            return null;
         }
     }
 
@@ -450,15 +508,13 @@ public class GenerationPersistenceService {
                 return false;
             }
             MetadataSnapshot current = currentMetadata.get();
-            int updatedRows = programmingExerciseRepository.updateProblemStatementAndTitleIfUnchanged(exercise.getId(), problemStatement, title, current.problemStatement(),
-                    current.title());
+            // The metadata write and the task rebuild it drives are one narrow @Transactional database unit, so a task-rebuild failure here never leaves a committed problem
+            // statement paired with a half-rebuilt task set.
+            int updatedRows = problemStatementMetadataUpdateService.updateProblemStatementAndTasks(exercise, problemStatement, title, current.problemStatement(), current.title());
             if (updatedRows != 1) {
                 log.error("Could not restore the previous problem statement/title for exercise {} because it changed after the adaptation revert started", exercise.getId());
                 return false;
             }
-            exercise.setTitle(title);
-            exercise.setProblemStatement(problemStatement);
-            programmingExerciseTaskService.updateTasksFromProblemStatement(exercise);
             return true;
         }
         catch (RuntimeException restoreFailure) {
@@ -523,15 +579,13 @@ public class GenerationPersistenceService {
         String trimmedProblemStatement = problemStatement.trim();
         MetadataSnapshot current = currentMetadataMatchingSafeSave(exercise, expectedProblemStatement, expectedTitle, trimmedProblemStatement, title).orElseThrow(
                 () -> new IllegalStateException("The problem statement/title changed while Hyperion was saving the generated exercise; refusing to overwrite manual edits"));
-        int updatedRows = programmingExerciseRepository.updateProblemStatementAndTitleIfUnchanged(exercise.getId(), trimmedProblemStatement, title, current.problemStatement(),
+        // Narrow @Transactional unit (metadata CAS write + task rebuild only, no Git/CI inside): a task-rebuild failure rolls the metadata write back too, instead of leaving a
+        // committed statement paired with a half-rebuilt task set.
+        int updatedRows = problemStatementMetadataUpdateService.updateProblemStatementAndTasks(exercise, trimmedProblemStatement, title, current.problemStatement(),
                 current.title());
         if (updatedRows != 1) {
             throw new IllegalStateException("The problem statement/title changed while Hyperion was saving the generated exercise; refusing to overwrite manual edits");
         }
-        if (!java.util.Objects.equals(exercise.getTitle(), title)) {
-            exercise.setTitle(title);
-        }
-        exercise.setProblemStatement(trimmedProblemStatement);
     }
 
     private void assertMetadataUnchangedSinceJobStart(ProgrammingExercise exercise, String expectedProblemStatement, String expectedTitle) {
@@ -649,9 +703,9 @@ public class GenerationPersistenceService {
             return postHash;
         }
         catch (Exception e) {
-            boolean manualReviewRequired = false;
+            CommitReconciliation reconciliation = CommitReconciliation.NOT_AMBIGUOUS;
             if (repository != null) {
-                manualReviewRequired = reconcileAmbiguousCommitFailure(exercise, repositoryType, uri, repository, repositoryBranch, prePersistHead, e);
+                reconciliation = reconcileAmbiguousCommitFailure(exercise, repositoryType, uri, repository, repositoryBranch, prePersistHead, e);
                 try {
                     gitService.resetToOriginHead(repository);
                 }
@@ -660,9 +714,11 @@ public class GenerationPersistenceService {
                             resetFailure.getMessage());
                 }
             }
-            String manualReviewMessage = manualReviewRequired ? " The remote repository state is ambiguous and requires manual review." : "";
-            throw new IllegalStateException("Failed to commit the " + repositoryType + " repository for exercise " + exercise.getId() + ": " + e.getMessage() + manualReviewMessage,
-                    e);
+            if (reconciliation.manualReviewRequired()) {
+                throw new AmbiguousCommitFailure("Failed to commit the " + repositoryType + " repository for exercise " + exercise.getId() + ": " + e.getMessage()
+                        + " The remote repository state is ambiguous and requires manual review.", e, repositoryType, reconciliation.possiblyPushedCommitHash());
+            }
+            throw new IllegalStateException("Failed to commit the " + repositoryType + " repository for exercise " + exercise.getId() + ": " + e.getMessage(), e);
         }
         finally {
             if (repository != null) {
@@ -672,15 +728,48 @@ public class GenerationPersistenceService {
         }
     }
 
-    private boolean reconcileAmbiguousCommitFailure(ProgrammingExercise exercise, RepositoryType repositoryType, LocalVCRepositoryUri uri, Repository repository,
+    /**
+     * Thrown instead of a plain {@link IllegalStateException} when a repository push fails in a way that cannot be conclusively resolved: the local commit succeeded, but the
+     * remote branch could not be confirmed to still be at its pre-persist state, so whether the push actually landed remotely is unknown. Carries the repository and the
+     * best-known (unconfirmed) commit hash so the caller can report the live exercise as conservatively changed and surface a concrete lead for manual review, instead of
+     * collapsing to an empty, falsely-reassuring commit map.
+     */
+    static final class AmbiguousCommitFailure extends IllegalStateException {
+
+        private final RepositoryType repositoryType;
+
+        private final String possiblyPushedCommitHash;
+
+        AmbiguousCommitFailure(String message, Throwable cause, RepositoryType repositoryType, String possiblyPushedCommitHash) {
+            super(message, cause);
+            this.repositoryType = repositoryType;
+            this.possiblyPushedCommitHash = possiblyPushedCommitHash;
+        }
+
+        RepositoryType repositoryType() {
+            return repositoryType;
+        }
+
+        String possiblyPushedCommitHash() {
+            return possiblyPushedCommitHash;
+        }
+    }
+
+    private record CommitReconciliation(boolean manualReviewRequired, String possiblyPushedCommitHash) {
+
+        static final CommitReconciliation NOT_AMBIGUOUS = new CommitReconciliation(false, null);
+    }
+
+    private CommitReconciliation reconcileAmbiguousCommitFailure(ProgrammingExercise exercise, RepositoryType repositoryType, LocalVCRepositoryUri uri, Repository repository,
             String repositoryBranch, String prePersistHead, Exception commitFailure) {
         if (prePersistHead == null) {
-            return false;
+            return CommitReconciliation.NOT_AMBIGUOUS;
         }
+        String localHead = null;
         try {
-            String localHead = gitService.getLocalHeadHash(repository);
+            localHead = gitService.getLocalHeadHash(repository);
             if (localHead == null || prePersistHead.equals(localHead)) {
-                return false;
+                return CommitReconciliation.NOT_AMBIGUOUS;
             }
             String remoteHead = gitService.getLastCommitHash(uri, repositoryBranch);
             if (!localHead.equals(remoteHead)) {
@@ -689,19 +778,19 @@ public class GenerationPersistenceService {
                     commitFailure.addSuppressed(ambiguousFailure);
                     log.error("Could not determine whether the failed {} repository commit for exercise {} remains in remote history; current remote HEAD is {}", repositoryType,
                             exercise.getId(), remoteHead);
-                    return true;
+                    return new CommitReconciliation(true, localHead);
                 }
-                return false;
+                return CommitReconciliation.NOT_AMBIGUOUS;
             }
             gitService.resetToCommitAndForcePush(repository, prePersistHead, localHead, repositoryBranch);
             log.info("Reverted the {} repository of exercise {} after its commit was pushed but reported as failed", repositoryType, exercise.getId());
-            return false;
+            return CommitReconciliation.NOT_AMBIGUOUS;
         }
         catch (Exception reconciliationFailure) {
             commitFailure.addSuppressed(reconciliationFailure);
             log.error("Could not reconcile the failed {} repository commit for exercise {}; the remote branch may contain an unrecorded Hyperion commit", repositoryType,
                     exercise.getId(), reconciliationFailure);
-            return true;
+            return new CommitReconciliation(true, localHead);
         }
     }
 

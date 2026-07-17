@@ -56,7 +56,7 @@ describe('HyperionExerciseGenerationService', () => {
         service.revertExerciseGeneration(42).subscribe((result) => expect(result.fullyReverted).toBe(true));
         const request = httpMock.expectOne('/api/hyperion/programming-exercises/42/generate-exercise/revert');
         expect(request.request.method).toBe('POST');
-        request.flush({ fullyReverted: true, revertedRepositories: ['exercise', 'solution', 'tests'], completedAt: '2026-07-10T20:00:00Z' });
+        request.flush({ fullyReverted: true, revertedRepositories: ['template', 'solution', 'tests'], completedAt: '2026-07-10T20:00:00Z' });
     });
 
     it('subscribes to the owner-private stream topic', () => {

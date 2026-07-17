@@ -25,6 +25,8 @@ import io.swagger.v3.oas.annotations.media.Schema;
  * @param liveExerciseChanged    on a terminal event, whether the live exercise repositories/problem statement were changed and an open editor should refresh; otherwise
  *                                   {@code null}
  * @param savedRepositoryCommits exact commit hashes saved by repository name on a successful terminal event; otherwise {@code null}
+ * @param savedExerciseVersionId the id of the exact {@code ExerciseVersion} row saved by this run, on a successful terminal event; {@code null} when no new version was
+ *                                   recorded (e.g. a no-op run)
  * @param timestamp              the moment the event was produced
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
@@ -35,6 +37,7 @@ public record ExerciseGenerationEventDTO(@Schema(description = "The event kind")
         @Schema(description = "On a terminal event, the structured verification verdict") @Nullable ExerciseGenerationVerdictDTO verdict,
         @Schema(description = "On a terminal event, whether the live exercise changed and open editors should refresh") @Nullable Boolean liveExerciseChanged,
         @Schema(description = "Exact saved commit hashes keyed by repository name") @Nullable Map<String, String> savedRepositoryCommits,
+        @Schema(description = "The exact saved exercise version id, on a successful terminal event") @Nullable Long savedExerciseVersionId,
         @Schema(description = "The moment the event was produced") Instant timestamp) implements Serializable {
 
     @Serial
@@ -65,7 +68,7 @@ public record ExerciseGenerationEventDTO(@Schema(description = "The event kind")
     }
 
     public static ExerciseGenerationEventDTO of(Type type, @Nullable String message) {
-        return new ExerciseGenerationEventDTO(type, message, null, null, null, null, Instant.now());
+        return new ExerciseGenerationEventDTO(type, message, null, null, null, null, null, Instant.now());
     }
 
     public static ExerciseGenerationEventDTO done(@Nullable String message, CompletionStatus completionStatus, @Nullable ExerciseGenerationVerdictDTO verdict) {
@@ -79,7 +82,12 @@ public record ExerciseGenerationEventDTO(@Schema(description = "The event kind")
 
     public static ExerciseGenerationEventDTO done(@Nullable String message, CompletionStatus completionStatus, @Nullable ExerciseGenerationVerdictDTO verdict,
             boolean liveExerciseChanged, @Nullable Map<String, String> savedRepositoryCommits) {
+        return done(message, completionStatus, verdict, liveExerciseChanged, savedRepositoryCommits, null);
+    }
+
+    public static ExerciseGenerationEventDTO done(@Nullable String message, CompletionStatus completionStatus, @Nullable ExerciseGenerationVerdictDTO verdict,
+            boolean liveExerciseChanged, @Nullable Map<String, String> savedRepositoryCommits, @Nullable Long savedExerciseVersionId) {
         return new ExerciseGenerationEventDTO(Type.DONE, message, completionStatus, verdict, liveExerciseChanged,
-                savedRepositoryCommits == null ? null : Map.copyOf(savedRepositoryCommits), Instant.now());
+                savedRepositoryCommits == null ? null : Map.copyOf(savedRepositoryCommits), savedExerciseVersionId, Instant.now());
     }
 }

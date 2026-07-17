@@ -30,6 +30,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastEditorInExercise;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionExerciseGenerationEnabled;
+import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationFileChangeDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationJobStartDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationRequestDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationRevertResultDTO;
@@ -216,7 +217,7 @@ public class HyperionExerciseGenerationResource {
                     revertibleJobId.ifPresent(jobId -> jobService.discardRetainedRun(exerciseId, jobId));
                 }
                 ExerciseGenerationRevertResultDTO body = new ExerciseGenerationRevertResultDTO(result.fullyReverted(),
-                        result.revertedRepositories().stream().map(RepositoryType::getName).toList(), Instant.now());
+                        result.revertedRepositories().stream().map(HyperionExerciseGenerationResource::repositoryLabel).toList(), Instant.now());
                 return result.fullyReverted() ? ResponseEntity.ok(body) : ResponseEntity.status(HttpStatus.CONFLICT).body(body);
             }).orElseGet(() -> ResponseEntity.notFound().build());
         }
@@ -253,6 +254,24 @@ public class HyperionExerciseGenerationResource {
     private static Long courseIdOf(ProgrammingExercise exercise) {
         Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
         return course == null ? null : course.getId();
+    }
+
+    /**
+     * Labels a repository the same way {@link ExerciseGenerationFileChangeDTO} already does for file-change events ({@code template}/{@code solution}/{@code tests}), instead of
+     * {@link RepositoryType#getName()} (which returns the LocalVC-facing name {@code "exercise"} for {@link RepositoryType#TEMPLATE}). Both endpoints describe the same three
+     * repositories within this one Hyperion feature; using one shared, instructor-facing vocabulary keeps {@code revertedRepositories} consistent with the file-change stream
+     * (which already has translation keys for {@code template}/{@code solution}/{@code tests}) instead of leaking the unrelated git-naming convention into this response.
+     *
+     * @param repositoryType the repository that was reverted
+     * @return the Hyperion-facing repository label
+     */
+    private static String repositoryLabel(RepositoryType repositoryType) {
+        return switch (repositoryType) {
+            case TEMPLATE -> ExerciseGenerationFileChangeDTO.REPOSITORY_TEMPLATE;
+            case SOLUTION -> ExerciseGenerationFileChangeDTO.REPOSITORY_SOLUTION;
+            case TESTS -> ExerciseGenerationFileChangeDTO.REPOSITORY_TESTS;
+            default -> repositoryType.getName();
+        };
     }
 
     /**

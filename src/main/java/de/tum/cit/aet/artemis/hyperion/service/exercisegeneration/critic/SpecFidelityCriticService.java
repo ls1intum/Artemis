@@ -101,14 +101,16 @@ public class SpecFidelityCriticService {
             {"exampleChecks": [{"claim":"verbatim outcome claim","computedOutcome":"independently replayed outcome","consistent":true,"reason":"calculation"}],
              "apiChecks": [{"symbol":"exact tested public symbol","discoverable":true,"reason":"statement/template evidence"}],
              "templateChecks": [{"test":"task-bound test or task group","targetReached":true,"reason":"first starter failure on its call path"}],
-             "contradictions": [{"requirement":"...","reason":"conflicting artifact evidence"}],
-             "hiddenRequirements": [{"requirement":"...","reason":"test/API evidence"}],
+             "contradictions": [{"requirement":"...","sourceQuote":"exact quote from PRIMARY SOURCE REQUIREMENTS or PRODUCED PROBLEM STATEMENT","reason":"conflicting artifact evidence"}],
+             "hiddenRequirements": [{"requirement":"...","sourceQuote":"exact quote from PRIMARY SOURCE REQUIREMENTS or PRODUCED PROBLEM STATEMENT","reason":"test/API evidence"}],
              "missingExamples": [{"behaviour":"...","reason":"..."}],
-             "invented": [{"requirement":"...","reason":"..."}],
+             "invented": [{"requirement":"...","sourceQuote":"exact quote from PRIMARY SOURCE REQUIREMENTS or PRODUCED PROBLEM STATEMENT","reason":"..."}],
              "unrequestedChanges": [{"change":"path and change","reason":"..."}],
              "missingRequestedChanges": [{"requirement":"...","reason":"..."}]}
             At most 3 exampleChecks, 8 apiChecks, 6 templateChecks, and 4 items in every other array. Prioritize blockers and group closely related symbols or tests. Every failed
-            reason must name the conflicting files, symbols, or assertions and the smallest coherent repair; do not answer with generic advice. Keep passing-check reasons brief.""";
+            reason must name the conflicting files, symbols, or assertions and the smallest coherent repair; do not answer with generic advice. Keep passing-check reasons brief.
+            Every contradiction, hiddenRequirement, and invented finding requires sourceQuote copied verbatim from PRIMARY SOURCE REQUIREMENTS or the PRODUCED PROBLEM STATEMENT;
+            omit the finding instead of inventing a quote when neither source states it.""";
 
     private static final String ORACLE_REVIEW_RESPONSE_SCHEMA = """
             Respond with ONLY this complete JSON shape; every array is mandatory for this test-oracle review:
@@ -390,6 +392,10 @@ public class SpecFidelityCriticService {
         }
         String userPrompt = renderUserPrompt(effectiveBrief, problemStatement, testNames, evidence.text(), adaptationChanges);
         String authoritativeSource = effectiveBrief;
+        // The contract pass's free-form contradiction/hidden-requirement/invented-requirement findings may legitimately quote either the instructor's brief or the produced
+        // problem statement (e.g. an invented requirement is, by construction, only ever stated in the produced statement). The oracle pass's requirement-coverage claims
+        // (uncovered/weakOracle/mutantChecks) keep the narrower brief-only source: the produced statement must never be able to authorize its own additions there.
+        String contractGroundingSource = problemStatement == null || problemStatement.isBlank() ? authoritativeSource : authoritativeSource + "\n\n" + problemStatement.strip();
         if (userPrompt.length() > MAX_REVIEW_INPUT_CHARS) {
             return reviewUnavailable(adaptationChanges, "The complete review input exceeded its bounded size.");
         }
@@ -398,7 +404,7 @@ public class SpecFidelityCriticService {
                 .anyMatch(content -> content.contains("public "));
         boolean expectTestChecks = !testNames.isEmpty();
         List<SpecFidelityReport.Finding> contractFindings = callReviewerSafely(ReviewPass.CONTRACT, CONTRACT_REVIEW_SYSTEM_PROMPT, userPrompt, adaptationChanges != null,
-                authoritativeSource, expectExampleChecks, expectApiChecks, expectTestChecks, false, usageSink);
+                contractGroundingSource, expectExampleChecks, expectApiChecks, expectTestChecks, false, usageSink);
         List<SpecFidelityReport.Finding> oracleFindings = callReviewerSafely(ReviewPass.ORACLE, ORACLE_REVIEW_SYSTEM_PROMPT, userPrompt, false, authoritativeSource, false, false,
                 false, expectTestChecks, usageSink);
         if (oracleFindings != null && hasUngroundedOracleReview(oracleFindings) && userPrompt.length() + ORACLE_REVIEW_CORRECTION.length() <= MAX_REVIEW_INPUT_CHARS) {
@@ -598,16 +604,22 @@ public class SpecFidelityCriticService {
                             "The starter fails before this task-specific check reaches its target: " + item.reason().strip()));
                 }
             }
-            appendBlockingFindings(findings, parsed.contradictions(), SpecFidelityReport.Kind.CONTRACT_CONTRADICTION, "The generated artifacts contradict this contract: ");
-            appendBlockingFindings(findings, parsed.hiddenRequirements(), SpecFidelityReport.Kind.HIDDEN_GRADED_REQUIREMENT,
+            appendGroundedBlockingFindings(findings, parsed.contradictions(), authoritativeSource, SpecFidelityReport.Kind.CONTRACT_CONTRADICTION,
+                    "The generated artifacts contradict this contract: ");
+            appendGroundedBlockingFindings(findings, parsed.hiddenRequirements(), authoritativeSource, SpecFidelityReport.Kind.HIDDEN_GRADED_REQUIREMENT,
                     "The grader requires behaviour or API that is not discoverable to the student: ");
         }
         else {
             for (MutantCheckItem item : parsed.mutantChecks()) {
-                if (!item.killed() && sourceQuoteIsGrounded(item.sourceQuote(), authoritativeSource) && findings.size() < MAX_REVIEW_FINDINGS) {
-                    findings.add(new SpecFidelityReport.Finding(SpecFidelityReport.Kind.WEAK_TEST_ORACLE, truncate(item.mutant().strip()),
-                            "This concrete contract-breaking implementation survives the generated suite: " + item.reason().strip()));
+                if (item.killed() || findings.size() >= MAX_REVIEW_FINDINGS) {
+                    continue;
                 }
+                if (!sourceQuoteIsGrounded(item.sourceQuote(), authoritativeSource)) {
+                    abstainUngroundedFinding(SpecFidelityReport.Kind.WEAK_TEST_ORACLE, item.mutant());
+                    continue;
+                }
+                findings.add(new SpecFidelityReport.Finding(SpecFidelityReport.Kind.WEAK_TEST_ORACLE, truncate(item.mutant().strip()),
+                        "This concrete contract-breaking implementation survives the generated suite: " + item.reason().strip()));
             }
             appendGroundedBlockingFindings(findings, parsed.weakOracle(), authoritativeSource, SpecFidelityReport.Kind.WEAK_TEST_ORACLE,
                     "A plausible contract-breaking implementation can pass the generated tests: ");
@@ -621,6 +633,7 @@ public class SpecFidelityCriticService {
                     continue;
                 }
                 if (!sourceQuoteIsGrounded(item.sourceQuote(), authoritativeSource)) {
+                    abstainUngroundedFinding(SpecFidelityReport.Kind.UNCOVERED_REQUIREMENT, item.requirement());
                     continue;
                 }
                 String requirement = truncate(item.requirement().strip());
@@ -655,6 +668,10 @@ public class SpecFidelityCriticService {
                 if (item == null || item.requirement() == null || item.requirement().isBlank()) {
                     continue;
                 }
+                if (!sourceQuoteIsGrounded(item.sourceQuote(), authoritativeSource)) {
+                    abstainUngroundedFinding(SpecFidelityReport.Kind.INVENTED_REQUIREMENT, item.requirement());
+                    continue;
+                }
                 String requirement = truncate(item.requirement().strip());
                 String reason = item.reason() != null && !item.reason().isBlank() ? item.reason().strip() : "the brief does not state it.";
                 findings.add(new SpecFidelityReport.Finding(SpecFidelityReport.Kind.INVENTED_REQUIREMENT, requirement,
@@ -671,8 +688,8 @@ public class SpecFidelityCriticService {
                 || expectApiChecks && parsed.apiChecks().isEmpty() || expectTemplateChecks && parsed.templateChecks().isEmpty() || malformedExampleChecks(parsed.exampleChecks())
                 || malformedApiChecks(parsed.apiChecks()) || malformedTemplateChecks(parsed.templateChecks()) || parsed.contradictions() == null
                 || parsed.hiddenRequirements() == null || parsed.missingExamples() == null || parsed.invented() == null || parsed.unrequestedChanges() == null
-                || parsed.missingRequestedChanges() == null || malformedBlockingItems(parsed.contradictions()) || malformedBlockingItems(parsed.hiddenRequirements())
-                || malformedBlockingItems(parsed.invented())
+                || parsed.missingRequestedChanges() == null || malformedGroundedBlockingItems(parsed.contradictions())
+                || malformedGroundedBlockingItems(parsed.hiddenRequirements()) || malformedGroundedBlockingItems(parsed.invented())
                 || requireScopeVerdict && (parsed.unrequestedChanges().stream()
                         .anyMatch(item -> item == null || item.change() == null || item.change().isBlank() || item.reason() == null || item.reason().isBlank())
                         || malformedBlockingItems(parsed.missingRequestedChanges()));
@@ -718,7 +735,13 @@ public class SpecFidelityCriticService {
                 .anyMatch(item -> item == null || item.mutant() == null || item.mutant().isBlank() || item.killed() == null || item.reason() == null || item.reason().isBlank());
     }
 
-    private static void appendBlockingFindings(List<SpecFidelityReport.Finding> findings, List<RequirementFindingItem> items, SpecFidelityReport.Kind kind, String detailPrefix) {
+    /**
+     * Appends one blocking finding per grounded item, uniformly requiring a {@code sourceQuote} that literally appears in {@code authoritativeSource} (the brief for oracle
+     * categories, the brief plus produced statement for contract categories — see {@link #reviewArtifacts}). An item whose quote does not validate is the critic's abstain
+     * outcome: it is logged for observability and dropped rather than surfaced, so it can never drive repair or reach the instructor as a hallucinated blocker.
+     */
+    private static void appendGroundedBlockingFindings(List<SpecFidelityReport.Finding> findings, List<RequirementFindingItem> items, String authoritativeSource,
+            SpecFidelityReport.Kind kind, String detailPrefix) {
         for (RequirementFindingItem item : items) {
             if (findings.size() >= MAX_REVIEW_FINDINGS) {
                 return;
@@ -726,22 +749,21 @@ public class SpecFidelityCriticService {
             if (item == null || item.requirement() == null || item.requirement().isBlank()) {
                 continue;
             }
-            String reason = item.reason() == null || item.reason().isBlank() ? "The full artifact review found no consistent evidence for this contract." : item.reason().strip();
-            findings.add(new SpecFidelityReport.Finding(kind, truncate(item.requirement().strip()), detailPrefix + reason));
-        }
-    }
-
-    private static void appendGroundedBlockingFindings(List<SpecFidelityReport.Finding> findings, List<RequirementFindingItem> items, String authoritativeSource,
-            SpecFidelityReport.Kind kind, String detailPrefix) {
-        for (RequirementFindingItem item : items) {
-            if (findings.size() >= MAX_REVIEW_FINDINGS) {
-                return;
-            }
-            if (item == null || item.requirement() == null || item.requirement().isBlank() || !sourceQuoteIsGrounded(item.sourceQuote(), authoritativeSource)) {
+            if (!sourceQuoteIsGrounded(item.sourceQuote(), authoritativeSource)) {
+                abstainUngroundedFinding(kind, item.requirement());
                 continue;
             }
             findings.add(new SpecFidelityReport.Finding(kind, truncate(item.requirement().strip()), detailPrefix + item.reason().strip()));
         }
+    }
+
+    /**
+     * The critic's abstain outcome for a finding it cannot ground: logged for operability so ungrounded-finding rates are observable, then dropped. An abstained finding is
+     * never added to the report, so it can never drive the retry prompt (see {@link #renderForRetryPrompt}) or reach the instructor review.
+     */
+    private static void abstainUngroundedFinding(SpecFidelityReport.Kind kind, @Nullable String requirement) {
+        log.info("Critic abstained on an ungrounded {} finding (no verbatim source quote in the reviewed brief/problem statement): {}", kind,
+                requirement == null ? "(no requirement text)" : truncate(requirement.strip()));
     }
 
     private static boolean sourceQuoteIsGrounded(@Nullable String sourceQuote, String authoritativeSource) {

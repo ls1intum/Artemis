@@ -451,13 +451,20 @@ public class GenerationJobService {
         }
     }
 
+    /**
+     * Narrows a retained transcript down to only its terminal event for a non-owner authorized instructor (anyone who passes the endpoint's course/exercise authorization check,
+     * not just the run's initiator). This hides the mid-run activity (tool calls, in-progress prompts/content) of a run that instructor did not start, but the terminal event
+     * itself is returned verbatim: the message, verification verdict, {@code savedRepositoryCommits}, and {@code savedExerciseVersionId} are not actually sensitive to another
+     * instructor who already has editor access to the same exercise — they are exactly the exact review identity (which commit, which version) any authorized reviewer needs to
+     * inspect what was saved. Redacting them here previously left co-instructors unable to tell which commit to review.
+     */
     @Nullable
     private ExerciseGenerationEventDTO sanitizedTerminalOutcome(JobTranscript transcript) {
         for (int index = transcript.events().size() - 1; index >= 0; index--) {
             ExerciseGenerationEventDTO event = transcript.events().get(index);
             if (event.type() == ExerciseGenerationEventDTO.Type.DONE || event.type() == ExerciseGenerationEventDTO.Type.CANCELLED
                     || event.type() == ExerciseGenerationEventDTO.Type.ERROR) {
-                return new ExerciseGenerationEventDTO(event.type(), null, event.completionStatus(), null, event.liveExerciseChanged(), null, event.timestamp());
+                return event;
             }
         }
         return null;

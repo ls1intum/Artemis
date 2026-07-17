@@ -151,9 +151,10 @@ public class ExerciseVersionService {
      *
      * @param targetExercise the exercise to create a version of
      * @param author         the user who created the version
+     * @return the id of the created {@code ExerciseVersion}, or {@code null} if the exercise's snapshot has not changed since the previous version (nothing was created)
      */
-    public void createExerciseVersionOrThrow(Exercise targetExercise, User author) {
-        createExerciseVersionOrThrow(targetExercise, author, Map.of());
+    public Long createExerciseVersionOrThrow(Exercise targetExercise, User author) {
+        return createExerciseVersionOrThrow(targetExercise, author, Map.of());
     }
 
     /**
@@ -162,8 +163,9 @@ public class ExerciseVersionService {
      * @param targetExercise      the exercise to create a version of
      * @param author              the user who created the version
      * @param repositoryCommitIds exact commit IDs keyed by repository type; missing entries are resolved normally
+     * @return the id of the created {@code ExerciseVersion}, or {@code null} if the exercise's snapshot has not changed since the previous version (nothing was created)
      */
-    public void createExerciseVersionOrThrow(Exercise targetExercise, User author, Map<RepositoryType, String> repositoryCommitIds) {
+    public Long createExerciseVersionOrThrow(Exercise targetExercise, User author, Map<RepositoryType, String> repositoryCommitIds) {
         if (author == null) {
             throw new IllegalArgumentException("No active user during exercise version creation check");
         }
@@ -171,7 +173,7 @@ public class ExerciseVersionService {
             throw new IllegalArgumentException("createExerciseVersion called with null");
         }
         try {
-            createExerciseVersionUnchecked(targetExercise, author, repositoryCommitIds);
+            return createExerciseVersionUnchecked(targetExercise, author, repositoryCommitIds);
         }
         catch (RuntimeException e) {
             throw e;
@@ -181,7 +183,7 @@ public class ExerciseVersionService {
         }
     }
 
-    private void createExerciseVersionUnchecked(Exercise targetExercise, User author, Map<RepositoryType, String> repositoryCommitIds) throws Exception {
+    private Long createExerciseVersionUnchecked(Exercise targetExercise, User author, Map<RepositoryType, String> repositoryCommitIds) throws Exception {
         Exercise exercise = fetchExerciseEagerly(targetExercise);
         if (exercise == null) {
             throw new IllegalStateException("Exercise with id " + targetExercise.getId() + " not found");
@@ -199,7 +201,7 @@ public class ExerciseVersionService {
             boolean equal = previousVersionSnapshot.equals(exerciseSnapshot);
             if (equal) {
                 log.info("Exercise {} has no versionable changes from last version", exercise.getId());
-                return;
+                return null;
             }
         }
         exerciseVersion.setExerciseSnapshot(exerciseSnapshot);
@@ -231,6 +233,7 @@ public class ExerciseVersionService {
         catch (RuntimeException ex) {
             log.warn("Exercise version {} was saved, but its notification event failed: {}", savedExerciseVersion.getId(), ex.getMessage());
         }
+        return savedExerciseVersion.getId();
     }
 
     /**

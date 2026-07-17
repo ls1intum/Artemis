@@ -942,7 +942,13 @@ class GenerationPersistenceServiceTest {
 
         GenerationOutcome outcome = outcomeWith(Map.of("Template.java", "t"), Map.of("Solution.java", "s"), Map.of("Test.java", "x"), "");
 
-        assertThatThrownBy(() -> service.persist(exercise, user, outcome)).isInstanceOf(GenerationIncompleteException.class).hasMessageContaining("requires manual review");
+        assertThatThrownBy(() -> service.persist(exercise, user, outcome)).isInstanceOfSatisfying(GenerationIncompleteException.class, thrown -> {
+            assertThat(thrown).hasMessageContaining("requires manual review");
+            // The push outcome is genuinely unknown (the local commit landed, but the remote branch could not be confirmed to still be at its pre-persist state): the live
+            // exercise must be conservatively reported as changed, and the best-known (unconfirmed) commit hash surfaced instead of an empty, falsely-reassuring commit map.
+            assertThat(thrown.liveExerciseChanged()).isTrue();
+            assertThat(thrown.savedRepositoryCommits()).containsExactly(Map.entry(RepositoryType.TEMPLATE, "template-after"));
+        });
         verify(gitService, never()).resetToCommitAndForcePush(any(), any(), any(), any());
     }
 

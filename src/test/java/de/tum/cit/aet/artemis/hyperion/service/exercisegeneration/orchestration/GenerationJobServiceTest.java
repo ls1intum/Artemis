@@ -334,19 +334,23 @@ class GenerationJobServiceTest {
         long exerciseId = 991L;
         ProgrammingExercise exercise = exercise(exerciseId);
         String jobId = jobService.startJob(user("instructorA"), exercise, "private prompt", GenerationMode.GENERATE);
-        jobService.recordEvent(exerciseId, jobId, ExerciseGenerationEventDTO.done("private result", ExerciseGenerationEventDTO.CompletionStatus.SUCCESS,
-                new ExerciseGenerationVerdictDTO(true, true, true, 3, List.of()), true), true);
+        jobService.recordEvent(exerciseId, jobId, ExerciseGenerationEventDTO.done("result message", ExerciseGenerationEventDTO.CompletionStatus.SUCCESS,
+                new ExerciseGenerationVerdictDTO(true, true, true, 3, List.of()), true, Map.of("solution", "abc123"), 42L), true);
         jobService.clearJob(exerciseId, jobId);
 
+        // Only the mid-run transcript (prompts/tool activity) is hidden from a non-owner authorized instructor; the terminal outcome itself carries the same exact review
+        // identity (message, verdict, saved commits, saved version id) the owner sees, since none of it is sensitive to another instructor with editor access to this exercise.
         assertThat(jobService.getStatus(user("instructorB"), exercise)).hasValueSatisfying(status -> {
             assertThat(status.running()).isFalse();
             assertThat(status.ownedByCaller()).isFalse();
             assertThat(status.fileChanges()).isEmpty();
             assertThat(status.events()).singleElement().satisfies(event -> {
                 assertThat(event.type()).isEqualTo(ExerciseGenerationEventDTO.Type.DONE);
-                assertThat(event.message()).isNull();
-                assertThat(event.verdict()).isNull();
+                assertThat(event.message()).isEqualTo("result message");
+                assertThat(event.verdict().mechanicallyVerified()).isTrue();
                 assertThat(event.liveExerciseChanged()).isTrue();
+                assertThat(event.savedRepositoryCommits()).containsEntry("solution", "abc123");
+                assertThat(event.savedExerciseVersionId()).isEqualTo(42L);
             });
         });
     }

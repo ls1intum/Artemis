@@ -1498,6 +1498,7 @@ components:
                 savedRepositoryCommits:
                     type: object
                     additionalProperties: { type: string }
+                savedExerciseVersionId: { type: integer, format: int64 }
                 timestamp: { type: string, format: date-time }
         ExerciseGenerationVerdict:
             type: object
@@ -1535,7 +1536,7 @@ components:
                     type: array
                     items:
                         type: string
-                        enum: [exercise, solution, tests, auxiliary, user]
+                        enum: [template, solution, tests, auxiliary, user]
                 completedAt: { type: string, format: date-time }
         QuizQuestionRefinementRequest:
             type: object

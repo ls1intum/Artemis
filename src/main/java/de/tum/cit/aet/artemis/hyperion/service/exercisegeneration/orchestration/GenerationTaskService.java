@@ -209,7 +209,11 @@ public class GenerationTaskService {
                         }
                         catch (GenerationIncompleteException e) {
                             log.error("Persisting verified generated exercise {} left the save incomplete", exerciseId, e);
-                            emitter.milestone(ExerciseGenerationEventDTO.done("Saving did not complete. Some changes may already have been saved; manual review is required.",
+                            // A partial or ambiguous finalization may have mixed newer, never-jointly-verified changes into the repositories the previous automatic-revert
+                            // baseline was captured against; applying that older baseline on top would silently mix two unrelated states, so it must no longer be offered.
+                            generationRevertService.invalidateBaseline(exerciseId);
+                            emitter.milestone(ExerciseGenerationEventDTO.done(
+                                    "Saving did not complete. Some changes may already have been saved; manual review is required. Automatic revert to the previous state is no longer available for this exercise.",
                                     ExerciseGenerationEventDTO.CompletionStatus.PARTIAL, verdict, e.liveExerciseChanged(),
                                     e.savedRepositoryCommits().entrySet().stream().collect(java.util.stream.Collectors
                                             .toUnmodifiableMap(entry -> entry.getKey().name().toLowerCase(java.util.Locale.ROOT), Map.Entry::getValue))));
@@ -227,6 +231,13 @@ public class GenerationTaskService {
                         }
                         if (!canContinueSave(exerciseId, jobId, heartbeatLost)) {
                             reportUncertainLiveSave(verdict, emitter);
+                            return;
+                        }
+                        if (isNoOpPersist(persistResult)) {
+                            // No repository was committed and the problem statement/title did not change: the generated candidate already matched the live exercise. Recording a
+                            // baseline here would be dishonest (there is nothing to undo) and would needlessly discard whatever earlier run's baseline is still valid.
+                            emitter.milestone(ExerciseGenerationEventDTO.done("The generated exercise already matched the current exercise. No changes were needed.",
+                                    ExerciseGenerationEventDTO.CompletionStatus.SUCCESS, verdict, false, Map.of()));
                             return;
                         }
                         boolean revertUnavailable = !generationRevertService.recordBaseline(exerciseToPersist, jobId, event.mode(), persistResult.prePersistHeads(),
@@ -256,8 +267,10 @@ public class GenerationTaskService {
                         }
                         emitter.milestone(ExerciseGenerationEventDTO.done(savedMessage + reviewNotes,
                                 instructorReviewRequired ? ExerciseGenerationEventDTO.CompletionStatus.NEEDS_REVIEW : ExerciseGenerationEventDTO.CompletionStatus.SUCCESS, verdict,
-                                true, persistResult.postPersistHeads().entrySet().stream().collect(
-                                        java.util.stream.Collectors.toUnmodifiableMap(entry -> entry.getKey().name().toLowerCase(java.util.Locale.ROOT), Map.Entry::getValue))));
+                                true,
+                                persistResult.postPersistHeads().entrySet().stream().collect(
+                                        java.util.stream.Collectors.toUnmodifiableMap(entry -> entry.getKey().name().toLowerCase(java.util.Locale.ROOT), Map.Entry::getValue)),
+                                persistResult.savedExerciseVersionId()));
                     }
                 }
             }
@@ -410,9 +423,12 @@ public class GenerationTaskService {
         return course == null ? null : course.getId();
     }
 
-    private static boolean problemStatementChanged(ProgrammingExercise exercise, GenerationOutcome outcome) {
-        String live = exercise.getProblemStatement() == null ? "" : exercise.getProblemStatement().strip();
-        return !outcome.producedProblemStatement().strip().equals(live);
+    /**
+     * A persist that committed no repository and wrote no problem statement/title change: the generated candidate already matched the live exercise. Recording an
+     * automatic-revert baseline or claiming {@code liveExerciseChanged} for such a run would misrepresent a no-op as a real save.
+     */
+    private static boolean isNoOpPersist(GenerationPersistenceService.PersistResult persistResult) {
+        return persistResult.postPersistHeads().isEmpty() && !persistResult.metadataChanged();
     }
 
     private static ExerciseGenerationVerdictDTO toVerdict(VerificationResult verification) {

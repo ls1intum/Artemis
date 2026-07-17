@@ -174,6 +174,27 @@ class ExerciseGenerationRevertServiceTest {
     }
 
     @Test
+    void invalidateBaseline_removesAPreviouslyRecordedBaseline_soAnOlderRunCanNoLongerBeReverted() throws Exception {
+        revertService.recordBaseline(exercise, "job-1", GenerationMode.ADAPT, preRunHeads(), postRunHeads(), "old statement", "Old Title");
+        assertThat(revertService.findRevertibleJobId(77L)).contains("job-1");
+
+        revertService.invalidateBaseline(77L);
+
+        assertThat(revertService.findRevertibleJobId(77L)).isEmpty();
+        assertThat(revertService.revert(exercise, user)).isEmpty();
+        verify(gitService, never()).resetToCommitAndForcePush(any(), any(), any(), any());
+    }
+
+    @Test
+    void invalidateBaseline_isIdempotentWhenNoBaselineIsRecorded() {
+        assertThat(revertService.findRevertibleJobId(77L)).isEmpty();
+
+        revertService.invalidateBaseline(77L);
+
+        assertThat(revertService.findRevertibleJobId(77L)).isEmpty();
+    }
+
+    @Test
     void revert_resetsEveryRepositoryToItsCapturedSha_andResyncsAndConsumesTheBaseline() throws Exception {
         when(gitService.getLastCommitHash(templateUri, DEFAULT_BRANCH)).thenReturn("adapted-template");
         when(gitService.getLastCommitHash(solutionUri, DEFAULT_BRANCH)).thenReturn("adapted-solution");

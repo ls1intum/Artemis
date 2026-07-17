@@ -291,6 +291,8 @@ class GenerationTaskServiceTest {
         assertThat(terminal.message()).contains("Saving did not complete", "manual review is required");
         verify(generationRevertService, never()).recordBaseline(any(), anyString(), any(), any(), any(), any(), any(), any(), any(), anyString());
         verify(reviewService, never()).attachFindings(any(), any(), any());
+        // An older baseline (from a previous, fully-verified run) must not be offered on top of this run's possibly-partial changes.
+        verify(generationRevertService).invalidateBaseline(EXERCISE_ID);
     }
 
     @ParameterizedTest(name = "post-save continuation stops at {0}")
@@ -424,6 +426,7 @@ class GenerationTaskServiceTest {
         assertThat(terminal.verdict().mechanicallyVerified()).isTrue();
         assertThat(terminal.message()).contains("Some changes may already have been saved", "manual review");
         assertThat(terminal.message()).doesNotContain("already-committed repositories");
+        verify(generationRevertService).invalidateBaseline(EXERCISE_ID);
     }
 
     @Test
@@ -437,6 +440,24 @@ class GenerationTaskServiceTest {
         assertThat(terminal.completionStatus()).isEqualTo(ExerciseGenerationEventDTO.CompletionStatus.PARTIAL);
         assertThat(terminal.liveExerciseChanged()).isTrue();
         assertThat(terminal.savedRepositoryCommits()).containsExactlyInAnyOrderEntriesOf(Map.of("solution", "solution-commit", "tests", "tests-commit"));
+        verify(generationRevertService).invalidateBaseline(EXERCISE_ID);
+    }
+
+    @Test
+    void noOpPersist_reportsHonestlyWithoutRecordingABaselineOrAttachingReviewFindings() {
+        when(persistenceService.persist(any(), any(), any(), any(), any(), anyString(), any(), any()))
+                .thenReturn(new GenerationPersistenceService.PersistResult(Map.of(), Map.of(), exercise.getProblemStatement(), exercise.getTitle(), "main", false, null));
+
+        run(GenerationMode.ADAPT, outcomeWith(AgentLoopResult.Status.COMPLETED, new VerificationResult(true, true, true, 3, List.of())));
+
+        ExerciseGenerationEventDTO terminal = sentEvents().getLast();
+        assertThat(terminal.type()).isEqualTo(ExerciseGenerationEventDTO.Type.DONE);
+        assertThat(terminal.completionStatus()).isEqualTo(ExerciseGenerationEventDTO.CompletionStatus.SUCCESS);
+        assertThat(terminal.liveExerciseChanged()).isFalse();
+        assertThat(terminal.message()).contains("No changes were needed");
+        assertThat(terminal.savedRepositoryCommits()).isNullOrEmpty();
+        verify(generationRevertService, never()).recordBaseline(any(), anyString(), any(), any(), any(), any(), any(), any(), any(), anyString());
+        verify(reviewService, never()).attachFindings(any(), any(), any());
     }
 
     @Test
@@ -674,6 +695,7 @@ class GenerationTaskServiceTest {
         taskService.runAsync(new GenerationStartedEvent(JOB_ID, user, exercise, "make it", GenerationMode.GENERATE));
 
         assertThat(sentEvents().getLast().completionStatus()).isEqualTo(ExerciseGenerationEventDTO.CompletionStatus.PARTIAL);
+        verify(generationRevertService).invalidateBaseline(EXERCISE_ID);
     }
 
     @Test

@@ -30,6 +30,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
 import de.tum.cit.aet.artemis.communication.util.ConversationUtilService;
 import de.tum.cit.aet.artemis.course.domain.Course;
@@ -143,6 +144,33 @@ class ExerciseVersionServiceTest extends AbstractProgrammingIntegrationLocalCILo
         Exercise exercise = createExerciseByType(exerciseType);
         exerciseVersionService.createExerciseVersion(exercise);
         exerciseVersionUtilService.verifyExerciseVersionCreated(exercise.getId(), TEST_PREFIX + "instructor1", exerciseType);
+    }
+
+    @ParameterizedTest
+    @EnumSource(ExerciseType.class)
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testCreateExerciseVersionOrThrow_returnsTheCreatedVersionId(ExerciseType exerciseType) {
+        Exercise exercise = createExerciseByType(exerciseType);
+        User author = userTestRepository.findOneByLogin(TEST_PREFIX + "instructor1").orElseThrow();
+
+        Long returnedVersionId = exerciseVersionService.createExerciseVersionOrThrow(exercise, author);
+
+        ExerciseVersion persistedVersion = exerciseVersionUtilService.verifyExerciseVersionCreated(exercise.getId(), TEST_PREFIX + "instructor1", exerciseType);
+        assertThat(returnedVersionId).isNotNull().isEqualTo(persistedVersion.getId());
+    }
+
+    @ParameterizedTest
+    @EnumSource(ExerciseType.class)
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testCreateExerciseVersionOrThrow_returnsNullWhenSnapshotIsUnchanged(ExerciseType exerciseType) {
+        Exercise exercise = createExerciseByType(exerciseType);
+        User author = userTestRepository.findOneByLogin(TEST_PREFIX + "instructor1").orElseThrow();
+        Long firstVersionId = exerciseVersionService.createExerciseVersionOrThrow(exercise, author);
+        assertThat(firstVersionId).isNotNull();
+
+        Long secondVersionId = exerciseVersionService.createExerciseVersionOrThrow(exercise, author);
+
+        assertThat(secondVersionId).isNull();
     }
 
     @ParameterizedTest

@@ -178,6 +178,21 @@ public class ExerciseGenerationRevertService {
     }
 
     /**
+     * Invalidates any previously recorded automatic-revert baseline for the exercise. Callers must invoke this whenever a later run's persistence stops in a state that is not a
+     * clean, fully-verified save (a partial finalization, or a push whose remote outcome is ambiguous): an older baseline was captured relative to the repository state
+     * <em>before</em> that later run started, so applying it on top of the later run's (possibly partial or unconfirmed) changes would silently mix two unrelated, never
+     * jointly-verified states. Idempotent against a missing baseline.
+     *
+     * @param exerciseId the exercise whose baseline should no longer be offered for automatic revert
+     */
+    public void invalidateBaseline(long exerciseId) {
+        if (baselineMap.containsKey(exerciseId)) {
+            baselineMap.delete(exerciseId);
+            log.info("Invalidated the automatic-revert baseline for exercise {} because a later run's save was not cleanly verified", exerciseId);
+        }
+    }
+
+    /**
      * Returns the retained run metadata from one baseline-map read.
      *
      * @param exerciseId the exercise whose baseline should be inspected

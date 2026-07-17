@@ -62,7 +62,7 @@ class MockService {
 
     revertExerciseGeneration(exerciseId: number): Observable<ExerciseGenerationRevertResult> {
         this.revertCalls.push(exerciseId);
-        return of({ fullyReverted: true, revertedRepositories: ['exercise', 'solution', 'tests'], completedAt: '2026-07-10T20:00:00Z' });
+        return of({ fullyReverted: true, revertedRepositories: ['template', 'solution', 'tests'], completedAt: '2026-07-10T20:00:00Z' });
     }
 
     subscribeToStream(): Observable<HyperionGenerationMessage> {

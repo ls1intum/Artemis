@@ -560,7 +560,7 @@ class SpecFidelityCriticServiceTest {
     @Test
     void inventedRequirementNotInBrief_isFlagged() {
         SpecFidelityCriticService critic = criticReturning(jsonResponse(
-                "{\"uncovered\":[],\"missingExamples\":[],\"invented\":[{\"requirement\":\"O(1) extra space\",\"reason\":\"the brief never constrains space complexity\"}]}"));
+                "{\"uncovered\":[],\"missingExamples\":[],\"invented\":[{\"requirement\":\"O(1) extra space\",\"sourceQuote\":\"O(1) extra space\",\"reason\":\"the brief never constrains space complexity\"}]}"));
 
         SpecFidelityReport report = critic.critique(UNICODE_BRIEF, "Rotate the matrix; your solution must use O(1) extra space.", List.of("test_rotate"));
 
@@ -629,8 +629,8 @@ class SpecFidelityCriticServiceTest {
     @Test
     void mechanicsLeakIsMergedWithSemanticReviewFindings() {
         ChatModel chatModel = mock(ChatModel.class);
-        when(chatModel.call(any(Prompt.class))).thenReturn(
-                jsonResponse("{\"hiddenRequirements\":[{\"requirement\":\"ScoreCalculator(int)\",\"reason\":\"the tests compile an API absent from the statement\"}]}"),
+        when(chatModel.call(any(Prompt.class))).thenReturn(jsonResponse(
+                "{\"hiddenRequirements\":[{\"requirement\":\"count_graphemes(s)\",\"sourceQuote\":\"count_graphemes(s)\",\"reason\":\"the tests require this exact signature but the statement never restates it\"}]}"),
                 rawResponse("""
                         {"mutantChecks":[{"mutant":"ignore CJK input","killed":false,"sourceQuote":"CJK characters","reason":"no assertion uses CJK input"}],
                          "uncovered":[],"weakOracle":[]}
@@ -643,6 +643,30 @@ class SpecFidelityCriticServiceTest {
         assertThat(report.findings()).extracting(SpecFidelityReport.Finding::kind).contains(SpecFidelityReport.Kind.MECHANICS_LEAK,
                 SpecFidelityReport.Kind.HIDDEN_GRADED_REQUIREMENT, SpecFidelityReport.Kind.WEAK_TEST_ORACLE);
         verify(chatModel, times(2)).call(any(Prompt.class));
+    }
+
+    /**
+     * A contradiction whose {@code sourceQuote} does not appear verbatim in the brief or the produced statement is the critic's abstain outcome: dropped rather than surfaced, so
+     * it can never reach the retry prompt as a hallucinated repair instruction. Every finding category that drives repair (contradictions, hidden requirements, invented
+     * requirements) is held to this same uniform grounding requirement.
+     */
+    @Test
+    void ungroundedContradictionFinding_isExcludedFromRepairPrompt() {
+        ChatModel chatModel = mock(ChatModel.class);
+        when(chatModel.call(any(Prompt.class)))
+                .thenReturn(jsonResponse("{\"contradictions\":[{\"requirement\":\"the answer is always 42\",\"sourceQuote\":\"the answer is always 42\","
+                        + "\"reason\":\"the solution and template disagree\"}]}"), rawResponse("""
+                                {"mutantChecks":[{"mutant":"ignore CJK input","killed":true,"reason":"the assertion kills it"}],
+                                 "uncovered":[],"weakOracle":[]}
+                                """));
+        when(chatModel.getOptions()).thenReturn(ChatOptions.builder().build());
+        SpecFidelityCriticService critic = new SpecFidelityCriticService(ChatClient.create(chatModel), objectMapper);
+
+        SpecFidelityReport report = critic.critique(UNICODE_BRIEF, "Count graphemes.", List.of("cjk"), COMPLETE_ARTIFACTS, null);
+
+        assertThat(report.findings()).noneMatch(finding -> finding.kind() == SpecFidelityReport.Kind.CONTRACT_CONTRADICTION);
+        assertThat(report.findings()).isEmpty();
+        assertThat(critic.renderForRetryPrompt(report)).isEmpty();
     }
 
     /** A model error does not escape, but it blocks automatic acceptance because semantic evidence is missing. */
@@ -867,7 +891,8 @@ class SpecFidelityCriticServiceTest {
     void contractFindingFlood_cannotDisplaceTheOracleVerdict() {
         StringBuilder contradictions = new StringBuilder();
         for (int i = 0; i < 12; i++) {
-            contradictions.append(i == 0 ? "" : ",").append("{\"requirement\":\"contract ").append(i).append("\",\"reason\":\"statement and test disagree; align both\"}");
+            contradictions.append(i == 0 ? "" : ",").append("{\"requirement\":\"contract ").append(i)
+                    .append("\",\"sourceQuote\":\"user-perceived characters\",\"reason\":\"statement and test disagree; align both\"}");
         }
         ChatModel chatModel = mock(ChatModel.class);
         when(chatModel.call(any(Prompt.class))).thenReturn(rawResponse("""

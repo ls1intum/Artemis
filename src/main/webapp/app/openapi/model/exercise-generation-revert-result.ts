@@ -15,14 +15,14 @@ export interface ExerciseGenerationRevertResult {
     completedAt: string;
 }
 
-export type ExerciseGenerationRevertResultRevertedRepositoriesEnum = 'exercise' | 'solution' | 'tests' | 'auxiliary' | 'user';
+export type ExerciseGenerationRevertResultRevertedRepositoriesEnum = 'template' | 'solution' | 'tests' | 'auxiliary' | 'user';
 
 export const ExerciseGenerationRevertResultRevertedRepositoriesEnum = {
-    Exercise: 'exercise' as const,
+    Template: 'template' as const,
     Solution: 'solution' as const,
     Tests: 'tests' as const,
     Auxiliary: 'auxiliary' as const,
     User: 'user' as const,
 } as const;
 
-export const ExerciseGenerationRevertResultRevertedRepositoriesEnumValues = ['exercise', 'solution', 'tests', 'auxiliary', 'user'] as const;
+export const ExerciseGenerationRevertResultRevertedRepositoriesEnumValues = ['template', 'solution', 'tests', 'auxiliary', 'user'] as const;

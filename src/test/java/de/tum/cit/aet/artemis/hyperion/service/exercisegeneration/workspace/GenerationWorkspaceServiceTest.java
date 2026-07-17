@@ -174,15 +174,24 @@ class GenerationWorkspaceServiceTest {
 
         Map<String, String> reference = new GenerationWorkspaceService(mock(), mock(), mock(), resourceLoaderService, tempFileUtilService()).readReferenceSample(exercise);
 
-        assertThat(reference).containsKeys("reference/problem-statement.md", "reference/template/src/de/tum/cit/aet/reference/ScoreCalculator.java",
-                "reference/solution/src/de/tum/cit/aet/reference/ScoreCalculator.java", "reference/tests/test/de/tum/cit/aet/reference/ScoreCalculatorTest.java");
-        assertThat(reference).doesNotContainKey("reference/tests/structural/test.json");
+        assertThat(reference).containsKeys("reference/problem-statement.md", "reference/template/src/de/tum/cit/aet/reference/StandardFeeStrategy.java",
+                "reference/template/src/de/tum/cit/aet/reference/ExpressFeeStrategy.java", "reference/solution/src/de/tum/cit/aet/reference/StandardFeeStrategy.java",
+                "reference/solution/src/de/tum/cit/aet/reference/ExpressFeeStrategy.java", "reference/solution/src/de/tum/cit/aet/reference/FeeStrategy.java",
+                "reference/solution/src/de/tum/cit/aet/reference/ShippingCalculator.java", "reference/tests/test/de/tum/cit/aet/reference/StandardFeeStrategyTest.java",
+                "reference/tests/test/de/tum/cit/aet/reference/ExpressFeeStrategyTest.java", "reference/tests/test/de/tum/cit/aet/reference/ShippingCalculatorTest.java");
+        // The solution introduces FeeStrategy and ShippingCalculator entirely on its own; the template never sees them (mirrors BubbleSort's Context/Policy/SortStrategy shape),
+        // so a multi-class, multi-task design stays available as a worked example instead of only a single-method utility.
+        assertThat(reference).doesNotContainKeys("reference/template/src/de/tum/cit/aet/reference/FeeStrategy.java",
+                "reference/template/src/de/tum/cit/aet/reference/ShippingCalculator.java", "reference/tests/structural/test.json");
         assertThat(reference.values()).noneMatch(content -> content.contains("${packageName"));
         String statement = reference.get("reference/problem-statement.md");
-        String tests = reference.get("reference/tests/test/de/tum/cit/aet/reference/ScoreCalculatorTest.java");
-        assertThat(statement).contains("[task][Count passing scores](testRepresentativeScores,testBoundaryScores,testEmptyInput)");
-        assertThat(tests).contains("representative scores should count every value at or above 50", "a score of exactly 50 should pass",
-                "an empty score list should have no passing scores");
+        assertThat(statement).contains("[task][Implement Standard Fee Strategy](testStandardFeeTypical,testStandardFeeZeroWeight)",
+                "[task][Implement Express Fee Strategy](testExpressFeeTypical,testExpressFeeMinimumSurcharge)",
+                "[task][Select Strategy By Weight](testSelectsExpressForHeavyPackages,testSelectsStandardForLightPackages)",
+                "[task][Compute Total Fee](testComputeFeeDelegatesToChosenStrategy)");
+        String calculatorTest = reference.get("reference/tests/test/de/tum/cit/aet/reference/ShippingCalculatorTest.java");
+        assertThat(calculatorTest).contains("a 12kg package should select the express strategy", "a 4kg package should select the standard strategy",
+                "a 12kg package should be charged the express rate plus surcharge");
     }
 
     @Test
