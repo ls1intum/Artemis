@@ -16,8 +16,8 @@ import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
  * <p>
  * It is {@link AutoCloseable}: closing it destroys the underlying sandbox container. Verification already reads each repository's produced files (and the problem statement) out of
  * the session to run the integrity gates, so those extractions are captured on the outcome and reused at persist — no second full-repo read of the sandbox. Persist only runs on a
- * verified outcome (accepted in place, or rejected and persisted as a recovery draft), both of which populate the captures, so the accessors return the captured value directly
- * (empty when absent); the outcome holds a reference back to the orchestrator and the session id solely so {@link #close()} can destroy the sandbox container.
+ * mechanically verified outcome, so the accessors return the captured value directly (empty when absent); the outcome holds a reference back to the orchestrator and the session
+ * id solely so {@link #close()} can destroy the sandbox container.
  */
 public final class GenerationOutcome implements AutoCloseable {
 
@@ -39,23 +39,21 @@ public final class GenerationOutcome implements AutoCloseable {
     private final String errorMessage;
 
     /**
-     * Produced files captured from the sandbox. Verified outcomes reuse the verification extraction; an errored run may carry a complete best-effort extraction for isolated
-     * recovery.
-     * Cancelled and unrecoverable errored outcomes keep this empty.
+     * Produced files captured from the sandbox. Verified outcomes reuse the verification extraction; an errored run may retain best-effort diagnostics, but unverified artifacts
+     * are never persisted. Cancelled and artifact-less errored outcomes keep this empty.
      */
     private final Map<RepositoryType, Map<String, String>> capturedProducedFiles;
 
     private final Map<RepositoryType, String> seedRepositoryHeads;
 
     /**
-     * The produced problem statement captured to avoid a later sandbox read. It may also be present on an errored run so recovery can preserve a changed statement in a review
-     * note.
+     * The produced problem statement captured to avoid a later sandbox read. It may also be present on an errored run for diagnostics.
      */
     @Nullable
     private final String capturedProblemStatement;
 
     /**
-     * Full-artifact review findings. Blocking contract-risk findings prevent direct persistence; presentation findings are surfaced as advisory notes.
+     * Full-artifact review findings. Blocking findings require instructor review of the saved mechanically valid exercise; presentation findings are advisory.
      */
     private final SpecFidelityReport specFidelityReport;
 
@@ -108,19 +106,17 @@ public final class GenerationOutcome implements AutoCloseable {
         return specFidelityReport;
     }
 
-    /**
-     * @return {@code true} when mechanical verification accepted the exercise and no blocking full-artifact review finding remains
-     */
+    /** @return whether the generated exercise passed the authoritative mechanical verification */
     public boolean isAccepted() {
-        return verification != null && verification.accepted() && !specFidelityReport.hasBlockingFindings();
+        return verification != null && verification.accepted();
     }
 
     public AgentLoopResult loopResult() {
         return loopResult;
     }
 
-    /** @return whether an errored run still carries changed workspace artifacts that can be saved to an isolated review draft */
-    public boolean hasRecoverableDraft() {
+    /** @return whether an errored run captured workspace artifacts for diagnostics */
+    public boolean hasCapturedArtifacts() {
         return sessionId != null && (!capturedProducedFiles.isEmpty() || capturedProblemStatement != null);
     }
 
@@ -135,8 +131,8 @@ public final class GenerationOutcome implements AutoCloseable {
     }
 
     /**
-     * The produced files for a repository type — the extraction verification already performed and captured on this outcome. Only verified outcomes are persisted (accepted, or
-     * rejected as a recovery draft), so the capture is always present for the repositories persist reads.
+     * The produced files for a repository type — the extraction verification already performed and captured on this outcome. Only mechanically verified outcomes are persisted,
+     * so the capture is always present for the repositories persist reads.
      *
      * @param repositoryType the repository whose produced files to read
      * @return the produced files (path to content), or an empty map if that repository produced none

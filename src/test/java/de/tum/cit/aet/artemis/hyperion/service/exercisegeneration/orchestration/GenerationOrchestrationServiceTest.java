@@ -310,7 +310,7 @@ class GenerationOrchestrationServiceTest {
     }
 
     @Test
-    void erroredLoop_preservesChangedWorkspaceForRecovery() {
+    void erroredLoop_capturesChangedWorkspaceForDiagnostics() {
         when(exercise.getProblemStatement()).thenReturn("Original statement");
         when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any()))
                 .thenReturn(new AgentLoopResult(AgentLoopResult.Status.ERROR, 4, "Provider stopped responding"));
@@ -321,7 +321,7 @@ class GenerationOrchestrationServiceTest {
         GenerationOutcome outcome = generate(() -> false);
 
         assertThat(outcome.loopResult().status()).isEqualTo(AgentLoopResult.Status.ERROR);
-        assertThat(outcome.hasRecoverableDraft()).isTrue();
+        assertThat(outcome.hasCapturedArtifacts()).isTrue();
         assertThat(outcome.producedProblemStatement()).isEqualTo("Improved draft statement");
         assertThat(outcome.producedFiles(RepositoryType.SOLUTION)).containsKey("src/Library.java");
         verify(sandbox, never()).destroySession(SESSION_ID);
@@ -340,7 +340,7 @@ class GenerationOrchestrationServiceTest {
         when(workspace.extractRepository(any(), anyString(), eq(RepositoryType.TEMPLATE), any())).thenReturn(new GenerationWorkspaceService.RepositoryExtraction(Map.of(), true));
 
         try (GenerationOutcome outcome = generate(() -> false)) {
-            assertThat(outcome.hasRecoverableDraft()).isTrue();
+            assertThat(outcome.hasCapturedArtifacts()).isTrue();
             assertThat(outcome.producedProblemStatement()).isEqualTo("Original statement");
             assertThat(outcome.producedFiles(RepositoryType.SOLUTION)).containsEntry("src/Library.java", "class Library {}");
             assertThat(outcome.producedFiles(RepositoryType.TEMPLATE)).isEmpty();
@@ -348,7 +348,7 @@ class GenerationOrchestrationServiceTest {
     }
 
     @Test
-    void erroredLoopWithUnchangedStatementAndIncompleteExtractionDoesNotInventARecoverableDraft() {
+    void erroredLoopWithUnchangedStatementAndIncompleteExtractionDoesNotInventCapturedArtifacts() {
         when(exercise.getProblemStatement()).thenReturn("Original statement");
         when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any()))
                 .thenReturn(new AgentLoopResult(AgentLoopResult.Status.ERROR, 4, "Provider stopped responding"));
@@ -357,7 +357,7 @@ class GenerationOrchestrationServiceTest {
 
         GenerationOutcome outcome = generate(() -> false);
 
-        assertThat(outcome.hasRecoverableDraft()).isFalse();
+        assertThat(outcome.hasCapturedArtifacts()).isFalse();
         verify(sandbox).destroySession(SESSION_ID);
     }
 
@@ -383,7 +383,7 @@ class GenerationOrchestrationServiceTest {
 
     @ParameterizedTest
     @EnumSource(SpecFidelityReport.Kind.class)
-    void acceptedVerification_isBlockedOnlyByBlockingFindings(SpecFidelityReport.Kind kind) {
+    void mechanicalAcceptanceIsIndependentFromQualityReviewDisposition(SpecFidelityReport.Kind kind) {
         Set<SpecFidelityReport.Kind> expectedBlockingKinds = EnumSet.of(SpecFidelityReport.Kind.UNCOVERED_REQUIREMENT, SpecFidelityReport.Kind.MECHANICS_LEAK,
                 SpecFidelityReport.Kind.INVENTED_REQUIREMENT, SpecFidelityReport.Kind.UNREQUESTED_ADAPTATION_CHANGE, SpecFidelityReport.Kind.REQUESTED_ADAPTATION_CHANGE_MISSING,
                 SpecFidelityReport.Kind.ADAPTATION_SCOPE_REVIEW_UNAVAILABLE, SpecFidelityReport.Kind.CONTRACT_CONTRADICTION, SpecFidelityReport.Kind.HIDDEN_GRADED_REQUIREMENT,
@@ -393,7 +393,7 @@ class GenerationOrchestrationServiceTest {
 
         boolean expectedBlocking = expectedBlockingKinds.contains(kind);
         assertThat(report.hasBlockingFindings()).isEqualTo(expectedBlocking);
-        assertThat(outcome.isAccepted()).isEqualTo(!expectedBlocking);
+        assertThat(outcome.isAccepted()).isTrue();
     }
 
     @Test
@@ -425,7 +425,7 @@ class GenerationOrchestrationServiceTest {
     }
 
     @Test
-    void acceptedAdaptationWithPersistentScopeDrift_isNotAcceptedForLivePersistence() {
+    void acceptedAdaptationWithPersistentScopeDriftRemainsMechanicallyAcceptedAndRequiresReview() {
         SpecFidelityReport scopeDrift = new SpecFidelityReport(List.of(new SpecFidelityReport.Finding(SpecFidelityReport.Kind.UNREQUESTED_ADAPTATION_CHANGE,
                 "solution/src/Inventory.java removed displayName(String)", "The feedback explicitly required preserving it.")));
         when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(completed());
@@ -435,7 +435,7 @@ class GenerationOrchestrationServiceTest {
         try (GenerationOutcome outcome = service.generate(exercise, user, "Change only remove; preserve displayName", "job", GenerationMode.ADAPT, () -> false, null, null,
                 response -> {
                 })) {
-            assertThat(outcome.isAccepted()).as("unresolved adaptation scope drift must go to the isolated review draft, never live persistence").isFalse();
+            assertThat(outcome.isAccepted()).as("mechanically valid work is saved canonically so the instructor can review the scope finding").isTrue();
             assertThat(outcome.specFidelityReport().hasBlockingFindings()).isTrue();
         }
         verify(agentLoopRunner, times(MAX_GENERATION_ATTEMPTS)).run(anyString(), anyString(), any(), anyInt(), any(), any(), any());
@@ -469,7 +469,7 @@ class GenerationOrchestrationServiceTest {
                 List.of(new SpecFidelityReport.Finding(SpecFidelityReport.Kind.REQUESTED_ADAPTATION_CHANGE_MISSING, "Change one method only", "The candidate is unchanged."))));
 
         try (GenerationOutcome outcome = service.generate(exercise, user, "Change one method only", JOB_ID, GenerationMode.ADAPT, () -> false, null, null, null)) {
-            assertThat(outcome.isAccepted()).isFalse();
+            assertThat(outcome.isAccepted()).isTrue();
             assertThat(outcome.specFidelityReport().findings()).singleElement()
                     .satisfies(finding -> assertThat(finding.kind()).isEqualTo(SpecFidelityReport.Kind.REQUESTED_ADAPTATION_CHANGE_MISSING));
         }
@@ -481,7 +481,7 @@ class GenerationOrchestrationServiceTest {
     }
 
     @Test
-    void adaptationCriticExceptionOrTruncatedEvidence_neverAllowsLivePersistence() {
+    void adaptationCriticExceptionOrTruncatedEvidenceRequiresInstructorReview() {
         when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(completed());
         when(verifier.verify(any(), anyString(), any(), any(VerificationRequest.class))).thenReturn(accepted());
         when(workspace.seedWorkspace(any(), anyString(), any(), any())).thenReturn(
@@ -490,7 +490,7 @@ class GenerationOrchestrationServiceTest {
 
         try (GenerationOutcome outcome = service.generate(exercise, user, "Change one method only", "job", GenerationMode.ADAPT, () -> false, null, null, response -> {
         })) {
-            assertThat(outcome.isAccepted()).isFalse();
+            assertThat(outcome.isAccepted()).isTrue();
             assertThat(outcome.specFidelityReport().hasBlockingFindings()).isTrue();
         }
     }
@@ -538,7 +538,7 @@ class GenerationOrchestrationServiceTest {
         ArgumentCaptor<String> reviewBrief = ArgumentCaptor.forClass(String.class);
         ArgumentCaptor<String> agentPrompt = ArgumentCaptor.forClass(String.class);
         try (GenerationOutcome outcome = generate(() -> false)) {
-            assertThat(outcome.isAccepted()).isFalse();
+            assertThat(outcome.isAccepted()).isTrue();
         }
 
         verify(specFidelityCritic, times(MAX_GENERATION_ATTEMPTS)).critique(reviewBrief.capture(), any(), any(), any(), any());
@@ -558,7 +558,7 @@ class GenerationOrchestrationServiceTest {
         when(workspace.extractProblemStatement(any(), anyString())).thenReturn("# Mechanically verified candidate", "# Broken repair", "# Still broken repair");
 
         try (GenerationOutcome outcome = generate(() -> false)) {
-            assertThat(outcome.isAccepted()).isFalse();
+            assertThat(outcome.isAccepted()).isTrue();
             assertThat(outcome.verification()).isEqualTo(accepted());
             assertThat(outcome.producedProblemStatement()).isEqualTo("# Mechanically verified candidate");
             assertThat(outcome.specFidelityReport()).isEqualTo(contractBlocker);
@@ -576,7 +576,7 @@ class GenerationOrchestrationServiceTest {
         when(structuralOracleSeeder.seedIfStructuralDiff(any(), anyString(), any())).thenReturn(Set.of()).thenThrow(new IllegalStateException("repair extraction failed"));
 
         try (GenerationOutcome outcome = generate(() -> false)) {
-            assertThat(outcome.isAccepted()).isFalse();
+            assertThat(outcome.isAccepted()).isTrue();
             assertThat(outcome.verification()).isEqualTo(accepted());
             assertThat(outcome.producedProblemStatement()).isEqualTo("# Mechanically verified candidate");
             assertThat(outcome.specFidelityReport()).isEqualTo(contractBlocker);
@@ -590,7 +590,7 @@ class GenerationOrchestrationServiceTest {
         when(specFidelityCritic.critique(any(), any(), any(), any(), any())).thenThrow(new RuntimeException("critic exploded"));
 
         try (GenerationOutcome outcome = generate(() -> false)) {
-            assertThat(outcome.isAccepted()).isFalse();
+            assertThat(outcome.isAccepted()).isTrue();
             assertThat(outcome.specFidelityReport().findings()).singleElement()
                     .satisfies(finding -> assertThat(finding.kind()).isEqualTo(SpecFidelityReport.Kind.QUALITY_REVIEW_UNAVAILABLE));
         }
@@ -734,7 +734,7 @@ class GenerationOrchestrationServiceTest {
         try (GenerationOutcome outcome = generate(cancelled::get)) {
             assertThat(outcome.loopResult().status()).isEqualTo(AgentLoopResult.Status.COMPLETED);
             assertThat(outcome.verification()).isEqualTo(accepted());
-            assertThat(outcome.isAccepted()).isFalse();
+            assertThat(outcome.isAccepted()).isTrue();
             assertThat(outcome.specFidelityReport().hasBlockingFindings()).isTrue();
         }
         verify(specFidelityCritic, never()).critique(any(), any(), any(), any(), any());
@@ -751,7 +751,7 @@ class GenerationOrchestrationServiceTest {
 
         try (GenerationOutcome outcome = generate(() -> false)) {
             assertThat(outcome.loopResult().status()).isEqualTo(AgentLoopResult.Status.ERROR);
-            assertThat(outcome.hasRecoverableDraft()).isTrue();
+            assertThat(outcome.hasCapturedArtifacts()).isTrue();
             assertThat(outcome.producedProblemStatement()).isEqualTo("Improved statement");
         }
     }
@@ -768,7 +768,7 @@ class GenerationOrchestrationServiceTest {
 
         try (GenerationOutcome outcome = generate(() -> false)) {
             assertThat(outcome.loopResult().status()).isEqualTo(AgentLoopResult.Status.ERROR);
-            assertThat(outcome.hasRecoverableDraft()).isTrue();
+            assertThat(outcome.hasCapturedArtifacts()).isTrue();
             assertThat(outcome.producedFiles(RepositoryType.SOLUTION)).containsKey("src/Library.java");
         }
 
@@ -803,7 +803,7 @@ class GenerationOrchestrationServiceTest {
 
         try (GenerationOutcome outcome = generate(() -> false)) {
             assertThat(outcome.loopResult().status()).isEqualTo(AgentLoopResult.Status.ERROR);
-            assertThat(outcome.hasRecoverableDraft()).isTrue();
+            assertThat(outcome.hasCapturedArtifacts()).isTrue();
             assertThat(outcome.producedFiles(RepositoryType.SOLUTION)).containsKey("src/Library.java");
         }
 

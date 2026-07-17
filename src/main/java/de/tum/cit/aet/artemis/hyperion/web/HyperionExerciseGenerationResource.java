@@ -49,8 +49,8 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseReposito
  * REST controller for Hyperion's agentic whole-exercise generation and adaptation.
  * <p>
  * A single endpoint and a single engine drive both {@code GENERATE} and {@code ADAPT} — the client picks the mode explicitly (never inferred from the exercise's contents). The
- * agent produces or revises a complete exercise candidate (problem statement plus all repositories). The live exercise is saved only after mechanical verification and a
- * blocking full-artifact review; rejected or interrupted candidates can instead be preserved for instructor review. Progress streams over the websocket topic
+ * agent produces or revises a complete exercise candidate (problem statement plus all repositories). Mechanically verified work is saved to the exercise and versioned; automated
+ * quality findings become review comments for the instructor. Mechanically invalid or interrupted candidates are not saved. Progress streams over the websocket topic
  * {@code /topic/hyperion/exercise-generation/jobs/{jobId}}; a run is a multi-minute async job addressed by the returned {@code jobId}.
  */
 @Conditional(HyperionExerciseGenerationEnabled.class)
@@ -194,7 +194,7 @@ public class HyperionExerciseGenerationResource {
     }
 
     /**
-     * POST programming-exercises/{exerciseId}/generate-exercise/revert : reverts the most recent accepted generation or adaptation, resetting its
+     * POST programming-exercises/{exerciseId}/generate-exercise/revert : reverts the most recent saved generation or adaptation, resetting its
      * template/solution/tests
      * repositories back to the state captured before persistence.
      *
@@ -204,7 +204,7 @@ public class HyperionExerciseGenerationResource {
     @PostMapping("programming-exercises/{exerciseId}/generate-exercise/revert")
     @EnforceAtLeastEditorInExercise
     public ResponseEntity<ExerciseGenerationRevertResultDTO> revertExerciseGeneration(@PathVariable long exerciseId) {
-        log.debug("REST request to revert the last accepted agentic generation run of exercise [{}]", exerciseId);
+        log.debug("REST request to revert the last saved agentic generation run of exercise [{}]", exerciseId);
         ProgrammingExercise exercise = loadExercise(exerciseId);
         validateDraftExercise(exercise);
         User user = userRepository.getUserWithGroupsAndAuthorities();
@@ -256,7 +256,8 @@ public class HyperionExerciseGenerationResource {
     }
 
     /**
-     * Hyperion writes directly to the exercise repositories on accepted runs, so it must only run on unreleased instructor drafts without student participations. Released/null
+     * Hyperion writes directly to the exercise repositories on mechanically verified runs, so it must only run on unreleased instructor drafts without student participations.
+     * Released/null
      * release-date exercises are considered live in Artemis; instructors should clone or move the release date into the future before asking the agent to rewrite the exercise.
      *
      * @param exercise the exercise to validate

@@ -7,7 +7,6 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
-import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,21 +29,18 @@ import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationEventDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationFileSnapshotDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationVerdictDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.GenerationMode;
-import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.AgentLoopResult;
-import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.critic.SpecFidelityReport;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.persistence.ExerciseGenerationRevertService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.persistence.GenerationIncompleteException;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.persistence.GenerationPersistenceService;
-import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.persistence.GenerationRecoveryService;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.persistence.GenerationReviewService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.VerificationResult;
 import de.tum.cit.aet.artemis.hyperion.service.websocket.HyperionWebsocketService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
-import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 
 /**
- * Runs generation or adaptation asynchronously, streams progress, persists accepted output, and isolates recoverable rejected output for review. Every path closes the
- * {@link GenerationOutcome} so its sandbox is destroyed.
+ * Runs generation or adaptation asynchronously, streams progress, and persists mechanically verified output for instructor review. Every path closes the
+ * {@link GenerationOutcome} so its sandbox is destroyed. Unverified output is never persisted.
  */
 @Service
 @Lazy
@@ -59,7 +55,7 @@ public class GenerationTaskService {
 
     private final GenerationPersistenceService persistenceService;
 
-    private final GenerationRecoveryService recoveryService;
+    private final GenerationReviewService reviewService;
 
     private final HyperionWebsocketService websocket;
 
@@ -79,7 +75,7 @@ public class GenerationTaskService {
 
     private final Duration ownerHeartbeatInterval;
 
-    public GenerationTaskService(GenerationOrchestrationService orchestrator, GenerationPersistenceService persistenceService, GenerationRecoveryService recoveryService,
+    public GenerationTaskService(GenerationOrchestrationService orchestrator, GenerationPersistenceService persistenceService, GenerationReviewService reviewService,
             HyperionWebsocketService websocket, GenerationJobService jobService, ProgrammingExerciseRepository programmingExerciseRepository,
             HyperionGenerationBudgetService generationBudgetService, ExerciseGenerationRevertService generationRevertService,
             @Qualifier("taskScheduler") TaskScheduler taskScheduler, @Value("${artemis.hyperion.agent.max-job-duration:PT30M}") Duration maxJobDuration,
@@ -87,7 +83,7 @@ public class GenerationTaskService {
             @Value("${artemis.hyperion.agent.owner-heartbeat-interval:PT15S}") Duration ownerHeartbeatInterval) {
         this.orchestrator = orchestrator;
         this.persistenceService = persistenceService;
-        this.recoveryService = recoveryService;
+        this.reviewService = reviewService;
         this.websocket = websocket;
         this.jobService = jobService;
         this.programmingExerciseRepository = programmingExerciseRepository;
@@ -163,87 +159,82 @@ public class GenerationTaskService {
                     case CANCELLED -> emitter.milestone(ExerciseGenerationEventDTO.of(ExerciseGenerationEventDTO.Type.CANCELLED,
                             cancellationMessage(deadlineExceeded.get(), tokenBudgetExceeded.get(), heartbeatLost.get())));
                     case ERROR -> {
-                        if (!outcome.hasRecoverableDraft()) {
-                            emitter.milestone(ExerciseGenerationEventDTO.of(ExerciseGenerationEventDTO.Type.ERROR,
-                                    outcome.errorMessage() != null ? outcome.errorMessage() : "Generation failed."));
-                            break;
-                        }
-                        outcome.close();
-                        if (!jobService.enterNonCancellablePhase(exerciseId, jobId)) {
-                            emitter.milestone(ExerciseGenerationEventDTO.of(ExerciseGenerationEventDTO.Type.CANCELLED,
-                                    cancellationMessage(deadlineExceeded.get(), tokenBudgetExceeded.get(), heartbeatLost.get())));
-                            break;
-                        }
-                        emitter.progress("The agent stopped before verification. Preserving its partial work for review.");
-                        recoverOrReportPartial(exercise, user, exerciseId, jobId, outcome, null, emitter, deadlineExceeded, heartbeatLost);
+                        String message = outcome.hasCapturedArtifacts() ? "Generation stopped before mechanical verification completed. Nothing was saved."
+                                : outcome.errorMessage() != null ? outcome.errorMessage() : "Generation failed.";
+                        emitter.milestone(ExerciseGenerationEventDTO.of(ExerciseGenerationEventDTO.Type.ERROR, message));
                     }
-                    // A budget-exhausted run is still verified: it may have produced an acceptable exercise before the turn cap, or a recoverable near-miss.
+                    // A budget-exhausted run may still have produced a mechanically verified exercise before the turn cap.
                     case COMPLETED, BUDGET_EXHAUSTED -> {
                         // Verification already captured every artifact needed below. Release the scarce build-agent sandbox before Git persistence and CI synchronization.
                         outcome.close();
+                        ExerciseGenerationVerdictDTO verdict = toVerdict(outcome.verification());
+                        if (!outcome.isAccepted()) {
+                            String report = outcome.verification() == null ? "No mechanical verification result was produced." : outcome.verification().report();
+                            emitter.milestone(ExerciseGenerationEventDTO.of(ExerciseGenerationEventDTO.Type.ERROR,
+                                    "Generation did not pass mechanical verification. Nothing was saved. " + conciseReason(report)));
+                            break;
+                        }
                         if (!jobService.enterNonCancellablePhase(exerciseId, jobId)) {
                             emitter.milestone(ExerciseGenerationEventDTO.of(ExerciseGenerationEventDTO.Type.CANCELLED,
                                     cancellationMessage(deadlineExceeded.get(), tokenBudgetExceeded.get(), heartbeatLost.get())));
                             return;
                         }
-                        ExerciseGenerationVerdictDTO verdict = toVerdict(outcome.verification());
-                        if (outcome.isAccepted()) {
-                            emitter.progress("Checks passed. Saving the exercise.");
-                            ProgrammingExercise exerciseToPersist;
-                            GenerationPersistenceService.PersistResult persistResult;
-                            try {
-                                exerciseToPersist = reloadDraftExerciseBeforeLiveMutation(exerciseId);
-                                String originalProblemStatement = event.expectedProblemStatement();
-                                String originalTitle = event.expectedTitle();
-                                persistResult = persistenceService.persist(exerciseToPersist, user, outcome, originalProblemStatement, originalTitle, jobId,
-                                        () -> canContinue(exerciseId, jobId, deadlineExceeded, heartbeatLost) && isStillDraftWithoutParticipations(exerciseId));
-                            }
-                            catch (GenerationIncompleteException e) {
-                                log.error("Persisting verified generated exercise {} left the save incomplete", exerciseId, e);
-                                if (!canContinue(exerciseId, jobId, deadlineExceeded, heartbeatLost)) {
-                                    reportUncertainLiveSave(verdict, emitter);
-                                    return;
-                                }
-                                preserveVerifiedCandidateAfterSaveFailure(exercise, user, exerciseId, jobId, outcome, verdict, emitter, true, deadlineExceeded, heartbeatLost);
-                                return;
-                            }
-                            catch (RuntimeException e) {
-                                log.error("Failed to persist generated exercise {}", exerciseId, e);
-                                if (!canContinue(exerciseId, jobId, deadlineExceeded, heartbeatLost)) {
-                                    reportContinuationFailure(emitter);
-                                    return;
-                                }
-                                preserveVerifiedCandidateAfterSaveFailure(exercise, user, exerciseId, jobId, outcome, verdict, emitter, false, deadlineExceeded, heartbeatLost);
-                                return;
-                            }
-                            if (!canContinue(exerciseId, jobId, deadlineExceeded, heartbeatLost)) {
-                                reportUncertainLiveSave(verdict, emitter);
-                                return;
-                            }
-                            boolean revertUnavailable = !generationRevertService.recordBaseline(exerciseToPersist, jobId, event.mode(), persistResult.prePersistHeads(),
-                                    persistResult.postPersistHeads(), event.expectedProblemStatement(), event.expectedTitle(), persistResult.persistedProblemStatement(),
-                                    persistResult.persistedTitle(), persistResult.repositoryBranch());
-                            if (!canContinue(exerciseId, jobId, deadlineExceeded, heartbeatLost)) {
-                                reportUncertainLiveSave(verdict, emitter);
-                                return;
-                            }
-                            int advisoryCount = recoveryService.surfaceAdvisoryFindings(exerciseToPersist, user, outcome.specFidelityReport());
-                            String advisory = advisoryCount == 1 ? " 1 review note was added for your attention."
-                                    : advisoryCount > 1 ? " " + advisoryCount + " review notes were added for your attention." : "";
-                            String savedMessage = event.mode() == GenerationMode.ADAPT ? "The exercise was adapted and saved. Review the changes."
-                                    : "The exercise was generated and saved. Review the changes.";
-                            if (revertUnavailable) {
-                                savedMessage += " Automatic revert is unavailable for this run.";
-                            }
-                            if (!canContinue(exerciseId, jobId, deadlineExceeded, heartbeatLost)) {
-                                reportUncertainLiveSave(verdict, emitter);
-                                return;
-                            }
-                            emitter.milestone(ExerciseGenerationEventDTO.done(savedMessage + advisory, ExerciseGenerationEventDTO.CompletionStatus.SUCCESS, verdict, true));
+                        emitter.progress("Checks passed. Saving the exercise.");
+                        ProgrammingExercise exerciseToPersist;
+                        GenerationPersistenceService.PersistResult persistResult;
+                        try {
+                            exerciseToPersist = reloadDraftExerciseBeforeLiveMutation(exerciseId);
+                            persistResult = persistenceService.persist(exerciseToPersist, user, outcome, event.expectedProblemStatement(), event.expectedTitle(), jobId,
+                                    () -> canContinue(exerciseId, jobId, deadlineExceeded, heartbeatLost) && isStillDraftWithoutParticipations(exerciseId));
                         }
-                        else {
-                            recoverOrReportPartial(exercise, user, exerciseId, jobId, outcome, verdict, emitter, deadlineExceeded, heartbeatLost);
+                        catch (GenerationIncompleteException e) {
+                            log.error("Persisting verified generated exercise {} left the save incomplete", exerciseId, e);
+                            emitter.milestone(ExerciseGenerationEventDTO.done("Saving did not complete. Some changes may already have been saved; manual review is required.",
+                                    ExerciseGenerationEventDTO.CompletionStatus.PARTIAL, verdict, true));
+                            return;
                         }
+                        catch (RuntimeException e) {
+                            log.error("Failed to persist generated exercise {}", exerciseId, e);
+                            if (!canContinue(exerciseId, jobId, deadlineExceeded, heartbeatLost)) {
+                                reportContinuationFailure(emitter);
+                                return;
+                            }
+                            emitter.milestone(ExerciseGenerationEventDTO.of(ExerciseGenerationEventDTO.Type.ERROR,
+                                    "The generated exercise passed verification but could not be saved. Nothing was changed."));
+                            return;
+                        }
+                        if (!canContinue(exerciseId, jobId, deadlineExceeded, heartbeatLost)) {
+                            reportUncertainLiveSave(verdict, emitter);
+                            return;
+                        }
+                        boolean revertUnavailable = !generationRevertService.recordBaseline(exerciseToPersist, jobId, event.mode(), persistResult.prePersistHeads(),
+                                persistResult.postPersistHeads(), event.expectedProblemStatement(), event.expectedTitle(), persistResult.persistedProblemStatement(),
+                                persistResult.persistedTitle(), persistResult.repositoryBranch());
+                        if (!canContinue(exerciseId, jobId, deadlineExceeded, heartbeatLost)) {
+                            reportUncertainLiveSave(verdict, emitter);
+                            return;
+                        }
+                        int reviewNoteCount = reviewService.attachFindings(exerciseToPersist, user, outcome.specFidelityReport());
+                        String reviewNotes = reviewNoteCount == GenerationReviewService.REVIEW_COMMENTS_FAILED
+                                ? " Review notes could not be attached; inspect the generated exercise manually."
+                                : reviewNoteCount == 1 ? " 1 review note was added for your attention."
+                                        : reviewNoteCount > 1 ? " " + reviewNoteCount + " review notes were added for your attention." : "";
+                        String savedMessage = event.mode() == GenerationMode.ADAPT ? "The exercise was adapted and saved. Review the changes."
+                                : "The exercise was generated and saved. Review the changes.";
+                        if (revertUnavailable) {
+                            savedMessage += " Automatic revert is unavailable for this run.";
+                        }
+                        if (!canContinue(exerciseId, jobId, deadlineExceeded, heartbeatLost)) {
+                            reportUncertainLiveSave(verdict, emitter);
+                            return;
+                        }
+                        boolean instructorReviewRequired = outcome.specFidelityReport().hasBlockingFindings();
+                        if (instructorReviewRequired) {
+                            savedMessage += " Automated quality review found issues that require instructor review.";
+                        }
+                        emitter.milestone(ExerciseGenerationEventDTO.done(savedMessage + reviewNotes,
+                                instructorReviewRequired ? ExerciseGenerationEventDTO.CompletionStatus.NEEDS_REVIEW : ExerciseGenerationEventDTO.CompletionStatus.SUCCESS, verdict,
+                                true));
                     }
                 }
             }
@@ -259,37 +250,6 @@ public class GenerationTaskService {
         }
     }
 
-    private void preserveVerifiedCandidateAfterSaveFailure(ProgrammingExercise exercise, User user, long exerciseId, String jobId, GenerationOutcome outcome,
-            ExerciseGenerationVerdictDTO verdict, GenerationProgressEmitter emitter, boolean liveStateMayBePartial, AtomicBoolean deadlineExceeded, AtomicBoolean heartbeatLost) {
-        try {
-            GenerationRecoveryService.RecoveryResult result = recoveryService.recover(exercise, user, outcome, jobId,
-                    () -> canContinue(exerciseId, jobId, deadlineExceeded, heartbeatLost));
-            String repositories = result.savedRepositories().stream().sorted().map(RepositoryType::getName).collect(Collectors.joining(", "));
-            boolean statementChanged = problemStatementChanged(exercise, outcome);
-            String preserved = repositories.isEmpty()
-                    ? statementChanged ? "The generated problem statement was preserved in a review note."
-                            : "The generated problem statement did not differ from the live exercise."
-                    : "The verified candidate was preserved on branch '" + result.draftBranch() + "' for " + repositories
-                            + (statementChanged ? ", with its problem statement in a review note." : ". Its problem statement did not differ from the live exercise.");
-            if (liveStateMayBePartial) {
-                emitter.milestone(ExerciseGenerationEventDTO.done(
-                        "Verification passed, but saving did not complete. Some generated changes may already have been saved; manual review is required. " + preserved,
-                        ExerciseGenerationEventDTO.CompletionStatus.PARTIAL, verdict, true));
-            }
-            else {
-                emitter.milestone(ExerciseGenerationEventDTO.done("Saving the live exercise failed, but the verified candidate was not discarded. " + preserved,
-                        ExerciseGenerationEventDTO.CompletionStatus.NEEDS_REVIEW, verdict));
-            }
-        }
-        catch (RuntimeException recoveryFailure) {
-            log.error("Verified candidate for exercise {} could not be preserved after live persistence failed", exerciseId, recoveryFailure);
-            String message = liveStateMayBePartial
-                    ? "Verification passed, but saving did not complete. Some generated changes may already have been saved; manual review is required. The verified candidate could not be fully preserved."
-                    : "Verification passed, but saving the exercise and preserving its verified candidate both failed.";
-            emitter.milestone(ExerciseGenerationEventDTO.done(message, ExerciseGenerationEventDTO.CompletionStatus.PARTIAL, verdict, liveStateMayBePartial));
-        }
-    }
-
     private void clearJobAndReleaseBudget(long exerciseId, String jobId, GenerationStartedEvent event) {
         try {
             jobService.clearJob(exerciseId, jobId);
@@ -301,72 +261,6 @@ public class GenerationTaskService {
 
     private void releaseBudgetReservation(GenerationStartedEvent event) {
         generationBudgetService.releaseReservation(event.budgetReservationId());
-    }
-
-    /**
-     * Handles a non-accepted (but clean, non-cancelled, non-error) terminal state via {@link GenerationRecoveryService#recover}, emitting {@code NEEDS_REVIEW} when the draft was
-     * persisted (with {@code issueCount < 0} signalling its review comments could not be attached) and falling back to {@code PARTIAL} only when the persist itself failed.
-     *
-     * @param exercise   the target exercise
-     * @param user       the requesting instructor (commit and review-comment author)
-     * @param exerciseId the exercise id (for logging)
-     * @param jobId      the generation job id, used to name the isolated draft branch
-     * @param outcome    the non-accepted outcome holding the produced files, verification report, and agent note
-     * @param verdict    the structured verdict mirrored to the client
-     * @param emitter    the progress emitter for the live transcript
-     */
-    private void recoverOrReportPartial(ProgrammingExercise exercise, User user, long exerciseId, String jobId, GenerationOutcome outcome, ExerciseGenerationVerdictDTO verdict,
-            GenerationProgressEmitter emitter, AtomicBoolean deadlineExceeded, AtomicBoolean heartbeatLost) {
-        boolean reviewBlocked = outcome.specFidelityReport().hasBlockingFindings();
-        boolean verificationAccepted = outcome.verification() != null && outcome.verification().accepted();
-        String reviewReason = outcome.specFidelityReport().findings().stream().filter(SpecFidelityReport.Finding::isBlocking).map(SpecFidelityReport.Finding::detail)
-                .collect(Collectors.joining(" "));
-        String verificationReason = outcome.verification() != null ? outcome.verification().report()
-                : outcome.loopResult().status() == AgentLoopResult.Status.ERROR ? "The agent stopped before verification."
-                        : "The exercise could not be completed within the budget.";
-        String reason = verificationAccepted && reviewBlocked ? reviewReason : verificationReason + (reviewBlocked ? " Additionally, " + reviewReason : "");
-        try {
-            emitter.progress(
-                    verificationAccepted && reviewBlocked ? "Build and grading checks passed, but the exercise-quality review requires manual review. Saving an isolated draft."
-                            : "Verification did not pass. Saving the best-effort draft and recording what to review."
-                                    + (reviewBlocked ? " The exercise-quality review also found an issue." : ""));
-            GenerationRecoveryService.RecoveryResult result = recoveryService.recover(exercise, user, outcome, jobId,
-                    () -> canContinue(exerciseId, jobId, deadlineExceeded, heartbeatLost));
-            int issueCount = result.reviewThreadCount();
-            // Rejected drafts are isolated from the live exercise, regardless of whether this was a new generation or an adaptation. The instructor can inspect the draft branch
-            // without accidentally publishing unverified code.
-            String repositories = result.savedRepositories().stream().sorted().map(RepositoryType::getName).collect(Collectors.joining(", "));
-            String repositoryPlacement = repositories.isEmpty() ? " No generated repository files differed from the live exercise."
-                    : " Generated repository files for " + repositories + " were saved to branch '" + result.draftBranch() + "'.";
-            boolean statementChanged = problemStatementChanged(exercise, outcome);
-            String problemStatementPlacement = !statementChanged ? " The generated problem statement did not differ from the live exercise."
-                    : issueCount < 0 ? " The generated problem statement was not applied, and its review note could not be saved."
-                            : " The generated problem statement was preserved in a review note but not applied.";
-            String placement = " The live exercise was left unchanged." + repositoryPlacement + problemStatementPlacement
-                    + (repositories.isEmpty() ? " Review the notes before continuing."
-                            : " Review the notes and merge the repository branch manually in an external Git client if you want it.");
-            // recover only throws when persist itself failed, so reaching here means the repository draft is saved: always NEEDS_REVIEW. issueCount < 0 means a degraded save
-            // (review comments
-            // could not be attached), which the message states explicitly.
-            String outcomeSummary = verificationAccepted && reviewBlocked
-                    ? "Build and grading checks passed, but the exercise-quality review found an unresolved requirements issue or could not produce a complete verdict."
-                    : outcome.verification() == null ? "The generated draft was not verified."
-                            : "The generated draft did not pass verification."
-                                    + (reviewBlocked ? " The exercise-quality review also found an unresolved requirements issue or could not produce a complete verdict." : "");
-            String reviewNotes = issueCount == 1 ? " 1 issue to review was added to the exercise." : " " + issueCount + " issues to review were added to the exercise.";
-            String message = issueCount < 0
-                    ? outcomeSummary + " The review notes could not be attached automatically — open the exercise and review it manually before grading." + placement + " "
-                            + conciseReason(reason)
-                    : outcomeSummary + reviewNotes + placement + " Open the review notes for the specific findings and recommended repairs.";
-            emitter.milestone(ExerciseGenerationEventDTO.done(message, ExerciseGenerationEventDTO.CompletionStatus.NEEDS_REVIEW, verdict, false));
-        }
-        catch (RuntimeException e) {
-            // Recovery failed at the isolated-branch persist step. Earlier repository draft branches may already exist, so report PARTIAL and avoid claiming a clean draft.
-            log.error("Recovery of non-accepted generation outcome failed for exercise {} (draft persist did not complete)", exerciseId, e);
-            emitter.milestone(ExerciseGenerationEventDTO.done(
-                    conciseReason(reason) + " Saving the draft for review did not complete; any partial hyperion-draft branch must be reviewed or deleted manually.",
-                    ExerciseGenerationEventDTO.CompletionStatus.PARTIAL, verdict));
-        }
     }
 
     private static String conciseReason(String reason) {
@@ -451,7 +345,7 @@ public class GenerationTaskService {
             delegate.accept(response);
             long total = tokensUsed.addAndGet(LLMTokenUsageService.totalTokens(response));
             if (total >= maxTokensPerJob && tokenBudgetExceeded.compareAndSet(false, true)) {
-                log.info("Exercise generation job {} reached its token budget; stopping after the current model response so recoverable work can be preserved", jobId);
+                log.info("Exercise generation job {} reached its token budget; stopping after the current model response", jobId);
             }
         };
     }

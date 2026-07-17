@@ -434,16 +434,19 @@ test.describe('Hyperion exercise generation browser UI', { tag: ['@slow', '@hype
         runningJobId = undefined;
     });
 
-    test('completes a mocked accepted adaptation through the browser and real verifier', async ({ browser, page, login }) => {
+    test('saves a mechanically valid adaptation for instructor review through the browser and real verifier', async ({ browser, page, login }) => {
         test.setTimeout(300_000);
         const initialLlmRequests = await getHyperionLlmMockRequestCount(page);
         await openEditor(page, login, exercise!);
         const initialProblemStatement = await getExerciseProblemStatement(page, exercise!.id!);
         const initialTemplateFiles = await getRepositoryFiles(page, `api/programming/programming-exercises/${exercise!.id}/template-files-content?omitBinaries=true`);
+        const initialReviewThreadCount = await getReviewThreadCount(page, exercise!.id!);
+        const initialVersionCount = await getExerciseVersionCount(page, exercise!.id!);
 
         await page.getByTestId('hyperion-ai-menu').click();
         await page.getByTestId('hyperion-adapt-with-feedback').click();
-        await page.getByLabel('Additional instructions').fill('HYPERION_E2E_SUBMIT_SEEDED_EXERCISE: use merge sort for lists with more than 5 dates and update the matching test.');
+        const prompt = 'HYPERION_E2E_SUBMIT_SEEDED_EXERCISE HYPERION_E2E_REQUIRE_INSTRUCTOR_REVIEW: use merge sort for lists with more than 5 dates and update the matching test.';
+        await page.getByLabel('Additional instructions').fill(prompt);
 
         const startResponsePromise = waitForGenerationStart(page, exercise!.id!);
         await page.getByRole('button', { name: 'Adapt exercise', exact: true }).click();
@@ -452,7 +455,7 @@ test.describe('Hyperion exercise generation browser UI', { tag: ['@slow', '@hype
 
         expect(request).toEqual({
             mode: 'ADAPT',
-            prompt: 'HYPERION_E2E_SUBMIT_SEEDED_EXERCISE: use merge sort for lists with more than 5 dates and update the matching test.',
+            prompt,
         });
         const exerciseRefreshResponse = page.waitForResponse(
             (response) =>
@@ -471,13 +474,14 @@ test.describe('Hyperion exercise generation browser UI', { tag: ['@slow', '@hype
         await expect(activity).toContainText('exercise review found requirements or quality issues', { timeout: 180_000 });
         const buildOutputTab = page.getByRole('tab', { name: 'Build Output' });
         await selectTabWithKeyboard(page.getByRole('tab', { name: 'AI activity' }), buildOutputTab, 'ArrowLeft');
-        await expectSuccessfulGenerationStatus(page, exercise!.id!, jobId, 'ADAPT');
+        await expectSuccessfulGenerationStatus(page, exercise!.id!, jobId, 'ADAPT', 13, 'NEEDS_REVIEW');
         await expect(buildOutputTab).toHaveAttribute('aria-selected', 'true');
         await expect(buildOutputTab).toBeFocused();
 
         const hyperionTab = page.getByRole('tab', { name: 'AI activity' });
         await selectTabWithKeyboard(buildOutputTab, hyperionTab, 'ArrowRight');
         await expect(activity).toContainText('The exercise was adapted and saved', { timeout: 60_000 });
+        await expect(activity.getByTestId('hyperion-generation-persistence-state')).toContainText('Saved to exercise — instructor review required');
         const verdict = page.getByTestId('hyperion-generation-verdict');
         await expect(verdict).toContainText('Build and grading consistency checks passed');
         await expect(verdict).toContainText('Instructor review required');
@@ -493,11 +497,15 @@ test.describe('Hyperion exercise generation browser UI', { tag: ['@slow', '@hype
         await expectExerciseProblemStatement(page, exercise!.id!, correctedSeedStatementMarker);
         await expectExerciseProblemStatement(page, exercise!.id!, 'less or equal 5 dates');
         await expectSemanticAdaptation(page, exercise!.id!, true, initialTemplateFiles);
+        await expect.poll(() => getReviewThreadCount(page, exercise!.id!)).toBeGreaterThan(initialReviewThreadCount);
+        await expect(page.locator('#file-browser-problem-statement .badge')).toBeVisible();
+        await expect.poll(() => getExerciseVersionCount(page, exercise!.id!)).toBe(initialVersionCount + 1);
         await expectAdminGenerationSandboxSlots(browser, '0 / 1');
 
         await revertAcceptedAdaptationFromUi(page, exercise!.id!);
         await expect.poll(() => getExerciseProblemStatement(page, exercise!.id!), { timeout: 60_000 }).toBe(initialProblemStatement);
         await expectSemanticAdaptation(page, exercise!.id!, false, initialTemplateFiles);
+        await expect.poll(() => getExerciseVersionCount(page, exercise!.id!)).toBe(initialVersionCount + 2);
         runningJobId = undefined;
     });
 
@@ -531,15 +539,12 @@ test.describe('Hyperion exercise generation browser UI', { tag: ['@slow', '@hype
         }
     });
 
-    test('preserves useful work after a late external LLM failure and leaves the live exercise unchanged', async ({ browser, page, login }) => {
+    test('retains diagnostics after a late external LLM failure without saving unverified work', async ({ browser, page, login }) => {
         test.setTimeout(240_000);
         const initialLlmRequests = await getHyperionLlmMockRequestCount(page);
         await openEditor(page, login, exercise!);
         const initialSolutionFiles = await getRepositoryFiles(page, `api/programming/programming-exercises/${exercise!.id}/solution-files-content?omitBinaries=true`);
         const initialReviewThreads = await getReviewThreads(page, exercise!.id!);
-        const initialReviewThreadIds = new Set(initialReviewThreads.map((thread) => thread.id).filter((id): id is number => id !== undefined));
-        const problemStatementReviewBadge = page.locator('#file-browser-problem-statement .badge');
-        const initialProblemStatementBadgeCount = (await problemStatementReviewBadge.count()) > 0 ? Number((await problemStatementReviewBadge.textContent())?.trim() ?? 0) : 0;
 
         await page.getByTestId('hyperion-ai-menu').click();
         await page.getByTestId('hyperion-adapt-with-feedback').click();
@@ -555,43 +560,27 @@ test.describe('Hyperion exercise generation browser UI', { tag: ['@slow', '@hype
         });
 
         const activity = page.getByTestId('hyperion-generation-activity');
-        await expect(activity.getByTestId('hyperion-generation-file-static')).toContainText('HyperionRecovery.java', { timeout: 120_000 });
+        await expect(activity.getByTestId('hyperion-generation-file-static')).toContainText('HyperionDiagnostic.java', { timeout: 120_000 });
         await expect.poll(() => getPendingLateFailureCount(page)).toBe(1);
 
         await page.reload();
         await openHyperionTabWithKeyboard(page);
         await expectRunningGenerationStatus(page, exercise!.id!, jobId, 'ADAPT');
         await expect(activity.getByTestId('hyperion-generation-persistence-state')).toContainText('Agent working copy — not saved');
-        await expect(activity.getByTestId('hyperion-generation-file-static')).toContainText('HyperionRecovery.java');
+        await expect(activity.getByTestId('hyperion-generation-file-static')).toContainText('HyperionDiagnostic.java');
         await expect(page.getByTestId('hyperion-generation-cancel')).toBeVisible();
         await expectEditorActionsLockedDuringGeneration(page);
         await page.getByTestId('hyperion-ai-menu').click();
         await expect(page.getByTestId('hyperion-adapt-with-feedback')).toHaveCount(0);
         await expectHyperionTabSelected(page);
-        const reviewThreadsReloaded = page.waitForResponse(
-            (response) => response.request().method() === 'GET' && response.url().endsWith(`/api/exercise/exercises/${exercise!.id}/review-threads`),
-            { timeout: 120_000 },
-        );
         await releasePendingLateFailure(page);
 
-        await expect(activity.getByTestId('hyperion-generation-persistence-state')).toContainText('Draft saved — live exercise unchanged', { timeout: 120_000 });
-        expect((await reviewThreadsReloaded).ok()).toBeTruthy();
-        await expect.poll(() => getReviewThreadCount(page, exercise!.id!)).toBeGreaterThan(initialReviewThreads.length);
-        await expect.poll(async () => Number((await problemStatementReviewBadge.textContent())?.trim() ?? 0)).toBeGreaterThan(initialProblemStatementBadgeCount);
+        await expect(activity.getByTestId('hyperion-generation-persistence-state')).toContainText('Not saved — failed', { timeout: 120_000 });
+        await expect(activity.getByTestId('hyperion-generation-terminal-message')).toContainText('Nothing was saved');
+        await expect.poll(() => getReviewThreadCount(page, exercise!.id!)).toBe(initialReviewThreads.length);
         await expect(page.getByTestId('hyperion-generation-cancel')).toBeHidden();
         await expect(page.getByTestId('hyperion-ai-menu')).toBeEnabled();
         await expectHyperionLlmMockRequestsIncreased(page, initialLlmRequests);
-        const newReviewThreads = (await getReviewThreads(page, exercise!.id!)).filter((thread) => thread.id === undefined || !initialReviewThreadIds.has(thread.id));
-        expect(newReviewThreads).not.toHaveLength(0);
-        expect(newReviewThreads.every((thread) => thread.targetType === 'PROBLEM_STATEMENT' && thread.resolved === false)).toBeTruthy();
-        const reviewText = newReviewThreads
-            .flatMap((thread) => thread.comments ?? [])
-            .map((comment) => comment.content?.text ?? '')
-            .join('\n');
-        expect(reviewText.toLowerCase()).toContain('could not be reviewed automatically');
-        expect(reviewText.toLowerCase()).toContain('agent stopped before verification');
-        expect(reviewText.toLowerCase()).toContain('partial candidate requires manual review');
-        expect(reviewText.toLowerCase()).toContain('keep the generated files out of the live exercise');
         await expect
             .poll(async () =>
                 repositoryFilesEqual(
@@ -603,20 +592,19 @@ test.describe('Hyperion exercise generation browser UI', { tag: ['@slow', '@hype
         await expect
             .poll(async () => {
                 const status = await getGenerationStatus(page, exercise!.id!);
-                const terminal = [...status.events].reverse().find((event) => event.type === 'DONE');
-                return { jobId: status.jobId, running: status.running, completionStatus: terminal?.completionStatus, liveExerciseChanged: terminal?.liveExerciseChanged };
+                const terminal = [...status.events].reverse().find((event) => event.type === 'ERROR');
+                return { jobId: status.jobId, running: status.running, type: terminal?.type };
             })
-            .toEqual({ jobId, running: false, completionStatus: 'NEEDS_REVIEW', liveExerciseChanged: false });
+            .toEqual({ jobId, running: false, type: 'ERROR' });
 
         const freshPage = await newBrowserPage(browser);
         try {
             await openEditor(freshPage, (credentials, url) => Commands.login(freshPage, credentials, url), exercise!);
-            await expect(freshPage.locator('#file-browser-problem-statement .badge')).toBeVisible({ timeout: 60_000 });
             await openHyperionTabWithKeyboard(freshPage);
             const recovered = freshPage.getByTestId('hyperion-generation-activity');
-            await expect(recovered.getByTestId('hyperion-generation-persistence-state')).toContainText('Draft saved — live exercise unchanged');
-            await expect(recovered.getByTestId('hyperion-generation-file-static')).toContainText('HyperionRecovery.java');
-            await expect(recovered.getByTestId('hyperion-generation-run-again')).toHaveCount(0);
+            await expect(recovered.getByTestId('hyperion-generation-persistence-state')).toContainText('Not saved — failed');
+            await expect(recovered.getByTestId('hyperion-generation-file-static')).toContainText('HyperionDiagnostic.java');
+            await expect(recovered.getByTestId('hyperion-generation-run-again')).toBeVisible();
         } finally {
             await freshPage.context().close();
         }
@@ -634,6 +622,12 @@ async function requireHyperionGenerationAvailable(page: Page) {
 
 async function getReviewThreadCount(page: Page, exerciseId: number): Promise<number> {
     return (await getReviewThreads(page, exerciseId)).length;
+}
+
+async function getExerciseVersionCount(page: Page, exerciseId: number): Promise<number> {
+    const response = await page.request.get(`api/exercise/exercises/${exerciseId}/versions?size=100`);
+    expect(response.ok()).toBeTruthy();
+    return ((await response.json()) as unknown[]).length;
 }
 
 async function getReviewThreads(page: Page, exerciseId: number): Promise<ReviewThread[]> {
@@ -849,7 +843,14 @@ async function expectTerminalGenerationStatus(page: Page, exerciseId: number, jo
         .toEqual({ jobId, running: false, cancellable: false, terminalCount: 1, terminalType, terminalIsLast: true });
 }
 
-async function expectSuccessfulGenerationStatus(page: Page, exerciseId: number, jobId: string, mode: 'GENERATE' | 'ADAPT', expectedTestCount = 13) {
+async function expectSuccessfulGenerationStatus(
+    page: Page,
+    exerciseId: number,
+    jobId: string,
+    mode: 'GENERATE' | 'ADAPT',
+    expectedTestCount = 13,
+    expectedCompletionStatus: 'SUCCESS' | 'NEEDS_REVIEW' = 'SUCCESS',
+) {
     await expect
         .poll(
             async () => {
@@ -873,7 +874,7 @@ async function expectSuccessfulGenerationStatus(page: Page, exerciseId: number, 
             jobId,
             mode,
             running: false,
-            completionStatus: 'SUCCESS',
+            completionStatus: expectedCompletionStatus,
             accepted: true,
             solutionPassed: true,
             templateFailed: true,
@@ -1110,7 +1111,7 @@ async function revertAcceptedAdaptationFromUi(page: Page, exerciseId: number) {
     };
     page.on('request', countRevertRequest);
     await page.getByTestId('hyperion-generation-revert').click();
-    const initialDialog = page.getByRole('alertdialog', { name: 'Undo the most recent successful adaptation?' });
+    const initialDialog = page.getByRole('alertdialog', { name: 'Undo the most recent saved adaptation?' });
     const cancel = initialDialog.getByRole('button', { name: 'Cancel', exact: true });
     await expect(cancel).toBeFocused();
     await cancel.click();
@@ -1123,7 +1124,7 @@ async function revertAcceptedAdaptationFromUi(page: Page, exerciseId: number) {
         { timeout: 120_000 },
     );
     await page.getByTestId('hyperion-generation-revert').click();
-    await page.getByRole('alertdialog', { name: 'Undo the most recent successful adaptation?' }).getByRole('button', { name: 'Undo adaptation', exact: true }).click();
+    await page.getByRole('alertdialog', { name: 'Undo the most recent saved adaptation?' }).getByRole('button', { name: 'Undo adaptation', exact: true }).click();
     const revertResponse = await revertResponsePromise;
     expect(revertResponse.ok()).toBeTruthy();
     await expect(page.getByTestId('hyperion-generation-reverted')).toBeVisible({ timeout: 60_000 });

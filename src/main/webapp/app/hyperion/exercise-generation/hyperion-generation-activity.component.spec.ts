@@ -704,8 +704,9 @@ describe('HyperionGenerationActivityComponent', () => {
     it.each([
         [{ running: true, events: [] }, 'persistence.workingCopy'],
         [{ running: false, events: [{ type: 'DONE', completionStatus: 'SUCCESS', liveExerciseChanged: true }] }, 'persistence.saved'],
+        [{ running: false, events: [{ type: 'DONE', completionStatus: 'NEEDS_REVIEW', liveExerciseChanged: true }] }, 'persistence.savedNeedsReview'],
         [{ running: false, events: [{ type: 'DONE', completionStatus: 'PARTIAL', liveExerciseChanged: false }] }, 'persistence.partial'],
-        [{ running: false, events: [{ type: 'DONE', completionStatus: 'NEEDS_REVIEW', liveExerciseChanged: false }] }, 'persistence.draft'],
+        [{ running: false, events: [{ type: 'DONE', completionStatus: 'NEEDS_REVIEW', liveExerciseChanged: false }] }, 'persistence.notSaved'],
         [{ running: false, events: [{ type: 'CANCELLED' }] }, 'persistence.cancelled'],
         [{ running: false, events: [{ type: 'ERROR' }] }, 'persistence.failed'],
     ])('shows the persistence state for %o', (state, labelKey) => {
@@ -737,17 +738,17 @@ describe('HyperionGenerationActivityComponent', () => {
         expect(fixture.componentInstance.canRunAgain()).toBe(false);
     });
 
-    it('keeps partial-recovery instructions visible when Run again is offered', () => {
+    it('keeps partial-save instructions visible when Run again is offered', () => {
         const fixture = createWith({
             jobId: 'j1',
             mode: 'GENERATE',
             running: false,
-            events: [{ type: 'DONE', completionStatus: 'PARTIAL', message: 'Review branch hyperion/recovery-123 manually.' }],
+            events: [{ type: 'DONE', completionStatus: 'PARTIAL', message: 'Review the partially saved exercise manually.' }],
             fileSnapshots: [],
         });
         fixture.detectChanges();
 
-        expect(fixture.nativeElement.querySelector('[data-testid="hyperion-generation-terminal-message"]').textContent).toContain('hyperion/recovery-123');
+        expect(fixture.nativeElement.querySelector('[data-testid="hyperion-generation-terminal-message"]').textContent).toContain('partially saved exercise');
         expect(fixture.nativeElement.querySelector('[data-testid="hyperion-generation-run-again"]')).not.toBeNull();
     });
 

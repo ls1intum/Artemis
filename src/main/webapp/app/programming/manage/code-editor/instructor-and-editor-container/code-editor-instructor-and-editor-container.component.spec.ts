@@ -2187,6 +2187,28 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Adapt with feedback'
         expect(loadSpy).not.toHaveBeenCalled();
     });
 
+    it('refreshes the live editor and review threads when a saved generation needs instructor review', () => {
+        const actions = createActions();
+        setCodeEditorContainer(comp, { actions: () => actions });
+        setEditableInstructions(comp, { acceptServerBaseline: vi.fn(), unsavedChangesValue: () => false });
+        const loadSpy = vi
+            .spyOn(TestBed.inject(ProgrammingExerciseService), 'findWithTemplateAndSolutionParticipationAndResults')
+            .mockReturnValue(of({ body: createMockExercise({ problemStatement: 'Generated statement for review' }) } as any));
+
+        (comp as any).onHyperionGenerationCompleted({
+            mode: 'GENERATE',
+            completionStatus: 'NEEDS_REVIEW',
+            verdict: { accepted: true, solutionPassed: true, templateFailed: true, testCount: 2 },
+            liveExerciseChanged: true,
+            completedAt: '2026-07-17T12:00:00Z',
+        });
+
+        expect(reviewCommentService.reloadThreads).toHaveBeenCalledOnce();
+        expect(actions.refreshAfterExternalUpdate).toHaveBeenCalledOnce();
+        expect(loadSpy).toHaveBeenCalledWith(42);
+        expect(comp.exercise.problemStatement).toBe('Generated statement for review');
+    });
+
     it('filters non-consistency, resolved, and outdated review threads out of the adapt count, dialog, and ADAPT payload', () => {
         const resolvedConsistencyThread = { ...consistencyThread(9), resolved: true };
         const outdatedConsistencyThread = { ...consistencyThread(10), outdated: true };

@@ -635,10 +635,10 @@ public class GenerationJobService {
     }
 
     /**
-     * Marks the job as past the cancellation point and returns whether it may continue into durable persistence/recovery.
+     * Marks the job as past the cancellation point and returns whether it may continue into durable persistence.
      * <p>
      * Cancellation is meaningful while the agent is still in the disposable sandbox: the cancel hook can destroy the session and no live repository has been touched. Once the
-     * task starts saving verified or recoverable output, accepting a new cancellation would be misleading because the repository operation cannot be safely interrupted. The same
+     * task starts saving verified output, accepting a new cancellation would be misleading because the repository operation cannot be safely interrupted. The same
      * distributed job-map lock is used by {@link #requestCancellation(long, String, User)} so a cancel cannot race with this transition across core nodes.
      *
      * @param exerciseId the exercise id

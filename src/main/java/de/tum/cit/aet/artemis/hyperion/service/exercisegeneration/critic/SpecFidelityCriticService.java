@@ -53,8 +53,8 @@ import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
  * It combines deterministic checks with two bounded, tool-free reviews of the complete generated artifact set: one for the student contract and one for the executable test
  * oracle. Contract-risk findings block persistence and feed the existing bounded repair loop; subjective presentation findings remain advisory.
  * <p>
- * For adaptations, the contract pass also receives a compact baseline-to-candidate diff. Any unresolved blocking finding prevents direct live persistence and routes the
- * candidate to the isolated review-draft path.
+ * For adaptations, the contract pass also receives a compact baseline-to-candidate diff. Unresolved blocking findings are attached to a mechanically valid saved candidate for
+ * instructor review.
  */
 @Lazy
 @Service
@@ -559,7 +559,7 @@ public class SpecFidelityCriticService {
         }
         boolean hasUngroundedOracleClaim = pass == ReviewPass.ORACLE && hasUngroundedOracleClaim(parsed, authoritativeSource);
         List<SpecFidelityReport.Finding> findings = new ArrayList<>();
-        // Scope violations can prevent live persistence, so retain them before advisory findings consume the shared defensive cap.
+        // Scope violations require instructor attention, so retain them before advisory findings consume the shared defensive cap.
         if (requireScopeVerdict) {
             for (AdaptationChangeItem item : parsed.unrequestedChanges()) {
                 if (findings.size() >= MAX_REVIEW_FINDINGS) {

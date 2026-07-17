@@ -317,7 +317,6 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     protected onHyperionGenerationCompleted(event: HyperionGenerationCompletedEvent): void {
         if (event.completionStatus === 'NEEDS_REVIEW') {
             this.exerciseReviewCommentService.reloadThreads();
-            return;
         }
         if (event.liveExerciseChanged === true) {
             this.refreshAfterHyperionRepositoryChange(event.completedAt ? Date.parse(event.completedAt) : undefined);

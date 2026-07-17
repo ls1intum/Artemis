@@ -245,36 +245,4 @@ class ProgrammingExerciseGitIntegrationTest extends AbstractProgrammingIntegrati
         }
     }
 
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = { "USER", "STUDENT" })
-    void commitToIsolatedBranchAndPush_reportsARejectedUpdate() throws Exception {
-        String projectKey = "PROGEXGITDRAFT";
-        String repoSlug = projectKey.toLowerCase() + "-tests";
-        String draftBranch = "hyperion-draft/job-1";
-        createRemoteWithInitialCommit(projectKey, repoSlug);
-
-        LocalVCRepositoryUri repoUri = new LocalVCRepositoryUri(localVCLocalCITestService.buildLocalVCUri(null, null, projectKey, repoSlug));
-        Path firstPath = tempPath.resolve("first-draft-checkout");
-        Path competingPath = tempPath.resolve("competing-draft-checkout");
-        var first = gitService.getOrCheckoutRepositoryWithTargetPath(repoUri, firstPath, true, true);
-        var competing = gitService.getOrCheckoutRepositoryWithTargetPath(repoUri, competingPath, true, true);
-        try {
-            FileUtils.writeStringToFile(first.getLocalPath().resolve("first.txt").toFile(), "first draft", StandardCharsets.UTF_8);
-            gitService.stageAllChanges(first);
-            String firstDraftHead = gitService.commitToIsolatedBranchAndPush(first, draftBranch, "First draft", null);
-
-            FileUtils.writeStringToFile(competing.getLocalPath().resolve("competing.txt").toFile(), "competing draft", StandardCharsets.UTF_8);
-            gitService.stageAllChanges(competing);
-            assertThatExceptionOfType(TransportException.class).isThrownBy(() -> gitService.commitToIsolatedBranchAndPush(competing, draftBranch, "Competing draft", null));
-
-            gitService.fetchAll(first);
-            assertThat(first.resolve("refs/remotes/origin/" + draftBranch).getName()).isEqualTo(firstDraftHead);
-        }
-        finally {
-            first.close();
-            competing.close();
-            RepositoryExportTestUtil.safeDeleteDirectory(firstPath);
-            RepositoryExportTestUtil.safeDeleteDirectory(competingPath);
-        }
-    }
 }

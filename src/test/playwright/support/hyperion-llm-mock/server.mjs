@@ -8,9 +8,10 @@ const pendingLateFailures = new Set();
 const pendingProviderResponses = new Set();
 let holdUnmatchedRequests = false;
 const failMarker = 'HYPERION_E2E_FAIL_LLM';
-const recoveryFilePath = 'solution/src/de/test/HyperionRecovery.java';
+const diagnosticFilePath = 'solution/src/de/test/HyperionDiagnostic.java';
 const writeSnapshotMarker = 'HYPERION_E2E_WRITE_SNAPSHOT';
 const submitSeedMarker = 'HYPERION_E2E_SUBMIT_SEEDED_EXERCISE';
+const reviewRequiredMarker = 'HYPERION_E2E_REQUIRE_INSTRUCTOR_REVIEW';
 const submitNewExerciseMarker = 'HYPERION_E2E_SUBMIT_NEW_EXERCISE';
 const correctedSeedStatementMarker = 'more than 5 dates';
 const adaptedPolicyMarker = 'DATES_SIZE_THRESHOLD = 5';
@@ -293,7 +294,7 @@ const server = http.createServer((req, res) => {
             jsonResponse(res, 409, { error: { message: `Expected one pending late failure, found ${pendingLateFailures.size}` } });
             return;
         }
-        failPendingResponses(pendingLateFailures, 'Hyperion E2E requested LLM failure after producing recoverable work');
+        failPendingResponses(pendingLateFailures, 'Hyperion E2E requested LLM failure after producing diagnostic work');
         jsonResponse(res, 200, { released: 1 });
         return;
     }
@@ -355,14 +356,14 @@ const server = http.createServer((req, res) => {
                 return;
             }
             if (body.includes(failMarker)) {
-                if (!hasAcknowledgedToolCall(body, 'write_file', (args) => args.path === recoveryFilePath)) {
+                if (!hasAcknowledgedToolCall(body, 'write_file', (args) => args.path === diagnosticFilePath)) {
                     jsonResponse(
                         res,
                         200,
                         toolCallResponse(requestNumber, 'write_file', {
-                            path: recoveryFilePath,
+                            path: diagnosticFilePath,
                             content:
-                                'package de.test;\n\npublic class HyperionRecovery {\n    public String marker() {\n        return "preserved-after-provider-failure";\n    }\n}\n',
+                                'package de.test;\n\npublic class HyperionDiagnostic {\n    public String marker() {\n        return "captured-after-provider-failure";\n    }\n}\n',
                         }),
                     );
                     return;
@@ -374,6 +375,10 @@ const server = http.createServer((req, res) => {
             if (body.includes(criticPromptMarker)) {
                 const weakThresholdOracle = body.includes(submitSeedMarker) && currentCandidateContains(body, 'for (int i = 0; i < 3; i++)');
                 const oracleReview = body.includes(oracleReviewPromptMarker);
+                const invented =
+                    body.includes(reviewRequiredMarker) && !oracleReview
+                        ? '[{"requirement":"submit a written complexity proof","reason":"the instructor requested only the implementation and matching tests"}]'
+                        : '[]';
                 const audit = oracleReview
                     ? `"exampleChecks":[],"apiChecks":[],"templateChecks":[],"mutantChecks":[{"mutant":"a threshold of 4","killed":${!weakThresholdOracle},"sourceQuote":"use merge sort for lists with more than 5 dates and update the matching test.","reason":"the boundary tests must distinguish sizes 5 and 6"}]`
                     : '"exampleChecks":[],"apiChecks":[{"symbol":"seeded public API","discoverable":true,"reason":"the statement and starter expose it"}],"templateChecks":[{"test":"seeded task groups","targetReached":true,"reason":"the existing starter reaches each target"}],"mutantChecks":[]';
@@ -382,7 +387,7 @@ const server = http.createServer((req, res) => {
                     200,
                     textResponse(
                         requestNumber,
-                        `{${audit},"uncovered":[],"contradictions":[],"hiddenRequirements":[],"weakOracle":[],"templateGaps":[],"missingExamples":[],"invented":[],"unrequestedChanges":[],"missingRequestedChanges":[]}`,
+                        `{${audit},"uncovered":[],"contradictions":[],"hiddenRequirements":[],"weakOracle":[],"templateGaps":[],"missingExamples":[],"invented":${invented},"unrequestedChanges":[],"missingRequestedChanges":[]}`,
                     ),
                 );
                 return;

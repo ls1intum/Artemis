@@ -14,7 +14,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  * @param mode            the explicit run intent (generate vs. adapt), so a reconnecting client can restore the correct header label and the revert affordance without inferring it
  * @param events          the events produced so far, oldest first, to replay into the transcript
  * @param fileSnapshots   the latest whole-file snapshot per file written so far, in write order, so a reloading client can rehydrate the live editor preview and resume the stream
- * @param revertAvailable whether the server still retains the baseline required to undo the latest successful generation or adaptation
+ * @param revertAvailable whether the server still retains the baseline required to undo the latest saved generation or adaptation
  * @param revertJobId     the successful run whose baseline can be reverted; may differ from {@code jobId} when a later run failed or was cancelled
  * @param revertMode      the mode of {@code revertJobId}, used for truthful undo copy
  * @param ownedByCaller   whether the requesting instructor owns the active run and may inspect its retained details

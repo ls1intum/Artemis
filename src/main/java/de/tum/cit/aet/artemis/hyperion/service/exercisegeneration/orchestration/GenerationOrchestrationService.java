@@ -366,7 +366,7 @@ public class GenerationOrchestrationService {
             }
 
             // A semantic repair can accidentally break a candidate that already built and graded correctly. Never discard that more useful checkpoint in favour of a later
-            // mechanically broken tree; recovery should expose the last buildable candidate and the review findings that still prevented live persistence.
+            // mechanically broken tree; return the last buildable candidate and its unresolved review findings.
             if ((verification == null || !verification.accepted()) && lastMechanicallyVerifiedCandidate != null) {
                 loopResult = lastMechanicallyVerifiedCandidate.loopResult();
                 verification = lastMechanicallyVerifiedCandidate.verification();
@@ -399,12 +399,11 @@ public class GenerationOrchestrationService {
                 return new GenerationOutcome(stopped, null, sessionId, this, sandbox, lastExtractedCandidate.producedFiles(), lastExtractedCandidate.problemStatement(),
                         SpecFidelityReport.qualityReviewUnavailable("Generation stopped before the captured candidate could be fully verified."), workspaceSeed.repositoryHeads());
             }
-            GenerationOutcome recoveredError = captureUnexpectedFailure(sandbox, sessionId, workspaceSeed, placeholderReplacements, baselineRepositoryFiles,
+            GenerationOutcome diagnosticError = captureUnexpectedFailure(sandbox, sessionId, workspaceSeed, placeholderReplacements, baselineRepositoryFiles,
                     baselineProblemStatement);
-            if (recoveredError != null) {
-                log.warn("Exercise generation failed after producing recoverable work for exercise {}; preserving it as an isolated review draft ({})", exercise.getId(),
-                        e.getClass().getSimpleName());
-                return recoveredError;
+            if (diagnosticError != null) {
+                log.warn("Exercise generation failed after producing diagnostic artifacts for exercise {} ({})", exercise.getId(), e.getClass().getSimpleName());
+                return diagnosticError;
             }
             // No usable outcome exists for the caller to close.
             destroyQuietly(sandbox, sessionId);
@@ -432,9 +431,10 @@ public class GenerationOrchestrationService {
     private GenerationOutcome stopOrPreserve(InteractiveSandbox sandbox, @Nullable String sessionId, GenerationWorkspaceService.@Nullable WorkspaceSeed workspaceSeed,
             Map<String, String> placeholderReplacements, Map<RepositoryType, Map<String, String>> baselineRepositoryFiles, @Nullable String baselineProblemStatement,
             AgentLoopResult cancelledResult) {
-        GenerationOutcome recoverable = captureUnexpectedFailure(sandbox, sessionId, workspaceSeed, placeholderReplacements, baselineRepositoryFiles, baselineProblemStatement);
-        if (recoverable != null) {
-            return recoverable;
+        GenerationOutcome diagnosticOutcome = captureUnexpectedFailure(sandbox, sessionId, workspaceSeed, placeholderReplacements, baselineRepositoryFiles,
+                baselineProblemStatement);
+        if (diagnosticOutcome != null) {
+            return diagnosticOutcome;
         }
         destroyQuietly(sandbox, sessionId);
         return GenerationOutcome.cancelled(cancelledResult);
@@ -450,7 +450,7 @@ public class GenerationOrchestrationService {
             workspace.cleanTransientBuildOutputs(sandbox, sessionId);
         }
         catch (RuntimeException cleanupFailure) {
-            log.debug("Could not clean transient outputs before generation recovery: {}", cleanupFailure.getMessage());
+            log.debug("Could not clean transient outputs before diagnostic capture: {}", cleanupFailure.getMessage());
         }
         Map<RepositoryType, Map<String, String>> files = Map.of();
         try {
@@ -567,7 +567,7 @@ public class GenerationOrchestrationService {
                 String counts = blockingCount > 0 && advisoryCount > 0 ? blockingCount + " blocking and " + advisoryCount + " advisory"
                         : blockingCount > 0 ? blockingCount + " blocking" : advisoryCount + " advisory";
                 String gaps = report.findings().size() == 1 ? " exercise-quality gap" : " exercise-quality gaps";
-                emit(progress, "The review found " + counts + gaps + (blockingCount > 0 ? " that must be resolved before live persistence." : "."));
+                emit(progress, "The review found " + counts + gaps + (blockingCount > 0 ? " that require instructor attention." : "."));
             }
             return report;
         }

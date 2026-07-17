@@ -8,7 +8,6 @@ import java.nio.file.Path;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.EnumMap;
-import java.util.EnumSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -131,116 +130,14 @@ public class GenerationPersistenceService {
 
     private static final RepositoryType[] PERSIST_ORDER = { RepositoryType.TEMPLATE, RepositoryType.SOLUTION, RepositoryType.TESTS };
 
-    static final String RECOVERY_DRAFT_BRANCH_PREFIX = "hyperion-draft/";
-
     private static final int MAX_TITLE_LENGTH = 255;
 
     private static final Duration TEST_CASE_SYNC_TIMEOUT = Duration.ofMinutes(2);
 
     private static final Duration TEST_CASE_SYNC_POLL = Duration.ofSeconds(3);
 
-    public record RecoveryPersistResult(String draftBranch, Set<RepositoryType> savedRepositories) {
-
-        public RecoveryPersistResult {
-            savedRepositories = Set.copyOf(savedRepositories);
-        }
-    }
-
     public record PersistResult(Map<RepositoryType, String> prePersistHeads, Map<RepositoryType, String> postPersistHeads, String persistedProblemStatement, String persistedTitle,
             String repositoryBranch) {
-    }
-
-    /**
-     * Persists generated repository files from a non-accepted run without touching the live default branch. Statement recovery is handled separately as a required review note.
-     * Rejected repository output is diverted to an isolated branch with no CI build and no exercise version; only the accepted path may update the canonical exercise.
-     *
-     * @param exercise the exercise to persist the draft into
-     * @param user     the instructor performing the generation (commit author)
-     * @param outcome  the non-accepted generation outcome holding the produced files
-     * @param jobId    the generation job id, used to name the isolated draft branch
-     * @return the isolated branch and the repositories for which a draft commit was pushed
-     */
-    public RecoveryPersistResult persistRecoveryDraft(ProgrammingExercise exercise, User user, GenerationOutcome outcome, String jobId) {
-        return persistRecoveryDraft(exercise, user, outcome, jobId, () -> true);
-    }
-
-    /**
-     * Persists a non-accepted draft while aborting before each repository mutation if this node no longer owns the job.
-     *
-     * @param exercise              the exercise to persist the draft into
-     * @param user                  the instructor performing the generation (commit author)
-     * @param outcome               the non-accepted generation outcome holding the produced files
-     * @param jobId                 the generation job id, used to name the isolated draft branch
-     * @param stillOwnsMutationSlot guard checked before each durable mutation
-     * @return the isolated branch and the repositories for which a draft commit was pushed
-     */
-    public RecoveryPersistResult persistRecoveryDraft(ProgrammingExercise exercise, User user, GenerationOutcome outcome, String jobId, BooleanSupplier stillOwnsMutationSlot) {
-        String draftBranch = RECOVERY_DRAFT_BRANCH_PREFIX + jobId;
-        String repositoryBranch = repositoryBranch(exercise);
-        Set<RepositoryType> savedRepositories = EnumSet.noneOf(RepositoryType.class);
-        RuntimeException firstFailure = null;
-        for (RepositoryType repositoryType : PERSIST_ORDER) {
-            assertStillOwnsMutationSlot(stillOwnsMutationSlot);
-            try {
-                if (commitDraftToIsolatedBranch(exercise, user, repositoryType, outcome.producedFiles(repositoryType), repositoryBranch, draftBranch)) {
-                    savedRepositories.add(repositoryType);
-                }
-            }
-            catch (RuntimeException e) {
-                if (firstFailure == null) {
-                    firstFailure = e;
-                }
-                log.warn("Could not save the {} recovery draft for exercise {}; continuing with later repositories: {}", repositoryType, exercise.getId(), e.getMessage());
-            }
-        }
-        String liveProblemStatement = exercise.getProblemStatement() == null ? "" : exercise.getProblemStatement().trim();
-        boolean statementChanged = !liveProblemStatement.equals(outcome.producedProblemStatement().trim());
-        if (firstFailure != null) {
-            throw firstFailure;
-        }
-        if (savedRepositories.isEmpty() && !statementChanged) {
-            throw new IllegalStateException("No repository draft was saved for exercise " + exercise.getId());
-        }
-        log.info("Recovered non-accepted generation draft for exercise {} onto isolated branch {} in {}; generated statement present: {}", exercise.getId(), draftBranch,
-                savedRepositories, !outcome.producedProblemStatement().isBlank());
-        return new RecoveryPersistResult(draftBranch, savedRepositories);
-    }
-
-    private boolean commitDraftToIsolatedBranch(ProgrammingExercise exercise, User user, RepositoryType repositoryType, Map<String, String> producedFiles, String repositoryBranch,
-            String draftBranch) {
-        if (producedFiles == null || producedFiles.isEmpty()) {
-            return false;
-        }
-        LocalVCRepositoryUri uri = exercise.getRepositoryURI(repositoryType);
-        if (uri == null) {
-            throw new IllegalStateException("The " + repositoryType + " repository is unavailable; its generated files cannot be saved");
-        }
-        Repository repository = null;
-        Path temporaryCheckout = null;
-        try {
-            temporaryCheckout = tempFileUtilService.createTempDirectory("hyperion-persist-");
-            repository = gitService.getOrCheckoutRepository(uri, uri, temporaryCheckout.resolve("repository"), true, repositoryBranch, false);
-            if (repository == null) {
-                throw new IllegalStateException("Could not check out the " + repositoryType + " repository");
-            }
-            mirrorProducedFilesIntoWorkingCopy(exercise, repository, repositoryType, producedFiles);
-            if (gitService.isWorkingCopyClean(repository)) {
-                return false;
-            }
-            gitService.stageAllChanges(repository);
-            gitService.commitToIsolatedBranchAndPush(repository, draftBranch, "Hyperion generation draft (needs review; NOT applied to the live exercise)", user);
-            return true;
-        }
-        catch (Exception e) {
-            throw new IllegalStateException(
-                    "Failed to commit the " + repositoryType + " recovery draft to the isolated branch for exercise " + exercise.getId() + ": " + e.getMessage(), e);
-        }
-        finally {
-            if (repository != null) {
-                repository.closeBeforeDelete();
-            }
-            deleteTemporaryCheckout(temporaryCheckout);
-        }
     }
 
     /**
@@ -292,7 +189,7 @@ public class GenerationPersistenceService {
     }
 
     /**
-     * Persists a verified generated exercise and includes its job id in repository commits for cross-repository recovery diagnostics.
+     * Persists a verified generated exercise and includes its job id in repository commits for cross-repository diagnostics.
      *
      * @param exercise                 the exercise to update
      * @param user                     the commit and version author
@@ -310,6 +207,9 @@ public class GenerationPersistenceService {
 
     private PersistResult persistWithCommitMessage(ProgrammingExercise exercise, User user, GenerationOutcome outcome, String expectedProblemStatement, String expectedTitle,
             String commitMessage, BooleanSupplier stillOwnsMutationSlot) {
+        if (!outcome.isAccepted()) {
+            throw new IllegalArgumentException("Refusing to persist an exercise that did not pass mechanical verification");
+        }
         String repositoryBranch = repositoryBranch(exercise);
         // Capture each repository's pre-persist HEAD before writing it, so a later failure can revert the already-committed repositories to a consistent pre-generation state.
         Map<RepositoryType, String> prePersistHashes = new EnumMap<>(RepositoryType.class);

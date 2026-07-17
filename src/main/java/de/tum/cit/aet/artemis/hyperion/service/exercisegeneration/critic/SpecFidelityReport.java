@@ -11,7 +11,7 @@ import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.D
  * bindings resolve) but never whether it implements the instructor's brief. This report carries the gaps between the brief and the produced tests (see {@link Kind} for the finding
  * categories).
  * <p>
- * Contract-risk findings block direct live persistence. Presentation findings remain advisory.
+ * Contract-risk findings require instructor review after a mechanically valid candidate is saved. Presentation findings remain advisory.
  *
  * @param findings the spec-fidelity or adaptation-scope findings
  */
@@ -77,12 +77,12 @@ public record SpecFidelityReport(List<Finding> findings) {
 
     public static SpecFidelityReport adaptationScopeUnavailable(String detail) {
         return new SpecFidelityReport(List.of(new Finding(Kind.ADAPTATION_SCOPE_REVIEW_UNAVAILABLE, "Adaptation scope could not be verified",
-                detail + " Keep the generated files out of the live exercise until their scope can be reviewed.")));
+                detail + " Review the saved adaptation carefully before releasing the exercise.")));
     }
 
     public static SpecFidelityReport qualityReviewUnavailable(String detail) {
-        return new SpecFidelityReport(List.of(new Finding(Kind.QUALITY_REVIEW_UNAVAILABLE, "Exercise quality could not be verified",
-                detail + " Keep the generated files out of the live exercise until the full artifact set can be reviewed.")));
+        return new SpecFidelityReport(List
+                .of(new Finding(Kind.QUALITY_REVIEW_UNAVAILABLE, "Exercise quality could not be verified", detail + " Review the saved exercise carefully before releasing it.")));
     }
 
     public boolean hasFindings() {

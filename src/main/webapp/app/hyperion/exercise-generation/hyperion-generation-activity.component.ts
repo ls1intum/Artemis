@@ -205,11 +205,11 @@ export class HyperionGenerationActivityComponent implements OnDestroy {
                 return { labelKey: 'artemisApp.hyperion.generationActivity.persistence.partial', severity: 'danger' as const };
             }
             if (terminal.liveExerciseChanged) {
-                return { labelKey: 'artemisApp.hyperion.generationActivity.persistence.saved', severity: 'success' as const };
+                return terminal.completionStatus === 'NEEDS_REVIEW'
+                    ? { labelKey: 'artemisApp.hyperion.generationActivity.persistence.savedNeedsReview', severity: 'warn' as const }
+                    : { labelKey: 'artemisApp.hyperion.generationActivity.persistence.saved', severity: 'success' as const };
             }
-            return terminal.completionStatus === 'NEEDS_REVIEW'
-                ? { labelKey: 'artemisApp.hyperion.generationActivity.persistence.draft', severity: 'warn' as const }
-                : { labelKey: 'artemisApp.hyperion.generationActivity.persistence.notSaved', severity: 'danger' as const };
+            return { labelKey: 'artemisApp.hyperion.generationActivity.persistence.notSaved', severity: 'danger' as const };
         }
         if (terminal?.type === 'CANCELLED') {
             return { labelKey: 'artemisApp.hyperion.generationActivity.persistence.cancelled', severity: 'secondary' as const };

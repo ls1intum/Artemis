@@ -54,9 +54,9 @@ public record ExerciseGenerationEventDTO(@Schema(description = "The event kind")
     public enum CompletionStatus {
         /** The exercise was verified and saved. */
         SUCCESS,
-        /** Not fully converged but a usable best-effort draft was saved with verification findings attached as review comments to resolve. */
+        /** The mechanically verified exercise was saved, but automated quality findings require instructor review. */
         NEEDS_REVIEW,
-        /** Saving did not complete; partial draft branches or live changes may exist and require manual review. */
+        /** Saving did not complete; live changes may exist and require manual review. */
         PARTIAL
     }
 
