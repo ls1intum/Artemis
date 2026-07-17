@@ -334,6 +334,23 @@ describe('CourseNotificationOverviewComponent', () => {
         expect(courseNotificationService.removeNotificationFromMap).toHaveBeenCalledWith(101, notification);
     });
 
+    it('should keep the current scroll position (not jump to the saved bottom) when the list changes outside pagination', () => {
+        vi.useFakeTimers();
+        const scrollElement = { scrollTop: 120 };
+        componentAsAny.scrollContainer = () => ({ nativeElement: scrollElement });
+        componentAsAny.isShown.set(true);
+        componentAsAny.isLoading.set(false);
+        componentAsAny.pagesFinished = true;
+        // Stale saved position from a previous scroll-to-bottom; the old behaviour would jump here.
+        componentAsAny.savedScrollPosition = 500;
+
+        componentAsAny.handleNotificationsUpdate([createMockNotification(1, 101, CourseNotificationCategory.GENERAL)]);
+        vi.runAllTimers();
+
+        expect(scrollElement.scrollTop).toBe(120);
+        vi.useRealTimers();
+    });
+
     it('should update unseen notifications to seen on client side', () => {
         const unseenNotification1 = createMockNotification(1, 101, CourseNotificationCategory.COMMUNICATION);
         const unseenNotification2 = createMockNotification(2, 101, CourseNotificationCategory.COMMUNICATION);

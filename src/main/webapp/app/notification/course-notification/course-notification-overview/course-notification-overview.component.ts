@@ -186,6 +186,11 @@ export class CourseNotificationOverviewComponent implements AfterViewInit {
      * @param notifications - The up-to-date list of notifications for the current course
      */
     private handleNotificationsUpdate(notifications: CourseNotification[]): void {
+        // Capture the live scroll position before the list re-renders. `savedScrollPosition` only tracks the
+        // position at which pagination was last triggered (the bottom), so restoring it after a non-pagination
+        // update - e.g. closing/removing a single notification - would wrongly jump the list to the bottom.
+        const currentScrollTop = this.scrollContainer()?.nativeElement.scrollTop ?? 0;
+
         this.notifications = notifications;
 
         this.filterNotificationsIntoCurrentCategory();
@@ -204,7 +209,7 @@ export class CourseNotificationOverviewComponent implements AfterViewInit {
 
             if (this.isShown()) {
                 setTimeout(() => {
-                    this.scrollContainer()!.nativeElement.scrollTop = this.savedScrollPosition;
+                    this.scrollContainer()!.nativeElement.scrollTop = currentScrollTop;
                 });
                 this.updateCurrentCategoryNotificationsToSeenOnServer();
             }

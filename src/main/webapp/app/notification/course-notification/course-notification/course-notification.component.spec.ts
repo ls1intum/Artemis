@@ -132,6 +132,16 @@ describe('CourseNotificationComponent', () => {
         expect(notificationWrap.classes['is-unseen']).toBeFalsy();
     });
 
+    it('should add is-fluid class only when fluid is true', () => {
+        fixture.componentRef.setInput('fluid', false);
+        fixture.detectChanges();
+        expect(fixture.debugElement.query(By.css('.course-notification-wrap')).classes['is-fluid']).toBeFalsy();
+
+        fixture.componentRef.setInput('fluid', true);
+        fixture.detectChanges();
+        expect(fixture.debugElement.query(By.css('.course-notification-wrap')).classes['is-fluid']).toBe(true);
+    });
+
     it('should show profile picture when author details are present', () => {
         const notificationWithAuthor = createMockNotification(1, 101, 'newPostNotification', {
             authorName: 'Test Author',

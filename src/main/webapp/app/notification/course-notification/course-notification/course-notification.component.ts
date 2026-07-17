@@ -36,6 +36,9 @@ export class CourseNotificationComponent {
     readonly isHideTime = input<boolean>(false);
     readonly isRedirectToUrl = input<boolean>(false);
     readonly displayTimeInMilliseconds = input<number | undefined>(undefined);
+    // When true, the card fills the available width and grows in height (used in the overview
+    // overlay). The transient popup toast keeps the default fixed size.
+    readonly fluid = input<boolean>(false);
 
     protected readonly faIcon = signal<IconDefinition>(undefined!);
     protected readonly notificationParameters = signal<{ [key: string]: unknown }>(undefined!);
