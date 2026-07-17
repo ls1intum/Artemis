@@ -326,8 +326,10 @@ public class CourseScoreCalculationService {
     }
 
     /**
-     * Calculates the points a student earns from each exercise variant group, capped at each group's configured
-     * maxPoints and with plagiarism verdicts applied, keyed by group id. Mirrors the variant-group branch of
+     * Calculates the points a student earns from each exercise variant group, with plagiarism verdicts applied, keyed
+     * by group id. Groups with a configured {@code maxPoints} are capped at it; groups without one (deliberately
+     * uncapped, see {@link ExerciseVariantGroup#getMaxPoints()}) are included at their raw, uncapped sum, so every
+     * group a student has a rated result in is present in the returned map. Mirrors the variant-group branch of
      * {@link #calculateCourseScoreForStudentParticipations}: a course-wide {@link PlagiarismVerdict#PLAGIARISM} verdict
      * zeroes the whole course (empty map), and each member's contribution runs through
      * {@link #calculatePointsAchievedFromExercise}, which applies the per-exercise plagiarism point deduction.
@@ -335,7 +337,8 @@ public class CourseScoreCalculationService {
      * @param userId                  the id of the student whose per-group points are calculated
      * @param participationsOfStudent the student's graded participations (exercises must still be attached)
      * @param plagiarismCases         the plagiarism verdicts relevant for the student
-     * @return the capped, plagiarism-adjusted points per variant group id; empty when no variant group contributes
+     * @return the plagiarism-adjusted points per variant group id (capped where a cap is configured); empty when no
+     *         variant group contributes
      */
     Map<Long, Double> calculateAchievedPointsPerVariantGroup(long userId, Collection<StudentParticipation> participationsOfStudent, Collection<PlagiarismCase> plagiarismCases) {
         PlagiarismMapping plagiarismMapping = PlagiarismMapping.createFromPlagiarismCases(plagiarismCases);
@@ -347,7 +350,7 @@ public class CourseScoreCalculationService {
         for (StudentParticipation participation : participationsOfStudent) {
             Exercise exercise = participation.getExercise();
             ExerciseVariantGroup variantGroup = exercise.getExerciseVariantGroup();
-            if (variantGroup == null || variantGroup.getMaxPoints() == null || !includeIntoScoreCalculation(ExerciseCourseScoreDTO.from(exercise))) {
+            if (variantGroup == null || !includeIntoScoreCalculation(ExerciseCourseScoreDTO.from(exercise))) {
                 continue;
             }
             Result result = getResultForParticipation(participation, exercise.getDueDate());

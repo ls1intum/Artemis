@@ -437,6 +437,16 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationIndepen
     }
 
     @Test
+    void cappedPointsPerGroupIncludesUncappedGroupsAtRawSum() {
+        VariantGroupCappedSum cappedSum = new VariantGroupCappedSum();
+        cappedSum.add(1L, null, 4.0); // group 1 has no configured cap
+        cappedSum.add(1L, null, 4.0); // group 1 sum 8, not capped
+
+        assertThat(cappedSum.cappedPointsPerGroup()).containsExactlyInAnyOrderEntriesOf(Map.of(1L, 8.0));
+        assertThat(cappedSum.total()).isEqualTo(8.0);
+    }
+
+    @Test
     void achievedPointsPerVariantGroupAreCappedAtGroupMaxPoints() {
         ExerciseVariantGroup group = cappedGroup(200L, 5.0);
         Course variantCourse = variantScoringCourse();
@@ -468,6 +478,21 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationIndepen
     }
 
     @Test
+    void achievedPointsPerVariantGroupIncludesUncappedGroupsAtRawSum() {
+        // A group with no configured maxPoints is deliberately uncapped; it must still appear in the map (the
+        // group-detail page reads it and treats a missing entry as 0), just without a cap applied.
+        ExerciseVariantGroup group = uncappedGroup(200L);
+        Course variantCourse = variantScoringCourse();
+        var participations = List.of(ratedParticipation(variantExercise(101L, variantCourse, group), 100.0),
+                ratedParticipation(variantExercise(102L, variantCourse, group), 100.0));
+
+        Map<Long, Double> perGroup = courseScoreCalculationService.calculateAchievedPointsPerVariantGroup(1L, participations, List.of());
+
+        // 5 + 5 earned, no cap to apply.
+        assertThat(perGroup).containsExactlyInAnyOrderEntriesOf(Map.of(200L, 10.0));
+    }
+
+    @Test
     void achievedPointsPerVariantGroupAreEmptyOnPlagiarismVerdict() {
         ExerciseVariantGroup group = cappedGroup(200L, 5.0);
         Course variantCourse = variantScoringCourse();
@@ -489,6 +514,13 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationIndepen
         ExerciseVariantGroup group = new ExerciseVariantGroup();
         group.setId(id);
         group.setMaxPoints(maxPoints);
+        return group;
+    }
+
+    /** A variant group with the given id and no configured maxPoints (deliberately uncapped). */
+    private static ExerciseVariantGroup uncappedGroup(long id) {
+        ExerciseVariantGroup group = new ExerciseVariantGroup();
+        group.setId(id);
         return group;
     }
 

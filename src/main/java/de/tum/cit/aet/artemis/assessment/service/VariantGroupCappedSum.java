@@ -10,10 +10,11 @@ import de.tum.cit.aet.artemis.exercise.domain.ExerciseVariantGroup;
 /**
  * Accumulates per-exercise point contributions while enforcing the cap of {@link ExerciseVariantGroup}s.
  * <p>
- * Contributions of exercises that do not belong to a variant group (or whose group has no configured cap) are summed
- * up individually. Contributions of exercises in the same variant group are summed first and then capped at the
- * group's configured {@code maxPoints}, so a group never contributes more than its cap to the {@link #total()}:
- * {@code min(sum(contributions of the group's variants), cap)}.
+ * Contributions of exercises that do not belong to a variant group are summed up individually. Contributions of
+ * exercises in the same variant group are always summed together first; if the group has a configured cap, the sum is
+ * then capped at the group's {@code maxPoints}, so a capped group never contributes more than its cap to the
+ * {@link #total()}: {@code min(sum(contributions of the group's variants), cap)}. Groups without a configured cap
+ * contribute their raw, uncapped sum.
  */
 final class VariantGroupCappedSum {
 
@@ -31,23 +32,24 @@ final class VariantGroupCappedSum {
      * @param value                 the points the exercise contributes
      */
     void add(@Nullable Long variantGroupId, @Nullable Double variantGroupMaxPoints, double value) {
-        if (variantGroupId == null || variantGroupMaxPoints == null) {
+        if (variantGroupId == null) {
             ungroupedSum += value;
+            return;
         }
-        else {
-            sumPerVariantGroup.merge(variantGroupId, value, Double::sum);
+        sumPerVariantGroup.merge(variantGroupId, value, Double::sum);
+        if (variantGroupMaxPoints != null) {
             capPerVariantGroup.put(variantGroupId, variantGroupMaxPoints);
         }
     }
 
     /**
      * @return the sum of all ungrouped contributions plus, for every variant group, the smaller of its summed
-     *         contributions and its cap
+     *         contributions and its cap (or the raw sum, for groups without a configured cap)
      */
     double total() {
         double total = ungroupedSum;
         for (var entry : sumPerVariantGroup.entrySet()) {
-            total += Math.min(entry.getValue(), capPerVariantGroup.get(entry.getKey()));
+            total += cappedGroupSum(entry.getKey(), entry.getValue());
         }
         return total;
     }
@@ -64,15 +66,20 @@ final class VariantGroupCappedSum {
     }
 
     /**
-     * @return the capped points each variant group contributes, keyed by group id: {@code min(sum(contributions), cap)}
-     *         per group. Only groups that received at least one contribution are present; ungrouped contributions are
-     *         not included.
+     * @return the points each variant group contributes, keyed by group id: {@code min(sum(contributions), cap)} for
+     *         groups with a configured cap, or the raw sum for groups without one. Only groups that received at least
+     *         one contribution are present; ungrouped contributions are not included.
      */
     Map<Long, Double> cappedPointsPerGroup() {
         Map<Long, Double> cappedPerGroup = new HashMap<>();
         for (var entry : sumPerVariantGroup.entrySet()) {
-            cappedPerGroup.put(entry.getKey(), Math.min(entry.getValue(), capPerVariantGroup.get(entry.getKey())));
+            cappedPerGroup.put(entry.getKey(), cappedGroupSum(entry.getKey(), entry.getValue()));
         }
         return cappedPerGroup;
+    }
+
+    private double cappedGroupSum(long variantGroupId, double groupSum) {
+        Double cap = capPerVariantGroup.get(variantGroupId);
+        return cap != null ? Math.min(groupSum, cap) : groupSum;
     }
 }
