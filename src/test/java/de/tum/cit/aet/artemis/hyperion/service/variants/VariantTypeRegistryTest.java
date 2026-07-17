@@ -2,6 +2,8 @@ package de.tum.cit.aet.artemis.hyperion.service.variants;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -12,6 +14,7 @@ import org.junit.jupiter.api.Test;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
 
 /**
@@ -21,9 +24,20 @@ import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
 class VariantTypeRegistryTest {
 
     private VariantTypeAdapters bundleFor(ExerciseType type) {
+        return bundleFor(type, true);
+    }
+
+    private VariantTypeAdapters bundleFor(ExerciseType type, boolean supportsExercise) {
         VariantTypeAdapters bundle = mock(VariantTypeAdapters.class);
         when(bundle.supportedExerciseType()).thenReturn(type);
+        lenient().when(bundle.supportsExercise(any())).thenReturn(supportsExercise);
         return bundle;
+    }
+
+    private Exercise exerciseOfType(ExerciseType type) {
+        Exercise exercise = mock(Exercise.class);
+        lenient().when(exercise.getExerciseType()).thenReturn(type);
+        return exercise;
     }
 
     @Test
@@ -38,6 +52,25 @@ class VariantTypeRegistryTest {
         assertThat(registry.isSupported(ExerciseType.TEXT)).isFalse();
         assertThat(registry.resolve(ExerciseType.PROGRAMMING)).isSameAs(programming);
         assertThat(registry.resolve(ExerciseType.QUIZ)).isSameAs(quiz);
+    }
+
+    @Test
+    void shouldLetTheBundleRejectAnIndividualExerciseOfASupportedType() {
+        // A quiz with drag-and-drop questions: the type has a bundle, but this exercise is out of scope.
+        VariantTypeRegistry registry = new VariantTypeRegistry(List.of(bundleFor(ExerciseType.PROGRAMMING), bundleFor(ExerciseType.QUIZ, false)));
+        registry.init();
+
+        assertThat(registry.isSupported(ExerciseType.QUIZ)).isTrue();
+        assertThat(registry.isSupported(exerciseOfType(ExerciseType.QUIZ))).isFalse();
+        assertThat(registry.isSupported(exerciseOfType(ExerciseType.PROGRAMMING))).isTrue();
+    }
+
+    @Test
+    void shouldNotSupportExercisesOfATypeWithoutABundle() {
+        VariantTypeRegistry registry = new VariantTypeRegistry(List.of(bundleFor(ExerciseType.PROGRAMMING)));
+        registry.init();
+
+        assertThat(registry.isSupported(exerciseOfType(ExerciseType.TEXT))).isFalse();
     }
 
     @Test

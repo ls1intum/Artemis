@@ -56,6 +56,7 @@ import { QuizExerciseService } from 'app/quiz/manage/service/quiz-exercise.servi
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
 import { ModelingExerciseService } from 'app/modeling/manage/services/modeling-exercise.service';
 import { ExerciseVariantAiModalWizardComponent } from 'app/course/manage/exercises/create-variant-modal/exercise-variant-ai-modal-wizard.component';
+import { supportsAiVariantGeneration } from 'app/course/manage/exercises/create-variant-modal/exercise-variant-ai-modal.utils';
 
 /** A single collapsible main action rendered in the action row or the ellipsis overflow menu. */
 interface ActionItem {
@@ -250,8 +251,9 @@ export class ExerciseActionsComponent {
             });
         }
         // The AI variant button sits between the info/success-colored buttons above and the warning-colored
-        // edit buttons below, matching its own warning color.
-        if (ex.isAtLeastEditor) {
+        // edit buttons below, matching its own warning color. Only shown for exercise types the generator
+        // supports — the server rejects the rest anyway.
+        if (ex.isAtLeastEditor && supportsAiVariantGeneration(ex)) {
             items.push({
                 id: 'create-variant-ai',
                 labelKey: 'artemisApp.exerciseManagement.action.createVariantWithAi',

@@ -17,6 +17,7 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 import { ArtemisTimeAgoPipe } from 'app/foundation/pipes/artemis-time-ago.pipe';
 import { ExerciseCategoriesComponent } from 'app/exercise/exercise-categories/exercise-categories.component';
 import { ExerciseVariantAiModalWizardComponent } from 'app/course/manage/exercises/create-variant-modal/exercise-variant-ai-modal-wizard.component';
+import { supportsAiVariantGeneration } from 'app/course/manage/exercises/create-variant-modal/exercise-variant-ai-modal.utils';
 
 export enum ExerciseRowType {
     FUTURE = 'future',
@@ -93,6 +94,8 @@ export class CourseManagementExerciseRowComponent {
     readonly faExclamationTriangle = faExclamationTriangle;
     readonly faFileSignature = faFileSignature;
     readonly faRobot = faRobot;
+    /** Gates the "Create Variant with AI" button — only programming and non-drag-and-drop quizzes are supported. */
+    protected readonly supportsAiVariantGeneration = supportsAiVariantGeneration;
 
     constructor() {
         // Effect to process statistic changes

@@ -93,7 +93,9 @@ export class ExerciseGroupSyncService {
         // quizInfoById carries both quizBatches (for status computation) and isEditable (from the server,
         // which uses the authoritative DB check — client-side status alone can miss cases like INDIVIDUAL
         // mode quizzes where student batches are started but the quiz is not visibleToStudents yet).
-        const quizInfoById = new Map(quizzes.map((quiz) => [quiz.id, { quizBatches: quiz.quizBatches, isEditable: quiz.isEditable }]));
+        const quizInfoById = new Map(
+            quizzes.map((quiz) => [quiz.id, { quizBatches: quiz.quizBatches, isEditable: quiz.isEditable, hasDragAndDropQuestions: quiz.hasDragAndDropQuestions }]),
+        );
         const replacements = new Map<number, Exercise>();
         const merged = exercises.map((exercise) => {
             if (exercise.type === ExerciseType.QUIZ && exercise.id !== undefined && quizInfoById.has(exercise.id)) {
@@ -101,6 +103,9 @@ export class ExerciseGroupSyncService {
                 const info = quizInfoById.get(exercise.id)!;
                 quiz.quizBatches = info.quizBatches;
                 quiz.isEditable = info.isEditable;
+                // The /with-exercises response has no question graph, so this flag is the list view's only way to
+                // tell whether the quiz supports AI variant generation.
+                quiz.hasDragAndDropQuestions = info.hasDragAndDropQuestions;
                 this.applyQuizClientState(quiz);
                 replacements.set(exercise.id, quiz);
                 return quiz;

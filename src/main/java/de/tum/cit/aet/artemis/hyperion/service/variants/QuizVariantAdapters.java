@@ -29,6 +29,7 @@ import de.tum.cit.aet.artemis.hyperion.config.HyperionEnabled;
 import de.tum.cit.aet.artemis.hyperion.dto.VariantGenerationRequestDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.VariantPlacementDTO;
 import de.tum.cit.aet.artemis.hyperion.service.HyperionPromptTemplateService;
+import de.tum.cit.aet.artemis.quiz.domain.DragAndDropQuestion;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.domain.QuizMode;
 import de.tum.cit.aet.artemis.quiz.domain.QuizQuestion;
@@ -89,6 +90,17 @@ public class QuizVariantAdapters implements VariantTypeAdapters {
     @Override
     public ExerciseType supportedExerciseType() {
         return ExerciseType.QUIZ;
+    }
+
+    /**
+     * Drag-and-drop questions are not supported: their content lives in the background image and the drag-item /
+     * drop-location geometry, none of which the agent can re-theme (image regeneration is explicit future work,
+     * and the source images are carried over unchanged). A variant of such a quiz would keep the old theme's
+     * pictures next to re-themed text, so the button is hidden and the request rejected instead.
+     */
+    @Override
+    public boolean supportsExercise(Exercise exercise) {
+        return quizExerciseRepository.findByIdWithQuestionsElseThrow(exercise.getId()).getQuizQuestions().stream().noneMatch(question -> question instanceof DragAndDropQuestion);
     }
 
     @Override

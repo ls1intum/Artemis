@@ -39,6 +39,7 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { ExerciseVariantAiModalWizardComponent } from 'app/course/manage/exercises/create-variant-modal/exercise-variant-ai-modal-wizard.component';
+import { supportsAiVariantGeneration } from 'app/course/manage/exercises/create-variant-modal/exercise-variant-ai-modal.utils';
 
 @Component({
     selector: 'jhi-exam-exercise-row-buttons',
@@ -79,6 +80,8 @@ export class ExamExerciseRowButtonsComponent implements OnInit {
     faFileSignature = faFileSignature;
     farListAlt = faListAlt;
     faRobot = faRobot;
+    /** Gates the "Create Variant with AI" button — only programming and non-drag-and-drop quizzes are supported. */
+    protected readonly supportsAiVariantGeneration = supportsAiVariantGeneration;
 
     /** Controls the AI variant generation wizard/modal opened via the "Create Variant with AI" action. */
     readonly aiVariantModalVisible = signal(false);

@@ -41,7 +41,7 @@
             <span class="d-none d-md-inline" jhiTranslate="entity.action.scores"></span>
         </a>
     }
-    @if (courseValue.isAtLeastEditor) {
+    @if (courseValue.isAtLeastEditor && supportsAiVariantGeneration(exerciseValue)) {
         <button type="button" class="btn btn-warning btn-sm me-1" (click)="aiVariantModalVisible.set(true)">
             <fa-icon [icon]="faRobot" />
             <span class="d-none d-md-inline" jhiTranslate="artemisApp.exerciseManagement.action.createVariantWithAi"></span>

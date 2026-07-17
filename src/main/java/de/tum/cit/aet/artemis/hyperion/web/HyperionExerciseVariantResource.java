@@ -142,6 +142,11 @@ public class HyperionExerciseVariantResource {
         if (!typeRegistry.isSupported(exercise.getExerciseType())) {
             throw new BadRequestAlertException("Variant generation is not supported for exercise type " + exercise.getExerciseType(), ENTITY_NAME, "unsupportedType");
         }
+        // Type-level support is not enough: an individual exercise of a supported type can still be out of scope
+        // (a quiz with drag-and-drop questions). The client hides the button for these; this is the enforcement.
+        if (!typeRegistry.isSupported(exercise)) {
+            throw new BadRequestAlertException("Variant generation is not supported for exercise " + exercise.getId(), ENTITY_NAME, "unsupportedExercise");
+        }
         validatePlacement(exercise, request.placement());
     }
 

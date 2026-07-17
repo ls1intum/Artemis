@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.hyperion.service.variants;
 
+import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
 
 /**
@@ -17,4 +18,16 @@ public interface VariantTypeAdapters extends VariantContextRenderer, ExercisePro
      * @return the exercise type this bundle supports (used by {@link VariantTypeRegistry#resolve})
      */
     ExerciseType supportedExerciseType();
+
+    /**
+     * Refines {@link #supportedExerciseType()} for the individual exercise: a type may be supported in general
+     * while a particular exercise of that type is not (see {@code QuizVariantAdapters} for drag-and-drop quizzes).
+     * The client hides the generation button for unsupported exercises; the REST boundary rejects them.
+     *
+     * @param exercise the source exercise, already known to be of {@link #supportedExerciseType()}
+     * @return true when a variant can be generated from this exercise; the default is "every exercise of the type"
+     */
+    default boolean supportsExercise(Exercise exercise) {
+        return true;
+    }
 }

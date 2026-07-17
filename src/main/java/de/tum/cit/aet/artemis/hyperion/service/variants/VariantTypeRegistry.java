@@ -11,6 +11,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionEnabled;
 
@@ -54,6 +55,18 @@ public class VariantTypeRegistry {
      */
     public boolean isSupported(ExerciseType exerciseType) {
         return adaptersByType.containsKey(exerciseType);
+    }
+
+    /**
+     * Whether a variant can be generated from this concrete exercise — the type must have a bundle AND the bundle
+     * must accept the individual exercise (e.g. quizzes with drag-and-drop questions are rejected).
+     *
+     * @param exercise the source exercise (read server-side, never client-supplied)
+     * @return true when variant generation supports the exercise
+     */
+    public boolean isSupported(Exercise exercise) {
+        VariantTypeAdapters adapters = adaptersByType.get(exercise.getExerciseType());
+        return adapters != null && adapters.supportsExercise(exercise);
     }
 
     /**

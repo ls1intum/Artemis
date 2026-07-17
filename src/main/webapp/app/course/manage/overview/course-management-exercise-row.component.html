@@ -165,7 +165,7 @@
                         ><fa-icon [icon]="faTable"
                     /></a>
                 }
-                @if (course().isAtLeastEditor) {
+                @if (course().isAtLeastEditor && supportsAiVariantGeneration(details())) {
                     <button
                         type="button"
                         class="btn btn-warning me-1 mb-1"
