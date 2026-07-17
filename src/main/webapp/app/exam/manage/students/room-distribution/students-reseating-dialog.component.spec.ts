@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { Course } from 'app/course/shared/entities/course.model';
@@ -14,8 +13,6 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { ExamUser } from 'app/exam/shared/entities/exam-user.model';
 
 describe('StudentsReseatingDialogComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: StudentsReseatingDialogComponent;
     let fixture: ComponentFixture<StudentsReseatingDialogComponent>;
     let service: StudentsRoomDistributionService;

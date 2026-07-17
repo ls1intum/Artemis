@@ -80,8 +80,7 @@
                 class="clone-url url-box-remove-line-left url-box-remove-line-right"
                 [cdkCopyToClipboard]="getHttpOrSshRepositoryUri(false)"
                 (cdkCopyToClipboardCopied)="copyEnabled() ? onCopyFinished($event) : null"
-                >{{ getHttpOrSshRepositoryUri() }} </pre
-            >
+                >{{ getHttpOrSshRepositoryUri() }} </pre>
             <div class="d-flex align-items-center">
                 <a
                     [style.flex]="1"

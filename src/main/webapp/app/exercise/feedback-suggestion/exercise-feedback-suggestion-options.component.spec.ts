@@ -1,5 +1,4 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
 import { of } from 'rxjs';
@@ -9,10 +8,9 @@ import { AthenaService } from 'app/assessment/shared/services/athena.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
-import { TranslateModule } from '@ngx-translate/core';
+import { provideTranslateService } from '@ngx-translate/core';
 
 describe('ExerciseFeedbackSuggestionOptionsComponent', () => {
-    setupTestBed({ zoneless: true });
     let component: ExerciseFeedbackSuggestionOptionsComponent;
     let fixture: ComponentFixture<ExerciseFeedbackSuggestionOptionsComponent>;
     let athenaService: { getAvailableModules: ReturnType<typeof vi.fn> };
@@ -40,7 +38,7 @@ describe('ExerciseFeedbackSuggestionOptionsComponent', () => {
         profileService = { isModuleFeatureActive: vi.fn().mockReturnValue(true) };
 
         await TestBed.configureTestingModule({
-            imports: [ExerciseFeedbackSuggestionOptionsComponent, TranslateModule.forRoot()],
+            imports: [ExerciseFeedbackSuggestionOptionsComponent],
             providers: [
                 { provide: AthenaService, useValue: athenaService },
                 { provide: ProfileService, useValue: profileService },
@@ -48,6 +46,7 @@ describe('ExerciseFeedbackSuggestionOptionsComponent', () => {
                     provide: ActivatedRoute,
                     useValue: { snapshot: { paramMap: { get: (key: string) => (key === 'courseId' ? '42' : null) } } },
                 },
+                provideTranslateService(),
             ],
         }).compileComponents();
 

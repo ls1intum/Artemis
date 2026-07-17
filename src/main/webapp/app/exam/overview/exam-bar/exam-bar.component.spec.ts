@@ -16,11 +16,8 @@ import { DialogService } from 'primeng/dynamicdialog';
 import { MockResizeObserver } from 'test/helpers/mocks/service/mock-resize-observer';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('ExamBarComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<ExamBarComponent>;
     let comp: ExamBarComponent;
 

@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TestBed } from '@angular/core/testing';
 import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';
 import {
@@ -23,8 +22,6 @@ import {
 import { CourseSidebarItemService } from 'app/course/shared/services/sidebar-item.service';
 
 describe('CourseSidebarItemService', () => {
-    setupTestBed({ zoneless: true });
-
     let service: CourseSidebarItemService;
     const courseId = 123;
 

@@ -1,6 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 import { BuildAgentPauseAllModalComponent } from 'app/localci/build-agent-summary/build-agent-pause-all-modal/build-agent-pause-all-modal.component';
 import { DynamicDialogRef } from 'primeng/dynamicdialog';
@@ -8,8 +7,6 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { TranslateService } from '@ngx-translate/core';
 
 describe('BuildAgentPauseAllModalComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: BuildAgentPauseAllModalComponent;
     let fixture: ComponentFixture<BuildAgentPauseAllModalComponent>;
     const dialogRef = {

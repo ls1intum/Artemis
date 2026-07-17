@@ -28,10 +28,10 @@
                 @if (hasParsed()) {
                     <div>
                         <div class="ms-2">
-                            <strong jhiTranslate="artemisApp.importUsers.numberOfUsersNotImported"></strong>
-                            <span
-                                ><b style="color: red">{{ usersNotFound }}</b></span
-                            >
+                            <strong jhiTranslate="artemisApp.importUsers.numberOfUsersNotFound"></strong>
+                            <span>
+                                <b class="text-state-danger">{{ usersNotFound }}</b>
+                            </span>
                         </div>
                         <div class="ms-2">
                             <strong>{{ 'artemisApp.exam.examUsers.numberOfImagesSaved' | artemisTranslate }}:</strong>

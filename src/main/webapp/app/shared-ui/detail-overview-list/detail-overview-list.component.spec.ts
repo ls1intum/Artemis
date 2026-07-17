@@ -1,5 +1,4 @@
 import { vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { DetailOverviewListComponent, DetailOverviewSection, DetailType } from 'app/shared-ui/detail-overview-list/detail-overview-list.component';
 import { ModelingExerciseService } from 'app/modeling/manage/services/modeling-exercise.service';
@@ -31,7 +30,6 @@ const sections: DetailOverviewSection[] = [
 ];
 
 describe('DetailOverviewList', () => {
-    setupTestBed({ zoneless: true });
     let component: DetailOverviewListComponent;
     let fixture: ComponentFixture<DetailOverviewListComponent>;
     let modelingService: ModelingExerciseService;
