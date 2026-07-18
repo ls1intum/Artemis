@@ -33,10 +33,11 @@ public record FileUploadSubmissionDTO(Long id, Boolean submitted, SubmissionType
      * Factory method to map a {@link FileUploadSubmission} to a DTO after a successful submission.
      *
      * @param submission the file upload submission entity to map
+     * @param isOwner    whether the current user owns the participation
      * @return the mapped DTO, or null if the input was null
      */
-    public static FileUploadSubmissionDTO ofAfterSubmit(FileUploadSubmission submission) {
-        return of(submission, true, false, true, null, null, null, null);
+    public static FileUploadSubmissionDTO ofAfterSubmit(FileUploadSubmission submission, Boolean isOwner) {
+        return of(submission, true, false, true, isOwner, null, null, null);
     }
 
     /**
@@ -50,16 +51,6 @@ public record FileUploadSubmissionDTO(Long id, Boolean submitted, SubmissionType
     }
 
     /**
-     * Factory method to map a {@link FileUploadSubmission} to a DTO for assessment purposes.
-     *
-     * @param submission the file upload submission entity to map
-     * @return the mapped DTO, or null if the input was null
-     */
-    public static FileUploadSubmissionDTO ofForAssessment(FileUploadSubmission submission) {
-        return of(submission, true, true, true, null, null, null, null);
-    }
-
-    /**
      * Factory method to map a {@link FileUploadSubmission} to a DTO for assessment purposes with permission flags.
      *
      * @param submission          the file upload submission entity to map
@@ -70,16 +61,6 @@ public record FileUploadSubmissionDTO(Long id, Boolean submitted, SubmissionType
      */
     public static FileUploadSubmissionDTO ofForAssessment(FileUploadSubmission submission, Boolean isAtLeastTutor, Boolean isAtLeastEditor, Boolean isAtLeastInstructor) {
         return of(submission, true, true, true, null, isAtLeastTutor, isAtLeastEditor, isAtLeastInstructor);
-    }
-
-    /**
-     * Factory method to map a {@link FileUploadSubmission} to a DTO for the editor view.
-     *
-     * @param submission the file upload submission entity to map
-     * @return the mapped DTO, or null if the input was null
-     */
-    public static FileUploadSubmissionDTO ofForEditor(FileUploadSubmission submission) {
-        return of(submission, true, true, true, null, null, null, null);
     }
 
     /**

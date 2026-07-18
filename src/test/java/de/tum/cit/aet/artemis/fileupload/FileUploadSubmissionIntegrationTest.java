@@ -169,9 +169,10 @@ class FileUploadSubmissionIntegrationTest extends AbstractFileUploadIntegrationT
         URI publicFilePath = FilePathConverter.externalUriForFileSystemPath(actualFilePath, FilePathType.FILE_UPLOAD_SUBMISSION, returnedSubmission.id());
         assertThat(returnedSubmission).as("submission correctly posted").isNotNull();
         assertThat(returnedSubmission.filePath()).isEqualTo(publicFilePath.toString());
+        assertThat(returnedSubmission.participation().isOwner()).isTrue();
+        assertThat(returnedSubmission.results()).isNullOrEmpty();
         var fileBytes = Files.readAllBytes(actualFilePath);
         assertThat(fileBytes.length > 0).as("Stored file has content").isTrue();
-        checkDetailsHidden(returnedSubmission, true);
 
         String requestUrl = String.format("%s%s", ARTEMIS_FILE_PATH_PREFIX, returnedSubmission.filePath());
         MvcResult file = request.performMvcRequest(get(requestUrl)).andExpect(status().isOk()).andExpect(content().contentType(expectedMediaType)).andReturn();
@@ -242,8 +243,9 @@ class FileUploadSubmissionIntegrationTest extends AbstractFileUploadIntegrationT
         FileUploadSubmission submission2 = fileUploadExerciseUtilService.addFileUploadSubmission(releasedFileUploadExercise, submittedFileUploadSubmission,
                 TEST_PREFIX + "student2");
 
-        List<FileUploadSubmissionDTO> submissions = request.getList("/api/fileupload/exercises/" + releasedFileUploadExercise.getId() + "/file-upload-submissions", HttpStatus.OK,
-                FileUploadSubmissionDTO.class);
+        List<FileUploadSubmissionDTO> submissions = assertThatDb(
+                () -> request.getList("/api/fileupload/exercises/" + releasedFileUploadExercise.getId() + "/file-upload-submissions", HttpStatus.OK, FileUploadSubmissionDTO.class))
+                .hasBeenCalledAtMostTimes(10);
 
         assertThat(submissions).extracting(FileUploadSubmissionDTO::id).containsExactlyInAnyOrder(submission1.getId(), submission2.getId());
     }
@@ -304,8 +306,10 @@ class FileUploadSubmissionIntegrationTest extends AbstractFileUploadIntegrationT
         exerciseUtilService.updateExerciseDueDate(releasedFileUploadExercise.getId(), ZonedDateTime.now().minusHours(1));
         assertThat(releasedFileUploadExercise.getNumberOfSubmissions()).as("no submissions").isNull();
 
-        FileUploadSubmissionDTO storedSubmission = request.get("/api/fileupload/exercises/" + releasedFileUploadExercise.getId() + "/file-upload-submission-without-assessment",
-                HttpStatus.OK, FileUploadSubmissionDTO.class);
+        FileUploadSubmissionDTO storedSubmission = assertThatDb(
+                () -> request.get("/api/fileupload/exercises/" + releasedFileUploadExercise.getId() + "/file-upload-submission-without-assessment", HttpStatus.OK,
+                        FileUploadSubmissionDTO.class))
+                .hasBeenCalledAtMostTimes(10);
 
         assertThat(storedSubmission).as("no submission eligible for new assessment").isNull();
     }
@@ -331,7 +335,6 @@ class FileUploadSubmissionIntegrationTest extends AbstractFileUploadIntegrationT
         assertThat(storedSubmission.submissionDate()).as("submission date is correct").isCloseTo(submission.getSubmissionDate(), HalfSecond());
         assertThat(storedSubmission.results()).as("result is not set").isNullOrEmpty();
         assertThat(storedSubmission.participation().exercise().exampleSolution()).isEqualTo(releasedFileUploadExercise.getExampleSolution());
-        checkDetailsHidden(storedSubmission, false);
     }
 
     @Test
@@ -351,7 +354,6 @@ class FileUploadSubmissionIntegrationTest extends AbstractFileUploadIntegrationT
 
         assertThat(storedSubmission.id()).as("submission was found").isEqualTo(lateSubmission.getId());
         assertThat(storedSubmission.results()).as("result is not set").isNullOrEmpty();
-        checkDetailsHidden(storedSubmission, false);
     }
 
     @Test
@@ -373,7 +375,6 @@ class FileUploadSubmissionIntegrationTest extends AbstractFileUploadIntegrationT
 
         assertThat(storedSubmission.id()).as("submission was found").isEqualTo(lateSubmission.getId());
         assertThat(storedSubmission.results()).as("result is set").isNotEmpty();
-        checkDetailsHidden(storedSubmission, false);
     }
 
     @Test
@@ -578,6 +579,18 @@ class FileUploadSubmissionIntegrationTest extends AbstractFileUploadIntegrationT
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student3", roles = "USER")
+    void submitExercise_existingSubmissionIdFromAnotherStudent_forbiddenBeforeExerciseValidation() throws Exception {
+        FileUploadSubmission otherStudentsSubmission = fileUploadExerciseUtilService.addFileUploadSubmission(releasedFileUploadExercise,
+                ParticipationFactory.generateFileUploadSubmission(true), TEST_PREFIX + "student2");
+        FileUploadSubmissionInputDTO input = new FileUploadSubmissionInputDTO(otherStudentsSubmission.getId(), otherStudentsSubmission.isSubmitted(),
+                finishedFileUploadExercise.getId());
+
+        request.postWithMultipartFile("/api/fileupload/exercises/" + finishedFileUploadExercise.getId() + "/file-upload-submissions", input, "submission", validFile,
+                FileUploadSubmissionDTO.class, HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student3", roles = "USER")
     void submitExercise_beforeDueDate_allowed() throws Exception {
         FileUploadSubmissionDTO submission = request.postWithMultipartFile("/api/fileupload/exercises/" + releasedFileUploadExercise.getId() + "/file-upload-submissions",
                 submissionInput(notSubmittedFileUploadSubmission, releasedFileUploadExercise.getId()), "submission", validFile, FileUploadSubmissionDTO.class, HttpStatus.OK);
@@ -666,12 +679,6 @@ class FileUploadSubmissionIntegrationTest extends AbstractFileUploadIntegrationT
 
     private FileUploadSubmissionInputDTO submissionInput(FileUploadSubmission submission, Long exerciseId) {
         return new FileUploadSubmissionInputDTO(submission.getId(), submission.isSubmitted(), exerciseId);
-    }
-
-    private void checkDetailsHidden(FileUploadSubmissionDTO submission, boolean isStudent) {
-        if (isStudent) {
-            assertThat(submission.results()).isNullOrEmpty();
-        }
     }
 
     @Test

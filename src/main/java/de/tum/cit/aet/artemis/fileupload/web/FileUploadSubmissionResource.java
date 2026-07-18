@@ -126,19 +126,21 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
         if (fileUploadSubmissionInput.exerciseId() != null && fileUploadSubmissionInput.exerciseId() != exerciseId) {
             throw new BadRequestAlertException("ExerciseId in Body doesn't match ExerciseId in path!", "exerciseId", "400");
         }
-        validateSubmissionIdBelongsToExercise(fileUploadSubmissionInput.id(), exerciseId);
-
         // Apply further checks if it is an exam submission
         if (exercise.isExamExercise()) {
             ExamSubmissionApi api = examSubmissionApi.orElseThrow(() -> new ExamApiNotPresentException(ExamSubmissionApi.class));
             api.checkSubmissionAllowanceElseThrow(exercise, user);
+        }
 
+        // Check ownership before validating the exercise relation to avoid exposing arbitrary submission/exercise pairs.
+        fileUploadSubmissionService.checkSubmissionAllowanceElseThrow(exercise, fileUploadSubmission, user);
+        validateSubmissionIdBelongsToExercise(fileUploadSubmissionInput.id(), exerciseId);
+
+        if (exercise.isExamExercise()) {
+            ExamSubmissionApi api = examSubmissionApi.orElseThrow(() -> new ExamApiNotPresentException(ExamSubmissionApi.class));
             // Prevent multiple submissions (currently only for exam submissions)
             fileUploadSubmission = (FileUploadSubmission) api.preventMultipleSubmissions(exercise, fileUploadSubmission, user);
         }
-
-        // Check if the user is allowed to submit
-        fileUploadSubmissionService.checkSubmissionAllowanceElseThrow(exercise, fileUploadSubmission, user);
 
         final FileUploadSubmission submission;
         try {
@@ -151,10 +153,11 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
             throw new BadRequestAlertException("The uploaded file is empty", ENTITY_NAME, "cantSaveFile");
         }
 
+        boolean isOwner = authCheckService.isOwnerOfParticipation((StudentParticipation) submission.getParticipation(), user);
         fileUploadSubmissionService.hideDetails(submission, user);
         long end = System.currentTimeMillis();
         log.info("handleFileUploadSubmission took {}ms for exercise {} and user {}", end - start, exerciseId, user.getLogin());
-        return ResponseEntity.ok(FileUploadSubmissionDTO.ofAfterSubmit(submission));
+        return ResponseEntity.ok(FileUploadSubmissionDTO.ofAfterSubmit(submission, isOwner));
     }
 
     private void validateSubmissionIdBelongsToExercise(Long submissionId, long exerciseId) {
