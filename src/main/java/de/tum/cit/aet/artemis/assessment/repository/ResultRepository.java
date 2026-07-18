@@ -180,6 +180,9 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
     @EntityGraph(type = LOAD, attributePaths = { "feedbacks", "feedbacks.testCase", "submission" })
     Optional<Result> findResultWithSubmissionAndFeedbacksTestCasesById(long resultId);
 
+    @EntityGraph(type = LOAD, attributePaths = { "submission", "submission.participation" })
+    Optional<Result> findResultWithSubmissionAndParticipationById(long resultId);
+
     /**
      * Finds the first result by participation ID, including its submission, feedback, and test cases, ordered by completion date in descending order.
      * This method avoids in-memory paging by retrieving the first result directly from the database.

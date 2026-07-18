@@ -43,6 +43,13 @@
                 "showSampleSolution": "Zeige Beispiellösung",
                 "hideSampleSolution": "Verberge Beispiellösung"
             },
+            "tooltip": {
+                "participantShare": "{{ count }} von {{ participants }} Teilnehmenden ({{ percent }} %)",
+                "correctSolutions": "{{ count }} von {{ participants }} Teilnehmenden haben diese Frage richtig beantwortet ({{ percent }} %)",
+                "average": "Durchschnitt: {{ count }} richtige Lösungen ({{ percent }} % der Teilnehmenden)",
+                "pointRange": "{{ count }} von {{ participants }} Teilnehmenden liegen in diesem Bereich ({{ percent }} %)",
+                "correctOverall": "{{ count }} von {{ participants }} Teilnehmenden haben die gesamte Frage richtig beantwortet ({{ percent }} %)"
+            },
             "invalid": "(ungültig)",
             "quizHasEnded": "Quiz ist zu Ende!",
             "now": "Läuft"

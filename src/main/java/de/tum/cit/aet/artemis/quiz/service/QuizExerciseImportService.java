@@ -82,9 +82,15 @@ public class QuizExerciseImportService extends ExerciseImportService {
     @NonNull
     public QuizExercise importQuizExercise(final QuizExercise templateExercise, QuizExercise importedExercise, @Nullable List<MultipartFile> files) throws IOException {
         log.debug("Creating a new Exercise based on exercise {}", templateExercise);
-        QuizExercise newExercise = copyQuizExerciseBasis(importedExercise);
-        copyQuizQuestions(importedExercise, newExercise);
-        copyQuizBatches(importedExercise, newExercise);
+        QuizExercise newExercise = copyQuizExerciseBasis(importedExercise, templateExercise);
+        // Use templateExercise as fallback source for questions/batches when importedExercise (skeleton) doesn't have them
+        QuizExercise questionSource = importedExercise.getQuizQuestions() != null && !importedExercise.getQuizQuestions().isEmpty() ? importedExercise : templateExercise;
+        copyQuizQuestions(questionSource, newExercise);
+        // Don't copy batches for exam exercises — exam timing controls quiz scheduling
+        if (!newExercise.isExamExercise()) {
+            QuizExercise batchSource = importedExercise.getQuizBatches() != null && !importedExercise.getQuizBatches().isEmpty() ? importedExercise : templateExercise;
+            copyQuizBatches(batchSource, newExercise);
+        }
 
         QuizExercise newQuizExercise = quizExerciseService.save(newExercise);
 
@@ -100,23 +106,25 @@ public class QuizExerciseImportService extends ExerciseImportService {
     }
 
     /**
-     * This helper method copies all attributes of the {@code importedExercise} into a new exercise.
-     * Here we ignore all external entities as well as the start-, end-, and asseessment due date.
+     * Copies the exercise basis into a new exercise. Structural context (target course/group) comes from
+     * {@code importedExercise}; the quiz content and settings come from {@code templateExercise} (the original exercise),
+     * with {@code importedExercise} taking precedence where it carries a value. The start-, end-, and assessment due
+     * dates are intentionally not copied here.
      *
-     * @param importedExercise The exercise from which to copy the basis
+     * @param importedExercise the intended exercise (full for standalone import, a destination skeleton for bulk import)
+     * @param templateExercise the original exercise providing the quiz content and settings
      * @return the cloned QuizExercise basis
      */
     @NonNull
-    private QuizExercise copyQuizExerciseBasis(QuizExercise importedExercise) {
+    private QuizExercise copyQuizExerciseBasis(QuizExercise importedExercise, QuizExercise templateExercise) {
         log.debug("Copying the exercise basis from {}", importedExercise);
         QuizExercise newExercise = new QuizExercise();
 
-        super.copyExerciseBasis(newExercise, importedExercise, new HashMap<>());
-        newExercise.setRandomizeQuestionOrder(importedExercise.isRandomizeQuestionOrder());
-        newExercise.setAllowedNumberOfAttempts(importedExercise.getAllowedNumberOfAttempts());
-        newExercise.setRemainingNumberOfAttempts(importedExercise.getRemainingNumberOfAttempts());
-        newExercise.setQuizMode(importedExercise.getQuizMode());
-        newExercise.setDuration(importedExercise.getDuration());
+        super.copyExerciseBasis(newExercise, importedExercise, templateExercise, new HashMap<>());
+        newExercise.setRandomizeQuestionOrder(templateExercise.isRandomizeQuestionOrder());
+        newExercise.setAllowedNumberOfAttempts(templateExercise.getAllowedNumberOfAttempts());
+        newExercise.setQuizMode(templateExercise.getQuizMode());
+        newExercise.setDuration(templateExercise.getDuration());
         return newExercise;
     }
 

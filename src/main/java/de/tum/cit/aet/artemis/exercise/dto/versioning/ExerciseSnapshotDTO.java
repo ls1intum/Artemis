@@ -3,7 +3,6 @@ package de.tum.cit.aet.artemis.exercise.dto.versioning;
 import java.io.Serializable;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
-import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -21,11 +20,9 @@ import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
 import de.tum.cit.aet.artemis.exercise.domain.IncludedInOverallScore;
 import de.tum.cit.aet.artemis.exercise.domain.TeamAssignmentConfig;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
-import de.tum.cit.aet.artemis.localvc.service.GitService;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismDetectionConfig;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
-import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 
@@ -50,25 +47,19 @@ public record ExerciseSnapshotDTO(
     /**
      * Creates a snapshot of the given exercise.
      *
-     * @param exercise   {@link Exercise}
-     * @param gitService {@link GitService}
+     * @param exercise                {@link Exercise}
+     * @param programmingCommitHashes the pre-resolved git commit hashes for a programming exercise's repositories, or
+     *                                    {@code null} for non-programming exercises
      * @return {@link ExerciseSnapshotDTO}
      */
-    public static ExerciseSnapshotDTO of(Exercise exercise, GitService gitService) {
-        return of(exercise, gitService, Map.of());
-    }
-
-    /**
-     * Creates a snapshot with exact caller-captured commit IDs for repositories changed by the current operation.
-     */
-    public static ExerciseSnapshotDTO of(Exercise exercise, GitService gitService, Map<RepositoryType, String> repositoryCommitIds) {
+    public static ExerciseSnapshotDTO of(Exercise exercise, ProgrammingExerciseSnapshotDTO.@Nullable CommitHashesDTO programmingCommitHashes) {
 
         var competencyLinks = CollectionUtil.nullIfEmpty(exercise.getCompetencyLinks().stream().map(CompetencyExerciseLinkSnapshotDTO::of).collect(Collectors.toSet()));
         var gradingCriteria = CollectionUtil.nullIfEmpty(exercise.getGradingCriteria().stream().map(GradingCriterionDTO::of).collect(Collectors.toSet()));
         var categories = CollectionUtil.nullIfEmpty(exercise.getCategories());
         var plagiarismDetectionConfig = PlagiarismDetectionConfigSnapshotDTO.of(exercise.getPlagiarismDetectionConfig());
 
-        var programmingData = exercise instanceof ProgrammingExercise ? ProgrammingExerciseSnapshotDTO.of((ProgrammingExercise) exercise, gitService, repositoryCommitIds) : null;
+        var programmingData = exercise instanceof ProgrammingExercise programmingExercise ? ProgrammingExerciseSnapshotDTO.of(programmingExercise, programmingCommitHashes) : null;
         var textData = exercise instanceof TextExercise ? TextExerciseSnapshotDTO.of((TextExercise) exercise) : null;
         var modelingData = exercise instanceof ModelingExercise ? ModelingExerciseSnapshotDTO.of((ModelingExercise) exercise) : null;
         var quizData = exercise instanceof QuizExercise ? QuizExerciseSnapshotDTO.of((QuizExercise) exercise) : null;

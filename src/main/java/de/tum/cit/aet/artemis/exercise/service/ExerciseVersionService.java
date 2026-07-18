@@ -10,16 +10,20 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.Executor;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
@@ -78,13 +82,18 @@ public class ExerciseVersionService {
 
     private final ApplicationEventPublisher eventPublisher;
 
-    private final com.fasterxml.jackson.databind.ObjectMapper objectMapper;
+    private final ObjectMapper objectMapper;
+
+    // Executor for versioning work. In production this is a dedicated, bounded thread pool (see
+    // AsyncConfiguration#exerciseVersionTaskExecutor) so slow git access does not exhaust the shared async pool;
+    // under the test profile it is synchronous, keeping versioning-triggering tests deterministic.
+    private final Executor exerciseVersionExecutor;
 
     public ExerciseVersionService(ExerciseVersionRepository exerciseVersionRepository, GitService gitService, ProgrammingExerciseRepository programmingExerciseRepository,
             QuizExerciseRepository quizExerciseRepository, Optional<TextRepositoryApi> textRepositoryApi, Optional<ModelingRepositoryApi> modelingRepositoryApi,
             Optional<FileUploadApi> fileUploadApi, UserRepository userRepository, ExerciseEditorSyncService exerciseEditorSyncService, ChannelRepository channelRepository,
-            ExerciseReviewVersionChangeService exerciseReviewVersionChangeService, ApplicationEventPublisher eventPublisher,
-            com.fasterxml.jackson.databind.ObjectMapper objectMapper) {
+            ExerciseReviewVersionChangeService exerciseReviewVersionChangeService, ApplicationEventPublisher eventPublisher, ObjectMapper objectMapper,
+            @Qualifier("exerciseVersionTaskExecutor") Executor exerciseVersionExecutor) {
         this.exerciseVersionRepository = exerciseVersionRepository;
         this.gitService = gitService;
         this.programmingExerciseRepository = programmingExerciseRepository;
@@ -98,6 +107,7 @@ public class ExerciseVersionService {
         this.exerciseReviewVersionChangeService = exerciseReviewVersionChangeService;
         this.eventPublisher = eventPublisher;
         this.objectMapper = objectMapper;
+        this.exerciseVersionExecutor = exerciseVersionExecutor;
     }
 
     /**
@@ -120,27 +130,38 @@ public class ExerciseVersionService {
      * @param targetExercise The exercise to create a version of
      */
     public void createExerciseVersion(Exercise targetExercise) {
+        // Resolve the current user on the request thread: the async executor thread has no SecurityContext.
         User user = userRepository.getUser();
         createExerciseVersion(targetExercise, user);
     }
 
     /**
-     * Creates an exercise version. This function would fetch the exercise eagerly
-     * that corresponds to its type,
-     * initialize an {@link ExerciseSnapshotDTO} and create a new
-     * {@link ExerciseVersion} to persist.
+     * Requests the (asynchronous) creation of an exercise version. This schedules the actual work on the
+     * {@code exerciseVersionExecutor} and returns immediately, so exercise updates do not block the end user while
+     * versioning executes (which may involve slower-than-usual queries and git access). Under the {@code test} profile
+     * the executor is synchronous, so versioning still completes before the calling test continues.
      *
      * @param targetExercise The exercise to create a version of
      * @param author         The user who created the version
      */
     public void createExerciseVersion(Exercise targetExercise, User author) {
+        exerciseVersionExecutor.execute(() -> createExerciseVersionInternal(targetExercise, author));
+    }
+
+    /**
+     * Creates an exercise version, swallowing all failures. Runs on the {@code exerciseVersionExecutor} thread.
+     * Exercise version creation is a non-critical side effect of saving an exercise: failures here (e.g.
+     * serialization issues, DB errors) must not surface to the caller, since the exercise save itself has already
+     * succeeded by the time this runs.
+     *
+     * @param targetExercise The exercise to create a version of
+     * @param author         The user who created the version
+     */
+    private void createExerciseVersionInternal(Exercise targetExercise, User author) {
         try {
             createExerciseVersionOrThrow(targetExercise, author);
         }
         catch (RuntimeException e) {
-            // Intentionally swallowed: exercise version creation is a non-critical side effect
-            // of saving an exercise. Failures here (e.g. serialization issues, DB errors) must
-            // not prevent the exercise save itself from succeeding.
             Long exerciseId = targetExercise == null ? null : targetExercise.getId();
             log.error("Error creating exercise version for exercise with id {}: {}", exerciseId, e.getMessage(), e);
         }
@@ -191,7 +212,9 @@ public class ExerciseVersionService {
         ExerciseVersion exerciseVersion = new ExerciseVersion();
         exerciseVersion.setExerciseId(targetExercise.getId());
         exerciseVersion.setAuthorId(author.getId());
-        ExerciseSnapshotDTO rawSnapshot = ExerciseSnapshotDTO.of(exercise, gitService, repositoryCommitIds);
+        var resolvedCommitHashes = ExerciseVersionCommitHashResolver.resolveForExercise(exercise, gitService);
+        var commitHashes = overlayCommitHashes(resolvedCommitHashes, repositoryCommitIds);
+        ExerciseSnapshotDTO rawSnapshot = ExerciseSnapshotDTO.of(exercise, commitHashes);
         // Normalize through JSON round-trip to ensure consistent null/empty list handling
         // (@JsonInclude(NON_EMPTY) causes empty lists to become null after deserialization)
         ExerciseSnapshotDTO exerciseSnapshot = objectMapper.readValue(objectMapper.writeValueAsString(rawSnapshot), ExerciseSnapshotDTO.class);
@@ -266,6 +289,27 @@ public class ExerciseVersionService {
             }
         }
         return fetched;
+    }
+
+    /**
+     * Overlays exact caller-captured commit IDs for repositories the caller just changed onto the commit hashes
+     * otherwise resolved via {@link ExerciseVersionCommitHashResolver}. This avoids a race where a repository was
+     * committed to by the current operation but a fresh {@code git} lookup would not yet (reliably) observe the new
+     * commit, while still resolving every other repository normally.
+     *
+     * @param resolvedCommitHashes the commit hashes resolved via {@link ExerciseVersionCommitHashResolver}, or {@code null} for non-programming exercises
+     * @param repositoryCommitIds  exact commit IDs keyed by repository type; missing entries fall back to {@code resolvedCommitHashes}
+     * @return the resulting commit hashes, or {@code null} if {@code resolvedCommitHashes} is {@code null}
+     */
+    private static ProgrammingExerciseSnapshotDTO.@Nullable CommitHashesDTO overlayCommitHashes(ProgrammingExerciseSnapshotDTO.@Nullable CommitHashesDTO resolvedCommitHashes,
+            Map<RepositoryType, String> repositoryCommitIds) {
+        if (resolvedCommitHashes == null || repositoryCommitIds.isEmpty()) {
+            return resolvedCommitHashes;
+        }
+        String templateCommitHash = repositoryCommitIds.getOrDefault(RepositoryType.TEMPLATE, resolvedCommitHashes.templateCommitHash());
+        String solutionCommitHash = repositoryCommitIds.getOrDefault(RepositoryType.SOLUTION, resolvedCommitHashes.solutionCommitHash());
+        String testsCommitHash = repositoryCommitIds.getOrDefault(RepositoryType.TESTS, resolvedCommitHashes.testsCommitHash());
+        return new ProgrammingExerciseSnapshotDTO.CommitHashesDTO(templateCommitHash, solutionCommitHash, testsCommitHash, resolvedCommitHashes.auxiliaryRepositoryCommitHashes());
     }
 
     /**
