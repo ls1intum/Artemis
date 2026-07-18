@@ -54,7 +54,9 @@ class ProgrammingExerciseServiceIntegrationTest extends AbstractProgrammingInteg
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void importProgrammingExerciseBasis_baseReferencesGotCloned() {
-        final var newlyImported = importExerciseBase();
+        // Re-fetch the imported exercise with all references eagerly initialized instead of relying on lazy proxies:
+        // the import runs without an open session, so a returned lazy collection could not be read here.
+        final var newlyImported = programmingExerciseUtilService.loadProgrammingExerciseWithEagerReferences(importExerciseBase());
 
         assertThat(newlyImported.getId()).isNotEqualTo(programmingExercise.getId());
         assertThat(newlyImported).isNotSameAs(programmingExercise);
@@ -70,10 +72,11 @@ class ProgrammingExerciseServiceIntegrationTest extends AbstractProgrammingInteg
         assertThat(newlyImported.getNumberOfComplaints()).isNull();
         assertThat(newlyImported.getNumberOfMoreFeedbackRequests()).isNull();
         assertThat(newlyImported.getNumberOfSubmissions()).isNull();
-        assertThat(newlyImported.getAttachments()).isNull();
-        assertThat(newlyImported.getTutorParticipations()).isNull();
-        assertThat(newlyImported.getExampleSubmissions()).isNull();
-        assertThat(newlyImported.getStudentParticipations()).isNull();
+        // Student-facing data is not copied, so these collections are empty on the imported exercise.
+        assertThat(newlyImported.getAttachments()).isEmpty();
+        assertThat(newlyImported.getTutorParticipations()).isEmpty();
+        assertThat(newlyImported.getExampleSubmissions()).isEmpty();
+        assertThat(newlyImported.getStudentParticipations()).isEmpty();
         final var newTestCaseIDs = newlyImported.getTestCases().stream().map(ProgrammingExerciseTestCase::getId).collect(Collectors.toSet());
         assertThat(newlyImported.getTestCases()).hasSameSizeAs(programmingExercise.getTestCases());
         assertThat(programmingExercise.getTestCases()).noneMatch(testCase -> newTestCaseIDs.contains(testCase.getId()));

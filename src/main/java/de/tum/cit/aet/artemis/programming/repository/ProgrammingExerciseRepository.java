@@ -59,6 +59,23 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
             "submissionPolicy", "buildConfig" })
     Optional<ProgrammingExercise> findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesAndBuildConfigById(long exerciseId);
 
+    @EntityGraph(type = LOAD, attributePaths = { "templateParticipation", "solutionParticipation", "teamAssignmentConfig", "categories", "auxiliaryRepositories",
+            "submissionPolicy", "buildConfig", "gradingCriteria", "gradingCriteria.structuredGradingInstructions" })
+    Optional<ProgrammingExercise> findWithImportRelevantReferencesById(long exerciseId);
+
+    /**
+     * Fetches a programming exercise with the associations that the import result carries: template and solution
+     * participation, team assignment config, categories, auxiliary repositories, submission policy, build config and
+     * grading criteria (with their structured instructions). Used to return a fully initialized exercise from the import,
+     * which runs without an open session. Throws if the exercise does not exist.
+     *
+     * @param exerciseId the id of the imported programming exercise
+     * @return the programming exercise with the import-relevant associations initialized
+     */
+    default ProgrammingExercise findWithImportRelevantReferencesByIdElseThrow(long exerciseId) {
+        return getValueElseThrow(findWithImportRelevantReferencesById(exerciseId), exerciseId);
+    }
+
     @EntityGraph(type = LOAD, attributePaths = { "templateParticipation", "solutionParticipation", "teamAssignmentConfig", "categories", "competencyLinks.competency",
             "auxiliaryRepositories", "submissionPolicy" })
     Optional<ProgrammingExercise> findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesAndCompetenciesById(long exerciseId);
