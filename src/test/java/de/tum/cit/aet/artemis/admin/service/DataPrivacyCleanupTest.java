@@ -4,8 +4,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyMap;
+import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.timeout;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
 import java.io.IOException;
@@ -26,7 +27,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.account.util.UserUtilService;
-import de.tum.cit.aet.artemis.communication.repository.PostRepository;
+import de.tum.cit.aet.artemis.communication.test_repository.PostTestRepository;
 import de.tum.cit.aet.artemis.core.domain.Language;
 import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
 import de.tum.cit.aet.artemis.core.util.CourseUtilService;
@@ -34,6 +35,7 @@ import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.domain.CourseConfiguration;
 import de.tum.cit.aet.artemis.course.repository.CourseConfigurationRepository;
 import de.tum.cit.aet.artemis.course.service.CourseDataRetentionService;
+import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
@@ -42,9 +44,12 @@ import de.tum.cit.aet.artemis.exercise.repository.ExerciseTestRepository;
 import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.fileupload.util.ZipFileTestUtilService;
+import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismCase;
+import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismSubmission;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismVerdict;
 import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismCaseRepository;
+import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismSubmissionRepository;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.util.TextExerciseUtilService;
@@ -111,7 +116,13 @@ class DataPrivacyCleanupTest extends AbstractSpringIntegrationIndependentTest {
     private PlagiarismCaseRepository plagiarismCaseRepository;
 
     @Autowired
-    private PostRepository postRepository;
+    private PlagiarismSubmissionRepository plagiarismSubmissionRepository;
+
+    @Autowired
+    private ExamUtilService examUtilService;
+
+    @Autowired
+    private PostTestRepository postRepository;
 
     @Value("${artemis.course-archives-path}")
     private Path courseArchivesDirPath;
@@ -187,6 +198,8 @@ class DataPrivacyCleanupTest extends AbstractSpringIntegrationIndependentTest {
     void notEnrolledUserCleanupWarnsThenDeletesOnlyAfterGraceAndSparesTheRest() {
         Instant longAgo = ZonedDateTime.now().minusYears(1).toInstant();
         doReturn(true).when(mailSendingService).isMailConfigured();
+        // The warning is sent synchronously and the "warned" stamp is only written when the send succeeds.
+        doReturn(true).when(mailSendingService).buildAndSendSyncReporting(any(), any(), anyList(), any(), anyMap());
 
         int baselineWarnCount = dataCleanupService.countNotEnrolledUsersWarning().users();
 
@@ -209,7 +222,7 @@ class DataPrivacyCleanupTest extends AbstractSpringIntegrationIndependentTest {
         // Phase 1 (warn): exactly the one candidate is counted (enrolled, recent, and the already-warned bot excluded).
         assertThat(dataCleanupService.countNotEnrolledUsersWarning().users()).isEqualTo(baselineWarnCount + 1);
         dataCleanupService.warnNotEnrolledUsers();
-        verify(mailSendingService, timeout(5000).atLeastOnce()).buildAndSendAsync(any(), any(), anyList(), any(), anyMap()); // wait for the async warning email
+        verify(mailSendingService, atLeastOnce()).buildAndSendSyncReporting(any(), any(), anyList(), any(), anyMap());
         assertThat(userRepository.findById(toDeleteId)).get().extracting(User::getDeletionWarningSentDate).isNotNull();
         assertThat(userRepository.findById(enrolled.getId())).get().extracting(User::getDeletionWarningSentDate).isNull();
         assertThat(userRepository.findById(recent.getId())).get().extracting(User::getDeletionWarningSentDate).isNull();
@@ -240,12 +253,49 @@ class DataPrivacyCleanupTest extends AbstractSpringIntegrationIndependentTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "ADMIN")
+    void warnDoesNotStampOrDeleteWhenTheWarningCannotBeDelivered() {
+        // The central GDPR guarantee: an account is only advanced to "warned" (and thus eligible for deletion) once a
+        // warning was actually delivered. Here mail is configured but every send fails, so the account must not be
+        // stamped and must never be deleted, even past the grace period.
+        Instant longAgo = ZonedDateTime.now().minusYears(1).toInstant();
+        doReturn(true).when(mailSendingService).isMailConfigured();
+        doReturn(false).when(mailSendingService).buildAndSendSyncReporting(any(), any(), anyList(), any(), anyMap());
+        User sendFails = notEnrolledUser(TEST_PREFIX + "sendfails", longAgo);
+
+        dataCleanupService.warnNotEnrolledUsers();
+
+        verify(mailSendingService, atLeastOnce()).buildAndSendSyncReporting(any(), any(), anyList(), any(), anyMap());
+        assertThat(userRepository.findById(sendFails.getId())).get().extracting(User::getDeletionWarningSentDate).isNull();
+
+        // No warning was ever stamped, so phase 2 cannot delete the account (even though it is well past the grace period).
+        dataCleanupService.deleteNotEnrolledUsers();
+        assertThat(userRepository.findById(sendFails.getId())).get().extracting(User::isDeleted).isEqualTo(false);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "ADMIN")
+    void warnDoesNothingWhenMailIsNotConfigured() {
+        // If mail is not configured the warn phase must warn nobody and stamp nobody, so no account can ever be scheduled
+        // for deletion without prior notice.
+        Instant longAgo = ZonedDateTime.now().minusYears(1).toInstant();
+        doReturn(false).when(mailSendingService).isMailConfigured();
+        User candidate = notEnrolledUser(TEST_PREFIX + "nomailcand", longAgo);
+
+        dataCleanupService.warnNotEnrolledUsers();
+
+        verify(mailSendingService, never()).buildAndSendSyncReporting(any(), any(), anyList(), any(), anyMap());
+        assertThat(userRepository.findById(candidate.getId())).get().extracting(User::getDeletionWarningSentDate).isNull();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "ADMIN")
     void warnCreatesRecoverableArchiveWithStudentDataThatSurvivesTheReset() throws IOException {
         // The core "no data lost" guarantee for enabling automation: before any student data is deleted, the warn phase
         // must produce a real, non-empty course archive that actually CONTAINS the students' submissions, and that
         // backup must survive the subsequent reset. This runs the REAL archive (CourseArchiveService) and the REAL
         // reset (CourseResetService) end to end; only the external mail service is stubbed.
         doReturn(true).when(mailSendingService).isMailConfigured();
+        doReturn(true).when(mailSendingService).buildAndSendSyncReporting(any(), any(), anyList(), any(), anyMap());
 
         // A finished course with a real, submitted text submission for <prefix>student1.
         Course course = courseUtilService.addCourseWithModelingAndTextExercise();
@@ -264,10 +314,10 @@ class DataPrivacyCleanupTest extends AbstractSpringIntegrationIndependentTest {
         textExerciseUtilService.saveTextSubmission(textExercise, ParticipationFactory.generateTextSubmission("example text", Language.ENGLISH, true), TEST_PREFIX + "student1");
         assertThat(studentParticipationRepository.findByExerciseIdAndTestRunWithEagerSubmissionsResultAssessor(textExerciseId, false)).isNotEmpty();
 
-        // Phase 1: warn + archive (real). Wait for the async instructor email to be dispatched.
+        // Phase 1: warn + archive (real).
         int warned = courseDataRetentionService.warnAndArchiveDueCourses();
         assertThat(warned).isGreaterThanOrEqualTo(1);
-        verify(mailSendingService, timeout(5000).atLeastOnce()).buildAndSendAsync(any(), any(), anyList(), any(), anyMap());
+        verify(mailSendingService, atLeastOnce()).buildAndSendSyncReporting(any(), any(), anyList(), any(), anyMap());
 
         Course archivedCourse = courseRepository.findById(courseId).orElseThrow();
         assertThat(archivedCourse.hasCourseArchive()).isTrue();
@@ -333,6 +383,15 @@ class DataPrivacyCleanupTest extends AbstractSpringIntegrationIndependentTest {
         long oldPostId = plagiarismCaseRepository.findByStudentIdAndExerciseIdWithPost(student.getId(), oldExercise.getId()).orElseThrow().getPost().getId();
         assertThat(postRepository.findById(oldPostId)).isPresent();
 
+        // Attach a plagiarism submission whose plagiarism_case_id FK is RESTRICT. The delete must null this FK (via the
+        // per-submission modifying query) BEFORE removing the case; without that null-out the case delete would throw an
+        // FK violation. This makes the test fail if that null-out loop is ever removed.
+        PlagiarismSubmission oldSubmission = new PlagiarismSubmission();
+        oldSubmission.setStudentLogin(student.getLogin());
+        oldSubmission.setSubmissionId(123L);
+        oldSubmission.setPlagiarismCase(oldCasesBefore.getFirst());
+        long oldSubmissionId = plagiarismSubmissionRepository.save(oldSubmission).getId();
+
         // The count preview counts the seeded old-course case (it is course-end-date driven, like the deletion itself).
         assertThat(dataCleanupService.countPlagiarismCasesOfOldCourses().plagiarismCases()).isGreaterThanOrEqualTo(1);
 
@@ -343,9 +402,32 @@ class DataPrivacyCleanupTest extends AbstractSpringIntegrationIndependentTest {
         assertThat(plagiarismCaseRepository.findByCourseId(oldCourseId)).isEmpty();
         assertThat(postRepository.findById(oldPostId)).isEmpty();
         assertThat(courseRepository.findById(oldCourseId)).isPresent();
+        // The submission row survives, but its RESTRICT reference to the deleted case was cleared first.
+        assertThat(plagiarismSubmissionRepository.findById(oldSubmissionId)).get().extracting(PlagiarismSubmission::getPlagiarismCase).isNull();
 
         // Recent course's plagiarism case survives untouched.
         assertThat(plagiarismCaseRepository.findByCourseId(recentCourseId)).hasSize(1);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "ADMIN")
+    void deletePlagiarismCasesAlsoRemovesExamExerciseCasesOfOldCourses() {
+        // Exam plagiarism cases reach their course via the exam, not directly, and are just as grade-relevant. They must
+        // be included in the 5-year retention deletion (they are never erased by the course reset, which retains
+        // plagiarism cases), so a regression narrowing the query back to only direct-course exercises is caught here.
+        User student = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        ModelingExercise examExercise = examUtilService.addCourseExamExerciseGroupWithOneModelingExercise();
+        Course examCourse = examExercise.getExerciseGroup().getExam().getCourse();
+        examCourse.setEndDate(ZonedDateTime.now().minusYears(6));
+        courseRepository.save(examCourse);
+        exerciseUtilService.createPlagiarismCaseForUserForExercise(examExercise, student, TEST_PREFIX, PlagiarismVerdict.PLAGIARISM);
+
+        long examCaseId = plagiarismCaseRepository.findByStudentIdAndExerciseIdWithPost(student.getId(), examExercise.getId()).orElseThrow().getId();
+        assertThat(dataCleanupService.countPlagiarismCasesOfOldCourses().plagiarismCases()).isGreaterThanOrEqualTo(1);
+
+        dataCleanupService.deletePlagiarismCasesOfOldCourses();
+
+        assertThat(plagiarismCaseRepository.findById(examCaseId)).isEmpty();
     }
 
     private static boolean fileContains(Path file, String text) {

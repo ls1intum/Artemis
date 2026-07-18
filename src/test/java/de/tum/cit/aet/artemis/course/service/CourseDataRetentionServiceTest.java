@@ -112,6 +112,7 @@ class CourseDataRetentionServiceTest {
         when(courseRepository.findByIdWithExercisesAndExerciseDetailsAndLecturesElseThrow(1L)).thenReturn(due);
         when(courseArchiveService.archiveCourseSynchronously(due)).thenReturn(true);
         when(mailSendingService.isMailConfigured()).thenReturn(true);
+        when(mailSendingService.buildAndSendSyncReporting(any(MailRecipientDTO.class), any(), anyList(), any(), anyMap())).thenReturn(true);
         User instructor = new User();
         instructor.setLogin("instructor1");
         instructor.setEmail("instructor1@artemis.test");
@@ -122,7 +123,7 @@ class CourseDataRetentionServiceTest {
 
         assertThat(warned).isEqualTo(1);
         verify(courseArchiveService).archiveCourseSynchronously(due);
-        verify(mailSendingService).buildAndSendAsync(any(MailRecipientDTO.class), eq("email.courseStudentDataResetWarning.title"), anyList(),
+        verify(mailSendingService).buildAndSendSyncReporting(any(MailRecipientDTO.class), eq("email.courseStudentDataResetWarning.title"), anyList(),
                 eq("mail/courseStudentDataResetWarningEmail"), anyMap());
         verify(courseRepository).save(due);
         assertThat(due.getCourseConfiguration()).isNotNull();
@@ -164,7 +165,7 @@ class CourseDataRetentionServiceTest {
         int warned = service().warnAndArchiveDueCourses();
 
         assertThat(warned).isZero();
-        verify(mailSendingService, never()).buildAndSendAsync(any(), any(), anyList(), any(), anyMap());
+        verify(mailSendingService, never()).buildAndSendSyncReporting(any(), any(), anyList(), any(), anyMap());
         verify(courseRepository, never()).save(any());
     }
 

@@ -4,8 +4,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyMap;
+import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 
 import java.time.Instant;
@@ -169,12 +169,13 @@ class ScheduledDataCleanupTest extends AbstractSpringIntegrationIndependentTest 
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "ADMIN")
     void scheduledWarnNotEnrolledUsersStampsWarningOnlyForInactiveWhenEnabled() {
         doReturn(true).when(mailSendingService).isMailConfigured();
+        doReturn(true).when(mailSendingService).buildAndSendSyncReporting(any(), any(), anyList(), any(), anyMap());
         User inactive = backdatedNotEnrolledUser(TEST_PREFIX + "warncand"); // inactive, not yet warned -> warn
         User recent = notEnrolledUser(TEST_PREFIX + "warnrecent"); // recently active -> must NOT be warned
 
         scheduleService(false, false, false, false, true, false, false).warnNotEnrolledUsers();
 
-        verify(mailSendingService, timeout(5000).atLeastOnce()).buildAndSendAsync(any(), any(), anyList(), any(), anyMap()); // wait for the async warning email
+        verify(mailSendingService, atLeastOnce()).buildAndSendSyncReporting(any(), any(), anyList(), any(), anyMap());
         assertThat(userRepository.findById(inactive.getId())).get().extracting(User::getDeletionWarningSentDate).isNotNull();
         assertThat(userRepository.findById(recent.getId())).get().extracting(User::getDeletionWarningSentDate).isNull();
     }

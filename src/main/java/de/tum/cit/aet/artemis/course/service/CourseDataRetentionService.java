@@ -213,9 +213,14 @@ public class CourseDataRetentionService {
                 continue;
             }
             try {
-                mailSendingService.buildAndSendAsync(MailRecipientDTO.from(instructor), RESET_WARNING_EMAIL_SUBJECT_KEY, List.of(course.getTitle()), RESET_WARNING_EMAIL_TEMPLATE,
-                        contextVariables);
-                notified++;
+                // Send synchronously and only count instructors who were actually warned, so the reset lifecycle
+                // advances only once at least one warning was really delivered (an SMTP outage warns nobody -> the
+                // caller does not advance the lifecycle -> no student data is reset without a delivered warning).
+                boolean sent = mailSendingService.buildAndSendSyncReporting(MailRecipientDTO.from(instructor), RESET_WARNING_EMAIL_SUBJECT_KEY, List.of(course.getTitle()),
+                        RESET_WARNING_EMAIL_TEMPLATE, contextVariables);
+                if (sent) {
+                    notified++;
+                }
             }
             catch (Exception ex) {
                 log.error("Failed to send student-data reset warning email to instructor {} for course {}", instructor.getLogin(), course.getId(), ex);

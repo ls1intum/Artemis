@@ -451,10 +451,15 @@ public class DataCleanupService {
                     continue; // cannot warn this user, so do not schedule their account for deletion
                 }
                 try {
-                    mailSendingService.buildAndSendAsync(MailRecipientDTO.from(user), NOT_ENROLLED_DELETION_WARNING_SUBJECT_KEY, List.of(),
+                    // Send synchronously and only stamp the warning once it was actually delivered. Otherwise an SMTP
+                    // outage would stamp every user as "warned" (async enqueue never reports the later delivery failure)
+                    // and phase 2 would soft-delete and anonymize accounts that never received any notice.
+                    boolean sent = mailSendingService.buildAndSendSyncReporting(MailRecipientDTO.from(user), NOT_ENROLLED_DELETION_WARNING_SUBJECT_KEY, List.of(),
                             NOT_ENROLLED_DELETION_WARNING_EMAIL_TEMPLATE, contextVariables);
-                    userRepository.updateDeletionWarningSentDate(user.getLogin(), ZonedDateTime.now().toInstant());
-                    warned++;
+                    if (sent) {
+                        userRepository.updateDeletionWarningSentDate(user.getLogin(), ZonedDateTime.now().toInstant());
+                        warned++;
+                    }
                 }
                 catch (Exception e) {
                     log.error("Failed to warn not-enrolled user {} about the upcoming account deletion", user.getLogin(), e);
@@ -472,7 +477,9 @@ public class DataCleanupService {
      */
     public NotEnrolledUsersCleanupCountDTO countNotEnrolledUsersWarning() {
         var inactiveBefore = ZonedDateTime.now().minusMonths(dataCleanupProperties.notEnrolledUsersInactivityMonths()).toInstant();
-        long count = userRepository.findNotEnrolledUsersToWarn(inactiveBefore).stream().filter(user -> !user.isBot()).count();
+        // Mirror the exact filter of warnNotEnrolledUsers (not a bot, activated, has an email); otherwise the preview
+        // would keep counting accounts that can never be warned (nor deleted), so the count would never drain to zero.
+        long count = userRepository.findNotEnrolledUsersToWarn(inactiveBefore).stream().filter(user -> !user.isBot() && user.getActivated() && user.getEmail() != null).count();
         return new NotEnrolledUsersCleanupCountDTO((int) count);
     }
 
