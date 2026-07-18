@@ -309,7 +309,8 @@ export class HomeComponent implements OnInit, AfterViewChecked, OnDestroy {
     }
 
     /**
-     * Resets the stage back to the identifier screen.
+     * Resets the authentication stage back to the initial identifier screen
+     * and clears the password input.
      */
     goBack() {
         this.currentStage.set(1);
@@ -317,6 +318,9 @@ export class HomeComponent implements OnInit, AfterViewChecked, OnDestroy {
         this.mainElementFocused = false;
     }
 
+    /**
+     * Executes the traditional password-based authentication flow.
+     */
     login() {
         this.isSubmittingLogin.set(true);
         this.loginService
@@ -336,6 +340,9 @@ export class HomeComponent implements OnInit, AfterViewChecked, OnDestroy {
             });
     }
 
+    /**
+     * Initiates the OpenID Connect (OIDC) single sign-on authentication flow.
+     */
     loginWithOidc() {
         this.isSubmittingLogin.set(true);
         this.loginService
@@ -392,6 +399,10 @@ export class HomeComponent implements OnInit, AfterViewChecked, OnDestroy {
         }
     }
 
+    /**
+     * Validates if the currently entered username or email satisfies both
+     * the length constraints and the dynamic regular expression pattern.
+     */
     checkIdentifierValidity() {
         const meetsLength = this.username !== undefined && this.username.length >= this.USERNAME_MIN_LENGTH && this.username.length <= this.USERNAME_MAX_LENGTH;
 

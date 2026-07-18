@@ -63,3 +63,8 @@ spring:
             token-uri: "${ARTEMIS_OIDC_TOKEN_URI:https://login.tum.de/idp/profile/oidc/token}"
             user-info-uri: "${ARTEMIS_OIDC_USER_INFO_URI:https://login.tum.de/idp/profile/oidc/userinfo}"
             jwk-set-uri: "${ARTEMIS_OIDC_JWK_SET_URI:https://login.tum.de/idp/profile/oidc/keyset}"
+
+info:
+  oidc:
+    # Customizable string used for the external login selection screen button (e.g. 'TUM Login')
+    buttonLabel: "${ARTEMIS_OIDC_DISPLAY_NAME:TUM Login}"
