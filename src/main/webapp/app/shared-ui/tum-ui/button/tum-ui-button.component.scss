@@ -11,10 +11,11 @@
     line-height: 1.25;
     cursor: pointer;
     white-space: nowrap;
-    // Match the PrimeNG Aura button radius. Set structurally (not via the `rounded-md` utility) because
-    // Artemis' global `button` reset zeroes the utility's border-radius on native <button> elements,
-    // which made the kit buttons render square (PR #13226 review).
-    border-radius: 6px;
+    // Radius from the Tailwind design token (--radius-md = 0.375rem, matching the PrimeNG Aura button). Referenced
+    // as the CSS variable rather than the `rounded-md` utility class because Artemis' global `button` reset zeroes
+    // the utility's border-radius on native <button> elements, which made the kit buttons render square (PR #13226
+    // review). Using the token variable keeps the radius in sync with the design scale.
+    border-radius: var(--radius-md);
 
     // Hover/active state layer, matching PrimeNG's subtle overlay. Applied as a pseudo-element rather than
     // via Tailwind `hover:bg-*` utilities, which do not take effect on native <button> elements under
