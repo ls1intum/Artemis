@@ -17,6 +17,7 @@ import java.util.stream.Stream;
 import org.apache.commons.io.FileUtils;
 
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 
 final class VerifyScriptTestHarness {
 
@@ -27,8 +28,11 @@ final class VerifyScriptTestHarness {
         FileUtils.writeStringToFile(path.toFile(), content.toString(), StandardCharsets.UTF_8);
     }
 
+    /** Renders a default Java verify.sh (generation only ever runs for Java/Maven exercises, so tests that do not care about the language use this fixture). */
     static String verifyScript() {
-        return new SandboxBuildCommandService(Optional.empty(), Optional.empty()).verifyScriptContent(new ProgrammingExercise());
+        ProgrammingExercise java = new ProgrammingExercise();
+        java.setProgrammingLanguage(ProgrammingLanguage.JAVA);
+        return new SandboxBuildCommandService(Optional.empty(), Optional.empty()).verifyScriptContent(java);
     }
 
     static String verifyScript(SandboxBuildCommandService service, ProgrammingExercise exercise) {
@@ -62,38 +66,20 @@ final class VerifyScriptTestHarness {
 
     static Map<String, String> collect(SandboxBuildCommandService service, ProgrammingExercise exercise, Path tempDir, String name, Map<String, String> buildFiles)
             throws IOException, InterruptedException {
-        return collect(service, exercise, tempDir, name, buildFiles, Map.of());
-    }
-
-    /**
-     * Same as {@link #collect(SandboxBuildCommandService, ProgrammingExercise, Path, String, Map)}, but also seeds {@code rawMavenReportFiles} (paths relative to a dedicated
-     * maven-reports directory bound to {@code $RAW_MAVEN_REPORTS_DIR}) build-fresh, so Java exercises — whose Surefire/Failsafe reports are redirected outside {@code $BUILD_DIR}
-     * — can be exercised through the same live collect snippet.
-     */
-    static Map<String, String> collect(SandboxBuildCommandService service, ProgrammingExercise exercise, Path tempDir, String name, Map<String, String> buildFiles,
-            Map<String, String> rawMavenReportFiles) throws IOException, InterruptedException {
         Path buildDir = Files.createDirectories(tempDir.resolve(name).resolve("build"));
         Path reportsParent = Files.createDirectories(tempDir.resolve(name).resolve("reports-root"));
-        Path rawMavenReportsDir = Files.createDirectories(tempDir.resolve(name).resolve("maven-reports"));
         Path marker = staleBuildStartMarker(buildDir);
         for (Map.Entry<String, String> file : buildFiles.entrySet()) {
             Path target = buildDir.resolve(file.getKey());
             Files.createDirectories(target.getParent());
             writeString(target, file.getValue());
         }
-        for (Map.Entry<String, String> file : rawMavenReportFiles.entrySet()) {
-            Path target = rawMavenReportsDir.resolve(file.getKey());
-            Files.createDirectories(target.getParent());
-            writeString(target, file.getValue());
-            Files.setLastModifiedTime(target, FileTime.from(Instant.now()));
-        }
 
         String fullScript = verifyScript(service, exercise);
         String collectSnippet = slice(fullScript, "rm -rf \"$REPORTS_DIR\"", "echo \"" + SandboxBuildCommandService.COLLECTED_MARKER);
         // Bind the variables the collect snippet reads; point REPORTS_DIR at a per-run dir so we can read back what was collected.
         Path reportsDir = reportsParent.resolve("solution");
-        String script = "BUILD_DIR='" + buildDir + "'\nBUILD_START_MARKER='" + marker + "'\nREPORTS_DIR='" + reportsDir + "'\nRAW_MAVEN_REPORTS_DIR='" + rawMavenReportsDir
-                + "'\nrc=0\nseq=0\n" + collectSnippet + "\n";
+        String script = "BUILD_DIR='" + buildDir + "'\nBUILD_START_MARKER='" + marker + "'\nREPORTS_DIR='" + reportsDir + "'\nrc=0\nseq=0\n" + collectSnippet + "\n";
         Path scriptFile = tempDir.resolve(name + "-collect.sh");
         writeString(scriptFile, script);
         runSh(scriptFile);

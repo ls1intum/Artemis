@@ -188,9 +188,6 @@ public class AgentSystemPromptService {
         }
         String testLocation = context.testCheckoutDir().isBlank() ? "the build root, next to assignment/" : context.testCheckoutDir() + "/";
         section.append("\n- Layout: your assignment is checked out into assignment/; the tests into ").append(testLocation);
-        if (context.materializesSolution()) {
-            section.append("; a sibling solution/ is also checked out because this harness references it");
-        }
         if (!context.phaseScripts().isEmpty()) {
             section.append("\n- Build phases (run in order from the build root, verbatim):");
             int index = 1;

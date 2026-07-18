@@ -59,9 +59,6 @@ public class SandboxBuildCommandService {
      */
     static final String REPORTS_DIR = PRISTINE_VERIFY_DIR + "/reports";
 
-    /** Fresh Maven reporter output. Ares-generated tests may write only below {@code target}, not this path. */
-    static final String RAW_MAVEN_REPORTS_DIR = PRISTINE_VERIFY_DIR + "/maven-reports";
-
     /** Prefix of the non-authoritative liveness line {@code verify.sh} prints; the verdict is read from the collected files, not this line. */
     static final String COLLECTED_MARKER = "HYPERION_COLLECTED";
 
@@ -152,23 +149,16 @@ public class SandboxBuildCommandService {
         String phaseSection = buildPhaseSection(recipe.phases());
         boolean java = exercise.getProgrammingLanguage() == ProgrammingLanguage.JAVA;
         String javaSecurityManagerAllow = java
-                ? "export JAVA_TOOL_OPTIONS=\"${JAVA_TOOL_OPTIONS:-} -Djava.security.manager=allow\"\nexport GRADLE_OPTS=\"${GRADLE_OPTS:-} -Djava.security.manager=allow\""
+                ? "export JAVA_TOOL_OPTIONS=\"${JAVA_TOOL_OPTIONS:-} -Djava.security.manager=allow\"\nexport MAVEN_OPTS=\"${MAVEN_OPTS:-} -Djava.security.manager=allow\"\nexport GRADLE_OPTS=\"${GRADLE_OPTS:-} -Djava.security.manager=allow\""
                 : ": # no Java/Ares security-manager compatibility flags needed";
-        String junitSearchRoot = java ? "\"$RAW_MAVEN_REPORTS_DIR\"" : "\"$BUILD_DIR\"";
-        String junitFindExpression = java ? "-name '*.xml'" : findExpression;
         // CI placeholder values for the seeded harness, mapped to the real checkout layout. With no solution checkout the solution placeholder never appears, so its fallback is
         // moot.
-        String solutionPlaceholderValue = recipe.solutionDir().isEmpty() ? "assignment" : recipe.solutionDir();
         String testPlaceholderValue = recipe.testDir().isEmpty() ? "." : recipe.testDir();
-        String assignmentParentPlaceholderValue = exercise.getProgrammingLanguage() == ProgrammingLanguage.PYTHON ? recipe.assignmentDir().replace('/', '.')
-                : recipe.assignmentDir();
-        // Materialize a sibling solution/ exactly when real CI would (language defines a solution checkout path — Haskell/OCaml — and the exercise checks it out), so the harness
-        // reference (e.g. the Haskell cabal's `library solution`) resolves. Other languages get no solution/, keeping their differential unchanged.
-        boolean materializeSolution = recipe.materializesSolution();
-        String solutionCopySection = materializeSolution
-                ? "mkdir -p \"$BUILD_DIR/" + recipe.solutionDir() + "\"\n                cp -a \"$WORKSPACE/solution/.\" \"$BUILD_DIR/" + recipe.solutionDir()
-                        + "\"/ 2>/dev/null || true"
-                : ": # this language's harness references no sibling solution/";
+        // Java/Maven never checks out a sibling solution/ during the assignment build, so the placeholder always collapses to the assignment directory and no solution/ is
+        // materialized.
+        String solutionPlaceholderValue = "assignment";
+        String assignmentParentPlaceholderValue = recipe.assignmentDir();
+        String solutionCopySection = ": # this language's harness references no sibling solution/";
         String readinessOverlay = readinessProbe ? """
                 # Keep the exercise's immutable build harness, but remove every exercise-owned Java source before installing the trusted readiness fixture.
                 rm -rf "$TEST_DEST/test" "$TEST_DEST/structural/test" "$TEST_DEST/behavior/test" "$ASSIGNMENT_DEST"
@@ -195,7 +185,6 @@ public class SandboxBuildCommandService {
                 fi
                 WORKSPACE="@@WORKSPACE@@"
                 REPORTS_DIR="@@REPORTS_DIR@@/$ASSIGNMENT"
-                RAW_MAVEN_REPORTS_DIR="@@RAW_MAVEN_REPORTS_DIR@@/$ASSIGNMENT"
                 BUILD_DIR=$(mktemp -d /tmp/hyperion-verify.XXXXXX) || exit 70
                 trap 'rm -rf "$BUILD_DIR"' EXIT
                 # Materialize the CI checkout layout (-a preserves exec bits and binaries).
@@ -223,24 +212,16 @@ public class SandboxBuildCommandService {
                         -e 's#${solutionWorkingDirectory}#@@SOLUTION_DIR@@#g' \\
                         -e 's#${testWorkingDirectory}#@@TEST_DIR@@#g' "$f" > "$f.hyp" 2>/dev/null && mv "$f.hyp" "$f" 2>/dev/null || rm -f "$f.hyp" 2>/dev/null
                 done
-                # Remove every pre-existing report before the phases run. Java Maven reports are redirected outside the test JVM's Ares-whitelisted target tree; each phase gets a
-                # separate directory so structural and behaviour reports cannot overwrite one another.
+                # Anti-forgery: delete every pre-existing report before the phases run (the agent can plant one in tests/ and cp -a preserves its mtime), so only reports written
+                # this run are collected.
                 find "$BUILD_DIR" -type f \\( @@REPORT_FIND@@ \\) -delete 2>/dev/null || true
-                rm -rf "$RAW_MAVEN_REPORTS_DIR" 2>/dev/null || true
-                mkdir -p "$RAW_MAVEN_REPORTS_DIR" || exit 70
-                # Reference marker; collection accepts only reports created by this build.
+                # Reference marker; collection takes only reports NEWER than it, so a planted report that escaped the delete still cannot be collected.
                 BUILD_START_MARKER="$BUILD_DIR/.hyperion-build-start"
                 : > "$BUILD_START_MARKER"
                 @@JAVA_SECURITY_MANAGER_ALLOW@@
                 # Run the exercise's real build phases, each from the build root. A non-zero exit (failing tests or a compile error) is expected for the template.
                 rc=0
-                phase_seq=0
                 run_phase() {
-                    phase_seq=$((phase_seq + 1))
-                    phase_reports="$RAW_MAVEN_REPORTS_DIR/$phase_seq"
-                    mkdir -p "$phase_reports" || exit 70
-                    MAVEN_OPTS="${MAVEN_OPTS:-} -Djava.security.manager=allow -Dsurefire.reportsDirectory=$phase_reports/surefire -Dfailsafe.reportsDirectory=$phase_reports/failsafe"
-                    export MAVEN_OPTS
                     ( cd "$BUILD_DIR" || exit 70; set -e; eval "$1" )
                     phase_rc=$?
                     if [ "$phase_rc" -ne 0 ] && [ "$rc" -eq 0 ]; then rc=$phase_rc; fi
@@ -261,7 +242,7 @@ public class SandboxBuildCommandService {
                 }
                 seq=0
                 junit_report_list=$(mktemp /tmp/hyperion-junit-reports.XXXXXX) || exit 70
-                find @@JUNIT_SEARCH_ROOT@@ -type f -newer "$BUILD_START_MARKER" \\( @@JUNIT_FIND@@ \\) > "$junit_report_list" 2>/dev/null || true
+                find "$BUILD_DIR" -type f -newer "$BUILD_START_MARKER" \\( @@REPORT_FIND@@ \\) > "$junit_report_list" 2>/dev/null || true
                 while IFS= read -r report; do
                     seq=$((seq + 1)); collect_one "$seq" "$report" "@@JUNIT_TOKEN@@"; collected_tests=$((collected_tests + 1))
                 done < "$junit_report_list"
@@ -276,8 +257,7 @@ public class SandboxBuildCommandService {
                 .replace("@@REPORT_FIND@@", findExpression).replace("@@JAVA_SECURITY_MANAGER_ALLOW@@", javaSecurityManagerAllow).replace("@@PHASES@@", phaseSection)
                 .replace("@@SCA_COLLECT@@", buildScaCollectSection(scaFindExpression)).replace("@@NAME_SEP@@", COLLECTED_NAME_SEPARATOR)
                 .replace("@@JUNIT_TOKEN@@", COLLECTED_JUNIT_TOKEN).replace("@@COLLECTED_MARKER@@", COLLECTED_MARKER).replace("@@READINESS_OVERLAY@@", readinessOverlay)
-                .replace("@@READINESS_FIXTURE@@", READINESS_FIXTURE_DIR).replace("@@JUNIT_SEARCH_ROOT@@", junitSearchRoot).replace("@@JUNIT_FIND@@", junitFindExpression)
-                .replace("@@RAW_MAVEN_REPORTS_DIR@@", RAW_MAVEN_REPORTS_DIR);
+                .replace("@@READINESS_FIXTURE@@", READINESS_FIXTURE_DIR);
     }
 
     /**
@@ -349,29 +329,21 @@ public class SandboxBuildCommandService {
     }
 
     /**
-     * Sentinel field semantics: empty {@code testDir} = tests at the build root (no {@code tests/} subdir); empty {@code solutionDir} = no sibling solution checkout; empty
-     * {@code scaReportFiles} = SCA disabled.
+     * Sentinel field semantics: empty {@code testDir} = tests at the build root (no {@code tests/} subdir); empty {@code scaReportFiles} = SCA disabled.
      */
-    private record BuildRecipe(List<String> phases, List<String> reportGlobs, String assignmentDir, String testDir, String solutionDir, boolean checkoutSolution,
-            List<String> scaReportFiles) {
-
-        /** True exactly when the language defines a solution checkout path (Haskell/OCaml) AND the exercise checks it out. */
-        boolean materializesSolution() {
-            return !solutionDir.isEmpty() && checkoutSolution;
-        }
+    private record BuildRecipe(List<String> phases, List<String> reportGlobs, String assignmentDir, String testDir, List<String> scaReportFiles) {
     }
 
     /**
      * Summary of the resolved build recipe for the agent's system prompt, derived from the same {@link #resolveBuildRecipe} that renders {@code verify.sh} so prompt and grader
      * cannot drift.
      *
-     * @param phaseScripts         the placeholder-substituted per-phase commands, run in order from the build root
-     * @param reportGlobs          the build-root-relative locations the grader collects test-report XML from
-     * @param testCheckoutDir      where the tests are checked out ({@code ""} = the build root, not a {@code tests/} subdir)
-     * @param materializesSolution whether a sibling {@code solution/} checkout is materialized (Haskell/OCaml only)
-     * @param scaReportFiles       the canonical SCA report file names the grader parses ({@code empty} = SCA disabled)
+     * @param phaseScripts    the placeholder-substituted per-phase commands, run in order from the build root
+     * @param reportGlobs     the build-root-relative locations the grader collects test-report XML from
+     * @param testCheckoutDir where the tests are checked out ({@code ""} = the build root, not a {@code tests/} subdir)
+     * @param scaReportFiles  the canonical SCA report file names the grader parses ({@code empty} = SCA disabled)
      */
-    public record BuildContextSummary(List<String> phaseScripts, List<String> reportGlobs, String testCheckoutDir, boolean materializesSolution, List<String> scaReportFiles) {
+    public record BuildContextSummary(List<String> phaseScripts, List<String> reportGlobs, String testCheckoutDir, List<String> scaReportFiles) {
     }
 
     /**
@@ -382,23 +354,18 @@ public class SandboxBuildCommandService {
      */
     public BuildContextSummary describeBuildContext(ProgrammingExercise exercise) {
         BuildRecipe recipe = resolveBuildRecipe(exercise);
-        boolean materializeSolution = recipe.materializesSolution();
-        return new BuildContextSummary(recipe.phases(), recipe.reportGlobs(), recipe.testDir(), materializeSolution, recipe.scaReportFiles());
+        return new BuildContextSummary(recipe.phases(), recipe.reportGlobs(), recipe.testDir(), recipe.scaReportFiles());
     }
 
     /**
      * Resolves the per-language build recipe from the exact LocalCI build phases (matching real CI), applying the same placeholder substitution mapped to the language's checkout
-     * layout. Falls back to conventional Gradle/Maven commands when the phase template cannot be resolved.
+     * layout. Falls back to a conventional Maven build when the phase template cannot be resolved.
      */
     private BuildRecipe resolveBuildRecipe(ProgrammingExercise exercise) {
         String assignmentDir = checkoutPath(RepositoryCheckoutService.RepositoryCheckoutPath.ASSIGNMENT, exercise,
                 exercise.getBuildConfig() != null ? exercise.getBuildConfig().getAssignmentCheckoutPath() : null, "assignment");
         String testDir = checkoutPath(RepositoryCheckoutService.RepositoryCheckoutPath.TEST, exercise,
                 exercise.getBuildConfig() != null ? exercise.getBuildConfig().getTestCheckoutPath() : null, "");
-        // Defined only for harnesses referencing a sibling solution/ (Haskell/OCaml); other languages make the enum throw -> "" -> no solution/ materialized.
-        String solutionDir = checkoutPath(RepositoryCheckoutService.RepositoryCheckoutPath.SOLUTION, exercise,
-                exercise.getBuildConfig() != null ? exercise.getBuildConfig().getSolutionCheckoutPath() : null, "");
-        boolean checkoutSolution = exercise.getBuildConfig() != null && exercise.getBuildConfig().getCheckoutSolutionRepository();
 
         List<BuildPhaseDTO> phases = List.of();
         if (buildPhasesTemplateService.isPresent()) {
@@ -424,30 +391,28 @@ public class SandboxBuildCommandService {
 
         List<String> phaseScripts = phases.stream().map(BuildPhaseDTO::script).filter(s -> s != null && !s.isBlank()).map(s -> substitute(s, assignmentDir, testDir)).toList();
         if (!phaseScripts.isEmpty()) {
-            return new BuildRecipe(phaseScripts, reportGlobs, assignmentDir, testDir, solutionDir, checkoutSolution, scaReportFiles);
+            return new BuildRecipe(phaseScripts, reportGlobs, assignmentDir, testDir, scaReportFiles);
         }
-        return new BuildRecipe(fallbackBuildPhases(exercise), reportGlobs, assignmentDir, testDir, solutionDir, checkoutSolution, scaReportFiles);
+        return new BuildRecipe(fallbackBuildPhases(exercise), reportGlobs, assignmentDir, testDir, scaReportFiles);
     }
 
-    /** Conventional Java phases used when LocalCI has no project-type-specific template, including the two sequential test layouts. */
+    /**
+     * Conventional Java Maven phases used when LocalCI has no project-type-specific template, including the two sequential test layouts. Generation only ever runs for Java/Maven
+     * exercises ({@link de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.profile.LanguageGenerationProfile}); any other configuration reaching this fallback (e.g. a bare
+     * test fixture with no language set) gets a generic best-effort build attempt rather than a hard failure, since this is a last-resort safety net for a degraded
+     * {@link BuildPhasesTemplateService}, not a design surface for multi-language support.
+     */
     private static List<String> fallbackBuildPhases(ProgrammingExercise exercise) {
         boolean sequential = exercise.getBuildConfig() != null && exercise.getBuildConfig().hasSequentialTestRuns();
-        ProjectType projectType = exercise.getProjectType();
-        if (exercise.getProgrammingLanguage() == ProgrammingLanguage.JAVA && ProjectType.isMavenProject(projectType)) {
+        if (exercise.getProgrammingLanguage() == ProgrammingLanguage.JAVA && ProjectType.isMavenProject(exercise.getProjectType())) {
             if (sequential) {
                 return List.of("cd structural\nmvn -B clean compile", "cd behavior\nmvn -B clean compile", "cd structural\nmvn -B test", "cd behavior\nmvn -B test");
             }
             return List.of("mvn -B clean compile", "mvn -B test");
         }
-        if (exercise.getProgrammingLanguage() == ProgrammingLanguage.JAVA && projectType != null && projectType.isGradle()) {
-            if (sequential) {
-                return List.of("chmod +x ./gradlew\n./gradlew clean compileJava compileTestJava", "./gradlew structuralTests", "./gradlew behaviorTests");
-            }
-            return List.of("chmod +x ./gradlew\n./gradlew clean compileJava compileTestJava", "./gradlew test");
-        }
         return List.of("""
-                if [ -f ./gradlew ]; then chmod +x ./gradlew && ./gradlew clean test --no-daemon;
-                elif [ -f pom.xml ]; then mvn clean test;
+                if [ -f pom.xml ]; then mvn clean test;
+                elif [ -f ./gradlew ]; then chmod +x ./gradlew && ./gradlew clean test --no-daemon;
                 elif [ -f build.gradle ]; then gradle clean test --no-daemon;
                 else echo 'No recognized build system' >&2; exit 2; fi""");
     }

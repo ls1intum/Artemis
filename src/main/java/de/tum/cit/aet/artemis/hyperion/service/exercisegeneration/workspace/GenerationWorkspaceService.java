@@ -392,14 +392,11 @@ public class GenerationWorkspaceService {
      * @return the rendered layout snapshot, or an empty string if it could not be produced
      */
     public String probeWorkspaceLayout(InteractiveSandbox sandbox, String sessionId) {
-        // One shell pass: ls -R the repo dirs, then find+head the build manifests present at their roots (broad language-agnostic union; find emits only the ones that exist).
+        // One shell pass: ls -R the repo dirs, then find+head the build manifest present at their roots. Generation only ever runs for Java/Maven exercises
+        // (LanguageGenerationProfile), so only pom.xml is probed.
         String script = "cd " + WORKSPACE + " 2>/dev/null || exit 0\n" + "echo '--- ls -R " + String.join(" ", REPOSITORY_DIRECTORIES) + " ---'\n" + "ls -R "
                 + String.join(" ", REPOSITORY_DIRECTORIES) + " 2>/dev/null\n" + "for f in $(find " + String.join(" ", REPOSITORY_DIRECTORIES)
-                + " -maxdepth 2 -type f \\( -name pom.xml -o -name 'build.gradle' -o -name 'build.gradle.kts' "
-                + "-o -name 'settings.gradle' -o -name 'settings.gradle.kts' -o -name Cargo.toml -o -name package.json -o -name go.mod -o -name Makefile -o -name CMakeLists.txt "
-                + "-o -name dune-project -o -name dune -o -name '*.cabal' -o -name stack.yaml -o -name pyproject.toml -o -name setup.py -o -name requirements.txt -o -name Gemfile "
-                + "-o -name '*.csproj' -o -name build.sbt -o -name Package.swift -o -name pubspec.yaml -o -name DESCRIPTION -o -name composer.json -o -name '*.bats' \\) "
-                + "2>/dev/null | sort); do\n" + "  echo; echo \"--- head -40 $f ---\"; head -40 \"$f\" 2>/dev/null\n" + "done\n"
+                + " -maxdepth 2 -type f -name pom.xml 2>/dev/null | sort); do\n" + "  echo; echo \"--- head -40 $f ---\"; head -40 \"$f\" 2>/dev/null\n" + "done\n"
                 // Surface the reference dir so the agent discovers it (it is not a repository dir, so the listing above misses it).
                 + "if [ -d " + REFERENCE_DIR + " ]; then echo; echo '--- ls -R " + REFERENCE_DIR
                 + " (non-persisted worked example: study its language and test-framework conventions; do not edit or copy it) ---'; ls -R " + REFERENCE_DIR
@@ -505,15 +502,22 @@ public class GenerationWorkspaceService {
 
     /**
      * Overwrites repository text files with the canonical bytes that verification and persistence must share.
+     * <p>
+     * Also re-seeds the workspace-root problem statement when given. This matters because callers use this method to restore a candidate into a sandbox session that was just
+     * {@code resetSession}'d: {@code /workspace} is mounted on a bounded tmpfs (see {@code InteractiveSandboxService#hardenedHostConfig}), so a container restart empties it
+     * completely — a candidate restore that touched only the three repositories would silently drop {@code problem-statement.md} (it lives at the workspace root, outside any
+     * repository), and the next read of it would fail with "the generated problem statement is missing".
      *
      * @param sandbox               the sandbox session
      * @param sessionId             the session handle
      * @param filesByRepository     the canonical repository text files
      * @param repositoryMetadata    seeded file metadata used to preserve executable modes
      * @param repositoryBinaryFiles the canonical repository binary files, written back verbatim alongside the text files
+     * @param problemStatement      the canonical problem statement to re-seed at the workspace root, or {@code null} to leave it untouched
      */
     public void materializeRepositoryFiles(InteractiveSandbox sandbox, String sessionId, Map<RepositoryType, Map<String, String>> filesByRepository,
-            Map<RepositoryType, RepositorySeedMetadata> repositoryMetadata, Map<RepositoryType, Map<String, BinarySeedFile>> repositoryBinaryFiles) {
+            Map<RepositoryType, RepositorySeedMetadata> repositoryMetadata, Map<RepositoryType, Map<String, BinarySeedFile>> repositoryBinaryFiles,
+            @Nullable String problemStatement) {
         Map<String, String> workspaceFiles = new LinkedHashMap<>();
         Map<String, byte[]> workspaceBinaryFiles = new LinkedHashMap<>();
         Set<String> executableFiles = new LinkedHashSet<>();
@@ -521,6 +525,9 @@ public class GenerationWorkspaceService {
         repositoryBinaryFiles
                 .forEach((repositoryType, files) -> files.forEach((path, file) -> workspaceBinaryFiles.put(directoryFor(repositoryType) + "/" + path, file.content())));
         repositoryMetadata.forEach((repositoryType, metadata) -> metadata.executableFiles().forEach(path -> executableFiles.add(directoryFor(repositoryType) + "/" + path)));
+        if (problemStatement != null) {
+            workspaceFiles.put(PROBLEM_STATEMENT_FILE, problemStatement);
+        }
         sandbox.copyIn(sessionId, WORKSPACE, WorkspaceArchive.buildFilesTarStream(workspaceFiles, workspaceBinaryFiles, executableFiles));
     }
 

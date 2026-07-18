@@ -18,9 +18,15 @@ class ProblemStatementBindingCheckerTest {
     void javaReferenceProblemStatementUsesResolvableProductionTaskBindings() throws IOException {
         String statement = new ClassPathResource("templates/hyperion/reference/java/problem-statement.md").getContentAsString(StandardCharsets.UTF_8);
 
-        assertThat(ProblemStatementBindingChecker.boundTestNames(statement)).containsExactly("testRepresentativeScores", "testBoundaryScores", "testEmptyInput");
-        assertThat(ProblemStatementBindingChecker.unresolvedTaskBindings(statement, List.of("testPublicApi", "testRepresentativeScores", "testBoundaryScores", "testEmptyInput"), 4,
-                Set.of())).isEmpty();
+        assertThat(ProblemStatementBindingChecker.boundTestNames(statement)).containsExactly("testStandardFeeTypical", "testStandardFeeZeroWeight", "testExpressFeeTypical",
+                "testExpressFeeMinimumSurcharge", "testSelectsExpressForHeavyPackages", "testSelectsStandardForLightPackages", "testComputeFeeDelegatesToChosenStrategy");
+        assertThat(
+                ProblemStatementBindingChecker
+                        .unresolvedTaskBindings(statement,
+                                List.of("testStandardFeeTypical", "testStandardFeeZeroWeight", "testExpressFeeTypical", "testExpressFeeMinimumSurcharge",
+                                        "testSelectsExpressForHeavyPackages", "testSelectsStandardForLightPackages", "testComputeFeeDelegatesToChosenStrategy"),
+                                7, Set.of()))
+                .isEmpty();
     }
 
     @Test

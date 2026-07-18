@@ -26,8 +26,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
-import jakarta.annotation.PostConstruct;
-
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.jgit.api.CloneCommand;
@@ -104,17 +102,7 @@ public class GitService extends AbstractGitService {
     @Value("${artemis.git.email}")
     private String artemisGitEmail;
 
-    @Value("${artemis.version-control.git-operation-timeout-seconds:120}")
-    private int gitOperationTimeoutSeconds = 120;
-
     private final Map<Path, Path> cloneInProgressOperations = new ConcurrentHashMap<>();
-
-    @PostConstruct
-    private void validateGitOperationTimeout() {
-        if (gitOperationTimeoutSeconds <= 0) {
-            throw new IllegalArgumentException("artemis.version-control.git-operation-timeout-seconds must be positive");
-        }
-    }
 
     /**
      * Returns the checked-out repository's current local HEAD. Unlike {@link #getLastCommitHash(LocalVCRepositoryUri)}, this reads the exact working copy after checkout/pull and
@@ -1287,27 +1275,27 @@ public class GitService extends AbstractGitService {
     }
 
     private PullCommand pullCommand(Git git) {
-        return git.pull().setTimeout(gitOperationTimeoutSeconds);
+        return git.pull();
     }
 
     private PushCommand pushCommand(Git git) {
-        return git.push().setTimeout(gitOperationTimeoutSeconds);
+        return git.push();
     }
 
     private FetchCommand fetchCommand(Git git) {
-        return git.fetch().setTimeout(gitOperationTimeoutSeconds);
+        return git.fetch();
     }
 
     protected LsRemoteCommand lsRemoteCommand(Git git) {
-        return git.lsRemote().setTimeout(gitOperationTimeoutSeconds);
+        return git.lsRemote();
     }
 
     @Override
     protected LsRemoteCommand lsRemoteCommand() {
-        return Git.lsRemoteRepository().setTimeout(gitOperationTimeoutSeconds);
+        return Git.lsRemoteRepository();
     }
 
     protected CloneCommand cloneCommand() {
-        return Git.cloneRepository().setTimeout(gitOperationTimeoutSeconds);
+        return Git.cloneRepository();
     }
 }

@@ -743,7 +743,7 @@ class GenerationOrchestrationServiceTest {
         }
 
         verify(verifier).verify(eq(sandbox), eq(SESSION_ID), eq(exercise), any(VerificationRequest.class), any(Runnable.class));
-        verify(workspace).materializeRepositoryFiles(eq(sandbox), eq(SESSION_ID), any(), any(), any());
+        verify(workspace).materializeRepositoryFiles(eq(sandbox), eq(SESSION_ID), any(), any(), any(), any());
         verify(sandbox, times(1)).createSession(any());
     }
 
@@ -883,6 +883,6 @@ class GenerationOrchestrationServiceTest {
         restoreCandidate.getValue().run();
         InOrder resetThenMaterialize = inOrder(sandbox, workspace);
         resetThenMaterialize.verify(sandbox).resetSession(SESSION_ID);
-        resetThenMaterialize.verify(workspace).materializeRepositoryFiles(eq(sandbox), eq(SESSION_ID), any(), any(), any());
+        resetThenMaterialize.verify(workspace).materializeRepositoryFiles(eq(sandbox), eq(SESSION_ID), any(), any(), any(), any());
     }
 }

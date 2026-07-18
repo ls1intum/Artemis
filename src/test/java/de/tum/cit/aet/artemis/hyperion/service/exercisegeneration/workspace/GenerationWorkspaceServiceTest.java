@@ -348,7 +348,24 @@ class GenerationWorkspaceServiceTest {
                 Map.of(RepositoryType.SOLUTION, Map.of("gradlew", "#!/bin/sh\n", "src/Main.java", "class Main {}"), RepositoryType.TESTS,
                         Map.of("test/MainTest.java", "class MainTest {}")),
                 Map.of(RepositoryType.SOLUTION, new GenerationWorkspaceService.RepositorySeedMetadata(Map.of("tool.bin", WorkspaceArchive.sha256(binary)), Set.of("gradlew"))),
-                Map.of(RepositoryType.SOLUTION, Map.of("tool.bin", new GenerationWorkspaceService.BinarySeedFile(binary))));
+                Map.of(RepositoryType.SOLUTION, Map.of("tool.bin", new GenerationWorkspaceService.BinarySeedFile(binary))), null);
+    }
+
+    @Test
+    void materializeRepositoryFiles_reseedsTheProblemStatementWhenGiven() {
+        // /workspace is a tmpfs; a resetSession() (container restart) between the two differential builds wipes it entirely, and problem-statement.md lives at the workspace root
+        // outside any of the three repositories, so the restore must re-seed it explicitly or the next read fails with "the generated problem statement is missing".
+        InteractiveSandbox sandbox = mock(InteractiveSandbox.class);
+        doAnswer(invocation -> {
+            try (TarArchiveInputStream tar = new TarArchiveInputStream(invocation.getArgument(2))) {
+                WorkspaceArchive.ArchiveContents contents = WorkspaceArchive.readTarContents(tar, "");
+                assertThat(contents.textFiles()).containsEntry("problem-statement.md", "# Restored\n");
+            }
+            return null;
+        }).when(sandbox).copyIn(eq("session"), eq("/workspace"), any());
+        GenerationWorkspaceService service = new GenerationWorkspaceService(mock(), mock(), mock(), mock(), tempFileUtilService());
+
+        service.materializeRepositoryFiles(sandbox, "session", Map.of(), Map.of(), Map.of(), "# Restored\n");
     }
 
     @Test

@@ -75,27 +75,32 @@ class SandboxBuildCommandServiceTest {
     }
 
     @Test
-    void verifyScript_java_searchesTheRedirectedMavenReportsDirForJunitReports_notTheBuildDir() {
-        // Maven Surefire/Failsafe reports are redirected to $RAW_MAVEN_REPORTS_DIR (outside the Ares-whitelisted $BUILD_DIR/target tree, see the run_phase MAVEN_OPTS wiring), so
-        // the JUnit collection step must search there instead of $BUILD_DIR for Java — searching $BUILD_DIR would deterministically collect zero reports.
+    void verifyScript_java_searchesTheBuildDirDirectlyForJunitReports_noRedirect() {
+        // Maven Surefire's reportsDirectory parameter has no CLI-settable property binding (verified against the plugin descriptor for the version templates/java pins), so a
+        // -Dsurefire.reportsDirectory=... flag in MAVEN_OPTS is silently ignored by real Maven, which always writes to the plugin's default
+        // ${project.build.directory}/surefire-reports. The JUnit collection step therefore must search $BUILD_DIR with the same report globs as every other language (matching
+        // production's own resultPaths in templates/phases/java/*.yaml), not a dedicated redirect directory that real Maven never writes to.
         ProgrammingExercise java = new ProgrammingExercise();
         java.setProgrammingLanguage(ProgrammingLanguage.JAVA);
         String script = new SandboxBuildCommandService(Optional.empty(), Optional.empty()).verifyScriptContent(java);
 
-        assertThat(script).contains("RAW_MAVEN_REPORTS_DIR=\"/opt/hyperion/maven-reports/$ASSIGNMENT\"")
-                .contains("find \"$RAW_MAVEN_REPORTS_DIR\" -type f -newer \"$BUILD_START_MARKER\"").contains("-name '*.xml'")
-                .doesNotContain("find \"$BUILD_DIR\" -type f -newer \"$BUILD_START_MARKER\" \\( -name '*.xml' \\)");
+        assertThat(script)
+                .contains("find \"$BUILD_DIR\" -type f -newer \"$BUILD_START_MARKER\" \\( -path '*/target/surefire-reports/*.xml' -o -path '*/target/failsafe-reports/*.xml'")
+                .doesNotContain("RAW_MAVEN_REPORTS_DIR").doesNotContain("surefire.reportsDirectory").doesNotContain("failsafe.reportsDirectory");
     }
 
     @Test
     void verifyScript_neverLeavesAnUnsubstitutedTemplateToken() {
-        // Regression guard for tokens like @@RAW_MAVEN_REPORTS_DIR@@, which were previously computed/interpolated into the raw variable assignment but never registered in the
-        // final .replace(...) chain, so the shell script silently carried the literal placeholder text instead of the real path.
-        String defaultScript = new SandboxBuildCommandService(Optional.empty(), Optional.empty()).verifyScriptContent(new ProgrammingExercise());
+        // Regression guard for tokens like @@REPORT_FIND@@, which must be computed/interpolated and registered in the final .replace(...) chain, so the shell script never
+        // silently carries the literal placeholder text instead of the real value.
+        ProgrammingExercise defaultJava = new ProgrammingExercise();
+        defaultJava.setProgrammingLanguage(ProgrammingLanguage.JAVA);
+        String defaultScript = new SandboxBuildCommandService(Optional.empty(), Optional.empty()).verifyScriptContent(defaultJava);
         assertThat(defaultScript).doesNotContain("@@");
 
         ProgrammingExercise java = new ProgrammingExercise();
         java.setProgrammingLanguage(ProgrammingLanguage.JAVA);
+        java.setProjectType(ProjectType.MAVEN_MAVEN);
         String javaScript = new SandboxBuildCommandService(Optional.empty(), Optional.empty()).verifyScriptContent(java);
         assertThat(javaScript).doesNotContain("@@");
     }
@@ -141,6 +146,7 @@ class SandboxBuildCommandServiceTest {
     @Test
     void verifyScript_materializesAssignmentAtConfiguredCheckoutPath() {
         ProgrammingExercise exercise = new ProgrammingExercise();
+        exercise.setProgrammingLanguage(ProgrammingLanguage.JAVA);
         ProgrammingExerciseBuildConfig buildConfig = new ProgrammingExerciseBuildConfig();
         buildConfig.setAssignmentCheckoutPath("student-code");
         exercise.setBuildConfig(buildConfig);
@@ -153,9 +159,11 @@ class SandboxBuildCommandServiceTest {
 
     @Test
     void verifyScript_fallsBackToConventionalBuild_whenNoPhases() {
+        ProgrammingExercise exercise = new ProgrammingExercise();
+        exercise.setProgrammingLanguage(ProgrammingLanguage.JAVA);
         SandboxBuildCommandService factory = new SandboxBuildCommandService(Optional.empty(), Optional.empty());
-        String script = factory.verifyScriptContent(new ProgrammingExercise());
-        assertThat(script).contains("mvn clean test").contains("surefire-reports").contains("test-reports");
+        String script = factory.verifyScriptContent(exercise);
+        assertThat(script).contains("mvn -B clean compile").contains("mvn -B test").contains("surefire-reports").contains("test-reports");
     }
 
     @Test
@@ -173,17 +181,16 @@ class SandboxBuildCommandServiceTest {
     }
 
     @Test
-    void verifyScript_fallbackSupportsSequentialGradleHarnessWithoutRelyingOnExecutableArchiveMode() {
+    void verifyScript_fallbackUsesTheGenericBuildDetector_forConfigurationsOutsideJavaMaven() {
+        // Generation only ever runs for Java/Maven exercises (LanguageGenerationProfile); a Java/Gradle exercise is unreachable in production. If the fallback is ever hit for
+        // such a configuration, it gets a generic best-effort build detection rather than Gradle-specific commands.
         ProgrammingExercise exercise = new ProgrammingExercise();
         exercise.setProgrammingLanguage(ProgrammingLanguage.JAVA);
         exercise.setProjectType(ProjectType.GRADLE_GRADLE);
-        ProgrammingExerciseBuildConfig buildConfig = new ProgrammingExerciseBuildConfig();
-        buildConfig.setSequentialTestRuns(true);
-        exercise.setBuildConfig(buildConfig);
 
         String script = new SandboxBuildCommandService(Optional.empty(), Optional.empty()).verifyScriptContent(exercise);
 
-        assertThat(script).contains("chmod +x ./gradlew\n./gradlew clean compileJava compileTestJava", "./gradlew structuralTests", "./gradlew behaviorTests");
+        assertThat(script).contains("if [ -f pom.xml ]; then mvn clean test;").contains("elif [ -f ./gradlew ]; then chmod +x ./gradlew && ./gradlew clean test --no-daemon;");
     }
 
     @Test
@@ -192,12 +199,8 @@ class SandboxBuildCommandServiceTest {
         java.setProgrammingLanguage(ProgrammingLanguage.JAVA);
         String script = new SandboxBuildCommandService(Optional.empty(), Optional.empty()).verifyScriptContent(java);
 
-        // MAVEN_OPTS is not exported at the top level: it carries the same security-manager flag, but set fresh per phase (run_phase) alongside the per-phase
-        // Surefire/Failsafe reportsDirectory redirection, so it cannot be a single static top-level export.
         assertThat(script).contains("export JAVA_TOOL_OPTIONS=\"${JAVA_TOOL_OPTIONS:-} -Djava.security.manager=allow\"")
-                .contains("export GRADLE_OPTS=\"${GRADLE_OPTS:-} -Djava.security.manager=allow\"")
-                .contains("MAVEN_OPTS=\"${MAVEN_OPTS:-} -Djava.security.manager=allow -Dsurefire.reportsDirectory=$phase_reports/surefire "
-                        + "-Dfailsafe.reportsDirectory=$phase_reports/failsafe\"");
+                .contains("export MAVEN_OPTS=\"${MAVEN_OPTS:-} -Djava.security.manager=allow\"").contains("export GRADLE_OPTS=\"${GRADLE_OPTS:-} -Djava.security.manager=allow\"");
     }
 
     @Test
@@ -213,8 +216,10 @@ class SandboxBuildCommandServiceTest {
     @Test
     void verifyScript_isolatesTheCanonicalFixtureOnlyInThePristineReadinessVariant() {
         SandboxBuildCommandService service = new SandboxBuildCommandService(Optional.empty(), Optional.empty());
-        String agentScript = service.verifyScriptContent(new ProgrammingExercise());
-        String readinessScript = service.readinessVerifyScriptContent(new ProgrammingExercise());
+        ProgrammingExercise java = new ProgrammingExercise();
+        java.setProgrammingLanguage(ProgrammingLanguage.JAVA);
+        String agentScript = service.verifyScriptContent(java);
+        String readinessScript = service.readinessVerifyScriptContent(java);
 
         assertThat(agentScript).doesNotContain("hyperion-readiness-fixture", "[reference]");
         assertThat(readinessScript).contains("rm -rf \"$TEST_DEST/test\" \"$TEST_DEST/structural/test\" \"$TEST_DEST/behavior/test\" \"$ASSIGNMENT_DEST\"",
@@ -224,14 +229,18 @@ class SandboxBuildCommandServiceTest {
 
     @Test
     void verifyScript_substitutesCiPlaceholdersInsideTheCopiedTestHarness_soTheAgentNeverNeedsToEditIt() {
-        String script = new SandboxBuildCommandService(Optional.empty(), Optional.empty()).verifyScriptContent(new ProgrammingExercise());
+        ProgrammingExercise java = new ProgrammingExercise();
+        java.setProgrammingLanguage(ProgrammingLanguage.JAVA);
+        String script = new SandboxBuildCommandService(Optional.empty(), Optional.empty()).verifyScriptContent(java);
         assertThat(script).contains("s#${studentParentWorkingDirectoryName}#assignment#g").contains("s#${solutionWorkingDirectory}#assignment#g")
                 .contains("s#${studentWorkingDirectory}#/assignment/src#g").contains("s#${testWorkingDirectory}#.#g");
     }
 
     @Test
     void verifyScript_removesTeamscalePluginOnlyFromTheDisposableOfflineBuildCopy() {
-        String script = new SandboxBuildCommandService(Optional.empty(), Optional.empty()).verifyScriptContent(new ProgrammingExercise());
+        ProgrammingExercise java = new ProgrammingExercise();
+        java.setProgrammingLanguage(ProgrammingLanguage.JAVA);
+        String script = new SandboxBuildCommandService(Optional.empty(), Optional.empty()).verifyScriptContent(java);
 
         assertThat(script).contains("for build_file in \"$TEST_DEST/build.gradle\" \"$TEST_DEST/build.gradle.kts\"").contains("grep -vF \"id 'com.teamscale' version\"")
                 .contains("grep -vF 'id(\"com.teamscale\") version'");
@@ -255,41 +264,6 @@ class SandboxBuildCommandServiceTest {
 
         assertThat(Files.readString(groovyBuild)).contains("id 'java'").doesNotContain("com.teamscale");
         assertThat(Files.readString(kotlinBuild)).contains("java").doesNotContain("com.teamscale");
-    }
-
-    @Test
-    void verifyScript_materializesSiblingSolution_andSubstitutesRealLayout_forSolutionCheckoutLanguages() {
-        // Haskell's harness references ${solutionWorkingDirectory}. When checkoutSolutionRepository is set, real CI materializes a sibling solution/ and substitutes the
-        // placeholder
-        // to solution/ (not the collapsed assignment), so the template run compares against the REAL solution; a collapse would make the template trivially pass -> false reject.
-        ProgrammingExercise haskell = new ProgrammingExercise();
-        haskell.setProgrammingLanguage(ProgrammingLanguage.HASKELL);
-        ProgrammingExerciseBuildConfig buildConfig = new ProgrammingExerciseBuildConfig();
-        buildConfig.setCheckoutSolutionRepository(true);
-        haskell.setBuildConfig(buildConfig);
-
-        String script = factoryWithPhases(List.of(new BuildPhaseDTO("test", "./run.sh -s", null, false, List.of("test-reports/results.xml")))).verifyScriptContent(haskell);
-
-        // A sibling solution/ is materialized and the placeholders resolve to the real CI layout: solution/ (not the collapsed assignment), test root.
-        assertThat(script).contains("mkdir -p \"$BUILD_DIR/solution\"").contains("cp -a \"$WORKSPACE/solution/.\" \"$BUILD_DIR/solution\"/");
-        assertThat(script).contains("s#${solutionWorkingDirectory}#solution#g").contains("s#${studentParentWorkingDirectoryName}#assignment#g")
-                .contains("s#${testWorkingDirectory}#.#g");
-    }
-
-    @Test
-    void verifyScript_doesNotMaterializeSolution_forLanguagesThatDoNotCheckItOut_soTheDifferentialIsUnchanged() {
-        // Languages other than Haskell/OCaml check out no sibling solution/ (the enum throws -> solutionDir empty), so none is materialized and a broad-glob build cannot pick up
-        // solution sources and inflate the differential. The placeholder never appears in their harness, so its no-op substitution stays at the collapse value.
-        ProgrammingExercise go = new ProgrammingExercise();
-        go.setProgrammingLanguage(ProgrammingLanguage.GO);
-        ProgrammingExerciseBuildConfig buildConfig = new ProgrammingExerciseBuildConfig();
-        buildConfig.setCheckoutSolutionRepository(true); // even when requested, Go has no solution checkout path, so none is materialized
-        go.setBuildConfig(buildConfig);
-
-        String script = factoryWithPhases(List.of(new BuildPhaseDTO("test", "go test ./...", null, false, List.of()))).verifyScriptContent(go);
-
-        assertThat(script).doesNotContain("cp -a \"$WORKSPACE/solution/.").doesNotContain("mkdir -p \"$BUILD_DIR/solution\"");
-        assertThat(script).contains("s#${solutionWorkingDirectory}#assignment#g");
     }
 
     /**
@@ -381,12 +355,12 @@ class SandboxBuildCommandServiceTest {
         }
 
         @Test
-        void collectsMavenReportsFromTheRedirectedRawReportsDir_forJavaExercises(@TempDir Path tempDir) throws Exception {
-            // Java Surefire/Failsafe reports land under $RAW_MAVEN_REPORTS_DIR/<phase_seq>/<surefire|failsafe>/..., never under $BUILD_DIR; this proves the live collect snippet
-            // finds them there (the bug this test guards against: searching $BUILD_DIR would collect nothing for Java).
+        void collectsMavenReportsFromTheDefaultSurefireLocation_forJavaExercises(@TempDir Path tempDir) throws Exception {
+            // Real Maven Surefire always writes to its default ${project.build.directory}/surefire-reports regardless of any -D flag (the reportsDirectory parameter has no
+            // CLI-settable property binding), so the live collect snippet must find the report there, directly under $BUILD_DIR, exactly like every other language.
             ProgrammingExercise java = new ProgrammingExercise();
             java.setProgrammingLanguage(ProgrammingLanguage.JAVA);
-            Map<String, String> collected = VerifyScriptTestHarness.collect(factory(), java, tempDir, "java-maven", Map.of(), Map.of("1/surefire/TEST-StackTest.xml", SUREFIRE));
+            Map<String, String> collected = VerifyScriptTestHarness.collect(factory(), java, tempDir, "java-maven", Map.of("target/surefire-reports/TEST-StackTest.xml", SUREFIRE));
 
             assertThat(collected).hasSize(1);
             assertThat(collected.keySet().iterator().next()).endsWith(SandboxBuildCommandService.COLLECTED_NAME_SEPARATOR + SandboxBuildCommandService.COLLECTED_JUNIT_TOKEN);

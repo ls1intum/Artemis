@@ -38,7 +38,7 @@ public interface InteractiveSandbox {
     SandboxExecResult exec(String sessionId, Duration timeout, String... command);
 
     /**
-     * Copies a tar archive into the session container at the given absolute destination path. Used to seed the workspace and to write generated files.
+     * Copies a tar archive into the session container at the given absolute destination path.
      *
      * @param sessionId       the session handle
      * @param destinationPath the absolute container path to extract the archive into
@@ -47,7 +47,7 @@ public interface InteractiveSandbox {
     void copyIn(String sessionId, String destinationPath, InputStream tarArchive);
 
     /**
-     * Reads a path out of the session container as a tar archive, used to extract the produced files at the end of a session.
+     * Reads a path out of the session container as a tar archive.
      *
      * @param sessionId the session handle
      * @param path      the absolute container path to read

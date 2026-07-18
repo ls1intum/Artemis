@@ -133,9 +133,11 @@ public class DifferentialVerificationService {
         }
     }
 
-    /** Build-manifest filenames that are legitimately repo-specific, so the dead-file probe must not flag them. */
-    private static final Set<String> BUILD_MANIFEST_NAMES = Set.of("go.mod", "go.sum", "pom.xml", "build.gradle", "build.gradle.kts", "settings.gradle", "settings.gradle.kts",
-            "cargo.toml", "cargo.lock", "makefile", "package.json", "package-lock.json", "tsconfig.json", "build.sbt", "pubspec.yaml", "pubspec.lock");
+    /**
+     * Build-manifest filenames that are legitimately repo-specific, so the dead-file probe must not flag them. Generation only ever runs for Java/Maven exercises
+     * ({@link de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.profile.LanguageGenerationProfile}), so only the Maven manifest is listed.
+     */
+    private static final Set<String> BUILD_MANIFEST_NAMES = Set.of("pom.xml");
 
     /** Lists the assignment repo's source files (repo-relative) for the dead-file probe, excluding hidden files and build manifests. Empty on any non-success (fail-open). */
     private static Set<String> listSourceFiles(InteractiveSandbox sandbox, String sessionId, String repoDirectory) {
@@ -208,10 +210,6 @@ public class DifferentialVerificationService {
         List<String> solutionLeakReasons = ExerciseIntegrityGate.solutionLeakReasons(request.producedTemplateFiles(), request.producedSolutionFiles());
         boolean noSolutionLeak = solutionLeakReasons.isEmpty();
         reasons.addAll(solutionLeakReasons);
-        // A self-comparison harness passes the differential invariant (template still errors) yet grades any submission 100%, so the oracle is blind to it; gated here.
-        List<String> selfComparisonReasons = ExerciseIntegrityGate.selfComparisonHarnessReasons(request.producedTestsFiles());
-        boolean noSelfComparison = selfComparisonReasons.isEmpty();
-        reasons.addAll(selfComparisonReasons);
         List<String> javaAresConventionReasons = exercise.getProgrammingLanguage() == ProgrammingLanguage.JAVA
                 ? ExerciseIntegrityGate.javaAresConventionReasons(request.seedTestsFiles(), request.producedTestsFiles(), request.adaptation())
                 : List.of();
@@ -232,14 +230,14 @@ public class DifferentialVerificationService {
         boolean noAdaptWipe = adaptWipeReasons.isEmpty();
         reasons.addAll(adaptWipeReasons);
 
-        boolean mechanicallyVerified = analysis.actionableGatesPass() && harnessIntact && noSolutionLeak && noSelfComparison && javaAresConventionsHold && javaSourceLayoutIntact
-                && extractionSound && noAdaptWipe;
+        boolean mechanicallyVerified = analysis.actionableGatesPass() && harnessIntact && noSolutionLeak && javaAresConventionsHold && javaSourceLayoutIntact && extractionSound
+                && noAdaptWipe;
         if (!mechanicallyVerified) {
             log.info(
-                    "Differential verification failed: solution[{}], template[{}], actionableGatesPass={}, harnessIntact={}, noSolutionLeak={}, noSelfComparison={}, "
+                    "Differential verification failed: solution[{}], template[{}], actionableGatesPass={}, harnessIntact={}, noSolutionLeak={}, "
                             + "javaAresConventionsHold={}, javaSourceLayoutIntact={}, extractionSound={}, noAdaptWipe={}",
-                    solution, template, analysis.actionableGatesPass(), harnessIntact, noSolutionLeak, noSelfComparison, javaAresConventionsHold, javaSourceLayoutIntact,
-                    extractionSound, noAdaptWipe);
+                    solution, template, analysis.actionableGatesPass(), harnessIntact, noSolutionLeak, javaAresConventionsHold, javaSourceLayoutIntact, extractionSound,
+                    noAdaptWipe);
         }
         return new VerificationResult(mechanicallyVerified, analysis.solutionPassed(), analysis.templateFailed(), solution.tests(), reasons);
     }

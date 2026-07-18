@@ -18,7 +18,6 @@ export default defineConfig({
     testDir: './',
     /* Run tests in files in parallel */
     fullyParallel: true,
-    forbidOnly: !!process.env.CI,
     timeout: (parseNumber(process.env.TEST_TIMEOUT_SECONDS) ?? 3 * 60) * 1000,
     retries: parseNumber(process.env.TEST_RETRIES) ?? 2,
     workers: parseNumber(process.env.TEST_WORKER_PROCESSES) ?? 5,

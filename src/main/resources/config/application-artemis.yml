@@ -48,7 +48,6 @@ artemis:
     # token: <token>                # VCS API token giving Artemis full Admin access.
     ssh-template-clone-url: ssh://git@artemis.tum.de:7921/    # Url Stem for cloning via ssh
     ssh-port: 7921
-    git-operation-timeout-seconds: 120 # Inactivity timeout for clone/fetch/pull/push/remote-list operations.
     #        ssh-private-key-folder-path: <ssh-private-key-folder-path>       # the path to the folder in which the private ssh key file (e.g. id_rsa) is stored that can be used to clone git repos on the version control server
     #        ssh-private-key-password: <ssh-private-key-password>        # the password for the private ssh key
     default-branch: main            # The branch that should be used as default branch for all newly created repositories. This does NOT have to be equal to the default branch of the VCS

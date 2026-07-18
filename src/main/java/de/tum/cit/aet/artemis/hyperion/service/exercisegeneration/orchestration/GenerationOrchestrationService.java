@@ -202,8 +202,9 @@ public class GenerationOrchestrationService {
             // The agent's `verify` tool runs the same differential as the post-loop gate so it sees the verdict in-loop (pass/fail tests, exact [task] names); the post-loop
             // verify(...) below stays the mechanical-verification decision.
             SandboxAgentTools baseTools = new SandboxAgentTools(sandbox, sessionId, verifier, exercise, testsSeedSnapshot, mode == GenerationMode.ADAPT);
-            // Wrap the tools in the file-change decorator when a sink is supplied, so each successful write streams the whole file to the instructor's editor. The decorator
-            // re-exposes the same @Tool surface (the model sees the same tools) and only adds emission.
+            // Wrap the tools in the file-change decorator when a sink is supplied, so each successful write/edit/delete emits a lightweight notification (path, repository bucket,
+            // action, turn) for the instructor's live activity view — not the file content itself. The decorator re-exposes the same @Tool surface (the model sees the same tools)
+            // and only adds emission.
             Object tools = fileChangeSink != null ? new FileChangeEmittingAgentTools(baseTools, fileChangeSink) : baseTools;
 
             // Free turn-0 observation of the seeded layout so the agent need not `ls -R`. Best-effort (empty probe leaves the prompt unchanged) and first-attempt only — retries
@@ -212,7 +213,8 @@ public class GenerationOrchestrationService {
 
             // On mechanical rejection, feed the verifier's reasons back and retry up to a small bound. The verifier enforces rules the agent's own verify.sh cannot show (template
             // must fail a
-            // meaningful fraction; problem statement must bind tasks), so this loop turns a "builds but not quite right" first attempt into an accepted exercise.
+            // meaningful fraction; problem statement must bind tasks), so this loop turns a "builds but not quite right" first attempt into a mechanically verified candidate that
+            // persistence saves for instructor review (see GenerationPersistenceService) rather than an auto-published exercise.
             String currentPrompt = firstPrompt;
             AgentLoopResult loopResult = null;
             VerificationResult verification = null;
@@ -310,10 +312,13 @@ public class GenerationOrchestrationService {
                 InteractiveSandbox activeSandbox = sandbox;
                 GenerationWorkspaceService.WorkspaceSeed activeWorkspaceSeed = workspaceSeed;
                 Map<RepositoryType, Map<String, String>> candidateFiles = copyProducedFiles(producedFilesByType);
+                String candidateProblemStatement = producedProblemStatement;
                 Runnable restoreCandidate = () -> {
                     activeSandbox.resetSession(activeSessionId);
+                    // /workspace is a tmpfs (see GenerationWorkspaceService#materializeRepositoryFiles), so the reset wipes problem-statement.md too; re-seed it alongside the
+                    // repositories or the next attempt's extraction fails with "the generated problem statement is missing".
                     workspace.materializeRepositoryFiles(activeSandbox, activeSessionId, candidateFiles, activeWorkspaceSeed.repositoryMetadata(),
-                            activeWorkspaceSeed.repositoryBinaryFiles());
+                            activeWorkspaceSeed.repositoryBinaryFiles(), candidateProblemStatement);
                 };
                 verification = verifyWithInfrastructureRetry(sandbox, sessionId, exercise, verificationRequest, restoreCandidate, cancelled, progress);
                 emit(progress, verification.report());

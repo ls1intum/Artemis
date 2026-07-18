@@ -676,25 +676,6 @@ class DifferentialVerificationServiceTest {
         assertThat(result.mechanicallyVerified()).as("a non-Java empty harness snapshot stays fail-open").isTrue();
     }
 
-    private static final String SELF_COMPARISON_CABAL = "test-suite test\n  other-modules: Interface\n  mixins:\n    solution (Exercise as Solution)\n";
-
-    @Test
-    void integrityGates_rejectSelfComparisonHarnessThroughVerify_evenWhenTheDifferentialPasses() {
-        // The differential passes, yet the tests compare the submission to ITSELF (Test.hs imports the bare submission as the reference); the gate must still reject.
-        var producedTests = Map.of("test.cabal", SELF_COMPARISON_CABAL, "test/Test.hs", "module Test where\nimport qualified Interface as Sub\nimport qualified Exercise as Sol\n");
-        VerificationResult result = verifyWithFiles(result(5, 0, 0, 0), result(5, 3, 0, 1), Map.of("test.cabal", SELF_COMPARISON_CABAL), producedTests, Map.of(), Map.of());
-        assertThat(result.mechanicallyVerified()).isFalse();
-        assertThat(result.reasons()).anyMatch(r -> r.contains("compares the submission against ITSELF"));
-    }
-
-    @Test
-    void integrityGates_acceptCorrectRenamedReferenceHarnessThroughVerify() {
-        // The correct harness (Sol = renamed reference module, Sub = student code via Interface) must still be accepted.
-        var producedTests = Map.of("test.cabal", SELF_COMPARISON_CABAL, "test/Test.hs", "module Test where\nimport qualified Interface as Sub\nimport qualified Solution as Sol\n");
-        VerificationResult result = verifyWithFiles(result(5, 0, 0, 0), result(5, 3, 0, 1), Map.of("test.cabal", SELF_COMPARISON_CABAL), producedTests, Map.of(), Map.of());
-        assertThat(result.mechanicallyVerified()).isTrue();
-    }
-
     @Test
     void shouldAcceptWhenSolutionPassesAndTemplateFailsViaRealJUnitReports() {
         List<String> names = List.of("stack_initially_empty", "push_then_pop", "size_tracks_elements");
