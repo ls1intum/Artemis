@@ -34,7 +34,7 @@ final class HyperionMockedLlmE2eSupport {
     }
 
     /**
-     * @return whether a Docker daemon is reachable, used as the {@code @EnabledIf} gate for the Docker-backed mocked E2E tests
+     * @return whether a Docker daemon is reachable, used locally as the developer convenience part of the {@code @EnabledIf} gate for the Docker-backed mocked E2E tests
      */
     static boolean isDockerAvailable() {
         TransportConfig dockerTransportConfig = discoverDockerTransportConfig();
@@ -50,8 +50,32 @@ final class HyperionMockedLlmE2eSupport {
         }
     }
 
+    /**
+     * @return whether the current process is running in CI (GitHub Actions and most other CI providers set the {@code CI} environment variable)
+     */
+    static boolean isRunningInCi() {
+        return System.getenv("CI") != null;
+    }
+
+    /**
+     * {@code @EnabledIf} gate for the Docker-backed mocked E2E tests.
+     * <p>
+     * Locally, a broken or absent Docker daemon skips the test — a developer convenience, since not every workstation runs Docker. In CI, Docker is expected to always be present
+     * (the server-test job already depends on it for Testcontainers), so the gate returns {@code true} unconditionally there even when the Docker probe itself fails: a broken
+     * Docker daemon in CI must fail the test loudly with the real error, not silently skip it and report a green, meaningless run.
+     *
+     * @return whether the Docker-backed tests should run
+     */
+    static boolean dockerGateEnabled() {
+        return isRunningInCi() || isDockerAvailable();
+    }
+
+    /**
+     * {@code @EnabledIf} gate for {@link HyperionBuildReadinessDockerIntegrationTest}. {@link #JAVA_BUILD_IMAGE} already falls back to the repo-owned production default when
+     * {@code HYPERION_TEST_JAVA_BUILD_IMAGE} is unset, so unlike the Docker daemon this test does not additionally require the environment variable to be set.
+     */
     static boolean isReadinessMatrixConfigured() {
-        return System.getenv("HYPERION_TEST_JAVA_BUILD_IMAGE") != null && isDockerAvailable();
+        return dockerGateEnabled();
     }
 
     /**
