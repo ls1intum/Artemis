@@ -120,7 +120,9 @@
                             <th scope="col" [jhiTranslate]="'artemisApp.importUsers.email'">Email</th>
                             <th scope="col" [jhiTranslate]="'artemisApp.importUsers.firstName'">First name</th>
                             <th scope="col" [jhiTranslate]="'artemisApp.importUsers.lastName'">Last name</th>
-                            <th scope="col" [jhiTranslate]="'artemisApp.importUsers.testUser'">Test user</th>
+                            @if (adminUserMode()) {
+                                <th scope="col" [jhiTranslate]="'artemisApp.importUsers.testUser'">Test user</th>
+                            }
                         </tr>
                     </ng-template>
                     <ng-template #body let-user let-i="rowIndex">
@@ -131,12 +133,14 @@
                             <td>{{ user.email }}</td>
                             <td>{{ user.firstName }}</td>
                             <td>{{ user.lastName }}</td>
-                            <td>
-                                @if (user.isTestUser) {
-                                    <fa-icon [icon]="faCheck" />
-                                    <span class="sr-only" jhiTranslate="artemisApp.importUsers.testUser"></span>
-                                }
-                            </td>
+                            @if (adminUserMode()) {
+                                <td>
+                                    @if (user.isTestUser) {
+                                        <fa-icon [icon]="faCheck" />
+                                        <span class="sr-only" jhiTranslate="artemisApp.importUsers.testUser"></span>
+                                    }
+                                </td>
+                            }
                         </tr>
                     </ng-template>
                 </p-table>

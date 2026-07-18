@@ -340,6 +340,7 @@ public interface StatisticsRepository extends ArtemisJpaRepository<User, Long> {
                     OR r.assessmentType = de.tum.cit.aet.artemis.assessment.domain.AssessmentType.SEMI_AUTOMATIC
                 ) AND r.assessor.isTestUser = FALSE
                 AND r.exerciseId IN :exerciseIds
+                AND (r.exampleResult IS NULL OR r.exampleResult = FALSE)
             """)
     List<StatisticsEntry> getActiveTutorsForCourse(@Param("startDate") ZonedDateTime startDate, @Param("endDate") ZonedDateTime endDate,
             @Param("exerciseIds") List<Long> exerciseIds);
@@ -357,6 +358,7 @@ public interface StatisticsRepository extends ArtemisJpaRepository<User, Long> {
                     OR r.assessmentType = de.tum.cit.aet.artemis.assessment.domain.AssessmentType.SEMI_AUTOMATIC
                 ) AND r.assessor.isTestUser = FALSE
                 AND r.exerciseId = :exerciseId
+                AND (r.exampleResult IS NULL OR r.exampleResult = FALSE)
             """)
     List<StatisticsEntry> getActiveTutorsForExercise(@Param("startDate") ZonedDateTime startDate, @Param("endDate") ZonedDateTime endDate, @Param("exerciseId") long exerciseId);
 
@@ -384,6 +386,7 @@ public interface StatisticsRepository extends ArtemisJpaRepository<User, Long> {
             WHERE r.completionDate >= :startDate
                 AND r.completionDate <= :endDate
                 AND r.exerciseId IN :exerciseIds
+                AND (r.exampleResult IS NULL OR r.exampleResult = FALSE)
             GROUP BY r.completionDate
             ORDER BY r.completionDate
             """)
@@ -398,6 +401,7 @@ public interface StatisticsRepository extends ArtemisJpaRepository<User, Long> {
             WHERE r.completionDate >= :startDate
                 AND r.completionDate <= :endDate
                 AND r.exerciseId = :exerciseId
+                AND (r.exampleResult IS NULL OR r.exampleResult = FALSE)
             GROUP BY r.completionDate
             ORDER BY r.completionDate
             """)
@@ -426,6 +430,7 @@ public interface StatisticsRepository extends ArtemisJpaRepository<User, Long> {
             WHERE r.completionDate >= :startDate
                 AND r.completionDate <= :endDate
                 AND r.exerciseId IN :exerciseIds
+                AND (r.exampleResult IS NULL OR r.exampleResult = FALSE)
             GROUP BY r.completionDate
             ORDER BY r.completionDate
             """)
@@ -440,6 +445,7 @@ public interface StatisticsRepository extends ArtemisJpaRepository<User, Long> {
             WHERE r.completionDate >= :startDate
                 AND r.completionDate <= :endDate
                 AND r.exerciseId = :exerciseId
+                AND (r.exampleResult IS NULL OR r.exampleResult = FALSE)
             GROUP BY r.completionDate
             ORDER BY r.completionDate
             """)
