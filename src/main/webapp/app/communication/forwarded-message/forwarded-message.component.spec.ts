@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockComponent, MockPipe } from 'ng-mocks';
 import dayjs from 'dayjs/esm';
@@ -19,8 +18,6 @@ import { MetisService } from 'app/communication/service/metis.service';
 import { MockMetisService } from 'test/helpers/mocks/service/mock-metis-service.service';
 
 describe('ForwardedMessageComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: ForwardedMessageComponent;
     let fixture: ComponentFixture<ForwardedMessageComponent>;
 

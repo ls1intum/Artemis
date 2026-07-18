@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CUSTOM_ELEMENTS_SCHEMA, NO_ERRORS_SCHEMA, SimpleChange } from '@angular/core';
 import { Range } from 'app/foundation/util/utils';
@@ -13,8 +12,6 @@ import { DatePipe } from '@angular/common';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 describe('Plagiarism Run Details', () => {
-    setupTestBed({ zoneless: true });
-
     let comp: PlagiarismRunDetailsComponent;
     let fixture: ComponentFixture<PlagiarismRunDetailsComponent>;
 

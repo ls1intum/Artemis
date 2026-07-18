@@ -1,4 +1,4 @@
-import { Component, HostListener, effect, inject, input, model, output } from '@angular/core';
+import { Component, HostListener, inject, input, model, output } from '@angular/core';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { TextAssessmentAnalytics } from 'app/text/manage/assess/analytics/text-assessment-analytics.service';
@@ -61,7 +61,6 @@ export class AssessmentHeaderComponent {
     readonly onSubmit = output();
     readonly onCancel = output();
     readonly nextSubmission = output();
-    readonly highlightDifferencesChange = output<boolean>();
     readonly useAsExampleSubmission = output();
 
     readonly ExerciseType = ExerciseType;
@@ -73,20 +72,8 @@ export class AssessmentHeaderComponent {
     faSave = faSave;
     faSquareCaretRight = faSquareCaretRight;
 
-    private highlightDifferencesEffectInitialized = false;
-
     constructor() {
         this.textAssessmentAnalytics.setComponentRoute(this.route);
-
-        // Emit highlightDifferencesChange when the model changes (skip initial emission)
-        effect(() => {
-            const value = this.highlightDifferences();
-            if (!this.highlightDifferencesEffectInitialized) {
-                this.highlightDifferencesEffectInitialized = true;
-                return;
-            }
-            this.highlightDifferencesChange.emit(value);
-        });
     }
 
     get overrideVisible() {

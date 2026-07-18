@@ -1,5 +1,4 @@
 import { type Mocked, afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { SavedPostsComponent } from 'app/communication/course-conversations-components/saved-posts/saved-posts.component';
 import { SavedPostService } from 'app/communication/service/saved-post.service';
@@ -16,8 +15,6 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { CourseSidebarService } from 'app/course/overview/services/course-sidebar.service';
 
 describe('SavedPostsComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: SavedPostsComponent;
     let fixture: ComponentFixture<SavedPostsComponent>;
     let savedPostService: Mocked<SavedPostService>;

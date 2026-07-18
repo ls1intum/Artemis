@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { PlagiarismCaseInstructorDetailViewComponent } from 'app/plagiarism/manage/instructor-view/detail-view/plagiarism-case-instructor-detail-view.component';
@@ -26,8 +25,6 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
 
 describe('Plagiarism Cases Instructor View Component', () => {
-    setupTestBed({ zoneless: true });
-
     let component: PlagiarismCaseInstructorDetailViewComponent;
     let fixture: ComponentFixture<PlagiarismCaseInstructorDetailViewComponent>;
     let plagiarismCasesService: PlagiarismCasesService;

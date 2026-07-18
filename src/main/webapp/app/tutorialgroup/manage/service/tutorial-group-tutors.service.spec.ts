@@ -1,5 +1,4 @@
 import { TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { HttpResponse } from '@angular/common/http';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { of, throwError } from 'rxjs';
@@ -10,8 +9,6 @@ import { AlertService } from 'app/foundation/service/alert.service';
 import { TutorialGroupTutorsService } from './tutorial-group-tutors.service';
 
 describe('TutorialGroupTutorsService', () => {
-    setupTestBed({ zoneless: true });
-
     let service: TutorialGroupTutorsService;
 
     let courseManagementService: { getAllUsersInCourseGroup: ReturnType<typeof vi.fn> };

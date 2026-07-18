@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TestBed } from '@angular/core/testing';
 import { CourseNotificationWebsocketService } from 'app/notification/course-notification/course-notification-websocket.service';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
@@ -14,8 +13,6 @@ import { AccountService } from 'app/core/auth/account.service';
 import { User } from 'app/account/user/user.model';
 
 describe('CourseNotificationWebsocketService', () => {
-    setupTestBed({ zoneless: true });
-
     let service: CourseNotificationWebsocketService;
     let websocketServiceMock: { subscribe: ReturnType<typeof vi.fn> };
     let courseNotificationServiceMock: { addNotification: ReturnType<typeof vi.fn> };
