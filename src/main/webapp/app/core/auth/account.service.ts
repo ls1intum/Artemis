@@ -423,8 +423,10 @@ export class AccountService implements IAccountService {
                         return currentUserIdentity;
                     }
 
-                    currentUserIdentity.memirisEnabled = memirisEnabled;
-                    return currentUserIdentity;
+                    // Return a NEW object rather than mutating in place: a signal compares with Object.is, so
+                    // returning the same reference emits no notification and (under zoneless change detection) any
+                    // dependent view would not react to the toggled setting. Mirrors setImageUrl / setUserLLMSelectionDecision.
+                    return Object.assign({}, currentUserIdentity, { memirisEnabled });
                 });
             },
             error: (_) => {},
