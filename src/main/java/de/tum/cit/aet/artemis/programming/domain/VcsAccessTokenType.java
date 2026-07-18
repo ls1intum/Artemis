@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.programming.dto;
+package de.tum.cit.aet.artemis.programming.domain;
 
 /**
  * The kind of VCS access token shown in the user-settings token overview, used to route a revoke request to the correct table.

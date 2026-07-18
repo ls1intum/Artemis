@@ -11,8 +11,8 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
+import de.tum.cit.aet.artemis.programming.domain.VcsAccessTokenType;
 import de.tum.cit.aet.artemis.programming.dto.VcsAccessTokenOverviewDTO;
-import de.tum.cit.aet.artemis.programming.dto.VcsAccessTokenType;
 import de.tum.cit.aet.artemis.programming.repository.ParticipationVCSAccessTokenRepository;
 import de.tum.cit.aet.artemis.programming.repository.RepositoryVCSAccessTokenRepository;
 

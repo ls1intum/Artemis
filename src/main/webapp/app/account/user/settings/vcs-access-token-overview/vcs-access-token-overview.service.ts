@@ -22,6 +22,6 @@ export class VcsAccessTokenOverviewService {
      * @param id        the id of the token to revoke
      */
     revokeToken(tokenType: VcsAccessTokenType, id: number): Observable<void> {
-        return this.http.delete<void>(`${this.resourceUrl}/${tokenType}/${id}`);
+        return this.http.delete<void>(`${this.resourceUrl}/${id}`, { params: { tokenType } });
     }
 }

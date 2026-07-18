@@ -29,8 +29,8 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryVCSAccessToken;
+import de.tum.cit.aet.artemis.programming.domain.VcsAccessTokenType;
 import de.tum.cit.aet.artemis.programming.dto.VcsAccessTokenOverviewDTO;
-import de.tum.cit.aet.artemis.programming.dto.VcsAccessTokenType;
 import de.tum.cit.aet.artemis.programming.repository.RepositoryVCSAccessTokenRepository;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseDeletionService;
 
@@ -536,7 +536,7 @@ class RepositoryVcsAccessTokenIntegrationTest extends AbstractProgrammingIntegra
         RepositoryVCSAccessToken token = repositoryVcsAccessTokenService.getOrCreateToken(tutor, exercise, RepositoryType.TEMPLATE, null);
         assertThat(repositoryVCSAccessTokenRepository.findById(token.getId())).isPresent();
 
-        request.delete("/api/programming/vcs-access-tokens/REPOSITORY/" + token.getId(), HttpStatus.NO_CONTENT);
+        request.delete("/api/programming/vcs-access-tokens/" + token.getId() + "?tokenType=REPOSITORY", HttpStatus.NO_CONTENT);
         assertThat(repositoryVCSAccessTokenRepository.findById(token.getId())).isEmpty();
 
         // The next clone-dialog visit transparently re-mints a fresh token (a new id and secret).
@@ -552,7 +552,7 @@ class RepositoryVcsAccessTokenIntegrationTest extends AbstractProgrammingIntegra
         RepositoryVCSAccessToken instructorToken = repositoryVcsAccessTokenService.getOrCreateToken(instructor, exercise, RepositoryType.TEMPLATE, null);
 
         // The tutor must not be able to revoke another user's token; the delete is scoped to the caller's own tokens.
-        request.delete("/api/programming/vcs-access-tokens/REPOSITORY/" + instructorToken.getId(), HttpStatus.NOT_FOUND);
+        request.delete("/api/programming/vcs-access-tokens/" + instructorToken.getId() + "?tokenType=REPOSITORY", HttpStatus.NOT_FOUND);
         assertThat(repositoryVCSAccessTokenRepository.findById(instructorToken.getId())).isPresent();
     }
 

@@ -13,14 +13,15 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.localvc.service.VcsAccessTokenOverviewService;
+import de.tum.cit.aet.artemis.programming.domain.VcsAccessTokenType;
 import de.tum.cit.aet.artemis.programming.dto.VcsAccessTokenOverviewDTO;
-import de.tum.cit.aet.artemis.programming.dto.VcsAccessTokenType;
 
 /**
  * REST controller that lets a user view and revoke the VCS access tokens they own (participation tokens plus repository-scoped staff tokens), for the user-settings token
@@ -58,19 +59,19 @@ public class VcsAccessTokenOverviewResource {
     }
 
     /**
-     * DELETE vcs-access-tokens/{tokenType}/{tokenId} : Revokes a single VCS access token the current user owns. Scoped to the current user, so a user can never revoke another
-     * user's token. The next clone-dialog visit transparently re-mints a fresh token.
+     * DELETE vcs-access-tokens/{vcsAccessTokenId} : Revokes a single VCS access token the current user owns. Scoped to the current user, so a user can never revoke another user's
+     * token. The next clone-dialog visit transparently re-mints a fresh token.
      *
-     * @param tokenType whether the token is a participation or a repository-scoped token
-     * @param tokenId   the id of the token to revoke
+     * @param vcsAccessTokenId the id of the token to revoke
+     * @param tokenType        whether the token is a participation or a repository-scoped token (disambiguates the id, which is only unique within its own token table)
      * @return 204 No Content
      */
-    @DeleteMapping("vcs-access-tokens/{tokenType}/{tokenId}")
+    @DeleteMapping("vcs-access-tokens/{vcsAccessTokenId}")
     @EnforceAtLeastStudent
-    public ResponseEntity<Void> revokeVcsAccessToken(@PathVariable VcsAccessTokenType tokenType, @PathVariable long tokenId) {
+    public ResponseEntity<Void> revokeVcsAccessToken(@PathVariable long vcsAccessTokenId, @RequestParam("tokenType") VcsAccessTokenType tokenType) {
         User user = userRepository.getUser();
-        log.debug("REST request to revoke {} VCS access token {} of user {}", tokenType, tokenId, user.getLogin());
-        vcsAccessTokenOverviewService.revokeToken(user.getId(), tokenType, tokenId);
+        log.debug("REST request to revoke {} VCS access token {} of user {}", tokenType, vcsAccessTokenId, user.getLogin());
+        vcsAccessTokenOverviewService.revokeToken(user.getId(), tokenType, vcsAccessTokenId);
         return ResponseEntity.noContent().build();
     }
 }

@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.programming.dto;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
+import de.tum.cit.aet.artemis.programming.domain.VcsAccessTokenType;
 
 /**
  * A single VCS access token a user owns, shown in the user-settings token overview. Carries only metadata for display and revocation, never the token secret itself.
@@ -13,7 +14,7 @@ import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
  * @param exerciseTitle  the title of the programming exercise the token's repository belongs to
  * @param studentLogin   the login of the student whose assignment repository a staff USER token grants access to; {@code null} for all other tokens
  */
-@JsonInclude(JsonInclude.Include.NON_ABSENT)
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record VcsAccessTokenOverviewDTO(long id, VcsAccessTokenType tokenType, RepositoryType repositoryType, String exerciseTitle, String studentLogin) {
 
     /**
