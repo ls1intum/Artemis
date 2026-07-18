@@ -309,7 +309,11 @@ public class GitService extends AbstractGitService {
                 cloneInProgressOperations.put(localPath, localPath);
                 // make sure the directory to copy into is empty
                 FileUtils.deleteDirectory(localPath.toFile());
-                try (Git ignored = cloneCommand().setURI(gitUriAsString).setDirectory(localPath.toFile()).call()) {
+                CloneCommand clone = cloneCommand().setURI(gitUriAsString).setDirectory(localPath.toFile());
+                if (StringUtils.isNotBlank(defaultBranch)) {
+                    clone.setBranch(defaultBranch);
+                }
+                try (Git ignored = clone.call()) {
                     // Git instance automatically closed by try-with-resources
                 }
             }
