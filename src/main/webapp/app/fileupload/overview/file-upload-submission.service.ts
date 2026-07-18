@@ -3,10 +3,24 @@ import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 
-import { FileUploadSubmission, FileUploadSubmissionDTO, FileUploadSubmissionInputDTO } from 'app/fileupload/shared/entities/file-upload-submission.model';
+import {
+    FileUploadCourseContextDTO,
+    FileUploadExamContextDTO,
+    FileUploadExerciseContextDTO,
+    FileUploadExerciseGroupContextDTO,
+    FileUploadParticipation,
+    FileUploadParticipationDTO,
+    FileUploadSubmission,
+    FileUploadSubmissionDTO,
+    FileUploadSubmissionInputDTO,
+} from 'app/fileupload/shared/entities/file-upload-submission.model';
 import { createRequestOption } from 'app/foundation/util/request.util';
 import { SubmissionService } from 'app/exercise/submission/submission.service';
 import { addPublicFilePrefix } from 'app/app.constants';
+import { Course } from 'app/course/shared/entities/course.model';
+import { Exam } from 'app/exam/shared/entities/exam.model';
+import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
+import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
 
 export type EntityResponseType = HttpResponse<FileUploadSubmissionDTO>;
 
@@ -121,7 +135,7 @@ export class FileUploadSubmissionService {
      * constructor of the {@link FileUploadSubmission} class, which would set {@link FileUploadSubmission.filePathUrl}, therefore we need to set it manually here.
      */
     private convertFileSubmissionFromServer(res: FileUploadSubmissionDTO): FileUploadSubmission {
-        const convertedBaseSubmission = this.submissionService.convertSubmissionFromServer<FileUploadSubmission>(res);
+        const convertedBaseSubmission = this.submissionService.convertSubmissionFromServer(this.mapSubmissionDtoToModel(res));
         convertedBaseSubmission.filePathUrl = addPublicFilePrefix(res.filePath);
         return convertedBaseSubmission;
     }
@@ -130,10 +144,55 @@ export class FileUploadSubmissionService {
      * See {@link convertFileSubmissionFromServer}
      */
     private convertFileSubmissionResponseFromServer(res: HttpResponse<FileUploadSubmissionDTO>): HttpResponse<FileUploadSubmission> {
-        const convertedBaseSubmission = this.submissionService.convertSubmissionResponseFromServer<FileUploadSubmission>(res);
+        if (!res.body) {
+            return res.clone({ body: null });
+        }
+
+        const responseWithModel = res.clone({ body: this.mapSubmissionDtoToModel(res.body) });
+        const convertedBaseSubmission = this.submissionService.convertSubmissionResponseFromServer(responseWithModel);
         if (convertedBaseSubmission.body) {
             convertedBaseSubmission.body.filePathUrl = addPublicFilePrefix(convertedBaseSubmission.body.filePath);
         }
         return convertedBaseSubmission;
+    }
+
+    private mapSubmissionDtoToModel(dto: FileUploadSubmissionDTO): FileUploadSubmission {
+        const submission = Object.assign(new FileUploadSubmission(), dto);
+        submission.participation = this.mapParticipationDtoToModel(dto.participation);
+        return submission;
+    }
+
+    private mapParticipationDtoToModel(dto: FileUploadParticipationDTO | undefined): FileUploadParticipation | undefined {
+        if (!dto) {
+            return undefined;
+        }
+        return Object.assign(new FileUploadParticipation(dto.type), dto, { exercise: this.mapExerciseDtoToModel(dto.exercise) });
+    }
+
+    private mapExerciseDtoToModel(dto: FileUploadExerciseContextDTO | undefined): FileUploadExercise | undefined {
+        if (!dto) {
+            return undefined;
+        }
+        const course = this.mapCourseDtoToModel(dto.course);
+        const exerciseGroup = this.mapExerciseGroupDtoToModel(dto.exerciseGroup);
+        return Object.assign(new FileUploadExercise(course, exerciseGroup), dto, { course, exerciseGroup });
+    }
+
+    private mapExerciseGroupDtoToModel(dto: FileUploadExerciseGroupContextDTO | undefined): ExerciseGroup | undefined {
+        if (!dto) {
+            return undefined;
+        }
+        return Object.assign(new ExerciseGroup(), dto, { exam: this.mapExamDtoToModel(dto.exam) });
+    }
+
+    private mapExamDtoToModel(dto: FileUploadExamContextDTO | undefined): Exam | undefined {
+        if (!dto) {
+            return undefined;
+        }
+        return Object.assign(new Exam(), dto, { course: this.mapCourseDtoToModel(dto.course) });
+    }
+
+    private mapCourseDtoToModel(dto: FileUploadCourseContextDTO | undefined): Course | undefined {
+        return dto ? Object.assign(new Course(), dto) : undefined;
     }
 }
