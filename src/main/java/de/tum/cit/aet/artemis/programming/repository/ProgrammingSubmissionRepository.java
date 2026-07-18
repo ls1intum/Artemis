@@ -234,4 +234,21 @@ public interface ProgrammingSubmissionRepository extends ArtemisJpaRepository<Pr
             """)
     Set<ParticipationCommitHashDTO> findLatestValidCommitHashForParticipations(@Param("loadedParticipationIds") Set<Long> loadedParticipationIds,
             @Param("filterLateSubmissionsIndividualDueDate") ZonedDateTime filterLateSubmissionsIndividualDueDate, @Param("exerciseDueDate") ZonedDateTime exerciseDueDate);
+
+    /**
+     * Checks whether a successful TEST build result newer than the pre-trigger baseline exists.
+     *
+     * @param participationId        the solution participation id
+     * @param testsCommitHash        the tests commit hash
+     * @param baselineLatestResultId the latest result id observed before triggering the build, or null
+     * @return true if a newer matching successful TEST result exists
+     */
+    @Query("""
+            SELECT COUNT(r) > 0 FROM ProgrammingSubmission ps JOIN ps.results r
+            WHERE ps.participation.id = :participationId AND ps.type = de.tum.cit.aet.artemis.exercise.domain.SubmissionType.TEST
+                AND ps.commitHash = :testsCommitHash AND r.successful = TRUE
+                AND (:baselineLatestResultId IS NULL OR r.id > :baselineLatestResultId)
+            """)
+    boolean existsNewerSuccessfulTestResultForParticipationAndCommitHash(@Param("participationId") long participationId, @Param("testsCommitHash") String testsCommitHash,
+            @Param("baselineLatestResultId") Long baselineLatestResultId);
 }

@@ -954,7 +954,7 @@ public class GenerationPersistenceService {
     private Set<ProgrammingExerciseTestCase> awaitBuildProcessedTestCaseSet(long exerciseId, TestsBuildSignal signal, boolean failOnTimeout) throws InterruptedException {
         long deadline = System.nanoTime() + testCaseSyncTimeout.toNanos();
         while (System.nanoTime() < deadline) {
-            if (resultRepository.existsNewerSuccessfulTestResultForParticipationAndCommitHash(signal.solutionParticipationId(), signal.testsCommitHash(),
+            if (programmingSubmissionService.existsNewerSuccessfulTestResultForParticipationAndCommitHash(signal.solutionParticipationId(), signal.testsCommitHash(),
                     signal.baselineLatestResultId())) {
                 return testCaseRepository.findByExerciseId(exerciseId);
             }
