@@ -1,4 +1,4 @@
-import { Component, computed, model, output, signal } from '@angular/core';
+import { Component, model, output } from '@angular/core';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ExerciseTimelineComponent, ExerciseTimelineStatus, TimelineItem } from 'app/exercise/exercise-timeline/exercise-timeline.component';
 import { Dayjs } from 'dayjs/esm';
@@ -10,8 +10,6 @@ import { Dayjs } from 'dayjs/esm';
     styleUrl: './lecture-timeline.component.scss',
 })
 export class LectureTimelineComponent {
-    private timelineStatus = signal<ExerciseTimelineStatus>({ valid: true, empty: true });
-
     startDate = model<Dayjs | undefined>();
     endDate = model<Dayjs | undefined>();
     timelineStatusChange = output<ExerciseTimelineStatus>();
@@ -27,10 +25,4 @@ export class LectureTimelineComponent {
             date: this.endDate,
         },
     ];
-    isPeriodSectionValid = computed(() => this.timelineStatus().valid);
-
-    onTimelineStatusChange(status: ExerciseTimelineStatus) {
-        this.timelineStatus.set(status);
-        this.timelineStatusChange.emit(status);
-    }
 }

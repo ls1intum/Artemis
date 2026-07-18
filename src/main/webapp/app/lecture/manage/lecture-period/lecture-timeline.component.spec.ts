@@ -39,7 +39,7 @@ describe('LectureTimelineComponent', () => {
         expect(component.timelineItems.every((item) => item.kind === 'optional')).toBe(true);
     });
 
-    it('should forward the timeline status and expose its validity', () => {
+    it('should forward the timeline status', () => {
         fixture.detectChanges();
         const emitSpy = vi.spyOn(component.timelineStatusChange, 'emit');
         const timeline = fixture.debugElement.query(By.directive(ExerciseTimelineComponent)).componentInstance as ExerciseTimelineComponent;
@@ -48,6 +48,5 @@ describe('LectureTimelineComponent', () => {
         timeline.timelineStatusChange.emit(status);
 
         expect(emitSpy).toHaveBeenCalledExactlyOnceWith(status);
-        expect(component.isPeriodSectionValid()).toBe(false);
     });
 });

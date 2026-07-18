@@ -32,6 +32,7 @@ import { AlertService } from 'app/foundation/service/alert.service';
 import { ArtemisNavigationUtilService } from 'app/foundation/util/navigation.utils';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { LectureUnsavedChangesComponent } from 'app/lecture/manage/hasLectureUnsavedChanges.guard';
+import { ExerciseTimelineStatus } from 'app/exercise/exercise-timeline/exercise-timeline.component';
 
 export enum LectureCreationMode {
     SINGLE = 'single',
@@ -88,7 +89,6 @@ export class LectureUpdateComponent implements OnInit, LectureUnsavedChangesComp
     private currentLocale = getCurrentLocaleSignal(this.translateService);
 
     titleSection = viewChild(LectureTitleChannelNameComponent);
-    lecturePeriodSection = viewChild(LectureTimelineComponent);
     unitSection = viewChild(LectureUpdateUnitsComponent);
     formStatusBar = viewChild(FormStatusBarComponent);
     courseId = signal<number | undefined>(undefined);
@@ -106,6 +106,7 @@ export class LectureUpdateComponent implements OnInit, LectureUnsavedChangesComp
     fileInputTouched = false;
     isNewlyCreatedExercise = false;
     readonly isChangeMadeToTitleOrPeriodSection = signal(false);
+    readonly timelineStatus = signal<ExerciseTimelineStatus>({ valid: true, empty: true });
     shouldDisplayDismissWarning = true;
     areSectionsValid = computed(() => this.computeAreSectionsValid());
     createLectureOptions = computed(() => this.computeCreateLectureOptions());
@@ -184,7 +185,7 @@ export class LectureUpdateComponent implements OnInit, LectureUnsavedChangesComp
             },
             {
                 title: 'artemisApp.lecture.sections.period',
-                valid: this.lecturePeriodSection()?.isPeriodSectionValid() ?? false,
+                valid: this.timelineStatus().valid,
             },
         );
 
@@ -222,6 +223,11 @@ export class LectureUpdateComponent implements OnInit, LectureUnsavedChangesComp
 
     protected updateIsChangesMadeToTitleOrPeriodSection() {
         this.isChangeMadeToTitleOrPeriodSection.set(this.isChangeMadeToTitleSection() || this.isChangeMadeToPeriodSection());
+    }
+
+    onTimelineStatusChange(status: ExerciseTimelineStatus): void {
+        this.timelineStatus.set(status);
+        this.updateIsChangesMadeToTitleOrPeriodSection();
     }
 
     /**
@@ -337,13 +343,12 @@ export class LectureUpdateComponent implements OnInit, LectureUnsavedChangesComp
 
     private computeAreSectionsValid(): boolean {
         const titleSection = this.titleSection();
-        const lecturePeriodSection = this.lecturePeriodSection();
         const unitSection = this.unitSection();
-        if (titleSection && lecturePeriodSection) {
+        if (titleSection) {
             if (unitSection) {
-                return titleSection.titleChannelNameComponent().isValid() && lecturePeriodSection.isPeriodSectionValid() && unitSection.isUnitConfigurationValid();
+                return titleSection.titleChannelNameComponent().isValid() && this.timelineStatus().valid && unitSection.isUnitConfigurationValid();
             } else {
-                return titleSection.titleChannelNameComponent().isValid() && lecturePeriodSection.isPeriodSectionValid();
+                return titleSection.titleChannelNameComponent().isValid() && this.timelineStatus().valid;
             }
         }
         return false;

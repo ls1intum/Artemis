@@ -314,6 +314,18 @@ describe('LectureUpdateComponent', () => {
     });
 
     describe('isChangeMadeToPeriodSection', () => {
+        it('should store emitted timeline status and update the period change state', async () => {
+            await configureActiveRouteMockAndCompileComponents();
+            lectureUpdateComponent.lectureOnInit = { startDate: dayjs(), endDate: dayjs().add(1, 'day') } as Lecture;
+            lectureUpdateComponent.lecture.set({ startDate: dayjs().add(2, 'days'), endDate: dayjs().add(3, 'days') } as Lecture);
+            const status = { valid: false, empty: false };
+
+            lectureUpdateComponent.onTimelineStatusChange(status);
+
+            expect(lectureUpdateComponent.timelineStatus()).toEqual(status);
+            expect(lectureUpdateComponent.isChangeMadeToTitleOrPeriodSection()).toBe(true);
+        });
+
         it('should detect changes made to the period section', async () => {
             await configureActiveRouteMockAndCompileComponents();
             lectureUpdateComponent.lecture.set({ startDate: dayjs().add(2, 'day'), endDate: dayjs().add(3, 'day') } as Lecture);
@@ -350,9 +362,7 @@ describe('LectureUpdateComponent', () => {
                     isValid: () => true,
                 }),
             } as any);
-            lectureUpdateComponent.lecturePeriodSection = signal({
-                isPeriodSectionValid: () => true,
-            } as any);
+            lectureUpdateComponent.timelineStatus.set({ valid: true, empty: false });
             lectureUpdateComponent.unitSection = signal({
                 isUnitConfigurationValid: () => true,
             } as any);
@@ -374,9 +384,7 @@ describe('LectureUpdateComponent', () => {
                     isValid: () => false,
                 }),
             } as any);
-            lectureUpdateComponent.lecturePeriodSection = signal({
-                isPeriodSectionValid: () => true,
-            } as any);
+            lectureUpdateComponent.timelineStatus.set({ valid: true, empty: false });
 
             lectureUpdateComponent.updateFormStatusBar();
 
@@ -394,9 +402,7 @@ describe('LectureUpdateComponent', () => {
                     isValid: () => false,
                 }),
             } as any);
-            lectureUpdateComponent.lecturePeriodSection = signal({
-                isPeriodSectionValid: () => false,
-            } as any);
+            lectureUpdateComponent.timelineStatus.set({ valid: false, empty: false });
             lectureUpdateComponent.unitSection = signal({
                 isUnitConfigurationValid: () => false,
             } as any);
