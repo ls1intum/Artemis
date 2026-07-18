@@ -524,6 +524,9 @@ class FileUploadSubmissionIntegrationTest extends AbstractFileUploadIntegrationT
 
         var course = submission.participation().exercise().course();
         var expectedCourse = assessedFileUploadExercise.getCourseViaExerciseGroupOrCourseMember();
+        assertThat(course.teachingAssistantGroupName()).isEqualTo(expectedCourse.getTeachingAssistantGroupName());
+        assertThat(course.editorGroupName()).isEqualTo(expectedCourse.getEditorGroupName());
+        assertThat(course.instructorGroupName()).isEqualTo(expectedCourse.getInstructorGroupName());
         assertThat(course.maxComplaints()).isEqualTo(expectedCourse.getMaxComplaints());
         assertThat(course.maxTeamComplaints()).isEqualTo(expectedCourse.getMaxTeamComplaints());
         assertThat(course.maxComplaintTimeDays()).isEqualTo(expectedCourse.getMaxComplaintTimeDays());
