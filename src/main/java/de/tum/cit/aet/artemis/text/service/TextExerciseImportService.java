@@ -84,7 +84,7 @@ public class TextExerciseImportService extends ExerciseImportService {
      * exercise and {@link #copyExampleSubmission(Exercise, Exercise, Map)} for a hard copy of the example submissions.
      *
      * @param newExercise    the exercise to build; already carries the destination (course / exercise group) and any overrides
-     * @param sourceExercise the original exercise whose content is copied
+     * @param sourceExercise the source exercise whose content is copied
      * @return The newly created exercise
      */
     @NonNull
@@ -98,17 +98,16 @@ public class TextExerciseImportService extends ExerciseImportService {
         }
 
         var competencyLinks = competencyExerciseLinkService.extractCompetencyLinksForCreation(newExercise);
-        TextExercise savedExercise = textExerciseRepository.save(newExercise);
+        textExerciseRepository.save(newExercise);
         if (!competencyLinks.isEmpty()) {
-            competencyExerciseLinkService.addCompetencyLinksForCreation(savedExercise, competencyLinks);
-            savedExercise = textExerciseRepository.save(savedExercise);
+            competencyExerciseLinkService.addCompetencyLinksForCreation(newExercise, competencyLinks);
+            textExerciseRepository.save(newExercise);
         }
-        final TextExercise newTextExercise = savedExercise;
 
-        channelService.createExerciseChannel(newTextExercise, Optional.ofNullable(newExercise.getChannelName()));
+        channelService.createExerciseChannel(newExercise, Optional.ofNullable(newExercise.getChannelName()));
         newExercise.setExampleSubmissions(copyExampleSubmission(sourceExercise, newExercise, gradingInstructionCopyTracker));
 
-        competencyProgressApi.ifPresent(api -> api.updateProgressByLearningObjectAsync(newTextExercise));
+        competencyProgressApi.ifPresent(api -> api.updateProgressByLearningObjectAsync(newExercise));
 
         return newExercise;
     }
@@ -120,7 +119,7 @@ public class TextExerciseImportService extends ExerciseImportService {
      * start-, end-, and assessment due dates are intentionally not copied here.
      *
      * @param newExercise                   the exercise being built; mutated in place
-     * @param sourceExercise                the original exercise providing the content to backfill
+     * @param sourceExercise                the source exercise providing the content to backfill
      * @param gradingInstructionCopyTracker The mapping from original GradingInstruction Ids to new GradingInstruction instances.
      */
     private void copyTextExerciseBasis(TextExercise newExercise, TextExercise sourceExercise, Map<Long, GradingInstruction> gradingInstructionCopyTracker) {
@@ -163,18 +162,18 @@ public class TextExerciseImportService extends ExerciseImportService {
     }
 
     /**
-     * This functions does a hard copy of the example submissions contained in {@code templateExercise}.
+     * This functions does a hard copy of the example submissions contained in {@code sourceExercise}.
      * To copy the corresponding Submission entity this function calls {@link #copySubmission(Submission, Map)}}
      *
-     * @param templateExercise              {TextExercise} The original exercise from which to fetch the example submissions
+     * @param sourceExercise                The source exercise from which to fetch the example submissions
      * @param newExercise                   The new exercise in which we will insert the example submissions
      * @param gradingInstructionCopyTracker The mapping from original GradingInstruction Ids to new GradingInstruction instances.
      * @return The cloned set of example submissions
      */
-    private Set<ExampleSubmission> copyExampleSubmission(Exercise templateExercise, Exercise newExercise, Map<Long, GradingInstruction> gradingInstructionCopyTracker) {
+    private Set<ExampleSubmission> copyExampleSubmission(Exercise sourceExercise, Exercise newExercise, Map<Long, GradingInstruction> gradingInstructionCopyTracker) {
         log.debug("Copying the ExampleSubmissions to new Exercise: {}", newExercise);
         Set<ExampleSubmission> newExampleSubmissions = new HashSet<>();
-        for (ExampleSubmission originalExampleSubmission : templateExercise.getExampleSubmissions()) {
+        for (ExampleSubmission originalExampleSubmission : sourceExercise.getExampleSubmissions()) {
             TextSubmission originalSubmission = (TextSubmission) originalExampleSubmission.getSubmission();
             TextSubmission newSubmission = copySubmission(originalSubmission, gradingInstructionCopyTracker);
 

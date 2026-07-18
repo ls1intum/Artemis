@@ -76,7 +76,7 @@ public class QuizExerciseImportService extends ExerciseImportService {
      * and {@link #copyQuizQuestions(QuizExercise, QuizExercise)} for a hard copy of the questions.
      *
      * @param newExercise    the exercise to build; already carries the destination (course / exercise group) and any overrides
-     * @param sourceExercise the original exercise whose content and settings are copied
+     * @param sourceExercise the source exercise whose content and settings are copied
      * @param files          The potential files to be added. Null if no change to files during import. ExamImportService sends null by default
      * @return The newly created exercise
      */
@@ -90,17 +90,18 @@ public class QuizExerciseImportService extends ExerciseImportService {
             copyQuizBatches(sourceExercise, newExercise);
         }
 
-        QuizExercise newQuizExercise = quizExerciseService.save(newExercise);
+        // save() and uploadNewFilesToNewImportedQuiz() both mutate newExercise in place (id, statistic, file paths), so we
+        // keep operating on the single newExercise reference instead of juggling the returned instances.
+        quizExerciseService.save(newExercise);
 
-        channelService.createExerciseChannel(newQuizExercise, Optional.ofNullable(newExercise.getChannelName()));
+        channelService.createExerciseChannel(newExercise, Optional.ofNullable(newExercise.getChannelName()));
 
-        QuizExercise finalNewQuizExercise = newQuizExercise;
-        competencyProgressApi.ifPresent(api -> api.updateProgressByLearningObjectAsync(finalNewQuizExercise));
+        competencyProgressApi.ifPresent(api -> api.updateProgressByLearningObjectAsync(newExercise));
         if (files != null) {
-            newQuizExercise = quizExerciseService.save(quizExerciseService.uploadNewFilesToNewImportedQuiz(newQuizExercise, files));
+            quizExerciseService.save(quizExerciseService.uploadNewFilesToNewImportedQuiz(newExercise, files));
         }
 
-        return newQuizExercise;
+        return newExercise;
     }
 
     /**
@@ -112,7 +113,7 @@ public class QuizExerciseImportService extends ExerciseImportService {
      * assessment due dates are intentionally not copied here.
      *
      * @param newExercise    the exercise being built; mutated in place
-     * @param sourceExercise the original exercise providing the quiz content and settings
+     * @param sourceExercise the source exercise providing the quiz content and settings
      */
     private void copyQuizExerciseBasis(QuizExercise newExercise, QuizExercise sourceExercise) {
         log.debug("Copying the quiz exercise basis from {}", sourceExercise);

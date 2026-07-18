@@ -78,20 +78,20 @@ public class ProgrammingExerciseImportService {
      * Imports all base build plans for an exercise. These include the template and the solution build plan, <b>not</b>
      * any participation plans!
      *
-     * @param templateExercise The template exercise which plans should get copied
-     * @param newExercise      The new exercise to which all plans should get copied
+     * @param sourceExercise The source exercise which plans should get copied
+     * @param newExercise    The new exercise to which all plans should get copied
      */
-    public void importBuildPlans(final ProgrammingExercise templateExercise, final ProgrammingExercise newExercise) {
+    public void importBuildPlans(final ProgrammingExercise sourceExercise, final ProgrammingExercise newExercise) {
         final var templateParticipation = newExercise.getTemplateParticipation();
         final var solutionParticipation = newExercise.getSolutionParticipation();
         final var targetExerciseProjectKey = newExercise.getProjectKey();
 
         // Clone all build plans, enable them and set up the initial participations, i.e. setting the correct repo URIs and
         // running the plan for the first time
-        cloneAndEnableAllBuildPlans(templateExercise, newExercise);
+        cloneAndEnableAllBuildPlans(sourceExercise, newExercise);
 
-        updatePlanRepositoriesInBuildPlans(newExercise, targetExerciseProjectKey, templateExercise.getTemplateRepositoryUri(), templateExercise.getSolutionRepositoryUri(),
-                templateExercise.getTestRepositoryUri(), templateExercise.getAuxiliaryRepositoriesForBuildPlan());
+        updatePlanRepositoriesInBuildPlans(newExercise, targetExerciseProjectKey, sourceExercise.getTemplateRepositoryUri(), sourceExercise.getSolutionRepositoryUri(),
+                sourceExercise.getTestRepositoryUri(), sourceExercise.getAuxiliaryRepositoriesForBuildPlan());
 
         ContinuousIntegrationTriggerService triggerService = continuousIntegrationTriggerService.orElseThrow();
         triggerService.triggerBuild(templateParticipation);
@@ -135,7 +135,7 @@ public class ProgrammingExerciseImportService {
         }
     }
 
-    private void cloneAndEnableAllBuildPlans(ProgrammingExercise templateExercise, ProgrammingExercise newExercise) {
+    private void cloneAndEnableAllBuildPlans(ProgrammingExercise sourceExercise, ProgrammingExercise newExercise) {
         final var templateParticipation = newExercise.getTemplateParticipation();
         final var solutionParticipation = newExercise.getSolutionParticipation();
         final var targetExerciseProjectKey = newExercise.getProjectKey();
@@ -144,8 +144,8 @@ public class ProgrammingExerciseImportService {
         final var targetName = newExercise.getCourseViaExerciseGroupOrCourseMember().getShortName().toUpperCase() + " " + newExercise.getTitle();
         ContinuousIntegrationService continuousIntegration = continuousIntegrationService.orElseThrow();
         continuousIntegration.createProjectForExercise(newExercise);
-        continuousIntegration.copyBuildPlan(templateExercise, templatePlanName, newExercise, targetName, templatePlanName, false);
-        continuousIntegration.copyBuildPlan(templateExercise, solutionPlanName, newExercise, targetName, solutionPlanName, true);
+        continuousIntegration.copyBuildPlan(sourceExercise, templatePlanName, newExercise, targetName, templatePlanName, false);
+        continuousIntegration.copyBuildPlan(sourceExercise, solutionPlanName, newExercise, targetName, solutionPlanName, true);
         continuousIntegration.enablePlan(targetExerciseProjectKey, templateParticipation.getBuildPlanId());
         continuousIntegration.enablePlan(targetExerciseProjectKey, solutionParticipation.getBuildPlanId());
     }

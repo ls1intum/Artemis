@@ -66,7 +66,7 @@ public abstract class ExerciseImportService {
 
     /**
      * Backfills the exercise basis onto {@code newExercise} from {@code sourceExercise}: any content field the caller
-     * has not already set on {@code newExercise} is taken from the original exercise being imported.
+     * has not already set on {@code newExercise} is taken from the source exercise being imported.
      * <p>
      * The caller owns {@code newExercise} and must set its destination (course or exercise group) and any intended
      * overrides before calling. A standalone REST import passes the full edited exercise, so its values win and the
@@ -76,7 +76,7 @@ public abstract class ExerciseImportService {
      *
      * @param newExercise                   the exercise being built; already carries the destination and any caller
      *                                          overrides, receives the source content for every field it does not define
-     * @param sourceExercise                the original exercise providing the content to backfill
+     * @param sourceExercise                the source exercise providing the content to backfill
      * @param gradingInstructionCopyTracker tracker for deep-copying grading instructions
      */
     protected void copyExerciseBasis(final Exercise newExercise, final Exercise sourceExercise, final Map<Long, GradingInstruction> gradingInstructionCopyTracker) {

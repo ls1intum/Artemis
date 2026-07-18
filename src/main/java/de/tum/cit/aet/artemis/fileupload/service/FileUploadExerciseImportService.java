@@ -56,7 +56,7 @@ public class FileUploadExerciseImportService extends ExerciseImportService {
      * of the exercise.
      *
      * @param newExercise    the exercise to build; already carries the destination (course / exercise group) and any overrides
-     * @param sourceExercise the original exercise whose content is copied
+     * @param sourceExercise the source exercise whose content is copied
      * @return The newly created exercise
      */
     @NonNull
@@ -65,18 +65,17 @@ public class FileUploadExerciseImportService extends ExerciseImportService {
         copyFileUploadExerciseBasis(newExercise, sourceExercise);
 
         var competencyLinks = competencyExerciseLinkService.extractCompetencyLinksForCreation(newExercise);
-        FileUploadExercise savedExercise = fileUploadExerciseRepository.save(newExercise);
+        fileUploadExerciseRepository.save(newExercise);
         if (!competencyLinks.isEmpty()) {
-            competencyExerciseLinkService.addCompetencyLinksForCreation(savedExercise, competencyLinks);
-            savedExercise = fileUploadExerciseRepository.save(savedExercise);
+            competencyExerciseLinkService.addCompetencyLinksForCreation(newExercise, competencyLinks);
+            fileUploadExerciseRepository.save(newExercise);
         }
-        final FileUploadExercise newFileUploadExercise = savedExercise;
 
-        channelService.createExerciseChannel(newFileUploadExercise, Optional.ofNullable(newExercise.getChannelName()));
+        channelService.createExerciseChannel(newExercise, Optional.ofNullable(newExercise.getChannelName()));
 
-        competencyProgressApi.ifPresent(api -> api.updateProgressByLearningObjectAsync(newFileUploadExercise));
+        competencyProgressApi.ifPresent(api -> api.updateProgressByLearningObjectAsync(newExercise));
 
-        return newFileUploadExercise;
+        return newExercise;
     }
 
     /**
@@ -87,7 +86,7 @@ public class FileUploadExerciseImportService extends ExerciseImportService {
      * All external entities and the start-, end-, and assessment due dates are intentionally not copied here.
      *
      * @param newExercise    the exercise being built; mutated in place
-     * @param sourceExercise the original exercise providing the content to backfill
+     * @param sourceExercise the source exercise providing the content to backfill
      */
     private void copyFileUploadExerciseBasis(FileUploadExercise newExercise, FileUploadExercise sourceExercise) {
         log.debug("Copying the file upload exercise basis from {}", sourceExercise);
