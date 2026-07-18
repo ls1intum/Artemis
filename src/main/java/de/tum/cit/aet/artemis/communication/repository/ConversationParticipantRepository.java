@@ -176,6 +176,21 @@ public interface ConversationParticipantRepository extends ArtemisJpaRepository<
     void deleteAllByConversationId(Long conversationId);
 
     /**
+     * Deletes all conversation participants (channel/conversation memberships and their read state) of every
+     * conversation belonging to the given course. Used by the course reset to remove the per-user membership data while
+     * the conversation/channel structure itself is preserved.
+     *
+     * @param courseId the id of the course whose conversation participants should be deleted
+     */
+    @Transactional // ok because of delete
+    @Modifying
+    @Query("""
+            DELETE FROM ConversationParticipant conversationParticipant
+            WHERE conversationParticipant.conversation.course.id = :courseId
+            """)
+    void deleteAllByConversationCourseId(@Param("courseId") long courseId);
+
+    /**
      * Increment unreadMessageCount field of ConversationParticipant
      *
      * @param senderId       userId of the sender of the message(Post)

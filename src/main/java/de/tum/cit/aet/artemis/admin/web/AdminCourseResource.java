@@ -303,8 +303,8 @@ public class AdminCourseResource {
      * <li>Course configuration and settings</li>
      * <li>Exercise, exam, and lecture definitions</li>
      * <li>Competency definitions</li>
-     * <li>Conversation/channel structure</li>
-     * <li>Tutor, editor, and instructor group memberships</li>
+     * <li>Conversation/channel structure (but not per-user membership)</li>
+     * <li>Instructor group memberships (students, tutors, and editors are unenrolled)</li>
      * </ul>
      * <p>
      * <b>Deleted data:</b>

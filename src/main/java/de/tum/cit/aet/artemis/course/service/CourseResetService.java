@@ -54,11 +54,15 @@ import de.tum.cit.aet.artemis.tutorialgroup.api.TutorialGroupApi;
  * </tr>
  * <tr>
  * <td>Communication</td>
- * <td>Channel/conversation structure (but not messages)</td>
+ * <td>Channel/conversation structure (but not messages or per-user membership)</td>
  * </tr>
  * <tr>
  * <td>Staff</td>
  * <td>Instructor assignments only</td>
+ * </tr>
+ * <tr>
+ * <td>Plagiarism</td>
+ * <td>Plagiarism cases (retained under their own retention period; removed separately by the age-based cleanup)</td>
  * </tr>
  * </table>
  * <p>
@@ -70,11 +74,11 @@ import de.tum.cit.aet.artemis.tutorialgroup.api.TutorialGroupApi;
  * </tr>
  * <tr>
  * <td>Exercise Data</td>
- * <td>Participations, submissions, results, feedbacks, build results, plagiarism cases</td>
+ * <td>Participations, submissions, results, feedbacks, plagiarism results</td>
  * </tr>
  * <tr>
  * <td>Exam Data</td>
- * <td>Student exams, exam participations, exam submissions, exam grades</td>
+ * <td>Student exams, exam participations, exam submissions, exam grades, exam users (seating, identity checks, signature/photo files)</td>
  * </tr>
  * <tr>
  * <td>Learning Analytics</td>
@@ -82,7 +86,7 @@ import de.tum.cit.aet.artemis.tutorialgroup.api.TutorialGroupApi;
  * </tr>
  * <tr>
  * <td>Communication</td>
- * <td>Posts, answer posts, reactions, notifications, notification settings</td>
+ * <td>Posts, answer posts, reactions, conversation participants (channel membership), notifications, notification settings</td>
  * </tr>
  * <tr>
  * <td>AI Features</td>
@@ -505,22 +509,27 @@ public class CourseResetService {
      * @param courseId the ID of the course whose students, tutors, and editors should be unenrolled
      */
     private void unenrollStudentsTutorsAndEditors(long courseId) {
-        // Remove students using bulk operation
-        String studentGroupName = courseRepository.getStudentGroupNameById(courseId);
-        if (studentGroupName != null) {
-            userService.removeGroupFromAllUsers(studentGroupName);
-        }
+        removeGroupIfNotSharedByAnotherCourse(courseId, courseRepository.getStudentGroupNameById(courseId));
+        removeGroupIfNotSharedByAnotherCourse(courseId, courseRepository.getTeachingAssistantGroupNameById(courseId));
+        removeGroupIfNotSharedByAnotherCourse(courseId, courseRepository.getEditorGroupNameById(courseId));
+    }
 
-        // Remove tutors (teaching assistants) using bulk operation
-        String tutorGroupName = courseRepository.getTeachingAssistantGroupNameById(courseId);
-        if (tutorGroupName != null) {
-            userService.removeGroupFromAllUsers(tutorGroupName);
+    /**
+     * Removes the given group from all users via a bulk operation, unless another course also uses that group name. The
+     * removal is keyed purely by group name, so removing a shared group would unenroll users from unrelated courses;
+     * auto-generated group names are course-unique, but manually configured shared groups must be left untouched.
+     *
+     * @param courseId  the id of the course being reset
+     * @param groupName the group to remove (ignored if {@code null})
+     */
+    private void removeGroupIfNotSharedByAnotherCourse(long courseId, String groupName) {
+        if (groupName == null) {
+            return;
         }
-
-        // Remove editors using bulk operation
-        String editorGroupName = courseRepository.getEditorGroupNameById(courseId);
-        if (editorGroupName != null) {
-            userService.removeGroupFromAllUsers(editorGroupName);
+        if (courseRepository.countOtherCoursesUsingGroup(courseId, groupName) > 0) {
+            log.warn("Skipping unenrollment for group '{}' during reset of course {} because another course also uses this group name", groupName, courseId);
+            return;
         }
+        userService.removeGroupFromAllUsers(groupName);
     }
 }

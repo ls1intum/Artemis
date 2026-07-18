@@ -300,6 +300,23 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long>, Jp
     String getEditorGroupNameById(@Param("courseId") long courseId);
 
     /**
+     * Counts the courses other than the given one that reference the given group name as their student, teaching
+     * assistant, editor, or instructor group. Used by the course reset to avoid unenrolling users from unrelated courses
+     * that (in a manually configured setup) share a group name.
+     *
+     * @param courseId  the id of the course being reset (excluded from the count)
+     * @param groupName the group name to check
+     * @return the number of other courses using this group name
+     */
+    @Query("""
+            SELECT COUNT(c)
+            FROM Course c
+            WHERE c.id <> :courseId
+                AND (c.studentGroupName = :groupName OR c.teachingAssistantGroupName = :groupName OR c.editorGroupName = :groupName OR c.instructorGroupName = :groupName)
+            """)
+    long countOtherCoursesUsingGroup(@Param("courseId") long courseId, @Param("groupName") String groupName);
+
+    /**
      * Returns the instructor group name of the course with the given id.
      *
      * @param courseId the id of the course
