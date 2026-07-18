@@ -10,6 +10,7 @@ describe('MonacoEditorOptionPresets', () => {
             expect.objectContaining({
                 fixedOverflowWidgets: true,
                 quickSuggestions: { other: 'on', comments: 'off', strings: 'off' },
+                suggest: { showWords: false, showIcons: false },
             }),
         );
     });

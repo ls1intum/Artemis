@@ -97,8 +97,8 @@ describe('EmojiCompletionAction', () => {
         const completer = registerAndCaptureCompleter();
         const range = new TextEditorRange(new TextEditorPosition(1, 1), new TextEditorPosition(1, 4));
         const item = completer.mapCompletionItem(emojiData('joy', '😂'), range, 'jo', 3);
-        expect(item.getLabel()).toBe(':joy:');
-        expect(item.getDetailText()).toBe('😂');
+        expect(item.getLabel()).toBe('😂 :joy:');
+        expect(item.getDetailText()).toBeUndefined();
         expect(item.getInsertText()).toBe('😂');
         expect(item.getKind()).toBe(TextEditorCompletionItemKind.Default);
         expect(item.getRange()).toBe(range);

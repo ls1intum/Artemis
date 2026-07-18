@@ -54,4 +54,11 @@ export const COMMUNICATION_MARKDOWN_EDITOR_OPTIONS = new MonacoEditorOptionPrese
     // Explicitly enable suggestions while typing regular text: the emoji completion relies on quick suggestions
     // to reopen the suggest widget for the first letter typed after ':'. Comments and strings are excluded on purpose.
     quickSuggestions: { other: 'on', comments: 'off', strings: 'off' },
+    suggest: {
+        // Inherited from the default markdown options: word suggestions are shared between editors of the same language.
+        showWords: false,
+        // The chat completions carry their own visuals (user names, channel names, emoji glyphs in the label);
+        // Monaco's kind icons only add noise in this context.
+        showIcons: false,
+    },
 });

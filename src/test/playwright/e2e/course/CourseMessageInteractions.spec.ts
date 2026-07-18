@@ -373,7 +373,7 @@ test.describe('Message interactions', { tag: '@fast' }, () => {
             // explicitly by its exact label rather than relying on whichever entry Monaco highlights by default.
             const suggestWidget = courseMessages.getSuggestWidget();
             await expect(suggestWidget).toBeVisible({ timeout: 10000 });
-            const joySuggestion = suggestWidget.getByRole('option', { name: /^:joy:,/ });
+            const joySuggestion = suggestWidget.getByRole('option', { name: /:joy:$/ });
             await expect(joySuggestion).toBeVisible();
 
             // Accepting the suggestion (click) replaces the shortcode with the native emoji glyph

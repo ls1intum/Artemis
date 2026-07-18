@@ -68,12 +68,15 @@ export class EmojiCompletionAction extends TextEditorAction {
             this.searchEmojisForTerm.bind(this),
             (emoji: NativeEmojiData, range: TextEditorRange, searchTerm: string, index: number) =>
                 new TextEditorCompletionItem(
-                    `:${emoji.id}:`,
-                    emoji.native,
+                    // The glyph leads the label (GitHub-style); no detail text, since Monaco renders details in the
+                    // right-aligned part of the row, far away from the shortcode.
+                    `${emoji.native} :${emoji.id}:`,
+                    undefined,
                     emoji.native,
                     TextEditorCompletionItemKind.Default,
                     range,
-                    // Filter against what the user typed so that keyword and alias matches (e.g. ':party' -> 'tada') survive Monaco's filtering.
+                    // Filter against what the user typed so that the glyph-led label and keyword/alias matches
+                    // (e.g. ':party' -> 'tada') survive Monaco's filtering.
                     `:${searchTerm}`,
                     // Preserve the search's relevance order instead of Monaco's label-based ordering.
                     String(index).padStart(3, '0'),
