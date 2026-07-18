@@ -638,7 +638,7 @@ class GenerationPersistenceServiceTest {
         stubSuccessfulCheckoutAndCommits();
         when(participationService.retrieveSolutionParticipation(exercise)).thenReturn(mock(ProgrammingExerciseParticipation.class));
 
-        Duration timeout = Duration.ofMillis(80);
+        Duration timeout = Duration.ofMillis(500);
         GenerationPersistenceService boundedService = new GenerationPersistenceService("main", gitService, repositoryService, participationService,
                 continuousIntegrationTriggerService, programmingSubmissionService, exerciseVersionService, testCaseRepository, resultRepository, programmingExerciseRepository,
                 programmingExerciseTaskService, tempFileUtilService, timeout, Duration.ofMillis(5));
