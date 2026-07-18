@@ -308,7 +308,7 @@ public class CourseMaterialImportService {
         copyImportOverrides(optionalOriginal.get(), newExercise);
 
         try {
-            return Optional.of(quizExerciseImportService.importQuizExercise(optionalOriginal.get(), newExercise, null));
+            return Optional.of(quizExerciseImportService.importQuizExercise(newExercise, optionalOriginal.get(), null));
         }
         catch (Exception e) {
             log.error("Failed to import quiz exercise: {}", e.getMessage());

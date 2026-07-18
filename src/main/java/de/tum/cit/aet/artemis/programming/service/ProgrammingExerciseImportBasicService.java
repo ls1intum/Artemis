@@ -129,43 +129,43 @@ public class ProgrammingExerciseImportBasicService {
      * <li>The example submissions</li>
      * </ul>
      *
-     * @param originalProgrammingExercise The template exercise which should get
-     *                                        imported
-     * @param newProgrammingExercise      The new exercise already containing values
-     *                                        which should not get copied, i.e.
-     *                                        overwritten
+     * @param sourceExercise The template exercise which should get
+     *                           imported
+     * @param newExercise    The new exercise already containing values
+     *                           which should not get copied, i.e.
+     *                           overwritten
      * @return The newly created exercise
      */
     @Transactional // TODO: NOT OK --> apply the transaction on a smaller scope
     // IMPORTANT: the transactional context only works if you invoke this method
     // from another class
-    public ProgrammingExercise importProgrammingExerciseBasis(final ProgrammingExercise originalProgrammingExercise, final ProgrammingExercise newProgrammingExercise) {
-        prepareBasicExerciseInformation(originalProgrammingExercise, newProgrammingExercise);
+    public ProgrammingExercise importProgrammingExerciseBasis(final ProgrammingExercise sourceExercise, final ProgrammingExercise newExercise) {
+        prepareBasicExerciseInformation(sourceExercise, newExercise);
 
         // Note: same order as when creating an exercise
-        programmingExerciseParticipationService.setupInitialTemplateParticipation(newProgrammingExercise);
-        programmingExerciseParticipationService.setupInitialSolutionParticipation(newProgrammingExercise);
-        setupTestRepository(newProgrammingExercise);
-        programmingExerciseCreationUpdateService.initParticipations(newProgrammingExercise);
+        programmingExerciseParticipationService.setupInitialTemplateParticipation(newExercise);
+        programmingExerciseParticipationService.setupInitialSolutionParticipation(newExercise);
+        setupTestRepository(newExercise);
+        programmingExerciseCreationUpdateService.initParticipations(newExercise);
 
-        newProgrammingExercise.getBuildConfig().setBranch(defaultBranch);
-        if (newProgrammingExercise.getBuildConfig().getBuildPlanConfiguration() == null) {
+        newExercise.getBuildConfig().setBranch(defaultBranch);
+        if (newExercise.getBuildConfig().getBuildPlanConfiguration() == null) {
             // this means the user did not override the build plan config when importing the
             // exercise and want to reuse it from the existing exercise
-            newProgrammingExercise.getBuildConfig().setBuildPlanConfiguration(originalProgrammingExercise.getBuildConfig().getBuildPlanConfiguration());
+            newExercise.getBuildConfig().setBuildPlanConfiguration(sourceExercise.getBuildConfig().getBuildPlanConfiguration());
         }
 
         // Hints, tasks, test cases and static code analysis categories
-        newProgrammingExercise.setBuildConfig(programmingExerciseBuildConfigRepository.save(newProgrammingExercise.getBuildConfig()));
+        newExercise.setBuildConfig(programmingExerciseBuildConfigRepository.save(newExercise.getBuildConfig()));
 
-        Set<GradingCriterion> oldCriteria = originalProgrammingExercise.getGradingCriteria();
+        Set<GradingCriterion> oldCriteria = sourceExercise.getGradingCriteria();
         if (oldCriteria != null) {
             for (GradingCriterion oldCriterion : oldCriteria) {
                 // 1) Create and copy a new GradingCriterion
                 GradingCriterion copyCriterion = new GradingCriterion();
                 copyCriterion.setId(null); // ensure Hibernate treats it as new
                 copyCriterion.setTitle(oldCriterion.getTitle());
-                copyCriterion.setExercise(newProgrammingExercise);
+                copyCriterion.setExercise(newExercise);
 
                 // 2) Copy each GradingInstruction (but skip feedbacks)
                 for (GradingInstruction oldInstr : oldCriterion.getStructuredGradingInstructions()) {
@@ -183,59 +183,59 @@ public class ProgrammingExerciseImportBasicService {
                 }
 
                 // 3) Add the newly built criterion into the new exercise
-                newProgrammingExercise.getGradingCriteria().add(copyCriterion);
+                newExercise.getGradingCriteria().add(copyCriterion);
             }
         }
 
-        var competencyLinks = competencyExerciseLinkService.extractCompetencyLinksForCreation(newProgrammingExercise);
-        ProgrammingExercise importedExercise = programmingExerciseRepository.save(newProgrammingExercise);
+        var competencyLinks = competencyExerciseLinkService.extractCompetencyLinksForCreation(newExercise);
+        ProgrammingExercise savedExercise = programmingExerciseRepository.save(newExercise);
         if (!competencyLinks.isEmpty()) {
-            competencyExerciseLinkService.addCompetencyLinksForCreation(importedExercise, competencyLinks);
-            importedExercise = programmingExerciseRepository.save(importedExercise);
+            competencyExerciseLinkService.addCompetencyLinksForCreation(savedExercise, competencyLinks);
+            savedExercise = programmingExerciseRepository.save(savedExercise);
         }
 
-        final Map<Long, Long> newTestCaseIdByOldId = importTestCases(originalProgrammingExercise, importedExercise);
-        importTasks(originalProgrammingExercise, importedExercise, newTestCaseIdByOldId);
+        final Map<Long, Long> newTestCaseIdByOldId = importTestCases(sourceExercise, savedExercise);
+        importTasks(sourceExercise, savedExercise, newTestCaseIdByOldId);
 
         // Set up new exercise submission policy before the solution entries are
         // imported
-        importSubmissionPolicy(importedExercise);
+        importSubmissionPolicy(savedExercise);
         // Having the submission policy in place prevents errors
 
         // Use the template problem statement (with ids) as a new basis (You cannot edit
         // the problem statement while importing)
         // Then replace the old test ids by the newly created ones.
-        importedExercise.setProblemStatement(originalProgrammingExercise.getProblemStatement());
-        programmingExerciseTaskService.updateTestIds(importedExercise, newTestCaseIdByOldId);
+        savedExercise.setProblemStatement(sourceExercise.getProblemStatement());
+        programmingExerciseTaskService.updateTestIds(savedExercise, newTestCaseIdByOldId);
 
         // Copy or create SCA categories
-        if (Boolean.TRUE.equals(importedExercise.isStaticCodeAnalysisEnabled()) && Boolean.TRUE.equals(originalProgrammingExercise.isStaticCodeAnalysisEnabled())) {
-            importStaticCodeAnalysisCategories(originalProgrammingExercise, importedExercise);
+        if (Boolean.TRUE.equals(savedExercise.isStaticCodeAnalysisEnabled()) && Boolean.TRUE.equals(sourceExercise.isStaticCodeAnalysisEnabled())) {
+            importStaticCodeAnalysisCategories(sourceExercise, savedExercise);
         }
-        else if (Boolean.TRUE.equals(importedExercise.isStaticCodeAnalysisEnabled()) && !Boolean.TRUE.equals(originalProgrammingExercise.isStaticCodeAnalysisEnabled())) {
-            staticCodeAnalysisService.createDefaultCategories(importedExercise);
+        else if (Boolean.TRUE.equals(savedExercise.isStaticCodeAnalysisEnabled()) && !Boolean.TRUE.equals(sourceExercise.isStaticCodeAnalysisEnabled())) {
+            staticCodeAnalysisService.createDefaultCategories(savedExercise);
         }
 
         // An exam exercise can only be in individual mode
-        if (importedExercise.isExamExercise()) {
-            importedExercise.setMode(ExerciseMode.INDIVIDUAL);
-            importedExercise.setTeamAssignmentConfig(null);
+        if (savedExercise.isExamExercise()) {
+            savedExercise.setMode(ExerciseMode.INDIVIDUAL);
+            savedExercise.setTeamAssignmentConfig(null);
         }
 
         // Re-adding auxiliary repositories
-        final List<AuxiliaryRepository> auxiliaryRepositoriesToBeImported = originalProgrammingExercise.getAuxiliaryRepositories();
+        final List<AuxiliaryRepository> auxiliaryRepositoriesToBeImported = sourceExercise.getAuxiliaryRepositories();
 
         for (AuxiliaryRepository auxiliaryRepository : auxiliaryRepositoriesToBeImported) {
             AuxiliaryRepository newAuxiliaryRepository = auxiliaryRepository.cloneObjectForNewExercise();
             newAuxiliaryRepository = auxiliaryRepositoryRepository.save(newAuxiliaryRepository);
-            importedExercise.addAuxiliaryRepository(newAuxiliaryRepository);
+            savedExercise.addAuxiliaryRepository(newAuxiliaryRepository);
         }
 
-        ProgrammingExercise savedImportedExercise = programmingExerciseRepository.save(importedExercise);
+        ProgrammingExercise persistedExercise = programmingExerciseRepository.save(savedExercise);
 
-        channelService.createExerciseChannel(savedImportedExercise, Optional.ofNullable(newProgrammingExercise.getChannelName()));
+        channelService.createExerciseChannel(persistedExercise, Optional.ofNullable(newExercise.getChannelName()));
 
-        return savedImportedExercise;
+        return persistedExercise;
     }
 
     /**
@@ -244,17 +244,17 @@ public class ProgrammingExerciseImportBasicService {
      * Replaces attributes in the new exercise that should not be copied from the
      * previous one.
      *
-     * @param originalProgrammingExercise Some exercise the information is copied
-     *                                        from.
-     * @param newProgrammingExercise      The exercise that is prepared.
+     * @param sourceExercise Some exercise the information is copied
+     *                           from.
+     * @param newExercise    The exercise that is prepared.
      */
-    private void prepareBasicExerciseInformation(final ProgrammingExercise originalProgrammingExercise, final ProgrammingExercise newProgrammingExercise) {
+    private void prepareBasicExerciseInformation(final ProgrammingExercise sourceExercise, final ProgrammingExercise newExercise) {
         // Set values we don't want to copy to null
-        setupExerciseForImport(newProgrammingExercise);
-        setupBuildConfig(newProgrammingExercise, originalProgrammingExercise);
+        setupExerciseForImport(newExercise);
+        setupBuildConfig(newExercise, sourceExercise);
 
-        if (originalProgrammingExercise.getBuildConfig().hasBuildPlanAccessSecretSet()) {
-            newProgrammingExercise.getBuildConfig().generateAndSetBuildPlanAccessSecret();
+        if (sourceExercise.getBuildConfig().hasBuildPlanAccessSecretSet()) {
+            newExercise.getBuildConfig().generateAndSetBuildPlanAccessSecret();
         }
     }
 

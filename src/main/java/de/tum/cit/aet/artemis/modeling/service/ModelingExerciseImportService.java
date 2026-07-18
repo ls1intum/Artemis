@@ -57,20 +57,21 @@ public class ModelingExerciseImportService extends ExerciseImportService {
     }
 
     /**
-     * Imports a modeling exercise creating a new entity, copying all basic values and saving it in the database.
-     * All basic include everything except Student-, Tutor participations, and student questions. <br>
-     * This method calls {@link #copyModelingExerciseBasis(Exercise, Map)} to set up the basis of the exercise
-     * {@link #copyExampleSubmission(Exercise, Exercise, Map)} for a hard copy of the example submissions.
+     * Imports a modeling exercise: builds a new entity from {@code newExercise} (the destination and any caller
+     * overrides), backfills its basis from {@code sourceExercise} (the original), copies a hard copy of the example
+     * submissions, and saves it. Student-/tutor participations are not copied.
+     * This method calls {@link #copyModelingExerciseBasis(ModelingExercise, ModelingExercise, Map)} to set up the basis
+     * of the exercise and {@link #copyExampleSubmission(Exercise, Exercise, Map)} for a hard copy of the example submissions.
      *
-     * @param templateExercise The template exercise which should get imported
-     * @param importedExercise The new exercise already containing values which should not get copied, i.e. overwritten
+     * @param newExercise    the exercise to build; already carries the destination (course / exercise group) and any overrides
+     * @param sourceExercise the original exercise whose content is copied
      * @return The newly created exercise
      */
     @NonNull
-    public ModelingExercise importModelingExercise(ModelingExercise templateExercise, ModelingExercise importedExercise) {
-        log.debug("Creating a new Exercise based on exercise {}", templateExercise.getId());
+    public ModelingExercise importModelingExercise(ModelingExercise newExercise, ModelingExercise sourceExercise) {
+        log.debug("Creating a new modeling exercise based on exercise {}", sourceExercise.getId());
         Map<Long, GradingInstruction> gradingInstructionCopyTracker = new HashMap<>();
-        ModelingExercise newExercise = copyModelingExerciseBasis(importedExercise, templateExercise, gradingInstructionCopyTracker);
+        copyModelingExerciseBasis(newExercise, sourceExercise, gradingInstructionCopyTracker);
 
         var competencyLinks = competencyExerciseLinkService.extractCompetencyLinksForCreation(newExercise);
         ModelingExercise savedExercise = modelingExerciseRepository.save(newExercise);
@@ -80,8 +81,8 @@ public class ModelingExerciseImportService extends ExerciseImportService {
         }
         final ModelingExercise newModelingExercise = savedExercise;
 
-        channelService.createExerciseChannel(newModelingExercise, Optional.ofNullable(importedExercise.getChannelName()));
-        newModelingExercise.setExampleSubmissions(copyExampleSubmission(templateExercise, newExercise, gradingInstructionCopyTracker));
+        channelService.createExerciseChannel(newModelingExercise, Optional.ofNullable(newExercise.getChannelName()));
+        newModelingExercise.setExampleSubmissions(copyExampleSubmission(sourceExercise, newExercise, gradingInstructionCopyTracker));
 
         competencyProgressApi.ifPresent(api -> api.updateProgressByLearningObjectAsync(newModelingExercise));
 
@@ -89,26 +90,25 @@ public class ModelingExerciseImportService extends ExerciseImportService {
     }
 
     /**
-     * This helper method copies all attributes of the {@code importedExercise} into the new exercise.
-     * Here we ignore all external entities as well as the start-, end-, and assessment due date.
-     * Also fills {@code gradingInstructionCopyTracker}.
+     * Backfills the modeling exercise basis onto {@code newExercise} from {@code sourceExercise}: the generic basis
+     * follows the "keep the caller's value, else take the source's" rule (see
+     * {@link ExerciseImportService#copyExerciseBasis}), and the modeling-specific fields likewise prefer the caller's
+     * edited value. All external entities and the start-, end-, and assessment due dates are intentionally not copied
+     * here. Also fills {@code gradingInstructionCopyTracker}.
      *
-     * @param importedExercise              The exercise from which to copy the basis
+     * @param newExercise                   the exercise being built; mutated in place
+     * @param sourceExercise                the original exercise providing the content to backfill
      * @param gradingInstructionCopyTracker The mapping from original GradingInstruction Ids to new GradingInstruction instances.
-     * @return the cloned TextExercise basis
      */
-    @NonNull
-    private ModelingExercise copyModelingExerciseBasis(Exercise importedExercise, ModelingExercise templateExercise, Map<Long, GradingInstruction> gradingInstructionCopyTracker) {
-        log.debug("Copying the exercise basis from {}", importedExercise);
-        ModelingExercise newExercise = new ModelingExercise();
-        super.copyExerciseBasis(newExercise, importedExercise, templateExercise, gradingInstructionCopyTracker);
+    private void copyModelingExerciseBasis(ModelingExercise newExercise, ModelingExercise sourceExercise, Map<Long, GradingInstruction> gradingInstructionCopyTracker) {
+        log.debug("Copying the modeling exercise basis from {}", sourceExercise);
+        prepareNewExerciseForImport(newExercise);
+        super.copyExerciseBasis(newExercise, sourceExercise, gradingInstructionCopyTracker);
 
-        // Prefer the intended exercise (honours edits from the standalone import form), fall back to the source content.
-        ModelingExercise imported = (ModelingExercise) importedExercise;
-        newExercise.setDiagramType(firstNonNull(imported.getDiagramType(), templateExercise.getDiagramType()));
-        newExercise.setExampleSolutionModel(firstNonNull(imported.getExampleSolutionModel(), templateExercise.getExampleSolutionModel()));
-        newExercise.setExampleSolutionExplanation(firstNonNull(imported.getExampleSolutionExplanation(), templateExercise.getExampleSolutionExplanation()));
-        return newExercise;
+        // Prefer the caller's edited value (standalone import form), fall back to the source content.
+        newExercise.setDiagramType(firstNonNull(newExercise.getDiagramType(), sourceExercise.getDiagramType()));
+        newExercise.setExampleSolutionModel(firstNonNull(newExercise.getExampleSolutionModel(), sourceExercise.getExampleSolutionModel()));
+        newExercise.setExampleSolutionExplanation(firstNonNull(newExercise.getExampleSolutionExplanation(), sourceExercise.getExampleSolutionExplanation()));
     }
 
     /**

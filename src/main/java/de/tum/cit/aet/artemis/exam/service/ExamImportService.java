@@ -458,19 +458,14 @@ public class ExamImportService {
                             yield Optional.empty();
                         }
                         var originalQuizExercise = optionalOriginalQuizExercise.get();
-                        // The import service mutates the second parameter (importedExercise) in-place
-                        // (e.g., nulling question IDs and clearing statistics). We must NOT pass the
-                        // same managed entity for both parameters, as that would corrupt the original
-                        // quiz in the L1 cache. The exerciseToCopy skeleton already has the correct
-                        // exercise group, title, shortName, etc. from the DTO conversion.
-                        // However, the skeleton does not contain quiz questions or batches (these are
-                        // not part of ExerciseImportDTO), so we must copy them from the original.
+                        // The quizSkeleton is the destination-bearing newExercise (correct exercise group, title,
+                        // shortName from the DTO conversion). The import service backfills questions and settings from
+                        // originalQuizExercise (the source), so we must NOT pass the same managed entity for both
+                        // parameters, which would corrupt the original quiz in the L1 cache. Batches are not copied for
+                        // exam exercises (exam timing controls scheduling); the import service skips them anyway.
                         QuizExercise quizSkeleton = (QuizExercise) exerciseToCopy;
-                        quizSkeleton.setQuizQuestions(originalQuizExercise.getQuizQuestions());
-                        // Don't copy batches — exam timing controls quiz scheduling, and the import service
-                        // skips batch copying for exam exercises anyway.
                         // We don't allow a modification of the exercise at this point, so we can just pass an empty list of files.
-                        yield Optional.of(quizExerciseImportService.importQuizExercise(originalQuizExercise, quizSkeleton, null));
+                        yield Optional.of(quizExerciseImportService.importQuizExercise(quizSkeleton, originalQuizExercise, null));
                     }
                 };
                 // Attach the newly created Exercise to the new Exercise Group only if the importing was successful.

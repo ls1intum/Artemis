@@ -77,20 +77,21 @@ public class TextExerciseImportService extends ExerciseImportService {
     }
 
     /**
-     * Imports a text exercise creating a new entity, copying all basic values and saving it in the database.
-     * All basic include everything except Student-, Tutor participations, and student questions. <br>
-     * This method calls {@link #copyTextExerciseBasis(TextExercise, Map)} to set up the basis of the exercise
-     * {@link #copyExampleSubmission(Exercise, Exercise, Map)} for a hard copy of the example submissions.
+     * Imports a text exercise: builds a new entity from {@code newExercise} (the destination and any caller overrides),
+     * backfills its basis from {@code sourceExercise} (the original), copies a hard copy of the example submissions, and
+     * saves it. Student-/tutor participations are not copied.
+     * This method calls {@link #copyTextExerciseBasis(TextExercise, TextExercise, Map)} to set up the basis of the
+     * exercise and {@link #copyExampleSubmission(Exercise, Exercise, Map)} for a hard copy of the example submissions.
      *
-     * @param templateExercise The template exercise which should get imported
-     * @param importedExercise The new exercise already containing values which should not get copied, i.e. overwritten
+     * @param newExercise    the exercise to build; already carries the destination (course / exercise group) and any overrides
+     * @param sourceExercise the original exercise whose content is copied
      * @return The newly created exercise
      */
     @NonNull
-    public TextExercise importTextExercise(final TextExercise templateExercise, TextExercise importedExercise) {
-        log.debug("Creating a new Exercise based on exercise {}", templateExercise);
+    public TextExercise importTextExercise(final TextExercise newExercise, final TextExercise sourceExercise) {
+        log.debug("Creating a new text exercise based on exercise {}", sourceExercise);
         Map<Long, GradingInstruction> gradingInstructionCopyTracker = new HashMap<>();
-        TextExercise newExercise = copyTextExerciseBasis(importedExercise, templateExercise, gradingInstructionCopyTracker);
+        copyTextExerciseBasis(newExercise, sourceExercise, gradingInstructionCopyTracker);
         if (newExercise.isExamExercise()) {
             // Disable feedback suggestions on exam exercises (currently not supported)
             newExercise.setFeedbackSuggestionModule(null);
@@ -104,8 +105,8 @@ public class TextExerciseImportService extends ExerciseImportService {
         }
         final TextExercise newTextExercise = savedExercise;
 
-        channelService.createExerciseChannel(newTextExercise, Optional.ofNullable(importedExercise.getChannelName()));
-        newExercise.setExampleSubmissions(copyExampleSubmission(templateExercise, newExercise, gradingInstructionCopyTracker));
+        channelService.createExerciseChannel(newTextExercise, Optional.ofNullable(newExercise.getChannelName()));
+        newExercise.setExampleSubmissions(copyExampleSubmission(sourceExercise, newExercise, gradingInstructionCopyTracker));
 
         competencyProgressApi.ifPresent(api -> api.updateProgressByLearningObjectAsync(newTextExercise));
 
@@ -113,22 +114,21 @@ public class TextExerciseImportService extends ExerciseImportService {
     }
 
     /**
-     * This helper method copies all attributes of the {@code importedExercise} into the new exercise.
-     * Here we ignore all external entities as well as the start-, end-, and assessment due date.
+     * Backfills the text exercise basis onto {@code newExercise} from {@code sourceExercise}: the generic basis follows
+     * the "keep the caller's value, else take the source's" rule (see {@link ExerciseImportService#copyExerciseBasis}),
+     * and the text-specific example solution likewise prefers the caller's edited value. All external entities and the
+     * start-, end-, and assessment due dates are intentionally not copied here.
      *
-     * @param importedExercise              The exercise from which to copy the basis
+     * @param newExercise                   the exercise being built; mutated in place
+     * @param sourceExercise                the original exercise providing the content to backfill
      * @param gradingInstructionCopyTracker The mapping from original GradingInstruction Ids to new GradingInstruction instances.
-     * @return the cloned TextExercise basis
      */
-    @NonNull
-    private TextExercise copyTextExerciseBasis(TextExercise importedExercise, TextExercise templateExercise, Map<Long, GradingInstruction> gradingInstructionCopyTracker) {
-        log.debug("Copying the exercise basis from {}", importedExercise);
-        TextExercise newExercise = new TextExercise();
-
-        super.copyExerciseBasis(newExercise, importedExercise, templateExercise, gradingInstructionCopyTracker);
-        // Prefer the intended exercise (honours edits from the standalone import form), fall back to the source content.
-        newExercise.setExampleSolution(firstNonNull(importedExercise.getExampleSolution(), templateExercise.getExampleSolution()));
-        return newExercise;
+    private void copyTextExerciseBasis(TextExercise newExercise, TextExercise sourceExercise, Map<Long, GradingInstruction> gradingInstructionCopyTracker) {
+        log.debug("Copying the text exercise basis from {}", sourceExercise);
+        prepareNewExerciseForImport(newExercise);
+        super.copyExerciseBasis(newExercise, sourceExercise, gradingInstructionCopyTracker);
+        // Prefer the caller's edited value (standalone import form), fall back to the source content.
+        newExercise.setExampleSolution(firstNonNull(newExercise.getExampleSolution(), sourceExercise.getExampleSolution()));
     }
 
     /**

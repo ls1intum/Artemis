@@ -154,66 +154,66 @@ public class ProgrammingExerciseImportService {
      * Method to import a programming exercise, including all base build plans (template, solution) and repositories (template, solution, test).
      * Referenced entities, s.a. the test cases or the hints will get cloned and assigned a new id.
      *
-     * @param originalProgrammingExercise         the Programming Exercise which should be used as a blueprint
-     * @param newProgrammingExercise              The new exercise already containing values which should not get copied, i.e. overwritten
+     * @param sourceExercise                      the Programming Exercise which should be used as a blueprint
+     * @param newExercise                         The new exercise already containing values which should not get copied, i.e. overwritten
      * @param updateTemplate                      if the template files should be updated
      * @param recreateBuildPlans                  if the build plans should be recreated
      * @param setTestCaseVisibilityToAfterDueDate if the test case visibility should be set to {@link Visibility#AFTER_DUE_DATE}
      * @return the imported programming exercise
      */
-    public ProgrammingExercise importProgrammingExercise(ProgrammingExercise originalProgrammingExercise, ProgrammingExercise newProgrammingExercise, boolean updateTemplate,
-            boolean recreateBuildPlans, boolean setTestCaseVisibilityToAfterDueDate) throws JsonProcessingException {
+    public ProgrammingExercise importProgrammingExercise(ProgrammingExercise sourceExercise, ProgrammingExercise newExercise, boolean updateTemplate, boolean recreateBuildPlans,
+            boolean setTestCaseVisibilityToAfterDueDate) throws JsonProcessingException {
         // remove all non-alphanumeric characters from the short name. This gets already done in the client, but we do it again here to be sure
-        newProgrammingExercise.setShortName(newProgrammingExercise.getShortName().replaceAll("[^a-zA-Z0-9]", ""));
-        newProgrammingExercise.generateAndSetProjectKey();
-        programmingExerciseValidationService.checkIfProjectExists(newProgrammingExercise);
+        newExercise.setShortName(newExercise.getShortName().replaceAll("[^a-zA-Z0-9]", ""));
+        newExercise.generateAndSetProjectKey();
+        programmingExerciseValidationService.checkIfProjectExists(newExercise);
 
-        if (newProgrammingExercise.isExamExercise()) {
+        if (newExercise.isExamExercise()) {
             // Disable feedback suggestions on exam exercises (currently not supported)
-            newProgrammingExercise.setFeedbackSuggestionModule(null);
+            newExercise.setFeedbackSuggestionModule(null);
         }
 
-        newProgrammingExercise = programmingExerciseImportBasicService.importProgrammingExerciseBasis(originalProgrammingExercise, newProgrammingExercise);
+        newExercise = programmingExerciseImportBasicService.importProgrammingExerciseBasis(sourceExercise, newExercise);
         if (automaticAfterDueDateService.isPresent()) {
-            final ZonedDateTime computedBuildAndTestDate = automaticAfterDueDateService.orElseThrow().computeBuildAndTestDate(newProgrammingExercise);
-            final boolean buildAndTestDateChanged = !Objects.equals(newProgrammingExercise.getBuildAndTestStudentSubmissionsAfterDueDate(), computedBuildAndTestDate);
-            final boolean feedbackRequestsChanged = setBuildAndTestDateAndEnforceFeedbackRequestInvariant(newProgrammingExercise, computedBuildAndTestDate);
+            final ZonedDateTime computedBuildAndTestDate = automaticAfterDueDateService.orElseThrow().computeBuildAndTestDate(newExercise);
+            final boolean buildAndTestDateChanged = !Objects.equals(newExercise.getBuildAndTestStudentSubmissionsAfterDueDate(), computedBuildAndTestDate);
+            final boolean feedbackRequestsChanged = setBuildAndTestDateAndEnforceFeedbackRequestInvariant(newExercise, computedBuildAndTestDate);
             if (buildAndTestDateChanged || feedbackRequestsChanged) {
-                programmingExerciseRepository.save(newProgrammingExercise);
+                programmingExerciseRepository.save(newExercise);
             }
         }
-        programmingExerciseImportBasicService.importRepositories(originalProgrammingExercise, newProgrammingExercise);
+        programmingExerciseImportBasicService.importRepositories(sourceExercise, newExercise);
 
         if (setTestCaseVisibilityToAfterDueDate) {
-            Set<ProgrammingExerciseTestCase> testCases = this.programmingExerciseTestCaseRepository.findByExerciseId(newProgrammingExercise.getId());
+            Set<ProgrammingExerciseTestCase> testCases = this.programmingExerciseTestCaseRepository.findByExerciseId(newExercise.getId());
             for (ProgrammingExerciseTestCase testCase : testCases) {
                 testCase.setVisibility(Visibility.AFTER_DUE_DATE);
             }
             List<ProgrammingExerciseTestCase> updatedTestCases = programmingExerciseTestCaseRepository.saveAll(testCases);
-            newProgrammingExercise.setTestCases(new HashSet<>(updatedTestCases));
+            newExercise.setTestCases(new HashSet<>(updatedTestCases));
         }
 
         // Update the template files
         if (updateTemplate) {
-            TemplateUpgradeService upgradeService = templateUpgradePolicyService.getUpgradeService(newProgrammingExercise.getProgrammingLanguage());
-            upgradeService.upgradeTemplate(newProgrammingExercise);
+            TemplateUpgradeService upgradeService = templateUpgradePolicyService.getUpgradeService(newExercise.getProgrammingLanguage());
+            upgradeService.upgradeTemplate(newExercise);
         }
 
         if (recreateBuildPlans) {
             // Create completely new build plans for the exercise
-            programmingExerciseBuildPlanService.setupBuildPlansForNewExercise(newProgrammingExercise);
+            programmingExerciseBuildPlanService.setupBuildPlansForNewExercise(newExercise);
         }
         else {
             // We have removed the automatic build trigger from test to base for new programming exercises.
             // We also remove this build trigger in the case of an import as the source exercise might still have this trigger.
             // The importBuildPlans method includes this process
-            importBuildPlans(originalProgrammingExercise, newProgrammingExercise);
+            importBuildPlans(sourceExercise, newExercise);
         }
 
-        programmingExerciseCreationScheduleService.scheduleOperations(newProgrammingExercise.getId());
+        programmingExerciseCreationScheduleService.scheduleOperations(newExercise.getId());
 
-        programmingExerciseTaskService.replaceTestIdsWithNames(newProgrammingExercise);
-        return newProgrammingExercise;
+        programmingExerciseTaskService.replaceTestIdsWithNames(newExercise);
+        return newExercise;
     }
 
     private boolean setBuildAndTestDateAndEnforceFeedbackRequestInvariant(ProgrammingExercise programmingExercise, ZonedDateTime computedBuildAndTestDate) {
