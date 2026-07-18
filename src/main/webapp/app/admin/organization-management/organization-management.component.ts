@@ -1,19 +1,19 @@
-import { ChangeDetectionStrategy, Component, computed, inject, signal, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, TrackByFunction, computed, inject, signal, viewChild } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { RouterLink } from '@angular/router';
 import { Organization } from 'app/admin/organization-management/organization.model';
 import { OrganizationManagementService } from 'app/admin/organization-management/organization-management.service';
 import { Subject } from 'rxjs';
 import { faPencil, faPlus, faTrash } from '@fortawesome/free-solid-svg-icons';
-import { TableLazyLoadEvent } from 'primeng/table';
 import { ButtonModule } from 'primeng/button';
+import { TumUiTableComponent } from 'app/shared-ui/tum-ui/table/tum-ui-table.component';
+import { CellTemplateRef, ColumnDef, TumUiTableQueryEvent } from 'app/shared-ui/tum-ui/table/tum-ui-table.types';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
 import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-title.directive';
 import { AdminTitleBarActionsDirective } from 'app/admin/shared/admin-title-bar-actions.directive';
-import { CellTemplateRef, ColumnDef, TableViewComponent, TableViewOptions } from 'app/shared-ui/table-view/table-view';
-import { buildDbQueryFromLazyEvent } from 'app/shared-ui/table-view/request-builder';
+import { buildDbQueryFromTableEvent } from 'app/shared-ui/tum-ui/table/tum-ui-table-request-builder';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { onError } from 'app/foundation/util/global.utils';
 
@@ -25,13 +25,20 @@ import { onError } from 'app/foundation/util/global.utils';
     selector: 'jhi-organization-management',
     templateUrl: './organization-management.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [TranslateDirective, RouterLink, FaIconComponent, DeleteButtonDirective, AdminTitleBarTitleDirective, AdminTitleBarActionsDirective, TableViewComponent, ButtonModule],
+    imports: [
+        TranslateDirective,
+        RouterLink,
+        FaIconComponent,
+        DeleteButtonDirective,
+        AdminTitleBarTitleDirective,
+        AdminTitleBarActionsDirective,
+        TumUiTableComponent,
+        ButtonModule,
+    ],
 })
 export class OrganizationManagementComponent {
     private readonly organizationService = inject(OrganizationManagementService);
     private readonly alertService = inject(AlertService);
-
-    readonly tableOptions: TableViewOptions = { striped: true, scrollable: true, scrollHeight: 'flex' };
 
     organizations = signal<Organization[]>([]);
     totalCount = signal(0);
@@ -49,12 +56,15 @@ export class OrganizationManagementComponent {
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
 
+    // Row identity so the table reuses row DOM across reloads instead of rebuilding every row.
+    protected readonly trackByOrgId: TrackByFunction<Organization> = (_, organization) => organization.id;
+
     // Icons
     faPlus = faPlus;
     faTrash = faTrash;
     faPencil = faPencil;
 
-    private lastLoadEvent: TableLazyLoadEvent | undefined;
+    private lastLoadEvent: TumUiTableQueryEvent | undefined;
     private loadRequestId = 0;
 
     /**
@@ -78,11 +88,11 @@ export class OrganizationManagementComponent {
         });
     }
 
-    loadOrganizations(event: TableLazyLoadEvent): void {
+    loadOrganizations(event: TumUiTableQueryEvent): void {
         this.lastLoadEvent = event;
         this.isLoading.set(true);
         const requestId = ++this.loadRequestId;
-        const query = buildDbQueryFromLazyEvent(event);
+        const query = buildDbQueryFromTableEvent(event);
         this.organizationService.getOrganizations(query, true).subscribe({
             next: (response) => {
                 if (requestId !== this.loadRequestId) return;
