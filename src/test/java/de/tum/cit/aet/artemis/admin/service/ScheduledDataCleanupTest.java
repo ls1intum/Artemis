@@ -1,7 +1,14 @@
 package de.tum.cit.aet.artemis.admin.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.anyMap;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.timeout;
+import static org.mockito.Mockito.verify;
 
+import java.time.Instant;
 import java.time.ZonedDateTime;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -105,16 +112,19 @@ class ScheduledDataCleanupTest extends AbstractSpringIntegrationIndependentTest 
         Result oldNonLatestFeedbackResult = oldCourseNonLatestRatedResultWithFeedback();
         SubmissionVersion oldSubmissionVersion = oldCourseSubmissionVersion();
 
-        AutomaticDataCleanupScheduleService disabled = scheduleService(false, false, false, false, false);
+        AutomaticDataCleanupScheduleService disabled = scheduleService(false, false, false, false, false, false);
         disabled.warnOldCoursesReset();
         disabled.resetOldCourses();
         disabled.deleteOldFeedback();
         disabled.deleteOldSubmissionVersions();
+        disabled.warnNotEnrolledUsers();
         disabled.deleteNotEnrolledUsers();
 
-        // Nothing was touched.
+        // Nothing was touched: no data deleted and no user even warned.
         assertThat(studentParticipationRepository.findById(resetParticipation.getId())).isPresent();
-        assertThat(userRepository.findById(inactiveNotEnrolled.getId())).get().extracting(User::isDeleted).isEqualTo(false);
+        User notEnrolledAfter = userRepository.findById(inactiveNotEnrolled.getId()).orElseThrow();
+        assertThat(notEnrolledAfter.isDeleted()).isFalse();
+        assertThat(notEnrolledAfter.getDeletionWarningSentDate()).isNull();
         assertThat(feedbackRepository.findByResult(oldNonLatestFeedbackResult)).isNotEmpty();
         assertThat(submissionVersionRepository.findById(oldSubmissionVersion.getId())).isPresent();
     }
@@ -132,7 +142,7 @@ class ScheduledDataCleanupTest extends AbstractSpringIntegrationIndependentTest 
         course.setCourseConfiguration(configuration);
         courseRepository.save(course);
 
-        scheduleService(false, true, false, false, false).resetOldCourses();
+        scheduleService(false, true, false, false, false, false).resetOldCourses();
 
         // Student data deleted, but the course material (course + exercise) and configuration are preserved and the
         // reset is stamped so the course is never reset again.
@@ -144,19 +154,41 @@ class ScheduledDataCleanupTest extends AbstractSpringIntegrationIndependentTest 
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "ADMIN")
-    void scheduledNotEnrolledUsersCleanupSoftDeletesWhenEnabled() {
-        User inactiveNotEnrolled = backdatedNotEnrolledUser(TEST_PREFIX + "enabled");
-        long inactiveId = inactiveNotEnrolled.getId();
-        String originalLogin = inactiveNotEnrolled.getLogin();
-        User recentNotEnrolled = notEnrolledUser(TEST_PREFIX + "recent"); // recently active -> must survive
+    void scheduledWarnNotEnrolledUsersStampsWarningOnlyForInactiveWhenEnabled() {
+        doReturn(true).when(mailSendingService).isMailConfigured();
+        User inactive = backdatedNotEnrolledUser(TEST_PREFIX + "warncand"); // inactive, not yet warned -> warn
+        User recent = notEnrolledUser(TEST_PREFIX + "warnrecent"); // recently active -> must NOT be warned
 
-        scheduleService(false, false, false, false, true).deleteNotEnrolledUsers();
+        scheduleService(false, false, false, false, true, false).warnNotEnrolledUsers();
 
-        User deleted = userRepository.findById(inactiveId).orElseThrow();
+        verify(mailSendingService, timeout(5000).atLeastOnce()).buildAndSendAsync(any(), any(), anyList(), any(), anyMap()); // wait for the async warning email
+        assertThat(userRepository.findById(inactive.getId())).get().extracting(User::getDeletionWarningSentDate).isNotNull();
+        assertThat(userRepository.findById(recent.getId())).get().extracting(User::getDeletionWarningSentDate).isNull();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "ADMIN")
+    void scheduledDeleteNotEnrolledUsersSoftDeletesOnlyWarnedPastGraceWhenEnabled() {
+        Instant longAgo = ZonedDateTime.now().minusYears(1).toInstant();
+        // Warned > 30-day grace ago, no login since the warning -> deleted.
+        User due = warnedNotEnrolledUser(TEST_PREFIX + "delcand", longAgo, ZonedDateTime.now().minusDays(31).toInstant());
+        long dueId = due.getId();
+        String dueLogin = due.getLogin();
+        // Warned only 5 days ago (still within grace) -> survives.
+        User withinGrace = warnedNotEnrolledUser(TEST_PREFIX + "delgrace", longAgo, ZonedDateTime.now().minusDays(5).toInstant());
+        // Warned > grace ago, but logged in AFTER the warning -> came back, so survives and the warning is cleared.
+        User returned = warnedNotEnrolledUser(TEST_PREFIX + "delreturn", ZonedDateTime.now().toInstant(), ZonedDateTime.now().minusDays(31).toInstant());
+
+        scheduleService(false, false, false, false, false, true).deleteNotEnrolledUsers();
+
+        User deleted = userRepository.findById(dueId).orElseThrow();
         assertThat(deleted.isDeleted()).isTrue();
         assertThat(deleted.getActivated()).isFalse();
-        assertThat(deleted.getLogin()).isNotEqualTo(originalLogin); // anonymized
-        assertThat(userRepository.findById(recentNotEnrolled.getId())).get().extracting(User::isDeleted).isEqualTo(false);
+        assertThat(deleted.getLogin()).isNotEqualTo(dueLogin); // anonymized
+        assertThat(userRepository.findById(withinGrace.getId())).get().extracting(User::isDeleted).isEqualTo(false);
+        User returnedAfter = userRepository.findById(returned.getId()).orElseThrow();
+        assertThat(returnedAfter.isDeleted()).isFalse();
+        assertThat(returnedAfter.getDeletionWarningSentDate()).isNull(); // warning cleared because the user logged in after being warned
     }
 
     @Test
@@ -171,7 +203,7 @@ class ScheduledDataCleanupTest extends AbstractSpringIntegrationIndependentTest 
         Feedback latestFeedback = feedbackRepository.save(new Feedback());
         participationUtilService.addFeedbackToResult(latestFeedback, latest);
 
-        scheduleService(false, false, true, false, false).deleteOldFeedback();
+        scheduleService(false, false, true, false, false, false).deleteOldFeedback();
 
         assertThat(feedbackRepository.findByResult(nonLatest)).isEmpty();
         assertThat(feedbackRepository.findByResult(latest)).isNotEmpty();
@@ -185,13 +217,15 @@ class ScheduledDataCleanupTest extends AbstractSpringIntegrationIndependentTest 
     void scheduledSubmissionVersionCleanupDeletesWhenEnabled() {
         SubmissionVersion version = oldCourseSubmissionVersion();
 
-        scheduleService(false, false, false, true, false).deleteOldSubmissionVersions();
+        scheduleService(false, false, false, true, false, false).deleteOldSubmissionVersions();
 
         assertThat(submissionVersionRepository.findById(version.getId())).isEmpty();
     }
 
-    private AutomaticDataCleanupScheduleService scheduleService(boolean warn, boolean reset, boolean feedback, boolean submissionVersions, boolean notEnrolled) {
-        return new AutomaticDataCleanupScheduleService(dataCleanupService, new DataCleanupProperties(5, 1, 30, 8, 8, 6, warn, reset, feedback, submissionVersions, notEnrolled));
+    private AutomaticDataCleanupScheduleService scheduleService(boolean warn, boolean reset, boolean feedback, boolean submissionVersions, boolean notEnrolledWarn,
+            boolean notEnrolled) {
+        return new AutomaticDataCleanupScheduleService(dataCleanupService,
+                new DataCleanupProperties(5, 1, 30, 8, 8, 6, 30, warn, reset, feedback, submissionVersions, notEnrolledWarn, notEnrolled));
     }
 
     /**
@@ -246,6 +280,13 @@ class ScheduledDataCleanupTest extends AbstractSpringIntegrationIndependentTest 
     private User backdatedNotEnrolledUser(String login) {
         User user = userUtilService.createAndSaveUser(login);
         userRepository.updateLastLoginDate(user.getLogin(), ZonedDateTime.now().minusYears(1).toInstant());
+        return user;
+    }
+
+    private User warnedNotEnrolledUser(String login, Instant lastLogin, Instant warningDate) {
+        User user = userUtilService.createAndSaveUser(login);
+        userRepository.updateLastLoginDate(user.getLogin(), lastLogin);
+        userRepository.updateDeletionWarningSentDate(user.getLogin(), warningDate);
         return user;
     }
 }

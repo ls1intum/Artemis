@@ -301,26 +301,50 @@ public class AdminCleanupResource {
     }
 
     /**
+     * POST admin/cleanup/not-enrolled-users/warn
+     * Warns not-enrolled, inactive users (by email) that their account will be deleted after the grace period.
+     *
+     * @return a {@link ResponseEntity} containing the result of the cleanup operation
+     */
+    @PostMapping("not-enrolled-users/warn")
+    public ResponseEntity<CleanupServiceExecutionRecordDTO> warnNotEnrolledUsers() {
+        log.info("REST request to warn not-enrolled, inactive users about an upcoming account deletion");
+        return ResponseEntity.ok().body(dataCleanupService.warnNotEnrolledUsers());
+    }
+
+    /**
+     * GET admin/cleanup/not-enrolled-users/warn/count
+     * Counts the not-enrolled, inactive users that would be warned about an upcoming account deletion.
+     *
+     * @return a {@link ResponseEntity} containing the count of affected users
+     */
+    @GetMapping("not-enrolled-users/warn/count")
+    public ResponseEntity<NotEnrolledUsersCleanupCountDTO> countNotEnrolledUsersWarning() {
+        log.info("REST request to count not-enrolled, inactive users to warn about an upcoming account deletion");
+        return ResponseEntity.ok().body(dataCleanupService.countNotEnrolledUsersWarning());
+    }
+
+    /**
      * DELETE admin/cleanup/not-enrolled-users
-     * Soft-deletes (and anonymizes) users who are enrolled in no course and inactive beyond the configured guard period.
+     * Soft-deletes (and anonymizes) warned users whose grace period has elapsed and who are still not-enrolled and inactive.
      *
      * @return a {@link ResponseEntity} containing the result of the cleanup operation
      */
     @DeleteMapping("not-enrolled-users")
     public ResponseEntity<CleanupServiceExecutionRecordDTO> deleteNotEnrolledUsers() {
-        log.info("REST request to soft-delete not-enrolled, inactive users");
+        log.info("REST request to soft-delete warned not-enrolled, inactive users");
         return ResponseEntity.ok().body(dataCleanupService.deleteNotEnrolledUsers());
     }
 
     /**
      * GET admin/cleanup/not-enrolled-users/count
-     * Counts the users that would be soft-deleted by the not-enrolled-user cleanup.
+     * Counts the warned users that would be soft-deleted by the not-enrolled-user cleanup.
      *
      * @return a {@link ResponseEntity} containing the count of affected users
      */
     @GetMapping("not-enrolled-users/count")
     public ResponseEntity<NotEnrolledUsersCleanupCountDTO> countNotEnrolledUsers() {
-        log.info("REST request to count not-enrolled, inactive users");
+        log.info("REST request to count warned not-enrolled, inactive users");
         return ResponseEntity.ok().body(dataCleanupService.countNotEnrolledUsers());
     }
 

@@ -185,7 +185,14 @@ describe('CleanupServiceComponent', () => {
 
     it('should expose the new data-privacy operations as age-based (no date range) and valid', () => {
         const operations = comp.cleanupOperations();
-        const ageBasedNames = ['warnOldCoursesReset', 'resetOldCourses', 'deleteOldFeedback', 'deleteOldCourseSubmissionVersions', 'deleteNotEnrolledUsers'];
+        const ageBasedNames = [
+            'warnOldCoursesReset',
+            'resetOldCourses',
+            'deleteOldFeedback',
+            'deleteOldCourseSubmissionVersions',
+            'warnNotEnrolledUsers',
+            'deleteNotEnrolledUsers',
+        ];
 
         for (const name of ageBasedNames) {
             const operation = operations.find((candidate) => candidate.name === name);

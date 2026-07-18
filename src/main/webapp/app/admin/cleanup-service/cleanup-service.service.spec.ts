@@ -283,6 +283,15 @@ describe('DataCleanupService', () => {
         req.flush(mockExecutionRecord);
     });
 
+    it('should send POST request to warn not-enrolled users', () => {
+        service.warnNotEnrolledUsers().subscribe((res) => {
+            expect(res.body).toEqual(mockExecutionRecord);
+        });
+
+        const req = httpMock.expectOne({ method: 'POST', url: 'api/admin/cleanup/not-enrolled-users/warn' });
+        req.flush(mockExecutionRecord);
+    });
+
     it('should send DELETE request to delete not-enrolled users', () => {
         service.deleteNotEnrolledUsers().subscribe((res) => {
             expect(res.body).toEqual(mockExecutionRecord);
@@ -304,6 +313,9 @@ describe('DataCleanupService', () => {
 
         service.countOldCourseSubmissionVersions().subscribe((res) => expect(res.body).toEqual(mockSubmissionVersionsCount));
         httpMock.expectOne({ method: 'GET', url: 'api/admin/cleanup/old-course-submission-versions/count' }).flush(mockSubmissionVersionsCount);
+
+        service.countNotEnrolledUsersWarning().subscribe((res) => expect(res.body).toEqual({ users: 7 }));
+        httpMock.expectOne({ method: 'GET', url: 'api/admin/cleanup/not-enrolled-users/warn/count' }).flush({ users: 7 });
 
         service.countNotEnrolledUsers().subscribe((res) => expect(res.body).toEqual({ users: 5 }));
         httpMock.expectOne({ method: 'GET', url: 'api/admin/cleanup/not-enrolled-users/count' }).flush({ users: 5 });

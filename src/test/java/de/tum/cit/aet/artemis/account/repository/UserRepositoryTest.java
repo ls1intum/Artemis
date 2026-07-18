@@ -71,31 +71,77 @@ class UserRepositoryTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     /**
-     * Exhaustively verifies the selection filter of the age-based not-enrolled-user cleanup query. This query decides
-     * which user accounts get soft-deleted (and anonymized), so a single wrong clause would irreversibly scrub the wrong
-     * accounts. Every "must survive" user violates exactly one guard (recently active / enrolled / admin / super-admin /
-     * already deleted), so a broken clause makes the corresponding assertion fail.
+     * Phase 1 selection: verifies which not-enrolled, inactive, not-yet-warned users are picked to be warned. Every
+     * "must survive" user violates exactly one guard (recently active / enrolled / admin / super-admin / already deleted
+     * / already warned), so a broken clause makes the corresponding assertion fail.
      */
     @Test
-    void testFindAllNotEnrolledUsersInactiveBefore() {
+    void testFindNotEnrolledUsersToWarn() {
         final Instant cutoff = ZonedDateTime.now().minusMonths(6).toInstant();
         final Instant longAgo = ZonedDateTime.now().minusYears(1).toInstant();
 
-        // Selected: not enrolled (no groups), no admin authority, inactive (last login > 6 months ago), not deleted.
-        User inactiveNotEnrolled = createUser(TEST_PREFIX + "nedel", Set.of(), Set.of(), false, longAgo);
+        User toWarn = createUser(TEST_PREFIX + "warncand", Set.of(), Set.of(), false, longAgo); // -> warn
+        User recent = createUser(TEST_PREFIX + "warnrecent", Set.of(), Set.of(), false, ZonedDateTime.now().toInstant()); // active -> keep
+        User enrolled = createUser(TEST_PREFIX + "warnenrolled", Set.of("cleanup-test-group"), Set.of(), false, longAgo); // enrolled -> keep
+        User admin = createUser(TEST_PREFIX + "warnadmin", Set.of(), Set.of(Authority.ADMIN_AUTHORITY), false, longAgo); // admin -> keep
+        User superAdmin = createUser(TEST_PREFIX + "warnsuper", Set.of(), Set.of(Authority.SUPER_ADMIN_AUTHORITY), false, longAgo); // super admin -> keep
+        User deleted = createUser(TEST_PREFIX + "warndeleted", Set.of(), Set.of(), true, longAgo); // already deleted -> keep
+        User alreadyWarned = createUser(TEST_PREFIX + "warnalready", Set.of(), Set.of(), false, longAgo); // already warned -> keep
+        userRepository.updateDeletionWarningSentDate(alreadyWarned.getLogin(), longAgo);
 
-        // Must survive — each violates exactly one guard:
-        User recentNotEnrolled = createUser(TEST_PREFIX + "nerecent", Set.of(), Set.of(), false, ZonedDateTime.now().toInstant()); // active -> keep
-        User enrolledInactive = createUser(TEST_PREFIX + "neenrolled", Set.of("cleanup-not-enrolled-test-group"), Set.of(), false, longAgo); // enrolled -> keep
-        User adminInactive = createUser(TEST_PREFIX + "neadmin", Set.of(), Set.of(Authority.ADMIN_AUTHORITY), false, longAgo); // admin -> keep
-        User superAdminInactive = createUser(TEST_PREFIX + "nesuper", Set.of(), Set.of(Authority.SUPER_ADMIN_AUTHORITY), false, longAgo); // super admin -> keep
-        User deletedInactive = createUser(TEST_PREFIX + "nedeleted", Set.of(), Set.of(), true, longAgo); // already deleted -> keep
+        final List<String> logins = userRepository.findNotEnrolledUsersToWarn(cutoff).stream().map(User::getLogin).toList();
 
-        final List<String> actual = userRepository.findAllNotEnrolledUsersInactiveBefore(cutoff);
+        assertThat(logins).contains(toWarn.getLogin());
+        assertThat(logins).doesNotContain(recent.getLogin(), enrolled.getLogin(), admin.getLogin(), superAdmin.getLogin(), deleted.getLogin(), alreadyWarned.getLogin());
+    }
 
-        assertThat(actual).contains(inactiveNotEnrolled.getLogin());
-        assertThat(actual).doesNotContain(recentNotEnrolled.getLogin(), enrolledInactive.getLogin(), adminInactive.getLogin(), superAdminInactive.getLogin(),
-                deletedInactive.getLogin());
+    /**
+     * Phase 2 selection: verifies which warned users are picked for deletion. Only a warned, past-grace, still-inactive
+     * account with no login since the warning is selected; within-grace, logged-in-since, and never-warned accounts are
+     * spared.
+     */
+    @Test
+    void testFindNotEnrolledUserLoginsToDelete() {
+        final Instant graceCutoff = ZonedDateTime.now().minusDays(30).toInstant();
+        final Instant longAgo = ZonedDateTime.now().minusYears(1).toInstant();
+        final Instant warnedPastGrace = ZonedDateTime.now().minusDays(31).toInstant();
+        final Instant warnedWithinGrace = ZonedDateTime.now().minusDays(5).toInstant();
+
+        User due = createUser(TEST_PREFIX + "delcand", Set.of(), Set.of(), false, longAgo);
+        userRepository.updateDeletionWarningSentDate(due.getLogin(), warnedPastGrace); // warned past grace, no login since -> delete
+        User withinGrace = createUser(TEST_PREFIX + "delgrace", Set.of(), Set.of(), false, longAgo);
+        userRepository.updateDeletionWarningSentDate(withinGrace.getLogin(), warnedWithinGrace); // still within grace -> keep
+        User loggedInSince = createUser(TEST_PREFIX + "delloggedin", Set.of(), Set.of(), false, ZonedDateTime.now().toInstant());
+        userRepository.updateDeletionWarningSentDate(loggedInSince.getLogin(), warnedPastGrace); // logged in after warning -> keep
+        User notWarned = createUser(TEST_PREFIX + "delnotwarned", Set.of(), Set.of(), false, longAgo); // never warned -> keep
+
+        final List<String> logins = userRepository.findNotEnrolledUserLoginsToDelete(graceCutoff);
+
+        assertThat(logins).contains(due.getLogin());
+        assertThat(logins).doesNotContain(withinGrace.getLogin(), loggedInSince.getLogin(), notWarned.getLogin());
+    }
+
+    /**
+     * Verifies that the warning is cleared for users who "came back" (re-enrolled or logged in after being warned) while
+     * being kept for those who are still not-enrolled and inactive.
+     */
+    @Test
+    void testClearDeletionWarningForReturnedUsers() {
+        final Instant longAgo = ZonedDateTime.now().minusYears(1).toInstant();
+        final Instant warned = ZonedDateTime.now().minusDays(10).toInstant();
+
+        User stillInactive = createUser(TEST_PREFIX + "clrinactive", Set.of(), Set.of(), false, longAgo);
+        userRepository.updateDeletionWarningSentDate(stillInactive.getLogin(), warned);
+        User reEnrolled = createUser(TEST_PREFIX + "clrenrolled", Set.of("cleanup-test-group"), Set.of(), false, longAgo);
+        userRepository.updateDeletionWarningSentDate(reEnrolled.getLogin(), warned);
+        User loggedInSince = createUser(TEST_PREFIX + "clrloggedin", Set.of(), Set.of(), false, ZonedDateTime.now().toInstant());
+        userRepository.updateDeletionWarningSentDate(loggedInSince.getLogin(), warned);
+
+        userRepository.clearDeletionWarningForReturnedUsers();
+
+        assertThat(userRepository.findById(stillInactive.getId())).get().extracting(User::getDeletionWarningSentDate).isNotNull();
+        assertThat(userRepository.findById(reEnrolled.getId())).get().extracting(User::getDeletionWarningSentDate).isNull();
+        assertThat(userRepository.findById(loggedInSince.getId())).get().extracting(User::getDeletionWarningSentDate).isNull();
     }
 
     /**

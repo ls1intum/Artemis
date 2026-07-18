@@ -85,14 +85,28 @@ public class AutomaticDataCleanupScheduleService {
     }
 
     /**
-     * Soft-deletes users who are enrolled in no course and inactive beyond the configured guard period.
+     * Warns users who are enrolled in no course and inactive beyond the configured guard period that their account will
+     * be deleted after the grace period (phase 1 of the not-enrolled-user cleanup).
+     */
+    @Scheduled(cron = "${artemis.scheduling.not-enrolled-users-warning-time:0 0 5 1 * *}")
+    public void warnNotEnrolledUsers() {
+        if (!dataCleanupProperties.notEnrolledUsersWarningScheduleEnabled()) {
+            return;
+        }
+        log.info("Scheduled data-privacy cleanup: warning not-enrolled, inactive users about an upcoming account deletion");
+        runAsSystem(dataCleanupService::warnNotEnrolledUsers);
+    }
+
+    /**
+     * Soft-deletes users who were warned, whose grace period has elapsed, and who are still not-enrolled and inactive
+     * (phase 2 of the not-enrolled-user cleanup).
      */
     @Scheduled(cron = "${artemis.scheduling.not-enrolled-users-cleanup-time:0 0 6 1 * *}")
     public void deleteNotEnrolledUsers() {
         if (!dataCleanupProperties.notEnrolledUsersScheduleEnabled()) {
             return;
         }
-        log.info("Scheduled data-privacy cleanup: soft-deleting not-enrolled, inactive users");
+        log.info("Scheduled data-privacy cleanup: soft-deleting warned not-enrolled, inactive users");
         runAsSystem(dataCleanupService::deleteNotEnrolledUsers);
     }
 

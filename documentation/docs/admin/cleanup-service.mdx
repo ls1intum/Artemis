@@ -77,7 +77,7 @@ All of these operations are **admin-only**, expose a **count/preview** before ex
 | Reset student data of old courses (two phases) | All student data of the course (participations, submissions, results, feedback, posts, enrollments, student/tutor/editor group memberships) | The course itself, its exercises, lectures, exams, competencies and tutorial-group configuration, and the instructors | 5 years after end (grade-relevant), 1 year (non-grade-relevant), plus a grace period |
 | Delete feedback of non-latest results | Feedback, long feedback texts and text blocks of results that are **not** the latest per participation | The results themselves, and the feedback of the latest **rated** and latest **non-rated** result per participation | 8 weeks after course end |
 | Delete old submission versions | Submission versions (the editor keystroke/version history of a submission) | The submission itself and its latest stored content | 8 weeks after course end |
-| Delete not-enrolled users | Soft-deletes and anonymizes user accounts that are enrolled in no course and have been inactive | Enrolled users, recently active users, administrators, and the Iris bot | 6 months of inactivity |
+| Warn + delete not-enrolled users (two phases) | Phase 1 emails users enrolled in no course and inactive that their account will be deleted after a grace period; phase 2 soft-deletes and anonymizes those still not-enrolled who did not log in since the warning | Enrolled users, recently active users, users who log in during the grace period, administrators, and the Iris bot | 6 months of inactivity + a grace period |
 
 :::info
 Courses are **never deleted** by these operations. The old-course operation only **resets** the student data and keeps all course material so the course can be reused. Exam submission versions are not affected by the submission-version cleanup because exam exercises are not attached to a course.
@@ -122,7 +122,7 @@ Once the grace period (measured from the actual warning event, not from the cour
 - **Two independent conditions** gate a reset: the retention period must have elapsed **and** the instructors must have been warned (with an archive) **and** the grace period must have passed. A course that was never warned is never reset.
 - **One-shot lifecycle:** the warning and reset timestamps make re-warning or re-resetting an already-processed course impossible, even if a schedule fires repeatedly.
 - **Feedback cleanup keeps results:** only feedback entries of non-latest results are removed, never the results, and always keeping the latest rated and latest non-rated feedback per participation.
-- **Not-enrolled user cleanup** never touches administrators, the Iris bot, enrolled users, or recently active accounts, and it **soft-deletes and anonymizes** rather than hard-deleting (the account row remains, with identifying fields scrubbed).
+- **Not-enrolled user cleanup is two-phase**: an inactive, course-less account is first emailed a warning and only soft-deleted (and anonymized, not hard-deleted) after a grace period, and only if it is still not-enrolled and has not logged in since the warning. **Logging in cancels the deletion.** Administrators and the Iris bot are never affected. Inactivity is measured by the user's last login (falling back to the account creation date), not by the last modification of the user row.
 - **Preview first:** every operation has a count endpoint so an admin can see exactly how many entities would be affected before confirming.
 
 These guarantees are covered by server integration tests that run the real deletion (and the real scheduled entry point) against a database, asserting both that the intended data is deleted and that everything outside the gate survives. See [Testing and assurance](#testing-and-assurance).
@@ -139,6 +139,7 @@ The default cron schedules (configurable under `artemis.scheduling`) are:
 | Reset old courses' student data | Sundays 03:00 | `old-courses-reset-schedule-enabled` |
 | Delete feedback of non-latest results | Sundays 04:30 | `old-feedback-schedule-enabled` |
 | Delete old submission versions | Sundays 04:45 | `old-submission-versions-schedule-enabled` |
+| Warn not-enrolled users | 1st of month 05:00 | `not-enrolled-users-warning-schedule-enabled` |
 | Delete not-enrolled users | 1st of month 06:00 | `not-enrolled-users-schedule-enabled` |
 
 The warning job is scheduled before the reset job so that, once both are enabled, a course is warned and archived in one run and only reset in a later run after its grace period.
@@ -154,6 +155,7 @@ artemis:
     old-courses-reset-time: 0 0 3 * * SUN
     old-feedback-cleanup-time: 0 30 4 * * SUN
     old-submission-versions-cleanup-time: 0 45 4 * * SUN
+    not-enrolled-users-warning-time: 0 0 5 1 * *
     not-enrolled-users-cleanup-time: 0 0 6 1 * *
   cleanup:
     # Retention cutoffs
@@ -162,12 +164,14 @@ artemis:
     reset-warning-grace-period-days: 30    # days between warning instructors and the reset
     old-feedback-cutoff-weeks: 8           # purge feedback of non-latest results 8 weeks after course end
     old-submission-versions-cutoff-weeks: 8 # purge submission versions 8 weeks after course end
-    not-enrolled-users-inactivity-months: 6 # inactivity before a course-less user is soft-deleted
+    not-enrolled-users-inactivity-months: 6 # inactivity (by last login) before a course-less user is warned
+    not-enrolled-users-warning-grace-period-days: 30 # days between warning a user and deleting the account (login cancels it)
     # Schedule kill switches (all off by default)
     old-courses-warning-schedule-enabled: false
     old-courses-reset-schedule-enabled: false
     old-feedback-schedule-enabled: false
     old-submission-versions-schedule-enabled: false
+    not-enrolled-users-warning-schedule-enabled: false
     not-enrolled-users-schedule-enabled: false
 ```
 
@@ -179,17 +183,17 @@ The switches are off by default deliberately, because the operations delete pers
 2. **Dry-run manually first.** Open the admin **Data Cleanup** page and use the count/preview for each operation to see how much data would be affected on your production data.
 3. **Enable the housekeeping jobs first** (`old-feedback-schedule-enabled`, `old-submission-versions-schedule-enabled`), which only trim redundant history and keep all results.
 4. **Enable the two-phase course reset** by turning on the warning job and the reset job together (`old-courses-warning-schedule-enabled` and `old-courses-reset-schedule-enabled`). Make sure email is configured, otherwise the warning phase cannot advance and no reset will ever happen (by design).
-5. **Enable the not-enrolled-user cleanup** (`not-enrolled-users-schedule-enabled`) once you have confirmed via the preview that only the expected accounts are selected.
+5. **Enable the two-phase not-enrolled-user cleanup** by turning on the warning job and the deletion job together (`not-enrolled-users-warning-schedule-enabled` and `not-enrolled-users-schedule-enabled`), once you have confirmed via the preview that only the expected accounts are selected. As with the course reset, email must be configured, otherwise the warning phase cannot advance and no account is ever deleted (by design).
 6. **Confirm the scheduling node.** The jobs run only on the node with the scheduling profile active.
 
 :::caution
-`not-enrolled-users-inactivity-months` uses the user's last modification date as an inactivity signal, because Artemis has no dedicated last-login field. This is reliable when authentication updates the user record (for example internal authentication). In some external-authentication setups (certain LDAP/SAML group-sync configurations) a regularly logging-in but course-less user might still be selected. Always review the count/preview before enabling this job, and prefer running it manually first.
+Inactivity for the not-enrolled-user cleanup is measured by the user's last login (`lastLoginDate`, recorded on every successful authentication), falling back to the account creation date for accounts that never logged in. This is a real activity signal, unlike the user row's last modification date (which is bumped by, for example, group synchronization). For existing accounts at the time of the upgrade, `lastLoginDate` is backfilled to the migration time, so no existing account is immediately eligible; the inactivity clock starts at deployment. The warning phase and the "logging in cancels the deletion" rule provide an additional safeguard against deleting an account the user still wants. Always review the count/preview before enabling these jobs.
 :::
 
 ### Testing and assurance
 
 The correctness of these deletions is protected by server integration tests that run against a real database with no mocking of the deletion logic:
 
-- The **selection filters** are tested exhaustively (for example, the not-enrolled-user query is verified to exclude enrolled, recently active, administrator, super-administrator and already-deleted users, selecting only inactive course-less accounts).
-- The **destructive operations** are tested end to end: a warned, past-grace course really has its student data deleted while the course, its exercises and its configuration survive; the not-enrolled-user cleanup soft-deletes and anonymizes exactly the inactive course-less accounts while sparing everyone else; the feedback cleanup removes only non-latest feedback and keeps the results; the submission-version cleanup removes only versions of ended courses.
+- The **selection filters** are tested exhaustively (for example, the not-enrolled-user warn query excludes enrolled, recently active, administrator, super-administrator, already-deleted and already-warned users; the delete query selects only warned, past-grace, still-inactive accounts that did not log in since the warning).
+- The **destructive operations** are tested end to end: a warned, past-grace course really has its student data deleted while the course, its exercises and its configuration survive; the not-enrolled-user cleanup only warns inactive course-less accounts and only deletes them after the grace period (sparing anyone who re-enrolls or logs in), soft-deleting and anonymizing exactly the right accounts; the feedback cleanup removes only non-latest feedback and keeps the results; the submission-version cleanup removes only versions of ended courses.
 - The **scheduled entry point** is tested through the real `AutomaticDataCleanupScheduleService` (flag gate and system-context wrapper included): with every kill switch off, running all jobs deletes nothing; with a switch on, the corresponding job performs exactly the intended deletion.

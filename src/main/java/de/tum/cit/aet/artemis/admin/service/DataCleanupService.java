@@ -6,6 +6,7 @@ import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -40,6 +41,8 @@ import de.tum.cit.aet.artemis.assessment.repository.cleanup.TeamScoreCleanupRepo
 import de.tum.cit.aet.artemis.assessment.repository.cleanup.TextBlockCleanupRepository;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.service.CourseDataRetentionService;
+import de.tum.cit.aet.artemis.notification.dto.MailRecipientDTO;
+import de.tum.cit.aet.artemis.notification.service.notifications.MailSendingService;
 
 @Profile(PROFILE_CORE)
 @Lazy
@@ -76,6 +79,12 @@ public class DataCleanupService {
 
     private final UserRepository userRepository;
 
+    private final MailSendingService mailSendingService;
+
+    private static final String NOT_ENROLLED_DELETION_WARNING_EMAIL_TEMPLATE = "mail/notEnrolledUserDeletionWarningEmail";
+
+    private static final String NOT_ENROLLED_DELETION_WARNING_SUBJECT_KEY = "email.notEnrolledUserDeletionWarning.title";
+
     // A date safely before any real course start date, used to convert the existing "course date range" feedback cleanup
     // queries (which filter startDate > deleteFrom AND endDate < deleteTo) into an age-only ("ended before X") cleanup.
     private static final ZonedDateTime FAR_PAST = ZonedDateTime.of(1900, 1, 1, 0, 0, 0, 0, ZoneOffset.UTC);
@@ -85,7 +94,7 @@ public class DataCleanupService {
             TextBlockCleanupRepository textBlockCleanupRepository, LongFeedbackTextCleanupRepository longFeedbackTextCleanupRepository,
             StudentScoreCleanupRepository studentScoreCleanupRepository, TeamScoreCleanupRepository teamScoreCleanupRepository,
             SubmissionVersionCleanupRepository submissionVersionCleanupRepository, DataCleanupProperties dataCleanupProperties,
-            CourseDataRetentionService courseDataRetentionService, UserService userService, UserRepository userRepository) {
+            CourseDataRetentionService courseDataRetentionService, UserService userService, UserRepository userRepository, MailSendingService mailSendingService) {
         this.resultCleanupRepository = resultCleanupRepository;
         this.ratingCleanupRepository = ratingCleanupRepository;
         this.feedbackCleanupRepository = feedbackCleanupRepository;
@@ -100,6 +109,7 @@ public class DataCleanupService {
         this.courseDataRetentionService = courseDataRetentionService;
         this.userService = userService;
         this.userRepository = userRepository;
+        this.mailSendingService = mailSendingService;
     }
 
     /**
@@ -413,14 +423,64 @@ public class DataCleanupService {
     }
 
     /**
-     * Soft-deletes (and anonymizes) all users who are enrolled in no course and have been inactive beyond the configured
-     * guard period. The Iris bot is never deleted; admins and super-admins are already excluded by the repository query.
+     * Phase 1 of the not-enrolled-user cleanup: emails every not-enrolled, inactive user a warning that their account
+     * will be deleted after the grace period, and stamps the warning date. The account is only advanced to "warned" if a
+     * warning was actually sent (mail configured, user activated with an email), so an account is never scheduled for
+     * deletion without prior notice. The Iris bot and administrators are excluded.
+     *
+     * @return a {@link CleanupServiceExecutionRecordDTO} representing the execution record of the cleanup job
+     */
+    public CleanupServiceExecutionRecordDTO warnNotEnrolledUsers() {
+        int warned = 0;
+        if (!mailSendingService.isMailConfigured()) {
+            log.warn("Mail is not configured; skipping the not-enrolled-user deletion warning so that no account is scheduled for deletion without prior notice");
+        }
+        else {
+            var inactiveBefore = ZonedDateTime.now().minusMonths(dataCleanupProperties.notEnrolledUsersInactivityMonths()).toInstant();
+            List<User> usersToWarn = userRepository.findNotEnrolledUsersToWarn(inactiveBefore).stream().filter(user -> !user.isBot()).toList();
+            Map<String, Object> contextVariables = Map.of("gracePeriodDays", dataCleanupProperties.notEnrolledUsersWarningGracePeriodDays());
+            for (User user : usersToWarn) {
+                if (!user.getActivated() || user.getEmail() == null) {
+                    continue; // cannot warn this user, so do not schedule their account for deletion
+                }
+                try {
+                    mailSendingService.buildAndSendAsync(MailRecipientDTO.from(user), NOT_ENROLLED_DELETION_WARNING_SUBJECT_KEY, List.of(),
+                            NOT_ENROLLED_DELETION_WARNING_EMAIL_TEMPLATE, contextVariables);
+                    userRepository.updateDeletionWarningSentDate(user.getLogin(), ZonedDateTime.now().toInstant());
+                    warned++;
+                }
+                catch (Exception e) {
+                    log.error("Failed to warn not-enrolled user {} about the upcoming account deletion", user.getLogin(), e);
+                }
+            }
+        }
+        log.info("Warned {} not-enrolled, inactive user(s) about an upcoming account deletion", warned);
+        return CleanupServiceExecutionRecordDTO.of(createCleanupJobExecution(CleanupJobType.NOT_ENROLLED_USERS_WARNING, null, null));
+    }
+
+    /**
+     * Counts the not-enrolled, inactive users who have not yet been warned and would be warned by phase 1.
+     *
+     * @return a {@link NotEnrolledUsersCleanupCountDTO} with the affected user count
+     */
+    public NotEnrolledUsersCleanupCountDTO countNotEnrolledUsersWarning() {
+        var inactiveBefore = ZonedDateTime.now().minusMonths(dataCleanupProperties.notEnrolledUsersInactivityMonths()).toInstant();
+        long count = userRepository.findNotEnrolledUsersToWarn(inactiveBefore).stream().filter(user -> !user.isBot()).count();
+        return new NotEnrolledUsersCleanupCountDTO((int) count);
+    }
+
+    /**
+     * Phase 2 of the not-enrolled-user cleanup: soft-deletes (and anonymizes) every user who was warned, whose grace
+     * period has elapsed, who is still enrolled in no course, and who has not logged in since the warning. Users who
+     * "came back" (re-enrolled or logged in after the warning) first have their warning cleared and are spared. The Iris
+     * bot is never deleted; admins and super-admins are already excluded by the repository query.
      *
      * @return a {@link CleanupServiceExecutionRecordDTO} representing the execution record of the cleanup job
      */
     public CleanupServiceExecutionRecordDTO deleteNotEnrolledUsers() {
-        List<String> logins = notEnrolledUserLogins();
-        log.info("Soft-deleting {} not-enrolled, inactive user(s)", logins.size());
+        userRepository.clearDeletionWarningForReturnedUsers();
+        List<String> logins = notEnrolledUserLoginsToDelete();
+        log.info("Soft-deleting {} not-enrolled, inactive, warned user(s)", logins.size());
         logins.forEach(login -> {
             try {
                 userService.softDeleteUser(login);
@@ -433,27 +493,23 @@ public class DataCleanupService {
     }
 
     /**
-     * Counts the users who are enrolled in no course and inactive beyond the guard period and would be soft-deleted.
+     * Counts the warned, past-grace, still-inactive users who would be soft-deleted by phase 2.
      *
      * @return a {@link NotEnrolledUsersCleanupCountDTO} with the affected user count
      */
     public NotEnrolledUsersCleanupCountDTO countNotEnrolledUsers() {
-        return new NotEnrolledUsersCleanupCountDTO(notEnrolledUserLogins().size());
+        return new NotEnrolledUsersCleanupCountDTO(notEnrolledUserLoginsToDelete().size());
     }
 
     /**
-     * Resolves the logins of users enrolled in no course and inactive beyond the configured guard period.
-     * <p>
-     * Inactivity is measured by the user's last login (falling back to the creation date for accounts that never logged
-     * in), a real activity signal rather than {@code lastModifiedDate} (which is bumped by any write to the user row,
-     * e.g. group synchronization). The operation is admin-only and has a count-preview endpoint, so an admin can review
-     * the affected users before confirming the (irreversible) soft delete.
+     * Resolves the logins of warned users whose grace period has elapsed and who are still not-enrolled and inactive
+     * (no login since the warning), excluding the Iris bot (admins/super-admins are already excluded by the query).
      *
-     * @return the logins to soft-delete, excluding the Iris bot (admins/super-admins are already excluded by the query)
+     * @return the logins to soft-delete
      */
-    private List<String> notEnrolledUserLogins() {
-        var inactiveBefore = ZonedDateTime.now().minusMonths(dataCleanupProperties.notEnrolledUsersInactivityMonths()).toInstant();
-        return userRepository.findAllNotEnrolledUsersInactiveBefore(inactiveBefore).stream().filter(login -> !User.IRIS_BOT_LOGIN.equals(login)).toList();
+    private List<String> notEnrolledUserLoginsToDelete() {
+        var warnedBefore = ZonedDateTime.now().minusDays(dataCleanupProperties.notEnrolledUsersWarningGracePeriodDays()).toInstant();
+        return userRepository.findNotEnrolledUserLoginsToDelete(warnedBefore).stream().filter(login -> !User.IRIS_BOT_LOGIN.equals(login)).toList();
     }
 
     private OldCoursesCleanupCountDTO toOldCoursesCleanupCountDTO(List<Course> courses) {

@@ -147,6 +147,9 @@ export class CleanupOperationModalComponent {
             case 'deleteOldCourseSubmissionVersions':
                 executionRequest = this.dataCleanupService.deleteOldCourseSubmissionVersions();
                 break;
+            case 'warnNotEnrolledUsers':
+                executionRequest = this.dataCleanupService.warnNotEnrolledUsers();
+                break;
             case 'deleteNotEnrolledUsers':
                 executionRequest = this.dataCleanupService.deleteNotEnrolledUsers();
                 break;
@@ -191,6 +194,8 @@ export class CleanupOperationModalComponent {
                 return this.dataCleanupService.countOldFeedback();
             case 'deleteOldCourseSubmissionVersions':
                 return this.dataCleanupService.countOldCourseSubmissionVersions();
+            case 'warnNotEnrolledUsers':
+                return this.dataCleanupService.countNotEnrolledUsersWarning();
             case 'deleteNotEnrolledUsers':
                 return this.dataCleanupService.countNotEnrolledUsers();
             default:

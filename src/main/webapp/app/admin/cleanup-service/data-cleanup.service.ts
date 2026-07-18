@@ -163,7 +163,14 @@ export class DataCleanupService {
     }
 
     /**
-     * Send DELETE request to soft-delete users who are enrolled in no course and inactive beyond the guard period.
+     * Send POST request to warn not-enrolled, inactive users that their account will be deleted after the grace period.
+     */
+    warnNotEnrolledUsers(): Observable<HttpResponse<CleanupServiceExecutionRecordDTO>> {
+        return this.http.post<CleanupServiceExecutionRecordDTO>(`${this.adminResourceUrl}/not-enrolled-users/warn`, undefined, { observe: 'response' });
+    }
+
+    /**
+     * Send DELETE request to soft-delete warned users who are enrolled in no course and past the deletion grace period.
      */
     deleteNotEnrolledUsers(): Observable<HttpResponse<CleanupServiceExecutionRecordDTO>> {
         return this.http.delete<CleanupServiceExecutionRecordDTO>(`${this.adminResourceUrl}/not-enrolled-users`, { observe: 'response' });
@@ -278,7 +285,14 @@ export class DataCleanupService {
     }
 
     /**
-     * Send GET request to count the users that would be soft-deleted by the not-enrolled-user cleanup.
+     * Send GET request to count the not-enrolled, inactive users that would be warned about an upcoming deletion.
+     */
+    countNotEnrolledUsersWarning(): Observable<HttpResponse<NotEnrolledUsersCleanupCountDTO>> {
+        return this.http.get<NotEnrolledUsersCleanupCountDTO>(`${this.adminResourceUrl}/not-enrolled-users/warn/count`, { observe: 'response' });
+    }
+
+    /**
+     * Send GET request to count the warned users that would be soft-deleted by the not-enrolled-user cleanup.
      */
     countNotEnrolledUsers(): Observable<HttpResponse<NotEnrolledUsersCleanupCountDTO>> {
         return this.http.get<NotEnrolledUsersCleanupCountDTO>(`${this.adminResourceUrl}/not-enrolled-users/count`, { observe: 'response' });

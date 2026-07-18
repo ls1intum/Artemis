@@ -17,7 +17,8 @@
             "warnOldCoursesReset": "Dozierende alter Kurse warnen (Archiv + E-Mail)",
             "resetOldCourses": "Studierendendaten alter Kurse zurücksetzen",
             "deleteOldCourseSubmissionVersions": "Teilnahmeversionen alter Kurse löschen",
-            "deleteNotEnrolledUsers": "Nutzer ohne Kurszugehörigkeit löschen"
+            "warnNotEnrolledUsers": "Nutzer ohne Kurszugehörigkeit warnen (E-Mail)",
+            "deleteNotEnrolledUsers": "Gewarnte Nutzer ohne Kurszugehörigkeit löschen"
         },
         "tooltip": {
             "deleteOrphans": "Löscht verwaiste Entitäten, die nicht mehr mit gültigen Ergebnissen oder Teilnahmen verbunden sind. Dazu gehören Feedback, Textblöcke und Bewertungen, die sich auf ungültige Ergebnisse, Teilnahmen oder Einreichungen beziehen.",
@@ -29,7 +30,8 @@
             "warnOldCoursesReset": "Archiviert jeden alten Kurs, dessen konfigurierte Aufbewahrungsfrist abgelaufen ist (standardmäßig 1 Jahr bei nicht notenrelevanten und 5 Jahre bei notenrelevanten Kursen), und sendet den Dozierenden einen Download-Link sowie einen Hinweis, dass die Studierendendaten nach der konfigurierten Übergangsfrist gelöscht werden. Die Kursmaterialien bleiben erhalten.",
             "resetOldCourses": "Löscht alle Studierendendaten alter Kurse, die die Übergangsfrist überschritten haben (und bereits archiviert wurden), wobei die Kursmaterialien erhalten bleiben. Diese Aktion kann nicht rückgängig gemacht werden.",
             "deleteOldCourseSubmissionVersions": "Löscht die Teilnahmeversionen (Editor-Verlauf) von Kursen, die vor dem konfigurierten Stichtag endeten.",
-            "deleteNotEnrolledUsers": "Löscht (soft-delete) und anonymisiert Nutzer, die in keinem Kurs eingeschrieben und über die konfigurierte Frist hinaus inaktiv sind. Administratoren sind nicht betroffen."
+            "warnNotEnrolledUsers": "Sendet Nutzern, die in keinem Kurs eingeschrieben und über die konfigurierte Frist hinaus inaktiv sind, eine E-Mail mit der Warnung, dass ihr Konto nach der Übergangsfrist gelöscht wird. Eine Anmeldung bricht die Löschung ab. Administratoren sind nicht betroffen.",
+            "deleteNotEnrolledUsers": "Löscht (soft-delete) und anonymisiert gewarnte Nutzer, die weiterhin in keinem Kurs eingeschrieben sind, deren Übergangsfrist abgelaufen ist und die sich seit der Warnung nicht angemeldet haben. Administratoren sind nicht betroffen."
         },
         "execute": {
             "question": "Bist du sicher, dass du die Operation <strong>{{ operationName }}</strong> für den Zeitraum von {{deleteFrom}} bis {{deleteTo}} ausführen möchtest? Diese Aktion kann NICHT rückgängig gemacht werden!",

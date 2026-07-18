@@ -20,59 +20,52 @@ class AutomaticDataCleanupScheduleServiceTest {
     @Mock
     private DataCleanupService dataCleanupService;
 
-    private DataCleanupProperties properties(boolean warn, boolean reset, boolean feedback, boolean submissionVersions, boolean notEnrolled) {
-        return new DataCleanupProperties(5, 1, 30, 8, 8, 6, warn, reset, feedback, submissionVersions, notEnrolled);
+    private DataCleanupProperties properties(boolean warn, boolean reset, boolean feedback, boolean submissionVersions, boolean notEnrolledWarn, boolean notEnrolled) {
+        return new DataCleanupProperties(5, 1, 30, 8, 8, 6, 30, warn, reset, feedback, submissionVersions, notEnrolledWarn, notEnrolled);
     }
 
     private AutomaticDataCleanupScheduleService service(DataCleanupProperties properties) {
         return new AutomaticDataCleanupScheduleService(dataCleanupService, properties);
     }
 
-    @Test
-    void doesNothingWhenAllSchedulesDisabled() {
-        AutomaticDataCleanupScheduleService service = service(properties(false, false, false, false, false));
-
+    private void runAllJobs(AutomaticDataCleanupScheduleService service) {
         service.warnOldCoursesReset();
         service.resetOldCourses();
         service.deleteOldFeedback();
         service.deleteOldSubmissionVersions();
+        service.warnNotEnrolledUsers();
         service.deleteNotEnrolledUsers();
+    }
+
+    @Test
+    void doesNothingWhenAllSchedulesDisabled() {
+        runAllJobs(service(properties(false, false, false, false, false, false)));
 
         verifyNoInteractions(dataCleanupService);
     }
 
     @Test
     void runsOnlyTheEnabledJobs() {
-        // only the warning and not-enrolled-user jobs are enabled
-        AutomaticDataCleanupScheduleService service = service(properties(true, false, false, false, true));
-
-        service.warnOldCoursesReset();
-        service.resetOldCourses();
-        service.deleteOldFeedback();
-        service.deleteOldSubmissionVersions();
-        service.deleteNotEnrolledUsers();
+        // only the old-course warning and the not-enrolled-user warning jobs are enabled
+        runAllJobs(service(properties(true, false, false, false, true, false)));
 
         verify(dataCleanupService).warnOldCoursesReset();
-        verify(dataCleanupService).deleteNotEnrolledUsers();
+        verify(dataCleanupService).warnNotEnrolledUsers();
         verify(dataCleanupService, never()).resetOldCourses();
         verify(dataCleanupService, never()).deleteFeedbackOfNonLatestResultsOfOldCourses();
         verify(dataCleanupService, never()).deleteOldCourseSubmissionVersions();
+        verify(dataCleanupService, never()).deleteNotEnrolledUsers();
     }
 
     @Test
     void runsEachJobWhenEnabled() {
-        AutomaticDataCleanupScheduleService service = service(properties(true, true, true, true, true));
-
-        service.warnOldCoursesReset();
-        service.resetOldCourses();
-        service.deleteOldFeedback();
-        service.deleteOldSubmissionVersions();
-        service.deleteNotEnrolledUsers();
+        runAllJobs(service(properties(true, true, true, true, true, true)));
 
         verify(dataCleanupService).warnOldCoursesReset();
         verify(dataCleanupService).resetOldCourses();
         verify(dataCleanupService).deleteFeedbackOfNonLatestResultsOfOldCourses();
         verify(dataCleanupService).deleteOldCourseSubmissionVersions();
+        verify(dataCleanupService).warnNotEnrolledUsers();
         verify(dataCleanupService).deleteNotEnrolledUsers();
     }
 }

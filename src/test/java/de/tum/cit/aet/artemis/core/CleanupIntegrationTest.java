@@ -750,6 +750,8 @@ class CleanupIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCTest
         request.get("/api/core/admin/cleanup/old-feedback/count", HttpStatus.FORBIDDEN, OldFeedbackCleanupCountDTO.class);
         request.delete("/api/core/admin/cleanup/old-course-submission-versions", HttpStatus.FORBIDDEN, CleanupServiceExecutionRecordDTO.class);
         request.get("/api/core/admin/cleanup/old-course-submission-versions/count", HttpStatus.FORBIDDEN, SubmissionVersionsCleanupCountDTO.class);
+        request.postWithoutResponseBody("/api/core/admin/cleanup/not-enrolled-users/warn", null, HttpStatus.FORBIDDEN);
+        request.get("/api/core/admin/cleanup/not-enrolled-users/warn/count", HttpStatus.FORBIDDEN, NotEnrolledUsersCleanupCountDTO.class);
         request.delete("/api/core/admin/cleanup/not-enrolled-users", HttpStatus.FORBIDDEN, CleanupServiceExecutionRecordDTO.class);
         request.get("/api/core/admin/cleanup/not-enrolled-users/count", HttpStatus.FORBIDDEN, NotEnrolledUsersCleanupCountDTO.class);
 
@@ -764,6 +766,7 @@ class CleanupIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCTest
         assertThat(request.get("/api/core/admin/cleanup/old-courses/reset/count", HttpStatus.OK, OldCoursesCleanupCountDTO.class)).isNotNull();
         assertThat(request.get("/api/core/admin/cleanup/old-feedback/count", HttpStatus.OK, OldFeedbackCleanupCountDTO.class)).isNotNull();
         assertThat(request.get("/api/core/admin/cleanup/old-course-submission-versions/count", HttpStatus.OK, SubmissionVersionsCleanupCountDTO.class)).isNotNull();
+        assertThat(request.get("/api/core/admin/cleanup/not-enrolled-users/warn/count", HttpStatus.OK, NotEnrolledUsersCleanupCountDTO.class)).isNotNull();
         assertThat(request.get("/api/core/admin/cleanup/not-enrolled-users/count", HttpStatus.OK, NotEnrolledUsersCleanupCountDTO.class)).isNotNull();
     }
 

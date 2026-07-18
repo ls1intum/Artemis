@@ -131,7 +131,8 @@ artemis:
     old-courses-reset-time: 0 0 3 * * SUN # every Sunday at 3am: reset student data of old courses past the grace period
     old-feedback-cleanup-time: 0 30 4 * * SUN # every Sunday at 4:30am: delete feedback of non-latest results of old courses
     old-submission-versions-cleanup-time: 0 45 4 * * SUN # every Sunday at 4:45am: delete submission versions of old courses
-    not-enrolled-users-cleanup-time: 0 0 6 1 * * # 1st of every month at 6am: soft-delete users enrolled in no course
+    not-enrolled-users-warning-time: 0 0 5 1 * * # 1st of every month at 5am: warn inactive users enrolled in no course
+    not-enrolled-users-cleanup-time: 0 0 6 1 * * # 1st of every month at 6am: soft-delete warned users enrolled in no course
 
   data-export:
     days-between-data-exports: 14
@@ -151,12 +152,14 @@ artemis:
     reset-warning-grace-period-days: 30 # days between warning instructors and actually resetting the student data
     old-feedback-cutoff-weeks: 8 # weeks after course end before feedback of non-latest results is purged (final result's feedback is kept)
     old-submission-versions-cutoff-weeks: 8 # weeks after course end before submission versions (editor history) are purged
-    not-enrolled-users-inactivity-months: 6 # months of inactivity before a user enrolled in no course is soft-deleted
+    not-enrolled-users-inactivity-months: 6 # months of inactivity (by last login) before a not-enrolled user is warned and later deleted
+    not-enrolled-users-warning-grace-period-days: 30 # days between warning a not-enrolled user and deleting the account (logging in cancels it)
     # Schedule kill switches (all off by default: nothing runs automatically until an admin opts in).
     old-courses-warning-schedule-enabled: false
     old-courses-reset-schedule-enabled: false
     old-feedback-schedule-enabled: false
     old-submission-versions-schedule-enabled: false
+    not-enrolled-users-warning-schedule-enabled: false
     not-enrolled-users-schedule-enabled: false
 
   plagiarism-checks:

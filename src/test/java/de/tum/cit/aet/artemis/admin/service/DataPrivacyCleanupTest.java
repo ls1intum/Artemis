@@ -4,8 +4,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyMap;
-import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.timeout;
+import static org.mockito.Mockito.verify;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -169,12 +170,13 @@ class DataPrivacyCleanupTest extends AbstractSpringIntegrationIndependentTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "ADMIN")
-    void deleteNotEnrolledUsersSoftDeletesOnlyInactiveNotEnrolledAccountsAndSparesTheRest() {
+    void notEnrolledUserCleanupWarnsThenDeletesOnlyAfterGraceAndSparesTheRest() {
         Instant longAgo = ZonedDateTime.now().minusYears(1).toInstant();
+        doReturn(true).when(mailSendingService).isMailConfigured();
 
-        int baselineCount = dataCleanupService.countNotEnrolledUsers().users();
+        int baselineWarnCount = dataCleanupService.countNotEnrolledUsersWarning().users();
 
-        // Selected for soft-delete: not enrolled (no groups), no admin authority, inactive, not deleted.
+        // Candidate: not enrolled (no groups), no admin authority, inactive, not deleted.
         User toDelete = notEnrolledUser(TEST_PREFIX + "todelete", longAgo);
         long toDeleteId = toDelete.getId();
         String originalLogin = toDelete.getLogin();
@@ -183,26 +185,38 @@ class DataPrivacyCleanupTest extends AbstractSpringIntegrationIndependentTest {
         User enrolled = enrolledUser(TEST_PREFIX + "enrolled", longAgo); // enrolled -> keep
         User recent = notEnrolledUser(TEST_PREFIX + "recent", ZonedDateTime.now().toInstant()); // recently active -> keep
 
-        // The Iris bot matches the query (no groups, inactive) but is explicitly excluded by the service; set it up only
-        // if the deployment did not already seed it, to avoid mutating the real bot.
+        // The Iris bot matches the query but is explicitly excluded by the service; set it up (already warned past grace)
+        // only if the deployment did not already seed it, so that ONLY the service's bot filter can save it on delete.
         User irisBot = userUtilService.userExistsWithLogin(User.IRIS_BOT_LOGIN) ? null : notEnrolledUser(User.IRIS_BOT_LOGIN, longAgo);
+        if (irisBot != null) {
+            userRepository.updateDeletionWarningSentDate(User.IRIS_BOT_LOGIN, ZonedDateTime.now().minusDays(31).toInstant());
+        }
 
-        // The count preview must add exactly the one deletable account (the Iris bot is excluded from the count too).
-        assertThat(dataCleanupService.countNotEnrolledUsers().users()).isEqualTo(baselineCount + 1);
+        // Phase 1 (warn): exactly the one candidate is counted (enrolled, recent, and the already-warned bot excluded).
+        assertThat(dataCleanupService.countNotEnrolledUsersWarning().users()).isEqualTo(baselineWarnCount + 1);
+        dataCleanupService.warnNotEnrolledUsers();
+        verify(mailSendingService, timeout(5000).atLeastOnce()).buildAndSendAsync(any(), any(), anyList(), any(), anyMap()); // wait for the async warning email
+        assertThat(userRepository.findById(toDeleteId)).get().extracting(User::getDeletionWarningSentDate).isNotNull();
+        assertThat(userRepository.findById(enrolled.getId())).get().extracting(User::getDeletionWarningSentDate).isNull();
+        assertThat(userRepository.findById(recent.getId())).get().extracting(User::getDeletionWarningSentDate).isNull();
 
+        // Immediately after warning the account is within grace -> the delete phase deletes nobody yet.
+        dataCleanupService.deleteNotEnrolledUsers();
+        assertThat(userRepository.findById(toDeleteId)).get().extracting(User::isDeleted).isEqualTo(false);
+
+        // Backdate the warning past the 30-day grace; now the account is due for deletion.
+        userRepository.updateDeletionWarningSentDate(originalLogin, ZonedDateTime.now().minusDays(31).toInstant());
         dataCleanupService.deleteNotEnrolledUsers();
 
-        // The deletable account is soft-deleted and anonymized (login/email replaced, deactivated).
+        // The warned, past-grace account is soft-deleted and anonymized (login/email replaced, deactivated).
         User deleted = userRepository.findById(toDeleteId).orElseThrow();
         assertThat(deleted.isDeleted()).isTrue();
         assertThat(deleted.getActivated()).isFalse();
         assertThat(deleted.getLogin()).isNotEqualTo(originalLogin);
 
-        // Enrolled and recently-active users are untouched.
+        // Enrolled and recently-active users are untouched; the Iris bot is never deleted even when warned past grace.
         assertThat(userRepository.findById(enrolled.getId())).get().extracting(User::isDeleted).isEqualTo(false);
         assertThat(userRepository.findById(recent.getId())).get().extracting(User::isDeleted).isEqualTo(false);
-
-        // The Iris bot is never soft-deleted, even though it matches the selection query.
         if (irisBot != null) {
             User irisBotAfter = userRepository.findById(irisBot.getId()).orElseThrow();
             assertThat(irisBotAfter.isDeleted()).isFalse();
@@ -218,7 +232,6 @@ class DataPrivacyCleanupTest extends AbstractSpringIntegrationIndependentTest {
         // backup must survive the subsequent reset. This runs the REAL archive (CourseArchiveService) and the REAL
         // reset (CourseResetService) end to end; only the external mail service is stubbed.
         doReturn(true).when(mailSendingService).isMailConfigured();
-        doNothing().when(mailSendingService).buildAndSendAsync(any(), any(), anyList(), any(), anyMap());
 
         // A finished course with a real, submitted text submission for <prefix>student1.
         Course course = courseUtilService.addCourseWithModelingAndTextExercise();
@@ -237,9 +250,10 @@ class DataPrivacyCleanupTest extends AbstractSpringIntegrationIndependentTest {
         textExerciseUtilService.saveTextSubmission(textExercise, ParticipationFactory.generateTextSubmission("example text", Language.ENGLISH, true), TEST_PREFIX + "student1");
         assertThat(studentParticipationRepository.findByExerciseIdAndTestRunWithEagerSubmissionsResultAssessor(textExerciseId, false)).isNotEmpty();
 
-        // Phase 1: warn + archive (real).
+        // Phase 1: warn + archive (real). Wait for the async instructor email to be dispatched.
         int warned = courseDataRetentionService.warnAndArchiveDueCourses();
         assertThat(warned).isGreaterThanOrEqualTo(1);
+        verify(mailSendingService, timeout(5000).atLeastOnce()).buildAndSendAsync(any(), any(), anyList(), any(), anyMap());
 
         Course archivedCourse = courseRepository.findById(courseId).orElseThrow();
         assertThat(archivedCourse.hasCourseArchive()).isTrue();

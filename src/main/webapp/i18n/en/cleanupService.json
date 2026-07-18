@@ -17,7 +17,8 @@
             "warnOldCoursesReset": "Warn instructors of old courses (archive + email)",
             "resetOldCourses": "Reset student data of old courses",
             "deleteOldCourseSubmissionVersions": "Delete submission versions of old courses",
-            "deleteNotEnrolledUsers": "Delete users not enrolled in any course"
+            "warnNotEnrolledUsers": "Warn users not enrolled in any course (email)",
+            "deleteNotEnrolledUsers": "Delete warned users not enrolled in any course"
         },
         "tooltip": {
             "deleteOrphans": "Deletes orphaned entities that are no longer associated with valid results or participations. This includes feedback, text blocks, and scores that reference null results, participations, or submissions.",
@@ -29,7 +30,8 @@
             "warnOldCoursesReset": "Archives every old course whose configured data-retention period has elapsed (by default 1 year for non-grade-relevant and 5 years for grade-relevant courses) and emails its instructors a download link plus a notice that the student data will be deleted after the configured grace period. Course material is kept.",
             "resetOldCourses": "Deletes all student data of old courses that are past the reset grace period (and were already archived), while keeping the course material. This action cannot be undone.",
             "deleteOldCourseSubmissionVersions": "Deletes the submission versions (editor keystroke history) of courses that ended before the configured cutoff.",
-            "deleteNotEnrolledUsers": "Soft-deletes and anonymizes users who are enrolled in no course and have been inactive beyond the configured guard period. Administrators are not affected."
+            "warnNotEnrolledUsers": "Emails users who are enrolled in no course and have been inactive beyond the configured guard period, warning that their account will be deleted after the grace period. Logging in cancels the deletion. Administrators are not affected.",
+            "deleteNotEnrolledUsers": "Soft-deletes and anonymizes warned users who are still enrolled in no course, whose grace period has elapsed, and who have not logged in since the warning. Administrators are not affected."
         },
         "execute": {
             "question": "Are you sure you want to execute the operation <strong>{{ operationName }}</strong> for the period from {{deleteFrom}} to {{deleteTo}}? This action cannot be undone!",

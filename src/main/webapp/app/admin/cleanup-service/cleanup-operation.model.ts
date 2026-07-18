@@ -11,6 +11,7 @@ export type OperationName =
     | 'warnOldCoursesReset'
     | 'resetOldCourses'
     | 'deleteOldCourseSubmissionVersions'
+    | 'warnNotEnrolledUsers'
     | 'deleteNotEnrolledUsers';
 
 /** Instantiated in code; fields are populated after construction, hence the definite-assignment (!) markers. */
