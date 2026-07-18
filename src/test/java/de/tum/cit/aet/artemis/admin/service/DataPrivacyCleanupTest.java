@@ -15,6 +15,7 @@ import java.nio.file.Path;
 import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.apache.commons.io.FileUtils;
@@ -22,12 +23,15 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.actuate.audit.AuditEvent;
+import org.springframework.boot.actuate.audit.AuditEventRepository;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.account.util.UserUtilService;
 import de.tum.cit.aet.artemis.communication.test_repository.PostTestRepository;
+import de.tum.cit.aet.artemis.core.config.audit.AuditEventConstants;
 import de.tum.cit.aet.artemis.core.domain.Language;
 import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
 import de.tum.cit.aet.artemis.core.util.CourseUtilService;
@@ -123,6 +127,9 @@ class DataPrivacyCleanupTest extends AbstractSpringIntegrationIndependentTest {
 
     @Autowired
     private PostTestRepository postRepository;
+
+    @Autowired
+    private AuditEventRepository auditEventRepository;
 
     @Value("${artemis.course-archives-path}")
     private Path courseArchivesDirPath;
@@ -428,6 +435,25 @@ class DataPrivacyCleanupTest extends AbstractSpringIntegrationIndependentTest {
         dataCleanupService.deletePlagiarismCasesOfOldCourses();
 
         assertThat(plagiarismCaseRepository.findById(examCaseId)).isEmpty();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void successfulLoginRecordsLastLoginDateUsedByTheInactivityGuard() {
+        // The not-enrolled-user cleanup measures inactivity by lastLoginDate, which is recorded from the auth audit hook
+        // on every successful login. If that wiring breaks, the guard silently falls back to the creation date and could
+        // delete an actively-used account. This drives the real audit path (add -> isLoginSuccess -> recordLastLogin).
+        User user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        Instant longAgo = ZonedDateTime.now().minusYears(1).toInstant();
+        userRepository.updateLastLoginDate(user.getLogin(), longAgo);
+
+        Instant loginTime = ZonedDateTime.now().toInstant();
+        auditEventRepository.add(new AuditEvent(loginTime, user.getLogin(), AuditEventConstants.AUTHENTICATION_SUCCESS, Map.of()));
+
+        // The successful login moved lastLoginDate forward from the backdated value to ~now (compared with a margin
+        // because the column stores millisecond precision), proving the audit hook records the activity signal.
+        Instant recorded = userRepository.findById(user.getId()).orElseThrow().getLastLoginDate();
+        assertThat(recorded).isAfter(longAgo).isBetween(loginTime.minusSeconds(60), loginTime.plusSeconds(60));
     }
 
     private static boolean fileContains(Path file, String text) {

@@ -5,6 +5,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -197,5 +198,24 @@ class CourseDataRetentionServiceTest {
         verify(courseResetService).resetStudentData(1L);
         verify(courseResetService, never()).resetStudentData(2L);
         assertThat(due.getCourseConfiguration().getStudentDataResetDate()).isNotNull();
+    }
+
+    @Test
+    void resetContinuesAfterAPerCourseFailureAndLeavesTheFailedCourseUnstamped() {
+        ZonedDateTime now = ZonedDateTime.now();
+        Course failing = course(1, now.minusYears(2), false, false, now.minusDays(40), null);
+        Course succeeding = course(2, now.minusYears(2), false, false, now.minusDays(40), null);
+        when(courseRepository.findAllWithResetWarningSent()).thenReturn(List.of(failing, succeeding));
+        doThrow(new RuntimeException("reset failed")).when(courseResetService).resetStudentData(1L);
+
+        int reset = service().resetDueCourses();
+
+        // A single course failing must not abort the batch, and a course whose reset threw must NOT be stamped as reset
+        // (so it is retried), while the other course is still reset and stamped.
+        assertThat(reset).isEqualTo(1);
+        verify(courseResetService).resetStudentData(1L);
+        verify(courseResetService).resetStudentData(2L);
+        assertThat(failing.getCourseConfiguration().getStudentDataResetDate()).isNull();
+        assertThat(succeeding.getCourseConfiguration().getStudentDataResetDate()).isNotNull();
     }
 }

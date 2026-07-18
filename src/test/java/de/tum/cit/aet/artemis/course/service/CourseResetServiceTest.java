@@ -167,6 +167,15 @@ class CourseResetServiceTest extends AbstractSpringIntegrationIndependentTest {
         Channel channel = conversationUtilService.createCourseWideChannel(course, TEST_PREFIX + "channel");
         conversationUtilService.addParticipantToConversation(channel, TEST_PREFIX + "student1");
 
+        // A SECOND, unrelated course whose exam users and conversation participants must be untouched by resetting the
+        // first course. This catches a regression that broadens the scope (e.g. an exam-user or participant delete that
+        // is no longer keyed by course/exam id) and would otherwise silently destroy another course's data.
+        Course otherCourse = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
+        Exam otherExam = examUtilService.registerUsersForExamAndSaveExam(examUtilService.addExam(otherCourse), TEST_PREFIX, 1);
+        long otherExamId = otherExam.getId();
+        Channel otherChannel = conversationUtilService.createCourseWideChannel(otherCourse, TEST_PREFIX + "otherchannel");
+        conversationUtilService.addParticipantToConversation(otherChannel, TEST_PREFIX + "student1");
+
         // Everything is present before the reset.
         assertThat(examUserRepository.countByExamId(examId)).isEqualTo(1);
         assertThat(conversationParticipantRepository.findConversationParticipantByConversationIdAndUserId(channel.getId(), student.getId())).isPresent();
@@ -187,5 +196,9 @@ class CourseResetServiceTest extends AbstractSpringIntegrationIndependentTest {
         assertThat(courseRepository.findById(courseId)).isPresent();
         assertThat(exerciseRepository.findById(exerciseId)).isPresent();
         assertThat(userUtilService.getUserByLogin(TEST_PREFIX + "instructor1").getGroups()).contains(course.getInstructorGroupName());
+
+        // The unrelated course's exam users and conversation participants are untouched.
+        assertThat(examUserRepository.countByExamId(otherExamId)).isEqualTo(1);
+        assertThat(conversationParticipantRepository.findConversationParticipantByConversationIdAndUserId(otherChannel.getId(), student.getId())).isPresent();
     }
 }
