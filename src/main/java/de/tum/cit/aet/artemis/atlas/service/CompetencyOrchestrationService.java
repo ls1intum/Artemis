@@ -505,13 +505,27 @@ public class CompetencyOrchestrationService {
      * on FAILED the caller requeues the whole batch instead. The reservation is kept (a run did
      * happen), so the per-course daily cap still bounds retries. Safe on PARTIAL: skipped ids never
      * reached the prompt, so no mutation was committed for them.
+     * <p>
+     * The requeue is best-effort and must never throw: by the time it runs the LLM has already
+     * committed its competency tool mutations. If a requeue failure escaped {@code runBatch},
+     * {@link ContentChangeScheduler#processBatch} would treat it as a pre-mutation error and requeue
+     * the <em>whole</em> batch, so the already-applied competency changes would be re-orchestrated on
+     * the next tick. Losing the skipped ids (logged below) is strictly preferable to re-applying
+     * committed mutations, so a requeue failure is logged and swallowed.
      */
     private void requeueSkippedExercises(long courseId, Set<Long> skipped) {
         if (skipped.isEmpty()) {
             return;
         }
         log.info("Atlas orchestrator (batch) requeueing {} exercise(s) skipped mid-run for course {}: {}", skipped.size(), courseId, skipped);
-        contentChangeAccumulatorService.requeueAfterFailedRun(courseId, skipped);
+        try {
+            contentChangeAccumulatorService.requeueAfterFailedRun(courseId, skipped);
+        }
+        catch (Exception ex) {
+            // Must not escape after committed mutations (see method Javadoc): drop the skipped ids rather than
+            // let the scheduler re-requeue and re-apply the whole batch.
+            log.warn("Atlas orchestrator (batch) failed to requeue {} skipped exercise(s) for course {}; dropping them: {}", skipped.size(), courseId, ex.getMessage(), ex);
+        }
     }
 
     /**

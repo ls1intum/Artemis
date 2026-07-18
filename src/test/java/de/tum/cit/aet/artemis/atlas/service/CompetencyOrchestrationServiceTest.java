@@ -10,12 +10,14 @@ import static de.tum.cit.aet.artemis.atlas.dto.CompetencyOrchestrationResultDTO.
 import static de.tum.cit.aet.artemis.atlas.dto.CompetencyOrchestrationResultDTO.Status.PARTIAL;
 import static de.tum.cit.aet.artemis.atlas.dto.CompetencyOrchestrationResultDTO.Status.SUCCESS;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -29,6 +31,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.BeforeEach;
@@ -469,6 +472,48 @@ class CompetencyOrchestrationServiceTest {
 
         assertThat(result.status()).isEqualTo(SUCCESS);
         // Only the extraction-failed quiz (12) is requeued — the healthy exercise was orchestrated, not requeued.
+        verify(contentChangeAccumulatorService).requeueAfterFailedRun(COURSE_ID, Set.of(12L));
+        verify(runMap).remove(COURSE_ID);
+    }
+
+    @Test
+    void runBatch_requeueOfSkippedIdThrowsAfterCommittedActions_isSwallowedAndSuccessPreserved() {
+        // Same shape as the SUCCESS-requeue test, but the post-mutation requeue itself fails (e.g. Hazelcast down).
+        // By this point the LLM has already committed its competency mutations. The requeue failure must NOT escape:
+        // if it did, ContentChangeScheduler would treat it as a pre-mutation error and re-requeue the whole batch,
+        // re-applying the committed changes on the next tick. So the failure is swallowed and SUCCESS is preserved.
+        ProgrammingExercise healthy = courseExercise(10L);
+        QuizExercise doomedQuiz = quizExercise(12L);
+        when(exerciseRepository.findAllById(any())).thenReturn(List.<Exercise>of(healthy, doomedQuiz));
+        stubRunMap();
+        when(contentExtractionService.extractContent(healthy)).thenReturn(new ExtractedContentDTO("Survivor", "Survivor body", Map.of()));
+        when(contentExtractionService.extractContent(doomedQuiz)).thenThrow(new RuntimeException("quiz deleted mid-run"));
+        when(orchestratorToolsService.listCompetencyIndex(COURSE_ID)).thenReturn(new CompetencyIndexResponseDTO(List.of(), List.of()));
+        when(templateService.render(anyString(), anyMap())).thenReturn("system prompt");
+        when(toolCallbackFactory.createOrchestratorProvider()).thenReturn(mock(org.springframework.ai.tool.ToolCallbackProvider.class));
+        // The requeue of the skipped id (12) blows up — this runs only after mutations have committed.
+        doThrow(new RuntimeException("hazelcast down")).when(contentChangeAccumulatorService).requeueAfterFailedRun(COURSE_ID, Set.of(12L));
+
+        ChatResponse chatResponse = new ChatResponse(List.of(new Generation(new AssistantMessage("Run summary"))));
+        ChatClient mockChatClient = mock(ChatClient.class);
+        ChatClient.ChatClientRequestSpec spec = mock(ChatClient.ChatClientRequestSpec.class);
+        when(mockChatClient.prompt()).thenReturn(spec);
+        when(spec.system(anyString())).thenReturn(spec);
+        when(spec.user(anyString())).thenReturn(spec);
+        when(spec.options(any())).thenReturn(spec);
+        when(spec.toolContext(anyMap())).thenReturn(spec);
+        when(spec.toolCallbacks(any(org.springframework.ai.tool.ToolCallbackProvider.class))).thenReturn(spec);
+        ChatClient.CallResponseSpec callResponseSpec = mock(ChatClient.CallResponseSpec.class);
+        when(spec.call()).thenReturn(callResponseSpec);
+        when(callResponseSpec.chatResponse()).thenReturn(chatResponse);
+
+        CompetencyOrchestrationService service = createServiceWithRunMap(mockChatClient);
+        // The requeue exception must not escape runBatch after committed actions; capture the result to assert on it.
+        AtomicReference<CompetencyOrchestrationResultDTO> result = new AtomicReference<>();
+        assertThatCode(() -> result.set(service.runBatch(COURSE_ID, Set.of(10L, 12L)))).doesNotThrowAnyException();
+
+        // The committed-mutation result is preserved as SUCCESS despite the requeue failure.
+        assertThat(result.get().status()).isEqualTo(SUCCESS);
         verify(contentChangeAccumulatorService).requeueAfterFailedRun(COURSE_ID, Set.of(12L));
         verify(runMap).remove(COURSE_ID);
     }
