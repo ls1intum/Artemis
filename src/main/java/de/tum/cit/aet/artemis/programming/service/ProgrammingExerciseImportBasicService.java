@@ -197,17 +197,16 @@ public class ProgrammingExerciseImportBasicService {
             newExercise.addAuxiliaryRepository(newAuxiliaryRepository);
         }
 
-        // Final save: persists the participation references, the remapped problem statement, the test repository uri and
-        // the auxiliary repositories set above.
-        newExercise = programmingExerciseRepository.save(newExercise);
+        // Final save persisting the participation references, the remapped problem statement, the test repository uri
+        // and the auxiliary repositories set above. This runs without an open session, so the returned exercise must
+        // carry the associations its consumers (the surrounding import flow and the serialized response) read rather
+        // than relying on lazy proxies. saveForCreation re-fetches the complete new-exercise graph for exactly this
+        // reason, so we reuse it here (the import produces a new exercise just like a regular creation).
+        newExercise = programmingExerciseRepository.saveForCreation(newExercise);
 
         channelService.createExerciseChannel(newExercise, Optional.ofNullable(newExercise.getChannelName()));
 
-        // This method runs without an open session, so the returned exercise must carry the associations its consumers
-        // (the surrounding import flow, the API callers and the serialized response) read, rather than relying on lazy
-        // proxies. Re-fetch it with the participations, build config, submission policy, grading criteria and auxiliary
-        // repositories explicitly initialized.
-        return programmingExerciseRepository.findWithImportRelevantReferencesByIdElseThrow(newExercise.getId());
+        return newExercise;
     }
 
     /**

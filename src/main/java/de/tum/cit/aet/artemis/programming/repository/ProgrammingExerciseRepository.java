@@ -59,23 +59,6 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
             "submissionPolicy", "buildConfig" })
     Optional<ProgrammingExercise> findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesAndBuildConfigById(long exerciseId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "templateParticipation", "solutionParticipation", "teamAssignmentConfig", "categories", "auxiliaryRepositories",
-            "submissionPolicy", "buildConfig", "gradingCriteria", "gradingCriteria.structuredGradingInstructions" })
-    Optional<ProgrammingExercise> findWithImportRelevantReferencesById(long exerciseId);
-
-    /**
-     * Fetches a programming exercise with the associations that the import result carries: template and solution
-     * participation, team assignment config, categories, auxiliary repositories, submission policy, build config and
-     * grading criteria (with their structured instructions). Used to return a fully initialized exercise from the import,
-     * which runs without an open session. Throws if the exercise does not exist.
-     *
-     * @param exerciseId the id of the imported programming exercise
-     * @return the programming exercise with the import-relevant associations initialized
-     */
-    default ProgrammingExercise findWithImportRelevantReferencesByIdElseThrow(long exerciseId) {
-        return getValueElseThrow(findWithImportRelevantReferencesById(exerciseId), exerciseId);
-    }
-
     @EntityGraph(type = LOAD, attributePaths = { "templateParticipation", "solutionParticipation", "teamAssignmentConfig", "categories", "competencyLinks.competency",
             "auxiliaryRepositories", "submissionPolicy" })
     Optional<ProgrammingExercise> findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesAndCompetenciesById(long exerciseId);
@@ -105,7 +88,8 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
     Optional<Integer> findBuildTimeoutSecondsByExerciseId(@Param("exerciseId") long exerciseId);
 
     @EntityGraph(type = LOAD, attributePaths = { "categories", "teamAssignmentConfig", "templateParticipation.submissions.results", "solutionParticipation.submissions.results",
-            "auxiliaryRepositories", "plagiarismDetectionConfig", "templateParticipation", "solutionParticipation", "buildConfig" })
+            "auxiliaryRepositories", "plagiarismDetectionConfig", "templateParticipation", "solutionParticipation", "buildConfig", "submissionPolicy", "gradingCriteria",
+            "gradingCriteria.structuredGradingInstructions" })
     Optional<ProgrammingExercise> findForCreationById(long exerciseId);
 
     @EntityGraph(type = LOAD, attributePaths = "testCases")
@@ -933,7 +917,11 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
     }
 
     /**
-     * Find a programming exercise by its id, with eagerly loaded objects required for the creation of a programming exercise.
+     * Finds a programming exercise by its id, eagerly loading the associations that make up a freshly created (or
+     * imported) exercise: template and solution participation, team assignment config, categories, auxiliary
+     * repositories, plagiarism detection config, build config, submission policy and grading criteria (with their
+     * structured instructions). This is used to return a fully initialized exercise after creation or import, both of
+     * which run without an open session and would otherwise expose uninitialized proxies.
      *
      * @param programmingExerciseId of the programming exercise.
      * @return The programming exercise related to the given id
