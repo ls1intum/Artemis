@@ -84,8 +84,8 @@ describe('EmojiCompletionAction', () => {
         const withNative = Array.from({ length: 16 }, (_, i) => emojiData(`emoji${i}`, '😀'));
         searchSpy.mockReturnValue([emojiData('broken1'), ...withNative.slice(0, 8), emojiData('broken2'), ...withNative.slice(8)]);
         const result = await action.searchEmojisForTerm('emo');
-        expect(result).toHaveLength(10);
-        expect(result).toEqual(withNative.slice(0, 10));
+        expect(result).toHaveLength(5);
+        expect(result).toEqual(withNative.slice(0, 5));
     });
 
     it('should return no suggestions when the search yields nothing', async () => {

@@ -25,7 +25,7 @@ const SHORTCODE_TERM_PATTERN = /^[A-Za-z0-9_+-]+$/;
  * The maximum number of suggestions shown at once. Monaco re-queries on every keystroke
  * (the completer reports its list as incomplete), so capped results stay reachable by typing more.
  */
-const MAX_SUGGESTIONS = 10;
+const MAX_SUGGESTIONS = 5;
 
 /**
  * How many results to request from the emoji search before filtering out entries without a native glyph.
