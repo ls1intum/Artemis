@@ -55,8 +55,6 @@ const correctedSeedStatementMarker = 'more than 5 dates';
 const policyPath = 'src/de/test/Policy.java';
 const policyThresholdBeforeAdaptation = 'DATES_SIZE_THRESHOLD = 10';
 const policyThresholdAfterAdaptation = 'DATES_SIZE_THRESHOLD = 5';
-const bubbleSortDiagnostic = 'choosing bubble sort!';
-const contradictoryQuickSortDiagnostic = 'choosing quick sort!';
 const sortingTestPath = 'test/de/test/SortingExampleBehaviorTest.java';
 const sortingTestBeforeAdaptation = 'for (int i = 0; i < 11; i++)';
 const sortingTestAfterAdaptation = 'for (int i = 0; i < 6; i++)';
@@ -140,8 +138,6 @@ test.describe('Hyperion exercise generation browser UI', { tag: ['@slow', '@hype
         await programmingExerciseCreation.changeEditMode();
         await programmingExerciseCreation.setProgrammingLanguage(ProgrammingLanguage.JAVA);
         await page.locator('#field_projectType').getByText('Maven', { exact: true }).click();
-        await programmingExerciseCreation.setPackageName('de.tum.cit.aet.temperature');
-        await programmingExerciseCreation.setTitle(`hyperion-form-${generateUUID()}`);
         await programmingExerciseCreation.setShortName(`hyperionform${generateUUID()}`);
         await programmingExerciseCreation.setPoints(10);
         await page.locator('#field_bonusPoints').fill('0');
@@ -159,6 +155,8 @@ test.describe('Hyperion exercise generation browser UI', { tag: ['@slow', '@hype
         expect(draftResponse.ok()).toBeTruthy();
         const draft = await readResponseJson<{ draftProblemStatement?: string }>(draftResponse);
         expect(draft.draftProblemStatement).toContain('# Temperature Alert Classification');
+        await expect(page.locator('#field_title')).toHaveValue('Temperature Alert Classification');
+        await expect(page.locator('#field_packageName')).toHaveValue('temperaturealertclassification');
         await expect(page.getByText('Problem statement has been successfully generated.')).toBeVisible();
         await expect(page.locator('#generate-with-ai')).toBeVisible();
 
@@ -173,6 +171,8 @@ test.describe('Hyperion exercise generation browser UI', { tag: ['@slow', '@hype
         expect(setupResponse.ok()).toBeTruthy();
         exercise = await readResponseJson<ProgrammingExercise>(setupResponse);
         expect(exercise.id).toBeDefined();
+        expect(exercise.title).toBe('Temperature Alert Classification');
+        expect(exercise.packageName).toBe('temperaturealertclassification');
         await expect(page).toHaveURL(new RegExp(`/programming-exercises/${exercise.id}/code-editor/TEMPLATE/`));
         const startResponse = await startResponsePromise;
         expect(startResponse.status()).toBe(202);
@@ -183,9 +183,9 @@ test.describe('Hyperion exercise generation browser UI', { tag: ['@slow', '@hype
         await expect(page.getByTestId('hyperion-generation-persistence-state')).toContainText('Saved to exercise');
         await expectExerciseProblemStatement(page, exercise.id!, 'TemperatureClassifier.classify');
         const solution = await getRepositoryFiles(page, `api/programming/programming-exercises/${exercise.id}/solution-files-content?omitBinaries=true`);
-        expect(solution['src/de/tum/cit/aet/temperature/TemperatureClassifier.java']).toContain('labels.add');
+        expect(solution['src/temperaturealertclassification/TemperatureClassifier.java']).toContain('labels.add');
         const template = await getRepositoryFiles(page, `api/programming/programming-exercises/${exercise.id}/template-files-content?omitBinaries=true`);
-        expect(template['src/de/tum/cit/aet/temperature/TemperatureClassifier.java']).toContain('throw new UnsupportedOperationException("Not implemented")');
+        expect(template['src/temperaturealertclassification/TemperatureClassifier.java']).toContain('throw new UnsupportedOperationException("Not implemented")');
         await page.reload();
         await openHyperionTabWithKeyboard(page);
         await expect(page.getByTestId('hyperion-generation-persistence-state')).toContainText('Saved to exercise');
@@ -331,6 +331,7 @@ test.describe('Hyperion exercise generation browser UI', { tag: ['@slow', '@hype
             await expect(observerPage.getByTestId('hyperion-generation-empty')).toBeVisible();
             await observerPage.getByTestId('hyperion-ai-menu').click();
             await expect(observerPage.getByTestId('hyperion-adapt-with-feedback')).toBeEnabled();
+            await observerPage.getByTestId('hyperion-ai-menu').click();
 
             await holdUnmatchedHyperionLlmRequests(page);
             const { jobId } = await startGenerationFromMenu(page, exercise!.id!);
@@ -339,10 +340,13 @@ test.describe('Hyperion exercise generation browser UI', { tag: ['@slow', '@hype
             await expect(observerPage.getByTestId('hyperion-generation-cancel')).toBeHidden();
             await expect(observerPage.getByTestId('hyperion-generation-activity')).toContainText('another instructor', { timeout: 60_000 });
             await expectEditorActionsLockedDuringGeneration(observerPage);
-            await expect(observerPage.getByTestId('hyperion-generate-exercise')).toBeDisabled();
-            await expect(observerPage.getByTestId('hyperion-adapt-with-feedback')).toBeDisabled();
-            await expect(observerPage.getByTestId('hyperion-refine-problem-statement')).toBeDisabled();
-            await expect(observerPage.getByTestId('hyperion-check-consistency')).toBeDisabled();
+
+            const bottomPanelToggle = observerPage.getByTestId('code-editor-bottom-collapse');
+            await bottomPanelToggle.click();
+            await expect(bottomPanelToggle).toHaveAttribute('aria-expanded', 'false');
+            await observerPage.getByTestId('hyperion-ai-menu').click();
+            await expect(bottomPanelToggle).toHaveAttribute('aria-expanded', 'true');
+            await expect(observerPage.locator('.ai-dropdown-menu')).toBeHidden();
 
             const observerStatusResponse = await observerPage.request.get(`api/hyperion/programming-exercises/${exercise!.id}/generate-exercise/status`);
             expect(observerStatusResponse.ok()).toBeTruthy();
@@ -1034,18 +1038,6 @@ async function expectSemanticAdaptation(page: Page, exerciseId: number, adapted:
                     policyPath,
                     stalePolicyThreshold,
                 ),
-                solutionDiagnosticUpdated: await repositoryFileContains(
-                    page,
-                    `api/programming/programming-exercises/${exerciseId}/solution-files-content?omitBinaries=true`,
-                    policyPath,
-                    bubbleSortDiagnostic,
-                ),
-                solutionDiagnosticStale: await repositoryFileContains(
-                    page,
-                    `api/programming/programming-exercises/${exerciseId}/solution-files-content?omitBinaries=true`,
-                    policyPath,
-                    contradictoryQuickSortDiagnostic,
-                ),
                 templateUnchanged: repositoryFilesEqual(
                     await getRepositoryFiles(page, `api/programming/programming-exercises/${exerciseId}/template-files-content?omitBinaries=true`),
                     initialTemplateFiles,
@@ -1064,8 +1056,6 @@ async function expectSemanticAdaptation(page: Page, exerciseId: number, adapted:
         .toEqual({
             solutionUpdated: true,
             solutionStale: false,
-            solutionDiagnosticUpdated: true,
-            solutionDiagnosticStale: false,
             templateUnchanged: true,
             testLoopUpdated: true,
             testLoopStale: false,

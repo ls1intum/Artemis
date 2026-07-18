@@ -506,6 +506,10 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate, OnD
         return _isEmpty(this.unsavedFiles);
     }
 
+    hasCleanRepositoryState(): boolean {
+        return this.commitState === CommitState.CLEAN;
+    }
+
     /**
      * Returns the feedbacks for the current submission or an empty array if no feedbacks are available.
      */

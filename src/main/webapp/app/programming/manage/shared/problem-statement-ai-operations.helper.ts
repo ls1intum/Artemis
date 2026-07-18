@@ -1,13 +1,20 @@
 import { DestroyRef, Injector, Signal, afterNextRender, computed, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Subscription } from 'rxjs';
+import { cloneDeep } from 'lodash-es';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { ArtemisIntelligenceService } from 'app/editor/monaco-editor/model/actions/artemis-intelligence/artemis-intelligence.service';
 import { ProblemStatementService } from 'app/programming/manage/services/problem-statement.service';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { ProgrammingExerciseEditableInstructionComponent } from 'app/programming/manage/instructions-editor/programming-exercise-editable-instruction.component';
-import { InlineRefinementEvent, MAX_USER_PROMPT_LENGTH, PROMPT_LENGTH_WARNING_THRESHOLD, isTemplateOrEmpty } from 'app/programming/manage/shared/problem-statement.utils';
+import {
+    InlineRefinementEvent,
+    MAX_USER_PROMPT_LENGTH,
+    PROMPT_LENGTH_WARNING_THRESHOLD,
+    deriveDraftMetadataPrefill,
+    isTemplateOrEmpty,
+} from 'app/programming/manage/shared/problem-statement.utils';
 import { LineChange } from 'app/programming/shared/utils/diff.utils';
 import { MODULE_FEATURE_HYPERION, PROFILE_LOCALCI } from 'app/app.constants';
 
@@ -141,9 +148,11 @@ export class ProblemStatementAiOperationsHelper {
 
                         editableInstructions?.setText(draftContent);
                         exercise.problemStatement = draftContent;
+                        const metadataPrefill = deriveDraftMetadataPrefill(exercise, draftContent);
+                        const updatedExercise = metadataPrefill ? Object.assign(cloneDeep(exercise), metadataPrefill) : exercise;
                         this.currentProblemStatement.set(draftContent);
                         this.userPrompt.set('');
-                        this.changeHandler?.onContentChanged(draftContent, exercise);
+                        this.changeHandler?.onContentChanged(draftContent, updatedExercise);
                     } else if (!result.errorHandled) {
                         this.alertService.error('artemisApp.programmingExercise.problemStatement.generationError');
                     }

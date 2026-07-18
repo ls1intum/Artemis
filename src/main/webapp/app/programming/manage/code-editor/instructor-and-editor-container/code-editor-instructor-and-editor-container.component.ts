@@ -546,7 +546,8 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     }
 
     private canRefreshAfterHyperionRepositoryChange(): boolean {
-        const codeEditorClean = this.codeEditorContainer()?.canDeactivate?.() ?? true;
+        const codeEditor = this.codeEditorContainer();
+        const codeEditorClean = (codeEditor?.canDeactivate?.() ?? false) && (codeEditor?.hasCleanRepositoryState?.() ?? false);
         const problemStatementClean = !(this.editableInstructions()?.unsavedChangesValue?.() ?? false);
         return codeEditorClean && problemStatementClean;
     }
@@ -810,6 +811,9 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
 
     private maybeAutoStartExerciseGenerationFromNavigation(): void {
         if (!this.shouldAutoStartExerciseGeneration || !this.exercise?.id || !this.canGenerateExercise() || this.isExerciseGenerationActionBlocked()) {
+            return;
+        }
+        if (!this.canRefreshAfterHyperionRepositoryChange()) {
             return;
         }
 
@@ -1229,6 +1233,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     }
 
     onRepositoryFilesLoaded(): void {
+        this.maybeAutoStartExerciseGenerationFromNavigation();
         const target = this.repositorySwitchTarget;
         if (!target) {
             return;

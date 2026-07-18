@@ -499,6 +499,11 @@ describe('CodeEditorContainerComponent', () => {
         expect(event.preventDefault).not.toHaveBeenCalled();
     });
 
+    it.each(Object.values(CommitState))('should report whether %s is a verified clean repository state', (commitState) => {
+        component.commitState = commitState;
+        expect(component.hasCleanRepositoryState()).toBe(commitState === CommitState.CLEAN);
+    });
+
     it('jumpToLine should call monaco revealLine with Immediate scroll type', () => {
         const ed = monacoEditorStub.editor();
         const revealSpy = vi.spyOn(ed, 'revealLine');

@@ -1,4 +1,11 @@
-import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
+import { ProgrammingExercise, ProgrammingLanguage, ProjectType } from 'app/programming/shared/entities/programming-exercise.model';
+import {
+    APP_NAME_PATTERN_FOR_SWIFT,
+    PACKAGE_NAME_PATTERN_FOR_DART,
+    PACKAGE_NAME_PATTERN_FOR_GO,
+    PACKAGE_NAME_PATTERN_FOR_JAVA_BLACKBOX,
+    PACKAGE_NAME_PATTERN_FOR_JAVA_KOTLIN,
+} from 'app/foundation/constants/input.constants';
 import { ProblemStatementGlobalRefinementRequest } from 'app/openapi/model/problem-statement-global-refinement-request';
 import { ProblemStatementTargetedRefinementRequest } from 'app/openapi/model/problem-statement-targeted-refinement-request';
 import { ProblemStatementGenerationRequest } from 'app/openapi/model/problem-statement-generation-request';
@@ -141,4 +148,94 @@ export function buildGenerationRequest(userPrompt: string): ProblemStatementGene
     return {
         userPrompt: userPrompt.trim(),
     };
+}
+
+const MAX_PROPOSED_PACKAGE_NAME_LENGTH = 32;
+
+/** Extracts a title from the first level-one Markdown heading. */
+export function extractProblemStatementTitle(problemStatement: string | undefined): string | undefined {
+    const match = problemStatement?.match(/^#\s+(.+)$/m);
+    const title = match?.[1]?.replace(/[*_`~]/g, '').trim();
+    return title ? title : undefined;
+}
+
+function sanitizeExerciseTitle(title: string): string | undefined {
+    const sanitized = title
+        .normalize('NFKD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/[^a-zA-Z0-9 _-]+/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+    return sanitized.length >= 3 ? sanitized : undefined;
+}
+
+/** Derives a valid package or app name from an exercise title. */
+export function deriveProposedPackageName(title: string, language: ProgrammingLanguage, projectType?: ProjectType): string | undefined {
+    const words = title
+        .normalize('NFKD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .split(/[^a-zA-Z0-9]+/)
+        .filter(Boolean);
+    const pattern = packageNamePatternFor(language, projectType);
+    if (!pattern || words.length === 0) {
+        return undefined;
+    }
+    const pascalCase = language === ProgrammingLanguage.SWIFT;
+    const joined = words.map((word) => (pascalCase ? word.charAt(0).toUpperCase() + word.slice(1).toLowerCase() : word.toLowerCase())).join('');
+    const candidate = joined.replace(/^[0-9]+/, '').substring(0, MAX_PROPOSED_PACKAGE_NAME_LENGTH);
+    if (!candidate) {
+        return undefined;
+    }
+    for (const proposal of [candidate, pascalCase ? `${candidate}Exercise` : `${candidate}exercise`]) {
+        if (new RegExp(pattern).test(proposal)) {
+            return proposal;
+        }
+    }
+    return undefined;
+}
+
+function packageNamePatternFor(language: ProgrammingLanguage, projectType?: ProjectType): string | undefined {
+    switch (language) {
+        case ProgrammingLanguage.JAVA:
+        case ProgrammingLanguage.KOTLIN:
+            return projectType === ProjectType.MAVEN_BLACKBOX ? PACKAGE_NAME_PATTERN_FOR_JAVA_BLACKBOX : PACKAGE_NAME_PATTERN_FOR_JAVA_KOTLIN;
+        case ProgrammingLanguage.SWIFT:
+            return APP_NAME_PATTERN_FOR_SWIFT;
+        case ProgrammingLanguage.GO:
+            return PACKAGE_NAME_PATTERN_FOR_GO;
+        case ProgrammingLanguage.DART:
+            return PACKAGE_NAME_PATTERN_FOR_DART;
+        default:
+            return undefined;
+    }
+}
+
+export interface DraftMetadataPrefill {
+    title?: string;
+    packageName?: string;
+}
+
+/** Proposes blank creation-form metadata from an AI-generated draft without mutating the exercise. */
+export function deriveDraftMetadataPrefill(exercise: ProgrammingExercise, draftProblemStatement: string): DraftMetadataPrefill | undefined {
+    if (exercise.id) {
+        return undefined;
+    }
+    const heading = extractProblemStatementTitle(draftProblemStatement);
+    if (!heading) {
+        return undefined;
+    }
+    const prefill: DraftMetadataPrefill = {};
+    if (!exercise.title?.trim()) {
+        const title = sanitizeExerciseTitle(heading);
+        if (title) {
+            prefill.title = title;
+        }
+    }
+    if (!exercise.packageName?.trim() && exercise.programmingLanguage) {
+        const packageName = deriveProposedPackageName(heading, exercise.programmingLanguage, exercise.projectType);
+        if (packageName) {
+            prefill.packageName = packageName;
+        }
+    }
+    return Object.keys(prefill).length > 0 ? prefill : undefined;
 }

@@ -58,7 +58,7 @@ const correctedGeneratedProblemStatement = generatedProblemStatement
     .replace('testRepresentativeTemperatures)', 'testRepresentativeTemperatures())')
     .replace('testBoundariesAndEmptyInput)', 'testBoundariesAndEmptyInput())')
     .replace('testMissingReadingIsRejected)', 'testMissingReadingIsRejected())');
-const generatedSolution = `package de.tum.cit.aet.temperature;
+const generatedSolution = `package temperaturealertclassification;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -79,7 +79,7 @@ public final class TemperatureClassifier {
     }
 }
 `;
-const generatedTemplate = `package de.tum.cit.aet.temperature;
+const generatedTemplate = `package temperaturealertclassification;
 
 import java.util.List;
 
@@ -93,7 +93,7 @@ public final class TemperatureClassifier {
     }
 }
 `;
-const generatedTests = `package de.tum.cit.aet.temperature;
+const generatedTests = `package temperaturealertclassification;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -401,9 +401,9 @@ const server = http.createServer((req, res) => {
                     return;
                 }
                 const files = [
-                    ['solution/src/de/tum/cit/aet/temperature/TemperatureClassifier.java', generatedSolution],
-                    ['template/src/de/tum/cit/aet/temperature/TemperatureClassifier.java', generatedTemplate],
-                    ['tests/test/de/tum/cit/aet/temperature/TemperatureClassifierTest.java', generatedTests],
+                    ['solution/src/temperaturealertclassification/TemperatureClassifier.java', generatedSolution],
+                    ['template/src/temperaturealertclassification/TemperatureClassifier.java', generatedTemplate],
+                    ['tests/test/temperaturealertclassification/TemperatureClassifierTest.java', generatedTests],
                     ['problem-statement.md', generatedProblemStatement],
                 ];
                 const nextFile = files.find(([file]) => !hasAcknowledgedToolCall(body, 'write_file', (args) => args.path === file));

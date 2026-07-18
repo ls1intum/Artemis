@@ -76,6 +76,7 @@ const internals = (c: CodeEditorInstructorAndEditorContainerComponent): Componen
 interface CodeEditorContainerStub {
     actions?: () => { refreshAfterExternalUpdate: ReturnType<typeof vi.fn>; onSave: ReturnType<typeof vi.fn> };
     canDeactivate?: () => boolean;
+    hasCleanRepositoryState?: () => boolean;
     selectedFile?: string;
     selectedRepository?: ReturnType<typeof vi.fn>;
     problemStatementIdentifier?: string;
@@ -86,7 +87,8 @@ interface CodeEditorContainerStub {
 }
 
 function setCodeEditorContainer(comp: CodeEditorInstructorAndEditorContainerComponent, stub: CodeEditorContainerStub | undefined): void {
-    internals(comp).codeEditorContainer = (() => stub) as unknown as Signal<any>;
+    const completeStub = stub ? { canDeactivate: () => true, hasCleanRepositoryState: () => true, ...stub } : undefined;
+    internals(comp).codeEditorContainer = (() => completeStub) as unknown as Signal<any>;
 }
 
 function getCodeEditorContainer(comp: CodeEditorInstructorAndEditorContainerComponent): any {
@@ -107,6 +109,7 @@ function createDefaultContainerStub(): CodeEditorContainerStub {
     return {
         actions: () => actions,
         canDeactivate: () => true,
+        hasCleanRepositoryState: () => true,
         selectedFile: undefined as string | undefined,
         selectedRepository: vi.fn().mockReturnValue('SOLUTION'),
         problemStatementIdentifier: 'problem_statement.md',
@@ -1405,7 +1408,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Adapt with feedback'
         expect(openEditorBottomPanel).toHaveBeenCalledOnce();
     });
 
-    it('auto-starts creation generation after the activity status finishes loading', async () => {
+    it('auto-starts creation generation only after status loading and repository initialization finish', async () => {
         fixture.destroy();
         window.history.replaceState({ [AUTO_START_EXERCISE_GENERATION_STATE]: true }, '');
         fixture = TestBed.createComponent(CodeEditorInstructorAndEditorContainerComponent);
@@ -1417,7 +1420,8 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Adapt with feedback'
             isAtLeastEditor: true,
             releaseDate: dayjs().add(1, 'day'),
         });
-        setCodeEditorContainer(comp, createDefaultContainerStub());
+        let repositoryClean = false;
+        setCodeEditorContainer(comp, { ...createDefaultContainerStub(), hasCleanRepositoryState: () => repositoryClean });
         const activity = signal<any | undefined>(undefined);
         (comp as any).generationActivity = activity;
 
@@ -1427,6 +1431,10 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Adapt with feedback'
         activity.set({ attachToJob, running: () => false, statusLoading: () => false, statusLoadFailed: () => false });
         fixture.detectChanges();
         await fixture.whenStable();
+        expect(generationService.generate).not.toHaveBeenCalled();
+
+        repositoryClean = true;
+        comp.onRepositoryFilesLoaded();
 
         expect(generationService.generate).toHaveBeenCalledExactlyOnceWith(42, { mode: 'GENERATE' });
         window.history.replaceState({}, '');
@@ -1859,6 +1867,16 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Adapt with feedback'
 
         expect(generationService.generate).not.toHaveBeenCalled();
         expect(attachToJob).not.toHaveBeenCalled();
+        expect(warningSpy).toHaveBeenCalledWith('pendingChanges');
+    });
+
+    it('startGeneration is blocked unless the repository state is verified clean', () => {
+        setCodeEditorContainer(comp, { canDeactivate: () => true, hasCleanRepositoryState: () => false });
+        const warningSpy = vi.spyOn(TestBed.inject(AlertService), 'warning');
+
+        (comp as any).startGeneration();
+
+        expect(generationService.generate).not.toHaveBeenCalled();
         expect(warningSpy).toHaveBeenCalledWith('pendingChanges');
     });
 
