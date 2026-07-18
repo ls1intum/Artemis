@@ -137,11 +137,20 @@ artemis:
     days-between-data-exports: 14
 
   cleanup: # Data-privacy (GDPR) retention cutoffs and schedule kill switches for the admin data cleanup jobs.
+    # Legal basis (defaults chosen for TUM / Bavaria; adjust per your institution's regulations):
+    #  - GDPR Art. 5(1)(e) storage limitation + Art. 17 (erasure): personal data must be deleted once no longer needed.
+    #  - Grade-relevant courses hold examination data (Prüfungsunterlagen). For Bavarian universities these must be kept
+    #    5 years (Bavarian State Ministry circular; the 2-year RaPO period applies to Fachhochschulen, not universities),
+    #    then destroyed. The authoritative long-term grade/degree record (reduced exam file, 50 years) is kept in the
+    #    campus-management system (e.g. TUMonline), not in Artemis. See the privacy statement (BayHSchG Art. 61, TUM APSO).
+    #  - Non-grade-relevant courses carry no exam-retention obligation, so their student data is minimized after 1 year.
+    #  NOTE: a pending objection/legal proceeding legally extends retention; Artemis does not model legal holds, so exclude
+    #  such a course from the reset (the jobs are admin-triggered and off by default) until the proceeding concludes.
     grade-relevant-retention-years: 5 # reset student data of grade-relevant courses 5 years after they end
     non-grade-relevant-retention-years: 1 # reset student data of non-grade-relevant courses 1 year after they end
     reset-warning-grace-period-days: 30 # days between warning instructors and actually resetting the student data
-    old-feedback-cutoff-weeks: 8 # weeks after course end before feedback of non-latest results is purged
-    old-submission-versions-cutoff-weeks: 8 # weeks after course end before submission versions are purged
+    old-feedback-cutoff-weeks: 8 # weeks after course end before feedback of non-latest results is purged (final result's feedback is kept)
+    old-submission-versions-cutoff-weeks: 8 # weeks after course end before submission versions (editor history) are purged
     not-enrolled-users-inactivity-months: 6 # months of inactivity before a user enrolled in no course is soft-deleted
     # Schedule kill switches (all off by default: nothing runs automatically until an admin opts in).
     old-courses-warning-schedule-enabled: false

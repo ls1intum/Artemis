@@ -8,9 +8,13 @@ import org.springframework.validation.annotation.Validated;
 
 /**
  * Configuration for the admin data-privacy cleanup jobs (GDPR retention), bound from {@code artemis.cleanup}. Cutoff
- * defaults follow German/EU data-protection practice (storage limitation and minimization). The cron expressions for the
- * scheduled variants live under {@code artemis.scheduling}; the {@code *ScheduleEnabled} flags here are the kill switches
- * and default to {@code false} so nothing runs automatically until an admin opts in.
+ * defaults follow German/EU data-protection practice (GDPR Art. 5(1)(e) storage limitation and Art. 17 erasure): the
+ * grade-relevant default (5 years) matches the examination-document retention for Bavarian universities, after which the
+ * data must be destroyed; non-grade-relevant courses carry no exam-retention obligation and are minimized after 1 year.
+ * The authoritative long-term grade/degree record is kept in the campus-management system (e.g. TUMonline), not Artemis.
+ * All defaults are configurable per institution. The cron expressions for the scheduled variants live under
+ * {@code artemis.scheduling}; the {@code *ScheduleEnabled} flags here are the kill switches and default to {@code false}
+ * so nothing runs automatically until an admin opts in.
  *
  * @param gradeRelevantRetentionYears          Years after a grade-relevant course ends before its student data is reset
  *                                                 (exam/grade records retention).
