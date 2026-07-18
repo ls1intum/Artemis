@@ -16,7 +16,7 @@ import { omit } from 'lodash-es';
 import { ParticipationWebsocketService } from 'app/course/shared/services/participation-websocket.service';
 import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
 import { ComponentCanDeactivate } from 'app/foundation/guard/can-deactivate.model';
-import { FileUploadParticipationDTO, FileUploadSubmission } from 'app/fileupload/shared/entities/file-upload-submission.model';
+import { FileUploadParticipation, FileUploadSubmission } from 'app/fileupload/shared/entities/file-upload-submission.model';
 import { getExerciseDueDate, hasExerciseDueDatePassed } from 'app/exercise/util/exercise.utils';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { AccountService } from 'app/core/auth/account.service';
@@ -209,7 +209,7 @@ export class FileUploadSubmissionComponent implements ComponentCanDeactivate {
         this.isOwnerOfParticipation.set(this.isOwnerOfFileUploadParticipation(participation));
     }
 
-    private isFileUploadParticipation(participation: Participation | undefined): participation is FileUploadParticipationDTO {
+    private isFileUploadParticipation(participation: Participation | undefined): participation is FileUploadParticipation {
         return participation?.type === ParticipationType.STUDENT;
     }
 
@@ -217,7 +217,7 @@ export class FileUploadSubmissionComponent implements ComponentCanDeactivate {
         return exercise?.type === ExerciseType.FILE_UPLOAD;
     }
 
-    private isOwnerOfFileUploadParticipation(participation: FileUploadParticipationDTO): boolean {
+    private isOwnerOfFileUploadParticipation(participation: FileUploadParticipation): boolean {
         if (typeof participation.isOwner === 'boolean') {
             return participation.isOwner;
         }
