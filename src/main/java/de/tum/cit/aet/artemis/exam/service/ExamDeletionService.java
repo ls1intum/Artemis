@@ -29,6 +29,7 @@ import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
+import de.tum.cit.aet.artemis.exam.domain.ExamUser;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
 import de.tum.cit.aet.artemis.exam.dto.ExamDeletionSummaryDTO;
@@ -89,6 +90,8 @@ public class ExamDeletionService {
 
     private final ExamUserRepository examUserRepository;
 
+    private final ExamUserService examUserService;
+
     private final StudentExamService studentExamService;
 
     private final Optional<SearchableEntityWeaviateService> searchableEntityWeaviateService;
@@ -98,7 +101,8 @@ public class ExamDeletionService {
             GradingScaleRepository gradingScaleRepository, StudentParticipationRepository studentParticipationRepository, ChannelRepository channelRepository,
             ChannelService channelService, ExamLiveEventRepository examLiveEventRepository, ExamSessionRepository examSessionRepository, BuildJobRepository buildJobRepository,
             PostRepository postRepository, AnswerPostRepository answerPostRepository, ProgrammingExerciseRepository programmingExerciseRepository,
-            ExamUserRepository examUserRepository, final StudentExamService studentExamService, Optional<SearchableEntityWeaviateService> searchableEntityWeaviateServiceOptional) {
+            ExamUserRepository examUserRepository, ExamUserService examUserService, final StudentExamService studentExamService,
+            Optional<SearchableEntityWeaviateService> searchableEntityWeaviateServiceOptional) {
         this.exerciseDeletionService = exerciseDeletionService;
         this.participationDeletionService = participationDeletionService;
         this.cacheManager = cacheManager;
@@ -117,6 +121,7 @@ public class ExamDeletionService {
         this.answerPostRepository = answerPostRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.examUserRepository = examUserRepository;
+        this.examUserService = examUserService;
         this.studentExamService = studentExamService;
         this.searchableEntityWeaviateService = searchableEntityWeaviateServiceOptional;
     }
@@ -227,6 +232,20 @@ public class ExamDeletionService {
 
         // Delete exam live events
         examLiveEventRepository.deleteAllByExamId(examId);
+
+        // Delete exam users (seating, identity-check flags, and the student signature/photo image files). These are not
+        // cascade-removed on a reset because the exam entity itself is kept, so they must be deleted explicitly. The file
+        // deletion is best-effort per user so a single malformed stored path cannot abort the whole reset.
+        List<ExamUser> examUsers = examUserRepository.findAllByExamId(examId);
+        for (ExamUser examUser : examUsers) {
+            try {
+                examUserService.deleteAvailableExamUserImages(examUser);
+            }
+            catch (Exception e) {
+                log.warn("Could not schedule the image files of exam user {} (exam {}) for deletion", examUser.getId(), examId, e);
+            }
+        }
+        examUserRepository.deleteAll(examUsers);
 
         // Clear the cache for student exam exercise preparation status
         var studentExamExercisePreparationCache = cacheManager.getCache(EXAM_EXERCISE_START_STATUS);
