@@ -509,27 +509,22 @@ public class CourseResetService {
      * @param courseId the ID of the course whose students, tutors, and editors should be unenrolled
      */
     private void unenrollStudentsTutorsAndEditors(long courseId) {
-        removeGroupIfNotSharedByAnotherCourse(courseId, courseRepository.getStudentGroupNameById(courseId));
-        removeGroupIfNotSharedByAnotherCourse(courseId, courseRepository.getTeachingAssistantGroupNameById(courseId));
-        removeGroupIfNotSharedByAnotherCourse(courseId, courseRepository.getEditorGroupNameById(courseId));
-    }
+        // Remove students using bulk operation
+        String studentGroupName = courseRepository.getStudentGroupNameById(courseId);
+        if (studentGroupName != null) {
+            userService.removeGroupFromAllUsers(studentGroupName);
+        }
 
-    /**
-     * Removes the given group from all users via a bulk operation, unless another course also uses that group name. The
-     * removal is keyed purely by group name, so removing a shared group would unenroll users from unrelated courses;
-     * auto-generated group names are course-unique, but manually configured shared groups must be left untouched.
-     *
-     * @param courseId  the id of the course being reset
-     * @param groupName the group to remove (ignored if {@code null})
-     */
-    private void removeGroupIfNotSharedByAnotherCourse(long courseId, String groupName) {
-        if (groupName == null) {
-            return;
+        // Remove tutors (teaching assistants) using bulk operation
+        String tutorGroupName = courseRepository.getTeachingAssistantGroupNameById(courseId);
+        if (tutorGroupName != null) {
+            userService.removeGroupFromAllUsers(tutorGroupName);
         }
-        if (courseRepository.countOtherCoursesUsingGroup(courseId, groupName) > 0) {
-            log.warn("Skipping unenrollment for group '{}' during reset of course {} because another course also uses this group name", groupName, courseId);
-            return;
+
+        // Remove editors using bulk operation
+        String editorGroupName = courseRepository.getEditorGroupNameById(courseId);
+        if (editorGroupName != null) {
+            userService.removeGroupFromAllUsers(editorGroupName);
         }
-        userService.removeGroupFromAllUsers(groupName);
     }
 }
