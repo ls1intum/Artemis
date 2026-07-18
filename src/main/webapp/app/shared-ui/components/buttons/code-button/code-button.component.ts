@@ -109,6 +109,10 @@ export class CodeButtonComponent implements OnInit {
     private readonly userLogin = signal<string | undefined>(undefined);
     // Guards against reporting the same missing-token anomaly repeatedly (getHttpOrSshRepositoryUri runs on every change detection).
     private vcsAccessTokenReportedMissing = false;
+    // Set once a participation VCS token request has terminally failed to yield a token (empty response or an error that
+    // is not the 404 → create fallback). Gates the missing-token Sentry report so it never fires while a token is still
+    // in flight (an expected transient state during which the clone URL simply omits the token).
+    private readonly participationTokenLoadFailed = signal(false);
     sshKeys?: UserSshPublicKey[];
 
     // Signals (we ideally declare everything related to change detection/UI to signals and leave component fields
@@ -349,7 +353,9 @@ export class CodeButtonComponent implements OnInit {
      * and base-repository tokens, which have their own dedicated error handling.
      */
     private reportMissingVcsAccessToken(): void {
-        if (this.vcsAccessTokenReportedMissing || this.isBaseRepository() || this.usesStaffUserToken()) {
+        // Only report once a participation token request has terminally failed; never while the token is still loading
+        // (the URL correctly omits the token during that transient window, so passive render must not raise an alarm).
+        if (this.vcsAccessTokenReportedMissing || this.isBaseRepository() || this.usesStaffUserToken() || !this.participationTokenLoadFailed()) {
             return;
         }
         this.vcsAccessTokenReportedMissing = true;
@@ -399,14 +405,19 @@ export class CodeButtonComponent implements OnInit {
                     if (this.useToken()) {
                         this.copyEnabled.set(true);
                     }
+                } else {
+                    // The server answered without a token: terminal failure, no create fallback follows.
+                    this.participationTokenLoadFailed.set(true);
                 }
             },
             error: (error: HttpErrorResponse) => {
                 if (error.status == 404) {
                     this.createNewParticipationVcsAccessToken(participation);
-                }
-                if (error.status == 403) {
-                    this.alertService.warning('403 Forbidden');
+                } else {
+                    if (error.status == 403) {
+                        this.alertService.warning('403 Forbidden');
+                    }
+                    this.participationTokenLoadFailed.set(true);
                 }
             },
         });
@@ -425,12 +436,16 @@ export class CodeButtonComponent implements OnInit {
                     if (this.useToken()) {
                         this.copyEnabled.set(true);
                     }
+                } else {
+                    // Creating the token succeeded but returned no token: terminal failure.
+                    this.participationTokenLoadFailed.set(true);
                 }
             },
             error: (error: HttpErrorResponse) => {
                 if (error.status == 403) {
                     this.alertService.warning('403 Forbidden');
                 }
+                this.participationTokenLoadFailed.set(true);
             },
         });
     }
