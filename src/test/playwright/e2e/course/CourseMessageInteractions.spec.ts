@@ -386,7 +386,7 @@ test.describe('Message interactions', { tag: '@fast' }, () => {
             // The editor propagates content to the send form with a 200ms debounce, and the Enter handler
             // silently drops the submit while the form is still empty/invalid. The send button's enabled
             // state mirrors form validity, so wait for it before sending (a real user is slower than 200ms).
-            await expect(courseMessages['page'].locator('#save')).toBeEnabled({ timeout: 10000 });
+            await courseMessages.waitUntilSendEnabled();
 
             const message = await courseMessages.sendMessageWithEnterKey();
             expect(message.content!).toContain('😂');

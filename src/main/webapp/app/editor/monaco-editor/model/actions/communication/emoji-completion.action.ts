@@ -85,7 +85,9 @@ export class EmojiCompletionAction extends TextEditorAction {
     }
 
     /**
-     * Inserts the text ':' into the editor and focuses it. This method will trigger the completion provider to show the available emojis.
+     * Inserts the text ':' into the editor, focuses it, and triggers the completion provider. Since the
+     * search term right after a bare ':' is empty, {@link searchEmojisForTerm} returns no results and the
+     * suggestion popup only appears once the user types at least one character following the colon.
      * @param editor The editor to insert the text into.
      */
     run(editor: TextEditor) {

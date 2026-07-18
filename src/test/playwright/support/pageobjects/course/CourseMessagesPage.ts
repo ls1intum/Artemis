@@ -325,6 +325,14 @@ export class CourseMessagesPage {
     }
 
     /**
+     * Waits until the send button becomes enabled. The editor propagates content to the send form
+     * with a debounce, so the button's enabled state only mirrors form validity a moment after typing.
+     */
+    async waitUntilSendEnabled() {
+        await expect(this.page.locator('#save')).toBeEnabled({ timeout: 10000 });
+    }
+
+    /**
      * Sends the message currently in the main message editor by pressing Enter (rather than
      * clicking the send button), and waits for the message to be persisted.
      * @returns The created message.
