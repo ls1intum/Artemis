@@ -1,14 +1,11 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { describe, expect, it, vi } from 'vitest';
 import { ExerciseTimelineStubComponent } from 'test/helpers/stubs/modeling/exercise-timeline-stub.component';
 
 import { TextExerciseTimelineComponent } from './text-exercise-timeline.component';
 
 describe('TextExerciseTimeline', () => {
-    setupTestBed({ zoneless: true });
-
     let component: TextExerciseTimelineComponent;
     let fixture: ComponentFixture<TextExerciseTimelineComponent>;
 
