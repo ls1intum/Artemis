@@ -371,7 +371,7 @@ test.describe('Message interactions', { tag: '@fast' }, () => {
             // The suggest widget opens after typing ":" plus at least one letter and offers a ":joy:" row.
             // "jo" fuzzy-matches several shortcodes (":joystick:", ":banjo:", ...), so the row is selected
             // explicitly by its shortcode rather than relying on whichever entry Monaco highlights by default.
-            // The accessible name of a row is the label plus a kind suffix (e.g. "😂 :joy:, Text"), so the
+            // The accessible name of a row is the label plus a kind suffix (e.g. "😂 :joy:, Constant"), so the
             // shortcode is matched as a substring; ":joy:" cannot collide with ":joy_cat:" or ":joystick:".
             const suggestWidget = courseMessages.getSuggestWidget();
             await expect(suggestWidget).toBeVisible({ timeout: 10000 });
@@ -401,9 +401,11 @@ test.describe('Message interactions', { tag: '@fast' }, () => {
             await courseMessages.typeInMessageEditor('10:30');
 
             // The character before the trigger colon is a digit, not whitespace, so the word-boundary
-            // check rejects the trigger and the widget must stay closed
-            await expect(courseMessages.getSuggestWidget()).toBeHidden({ timeout: 2000 });
+            // check rejects the trigger and the widget must stay closed. The editor text is asserted
+            // first: it waits until all keystrokes are rendered, so the hidden check afterwards is
+            // meaningful (a broken boundary check would have opened the widget while typing ":3").
             await expect(courseMessages.getMessageEditorText()).toContainText('10:30');
+            await expect(courseMessages.getSuggestWidget()).toBeHidden();
         });
     });
 
