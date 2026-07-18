@@ -3,6 +3,8 @@ package de.tum.cit.aet.artemis.account.repository;
 import static de.tum.cit.aet.artemis.account.util.UserFactory.USER_PASSWORD;
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.time.Instant;
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Set;
 
@@ -66,6 +68,48 @@ class UserRepositoryTest extends AbstractSpringIntegrationIndependentTest {
 
         assertThat(actual).doesNotContainAnyElementsOf(unexpected.stream().map(User::getLogin).toList());
         assertThat(actual).containsAll(expected.stream().map(User::getLogin).toList());
+    }
+
+    /**
+     * Exhaustively verifies the selection filter of the age-based not-enrolled-user cleanup query. This query decides
+     * which user accounts get soft-deleted (and anonymized), so a single wrong clause would irreversibly scrub the wrong
+     * accounts. Every "must survive" user violates exactly one guard (recently active / enrolled / admin / super-admin /
+     * already deleted), so a broken clause makes the corresponding assertion fail.
+     */
+    @Test
+    void testFindAllNotEnrolledUsersModifiedBefore() {
+        final Instant cutoff = ZonedDateTime.now().minusMonths(6).toInstant();
+        final Instant longAgo = ZonedDateTime.now().minusYears(1).toInstant();
+
+        // Selected: not enrolled (no groups), no admin authority, inactive (modified > 6 months ago), not deleted.
+        User inactiveNotEnrolled = createUser(TEST_PREFIX + "nedel", Set.of(), Set.of(), false, longAgo);
+
+        // Must survive — each violates exactly one guard:
+        User recentNotEnrolled = createUser(TEST_PREFIX + "nerecent", Set.of(), Set.of(), false, ZonedDateTime.now().toInstant()); // active -> keep
+        User enrolledInactive = createUser(TEST_PREFIX + "neenrolled", Set.of("cleanup-not-enrolled-test-group"), Set.of(), false, longAgo); // enrolled -> keep
+        User adminInactive = createUser(TEST_PREFIX + "neadmin", Set.of(), Set.of(Authority.ADMIN_AUTHORITY), false, longAgo); // admin -> keep
+        User superAdminInactive = createUser(TEST_PREFIX + "nesuper", Set.of(), Set.of(Authority.SUPER_ADMIN_AUTHORITY), false, longAgo); // super admin -> keep
+        User deletedInactive = createUser(TEST_PREFIX + "nedeleted", Set.of(), Set.of(), true, longAgo); // already deleted -> keep
+
+        final List<String> actual = userRepository.findAllNotEnrolledUsersModifiedBefore(cutoff);
+
+        assertThat(actual).contains(inactiveNotEnrolled.getLogin());
+        assertThat(actual).doesNotContain(recentNotEnrolled.getLogin(), enrolledInactive.getLogin(), adminInactive.getLogin(), superAdminInactive.getLogin(),
+                deletedInactive.getLogin());
+    }
+
+    /**
+     * Creates a not-enrolled-user-cleanup test fixture: a saved user with the given groups/authorities/deleted flag and a
+     * backdated last modification date (set via a bulk update so auditing does not overwrite it).
+     */
+    private User createUser(String login, Set<String> groups, Set<Authority> authorities, boolean deleted, Instant lastModifiedDate) {
+        User user = userUtilService.createAndSaveUser(login);
+        user.setGroups(groups);
+        user.setAuthorities(authorities);
+        user.setDeleted(deleted);
+        user = userRepository.save(user);
+        userRepository.updateLastModifiedDate(user.getId(), lastModifiedDate);
+        return user;
     }
 
     @Test

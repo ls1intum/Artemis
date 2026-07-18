@@ -638,6 +638,73 @@ class CleanupIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCTest
 
     @Test
     @WithMockUser(roles = "ADMIN")
+    void testDeleteOldCourseSubmissionVersionsByCourseEndDate() throws Exception {
+        // The automated cleanup deletes submission versions by the OWNING COURSE's end date (submission -> participation
+        // -> exercise -> course), which is a different query than the createdDate-range endpoint covered by
+        // testDeleteOldSubmissionVersions. A version whose course (oldCourse) ended well before the cutoff must be
+        // deleted; a version whose course (newCourse) has not ended must be kept.
+        // The count aggregates across all old courses, so capture the baseline before seeding and assert the delta this
+        // test introduces (exactly the one old-course version), keeping it robust against versions left by other tests.
+        int baseline = request.get("/api/core/admin/cleanup/old-course-submission-versions/count", HttpStatus.OK, SubmissionVersionsCleanupCountDTO.class).submissionVersions();
+
+        var oldExercise = textExerciseRepository.findByCourseIdWithCategories(oldCourse.getId()).getFirst();
+        var oldParticipation = participationUtilService.createAndSaveParticipationForExercise(oldExercise, student.getLogin());
+        var oldSubmission = participationUtilService.addSubmission(oldParticipation, ParticipationFactory.generateTextSubmission("old", Language.ENGLISH, true));
+        var oldVersion = submissionVersionRepository.save(ParticipationFactory.generateSubmissionVersion("old-content", oldSubmission, student));
+
+        var newExercise = textExerciseRepository.findByCourseIdWithCategories(newCourse.getId()).getFirst();
+        var newParticipation = participationUtilService.createAndSaveParticipationForExercise(newExercise, student.getLogin());
+        var newSubmission = participationUtilService.addSubmission(newParticipation, ParticipationFactory.generateTextSubmission("new", Language.ENGLISH, true));
+        var newVersion = submissionVersionRepository.save(ParticipationFactory.generateSubmissionVersion("new-content", newSubmission, student));
+
+        // Only the old-course version is counted; the not-yet-ended course's version must not be.
+        int afterSeeding = request.get("/api/core/admin/cleanup/old-course-submission-versions/count", HttpStatus.OK, SubmissionVersionsCleanupCountDTO.class).submissionVersions();
+        assertThat(afterSeeding).isEqualTo(baseline + 1);
+
+        var responseBody = request.delete("/api/core/admin/cleanup/old-course-submission-versions", new LinkedMultiValueMap<>(), null, CleanupServiceExecutionRecordDTO.class,
+                HttpStatus.OK);
+        assertThat(responseBody.jobType()).isEqualTo(CleanupJobType.OLD_COURSE_SUBMISSION_VERSIONS.label());
+        assertThat(responseBody.executionDate()).isNotNull();
+
+        // Only the version of the course that already ended is deleted; the ongoing course's version survives.
+        assertThat(submissionVersionRepository.findById(oldVersion.getId())).isEmpty();
+        assertThat(submissionVersionRepository.findById(newVersion.getId())).isPresent();
+    }
+
+    @Test
+    @WithMockUser(roles = "ADMIN")
+    void testDeleteOldFeedbackKeepsRecentCourseFeedback() throws Exception {
+        // Cutoff-boundary guard: the age-based feedback cleanup must only touch courses that ended before the cutoff.
+        // Feedback of a non-latest result of a course that has NOT yet ended (newCourse) must neither be counted nor
+        // deleted, so ongoing/recent courses can never lose feedback by accident.
+        int baseline = request.get("/api/core/admin/cleanup/old-feedback/count", HttpStatus.OK, OldFeedbackCleanupCountDTO.class).feedback();
+
+        var newExercise = textExerciseRepository.findByCourseIdWithCategories(newCourse.getId()).getFirst();
+        var participation = participationUtilService.createAndSaveParticipationForExercise(newExercise, student.getLogin());
+        var submission = participationUtilService.addSubmission(participation, ParticipationFactory.generateProgrammingSubmission(true));
+        // Two rated results: the first is non-latest (a deletion candidate for an OLD course), the second is latest.
+        var nonLatestRated = participationUtilService.generateResult(submission, instructor);
+        var feedbackNonLatest = createFeedbackWithLinkedLongFeedback();
+        createTextBlockForFeedback(feedbackNonLatest);
+        participationUtilService.addFeedbackToResult(feedbackNonLatest, nonLatestRated);
+        var latestRated = participationUtilService.generateResult(submission, instructor);
+        var feedbackLatest = createFeedbackWithLinkedLongFeedback();
+        participationUtilService.addFeedbackToResult(feedbackLatest, latestRated);
+
+        // The not-yet-ended course contributes nothing to the count, even though it has a non-latest result.
+        int afterSeeding = request.get("/api/core/admin/cleanup/old-feedback/count", HttpStatus.OK, OldFeedbackCleanupCountDTO.class).feedback();
+        assertThat(afterSeeding).isEqualTo(baseline);
+
+        var responseBody = request.delete("/api/core/admin/cleanup/old-feedback", new LinkedMultiValueMap<>(), null, CleanupServiceExecutionRecordDTO.class, HttpStatus.OK);
+        assertThat(responseBody.jobType()).isEqualTo(CleanupJobType.FEEDBACK.label());
+
+        // The recent course's feedback (both non-latest and latest) survives the cleanup.
+        assertThat(feedbackRepository.findByResult(nonLatestRated)).isNotEmpty();
+        assertThat(feedbackRepository.findByResult(latestRated)).isNotEmpty();
+    }
+
+    @Test
+    @WithMockUser(roles = "ADMIN")
     void testGetLastExecutions() throws Exception {
 
         var now = ZonedDateTime.now();
