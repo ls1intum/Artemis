@@ -58,6 +58,9 @@ export class VcsAccessTokenOverviewComponent implements OnInit {
         this.loadTokens();
     }
 
+    /**
+     * Loads the current user's VCS access tokens from the server and applies the current query (page, sort, search) to them.
+     */
     private loadTokens(): void {
         this.isLoading.set(true);
         this.service.getTokens().subscribe({
@@ -84,6 +87,11 @@ export class VcsAccessTokenOverviewComponent implements OnInit {
         this.applyQuery(event);
     }
 
+    /**
+     * Filters (by search term), sorts, and paginates the full in-memory token list according to the given table query, updating the displayed rows and the total count.
+     *
+     * @param event the current table query (page, page size, optional sort and search term)
+     */
     private applyQuery(event: TumUiTableQueryEvent): void {
         let filtered = this.allTokens();
         const term = event.searchTerm?.toLowerCase();
@@ -100,6 +108,11 @@ export class VcsAccessTokenOverviewComponent implements OnInit {
         this.rows.set(sorted.slice(from, from + event.pageSize));
     }
 
+    /**
+     * Revokes the given token, removes it from the list on success, and reports the outcome. The next clone-dialog visit re-mints a fresh token for that repository.
+     *
+     * @param token the token to revoke
+     */
     revokeToken(token: VcsAccessTokenOverview): void {
         this.service.revokeToken(token.tokenType, token.id).subscribe({
             next: () => {
