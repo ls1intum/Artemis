@@ -104,6 +104,7 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
              AND result.rated = TRUE
              AND result.completionDate IS NOT NULL
              AND result.score IS NOT NULL
+             AND submission.submissionDate IS NOT NULL
              AND NOT EXISTS (
                  SELECT innerSubmission
                  FROM Submission innerSubmission
@@ -142,6 +143,7 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                 AND r.rated = TRUE
                 AND r.completionDate IS NOT NULL
                 AND r.score IS NOT NULL
+                AND s.submissionDate IS NOT NULL
                 AND NOT EXISTS (SELECT s2 FROM Submission s2 WHERE s2.participation = p AND s2.submissionDate > s.submissionDate)
                 AND NOT EXISTS (SELECT r2 FROM Result r2 WHERE r2.submission = s AND r2.completionDate > r.completionDate)
             """)
@@ -170,6 +172,7 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                 AND r.rated = TRUE
                 AND r.completionDate IS NOT NULL
                 AND r.score IS NOT NULL
+                AND s.submissionDate IS NOT NULL
                 AND NOT EXISTS (SELECT s2 FROM Submission s2 WHERE s2.participation = p AND s2.submissionDate > s.submissionDate)
                 AND NOT EXISTS (SELECT r2 FROM Result r2 WHERE r2.submission = s AND r2.completionDate > r.completionDate)
             """)
@@ -189,6 +192,7 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                 AND r.rated = TRUE
                 AND r.completionDate IS NOT NULL
                 AND r.score IS NOT NULL
+                AND s.submissionDate IS NOT NULL
                 AND NOT EXISTS (SELECT s2 FROM Submission s2 WHERE s2.participation = p AND s2.submissionDate < s.submissionDate)
                 AND NOT EXISTS (SELECT r2 FROM Result r2 WHERE r2.submission = s AND r2.completionDate > r.completionDate)
             """)
@@ -217,6 +221,7 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                 AND r.rated = TRUE
                 AND r.completionDate IS NOT NULL
                 AND r.score IS NOT NULL
+                AND s.submissionDate IS NOT NULL
                 AND NOT EXISTS (SELECT s2 FROM Submission s2 WHERE s2.participation = p AND s2.submissionDate > s.submissionDate)
                 AND NOT EXISTS (SELECT r2 FROM Result r2 WHERE r2.submission = s AND r2.completionDate > r.completionDate)
             """)
@@ -245,6 +250,7 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                 AND r.rated = TRUE
                 AND r.completionDate IS NOT NULL
                 AND r.score IS NOT NULL
+                AND s.submissionDate IS NOT NULL
                 AND NOT EXISTS (SELECT s2 FROM Submission s2 WHERE s2.participation = p AND s2.submissionDate > s.submissionDate)
                 AND NOT EXISTS (SELECT r2 FROM Result r2 WHERE r2.submission = s AND r2.completionDate > r.completionDate)
             """)
@@ -274,6 +280,7 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                 AND r.rated = TRUE
                 AND r.completionDate IS NOT NULL
                 AND r.score IS NOT NULL
+                AND s.submissionDate IS NOT NULL
                 AND NOT EXISTS (SELECT s2 FROM Submission s2 WHERE s2.participation = p AND s2.submissionDate > s.submissionDate)
                 AND NOT EXISTS (SELECT r2 FROM Result r2 WHERE r2.submission = s AND r2.completionDate > r.completionDate)
             """)
@@ -289,6 +296,7 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
             WHERE ex.exerciseGroup.exam.id = :examId
                 AND p.testRun = TRUE
                 AND p.student.id = :studentId
+                AND s.submissionDate IS NOT NULL
                 AND NOT EXISTS (SELECT s2 FROM Submission s2 WHERE s2.participation = p AND s2.submissionDate > s.submissionDate)
                 AND((r.completionDate IS NULL) OR r.completionDate = (SELECT MAX(r2.completionDate) FROM Result r2 WHERE r2.submission = s))
             """)
@@ -308,6 +316,7 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                 AND r.rated = TRUE
                 AND r.completionDate IS NOT NULL
                 AND r.score IS NOT NULL
+                AND s.submissionDate IS NOT NULL
                 AND NOT EXISTS (SELECT s2 FROM Submission s2 WHERE s2.participation = p AND s2.submissionDate > s.submissionDate)
                 AND NOT EXISTS (SELECT r2 FROM Result r2 WHERE r2.submission = s AND r2.completionDate > r.completionDate)
             """)
