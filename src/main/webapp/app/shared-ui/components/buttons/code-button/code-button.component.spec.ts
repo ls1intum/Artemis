@@ -1,4 +1,14 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+
+vi.mock('@sentry/angular', async (importOriginal) => {
+    const originalModule = await importOriginal<typeof import('@sentry/angular')>();
+    return {
+        ...originalModule,
+        captureException: vi.fn(),
+    };
+});
+
+import * as Sentry from '@sentry/angular';
 import { By } from '@angular/platform-browser';
 import { AccountService } from 'app/core/auth/account.service';
 import { AlertService } from 'app/foundation/service/alert.service';
@@ -500,6 +510,116 @@ describe('CodeButtonComponent', () => {
 
         url = component.getHttpOrSshRepositoryUri(false);
         expect(url).toBe(`https://${component.user.login}:${vcsToken}@artemis.tum.de/git/ITCPLEASE1/itcplease1-exercise-team1.git`);
+    });
+
+    it('should use the participation token for the users own test run participation in course management', async () => {
+        // Exam test runs are served under a course-management URL, but the participation belongs to the current user,
+        // so its own participation token (not the personal staff token) must be used and loaded.
+        const participationToken = 'vcpat-own-test-run-participation-token';
+        getVcsAccessTokenSpy.mockReturnValue(of(new HttpResponse({ body: participationToken })));
+        localStorageState = RepositoryAuthenticationMethod.Token;
+
+        const ownTestRunParticipation = {
+            id: 42,
+            testRun: true,
+            student: { login: 'edx_userLogin' },
+            repositoryUri: 'https://artemis.tum.de/git/ITCPLEASE1/itcplease1-exercise.git',
+        } as ProgrammingExerciseStudentParticipation;
+
+        await component.ngOnInit();
+        component.isInCourseManagement.set(true);
+        fixture.componentRef.setInput('participations', [ownTestRunParticipation]);
+        fixture.detectChanges();
+        await fixture.whenStable();
+        component.onClick();
+        fixture.detectChanges();
+
+        expect(component.isInCourseManagement()).toBe(true);
+        expect(getVcsAccessTokenSpy).toHaveBeenCalledWith(42);
+        expect(ownTestRunParticipation.vcsAccessToken).toEqual(participationToken);
+        const url = component.getHttpOrSshRepositoryUri(false);
+        expect(url).toBe(`https://edx_userLogin:${participationToken}@artemis.tum.de/git/ITCPLEASE1/itcplease1-exercise.git`);
+        expect(url).not.toContain('undefined');
+    });
+
+    it('should keep using the personal staff token for another users test run participation in course management', async () => {
+        // When course staff open another instructor's test run summary, the participation is not owned by them, so the
+        // personal staff token must still be used (fetching the participation token would be forbidden server-side).
+        localStorageState = RepositoryAuthenticationMethod.Token;
+
+        const othersTestRunParticipation = {
+            id: 43,
+            testRun: true,
+            student: { login: 'other_instructor' },
+            repositoryUri: 'https://artemis.tum.de/git/ITCPLEASE1/itcplease1-exercise.git',
+        } as ProgrammingExerciseStudentParticipation;
+
+        await component.ngOnInit();
+        component.isInCourseManagement.set(true);
+        fixture.componentRef.setInput('participations', [othersTestRunParticipation]);
+        fixture.detectChanges();
+        await fixture.whenStable();
+        component.onClick();
+        fixture.detectChanges();
+
+        expect(getVcsAccessTokenSpy).not.toHaveBeenCalled();
+        const url = component.getHttpOrSshRepositoryUri(false);
+        expect(url).toBe(`https://edx_userLogin:${vcsToken}@artemis.tum.de/git/ITCPLEASE1/itcplease1-exercise.git`);
+    });
+
+    it('should omit the token and report to Sentry when a participation token is unexpectedly missing', async () => {
+        const captureSpy = vi.spyOn(Sentry, 'captureException').mockImplementation(() => '');
+        captureSpy.mockClear();
+        // Simulate a participation whose token can neither be fetched nor created (should never happen in practice).
+        getVcsAccessTokenSpy.mockReturnValue(of(new HttpResponse<string>({ body: undefined })));
+        createVcsAccessTokenSpy.mockReturnValue(of(new HttpResponse<string>({ body: undefined })));
+        localStorageState = RepositoryAuthenticationMethod.Token;
+
+        const participation = {
+            id: 7,
+            testRun: false,
+            repositoryUri: 'https://artemis.tum.de/git/ITCPLEASE1/itcplease1-exercise.git',
+        } as ProgrammingExerciseStudentParticipation;
+
+        await component.ngOnInit();
+        fixture.componentRef.setInput('participations', [participation]);
+        fixture.detectChanges();
+        await fixture.whenStable();
+        component.onClick();
+        fixture.detectChanges();
+
+        const url = component.getHttpOrSshRepositoryUri(false);
+        expect(url).toBe('https://edx_userLogin@artemis.tum.de/git/ITCPLEASE1/itcplease1-exercise.git');
+        expect(url).not.toContain('undefined');
+        expect(captureSpy).toHaveBeenCalled();
+    });
+
+    it('should not report to Sentry when only the personal staff token is missing (known, UI-handled case)', async () => {
+        const captureSpy = vi.spyOn(Sentry, 'captureException').mockImplementation(() => '');
+        captureSpy.mockClear();
+        // Course staff browsing another participant's repository without having created a personal VCS token: the URL
+        // must still not contain "undefined", but this is an expected, already UI-surfaced state and must not be reported.
+        vi.spyOn(accountService, 'identity').mockReturnValue(Promise.resolve({ login: 'edx_userLogin', internal: true, vcsAccessToken: undefined }));
+        localStorageState = RepositoryAuthenticationMethod.Token;
+
+        const othersParticipation = {
+            id: 44,
+            student: { login: 'some_student' },
+            repositoryUri: 'https://artemis.tum.de/git/ITCPLEASE1/itcplease1-exercise.git',
+        } as ProgrammingExerciseStudentParticipation;
+
+        await component.ngOnInit();
+        component.isInCourseManagement.set(true);
+        fixture.componentRef.setInput('participations', [othersParticipation]);
+        fixture.detectChanges();
+        await fixture.whenStable();
+        component.onClick();
+        fixture.detectChanges();
+
+        const url = component.getHttpOrSshRepositoryUri(false);
+        expect(url).toBe('https://edx_userLogin@artemis.tum.de/git/ITCPLEASE1/itcplease1-exercise.git');
+        expect(url).not.toContain('undefined');
+        expect(captureSpy).not.toHaveBeenCalled();
     });
 
     it('should add the user login and token to the URL', async () => {
