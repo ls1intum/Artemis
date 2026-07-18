@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.programming.repository;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.context.annotation.Lazy;
@@ -14,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.programming.domain.ParticipationVCSAccessToken;
+import de.tum.cit.aet.artemis.programming.dto.VcsAccessTokenOverviewDTO;
 
 @Profile(PROFILE_CORE)
 @Lazy
@@ -56,4 +58,31 @@ public interface ParticipationVCSAccessTokenRepository extends ArtemisJpaReposit
             throw new IllegalStateException();
         });
     }
+
+    /**
+     * Deletes the participation token with the given id, but only if it belongs to the given user. Used by the user-settings revoke endpoint so a user can never revoke another
+     * user's token.
+     *
+     * @param id     the id of the token to delete
+     * @param userId the id of the user the token must belong to
+     * @return the number of deleted rows (0 if no such token exists for that user)
+     */
+    @Transactional // ok because of delete
+    @Modifying
+    int deleteByIdAndUserId(long id, long userId);
+
+    /**
+     * Returns the participation tokens a user owns as overview projections for the user-settings token overview (metadata only, never the token secret).
+     *
+     * @param userId the id of the owning user
+     * @return the user's participation tokens as overview DTOs
+     */
+    @Query("""
+            SELECT new de.tum.cit.aet.artemis.programming.dto.VcsAccessTokenOverviewDTO(
+                t.id,
+                t.participation.exercise.title)
+            FROM ParticipationVCSAccessToken t
+            WHERE t.user.id = :userId
+            """)
+    List<VcsAccessTokenOverviewDTO> findOverviewsByUserId(@Param("userId") long userId);
 }

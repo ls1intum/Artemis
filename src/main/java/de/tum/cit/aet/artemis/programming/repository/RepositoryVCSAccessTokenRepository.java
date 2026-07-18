@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.programming.repository;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
@@ -16,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryVCSAccessToken;
+import de.tum.cit.aet.artemis.programming.dto.VcsAccessTokenOverviewDTO;
 
 @Profile(PROFILE_CORE)
 @Lazy
@@ -70,4 +72,36 @@ public interface RepositoryVCSAccessTokenRepository extends ArtemisJpaRepository
     @Transactional // ok because of delete
     @Modifying
     void deleteAllByUserIdAndExerciseIdIn(long userId, Collection<Long> exerciseIds);
+
+    /**
+     * Deletes the repository-scoped token with the given id, but only if it belongs to the given user. Used by the user-settings revoke endpoint so a user can never revoke another
+     * user's token.
+     *
+     * @param id     the id of the token to delete
+     * @param userId the id of the user the token must belong to
+     * @return the number of deleted rows (0 if no such token exists for that user)
+     */
+    @Transactional // ok because of delete
+    @Modifying
+    int deleteByIdAndUserId(long id, long userId);
+
+    /**
+     * Returns the repository-scoped tokens a user owns as overview projections for the user-settings token overview (metadata only, never the token secret). For a USER (student
+     * repository) token the student's login is included, otherwise it is {@code null}.
+     *
+     * @param userId the id of the owning user
+     * @return the user's repository-scoped tokens as overview DTOs
+     */
+    @Query("""
+            SELECT new de.tum.cit.aet.artemis.programming.dto.VcsAccessTokenOverviewDTO(
+                t.id,
+                t.repositoryType,
+                t.exercise.title,
+                student.login)
+            FROM RepositoryVCSAccessToken t
+                LEFT JOIN TREAT(t.participation AS ProgrammingExerciseStudentParticipation) sp
+                LEFT JOIN sp.student student
+            WHERE t.user.id = :userId
+            """)
+    List<VcsAccessTokenOverviewDTO> findOverviewsByUserId(@Param("userId") long userId);
 }

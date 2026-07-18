@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.awaitility.Awaitility.await;
 
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
@@ -28,6 +29,8 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryVCSAccessToken;
+import de.tum.cit.aet.artemis.programming.dto.VcsAccessTokenOverviewDTO;
+import de.tum.cit.aet.artemis.programming.dto.VcsAccessTokenType;
 import de.tum.cit.aet.artemis.programming.repository.RepositoryVCSAccessTokenRepository;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseDeletionService;
 
@@ -489,6 +492,68 @@ class RepositoryVcsAccessTokenIntegrationTest extends AbstractProgrammingIntegra
         }).doesNotThrowAnyException();
 
         assertThat(repositoryVCSAccessTokenRepository.findById(token.getId())).isEmpty();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void getVcsAccessTokenOverview_returnsOwnRepositoryTokensWithMetadataOnly() throws Exception {
+        User tutor = userUtilService.getUserByLogin(TEST_PREFIX + "tutor1");
+        repositoryVcsAccessTokenService.getOrCreateToken(tutor, exercise, RepositoryType.TEMPLATE, null);
+        ProgrammingExerciseStudentParticipation studentParticipation = participationUtilService.addStudentParticipationForProgrammingExercise(exercise, TEST_PREFIX + "student1");
+        repositoryVcsAccessTokenService.getOrCreateStudentRepositoryToken(tutor, exercise, studentParticipation);
+
+        List<VcsAccessTokenOverviewDTO> overview = request.getList("/api/programming/vcs-access-tokens", HttpStatus.OK, VcsAccessTokenOverviewDTO.class);
+
+        // The tutor's own repository tokens (a base and a student one) are listed as repository tokens; the student's participation token belongs to the student, not the tutor.
+        assertThat(overview).isNotEmpty().allSatisfy(dto -> assertThat(dto.tokenType()).isEqualTo(VcsAccessTokenType.REPOSITORY));
+        assertThat(overview).anySatisfy(dto -> {
+            assertThat(dto.repositoryType()).isEqualTo(RepositoryType.TEMPLATE);
+            assertThat(dto.exerciseTitle()).isEqualTo(exercise.getTitle());
+            assertThat(dto.studentLogin()).isNull();
+        });
+        assertThat(overview).anySatisfy(dto -> {
+            assertThat(dto.repositoryType()).isEqualTo(RepositoryType.USER);
+            assertThat(dto.studentLogin()).isEqualTo(TEST_PREFIX + "student1");
+        });
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void getVcsAccessTokenOverview_returnsOwnParticipationToken() throws Exception {
+        // Creating the participation also creates the student's own participation token.
+        participationUtilService.addStudentParticipationForProgrammingExercise(exercise, TEST_PREFIX + "student1");
+
+        List<VcsAccessTokenOverviewDTO> overview = request.getList("/api/programming/vcs-access-tokens", HttpStatus.OK, VcsAccessTokenOverviewDTO.class);
+
+        assertThat(overview).isNotEmpty().allSatisfy(dto -> assertThat(dto.tokenType()).isEqualTo(VcsAccessTokenType.PARTICIPATION));
+        assertThat(overview).anySatisfy(dto -> assertThat(dto.exerciseTitle()).isEqualTo(exercise.getTitle()));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void revokeVcsAccessToken_removesOwnRepositoryTokenAndAllowsReminting() throws Exception {
+        User tutor = userUtilService.getUserByLogin(TEST_PREFIX + "tutor1");
+        RepositoryVCSAccessToken token = repositoryVcsAccessTokenService.getOrCreateToken(tutor, exercise, RepositoryType.TEMPLATE, null);
+        assertThat(repositoryVCSAccessTokenRepository.findById(token.getId())).isPresent();
+
+        request.delete("/api/programming/vcs-access-tokens/REPOSITORY/" + token.getId(), HttpStatus.NO_CONTENT);
+        assertThat(repositoryVCSAccessTokenRepository.findById(token.getId())).isEmpty();
+
+        // The next clone-dialog visit transparently re-mints a fresh token (a new id and secret).
+        RepositoryVCSAccessToken reminted = repositoryVcsAccessTokenService.getOrCreateToken(tutor, exercise, RepositoryType.TEMPLATE, null);
+        assertThat(reminted.getId()).isNotEqualTo(token.getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void revokeVcsAccessToken_forAnotherUsersToken_isNotFoundAndKeepsTheToken() throws Exception {
+        // A repository token owned by the instructor, not by the tutor making the request.
+        User instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
+        RepositoryVCSAccessToken instructorToken = repositoryVcsAccessTokenService.getOrCreateToken(instructor, exercise, RepositoryType.TEMPLATE, null);
+
+        // The tutor must not be able to revoke another user's token; the delete is scoped to the caller's own tokens.
+        request.delete("/api/programming/vcs-access-tokens/REPOSITORY/" + instructorToken.getId(), HttpStatus.NOT_FOUND);
+        assertThat(repositoryVCSAccessTokenRepository.findById(instructorToken.getId())).isPresent();
     }
 
     /**
