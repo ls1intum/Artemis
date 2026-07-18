@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
@@ -92,8 +91,6 @@ function setupCanvasAndImageMocks() {
  * 4. Error handling and edge cases
  */
 describe('QuizExercise Generator', () => {
-    setupTestBed({ zoneless: true });
-
     const course: Course = { id: 123 } as Course;
     let cleanupCanvasAndImageMocks: (() => void) | undefined;
     const defaultExportModelAsSvgResult = {

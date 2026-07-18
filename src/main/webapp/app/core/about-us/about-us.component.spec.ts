@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { MockTranslateService, TranslatePipeMock } from 'test/helpers/mocks/service/mock-translate.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
@@ -15,8 +14,6 @@ import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 import { TranslateService } from '@ngx-translate/core';
 
 describe('AboutUsComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<AboutUsComponent>;
 
     const route = { snapshot: { url: ['about'] } } as any as ActivatedRoute;

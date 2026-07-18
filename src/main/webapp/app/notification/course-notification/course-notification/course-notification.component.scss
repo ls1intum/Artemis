@@ -20,6 +20,26 @@ $notification-padding-x: 1.2rem;
     border: var(--bs-border-width) var(--bs-border-style) var(--bs-border-color);
 }
 
+// Fluid variant used inside the notification overview overlay: the card fills the available
+// width and grows vertically so the (wrapped) content is fully visible, instead of the fixed
+// size that the transient popup toast relies on. The host and its inline-block child are made
+// block-level so `width: 100%` on the wrap resolves against a definite containing block (the
+// overlay width) rather than shrinking to fit each notification's content.
+:host(.fluid) {
+    display: block;
+}
+
+:host(.fluid) .course-notification {
+    display: block;
+    width: 100%;
+}
+
+.course-notification-wrap.is-fluid {
+    width: 100%;
+    height: auto;
+    min-height: 6.5rem;
+}
+
 .course-notification-redirect-link {
     position: absolute;
     top: 0;
@@ -94,6 +114,13 @@ $notification-padding-x: 1.2rem;
 
 .course-notification:hover .course-notification-date {
     right: $notification-padding-y + 0.5rem;
+}
+
+// `min-width: 0` is required so this flex item may shrink below the intrinsic width of its
+// content. Without it the `-webkit-box` content below keeps the item at its single-line width,
+// so the text never wraps and gets clipped horizontally instead of breaking into two lines.
+.course-notification-content-wrap {
+    min-width: 0;
 }
 
 .course-notification-content {

@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
@@ -11,8 +10,6 @@ import { provideHttpClient } from '@angular/common/http';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 
 describe('IrisStatusService', () => {
-    setupTestBed({ zoneless: true });
-
     let service: IrisStatusService;
     let httpMock: HttpTestingController;
 
