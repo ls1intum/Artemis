@@ -36,6 +36,7 @@ import org.springframework.validation.annotation.Validated;
  * @param oldSubmissionVersionsScheduleEnabled   Whether the scheduled "delete old submission versions" job runs automatically.
  * @param notEnrolledUsersWarningScheduleEnabled Whether the scheduled "warn not-enrolled users" job runs automatically.
  * @param notEnrolledUsersScheduleEnabled        Whether the scheduled "delete not-enrolled users" job runs automatically.
+ * @param plagiarismCasesScheduleEnabled         Whether the scheduled "delete plagiarism cases of old courses" job runs automatically.
  */
 @Validated
 @ConfigurationProperties(prefix = "artemis.cleanup", ignoreUnknownFields = false)
@@ -45,5 +46,5 @@ public record DataCleanupProperties(@DefaultValue("5") @Positive int gradeReleva
         @DefaultValue("30") @Positive int notEnrolledUsersWarningGracePeriodDays, @DefaultValue("false") boolean oldCoursesWarningScheduleEnabled,
         @DefaultValue("false") boolean oldCoursesResetScheduleEnabled, @DefaultValue("false") boolean oldFeedbackScheduleEnabled,
         @DefaultValue("false") boolean oldSubmissionVersionsScheduleEnabled, @DefaultValue("false") boolean notEnrolledUsersWarningScheduleEnabled,
-        @DefaultValue("false") boolean notEnrolledUsersScheduleEnabled) {
+        @DefaultValue("false") boolean notEnrolledUsersScheduleEnabled, @DefaultValue("false") boolean plagiarismCasesScheduleEnabled) {
 }

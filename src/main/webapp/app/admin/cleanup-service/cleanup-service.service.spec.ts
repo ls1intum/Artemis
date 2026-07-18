@@ -301,6 +301,15 @@ describe('DataCleanupService', () => {
         req.flush(mockExecutionRecord);
     });
 
+    it('should send DELETE request to delete plagiarism cases of old courses', () => {
+        service.deletePlagiarismCases().subscribe((res) => {
+            expect(res.body).toEqual(mockExecutionRecord);
+        });
+
+        const req = httpMock.expectOne({ method: 'DELETE', url: 'api/admin/cleanup/plagiarism-cases' });
+        req.flush(mockExecutionRecord);
+    });
+
     it('should send GET requests to count the new data-privacy operations', () => {
         service.countOldCoursesResetWarning().subscribe((res) => expect(res.body).toEqual({ courses: 2 }));
         httpMock.expectOne({ method: 'GET', url: 'api/admin/cleanup/old-courses/warn/count' }).flush({ courses: 2 });
@@ -319,5 +328,8 @@ describe('DataCleanupService', () => {
 
         service.countNotEnrolledUsers().subscribe((res) => expect(res.body).toEqual({ users: 5 }));
         httpMock.expectOne({ method: 'GET', url: 'api/admin/cleanup/not-enrolled-users/count' }).flush({ users: 5 });
+
+        service.countPlagiarismCases().subscribe((res) => expect(res.body).toEqual({ plagiarismCases: 3 }));
+        httpMock.expectOne({ method: 'GET', url: 'api/admin/cleanup/plagiarism-cases/count' }).flush({ plagiarismCases: 3 });
     });
 });

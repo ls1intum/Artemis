@@ -192,6 +192,7 @@ describe('CleanupServiceComponent', () => {
             'deleteOldCourseSubmissionVersions',
             'warnNotEnrolledUsers',
             'deleteNotEnrolledUsers',
+            'deletePlagiarismCases',
         ];
 
         for (const name of ageBasedNames) {

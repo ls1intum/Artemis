@@ -78,6 +78,7 @@ All of these operations are **admin-only**, expose a **count/preview** before ex
 | Delete feedback of non-latest results | Feedback, long feedback texts and text blocks of results that are **not** the latest per participation | The results themselves, and the feedback of the latest **rated** and latest **non-rated** result per participation | 8 weeks after course end |
 | Delete old submission versions | Submission versions (the editor keystroke/version history of a submission) | The submission itself and its latest stored content | 8 weeks after course end |
 | Warn + delete not-enrolled users (two phases) | Phase 1 emails users enrolled in no course and inactive that their account will be deleted after a grace period; phase 2 soft-deletes and anonymizes those still not-enrolled who did not log in since the warning | Enrolled users, recently active users, users who log in during the grace period, administrators, and the Iris bot | 6 months of inactivity + a grace period |
+| Delete plagiarism cases of old courses | Plagiarism cases of courses that ended long ago, together with their notification post and answer posts | Everything else; the case's plagiarism submissions are kept (only their reference to the deleted case is cleared) | 5 years after course end (the grade-relevant retention) |
 
 :::info
 Courses are **never deleted** by these operations. The old-course operation only **resets** the student data and keeps all course material so the course can be reused. Exam submission versions are not affected by the submission-version cleanup because exam exercises are not attached to a course.
@@ -141,6 +142,7 @@ The default cron schedules (configurable under `artemis.scheduling`) are:
 | Delete old submission versions | Sundays 04:45 | `old-submission-versions-schedule-enabled` |
 | Warn not-enrolled users | 1st of month 05:00 | `not-enrolled-users-warning-schedule-enabled` |
 | Delete not-enrolled users | 1st of month 06:00 | `not-enrolled-users-schedule-enabled` |
+| Delete plagiarism cases of old courses | Sundays 03:30 | `plagiarism-cases-schedule-enabled` |
 
 The warning job is scheduled before the reset job so that, once both are enabled, a course is warned and archived in one run and only reset in a later run after its grace period.
 
@@ -157,6 +159,7 @@ artemis:
     old-submission-versions-cleanup-time: 0 45 4 * * SUN
     not-enrolled-users-warning-time: 0 0 5 1 * *
     not-enrolled-users-cleanup-time: 0 0 6 1 * *
+    plagiarism-cases-cleanup-time: 0 30 3 * * SUN
   cleanup:
     # Retention cutoffs
     grade-relevant-retention-years: 5      # reset grade-relevant courses 5 years after they end
@@ -173,7 +176,10 @@ artemis:
     old-submission-versions-schedule-enabled: false
     not-enrolled-users-warning-schedule-enabled: false
     not-enrolled-users-schedule-enabled: false
+    plagiarism-cases-schedule-enabled: false
 ```
+
+The plagiarism-case cleanup reuses the grade-relevant retention (`grade-relevant-retention-years`, 5 years by default): plagiarism cases are examination records and share the same retention obligation as other grade-relevant data.
 
 ### Enabling automation in production
 

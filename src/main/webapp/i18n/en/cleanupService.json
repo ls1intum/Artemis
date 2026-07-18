@@ -18,7 +18,8 @@
             "resetOldCourses": "Reset student data of old courses",
             "deleteOldCourseSubmissionVersions": "Delete submission versions of old courses",
             "warnNotEnrolledUsers": "Warn users not enrolled in any course (email)",
-            "deleteNotEnrolledUsers": "Delete warned users not enrolled in any course"
+            "deleteNotEnrolledUsers": "Delete warned users not enrolled in any course",
+            "deletePlagiarismCases": "Delete plagiarism cases of old courses"
         },
         "tooltip": {
             "deleteOrphans": "Deletes orphaned entities that are no longer associated with valid results or participations. This includes feedback, text blocks, and scores that reference null results, participations, or submissions.",
@@ -31,7 +32,8 @@
             "resetOldCourses": "Deletes all student data of old courses that are past the reset grace period (and were already archived), while keeping the course material. This action cannot be undone.",
             "deleteOldCourseSubmissionVersions": "Deletes the submission versions (editor keystroke history) of courses that ended before the configured cutoff.",
             "warnNotEnrolledUsers": "Emails users who are enrolled in no course and have been inactive beyond the configured guard period, warning that their account will be deleted after the grace period. Logging in cancels the deletion. Administrators are not affected.",
-            "deleteNotEnrolledUsers": "Soft-deletes and anonymizes warned users who are still enrolled in no course, whose grace period has elapsed, and who have not logged in since the warning. Administrators are not affected."
+            "deleteNotEnrolledUsers": "Soft-deletes and anonymizes warned users who are still enrolled in no course, whose grace period has elapsed, and who have not logged in since the warning. Administrators are not affected.",
+            "deletePlagiarismCases": "Deletes the plagiarism cases (with their notification posts) of courses that ended before the grade-relevant retention cutoff (5 years by default). Plagiarism cases are grade-relevant records and share the same retention period as other exam data. This action cannot be undone."
         },
         "execute": {
             "question": "Are you sure you want to execute the operation <strong>{{ operationName }}</strong> for the period from {{deleteFrom}} to {{deleteTo}}? This action cannot be undone!",
@@ -66,7 +68,8 @@
             "feedback": "Feedback",
             "submissionVersions": "Submission versions",
             "courses": "Courses",
-            "users": "Users"
+            "users": "Users",
+            "plagiarismCases": "Plagiarism cases"
         },
         "button": {
             "execute": "Execute",

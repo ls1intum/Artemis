@@ -63,6 +63,10 @@ export interface NotEnrolledUsersCleanupCountDTO extends CleanupCount {
     users: number;
 }
 
+export interface PlagiarismCasesCleanupCountDTO extends CleanupCount {
+    plagiarismCases: number;
+}
+
 @Injectable({ providedIn: 'root' })
 export class DataCleanupService {
     private readonly adminResourceUrl = 'api/admin/cleanup';
@@ -174,6 +178,13 @@ export class DataCleanupService {
      */
     deleteNotEnrolledUsers(): Observable<HttpResponse<CleanupServiceExecutionRecordDTO>> {
         return this.http.delete<CleanupServiceExecutionRecordDTO>(`${this.adminResourceUrl}/not-enrolled-users`, { observe: 'response' });
+    }
+
+    /**
+     * Send DELETE request to delete the plagiarism cases of courses that ended before the grade-relevant retention cutoff.
+     */
+    deletePlagiarismCases(): Observable<HttpResponse<CleanupServiceExecutionRecordDTO>> {
+        return this.http.delete<CleanupServiceExecutionRecordDTO>(`${this.adminResourceUrl}/plagiarism-cases`, { observe: 'response' });
     }
 
     /**
@@ -296,5 +307,12 @@ export class DataCleanupService {
      */
     countNotEnrolledUsers(): Observable<HttpResponse<NotEnrolledUsersCleanupCountDTO>> {
         return this.http.get<NotEnrolledUsersCleanupCountDTO>(`${this.adminResourceUrl}/not-enrolled-users/count`, { observe: 'response' });
+    }
+
+    /**
+     * Send GET request to count the plagiarism cases of courses that ended before the grade-relevant retention cutoff.
+     */
+    countPlagiarismCases(): Observable<HttpResponse<PlagiarismCasesCleanupCountDTO>> {
+        return this.http.get<PlagiarismCasesCleanupCountDTO>(`${this.adminResourceUrl}/plagiarism-cases/count`, { observe: 'response' });
     }
 }

@@ -153,6 +153,9 @@ export class CleanupOperationModalComponent {
             case 'deleteNotEnrolledUsers':
                 executionRequest = this.dataCleanupService.deleteNotEnrolledUsers();
                 break;
+            case 'deletePlagiarismCases':
+                executionRequest = this.dataCleanupService.deletePlagiarismCases();
+                break;
             default:
                 this.operationExecuting.set(false);
                 throw new Error(`Unsupported operation: ${String(operation.name)}`);
@@ -198,6 +201,8 @@ export class CleanupOperationModalComponent {
                 return this.dataCleanupService.countNotEnrolledUsersWarning();
             case 'deleteNotEnrolledUsers':
                 return this.dataCleanupService.countNotEnrolledUsers();
+            case 'deletePlagiarismCases':
+                return this.dataCleanupService.countPlagiarismCases();
             default:
                 throw new Error(`Unsupported operation: ${String(operation.name)}`);
         }

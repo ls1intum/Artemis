@@ -25,6 +25,7 @@ import de.tum.cit.aet.artemis.admin.dto.NotEnrolledUsersCleanupCountDTO;
 import de.tum.cit.aet.artemis.admin.dto.OldCoursesCleanupCountDTO;
 import de.tum.cit.aet.artemis.admin.dto.OldFeedbackCleanupCountDTO;
 import de.tum.cit.aet.artemis.admin.dto.OrphanCleanupCountDTO;
+import de.tum.cit.aet.artemis.admin.dto.PlagiarismCasesCleanupCountDTO;
 import de.tum.cit.aet.artemis.admin.dto.PlagiarismComparisonCleanupCountDTO;
 import de.tum.cit.aet.artemis.admin.dto.SubmissionVersionsCleanupCountDTO;
 import de.tum.cit.aet.artemis.admin.service.DataCleanupService;
@@ -346,6 +347,30 @@ public class AdminCleanupResource {
     public ResponseEntity<NotEnrolledUsersCleanupCountDTO> countNotEnrolledUsers() {
         log.info("REST request to count warned not-enrolled, inactive users");
         return ResponseEntity.ok().body(dataCleanupService.countNotEnrolledUsers());
+    }
+
+    /**
+     * DELETE admin/cleanup/plagiarism-cases
+     * Deletes the plagiarism cases of courses that ended before the grade-relevant retention cutoff (5 years by default).
+     *
+     * @return a {@link ResponseEntity} containing the result of the cleanup operation
+     */
+    @DeleteMapping("plagiarism-cases")
+    public ResponseEntity<CleanupServiceExecutionRecordDTO> deletePlagiarismCases() {
+        log.info("REST request to delete plagiarism cases of old courses");
+        return ResponseEntity.ok().body(dataCleanupService.deletePlagiarismCasesOfOldCourses());
+    }
+
+    /**
+     * GET admin/cleanup/plagiarism-cases/count
+     * Counts the plagiarism cases of courses that ended before the grade-relevant retention cutoff.
+     *
+     * @return a {@link ResponseEntity} containing the count of affected plagiarism cases
+     */
+    @GetMapping("plagiarism-cases/count")
+    public ResponseEntity<PlagiarismCasesCleanupCountDTO> countPlagiarismCases() {
+        log.info("REST request to count plagiarism cases of old courses");
+        return ResponseEntity.ok().body(dataCleanupService.countPlagiarismCasesOfOldCourses());
     }
 
     /**

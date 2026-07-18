@@ -52,7 +52,7 @@ class CourseDataRetentionServiceTest {
     private MailSendingService mailSendingService;
 
     // 5-year retention for grade-relevant, 1-year for non-grade-relevant courses, 30-day reset grace.
-    private final DataCleanupProperties properties = new DataCleanupProperties(5, 1, 30, 8, 8, 6, 30, false, false, false, false, false, false);
+    private final DataCleanupProperties properties = new DataCleanupProperties(5, 1, 30, 8, 8, 6, 30, false, false, false, false, false, false, false);
 
     private CourseDataRetentionService service() {
         return new CourseDataRetentionService(courseRepository, courseArchiveService, courseResetService, userRepository, mailSendingService, properties);

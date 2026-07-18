@@ -7,6 +7,7 @@ import java.time.ZonedDateTime;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,6 +28,7 @@ import de.tum.cit.aet.artemis.admin.dto.NotEnrolledUsersCleanupCountDTO;
 import de.tum.cit.aet.artemis.admin.dto.OldCoursesCleanupCountDTO;
 import de.tum.cit.aet.artemis.admin.dto.OldFeedbackCleanupCountDTO;
 import de.tum.cit.aet.artemis.admin.dto.OrphanCleanupCountDTO;
+import de.tum.cit.aet.artemis.admin.dto.PlagiarismCasesCleanupCountDTO;
 import de.tum.cit.aet.artemis.admin.dto.PlagiarismComparisonCleanupCountDTO;
 import de.tum.cit.aet.artemis.admin.dto.SubmissionVersionsCleanupCountDTO;
 import de.tum.cit.aet.artemis.admin.repository.CleanupJobExecutionRepository;
@@ -43,6 +45,7 @@ import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.service.CourseDataRetentionService;
 import de.tum.cit.aet.artemis.notification.dto.MailRecipientDTO;
 import de.tum.cit.aet.artemis.notification.service.notifications.MailSendingService;
+import de.tum.cit.aet.artemis.plagiarism.api.PlagiarismCaseApi;
 
 @Profile(PROFILE_CORE)
 @Lazy
@@ -81,6 +84,8 @@ public class DataCleanupService {
 
     private final MailSendingService mailSendingService;
 
+    private final Optional<PlagiarismCaseApi> plagiarismCaseApi;
+
     private static final String NOT_ENROLLED_DELETION_WARNING_EMAIL_TEMPLATE = "mail/notEnrolledUserDeletionWarningEmail";
 
     private static final String NOT_ENROLLED_DELETION_WARNING_SUBJECT_KEY = "email.notEnrolledUserDeletionWarning.title";
@@ -94,7 +99,8 @@ public class DataCleanupService {
             TextBlockCleanupRepository textBlockCleanupRepository, LongFeedbackTextCleanupRepository longFeedbackTextCleanupRepository,
             StudentScoreCleanupRepository studentScoreCleanupRepository, TeamScoreCleanupRepository teamScoreCleanupRepository,
             SubmissionVersionCleanupRepository submissionVersionCleanupRepository, DataCleanupProperties dataCleanupProperties,
-            CourseDataRetentionService courseDataRetentionService, UserService userService, UserRepository userRepository, MailSendingService mailSendingService) {
+            CourseDataRetentionService courseDataRetentionService, UserService userService, UserRepository userRepository, MailSendingService mailSendingService,
+            Optional<PlagiarismCaseApi> plagiarismCaseApi) {
         this.resultCleanupRepository = resultCleanupRepository;
         this.ratingCleanupRepository = ratingCleanupRepository;
         this.feedbackCleanupRepository = feedbackCleanupRepository;
@@ -110,6 +116,7 @@ public class DataCleanupService {
         this.userService = userService;
         this.userRepository = userRepository;
         this.mailSendingService = mailSendingService;
+        this.plagiarismCaseApi = plagiarismCaseApi;
     }
 
     /**
@@ -510,6 +517,32 @@ public class DataCleanupService {
     private List<String> notEnrolledUserLoginsToDelete() {
         var warnedBefore = ZonedDateTime.now().minusDays(dataCleanupProperties.notEnrolledUsersWarningGracePeriodDays()).toInstant();
         return userRepository.findNotEnrolledUserLoginsToDelete(warnedBefore).stream().filter(login -> !User.IRIS_BOT_LOGIN.equals(login)).toList();
+    }
+
+    /**
+     * Deletes all plagiarism cases (with their notification posts and answer posts) of courses that ended before the
+     * grade-relevant retention cutoff. Plagiarism cases are grade-relevant records and therefore share the same 5-year
+     * (configurable) retention period as other exam/grade data. If the plagiarism module is disabled, nothing is deleted
+     * and the execution is still recorded so the operation appears consistent in the admin UI.
+     *
+     * @return a {@link CleanupServiceExecutionRecordDTO} representing the execution record of the cleanup job
+     */
+    public CleanupServiceExecutionRecordDTO deletePlagiarismCasesOfOldCourses() {
+        ZonedDateTime cutoff = ZonedDateTime.now().minusYears(dataCleanupProperties.gradeRelevantRetentionYears());
+        int deleted = plagiarismCaseApi.map(api -> api.deletePlagiarismCasesOfCoursesEndedBefore(cutoff)).orElse(0);
+        log.info("Deleted {} plagiarism case(s) of courses that ended before {}", deleted, cutoff);
+        return CleanupServiceExecutionRecordDTO.of(createCleanupJobExecution(CleanupJobType.PLAGIARISM_CASES, null, null));
+    }
+
+    /**
+     * Counts the plagiarism cases of courses that ended before the grade-relevant retention cutoff and would be deleted.
+     *
+     * @return a {@link PlagiarismCasesCleanupCountDTO} with the affected plagiarism-case count
+     */
+    public PlagiarismCasesCleanupCountDTO countPlagiarismCasesOfOldCourses() {
+        ZonedDateTime cutoff = ZonedDateTime.now().minusYears(dataCleanupProperties.gradeRelevantRetentionYears());
+        int count = plagiarismCaseApi.map(api -> api.countPlagiarismCasesOfCoursesEndedBefore(cutoff)).orElse(0);
+        return new PlagiarismCasesCleanupCountDTO(count);
     }
 
     private OldCoursesCleanupCountDTO toOldCoursesCleanupCountDTO(List<Course> courses) {

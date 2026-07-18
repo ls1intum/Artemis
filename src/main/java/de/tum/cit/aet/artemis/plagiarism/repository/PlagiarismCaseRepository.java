@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.plagiarism.repository;
 
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -35,6 +36,41 @@ public interface PlagiarismCaseRepository extends ArtemisJpaRepository<Plagiaris
                 AND plagiarismCase.exercise.id = :exerciseId
             """)
     Optional<PlagiarismCase> findByStudentLoginAndExerciseIdWithPlagiarismSubmissions(@Param("studentLogin") String studentLogin, @Param("exerciseId") Long exerciseId);
+
+    /**
+     * Finds all plagiarism cases (with their submissions eagerly loaded) of course exercises whose course ended before
+     * the given date. Used by the data-privacy cleanup to remove plagiarism cases once their retention period elapsed.
+     * Exam-exercise cases are not included (they have no direct course), consistent with the other course-date cleanups.
+     *
+     * @param endDateBefore only cases of courses that ended strictly before this are returned
+     * @return the matching plagiarism cases with their submissions initialized
+     */
+    @Query("""
+            SELECT DISTINCT plagiarismCase
+            FROM PlagiarismCase plagiarismCase
+                LEFT JOIN FETCH plagiarismCase.plagiarismSubmissions
+                JOIN plagiarismCase.exercise exercise
+                JOIN exercise.course course
+            WHERE course.endDate IS NOT NULL
+                AND course.endDate < :endDateBefore
+            """)
+    List<PlagiarismCase> findWithSubmissionsByCourseEndDateBefore(@Param("endDateBefore") ZonedDateTime endDateBefore);
+
+    /**
+     * Counts the plagiarism cases of course exercises whose course ended before the given date.
+     *
+     * @param endDateBefore only cases of courses that ended strictly before this are counted
+     * @return the number of matching plagiarism cases
+     */
+    @Query("""
+            SELECT COUNT(plagiarismCase)
+            FROM PlagiarismCase plagiarismCase
+                JOIN plagiarismCase.exercise exercise
+                JOIN exercise.course course
+            WHERE course.endDate IS NOT NULL
+                AND course.endDate < :endDateBefore
+            """)
+    int countByCourseEndDateBefore(@Param("endDateBefore") ZonedDateTime endDateBefore);
 
     @Query("""
             SELECT new de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismCaseOverviewDTO(

@@ -12,7 +12,8 @@ export type OperationName =
     | 'resetOldCourses'
     | 'deleteOldCourseSubmissionVersions'
     | 'warnNotEnrolledUsers'
-    | 'deleteNotEnrolledUsers';
+    | 'deleteNotEnrolledUsers'
+    | 'deletePlagiarismCases';
 
 /** Instantiated in code; fields are populated after construction, hence the definite-assignment (!) markers. */
 export class CleanupOperation {

@@ -39,6 +39,10 @@ import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilServi
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseTestRepository;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionVersionRepository;
 import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
+import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
+import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismCase;
+import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismVerdict;
+import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismCaseRepository;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 
@@ -96,6 +100,12 @@ class ScheduledDataCleanupTest extends AbstractSpringIntegrationIndependentTest 
     @Autowired
     private ExerciseTestRepository exerciseRepository;
 
+    @Autowired
+    private ExerciseUtilService exerciseUtilService;
+
+    @Autowired
+    private PlagiarismCaseRepository plagiarismCaseRepository;
+
     @BeforeEach
     void setup() {
         userUtilService.addUsers(TEST_PREFIX, 1, 0, 0, 1);
@@ -111,14 +121,16 @@ class ScheduledDataCleanupTest extends AbstractSpringIntegrationIndependentTest 
         User inactiveNotEnrolled = backdatedNotEnrolledUser(TEST_PREFIX + "disabled");
         Result oldNonLatestFeedbackResult = oldCourseNonLatestRatedResultWithFeedback();
         SubmissionVersion oldSubmissionVersion = oldCourseSubmissionVersion();
+        long oldPlagiarismCaseId = oldCoursePlagiarismCaseId();
 
-        AutomaticDataCleanupScheduleService disabled = scheduleService(false, false, false, false, false, false);
+        AutomaticDataCleanupScheduleService disabled = scheduleService(false, false, false, false, false, false, false);
         disabled.warnOldCoursesReset();
         disabled.resetOldCourses();
         disabled.deleteOldFeedback();
         disabled.deleteOldSubmissionVersions();
         disabled.warnNotEnrolledUsers();
         disabled.deleteNotEnrolledUsers();
+        disabled.deletePlagiarismCases();
 
         // Nothing was touched: no data deleted and no user even warned.
         assertThat(studentParticipationRepository.findById(resetParticipation.getId())).isPresent();
@@ -127,6 +139,7 @@ class ScheduledDataCleanupTest extends AbstractSpringIntegrationIndependentTest 
         assertThat(notEnrolledAfter.getDeletionWarningSentDate()).isNull();
         assertThat(feedbackRepository.findByResult(oldNonLatestFeedbackResult)).isNotEmpty();
         assertThat(submissionVersionRepository.findById(oldSubmissionVersion.getId())).isPresent();
+        assertThat(plagiarismCaseRepository.findById(oldPlagiarismCaseId)).isPresent();
     }
 
     @Test
@@ -142,7 +155,7 @@ class ScheduledDataCleanupTest extends AbstractSpringIntegrationIndependentTest 
         course.setCourseConfiguration(configuration);
         courseRepository.save(course);
 
-        scheduleService(false, true, false, false, false, false).resetOldCourses();
+        scheduleService(false, true, false, false, false, false, false).resetOldCourses();
 
         // Student data deleted, but the course material (course + exercise) and configuration are preserved and the
         // reset is stamped so the course is never reset again.
@@ -159,7 +172,7 @@ class ScheduledDataCleanupTest extends AbstractSpringIntegrationIndependentTest 
         User inactive = backdatedNotEnrolledUser(TEST_PREFIX + "warncand"); // inactive, not yet warned -> warn
         User recent = notEnrolledUser(TEST_PREFIX + "warnrecent"); // recently active -> must NOT be warned
 
-        scheduleService(false, false, false, false, true, false).warnNotEnrolledUsers();
+        scheduleService(false, false, false, false, true, false, false).warnNotEnrolledUsers();
 
         verify(mailSendingService, timeout(5000).atLeastOnce()).buildAndSendAsync(any(), any(), anyList(), any(), anyMap()); // wait for the async warning email
         assertThat(userRepository.findById(inactive.getId())).get().extracting(User::getDeletionWarningSentDate).isNotNull();
@@ -179,7 +192,7 @@ class ScheduledDataCleanupTest extends AbstractSpringIntegrationIndependentTest 
         // Warned > grace ago, but logged in AFTER the warning -> came back, so survives and the warning is cleared.
         User returned = warnedNotEnrolledUser(TEST_PREFIX + "delreturn", ZonedDateTime.now().toInstant(), ZonedDateTime.now().minusDays(31).toInstant());
 
-        scheduleService(false, false, false, false, false, true).deleteNotEnrolledUsers();
+        scheduleService(false, false, false, false, false, true, false).deleteNotEnrolledUsers();
 
         User deleted = userRepository.findById(dueId).orElseThrow();
         assertThat(deleted.isDeleted()).isTrue();
@@ -203,7 +216,7 @@ class ScheduledDataCleanupTest extends AbstractSpringIntegrationIndependentTest 
         Feedback latestFeedback = feedbackRepository.save(new Feedback());
         participationUtilService.addFeedbackToResult(latestFeedback, latest);
 
-        scheduleService(false, false, true, false, false, false).deleteOldFeedback();
+        scheduleService(false, false, true, false, false, false, false).deleteOldFeedback();
 
         assertThat(feedbackRepository.findByResult(nonLatest)).isEmpty();
         assertThat(feedbackRepository.findByResult(latest)).isNotEmpty();
@@ -217,15 +230,25 @@ class ScheduledDataCleanupTest extends AbstractSpringIntegrationIndependentTest 
     void scheduledSubmissionVersionCleanupDeletesWhenEnabled() {
         SubmissionVersion version = oldCourseSubmissionVersion();
 
-        scheduleService(false, false, false, true, false, false).deleteOldSubmissionVersions();
+        scheduleService(false, false, false, true, false, false, false).deleteOldSubmissionVersions();
 
         assertThat(submissionVersionRepository.findById(version.getId())).isEmpty();
     }
 
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "ADMIN")
+    void scheduledPlagiarismCaseCleanupDeletesWhenEnabled() {
+        long plagiarismCaseId = oldCoursePlagiarismCaseId();
+
+        scheduleService(false, false, false, false, false, false, true).deletePlagiarismCases();
+
+        assertThat(plagiarismCaseRepository.findById(plagiarismCaseId)).isEmpty();
+    }
+
     private AutomaticDataCleanupScheduleService scheduleService(boolean warn, boolean reset, boolean feedback, boolean submissionVersions, boolean notEnrolledWarn,
-            boolean notEnrolled) {
+            boolean notEnrolled, boolean plagiarismCases) {
         return new AutomaticDataCleanupScheduleService(dataCleanupService,
-                new DataCleanupProperties(5, 1, 30, 8, 8, 6, 30, warn, reset, feedback, submissionVersions, notEnrolledWarn, notEnrolled));
+                new DataCleanupProperties(5, 1, 30, 8, 8, 6, 30, warn, reset, feedback, submissionVersions, notEnrolledWarn, notEnrolled, plagiarismCases));
     }
 
     /**
@@ -260,6 +283,17 @@ class ScheduledDataCleanupTest extends AbstractSpringIntegrationIndependentTest 
         Submission submission = oldCourseSubmission();
         User student = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         return submissionVersionRepository.save(ParticipationFactory.generateSubmissionVersion("keystrokes", submission, student));
+    }
+
+    /** Creates a plagiarism case (with its notification post) for a course that ended six years ago (past the 5y cutoff). */
+    private long oldCoursePlagiarismCaseId() {
+        Course course = courseUtilService.addCourseWithModelingAndTextExercise();
+        Exercise exercise = course.getExercises().iterator().next();
+        course.setEndDate(ZonedDateTime.now().minusYears(6));
+        courseRepository.save(course);
+        User student = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        exerciseUtilService.createPlagiarismCaseForUserForExercise(exercise, student, TEST_PREFIX, PlagiarismVerdict.PLAGIARISM);
+        return plagiarismCaseRepository.findByCourseId(course.getId()).stream().map(PlagiarismCase::getId).findFirst().orElseThrow();
     }
 
     private Result oldCourseNonLatestRatedResultWithFeedback() {

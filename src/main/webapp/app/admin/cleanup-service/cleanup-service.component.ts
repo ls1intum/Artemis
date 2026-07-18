@@ -64,6 +64,7 @@ export class CleanupServiceComponent implements OnInit {
         deleteOldCourseSubmissionVersions: 'deleteOldCourseSubmissionVersions',
         warnNotEnrolledUsers: 'warnNotEnrolledUsers',
         deleteNotEnrolledUsers: 'deleteNotEnrolledUsers',
+        deletePlagiarismCases: 'deletePlagiarismCases',
     };
     protected readonly DateTimePickerType = DateTimePickerType;
 
@@ -154,6 +155,14 @@ export class CleanupServiceComponent implements OnInit {
         },
         {
             name: 'deleteNotEnrolledUsers',
+            deleteFrom: undefined,
+            deleteTo: undefined,
+            lastExecuted: undefined,
+            datesValid: signal(true),
+            ageBased: true,
+        },
+        {
+            name: 'deletePlagiarismCases',
             deleteFrom: undefined,
             deleteTo: undefined,
             lastExecuted: undefined,

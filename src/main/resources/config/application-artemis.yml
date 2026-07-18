@@ -133,6 +133,7 @@ artemis:
     old-submission-versions-cleanup-time: 0 45 4 * * SUN # every Sunday at 4:45am: delete submission versions of old courses
     not-enrolled-users-warning-time: 0 0 5 1 * * # 1st of every month at 5am: warn inactive users enrolled in no course
     not-enrolled-users-cleanup-time: 0 0 6 1 * * # 1st of every month at 6am: soft-delete warned users enrolled in no course
+    plagiarism-cases-cleanup-time: 0 30 3 * * SUN # every Sunday at 3:30am: delete plagiarism cases of courses ended > 5 years ago
 
   data-export:
     days-between-data-exports: 14
@@ -161,6 +162,7 @@ artemis:
     old-submission-versions-schedule-enabled: false
     not-enrolled-users-warning-schedule-enabled: false
     not-enrolled-users-schedule-enabled: false
+    plagiarism-cases-schedule-enabled: false
 
   plagiarism-checks:
     plagiarism-results-limit: 100

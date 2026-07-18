@@ -111,6 +111,18 @@ public class AutomaticDataCleanupScheduleService {
     }
 
     /**
+     * Deletes the plagiarism cases of courses that ended before the grade-relevant retention cutoff (5 years by default).
+     */
+    @Scheduled(cron = "${artemis.scheduling.plagiarism-cases-cleanup-time:0 30 3 * * SUN}")
+    public void deletePlagiarismCases() {
+        if (!dataCleanupProperties.plagiarismCasesScheduleEnabled()) {
+            return;
+        }
+        log.info("Scheduled data-privacy cleanup: deleting plagiarism cases of old courses");
+        runAsSystem(dataCleanupService::deletePlagiarismCasesOfOldCourses);
+    }
+
+    /**
      * Runs the given cleanup job with a synthetic system authorization, restoring the previous security context
      * afterwards so the mutated thread-local state cannot leak to unrelated work on the reused scheduler thread.
      *

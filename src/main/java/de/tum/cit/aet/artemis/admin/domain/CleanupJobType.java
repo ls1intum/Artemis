@@ -4,7 +4,8 @@ public enum CleanupJobType {
 
     ORPHANS("deleteOrphans"), PLAGIARISM_COMPARISONS("deletePlagiarismComparisons"), NON_RATED_RESULTS("deleteNonRatedResults"), RATED_RESULTS("deleteRatedResults"),
     SUBMISSION_VERSIONS("deleteSubmissionVersions"), FEEDBACK("deleteFeedback"), OLD_COURSES_RESET_WARNING("warnOldCoursesReset"), OLD_COURSES_RESET("resetOldCourses"),
-    NOT_ENROLLED_USERS("deleteNotEnrolledUsers"), OLD_COURSE_SUBMISSION_VERSIONS("deleteOldCourseSubmissionVersions"), NOT_ENROLLED_USERS_WARNING("warnNotEnrolledUsers");
+    NOT_ENROLLED_USERS("deleteNotEnrolledUsers"), OLD_COURSE_SUBMISSION_VERSIONS("deleteOldCourseSubmissionVersions"), NOT_ENROLLED_USERS_WARNING("warnNotEnrolledUsers"),
+    PLAGIARISM_CASES("deletePlagiarismCases");
 
     private final String label;
 

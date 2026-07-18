@@ -26,6 +26,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.account.util.UserUtilService;
+import de.tum.cit.aet.artemis.communication.repository.PostRepository;
 import de.tum.cit.aet.artemis.core.domain.Language;
 import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
 import de.tum.cit.aet.artemis.core.util.CourseUtilService;
@@ -39,7 +40,11 @@ import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseTestRepository;
 import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
+import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.fileupload.util.ZipFileTestUtilService;
+import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismCase;
+import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismVerdict;
+import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismCaseRepository;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.util.TextExerciseUtilService;
@@ -98,6 +103,15 @@ class DataPrivacyCleanupTest extends AbstractSpringIntegrationIndependentTest {
 
     @Autowired
     private ZipFileTestUtilService zipFileTestUtilService;
+
+    @Autowired
+    private ExerciseUtilService exerciseUtilService;
+
+    @Autowired
+    private PlagiarismCaseRepository plagiarismCaseRepository;
+
+    @Autowired
+    private PostRepository postRepository;
 
     @Value("${artemis.course-archives-path}")
     private Path courseArchivesDirPath;
@@ -288,6 +302,50 @@ class DataPrivacyCleanupTest extends AbstractSpringIntegrationIndependentTest {
         assertThat(courseConfigurationRepository.findByCourseId(courseId)).get().extracting(CourseConfiguration::getStudentDataResetDate).isNotNull();
 
         Files.deleteIfExists(archiveFile);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "ADMIN")
+    void deletePlagiarismCasesRemovesOnlyCasesOfCoursesEndedBeyondRetentionAndSparesRecent() {
+        User student = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+
+        // Old course: ended > 5 years ago (the grade-relevant retention cutoff) -> its plagiarism case must be deleted.
+        Course oldCourse = courseUtilService.addCourseWithModelingAndTextExercise();
+        Exercise oldExercise = oldCourse.getExercises().iterator().next();
+        oldCourse.setEndDate(ZonedDateTime.now().minusYears(6));
+        courseRepository.save(oldCourse);
+        long oldCourseId = oldCourse.getId();
+        exerciseUtilService.createPlagiarismCaseForUserForExercise(oldExercise, student, TEST_PREFIX, PlagiarismVerdict.PLAGIARISM);
+
+        // Recent course: ended 1 year ago -> within the 5-year retention -> its plagiarism case must be kept.
+        Course recentCourse = courseUtilService.addCourseWithModelingAndTextExercise();
+        Exercise recentExercise = recentCourse.getExercises().iterator().next();
+        recentCourse.setEndDate(ZonedDateTime.now().minusYears(1));
+        courseRepository.save(recentCourse);
+        long recentCourseId = recentCourse.getId();
+        exerciseUtilService.createPlagiarismCaseForUserForExercise(recentExercise, student, TEST_PREFIX, PlagiarismVerdict.PLAGIARISM);
+
+        // Capture the old-course case + its notification post to prove both are deleted (the post FK is RESTRICT, so a
+        // wrong deletion order would throw instead of silently orphaning the post).
+        List<PlagiarismCase> oldCasesBefore = plagiarismCaseRepository.findByCourseId(oldCourseId);
+        assertThat(oldCasesBefore).hasSize(1);
+        long oldCaseId = oldCasesBefore.getFirst().getId();
+        long oldPostId = plagiarismCaseRepository.findByStudentIdAndExerciseIdWithPost(student.getId(), oldExercise.getId()).orElseThrow().getPost().getId();
+        assertThat(postRepository.findById(oldPostId)).isPresent();
+
+        // The count preview counts the seeded old-course case (it is course-end-date driven, like the deletion itself).
+        assertThat(dataCleanupService.countPlagiarismCasesOfOldCourses().plagiarismCases()).isGreaterThanOrEqualTo(1);
+
+        dataCleanupService.deletePlagiarismCasesOfOldCourses();
+
+        // Old course's plagiarism case AND its notification post are gone, but the course itself is untouched.
+        assertThat(plagiarismCaseRepository.findById(oldCaseId)).isEmpty();
+        assertThat(plagiarismCaseRepository.findByCourseId(oldCourseId)).isEmpty();
+        assertThat(postRepository.findById(oldPostId)).isEmpty();
+        assertThat(courseRepository.findById(oldCourseId)).isPresent();
+
+        // Recent course's plagiarism case survives untouched.
+        assertThat(plagiarismCaseRepository.findByCourseId(recentCourseId)).hasSize(1);
     }
 
     private static boolean fileContains(Path file, String text) {

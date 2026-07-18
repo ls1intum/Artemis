@@ -27,6 +27,7 @@ import de.tum.cit.aet.artemis.admin.dto.NotEnrolledUsersCleanupCountDTO;
 import de.tum.cit.aet.artemis.admin.dto.OldCoursesCleanupCountDTO;
 import de.tum.cit.aet.artemis.admin.dto.OldFeedbackCleanupCountDTO;
 import de.tum.cit.aet.artemis.admin.dto.OrphanCleanupCountDTO;
+import de.tum.cit.aet.artemis.admin.dto.PlagiarismCasesCleanupCountDTO;
 import de.tum.cit.aet.artemis.admin.dto.PlagiarismComparisonCleanupCountDTO;
 import de.tum.cit.aet.artemis.admin.dto.SubmissionVersionsCleanupCountDTO;
 import de.tum.cit.aet.artemis.admin.repository.CleanupJobExecutionRepository;
@@ -754,6 +755,8 @@ class CleanupIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCTest
         request.get("/api/core/admin/cleanup/not-enrolled-users/warn/count", HttpStatus.FORBIDDEN, NotEnrolledUsersCleanupCountDTO.class);
         request.delete("/api/core/admin/cleanup/not-enrolled-users", HttpStatus.FORBIDDEN, CleanupServiceExecutionRecordDTO.class);
         request.get("/api/core/admin/cleanup/not-enrolled-users/count", HttpStatus.FORBIDDEN, NotEnrolledUsersCleanupCountDTO.class);
+        request.delete("/api/core/admin/cleanup/plagiarism-cases", HttpStatus.FORBIDDEN, CleanupServiceExecutionRecordDTO.class);
+        request.get("/api/core/admin/cleanup/plagiarism-cases/count", HttpStatus.FORBIDDEN, PlagiarismCasesCleanupCountDTO.class);
 
         request.get("/api/core/admin/cleanup/last-executions", HttpStatus.FORBIDDEN, List.class);
     }
@@ -768,6 +771,7 @@ class CleanupIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCTest
         assertThat(request.get("/api/core/admin/cleanup/old-course-submission-versions/count", HttpStatus.OK, SubmissionVersionsCleanupCountDTO.class)).isNotNull();
         assertThat(request.get("/api/core/admin/cleanup/not-enrolled-users/warn/count", HttpStatus.OK, NotEnrolledUsersCleanupCountDTO.class)).isNotNull();
         assertThat(request.get("/api/core/admin/cleanup/not-enrolled-users/count", HttpStatus.OK, NotEnrolledUsersCleanupCountDTO.class)).isNotNull();
+        assertThat(request.get("/api/core/admin/cleanup/plagiarism-cases/count", HttpStatus.OK, PlagiarismCasesCleanupCountDTO.class)).isNotNull();
     }
 
     private Feedback createFeedbackWithLinkedLongFeedback() {
