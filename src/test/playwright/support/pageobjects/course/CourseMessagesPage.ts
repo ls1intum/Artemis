@@ -289,6 +289,57 @@ export class CourseMessagesPage {
     }
 
     /**
+     * Returns the Monaco editor of the main (non-thread) message input.
+     */
+    getMessageEditor() {
+        return this.page.locator('jhi-posting-markdown-editor .monaco-editor').first();
+    }
+
+    /**
+     * Focuses the main message editor and types the given text via real keystrokes rather than
+     * Monaco's `setValue` API (used by {@link writeMessage}). Behavior that only reacts to actual
+     * typing, such as the emoji shortcode suggest widget, requires this instead of `fill`/`setValue`.
+     * @param text - The text to type into the editor.
+     */
+    async typeInMessageEditor(text: string) {
+        const editor = this.getMessageEditor();
+        await editor.waitFor({ state: 'visible', timeout: 10000 });
+        await editor.click();
+        await this.page.keyboard.type(text);
+    }
+
+    /**
+     * Returns the locator for Monaco's suggest widget (the autocomplete popup shown while typing),
+     * scoped to its `visible` state class so a hidden (but still DOM-attached) widget from a
+     * previous session does not cause a strict-mode match with the currently open one.
+     */
+    getSuggestWidget() {
+        return this.page.locator('.suggest-widget.visible');
+    }
+
+    /**
+     * Returns the locator for the rendered text content of the main message editor.
+     */
+    getMessageEditorText() {
+        return this.getMessageEditor().locator('.view-lines');
+    }
+
+    /**
+     * Sends the message currently in the main message editor by pressing Enter (rather than
+     * clicking the send button), and waits for the message to be persisted.
+     * @returns The created message.
+     */
+    async sendMessageWithEnterKey(): Promise<Post> {
+        const responsePromise = this.page.waitForResponse(
+            (resp) => resp.url().includes('api/communication/courses/') && resp.url().endsWith('/messages') && resp.request().method() === 'POST',
+        );
+        await this.page.keyboard.press('Enter');
+        const response = await responsePromise;
+        expect(response.status()).toBe(201);
+        return readResponseJson(response);
+    }
+
+    /**
      * Checks for the presence of a message by its ID and content.
      * @param messageId - The ID of the message to check.
      * @param message - The content of the message to verify.
