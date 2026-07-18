@@ -41,7 +41,7 @@ import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTe
  * covered by the pure-unit {@code CourseDataRetentionServiceTest}; the query-level user filter by
  * {@code UserRepositoryTest#testFindAllNotEnrolledUsersModifiedBefore}.
  */
-class DataPrivacyCleanupIntegrationTest extends AbstractSpringIntegrationIndependentTest {
+class DataPrivacyCleanupTest extends AbstractSpringIntegrationIndependentTest {
 
     private static final String TEST_PREFIX = "dataprivacycleanup";
 
