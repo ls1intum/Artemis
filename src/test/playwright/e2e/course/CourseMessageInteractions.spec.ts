@@ -370,10 +370,12 @@ test.describe('Message interactions', { tag: '@fast' }, () => {
 
             // The suggest widget opens after typing ":" plus at least one letter and offers a ":joy:" row.
             // "jo" fuzzy-matches several shortcodes (":joystick:", ":banjo:", ...), so the row is selected
-            // explicitly by its exact label rather than relying on whichever entry Monaco highlights by default.
+            // explicitly by its shortcode rather than relying on whichever entry Monaco highlights by default.
+            // The accessible name of a row is the label plus a kind suffix (e.g. "😂 :joy:, Text"), so the
+            // shortcode is matched as a substring; ":joy:" cannot collide with ":joy_cat:" or ":joystick:".
             const suggestWidget = courseMessages.getSuggestWidget();
             await expect(suggestWidget).toBeVisible({ timeout: 10000 });
-            const joySuggestion = suggestWidget.getByRole('option', { name: /:joy:$/ });
+            const joySuggestion = suggestWidget.getByRole('option', { name: /:joy:/ });
             await expect(joySuggestion).toBeVisible();
 
             // Accepting the suggestion (click) replaces the shortcode with the native emoji glyph
