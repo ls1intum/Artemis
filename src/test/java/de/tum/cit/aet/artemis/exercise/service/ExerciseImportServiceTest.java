@@ -26,9 +26,9 @@ class ExerciseImportServiceTest {
      * Minimal concrete subclass exposing the protected copy helpers. {@code copyExerciseBasis} and
      * {@code prepareNewExerciseForImport} do not use any injected dependency, so passing {@code null} is safe here.
      */
-    private static final class TestableExerciseImportService extends ExerciseImportService {
+    private static final class TestableExerciseImport extends ExerciseImportService {
 
-        private TestableExerciseImportService() {
+        private TestableExerciseImport() {
             super(null, null, null, null);
         }
 
@@ -37,7 +37,7 @@ class ExerciseImportServiceTest {
         }
     }
 
-    private final TestableExerciseImportService service = new TestableExerciseImportService();
+    private final TestableExerciseImport service = new TestableExerciseImport();
 
     private TextExercise sourceWithContent() {
         Course course = new Course();
