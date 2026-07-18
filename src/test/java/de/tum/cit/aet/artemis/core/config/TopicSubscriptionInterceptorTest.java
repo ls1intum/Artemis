@@ -136,4 +136,41 @@ class TopicSubscriptionInterceptorTest extends AbstractSpringIntegrationIndepend
             assertThat(returnedValue).isNull();
         }
     }
+
+    @Test
+    void testAllowOnlyEditorsToSendExerciseSynchronizationMessages() {
+        userUtilService.addUsers(TEST_PREFIX + "send", 1, 1, 1, 1);
+        var course = courseUtilService.createCourseWithAllExerciseTypesAndParticipationsAndSubmissionsAndResults(TEST_PREFIX + "send", false);
+        var exercise = course.getExercises().stream().findFirst().orElseThrow();
+
+        var interceptor = websocketConfiguration.new TopicSubscriptionInterceptor();
+        var message = (Message<String>) mock(Message.class);
+        try (var ignored = mockStatic(StompHeaderAccessor.class)) {
+            var headerAccessor = mock(StompHeaderAccessor.class);
+            when(StompHeaderAccessor.wrap(message)).thenReturn(headerAccessor);
+            when(headerAccessor.getCommand()).thenReturn(StompCommand.SEND);
+            when(headerAccessor.getDestination()).thenReturn("/topic/exercises/" + exercise.getId() + "/synchronization");
+            var principal = mock(Principal.class);
+            when(headerAccessor.getUser()).thenReturn(principal);
+            var channel = mock(MessageChannel.class);
+
+            when(principal.getName()).thenReturn(TEST_PREFIX + "sendinstructor1");
+            assertThat(interceptor.preSend(message, channel)).isEqualTo(message);
+
+            when(principal.getName()).thenReturn(TEST_PREFIX + "sendeditor1");
+            assertThat(interceptor.preSend(message, channel)).isEqualTo(message);
+
+            when(principal.getName()).thenReturn(TEST_PREFIX + "sendtutor1");
+            assertThat(interceptor.preSend(message, channel)).isNull();
+
+            when(principal.getName()).thenReturn(TEST_PREFIX + "sendstudent1");
+            assertThat(interceptor.preSend(message, channel)).isNull();
+
+            when(headerAccessor.getDestination()).thenReturn("/topic/exercise/" + exercise.getId() + "/newResults");
+            assertThat(interceptor.preSend(message, channel)).isNull();
+
+            when(headerAccessor.getDestination()).thenReturn("/app/exercises/" + exercise.getId());
+            assertThat(interceptor.preSend(message, channel)).isEqualTo(message);
+        }
+    }
 }

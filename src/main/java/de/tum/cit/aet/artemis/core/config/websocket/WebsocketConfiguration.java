@@ -340,16 +340,17 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
             Principal principal = headerAccessor.getUser();
             String destination = headerAccessor.getDestination();
 
-            if (StompCommand.SUBSCRIBE.equals(headerAccessor.getCommand())) {
+            StompCommand command = headerAccessor.getCommand();
+            if (StompCommand.SUBSCRIBE.equals(command) || StompCommand.SEND.equals(command)) {
                 try {
-                    if (!allowSubscription(principal, destination)) {
+                    boolean allowed = StompCommand.SUBSCRIBE.equals(command) ? allowSubscription(principal, destination) : allowSend(principal, destination);
+                    if (!allowed) {
                         logUnauthorizedDestinationAccess(principal, destination);
-                        return null; // erase the forbidden SUBSCRIBE command the user was trying to send
+                        return null;
                     }
                 }
                 catch (EntityNotFoundException e) {
-                    // If the user is not found (e.g. because they are not logged in), they should not be able to subscribe to these topics
-                    log.warn("An error occurred while subscribing user {} to destination {}: {}", principal != null ? principal.getName() : "null", destination, e.getMessage());
+                    log.warn("An error occurred while authorizing user {} for destination {}: {}", principal != null ? principal.getName() : "null", destination, e.getMessage());
                     return null;
                 }
             }
@@ -425,6 +426,23 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
             }
 
             return true;
+        }
+
+        /**
+         * Clients may publish directly to exercise synchronization topics because the broker relays those messages to other editors. All other application destinations retain
+         * their
+         * existing Spring Security handling, while direct publication to any other broker topic is rejected.
+         */
+        private boolean allowSend(@Nullable Principal principal, @Nullable String destination) {
+            if (destination == null || !destination.startsWith("/topic/")) {
+                return true;
+            }
+            if (principal == null) {
+                return false;
+            }
+
+            return getExerciseIdFromSynchronizationDestination(destination).map(exerciseId -> authorizationCheckService.isAtLeastEditorInExercise(principal.getName(), exerciseId))
+                    .orElse(false);
         }
 
         private void logUnauthorizedDestinationAccess(Principal principal, String destination) {
