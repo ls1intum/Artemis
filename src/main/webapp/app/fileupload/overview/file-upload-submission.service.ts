@@ -145,7 +145,7 @@ export class FileUploadSubmissionService {
      */
     private convertFileSubmissionResponseFromServer(res: HttpResponse<FileUploadSubmissionDTO>): HttpResponse<FileUploadSubmission> {
         if (!res.body) {
-            return res.clone({ body: null });
+            return res.clone<FileUploadSubmission>({ body: null });
         }
 
         const responseWithModel = res.clone({ body: this.mapSubmissionDtoToModel(res.body) });
