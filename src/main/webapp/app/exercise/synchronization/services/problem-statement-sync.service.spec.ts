@@ -18,11 +18,11 @@ import * as yjsUtils from 'app/exercise/synchronization/services/yjs-utils';
  * Find the requestId of the most recently sent PROBLEM_STATEMENT_SYNC_FULL_CONTENT_REQUEST on a
  * mocked ExerciseEditorSyncService's `sendSynchronizationUpdate` spy.
  */
-function captureRequestId(mock: { sendSynchronizationUpdate: ReturnType<typeof vi.fn> }): string {
+function captureRequestId(mock: { sendSynchronizationUpdate: { mock: { calls: unknown[][] } } }): string {
     const call = mock.sendSynchronizationUpdate.mock.calls.find(
-        ([, message]: [number, any]) => message.eventType === ExerciseEditorSyncEventType.PROBLEM_STATEMENT_SYNC_FULL_CONTENT_REQUEST,
+        (args) => (args[1] as { eventType?: ExerciseEditorSyncEventType } | undefined)?.eventType === ExerciseEditorSyncEventType.PROBLEM_STATEMENT_SYNC_FULL_CONTENT_REQUEST,
     );
-    return call?.[1].requestId as string;
+    return (call?.[1] as { requestId?: string } | undefined)?.requestId as string;
 }
 
 /**

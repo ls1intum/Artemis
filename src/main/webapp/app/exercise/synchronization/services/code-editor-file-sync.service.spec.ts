@@ -23,11 +23,13 @@ import * as yjsUtils from 'app/exercise/synchronization/services/yjs-utils';
  * Find the requestId of the most recently sent FILE_SYNC_FULL_CONTENT_REQUEST for `filePath` on a
  * mocked ExerciseEditorSyncService's `sendSynchronizationUpdate` spy.
  */
-function captureRequestId(mock: { sendSynchronizationUpdate: ReturnType<typeof vi.fn> }, filePath: string): string {
-    const call = mock.sendSynchronizationUpdate.mock.calls.find(
-        ([, message]: [number, any]) => message.eventType === ExerciseEditorSyncEventType.FILE_SYNC_FULL_CONTENT_REQUEST && message.filePath === filePath,
-    );
-    return call?.[1].requestId as string;
+function captureRequestId(mock: { sendSynchronizationUpdate: { mock: { calls: unknown[][] } } }, filePath: string): string {
+    type SentMessage = { eventType?: ExerciseEditorSyncEventType; filePath?: string; requestId?: string };
+    const call = mock.sendSynchronizationUpdate.mock.calls.find((args) => {
+        const message = args[1] as SentMessage | undefined;
+        return message?.eventType === ExerciseEditorSyncEventType.FILE_SYNC_FULL_CONTENT_REQUEST && message?.filePath === filePath;
+    });
+    return (call?.[1] as { requestId?: string } | undefined)?.requestId as string;
 }
 
 /**
