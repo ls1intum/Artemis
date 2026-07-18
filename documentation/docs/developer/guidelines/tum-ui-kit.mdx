@@ -120,7 +120,12 @@ such as `text-state-danger` is correct in both themes without a `dark:` variant.
 
 ### Button — `tum-ui-button`
 
-A native `<button>` with severity / size variants.
+A native `<button>` wrapped so its look is driven by two orthogonal axes — **`severity`** (what the action
+means: primary action, neutral, or a state like success/danger) and **`variant`** (how much visual weight it
+carries: `solid` for the main call-to-action, `outlined` for secondary actions, `text` for low-emphasis inline
+actions). Pick the severity from intent and the variant from prominence; e.g. a destructive confirm is
+`severity="danger" variant="solid"`, a cancel next to it is `severity="secondary" variant="text"`. The real
+`<button>` is kept internal so focus, `type="submit"`, and disabled semantics behave natively.
 
 <Shots light={TumuiButtonLight} dark={TumuiButtonDark} alt="tum-ui-button variants" />
 
@@ -137,15 +142,21 @@ A native `<button>` with severity / size variants.
 | `clicked` (output)                                                  | `MouseEvent`                                                                          |             | The click contract; emitted on click when enabled. Prefer `(clicked)` over the host's bubbled native `(click)`.       |
 
 ```html
+<!-- Secondary, low-emphasis text button with a leading icon -->
 <tum-ui-button severity="secondary" size="small" variant="outlined" (clicked)="scrollTo('features')"> {{ 'artemisApp.features.title' | artemisTranslate }} </tum-ui-button>
 
 <!-- Icon-only: the glyph carries no text, so an accessible name is mandatory -->
 <tum-ui-button [icon]="faTrash" severity="danger" ariaLabel="Delete" (clicked)="delete()" />
+
+<!-- Primary submit inside a form: type="submit" keeps native form submission, disabled gates it -->
+<tum-ui-button type="submit" severity="primary" [disabled]="form.invalid()" (clicked)="save()"> {{ 'entity.action.save' | artemisTranslate }} </tum-ui-button>
 ```
 
 <Callout variant={CalloutVariant.danger}>
     An `aria-label` placed on the `<tum-ui-button>` host sits on the wrong element and leaves the real
-    button unnamed. Always pass the `ariaLabel` **input** for icon-only buttons.
+    button unnamed. Always pass the `ariaLabel` **input** for icon-only buttons. Likewise, prefer the
+    `(clicked)` output over the host's bubbled native `(click)`: `(clicked)` fires only when the button is
+    enabled, so a disabled button can never emit an action.
 </Callout>
 
 ### Tag — `tum-ui-tag`
@@ -157,68 +168,101 @@ component SCSS (matching PrimeNG's `--p-<color>-100` / `-700`), not a Tailwind o
 
 <Shots light={TumuiTagLight} dark={TumuiTagDark} alt="tum-ui-tag severities" />
 
-| Input      | Type                                                                     | Default                             |
-| ---------- | ------------------------------------------------------------------------ | ----------------------------------- |
-| `severity` | `'secondary' \| 'success' \| 'info' \| 'warn' \| 'danger' \| 'contrast'` | `'secondary'`                       |
-| `value`    | `string`                                                                 | – (falls back to projected content) |
-| `rounded`  | `boolean`                                                                | `false`                             |
+| Input      | Type                                                                     | Default                             | Notes                                                                                                                                                                                              |
+| ---------- | ------------------------------------------------------------------------ | ----------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `severity` | `'secondary' \| 'success' \| 'info' \| 'warn' \| 'danger' \| 'contrast'` | `'secondary'`                       | Picks the tint. Map it to meaning: `success` (done/active), `warn` (attention), `danger` (error/blocked), `info` (neutral highlight), `secondary` (default), `contrast` (high-emphasis dark chip). |
+| `value`    | `string`                                                                 | – (falls back to projected content) | Convenience for a plain-text label. Omit it and project content instead when you need markup (an icon + text).                                                                                     |
+| `rounded`  | `boolean`                                                                | `false`                             | `true` renders a fully pill-shaped chip; the default is a subtly-rounded rectangle.                                                                                                                |
 
 ```html
+<!-- Plain-text label via the value input -->
 <tum-ui-tag severity="success" [value]="'artemisApp.features.active' | artemisTranslate" />
+
+<!-- Projected content when you need more than text (e.g. an icon + label) -->
+<tum-ui-tag severity="warn"> <fa-icon [icon]="faTriangleExclamation" /> {{ 'artemisApp.exercise.pending' | artemisTranslate }} </tum-ui-tag>
+
+<!-- Pill-shaped count badge -->
+<tum-ui-tag severity="info" [rounded]="true" [value]="participantCount().toString()" />
 ```
 
 ### Tooltip — `[tumUiTooltip]`
 
-Hover + focus tooltip built on the overlay substrate, with `aria-describedby` wiring so the bubble is
-announced. Hover and keyboard focus are tracked independently, so the tooltip stays visible while
-either is active.
+A directive (attach it to any focusable host — a button, link, or icon button) that shows a short text
+bubble on hover **and** keyboard focus, built on the overlay substrate. Hover and focus are tracked
+independently, so the bubble stays visible while either is active (e.g. it does not vanish when the pointer
+leaves but the element is still focused). It wires `aria-describedby` from the host to the bubble, so screen
+readers announce the hint — which is why the host must be genuinely focusable (a `<button>`, not a bare
+`<span>`). Use it for a brief hint only; for rich or interactive content use the **popover** instead.
 
 <Shots light={TumuiTooltipLight} dark={TumuiTooltipDark} alt="tum-ui tooltip" />
 
-| Input                     | Type                                     | Default       |
-| ------------------------- | ---------------------------------------- | ------------- |
-| `tumUiTooltip`            | `string` (required)                      | –             |
-| `tumUiTooltipPlacement`   | `'top' \| 'bottom' \| 'left' \| 'right'` | `'top'`       |
-| `showDelay` / `hideDelay` | `number`                                 | `150` / `100` |
+| Input                     | Type                                     | Default       | Notes                                                                                              |
+| ------------------------- | ---------------------------------------- | ------------- | -------------------------------------------------------------------------------------------------- |
+| `tumUiTooltip`            | `string` (required)                      | –             | The bubble text. Also the selector — attaching the attribute enables the tooltip.                  |
+| `tumUiTooltipPlacement`   | `'top' \| 'bottom' \| 'left' \| 'right'` | `'top'`       | Preferred side; the overlay flips to the opposite side automatically on a viewport-edge collision. |
+| `showDelay` / `hideDelay` | `number`                                 | `150` / `100` | Milliseconds before the bubble appears / disappears, so quick pointer passes don't flash it.       |
 
 ```html
+<!-- On a text button -->
 <button tumUiTooltip="Refresh" tumUiTooltipPlacement="bottom">…</button>
+
+<!-- On an icon-only button: the tooltip complements (does not replace) the required aria-label -->
+<tum-ui-button [icon]="faRotate" ariaLabel="Refresh" tumUiTooltip="Refresh the list" />
 ```
 
 ### Popover — `tum-ui-popover` + `[tumUiPopoverTrigger]`
 
-A content-projected `role="dialog"` panel. Closes on backdrop click and Escape, traps and restores
-focus (`cdkTrapFocus`), and is exposed as a modal dialog (`aria-modal="true"`).
+A content-projected `role="dialog"` panel opened from a trigger. Unlike the tooltip it holds **interactive**
+content (form controls, buttons, links): it traps and restores focus (`cdkTrapFocus`), is exposed as a modal
+dialog (`aria-modal="true"`), and closes on backdrop click and Escape. Reach for it for filter panels, small
+inline forms, and confirmation prompts; for a one-line hint use the **tooltip** instead.
+The pattern is two pieces: the `[tumUiPopoverTrigger]` directive on the opener (any focusable element) bound to
+a template-reference of the `<tum-ui-popover>` panel.
 
 <Shots light={TumuiPopoverLight} dark={TumuiPopoverDark} alt="tum-ui-popover panel" />
 
-| Input                 | Type                                     | Notes                           |
-| --------------------- | ---------------------------------------- | ------------------------------- |
-| `placement`           | `'top' \| 'bottom' \| 'left' \| 'right'` | Default `'bottom'`.             |
-| `ariaLabel`           | `string` (**required**)                  | Accessible name for the dialog. |
-| `openChange` (output) | `boolean`                                |                                 |
+| Input / Output        | Type                                     | Notes                                                                                                   |
+| --------------------- | ---------------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| `placement`           | `'top' \| 'bottom' \| 'left' \| 'right'` | Preferred side of the trigger; default `'bottom'`, flips on a viewport-edge collision.                  |
+| `ariaLabel`           | `string` (**required**)                  | Accessible name announced for the dialog — required because the panel is a modal dialog.                |
+| `openChange` (output) | `boolean`                                | Emits `true` when it opens and `false` when it closes; use it to lazy-load panel data or sync a toggle. |
 
 ```html
 <button [tumUiPopoverTrigger]="filters">Filters</button>
-<tum-ui-popover #filters ariaLabel="Filter options">
-    <!-- projected content -->
+<tum-ui-popover #filters ariaLabel="Filter options" placement="bottom" (openChange)="onFilterPanelToggle($event)">
+    <!-- interactive, projected content -->
+    <div class="flex flex-col gap-2">
+        <label><input type="checkbox" [checked]="showActive()" (change)="toggleActive()" /> Active only</label>
+        <label><input type="checkbox" [checked]="showArchived()" (change)="toggleArchived()" /> Include archived</label>
+    </div>
 </tum-ui-popover>
 ```
 
 ### Table — `tum-ui-table<T>`
 
-A generic data grid on `@angular/cdk/table`: dynamic columns, single-column server-side sort,
-server-side paging, debounced global search, row actions, striped / scrollable with a sticky header.
+A generic (`<T>`) data grid on `@angular/cdk/table`: dynamic columns, single-column server-side sort,
+server-side paging, debounced global search, row actions, striped / scrollable with a sticky header. It is a
+**dumb, server-driven grid** — it never sorts, filters, or pages `rows` itself; it emits one `dataRequest`
+event describing the wanted query and renders exactly the `rows` you hand back. That keeps the source of
+truth on the server and makes it a drop-in for Artemis' paged search endpoints.
 
 <Shots light={TumuiTableLight} dark={TumuiTableDark} alt="tum-ui-table data grid" />
 
-Key inputs: `columns` (`ColumnDef<T>[]`, required), `rows` (`T[]`, required), `totalRecords`,
-`loading`, `rowActions` (a `TemplateRef`), `trackBy` (row-identity `TrackByFunction<T>`, e.g. `(_, row) => row.id`,
-so reloads reuse row DOM instead of rebuilding it), `striped`, `scrollable`, `scrollHeight`, `showSearch`,
-`searchPlaceholder` (i18n key), `emptyMessage` (i18n key), `pageSize`, `pageSizeOptions`,
-`initialSortField` / `initialSortDirection` (`'asc'` | `'desc'`). Output: `dataRequest`
-(`TumUiTableQueryEvent` with `page` (0-based), `pageSize`, `sort?` (a `{ field, direction }` pair, absent when
-unsorted), `searchTerm?`), emitted whenever the query changes (sort / page / search) so the consumer refetches.
+| Input / Output                              | Type                            | Default  | Notes                                                                                                                                                                                      |
+| ------------------------------------------- | ------------------------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `columns`                                   | `ColumnDef<T>[]` (**required**) | –        | Column definitions (see below); the array order is the visual column order.                                                                                                                |
+| `rows`                                      | `T[]` (**required**)            | –        | The current page's rows, exactly as returned by the server for the last `dataRequest`.                                                                                                     |
+| `totalRecords`                              | `number`                        | `0`      | Total across all pages, so the embedded paginator can compute the last page and the "of Z" report.                                                                                         |
+| `loading`                                   | `boolean`                       | `false`  | Shows the loading state and disables controls while a fetch is in flight.                                                                                                                  |
+| `rowActions`                                | `TemplateRef`                   | –        | Per-row action cell (edit/delete buttons); rendered as a trailing column. The row is the template `$implicit` context.                                                                     |
+| `trackBy`                                   | `TrackByFunction<T>`            | identity | Row identity (e.g. `(_, row) => row.id`) so a reload **reuses** row DOM instead of rebuilding it — important so an open row action stays bound across a debounced-search reload.           |
+| `striped` / `scrollable`                    | `boolean`                       | `false`  | Zebra rows; a bounded, vertically-scrolling body with a sticky header.                                                                                                                     |
+| `scrollHeight`                              | `string`                        | –        | Height of the scroll viewport; `"flex"` fills the remaining space of a `min-h-0` flex-column parent.                                                                                       |
+| `showSearch`                                | `boolean`                       | `true`   | Toggles the debounced global search box.                                                                                                                                                   |
+| `searchPlaceholder` / `emptyMessage`        | `string` (i18n key)             | defaults | Translation keys for the search placeholder and the no-results message.                                                                                                                    |
+| `pageSize` / `pageSizeOptions`              | `number` / `number[]`           | –        | Forwarded to the embedded paginator.                                                                                                                                                       |
+| `initialSortField` / `initialSortDirection` | `string` / `'asc' \| 'desc'`    | –        | Pre-select a sorted column on first render.                                                                                                                                                |
+| `dataRequest` (output)                      | `TumUiTableQueryEvent`          | –        | Emitted whenever the query changes (sort / page / search). Carries `page` (0-based), `pageSize`, `sort?` (`{ field, direction }`, absent when unsorted), and `searchTerm?`. Refetch on it. |
 
 A column is defined by a `ColumnDef<T>`: `field` (a `keyof T` key — autocompleted and typo-checked — or a
 dot-path string for nested reads), `header` (literal) or `headerKey` (i18n key), `sort` (makes the header a
@@ -259,12 +303,24 @@ sorting order comes from the `'asc'` / `'desc'` sort direction).
 
 ### Paginator — `tum-ui-paginator`
 
-Standalone paginator (the table embeds one, but it is reusable). Renders a "showing X to Y of Z"
-report, first / prev / windowed numbered page buttons / next / last, and a rows-per-page selector.
-Inputs: `totalRecords`, `page` (0-based), `pageSize`, `pageSizeOptions`, `disabled`. Outputs:
-`pageChange`, `pageSizeChange`.
+Standalone paginator. The **table** embeds one, but it is reusable on its own for any
+paged list. It renders a "Showing X to Y of Z items" report, first / previous / a windowed run of numbered
+page buttons / next / last, and a rows-per-page selector. It is **controlled**: it owns no page state — you
+pass the current `page` / `pageSize` in and react to the change outputs. It also self-clamps, so if
+`totalRecords` shrinks below the current page (e.g. after deleting the last row on the last page) its
+range, navigation state, and active page stay consistent.
 
 <Shots light={TumuiPaginatorLight} dark={TumuiPaginatorDark} alt="tum-ui-paginator" />
+
+| Input / Output            | Type       | Default                  | Notes                                                                                           |
+| ------------------------- | ---------- | ------------------------ | ----------------------------------------------------------------------------------------------- |
+| `totalRecords`            | `number`   | `0`                      | Total item count across all pages (drives the report and the last-page index).                  |
+| `page`                    | `number`   | `0`                      | **Zero-based** current page index (page 1 is `0`), matching the table's `TumUiTableQueryEvent`. |
+| `pageSize`                | `number`   | `50`                     | Rows per page; must be one of `pageSizeOptions` to appear selected in the dropdown.             |
+| `pageSizeOptions`         | `number[]` | `[10, 20, 50, 100, 200]` | Choices offered in the rows-per-page selector.                                                  |
+| `disabled`                | `boolean`  | `false`                  | Disables every control (e.g. while a page is loading).                                          |
+| `pageChange` (output)     | `number`   | –                        | New zero-based page index when the user navigates.                                              |
+| `pageSizeChange` (output) | `number`   | –                        | New page size when the user changes the rows-per-page selector.                                 |
 
 ```html
 <tum-ui-paginator [totalRecords]="total()" [page]="page()" [pageSize]="pageSize()" (pageChange)="page.set($event)" (pageSizeChange)="onPageSizeChange($event)" />
