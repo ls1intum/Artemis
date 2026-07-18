@@ -21,7 +21,7 @@ import { TemplatePortal } from '@angular/cdk/portal';
 import type { FormValueControl } from '@angular/forms/signals';
 import dayjs from 'dayjs/esm';
 import { FaIconComponent, FaStackComponent, FaStackItemSizeDirective } from '@fortawesome/angular-fontawesome';
-import { faCalendar, faClock, faGlobe, faXmark } from '@fortawesome/free-solid-svg-icons';
+import { faCalendar, faChevronDown, faChevronUp, faClock, faGlobe, faXmark } from '@fortawesome/free-solid-svg-icons';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TumUiButtonComponent } from 'app/shared-ui/tum-ui/button/tum-ui-button.component';
@@ -103,6 +103,8 @@ export class TumUiDatePickerComponent implements FormValueControl<dayjs.Dayjs | 
     protected readonly faXmark = faXmark;
     protected readonly faGlobe = faGlobe;
     protected readonly faClock = faClock;
+    protected readonly faChevronUp = faChevronUp;
+    protected readonly faChevronDown = faChevronDown;
 
     /** The viewer's local IANA time zone, shown in the timezone-warning tooltip (mirrors the legacy picker). */
     protected get currentTimeZone(): string {
@@ -136,6 +138,12 @@ export class TumUiDatePickerComponent implements FormValueControl<dayjs.Dayjs | 
 
     protected readonly showErrorBorder = computed(() => this.error() || !this.isInputValid());
     protected readonly showClear = computed(() => !!this.inputText());
+    // The two-digit hour / minute shown in the panel's time spinner, derived from the canonical `timeText`
+    // (24h `HH:mm`). Empty / not-yet-set defaults to `00`, mirroring the legacy PrimeNG spinner. Kept as a
+    // fixed 24h format regardless of the viewer's locale (a native `<input type="time">` would fall back to a
+    // 12h AM/PM field in en-US locales, diverging from the legacy `jhi-date-time-picker`'s `hourFormat="24"`).
+    protected readonly displayHour = computed(() => (TIME_REGEX.test(this.timeText()) ? this.timeText().split(':')[0] : '00'));
+    protected readonly displayMinute = computed(() => (TIME_REGEX.test(this.timeText()) ? this.timeText().split(':')[1] : '00'));
 
     constructor() {
         this.destroyRef.onDestroy(() => this.overlayRef?.dispose());
@@ -194,21 +202,86 @@ export class TumUiDatePickerComponent implements FormValueControl<dayjs.Dayjs | 
         }
     }
 
-    protected onTimeChange(input: HTMLInputElement): void {
-        const trimmed = input.value.trim();
-        if (!TIME_REGEX.test(trimmed)) {
-            // Invalid or cleared time (the native time field emits '' when cleared): re-sync to the committed
-            // value so the time sub-field and the main text input never silently disagree. Write the native
-            // element directly as well — if timeText already holds the committed string the signal does not
-            // change, so the `[value]` binding would not re-run and the field would stay visually cleared.
-            const committedTime = this.value()?.format('HH:mm') ?? '';
-            this.timeText.set(committedTime);
-            input.value = committedTime;
+    /** Increment (`+1`) or decrement (`-1`) the hour, wrapping 23→0 / 0→23 like the legacy PrimeNG spinner. */
+    protected stepHour(delta: number): void {
+        const { hour, minute } = this.currentTimeParts();
+        this.commitTime((hour + delta + 24) % 24, minute);
+    }
+
+    /** Increment (`+1`) or decrement (`-1`) the minute, wrapping 59→0 / 0→59 without carrying into the hour. */
+    protected stepMinute(delta: number): void {
+        const { hour, minute } = this.currentTimeParts();
+        this.commitTime(hour, (minute + delta + 60) % 60);
+    }
+
+    /**
+     * Commit a typed hour. Fires on `change` (blur / Enter), not per keystroke, so the `[value]` binding never
+     * fights the caret mid-edit. Unparseable / out-of-range text is rejected and the field reverts to the last
+     * committed hour; a valid value is clamped-parsed, committed, and re-rendered zero-padded.
+     */
+    protected onHourInput(input: HTMLInputElement): void {
+        const parsed = this.parseTimePart(input.value, 23);
+        if (parsed === undefined) {
+            input.value = this.displayHour();
             return;
         }
-        const [hour, minute] = trimmed.split(':').map(Number);
-        // With no value yet, base the date on today — NOT activeMonth (always month-start), which would
-        // silently commit the 1st of the current month. Mirrors onDaySelect's `dayjs()` fallback.
+        this.commitTime(parsed, this.currentTimeParts().minute);
+        input.value = this.displayHour();
+    }
+
+    /** Commit a typed minute; see {@link onHourInput} for the change-vs-input and revert rationale. */
+    protected onMinuteInput(input: HTMLInputElement): void {
+        const parsed = this.parseTimePart(input.value, 59);
+        if (parsed === undefined) {
+            input.value = this.displayMinute();
+            return;
+        }
+        this.commitTime(this.currentTimeParts().hour, parsed);
+        input.value = this.displayMinute();
+    }
+
+    /** ArrowUp / ArrowDown on a spinner field nudge it like the buttons (native-time / PrimeNG parity). */
+    protected onTimeKeydown(event: KeyboardEvent, field: 'hour' | 'minute'): void {
+        const delta = event.key === 'ArrowUp' ? 1 : event.key === 'ArrowDown' ? -1 : 0;
+        if (delta === 0) {
+            return;
+        }
+        event.preventDefault();
+        if (field === 'hour') {
+            this.stepHour(delta);
+        } else {
+            this.stepMinute(delta);
+        }
+    }
+
+    /** The current spinner time as numbers; `{0, 0}` when nothing is set yet (empty picker). */
+    private currentTimeParts(): { hour: number; minute: number } {
+        const text = this.timeText();
+        if (TIME_REGEX.test(text)) {
+            const [hour, minute] = text.split(':').map(Number);
+            return { hour, minute };
+        }
+        return { hour: 0, minute: 0 };
+    }
+
+    /** Parse 1–2 digits into `[0, max]`; returns undefined for empty / non-numeric / out-of-range text. */
+    private parseTimePart(raw: string, max: number): number | undefined {
+        const trimmed = raw.trim();
+        if (!/^\d{1,2}$/.test(trimmed)) {
+            return undefined;
+        }
+        const value = Number(trimmed);
+        return value <= max ? value : undefined;
+    }
+
+    /**
+     * Apply an hour+minute to the value. With no value yet, base the date on today — NOT activeMonth (always
+     * month-start), which would silently commit the 1st of the current month. Mirrors onDaySelect's `dayjs()`
+     * fallback. `timeText` is set up-front so the spinner reflects the change even when `commit` short-circuits
+     * on an unchanged instant (e.g. re-typing the current time).
+     */
+    private commitTime(hour: number, minute: number): void {
+        this.timeText.set(`${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`);
         const base = this.value() ?? dayjs().startOf('day');
         this.commit(base.hour(hour).minute(minute).second(0).millisecond(0));
     }

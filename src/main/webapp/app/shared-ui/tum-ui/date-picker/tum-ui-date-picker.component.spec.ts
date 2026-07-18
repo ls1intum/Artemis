@@ -149,15 +149,83 @@ describe('TumUiDatePickerComponent', () => {
         expect(component.value()).toBeUndefined();
     });
 
-    it('updates the time-of-day via the time field', () => {
-        fixture.componentRef.setInput('value', dayjs('2026-06-13T08:30'));
-        fixture.detectChanges();
+    function openPanel(): void {
         fixture.debugElement.query(By.css('[data-testid="tum-ui-date-picker-trigger"]')).nativeElement.click();
         fixture.detectChanges();
-        const timeInput = document.querySelector('[data-testid="tum-ui-date-picker-time"]') as HTMLInputElement;
-        timeInput.value = '10:45';
-        timeInput.dispatchEvent(new Event('input'));
+    }
+
+    function timeField(testId: string): HTMLInputElement {
+        return document.querySelector(`[data-testid="${testId}"]`) as HTMLInputElement;
+    }
+
+    function timeButton(testId: string): HTMLButtonElement {
+        return document.querySelector(`[data-testid="${testId}"]`) as HTMLButtonElement;
+    }
+
+    it('updates the time-of-day by typing into the hour and minute fields', () => {
+        fixture.componentRef.setInput('value', dayjs('2026-06-13T08:30'));
+        fixture.detectChanges();
+        openPanel();
+        const hour = timeField('tum-ui-date-picker-hour');
+        const minute = timeField('tum-ui-date-picker-minute');
+        // The 24h spinner seeds from the committed value.
+        expect(hour.value).toBe('08');
+        expect(minute.value).toBe('30');
+        hour.value = '10';
+        hour.dispatchEvent(new Event('change'));
+        minute.value = '45';
+        minute.dispatchEvent(new Event('change'));
         expect(component.value()?.format('HH:mm')).toBe('10:45');
+    });
+
+    it('zero-pads a single-digit typed hour/minute', () => {
+        fixture.componentRef.setInput('value', dayjs('2026-06-13T08:30'));
+        fixture.detectChanges();
+        openPanel();
+        const hour = timeField('tum-ui-date-picker-hour');
+        hour.value = '9';
+        hour.dispatchEvent(new Event('change'));
+        expect(component.value()?.format('HH:mm')).toBe('09:30');
+        expect(hour.value).toBe('09');
+    });
+
+    it('rejects an out-of-range typed hour and reverts the field', () => {
+        fixture.componentRef.setInput('value', dayjs('2026-06-13T08:30'));
+        fixture.detectChanges();
+        openPanel();
+        const hour = timeField('tum-ui-date-picker-hour');
+        hour.value = '25';
+        hour.dispatchEvent(new Event('change'));
+        // Out of [0, 23]: the value is untouched and the field reverts to the committed hour.
+        expect(component.value()?.format('HH:mm')).toBe('08:30');
+        expect(hour.value).toBe('08');
+    });
+
+    it('increments and wraps the hour via the spinner buttons (23 -> 00, no day change)', () => {
+        fixture.componentRef.setInput('value', dayjs('2026-06-13T23:30'));
+        fixture.detectChanges();
+        openPanel();
+        timeButton('tum-ui-date-picker-hour-up').click();
+        expect(component.value()?.format('DD.MM.YYYY HH:mm')).toBe('13.06.2026 00:30');
+    });
+
+    it('decrements and wraps the minute via the spinner buttons (00 -> 59, no hour change)', () => {
+        fixture.componentRef.setInput('value', dayjs('2026-06-13T08:00'));
+        fixture.detectChanges();
+        openPanel();
+        timeButton('tum-ui-date-picker-minute-down').click();
+        expect(component.value()?.format('HH:mm')).toBe('08:59');
+    });
+
+    it('nudges the hour with ArrowUp / ArrowDown for keyboard users', () => {
+        fixture.componentRef.setInput('value', dayjs('2026-06-13T08:30'));
+        fixture.detectChanges();
+        openPanel();
+        const hour = timeField('tum-ui-date-picker-hour');
+        hour.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowUp' }));
+        expect(component.value()?.format('HH:mm')).toBe('09:30');
+        hour.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown' }));
+        expect(component.value()?.format('HH:mm')).toBe('08:30');
     });
 
     it('selects a day from the calendar overlay', () => {
@@ -190,11 +258,16 @@ describe('TumUiDatePickerComponent', () => {
         // Regression: with no value yet, editing the time must not silently commit the 1st of the current
         // month (activeMonth is always month-start). It should fall back to today, like a day selection.
         expect(component.value()).toBeUndefined();
-        fixture.debugElement.query(By.css('[data-testid="tum-ui-date-picker-trigger"]')).nativeElement.click();
-        fixture.detectChanges();
-        const timeInput = document.querySelector('[data-testid="tum-ui-date-picker-time"]') as HTMLInputElement;
-        timeInput.value = '10:45';
-        timeInput.dispatchEvent(new Event('input'));
+        openPanel();
+        const hour = timeField('tum-ui-date-picker-hour');
+        const minute = timeField('tum-ui-date-picker-minute');
+        // An empty picker seeds the 24h spinner to 00:00.
+        expect(hour.value).toBe('00');
+        expect(minute.value).toBe('00');
+        hour.value = '10';
+        hour.dispatchEvent(new Event('change'));
+        minute.value = '45';
+        minute.dispatchEvent(new Event('change'));
         expect(component.value()?.format('YYYY-MM-DD')).toBe(dayjs().format('YYYY-MM-DD'));
         expect(component.value()?.format('HH:mm')).toBe('10:45');
     });

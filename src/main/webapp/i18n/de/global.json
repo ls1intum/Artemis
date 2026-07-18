@@ -338,6 +338,12 @@
             "clear": "Löschen",
             "done": "Fertig",
             "time": "Uhrzeit",
+            "hour": "Stunde",
+            "minute": "Minute",
+            "incrementHour": "Stunde erhöhen",
+            "decrementHour": "Stunde verringern",
+            "incrementMinute": "Minute erhöhen",
+            "decrementMinute": "Minute verringern",
             "invalid": "Bitte ein gültiges Datum mit Uhrzeit eingeben."
         }
     },

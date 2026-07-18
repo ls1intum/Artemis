@@ -273,7 +273,10 @@ Inputs: `totalRecords`, `page` (0-based), `pageSize`, `pageSizeOptions`, `disabl
 ### Date picker — `tum-ui-date-picker`
 
 A `dayjs`-backed date + time picker with a hand-built, keyboard-navigable calendar (roving tabindex,
-arrows / Home / End / PageUp / PageDown), a 24h time field, and the shared overlay for the panel.
+arrows / Home / End / PageUp / PageDown), a hand-built 24h `HH:mm` hour/minute spinner (chevron up/down
+per unit, typeable, ArrowUp/ArrowDown), and the shared overlay for the panel. The spinner is fixed 24h
+regardless of the viewer's locale, mirroring the legacy `jhi-date-time-picker` (`hourFormat="24"`); a
+native `<input type="time">` would fall back to a 12h AM/PM field in en-US locales and unstylable chrome.
 
 <Shots light={TumuiDatepickerLight} dark={TumuiDatepickerDark} alt="tum-ui-date-picker input control" />
 
@@ -294,7 +297,7 @@ arrows / Home / End / PageUp / PageDown), a 24h time field, and the shared overl
 
 The picker always renders a date + 24h-time control (`DD.MM.YYYY HH:mm`). Date-only / time-only modes are
 not implemented yet; use the legacy `jhi-date-time-picker` if you need those today. Opening the trigger
-shows the calendar overlay (month grid + 24h time field):
+shows the calendar overlay (month grid + 24h `HH:mm` hour/minute spinner):
 
 <Shots light={TumuiCalendarLight} dark={TumuiCalendarDark} alt="tum-ui-date-picker calendar overlay" />
 
