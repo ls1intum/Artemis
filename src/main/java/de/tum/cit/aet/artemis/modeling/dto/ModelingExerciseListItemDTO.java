@@ -16,6 +16,7 @@ import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
 import de.tum.cit.aet.artemis.exercise.domain.IncludedInOverallScore;
 import de.tum.cit.aet.artemis.modeling.domain.DiagramType;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
+import de.tum.cit.aet.artemis.modeling.util.ModelingDtoCollections;
 
 /**
  * Thin read DTO for listing {@link ModelingExercise} instances (course/exercise list and the cross-course import search).

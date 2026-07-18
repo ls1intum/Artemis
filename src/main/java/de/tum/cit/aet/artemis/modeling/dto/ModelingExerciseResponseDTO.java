@@ -22,6 +22,7 @@ import de.tum.cit.aet.artemis.exercise.dto.TeamAssignmentConfigDTO;
 import de.tum.cit.aet.artemis.lecture.dto.CompetencyLinkDTO;
 import de.tum.cit.aet.artemis.modeling.domain.DiagramType;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
+import de.tum.cit.aet.artemis.modeling.util.ModelingDtoCollections;
 import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismDetectionConfigDTO;
 
 /**
@@ -87,7 +88,8 @@ public record ModelingExerciseResponseDTO(Long id, String title, String shortNam
 
         Set<CompetencyLinkDTO> competencyLinkDTOs = ModelingDtoCollections.setFromInitializedSet(exercise.getCompetencyLinks(), CompetencyLinkDTO::of);
 
-        TeamAssignmentConfigDTO teamAssignmentConfigDTO = Hibernate.isInitialized(exercise.getTeamAssignmentConfig()) ? TeamAssignmentConfigDTO.of(exercise.getTeamAssignmentConfig())
+        TeamAssignmentConfigDTO teamAssignmentConfigDTO = Hibernate.isInitialized(exercise.getTeamAssignmentConfig())
+                ? TeamAssignmentConfigDTO.of(exercise.getTeamAssignmentConfig())
                 : null;
 
         PlagiarismDetectionConfigDTO plagiarismDetectionConfigDTO = Hibernate.isInitialized(exercise.getPlagiarismDetectionConfig())

@@ -538,8 +538,11 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
         body.setCourse(target);
         body.setChannelName("edited-import-" + UUID.randomUUID().toString().substring(0, 8));
 
-        var imported = request.postWithResponseBody("/api/modeling/modeling-exercises/import?sourceExerciseId=" + sourceExercise.getId(), body, ModelingExercise.class,
-                HttpStatus.CREATED);
+        // The import endpoint consumes the flat ImportModelingExerciseDTO (matching the migrated Angular client), so the
+        // edited entity is mapped to the DTO shape the client would send.
+        var importedDto = request.postWithResponseBody("/api/modeling/modeling-exercises/import?sourceExerciseId=" + sourceExercise.getId(), ImportModelingExerciseDTO.of(body),
+                ModelingExerciseResponseDTO.class, HttpStatus.CREATED);
+        ModelingExercise imported = modelingExerciseTestRepository.findByIdElseThrow(importedDto.id());
 
         assertThat(imported.getProblemStatement()).as("edited problem statement should survive the standalone import").isEqualTo("EDITED PROBLEM STATEMENT");
         assertThat(imported.getExampleSolutionExplanation()).as("edited example solution should survive the standalone import").isEqualTo("EDITED EXAMPLE SOLUTION");
