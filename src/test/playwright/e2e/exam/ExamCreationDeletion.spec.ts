@@ -1,5 +1,5 @@
 import { test } from '../../support/fixtures';
-import { dayjsToString, generateUUID, trimDate } from '../../support/utils';
+import { dayjsToString, generateUUID, readResponseJson, trimDate } from '../../support/utils';
 import dayjs from 'dayjs';
 import { expect } from '@playwright/test';
 import { Exam } from 'app/exam/shared/entities/exam.model';
@@ -44,7 +44,7 @@ test.describe('Exam creation/deletion', { tag: '@fast' }, () => {
 
         const response = await examCreation.submit();
         expect(response.status()).toBe(201);
-        const createdExam: Exam = await response.json();
+        const createdExam: Exam = await readResponseJson(response);
 
         await expect(examManagement.getExamTitle()).toContainText(examData.title);
         await expect(examManagement.getExamVisibleDate()).toContainText(examData.visibleDate.format(dateFormat));
@@ -134,7 +134,7 @@ test.describe('Exam creation/deletion', { tag: '@fast' }, () => {
 
             const response = await examCreation.update();
             expect(response.status()).toBe(200);
-            const editedExam = await response.json();
+            const editedExam = await readResponseJson(response);
 
             expect(editedExam.testExam).toBeFalsy();
             expect(trimDate(editedExam.visibleDate)).toBe(trimDate(dayjsToString(editedExamData.visibleDate)));

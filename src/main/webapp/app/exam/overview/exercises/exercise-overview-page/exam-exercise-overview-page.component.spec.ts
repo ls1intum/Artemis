@@ -16,13 +16,10 @@ import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { DialogService } from 'primeng/dynamicdialog';
 import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
 
 describe('ExamExerciseOverviewPageComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<ExamExerciseOverviewPageComponent>;
     let comp: ExamExerciseOverviewPageComponent;
     let studentExam: StudentExam;

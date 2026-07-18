@@ -82,6 +82,61 @@ public class AsyncConfiguration implements AsyncConfigurer {
         return taskExecutor::execute;
     }
 
+    /**
+     * Executor for asynchronous exercise versioning (see {@code ExerciseVersionService}).
+     * <p>
+     * In production this is a dedicated, bounded thread pool rather than a delegate to the shared {@code taskExecutor}.
+     * Versioning involves potentially slow git access; isolating it in its own pool prevents that slow work from
+     * exhausting the shared pool and starving unrelated {@code @Async} tasks (and vice versa).
+     * <p>
+     * In the {@code test} profile it is a {@link SyncTaskExecutor} so versioning runs on the calling thread. This keeps
+     * the many tests that trigger versioning (directly or through a REST call) deterministic: the exercise version is
+     * created before the test continues, without having to await a background thread.
+     *
+     * @return a synchronous executor under the {@code test} profile, otherwise a dedicated bounded thread pool
+     */
+    @Bean("exerciseVersionTaskExecutor")
+    public Executor exerciseVersionTaskExecutor() {
+        if (environment.acceptsProfiles(Profiles.of(SPRING_PROFILE_TEST))) {
+            return new SyncTaskExecutor();
+        }
+        ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
+        executor.setCorePoolSize(2);
+        executor.setMaxPoolSize(4);
+        executor.setQueueCapacity(taskExecutionProperties.getPool().getQueueCapacity());
+        executor.setThreadNamePrefix("exercise-versioning-");
+        return new ExceptionHandlingAsyncTaskExecutor(executor);
+    }
+
+    /**
+     * Executor for asynchronous quiz statistics updates (see {@code QuizSubmissionService}).
+     * <p>
+     * In production this is a dedicated, single-threaded executor rather than a delegate to the shared
+     * {@code taskExecutor}. It isolates the statistics work from the shared pool and, by using a single worker,
+     * serializes all statistics updates on a node so same-node updates cannot race. The incremental update itself is
+     * the same mechanism used for live and exam quiz submissions. Statistics are only relevant for instructors, so the
+     * student's submission request does not wait for this work.
+     * <p>
+     * In the {@code test} profile it is a {@link SyncTaskExecutor} so the statistics update runs on the calling thread,
+     * keeping tests that assert on quiz statistics deterministic.
+     *
+     * @return a synchronous executor under the {@code test} profile, otherwise a dedicated single-threaded executor
+     */
+    @Bean("quizStatisticsTaskExecutor")
+    public Executor quizStatisticsTaskExecutor() {
+        if (environment.acceptsProfiles(Profiles.of(SPRING_PROFILE_TEST))) {
+            return new SyncTaskExecutor();
+        }
+        ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
+        // Single worker: serializes incremental statistics updates so concurrent updates for the same quiz cannot
+        // overwrite each other's counter changes.
+        executor.setCorePoolSize(1);
+        executor.setMaxPoolSize(1);
+        executor.setQueueCapacity(taskExecutionProperties.getPool().getQueueCapacity());
+        executor.setThreadNamePrefix("quiz-statistics-");
+        return new ExceptionHandlingAsyncTaskExecutor(executor);
+    }
+
     @Override
     public AsyncUncaughtExceptionHandler getAsyncUncaughtExceptionHandler() {
         return new SimpleAsyncUncaughtExceptionHandler();

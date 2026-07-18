@@ -1,5 +1,4 @@
 import { type MockInstance, beforeEach, describe, expect, it, vi, afterEach as vitestAfterEach } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
@@ -138,7 +137,6 @@ const quizExerciseUnreleased: QuizExercise = {
 };
 
 // Single setupTestBed for all tests in this file
-setupTestBed({ zoneless: true });
 
 describe('QuizParticipationComponent - live mode', () => {
     let fixture: ComponentFixture<QuizParticipationComponent>;

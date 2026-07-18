@@ -13,7 +13,8 @@
                     [hideValidationMessage]="true"
                     [shouldDisplayTimeZoneWarning]="false"
                     [pickerType]="DateTimePickerType.CALENDAR"
-                    [value]="fromDateValue()"
+                    [ngModel]="fromDateValue()"
+                    [ngModelOptions]="{ standalone: true }"
                     (valueChange)="updateFromDate(fromPicker.isValid() ? fromPicker.value() : undefined); transition()"
                     data-testid="audits-from-date"
                 />
@@ -28,7 +29,8 @@
                     [hideValidationMessage]="true"
                     [shouldDisplayTimeZoneWarning]="false"
                     [pickerType]="DateTimePickerType.CALENDAR"
-                    [value]="toDateValue()"
+                    [ngModel]="toDateValue()"
+                    [ngModelOptions]="{ standalone: true }"
                     (valueChange)="updateToDate(toPicker.isValid() ? toPicker.value() : undefined); transition()"
                     data-testid="audits-to-date"
                 />

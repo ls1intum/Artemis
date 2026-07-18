@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockProvider } from 'ng-mocks';
@@ -41,8 +40,6 @@ type InformationInternals = ProgrammingExerciseInformationComponent & {
 const internals = (c: ProgrammingExerciseInformationComponent): InformationInternals => c as InformationInternals;
 
 describe('ProgrammingExerciseInformationComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<ProgrammingExerciseInformationComponent>;
     let comp: ProgrammingExerciseInformationComponent;
 

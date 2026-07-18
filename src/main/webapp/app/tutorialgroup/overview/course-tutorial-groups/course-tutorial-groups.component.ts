@@ -19,9 +19,8 @@ import { SessionStorageService } from 'app/foundation/service/session-storage.se
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { LectureService } from 'app/lecture/manage/services/lecture.service';
 import dayjs from 'dayjs/esm';
-import { TutorialGroupApiService } from 'app/openapi/api/tutorialGroupApi.service';
-import { HttpResponse } from '@angular/common/http';
-import { convertTutorialGroupResponseArrayDatesFromServer } from 'app/tutorialgroup/shared/util/convertTutorialGroupEntityDates';
+import { TutorialGroupApi } from 'app/openapi/api/tutorial-group-api';
+import { convertTutorialGroupArrayDatesFromServer } from 'app/tutorialgroup/shared/util/convertTutorialGroupEntityDates';
 
 @Component({
     selector: 'jhi-course-tutorial-groups',
@@ -50,7 +49,7 @@ export class CourseTutorialGroupsComponent {
     private activatedRoute = inject(ActivatedRoute);
     private alertService = inject(AlertService);
     private courseStorageService = inject(CourseStorageService);
-    private tutorialGroupApiService = inject(TutorialGroupApiService);
+    private tutorialGroupApiService = inject(TutorialGroupApi);
     private lectureService = inject(LectureService);
     private courseOverviewService = inject(CourseOverviewService);
     private sessionStorageService = inject(SessionStorageService);
@@ -124,11 +123,10 @@ export class CourseTutorialGroupsComponent {
 
     private loadAndSetTutorialGroups(courseId: number) {
         this.tutorialGroupApiService
-            .getTutorialGroupsForCourse(courseId, 'response')
-            .pipe(map((res: HttpResponse<TutorialGroup[]>) => convertTutorialGroupResponseArrayDatesFromServer(res)))
+            .getTutorialGroupsForCourse(courseId)
+            .pipe(map((tutorialGroups: TutorialGroup[]) => convertTutorialGroupArrayDatesFromServer(tutorialGroups)))
             .subscribe({
-                next: ({ body }) => {
-                    const tutorialGroups = body ?? [];
+                next: (tutorialGroups) => {
                     this.tutorialGroups.set(tutorialGroups);
                     this.updateCachedTutorialGroups(tutorialGroups, courseId);
                 },

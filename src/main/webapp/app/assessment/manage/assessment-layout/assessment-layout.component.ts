@@ -1,4 +1,4 @@
-import { Component, HostBinding, effect, input, model, output } from '@angular/core';
+import { Component, HostBinding, input, model, output } from '@angular/core';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { Complaint, ComplaintType } from 'app/assessment/shared/entities/complaint.model';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -54,22 +54,7 @@ export class AssessmentLayoutComponent {
     readonly onCancel = output();
     readonly nextSubmission = output();
     readonly updateAssessmentAfterComplaint = output<AssessmentAfterComplaint>();
-    readonly highlightDifferencesChange = output<boolean>();
     readonly useAsExampleSubmission = output();
-
-    private highlightDifferencesEffectInitialized = false;
-
-    constructor() {
-        // Emit highlightDifferencesChange when the model changes (skip initial emission)
-        effect(() => {
-            const value = this.highlightDifferences();
-            if (!this.highlightDifferencesEffectInitialized) {
-                this.highlightDifferencesEffectInitialized = true;
-                return;
-            }
-            this.highlightDifferencesChange.emit(value);
-        });
-    }
 
     setAssessmentNoteForResult(assessmentNote: AssessmentNote) {
         const result = this.result();

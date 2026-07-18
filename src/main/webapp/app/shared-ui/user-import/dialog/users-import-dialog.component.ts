@@ -4,7 +4,6 @@ import { AlertService } from 'app/foundation/service/alert.service';
 import { DialogModule } from 'primeng/dialog';
 import { ButtonModule } from 'primeng/button';
 import { TableModule } from 'primeng/table';
-import { HttpResponse } from '@angular/common/http';
 import { ExamUserDTO } from 'app/exam/shared/entities/exam-user-dto.model';
 import { Subject } from 'rxjs';
 import { ActionType } from 'app/shared-ui/delete-dialog/delete-dialog.model';
@@ -22,7 +21,7 @@ import { Student } from 'app/openapi/model/student';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { PrimeTemplate } from 'primeng/api';
 import { readExamUserDTOsFromCSVFile, readStudentDTOsFromCSVFile } from 'app/shared-ui/user-import/util/read-users-from-csv';
-import { TutorialGroupApiService } from 'app/openapi/api/tutorialGroupApi.service';
+import { TutorialGroupApi } from 'app/openapi/api/tutorial-group-api';
 
 @Component({
     selector: 'jhi-users-import-dialog',
@@ -36,7 +35,7 @@ export class UsersImportDialogComponent implements OnDestroy {
     private examManagementService = inject(ExamManagementService);
     private courseManagementService = inject(CourseManagementService);
     private adminUserService = inject(AdminUserService);
-    private tutorialGroupApiService = inject(TutorialGroupApiService);
+    private tutorialGroupApiService = inject(TutorialGroupApi);
 
     readonly ActionType = ActionType;
     readonly dialogVisible = signal<boolean>(false);
@@ -144,9 +143,9 @@ export class UsersImportDialogComponent implements OnDestroy {
         const courseId = this.courseId();
 
         if (tutorialGroup) {
-            this.tutorialGroupApiService.importRegistrations(courseId!, tutorialGroup.id!, this.usersToImport(), 'response').subscribe({
-                next: (res: HttpResponse<Array<Student>>) => {
-                    const convertedStudents = this.convertGeneratedDtoToNonGenerated(res.body || []);
+            this.tutorialGroupApiService.importRegistrations(courseId!, tutorialGroup.id!, this.usersToImport()).subscribe({
+                next: (students: Array<Student>) => {
+                    const convertedStudents = this.convertGeneratedDtoToNonGenerated(students || []);
                     this.onSaveSuccess(convertedStudents);
                 },
                 error: () => this.onSaveError(),

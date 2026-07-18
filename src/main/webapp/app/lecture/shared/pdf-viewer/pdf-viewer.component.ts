@@ -158,7 +158,9 @@ export class PdfViewerComponent {
     // Track the active language as a signal. The impure translate pipe does not re-run on a language switch in an
     // OnPush, zoneless component (no change detection is scheduled), so bindings computed from a signal are used
     // instead to keep translated text such as the search placeholder in sync with the selected language.
-    private readonly currentLanguage = toSignal(this.translateService.onLangChange.pipe(map((event) => event.lang)), { initialValue: this.translateService.getCurrentLang() });
+    private readonly currentLanguage = toSignal(this.translateService.onLangChange.pipe(map((event) => event.lang)), {
+        initialValue: this.translateService.getCurrentLang() ?? 'en',
+    });
     protected readonly searchPlaceholder = computed(() => {
         this.currentLanguage();
         return this.translateService.instant('artemisApp.attachmentVideoUnit.pdfViewer.searchPlaceholder');

@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TutorialGroupFreePeriod } from 'app/tutorialgroup/shared/entities/tutorial-group-free-day.model';
 import { generateExampleTutorialGroupFreePeriod } from 'test/helpers/sample/tutorialgroup/tutorialGroupFreePeriodExampleModel';
@@ -11,8 +10,6 @@ import { TranslateService } from '@ngx-translate/core';
 import { TutorialGroupFreeDaysOverviewComponent } from 'app/tutorialgroup/shared/tutorial-group-free-days-overview/tutorial-group-free-days-overview.component';
 
 describe('TutorialGroupFreeDaysOverviewComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: TutorialGroupFreeDaysOverviewComponent;
     let fixture: ComponentFixture<TutorialGroupFreeDaysOverviewComponent>;
 

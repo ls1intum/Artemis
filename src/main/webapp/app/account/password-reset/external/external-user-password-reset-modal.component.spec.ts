@@ -3,12 +3,9 @@
  */
 import { beforeEach, describe, expect, it } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ExternalUserPasswordResetModalComponent } from 'app/account/password-reset/external/external-user-password-reset-modal.component';
 
 describe('ExternalUserPasswordResetModalComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<ExternalUserPasswordResetModalComponent>;
     let comp: ExternalUserPasswordResetModalComponent;
 
