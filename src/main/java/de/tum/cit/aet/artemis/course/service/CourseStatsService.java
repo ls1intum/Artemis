@@ -346,7 +346,7 @@ public class CourseStatsService {
 
         List<TutorLeaderboardDTO> leaderboardEntries = tutorLeaderboardService.getCourseLeaderboard(course, courseExerciseIdsWithManualAssessments);
         stats.setTutorLeaderboardEntries(leaderboardEntries);
-        stats.setNumberOfRatings(ratingRepository.countByResult_Submission_Participation_Exercise_Course_Id(course.getId()));
+        stats.setNumberOfRatings(ratingRepository.countByResultExerciseIds(courseExerciseIds));
         return stats;
     }
 

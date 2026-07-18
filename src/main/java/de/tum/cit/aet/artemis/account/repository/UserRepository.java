@@ -1634,7 +1634,7 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
                 JOIN p.submissions s
                 JOIN p.student u
             WHERE s.submissionDate >= :activeSince
-                AND LOWER(u.login) NOT LIKE '%test%'
+                AND u.isTestUser = FALSE
             """)
     Set<Long> findActiveUserIdsSince(@Param("activeSince") ZonedDateTime activeSince);
 

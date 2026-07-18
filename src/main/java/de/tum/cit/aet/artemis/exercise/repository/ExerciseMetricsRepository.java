@@ -144,7 +144,11 @@ public interface ExerciseMetricsRepository extends ArtemisJpaRepository<Exercise
      * <p>
      * This query fetches all latest submission dates for the specified set of exercises.
      * It considers all student participations (non-test runs) related to the exercises.
-     * Optimized to use INNER JOINs and StudentParticipation directly for better query performance.
+     * <p>
+     * We navigate the base {@code Submission.participation} association (a plain join) and restrict to the student
+     * participation subtypes via {@code TYPE(p) IN (...)}. This avoids the discriminator derived-table subselect that
+     * Hibernate emits for an ad-hoc {@code JOIN StudentParticipation p ON ...}, while still excluding template/solution
+     * programming participations, so the result is unchanged.
      *
      * @param exerciseIds the ids of the exercises for which to fetch the latest submission dates
      * @return a set of ResourceTimestampDTO objects containing the exercise id and the latest submission date for each exercise
@@ -152,10 +156,11 @@ public interface ExerciseMetricsRepository extends ArtemisJpaRepository<Exercise
     @Query("""
             SELECT new de.tum.cit.aet.artemis.atlas.dto.metrics.ResourceTimestampDTO(p.exercise.id, MAX(s.submissionDate), p.id)
             FROM Submission s
-                JOIN StudentParticipation p ON s.participation.id = p.id
+                JOIN s.participation p
             WHERE p.exercise.id IN :exerciseIds
                 AND s.submitted = TRUE
                 AND p.testRun = FALSE
+                AND TYPE(p) IN (StudentParticipation, ProgrammingExerciseStudentParticipation)
             GROUP BY p.exercise.id, p.id
             """)
     Set<ResourceTimestampDTO> findLatestSubmissionDates(@Param("exerciseIds") Set<Long> exerciseIds);

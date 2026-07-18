@@ -17,6 +17,8 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.account.util.UserUtilService;
 import de.tum.cit.aet.artemis.admin.domain.GraphType;
 import de.tum.cit.aet.artemis.admin.domain.PersistentAuditEvent;
@@ -41,6 +43,9 @@ class StatisticsRepositoryTest extends AbstractSpringIntegrationIndependentTest 
 
     @Autowired
     private UserUtilService userUtilService;
+
+    @Autowired
+    private UserTestRepository userTestRepository;
 
     private ZonedDateTime startDate;
 
@@ -94,6 +99,32 @@ class StatisticsRepositoryTest extends AbstractSpringIntegrationIndependentTest 
 
         assertThat(entryList).as("Result has 2 entries for two time slots").hasSize(2);
         assertThat(entryList).as("Result contains the entry for 19.11.21").anyMatch((entry) -> compareStatisticsEntries(entry, entry191121));
+
+        persistenceAuditEventRepository.deleteAll();
+    }
+
+    /**
+     * Tests that users flagged as test users (isTestUser = true) are excluded from the logged-in users statistics,
+     * which replaced the previous "login NOT LIKE '%test%'" heuristic.
+     */
+    @Test
+    void testLoggedInUsersExcludesTestUsers() {
+        SecurityUtils.setAuthorizationObject();
+        var endDate = ZonedDateTime.of(2021, 11, 21, 23, 59, 59, 0, startDate.getZone());
+        userUtilService.addUsers(TEST_PREFIX, 2, 0, 0, 0);
+        // Mark student2 as a test user: it must be excluded from the statistics, even though its login does not contain "test".
+        User testUser = userTestRepository.findOneByLogin(TEST_PREFIX + "student2").orElseThrow();
+        testUser.setTestUser(true);
+        userTestRepository.save(testUser);
+        // Both students "log in" on the same day; only the non-test student1 must be counted.
+        persistenceAuditEventRepository.saveAll(List.of(setupPersistentEvent(TEST_PREFIX + "student1", startDate), setupPersistentEvent(TEST_PREFIX + "student2", startDate)));
+
+        List<StatisticsEntry> entryList = statisticsRepository.getNumberOfEntriesPerTimeSlot(GraphType.LOGGED_IN_USERS, SpanType.WEEK, startDate, endDate, StatisticsView.ARTEMIS,
+                null);
+
+        StatisticsEntry expected = new StatisticsEntry(startDate, 1);
+        assertThat(entryList).as("only the non-test user is counted for the slot").anyMatch((entry) -> compareStatisticsEntries(entry, expected));
+        assertThat(entryList).as("no slot counts the excluded test user").allSatisfy((entry) -> assertThat(entry.getAmount()).isEqualTo(1));
 
         persistenceAuditEventRepository.deleteAll();
     }
