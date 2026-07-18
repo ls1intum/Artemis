@@ -37,7 +37,7 @@ radius**, minted only when actually needed, and stored in the existing
 - Not touching the git authentication/authorization code paths (they already handle a
   repository-scoped token for any URI — see §5).
 - **No code-button / clone-dialog change in this concept.** This concept delivers the
-  backend *capability* (mint a scoped student-repo token) plus the overview/revoke UI.
+  server-side *capability* (mint a scoped student-repo token) plus the overview/revoke UI.
   Wiring the clone dialog to actually *use* a scoped token when staff clone a student repo
   (today it uses the broad personal token) is a **deliberate follow-up** — see §8. Once it
   lands, staff clone dialogs mint/use the scoped token and inherit the same get-or-create
@@ -217,7 +217,7 @@ Extend the existing `GET`/`PUT api/programming/repository-vcs-access-token`:
 **Primary follow-up (separate concept/PR):** wire the **clone dialog (code button)** to mint
 and use a `USER` scoped token when a staff member clones a **student** repo, instead of the
 broad personal token. This is what makes the capability user-facing end-to-end; it was
-deliberately kept out of this concept. The backend mint endpoint (§5.2) is designed so this
+deliberately kept out of this concept. The server-side mint endpoint (§5.2) is designed so this
 follow-up is a thin client change (call get-or-create with `participationId`, embed the
 returned token) mirroring the base-repo path already in the code button.
 
