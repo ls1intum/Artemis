@@ -228,6 +228,19 @@ describe('TumUiDatePickerComponent', () => {
         expect(component.value()?.format('HH:mm')).toBe('08:30');
     });
 
+    it('steps ArrowUp from the uncommitted typed field value, not the committed value', () => {
+        // Regression: typing "10" over "08" and pressing ArrowUp before blur (no change event yet) must
+        // step from the typed 10 (-> 11), preserving the edit, not from the committed 08 (-> 09).
+        fixture.componentRef.setInput('value', dayjs('2026-06-13T08:30'));
+        fixture.detectChanges();
+        openPanel();
+        const hour = timeField('tum-ui-date-picker-hour');
+        hour.value = '10'; // typed but not yet committed (no 'change' dispatched)
+        hour.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowUp' }));
+        expect(component.value()?.format('HH:mm')).toBe('11:30');
+        expect(hour.value).toBe('11');
+    });
+
     it('selects a day from the calendar overlay', () => {
         fixture.debugElement.query(By.css('[data-testid="tum-ui-date-picker-trigger"]')).nativeElement.click();
         fixture.detectChanges();

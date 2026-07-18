@@ -240,17 +240,27 @@ export class TumUiDatePickerComponent implements FormValueControl<dayjs.Dayjs | 
         input.value = this.displayMinute();
     }
 
-    /** ArrowUp / ArrowDown on a spinner field nudge it like the buttons (native-time / PrimeNG parity). */
-    protected onTimeKeydown(event: KeyboardEvent, field: 'hour' | 'minute'): void {
+    /**
+     * ArrowUp / ArrowDown on a spinner field nudge it by one (native-time / PrimeNG parity). It steps from the
+     * text **currently in the field** — which may be an uncommitted typed edit that has not fired `change` yet —
+     * not from the last committed `timeText()`. So typing `10` over `08` and pressing ArrowUp before blur yields
+     * `11` (not `09`), preserving the edit; an unparseable/empty field falls back to the committed value.
+     */
+    protected onTimeKeydown(event: KeyboardEvent, input: HTMLInputElement, field: 'hour' | 'minute'): void {
         const delta = event.key === 'ArrowUp' ? 1 : event.key === 'ArrowDown' ? -1 : 0;
         if (delta === 0) {
             return;
         }
         event.preventDefault();
+        const { hour, minute } = this.currentTimeParts();
         if (field === 'hour') {
-            this.stepHour(delta);
+            const base = this.parseTimePart(input.value, 23) ?? hour;
+            this.commitTime((base + delta + 24) % 24, minute);
+            input.value = this.displayHour();
         } else {
-            this.stepMinute(delta);
+            const base = this.parseTimePart(input.value, 59) ?? minute;
+            this.commitTime(hour, (base + delta + 60) % 60);
+            input.value = this.displayMinute();
         }
     }
 
