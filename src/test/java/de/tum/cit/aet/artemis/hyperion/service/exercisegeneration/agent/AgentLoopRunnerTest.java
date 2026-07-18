@@ -50,7 +50,7 @@ class AgentLoopRunnerTest {
     }
 
     /** In-memory fake sandbox: write/read operate on a map, bash is a no-op success. Lets us assert the agent's tool calls deterministically. */
-    private static final class FakeSandbox implements InteractiveSandbox {
+    private static class FakeSandbox implements InteractiveSandbox {
 
         private final Map<String, String> files = new HashMap<>();
 
@@ -113,6 +113,28 @@ class AgentLoopRunnerTest {
 
         assertThat(result.status()).isEqualTo(AgentLoopResult.Status.COMPLETED);
         assertThat(result.finalMessage()).isEqualTo("DONE");
+    }
+
+    @Test
+    void agentLoopFailsImmediatelyWhenATimedOutCommandTerminatesTheSandbox() {
+        ChatModel chatModel = mock(ChatModel.class);
+        when(chatModel.call(any(Prompt.class))).thenReturn(toolCallResponse("bash", "{\"command\":\"sleep 999\"}"), textResponse("must not be called"));
+        FakeSandbox sandbox = new FakeSandbox() {
+
+            @Override
+            public SandboxExecResult exec(String sessionId, Duration timeout, String... command) {
+                return new SandboxExecResult(-1, "", "", true);
+            }
+        };
+        List<String> steps = new ArrayList<>();
+
+        Object tools = new FileChangeEmittingAgentTools(new SandboxAgentTools(sandbox, "fake-session"), ignored -> {
+        });
+        AgentLoopResult result = newTestRunner(List.of(chatModel), 128_000).run("system", "do it", tools, 10, () -> false, null, steps::add);
+
+        assertThat(result.status()).isEqualTo(AgentLoopResult.Status.ERROR);
+        verify(chatModel, times(1)).call(any(Prompt.class));
+        assertThat(steps).contains("The build environment stopped responding.");
     }
 
     @Test

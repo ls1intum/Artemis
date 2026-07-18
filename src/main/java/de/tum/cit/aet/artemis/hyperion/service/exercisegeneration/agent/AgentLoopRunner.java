@@ -32,6 +32,8 @@ import org.springframework.ai.tool.method.MethodToolCallbackProvider;
 
 import com.knuddels.jtokkit.api.EncodingType;
 
+import de.tum.cit.aet.artemis.localci.exception.LocalCIException;
+
 /**
  * Drives the Spring AI tool-calling loop for agentic exercise generation: repeatedly calls the model, executes the requested tools, and feeds the results back until the model
  * stops, the turn budget is reached, cancellation is requested, or an error occurs. A manual loop is required because Spring AI's automatic tool execution has no iteration cap and
@@ -290,9 +292,18 @@ public class AgentLoopRunner {
             ToolExecutionResult toolExecutionResult;
             try {
                 toolExecutionResult = toolCallingManager.executeToolCalls(prompt, response);
+                if (isSandboxSessionTerminated(tools)) {
+                    emit(stepListener, "The build environment stopped responding.");
+                    return new AgentLoopResult(AgentLoopResult.Status.ERROR, turn, lastAssistantText);
+                }
                 consecutiveToolFailures = 0;
             }
             catch (RuntimeException e) {
+                if (hasCause(e, LocalCIException.class)) {
+                    log.warn("Agent loop lost its sandbox on turn {}", turn, e);
+                    emit(stepListener, "The build environment stopped responding.");
+                    return new AgentLoopResult(AgentLoopResult.Status.ERROR, turn, lastAssistantText);
+                }
                 // Unknown tool / malformed arguments surface here: feed the error back so the model can self-correct, only giving up after MAX_CONSECUTIVE_TOOL_FAILURES.
                 consecutiveToolFailures++;
                 log.warn("Agent loop tool execution failed on turn {} (consecutive failures: {})", turn, consecutiveToolFailures, e);
@@ -334,6 +345,23 @@ public class AgentLoopRunner {
 
         emit(stepListener, "The generation step limit was reached.");
         return new AgentLoopResult(AgentLoopResult.Status.BUDGET_EXHAUSTED, maxTurns, lastAssistantText);
+    }
+
+    private static boolean hasCause(Throwable failure, Class<? extends Throwable> type) {
+        for (Throwable current = failure; current != null; current = current.getCause()) {
+            if (type.isInstance(current)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static boolean isSandboxSessionTerminated(Object tools) {
+        return switch (tools) {
+            case SandboxAgentTools sandboxTools -> sandboxTools.isSandboxSessionTerminated();
+            case FileChangeEmittingAgentTools emittingTools -> emittingTools.isSandboxSessionTerminated();
+            default -> false;
+        };
     }
 
     /**

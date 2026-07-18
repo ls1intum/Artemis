@@ -17,6 +17,7 @@ import de.tum.cit.aet.artemis.buildagent.service.InteractiveSandbox;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.AgentVerifyReport;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.DifferentialVerificationService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.ExerciseIntegrityGate;
+import de.tum.cit.aet.artemis.localci.exception.LocalCIException;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 
 /**
@@ -74,6 +75,8 @@ public class SandboxAgentTools {
 
     /** Per-command spill-file counter; unsynchronized is safe — the agent loop calls the tools serially within a session and each session has its own instance and container. */
     private int bashSequence = 0;
+
+    private boolean sandboxSessionTerminated;
 
     /**
      * @param sandbox   the sandbox session the tools operate on
@@ -241,11 +244,14 @@ public class SandboxAgentTools {
                 + "printf '__HYP_META__ rc=%s bytes=%s lines=%s\\n' \"$rc\" \"$bytes\" \"$lines\"\n" + "tail -c " + BASH_TAIL_BYTES + " \"$LOG\"\n";
         SandboxExecResult result = sandbox.exec(sessionId, BASH_TIMEOUT, "sh", "-c", script);
         if (result.timedOut()) {
-            // The wrapper never reached the meta/tail step, so nothing is on the wire; the partial output is in the spill file.
-            return "exit=timeout (the command exceeded its time budget)\n[Partial output was written in the sandbox to " + logPath + " — read it with: tail -n 200 " + logPath
-                    + "]";
+            sandboxSessionTerminated = true;
+            throw new LocalCIException("Sandbox command timed out and the sandbox session was terminated");
         }
         return composeBashOutput(result, logPath);
+    }
+
+    boolean isSandboxSessionTerminated() {
+        return sandboxSessionTerminated;
     }
 
     /**

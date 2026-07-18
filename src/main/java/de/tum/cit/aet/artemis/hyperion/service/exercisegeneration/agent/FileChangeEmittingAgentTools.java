@@ -114,6 +114,10 @@ public class FileChangeEmittingAgentTools implements TurnAware {
         return delegate.submit(summary);
     }
 
+    boolean isSandboxSessionTerminated() {
+        return delegate.isSandboxSessionTerminated();
+    }
+
     private void emit(String path, String action) {
         try {
             changeSink.accept(ExerciseGenerationFileChangeDTO.of(path, action, currentTurn));
