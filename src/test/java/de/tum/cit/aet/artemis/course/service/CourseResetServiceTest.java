@@ -12,9 +12,21 @@ import de.tum.cit.aet.artemis.account.util.UserUtilService;
 import de.tum.cit.aet.artemis.admin.domain.LLMServiceType;
 import de.tum.cit.aet.artemis.admin.domain.LLMTokenUsageRequest;
 import de.tum.cit.aet.artemis.admin.domain.LLMTokenUsageTrace;
+import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
+import de.tum.cit.aet.artemis.communication.test_repository.ConversationParticipantTestRepository;
+import de.tum.cit.aet.artemis.communication.util.ConversationUtilService;
+import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
 import de.tum.cit.aet.artemis.core.test_repository.LLMTokenUsageRequestTestRepository;
 import de.tum.cit.aet.artemis.core.test_repository.LLMTokenUsageTraceTestRepository;
 import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.exam.domain.Exam;
+import de.tum.cit.aet.artemis.exam.repository.ExamUserRepository;
+import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
+import de.tum.cit.aet.artemis.exercise.domain.Exercise;
+import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
+import de.tum.cit.aet.artemis.exercise.repository.ExerciseTestRepository;
+import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
@@ -42,6 +54,30 @@ class CourseResetServiceTest extends AbstractSpringIntegrationIndependentTest {
 
     @Autowired
     private ProgrammingExerciseUtilService programmingExerciseUtilService;
+
+    @Autowired
+    private ExamUtilService examUtilService;
+
+    @Autowired
+    private ExamUserRepository examUserRepository;
+
+    @Autowired
+    private ConversationUtilService conversationUtilService;
+
+    @Autowired
+    private ConversationParticipantTestRepository conversationParticipantRepository;
+
+    @Autowired
+    private ParticipationUtilService participationUtilService;
+
+    @Autowired
+    private StudentParticipationTestRepository studentParticipationRepository;
+
+    @Autowired
+    private CourseTestRepository courseRepository;
+
+    @Autowired
+    private ExerciseTestRepository exerciseRepository;
 
     private Course course;
 
@@ -115,5 +151,41 @@ class CourseResetServiceTest extends AbstractSpringIntegrationIndependentTest {
 
         assertThat(llmTokenUsageRequestTestRepository.findAllByTraceCourseId(course.getId())).isEmpty();
         assertThat(llmTokenUsageTraceTestRepository.findAllByCourseId(course.getId())).isEmpty();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testResetDeletesExamUsersAndConversationParticipantsButKeepsCourseAndInstructor() {
+        Exercise exercise = course.getExercises().iterator().next();
+        long courseId = course.getId();
+        long exerciseId = exercise.getId();
+
+        // Student data that must be deleted by the reset.
+        StudentParticipation participation = participationUtilService.createAndSaveParticipationForExercise(exercise, TEST_PREFIX + "student1");
+        Exam exam = examUtilService.registerUsersForExamAndSaveExam(examUtilService.addExam(course), TEST_PREFIX, 1); // registers student1 as an exam user
+        long examId = exam.getId();
+        Channel channel = conversationUtilService.createCourseWideChannel(course, TEST_PREFIX + "channel");
+        conversationUtilService.addParticipantToConversation(channel, TEST_PREFIX + "student1");
+
+        // Everything is present before the reset.
+        assertThat(examUserRepository.countByExamId(examId)).isEqualTo(1);
+        assertThat(conversationParticipantRepository.findConversationParticipantByConversationIdAndUserId(channel.getId(), student.getId())).isPresent();
+        assertThat(studentParticipationRepository.findById(participation.getId())).isPresent();
+        // The instructor is enrolled via the course instructor group before the reset.
+        assertThat(userUtilService.getUserByLogin(TEST_PREFIX + "instructor1").getGroups()).contains(course.getInstructorGroupName());
+
+        courseResetService.resetStudentData(courseId);
+
+        // Exam users (identity/seating data, and their signature/photo files) and conversation participants (channel
+        // membership) are deleted, and the student's participation is gone.
+        assertThat(examUserRepository.countByExamId(examId)).isZero();
+        assertThat(conversationParticipantRepository.findConversationParticipantByConversationIdAndUserId(channel.getId(), student.getId())).isEmpty();
+        assertThat(studentParticipationRepository.findById(participation.getId())).isEmpty();
+
+        // The course material survives: the course, its exercise, the exam and the channel structure remain, and the
+        // instructor keeps access (instructors are never unenrolled by a reset).
+        assertThat(courseRepository.findById(courseId)).isPresent();
+        assertThat(exerciseRepository.findById(exerciseId)).isPresent();
+        assertThat(userUtilService.getUserByLogin(TEST_PREFIX + "instructor1").getGroups()).contains(course.getInstructorGroupName());
     }
 }
