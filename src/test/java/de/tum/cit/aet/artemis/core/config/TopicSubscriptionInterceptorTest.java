@@ -173,4 +173,30 @@ class TopicSubscriptionInterceptorTest extends AbstractSpringIntegrationIndepend
             assertThat(interceptor.preSend(message, channel)).isEqualTo(message);
         }
     }
+
+    @Test
+    void testAllowOnlyParticipationOwnersToSendTeamMessages() {
+        String prefix = "wsteamsend";
+        userUtilService.addUsers(prefix, 2, 1, 1, 1);
+        var course = courseUtilService.createCourseWithAllExerciseTypesAndParticipationsAndSubmissionsAndResults(prefix, false);
+        var participation = course.getExercises().stream().findFirst().orElseThrow().getStudentParticipations().stream().findFirst().orElseThrow();
+
+        var interceptor = websocketConfiguration.new TopicSubscriptionInterceptor();
+        var message = (Message<String>) mock(Message.class);
+        try (var ignored = mockStatic(StompHeaderAccessor.class)) {
+            var headerAccessor = mock(StompHeaderAccessor.class);
+            when(StompHeaderAccessor.wrap(message)).thenReturn(headerAccessor);
+            when(headerAccessor.getCommand()).thenReturn(StompCommand.SEND);
+            when(headerAccessor.getDestination()).thenReturn("/topic/participations/" + participation.getId() + "/team/modeling-submissions/update");
+            var principal = mock(Principal.class);
+            when(headerAccessor.getUser()).thenReturn(principal);
+            var channel = mock(MessageChannel.class);
+
+            when(principal.getName()).thenReturn(prefix + "student1");
+            assertThat(interceptor.preSend(message, channel)).isEqualTo(message);
+
+            when(principal.getName()).thenReturn(prefix + "student2");
+            assertThat(interceptor.preSend(message, channel)).isNull();
+        }
+    }
 }

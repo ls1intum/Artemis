@@ -77,18 +77,23 @@ run_playwright() {
 
 echo "=== Running Playwright Tests ==="
 
+# Hyperion runs in its own Playwright process. Reuse the existing sequential report channel so its
+# Monocart coverage remains part of merge-coverage-reports.mjs without adding another merge path.
 if [ ${#TEST_PATHS[@]} -gt 0 ]; then
     echo "Running filtered tests: ${TEST_PATHS[*]}"
 
-    # Run fast/slow tests plus the isolated one-worker Hyperion project.
+    # Filtered paths may belong to only one process, so empty selections are expected.
     echo "--- Running parallel tests ---"
-    run_playwright parallel --project=fast-tests --project=slow-tests --project=hyperion-tests "${TEST_PATHS[@]}"
+    run_playwright parallel --project=fast-tests --project=slow-tests --pass-with-no-tests "${TEST_PATHS[@]}"
+    echo "--- Running Hyperion tests ---"
+    run_playwright sequential --project=hyperion-tests --pass-with-no-tests "${TEST_PATHS[@]}"
 else
     echo "Running all tests"
 
-    # Run fast/slow tests plus the isolated one-worker Hyperion project.
     echo "--- Running parallel tests ---"
-    run_playwright parallel e2e --project=fast-tests --project=slow-tests --project=hyperion-tests
+    run_playwright parallel e2e --project=fast-tests --project=slow-tests
+    echo "--- Running Hyperion tests ---"
+    run_playwright sequential e2e --project=hyperion-tests
 fi
 
 # Run the @multi-node project only when the surrounding stack opts in via env var. The multi-node
@@ -137,18 +142,20 @@ echo "E2E counts: ${E2E_PASSED} passed, ${E2E_FLAKY} flaky, ${E2E_FAILED} failed
 # moving the real report into place, so CI never consumes an outdated report.
 echo "--- Finalizing test reports ---"
 rm -f ./test-reports/results.xml
-if [ -f ./test-reports/results-parallel.xml ] && [ -f ./test-reports/results-multinode.xml ]; then
-    if ! pnpm exec junit-merge ./test-reports/results-parallel.xml ./test-reports/results-multinode.xml -o ./test-reports/results.xml; then
+JUNIT_REPORTS=()
+for report in \
+    ./test-reports/results-parallel.xml \
+    ./test-reports/results-sequential.xml \
+    ./test-reports/results-multinode.xml; do
+    [ -f "$report" ] && JUNIT_REPORTS+=("$report")
+done
+if [ ${#JUNIT_REPORTS[@]} -gt 1 ]; then
+    if ! pnpm exec junit-merge "${JUNIT_REPORTS[@]}" -o ./test-reports/results.xml; then
         echo "ERROR: Failed to merge Playwright JUnit reports."
         FAILED=1
     fi
-elif [ -f ./test-reports/results-parallel.xml ]; then
-    if ! mv ./test-reports/results-parallel.xml ./test-reports/results.xml; then
-        echo "ERROR: Failed to finalize the Playwright JUnit report."
-        FAILED=1
-    fi
-elif [ -f ./test-reports/results-multinode.xml ]; then
-    if ! mv ./test-reports/results-multinode.xml ./test-reports/results.xml; then
+elif [ ${#JUNIT_REPORTS[@]} -eq 1 ]; then
+    if ! mv "${JUNIT_REPORTS[0]}" ./test-reports/results.xml; then
         echo "ERROR: Failed to finalize the Playwright JUnit report."
         FAILED=1
     fi

@@ -429,9 +429,8 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
         }
 
         /**
-         * Clients may publish directly to exercise synchronization topics because the broker relays those messages to other editors. All other application destinations retain
-         * their
-         * existing Spring Security handling, while direct publication to any other broker topic is rejected.
+         * Clients may publish directly to collaboration topics after the same authorization checks used for subscriptions. Application destinations retain their existing Spring
+         * Security handling, while direct publication to any other broker topic is rejected.
          */
         private boolean allowSend(@Nullable Principal principal, @Nullable String destination) {
             if (destination == null || !destination.startsWith("/topic/")) {
@@ -439,6 +438,10 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
             }
             if (principal == null) {
                 return false;
+            }
+
+            if (isParticipationTeamDestination(destination)) {
+                return isParticipationOwnedByUser(principal, getParticipationIdFromDestination(destination));
             }
 
             return getExerciseIdFromSynchronizationDestination(destination).map(exerciseId -> authorizationCheckService.isAtLeastEditorInExercise(principal.getName(), exerciseId))

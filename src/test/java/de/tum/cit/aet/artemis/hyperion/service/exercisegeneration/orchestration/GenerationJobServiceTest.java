@@ -4,8 +4,13 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.awaitility.Awaitility.await;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 
 import java.time.Duration;
@@ -623,6 +628,25 @@ class GenerationJobServiceTest {
     }
 
     @Test
+    void clearStaleJobs_ownerDepartedWithFreshHeartbeat_marksTranscriptDoneAndReleasesSlot() {
+        long exerciseId = 226L;
+        ProgrammingExercise exercise = exercise(exerciseId);
+        User owner = user("owner");
+        String jobId = jobService.startJob(owner, exercise, "go", GenerationMode.GENERATE);
+        jobService.recordEvent(exerciseId, jobId, progress("still running"), false);
+        forceJobOwner(exerciseId, "departed-node");
+
+        jobService.clearStaleJobs();
+
+        assertThat(jobService.getStatus(owner, exercise)).hasValueSatisfying(status -> {
+            assertThat(status.running()).isFalse();
+            assertThat(status.events().getLast().type()).isEqualTo(ExerciseGenerationEventDTO.Type.ERROR);
+        });
+        assertThat(jobService.hasActiveJob(exerciseId)).isFalse();
+        assertThat(jobService.startJob(owner, exercise, "retry", GenerationMode.GENERATE)).isNotBlank();
+    }
+
+    @Test
     void staleHeartbeatWithLiveOwner_cancelsButRetainsTheSlotUntilTheWorkerDrains() {
         long exerciseId = 225L;
         ProgrammingExercise exercise = exercise(exerciseId);
@@ -923,6 +947,42 @@ class GenerationJobServiceTest {
 
         fail.set(false);
         assertThat(service.startJob(owner, exercise, "retry", GenerationMode.GENERATE)).isNotBlank();
+    }
+
+    @Test
+    void startJob_whenTranscriptInitializationFails_releasesSlotAndAllowsRetry() {
+        long exerciseId = 82L;
+        String key = String.valueOf(exerciseId);
+        IMap<String, GenerationJobService.JobTranscript> originalTranscriptMap = transcriptMap();
+        IMap<String, GenerationJobService.JobTranscript> failingTranscriptMap = spy(originalTranscriptMap);
+        doThrow(new IllegalStateException("transcript initialization failed")).when(failingTranscriptMap).set(eq(key), any(GenerationJobService.JobTranscript.class), anyLong(),
+                eq(TimeUnit.SECONDS));
+        ReflectionTestUtils.setField(jobService, "transcriptMap", failingTranscriptMap);
+
+        assertThatExceptionOfType(IllegalStateException.class).isThrownBy(() -> jobService.startJob(user("owner"), exercise(exerciseId), "go", GenerationMode.GENERATE))
+                .withMessageContaining("transcript initialization failed");
+
+        ReflectionTestUtils.setField(jobService, "transcriptMap", originalTranscriptMap);
+        assertThat(jobService.hasActiveJob(exerciseId)).isFalse();
+        assertThat(jobService.startJob(user("owner"), exercise(exerciseId), "retry", GenerationMode.GENERATE)).isNotBlank();
+    }
+
+    @Test
+    void startJob_whenFileChangeInitializationFails_releasesSlotAndAllowsRetry() {
+        long exerciseId = 83L;
+        String key = String.valueOf(exerciseId);
+        IMap<String, GenerationJobService.JobFileChangeIndex> originalFileChangeMap = fileChangeMap();
+        IMap<String, GenerationJobService.JobFileChangeIndex> failingFileChangeMap = spy(originalFileChangeMap);
+        doThrow(new IllegalStateException("file-change initialization failed")).when(failingFileChangeMap).set(eq(key), any(GenerationJobService.JobFileChangeIndex.class),
+                anyLong(), eq(TimeUnit.SECONDS));
+        ReflectionTestUtils.setField(jobService, "fileChangeMap", failingFileChangeMap);
+
+        assertThatExceptionOfType(IllegalStateException.class).isThrownBy(() -> jobService.startJob(user("owner"), exercise(exerciseId), "go", GenerationMode.GENERATE))
+                .withMessageContaining("file-change initialization failed");
+
+        ReflectionTestUtils.setField(jobService, "fileChangeMap", originalFileChangeMap);
+        assertThat(jobService.hasActiveJob(exerciseId)).isFalse();
+        assertThat(jobService.startJob(user("owner"), exercise(exerciseId), "retry", GenerationMode.GENERATE)).isNotBlank();
     }
 
     @Test

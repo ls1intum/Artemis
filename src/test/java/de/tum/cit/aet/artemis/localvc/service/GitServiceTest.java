@@ -30,13 +30,13 @@ class GitServiceTest {
             Path marker = source.getRepository().getWorkTree().toPath().resolve("branch.txt");
             FileUtils.writeStringToFile(marker.toFile(), "main", StandardCharsets.UTF_8);
             source.add().addFilepattern("branch.txt").call();
-            source.commit().setMessage("Add main marker").setAuthor("Artemis", "artemis@example.com").setSign(false).call();
+            GitService.commit(source).setMessage("Add main marker").setAuthor("Artemis", "artemis@example.com").call();
             source.push().setRemote(bareRepositoryPath.toUri().toString()).setRefSpecs(new RefSpec("refs/heads/main:refs/heads/main")).call();
 
             source.checkout().setCreateBranch(true).setName("release").call();
             FileUtils.writeStringToFile(marker.toFile(), "release", StandardCharsets.UTF_8);
             source.add().addFilepattern("branch.txt").call();
-            source.commit().setMessage("Add release marker").setAuthor("Artemis", "artemis@example.com").setSign(false).call();
+            GitService.commit(source).setMessage("Add release marker").setAuthor("Artemis", "artemis@example.com").call();
             source.push().setRemote(bareRepositoryPath.toUri().toString()).setRefSpecs(new RefSpec("refs/heads/release:refs/heads/release")).call();
         }
 

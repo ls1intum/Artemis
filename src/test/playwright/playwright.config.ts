@@ -126,6 +126,7 @@ export default defineConfig({
             grepInvert: /@multi-node/,
             fullyParallel: false,
             workers: 1,
+            retries: 0,
             timeout: (parseNumber(process.env.SLOW_TEST_TIMEOUT_SECONDS) ?? 90) * 1000,
             use: {
                 browserName: 'chromium',

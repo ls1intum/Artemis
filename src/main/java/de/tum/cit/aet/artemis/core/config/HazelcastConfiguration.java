@@ -67,6 +67,7 @@ import com.hazelcast.core.Hazelcast;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.map.IMap;
 import com.hazelcast.spi.properties.ClusterProperty;
+import com.hazelcast.splitbrainprotection.SplitBrainProtectionOn;
 import com.hazelcast.spring.cache.HazelcastCacheManager;
 import com.hazelcast.spring.context.SpringManagedContext;
 import com.zaxxer.hikari.HikariDataSource;
@@ -168,6 +169,8 @@ import io.micrometer.core.instrument.binder.cache.HazelcastCacheMetrics;
 public class HazelcastConfiguration {
 
     private static final Logger log = LoggerFactory.getLogger(HazelcastConfiguration.class);
+
+    private static final String ARTEMIS_SPLIT_BRAIN_PROTECTION_NAME = "artemis-split-brain-protection";
 
     private final ServerProperties serverProperties;
 
@@ -530,6 +533,7 @@ public class HazelcastConfiguration {
         config.setInstanceName(instanceName);
         config.setClusterName("test-cluster-" + UUID.randomUUID());
 
+        configureSplitBrainProtection(config, false);
         configureCacheMaps(config, artemisProperties);
         config.getSerializationConfig().addSerializerConfig(createPathSerializerConfig());
 
@@ -627,7 +631,7 @@ public class HazelcastConfiguration {
 
         configureNetworkBindingAndDiscovery(config);
         configureCacheMaps(config, artemisProperties);
-        configureSplitBrainProtection(config);
+        configureSplitBrainProtection(config, true);
         configureClusterStabilitySettings(config);
         configureLocalCIQueueIfNeeded(config, artemisProperties);
         configureLiteMemberIfBuildAgent(config);
@@ -937,13 +941,15 @@ public class HazelcastConfiguration {
      * A single-node partition becomes read-only, which is acceptable for Artemis where data
      * consistency is more important than availability during network issues.
      *
-     * @param config the Hazelcast configuration to modify
+     * @param config  the Hazelcast configuration to modify
+     * @param enabled whether to enforce the protection; isolated single-member test instances register it disabled so protected maps use the same static configuration
      */
-    private void configureSplitBrainProtection(Config config) {
+    private void configureSplitBrainProtection(Config config, boolean enabled) {
         var splitBrainConfig = new SplitBrainProtectionConfig();
-        splitBrainConfig.setName("artemis-split-brain-protection");
-        splitBrainConfig.setEnabled(true);
+        splitBrainConfig.setName(ARTEMIS_SPLIT_BRAIN_PROTECTION_NAME);
+        splitBrainConfig.setEnabled(enabled);
         splitBrainConfig.setMinimumClusterSize(2);
+        splitBrainConfig.setProtectOn(SplitBrainProtectionOn.READ_WRITE);
 
         config.setSplitBrainProtectionConfigs(new ConcurrentHashMap<>());
         config.addSplitBrainProtectionConfig(splitBrainConfig);
@@ -1343,6 +1349,7 @@ public class HazelcastConfiguration {
      * <li><strong>atlas-session-preview-history:</strong> Atlas preview history for incremental updates</li>
      * <li><strong>atlas-content-change-accumulator:</strong> Per-course debounce buckets that drive the automatic competency orchestrator</li>
      * <li><strong>nodeMetrics:</strong> Per-node metrics snapshots (TTL 60s, no backups) for the multi-node admin metrics page</li>
+     * <li><strong>Hyperion coordination maps:</strong> Generation ownership, cancellation, budget, recovery, provider cooldown, progress, and sandbox handoff state</li>
      * </ul>
      *
      * @param config            the Hazelcast configuration to modify
@@ -1373,9 +1380,24 @@ public class HazelcastConfiguration {
         config.getMapConfigs().put("atlas-content-change-accumulator",
                 new MapConfig().setBackupCount(artemisProperties.getCache().getHazelcast().getBackupCount()).setTimeToLiveSeconds(48 * 60 * 60));
         config.getMapConfigs().put("iris-dashboard-schedule-state", new MapConfig().setBackupCount(artemisProperties.getCache().getHazelcast().getBackupCount()));
-        // Hyperion multi-node relay copy payloads (up to 32MB tar blobs) staged off the request/response topics. One synchronous backup keeps an in-flight handoff readable if its
-        // partition owner dies. The sender normally removes each entry; the TTL reclaims entries orphaned by a core-node crash.
-        config.getMapConfigs().put("hyperion-sandbox-payloads", new MapConfig().setBackupCount(1).setTimeToLiveSeconds(15 * 60));
+
+        // Hyperion uses these maps for cross-node ownership and coordination. A synchronous backup preserves state after one member failure. READ_WRITE split-brain protection
+        // rejects operations on an isolated member instead of allowing divergent ownership, admission, cancellation, recovery, or handoff state.
+        config.getMapConfigs().put("hyperion-provider-failure-cooldowns", createHyperionCorrectnessMapConfig());
+        config.getMapConfigs().put("hyperion-exercise-generation-jobs", createHyperionCorrectnessMapConfig());
+        config.getMapConfigs().put("hyperion-exercise-generation-cancellations", createHyperionCorrectnessMapConfig());
+        config.getMapConfigs().put("hyperion-exercise-generation-transcripts", createHyperionCorrectnessMapConfig());
+        config.getMapConfigs().put("hyperion-exercise-generation-file-changes", createHyperionCorrectnessMapConfig());
+        config.getMapConfigs().put("hyperion-generation-token-budget-reservations", createHyperionCorrectnessMapConfig());
+        config.getMapConfigs().put("hyperion-exercise-generation-baselines", createHyperionCorrectnessMapConfig());
+
+        // Multi-node relay copy payloads (up to 32MB tar blobs) are staged off the request/response topics. The sender normally removes each entry; the TTL reclaims entries
+        // orphaned by a core-node crash.
+        config.getMapConfigs().put("hyperion-sandbox-payloads", createHyperionCorrectnessMapConfig().setTimeToLiveSeconds(15 * 60));
+    }
+
+    private MapConfig createHyperionCorrectnessMapConfig() {
+        return new MapConfig().setBackupCount(1).setSplitBrainProtectionName(ARTEMIS_SPLIT_BRAIN_PROTECTION_NAME);
     }
 
     /**

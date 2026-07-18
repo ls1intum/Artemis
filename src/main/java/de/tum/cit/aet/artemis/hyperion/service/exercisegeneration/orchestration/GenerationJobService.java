@@ -189,16 +189,18 @@ public class GenerationJobService {
         Instant deadlineAt = deadlineAt(startedAt);
         JobInfo newJob = new JobInfo(jobId, user.getLogin(), exercise.getId(), startedAt, deadlineAt, localNodeId, startedAt, true, budgetReservationId);
         claimSlot(key, newJob, "Exercise generation is already running for this exercise", "exerciseGenerationRunning");
-        // Fresh transcript and fileChange store for this run. Keep the previous replay state until the async event is accepted; if publishing fails synchronously, rollback
-        // restores
-        // the prior terminal replay instead of leaving the status endpoint empty.
-        JobTranscript previousTranscript = transcriptMap.get(key);
-        JobFileChangeIndex previousFileChangeIndex = fileChangeMap.get(key);
         JobTranscript transcript = new JobTranscript(jobId, user.getLogin(), exercise.getId(), mode, new ArrayList<>(), false);
-        transcriptMap.set(key, transcript, JOB_TTL_SECONDS, TimeUnit.SECONDS);
         JobFileChangeIndex fileChangeIndex = new JobFileChangeIndex(jobId, user.getLogin(), new ArrayList<>());
-        fileChangeMap.set(key, fileChangeIndex, JOB_TTL_SECONDS, TimeUnit.SECONDS);
+        JobTranscript previousTranscript = null;
+        JobFileChangeIndex previousFileChangeIndex = null;
+        // Fresh transcript and fileChange store for this run. Keep the previous replay state until the async event is accepted; if publishing fails synchronously, rollback
+        // restores the prior terminal replay instead of leaving the status endpoint empty. State initialization is inside the rollback boundary as well: once the slot is claimed,
+        // no distributed-map failure may leave it wedged.
         try {
+            previousTranscript = transcriptMap.get(key);
+            previousFileChangeIndex = fileChangeMap.get(key);
+            transcriptMap.set(key, transcript, JOB_TTL_SECONDS, TimeUnit.SECONDS);
+            fileChangeMap.set(key, fileChangeIndex, JOB_TTL_SECONDS, TimeUnit.SECONDS);
             eventPublisher.publishEvent(
                     new GenerationStartedEvent(jobId, user, exercise, userPrompt, mode, exercise.getProblemStatement(), exercise.getTitle(), deadlineAt, budgetReservationId));
         }
@@ -807,7 +809,7 @@ public class GenerationJobService {
         }
     }
 
-    /** Cancels stale jobs whose owner or execution deadline has expired. */
+    /** Cancels stale jobs and terminalizes jobs whose owner has left the Hazelcast cluster. */
     @Scheduled(fixedDelayString = "${artemis.hyperion.agent.stale-job-scan-ms:60000}")
     public void clearStaleJobs() {
         Instant now = Instant.now();
@@ -894,7 +896,7 @@ public class GenerationJobService {
     }
 
     private boolean shouldClearAsStale(JobInfo job, @Nullable Instant staleBefore) {
-        return staleBefore != null && !job.lastHeartbeatOrStartedAt().isAfter(staleBefore);
+        return (staleBefore != null && !job.lastHeartbeatOrStartedAt().isAfter(staleBefore)) || !ownerMemberIsPresent(job);
     }
 
     private String stoppedMessage(JobInfo job, Instant now) {
