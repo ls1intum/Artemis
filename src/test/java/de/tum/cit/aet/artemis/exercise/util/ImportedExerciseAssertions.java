@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.exercise.util;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
+import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
@@ -39,8 +40,13 @@ public final class ImportedExerciseAssertions {
 
         // Grading criteria are deep-copied: assert the count and titles match, but the entities must be new (different ids).
         assertThat(imported.getGradingCriteria()).as("grading criteria count preserved").hasSameSizeAs(source.getGradingCriteria());
-        assertThat(imported.getGradingCriteria().stream().map(criterion -> criterion.getTitle()).toList()).as("grading criteria titles preserved")
-                .containsExactlyInAnyOrderElementsOf(source.getGradingCriteria().stream().map(criterion -> criterion.getTitle()).toList());
+        assertThat(imported.getGradingCriteria().stream().map(GradingCriterion::getTitle).toList()).as("grading criteria titles preserved")
+                .containsExactlyInAnyOrderElementsOf(source.getGradingCriteria().stream().map(GradingCriterion::getTitle).toList());
+        // Deep copy: the imported criteria must be fresh entities, so none of their ids may reuse a source id.
+        if (!source.getGradingCriteria().isEmpty()) {
+            assertThat(imported.getGradingCriteria().stream().map(GradingCriterion::getId).toList()).as("grading criteria are new entities")
+                    .doesNotContainAnyElementsOf(source.getGradingCriteria().stream().map(GradingCriterion::getId).toList());
+        }
 
         // File upload exercises are always manually assessed; every other type preserves the source assessment type.
         if (imported instanceof FileUploadExercise) {

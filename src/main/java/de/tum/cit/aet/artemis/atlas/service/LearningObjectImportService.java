@@ -305,6 +305,9 @@ public class LearningObjectImportService {
         newExercise.setMaxPoints(sourceExercise.getMaxPoints());
         newExercise.setBonusPoints(sourceExercise.getBonusPoints());
         newExercise.setIncludedInOverallScore(sourceExercise.getIncludedInOverallScore());
+        // mode also has a non-null default, so the import service's backfill cannot recover it; copy it explicitly so a
+        // TEAM source is not silently imported as INDIVIDUAL (the import service then copies the team config).
+        newExercise.setMode(sourceExercise.getMode());
         // Competency import replicates the source dates (they are optionally shifted afterwards, relative to the new
         // reference date), unlike the other import paths that intentionally reset dates. The import service keeps the
         // dates already present on newExercise, so copy them from the source here.
