@@ -245,7 +245,7 @@ class ScheduledDataCleanupTest extends AbstractSpringIntegrationIndependentTest 
 
     private User backdatedNotEnrolledUser(String login) {
         User user = userUtilService.createAndSaveUser(login);
-        userRepository.updateLastModifiedDate(user.getId(), ZonedDateTime.now().minusYears(1).toInstant());
+        userRepository.updateLastLoginDate(user.getLogin(), ZonedDateTime.now().minusYears(1).toInstant());
         return user;
     }
 }

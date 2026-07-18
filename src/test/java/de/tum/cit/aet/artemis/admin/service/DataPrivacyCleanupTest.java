@@ -311,17 +311,17 @@ class DataPrivacyCleanupTest extends AbstractSpringIntegrationIndependentTest {
         courseRepository.save(course);
     }
 
-    private User notEnrolledUser(String login, Instant lastModifiedDate) {
+    private User notEnrolledUser(String login, Instant lastLoginDate) {
         User user = userUtilService.createAndSaveUser(login);
-        userRepository.updateLastModifiedDate(user.getId(), lastModifiedDate);
+        userRepository.updateLastLoginDate(user.getLogin(), lastLoginDate);
         return user;
     }
 
-    private User enrolledUser(String login, Instant lastModifiedDate) {
+    private User enrolledUser(String login, Instant lastLoginDate) {
         User user = userUtilService.createAndSaveUser(login);
         user.setGroups(Set.of(TEST_PREFIX + "-enrolled-group"));
         user = userRepository.save(user);
-        userRepository.updateLastModifiedDate(user.getId(), lastModifiedDate);
+        userRepository.updateLastLoginDate(user.getLogin(), lastLoginDate);
         return user;
     }
 }

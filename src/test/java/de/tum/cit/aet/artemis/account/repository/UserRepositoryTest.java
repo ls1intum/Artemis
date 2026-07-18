@@ -77,11 +77,11 @@ class UserRepositoryTest extends AbstractSpringIntegrationIndependentTest {
      * already deleted), so a broken clause makes the corresponding assertion fail.
      */
     @Test
-    void testFindAllNotEnrolledUsersModifiedBefore() {
+    void testFindAllNotEnrolledUsersInactiveBefore() {
         final Instant cutoff = ZonedDateTime.now().minusMonths(6).toInstant();
         final Instant longAgo = ZonedDateTime.now().minusYears(1).toInstant();
 
-        // Selected: not enrolled (no groups), no admin authority, inactive (modified > 6 months ago), not deleted.
+        // Selected: not enrolled (no groups), no admin authority, inactive (last login > 6 months ago), not deleted.
         User inactiveNotEnrolled = createUser(TEST_PREFIX + "nedel", Set.of(), Set.of(), false, longAgo);
 
         // Must survive — each violates exactly one guard:
@@ -91,7 +91,7 @@ class UserRepositoryTest extends AbstractSpringIntegrationIndependentTest {
         User superAdminInactive = createUser(TEST_PREFIX + "nesuper", Set.of(), Set.of(Authority.SUPER_ADMIN_AUTHORITY), false, longAgo); // super admin -> keep
         User deletedInactive = createUser(TEST_PREFIX + "nedeleted", Set.of(), Set.of(), true, longAgo); // already deleted -> keep
 
-        final List<String> actual = userRepository.findAllNotEnrolledUsersModifiedBefore(cutoff);
+        final List<String> actual = userRepository.findAllNotEnrolledUsersInactiveBefore(cutoff);
 
         assertThat(actual).contains(inactiveNotEnrolled.getLogin());
         assertThat(actual).doesNotContain(recentNotEnrolled.getLogin(), enrolledInactive.getLogin(), adminInactive.getLogin(), superAdminInactive.getLogin(),
@@ -100,15 +100,15 @@ class UserRepositoryTest extends AbstractSpringIntegrationIndependentTest {
 
     /**
      * Creates a not-enrolled-user-cleanup test fixture: a saved user with the given groups/authorities/deleted flag and a
-     * backdated last modification date (set via a bulk update so auditing does not overwrite it).
+     * backdated last login date (set via a bulk update so it is the effective activity signal).
      */
-    private User createUser(String login, Set<String> groups, Set<Authority> authorities, boolean deleted, Instant lastModifiedDate) {
+    private User createUser(String login, Set<String> groups, Set<Authority> authorities, boolean deleted, Instant lastLoginDate) {
         User user = userUtilService.createAndSaveUser(login);
         user.setGroups(groups);
         user.setAuthorities(authorities);
         user.setDeleted(deleted);
         user = userRepository.save(user);
-        userRepository.updateLastModifiedDate(user.getId(), lastModifiedDate);
+        userRepository.updateLastLoginDate(user.getLogin(), lastLoginDate);
         return user;
     }
 

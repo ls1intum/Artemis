@@ -2,7 +2,6 @@ package de.tum.cit.aet.artemis.account.test_repository;
 
 import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
 
-import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -14,11 +13,9 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
-import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
-import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
@@ -29,23 +26,6 @@ import de.tum.cit.aet.artemis.account.repository.UserRepository;
 public interface UserTestRepository extends UserRepository {
 
     Set<User> findAllByGroupsNotEmpty();
-
-    /**
-     * Test-only: force a user's last modification date to a fixed value, bypassing Spring Data auditing (which would
-     * otherwise overwrite it with "now" on save). Used to simulate an inactive account for the data-privacy
-     * not-enrolled-user cleanup, whose inactivity guard is measured against {@code lastModifiedDate}.
-     *
-     * @param userId           the id of the user to update
-     * @param lastModifiedDate the last modification date to set
-     */
-    @Modifying
-    @Transactional // ok because test-only bulk update
-    @Query("""
-            UPDATE User user
-            SET user.lastModifiedDate = :lastModifiedDate
-            WHERE user.id = :userId
-            """)
-    void updateLastModifiedDate(@Param("userId") long userId, @Param("lastModifiedDate") Instant lastModifiedDate);
 
     @EntityGraph(type = LOAD, attributePaths = { "groups", "authorities" })
     Set<User> findAllWithGroupsAndAuthoritiesByDeletedIsFalse();

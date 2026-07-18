@@ -882,25 +882,44 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
     List<String> findAllNotEnrolledUsers();
 
     /**
-     * Get all logins of users that are not enrolled in any course and have not been modified since the given cutoff,
+     * Get all logins of users that are not enrolled in any course and have been inactive since the given cutoff,
      * excluding administrators (which are normally not enrolled in any course). Used by the data-privacy cleanup to avoid
-     * deleting freshly-created accounts that simply have not been added to a course group yet. Users with no last
-     * modification date are not returned.
+     * deleting freshly-created accounts that simply have not been added to a course group yet.
+     * <p>
+     * Inactivity is measured by {@code COALESCE(lastLoginDate, createdDate)}: the last actual login, or (for accounts
+     * that never logged in, e.g. those created but never used) the creation date. This is a real activity signal, unlike
+     * {@code lastModifiedDate}, which is bumped by any write to the user row (e.g. group synchronization).
      *
-     * @param modifiedBefore only users whose last modification date is strictly before this are returned
+     * @param inactiveBefore only users whose last activity is strictly before this are returned
      * @return all logins of not enrolled, inactive users as a sorted list (not admins)
      */
     @Query("""
             SELECT user.login
             FROM User user
             WHERE user.groups IS EMPTY AND NOT user.deleted
-                AND user.lastModifiedDate IS NOT NULL
-                AND user.lastModifiedDate < :modifiedBefore
+                AND COALESCE(user.lastLoginDate, user.createdDate) < :inactiveBefore
                 AND NOT :#{T(de.tum.cit.aet.artemis.account.domain.Authority).ADMIN_AUTHORITY} MEMBER OF user.authorities
                 AND NOT :#{T(de.tum.cit.aet.artemis.account.domain.Authority).SUPER_ADMIN_AUTHORITY} MEMBER OF user.authorities
             ORDER BY user.login
             """)
-    List<String> findAllNotEnrolledUsersModifiedBefore(@Param("modifiedBefore") Instant modifiedBefore);
+    List<String> findAllNotEnrolledUsersInactiveBefore(@Param("inactiveBefore") Instant inactiveBefore);
+
+    /**
+     * Records a user's last login. Set on every successful authentication (see {@code CustomAuditEventRepository}) and
+     * used as the activity signal for the data-privacy not-enrolled-user cleanup.
+     *
+     * @param login         the login of the user who just authenticated
+     * @param lastLoginDate the login timestamp to store
+     * @return the number of updated rows (0 if no user with that login exists)
+     */
+    @Modifying
+    @Transactional // ok because of modifying query
+    @Query("""
+            UPDATE User user
+            SET user.lastLoginDate = :lastLoginDate
+            WHERE user.login = :login
+            """)
+    int updateLastLoginDate(@Param("login") String login, @Param("lastLoginDate") Instant lastLoginDate);
 
     /**
      * Get all managed users

@@ -444,17 +444,16 @@ public class DataCleanupService {
     /**
      * Resolves the logins of users enrolled in no course and inactive beyond the configured guard period.
      * <p>
-     * NOTE: inactivity is approximated by {@code User.lastModifiedDate} because Artemis has no dedicated last-login /
-     * last-activity field. This is only a reliable "active" signal in deployments where authentication updates the user
-     * row (e.g. internal auth). In setups where login does not write the user (some LDAP/SAML group-sync setups), a
-     * regularly-logging-in but course-less user could still be selected. The operation is admin-only and has a
-     * count-preview endpoint, so an admin can review the affected users before confirming the (irreversible) soft delete.
+     * Inactivity is measured by the user's last login (falling back to the creation date for accounts that never logged
+     * in), a real activity signal rather than {@code lastModifiedDate} (which is bumped by any write to the user row,
+     * e.g. group synchronization). The operation is admin-only and has a count-preview endpoint, so an admin can review
+     * the affected users before confirming the (irreversible) soft delete.
      *
      * @return the logins to soft-delete, excluding the Iris bot (admins/super-admins are already excluded by the query)
      */
     private List<String> notEnrolledUserLogins() {
-        var modifiedBefore = ZonedDateTime.now().minusMonths(dataCleanupProperties.notEnrolledUsersInactivityMonths()).toInstant();
-        return userRepository.findAllNotEnrolledUsersModifiedBefore(modifiedBefore).stream().filter(login -> !User.IRIS_BOT_LOGIN.equals(login)).toList();
+        var inactiveBefore = ZonedDateTime.now().minusMonths(dataCleanupProperties.notEnrolledUsersInactivityMonths()).toInstant();
+        return userRepository.findAllNotEnrolledUsersInactiveBefore(inactiveBefore).stream().filter(login -> !User.IRIS_BOT_LOGIN.equals(login)).toList();
     }
 
     private OldCoursesCleanupCountDTO toOldCoursesCleanupCountDTO(List<Course> courses) {
