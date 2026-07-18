@@ -43,34 +43,6 @@ enum ProblemStatementSyncOrigin {
 }
 
 /**
- * Fixed Yjs client id used only for the single local "seed" transaction that inserts fallback
- * content into a freshly created Y.Doc when no peer answers the initial full-content request.
- *
- * Why this matters: two editors joining at nearly the same moment can both time out and
- * independently seed identical fallback content. If each used its own random `doc.clientID` (the
- * Yjs default), the resulting Y.Text items would be structurally distinct even though the
- * content is byte-identical — any later incremental edit that positions itself relative to the
- * seed item (as its left/right origin) could then never be integrated into the other peer's
- * document, so the two documents would diverge permanently (see
- * https://docs.yjs.dev/api/document-updates: merging requires shared history).
- *
- * Temporarily switching to this well-known constant for the seed transaction only (then
- * restoring the document's real client id, see `seedFallbackContent`) makes two independently
- * seeded documents produce a byte-identical Y.Text item for the same fallback string. Merging one
- * into the other is then a no-op for the seed, and any subsequent edits from either peer resolve
- * their positions correctly because they share that common ancestor item.
- *
- * Yjs itself defends against an accidental real collision with this reserved id: if a remote
- * update ever touches the clock for the local doc's current `clientID`, Yjs detects the clash and
- * regenerates a fresh random client id for the document (see yjs `Transaction.js`
- * `cleanupTransactions`), so briefly borrowing a fixed id here is safe.
- *
- * Exported so tests can construct a peer Y.Doc that mimics a real seed exactly (see
- * problem-statement-sync.service.spec.ts).
- */
-export const DETERMINISTIC_SEED_CLIENT_ID = 1;
-
-/**
  * Manages Yjs-based collaborative real-time synchronization for problem statement editing.
  *
  * This service is provided at the root level (singleton). It supports only one active exercise
@@ -91,6 +63,8 @@ export class ProblemStatementSyncService {
     private awareness?: Awareness;
     private awaitingInitialSync = false;
     private localLeaderTimestamp = Date.now();
+    private activeLeaderTimestamp = Date.now();
+    private activeLeaderSessionId?: string;
     private fallbackInitialContent = '';
     private latestInitialSyncRequestId?: string;
     private queuedFullContentRequests: string[] = [];
@@ -108,14 +82,10 @@ export class ProblemStatementSyncService {
     };
 
     /**
-     * Stream that would emit replacement Yjs primitives if the local Y.Doc were ever swapped out
-     * for a different one after initial sync.
+     * Stream emitting replacement Yjs primitives when a late winning leader response is accepted.
      *
-     * As of the state-vector reconciliation fix, this no longer happens: a late-arriving full
-     * state is always merged into the existing doc via `Y.applyUpdate` (see `handleSyncResponse`)
-     * instead of replacing it, so consumers never need to rebind. The observable is kept so that
-     * existing subscribers (e.g. Monaco bindings) continue to compile unchanged; it currently
-     * never emits.
+     * Consumers (e.g. Monaco bindings) must rebind to the emitted `text` and `awareness`
+     * instances, because they belong to a freshly created Y.Doc.
      */
     get stateReplaced$(): Observable<ProblemStatementSyncState> {
         return this.stateReplacedSubject.asObservable();
@@ -152,6 +122,7 @@ export class ProblemStatementSyncService {
         this.reset();
         this.exerciseId = exerciseId;
         this.localLeaderTimestamp = Date.now();
+        this.activeLeaderTimestamp = this.localLeaderTimestamp;
         this.fallbackInitialContent = initialContent ?? '';
         this.awaitingInitialSync = true;
         this.incomingMessageSubscription = this.syncService.subscribeToUpdates().subscribe((message) => this.handleRemoteMessage(message));
@@ -188,6 +159,7 @@ export class ProblemStatementSyncService {
         this.awaitingInitialSync = false;
         this.fallbackInitialContent = '';
         this.latestInitialSyncRequestId = undefined;
+        this.activeLeaderSessionId = undefined;
         this.queuedFullContentRequests = [];
         clearRemoteSelectionStyles();
     }
@@ -211,8 +183,7 @@ export class ProblemStatementSyncService {
         this.syncService.sendSynchronizationUpdate(this.exerciseId, requestEvent);
         // 500ms collection window for initial sync responses. This balances responsiveness with
         // giving peers enough time to respond. On slow networks, late responses are still handled
-        // correctly by merging them into the local doc in handleSyncResponse() — Yjs updates are
-        // commutative and idempotent, so this never discards local edits made in the meantime.
+        // correctly via replaceDocumentWithRemoteState(), though this causes a visible rebinding.
         this.pendingInitialSync.timeoutId = setTimeout(() => this.finalizeInitialSync(), 500);
     }
 
@@ -230,10 +201,8 @@ export class ProblemStatementSyncService {
             return;
         }
         const update = Y.encodeStateAsUpdate(this.yDoc);
-        // localLeaderTimestamp is informational only: it lets peers pick a deterministic winner
-        // among several responses collected within their own collection window (see
-        // finalizeInitialSync()). It no longer gates whether a late response is accepted, because
-        // late responses are always merged (see handleSyncResponse()).
+        // Intentionally send localLeaderTimestamp (not activeLeaderTimestamp) to avoid
+        // impersonating another client's leader authority when forwarding adopted state.
         const responseEvent: ProblemStatementSyncFullContentResponseEvent = {
             eventType: ExerciseEditorSyncEventType.PROBLEM_STATEMENT_SYNC_FULL_CONTENT_RESPONSE,
             target: ExerciseEditorSyncTarget.PROBLEM_STATEMENT,
@@ -330,22 +299,8 @@ export class ProblemStatementSyncService {
     }
 
     /**
-     * Track full-content responses for the initial leader selection while a request is still
-     * pending, or merge a late-arriving response into the already-finalized local doc.
-     *
-     * Responses collected while `pendingInitialSync` exists are evaluated on timeout to pick the
-     * earliest leader (see `finalizeInitialSync()`); this is a bootstrap-time optimization to
-     * avoid seeding when a peer answer is imminent, not a correctness requirement.
-     *
-     * A response that arrives after this client already finalized (e.g. on a slow network) is
-     * always merged into the local doc via `Y.applyUpdate`, never used to replace or reject it.
-     * Yjs updates are commutative and idempotent, so merging can only add state the local doc
-     * doesn't already have — it can never wipe local edits made since finalization. This also
-     * fixes the case where two editors joined near-simultaneously, both timed out, and
-     * independently seeded identical fallback content: because that seed now uses a deterministic
-     * client id (see `DETERMINISTIC_SEED_CLIENT_ID`), their seed items are structurally identical,
-     * so merging a peer's full state is a no-op for the shared seed and correctly integrates any
-     * edits the peer made on top of it.
+     * Track full-content responses for the initial leader selection.
+     * Responses are evaluated on timeout to pick the earliest leader.
      *
      * @param message The incoming full-content response.
      */
@@ -360,11 +315,11 @@ export class ProblemStatementSyncService {
         if (message.responseTo !== this.latestInitialSyncRequestId) {
             return;
         }
-        if (!this.yDoc) {
+        if (!this.shouldReplaceWithRemoteLeader(message.leaderTimestamp, message.sessionId)) {
             return;
         }
         const update = decodeBase64ToUint8Array(message.yjsUpdate);
-        Y.applyUpdate(this.yDoc, update, ProblemStatementSyncOrigin.Remote);
+        this.replaceDocumentWithRemoteState(update, message.leaderTimestamp, message.sessionId);
     }
 
     /**
@@ -413,8 +368,14 @@ export class ProblemStatementSyncService {
             if (this.yDoc) {
                 Y.applyUpdate(this.yDoc, update, ProblemStatementSyncOrigin.Remote);
             }
+            this.activeLeaderTimestamp = selected.leaderTimestamp;
+            this.activeLeaderSessionId = selected.sessionId;
         } else if (this.fallbackInitialContent && this.yDoc && this.yText) {
-            this.seedFallbackContent(this.yDoc, this.yText, this.fallbackInitialContent);
+            this.yDoc.transact(() => {
+                this.yText?.insert(0, this.fallbackInitialContent);
+            }, ProblemStatementSyncOrigin.Seed);
+            this.activeLeaderTimestamp = this.localLeaderTimestamp;
+            this.activeLeaderSessionId = this.syncService.sessionId;
         }
         if (this.pendingInitialSync.bufferedUpdates.length && this.yDoc) {
             this.pendingInitialSync.bufferedUpdates.forEach((update) => {
@@ -424,8 +385,7 @@ export class ProblemStatementSyncService {
         // scenario for high network latency
         // we must send queued full-content responses after the seed update has been sent
         // because even tho we sent the "seed" update, remote might have initialized with their own seed already
-        // this ensures remote will merge our seed into theirs (a no-op if both seeded identical
-        // fallback content, since the seed uses a deterministic client id — see seedFallbackContent())
+        // this ensures that remote will replace their seed with our seed
         this.flushQueuedFullContentRequests();
         const finalContent = this.yText?.toJSON() ?? '';
         const contentChangedDuringFinalize = textBeforeFinalize !== finalContent;
@@ -516,23 +476,52 @@ export class ProblemStatementSyncService {
     }
 
     /**
-     * Seed a freshly created Y.Doc with fallback content using a deterministic client id.
+     * Determine if a remote leader should replace the active local leader.
      *
-     * See {@link DETERMINISTIC_SEED_CLIENT_ID} for why this matters: it ensures two peers who
-     * both time out and seed the same fallback string end up with structurally identical (not
-     * just visually identical) Y.Text state, so their histories share a common ancestor and later
-     * merges (see `handleSyncResponse`) converge instead of diverging permanently.
+     * Lower leader timestamp wins deterministically. In case of timestamp collision,
+     * lexicographically smaller sessionId wins as a tie-breaker.
      *
-     * @param doc The Y.Doc to seed.
-     * @param text The shared Y.Text belonging to `doc`.
-     * @param content The fallback content to insert.
+     * @param remoteLeaderTimestamp Timestamp carried by the remote full-content response.
+     * @param remoteSessionId Session ID of the remote leader.
+     * @returns True when the remote leader has precedence.
      */
-    private seedFallbackContent(doc: Y.Doc, text: Y.Text, content: string): void {
-        const realClientId = doc.clientID;
-        doc.clientID = DETERMINISTIC_SEED_CLIENT_ID;
-        doc.transact(() => {
-            text.insert(0, content);
-        }, ProblemStatementSyncOrigin.Seed);
-        doc.clientID = realClientId;
+    private shouldReplaceWithRemoteLeader(remoteLeaderTimestamp: number, remoteSessionId?: string): boolean {
+        if (remoteLeaderTimestamp < this.activeLeaderTimestamp) {
+            return true;
+        }
+        if (remoteLeaderTimestamp > this.activeLeaderTimestamp) {
+            return false;
+        }
+        // Tie-breaker: lexicographically smaller sessionId wins for determinism
+        return (remoteSessionId ?? '') < (this.activeLeaderSessionId ?? '');
+    }
+
+    /**
+     * Replace current Yjs primitives with a full state received from a winning remote leader.
+     *
+     * This path handles late full-content responses that arrive after local initialization
+     * has timed out, but are still relevant to the latest request and have a better leader.
+     *
+     * It creates a new Y.Doc, applies the remote snapshot, emits `stateReplaced$` so editor
+     * bindings can reattach to the new doc, and finally destroys the previous doc.
+     *
+     * @param update Encoded full Yjs state to apply.
+     * @param leaderTimestamp Leader timestamp of the selected remote response.
+     * @param sessionId Session ID of the selected remote response.
+     */
+    private replaceDocumentWithRemoteState(update: Uint8Array, leaderTimestamp: number, sessionId?: string) {
+        const oldDoc = this.yDoc;
+        this.initializeYjsDocument();
+        if (!this.yDoc) {
+            return;
+        }
+        Y.applyUpdate(this.yDoc, update, ProblemStatementSyncOrigin.Remote);
+        this.activeLeaderTimestamp = leaderTimestamp;
+        this.activeLeaderSessionId = sessionId;
+        this.awaitingInitialSync = false;
+        this.pendingInitialSync = undefined;
+        clearRemoteSelectionStyles();
+        this.stateReplacedSubject.next({ doc: this.yDoc, text: this.yText!, awareness: this.awareness! });
+        oldDoc?.destroy();
     }
 }

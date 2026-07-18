@@ -43,35 +43,6 @@ enum FileSyncOrigin {
 }
 
 /**
- * Fixed Yjs client id used only for the single local "seed" transaction that inserts fallback
- * content into a freshly created per-file Y.Doc when no peer answers the initial full-content
- * request.
- *
- * Why this matters: two editors opening the same file at nearly the same moment can both time
- * out and independently seed identical fallback content. If each used its own random
- * `doc.clientID` (the Yjs default), the resulting Y.Text items would be structurally distinct
- * even though the content is byte-identical — any later incremental edit that positions itself
- * relative to the seed item (as its left/right origin) could then never be integrated into the
- * other peer's document, so the two documents would diverge permanently (see
- * https://docs.yjs.dev/api/document-updates: merging requires shared history).
- *
- * Temporarily switching to this well-known constant for the seed transaction only (then
- * restoring the document's real client id, see `seedFallbackContent`) makes two independently
- * seeded documents produce a byte-identical Y.Text item for the same fallback string. Merging one
- * into the other is then a no-op for the seed, and any subsequent edits from either peer resolve
- * their positions correctly because they share that common ancestor item.
- *
- * Yjs itself defends against an accidental real collision with this reserved id: if a remote
- * update ever touches the clock for the local doc's current `clientID`, Yjs detects the clash and
- * regenerates a fresh random client id for the document (see yjs `Transaction.js`
- * `cleanupTransactions`), so briefly borrowing a fixed id here is safe.
- *
- * Exported so tests can construct a peer Y.Doc that mimics a real seed exactly (see
- * code-editor-file-sync.service.spec.ts).
- */
-export const DETERMINISTIC_SEED_CLIENT_ID = 1;
-
-/**
  * Delay in milliseconds before finalizing initial sync.
  * Allows time for peers to respond with their full content state.
  */
@@ -95,6 +66,8 @@ type FileSyncEntry = {
     awareness: Awareness;
     awaitingInitialSync: boolean;
     localLeaderTimestamp: number;
+    activeLeaderTimestamp: number;
+    activeLeaderSessionId?: string;
     latestRequestId?: string;
     fallbackInitialContent: string;
     queuedFullContentRequests: string[];
@@ -153,14 +126,9 @@ export class CodeEditorFileSyncService {
     }
 
     /**
-     * Stream that would emit replacement Yjs primitives if a file's Y.Doc were ever swapped out
-     * for a different one after initial sync.
-     *
-     * As of the state-vector reconciliation fix, this no longer happens: a late-arriving full
-     * state is always merged into the existing per-file doc via `Y.applyUpdate` (see
-     * `handleSyncResponse`) instead of replacing it, so consumers never need to rebind. The
-     * observable is kept so that existing subscribers (e.g. Monaco bindings) continue to compile
-     * unchanged; it currently never emits.
+     * Stream emitting replacement Yjs primitives when a late-winning leader response is accepted
+     * for a specific file. Consumers (e.g. Monaco bindings) must rebind when their active file
+     * is replaced.
      */
     get stateReplaced$(): Observable<{ filePath: string } & FileSyncState> {
         return this.stateReplacedSubject.asObservable();
@@ -226,10 +194,6 @@ export class CodeEditorFileSyncService {
         clearRemoteSelectionStyles();
     }
 
-    /**
-     * Suppresses commit warnings while this editor deliberately refreshes repositories changed by
-     * an accepted server-side operation such as Hyperion generation.
-     */
     beginExpectedRepositoryUpdate(operationCompletedAt?: number): void {
         this.expectedRepositoryUpdate = true;
         this.expectedRepositoryUpdateCompletedAt = operationCompletedAt;
@@ -283,6 +247,7 @@ export class CodeEditorFileSyncService {
             awareness,
             awaitingInitialSync: true,
             localLeaderTimestamp: now,
+            activeLeaderTimestamp: now,
             fallbackInitialContent: initialContent ?? '',
             queuedFullContentRequests: [],
         };
@@ -561,25 +526,6 @@ export class CodeEditorFileSyncService {
         this.respondWithFullContent(entry, entry.filePath, requestId);
     }
 
-    /**
-     * Track full-content responses for the initial leader selection while a request is still
-     * pending for this file, or merge a late-arriving response into the already-finalized entry.
-     *
-     * Responses collected while `entry.pendingInitialSync` exists are evaluated on timeout to
-     * pick the earliest leader (see `finalizeInitialSync()`); this is a bootstrap-time
-     * optimization to avoid seeding when a peer answer is imminent, not a correctness
-     * requirement.
-     *
-     * A response that arrives after this file's entry already finalized (e.g. on a slow network)
-     * is always merged into the entry's doc via `Y.applyUpdate`, never used to replace or reject
-     * it. Yjs updates are commutative and idempotent, so merging can only add state the local doc
-     * doesn't already have — it can never wipe local edits made since finalization. This also
-     * fixes the case where two editors open the same file near-simultaneously, both time out, and
-     * independently seed identical fallback content: because that seed now uses a deterministic
-     * client id (see `DETERMINISTIC_SEED_CLIENT_ID`), their seed items are structurally identical,
-     * so merging a peer's full state is a no-op for the shared seed and correctly integrates any
-     * edits the peer made on top of it.
-     */
     private handleSyncResponse(message: FileSyncFullContentResponseEvent): void {
         const entry = this.getEntryByFilePath(message.filePath);
         if (!entry) {
@@ -595,8 +541,14 @@ export class CodeEditorFileSyncService {
         if (message.responseTo !== entry.latestRequestId) {
             return;
         }
+        if (!this.shouldReplaceWithRemoteLeader(entry, message.leaderTimestamp, message.sessionId)) {
+            return;
+        }
         const update = decodeBase64ToUint8Array(message.yjsUpdate);
-        Y.applyUpdate(entry.doc, update, FileSyncOrigin.Remote);
+        // Use entry.filePath (not message.filePath) so the replacement doc is stored under the
+        // current key. message.filePath may be the pre-rename path if the message was delivered
+        // via the recentRenames redirect chain.
+        this.replaceDocumentWithRemoteState(entry, entry.filePath, update, message.leaderTimestamp, message.sessionId);
     }
 
     /**
@@ -630,8 +582,14 @@ export class CodeEditorFileSyncService {
             });
             const update = decodeBase64ToUint8Array(selected.yjsUpdate);
             Y.applyUpdate(entry.doc, update, FileSyncOrigin.Remote);
+            entry.activeLeaderTimestamp = selected.leaderTimestamp;
+            entry.activeLeaderSessionId = selected.sessionId;
         } else if (entry.fallbackInitialContent.length > 0) {
-            this.seedFallbackContent(entry.doc, entry.text, entry.fallbackInitialContent);
+            entry.doc.transact(() => {
+                entry.text.insert(0, entry.fallbackInitialContent);
+            }, FileSyncOrigin.Seed);
+            entry.activeLeaderTimestamp = entry.localLeaderTimestamp;
+            entry.activeLeaderSessionId = this.syncService.sessionId;
         }
         if (entry.pendingInitialSync.bufferedUpdates.length) {
             entry.pendingInitialSync.bufferedUpdates.forEach((update) => {
@@ -658,24 +616,58 @@ export class CodeEditorFileSyncService {
         requests.forEach((requestId) => this.respondWithFullContent(entry, filePath, requestId));
     }
 
-    // ── Private: Deterministic seeding ───────────────────────────────────
+    // ── Private: Late-winning replacement ────────────────────────────────
 
     /**
-     * Seed a freshly created per-file Y.Doc with fallback content using a deterministic client id.
+     * Determine if a remote leader should replace the active local leader.
      *
-     * See {@link DETERMINISTIC_SEED_CLIENT_ID} for why this matters: it ensures two peers who
-     * both time out and seed the same fallback string for the same file end up with structurally
-     * identical (not just visually identical) Y.Text state, so their histories share a common
-     * ancestor and later merges (see `handleSyncResponse`) converge instead of diverging
-     * permanently.
+     * Lower leader timestamp wins deterministically. In case of timestamp collision,
+     * lexicographically smaller sessionId wins as a tie-breaker.
      */
-    private seedFallbackContent(doc: Y.Doc, text: Y.Text, content: string): void {
-        const realClientId = doc.clientID;
-        doc.clientID = DETERMINISTIC_SEED_CLIENT_ID;
-        doc.transact(() => {
-            text.insert(0, content);
-        }, FileSyncOrigin.Seed);
-        doc.clientID = realClientId;
+    private shouldReplaceWithRemoteLeader(entry: FileSyncEntry, remoteLeaderTimestamp: number, remoteSessionId?: string): boolean {
+        if (remoteLeaderTimestamp < entry.activeLeaderTimestamp) {
+            return true;
+        }
+        if (remoteLeaderTimestamp > entry.activeLeaderTimestamp) {
+            return false;
+        }
+        // Tie-breaker: lexicographically smaller sessionId wins for determinism
+        return (remoteSessionId ?? '') < (entry.activeLeaderSessionId ?? '');
+    }
+
+    private replaceDocumentWithRemoteState(oldEntry: FileSyncEntry, filePath: string, update: Uint8Array, leaderTimestamp: number, sessionId?: string): void {
+        const key = this.buildKey(filePath);
+
+        const doc = new Y.Doc();
+        const text = doc.getText('file-content');
+        const awareness = new Awareness(doc);
+
+        const newEntry: FileSyncEntry = {
+            filePath,
+            doc,
+            text,
+            awareness,
+            awaitingInitialSync: false,
+            localLeaderTimestamp: oldEntry.localLeaderTimestamp,
+            activeLeaderTimestamp: leaderTimestamp,
+            activeLeaderSessionId: sessionId,
+            latestRequestId: oldEntry.latestRequestId,
+            fallbackInitialContent: oldEntry.fallbackInitialContent,
+            queuedFullContentRequests: [],
+        };
+
+        this.wireDocumentHandlers(newEntry);
+        this.wireAwarenessHandlers(newEntry);
+        this.initializeLocalAwareness(awareness);
+
+        Y.applyUpdate(doc, update, FileSyncOrigin.Remote);
+
+        this.fileDocs.set(key, newEntry);
+        clearRemoteSelectionStyles();
+        this.stateReplacedSubject.next({ filePath, doc, text, awareness });
+
+        oldEntry.awareness.destroy();
+        oldEntry.doc.destroy();
     }
 
     // ── Private: Document and awareness wiring ───────────────────────────

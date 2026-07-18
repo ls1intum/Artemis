@@ -1,10 +1,10 @@
 import { Mocked, afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { Injector, WritableSignal, runInInjectionContext, signal } from '@angular/core';
+import { WritableSignal, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { Subject } from 'rxjs';
 import * as Y from 'yjs';
 import { Awareness, encodeAwarenessUpdate } from 'y-protocols/awareness';
-import { CodeEditorFileSyncService, DETERMINISTIC_SEED_CLIENT_ID, FileSyncState } from 'app/exercise/synchronization/services/code-editor-file-sync.service';
+import { CodeEditorFileSyncService, FileSyncState } from 'app/exercise/synchronization/services/code-editor-file-sync.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { MockAlertService } from 'test/helpers/mocks/service/mock-alert.service';
@@ -18,68 +18,6 @@ import {
     FileRenamedEvent,
 } from 'app/exercise/synchronization/services/exercise-editor-sync.service';
 import * as yjsUtils from 'app/exercise/synchronization/services/yjs-utils';
-
-/**
- * Find the requestId of the most recently sent FILE_SYNC_FULL_CONTENT_REQUEST for `filePath` on a
- * mocked ExerciseEditorSyncService's `sendSynchronizationUpdate` spy.
- */
-function captureRequestId(mock: { sendSynchronizationUpdate: { mock: { calls: unknown[][] } } }, filePath: string): string {
-    type SentMessage = { eventType?: ExerciseEditorSyncEventType; filePath?: string; requestId?: string };
-    const call = mock.sendSynchronizationUpdate.mock.calls.find((args) => {
-        const message = args[1] as SentMessage | undefined;
-        return message?.eventType === ExerciseEditorSyncEventType.FILE_SYNC_FULL_CONTENT_REQUEST && message?.filePath === filePath;
-    });
-    return (call?.[1] as { requestId?: string } | undefined)?.requestId as string;
-}
-
-/**
- * Seed a standalone Y.Doc exactly the way CodeEditorFileSyncService seeds a fresh per-file
- * document when no peer answers in time: using the same deterministic client id for the single
- * seed transaction. Used to simulate "another peer that also timed out and seeded identically".
- */
-function seedPeerDocLikeProduction(content: string): Y.Doc {
-    const doc = new Y.Doc();
-    const text = doc.getText('file-content');
-    const realClientId = doc.clientID;
-    doc.clientID = DETERMINISTIC_SEED_CLIENT_ID;
-    doc.transact(() => text.insert(0, content));
-    doc.clientID = realClientId;
-    return doc;
-}
-
-/**
- * A second, fully independent CodeEditorFileSyncService instance with its own mocked transport,
- * used to simulate a second real editor session opening the same file concurrently.
- */
-type SyncPeer = {
-    svc: CodeEditorFileSyncService;
-    incoming: Subject<ExerciseEditorSyncEvent>;
-    mockSync: {
-        subscribeToUpdates: ReturnType<typeof vi.fn>;
-        sendSynchronizationUpdate: ReturnType<typeof vi.fn>;
-        unsubscribe: ReturnType<typeof vi.fn>;
-        sessionId: string | undefined;
-    };
-};
-
-function createPeer(sessionId: string): SyncPeer {
-    const incoming = new Subject<ExerciseEditorSyncEvent>();
-    const mockSync = {
-        subscribeToUpdates: vi.fn().mockReturnValue(incoming.asObservable()),
-        sendSynchronizationUpdate: vi.fn(),
-        unsubscribe: vi.fn(),
-        sessionId,
-    };
-    const injector = Injector.create({
-        providers: [
-            { provide: ExerciseEditorSyncService, useValue: mockSync },
-            { provide: AccountService, useValue: { userIdentity: vi.fn().mockReturnValue(undefined) } },
-            { provide: AlertService, useClass: MockAlertService },
-        ],
-    });
-    const svc = runInInjectionContext(injector, () => new CodeEditorFileSyncService());
-    return { svc, incoming, mockSync };
-}
 
 describe('CodeEditorFileSyncService', () => {
     let service: CodeEditorFileSyncService;
@@ -231,7 +169,7 @@ describe('CodeEditorFileSyncService', () => {
             timestamp: 1,
         } as ExerciseEditorSyncEvent;
 
-        it('suppresses Hyperion-owned commit warnings only until the repository refresh completes', () => {
+        it('suppresses expected commit warnings only until the repository refresh completes', () => {
             const addAlertSpy = vi.spyOn(alertService, 'addAlert');
             service.init(EXERCISE_ID, TARGET);
 
@@ -244,7 +182,7 @@ describe('CodeEditorFileSyncService', () => {
             expect(addAlertSpy).toHaveBeenCalledOnce();
         });
 
-        it('dismisses an already delivered commit warning when the expected update begins', () => {
+        it('dismisses a warning delivered before the expected update begins', () => {
             const close = vi.fn();
             vi.spyOn(alertService, 'addAlert').mockReturnValue({ close } as any);
             service.init(EXERCISE_ID, TARGET);
@@ -255,7 +193,7 @@ describe('CodeEditorFileSyncService', () => {
             expect(close).toHaveBeenCalledOnce();
         });
 
-        it('suppresses an expected commit event delivered after refresh completion without hiding a later external commit', () => {
+        it('suppresses an expected delayed commit without hiding a newer commit', () => {
             const addAlertSpy = vi.spyOn(alertService, 'addAlert');
             service.init(EXERCISE_ID, TARGET);
 
@@ -268,7 +206,7 @@ describe('CodeEditorFileSyncService', () => {
             expect(addAlertSpy).toHaveBeenCalledOnce();
         });
 
-        it('suppresses one late timestamp-less expected commit without hiding a subsequent unknown commit', () => {
+        it('suppresses one delayed timestamp-less commit without hiding the next unknown commit', () => {
             const addAlertSpy = vi.spyOn(alertService, 'addAlert');
             service.init(EXERCISE_ID, TARGET);
             const timestampLessEvent = { ...newCommitEvent, timestamp: undefined } as ExerciseEditorSyncEvent;
@@ -282,20 +220,7 @@ describe('CodeEditorFileSyncService', () => {
             expect(addAlertSpy).toHaveBeenCalledOnce();
         });
 
-        it('does not suppress an external timestamp-less commit when the expected one arrived during refresh', () => {
-            const addAlertSpy = vi.spyOn(alertService, 'addAlert');
-            service.init(EXERCISE_ID, TARGET);
-            const timestampLessEvent = { ...newCommitEvent, timestamp: undefined } as ExerciseEditorSyncEvent;
-
-            service.beginExpectedRepositoryUpdate(100);
-            incomingMessages$.next(timestampLessEvent);
-            service.endExpectedRepositoryUpdate();
-            incomingMessages$.next(timestampLessEvent);
-
-            expect(addAlertSpy).toHaveBeenCalledOnce();
-        });
-
-        it('does not suppress a newer external commit while the expected refresh is still active', () => {
+        it('does not suppress an external commit newer than the expected refresh', () => {
             const addAlertSpy = vi.spyOn(alertService, 'addAlert');
             service.init(EXERCISE_ID, TARGET);
 
@@ -582,58 +507,110 @@ describe('CodeEditorFileSyncService', () => {
             expect(state.text.toString()).toBe('Response 2');
         });
 
-        it('merges multiple late full-content responses into the file doc regardless of leaderTimestamp/sessionId ordering', () => {
+        it('replaces state when late response has better sessionId with same timestamp', () => {
             service.init(EXERCISE_ID, TARGET);
-            const state = service.openFile(FILE_PATH, 'Fallback')!;
-            const requestId = captureRequestId(syncService, FILE_PATH);
+            service.openFile(FILE_PATH, 'Fallback')!;
 
-            vi.advanceTimersByTime(500);
-            expect(state.text.toString()).toBe('Fallback');
+            const requestCall = syncService.sendSynchronizationUpdate.mock.calls.find(
+                ([, msg]) => msg.eventType === ExerciseEditorSyncEventType.FILE_SYNC_FULL_CONTENT_REQUEST && (msg as any).filePath === FILE_PATH,
+            );
+            const requestId = (requestCall?.[1] as any).requestId as string;
 
-            // peerA forks from the same deterministic seed as this file entry and appends '-A'.
-            const peerADoc = seedPeerDocLikeProduction('Fallback');
-            peerADoc.getText('file-content').insert(peerADoc.getText('file-content').length, '-A');
-
-            // peerB continues from peerA's already-edited state (causally after '-A') and appends '-B'.
-            const peerBDoc = new Y.Doc();
-            Y.applyUpdate(peerBDoc, Y.encodeStateAsUpdate(peerADoc));
-            const peerBText = peerBDoc.getText('file-content');
-            peerBText.insert(peerBText.length, '-B');
-
-            // The first late response carries a WORSE (higher) leaderTimestamp and sessionId than
-            // the second — under the old leader-election gate this ordering would have caused the
-            // second, "better", response to win and the first to be rejected outright. Under the
-            // merge-based design both must be merged in, regardless of ordering.
+            // Initial response with higher sessionId
+            const initialDoc = new Y.Doc();
+            initialDoc.getText('file-content').insert(0, 'Initial content');
             incomingMessages$.next({
                 eventType: ExerciseEditorSyncEventType.FILE_SYNC_FULL_CONTENT_RESPONSE,
                 target: TARGET,
                 filePath: FILE_PATH,
                 responseTo: requestId,
-                yjsUpdate: yjsUtils.encodeUint8ArrayToBase64(Y.encodeStateAsUpdate(peerADoc)),
-                leaderTimestamp: 999,
+                yjsUpdate: yjsUtils.encodeUint8ArrayToBase64(Y.encodeStateAsUpdate(initialDoc)),
+                leaderTimestamp: 100,
                 sessionId: 'session-zzz',
                 timestamp: 1,
             });
+
+            vi.advanceTimersByTime(500);
+
+            let replacedState: ({ filePath: string } & FileSyncState) | undefined;
+            const sub = service.stateReplaced$.subscribe((s) => (replacedState = s));
+
+            // Late response with same timestamp but better sessionId
+            const lateDoc = new Y.Doc();
+            lateDoc.getText('file-content').insert(0, 'Late better content');
             incomingMessages$.next({
                 eventType: ExerciseEditorSyncEventType.FILE_SYNC_FULL_CONTENT_RESPONSE,
                 target: TARGET,
                 filePath: FILE_PATH,
                 responseTo: requestId,
-                yjsUpdate: yjsUtils.encodeUint8ArrayToBase64(Y.encodeStateAsUpdate(peerBDoc)),
-                leaderTimestamp: 1,
-                sessionId: 'session-aaa',
+                yjsUpdate: yjsUtils.encodeUint8ArrayToBase64(Y.encodeStateAsUpdate(lateDoc)),
+                leaderTimestamp: 100,
+                sessionId: 'session-aaa', // Lexicographically smaller
                 timestamp: 2,
             });
 
-            expect(state.text.toString()).toBe('Fallback-A-B');
+            expect(replacedState).toBeDefined();
+            expect(replacedState?.text.toString()).toBe('Late better content');
+            sub.unsubscribe();
+        });
+
+        it('does not replace state when late response has worse sessionId with same timestamp', () => {
+            service.init(EXERCISE_ID, TARGET);
+            const state = service.openFile(FILE_PATH, 'Fallback')!;
+
+            const requestCall = syncService.sendSynchronizationUpdate.mock.calls.find(
+                ([, msg]) => msg.eventType === ExerciseEditorSyncEventType.FILE_SYNC_FULL_CONTENT_REQUEST && (msg as any).filePath === FILE_PATH,
+            );
+            const requestId = (requestCall?.[1] as any).requestId as string;
+
+            // Initial response with lower sessionId
+            const initialDoc = new Y.Doc();
+            initialDoc.getText('file-content').insert(0, 'Initial content');
+            incomingMessages$.next({
+                eventType: ExerciseEditorSyncEventType.FILE_SYNC_FULL_CONTENT_RESPONSE,
+                target: TARGET,
+                filePath: FILE_PATH,
+                responseTo: requestId,
+                yjsUpdate: yjsUtils.encodeUint8ArrayToBase64(Y.encodeStateAsUpdate(initialDoc)),
+                leaderTimestamp: 100,
+                sessionId: 'session-aaa',
+                timestamp: 1,
+            });
+
+            vi.advanceTimersByTime(500);
+
+            let replacedState: ({ filePath: string } & FileSyncState) | undefined;
+            const sub = service.stateReplaced$.subscribe((s) => (replacedState = s));
+
+            // Late response with same timestamp but worse sessionId
+            const lateDoc = new Y.Doc();
+            lateDoc.getText('file-content').insert(0, 'Should not replace');
+            incomingMessages$.next({
+                eventType: ExerciseEditorSyncEventType.FILE_SYNC_FULL_CONTENT_RESPONSE,
+                target: TARGET,
+                filePath: FILE_PATH,
+                responseTo: requestId,
+                yjsUpdate: yjsUtils.encodeUint8ArrayToBase64(Y.encodeStateAsUpdate(lateDoc)),
+                leaderTimestamp: 100,
+                sessionId: 'session-zzz', // Lexicographically larger — should not win
+                timestamp: 2,
+            });
+
+            expect(replacedState).toBeUndefined();
+            expect(state.text.toString()).toBe('Initial content');
+            sub.unsubscribe();
         });
     });
 
     describe('late-winning response', () => {
-        it('merges a late full-content response into the file doc instead of replacing it', () => {
+        it('replaces state when a better leader responds late', () => {
             service.init(EXERCISE_ID, TARGET);
             const state = service.openFile(FILE_PATH, 'Fallback')!;
-            const requestId = captureRequestId(syncService, FILE_PATH);
+
+            const requestCall = syncService.sendSynchronizationUpdate.mock.calls.find(
+                ([, msg]) => msg.eventType === ExerciseEditorSyncEventType.FILE_SYNC_FULL_CONTENT_REQUEST && (msg as any).filePath === FILE_PATH,
+            );
+            const requestId = (requestCall?.[1] as any).requestId as string;
 
             let replacedState: ({ filePath: string } & FileSyncState) | undefined;
             const sub = service.stateReplaced$.subscribe((s) => (replacedState = s));
@@ -641,56 +618,21 @@ describe('CodeEditorFileSyncService', () => {
             vi.advanceTimersByTime(500);
             expect(state.text.toString()).toBe('Fallback');
 
-            // Simulate a peer that forked from the same deterministic seed (see
-            // DETERMINISTIC_SEED_CLIENT_ID) and additionally appended its own edit on top of it.
-            // Its full state arrives late, after this entry already finalized via its own seed.
-            const peerDoc = seedPeerDocLikeProduction('Fallback');
-            peerDoc.getText('file-content').insert(peerDoc.getText('file-content').length, ' from peer');
-
+            const lateDoc = new Y.Doc();
+            lateDoc.getText('file-content').insert(0, 'Late winning content');
             incomingMessages$.next({
                 eventType: ExerciseEditorSyncEventType.FILE_SYNC_FULL_CONTENT_RESPONSE,
                 target: TARGET,
                 filePath: FILE_PATH,
                 responseTo: requestId,
-                yjsUpdate: yjsUtils.encodeUint8ArrayToBase64(Y.encodeStateAsUpdate(peerDoc)),
+                yjsUpdate: yjsUtils.encodeUint8ArrayToBase64(Y.encodeStateAsUpdate(lateDoc)),
                 leaderTimestamp: 1,
                 timestamp: 2,
             });
 
-            // The peer's additional content is merged in (not discarded, and not used to replace
-            // the file's doc/text identity — stateReplaced$ never fires under the merge design).
-            expect(state.text.toString()).toBe('Fallback from peer');
-            expect(replacedState).toBeUndefined();
-            sub.unsubscribe();
-        });
-
-        it('does not wipe local edits made after initial sync finalized when a late full state merges in', () => {
-            service.init(EXERCISE_ID, TARGET);
-            const state = service.openFile(FILE_PATH, 'Fallback')!;
-            const requestId = captureRequestId(syncService, FILE_PATH);
-            vi.advanceTimersByTime(500);
-            state.text.insert(state.text.length, ' LOCAL');
-            let replacedState: ({ filePath: string } & FileSyncState) | undefined;
-            const sub = service.stateReplaced$.subscribe((replacement) => (replacedState = replacement));
-
-            // A peer that seeded the identical fallback content independently (same deterministic
-            // seed client id) and made no further edits of its own is only now, late, echoing that
-            // state back. Merging it is a structural no-op for the shared seed.
-            const peerDoc = seedPeerDocLikeProduction('Fallback');
-
-            incomingMessages$.next({
-                eventType: ExerciseEditorSyncEventType.FILE_SYNC_FULL_CONTENT_RESPONSE,
-                target: TARGET,
-                filePath: FILE_PATH,
-                responseTo: requestId,
-                yjsUpdate: yjsUtils.encodeUint8ArrayToBase64(Y.encodeStateAsUpdate(peerDoc)),
-                leaderTimestamp: 1,
-                timestamp: 2,
-            });
-
-            // The file's doc is never replaced, and the local edit survives untouched.
-            expect(replacedState).toBeUndefined();
-            expect(state.text.toString()).toBe('Fallback LOCAL');
+            expect(replacedState).toBeDefined();
+            expect(replacedState?.filePath).toBe(FILE_PATH);
+            expect(replacedState?.text.toString()).toBe('Late winning content');
             sub.unsubscribe();
         });
     });
@@ -948,13 +890,16 @@ describe('CodeEditorFileSyncService', () => {
             );
         });
 
-        it('merges a late full-content response addressed to the old path into the entry now living under the new path', () => {
+        it('stores late-winning replacement under the new path after a rename', () => {
             service.init(EXERCISE_ID, TARGET);
-            const state = service.openFile(FILE_PATH, 'Fallback')!;
-            const requestId = captureRequestId(syncService, FILE_PATH);
+            service.openFile(FILE_PATH, 'Fallback')!;
+
+            const requestCall = syncService.sendSynchronizationUpdate.mock.calls.find(
+                ([, msg]: [number, any]) => msg.eventType === ExerciseEditorSyncEventType.FILE_SYNC_FULL_CONTENT_REQUEST && msg.filePath === FILE_PATH,
+            );
+            const requestId = (requestCall?.[1] as any).requestId as string;
 
             vi.advanceTimersByTime(500);
-            expect(state.text.toString()).toBe('Fallback');
 
             const newPath = 'src/Renamed.java';
             service.emitFileRenamed(FILE_PATH, newPath, 'FILE');
@@ -962,26 +907,21 @@ describe('CodeEditorFileSyncService', () => {
             let replacedState: ({ filePath: string } & FileSyncState) | undefined;
             const sub = service.stateReplaced$.subscribe((s: { filePath: string } & FileSyncState) => (replacedState = s));
 
-            // A peer forked from the same deterministic seed and appended its own edit; its full
-            // state arrives late, addressed to the pre-rename path (the response was generated
-            // from the original request, before the peer learned about the rename).
-            const peerDoc = seedPeerDocLikeProduction('Fallback');
-            peerDoc.getText('file-content').insert(peerDoc.getText('file-content').length, ' from peer');
+            const lateDoc = new Y.Doc();
+            lateDoc.getText('file-content').insert(0, 'Late winning after rename');
             incomingMessages$.next({
                 eventType: ExerciseEditorSyncEventType.FILE_SYNC_FULL_CONTENT_RESPONSE,
                 target: TARGET,
                 filePath: FILE_PATH, // old path, as the response was generated from the request
                 responseTo: requestId,
-                yjsUpdate: yjsUtils.encodeUint8ArrayToBase64(Y.encodeStateAsUpdate(peerDoc)),
+                yjsUpdate: yjsUtils.encodeUint8ArrayToBase64(Y.encodeStateAsUpdate(lateDoc)),
                 leaderTimestamp: 1,
                 timestamp: 2,
             });
 
-            // The message is redirected via recentRenames and merged into the entry now living
-            // under the new path — never replacing it, so stateReplaced$ stays inert.
-            expect(replacedState).toBeUndefined();
-            const stateAtNewPath = service.openFile(newPath, '')!;
-            expect(stateAtNewPath.text.toString()).toBe('Fallback from peer');
+            // stateReplaced$ must emit with the new path
+            expect(replacedState?.filePath).toBe(newPath);
+            // The new doc must be accessible under the new path, not the old one
             expect(service.isFileOpen(newPath)).toBe(true);
             expect(service.isFileOpen(FILE_PATH)).toBe(false);
             sub.unsubscribe();
@@ -1107,68 +1047,6 @@ describe('CodeEditorFileSyncService', () => {
             });
 
             expect(state.text.toString()).toBe('');
-        });
-    });
-
-    describe('concurrent-join convergence (two real peers)', () => {
-        it('converges when two peers open the same file simultaneously, both time out and independently seed identical content, then edit concurrently', () => {
-            // Two fully independent CodeEditorFileSyncService instances, each with its own mocked
-            // transport, simulate two editors opening the same file at nearly the same moment.
-            // Neither answers the other's full-content request in time.
-            const peerA = createPeer('peer-a');
-            const peerB = createPeer('peer-b');
-
-            peerA.svc.init(EXERCISE_ID, TARGET);
-            peerB.svc.init(EXERCISE_ID, TARGET);
-
-            const stateA = peerA.svc.openFile(FILE_PATH, 'Base')!;
-            const stateB = peerB.svc.openFile(FILE_PATH, 'Base')!;
-
-            const requestIdA = captureRequestId(peerA.mockSync, FILE_PATH);
-            const requestIdB = captureRequestId(peerB.mockSync, FILE_PATH);
-            expect(requestIdA).toBeDefined();
-            expect(requestIdB).toBeDefined();
-
-            // Both peers time out with no answer and independently seed the identical fallback
-            // content into their own, structurally distinct Y.Doc instances.
-            vi.advanceTimersByTime(500);
-            expect(stateA.text.toString()).toBe('Base');
-            expect(stateB.text.toString()).toBe('Base');
-
-            // Each peer then edits locally, before either has heard from the other.
-            stateA.text.insert(stateA.text.length, '-A');
-            stateB.text.insert(stateB.text.length, '-B');
-
-            // The network eventually catches up: each peer's full current state (seed + its own
-            // edit) is delivered to the other as a late full-content response, as if the original
-            // request had finally been answered.
-            peerB.incoming.next({
-                eventType: ExerciseEditorSyncEventType.FILE_SYNC_FULL_CONTENT_RESPONSE,
-                target: TARGET,
-                filePath: FILE_PATH,
-                responseTo: requestIdB,
-                yjsUpdate: yjsUtils.encodeUint8ArrayToBase64(Y.encodeStateAsUpdate(stateA.doc)),
-                leaderTimestamp: 1,
-                timestamp: 1,
-            });
-            peerA.incoming.next({
-                eventType: ExerciseEditorSyncEventType.FILE_SYNC_FULL_CONTENT_RESPONSE,
-                target: TARGET,
-                filePath: FILE_PATH,
-                responseTo: requestIdA,
-                yjsUpdate: yjsUtils.encodeUint8ArrayToBase64(Y.encodeStateAsUpdate(stateB.doc)),
-                leaderTimestamp: 1,
-                timestamp: 1,
-            });
-
-            // Both documents must converge to the exact same final text, and neither peer's edit
-            // may have been silently lost.
-            expect(stateA.text.toString()).toBe(stateB.text.toString());
-            expect(stateA.text.toString()).toContain('-A');
-            expect(stateA.text.toString()).toContain('-B');
-
-            peerA.svc.reset();
-            peerB.svc.reset();
         });
     });
 });
