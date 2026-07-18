@@ -4,30 +4,15 @@
     <!-- Quick Navigation in Title Bar -->
     <div *adminTitleBarActions class="flex flex-wrap items-center gap-2" data-testid="feature-toggle-nav-actions">
         <span class="me-1 font-medium text-muted-color" jhiTranslate="artemisApp.features.jumpTo"></span>
-        <p-button
-            severity="secondary"
-            size="small"
-            [outlined]="true"
-            [label]="'artemisApp.features.profileFeatures.shortTitle' | artemisTranslate"
-            (onClick)="scrollToSection('profile-features')"
-            data-testid="nav-profile-features"
-        />
-        <p-button
-            severity="secondary"
-            size="small"
-            [outlined]="true"
-            [label]="'artemisApp.features.moduleFeatures.shortTitle' | artemisTranslate"
-            (onClick)="scrollToSection('module-features')"
-            data-testid="nav-module-features"
-        />
-        <p-button
-            severity="secondary"
-            size="small"
-            [outlined]="true"
-            [label]="'artemisApp.features.dynamicToggles.shortTitle' | artemisTranslate"
-            (onClick)="scrollToSection('runtime-toggles')"
-            data-testid="nav-runtime-toggles"
-        />
+        <tum-ui-button severity="secondary" size="small" variant="outlined" (clicked)="scrollToSection('profile-features')" data-testid="nav-profile-features">
+            {{ 'artemisApp.features.profileFeatures.shortTitle' | artemisTranslate }}
+        </tum-ui-button>
+        <tum-ui-button severity="secondary" size="small" variant="outlined" (clicked)="scrollToSection('module-features')" data-testid="nav-module-features">
+            {{ 'artemisApp.features.moduleFeatures.shortTitle' | artemisTranslate }}
+        </tum-ui-button>
+        <tum-ui-button severity="secondary" size="small" variant="outlined" (clicked)="scrollToSection('runtime-toggles')" data-testid="nav-runtime-toggles">
+            {{ 'artemisApp.features.dynamicToggles.shortTitle' | artemisTranslate }}
+        </tum-ui-button>
     </div>
 
     <!-- Section 1: Profile-Based Features -->
@@ -54,7 +39,7 @@
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     class="text-sm text-primary hover:underline"
-                                    [pTooltip]="'artemisApp.features.viewDocumentation' | artemisTranslate"
+                                    [tumUiTooltip]="'artemisApp.features.viewDocumentation' | artemisTranslate"
                                     data-testid="profile-doc-link"
                                 >
                                     <fa-icon [icon]="faExternalLinkAlt" />
@@ -63,9 +48,9 @@
                         </div>
                         <div class="flex items-center">
                             @if (profileInfo.isActive) {
-                                <p-tag severity="success" [value]="'artemisApp.features.active' | artemisTranslate" data-testid="profile-status-active" />
+                                <tum-ui-tag severity="success" [value]="'artemisApp.features.active' | artemisTranslate" data-testid="profile-status-active" />
                             } @else {
-                                <p-tag severity="secondary" [value]="'artemisApp.features.inactive' | artemisTranslate" data-testid="profile-status-inactive" />
+                                <tum-ui-tag severity="secondary" [value]="'artemisApp.features.inactive' | artemisTranslate" data-testid="profile-status-inactive" />
                             }
                         </div>
                     </div>
@@ -99,7 +84,7 @@
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     class="text-sm text-primary hover:underline"
-                                    [pTooltip]="'artemisApp.features.viewDocumentation' | artemisTranslate"
+                                    [tumUiTooltip]="'artemisApp.features.viewDocumentation' | artemisTranslate"
                                     data-testid="module-doc-link"
                                 >
                                     <fa-icon [icon]="faExternalLinkAlt" />
@@ -108,9 +93,9 @@
                         </div>
                         <div class="flex items-center">
                             @if (moduleInfo.isActive) {
-                                <p-tag severity="success" [value]="'artemisApp.features.active' | artemisTranslate" data-testid="module-status-active" />
+                                <tum-ui-tag severity="success" [value]="'artemisApp.features.active' | artemisTranslate" data-testid="module-status-active" />
                             } @else {
-                                <p-tag severity="secondary" [value]="'artemisApp.features.inactive' | artemisTranslate" data-testid="module-status-inactive" />
+                                <tum-ui-tag severity="secondary" [value]="'artemisApp.features.inactive' | artemisTranslate" data-testid="module-status-inactive" />
                             }
                         </div>
                     </div>
@@ -142,7 +127,7 @@
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     class="text-sm text-primary hover:underline"
-                                    [pTooltip]="'artemisApp.features.viewDocumentation' | artemisTranslate"
+                                    [tumUiTooltip]="'artemisApp.features.viewDocumentation' | artemisTranslate"
                                     data-testid="toggle-doc-link"
                                 >
                                     <fa-icon [icon]="faExternalLinkAlt" />
@@ -162,7 +147,7 @@
                     </div>
                     <p class="mb-2 text-sm leading-snug text-muted-color">{{ getFeatureDescriptionKey(featureInfo.feature) | artemisTranslate }}</p>
                     @if (!featureInfo.isActive) {
-                        <p-message severity="warn" [text]="getFeatureWarningKey(featureInfo.feature) | artemisTranslate" styleClass="w-full" data-testid="feature-warning" />
+                        <p-message severity="warn" styleClass="w-full" data-testid="feature-warning">{{ getFeatureWarningKey(featureInfo.feature) | artemisTranslate }}</p-message>
                     }
                 </div>
             }

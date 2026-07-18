@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { MockTranslateService, TranslatePipeMock } from 'test/helpers/mocks/service/mock-translate.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
@@ -25,8 +24,6 @@ import { MockAccountService } from 'test/helpers/mocks/service/mock-account.serv
 const flushPromises = () => vi.advanceTimersByTimeAsync(0);
 
 describe('SharingComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<SharingComponent>;
     let httpMock: HttpTestingController;
     let accountService: AccountService;

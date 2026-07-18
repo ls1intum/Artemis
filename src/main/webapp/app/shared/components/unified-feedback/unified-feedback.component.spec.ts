@@ -1,17 +1,16 @@
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { UnifiedFeedbackComponent } from './unified-feedback.component';
-import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { TranslateService, provideTranslateService } from '@ngx-translate/core';
 import { FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER } from 'app/assessment/shared/entities/feedback.model';
 
 describe('UnifiedFeedbackComponent', () => {
-    setupTestBed({ zoneless: true });
     let component: UnifiedFeedbackComponent;
     let fixture: ComponentFixture<UnifiedFeedbackComponent>;
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [UnifiedFeedbackComponent, TranslateModule.forRoot()],
+            imports: [UnifiedFeedbackComponent],
+            providers: [provideTranslateService()],
         }).compileComponents();
 
         const translateService = TestBed.inject(TranslateService);

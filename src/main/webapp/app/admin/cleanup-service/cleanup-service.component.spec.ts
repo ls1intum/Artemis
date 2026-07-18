@@ -3,7 +3,6 @@
  */
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { of, throwError } from 'rxjs';
 import { signal } from '@angular/core';
@@ -17,8 +16,6 @@ import { AlertService } from 'app/foundation/service/alert.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('CleanupServiceComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let comp: CleanupServiceComponent;
     let fixture: ComponentFixture<CleanupServiceComponent>;
     let cleanupService: DataCleanupService;

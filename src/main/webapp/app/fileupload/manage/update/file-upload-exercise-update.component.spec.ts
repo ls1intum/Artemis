@@ -68,11 +68,10 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ActivatedRoute, Data, Params, UrlSegment, provideRouter } from '@angular/router';
 import { BehaviorSubject, of, throwError } from 'rxjs';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { TranslateModule } from '@ngx-translate/core';
+import { provideTranslateService } from '@ngx-translate/core';
 import { MockComponent, MockDirective } from 'ng-mocks';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import dayjs from 'dayjs/esm';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 import 'app/foundation/util/array.extension';
 
@@ -147,8 +146,6 @@ class StubExerciseTitleChannelNameComponent {
 }
 
 describe('FileUploadExerciseUpdateComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: FileUploadExerciseUpdateComponent;
     let fixture: ComponentFixture<FileUploadExerciseUpdateComponent>;
     let fileUploadExerciseService: FileUploadExerciseService;
@@ -188,7 +185,7 @@ describe('FileUploadExerciseUpdateComponent', () => {
         routeParams$ = new BehaviorSubject<Params>({ courseId: 123 });
 
         await TestBed.configureTestingModule({
-            imports: [FileUploadExerciseUpdateComponent, TranslateModule.forRoot()],
+            imports: [FileUploadExerciseUpdateComponent],
             providers: [
                 provideHttpClient(),
                 provideHttpClientTesting(),
@@ -248,6 +245,7 @@ describe('FileUploadExerciseUpdateComponent', () => {
                         reloadEvents: vi.fn(),
                     },
                 },
+                provideTranslateService(),
             ],
         })
             .overrideComponent(FileUploadExerciseUpdateComponent, {

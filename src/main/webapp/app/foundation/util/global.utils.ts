@@ -74,7 +74,7 @@ export function isErrorAlert(error: unknown): boolean {
 
 export function getCurrentLocaleSignal(translateService: TranslateService): Signal<string> {
     return toSignal(translateService.onLangChange.pipe(map((event) => event.lang)), {
-        initialValue: translateService.getCurrentLang(),
+        initialValue: translateService.getCurrentLang() ?? 'en',
     });
 }
 
