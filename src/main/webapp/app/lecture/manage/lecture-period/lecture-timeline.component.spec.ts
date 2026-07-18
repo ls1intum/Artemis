@@ -2,24 +2,24 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { By } from '@angular/platform-browser';
 import { MockComponent } from 'ng-mocks';
-import { LectureUpdatePeriodComponent } from 'app/lecture/manage/lecture-period/lecture-period.component';
+import { LectureTimelineComponent } from 'app/lecture/manage/lecture-period/lecture-timeline.component';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { ExerciseTimelineComponent } from 'app/exercise/exercise-timeline/exercise-timeline.component';
 
-describe('LectureWizardPeriodComponent', () => {
-    let fixture: ComponentFixture<LectureUpdatePeriodComponent>;
-    let component: LectureUpdatePeriodComponent;
+describe('LectureTimelineComponent', () => {
+    let fixture: ComponentFixture<LectureTimelineComponent>;
+    let component: LectureTimelineComponent;
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [LectureUpdatePeriodComponent],
+            imports: [LectureTimelineComponent],
             providers: [{ provide: TranslateService, useClass: MockTranslateService }],
         })
-            .overrideComponent(LectureUpdatePeriodComponent, { set: { imports: [MockComponent(ExerciseTimelineComponent)] } })
+            .overrideComponent(LectureTimelineComponent, { set: { imports: [MockComponent(ExerciseTimelineComponent)] } })
             .compileComponents();
 
-        fixture = TestBed.createComponent(LectureUpdatePeriodComponent);
+        fixture = TestBed.createComponent(LectureTimelineComponent);
         component = fixture.componentInstance;
 
         await fixture.whenStable();

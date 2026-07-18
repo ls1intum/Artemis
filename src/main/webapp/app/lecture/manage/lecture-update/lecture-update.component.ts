@@ -18,7 +18,7 @@ import { FormSectionStatus, FormStatusBarComponent } from 'app/shared-ui/form/fo
 import { LectureTitleChannelNameComponent } from '../lecture-title-channel-name/lecture-title-channel-name.component';
 import { LectureSeriesCreateComponent } from 'app/lecture/manage/lecture-series-create/lecture-series-create.component';
 import { MarkdownEditorHeight, MarkdownEditorMonacoComponent } from 'app/editor/markdown-editor/monaco/markdown-editor-monaco.component';
-import { LectureUpdatePeriodComponent } from 'app/lecture/manage/lecture-period/lecture-period.component';
+import { LectureTimelineComponent } from 'app/lecture/manage/lecture-period/lecture-timeline.component';
 import { LectureUpdateUnitsComponent } from 'app/lecture/manage/lecture-units/lecture-units.component';
 import { DocumentationButtonComponent, DocumentationType } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
 import { SelectButtonModule } from 'primeng/selectbutton';
@@ -54,7 +54,7 @@ interface CreateLectureOption {
         FormStatusBarComponent,
         LectureTitleChannelNameComponent,
         MarkdownEditorMonacoComponent,
-        LectureUpdatePeriodComponent,
+        LectureTimelineComponent,
         FaIconComponent,
         LectureUpdateUnitsComponent,
         NgbTooltip,
@@ -88,7 +88,7 @@ export class LectureUpdateComponent implements OnInit, LectureUnsavedChangesComp
     private currentLocale = getCurrentLocaleSignal(this.translateService);
 
     titleSection = viewChild(LectureTitleChannelNameComponent);
-    lecturePeriodSection = viewChild(LectureUpdatePeriodComponent);
+    lecturePeriodSection = viewChild(LectureTimelineComponent);
     unitSection = viewChild(LectureUpdateUnitsComponent);
     formStatusBar = viewChild(FormStatusBarComponent);
     courseId = signal<number | undefined>(undefined);

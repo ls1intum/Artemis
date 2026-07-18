@@ -5,11 +5,11 @@ import { Dayjs } from 'dayjs/esm';
 
 @Component({
     selector: 'jhi-lecture-update-period',
-    templateUrl: './lecture-period.component.html',
+    templateUrl: './lecture-timeline.component.html',
     imports: [TranslateDirective, ExerciseTimelineComponent],
-    styleUrl: './lecture-period.component.scss',
+    styleUrl: './lecture-timeline.component.scss',
 })
-export class LectureUpdatePeriodComponent {
+export class LectureTimelineComponent {
     private timelineStatus = signal<ExerciseTimelineStatus>({ valid: true, empty: true });
 
     startDate = model<Dayjs | undefined>();

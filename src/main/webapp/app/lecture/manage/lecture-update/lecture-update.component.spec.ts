@@ -24,7 +24,7 @@ import { LectureTitleChannelNameComponent } from 'app/lecture/manage/lecture-tit
 import { MarkdownEditorMonacoComponent } from 'app/editor/markdown-editor/monaco/markdown-editor-monaco.component';
 import { CustomNotIncludedInValidatorDirective } from 'app/foundation/validators/custom-not-included-in-validator.directive';
 import { TitleChannelNameComponent } from 'app/shared-ui/form/title-channel-name/title-channel-name.component';
-import { LectureUpdatePeriodComponent } from 'app/lecture/manage/lecture-period/lecture-period.component';
+import { LectureTimelineComponent } from 'app/lecture/manage/lecture-period/lecture-timeline.component';
 import { LectureUnitManagementComponent } from 'app/lecture/manage/lecture-units/management/lecture-unit-management.component';
 import { LectureAttachmentsComponent } from 'app/lecture/manage/lecture-attachments/lecture-attachments.component';
 import { LectureUpdateUnitsComponent } from 'app/lecture/manage/lecture-units/lecture-units.component';
@@ -71,7 +71,7 @@ describe('LectureUpdateComponent', () => {
                 MockComponent(FormDateTimePickerComponent),
                 MockComponent(LectureAttachmentsComponent),
                 MockComponent(LectureUpdateUnitsComponent),
-                MockComponent(LectureUpdatePeriodComponent),
+                MockComponent(LectureTimelineComponent),
                 MockComponent(LectureUnitManagementComponent),
                 MockComponent(FormStatusBarComponent),
                 MockComponent(MarkdownEditorMonacoComponent),
