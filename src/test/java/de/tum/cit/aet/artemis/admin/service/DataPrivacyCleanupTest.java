@@ -1,20 +1,31 @@
 package de.tum.cit.aet.artemis.admin.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.anyMap;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doReturn;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Set;
 
+import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.account.util.UserUtilService;
+import de.tum.cit.aet.artemis.core.domain.Language;
 import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
 import de.tum.cit.aet.artemis.core.util.CourseUtilService;
 import de.tum.cit.aet.artemis.course.domain.Course;
@@ -23,16 +34,22 @@ import de.tum.cit.aet.artemis.course.repository.CourseConfigurationRepository;
 import de.tum.cit.aet.artemis.course.service.CourseDataRetentionService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseTestRepository;
 import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
+import de.tum.cit.aet.artemis.fileupload.util.ZipFileTestUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
+import de.tum.cit.aet.artemis.text.domain.TextExercise;
+import de.tum.cit.aet.artemis.text.util.TextExerciseUtilService;
 
 /**
  * Integration tests for the destructive, irreversible data-privacy cleanup paths, run against a real database:
  * <ul>
- * <li>the two-phase old-course student-data reset (phase 2, {@link CourseDataRetentionService#resetDueCourses()}), which
- * actually deletes student participations while keeping the course material, and</li>
+ * <li>the two-phase old-course flow end to end: the real warn+archive phase
+ * ({@link CourseDataRetentionService#warnAndArchiveDueCourses()}) produces a real archive that actually contains the
+ * students' submissions, and the real reset phase ({@link CourseDataRetentionService#resetDueCourses()}) then deletes the
+ * student data while keeping the course material and the archive backup, and</li>
  * <li>the not-enrolled-user soft-delete ({@link DataCleanupService#deleteNotEnrolledUsers()}), which anonymizes user
  * accounts.</li>
  * </ul>
@@ -74,6 +91,15 @@ class DataPrivacyCleanupTest extends AbstractSpringIntegrationIndependentTest {
 
     @Autowired
     private ExerciseTestRepository exerciseRepository;
+
+    @Autowired
+    private TextExerciseUtilService textExerciseUtilService;
+
+    @Autowired
+    private ZipFileTestUtilService zipFileTestUtilService;
+
+    @Value("${artemis.course-archives-path}")
+    private Path courseArchivesDirPath;
 
     @BeforeEach
     void setup() {
@@ -181,6 +207,81 @@ class DataPrivacyCleanupTest extends AbstractSpringIntegrationIndependentTest {
             User irisBotAfter = userRepository.findById(irisBot.getId()).orElseThrow();
             assertThat(irisBotAfter.isDeleted()).isFalse();
             assertThat(irisBotAfter.getLogin()).isEqualTo(User.IRIS_BOT_LOGIN);
+        }
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "ADMIN")
+    void warnCreatesRecoverableArchiveWithStudentDataThatSurvivesTheReset() throws IOException {
+        // The core "no data lost" guarantee for enabling automation: before any student data is deleted, the warn phase
+        // must produce a real, non-empty course archive that actually CONTAINS the students' submissions, and that
+        // backup must survive the subsequent reset. This runs the REAL archive (CourseArchiveService) and the REAL
+        // reset (CourseResetService) end to end; only the external mail service is stubbed.
+        doReturn(true).when(mailSendingService).isMailConfigured();
+        doNothing().when(mailSendingService).buildAndSendAsync(any(), any(), anyList(), any(), anyMap());
+
+        // A finished course with a real, submitted text submission for <prefix>student1.
+        Course course = courseUtilService.addCourseWithModelingAndTextExercise();
+        course.setInstructorGroupName(TEST_PREFIX + "instructor"); // so getInstructors() finds an eligible instructor
+        course.setStartDate(ZonedDateTime.now().minusYears(2).minusMonths(2));
+        course.setEndDate(ZonedDateTime.now().minusYears(2)); // past the 1-year non-grade retention -> due for warning
+        CourseConfiguration configuration = new CourseConfiguration();
+        configuration.setCourse(course);
+        configuration.setGradeRelevant(false);
+        course.setCourseConfiguration(configuration);
+        course = courseRepository.save(course);
+        long courseId = course.getId();
+        TextExercise textExercise = course.getExercises().stream().filter(TextExercise.class::isInstance).map(TextExercise.class::cast).findFirst().orElseThrow();
+        long textExerciseId = textExercise.getId();
+        // Known submission content, so we can prove the archive actually contains the student's work.
+        textExerciseUtilService.saveTextSubmission(textExercise, ParticipationFactory.generateTextSubmission("example text", Language.ENGLISH, true), TEST_PREFIX + "student1");
+        assertThat(studentParticipationRepository.findByExerciseIdAndTestRunWithEagerSubmissionsResultAssessor(textExerciseId, false)).isNotEmpty();
+
+        // Phase 1: warn + archive (real).
+        int warned = courseDataRetentionService.warnAndArchiveDueCourses();
+        assertThat(warned).isGreaterThanOrEqualTo(1);
+
+        Course archivedCourse = courseRepository.findById(courseId).orElseThrow();
+        assertThat(archivedCourse.hasCourseArchive()).isTrue();
+        Path archiveFile = courseArchivesDirPath.resolve(archivedCourse.getCourseArchivePath());
+        assertThat(archiveFile).exists();
+        assertThat(Files.size(archiveFile)).isPositive();
+        // The archive really contains the student's submission content (not an empty or broken backup).
+        Path extracted = zipFileTestUtilService.extractZipFileRecursively(archiveFile.toString());
+        try (var files = Files.walk(extracted)) {
+            assertThat(files.filter(Files::isRegularFile)).anyMatch(file -> fileContains(file, "example text"));
+        }
+        FileUtils.deleteDirectory(extracted.toFile());
+        // The warning is stamped and the student data is still present (the reset has not happened yet).
+        assertThat(courseConfigurationRepository.findByCourseId(courseId)).get().extracting(CourseConfiguration::getResetWarningSentDate).isNotNull();
+        assertThat(studentParticipationRepository.findByExerciseIdAndTestRunWithEagerSubmissionsResultAssessor(textExerciseId, false)).isNotEmpty();
+
+        // Backdate the warning past the 30-day grace period so the reset becomes due.
+        CourseConfiguration stored = courseConfigurationRepository.findByCourseId(courseId).orElseThrow();
+        stored.setResetWarningSentDate(ZonedDateTime.now().minusDays(31));
+        courseConfigurationRepository.save(stored);
+
+        // Phase 2: reset (real).
+        int reset = courseDataRetentionService.resetDueCourses();
+        assertThat(reset).isGreaterThanOrEqualTo(1);
+
+        // Student data is gone, but the course, its exercise, and the archive backup all survive.
+        assertThat(studentParticipationRepository.findByExerciseIdAndTestRunWithEagerSubmissionsResultAssessor(textExerciseId, false)).isEmpty();
+        assertThat(courseRepository.findById(courseId)).isPresent();
+        assertThat(exerciseRepository.findById(textExerciseId)).isPresent();
+        assertThat(courseRepository.findById(courseId)).get().extracting(Course::hasCourseArchive).isEqualTo(true);
+        assertThat(archiveFile).exists(); // the backup created before the reset is still on disk
+        assertThat(courseConfigurationRepository.findByCourseId(courseId)).get().extracting(CourseConfiguration::getStudentDataResetDate).isNotNull();
+
+        Files.deleteIfExists(archiveFile);
+    }
+
+    private static boolean fileContains(Path file, String text) {
+        try {
+            return Files.readString(file).contains(text);
+        }
+        catch (IOException e) {
+            return false; // binary files (e.g. the uploaded PNG) are not readable as UTF-8 text; skip them
         }
     }
 

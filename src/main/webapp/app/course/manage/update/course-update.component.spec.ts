@@ -128,6 +128,28 @@ describe('Course Management Update Component', () => {
     });
 
     describe('ngOnInit', () => {
+        it('should load a grade-relevance opt-out (gradeRelevant=false) as an unchecked control', () => {
+            // A course that opted out of grade relevance must load unchecked, otherwise a later save would silently flip
+            // it back to grade-relevant and extend its data-retention period.
+            course.courseConfiguration = { gradeRelevant: false };
+            vi.spyOn(profileService, 'getProfileInfo').mockReturnValue({ activeProfiles: [], activeModuleFeatures: [] } as unknown as ProfileInfo);
+            vi.spyOn(organizationService, 'getOrganizationsByCourse').mockReturnValue(of([]));
+
+            comp.ngOnInit();
+
+            expect(comp.courseForm.get('gradeRelevant')?.value).toBe(false);
+        });
+
+        it('should default the grade-relevance control to checked when the course has no configuration', () => {
+            course.courseConfiguration = undefined;
+            vi.spyOn(profileService, 'getProfileInfo').mockReturnValue({ activeProfiles: [], activeModuleFeatures: [] } as unknown as ProfileInfo);
+            vi.spyOn(organizationService, 'getOrganizationsByCourse').mockReturnValue(of([]));
+
+            comp.ngOnInit();
+
+            expect(comp.courseForm.get('gradeRelevant')?.value).toBe(true);
+        });
+
         it('should get course, profile and fill the form', async () => {
             const profileInfo = { activeProfiles: [], activeModuleFeatures: [MODULE_FEATURE_ATLAS, MODULE_FEATURE_LTI] } as unknown as ProfileInfo;
             const getProfileStub = vi.spyOn(profileService, 'getProfileInfo').mockReturnValue(profileInfo);
