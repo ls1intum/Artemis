@@ -1,0 +1,54 @@
+<div class="flex flex-col">
+    <h3 jhiTranslate="artemisApp.userSettings.vcsAccessTokensOverview.title"></h3>
+    <p class="text-muted-color" jhiTranslate="artemisApp.userSettings.vcsAccessTokensOverview.description"></p>
+    <tum-ui-table
+        [columns]="columns()"
+        [rows]="rows()"
+        [totalRecords]="totalCount()"
+        [trackBy]="trackByToken"
+        (dataRequest)="onDataRequest($event)"
+        [rowActions]="tokenActions"
+        [loading]="isLoading()"
+        [striped]="true"
+        emptyMessage="artemisApp.userSettings.vcsAccessTokensOverview.table.empty"
+    />
+</div>
+
+<ng-template #repositoryColumn let-params>
+    @let token = params.data;
+    @switch (token.tokenType) {
+        @case (VcsAccessTokenType.PARTICIPATION) {
+            <span jhiTranslate="artemisApp.userSettings.vcsAccessTokensOverview.repository.ownParticipation"></span>
+        }
+        @default {
+            @switch (token.repositoryType) {
+                @case (RepositoryType.USER) {
+                    <span jhiTranslate="artemisApp.userSettings.vcsAccessTokensOverview.repository.studentAssignment" [translateValues]="{ student: token.studentLogin }"></span>
+                }
+                @default {
+                    <span>{{ 'artemisApp.userSettings.vcsAccessTokensOverview.repository.type.' + token.repositoryType | artemisTranslate }}</span>
+                }
+            }
+        }
+    }
+</ng-template>
+
+<ng-template #tokenActions let-token>
+    <div class="flex items-center justify-end">
+        <button
+            pButton
+            severity="danger"
+            size="small"
+            [renderButtonStyle]="false"
+            jhiDeleteButton
+            deleteQuestion="artemisApp.userSettings.vcsAccessTokensOverview.revoke.question"
+            (delete)="revokeToken(token)"
+            [dialogError]="dialogError$"
+            (click)="$event.stopPropagation()"
+            data-testid="revoke-token-btn"
+        >
+            <fa-icon [icon]="faTrash" />
+            <span class="sr-only" jhiTranslate="artemisApp.userSettings.vcsAccessTokensOverview.revoke.label"></span>
+        </button>
+    </div>
+</ng-template>

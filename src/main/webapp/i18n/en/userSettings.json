@@ -6,6 +6,30 @@
             "userSettings": "User Settings",
             "sshSettings": "SSH",
             "vcsAccessTokenSettings": "VCS Token",
+            "vcsAccessTokensOverview": {
+                "title": "Access Tokens",
+                "description": "An overview of the VCS access tokens you can use to clone repositories over HTTPS. Each token is limited to a single repository. If you revoke a token, a new one is created automatically the next time you open the clone dialog for that repository.",
+                "table": {
+                    "exercise": "Exercise",
+                    "repository": "Repository",
+                    "empty": "You do not have any VCS access tokens yet."
+                },
+                "repository": {
+                    "ownParticipation": "Your assignment repository",
+                    "studentAssignment": "Assignment repository of {{ student }}",
+                    "type": {
+                        "TEMPLATE": "Template repository",
+                        "SOLUTION": "Solution repository",
+                        "TESTS": "Test repository",
+                        "AUXILIARY": "Auxiliary repository"
+                    }
+                },
+                "revoke": {
+                    "label": "Revoke",
+                    "question": "Are you sure you want to revoke this VCS access token? A new one is created automatically the next time you open the clone dialog for this repository.",
+                    "success": "The VCS access token was revoked."
+                }
+            },
             "passkeys": "Passkeys",
             "LLMUsage": "AI Experience",
             "accountInformation": "Account Information",

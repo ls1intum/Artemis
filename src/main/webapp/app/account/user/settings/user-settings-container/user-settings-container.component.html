@@ -39,6 +39,12 @@
                     >
                     </a>
                 }
+                <a
+                    class="list-group-item btn btn-outline-primary"
+                    routerLink="access-tokens"
+                    routerLinkActive="active"
+                    jhiTranslate="artemisApp.userSettings.vcsAccessTokensOverview.title"
+                ></a>
                 @if (isPasskeyEnabled()) {
                     <a class="list-group-item btn btn-outline-primary" routerLink="passkeys" routerLinkActive="active" jhiTranslate="artemisApp.userSettings.passkeys"></a>
                 }

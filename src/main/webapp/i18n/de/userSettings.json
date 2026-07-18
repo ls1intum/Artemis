@@ -6,6 +6,30 @@
             "userSettings": "Benutzereinstellungen",
             "sshSettings": "SSH",
             "vcsAccessTokenSettings": "VCS Token",
+            "vcsAccessTokensOverview": {
+                "title": "Zugriffstokens",
+                "description": "Eine Übersicht der VCS-Zugriffstokens, mit denen du Repositories über HTTPS klonen kannst. Jedes Token ist auf ein einzelnes Repository beschränkt. Wenn du ein Token widerrufst, wird beim nächsten Öffnen des Klon-Dialogs für dieses Repository automatisch ein neues erstellt.",
+                "table": {
+                    "exercise": "Aufgabe",
+                    "repository": "Repository",
+                    "empty": "Du hast noch keine VCS-Zugriffstokens."
+                },
+                "repository": {
+                    "ownParticipation": "Dein Abgabe-Repository",
+                    "studentAssignment": "Abgabe-Repository von {{ student }}",
+                    "type": {
+                        "TEMPLATE": "Vorlagen-Repository",
+                        "SOLUTION": "Lösungs-Repository",
+                        "TESTS": "Test-Repository",
+                        "AUXILIARY": "Zusatz-Repository"
+                    }
+                },
+                "revoke": {
+                    "label": "Widerrufen",
+                    "question": "Möchtest du dieses VCS-Zugriffstoken wirklich widerrufen? Beim nächsten Öffnen des Klon-Dialogs für dieses Repository wird automatisch ein neues erstellt.",
+                    "success": "Das VCS-Zugriffstoken wurde widerrufen."
+                }
+            },
             "passkeys": "Passkeys",
             "accountInformation": "Account Informationen",
             "LLMUsage": "KI-Erfahrung",
