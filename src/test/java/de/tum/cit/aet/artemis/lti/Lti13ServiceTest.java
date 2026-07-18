@@ -603,7 +603,7 @@ class Lti13ServiceTest {
 
     @Test
     void getTargetLinkType_irisPath() {
-        String targetLinkUrl = "https://some-artemis-domain.org/courses/123/dashboard";
+        String targetLinkUrl = "https://some-artemis-domain.org/courses/123/iris";
 
         DeepLinkingType linkType = lti13Service.getTargetLinkType(targetLinkUrl);
 
@@ -694,7 +694,7 @@ class Lti13ServiceTest {
 
     @Test
     void hasTargetLinkWithoutExercise_irisPath() {
-        String targetLinkUrl = "https://some-artemis-domain.org/courses/123/dashboard";
+        String targetLinkUrl = "https://some-artemis-domain.org/courses/123/iris";
         Optional<Lecture> targetLecture = Optional.empty();
 
         boolean result = lti13Service.hasTargetLinkWithoutExercise(targetLinkUrl, targetLecture);

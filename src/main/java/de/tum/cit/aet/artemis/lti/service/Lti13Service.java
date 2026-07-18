@@ -72,7 +72,7 @@ public class Lti13Service {
 
     private static final String COMPETENCY_PATH_PATTERN = "/courses/{courseId}/competencies";
 
-    private static final String IRIS_PATH_PATTERN = "/courses/{courseId}/dashboard";
+    private static final String IRIS_PATH_PATTERN = "/courses/{courseId}/iris";
 
     private static final String LEARNING_PATH_PATH_PATTERN = "/courses/{courseId}/learning-path";
 
