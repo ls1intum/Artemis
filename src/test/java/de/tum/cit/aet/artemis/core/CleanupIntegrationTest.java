@@ -584,6 +584,10 @@ class CleanupIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCTest
         // This is the case that motivated the FeedbackCleanupRepository r2.rated=FALSE fix: because r4 (rated) is the
         // overall newest result, a MAX(id)-over-all-results "keep" would wrongly delete the latest NON-rated result's
         // feedback (r3). The age-based cleanup must keep the latest rated (r4) AND the latest non-rated (r3) feedback.
+        // The old-feedback count aggregates across all old courses, so capture the baseline and assert the delta this
+        // test introduces, keeping it robust against data left over from other tests.
+        int initialFeedbackCount = request.get("/api/core/admin/cleanup/old-feedback/count", HttpStatus.OK, OldFeedbackCleanupCountDTO.class).feedback();
+
         var oldExercise = textExerciseRepository.findByCourseIdWithCategories(oldCourse.getId()).getFirst();
         var participation = participationUtilService.createAndSaveParticipationForExercise(oldExercise, student.getLogin());
         var submission = participationUtilService.addSubmission(participation, ParticipationFactory.generateProgrammingSubmission(true));
@@ -610,10 +614,10 @@ class CleanupIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCTest
         createTextBlockForFeedback(feedbackLatestRated);
         participationUtilService.addFeedbackToResult(feedbackLatestRated, latestRated);
 
-        // Only the two non-latest results' feedback should be reported and then deleted.
+        // Only the two non-latest results' feedback (fb of nonLatestNonRated + nonLatestRated) should be added to the count.
         var counts = request.get("/api/core/admin/cleanup/old-feedback/count", HttpStatus.OK, OldFeedbackCleanupCountDTO.class);
         assertThat(counts).isNotNull();
-        assertThat(counts.feedback()).isEqualTo(2);
+        assertThat(counts.feedback()).isEqualTo(initialFeedbackCount + 2);
 
         var responseBody = request.delete("/api/core/admin/cleanup/old-feedback", new LinkedMultiValueMap<>(), null, CleanupServiceExecutionRecordDTO.class, HttpStatus.OK);
         assertThat(responseBody.jobType()).isEqualTo("deleteFeedback");
