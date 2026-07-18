@@ -467,7 +467,8 @@ public class ExamImportService {
                         // not part of ExerciseImportDTO), so we must copy them from the original.
                         QuizExercise quizSkeleton = (QuizExercise) exerciseToCopy;
                         quizSkeleton.setQuizQuestions(originalQuizExercise.getQuizQuestions());
-                        quizSkeleton.setQuizBatches(originalQuizExercise.getQuizBatches());
+                        // Don't copy batches — exam timing controls quiz scheduling, and the import service
+                        // skips batch copying for exam exercises anyway.
                         // We don't allow a modification of the exercise at this point, so we can just pass an empty list of files.
                         yield Optional.of(quizExerciseImportService.importQuizExercise(originalQuizExercise, quizSkeleton, null));
                     }

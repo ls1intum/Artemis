@@ -90,7 +90,7 @@ public class TextExerciseImportService extends ExerciseImportService {
     public TextExercise importTextExercise(final TextExercise templateExercise, TextExercise importedExercise) {
         log.debug("Creating a new Exercise based on exercise {}", templateExercise);
         Map<Long, GradingInstruction> gradingInstructionCopyTracker = new HashMap<>();
-        TextExercise newExercise = copyTextExerciseBasis(importedExercise, gradingInstructionCopyTracker);
+        TextExercise newExercise = copyTextExerciseBasis(importedExercise, templateExercise, gradingInstructionCopyTracker);
         var competencyLinks = competencyExerciseLinkService.extractCompetencyLinksForCreation(newExercise);
         TextExercise savedExercise = textExerciseRepository.save(newExercise);
         if (!competencyLinks.isEmpty()) {
@@ -116,12 +116,13 @@ public class TextExerciseImportService extends ExerciseImportService {
      * @return the cloned TextExercise basis
      */
     @NonNull
-    private TextExercise copyTextExerciseBasis(TextExercise importedExercise, Map<Long, GradingInstruction> gradingInstructionCopyTracker) {
+    private TextExercise copyTextExerciseBasis(TextExercise importedExercise, TextExercise templateExercise, Map<Long, GradingInstruction> gradingInstructionCopyTracker) {
         log.debug("Copying the exercise basis from {}", importedExercise);
         TextExercise newExercise = new TextExercise();
 
-        super.copyExerciseBasis(newExercise, importedExercise, gradingInstructionCopyTracker);
-        newExercise.setExampleSolution(importedExercise.getExampleSolution());
+        super.copyExerciseBasis(newExercise, importedExercise, templateExercise, gradingInstructionCopyTracker);
+        // Prefer the intended exercise (honours edits from the standalone import form), fall back to the source content.
+        newExercise.setExampleSolution(firstNonNull(importedExercise.getExampleSolution(), templateExercise.getExampleSolution()));
         return newExercise;
     }
 
