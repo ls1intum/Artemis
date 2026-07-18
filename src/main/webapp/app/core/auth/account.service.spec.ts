@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { computed } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
@@ -516,6 +517,50 @@ describe('AccountService', () => {
             url = accountService.getImageUrl();
 
             expect(url).toBe(`api/core/files/${expectedUrl}`);
+        });
+    });
+
+    describe('test setImageUrl', () => {
+        it('should emit a NEW identity reference so the signal notifies (upload / edit)', () => {
+            accountService.userIdentity.set({ login: 'user', imageUrl: 'old.png' } as User);
+            const before = accountService.userIdentity();
+
+            accountService.setImageUrl('new.png');
+
+            const after = accountService.userIdentity();
+            // A new reference is what makes the signal notify (Object.is); mutating in place would not refresh the UI.
+            expect(after).not.toBe(before);
+            expect(after?.imageUrl).toBe('new.png');
+            expect(after?.login).toBe('user');
+        });
+
+        it('should emit a NEW identity reference when clearing the image (delete)', () => {
+            accountService.userIdentity.set({ login: 'user', imageUrl: 'old.png' } as User);
+            const before = accountService.userIdentity();
+
+            accountService.setImageUrl(undefined);
+
+            const after = accountService.userIdentity();
+            expect(after).not.toBe(before);
+            expect(after?.imageUrl).toBeUndefined();
+        });
+
+        it('should trigger a dependent computed to recompute', () => {
+            accountService.userIdentity.set({ imageUrl: 'old.png' } as User);
+            const derived = computed(() => accountService.userIdentity()?.imageUrl);
+            expect(derived()).toBe('old.png');
+
+            accountService.setImageUrl('new.png');
+            expect(derived()).toBe('new.png');
+
+            accountService.setImageUrl(undefined);
+            expect(derived()).toBeUndefined();
+        });
+
+        it('should be a no-op when there is no user identity', () => {
+            accountService.userIdentity.set(undefined);
+            expect(() => accountService.setImageUrl('x.png')).not.toThrow();
+            expect(accountService.userIdentity()).toBeUndefined();
         });
     });
 

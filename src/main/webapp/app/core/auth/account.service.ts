@@ -318,8 +318,10 @@ export class AccountService implements IAccountService {
                 return currentUserIdentity;
             }
 
-            currentUserIdentity.imageUrl = url;
-            return currentUserIdentity;
+            // Return a NEW object rather than mutating in place: a signal compares with Object.is, so returning the
+            // same reference emits no notification and (under zoneless change detection) nothing re-renders — the
+            // account picture would not refresh after upload / edit / delete. Mirrors setUserLLMSelectionDecision.
+            return Object.assign({}, currentUserIdentity, { imageUrl: url });
         });
     }
 
