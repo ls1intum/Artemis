@@ -1,31 +1,32 @@
 import { Dayjs } from 'dayjs/esm';
-import { CalendarEvent } from 'app/openapi/model/calendarEvent';
+import { CalendarEventTypeEnum } from 'app/openapi/model/calendar-event';
+import { generateUuid } from 'app/foundation/util/crypto.utils';
 
 export class IdentifiableCalendarEvent {
     public id: string;
 
     constructor(
-        public type: CalendarEvent.TypeEnum,
+        public type: CalendarEventTypeEnum,
         public title: string,
         public startDate: Dayjs,
         public endDate?: Dayjs,
         public location?: string,
         public facilitator?: string,
     ) {
-        this.id = window.crypto.randomUUID().toString();
+        this.id = generateUuid();
     }
 
-    isOfType(type: CalendarEvent.TypeEnum): boolean {
+    isOfType(type: CalendarEventTypeEnum): boolean {
         return this.type === type;
     }
 
     isOfExerciseType(): boolean {
         switch (this.type) {
-            case CalendarEvent.TypeEnum.ProgrammingExercise:
-            case CalendarEvent.TypeEnum.QuizExercise:
-            case CalendarEvent.TypeEnum.TextExercise:
-            case CalendarEvent.TypeEnum.FileUploadExercise:
-            case CalendarEvent.TypeEnum.ModelingExercise:
+            case 'PROGRAMMING_EXERCISE':
+            case 'QUIZ_EXERCISE':
+            case 'TEXT_EXERCISE':
+            case 'FILE_UPLOAD_EXERCISE':
+            case 'MODELING_EXERCISE':
                 return true;
             default:
                 return false;

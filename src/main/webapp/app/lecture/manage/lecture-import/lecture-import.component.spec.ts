@@ -1,6 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { FormsModule } from '@angular/forms';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { LectureImportComponent } from 'app/lecture/manage/lecture-import/lecture-import.component';
@@ -18,8 +17,6 @@ import { Subject, of } from 'rxjs';
 import { LecturePagingService } from 'app/lecture/manage/services/lecture-paging.service';
 
 describe('LectureImportComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<LectureImportComponent>;
     let comp: LectureImportComponent;
     let dialogRef: DynamicDialogRef;

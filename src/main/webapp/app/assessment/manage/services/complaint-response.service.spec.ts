@@ -2,7 +2,6 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { take } from 'rxjs/operators';
 import { ComplaintResponseService } from 'app/assessment/manage/services/complaint-response.service';
 import { ComplaintResponse } from 'app/assessment/shared/entities/complaint-response.model';
@@ -14,7 +13,6 @@ import { ComplaintAction, ComplaintResponseDTO, ComplaintResponseUpdateDTO } fro
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 
 describe('ComplaintResponseService', () => {
-    setupTestBed({ zoneless: true });
     let complaintResponseService: ComplaintResponseService;
     let httpTestingController: HttpTestingController;
     let defaultComplaintResponseDTO: ComplaintResponseDTO;

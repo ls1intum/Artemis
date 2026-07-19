@@ -22,6 +22,7 @@ import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.notification.domain.notification.SystemNotification;
 import de.tum.cit.aet.artemis.notification.dto.MailRecipientDTO;
+import de.tum.cit.aet.artemis.notification.dto.SystemNotificationDTO;
 import de.tum.cit.aet.artemis.notification.repository.MaintenanceEmailRecipientRepository;
 import de.tum.cit.aet.artemis.notification.repository.SystemNotificationRepository;
 import de.tum.cit.aet.artemis.notification.service.notifications.MailSendingService;
@@ -62,6 +63,15 @@ public class SystemNotificationService {
         return systemNotificationRepository.findAllActiveAndFutureSystemNotifications(ZonedDateTime.now());
     }
 
+    /**
+     * Finds all active and future system notifications and maps them to DTOs.
+     *
+     * @return the list of notification DTOs
+     */
+    public List<SystemNotificationDTO> findAllActiveAndFutureSystemNotificationDTOs() {
+        return findAllActiveAndFutureSystemNotifications().stream().map(SystemNotificationDTO::from).toList();
+    }
+
     static final String SYSTEM_NOTIFICATION_TOPIC = "/topic/notification/system-notification";
 
     // Legacy STOMP destination kept in parallel during the migration to /topic/notification/...
@@ -76,7 +86,7 @@ public class SystemNotificationService {
      */
     @SuppressWarnings("deprecation")
     public void distributeActiveAndFutureNotificationsToClients() {
-        List<SystemNotification> notifications = findAllActiveAndFutureSystemNotifications();
+        List<SystemNotificationDTO> notifications = findAllActiveAndFutureSystemNotificationDTOs();
         websocketMessagingService.sendMessage(SYSTEM_NOTIFICATION_TOPIC, notifications);
         // Mirror to the legacy destination so older subscribers continue to receive updates during the migration window.
         websocketMessagingService.sendMessage(LEGACY_SYSTEM_NOTIFICATION_TOPIC, notifications);

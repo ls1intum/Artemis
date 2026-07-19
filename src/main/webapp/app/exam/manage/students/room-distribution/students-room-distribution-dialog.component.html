@@ -8,7 +8,7 @@
     [draggable]="false"
     appendTo="body"
 >
-    <ng-template pTemplate="header">
+    <ng-template #header>
         <h4>
             <span jhiTranslate="artemisApp.exam.examUsers.rooms.dialogTitle"></span>
         </h4>
@@ -99,7 +99,7 @@
             </div>
         }
     </form>
-    <ng-template pTemplate="footer">
+    <ng-template #footer>
         <div class="distribution-footer-container">
             <p>
                 <span jhiTranslate="artemisApp.exam.examUsers.rooms.cantFindRoom"></span>

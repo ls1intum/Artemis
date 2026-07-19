@@ -233,11 +233,11 @@ public class ExamUserResource {
      */
     @GetMapping("courses/{courseId}/exams/{examId}/students/search")
     @EnforceAtLeastInstructor
-    public ResponseEntity<List<UserForRegistrationDTO>> searchUsersForExamRegistration(@PathVariable Long courseId, @PathVariable Long examId, @RequestParam String searchTerm,
+    public ResponseEntity<List<UserForRegistrationDTO>> searchStudentsForExamRegistration(@PathVariable Long courseId, @PathVariable Long examId, @RequestParam String searchTerm,
             @RequestParam(defaultValue = "0") @Min(0) int page, @RequestParam(defaultValue = "10") @Min(1) @Max(200) int size) {
         log.debug("REST request to search users for exam {} registration with term: {}", examId, searchTerm);
         examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
-        Page<UserForRegistrationDTO> result = examUserService.searchUsersForExamRegistration(examId, searchTerm, page, size);
+        Page<UserForRegistrationDTO> result = examUserService.searchStudentsForExamRegistration(courseId, examId, searchTerm, page, size);
         HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), result);
         return new ResponseEntity<>(result.getContent(), headers, HttpStatus.OK);
     }

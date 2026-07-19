@@ -3,7 +3,7 @@ import dayjs from 'dayjs/esm';
 import { omit } from 'lodash-es';
 import { combineLatest, takeWhile } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { AfterViewInit, Component, OnDestroy, OnInit, computed, inject, signal, viewChild, viewChildren } from '@angular/core';
+import { Component, OnDestroy, OnInit, computed, inject, signal, viewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { Dialog } from 'primeng/dialog';
@@ -14,6 +14,7 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { Course, isCommunicationEnabled } from 'app/course/shared/entities/course.model';
 import { onError } from 'app/foundation/util/global.utils';
+import { EXAM_TEXT_MAX_LENGTH, EXAM_TITLE_MAX_LENGTH } from 'app/foundation/constants/input.constants';
 import { ArtemisNavigationUtilService } from 'app/foundation/util/navigation.utils';
 import { ExamExerciseImportComponent } from 'app/exam/manage/exams/exam-exercise-import/exam-exercise-import.component';
 import { ExamImportProgressDialogComponent } from 'app/exam/manage/exams/exam-import/exam-import-progress-dialog.component';
@@ -56,7 +57,7 @@ import { ConfirmEntityNameComponent } from 'app/shared-ui/confirm-entity-name/co
         ExamImportProgressDialogComponent,
     ],
 })
-export class ExamUpdateComponent implements OnInit, OnDestroy, AfterViewInit {
+export class ExamUpdateComponent implements OnInit, OnDestroy {
     private route = inject(ActivatedRoute);
     private examManagementService = inject(ExamManagementService);
     private alertService = inject(AlertService);
@@ -70,6 +71,8 @@ export class ExamUpdateComponent implements OnInit, OnDestroy, AfterViewInit {
     protected readonly documentationType: DocumentationType = 'Exams';
     protected readonly ButtonType = ButtonType;
     protected readonly ButtonSize = ButtonSize;
+    protected readonly EXAM_TEXT_MAX_LENGTH = EXAM_TEXT_MAX_LENGTH;
+    protected readonly EXAM_TITLE_MAX_LENGTH = EXAM_TITLE_MAX_LENGTH;
 
     // exam is template-bound (directly and through many getters) and populated asynchronously from the route
     // resolver, so it is backed by a signal to schedule change detection. The getter/setter facade keeps the
@@ -81,7 +84,7 @@ export class ExamUpdateComponent implements OnInit, OnDestroy, AfterViewInit {
     set exam(value: Exam) {
         this._exam.set(value);
     }
-    course: Course;
+    course!: Course; // set in ngOnInit() from route data
     readonly isSaving = signal(false);
     readonly isImport = signal(false);
     readonly isImportInSameCourse = signal(false);
@@ -103,10 +106,6 @@ export class ExamUpdateComponent implements OnInit, OnDestroy, AfterViewInit {
     // Link to the component enabling the selection of exercise groups and exercises for import
     examExerciseImportComponent = viewChild.required(ExamExerciseImportComponent);
     examImportProgressDialog = viewChild.required(ExamImportProgressDialogComponent);
-
-    readonly datePickers = viewChildren(FormDateTimePickerComponent);
-
-    private viewInitialized = false;
 
     ngOnInit(): void {
         combineLatest([this.route.url, this.route.data])
@@ -144,13 +143,7 @@ export class ExamUpdateComponent implements OnInit, OnDestroy, AfterViewInit {
                     this.exam.startText = this.examDefaultStartText;
                 }
                 this.hideChannelNameInput.set((!!exam.id && !exam.channelName) || !isCommunicationEnabled(this.course));
-                this.refreshDatePickerValidation();
             });
-    }
-
-    ngAfterViewInit() {
-        this.viewInitialized = true;
-        this.refreshDatePickerValidation();
     }
 
     ngOnDestroy() {
@@ -186,14 +179,6 @@ export class ExamUpdateComponent implements OnInit, OnDestroy, AfterViewInit {
 
     get newWorkingTime(): number | undefined {
         return this.exam.workingTime;
-    }
-
-    private refreshDatePickerValidation() {
-        if (!this.viewInitialized) {
-            return;
-        }
-        // Delay until the current change detection cycle completed so the pickers have the latest ngModel values.
-        setTimeout(() => this.datePickers().forEach((picker) => picker.updateSignals()), 0);
     }
 
     /**
@@ -427,8 +412,24 @@ export class ExamUpdateComponent implements OnInit, OnDestroy, AfterViewInit {
             examValidWorkingTime &&
             examValidExampleSolutionPublicationDate &&
             examValidNumberOfExercises &&
-            examValidGracePeriod
+            examValidGracePeriod &&
+            this.areExamTextsValid
         );
+    }
+
+    /**
+     * Returns true when a single exam text (start / end / confirmation) is within the allowed length.
+     */
+    isExamTextTooLong(text?: string): boolean {
+        return (text?.length ?? 0) > EXAM_TEXT_MAX_LENGTH;
+    }
+
+    /**
+     * Returns true when all exam start / end / confirmation texts are within the allowed length.
+     */
+    // Getter (not a computed) on purpose: the texts are mutated in place via [(ngModel)] without changing the exam signal reference, so a computed would go stale.
+    get areExamTextsValid(): boolean {
+        return ![this.exam.startText, this.exam.endText, this.exam.confirmationStartText, this.exam.confirmationEndText].some((text) => this.isExamTextTooLong(text));
     }
 
     /**

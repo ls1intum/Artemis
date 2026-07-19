@@ -1,6 +1,6 @@
 @if (notificationInitialized()) {
     <div class="course-notification">
-        <div [ngClass]="isUnseen() ? 'is-unseen' : ''" class="course-notification-wrap">
+        <div [ngClass]="isUnseen() ? 'is-unseen' : ''" [class.is-fluid]="fluid()" class="course-notification-wrap">
             @if (isShowClose()) {
                 <div class="course-notification-close" (click)="closeClicked()">
                     <fa-icon [icon]="faTimes" />

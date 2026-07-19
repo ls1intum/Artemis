@@ -1,5 +1,4 @@
 import { vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockComponent } from 'ng-mocks';
 import { ExerciseUpdateNotificationComponent } from 'app/exercise/exercise-update-notification/exercise-update-notification.component';
@@ -10,7 +9,6 @@ import { provideHttpClient } from '@angular/common/http';
 import { FormFooterComponent } from 'app/shared-ui/form/form-footer/form-footer.component';
 
 describe('FormFooterComponent', () => {
-    setupTestBed({ zoneless: true });
     let fixture: ComponentFixture<FormFooterComponent>;
     let comp: FormFooterComponent;
 

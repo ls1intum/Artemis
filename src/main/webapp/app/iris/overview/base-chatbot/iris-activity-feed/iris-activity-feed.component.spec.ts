@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { Subject } from 'rxjs';
@@ -8,8 +7,6 @@ import { IrisActivityFeedComponent, prettifyActivityName } from 'app/iris/overvi
 import { IrisActivityItem, IrisActivityKind, IrisActivityState } from 'app/iris/shared/entities/iris-activity.model';
 
 describe('IrisActivityFeedComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<IrisActivityFeedComponent>;
     let translateService: {
         instant: ReturnType<typeof vi.fn>;

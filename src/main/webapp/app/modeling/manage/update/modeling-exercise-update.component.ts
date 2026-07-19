@@ -108,7 +108,7 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
     set modelingExercise(value: ModelingExercise) {
         this._modelingExercise.set(value);
     }
-    backupExercise: ModelingExercise;
+    backupExercise!: ModelingExercise; // set in ngOnInit() from route data before save()
     readonly exampleSolution = signal<UMLModel>(undefined!);
     readonly isSaving = signal(false);
     readonly exerciseCategories = signal<ExerciseCategory[]>([]);

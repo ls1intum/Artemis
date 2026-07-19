@@ -7,6 +7,7 @@ import { expect } from '@playwright/test';
 import dayjs from 'dayjs';
 import { QuizMode } from '../../../support/constants';
 import { SEED_COURSES } from '../../../support/seedData';
+import { readResponseJson } from '../../../support/utils';
 
 const course = { id: SEED_COURSES.quizParticipation.id } as any;
 
@@ -45,7 +46,7 @@ test.describe('Quiz Exercise Participation', { tag: '@fast' }, () => {
             // as submitted, and return exactly the answer the student ticked (one MC entry with the right selected ids).
             expect(submitResponse.status()).toBe(200);
             const submittedExpectedIds = tickedOptionIndices.map((index) => quizExercise.quizQuestions![0].answerOptions![index].id);
-            const responseBody = await submitResponse.json();
+            const responseBody = await readResponseJson(submitResponse);
             expect(responseBody.submitted, 'server must flip the submitted flag after final submit').toBe(true);
             expect(responseBody.submittedAnswers, 'server must persist exactly one submitted answer for the MC question').toHaveLength(1);
             const mcAnswer = responseBody.submittedAnswers[0];
@@ -115,7 +116,7 @@ test.describe('Quiz Exercise Participation', { tag: '@fast' }, () => {
                     await page.goto(`/courses/${course.id}/exercises/${shortQuiz.id!}`);
                     let body: any;
                     try {
-                        body = await (await responsePromise).json();
+                        body = await readResponseJson(await responsePromise);
                     } catch {
                         if (attempt === 2) {
                             throw new Error(`reloadAndReadSelectedOptionIds: start-participation never returned after 3 attempts`);
@@ -413,7 +414,7 @@ test.describe('Quiz Exercise Participation', { tag: '@fast' }, () => {
             // End-to-end submit contract for short-answer: the new DTO-bound endpoint must accept the rich entity-shaped JSON the
             // client sends, persist one submitted-text per filled spot (lifting the text verbatim), and not silently drop any of them.
             expect(submitResponse.status()).toBe(200);
-            const responseBody = await submitResponse.json();
+            const responseBody = await readResponseJson(submitResponse);
             expect(responseBody.submitted).toBe(true);
             expect(responseBody.submittedAnswers, 'server must persist exactly one submitted answer for the SA question').toHaveLength(1);
             const saAnswer = responseBody.submittedAnswers[0];
@@ -435,7 +436,7 @@ test.describe('Quiz Exercise Participation', { tag: '@fast' }, () => {
             await quizExerciseCreation.setTitle('Cypress Quiz');
             await quizExerciseCreation.addDragAndDropQuestion('DnD Quiz');
             const response = await quizExerciseCreation.saveQuiz();
-            quizExercise = await response.json();
+            quizExercise = await readResponseJson(response);
             await exerciseAPIRequests.setQuizVisible(quizExercise.id!);
             await exerciseAPIRequests.startQuizNow(quizExercise.id!);
         });
@@ -451,7 +452,7 @@ test.describe('Quiz Exercise Participation', { tag: '@fast' }, () => {
             // (with full nested DragItem / DropLocation objects) the client sends and persist one mapping per drop the
             // student performed — server-resolved by id, not the client-supplied object.
             expect(submitResponse.status()).toBe(200);
-            const responseBody = await submitResponse.json();
+            const responseBody = await readResponseJson(submitResponse);
             expect(responseBody.submitted).toBe(true);
             expect(responseBody.submittedAnswers, 'server must persist exactly one submitted answer for the DnD question').toHaveLength(1);
             const dndAnswer = responseBody.submittedAnswers[0];
@@ -460,6 +461,69 @@ test.describe('Quiz Exercise Participation', { tag: '@fast' }, () => {
             const mapping = dndAnswer.mappings[0];
             expect(mapping.dragItem?.id, 'persisted mapping must reference a real dragItem id').toEqual(expect.any(Number));
             expect(mapping.dropLocation?.id, 'persisted mapping must reference a real dropLocation id').toEqual(expect.any(Number));
+        });
+
+        /**
+         * Regression test for https://github.com/ls1intum/Artemis/issues/13187: on small screens the drag items are
+         * rendered below the exercise, so students must be able to scroll upwards while dragging an item. Holding a
+         * dragged item near the top edge of the scroll container must auto-scroll it (CDK auto-scroll requires the
+         * container to be registered as cdkScrollable).
+         */
+        test('View auto-scrolls when student drags an item to the top of the scroll container', async ({ login, page }) => {
+            await login(studentOne, `/courses/${course.id}/exercises/${quizExercise.id}`);
+            await page.setViewportSize({ width: 800, height: 600 });
+            const dragItem = page.locator('#drag-item-0');
+            await dragItem.waitFor({ state: 'visible' });
+            await dragItem.scrollIntoViewIfNeeded();
+            // Find the scroll container hosting the quiz and record its scroll state and position.
+            const before = await page.evaluate(() => {
+                let el = document.getElementById('drag-item-0')?.parentElement;
+                while (el) {
+                    const style = getComputedStyle(el);
+                    if (el.scrollHeight > el.clientHeight && ['auto', 'scroll'].includes(style.overflowY)) {
+                        break;
+                    }
+                    el = el.parentElement;
+                }
+                if (!el) {
+                    return undefined;
+                }
+                el.setAttribute('data-e2e-scroll-container', 'true');
+                const rect = el.getBoundingClientRect();
+                return { scrollTop: el.scrollTop, top: rect.top, left: rect.left, width: rect.width };
+            });
+            if (!before) {
+                throw new Error('the drag item must be inside a scrollable container');
+            }
+            expect(before.scrollTop, 'precondition: the container must be scrolled down so it can scroll up during the drag').toBeGreaterThan(0);
+
+            const box = await dragItem.boundingBox();
+            if (!box) {
+                throw new Error('the drag item must be visible and have a bounding box');
+            }
+            await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+            await page.mouse.down();
+            // Drag the item to the top edge of the scroll container and hold it there, jiggling the pointer
+            // so drag-move events keep firing until the auto-scroll has moved the container upwards.
+            const holdX = before.left + before.width / 2;
+            const holdY = before.top + 5;
+            await page.mouse.move(holdX, holdY, { steps: 10 });
+            const getScrollTop = () =>
+                page.evaluate(() => {
+                    const container = document.querySelector('[data-e2e-scroll-container]');
+                    if (!container) {
+                        throw new Error('scroll container marker not found');
+                    }
+                    return container.scrollTop;
+                });
+            let scrollTopWhileDragging = before.scrollTop;
+            for (let i = 0; i < 30 && scrollTopWhileDragging >= before.scrollTop; i++) {
+                await page.mouse.move(holdX + (i % 2), holdY);
+                await page.waitForTimeout(100);
+                scrollTopWhileDragging = await getScrollTop();
+            }
+            await page.mouse.up();
+            expect(scrollTopWhileDragging, 'holding a dragged item at the top edge must scroll the container upwards').toBeLessThan(before.scrollTop);
         });
     });
 

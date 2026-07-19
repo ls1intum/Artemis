@@ -23,7 +23,6 @@ import { MODULE_FEATURE_TEXT } from 'app/app.constants';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 function getExerciseGroups(equalPoints: boolean) {
     const dueDateStatArray = [{ inTime: 0, late: 0, total: 0 }];
@@ -55,8 +54,6 @@ function getExerciseGroups(equalPoints: boolean) {
 }
 
 describe('ExamChecklistComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let examChecklistComponentFixture: ComponentFixture<ExamChecklistComponent>;
     let component: ExamChecklistComponent;
 

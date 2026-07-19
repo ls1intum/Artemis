@@ -39,8 +39,8 @@ export class ExamScoresAverageScoresGraphComponent implements OnInit {
     averageScores = input.required<AggregatedExerciseGroupResult>();
     course = input.required<Course>();
 
-    courseId: number;
-    examId: number;
+    courseId!: number; // set in ngOnInit() from route params
+    examId!: number; // set in ngOnInit() from route params
 
     /** One entry per bar: the exercise group average followed by the exercise averages. */
     readonly chartEntries = signal<ChartSeriesEntry[]>([]);
@@ -126,7 +126,7 @@ export class ExamScoresAverageScoresGraphComponent implements OnInit {
      * Delegates the user to the scores page of the specific exam exercise if the corresponding bar is clicked
      * @param event the event that is fired by p-chart
      */
-    onSelect(event: { element?: { datasetIndex: number; index: number } }) {
+    onSelect(event: { element?: unknown }) {
         const selected = toChartSelectEvent(event, this.chartData());
         if (!selected?.label) {
             return;

@@ -10,7 +10,7 @@ model and stay fast and reproducible.
 
 It implements the small subset of the OpenAI HTTP API that Pyris's
 `type: openai_chat` / `openai_embedding` models exercise via the official
-openai-python SDK (Chat Completions API, NOT the Responses API; non-streaming):
+openai-python SDK (Chat Completions API, NOT the Responses API):
 
   POST /v1/chat/completions   -> a canned assistant message (finish_reason "stop",
                                  no tool_calls, with a usage block). If the request
@@ -18,6 +18,14 @@ openai-python SDK (Chat Completions API, NOT the Responses API; non-streaming):
                                  a JSON object is returned instead of prose so
                                  Pyris's JsonOutputParser-based sub-pipelines
                                  (e.g. interaction-suggestion `Questions`) parse it.
+                                 When the request sets "stream": true (Pyris does
+                                 this for every course/lecture chat call so it can
+                                 stream the answer to the browser as it generates),
+                                 the same canned message is instead served as a
+                                 Server-Sent Events chunk sequence so the openai-python
+                                 streaming client can parse it; the plain non-streaming
+                                 JSON body above is only used when "stream" is absent
+                                 or false.
   POST /v1/embeddings         -> a deterministic constant-dimension embedding vector
                                  (only needed if ingested content triggers retrieval;
                                  harmless to expose regardless).
@@ -45,6 +53,7 @@ import os
 import sys
 import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from typing import Optional
 
 HOST = os.environ.get("MOCK_LLM_HOST", "0.0.0.0")
 PORT = int(os.environ.get("MOCK_LLM_PORT", "8081"))
@@ -168,6 +177,62 @@ def chat_completion_body(model: str, wants_json: bool) -> dict:
     }
 
 
+def to_stream_chunks(response: dict) -> list:
+    """Convert a canned non-streaming Chat Completions response into the sequence of
+    SSE chunks the openai-python streaming client (`stream=True`) expects.
+
+    Pyris requests streaming for every course/lecture chat call (see
+    `_create_streamed_chat_completion` / `stream_handler` in edutelligence's
+    `openai_chat.py`) so it can forward partial deltas to Artemis while the answer
+    generates. The SDK's streaming reader parses Server-Sent Events, not a single
+    JSON body, so a response built for the non-streaming path must be re-shaped into
+    `chat.completion.chunk` deltas here rather than served as-is.
+    """
+    choice = response["choices"][0]
+    message = choice["message"]
+
+    def chunk(delta: dict, finish_reason: Optional[str] = None) -> dict:
+        return {
+            "id": response["id"],
+            "object": "chat.completion.chunk",
+            "created": response["created"],
+            "model": response["model"],
+            "choices": [{"index": 0, "delta": delta, "finish_reason": finish_reason}],
+        }
+
+    chunks = []
+    content = message.get("content") or ""
+    for i, word in enumerate(content.split(" ") if content else []):
+        chunks.append(chunk({"content": word if i == 0 else f" {word}"}))
+
+    tool_calls = message.get("tool_calls")
+    if tool_calls:
+        chunks.append(
+            chunk(
+                {
+                    "tool_calls": [
+                        {"index": i, "id": call["id"], "type": call["type"], "function": call["function"]} for i, call in enumerate(tool_calls)
+                    ]
+                }
+            )
+        )
+
+    chunks.append(chunk({}, finish_reason=choice["finish_reason"]))
+    # stream_options={"include_usage": True} (always set by Pyris) asks for a
+    # trailing chunk with empty choices and the usage block.
+    chunks.append(
+        {
+            "id": response["id"],
+            "object": "chat.completion.chunk",
+            "created": response["created"],
+            "model": response["model"],
+            "choices": [],
+            "usage": response["usage"],
+        }
+    )
+    return chunks
+
+
 def embeddings_body(model: str, inputs: list) -> dict:
     """Build a canned OpenAI embeddings response with constant-dimension vectors."""
     vector = [0.0] * EMBED_DIM
@@ -195,6 +260,27 @@ class MockLLMHandler(BaseHTTPRequestHandler):
         self.send_header("Content-Length", str(len(payload)))
         self.end_headers()
         self.wfile.write(payload)
+
+    def _respond_stream(self, chunks: list) -> None:
+        """Write a Chat Completions response as Server-Sent Events.
+
+        The body length isn't known upfront (chunks are generated on the fly), so
+        the response is close-delimited rather than framed with Content-Length.
+        """
+        self.send_response(200)
+        self.send_header("Content-Type", "text/event-stream")
+        self.send_header("Cache-Control", "no-cache")
+        self.send_header("Connection", "close")
+        self.end_headers()
+        # wfile is buffered; flush after every event so chunks reach the client as they're
+        # produced instead of arriving in one burst when the connection closes, which would
+        # defeat streaming semantics (and delay tool-call/activity visibility in Pyris).
+        for chunk in chunks:
+            self.wfile.write(f"data: {json.dumps(chunk)}\n\n".encode("utf-8"))
+            self.wfile.flush()
+        self.wfile.write(b"data: [DONE]\n\n")
+        self.wfile.flush()
+        self.close_connection = True
 
     def do_GET(self) -> None:  # noqa: N802 - http.server API
         if self.path.rstrip("/").endswith("/v1/models"):
@@ -240,14 +326,22 @@ class MockLLMHandler(BaseHTTPRequestHandler):
                     break
             wants_tool_round = bool(tools) and TOOL_MARKER in last_user_text
             has_tool_result = any(isinstance(m, dict) and m.get("role") == "tool" for m in messages)
-            log(f"chat.completions model={model!r} json={wants_json} tools={len(tools)} tool_round={wants_tool_round} tool_result={has_tool_result}")
+            wants_stream = bool(body.get("stream"))
+            log(
+                f"chat.completions model={model!r} json={wants_json} tools={len(tools)} "
+                f"tool_round={wants_tool_round} tool_result={has_tool_result} stream={wants_stream}"
+            )
             if wants_tool_round and not has_tool_result:
-                self._respond(200, tool_call_body(model, pick_tool_name(tools)))
-                return
-            if wants_tool_round and has_tool_result and TOOL_FOLLOWUP_DELAY_S > 0:
-                # Keep the finished tool chip visible for the UI assertion window.
-                time.sleep(TOOL_FOLLOWUP_DELAY_S)
-            self._respond(200, chat_completion_body(model, wants_json))
+                response = tool_call_body(model, pick_tool_name(tools))
+            else:
+                if wants_tool_round and has_tool_result and TOOL_FOLLOWUP_DELAY_S > 0:
+                    # Keep the finished tool chip visible for the UI assertion window.
+                    time.sleep(TOOL_FOLLOWUP_DELAY_S)
+                response = chat_completion_body(model, wants_json)
+            if wants_stream:
+                self._respond_stream(to_stream_chunks(response))
+            else:
+                self._respond(200, response)
             return
 
         if path.endswith("/v1/embeddings"):
@@ -264,6 +358,7 @@ class MockLLMHandler(BaseHTTPRequestHandler):
         log(f"unhandled POST {self.path}")
         self._respond(404, {"error": {"message": f"Unknown endpoint: {self.path}", "type": "invalid_request_error"}})
 
+    # pylint: disable-next=redefined-builtin
     def log_message(self, format: str, *args) -> None:  # noqa: A002 - argument name must match the BaseHTTPRequestHandler.log_message override
         return
 

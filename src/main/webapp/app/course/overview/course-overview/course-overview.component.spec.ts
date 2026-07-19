@@ -1,7 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { signal } from '@angular/core';
 import { CourseLecturesComponent } from 'app/lecture/shared/course-lectures/course-lectures.component';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { FeatureToggleHideDirective } from 'app/foundation/feature-toggle/feature-toggle-hide.directive';
 import { BehaviorSubject, EMPTY, Observable, Subject, of, throwError } from 'rxjs';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
@@ -41,7 +40,7 @@ import { CourseOverviewComponent } from 'app/course/overview/course-overview/cou
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
 import { ExamParticipationService } from 'app/exam/overview/services/exam-participation.service';
-import { TutorialGroupApiService } from 'app/openapi/api/tutorialGroupApi.service';
+import { TutorialGroupApi } from 'app/openapi/api/tutorial-group-api';
 import { TutorialGroupsConfigurationService } from 'app/tutorialgroup/manage/service/tutorial-groups-configuration.service';
 import { CourseAccessStorageService } from 'app/course/shared/services/course-access-storage.service';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
@@ -130,15 +129,13 @@ class ControlsTestingComponent implements BarControlConfigurationProvider, After
 }
 
 describe('CourseOverviewComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: CourseOverviewComponent;
     let fixture: ComponentFixture<CourseOverviewComponent>;
     let courseService: CourseManagementService;
     let courseStorageService: CourseStorageService;
     let examParticipationService: ExamParticipationService;
     let teamService: TeamService;
-    let tutorialGroupApiService: TutorialGroupApiService;
+    let tutorialGroupApiService: TutorialGroupApi;
     let tutorialGroupsConfigurationService: TutorialGroupsConfigurationService;
     let jhiWebsocketService: WebsocketService;
     let courseAccessStorageService: CourseAccessStorageService;
@@ -160,6 +157,7 @@ describe('CourseOverviewComponent', () => {
     beforeEach(async () => {
         route = {
             params: of({ courseId: course1.id }) as Params,
+            data: of({}),
             snapshot: { firstChild: { routeConfig: { path: 'exercises' } } },
         } as ActivatedRoute;
         router = new MockRouter();
@@ -193,7 +191,7 @@ describe('CourseOverviewComponent', () => {
                 MockProvider(CalendarService),
                 MockProvider(AlertService),
                 MockProvider(ChangeDetectorRef),
-                MockProvider(TutorialGroupApiService),
+                MockProvider(TutorialGroupApi),
                 MockProvider(TutorialGroupsConfigurationService),
                 MockProvider(MetisConversationService),
                 MockProvider(CourseAccessStorageService),
@@ -219,7 +217,7 @@ describe('CourseOverviewComponent', () => {
         examParticipationService = TestBed.inject(ExamParticipationService);
         teamService = TestBed.inject(TeamService);
         profileService = TestBed.inject(ProfileService);
-        tutorialGroupApiService = TestBed.inject(TutorialGroupApiService);
+        tutorialGroupApiService = TestBed.inject(TutorialGroupApi);
         tutorialGroupsConfigurationService = TestBed.inject(TutorialGroupsConfigurationService);
         jhiWebsocketService = TestBed.inject(WebsocketService);
         courseAccessStorageService = TestBed.inject(CourseAccessStorageService);
@@ -626,7 +624,7 @@ describe('CourseOverviewComponent', () => {
             status: 200,
         });
 
-        vi.spyOn(tutorialGroupApiService, 'getTutorialGroupsForCourse').mockReturnValue(of(tutorialGroupsResponse));
+        vi.spyOn(tutorialGroupApiService, 'getTutorialGroupsForCourse').mockReturnValue(of(tutorialGroupsResponse.body!));
         vi.spyOn(tutorialGroupsConfigurationService, 'getOneOfCourse').mockReturnValue(of(configurationResponse));
 
         getCourseStub.mockReturnValue(course2);

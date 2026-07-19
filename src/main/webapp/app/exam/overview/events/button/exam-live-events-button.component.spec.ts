@@ -11,11 +11,8 @@ import { ExamLiveEventsOverlayComponent } from 'app/exam/overview/events/overlay
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('ExamLiveEventsButtonComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: ExamLiveEventsButtonComponent;
     let fixture: ComponentFixture<ExamLiveEventsButtonComponent>;
     let mockDialogService: DialogService;
@@ -62,6 +59,8 @@ describe('ExamLiveEventsButtonComponent', () => {
         const config = dialogSpy.mock.calls[0][1];
         expect(config?.modal).toBe(true);
         expect(config?.styleClass).toBe('live-events-modal-window');
-        expect((config?.data as { examStartDate?: unknown } | undefined)?.examStartDate).toBeUndefined();
+        const examStartDateGetter = (config?.data as { examStartDate?: () => unknown } | undefined)?.examStartDate;
+        expect(examStartDateGetter).toBeTypeOf('function');
+        expect(examStartDateGetter?.()).toBeUndefined();
     });
 });

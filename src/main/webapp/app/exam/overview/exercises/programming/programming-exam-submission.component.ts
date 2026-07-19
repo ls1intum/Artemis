@@ -91,7 +91,7 @@ export class ProgrammingExamSubmissionComponent extends ExamSubmissionComponent 
         return this.exercise();
     }
 
-    isSaving: boolean;
+    isSaving = false;
     readonly ButtonType = ButtonType;
     readonly ButtonSize = ButtonSize;
 

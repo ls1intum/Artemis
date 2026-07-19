@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ChannelFormComponent, ChannelFormData } from 'app/communication/course-conversations-components/dialogs/channels-create-dialog/channel-form/channel-form.component';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
@@ -14,8 +13,6 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { SelectButton } from 'primeng/selectbutton';
 
 describe('ChannelFormComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: ChannelFormComponent;
     let fixture: ComponentFixture<ChannelFormComponent>;
     const validName = 'group-1';

@@ -1,7 +1,12 @@
-$overlay-width: 24rem;
+$overlay-width: 29rem;
 $overlay-container-height: 30rem;
 $padding: 1.4rem;
-$overlay-offset-top: 2.8rem;
+
+// Keep the panel close to the bell; leave just enough room for the pointer triangle.
+$overlay-offset-top: 1.9rem;
+
+// Overlay is right-aligned to the toggle; this centers the triangle under the bell icon.
+$triangle-offset-right: 0.2rem;
 
 // CSS animations for enter/leave (used with Angular's animate.enter/animate.leave)
 // Wrapper for animation - similar pattern to alerts
@@ -67,10 +72,35 @@ $overlay-offset-top: 2.8rem;
     }
 }
 
+.course-notification-overview {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+}
+
+.course-notification-overview-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: none;
+    padding: 0.25rem;
+    line-height: 1;
+    color: var(--navbar-dark-color);
+    cursor: pointer;
+    transition: color 0.2s;
+
+    &:hover,
+    &:focus {
+        color: var(--link-color);
+        outline: none;
+    }
+}
+
 .course-notification-overview-bubble {
     position: absolute;
-    top: 0;
-    right: 0.3rem;
+    top: -0.2rem;
+    right: -0.2rem;
 }
 
 .course-notification-overview-overlay {
@@ -79,6 +109,7 @@ $overlay-offset-top: 2.8rem;
     right: 0;
     display: none;
     background-color: var(--module-bg);
+    color: var(--bs-body-color);
     border: var(--bs-border-width) var(--bs-border-style) var(--bs-border-color);
     border-radius: 0.3rem;
     width: $overlay-width;
@@ -112,25 +143,64 @@ $overlay-offset-top: 2.8rem;
     background-clip: content-box;
 }
 
+// Bordered CSS triangle so the pointer stays visible in light and dark mode
 .course-notification-overview-triangle {
     width: 0;
     height: 0;
-    border-left: 8px solid transparent;
-    border-right: 8px solid transparent;
-    border-bottom: 8px solid var(--bs-border-color);
+    border-left: 9px solid transparent;
+    border-right: 9px solid transparent;
+    border-bottom: 9px solid var(--secondary);
     position: absolute;
-    top: -0.5rem;
-    right: 1.4rem;
+    bottom: 100%;
+    right: $triangle-offset-right;
+
+    &::after {
+        content: '';
+        position: absolute;
+        left: -8px;
+        top: 1px;
+        border-left: 8px solid transparent;
+        border-right: 8px solid transparent;
+        border-bottom: 8px solid var(--module-bg);
+    }
 }
 
 .course-notification-overview-overlay-headline {
     font-weight: 700;
+    font-size: 1.1rem;
+    min-width: 0;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
 }
 
 .course-notification-overview-category-wrap {
     display: flex;
     overflow-x: auto;
     overflow-y: hidden;
+}
+
+.course-notification-overview-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-shrink: 0;
+}
+
+.course-notification-overview-mark-all-as-read {
+    margin-left: auto;
+    flex-shrink: 0;
+    white-space: nowrap;
+    padding: 0 !important;
+    color: var(--link-color) !important;
+    text-decoration: underline;
+    font-weight: 400;
+
+    &:hover,
+    &:focus {
+        color: var(--link-color) !important;
+        text-decoration: underline;
+    }
 }
 
 .course-notification-overview-category {
@@ -152,7 +222,7 @@ $overlay-offset-top: 2.8rem;
 
 // Margins are now handled by .notification-animation-wrapper
 .course-notification-overview-notification-wrap {
-    // Content wrapper - no margins here, handled by animation wrapper
+    width: 100%;
 }
 
 .course-notification-overview-notification-empty-prompt {

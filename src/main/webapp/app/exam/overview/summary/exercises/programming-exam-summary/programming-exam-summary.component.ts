@@ -53,7 +53,7 @@ export class ProgrammingExamSummaryComponent implements OnInit {
 
     readonly commitHash = signal<string | undefined>(undefined);
 
-    routerLink: string;
+    routerLink!: string; // set in ngOnInit() from the current router URL
     isInCourseManagement = false;
 
     ngOnInit() {

@@ -1,5 +1,4 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ReactiveFormsModule } from '@angular/forms';
 import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
@@ -11,8 +10,6 @@ import { ProgrammingExercise } from 'app/programming/shared/entities/programming
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('Exercise Update Plagiarism Component', () => {
-    setupTestBed({ zoneless: true });
-
     let comp: ExerciseUpdatePlagiarismComponent;
     let fixture: ComponentFixture<ExerciseUpdatePlagiarismComponent>;
 

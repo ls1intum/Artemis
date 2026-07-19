@@ -11,10 +11,7 @@ import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-g
 import { StudentExamWithGradeDTO } from 'app/exam/manage/exam-scores/exam-score-dtos.model';
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 describe('Exam Resolve', () => {
-    setupTestBed({ zoneless: true });
-
     let resolve: ExamResolve;
     let examManagementService: ExamManagementService;
 

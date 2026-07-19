@@ -42,23 +42,42 @@ branch) still use the *split* `course-chat`/`lecture-chat` endpoints and are **n
 compatible with this Artemis branch. Build from `origin/main` (or a commit that contains
 `82185b1f`).
 
-This stack was validated against edutelligence `origin/main` at commit `f63e2337`.
+This stack was validated against edutelligence `origin/main` at commit `f63e2337`, and again
+at commit `7a9b99383d` (the run-state/activity-visibility + streaming-answer pipeline, see
+[#13149](https://github.com/ls1intum/Artemis/pull/13149)).
 
-## 1. Build the Pyris image
+## 1. Get the Pyris image
 
-Pyris's Dockerfile (`iris/Dockerfile`) `COPY memiris ../memiris`, so the **build context
-must be the edutelligence repo root** (the directory that contains both `iris/` and
-`memiris/`), not `iris/`:
+**Fastest: pull the published image.** edutelligence's own CI
+(`iris_build-and-push-docker.yml`) builds and pushes `ghcr.io/ls1intum/edutelligence/iris:latest`
+to GitHub Container Registry on every push to `main` (it's public, no login needed), so you
+usually don't need to build locally at all:
 
 ```bash
-# from a fresh checkout of edutelligence at origin/main:
+docker pull ghcr.io/ls1intum/edutelligence/iris:latest
+docker tag ghcr.io/ls1intum/edutelligence/iris:latest pyris-e2e:local
+```
+
+The image is tagged with the exact commit it was built from
+(`org.opencontainers.image.revision` label), so `docker inspect pyris-e2e:local --format
+'{{index .Config.Labels "org.opencontainers.image.revision"}}'` tells you precisely which
+edutelligence commit you're running.
+
+**Building from source** is only needed to test an in-progress edutelligence branch/PR that
+hasn't been merged to `main` yet (no published image exists for those). Pyris's Dockerfile
+(`iris/Dockerfile`) `COPY memiris ../memiris`, so the **build context must be the
+edutelligence repo root** (the directory that contains both `iris/` and `memiris/`), not
+`iris/`:
+
+```bash
+# from a fresh checkout of edutelligence at the branch/commit you want to test:
 git clone https://github.com/ls1intum/edutelligence.git
 cd edutelligence
-git checkout origin/main          # or a commit containing 82185b1f
+git checkout <branch-or-commit>   # must contain 82185b1f, see "Version compatibility" above
 docker build -f iris/Dockerfile -t pyris-e2e:local .
 ```
 
-Override the tag the stack uses with `PYRIS_IMAGE` if you build it under another name.
+Override the tag the stack uses with `PYRIS_IMAGE` if you build/pull it under another name.
 
 ## 2. Configuration
 
@@ -140,3 +159,16 @@ spec additionally PUTs `api/iris/courses/9022/iris-settings {enabled:true}` defe
   inside the container via the `host-gateway` extra_host).
 - **Pyris → LLM**: `http://mock-llm:8081/v1` (docker network).
 - **Pyris → Weaviate**: `weaviate:8001` (REST) + `weaviate:50051` (gRPC) (docker network).
+
+## Troubleshooting
+
+**Edited `mock_llm.py` but the container still runs the old code.** `docker compose up -d`
+only builds the `mock-llm` image the first time; once `iris-mock-llm:local` exists locally,
+compose reuses it even though `mock_llm.py` changed underneath it. Confirm with `docker exec
+iris-e2e-mock-llm grep <your-change> /app/mock_llm.py`, then force a rebuild:
+
+```bash
+docker compose -f src/test/playwright/support/iris-stack/docker-compose.yml down -v
+docker rmi iris-mock-llm:local
+RUN_IRIS=true ./run-e2e-tests-local-fast.sh --filter "Iris"   # rebuilds mock-llm fresh
+```

@@ -25,7 +25,7 @@ export class CourseUnenrollmentModalComponent implements OnInit {
     readonly visible = model<boolean>(false);
     readonly course = input<Course | undefined>();
 
-    confirmationForm: FormGroup;
+    confirmationForm!: FormGroup; // built in ngOnInit()
 
     // Icons
     faXmark = faXmark;
