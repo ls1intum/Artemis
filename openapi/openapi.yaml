@@ -2217,18 +2217,10 @@ components:
         hint: {type: string}
         invalid: {type: boolean}
     StudentQuizParticipation:
-      discriminator:
-        propertyName: type
-        mapping: {without-questions: '#/components/schemas/StudentQuizParticipationWithoutQuestions',
-          with-questions: '#/components/schemas/StudentQuizParticipationWithQuestions',
-          with-solutions: '#/components/schemas/StudentQuizParticipationWithSolutions'}
       oneOf:
-      - {$ref: '#/components/schemas/StudentQuizParticipationWithoutQuestions'}
-      - {$ref: '#/components/schemas/StudentQuizParticipationWithQuestions'}
       - {$ref: '#/components/schemas/StudentQuizParticipationWithSolutions'}
-      properties:
-        type: {type: string}
-      required: [type]
+      - {$ref: '#/components/schemas/StudentQuizParticipationWithQuestions'}
+      - {$ref: '#/components/schemas/StudentQuizParticipationWithoutQuestions'}
     CourseForQuizExercise:
       type: object
       properties:
