@@ -149,11 +149,6 @@
                     "description": "Allows instructors to import competencies from standardized frameworks (e.g., curricula, qualification profiles) and link them to course competencies for better alignment with educational standards.",
                     "disableWarning": "Instructors will not be able to import or link standardized competencies to their courses."
                 },
-                "StudentCourseAnalyticsDashboard": {
-                    "name": "Analytics Dashboard",
-                    "description": "Provides students with a personal dashboard showing learning progress, performance metrics, exercise statistics, and competency mastery - when enabled by course instructors.",
-                    "disableWarning": "Students will not have access to their personal analytics dashboard, even if instructors enable it for their course."
-                },
                 "TutorSuggestions": {
                     "name": "AI Tutor Suggestions",
                     "description": "Uses Iris to suggest answers for tutors when responding to student questions in the communication module.",

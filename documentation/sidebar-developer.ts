@@ -17,7 +17,7 @@ const sidebars: SidebarsConfig = {
                 {
                     type: 'category',
                     label: 'Client Guidelines',
-                    items: ['guidelines/client-development', 'guidelines/client-theming', 'guidelines/client-tests'],
+                    items: ['guidelines/client-development', 'guidelines/client-theming', 'guidelines/client-tests', 'guidelines/tum-ui-kit'],
                 },
                 {
                     type: 'category',
