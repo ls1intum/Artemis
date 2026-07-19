@@ -325,7 +325,27 @@
             "dev": "Development",
             "test": "Test Server"
         },
-        "item-count": "Showing {{first}} to {{second}} of {{total}} items"
+        "item-count": "Showing {{first}} to {{second}} of {{total}} items",
+        "paginator": {
+            "first": "First page",
+            "previous": "Previous page",
+            "next": "Next page",
+            "last": "Last page",
+            "rowsPerPage": "Rows per page"
+        },
+        "datePicker": {
+            "open": "Open calendar",
+            "clear": "Clear",
+            "done": "Done",
+            "time": "Time",
+            "hour": "Hour",
+            "minute": "Minute",
+            "incrementHour": "Increment hour",
+            "decrementHour": "Decrement hour",
+            "incrementMinute": "Increment minute",
+            "decrementMinute": "Decrement minute",
+            "invalid": "Please enter a valid date and time."
+        }
     },
     "entity": {
         "actions": "Actions",
