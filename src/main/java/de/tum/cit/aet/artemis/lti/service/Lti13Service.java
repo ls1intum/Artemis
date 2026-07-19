@@ -427,6 +427,9 @@ public class Lti13Service {
      * @return the normalized target link URI, or the original one if it is not a legacy dashboard link
      */
     public String normalizeLegacyIrisTargetLink(String targetLinkUri) {
+        if (targetLinkUri == null) {
+            return null;
+        }
         try {
             URI uri = new URI(targetLinkUri);
             String path = uri.getPath();

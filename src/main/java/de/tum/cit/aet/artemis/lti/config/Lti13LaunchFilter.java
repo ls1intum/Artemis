@@ -66,8 +66,9 @@ public class Lti13LaunchFilter extends OncePerRequestFilter {
             OidcAuthenticationToken authToken = finishOidcFlow(request, response);
             OidcIdToken ltiIdToken = ((OidcUser) authToken.getPrincipal()).getIdToken();
             // Normalize legacy Iris deep links (issued as /courses/{id}/dashboard before the dashboard removal) so the
-            // client redirect lands on the current Iris page instead of the removed dashboard route.
-            String targetLink = lti13Service.normalizeLegacyIrisTargetLink(ltiIdToken.getClaim(Claims.TARGET_LINK_URI).toString());
+            // client redirect lands on the current Iris page instead of the removed dashboard route. The claim can be
+            // absent (e.g. deep-linking requests), so read it null-safely instead of calling toString() on it.
+            String targetLink = lti13Service.normalizeLegacyIrisTargetLink(ltiIdToken.getClaim(Claims.TARGET_LINK_URI));
 
             try {
                 // here we need to check if this is a deep-linking request or a launch request

@@ -749,6 +749,12 @@ class Lti13ServiceTest {
         assertThat(normalized).isEqualTo(unrelatedTargetLink);
     }
 
+    @Test
+    void normalizeLegacyIrisTargetLink_handlesNullTargetLink() {
+        // the target_link_uri claim can be absent (e.g. deep-linking requests), so null must not throw
+        assertThat(lti13Service.normalizeLegacyIrisTargetLink(null)).isNull();
+    }
+
     private State getValidStateForNewResult(Result result) {
         User user = new User();
         user.setLogin("someone");
