@@ -451,6 +451,71 @@ paths:
           content:
             application/json:
               schema: {$ref: '#/components/schemas/CodeGenerationJobStart'}
+  /api/quiz/quiz-exercises/{quizExerciseId}/add-batch:
+    put:
+      tags: [quiz-exercise-batch]
+      operationId: addBatch
+      parameters:
+      - name: quizExerciseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/QuizBatchWithPassword'}
+  /api/quiz/quiz-exercises/{quizBatchId}/start-batch:
+    put:
+      tags: [quiz-exercise-batch]
+      operationId: startBatch
+      parameters:
+      - name: quizBatchId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/QuizBatch'}
+  /api/quiz/quiz-batches/{quizBatchId}/start-batch:
+    put:
+      tags: [quiz-exercise-batch]
+      operationId: startBatch_1
+      parameters:
+      - name: quizBatchId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/QuizBatch'}
+  /api/quiz/quiz-exercises/{quizExerciseId}/join:
+    post:
+      tags: [quiz-exercise-batch]
+      operationId: joinBatch
+      parameters:
+      - name: quizExerciseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      requestBody:
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/QuizBatchJoin'}
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/QuizBatch'}
   /api/quiz/quiz-exercises/{exerciseId}/start-participation:
     post:
       tags: [quiz-participation]
@@ -1284,6 +1349,14 @@ paths:
         '200': {description: OK}
 components:
   schemas:
+    QuizBatchWithPassword:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        startTime: {type: string, format: date-time}
+        started: {type: boolean}
+        ended: {type: boolean}
+        password: {type: string}
     QuizQuestionRefinementSuccess:
       description: Successful refinement result containing the refined question and
         an explanation of the changes
@@ -1309,6 +1382,10 @@ components:
           maxLength: 50, minLength: 0}
         exerciseId: {type: integer, format: int64, description: ID of the exercise}
       required: [problemStatementMarkdown]
+    QuizBatchJoin:
+      type: object
+      properties:
+        password: {type: string}
     QuizSubmissionFromStudent:
       type: object
       properties:
