@@ -368,7 +368,11 @@ public class InteractiveSandboxService implements InteractiveSandbox {
     }
 
     String containerNamePrefix() {
-        return SANDBOX_CONTAINER_PREFIX + sanitizedBuildAgentShortName() + "-";
+        return containerNamePrefix(buildAgentShortName);
+    }
+
+    static String containerNamePrefix(String buildAgentShortName) {
+        return SANDBOX_CONTAINER_PREFIX + sanitizedBuildAgentShortName(buildAgentShortName) + "-";
     }
 
     static boolean hasSandboxContainerName(Container container, String namePrefix) {
@@ -390,7 +394,7 @@ public class InteractiveSandboxService implements InteractiveSandbox {
         });
     }
 
-    private String sanitizedBuildAgentShortName() {
+    private static String sanitizedBuildAgentShortName(String buildAgentShortName) {
         String shortName = buildAgentShortName == null || buildAgentShortName.isBlank() ? "build-agent" : buildAgentShortName;
         return shortName.replaceAll("[^a-zA-Z0-9_.-]", "-");
     }
@@ -426,7 +430,7 @@ public class InteractiveSandboxService implements InteractiveSandbox {
 
                     @Override
                     public void onError(Throwable throwable) {
-                        log.error("Error while executing a sandbox command in session {}", sessionId, throwable);
+                        log.error("Sandbox command stream failed in session {} ({})", sessionId, throwable.getClass().getSimpleName());
                         errorRef.set(throwable);
                         latch.countDown();
                     }
@@ -443,7 +447,7 @@ public class InteractiveSandboxService implements InteractiveSandbox {
                     }
                     catch (InterruptedException e) {
                         Thread.currentThread().interrupt();
-                        LocalCIException failure = new LocalCIException("Interrupted while executing sandbox command: " + String.join(" ", command), e);
+                        LocalCIException failure = new LocalCIException("Interrupted while executing sandbox command", e);
                         invalidateSessionAfterOperationFailure(sessionId, callback, failure);
                         throw failure;
                     }
@@ -456,7 +460,7 @@ public class InteractiveSandboxService implements InteractiveSandbox {
 
                     Throwable execError = errorRef.get();
                     if (execError != null) {
-                        LocalCIException failure = new LocalCIException("Sandbox command failed: " + String.join(" ", command), execError);
+                        LocalCIException failure = new LocalCIException("Sandbox command failed", execError);
                         invalidateSessionAfterOperationFailure(sessionId, callback, failure);
                         throw failure;
                     }
@@ -470,7 +474,7 @@ public class InteractiveSandboxService implements InteractiveSandbox {
                         }
                     }
                     catch (RuntimeException inspectFailure) {
-                        LocalCIException failure = new LocalCIException("Could not inspect sandbox command: " + String.join(" ", command), inspectFailure);
+                        LocalCIException failure = new LocalCIException("Could not inspect sandbox command", inspectFailure);
                         invalidateSessionAfterOperationFailure(sessionId, callback, failure);
                         throw failure;
                     }

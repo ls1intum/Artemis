@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration
 
 import java.time.Duration;
 import java.time.Instant;
+import java.util.EnumMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ScheduledFuture;
@@ -30,13 +31,16 @@ import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationEventDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationFileChangeDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationVerdictDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.GenerationMode;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.ProviderUsageSink;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.persistence.ExerciseGenerationRevertService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.persistence.GenerationIncompleteException;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.persistence.GenerationPersistenceService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.persistence.GenerationReviewService;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.profile.LanguageGenerationProfile;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.VerificationResult;
 import de.tum.cit.aet.artemis.hyperion.service.websocket.HyperionWebsocketService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 
 /**
@@ -124,11 +128,13 @@ public class GenerationTaskService {
                 progressEvent -> websocket.send(login, topic, progressEvent));
         // File changes share the progress topic and are retained latest-per-path for reconnect.
         Consumer<ExerciseGenerationFileChangeDTO> fileChangeSink = change -> {
-            jobService.recordFileChange(exerciseId, jobId, change);
-            websocket.send(login, topic, change);
+            if (jobService.recordFileChange(exerciseId, jobId, change)) {
+                websocket.send(login, topic, change);
+            }
         };
         AtomicBoolean deadlineExceeded = new AtomicBoolean(false);
         AtomicBoolean tokenBudgetExceeded = new AtomicBoolean(false);
+        AtomicBoolean tokenAccountingFailed = new AtomicBoolean(false);
         AtomicBoolean heartbeatLost = new AtomicBoolean(false);
         ScheduledFuture<?> deadlineFuture = null;
         ScheduledFuture<?> heartbeatFuture = null;
@@ -156,13 +162,28 @@ public class GenerationTaskService {
                 emitter.milestone(ExerciseGenerationEventDTO.of(ExerciseGenerationEventDTO.Type.ERROR, "Generation failed: the exercise no longer exists."));
                 return;
             }
+            if (!LanguageGenerationProfile.isSupported(exercise)) {
+                emitter.milestone(
+                        ExerciseGenerationEventDTO.of(ExerciseGenerationEventDTO.Type.ERROR, "Generation stopped because the exercise configuration is no longer supported."));
+                return;
+            }
             deadlineFuture = scheduleDeadline(exerciseId, jobId, deadlineExceeded, event.deadlineAt());
             heartbeatFuture = scheduleHeartbeat(exerciseId, jobId, heartbeatLost);
             emitter.milestone(ExerciseGenerationEventDTO.of(ExerciseGenerationEventDTO.Type.STARTED, "Starting exercise generation"));
-            Consumer<ChatResponse> usageSink = budgetedUsageSink(jobService.tokenUsageSink(courseIdOf(exercise), exerciseId, user.getId()), jobId, tokenBudgetExceeded);
+            Consumer<ChatResponse> usageSink = budgetedUsageSink(jobService.tokenUsageSink(courseIdOf(exercise), exerciseId, user.getId()), exerciseId, jobId, tokenBudgetExceeded,
+                    tokenAccountingFailed);
             try (GenerationOutcome outcome = orchestrator.generate(exercise, user, userPrompt, jobId, event.mode(),
-                    () -> jobService.isCancelled(jobId) || deadlineExceeded.get() || tokenBudgetExceeded.get() || heartbeatLost.get(), emitter::progress, fileChangeSink,
-                    usageSink)) {
+                    () -> jobService.isCancelled(jobId) || deadlineExceeded.get() || tokenBudgetExceeded.get() || tokenAccountingFailed.get() || heartbeatLost.get(),
+                    emitter::progress, fileChangeSink, usageSink)) {
+                if (tokenAccountingFailed.get()) {
+                    emitter.milestone(ExerciseGenerationEventDTO.of(ExerciseGenerationEventDTO.Type.CANCELLED,
+                            "Generation stopped because token usage could not be accounted for. Nothing was changed."));
+                    return;
+                }
+                if (tokenBudgetExceeded.get()) {
+                    emitter.milestone(ExerciseGenerationEventDTO.of(ExerciseGenerationEventDTO.Type.CANCELLED, cancellationMessage(false, true, false)));
+                    return;
+                }
                 switch (outcome.loopResult().status()) {
                     case CANCELLED -> emitter.milestone(ExerciseGenerationEventDTO.of(ExerciseGenerationEventDTO.Type.CANCELLED,
                             cancellationMessage(deadlineExceeded.get(), tokenBudgetExceeded.get(), heartbeatLost.get())));
@@ -205,13 +226,16 @@ public class GenerationTaskService {
                         try {
                             exerciseToPersist = reloadDraftExerciseBeforeLiveMutation(exerciseId);
                             persistResult = persistenceService.persist(exerciseToPersist, user, outcome, event.expectedProblemStatement(), event.expectedTitle(), jobId,
-                                    event.mode(), () -> canContinueSave(exerciseId, jobId, heartbeatLost) && isStillDraftWithoutParticipations(exerciseId));
+                                    event.mode(), () -> canContinueSave(exerciseId, jobId, heartbeatLost) && isStillDraftWithoutParticipations(exerciseId),
+                                    () -> generationRevertService.invalidateBaseline(exerciseId));
                         }
                         catch (GenerationIncompleteException e) {
                             log.error("Persisting verified generated exercise {} left the save incomplete", exerciseId, e);
-                            // A partial or ambiguous finalization may have mixed newer, never-jointly-verified changes into the repositories the previous automatic-revert
-                            // baseline was captured against; applying that older baseline on top would silently mix two unrelated states, so it must no longer be offered.
-                            generationRevertService.invalidateBaseline(exerciseId);
+                            if (!e.liveExerciseChanged()) {
+                                emitter.milestone(ExerciseGenerationEventDTO.of(ExerciseGenerationEventDTO.Type.ERROR,
+                                        "The generated exercise passed verification but could not be saved. All changes were reverted."));
+                                return;
+                            }
                             emitter.milestone(ExerciseGenerationEventDTO.done(
                                     "Saving did not complete. Some changes may already have been saved; manual review is required. Automatic revert to the previous state is no longer available for this exercise.",
                                     ExerciseGenerationEventDTO.CompletionStatus.PARTIAL, verdict, e.liveExerciseChanged(),
@@ -247,7 +271,21 @@ public class GenerationTaskService {
                             reportUncertainLiveSave(verdict, emitter);
                             return;
                         }
-                        int reviewNoteCount = reviewService.attachFindings(exerciseToPersist, user, outcome.specFidelityReport());
+                        Map<RepositoryType, String> savedRepositoryHeads = new EnumMap<>(RepositoryType.class);
+                        savedRepositoryHeads.putAll(outcome.seedRepositoryHeads());
+                        savedRepositoryHeads.putAll(persistResult.postPersistHeads());
+                        int reviewNoteCount;
+                        if (outcome.specFidelityReport().findings().isEmpty()) {
+                            reviewNoteCount = reviewService.attachFindings(exerciseToPersist, user, outcome.specFidelityReport());
+                        }
+                        else if (persistResult.savedExerciseVersionId() == null) {
+                            log.warn("Could not attach generation review findings to exercise {} because its save did not create an identifiable exercise version", exerciseId);
+                            reviewNoteCount = GenerationReviewService.REVIEW_COMMENTS_FAILED;
+                        }
+                        else {
+                            reviewNoteCount = reviewService.attachFindings(exerciseToPersist, user, outcome.specFidelityReport(), persistResult.savedExerciseVersionId(),
+                                    Map.copyOf(savedRepositoryHeads));
+                        }
                         String reviewNotes = reviewNoteCount == GenerationReviewService.REVIEW_COMMENTS_FAILED
                                 ? " Review notes could not be attached; inspect the generated exercise manually."
                                 : reviewNoteCount == 1 ? " 1 review note was added for your attention."
@@ -282,16 +320,21 @@ public class GenerationTaskService {
         finally {
             cancelScheduled(deadlineFuture);
             cancelScheduled(heartbeatFuture);
-            clearJobAndReleaseBudget(exerciseId, jobId, event);
+            clearJobAndReleaseBudget(exerciseId, jobId, event, tokenAccountingFailed.get());
         }
     }
 
-    private void clearJobAndReleaseBudget(long exerciseId, String jobId, GenerationStartedEvent event) {
+    private void clearJobAndReleaseBudget(long exerciseId, String jobId, GenerationStartedEvent event, boolean tokenAccountingFailed) {
         try {
             jobService.clearJob(exerciseId, jobId);
         }
         finally {
-            releaseBudgetReservation(event);
+            if (tokenAccountingFailed) {
+                generationBudgetService.retainReservationForBudgetWindow(event.budgetReservationId());
+            }
+            else {
+                releaseBudgetReservation(event);
+            }
         }
     }
 
@@ -371,16 +414,37 @@ public class GenerationTaskService {
                 ExerciseGenerationEventDTO.CompletionStatus.PARTIAL, verdict, true));
     }
 
-    private Consumer<ChatResponse> budgetedUsageSink(Consumer<ChatResponse> delegate, String jobId, AtomicBoolean tokenBudgetExceeded) {
-        if (maxTokensPerJob <= 0) {
-            return delegate;
-        }
+    private ProviderUsageSink budgetedUsageSink(Consumer<ChatResponse> delegate, long exerciseId, String jobId, AtomicBoolean tokenBudgetExceeded,
+            AtomicBoolean tokenAccountingFailed) {
         AtomicLong tokensUsed = new AtomicLong();
-        return response -> {
-            delegate.accept(response);
-            long total = tokensUsed.addAndGet(LLMTokenUsageService.totalTokens(response));
-            if (total >= maxTokensPerJob && tokenBudgetExceeded.compareAndSet(false, true)) {
-                log.info("Exercise generation job {} reached its token budget; stopping after the current model response", jobId);
+        return new ProviderUsageSink() {
+
+            @Override
+            public void accept(ChatResponse response) {
+                try {
+                    delegate.accept(response);
+                }
+                catch (GenerationJobService.TokenUsageAccountingException e) {
+                    markUncertain();
+                    return;
+                }
+
+                if (maxTokensPerJob <= 0) {
+                    return;
+                }
+                long total = tokensUsed.addAndGet(LLMTokenUsageService.totalTokens(response));
+                if (total >= maxTokensPerJob && tokenBudgetExceeded.compareAndSet(false, true)) {
+                    log.info("Exercise generation job {} reached its token budget; stopping after the current model response", jobId);
+                    jobService.requestSystemCancellation(exerciseId, jobId, cancellationMessage(false, true, false));
+                }
+            }
+
+            @Override
+            public void markUncertain() {
+                if (tokenAccountingFailed.compareAndSet(false, true)) {
+                    log.warn("Exercise generation job {} stopped because provider token usage could not be determined", jobId);
+                    jobService.requestSystemCancellation(exerciseId, jobId, "Generation stopped because token usage could not be accounted for. Nothing was changed.");
+                }
             }
         };
     }

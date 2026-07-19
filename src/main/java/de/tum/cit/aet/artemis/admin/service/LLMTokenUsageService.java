@@ -39,11 +39,6 @@ public class LLMTokenUsageService {
 
     private static final Pattern DATE_SUFFIX_PATTERN = Pattern.compile("-?\\d{4}-\\d{2}-\\d{2}$");
 
-    /**
-     * Default value used when token-count metadata is missing ({@code null}).
-     */
-    private static final int DEFAULT_TOKEN_COUNT = 0;
-
     private final LLMTokenUsageTraceRepository llmTokenUsageTraceRepository;
 
     private final LLMTokenUsageRequestRepository llmTokenUsageRequestRepository;
@@ -165,28 +160,33 @@ public class LLMTokenUsageService {
     /**
      * Convenience method to track token usage from a {@link ChatResponse}.
      * Extracts metadata (model, prompt/completion tokens) from the response, builds an {@link LLMRequest},
-     * and persists it. Catches all exceptions so that tracking failures never affect the main operation.
+     * and persists it. Catches all exceptions and reports whether exact usage was recorded.
      *
      * @param chatResponse    the chat response containing usage metadata, may be null
      * @param serviceType     the LLM service type (e.g. HYPERION, IRIS)
      * @param pipelineId      the pipeline identifier for this request
      * @param builderFunction configures the trace (course, user, exercise, etc.)
+     * @return {@code true} only when complete usage metadata was persisted
      */
-    public void trackChatResponseTokenUsage(@Nullable ChatResponse chatResponse, LLMServiceType serviceType, String pipelineId,
+    public boolean trackChatResponseTokenUsage(@Nullable ChatResponse chatResponse, LLMServiceType serviceType, String pipelineId,
             Function<LLMTokenUsageBuilder, LLMTokenUsageBuilder> builderFunction) {
         try {
             if (chatResponse == null || chatResponse.getMetadata() == null || chatResponse.getMetadata().getUsage() == null) {
-                return;
+                return false;
             }
             ChatResponseMetadata metadata = chatResponse.getMetadata();
             Usage usage = metadata.getUsage();
+            if (usage.getPromptTokens() == null || usage.getCompletionTokens() == null) {
+                return false;
+            }
             String model = metadata.getModel() != null ? metadata.getModel() : "";
-            LLMRequest llmRequest = buildLLMRequest(model, usage.getPromptTokens() != null ? usage.getPromptTokens() : DEFAULT_TOKEN_COUNT,
-                    usage.getCompletionTokens() != null ? usage.getCompletionTokens() : DEFAULT_TOKEN_COUNT, pipelineId);
+            LLMRequest llmRequest = buildLLMRequest(model, usage.getPromptTokens(), usage.getCompletionTokens(), pipelineId);
             saveLLMTokenUsage(List.of(llmRequest), serviceType, builderFunction);
+            return true;
         }
         catch (Exception e) {
             log.warn("Failed to store token usage for pipeline [{}]: {}", pipelineId, e.getMessage(), e);
+            return false;
         }
     }
 

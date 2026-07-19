@@ -26,6 +26,9 @@ public class WebsocketSecurityConfiguration {
         messages
             .nullDestMatcher().authenticated()
             .simpDestMatchers("/topic").hasAuthority(Role.ADMIN.getAuthority())
+            .simpSubscribeDestMatchers("/user/topic/hyperion/**").authenticated()
+            .simpSubscribeDestMatchers("/topic/hyperion/exercise-generation/exercises/*/state").authenticated()
+            .simpSubscribeDestMatchers("/topic/hyperion/**", "/topic/user-registry", "/topic/unresolved-user").denyAll()
             // Topic-specific subscription and direct-send authorization is enforced by TopicSubscriptionInterceptor.
             .simpDestMatchers("/topic/**").authenticated()
             // message types other than MESSAGE and SUBSCRIBE

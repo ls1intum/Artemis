@@ -406,13 +406,12 @@ public class ProgrammingExerciseCreationUpdateService {
     /**
      * Updates the timeline attributes of the given programming exercise with the values from the DTO.
      *
-     * @param timelineUpdateDTO containing the timeline changes that have to be saved
-     * @param notificationText  optional text for a notification to all students about the update
+     * @param programmingExercise the current exercise loaded while holding its mutation lease
+     * @param timelineUpdateDTO   containing the timeline changes that have to be saved
+     * @param notificationText    optional text for a notification to all students about the update
      * @return the updated ProgrammingExercise object.
      */
-    public ProgrammingExercise updateTimeline(ProgrammingExerciseTimelineUpdateDTO timelineUpdateDTO, @Nullable String notificationText) {
-        ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdWithBuildConfigElseThrow(timelineUpdateDTO.id());
-
+    public ProgrammingExercise updateTimeline(ProgrammingExercise programmingExercise, ProgrammingExerciseTimelineUpdateDTO timelineUpdateDTO, @Nullable String notificationText) {
         // create slim copy of programmingExercise before the update - needed for notifications (only release date needed)
         ProgrammingExercise programmingExerciseBeforeUpdate = new ProgrammingExercise();
         programmingExerciseBeforeUpdate.setReleaseDate(programmingExercise.getReleaseDate());

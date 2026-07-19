@@ -15,6 +15,7 @@ import java.lang.reflect.RecordComponent;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -62,6 +63,7 @@ import de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.ProjectType;
+import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.SubmissionPenaltyPolicy;
 import de.tum.cit.aet.artemis.programming.repository.SubmissionPolicyRepository;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
@@ -171,6 +173,25 @@ class ExerciseVersionServiceTest extends AbstractProgrammingIntegrationLocalCILo
         Long secondVersionId = exerciseVersionService.createExerciseVersionOrThrow(exercise, author);
 
         assertThat(secondVersionId).isNull();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void createExerciseVersionSynchronouslyUsesExactCallerCapturedCommitIds() {
+        ProgrammingExercise exercise = createProgrammingExercise();
+        User author = userTestRepository.findOneByLogin(TEST_PREFIX + "instructor1").orElseThrow();
+        String exactTemplateCommit = "a".repeat(40);
+        String exactSolutionCommit = "b".repeat(40);
+        String exactTestsCommit = "c".repeat(40);
+
+        exerciseVersionService.createExerciseVersionSynchronously(exercise, author,
+                Map.of(RepositoryType.TEMPLATE, exactTemplateCommit, RepositoryType.SOLUTION, exactSolutionCommit, RepositoryType.TESTS, exactTestsCommit));
+
+        ProgrammingExerciseSnapshotDTO snapshot = exerciseVersionRepository.findTopByExerciseIdOrderByCreatedDateDesc(exercise.getId()).orElseThrow().getExerciseSnapshot()
+                .programmingData();
+        assertThat(snapshot.templateParticipation().commitId()).isEqualTo(exactTemplateCommit);
+        assertThat(snapshot.solutionParticipation().commitId()).isEqualTo(exactSolutionCommit);
+        assertThat(snapshot.testsCommitId()).isEqualTo(exactTestsCommit);
     }
 
     @ParameterizedTest

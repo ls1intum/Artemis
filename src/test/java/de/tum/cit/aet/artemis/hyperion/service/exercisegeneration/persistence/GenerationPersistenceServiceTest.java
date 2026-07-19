@@ -23,6 +23,7 @@ import java.time.Duration;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -59,6 +60,8 @@ import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTes
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
 
 class GenerationPersistenceServiceTest {
+
+    private static final String GITHUB_SENTINEL = "ghp_ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghij";
 
     @TempDir
     private Path temporaryDirectory;
@@ -175,6 +178,32 @@ class GenerationPersistenceServiceTest {
         verify(gitService, never()).getOrCheckoutRepository(any(), any(), any(), any(Boolean.class), any(), any(Boolean.class));
     }
 
+    @Test
+    void persistRejectsSupportedSecretFileBeforeAnyDurableWrite() throws Exception {
+        GenerationOutcome outcome = outcomeWith(Map.of("Template.java", "t"), Map.of("src/Fixture.java", GITHUB_SENTINEL), Map.of("Test.java", "x"), "safe statement");
+
+        assertThatThrownBy(() -> service.persist(exercise, user, outcome))
+                .isInstanceOf(de.tum.cit.aet.artemis.hyperion.service.HyperionSecretMaterialPolicy.SecretMaterialException.class).hasMessageContaining("GITHUB_TOKEN")
+                .hasMessageNotContaining(GITHUB_SENTINEL);
+        verify(repositoryService, never()).createFile(any(), any(), any());
+        verify(repositoryService, never()).deleteFile(any(), any());
+        verify(gitService, never()).getOrCheckoutRepository(any(), any(), any(), any(Boolean.class), any(), any(Boolean.class));
+        verify(programmingExerciseRepository, never()).updateProblemStatementAndTitleIfUnchanged(anyLong(), any(), any(), any(), any());
+        verify(exerciseVersionService, never()).createExerciseVersionOrThrow(any(), any());
+    }
+
+    @Test
+    void persistRejectsSupportedSecretProblemStatementBeforeAnyDurableWrite() throws Exception {
+        GenerationOutcome outcome = outcomeWith(Map.of("Template.java", "t"), Map.of("Solution.java", "s"), Map.of("Test.java", "x"), GITHUB_SENTINEL);
+
+        assertThatThrownBy(() -> service.persist(exercise, user, outcome))
+                .isInstanceOf(de.tum.cit.aet.artemis.hyperion.service.HyperionSecretMaterialPolicy.SecretMaterialException.class).hasMessageContaining("GITHUB_TOKEN")
+                .hasMessageNotContaining(GITHUB_SENTINEL);
+        verify(repositoryService, never()).createFile(any(), any(), any());
+        verify(programmingExerciseRepository, never()).updateProblemStatementAndTitleIfUnchanged(anyLong(), any(), any(), any(), any());
+        verify(exerciseVersionService, never()).createExerciseVersionOrThrow(any(), any());
+    }
+
     private Repository repository;
 
     private void stubRepositoryWorkingTree(Repository repository) throws Exception {
@@ -223,7 +252,7 @@ class GenerationPersistenceServiceTest {
         order.verify(exerciseVersionService).createExerciseVersionOrThrow(exercise, user,
                 Map.of(RepositoryType.TEMPLATE, "hash-template", RepositoryType.SOLUTION, "hash-solution", RepositoryType.TESTS, "hash-tests"));
         verify(programmingSubmissionService).createSolutionParticipationSubmissionWithTypeTest(1L, "hash-tests");
-        verify(continuousIntegrationTriggerService).triggerBuild(solutionParticipation, "hash-tests", RepositoryType.TESTS);
+        verify(continuousIntegrationTriggerService).triggerRestrictedBuild(solutionParticipation, "hash-tests", RepositoryType.TESTS);
         verify(programmingExerciseRepository).updateProblemStatementAndTitleIfUnchanged(1L, "new statement", null, "old statement", null);
 
         assertThat(persistResult.prePersistHeads()).containsEntry(RepositoryType.TEMPLATE, "pre-template").containsEntry(RepositoryType.SOLUTION, "pre-solution")
@@ -232,6 +261,88 @@ class GenerationPersistenceServiceTest {
                 .containsEntry(RepositoryType.TESTS, "hash-tests");
         assertThat(persistResult.persistedProblemStatement()).isEqualTo("new statement");
         assertThat(persistResult.persistedTitle()).isNull();
+    }
+
+    @Test
+    void persist_whenBaselineInvalidationFails_startsNoDurableWrite() throws Exception {
+        stubSuccessfulCheckoutAndCommits();
+        when(gitService.getLocalHeadHash(repository)).thenReturn("pre-template", "hash-template");
+        when(gitService.getLastCommitHash(templateUri, "main")).thenReturn("pre-template");
+        exerciseProblemStatement.set("old statement");
+        GenerationOutcome outcome = outcomeWith(Map.of("Template.java", "t"), Map.of(), Map.of(), "new statement");
+        AtomicInteger invalidationAttempts = new AtomicInteger();
+
+        assertThatThrownBy(() -> service.persist(exercise, user, outcome, "old statement", null, "job-1", GenerationMode.GENERATE, () -> true, () -> {
+            invalidationAttempts.incrementAndGet();
+            throw new IllegalStateException("Hazelcast invalidation failed");
+        })).isInstanceOf(GenerationIncompleteException.class).hasMessageContaining("Hazelcast invalidation failed").satisfies(exception -> {
+            GenerationIncompleteException incomplete = (GenerationIncompleteException) exception;
+            assertThat(incomplete.liveExerciseChanged()).isFalse();
+        });
+
+        verify(gitService, never()).pushCommitWithLease(any(), any(), any(), any());
+        verify(gitService, never()).resetToCommitAndForcePush(any(), any(), any(), any());
+        verify(programmingExerciseRepository, never()).updateProblemStatementAndTitleIfUnchanged(anyLong(), any(), any(), any(), any());
+        verify(continuousIntegrationTriggerService, never()).triggerBuild(any(), any(), any());
+        verify(exerciseVersionService, never()).createExerciseVersionOrThrow(any(), any());
+        verify(exerciseVersionService, never()).createExerciseVersionOrThrow(any(), any(), anyMap());
+        assertThat(invalidationAttempts).hasValue(1);
+    }
+
+    @Test
+    void persist_whenCandidateIsANoOp_preservesTheExistingBaseline() throws Exception {
+        stubSuccessfulCheckoutAndCommits();
+        when(gitService.isWorkingCopyClean(repository)).thenReturn(true);
+        AtomicInteger invalidationAttempts = new AtomicInteger();
+
+        service.persist(exercise, user, outcomeWith(Map.of("Template.java", "unchanged"), Map.of(), Map.of(), ""), null, null, "job-1", GenerationMode.GENERATE, () -> true,
+                invalidationAttempts::incrementAndGet);
+
+        assertThat(invalidationAttempts).hasValue(0);
+        verify(gitService, never()).pushCommitWithLease(any(), any(), any(), any());
+        verify(programmingExerciseRepository, never()).updateProblemStatementAndTitleIfUnchanged(anyLong(), any(), any(), any(), any());
+    }
+
+    @Test
+    void persist_whenDraftEligibilityIsLostBeforePush_doesNotPublishTheCommit() throws Exception {
+        stubSuccessfulCheckoutAndCommits();
+        when(gitService.getLocalHeadHash(repository)).thenReturn("pre-template", "hash-template");
+        when(gitService.getLastCommitHash(templateUri, "main")).thenReturn("pre-template");
+        AtomicBoolean eligible = new AtomicBoolean(true);
+        when(gitService.commitStagedChanges(any(), anyString(), any())).thenAnswer(invocation -> {
+            eligible.set(false);
+            return "hash-template";
+        });
+
+        assertThatThrownBy(() -> service.persist(exercise, user, outcomeWith(Map.of("Template.java", "t"), Map.of(), Map.of(), ""), null, null, "job-1", GenerationMode.GENERATE,
+                eligible::get)).isInstanceOf(GenerationIncompleteException.class).satisfies(exception -> {
+                    GenerationIncompleteException incomplete = (GenerationIncompleteException) exception;
+                    assertThat(incomplete.liveExerciseChanged()).isFalse();
+                });
+
+        verify(gitService, never()).pushCommitWithLease(any(), any(), any(), any());
+        verify(gitService, never()).resetToCommitAndForcePush(any(), any(), any(), any());
+    }
+
+    @Test
+    void persist_whenDraftEligibilityIsLostDuringPush_compensatesThePublishedCommit() throws Exception {
+        stubSuccessfulCheckoutAndCommits();
+        when(gitService.getLocalHeadHash(repository)).thenReturn("pre-template", "hash-template");
+        AtomicBoolean eligible = new AtomicBoolean(true);
+        doAnswer(invocation -> {
+            eligible.set(false);
+            return null;
+        }).when(gitService).pushCommitWithLease(repository, "hash-template", "main", "pre-template");
+
+        assertThatThrownBy(() -> service.persist(exercise, user, outcomeWith(Map.of("Template.java", "t"), Map.of(), Map.of(), ""), null, null, "job-1", GenerationMode.GENERATE,
+                eligible::get)).isInstanceOf(GenerationIncompleteException.class).satisfies(exception -> {
+                    GenerationIncompleteException incomplete = (GenerationIncompleteException) exception;
+                    assertThat(incomplete.liveExerciseChanged()).isFalse();
+                });
+
+        verify(gitService).pushCommitWithLease(repository, "hash-template", "main", "pre-template");
+        verify(gitService).resetToCommitAndForcePush(repository, "pre-template", "hash-template", "main");
+        verify(exerciseVersionService, never()).createExerciseVersionOrThrow(any(), any(), anyMap());
     }
 
     @Test
@@ -840,6 +951,22 @@ class GenerationPersistenceServiceTest {
         verify(programmingExerciseRepository).updateProblemStatementAndTitleIfUnchanged(1L, "old statement", "Old Title", "adapted statement\r\n", "Adapted Title");
         verify(programmingExerciseTaskService).updateTasksFromProblemStatement(exercise);
         verify(exerciseVersionService).createExerciseVersionOrThrow(exercise, user);
+    }
+
+    @Test
+    void resyncAfterRevert_recordsCallerCapturedBranchHeadsInTheVersion() {
+        ProgrammingExercise currentExercise = new ProgrammingExercise();
+        currentExercise.setProblemStatement("adapted statement");
+        currentExercise.setTitle("Adapted Title");
+        when(programmingExerciseRepository.findById(1L)).thenReturn(Optional.of(currentExercise));
+        when(programmingExerciseRepository.updateProblemStatementAndTitleIfUnchanged(1L, "old statement", "Old Title", "adapted statement", "Adapted Title")).thenReturn(1);
+        Map<RepositoryType, String> revertedHeads = Map.of(RepositoryType.TEMPLATE, "release-template", RepositoryType.SOLUTION, "release-solution", RepositoryType.TESTS,
+                "release-tests");
+
+        boolean result = service.resyncAfterRevertWithSignal(exercise, user, null, "old statement", "Old Title", "adapted statement", "Adapted Title", revertedHeads);
+
+        assertThat(result).isTrue();
+        verify(exerciseVersionService).createExerciseVersionOrThrow(exercise, user, revertedHeads);
     }
 
     @Test

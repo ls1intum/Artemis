@@ -4,6 +4,7 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
@@ -32,6 +33,8 @@ import org.springframework.ai.tool.method.MethodToolCallbackProvider;
 
 import com.knuddels.jtokkit.api.EncodingType;
 
+import de.tum.cit.aet.artemis.hyperion.service.HyperionSecretMaterialPolicy;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.ProviderUsageSink;
 import de.tum.cit.aet.artemis.localci.exception.LocalCIException;
 
 /**
@@ -42,6 +45,8 @@ import de.tum.cit.aet.artemis.localci.exception.LocalCIException;
 public class AgentLoopRunner {
 
     private static final Logger log = LoggerFactory.getLogger(AgentLoopRunner.class);
+
+    private static final HyperionSecretMaterialPolicy SECRET_MATERIAL_POLICY = new HyperionSecretMaterialPolicy();
 
     /** After this many consecutive tool-execution failures the model is considered stuck and the loop ends with an error. */
     private static final int MAX_CONSECUTIVE_TOOL_FAILURES = 5;
@@ -227,6 +232,8 @@ public class AgentLoopRunner {
         if (chatModel == null) {
             throw new IllegalStateException("No ChatModel is configured. Agentic generation is unavailable.");
         }
+        requireTextSafe("provider/system-prompt", systemPrompt);
+        requireTextSafe("provider/user-prompt", userPrompt);
         ToolCallbackProvider provider = MethodToolCallbackProvider.builder().toolObjects(tools).build();
         ToolCallback[] toolCallbacks = provider.getToolCallbacks();
 
@@ -300,13 +307,13 @@ public class AgentLoopRunner {
             }
             catch (RuntimeException e) {
                 if (hasCause(e, LocalCIException.class)) {
-                    log.warn("Agent loop lost its sandbox on turn {}", turn, e);
+                    log.warn("Agent loop lost its sandbox on turn {} ({})", turn, e.getClass().getSimpleName());
                     emit(stepListener, "The build environment stopped responding.");
                     return new AgentLoopResult(AgentLoopResult.Status.ERROR, turn, lastAssistantText);
                 }
                 // Unknown tool / malformed arguments surface here: feed the error back so the model can self-correct, only giving up after MAX_CONSECUTIVE_TOOL_FAILURES.
                 consecutiveToolFailures++;
-                log.warn("Agent loop tool execution failed on turn {} (consecutive failures: {})", turn, consecutiveToolFailures, e);
+                log.warn("Agent loop tool execution failed on turn {} (consecutive failures: {}, type: {})", turn, consecutiveToolFailures, e.getClass().getSimpleName());
                 emit(stepListener, "The agent tried an unavailable action and is correcting it.");
                 if (consecutiveToolFailures >= MAX_CONSECUTIVE_TOOL_FAILURES) {
                     return new AgentLoopResult(AgentLoopResult.Status.ERROR, turn, lastAssistantText);
@@ -320,7 +327,7 @@ public class AgentLoopRunner {
                         .toList();
                 // The catch is only reachable when this turn had tool calls (the no-tool-calls path returns above), so errorResponses always covers at least one call id.
                 conversation.add(ToolResponseMessage.builder().responses(errorResponses).build());
-                conversation = compactIfNeeded(conversation, lastPromptTokens, messagesAtLastCall, usageSink, stepListener);
+                conversation = compactIfNeeded(conversation, lastPromptTokens, messagesAtLastCall, usageSink, cancelled, stepListener);
                 prompt = new Prompt(conversation, agentOptions(toolCallbacks, conversation));
                 continue;
             }
@@ -339,7 +346,7 @@ public class AgentLoopRunner {
                 conversation.add(new UserMessage("You are close to the step limit. Finish the current change, make sure the build and tests reflect the intended outcome, "
                         + "and then stop calling tools."));
             }
-            conversation = compactIfNeeded(conversation, lastPromptTokens, messagesAtLastCall, usageSink, stepListener);
+            conversation = compactIfNeeded(conversation, lastPromptTokens, messagesAtLastCall, usageSink, cancelled, stepListener);
             prompt = new Prompt(conversation, agentOptions(toolCallbacks, conversation));
         }
 
@@ -436,6 +443,10 @@ public class AgentLoopRunner {
         if (path == null) {
             return null;
         }
+        HyperionSecretMaterialPolicy.Assessment assessment = SECRET_MATERIAL_POLICY.assess(path, new byte[0], HyperionSecretMaterialPolicy.Origin.TOOL_OBSERVATION);
+        if (!assessment.isSafe()) {
+            return assessment.safePath();
+        }
         String sanitized = UNSAFE_PROGRESS_CHARACTERS.matcher(path).replaceAll(" ").replaceAll("\\s+", " ").strip();
         if (sanitized.isEmpty()) {
             return null;
@@ -482,7 +493,17 @@ public class AgentLoopRunner {
                 return null;
             }
             try {
-                ChatResponse response = providerFailureCooldown.execute(providerFailureKey, providerHardFailureCooldown, () -> chatModel.call(prompt));
+                requirePromptSafe(prompt);
+                ChatResponse response;
+                try {
+                    response = providerFailureCooldown.execute(providerFailureKey, providerHardFailureCooldown, () -> chatModel.call(prompt));
+                }
+                catch (RuntimeException e) {
+                    if (!(e instanceof ProviderFailureCooldown.ProviderInCooldownException)) {
+                        markUsageUncertain(usageSink);
+                    }
+                    throw e;
+                }
                 emitUsage(usageSink, response);
                 if (!isEmptyResponse(response)) {
                     return response;
@@ -497,7 +518,7 @@ public class AgentLoopRunner {
                 }
             }
             catch (RuntimeException e) {
-                log.error("Agent loop model call failed on turn {} after the provider retry policy was exhausted", turn, e);
+                log.error("Agent loop model call failed on turn {} after the provider retry policy was exhausted ({})", turn, e.getClass().getSimpleName());
                 emit(stepListener, "The AI service could not complete the request.");
                 return null;
             }
@@ -553,13 +574,16 @@ public class AgentLoopRunner {
      * @return the (possibly compacted) conversation
      */
     private List<Message> compactIfNeeded(List<Message> conversation, long lastPromptTokens, int messagesAtLastCall, @Nullable Consumer<ChatResponse> usageSink,
-            @Nullable Consumer<String> stepListener) {
+            BooleanSupplier cancelled, @Nullable Consumer<String> stepListener) {
         long contextTokens = estimateContextTokens(conversation, lastPromptTokens, messagesAtLastCall);
         if (contextTokens <= (long) contextWindowTokens - RESERVE_TOKENS) {
             return conversation;
         }
+        if (cancelled.getAsBoolean()) {
+            return conversation;
+        }
         emit(stepListener, "Preparing the next generation step.");
-        return compact(conversation, usageSink);
+        return compact(conversation, usageSink, cancelled);
     }
 
     /**
@@ -656,6 +680,10 @@ public class AgentLoopRunner {
      * tool-pairing contract. If summarization fails, the old region is dropped behind a marker rather than aborting the run — the workspace files remain the source of truth.
      */
     List<Message> compact(List<Message> conversation, @Nullable Consumer<ChatResponse> usageSink) {
+        return compact(conversation, usageSink, () -> false);
+    }
+
+    List<Message> compact(List<Message> conversation, @Nullable Consumer<ChatResponse> usageSink, BooleanSupplier cancelled) {
         int protectedPrefix = Math.min(2, conversation.size());
         if (conversation.size() <= protectedPrefix + 1) {
             // Only the system prompt, the initial instruction, and at most one turn — nothing older to summarize.
@@ -667,12 +695,18 @@ public class AgentLoopRunner {
             return conversation;
         }
         List<Message> toSummarize = conversation.subList(protectedPrefix, cut);
+        if (cancelled.getAsBoolean()) {
+            return conversation;
+        }
         String summaryBody;
         try {
-            summaryBody = summarize(toSummarize, usageSink);
+            summaryBody = summarize(toSummarize, usageSink, cancelled);
+        }
+        catch (CancellationException ignored) {
+            return conversation;
         }
         catch (RuntimeException e) {
-            log.warn("Compaction summarization failed ({}); dropping {} older message(s) behind a marker instead.", e.getMessage(), toSummarize.size());
+            log.warn("Compaction summarization failed ({}); dropping {} older message(s) behind a marker instead.", e.getClass().getSimpleName(), toSummarize.size());
             summaryBody = "[" + toSummarize.size()
                     + " earlier messages were omitted to fit the context window. Re-read any workspace file you need with read_file or `ls -R`/`cat` via bash.]";
         }
@@ -727,7 +761,7 @@ public class AgentLoopRunner {
     }
 
     /** Summarizes the given older messages via a tool-free model call, producing the structured summary that replaces them. */
-    private String summarize(List<Message> messages, @Nullable Consumer<ChatResponse> usageSink) {
+    private String summarize(List<Message> messages, @Nullable Consumer<ChatResponse> usageSink, BooleanSupplier cancelled) {
         StringBuilder transcript = new StringBuilder();
         for (Message message : messages) {
             transcript.append(renderForSummary(message)).append('\n');
@@ -753,8 +787,21 @@ public class AgentLoopRunner {
         if (configuredModel != null) {
             summaryOptions.model(configuredModel);
         }
-        ChatResponse response = providerFailureCooldown.execute(ProviderFailureCooldown.keyForModel(configuredModel), providerHardFailureCooldown,
-                () -> chatModel.call(new Prompt(summaryPrompt, summaryOptions.build())));
+        Prompt prompt = new Prompt(summaryPrompt, summaryOptions.build());
+        requirePromptSafe(prompt);
+        if (cancelled.getAsBoolean()) {
+            throw new CancellationException("Generation was cancelled before conversation compaction");
+        }
+        ChatResponse response;
+        try {
+            response = providerFailureCooldown.execute(ProviderFailureCooldown.keyForModel(configuredModel), providerHardFailureCooldown, () -> chatModel.call(prompt));
+        }
+        catch (RuntimeException e) {
+            if (!(e instanceof ProviderFailureCooldown.ProviderInCooldownException)) {
+                markUsageUncertain(usageSink);
+            }
+            throw e;
+        }
         emitUsage(usageSink, response);
         String text = extractText(response);
         if (text == null || text.isBlank()) {
@@ -784,6 +831,28 @@ public class AgentLoopRunner {
         }
         String role = message instanceof SystemMessage ? "SYSTEM" : "USER";
         return role + ": " + (message.getText() == null ? "" : message.getText());
+    }
+
+    private static void requirePromptSafe(Prompt prompt) {
+        int messageIndex = 0;
+        for (Message message : prompt.getInstructions()) {
+            if (message instanceof ToolResponseMessage toolResponse) {
+                int responseIndex = 0;
+                for (ToolResponseMessage.ToolResponse response : toolResponse.getResponses()) {
+                    requireTextSafe("provider/tool-observation-" + messageIndex + "-" + responseIndex, response.responseData());
+                    responseIndex++;
+                }
+            }
+            else {
+                requireTextSafe("provider/message-" + messageIndex, message.getText());
+            }
+            messageIndex++;
+        }
+    }
+
+    private static void requireTextSafe(String logicalPath, @Nullable String text) {
+        SECRET_MATERIAL_POLICY.requireSafe(logicalPath, text == null ? new byte[0] : text.getBytes(java.nio.charset.StandardCharsets.UTF_8),
+                HyperionSecretMaterialPolicy.Origin.PROVIDER_PROMPT);
     }
 
     private static String truncateForSummary(@Nullable String value) {
@@ -829,6 +898,12 @@ public class AgentLoopRunner {
     private static void emitUsage(@Nullable Consumer<ChatResponse> usageSink, @Nullable ChatResponse response) {
         if (usageSink != null && response != null) {
             usageSink.accept(response);
+        }
+    }
+
+    private static void markUsageUncertain(@Nullable Consumer<ChatResponse> usageSink) {
+        if (usageSink instanceof ProviderUsageSink providerUsageSink) {
+            providerUsageSink.markUncertain();
         }
     }
 }

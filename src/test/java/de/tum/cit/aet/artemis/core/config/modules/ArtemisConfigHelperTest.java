@@ -9,6 +9,7 @@ import java.util.function.Function;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.core.env.Environment;
+import org.springframework.core.env.Profiles;
 
 import de.tum.cit.aet.artemis.core.config.ArtemisConfigHelper;
 import de.tum.cit.aet.artemis.core.config.Constants;
@@ -83,6 +84,19 @@ class ArtemisConfigHelperTest {
     @Test
     void testIrisProperty() {
         testProperty(artemisConfigHelper::isIrisEnabled, Constants.IRIS_ENABLED_PROPERTY_NAME);
+    }
+
+    @Test
+    void testHyperionExerciseGenerationProperty() {
+        mockProperty(Constants.HYPERION_ENABLED_PROPERTY_NAME, true);
+        when(mockEnv.getProperty(Constants.HYPERION_EXERCISE_GENERATION_ENABLED_PROPERTY_NAME, Boolean.class, false)).thenReturn(true, false);
+        when(mockEnv.acceptsProfiles(org.mockito.ArgumentMatchers.any(Profiles.class))).thenReturn(true);
+
+        assertThat(artemisConfigHelper.isHyperionExerciseGenerationEnabled(mockEnv)).isTrue();
+        assertThat(artemisConfigHelper.isHyperionExerciseGenerationEnabled(mockEnv)).isFalse();
+
+        mockProperty(Constants.HYPERION_ENABLED_PROPERTY_NAME, false);
+        assertThat(artemisConfigHelper.isHyperionExerciseGenerationEnabled(mockEnv)).isFalse();
     }
 
     private void testProperty(Function<Environment, Boolean> propertyTest, String propertyName) {

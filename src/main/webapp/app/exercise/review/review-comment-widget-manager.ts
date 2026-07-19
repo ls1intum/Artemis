@@ -79,6 +79,10 @@ export class ReviewCommentWidgetManager {
         });
     }
 
+    hasDrafts(): boolean {
+        return this.draftLinesByFile.size > 0;
+    }
+
     /**
      * Updates thread inputs in-place when widgets already exist.
      * Returns false when at least one thread widget is missing, so callers can fall back to a full render.

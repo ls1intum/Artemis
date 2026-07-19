@@ -16,6 +16,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationContext;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.TaskScheduler;
@@ -25,6 +26,7 @@ import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.model.Container;
 
 import de.tum.cit.aet.artemis.buildagent.BuildAgentConfiguration;
+import de.tum.cit.aet.artemis.buildagent.config.GenerationSandboxHostingEnabled;
 
 /**
  * Reaps orphaned interactive sandbox containers, i.e. those named with the {@link InteractiveSandboxService#SANDBOX_CONTAINER_PREFIX} prefix.
@@ -43,6 +45,7 @@ import de.tum.cit.aet.artemis.buildagent.BuildAgentConfiguration;
 @Lazy(false)
 @Service
 @Profile(PROFILE_BUILDAGENT)
+@Conditional(GenerationSandboxHostingEnabled.class)
 public class InteractiveSandboxReaperService {
 
     private static final Logger log = LoggerFactory.getLogger(InteractiveSandboxReaperService.class);
@@ -52,10 +55,7 @@ public class InteractiveSandboxReaperService {
     private final ApplicationContext applicationContext;
 
     /**
-     * The relay handler that owns the per-agent session permits. It is unconditionally present on a build-agent node (same {@link Profile}), so a plain dependency is correct; the
-     * reaper calls back into it to release the permit of any orphaned relay session it reaps, so lost CREATE responses / failovers / lost DESTROYs cannot slowly deplete the
-     * agent's
-     * generation sandbox slot capacity between restarts.
+     * The relay handler owns the per-agent session permits. Both beans use the same build-agent profile and generation-hosting condition, so a plain dependency is safe.
      */
     private final InteractiveSandboxRelayHandler relayHandler;
 
@@ -71,9 +71,6 @@ public class InteractiveSandboxReaperService {
     @Value("${artemis.continuous-integration.build-agent.generation-sandbox-cleanup-interval-minutes:15}")
     private int sandboxCleanupScheduleMinutes;
 
-    @Value("${artemis.continuous-integration.build-agent.max-generation-sandbox-slots:0}")
-    private int maxGenerationSandboxSlots;
-
     public InteractiveSandboxReaperService(BuildAgentConfiguration buildAgentConfiguration, ApplicationContext applicationContext, InteractiveSandboxRelayHandler relayHandler,
             @Qualifier("taskScheduler") TaskScheduler taskScheduler) {
         this.buildAgentConfiguration = buildAgentConfiguration;
@@ -82,26 +79,11 @@ public class InteractiveSandboxReaperService {
         this.taskScheduler = taskScheduler;
     }
 
-    /**
-     * Validates the configured thresholds and schedules the periodic sweep. When generation hosting is disabled ({@code maxGenerationSandboxSlots <= 0}), this instead removes
-     * this agent's leftover sandbox containers once, since no periodic sweep is needed if new sandboxes can never be created.
-     */
+    /** Validates the configured thresholds and schedules the periodic sweep. */
     @PostConstruct
     public void scheduleCleanup() {
         if (sandboxContainerExpiryMinutes <= 0 || sandboxCleanupScheduleMinutes <= 0) {
             throw new IllegalArgumentException("Generation sandbox cleanup interval and idle timeout must be positive");
-        }
-        if (maxGenerationSandboxSlots <= 0) {
-            try {
-                int removed = interactiveSandboxService().removeSessionsForCurrentAgent();
-                if (removed > 0) {
-                    log.info("Removed {} leftover interactive sandbox container(s) while generation hosting is disabled", removed);
-                }
-            }
-            catch (RuntimeException e) {
-                log.warn("Could not remove leftover interactive sandbox containers while generation hosting is disabled: {}", e.getMessage());
-            }
-            return;
         }
         taskScheduler.scheduleAtFixedRate(this::reapOrphanedSessions, Instant.now().plusSeconds(30), Duration.ofMinutes(sandboxCleanupScheduleMinutes));
     }

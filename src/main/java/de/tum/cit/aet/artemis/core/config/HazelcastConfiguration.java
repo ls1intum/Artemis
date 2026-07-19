@@ -170,6 +170,8 @@ public class HazelcastConfiguration {
 
     private static final Logger log = LoggerFactory.getLogger(HazelcastConfiguration.class);
 
+    public static final String HYPERION_EXERCISE_GENERATION_CAPABLE_MEMBER_ATTRIBUTE = "hyperion.exercise-generation-capable";
+
     private static final String ARTEMIS_SPLIT_BRAIN_PROTECTION_NAME = "artemis-split-brain-protection";
 
     private final ServerProperties serverProperties;
@@ -533,8 +535,9 @@ public class HazelcastConfiguration {
         config.setInstanceName(instanceName);
         config.setClusterName("test-cluster-" + UUID.randomUUID());
 
-        configureSplitBrainProtection(config, false);
+        configureSplitBrainProtection(config, false, artemisProperties);
         configureCacheMaps(config, artemisProperties);
+        configureMemberAttributes(config);
         config.getSerializationConfig().addSerializerConfig(createPathSerializerConfig());
 
         configureIsolatedNetworkingForTests(config);
@@ -631,7 +634,7 @@ public class HazelcastConfiguration {
 
         configureNetworkBindingAndDiscovery(config);
         configureCacheMaps(config, artemisProperties);
-        configureSplitBrainProtection(config, true);
+        configureSplitBrainProtection(config, true, artemisProperties);
         configureClusterStabilitySettings(config);
         configureLocalCIQueueIfNeeded(config, artemisProperties);
         configureLiteMemberIfBuildAgent(config);
@@ -725,19 +728,23 @@ public class HazelcastConfiguration {
      * </ul>
      *
      * <p>
-     * <strong>Attribute Selection:</strong> Uses the build agent display name if configured
-     * (for build agents), otherwise falls back to the Eureka instance ID. This ensures
-     * meaningful names like "build-agent-1" instead of UUIDs.
+     * <strong>Attribute Selection:</strong> Every member explicitly advertises whether it satisfies
+     * the whole-exercise generation predicate, so capability is inseparable from membership. The
+     * human-readable identifier uses the build agent display name if configured (for build agents),
+     * otherwise it falls back to the Eureka instance ID.
      *
      * @param config the Hazelcast configuration to modify
      */
     private void configureMemberAttributes(Config config) {
+        MemberAttributeConfig memberAttributeConfig = config.getMemberAttributeConfig();
+        boolean exerciseGenerationCapable = new ArtemisConfigHelper().isHyperionExerciseGenerationEnabled(env);
+        memberAttributeConfig.setAttribute(HYPERION_EXERCISE_GENERATION_CAPABLE_MEMBER_ATTRIBUTE, Boolean.toString(exerciseGenerationCapable));
+
         String buildAgentDisplayName = env.getProperty("artemis.continuous-integration.build-agent.display-name", "");
         String instanceId = env.getProperty("eureka.instance.instanceId", "");
         String displayName = !buildAgentDisplayName.isBlank() && !buildAgentDisplayName.equals("Unnamed Artemis Node") ? buildAgentDisplayName : instanceId;
 
         if (!displayName.isBlank()) {
-            MemberAttributeConfig memberAttributeConfig = config.getMemberAttributeConfig();
             log.info("Using instanceId '{}' for Hazelcast member attributes", displayName);
             memberAttributeConfig.setAttribute("instanceId", displayName);
         }
@@ -926,9 +933,8 @@ public class HazelcastConfiguration {
      * inconsistencies must be resolved.
      *
      * <p>
-     * <strong>Protection Mechanism:</strong> Split-brain protection defines a minimum cluster
-     * size (quorum) required for operations. With {@code minimumClusterSize=2}, a single
-     * isolated node cannot perform cluster operations, preventing inconsistent writes.
+     * <strong>Protection Mechanism:</strong> Split-brain protection defines the strict majority
+     * required for operations from the explicitly configured expected data-member topology.
      *
      * <p>
      * <strong>Merge Policy:</strong> The merge delay settings (30 seconds for first run,
@@ -941,20 +947,32 @@ public class HazelcastConfiguration {
      * A single-node partition becomes read-only, which is acceptable for Artemis where data
      * consistency is more important than availability during network issues.
      *
-     * @param config  the Hazelcast configuration to modify
-     * @param enabled whether to enforce the protection; isolated single-member test instances register it disabled so protected maps use the same static configuration
+     * @param config            the Hazelcast configuration to modify
+     * @param enabled           whether to enforce the protection; isolated single-member test instances register it disabled so protected maps use the same static configuration
+     * @param artemisProperties the configured expected data-member topology
      */
-    private void configureSplitBrainProtection(Config config, boolean enabled) {
+    private void configureSplitBrainProtection(Config config, boolean enabled, ArtemisProperties artemisProperties) {
+        int expectedDataMemberCount = artemisProperties.getCache().getHazelcast().getExpectedDataMemberCount();
+        int majority = majorityForExpectedDataMemberCount(expectedDataMemberCount);
         var splitBrainConfig = new SplitBrainProtectionConfig();
         splitBrainConfig.setName(ARTEMIS_SPLIT_BRAIN_PROTECTION_NAME);
-        splitBrainConfig.setEnabled(enabled);
-        splitBrainConfig.setMinimumClusterSize(2);
+        // Hazelcast requires a minimum of two for this setting. A one-member topology has no split brain to protect against, so its effective quorum of one is represented by a
+        // disabled protection definition. Hyperion admission still verifies that exactly one data member is visible.
+        splitBrainConfig.setEnabled(enabled && expectedDataMemberCount > 1);
+        splitBrainConfig.setMinimumClusterSize(Math.max(2, majority));
         splitBrainConfig.setProtectOn(SplitBrainProtectionOn.READ_WRITE);
 
         config.setSplitBrainProtectionConfigs(new ConcurrentHashMap<>());
         config.addSplitBrainProtectionConfig(splitBrainConfig);
         config.setProperty(ClusterProperty.MERGE_FIRST_RUN_DELAY_SECONDS.getName(), "30");
         config.setProperty(ClusterProperty.MERGE_NEXT_RUN_DELAY_SECONDS.getName(), "30");
+    }
+
+    static int majorityForExpectedDataMemberCount(int expectedDataMemberCount) {
+        if (expectedDataMemberCount < 1) {
+            throw new IllegalArgumentException("jhipster.cache.hazelcast.expected-data-member-count must be at least 1");
+        }
+        return expectedDataMemberCount / 2 + 1;
     }
 
     /**

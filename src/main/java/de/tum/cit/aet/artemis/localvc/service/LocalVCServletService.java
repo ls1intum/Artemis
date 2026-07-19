@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.OptionalLong;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
@@ -73,6 +74,7 @@ import de.tum.cit.aet.artemis.programming.repository.ParticipationVCSAccessToken
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.repository.RepositoryVCSAccessTokenRepository;
 import de.tum.cit.aet.artemis.programming.service.AuxiliaryRepositoryService;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseMutationGuard;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseParticipationService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseTestCaseChangedService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingSubmissionMessagingService;
@@ -91,6 +93,8 @@ import inet.ipaddr.IPAddressString;
 @Profile(PROFILE_LOCALVC)
 // TODO: we should rename this because its used in the context of https and ssh git operations
 public class LocalVCServletService {
+
+    static final String AUTHORIZED_EXERCISE_ATTRIBUTE = LocalVCServletService.class.getName() + ".authorizedExercise";
 
     private static final Logger log = LoggerFactory.getLogger(LocalVCServletService.class);
 
@@ -127,6 +131,8 @@ public class LocalVCServletService {
 
     private final ExerciseVersionService exerciseVersionService;
 
+    private final ProgrammingExerciseMutationGuard programmingExerciseMutationGuard;
+
     @Value("${artemis.version-control.url}")
     private URI localVCBaseUri;
 
@@ -147,7 +153,7 @@ public class LocalVCServletService {
             ProgrammingSubmissionMessagingService programmingSubmissionMessagingService, ProgrammingExerciseTestCaseChangedService programmingExerciseTestCaseChangedService,
             ParticipationVCSAccessTokenRepository participationVCSAccessTokenRepository, RepositoryVCSAccessTokenRepository repositoryVCSAccessTokenRepository,
             Optional<VcsAccessLogService> vcsAccessLogService, AuthorizationCheckService authorizationCheckService, RateLimitService rateLimitService,
-            ExerciseVersionService exerciseVersionService) {
+            ExerciseVersionService exerciseVersionService, ProgrammingExerciseMutationGuard programmingExerciseMutationGuard) {
         this.authenticationManager = authenticationManager;
         this.userRepository = userRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
@@ -164,6 +170,7 @@ public class LocalVCServletService {
         this.authorizationCheckService = authorizationCheckService;
         this.rateLimitService = rateLimitService;
         this.exerciseVersionService = exerciseVersionService;
+        this.programmingExerciseMutationGuard = programmingExerciseMutationGuard;
     }
 
     /**
@@ -299,7 +306,25 @@ public class LocalVCServletService {
             throw e;
         }
 
+        request.setAttribute(AUTHORIZED_EXERCISE_ATTRIBUTE, exercise);
+
         log.debug("Authorizing user {} for repository {} took {}", user.getLogin(), localVCRepositoryUri, TimeLogUtil.formatDurationFrom(timeNanoStart));
+    }
+
+    /**
+     * Claims the existing per-exercise mutation slot when a push targets a versionable staff repository. Student repositories receive a no-op lease.
+     *
+     * @param repository the repository targeted by receive-pack
+     * @param exercise   the already-authorized exercise
+     * @return a lease held by the transport until receive-pack and synchronous post-receive processing complete
+     */
+    public ProgrammingExerciseMutationGuard.MutationLease claimProgrammingExerciseMutation(Repository repository, ProgrammingExercise exercise) {
+        LocalVCRepositoryUri repositoryUri = parseRepositoryUri(repository.getDirectory().toPath());
+        RepositoryType repositoryType = getRepositoryType(repositoryUri.getRepositoryTypeOrUserName(), exercise);
+        if (exerciseVersionService.isRepositoryTypeVersionable(repositoryType)) {
+            return programmingExerciseMutationGuard.claimExternalMutation(exercise.getId());
+        }
+        return programmingExerciseMutationGuard.claimExternalMutation(OptionalLong.empty());
     }
 
     /**
@@ -931,7 +956,8 @@ public class LocalVCServletService {
 
         try {
             if (exerciseVersionService.isRepositoryTypeVersionable(repositoryType)) {
-                exerciseVersionService.createExerciseVersion(exercise, user);
+                Map<RepositoryType, String> exactCommitId = commitHash != null && repositoryType != RepositoryType.AUXILIARY ? Map.of(repositoryType, commitHash) : Map.of();
+                exerciseVersionService.createExerciseVersionSynchronously(exercise, user, exactCommitId);
             }
 
             if (repositoryType.equals(RepositoryType.TESTS)) {

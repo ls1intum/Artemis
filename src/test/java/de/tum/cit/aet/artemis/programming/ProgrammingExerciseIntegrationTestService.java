@@ -751,11 +751,13 @@ public class ProgrammingExerciseIntegrationTestService {
 
     void testGetProgrammingExerciseWithSetupParticipations() throws Exception {
         participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, userPrefix + "instructor1");
+        participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, userPrefix + "student1");
         final var path = "/api/programming/programming-exercises/" + programmingExercise.getId() + "/with-participations";
         var programmingExerciseServer = request.get(path, HttpStatus.OK, ProgrammingExercise.class);
         checkTemplateAndSolutionParticipationsFromServer(programmingExerciseServer);
-        assertThat(programmingExerciseServer.getStudentParticipations()).isNotEmpty();
-        // TODO add more assertions
+        assertThat(programmingExerciseServer.getStudentParticipations()).hasSize(1);
+        assertThat(programmingExerciseServer.getNumberOfParticipations())
+                .isEqualTo((long) programmingExerciseStudentParticipationRepository.findByExerciseId(programmingExercise.getId()).size());
     }
 
     void testGetProgrammingExerciseWithJustTemplateAndSolutionParticipation(boolean withSubmissionResults) throws Exception {

@@ -80,7 +80,8 @@ public class HyperionGenerationBudgetService {
         this.maxTokensPerCourse = maxTokensPerCourse;
         this.maxTokensGlobal = maxTokensGlobal;
         this.maxTokensPerJob = maxTokensPerJob;
-        this.reservationTtl = reservationTtl(maxJobDuration);
+        Duration activeReservationTtl = reservationTtl(maxJobDuration);
+        this.reservationTtl = budgetWindow == null || activeReservationTtl.compareTo(budgetWindow) >= 0 ? activeReservationTtl : budgetWindow;
     }
 
     private static void validateConfiguration(Duration budgetWindow, long maxTokensPerUser, long maxTokensPerCourse, long maxTokensGlobal, long maxTokensPerJob) {
@@ -200,19 +201,48 @@ public class HyperionGenerationBudgetService {
     }
 
     /**
+     * Retains the worst-case debit when exact provider usage could not be recorded.
+     *
+     * @param reservationId the reservation to retain
+     * @return whether no reservation was required or the reservation still exists
+     */
+    public boolean retainReservationForBudgetWindow(@Nullable String reservationId) {
+        if (reservationId == null || reservationMap == null) {
+            return true;
+        }
+        try {
+            boolean retained = reservationMap.setTtl(reservationId, Math.max(1L, budgetWindow.toSeconds()), TimeUnit.SECONDS);
+            if (!retained) {
+                log.error("Could not retain uncertain Hyperion token reservation {} because it no longer exists", reservationId);
+            }
+            return retained;
+        }
+        catch (RuntimeException e) {
+            log.warn("Could not extend uncertain Hyperion token reservation {} through the budget window: {}", reservationId, e.getMessage());
+            return false;
+        }
+    }
+
+    /**
      * Refreshes an active reservation's crash-only TTL while its owning worker is still heartbeating.
      *
      * @param reservationId the reservation id to refresh, or null when no reservation was made
+     * @return whether no reservation was required or the reservation still exists
      */
-    public void refreshReservation(@Nullable String reservationId) {
+    public boolean refreshReservation(@Nullable String reservationId) {
         if (reservationId == null || reservationMap == null) {
-            return;
+            return true;
         }
         try {
-            reservationMap.setTtl(reservationId, Math.max(1L, reservationTtl.toSeconds()), TimeUnit.SECONDS);
+            boolean refreshed = reservationMap.setTtl(reservationId, Math.max(1L, reservationTtl.toSeconds()), TimeUnit.SECONDS);
+            if (!refreshed) {
+                log.error("Could not refresh Hyperion generation budget reservation {} because it no longer exists", reservationId);
+            }
+            return refreshed;
         }
         catch (RuntimeException e) {
             log.warn("Could not refresh Hyperion generation budget reservation {}; its existing TTL remains in effect: {}", reservationId, e.getMessage());
+            return false;
         }
     }
 

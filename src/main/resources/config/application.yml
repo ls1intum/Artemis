@@ -424,6 +424,7 @@ jhipster:
         hazelcast: # Hazelcast distributed cache
             time-to-live-seconds: 3600
             backup-count: 1
+            expected-data-member-count: 1 # Must equal the number of core/data Hazelcast members on every node; do not count build-agent clients/lite members.
 
 # =======================================================================================
 # EUREKA CONFIGURATION (Service Discovery via JHipster Registry)

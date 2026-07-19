@@ -24,11 +24,11 @@ import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.Provider
  */
 @Lazy
 @Configuration
-@Conditional(HyperionEnabled.class)
+@Conditional(HyperionExerciseGenerationEnabled.class)
 public class HyperionAsyncConfiguration {
 
     /**
-     * Wires the task-agnostic {@link AgentLoopRunner} as a Hyperion-conditional bean, supplying the deployment's context-window size.
+     * Wires the task-agnostic {@link AgentLoopRunner} as an exercise-generation-conditional bean, supplying the deployment's context-window size.
      *
      * @param chatModels                  the available chat models (the first is used; empty if no AI provider is configured)
      * @param contextWindowTokens         the model's usable context window in tokens, below which the loop keeps the conversation via compaction
@@ -61,7 +61,7 @@ public class HyperionAsyncConfiguration {
         executor.setQueueCapacity(0);
         executor.setAllowCoreThreadTimeOut(true);
         executor.setThreadNamePrefix("hyperion-gen-");
-        // On saturation, abort rather than block the request thread for the full generation. The REST layer maps the rejection to a conflict response.
+        // On saturation, abort rather than block the request thread for the full generation. The REST layer reports that generation capacity is unavailable.
         executor.setRejectedExecutionHandler(new ThreadPoolExecutor.AbortPolicy());
         executor.initialize();
         return executor;

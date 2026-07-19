@@ -6,10 +6,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionEnabled;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.ExerciseGenerationStateChangedEvent;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationCancellationEvent;
 
 @Lazy
 @Service
@@ -26,6 +29,31 @@ public class HyperionWebsocketService {
 
     public HyperionWebsocketService(WebsocketMessagingService websocketMessagingService) {
         this.websocketMessagingService = websocketMessagingService;
+    }
+
+    @EventListener
+    public void sendCancellation(GenerationCancellationEvent cancellation) {
+        send(cancellation.userLogin(), "exercise-generation/jobs/" + cancellation.jobId(), cancellation.event());
+    }
+
+    /**
+     * Broadcasts shared generation lock state to authorized exercise editors.
+     *
+     * @param event the exercise-scoped generation state change
+     */
+    @EventListener
+    public void broadcastExerciseState(ExerciseGenerationStateChangedEvent event) {
+        String topic = TOPIC_PREFIX + "exercise-generation/exercises/" + event.state().exerciseId() + "/state";
+        try {
+            websocketMessagingService.sendMessage(topic, event.state()).orTimeout(DELIVERY_TIMEOUT_SECONDS, TimeUnit.SECONDS).whenComplete((ignored, error) -> {
+                if (error != null) {
+                    log.warn("Could not deliver Hyperion exercise state on topic {}", topic, error);
+                }
+            });
+        }
+        catch (RuntimeException e) {
+            log.warn("Could not send Hyperion exercise state on topic {}", topic, e);
+        }
     }
 
     /**

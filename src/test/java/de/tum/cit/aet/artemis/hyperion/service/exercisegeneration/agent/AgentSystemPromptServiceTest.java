@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -11,6 +12,7 @@ import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationRequestDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.GenerationMode;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.profile.LanguageGenerationProfile;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.workspace.SandboxBuildCommandService;
+import de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.ProjectType;
@@ -281,6 +283,14 @@ class AgentSystemPromptServiceTest {
 
         assertThat(exercise.getProjectType()).isNull();
         assertThat(LanguageGenerationProfile.isSupported(exercise)).isTrue();
+    }
+
+    @Test
+    void exerciseWithAuxiliaryRepositoryIsUnsupportedUntilGenerationCanPreserveIt() {
+        ProgrammingExercise exercise = exerciseWith(ProgrammingLanguage.JAVA, "");
+        exercise.setAuxiliaryRepositories(List.of(new AuxiliaryRepository()));
+
+        assertThat(LanguageGenerationProfile.isSupported(exercise)).isFalse();
     }
 
     @Test

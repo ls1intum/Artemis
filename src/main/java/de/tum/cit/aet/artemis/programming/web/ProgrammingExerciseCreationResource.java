@@ -43,6 +43,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.exception.ContinuousIntegrationException;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseCreationUpdateService;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseMutationGuard;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseValidationService;
 import de.tum.cit.aet.artemis.programming.service.StaticCodeAnalysisService;
 
@@ -80,10 +81,12 @@ public class ProgrammingExerciseCreationResource {
 
     private final ExerciseVersionService exerciseVersionService;
 
+    private final ProgrammingExerciseMutationGuard programmingExerciseMutationGuard;
+
     public ProgrammingExerciseCreationResource(AuthorizationCheckService authCheckService, CourseService courseService,
             ProgrammingExerciseValidationService programmingExerciseValidationService, ProgrammingExerciseCreationUpdateService programmingExerciseCreationUpdateService,
             StaticCodeAnalysisService staticCodeAnalysisService, Optional<AthenaApi> athenaApi, ProgrammingExerciseRepository programmingExerciseRepository,
-            UserRepository userRepository, ExerciseVersionService exerciseVersionService) {
+            UserRepository userRepository, ExerciseVersionService exerciseVersionService, ProgrammingExerciseMutationGuard programmingExerciseMutationGuard) {
         this.programmingExerciseValidationService = programmingExerciseValidationService;
         this.programmingExerciseCreationUpdateService = programmingExerciseCreationUpdateService;
         this.courseService = courseService;
@@ -93,6 +96,7 @@ public class ProgrammingExerciseCreationResource {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.userRepository = userRepository;
         this.exerciseVersionService = exerciseVersionService;
+        this.programmingExerciseMutationGuard = programmingExerciseMutationGuard;
     }
 
     /**
@@ -113,6 +117,7 @@ public class ProgrammingExerciseCreationResource {
         programmingExercise.checkCourseAndExerciseGroupExclusivity(ENTITY_NAME);
         Course course = courseService.retrieveCourseOverExerciseGroupOrCourseId(programmingExercise);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, null);
+        User user = userRepository.getUser();
         programmingExerciseValidationService.validateNewProgrammingExerciseSettings(programmingExercise, course);
         // Validate plagiarism detection config
         PlagiarismDetectionConfigHelper.validatePlagiarismDetectionConfigOrThrow(programmingExercise, ENTITY_NAME);
@@ -129,7 +134,7 @@ public class ProgrammingExerciseCreationResource {
                 staticCodeAnalysisService.createDefaultCategories(newProgrammingExercise);
             }
 
-            exerciseVersionService.createExerciseVersion(newProgrammingExercise);
+            exerciseVersionService.createExerciseVersionSynchronously(newProgrammingExercise, user);
 
             return ResponseEntity.created(new URI("/api/programming/programming-exercises/" + newProgrammingExercise.getId())).body(newProgrammingExercise);
         }
@@ -151,42 +156,48 @@ public class ProgrammingExerciseCreationResource {
     @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<String> generateStructureOracleForExercise(@PathVariable long exerciseId) {
         log.debug("REST request to generate the structure oracle for ProgrammingExercise with id: {}", exerciseId);
-        var programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesAndBuildConfigElseThrow(exerciseId);
+        var authorizationExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesAndBuildConfigElseThrow(exerciseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, programmingExercise, user);
-        if (programmingExercise.getPackageName() == null || programmingExercise.getPackageName().length() < 3) {
-            return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName,
-                    "This is a linked exercise and generating the structure oracle for this exercise is not possible.", "couldNotGenerateStructureOracle")).body(null);
-        }
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, authorizationExercise, user);
 
-        var solutionRepoUri = programmingExercise.getVcsSolutionRepositoryUri();
-        var exerciseRepoUri = programmingExercise.getVcsTemplateRepositoryUri();
-        var testRepoUri = programmingExercise.getVcsTestRepositoryUri();
-
-        try {
-            String testsPath = Path.of("test", programmingExercise.getPackageFolderName()).toString();
-            // Atm we only have one folder that can have structural tests, but this could change.
-            testsPath = programmingExercise.getBuildConfig().hasSequentialTestRuns() ? Path.of("structural", testsPath).toString() : testsPath;
-            boolean didGenerateOracle = programmingExerciseCreationUpdateService.generateStructureOracleFile(solutionRepoUri, exerciseRepoUri, testRepoUri, testsPath, user);
-
-            if (didGenerateOracle) {
-                exerciseVersionService.createExerciseVersion(programmingExercise, user);
-                HttpHeaders responseHeaders = new HttpHeaders();
-                responseHeaders.setContentType(MediaType.TEXT_PLAIN);
-                return new ResponseEntity<>("Successfully generated the structure oracle for the exercise " + programmingExercise.getProjectName(), responseHeaders, HttpStatus.OK);
+        var mutationLease = programmingExerciseMutationGuard.claimExternalMutation(exerciseId);
+        try (mutationLease) {
+            var programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesAndBuildConfigElseThrow(exerciseId);
+            if (programmingExercise.getPackageName() == null || programmingExercise.getPackageName().length() < 3) {
+                return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName,
+                        "This is a linked exercise and generating the structure oracle for this exercise is not possible.", "couldNotGenerateStructureOracle")).body(null);
             }
-            else {
-                return ResponseEntity.badRequest().headers(
-                        HeaderUtil.createAlert(applicationName, "Did not update the oracle because there have not been any changes to it.", "didNotGenerateStructureOracle"))
+
+            var solutionRepoUri = programmingExercise.getVcsSolutionRepositoryUri();
+            var exerciseRepoUri = programmingExercise.getVcsTemplateRepositoryUri();
+            var testRepoUri = programmingExercise.getVcsTestRepositoryUri();
+
+            try {
+                String testsPath = Path.of("test", programmingExercise.getPackageFolderName()).toString();
+                // Atm we only have one folder that can have structural tests, but this could change.
+                testsPath = programmingExercise.getBuildConfig().hasSequentialTestRuns() ? Path.of("structural", testsPath).toString() : testsPath;
+                boolean didGenerateOracle = programmingExerciseCreationUpdateService.generateStructureOracleFile(solutionRepoUri, exerciseRepoUri, testRepoUri, testsPath, user);
+
+                if (didGenerateOracle) {
+                    exerciseVersionService.createExerciseVersionSynchronously(programmingExercise, user);
+                    HttpHeaders responseHeaders = new HttpHeaders();
+                    responseHeaders.setContentType(MediaType.TEXT_PLAIN);
+                    return new ResponseEntity<>("Successfully generated the structure oracle for the exercise " + programmingExercise.getProjectName(), responseHeaders,
+                            HttpStatus.OK);
+                }
+                else {
+                    return ResponseEntity.badRequest().headers(
+                            HeaderUtil.createAlert(applicationName, "Did not update the oracle because there have not been any changes to it.", "didNotGenerateStructureOracle"))
+                            .body(null);
+                }
+            }
+            catch (Exception e) {
+                return ResponseEntity.badRequest()
+                        .headers(HeaderUtil.createAlert(applicationName,
+                                "An error occurred while generating the structure oracle for the exercise " + programmingExercise.getProjectName() + ": " + e,
+                                "errorStructureOracleGeneration"))
                         .body(null);
             }
-        }
-        catch (Exception e) {
-            return ResponseEntity.badRequest()
-                    .headers(HeaderUtil.createAlert(applicationName,
-                            "An error occurred while generating the structure oracle for the exercise " + programmingExercise.getProjectName() + ": " + e,
-                            "errorStructureOracleGeneration"))
-                    .body(null);
         }
     }
 

@@ -52,7 +52,7 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseReposito
  * A single endpoint and a single engine drive both {@code GENERATE} and {@code ADAPT} — the client picks the mode explicitly (never inferred from the exercise's contents). The
  * agent produces or revises a complete exercise candidate (problem statement plus all repositories). Mechanically verified work is saved to the exercise and versioned; automated
  * quality findings become review comments for the instructor. Mechanically invalid or interrupted candidates are not saved. Progress streams over the websocket topic
- * {@code /topic/hyperion/exercise-generation/jobs/{jobId}}; a run is a multi-minute async job addressed by the returned {@code jobId}.
+ * {@code /user/topic/hyperion/exercise-generation/jobs/{jobId}}; a run is a multi-minute async job addressed by the returned {@code jobId}.
  */
 @Conditional(HyperionExerciseGenerationEnabled.class)
 @Lazy

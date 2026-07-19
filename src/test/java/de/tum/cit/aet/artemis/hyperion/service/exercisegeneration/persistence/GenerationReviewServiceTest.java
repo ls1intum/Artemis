@@ -9,6 +9,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.List;
+import java.util.Map;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -24,6 +25,7 @@ import de.tum.cit.aet.artemis.exercise.service.review.ExerciseReviewService;
 import de.tum.cit.aet.artemis.hyperion.domain.Severity;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.critic.SpecFidelityReport;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 
 @ExtendWith(MockitoExtension.class)
 class GenerationReviewServiceTest {
@@ -51,15 +53,17 @@ class GenerationReviewServiceTest {
     @Test
     void attachFindings_attachesBlockingFindingAsHighSeverityAndBroadcastsIt() {
         SpecFidelityReport report = report(SpecFidelityReport.Kind.CONTRACT_CONTRADICTION);
-        when(exerciseReviewService.createConsistencyCheckThreads(eq(42L), any(), eq(user))).thenReturn(List.of(thread()));
+        Map<RepositoryType, String> savedHeads = Map.of(RepositoryType.TEMPLATE, "saved-template");
+        when(exerciseReviewService.createConsistencyCheckThreads(eq(42L), any(), eq(user), eq(17L), eq(savedHeads))).thenReturn(List.of(thread()));
 
-        int created = reviewService.attachFindings(exercise, user, report);
+        int created = reviewService.attachFindings(exercise, user, report, 17L, savedHeads);
 
         assertThat(created).isOne();
         assertThat(GenerationReviewService.toReviewFindings(report)).singleElement().satisfies(finding -> {
             assertThat(finding.severity()).isEqualTo(Severity.HIGH);
             assertThat(finding.description()).contains("contradict");
         });
+        verify(exerciseReviewService).createConsistencyCheckThreads(eq(42L), any(), eq(user), eq(17L), eq(savedHeads));
         verify(exerciseEditorSyncService).broadcastReviewThreadUpdate(eq(42L), any());
     }
 

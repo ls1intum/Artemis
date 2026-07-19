@@ -76,6 +76,30 @@ class TestResultXmlParserTest {
     }
 
     @Test
+    void testParseDtdAndEntityLiteralsInsideFailureCData() throws IOException {
+        String exampleXml = """
+                <testsuite>
+                    <testcase name="testXmlOutput()">
+                        <failure><![CDATA[Expected output to contain:
+                <!DOCTYPE html>
+                <!ENTITY example "value">]]></failure>
+                    </testcase>
+                </testsuite>
+                """;
+
+        TestResultXmlParser.processTestResultFile(exampleXml, failedTests, successfulTests);
+
+        assertThat(failedTests).singleElement().satisfies(test -> {
+            assertThat(test.name()).isEqualTo("testXmlOutput()");
+            assertThat(test.testMessages()).containsExactly("""
+                    Expected output to contain:
+                    <!DOCTYPE html>
+                    <!ENTITY example "value">""");
+        });
+        assertThat(successfulTests).isEmpty();
+    }
+
+    @Test
     void testSuccessfulTests() throws IOException {
         String exampleXml = """
                 <testsuite>
@@ -338,10 +362,12 @@ class TestResultXmlParserTest {
     void rejectsDtdDeclarations() {
         String input = """
                 <?xml version="1.0" encoding="UTF-8"?>
-                <!DOCTYPE testsuites>
+                <!DOCTYPE testsuites [
+                    <!ENTITY xxe SYSTEM "file:///etc/passwd">
+                ]>
                 <testsuites>
                     <testsuite>
-                        <testcase name="Test"/>
+                        <testcase name="&xxe;"/>
                     </testsuite>
                 </testsuites>
                 """;

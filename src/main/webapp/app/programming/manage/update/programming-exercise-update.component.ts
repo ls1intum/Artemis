@@ -39,7 +39,7 @@ import { SubmissionPolicyType } from 'app/exercise/shared/entities/submission/su
 import { ModePickerOption } from 'app/exercise/mode-picker/mode-picker.component';
 import { DocumentationButtonComponent, DocumentationType } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
 import { ProgrammingExerciseCreationConfig } from 'app/programming/manage/update/programming-exercise-creation-config';
-import { MODULE_FEATURE_HYPERION, MODULE_FEATURE_PLAGIARISM, MODULE_FEATURE_THEIA, PROFILE_LOCALCI } from 'app/app.constants';
+import { MODULE_FEATURE_HYPERION, MODULE_FEATURE_HYPERION_EXERCISE_GENERATION, MODULE_FEATURE_PLAGIARISM, MODULE_FEATURE_THEIA, PROFILE_LOCALCI } from 'app/app.constants';
 import { SharingInfo } from 'app/sharing/sharing.model';
 import { ProgrammingExerciseInformationComponent } from 'app/programming/manage/update/update-components/information/programming-exercise-information.component';
 import { ProgrammingExerciseModeComponent } from 'app/programming/manage/update/update-components/mode/programming-exercise-mode.component';
@@ -64,6 +64,7 @@ import { ExerciseEditorSyncService } from 'app/exercise/synchronization/services
 import { ExerciseMetadataSyncService } from 'app/exercise/synchronization/services/exercise-metadata-sync.service';
 import { BuildPhasesTemplateService } from 'app/programming/shared/services/build-phases-template.service';
 import { supportsHyperionExerciseGeneration } from 'app/hyperion/exercise-generation/hyperion-generation-support';
+import dayjs from 'dayjs/esm';
 
 export const LOCAL_STORAGE_KEY_IS_SIMPLE_MODE = 'isSimpleMode';
 const AUTO_START_EXERCISE_GENERATION_STATE = 'autoStartExerciseGeneration';
@@ -262,9 +263,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     public theiaEnabled = false;
     readonly plagiarismEnabled = signal(false);
     private _hyperionEnabled = false;
-    hyperionEnabledForAi = signal<boolean>(false);
-    /** Whether LocalCI is active. Agentic whole-exercise generation needs it (the server disables the generate endpoint under Jenkins), so it also gates the "Generate entire exercise" affordance. */
-    localCiEnabledForAi = signal<boolean>(false);
+    exerciseGenerationEnabled = signal<boolean>(false);
 
     public get hyperionEnabled(): boolean {
         return this._hyperionEnabled;
@@ -272,7 +271,6 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
 
     public set hyperionEnabled(value: boolean) {
         this._hyperionEnabled = value;
-        this.hyperionEnabledForAi.set(value);
     }
     public isGeneratingWithAi = signal<boolean>(false);
 
@@ -319,8 +317,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
 
     showGenerateWithAi = computed(() => {
         return (
-            this.hyperionEnabledForAi() &&
-            this.localCiEnabledForAi() &&
+            this.exerciseGenerationEnabled() &&
             this.programmingExerciseIdForAi() === undefined &&
             !this.isImportFromExistingExerciseForAi() &&
             !this.isImportFromFileForAi() &&
@@ -642,11 +639,10 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
             this.isLocalCIEnabled = true;
             this.customBuildPlansSupported = PROFILE_LOCALCI;
         }
-        this.localCiEnabledForAi.set(this.profileService.isProfileActive(PROFILE_LOCALCI));
-
         this.theiaEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_THEIA);
         this.plagiarismEnabled.set(this.profileService.isModuleFeatureActive(MODULE_FEATURE_PLAGIARISM));
         this.hyperionEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_HYPERION);
+        this.exerciseGenerationEnabled.set(this.profileService.isModuleFeatureActive(MODULE_FEATURE_HYPERION_EXERCISE_GENERATION));
         this.defineSupportedProgrammingLanguages();
     }
 
@@ -852,6 +848,10 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
             this.alertService.warning('artemisApp.hyperion.generationActivity.meaningfulSpecRequired');
             return;
         }
+        if (!this.hasFutureReleaseDate()) {
+            this.alertService.warning('artemisApp.hyperion.generationActivity.unavailableHint');
+            return;
+        }
         this.saveWithModalCheck(() => this.saveExerciseWithAi());
     }
 
@@ -890,12 +890,26 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         if (this.isSaving() || this.isGeneratingWithAi()) {
             return;
         }
-        if (this.isImportFromFile || this.isImportFromSharing || this.isImportFromExistingExercise || this.programmingExercise.id !== undefined || !this.hyperionEnabled) {
+        if (
+            this.isImportFromFile ||
+            this.isImportFromSharing ||
+            this.isImportFromExistingExercise ||
+            this.programmingExercise.id !== undefined ||
+            !this.exerciseGenerationEnabled()
+        ) {
             this.saveExercise();
+            return;
+        }
+        if (!this.hasFutureReleaseDate()) {
+            this.alertService.warning('artemisApp.hyperion.generationActivity.unavailableHint');
             return;
         }
         this.isGeneratingWithAi.set(true);
         this.saveExerciseWithOptions(true);
+    }
+
+    private hasFutureReleaseDate(): boolean {
+        return this.programmingExercise.releaseDate !== undefined && dayjs(this.programmingExercise.releaseDate).isAfter(dayjs());
     }
 
     /**

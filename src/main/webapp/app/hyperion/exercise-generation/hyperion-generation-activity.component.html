@@ -27,7 +27,7 @@
                 <div class="hyperion-activity-actions">
                     @if (editorRefreshFailed()) {
                         <p-button size="small" severity="secondary" [text]="true" (onClick)="editorRefreshRequested.emit()" data-testid="hyperion-editor-refresh-retry">
-                            <span jhiTranslate="artemisApp.hyperion.generationActivity.retryEditorRefresh"></span>
+                            <span jhiTranslate="artemisApp.hyperion.generationActivity.reloadSavedExercise"></span>
                         </p-button>
                     }
                     @if (terminalStatus(); as terminal) {

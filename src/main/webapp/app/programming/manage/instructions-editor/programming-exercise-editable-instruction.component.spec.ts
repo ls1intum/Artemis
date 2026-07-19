@@ -264,7 +264,7 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
         expect(refreshTestCasesSpy).toHaveBeenCalledExactlyOnceWith(exercise.id);
     });
 
-    it('does not emit unsaved flag during initial sync bootstrap', () => {
+    it('treats a non-blank change during initial sync as unsaved', () => {
         const hasUnsavedSpy = vi.fn();
         const instructionChangeSpy = vi.fn();
         comp.hasUnsavedChanges.subscribe(hasUnsavedSpy);
@@ -277,8 +277,8 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
 
         comp.updateProblemStatement('changed-during-sync');
 
-        expect(hasUnsavedSpy).not.toHaveBeenCalled();
-        expect(comp.unsavedChangesValue()).toBe(false);
+        expect(hasUnsavedSpy).toHaveBeenCalledWith(true);
+        expect(comp.unsavedChangesValue()).toBe(true);
         expect(instructionChangeSpy).toHaveBeenCalledWith('changed-during-sync');
     });
 
@@ -299,39 +299,6 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
         // Once the initial sync delivers the real content, it must still propagate so the parent model is restored.
         comp.updateProblemStatement('existing content restored');
         expect(instructionChangeSpy).toHaveBeenCalledExactlyOnceWith('existing content restored');
-    });
-
-    it('does not emit unsaved flag for finalize hydration when a bootstrap change was suppressed', () => {
-        const hasUnsavedSpy = vi.fn();
-        const instructionChangeSpy = vi.fn();
-        comp.hasUnsavedChanges.subscribe(hasUnsavedSpy);
-        comp.instructionChange.subscribe(instructionChangeSpy);
-
-        const exerciseWithStatement = { ...exercise, problemStatement: 'old' } as ProgrammingExercise;
-        setRequiredInputs(fixture, exerciseWithStatement);
-        fixture.detectChanges();
-
-        const mockEditor = editor.create();
-        setMarkdownEditorMonaco(comp, {
-            monacoEditor: () => ({
-                getModel: () => mockEditor.getModel(),
-                getEditor: () => mockEditor,
-            }),
-        } as unknown as MarkdownEditorMonacoComponent);
-
-        comp.ngAfterViewInit();
-
-        problemStatementSyncServiceMock.isAwaitingInitialSync.mockReturnValue(true);
-        comp.updateProblemStatement('changed-during-sync');
-        expect(hasUnsavedSpy).not.toHaveBeenCalled();
-
-        problemStatementSyncServiceMock.isAwaitingInitialSync.mockReturnValue(false);
-        initialSyncFinalized$.next({ contentChangedDuringFinalize: true, contentDivergedFromFallback: false, finalContent: 'changed-after-finalize' });
-        comp.updateProblemStatement('changed-after-finalize');
-
-        expect(hasUnsavedSpy).not.toHaveBeenCalled();
-        expect(comp.unsavedChangesValue()).toBe(false);
-        expect(instructionChangeSpy).toHaveBeenCalledWith('changed-after-finalize');
     });
 
     it('does not suppress first user edit after finalize when no bootstrap change was suppressed', () => {
@@ -646,6 +613,78 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
 
         expect(updateProblemStatement).not.toHaveBeenCalled();
         expect(debugElement.query(By.css('#save-instructions-button')).nativeElement.disabled).toBe(true);
+    });
+
+    it('makes the editor subtree inert and evicts focus while generation locks it', () => {
+        setRequiredInputs(fixture, exercise);
+        fixture.detectChanges();
+        const markdownEditor = debugElement.query(By.directive(MarkdownEditorMonacoComponent));
+        const toolbarButton = document.createElement('button');
+        const click = vi.fn();
+        toolbarButton.addEventListener('click', click);
+        toolbarButton.addEventListener('keydown', (event) => {
+            if (event.key === 'Enter') {
+                toolbarButton.click();
+            }
+        });
+        markdownEditor.nativeElement.append(toolbarButton);
+        toolbarButton.focus();
+
+        fixture.componentRef.setInput('isGeneratingOrRefining', true);
+        fixture.detectChanges();
+        document.activeElement?.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+
+        expect(markdownEditor.attributes.inert).toBe('');
+        expect(document.activeElement).not.toBe(toolbarButton);
+        expect(click).not.toHaveBeenCalled();
+    });
+
+    it('keeps a newer edit dirty when an older save completes', () => {
+        fixture.componentRef.setInput('editMode', true);
+        setRequiredInputs(fixture, { ...exercise, problemStatement: 'submitted value' });
+        fixture.detectChanges();
+        const currentContent = { value: 'submitted value' };
+        setMarkdownEditorMonaco(comp, {
+            monacoEditor: () => ({ getText: () => currentContent.value }),
+        } as unknown as MarkdownEditorMonacoComponent);
+        const response = new Subject<HttpResponse<ProgrammingExercise>>();
+        vi.spyOn(programmingExerciseService, 'updateProblemStatement').mockReturnValue(response);
+        const saved = vi.spyOn(comp.onProblemStatementSaved, 'emit');
+
+        comp.unsavedChanges = true;
+        comp.saveInstructions({ stopPropagation: () => {} } as Event);
+        currentContent.value = 'newer edit';
+        comp.updateProblemStatement('newer edit');
+        response.next(new HttpResponse({ body: exercise }));
+        response.complete();
+
+        expect(comp.unsavedChangesValue()).toBe(true);
+        expect(saved).not.toHaveBeenCalled();
+    });
+
+    it('blocks programmatic editor mutations while generation is running', () => {
+        fixture.componentRef.setInput('isGeneratingOrRefining', true);
+        setRequiredInputs(fixture, exercise);
+        fixture.detectChanges();
+        const setText = vi.fn();
+        const applyRefinedContent = vi.fn();
+        const revertAll = vi.fn();
+        setMarkdownEditorMonaco(comp, {
+            applyRefinedContent,
+            revertAll,
+            monacoEditor: () => ({ setText, getText: () => 'unchanged' }),
+        } as unknown as MarkdownEditorMonacoComponent);
+        const refine = vi.spyOn(comp.onInlineRefinement, 'emit');
+
+        comp.setText('generated');
+        comp.applyRefinedContent('refined');
+        comp.revertAll();
+        comp.onInlineRefine({} as any);
+
+        expect(setText).not.toHaveBeenCalled();
+        expect(applyRefinedContent).not.toHaveBeenCalled();
+        expect(revertAll).not.toHaveBeenCalled();
+        expect(refine).not.toHaveBeenCalled();
     });
 
     it('should log an error on save', () => {

@@ -340,7 +340,7 @@ describe('CodeEditorMonacoComponent', () => {
         expect(onFileContentChangeSpy).toHaveBeenCalledExactlyOnceWith({ fileName: filePath, text: 'genuine user edit' });
     });
 
-    it('should suppress a changed state replacement echo and mark the next user edit dirty', () => {
+    it('marks a late replacement dirty when it diverges from the persisted fallback and suppresses only its echo', () => {
         const filePath = 'src/Main.java';
         const initialSyncFinalized$ = new Subject<any>();
         const stateReplaced$ = new Subject<any>();
@@ -364,11 +364,11 @@ describe('CodeEditorMonacoComponent', () => {
         stateReplaced$.next({ filePath, text: { toJSON: () => 'remote replacement' } });
         comp.onFileTextChanged({ fileName: filePath, text: 'remote replacement' });
 
-        expect(onFileContentChangeSpy).not.toHaveBeenCalled();
+        expect(onFileContentChangeSpy).toHaveBeenCalledExactlyOnceWith({ fileName: filePath, text: 'remote replacement' });
 
         comp.onFileTextChanged({ fileName: filePath, text: 'local edit after replacement' });
 
-        expect(onFileContentChangeSpy).toHaveBeenCalledExactlyOnceWith({ fileName: filePath, text: 'local edit after replacement' });
+        expect(onFileContentChangeSpy).toHaveBeenNthCalledWith(2, { fileName: filePath, text: 'local edit after replacement' });
     });
 
     it('should mark a user edit dirty when finalized content already matches the hydrated model', () => {
@@ -800,6 +800,36 @@ describe('CodeEditorMonacoComponent', () => {
         longLoadingFileSubject.next({ fileName: 'file1', fileContent: 'some code that took a while to retrieve' });
         await firstFileChange;
         expect(changeModelSpy).toHaveBeenCalledExactlyOnceWith('file2', 'code2');
+    });
+
+    it('rejects a stale same-path load after an A-B-A selection sequence', async () => {
+        const resolvers: Array<() => void> = [];
+        vi.spyOn(comp, 'selectFileInEditor').mockImplementation(() => new Promise<void>((resolve) => resolvers.push(resolve)));
+        const fileLoadSpy = vi.spyOn(comp.onFileLoad, 'emit');
+        const cascade = (previous: string | undefined) =>
+            (comp as any).handleInputChangeCascade({
+                editorWasRefreshed: false,
+                editorWasReset: false,
+                selectedFileChanged: true,
+                feedbacksChanged: false,
+                prevSelectedFile: previous,
+            }) as Promise<void>;
+
+        fixture.componentRef.setInput('selectedFile', 'A.java');
+        const firstA = cascade(undefined);
+        fixture.componentRef.setInput('selectedFile', 'B.java');
+        const b = cascade('A.java');
+        fixture.componentRef.setInput('selectedFile', 'A.java');
+        const latestA = cascade('B.java');
+
+        resolvers[2]();
+        await latestA;
+        resolvers[0]();
+        await firstA;
+        resolvers[1]();
+        await b;
+
+        expect(fileLoadSpy).toHaveBeenCalledExactlyOnceWith('A.java');
     });
 
     it('should use the code and cursor position of the selected file', async () => {
@@ -1292,6 +1322,9 @@ describe('CodeEditorMonacoComponent', () => {
 
     it('should commit and mark inline fix as applied after successful code-editor apply', () => {
         fixture.componentRef.setInput('selectedFile', 'src/Foo.java');
+        comp.fileSession.set({
+            'src/Foo.java': { code: 'class Foo {}', cursor: { lineNumber: 1, column: 1 }, loadingError: false, scrollTop: 0 },
+        });
         fixture.changeDetectorRef.detectChanges();
         vi.spyOn(comp.editor(), 'getText').mockReturnValue('class Foo {}');
         const updateFilesSpy = vi.spyOn(codeEditorRepositoryFileService, 'updateFiles').mockReturnValue(of({} as any));
@@ -1316,6 +1349,31 @@ describe('CodeEditorMonacoComponent', () => {
         expect(onSavedFilesSpy).toHaveBeenCalledWith({ 'src/Foo.java': undefined });
         expect(onInlineFixCommittedSpy).toHaveBeenCalled();
         expect(markAppliedSpy).toHaveBeenCalledWith(42);
+    });
+
+    it('should not report an inline-fix file as saved after a newer edit', () => {
+        const fileName = 'src/Foo.java';
+        const saveResult = new Subject<Record<string, never>>();
+        fixture.componentRef.setInput('selectedFile', fileName);
+        comp.fileSession.set({
+            [fileName]: { code: 'class Foo {}', cursor: { lineNumber: 1, column: 1 }, loadingError: false, scrollTop: 0 },
+        });
+        fixture.changeDetectorRef.detectChanges();
+        vi.spyOn(comp.editor(), 'getText').mockReturnValue('class Foo {}');
+        vi.spyOn(codeEditorRepositoryFileService, 'updateFiles').mockReturnValue(saveResult);
+        const onSavedFilesSpy = vi.fn();
+        comp.onSavedFiles.subscribe(onSavedFilesSpy);
+        const thread = {
+            comments: [{ id: 42, type: CommentType.CONSISTENCY_CHECK, createdDate: '2026-01-01T00:00:00Z' }],
+        } as any;
+
+        internals(comp).persistInlineFixApplication(thread);
+        comp.fileSession.set({
+            [fileName]: { code: 'class Foo { /* newer edit */ }', cursor: { lineNumber: 1, column: 1 }, loadingError: false, scrollTop: 0 },
+        });
+        saveResult.next({});
+
+        expect(onSavedFilesSpy).not.toHaveBeenCalled();
     });
 
     it('should clear review comment drafts through the manager', () => {

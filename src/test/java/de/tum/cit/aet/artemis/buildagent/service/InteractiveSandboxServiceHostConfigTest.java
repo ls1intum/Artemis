@@ -378,8 +378,8 @@ class InteractiveSandboxServiceHostConfigTest {
         InteractiveSandboxService service = new InteractiveSandboxService(buildAgentConfiguration, buildAgentDockerService);
         service.markActive("container-1");
 
-        assertThatExceptionOfType(LocalCIException.class).isThrownBy(() -> service.exec("container-1", Duration.ofSeconds(1), "build"))
-                .withMessageContaining("Sandbox command failed");
+        assertThatExceptionOfType(LocalCIException.class).isThrownBy(() -> service.exec("container-1", Duration.ofSeconds(1), "build", "TOP_SECRET_SOURCE"))
+                .withMessageContaining("Sandbox command failed").withMessageNotContaining("TOP_SECRET_SOURCE");
 
         verify(removeContainerCmd).exec();
         assertThat(service.lastActivity("container-1")).isEmpty();

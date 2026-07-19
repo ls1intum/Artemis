@@ -5,19 +5,21 @@ import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CountDownLatch;
@@ -26,9 +28,9 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
@@ -39,10 +41,13 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.core.task.TaskRejectedException;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import com.hazelcast.cluster.Cluster;
+import com.hazelcast.cluster.Member;
 import com.hazelcast.config.Config;
 import com.hazelcast.core.Hazelcast;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.map.IMap;
+import com.hazelcast.topic.ITopic;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.admin.service.LLMTokenUsageService;
@@ -50,6 +55,7 @@ import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.exception.ServiceUnavailableAlertException;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationEventDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationFileChangeDTO;
+import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationStateDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationStatusDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationVerdictDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.GenerationMode;
@@ -158,6 +164,226 @@ class GenerationJobServiceTest {
     }
 
     @Test
+    void claimExternalMutationSlot_blocksGenerationUntilReleased() {
+        ProgrammingExercise exercise = exercise(440L);
+
+        String token = jobService.claimExternalMutationSlot(exercise.getId());
+
+        assertThatExceptionOfType(ConflictException.class).isThrownBy(() -> jobService.startJob(user("owner"), exercise, "generate", GenerationMode.GENERATE));
+        jobService.clearExternalMutationSlot(exercise.getId(), token);
+        assertThat(jobService.startJob(user("owner"), exercise, "generate", GenerationMode.GENERATE)).isNotBlank();
+    }
+
+    @Test
+    void getStatus_doesNotExposeAnExternalMutationAsExerciseGeneration() {
+        ProgrammingExercise exercise = exercise(441L);
+        jobService.claimExternalMutationSlot(exercise.getId());
+
+        assertThat(jobService.getStatus(user("owner"), exercise)).isEmpty();
+    }
+
+    @Test
+    void claimExternalMutationSlot_doesNotExpireWhileTheCallerStillHoldsTheLease() {
+        long exerciseId = 443L;
+
+        jobService.claimExternalMutationSlot(exerciseId);
+
+        @SuppressWarnings("unchecked")
+        IMap<String, GenerationJobService.JobInfo> jobMap = (IMap<String, GenerationJobService.JobInfo>) ReflectionTestUtils.getField(jobService, "jobMap");
+        assertThat(jobMap.getEntryView(String.valueOf(exerciseId)).getTtl()).isEqualTo(Long.MAX_VALUE);
+    }
+
+    @Test
+    void activeGenerationSlot_doesNotExpireForSupportedLongRunningJobs() {
+        long exerciseId = 447L;
+        GenerationJobService longRunningJobService = new GenerationJobService(hazelcastInstance, event -> {
+        }, mock(LLMTokenUsageService.class), Duration.ofHours(3).plusMinutes(1), Duration.ofHours(3));
+        longRunningJobService.init();
+
+        String jobId = longRunningJobService.startJob(user("owner"), exercise(exerciseId), "generate", GenerationMode.GENERATE);
+        @SuppressWarnings("unchecked")
+        IMap<String, GenerationJobService.JobInfo> jobMap = (IMap<String, GenerationJobService.JobInfo>) ReflectionTestUtils.getField(longRunningJobService, "jobMap");
+        assertThat(jobMap.getEntryView(String.valueOf(exerciseId)).getTtl()).isEqualTo(Long.MAX_VALUE);
+
+        assertThat(longRunningJobService.heartbeat(exerciseId, jobId)).isTrue();
+        assertThat(jobMap.getEntryView(String.valueOf(exerciseId)).getTtl()).isEqualTo(Long.MAX_VALUE);
+
+        assertThat(longRunningJobService.enterNonCancellablePhase(exerciseId, jobId)).isTrue();
+        assertThat(jobMap.getEntryView(String.valueOf(exerciseId)).getTtl()).isEqualTo(Long.MAX_VALUE);
+
+        longRunningJobService.recordEvent(exerciseId, jobId, progress("still running"), false);
+        longRunningJobService.recordFileChange(exerciseId, jobId, fileChange("solution/Preview.java", "changed"));
+        assertThat(jobMap.getEntryView(String.valueOf(exerciseId)).getTtl()).isEqualTo(Long.MAX_VALUE);
+        assertThat(transcriptMap().getEntryView(String.valueOf(exerciseId)).getTtl()).isEqualTo(Long.MAX_VALUE);
+        assertThat(fileChangeMap().getEntryView(String.valueOf(exerciseId)).getTtl()).isEqualTo(Long.MAX_VALUE);
+    }
+
+    @Test
+    void activeCancellationMarker_doesNotExpireBeforeTheJobClears() {
+        long exerciseId = 448L;
+        String jobId = jobService.startJob(user("owner"), exercise(exerciseId), "generate", GenerationMode.GENERATE);
+
+        assertThat(jobService.requestCancellation(exerciseId, jobId, user("owner"))).isTrue();
+        @SuppressWarnings("unchecked")
+        IMap<String, Boolean> cancellationMap = (IMap<String, Boolean>) ReflectionTestUtils.getField(jobService, "cancellationMap");
+        assertThat(cancellationMap.getEntryView(jobId).getTtl()).isEqualTo(Long.MAX_VALUE);
+        assertThat(transcriptMap().getEntryView(String.valueOf(exerciseId)).getTtl()).isEqualTo(Long.MAX_VALUE);
+
+        jobService.clearJob(exerciseId, jobId);
+        assertThat(cancellationMap.get(jobId)).isNull();
+        assertThat(transcriptMap().getEntryView(String.valueOf(exerciseId)).getTtl()).isBetween(1L, TimeUnit.MINUTES.toMillis(15));
+    }
+
+    @Test
+    void claimSlot_whenDataMemberCountDiffersFromConfiguredTopology_failsClosed() {
+        GenerationJobService mismatchedTopologyService = new GenerationJobService(hazelcastInstance, event -> {
+        }, mock(LLMTokenUsageService.class), null, Duration.ofMinutes(35), Duration.ofMinutes(30), Runnable::run, 2);
+        mismatchedTopologyService.init();
+
+        assertThatExceptionOfType(ServiceUnavailableAlertException.class).isThrownBy(() -> mismatchedTopologyService.rejectIfActiveJobCannotBeReclaimed(446L))
+                .withMessageContaining("expected 2").withMessageContaining("observed 1");
+        assertThatExceptionOfType(ServiceUnavailableAlertException.class).isThrownBy(() -> mismatchedTopologyService.claimExternalMutationSlot(446L))
+                .withMessageContaining("expected 2").withMessageContaining("observed 1");
+        assertThat(mismatchedTopologyService.hasActiveJob(446L)).isFalse();
+    }
+
+    @Test
+    void claimSlot_rechecksTopologyAfterAcquiringTheExerciseLock() throws Exception {
+        long exerciseId = 449L;
+        String key = String.valueOf(exerciseId);
+        IMap<String, GenerationJobService.JobInfo> jobMap = jobMap();
+        HazelcastInstance observedHazelcast = spy(hazelcastInstance);
+        Cluster cluster = mock(Cluster.class);
+        Member firstMember = hazelcastInstance.getCluster().getLocalMember();
+        Member secondMember = mock(Member.class);
+        AtomicBoolean topologyChanged = new AtomicBoolean(false);
+        when(cluster.getMembers()).thenAnswer(invocation -> topologyChanged.get() ? Set.of(firstMember, secondMember) : Set.of(firstMember));
+        when(secondMember.isLiteMember()).thenReturn(false);
+        when(cluster.getLocalMember()).thenReturn(firstMember);
+        doReturn(cluster).when(observedHazelcast).getCluster();
+        GenerationJobService service = new GenerationJobService(observedHazelcast, event -> {
+        }, mock(LLMTokenUsageService.class));
+        service.init();
+        ExecutorService executor = Executors.newSingleThreadExecutor();
+        CountDownLatch lockAttempted = captureNextJobLockAttempt(service, key);
+        AtomicBoolean lockHeld = new AtomicBoolean(true);
+
+        jobMap.lock(key);
+        try {
+            Future<String> claim = executor.submit(() -> service.startJob(user("owner"), exercise(exerciseId), "generate", GenerationMode.GENERATE));
+            assertThat(lockAttempted.await(5, TimeUnit.SECONDS)).isTrue();
+            topologyChanged.set(true);
+            jobMap.unlock(key);
+            lockHeld.set(false);
+
+            assertThatThrownBy(() -> claim.get(5, TimeUnit.SECONDS)).hasCauseInstanceOf(ServiceUnavailableAlertException.class);
+            assertThat(service.hasActiveJob(exerciseId)).isFalse();
+        }
+        finally {
+            if (lockHeld.get()) {
+                jobMap.unlock(key);
+            }
+            executor.shutdownNow();
+        }
+    }
+
+    @Test
+    void clearStaleJobs_keepsStaleExternalMutationWhileOwnerIsPresent() {
+        long exerciseId = 444L;
+        String token = jobService.claimExternalMutationSlot(exerciseId);
+        forceJobHeartbeat(exerciseId, token, Instant.now().minus(Duration.ofMinutes(10)));
+        GenerationJobService scanner = new GenerationJobService(hazelcastInstance, event -> {
+        }, mock(LLMTokenUsageService.class), Duration.ofMinutes(1), Duration.ofSeconds(30));
+        scanner.init();
+
+        scanner.clearStaleJobs();
+
+        assertThat(scanner.hasActiveJob(exerciseId)).isTrue();
+        assertThatExceptionOfType(ConflictException.class).isThrownBy(() -> scanner.startJob(user("owner"), exercise(exerciseId), "generate", GenerationMode.GENERATE));
+        jobService.clearExternalMutationSlot(exerciseId, token);
+    }
+
+    @Test
+    void clearStaleJobs_keepsExternalMutationAfterOwnerLeavesClusterUntilValueGuardedRecovery() {
+        long exerciseId = 445L;
+        String token = jobService.claimExternalMutationSlot(exerciseId);
+        forceJobHeartbeat(exerciseId, token, Instant.now().minus(Duration.ofMinutes(10)));
+        forceJobOwner(exerciseId, "departed-node");
+        GenerationJobService scanner = new GenerationJobService(hazelcastInstance, event -> {
+        }, mock(LLMTokenUsageService.class), Duration.ofMinutes(1), Duration.ofSeconds(30));
+        scanner.init();
+
+        scanner.clearStaleJobs();
+
+        assertThat(scanner.hasActiveJob(exerciseId)).isTrue();
+        assertThat(scanner.getExternalMutationInfo(exerciseId)).hasValueSatisfying(info -> {
+            assertThat(info.token()).isEqualTo(token);
+            assertThat(info.ownerNodeId()).isEqualTo("departed-node");
+        });
+        assertThat(scanner.recoverExternalMutationSlot(exerciseId, "external-mutation-wrong")).isFalse();
+        assertThat(scanner.hasActiveJob(exerciseId)).isTrue();
+        assertThat(scanner.recoverExternalMutationSlot(exerciseId, token)).isTrue();
+        assertThat(scanner.startJob(user("owner"), exercise(exerciseId), "generate", GenerationMode.GENERATE)).isNotBlank();
+    }
+
+    @Test
+    void recoverExternalMutationSlot_rejectsLiveOwner() {
+        long exerciseId = 447L;
+        String token = jobService.claimExternalMutationSlot(exerciseId);
+
+        assertThat(jobService.recoverExternalMutationSlot(exerciseId, token)).isFalse();
+        assertThat(jobService.hasActiveJob(exerciseId)).isTrue();
+
+        jobService.clearExternalMutationSlot(exerciseId, token);
+    }
+
+    @Test
+    void claimExternalMutationSlot_whenGenerationOwnsSlot_rejectsMutation() {
+        ProgrammingExercise exercise = exercise(441L);
+        jobService.startJob(user("owner"), exercise, "generate", GenerationMode.GENERATE);
+
+        assertThatExceptionOfType(ConflictException.class).isThrownBy(() -> jobService.claimExternalMutationSlot(exercise.getId())).withMessageContaining("generation");
+    }
+
+    @Test
+    void startAndClearJob_publishPublicExerciseStateWithoutPrivateTranscript() {
+        List<Object> publishedEvents = new CopyOnWriteArrayList<>();
+        GenerationJobService publishingService = new GenerationJobService(hazelcastInstance, publishedEvents::add, mock(LLMTokenUsageService.class));
+        publishingService.init();
+        ProgrammingExercise exercise = exercise(442L);
+
+        String jobId = publishingService.startJob(user("owner"), exercise, "private prompt", GenerationMode.GENERATE);
+        publishingService.clearJob(exercise.getId(), jobId);
+
+        assertThat(publishedEvents).filteredOn(ExerciseGenerationStateChangedEvent.class::isInstance).containsExactly(
+                new ExerciseGenerationStateChangedEvent(new ExerciseGenerationStateDTO(exercise.getId(), jobId, true)),
+                new ExerciseGenerationStateChangedEvent(new ExerciseGenerationStateDTO(exercise.getId(), jobId, false)));
+    }
+
+    @Test
+    void startJob_publishesRunningStateBeforeDispatchingTheWorker() {
+        List<ExerciseGenerationStateChangedEvent> stateEvents = new CopyOnWriteArrayList<>();
+        AtomicReference<GenerationJobService> serviceReference = new AtomicReference<>();
+        ApplicationEventPublisher publisher = event -> {
+            if (event instanceof ExerciseGenerationStateChangedEvent stateEvent) {
+                stateEvents.add(stateEvent);
+            }
+            else if (event instanceof GenerationStartedEvent startedEvent) {
+                serviceReference.get().clearJob(startedEvent.exercise().getId(), startedEvent.jobId());
+            }
+        };
+        GenerationJobService publishingService = new GenerationJobService(hazelcastInstance, publisher, mock(LLMTokenUsageService.class));
+        serviceReference.set(publishingService);
+        publishingService.init();
+        ProgrammingExercise exercise = exercise(444L);
+
+        String jobId = publishingService.startJob(user("owner"), exercise, "finish immediately", GenerationMode.GENERATE);
+
+        assertThat(stateEvents).containsExactly(new ExerciseGenerationStateChangedEvent(new ExerciseGenerationStateDTO(exercise.getId(), jobId, true)),
+                new ExerciseGenerationStateChangedEvent(new ExerciseGenerationStateDTO(exercise.getId(), jobId, false)));
+    }
+
+    @Test
     void discardRetainedRun_removesOnlyTheMatchingTranscriptAndFileChanges() {
         long exerciseId = 45L;
         ProgrammingExercise exercise = exercise(exerciseId);
@@ -172,12 +398,11 @@ class GenerationJobServiceTest {
         jobService.discardRetainedRun(exerciseId, jobId);
 
         assertThat(jobService.getStatus(owner, exercise)).isEmpty();
-        assertThat(fileChangeEntries()).isEmpty();
         assertThat(fileChangeMap().isEmpty()).isTrue();
     }
 
     @Test
-    void discardRetainedRun_waitsForTheJobFileChangeMutex() throws Exception {
+    void discardRetainedRun_waitsForTheJobMutex() throws Exception {
         long exerciseId = 46L;
         ProgrammingExercise exercise = exercise(exerciseId);
         User owner = user("owner");
@@ -185,17 +410,13 @@ class GenerationJobServiceTest {
         jobService.clearJob(exerciseId, jobId);
         String key = String.valueOf(exerciseId);
         ExecutorService executor = Executors.newSingleThreadExecutor();
-        CountDownLatch discardStarted = new CountDownLatch(1);
+        CountDownLatch lockAttempted = captureNextJobLockAttempt(key);
         Future<?> discard;
 
         jobMap().lock(key);
         try {
-            discard = executor.submit(() -> {
-                discardStarted.countDown();
-                jobService.discardRetainedRun(exerciseId, jobId);
-            });
-            assertThat(discardStarted.await(2, TimeUnit.SECONDS)).isTrue();
-            assertThatThrownBy(() -> discard.get(150, TimeUnit.MILLISECONDS)).isInstanceOf(TimeoutException.class);
+            discard = executor.submit(() -> jobService.discardRetainedRun(exerciseId, jobId));
+            assertThat(lockAttempted.await(2, TimeUnit.SECONDS)).isTrue();
             assertThat(transcriptMap().get(key)).isNotNull();
         }
         finally {
@@ -205,7 +426,6 @@ class GenerationJobServiceTest {
         executor.shutdownNow();
 
         assertThat(jobService.getStatus(owner, exercise)).isEmpty();
-        assertThat(fileChangeMap().isEmpty()).isTrue();
     }
 
     @Test
@@ -243,21 +463,16 @@ class GenerationJobServiceTest {
         ProgrammingExercise exercise = exercise(310L);
         User owner = user("owner");
         jobService.startJob(owner, exercise, "fix it", GenerationMode.ADAPT);
-        @SuppressWarnings("unchecked")
-        IMap<String, GenerationJobService.JobInfo> jobMap = (IMap<String, GenerationJobService.JobInfo>) ReflectionTestUtils.getField(jobService, "jobMap");
+        IMap<String, GenerationJobService.JobInfo> jobMap = jobMap();
         String key = String.valueOf(exercise.getId());
         ExecutorService executor = Executors.newSingleThreadExecutor();
-        CountDownLatch readerStarted = new CountDownLatch(1);
+        CountDownLatch lockAttempted = captureNextJobLockAttempt(key);
         AtomicBoolean lockHeld = new AtomicBoolean(true);
 
         jobMap.lock(key);
         try {
-            Future<Optional<ExerciseGenerationStatusDTO>> status = executor.submit(() -> {
-                readerStarted.countDown();
-                return jobService.getStatus(owner, exercise);
-            });
-            assertThat(readerStarted.await(5, TimeUnit.SECONDS)).isTrue();
-            assertThatThrownBy(() -> status.get(150, TimeUnit.MILLISECONDS)).isInstanceOf(TimeoutException.class);
+            Future<Optional<ExerciseGenerationStatusDTO>> status = executor.submit(() -> jobService.getStatus(owner, exercise));
+            assertThat(lockAttempted.await(5, TimeUnit.SECONDS)).isTrue();
 
             jobMap.unlock(key);
             lockHeld.set(false);
@@ -269,54 +484,6 @@ class GenerationJobServiceTest {
             }
             executor.shutdownNow();
         }
-    }
-
-    @Test
-    void recordEvent_refreshesTheActiveJobSlotTtl_soLongRunningJobsKeepSingleFlight() throws Exception {
-        ProgrammingExercise exercise = exercise(32L);
-        User owner = user("owner");
-        String jobId = jobService.startJob(owner, exercise, "go", GenerationMode.GENERATE);
-        @SuppressWarnings("unchecked")
-        IMap<String, GenerationJobService.JobInfo> jobMap = (IMap<String, GenerationJobService.JobInfo>) ReflectionTestUtils.getField(jobService, "jobMap");
-        String key = String.valueOf(exercise.getId());
-        jobMap.set(key, jobMap.get(key), 1, TimeUnit.SECONDS);
-
-        jobService.recordEvent(32L, jobId, progress("heartbeat"), false);
-
-        await().pollDelay(Duration.ofMillis(1300)).atMost(Duration.ofSeconds(2))
-                .untilAsserted(() -> assertThatExceptionOfType(ConflictException.class).isThrownBy(() -> jobService.startJob(owner, exercise, "again", GenerationMode.GENERATE)));
-    }
-
-    @Test
-    void recordFileChange_refreshesTheActiveJobSlotTtl_soFileChangeHeavyRunsKeepSingleFlight() throws Exception {
-        ProgrammingExercise exercise = exercise(33L);
-        User owner = user("owner");
-        String jobId = jobService.startJob(owner, exercise, "go", GenerationMode.GENERATE);
-        @SuppressWarnings("unchecked")
-        IMap<String, GenerationJobService.JobInfo> jobMap = (IMap<String, GenerationJobService.JobInfo>) ReflectionTestUtils.getField(jobService, "jobMap");
-        String key = String.valueOf(exercise.getId());
-        jobMap.set(key, jobMap.get(key), 1, TimeUnit.SECONDS);
-
-        jobService.recordFileChange(33L, jobId, fileChange("solution/Heartbeat.java", "changed"));
-
-        await().pollDelay(Duration.ofMillis(1300)).atMost(Duration.ofSeconds(2))
-                .untilAsserted(() -> assertThatExceptionOfType(ConflictException.class).isThrownBy(() -> jobService.startJob(owner, exercise, "again", GenerationMode.GENERATE)));
-    }
-
-    @Test
-    void activityRefreshesRetainedFileChangesDuringLongRuns() {
-        long exerciseId = 35L;
-        ProgrammingExercise exercise = exercise(exerciseId);
-        User owner = user("owner");
-        String jobId = jobService.startJob(owner, exercise, "go", GenerationMode.GENERATE);
-        String key = String.valueOf(exerciseId);
-        jobService.recordFileChange(exerciseId, jobId, fileChange("solution/Preview.java", "initial"));
-        fileChangeMap().set(key, fileChangeMap().get(key), 1, TimeUnit.SECONDS);
-
-        jobService.recordEvent(exerciseId, jobId, progress("still running"), false);
-
-        await().pollDelay(Duration.ofMillis(1300)).atMost(Duration.ofSeconds(2)).untilAsserted(() -> assertThat(jobService.getStatus(owner, exercise).orElseThrow().fileChanges())
-                .singleElement().extracting(ExerciseGenerationFileChangeDTO::path).isEqualTo("solution/Preview.java"));
     }
 
     @Test
@@ -404,8 +571,67 @@ class GenerationJobServiceTest {
         assertThat(hookRuns.get()).isEqualTo(1);
         assertThat(jobService.isCancelled(jobId)).isTrue();
 
-        assertThat(jobService.requestCancellation(11L, jobId, user("owner"))).isFalse();
+        assertThat(jobService.requestCancellation(11L, jobId, user("owner"))).isTrue();
         assertThat(hookRuns.get()).isEqualTo(1);
+    }
+
+    @Test
+    void requestCancellation_whenClusterInterruptPublicationFails_stillReturnsSuccess() {
+        HazelcastInstance failingHazelcastInstance = spy(hazelcastInstance);
+        @SuppressWarnings("unchecked")
+        ITopic<Object> failingCancelTopic = mock(ITopic.class);
+        doReturn(failingCancelTopic).when(failingHazelcastInstance).getTopic("hyperion-exercise-generation-cancel-requests");
+        doThrow(new IllegalStateException("cancel topic unavailable")).when(failingCancelTopic).publish(any());
+        GenerationJobService failingPublishJobService = new GenerationJobService(failingHazelcastInstance, event -> {
+        }, mock(LLMTokenUsageService.class));
+        failingPublishJobService.init();
+        ProgrammingExercise exercise = exercise(115L);
+        User owner = user("owner");
+        String jobId = failingPublishJobService.startJob(owner, exercise, "go", GenerationMode.GENERATE);
+
+        assertThat(failingPublishJobService.requestCancellation(exercise.getId(), jobId, owner)).isTrue();
+        assertThat(failingPublishJobService.getStatus(owner, exercise).orElseThrow().events()).extracting(ExerciseGenerationEventDTO::type)
+                .containsExactly(ExerciseGenerationEventDTO.Type.CANCELLED);
+    }
+
+    @Test
+    void requestCancellation_publishesTheExactRetainedTerminalEventForLiveClients() {
+        AtomicReference<Object> publishedEvent = new AtomicReference<>();
+        GenerationJobService publishingJobService = new GenerationJobService(hazelcastInstance, publishedEvent::set, mock(LLMTokenUsageService.class));
+        publishingJobService.init();
+        ProgrammingExercise exercise = exercise(114L);
+        User owner = user("owner");
+        String jobId = publishingJobService.startJob(owner, exercise, "go", GenerationMode.GENERATE);
+        publishedEvent.set(null);
+
+        assertThat(publishingJobService.requestCancellation(exercise.getId(), jobId, owner)).isTrue();
+
+        ExerciseGenerationEventDTO retainedEvent = publishingJobService.getStatus(owner, exercise).orElseThrow().events().getLast();
+        assertThat(publishedEvent.get()).isEqualTo(new GenerationCancellationEvent(owner.getLogin(), jobId, retainedEvent));
+    }
+
+    @Test
+    void requestCancellation_dispatchesTheCancelHookWithoutBlockingTheCaller() {
+        AtomicInteger submissions = new AtomicInteger();
+        AtomicReference<Runnable> submittedCleanup = new AtomicReference<>();
+        GenerationJobService asyncJobService = new GenerationJobService(hazelcastInstance, event -> {
+        }, mock(LLMTokenUsageService.class), null, Duration.ofMinutes(35), Duration.ofMinutes(30), task -> {
+            submissions.incrementAndGet();
+            submittedCleanup.set(task);
+        });
+        asyncJobService.init();
+        String jobId = asyncJobService.startJob(user("owner"), exercise(113L), "go", GenerationMode.GENERATE);
+        AtomicInteger hookRuns = new AtomicInteger();
+        asyncJobService.registerCancelHook(jobId, hookRuns::incrementAndGet);
+
+        assertThat(asyncJobService.requestCancellation(113L, jobId, user("owner"))).isTrue();
+        assertThat(hookRuns).hasValue(0);
+        assertThat(submissions).hasValue(1);
+
+        assertThat(asyncJobService.requestCancellation(113L, jobId, user("owner"))).isTrue();
+        assertThat(submissions).hasValue(1);
+        submittedCleanup.get().run();
+        assertThat(hookRuns).hasValue(1);
     }
 
     @Test
@@ -414,7 +640,7 @@ class GenerationJobServiceTest {
         ProgrammingExercise exercise = exercise(exerciseId);
         User owner = user("owner");
         String jobId = jobService.startJob(owner, exercise, "go", GenerationMode.GENERATE);
-        jobService.recordEvent(exerciseId, jobId, progress("working"), false);
+        assertThat(jobService.recordEvent(exerciseId, jobId, progress("working"), false)).isTrue();
         jobService.recordFileChange(exerciseId, jobId, fileChange("solution/Before.java", "before"));
 
         assertThat(jobService.requestCancellation(exerciseId, jobId, owner)).isTrue();
@@ -428,10 +654,12 @@ class GenerationJobServiceTest {
         assertThat(cancelled.fileChanges()).extracting(ExerciseGenerationFileChangeDTO::path).containsExactly("solution/Before.java");
         assertThat(jobService.hasActiveJob(exerciseId)).isTrue();
         assertThat(jobService.isCancelled(jobId)).isTrue();
-        assertThat(jobService.requestCancellation(exerciseId, jobId, owner)).isFalse();
+        assertThat(jobService.requestCancellation(exerciseId, jobId, owner)).isTrue();
 
-        jobService.recordEvent(exerciseId, jobId, ExerciseGenerationEventDTO.done("late success", ExerciseGenerationEventDTO.CompletionStatus.SUCCESS, null, true), true);
-        jobService.recordFileChange(exerciseId, jobId, fileChange("solution/Late.java", "late"));
+        assertThat(
+                jobService.recordEvent(exerciseId, jobId, ExerciseGenerationEventDTO.done("late success", ExerciseGenerationEventDTO.CompletionStatus.SUCCESS, null, true), true))
+                .isFalse();
+        assertThat(jobService.recordFileChange(exerciseId, jobId, fileChange("solution/Late.java", "late"))).isFalse();
 
         ExerciseGenerationStatusDTO afterLateCompletion = jobService.getStatus(owner, exercise).orElseThrow();
         assertThat(afterLateCompletion.events()).isEqualTo(cancelled.events());
@@ -482,6 +710,8 @@ class GenerationJobServiceTest {
         assertThat(jobService.isCancelled(jobId)).isFalse();
         assertThat(jobService.requestCancellation(12L, jobId, user("owner"))).isTrue();
         assertThat(jobService.isCancelled(jobId)).isTrue();
+        assertThat(jobService.requestCancellation(12L, jobId, user("notOwner"))).isFalse();
+        assertThat(jobService.requestCancellation(12L, "different-job", user("owner"))).isFalse();
     }
 
     @Test
@@ -593,6 +823,7 @@ class GenerationJobServiceTest {
     void heartbeat_refreshesTheInFlightBudgetReservation() {
         long exerciseId = 224L;
         HyperionGenerationBudgetService budgetService = mock(HyperionGenerationBudgetService.class);
+        when(budgetService.refreshReservation("reservation-224")).thenReturn(true);
         GenerationJobService service = new GenerationJobService(hazelcastInstance, event -> {
         }, mock(LLMTokenUsageService.class), budgetService, Duration.ofMinutes(35), Duration.ofMinutes(30));
         service.init();
@@ -601,6 +832,19 @@ class GenerationJobServiceTest {
         assertThat(service.heartbeat(exerciseId, jobId)).isTrue();
 
         verify(budgetService).refreshReservation("reservation-224");
+    }
+
+    @Test
+    void heartbeat_failsClosedWhenTheBudgetReservationIsMissing() {
+        long exerciseId = 225L;
+        HyperionGenerationBudgetService budgetService = mock(HyperionGenerationBudgetService.class);
+        when(budgetService.refreshReservation("reservation-225")).thenReturn(false);
+        GenerationJobService service = new GenerationJobService(hazelcastInstance, event -> {
+        }, mock(LLMTokenUsageService.class), budgetService, Duration.ofMinutes(35), Duration.ofMinutes(30));
+        service.init();
+        String jobId = service.startJob(user("owner"), exercise(exerciseId), "go", GenerationMode.GENERATE, "reservation-225");
+
+        assertThat(service.heartbeat(exerciseId, jobId)).isFalse();
     }
 
     @Test
@@ -700,7 +944,7 @@ class GenerationJobServiceTest {
     }
 
     @Test
-    void clearStaleJobs_releasesBudgetReservationForAbandonedJob() {
+    void clearStaleJobs_retainsBudgetReservationForAbandonedJob() {
         long exerciseId = 127L;
         ProgrammingExercise exercise = exercise(exerciseId);
         User owner = user("owner");
@@ -715,7 +959,8 @@ class GenerationJobServiceTest {
 
         scannerNode.clearStaleJobs();
 
-        verify(budgetService).releaseReservation("reservation-127");
+        verify(budgetService).retainReservationForBudgetWindow("reservation-127");
+        verify(budgetService, never()).releaseReservation("reservation-127");
         assertThat(scannerNode.hasActiveJob(exerciseId)).isFalse();
     }
 
@@ -797,7 +1042,8 @@ class GenerationJobServiceTest {
             });
         });
         assertThat(shortTimeoutService.hasActiveJob(exerciseId)).isFalse();
-        verify(budgetService).releaseReservation("reservation-228");
+        verify(budgetService).retainReservationForBudgetWindow("reservation-228");
+        verify(budgetService, never()).releaseReservation("reservation-228");
         assertThat(shortTimeoutService.startJob(owner, exercise, "new", GenerationMode.GENERATE)).isNotBlank();
     }
 
@@ -849,16 +1095,31 @@ class GenerationJobServiceTest {
         return hazelcastInstance.getMap("hyperion-exercise-generation-jobs");
     }
 
+    private CountDownLatch captureNextJobLockAttempt(String key) {
+        return captureNextJobLockAttempt(jobService, key);
+    }
+
+    private CountDownLatch captureNextJobLockAttempt(GenerationJobService service, String key) {
+        IMap<String, GenerationJobService.JobInfo> jobMap = jobMap();
+        IMap<String, GenerationJobService.JobInfo> observedJobMap = spy(jobMap);
+        CountDownLatch lockAttempted = new CountDownLatch(1);
+        doAnswer(invocation -> {
+            lockAttempted.countDown();
+            jobMap.lock(key);
+            return null;
+        }).when(observedJobMap).lock(key);
+        ReflectionTestUtils.setField(service, "jobMap", observedJobMap);
+        GenerationJobReplayStore replayStore = (GenerationJobReplayStore) ReflectionTestUtils.getField(service, "replayStore");
+        ReflectionTestUtils.setField(replayStore, "jobMap", observedJobMap);
+        return lockAttempted;
+    }
+
     private IMap<String, GenerationJobService.JobTranscript> transcriptMap() {
         return hazelcastInstance.getMap("hyperion-exercise-generation-transcripts");
     }
 
     private IMap<String, GenerationJobService.JobFileChangeIndex> fileChangeMap() {
-        return hazelcastInstance.getMap(GenerationJobService.FILE_CHANGE_MAP_NAME);
-    }
-
-    private Map<String, GenerationJobService.JobFileChangeIndex> fileChangeEntries() {
-        return fileChangeMap();
+        return hazelcastInstance.getMap(GenerationJobReplayStore.FILE_CHANGE_MAP_NAME);
     }
 
     @Test
@@ -867,17 +1128,17 @@ class GenerationJobServiceTest {
         User owner = user("owner");
         String jobId = jobService.startJob(owner, exercise(exerciseId), "go", GenerationMode.GENERATE);
 
-        for (int i = 0; i < GenerationJobService.MAX_RETAINED_FILE_CHANGES + 1; i++) {
+        for (int i = 0; i < GenerationJobReplayStore.MAX_RETAINED_FILE_CHANGES + 1; i++) {
             jobService.recordFileChange(exerciseId, jobId, fileChange("solution/File" + i + ".java", "body"));
         }
         jobService.recordFileChange(exerciseId, jobId, ExerciseGenerationFileChangeDTO.of("solution/File1.java", ExerciseGenerationFileChangeDTO.ACTION_EDIT, 9));
 
         List<ExerciseGenerationFileChangeDTO> replay = jobService.getStatus(owner, exercise(exerciseId)).orElseThrow().fileChanges();
-        assertThat(replay).hasSize(GenerationJobService.MAX_RETAINED_FILE_CHANGES);
+        assertThat(replay).hasSize(GenerationJobReplayStore.MAX_RETAINED_FILE_CHANGES);
         assertThat(replay.getFirst().path()).isEqualTo("solution/File1.java");
         assertThat(replay.getFirst().action()).isEqualTo(ExerciseGenerationFileChangeDTO.ACTION_EDIT);
         assertThat(replay.getFirst().turn()).isEqualTo(9);
-        assertThat(replay.getLast().path()).isEqualTo("solution/File" + GenerationJobService.MAX_RETAINED_FILE_CHANGES + ".java");
+        assertThat(replay.getLast().path()).isEqualTo("solution/File" + GenerationJobReplayStore.MAX_RETAINED_FILE_CHANGES + ".java");
     }
 
     @Test
@@ -889,10 +1150,10 @@ class GenerationJobServiceTest {
         jobService.clearJob(exerciseId, firstJob);
 
         String secondJob = jobService.startJob(owner, exercise(exerciseId), "second", GenerationMode.GENERATE);
-        jobService.recordFileChange(exerciseId, firstJob, fileChange("solution/Stale.java", "stale"));
+        assertThat(jobService.recordFileChange(exerciseId, firstJob, fileChange("solution/Stale.java", "stale"))).isFalse();
 
         assertThat(jobService.getStatus(owner, exercise(exerciseId)).orElseThrow().fileChanges()).isEmpty();
-        jobService.recordFileChange(exerciseId, secondJob, fileChange("solution/New.java", "new"));
+        assertThat(jobService.recordFileChange(exerciseId, secondJob, fileChange("solution/New.java", "new"))).isTrue();
         assertThat(jobService.getStatus(owner, exercise(exerciseId)).orElseThrow().fileChanges()).extracting(ExerciseGenerationFileChangeDTO::path)
                 .containsExactly("solution/New.java");
     }
@@ -902,8 +1163,10 @@ class GenerationJobServiceTest {
         AtomicBoolean reject = new AtomicBoolean(true);
         AtomicInteger publishAttempts = new AtomicInteger(0);
         ApplicationEventPublisher rejectingPublisher = event -> {
-            publishAttempts.incrementAndGet();
-            if (reject.get()) {
+            if (event instanceof GenerationStartedEvent) {
+                publishAttempts.incrementAndGet();
+            }
+            if (reject.get() && event instanceof GenerationStartedEvent) {
                 throw new TaskRejectedException("hyperionGenerationExecutor is saturated");
             }
         };
@@ -950,42 +1213,6 @@ class GenerationJobServiceTest {
     }
 
     @Test
-    void startJob_whenTranscriptInitializationFails_releasesSlotAndAllowsRetry() {
-        long exerciseId = 82L;
-        String key = String.valueOf(exerciseId);
-        IMap<String, GenerationJobService.JobTranscript> originalTranscriptMap = transcriptMap();
-        IMap<String, GenerationJobService.JobTranscript> failingTranscriptMap = spy(originalTranscriptMap);
-        doThrow(new IllegalStateException("transcript initialization failed")).when(failingTranscriptMap).set(eq(key), any(GenerationJobService.JobTranscript.class), anyLong(),
-                eq(TimeUnit.SECONDS));
-        ReflectionTestUtils.setField(jobService, "transcriptMap", failingTranscriptMap);
-
-        assertThatExceptionOfType(IllegalStateException.class).isThrownBy(() -> jobService.startJob(user("owner"), exercise(exerciseId), "go", GenerationMode.GENERATE))
-                .withMessageContaining("transcript initialization failed");
-
-        ReflectionTestUtils.setField(jobService, "transcriptMap", originalTranscriptMap);
-        assertThat(jobService.hasActiveJob(exerciseId)).isFalse();
-        assertThat(jobService.startJob(user("owner"), exercise(exerciseId), "retry", GenerationMode.GENERATE)).isNotBlank();
-    }
-
-    @Test
-    void startJob_whenFileChangeInitializationFails_releasesSlotAndAllowsRetry() {
-        long exerciseId = 83L;
-        String key = String.valueOf(exerciseId);
-        IMap<String, GenerationJobService.JobFileChangeIndex> originalFileChangeMap = fileChangeMap();
-        IMap<String, GenerationJobService.JobFileChangeIndex> failingFileChangeMap = spy(originalFileChangeMap);
-        doThrow(new IllegalStateException("file-change initialization failed")).when(failingFileChangeMap).set(eq(key), any(GenerationJobService.JobFileChangeIndex.class),
-                anyLong(), eq(TimeUnit.SECONDS));
-        ReflectionTestUtils.setField(jobService, "fileChangeMap", failingFileChangeMap);
-
-        assertThatExceptionOfType(IllegalStateException.class).isThrownBy(() -> jobService.startJob(user("owner"), exercise(exerciseId), "go", GenerationMode.GENERATE))
-                .withMessageContaining("file-change initialization failed");
-
-        ReflectionTestUtils.setField(jobService, "fileChangeMap", originalFileChangeMap);
-        assertThat(jobService.hasActiveJob(exerciseId)).isFalse();
-        assertThat(jobService.startJob(user("owner"), exercise(exerciseId), "retry", GenerationMode.GENERATE)).isNotBlank();
-    }
-
-    @Test
     void startJob_whenPublishFails_restoresPreviousRetainedReplayState() {
         long exerciseId = 79L;
         ProgrammingExercise exercise = exercise(exerciseId);
@@ -1012,72 +1239,4 @@ class GenerationJobServiceTest {
         });
     }
 
-    @Test
-    void rollbackUnpublishedStart_doesNotOverwriteNewerReplayState() {
-        long exerciseId = 80L;
-        String key = String.valueOf(exerciseId);
-        Instant now = Instant.now();
-        GenerationJobService.JobInfo failedJob = new GenerationJobService.JobInfo("failed", "owner", exerciseId, now, null, "node-a", now, true, null);
-        GenerationJobService.JobTranscript failedTranscript = new GenerationJobService.JobTranscript("failed", "owner", exerciseId, GenerationMode.GENERATE,
-                new CopyOnWriteArrayList<>(), false);
-        GenerationJobService.JobFileChangeIndex failedIndex = new GenerationJobService.JobFileChangeIndex("failed", "owner", List.of(fileChange("solution/Failed.java", "failed")));
-        GenerationJobService.JobTranscript previousTranscript = new GenerationJobService.JobTranscript("previous", "owner", exerciseId, GenerationMode.GENERATE,
-                new CopyOnWriteArrayList<>(), true);
-        GenerationJobService.JobFileChangeIndex previousIndex = new GenerationJobService.JobFileChangeIndex("previous", "owner",
-                List.of(fileChange("solution/Previous.java", "previous")));
-        GenerationJobService.JobInfo newerJob = new GenerationJobService.JobInfo("newer", "owner", exerciseId, now.plusMillis(1), null, "node-a", now.plusMillis(1), true, null);
-        GenerationJobService.JobTranscript newerTranscript = new GenerationJobService.JobTranscript("newer", "owner", exerciseId, GenerationMode.ADAPT,
-                new CopyOnWriteArrayList<>(), false);
-        GenerationJobService.JobFileChangeIndex newerIndex = new GenerationJobService.JobFileChangeIndex("newer", "owner", List.of(fileChange("solution/Newer.java", "newer")));
-        jobMap().set(key, newerJob);
-        transcriptMap().set(key, newerTranscript);
-        fileChangeMap().set(key, newerIndex);
-
-        ReflectionTestUtils.invokeMethod(jobService, "rollbackUnpublishedStart", exerciseId, key, failedJob, failedTranscript, failedIndex, previousTranscript, previousIndex);
-
-        assertThat(transcriptMap().get(key)).isEqualTo(newerTranscript);
-        assertThat(fileChangeMap().get(key)).isEqualTo(newerIndex);
-    }
-
-    @Test
-    void getStatus_doesNotObserveAnUnpublishedRollbackHalfwayThrough() throws Exception {
-        long exerciseId = 81L;
-        String key = String.valueOf(exerciseId);
-        Instant now = Instant.now();
-        ProgrammingExercise exercise = exercise(exerciseId);
-        User owner = user("owner");
-        GenerationJobService.JobInfo failedJob = new GenerationJobService.JobInfo("failed", "owner", exerciseId, now, null, "node-a", now, true, null);
-        GenerationJobService.JobTranscript failedTranscript = new GenerationJobService.JobTranscript("failed", "owner", exerciseId, GenerationMode.GENERATE,
-                new CopyOnWriteArrayList<>(), false);
-        GenerationJobService.JobFileChangeIndex failedIndex = new GenerationJobService.JobFileChangeIndex("failed", "owner", List.of());
-        GenerationJobService.JobTranscript previousTranscript = new GenerationJobService.JobTranscript("previous", "owner", exerciseId, GenerationMode.ADAPT,
-                new CopyOnWriteArrayList<>(), true);
-        GenerationJobService.JobFileChangeIndex previousIndex = new GenerationJobService.JobFileChangeIndex("previous", "owner", List.of());
-        jobMap().set(key, failedJob);
-        transcriptMap().set(key, failedTranscript);
-        fileChangeMap().set(key, failedIndex);
-        ExecutorService executor = Executors.newFixedThreadPool(2);
-        AtomicBoolean transcriptLockHeld = new AtomicBoolean(true);
-
-        transcriptMap().lock(key);
-        try {
-            Future<?> rollback = executor.submit(() -> ReflectionTestUtils.invokeMethod(jobService, "rollbackUnpublishedStart", exerciseId, key, failedJob, failedTranscript,
-                    failedIndex, previousTranscript, previousIndex));
-            await().atMost(Duration.ofSeconds(5)).until(() -> jobMap().get(key) == null);
-            Future<Optional<ExerciseGenerationStatusDTO>> status = executor.submit(() -> jobService.getStatus(owner, exercise));
-
-            assertThatThrownBy(() -> status.get(150, TimeUnit.MILLISECONDS)).isInstanceOf(TimeoutException.class);
-
-            transcriptMap().unlock(key);
-            transcriptLockHeld.set(false);
-            assertThat(rollback.get(5, TimeUnit.SECONDS)).isNull();
-            assertThat(status.get(5, TimeUnit.SECONDS)).hasValueSatisfying(value -> assertThat(value.jobId()).isEqualTo("previous"));
-        }
-        finally {
-            if (transcriptLockHeld.get()) {
-                transcriptMap().unlock(key);
-            }
-            executor.shutdownNow();
-        }
-    }
 }

@@ -1,5 +1,6 @@
 /* global Buffer, console, process */
 import http from 'node:http';
+import { clearTimeout, setTimeout } from 'node:timers';
 
 const port = Number(process.env.HYPERION_LLM_MOCK_PORT ?? 1234);
 let requestCount = 0;
@@ -8,6 +9,8 @@ const pendingLateFailures = new Set();
 const pendingProviderResponses = new Set();
 let holdUnmatchedRequests = false;
 const failMarker = 'HYPERION_E2E_FAIL_LLM';
+const mechanicalRejectionMarker = 'HYPERION_E2E_MECHANICAL_REJECTION';
+const invalidCandidatePath = 'solution/src/de/test/VerifierRejected.java';
 const diagnosticFilePath = 'solution/src/de/test/HyperionDiagnostic.java';
 const writeSnapshotMarker = 'HYPERION_E2E_WRITE_SNAPSHOT';
 const submitSeedMarker = 'HYPERION_E2E_SUBMIT_SEEDED_EXERCISE';
@@ -140,10 +143,10 @@ First, we need to implement two sorting algorithms, in this case \`MergeSort\` a
 
 **You have the following tasks:**
 
-1. [task][Implement Bubble Sort](testBubbleSort)
+1. [task][Implement Bubble Sort](testBubbleSort,testClass[BubbleSort])
 Implement the method \`performSort(List<Date>)\` in the class \`BubbleSort\`. Make sure to follow the Bubble Sort algorithm exactly.
 
-2. [task][Implement Merge Sort](testMergeSort)
+2. [task][Implement Merge Sort](testMergeSort,testClass[MergeSort])
 Implement the method \`performSort(List<Date>)\` in the class \`MergeSort\`. Make sure to follow the Merge Sort algorithm exactly.
 
 ### Part 2: Strategy Pattern
@@ -306,7 +309,22 @@ const server = http.createServer((req, res) => {
         }
         for (const pendingResponse of pendingProviderResponses) {
             pendingProviderResponses.delete(pendingResponse);
-            pendingResponse.once('finish', () => completedHeldProviderResponseCount++);
+            let settled = false;
+            const timeout = setTimeout(() => settle(504, 'Timed out while releasing the held provider response'), 5_000);
+            const settle = (status, error) => {
+                if (settled) {
+                    return;
+                }
+                settled = true;
+                clearTimeout(timeout);
+                jsonResponse(res, status, error ? { error: { message: error } } : { released: 1 });
+            };
+            pendingResponse.once('finish', () => {
+                completedHeldProviderResponseCount++;
+                settle(200);
+            });
+            pendingResponse.once('close', () => settle(502, 'Held provider response closed before completion'));
+            pendingResponse.once('error', () => settle(502, 'Held provider response failed before completion'));
             jsonResponse(
                 pendingResponse,
                 200,
@@ -316,7 +334,6 @@ const server = http.createServer((req, res) => {
                 }),
             );
         }
-        jsonResponse(res, 200, { released: 1 });
         return;
     }
 
@@ -352,6 +369,10 @@ const server = http.createServer((req, res) => {
             const requestNumber = requestCount;
             const body = Buffer.concat(chunks).toString('utf8');
             if (body.includes(draftPromptMarker)) {
+                if (!body.includes(submitNewExerciseMarker)) {
+                    jsonResponse(res, 400, { error: { message: 'The instructor brief was not forwarded to draft generation' } });
+                    return;
+                }
                 jsonResponse(res, 200, textResponse(requestNumber, draftProblemStatement));
                 return;
             }
@@ -372,13 +393,28 @@ const server = http.createServer((req, res) => {
                 res.once('close', () => pendingLateFailures.delete(res));
                 return;
             }
+            if (body.includes(mechanicalRejectionMarker)) {
+                if (!hasAcknowledgedToolCall(body, 'write_file', (args) => args.path === invalidCandidatePath)) {
+                    jsonResponse(
+                        res,
+                        200,
+                        toolCallResponse(requestNumber, 'write_file', {
+                            path: invalidCandidatePath,
+                            content: 'package de.test;\n\npublic class VerifierRejected {\n    this is not valid Java\n}\n',
+                        }),
+                    );
+                    return;
+                }
+                jsonResponse(res, 200, toolCallResponse(requestNumber, 'submit', { summary: 'Submit an intentionally invalid candidate to exercise the real verifier.' }));
+                return;
+            }
             if (body.includes(criticPromptMarker)) {
                 const weakThresholdOracle = body.includes(submitSeedMarker) && currentCandidateContains(body, 'for (int i = 0; i < 3; i++)');
                 const oracleReview = body.includes(oracleReviewPromptMarker);
-                const invented =
-                    body.includes(reviewRequiredMarker) && !oracleReview
-                        ? '[{"requirement":"submit a written complexity proof","reason":"the instructor requested only the implementation and matching tests"}]'
-                        : '[]';
+                if (body.includes(reviewRequiredMarker) && !oracleReview) {
+                    jsonResponse(res, 200, textResponse(requestNumber, '{}'));
+                    return;
+                }
                 const audit = oracleReview
                     ? `"exampleChecks":[],"apiChecks":[],"templateChecks":[],"mutantChecks":[{"mutant":"a threshold of 4","killed":${!weakThresholdOracle},"sourceQuote":"use merge sort for lists with more than 5 dates and update the matching test.","reason":"the boundary tests must distinguish sizes 5 and 6"}]`
                     : '"exampleChecks":[],"apiChecks":[{"symbol":"seeded public API","discoverable":true,"reason":"the statement and starter expose it"}],"templateChecks":[{"test":"seeded task groups","targetReached":true,"reason":"the existing starter reaches each target"}],"mutantChecks":[]';
@@ -387,7 +423,7 @@ const server = http.createServer((req, res) => {
                     200,
                     textResponse(
                         requestNumber,
-                        `{${audit},"uncovered":[],"contradictions":[],"hiddenRequirements":[],"weakOracle":[],"templateGaps":[],"missingExamples":[],"invented":${invented},"unrequestedChanges":[],"missingRequestedChanges":[]}`,
+                        `{${audit},"uncovered":[],"contradictions":[],"hiddenRequirements":[],"weakOracle":[],"templateGaps":[],"missingExamples":[],"invented":[],"unrequestedChanges":[],"missingRequestedChanges":[]}`,
                     ),
                 );
                 return;

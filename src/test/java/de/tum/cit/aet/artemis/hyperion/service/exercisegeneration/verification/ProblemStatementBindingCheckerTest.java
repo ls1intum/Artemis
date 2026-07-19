@@ -100,6 +100,13 @@ class ProblemStatementBindingCheckerTest {
     }
 
     @Test
+    void unboundGradableTestNames_includesAuthoritativeStructuralTests() {
+        List<String> actual = List.of("sortsAscending", "testClass[Sorter]");
+
+        assertThat(ProblemStatementBindingChecker.unboundGradableTestNames("[task][Sort](sortsAscending)\n", actual, 2)).containsExactly("testClass[Sorter]");
+    }
+
+    @Test
     void unresolvedTaskBindings_failsOpenWhenTheNameSetIsShorterThanTheTestCount() {
         // An incomplete emitted name list must not be used to reject; in the live pipeline fromReports guarantees the set is complete (pinned by
         // DifferentialVerificationServiceTest.buildSummary_fromReports_recordsACompleteSoundPerTestView), so this fail-open branch is a pure-function guard, not a runtime path.

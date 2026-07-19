@@ -17,6 +17,12 @@ export type HyperionGenerationEvent = GeneratedEvent;
 export type ExerciseGenerationFileChange = GeneratedFileChange;
 export type HyperionGenerationMessage = HyperionGenerationEvent | ExerciseGenerationFileChange;
 
+export interface HyperionExerciseGenerationState {
+    exerciseId: number;
+    jobId: string;
+    running: boolean;
+}
+
 export function isFileChange(message: HyperionGenerationMessage): message is ExerciseGenerationFileChange {
     return message.type === 'FILE_CHANGE';
 }

@@ -4,13 +4,13 @@ import java.io.Serial;
 import java.io.Serializable;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.Executor;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
@@ -42,6 +42,7 @@ import de.tum.cit.aet.artemis.core.exception.ServiceUnavailableAlertException;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionExerciseGenerationEnabled;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationEventDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationFileChangeDTO;
+import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationStateDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationStatusDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.GenerationMode;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -49,8 +50,8 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 /**
  * Single-flight slot and cancellation registry for whole-exercise agentic generation jobs.
  * <p>
- * At most one generation runs per exercise at a time (claimed atomically in a Hazelcast map with a TTL safety net), and a separate cancellation set lets the REST layer request
- * a cooperative abort that the running loop polls between turns. This per-exercise single-flight is the primary concurrency bound.
+ * At most one generation runs per exercise at a time (claimed atomically in a Hazelcast map), and a separate cancellation set lets the REST layer request a cooperative abort
+ * that the running loop polls between turns. This per-exercise single-flight is the primary concurrency bound.
  */
 @Service
 @Lazy
@@ -65,27 +66,17 @@ public class GenerationJobService {
 
     private static final String CANCEL_TOPIC_NAME = "hyperion-exercise-generation-cancel-requests";
 
-    private static final String TRANSCRIPT_MAP_NAME = "hyperion-exercise-generation-transcripts";
-
-    static final String FILE_CHANGE_MAP_NAME = "hyperion-exercise-generation-file-changes";
-
     private static final String ENTITY_NAME = "hyperionExerciseGeneration";
 
     private static final String REVERT_JOB_PREFIX = "revert-";
 
+    private static final String EXTERNAL_MUTATION_JOB_PREFIX = "external-mutation-";
+
     static final String GENERATION_PIPELINE_ID = "HYPERION_EXERCISE_GENERATION";
-
-    private static final int JOB_TTL_SECONDS = 7200;
-
-    private static final int TRANSCRIPT_TTL_SECONDS = 900;
-
-    private static final int MAX_RETAINED_EVENTS = 500;
 
     private static final String USER_CANCELLATION_MESSAGE = "Generation was cancelled. Nothing was changed.";
 
     private static final String SYSTEM_CANCELLATION_MESSAGE = "Generation was cancelled by an administrator. Nothing was changed.";
-
-    static final int MAX_RETAINED_FILE_CHANGES = 300;
 
     private final HazelcastInstance hazelcastInstance;
 
@@ -100,15 +91,17 @@ public class GenerationJobService {
 
     private final Duration maxJobDuration;
 
+    private final Executor cancellationExecutor;
+
+    private final int expectedDataMemberCount;
+
     private String localNodeId;
 
     private IMap<String, JobInfo> jobMap;
 
     private IMap<String, Boolean> cancellationMap;
 
-    private IMap<String, JobTranscript> transcriptMap;
-
-    private IMap<String, JobFileChangeIndex> fileChangeMap;
+    private GenerationJobReplayStore replayStore;
 
     // Node-local interrupts held in-process because the hook closes over a live sandbox reference that exists only on the node running the job; other nodes rely on the Hazelcast
     // flag.
@@ -118,22 +111,35 @@ public class GenerationJobService {
     public GenerationJobService(@Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance, ApplicationEventPublisher eventPublisher,
             LLMTokenUsageService llmTokenUsageService, HyperionGenerationBudgetService generationBudgetService,
             @Value("${artemis.hyperion.agent.stale-job-timeout:PT35M}") Duration staleJobTimeout,
-            @Value("${artemis.hyperion.agent.max-job-duration:PT30M}") Duration maxJobDuration) {
+            @Value("${artemis.hyperion.agent.max-job-duration:PT30M}") Duration maxJobDuration, @Qualifier("taskExecutor") Executor cancellationExecutor,
+            @Value("${jhipster.cache.hazelcast.expected-data-member-count:1}") int expectedDataMemberCount) {
         this.hazelcastInstance = hazelcastInstance;
         this.eventPublisher = eventPublisher;
         this.llmTokenUsageService = llmTokenUsageService;
         this.generationBudgetService = generationBudgetService;
         this.staleJobTimeout = staleJobTimeout;
         this.maxJobDuration = maxJobDuration;
+        this.cancellationExecutor = cancellationExecutor;
+        this.expectedDataMemberCount = expectedDataMemberCount;
+    }
+
+    public GenerationJobService(HazelcastInstance hazelcastInstance, ApplicationEventPublisher eventPublisher, LLMTokenUsageService llmTokenUsageService,
+            @Nullable HyperionGenerationBudgetService generationBudgetService, Duration staleJobTimeout, Duration maxJobDuration, Executor cancellationExecutor) {
+        this(hazelcastInstance, eventPublisher, llmTokenUsageService, generationBudgetService, staleJobTimeout, maxJobDuration, cancellationExecutor, 1);
     }
 
     GenerationJobService(HazelcastInstance hazelcastInstance, ApplicationEventPublisher eventPublisher, LLMTokenUsageService llmTokenUsageService) {
-        this(hazelcastInstance, eventPublisher, llmTokenUsageService, null, Duration.ofMinutes(35), Duration.ofMinutes(30));
+        this(hazelcastInstance, eventPublisher, llmTokenUsageService, null, Duration.ofMinutes(35), Duration.ofMinutes(30), Runnable::run);
     }
 
     GenerationJobService(HazelcastInstance hazelcastInstance, ApplicationEventPublisher eventPublisher, LLMTokenUsageService llmTokenUsageService, Duration staleJobTimeout,
             Duration maxJobDuration) {
-        this(hazelcastInstance, eventPublisher, llmTokenUsageService, null, staleJobTimeout, maxJobDuration);
+        this(hazelcastInstance, eventPublisher, llmTokenUsageService, null, staleJobTimeout, maxJobDuration, Runnable::run);
+    }
+
+    GenerationJobService(HazelcastInstance hazelcastInstance, ApplicationEventPublisher eventPublisher, LLMTokenUsageService llmTokenUsageService,
+            @Nullable HyperionGenerationBudgetService generationBudgetService, Duration staleJobTimeout, Duration maxJobDuration) {
+        this(hazelcastInstance, eventPublisher, llmTokenUsageService, generationBudgetService, staleJobTimeout, maxJobDuration, Runnable::run);
     }
 
     /**
@@ -146,13 +152,27 @@ public class GenerationJobService {
      * @return a sink that records each model response's token usage
      */
     public Consumer<ChatResponse> tokenUsageSink(@Nullable Long courseId, @Nullable Long exerciseId, @Nullable Long userId) {
-        return chatResponse -> llmTokenUsageService.trackChatResponseTokenUsage(chatResponse, LLMServiceType.HYPERION, GENERATION_PIPELINE_ID,
-                builder -> builder.withCourse(courseId).withExercise(exerciseId).withUser(userId));
+        return chatResponse -> {
+            boolean recorded = llmTokenUsageService.trackChatResponseTokenUsage(chatResponse, LLMServiceType.HYPERION, GENERATION_PIPELINE_ID,
+                    builder -> builder.withCourse(courseId).withExercise(exerciseId).withUser(userId));
+            if (!recorded) {
+                throw new TokenUsageAccountingException();
+            }
+        };
+    }
+
+    static final class TokenUsageAccountingException extends RuntimeException {
+
+        @Serial
+        private static final long serialVersionUID = 1L;
     }
 
     /** Initializes the distributed job state and local cancellation listener. */
     @PostConstruct
     public void init() {
+        if (expectedDataMemberCount < 1) {
+            throw new IllegalArgumentException("jhipster.cache.hazelcast.expected-data-member-count must be at least 1");
+        }
         if (maxJobDuration == null || maxJobDuration.isZero() || maxJobDuration.isNegative()) {
             throw new IllegalArgumentException("artemis.hyperion.agent.max-job-duration must be positive");
         }
@@ -161,8 +181,7 @@ public class GenerationJobService {
         }
         jobMap = hazelcastInstance.getMap(JOB_MAP_NAME);
         cancellationMap = hazelcastInstance.getMap(CANCEL_MAP_NAME);
-        transcriptMap = hazelcastInstance.getMap(TRANSCRIPT_MAP_NAME);
-        fileChangeMap = hazelcastInstance.getMap(FILE_CHANGE_MAP_NAME);
+        replayStore = new GenerationJobReplayStore(hazelcastInstance);
         ITopic<CancelRequest> cancelTopic = hazelcastInstance.getTopic(CANCEL_TOPIC_NAME);
         cancelTopic.addMessageListener(message -> runLocalCancelHook(message.getMessageObject().jobId()));
         localNodeId = hazelcastInstance.getCluster().getLocalMember().getUuid().toString();
@@ -189,32 +208,35 @@ public class GenerationJobService {
         Instant deadlineAt = deadlineAt(startedAt);
         JobInfo newJob = new JobInfo(jobId, user.getLogin(), exercise.getId(), startedAt, deadlineAt, localNodeId, startedAt, true, budgetReservationId);
         claimSlot(key, newJob, "Exercise generation is already running for this exercise", "exerciseGenerationRunning");
-        JobTranscript transcript = new JobTranscript(jobId, user.getLogin(), exercise.getId(), mode, new ArrayList<>(), false);
-        JobFileChangeIndex fileChangeIndex = new JobFileChangeIndex(jobId, user.getLogin(), new ArrayList<>());
-        JobTranscript previousTranscript = null;
-        JobFileChangeIndex previousFileChangeIndex = null;
+        GenerationJobReplayStore.StartedReplay startedReplay = null;
+        boolean publicStatePublished = false;
         // Fresh transcript and fileChange store for this run. Keep the previous replay state until the async event is accepted; if publishing fails synchronously, rollback
         // restores the prior terminal replay instead of leaving the status endpoint empty. State initialization is inside the rollback boundary as well: once the slot is claimed,
         // no distributed-map failure may leave it wedged.
         try {
-            previousTranscript = transcriptMap.get(key);
-            previousFileChangeIndex = fileChangeMap.get(key);
-            transcriptMap.set(key, transcript, JOB_TTL_SECONDS, TimeUnit.SECONDS);
-            fileChangeMap.set(key, fileChangeIndex, JOB_TTL_SECONDS, TimeUnit.SECONDS);
+            startedReplay = replayStore.initializeStart(exercise.getId(), jobId, user.getLogin(), mode);
+            publishExerciseState(exercise.getId(), jobId, true);
+            publicStatePublished = true;
             eventPublisher.publishEvent(
                     new GenerationStartedEvent(jobId, user, exercise, userPrompt, mode, exercise.getProblemStatement(), exercise.getTitle(), deadlineAt, budgetReservationId));
         }
         catch (RejectedExecutionException e) {
             // The generation executor is saturated (AbortPolicy). The @Async listener never ran, so no terminal event will ever fire — roll back the claimed slot and its retained
-            // state (value-guarded, so a later run for this exercise is never clobbered) instead of leaving the exercise wedged as "running" for the full TTL, and surface a busy
+            // state (value-guarded, so a later run for this exercise is never clobbered) instead of leaving the exercise wedged as "running", and surface a busy
             // error the instructor can act on. Note: TaskRejectedException (thrown by ThreadPoolTaskExecutor) is a RejectedExecutionException subclass, so it is caught here too.
-            rollbackUnpublishedStart(exercise.getId(), key, newJob, transcript, fileChangeIndex, previousTranscript, previousFileChangeIndex);
+            rollbackUnpublishedStart(exercise.getId(), key, newJob, startedReplay);
+            if (publicStatePublished) {
+                publishExerciseState(exercise.getId(), jobId, false);
+            }
             log.warn("Exercise generation executor rejected job {} for exercise {}; released the slot", jobId, exercise.getId());
             throw new ServiceUnavailableAlertException("The system is currently busy with too many exercise generations. Please try again in a few minutes.", ENTITY_NAME,
                     "exerciseGenerationCapacityExceeded");
         }
         catch (RuntimeException e) {
-            rollbackUnpublishedStart(exercise.getId(), key, newJob, transcript, fileChangeIndex, previousTranscript, previousFileChangeIndex);
+            rollbackUnpublishedStart(exercise.getId(), key, newJob, startedReplay);
+            if (publicStatePublished) {
+                publishExerciseState(exercise.getId(), jobId, false);
+            }
             throw e;
         }
         return jobId;
@@ -230,6 +252,7 @@ public class GenerationJobService {
         String key = key(exerciseId);
         jobMap.lock(key);
         try {
+            verifyExpectedDataMemberTopology();
             JobInfo existing = jobMap.get(key);
             if (existing == null) {
                 return;
@@ -247,22 +270,12 @@ public class GenerationJobService {
         }
     }
 
-    private void rollbackUnpublishedStart(long exerciseId, String key, JobInfo newJob, JobTranscript newTranscript, JobFileChangeIndex newFileChangeIndex,
-            @Nullable JobTranscript previousTranscript, @Nullable JobFileChangeIndex previousFileChangeIndex) {
+    private void rollbackUnpublishedStart(long exerciseId, String key, JobInfo newJob, GenerationJobReplayStore.@Nullable StartedReplay startedReplay) {
         jobMap.lock(key);
         try {
             jobMap.remove(key, newJob);
-            if (previousTranscript == null) {
-                transcriptMap.remove(key, newTranscript);
-            }
-            else {
-                restoreTranscriptIfStillUnpublished(key, newTranscript, previousTranscript);
-            }
-            if (previousFileChangeIndex == null) {
-                fileChangeMap.remove(key, newFileChangeIndex);
-            }
-            else {
-                restoreFileChangeIndexIfStillUnpublished(key, newFileChangeIndex, previousFileChangeIndex);
+            if (startedReplay != null) {
+                replayStore.restoreUnpublishedStart(exerciseId, startedReplay);
             }
         }
         finally {
@@ -270,33 +283,10 @@ public class GenerationJobService {
         }
     }
 
-    private void restoreTranscriptIfStillUnpublished(String key, JobTranscript newTranscript, JobTranscript previousTranscript) {
-        transcriptMap.lock(key);
-        try {
-            if (newTranscript.equals(transcriptMap.get(key))) {
-                transcriptMap.set(key, previousTranscript, TRANSCRIPT_TTL_SECONDS, TimeUnit.SECONDS);
-            }
-        }
-        finally {
-            transcriptMap.unlock(key);
-        }
-    }
-
-    private void restoreFileChangeIndexIfStillUnpublished(String key, JobFileChangeIndex newFileChangeIndex, JobFileChangeIndex previousFileChangeIndex) {
-        fileChangeMap.lock(key);
-        try {
-            if (newFileChangeIndex.equals(fileChangeMap.get(key))) {
-                fileChangeMap.set(key, previousFileChangeIndex, TRANSCRIPT_TTL_SECONDS, TimeUnit.SECONDS);
-            }
-        }
-        finally {
-            fileChangeMap.unlock(key);
-        }
-    }
-
     private void claimSlot(String key, JobInfo newJob, String conflictMessage, String errorKey) {
         jobMap.lock(key);
         try {
+            verifyExpectedDataMemberTopology();
             JobInfo existing = jobMap.get(key);
             if (existing != null) {
                 Instant now = Instant.now();
@@ -309,10 +299,28 @@ public class GenerationJobService {
                     throw new ConflictException(conflictMessage, ENTITY_NAME, errorKey);
                 }
             }
-            jobMap.set(key, newJob, JOB_TTL_SECONDS, TimeUnit.SECONDS);
+            jobMap.set(key, newJob);
         }
         finally {
             jobMap.unlock(key);
+        }
+    }
+
+    private void verifyExpectedDataMemberTopology() {
+        final long actualDataMemberCount;
+        try {
+            actualDataMemberCount = hazelcastInstance.getCluster().getMembers().stream().filter(member -> !member.isLiteMember()).count();
+        }
+        catch (RuntimeException e) {
+            throw new ServiceUnavailableAlertException(
+                    "Hyperion coordination cannot verify the Hazelcast data-member topology. Check jhipster.cache.hazelcast.expected-data-member-count.", ENTITY_NAME,
+                    "hyperionDataMemberTopologyUnavailable");
+        }
+        if (actualDataMemberCount != expectedDataMemberCount) {
+            throw new ServiceUnavailableAlertException(
+                    "Hyperion coordination is configured for expected " + expectedDataMemberCount + " Hazelcast data members, but observed " + actualDataMemberCount
+                            + ". Set jhipster.cache.hazelcast.expected-data-member-count to the number of core/data members on every node.",
+                    ENTITY_NAME, "hyperionDataMemberTopologyMismatch");
         }
     }
 
@@ -323,47 +331,10 @@ public class GenerationJobService {
      * @param jobId      the job id; the event is dropped if it does not match the retained transcript (a stale/older run)
      * @param event      the event to retain
      * @param terminal   whether this event terminates the run (marks the transcript done, so a reconnecting client knows not to expect more)
+     * @return whether the event was accepted into the authoritative transcript
      */
-    public void recordEvent(long exerciseId, String jobId, ExerciseGenerationEventDTO event, boolean terminal) {
-        String key = key(exerciseId);
-        jobMap.lock(key);
-        try {
-            if (!isActiveJob(exerciseId, jobId)) {
-                return;
-            }
-            JobTranscript transcript = transcriptMap.get(key);
-            if (transcript != null && transcript.jobId().equals(jobId) && !transcript.done()) {
-                List<ExerciseGenerationEventDTO> events = new ArrayList<>(transcript.events());
-                events.add(event);
-                while (events.size() > MAX_RETAINED_EVENTS) {
-                    events.remove(1);
-                }
-                transcriptMap.set(key,
-                        new JobTranscript(transcript.jobId(), transcript.userLogin(), transcript.exerciseId(), transcript.mode(), events, terminal || transcript.done()),
-                        JOB_TTL_SECONDS, TimeUnit.SECONDS);
-            }
-            refreshActiveJobRetainedStateTtl(exerciseId, jobId);
-        }
-        finally {
-            jobMap.unlock(key);
-        }
-    }
-
-    private void refreshActiveJobRetainedStateTtl(long exerciseId, String jobId) {
-        String key = key(exerciseId);
-        JobInfo job = jobMap.get(key);
-        if (job == null || !job.jobId().equals(jobId)) {
-            return;
-        }
-        jobMap.set(key, job.withHeartbeat(Instant.now()), JOB_TTL_SECONDS, TimeUnit.SECONDS);
-        JobTranscript transcript = transcriptMap.get(key);
-        if (transcript != null && transcript.jobId().equals(jobId)) {
-            transcriptMap.setTtl(key, JOB_TTL_SECONDS, TimeUnit.SECONDS);
-        }
-        JobFileChangeIndex fileChangeIndex = fileChangeMap.get(key);
-        if (fileChangeIndex != null && fileChangeIndex.jobId().equals(jobId)) {
-            fileChangeMap.setTtl(key, JOB_TTL_SECONDS, TimeUnit.SECONDS);
-        }
+    public boolean recordEvent(long exerciseId, String jobId, ExerciseGenerationEventDTO event, boolean terminal) {
+        return replayStore.recordEvent(exerciseId, jobId, event, terminal);
     }
 
     /**
@@ -372,38 +343,10 @@ public class GenerationJobService {
      * @param exerciseId the exercise id (the file-change key)
      * @param jobId      the job id; the change is dropped if it does not match the retained store (a stale/older run)
      * @param fileChange the lightweight file-change metadata to retain
+     * @return whether the change was accepted into the authoritative replay state
      */
-    public void recordFileChange(long exerciseId, String jobId, ExerciseGenerationFileChangeDTO fileChange) {
-        String exerciseKey = key(exerciseId);
-        jobMap.lock(exerciseKey);
-        try {
-            JobFileChangeIndex index = fileChangeMap.get(exerciseKey);
-            if (index == null || !index.jobId().equals(jobId) || !isActiveJob(exerciseId, jobId) || isCancelled(jobId)) {
-                return;
-            }
-            List<ExerciseGenerationFileChangeDTO> changes = new ArrayList<>(index.changes());
-            int existingIndex = -1;
-            for (int i = 0; i < changes.size(); i++) {
-                if (changes.get(i).path().equals(fileChange.path())) {
-                    existingIndex = i;
-                    break;
-                }
-            }
-            if (existingIndex >= 0) {
-                changes.set(existingIndex, fileChange);
-            }
-            else {
-                changes.add(fileChange);
-                while (changes.size() > MAX_RETAINED_FILE_CHANGES) {
-                    changes.removeFirst();
-                }
-            }
-            fileChangeMap.set(exerciseKey, new JobFileChangeIndex(index.jobId(), index.userLogin(), changes), JOB_TTL_SECONDS, TimeUnit.SECONDS);
-            refreshActiveJobRetainedStateTtl(exerciseId, jobId);
-        }
-        finally {
-            jobMap.unlock(exerciseKey);
-        }
+    public boolean recordFileChange(long exerciseId, String jobId, ExerciseGenerationFileChangeDTO fileChange) {
+        return replayStore.recordFileChange(exerciseId, jobId, fileChange);
     }
 
     /**
@@ -414,62 +357,7 @@ public class GenerationJobService {
      * @return the reconnection view (with a {@code running} flag derived from the live slot), or empty if none is retained for this user
      */
     public Optional<ExerciseGenerationStatusDTO> getStatus(User user, ProgrammingExercise exercise) {
-        String exerciseKey = key(exercise.getId());
-        jobMap.lock(exerciseKey);
-        try {
-            JobTranscript transcript = transcriptMap.get(exerciseKey);
-            JobInfo active = jobMap.get(exerciseKey);
-            if (active != null) {
-                boolean ownedByCaller = active.userLogin().equals(user.getLogin());
-                GenerationMode mode = transcript != null && transcript.jobId().equals(active.jobId()) ? transcript.mode() : null;
-                if (!ownedByCaller && transcript != null && transcript.jobId().equals(active.jobId()) && transcript.done()) {
-                    ExerciseGenerationEventDTO terminal = sanitizedTerminalOutcome(transcript);
-                    return terminal == null ? Optional.empty()
-                            : Optional.of(
-                                    new ExerciseGenerationStatusDTO(transcript.jobId(), false, transcript.mode(), List.of(terminal), List.of(), false, null, null, false, false));
-                }
-                if (!ownedByCaller || transcript == null || !transcript.jobId().equals(active.jobId()) || !transcript.userLogin().equals(user.getLogin())) {
-                    return Optional.of(new ExerciseGenerationStatusDTO(active.jobId(), true, mode, List.of(), List.of(), false, null, null, ownedByCaller,
-                            ownedByCaller && active.cancellable()));
-                }
-                return Optional.of(new ExerciseGenerationStatusDTO(transcript.jobId(), !transcript.done(), transcript.mode(), transcript.events(),
-                        latestFileChangesFor(exercise.getId(), transcript.jobId()), false, null, null, true, !transcript.done() && active.cancellable()));
-            }
-            if (transcript == null) {
-                return Optional.empty();
-            }
-            if (!transcript.userLogin().equals(user.getLogin())) {
-                ExerciseGenerationEventDTO terminal = sanitizedTerminalOutcome(transcript);
-                if (terminal == null) {
-                    return Optional.empty();
-                }
-                return Optional.of(new ExerciseGenerationStatusDTO(transcript.jobId(), false, transcript.mode(), List.of(terminal), List.of(), false, null, null, false, false));
-            }
-            return Optional.of(new ExerciseGenerationStatusDTO(transcript.jobId(), false, transcript.mode(), transcript.events(),
-                    latestFileChangesFor(exercise.getId(), transcript.jobId()), false, null, null, true, false));
-        }
-        finally {
-            jobMap.unlock(exerciseKey);
-        }
-    }
-
-    /**
-     * Narrows a retained transcript down to only its terminal event for a non-owner authorized instructor (anyone who passes the endpoint's course/exercise authorization check,
-     * not just the run's initiator). This hides the mid-run activity (tool calls, in-progress prompts/content) of a run that instructor did not start, but the terminal event
-     * itself is returned verbatim: the message, verification verdict, {@code savedRepositoryCommits}, and {@code savedExerciseVersionId} are not actually sensitive to another
-     * instructor who already has editor access to the same exercise — they are exactly the exact review identity (which commit, which version) any authorized reviewer needs to
-     * inspect what was saved. Redacting them here previously left co-instructors unable to tell which commit to review.
-     */
-    @Nullable
-    private ExerciseGenerationEventDTO sanitizedTerminalOutcome(JobTranscript transcript) {
-        for (int index = transcript.events().size() - 1; index >= 0; index--) {
-            ExerciseGenerationEventDTO event = transcript.events().get(index);
-            if (event.type() == ExerciseGenerationEventDTO.Type.DONE || event.type() == ExerciseGenerationEventDTO.Type.CANCELLED
-                    || event.type() == ExerciseGenerationEventDTO.Type.ERROR) {
-                return event;
-            }
-        }
-        return null;
+        return replayStore.getStatus(user, exercise);
     }
 
     /**
@@ -479,32 +367,7 @@ public class GenerationJobService {
      * @param jobId      the completed run to remove
      */
     public void discardRetainedRun(long exerciseId, String jobId) {
-        String key = key(exerciseId);
-        jobMap.lock(key);
-        try {
-            JobTranscript transcript = transcriptMap.get(key);
-            if (transcript != null && transcript.jobId().equals(jobId)) {
-                transcriptMap.remove(key, transcript);
-            }
-            JobFileChangeIndex index = fileChangeMap.get(key);
-            if (index != null && index.jobId().equals(jobId)) {
-                fileChangeMap.remove(key, index);
-            }
-        }
-        finally {
-            jobMap.unlock(key);
-        }
-    }
-
-    /**
-     * Returns the latest fileChange per file for the given run, in write order, or an empty list if none are retained or they belong to a different run.
-     */
-    private List<ExerciseGenerationFileChangeDTO> latestFileChangesFor(long exerciseId, String jobId) {
-        JobFileChangeIndex index = fileChangeMap.get(key(exerciseId));
-        if (index == null || !index.jobId().equals(jobId)) {
-            return List.of();
-        }
-        return index.changes();
+        replayStore.discardRetainedRun(exerciseId, jobId);
     }
 
     /**
@@ -520,11 +383,11 @@ public class GenerationJobService {
      * @param exerciseId the exercise id
      * @param jobId      the job id to cancel
      * @param user       the requesting user; must be the instructor who started the job
-     * @return {@code true} if a matching active, still-cancellable job owned by {@code user} was found and marked for cancellation
+     * @return {@code true} if a matching active, still-cancellable job owned by {@code user} was found and is cancelled, including an idempotent retry
      */
     public boolean requestCancellation(long exerciseId, String jobId, User user) {
         String key = key(exerciseId);
-        boolean cancelled;
+        ExerciseGenerationEventDTO cancellationEvent;
         jobMap.lock(key);
         try {
             JobInfo job = jobMap.get(key);
@@ -535,18 +398,23 @@ public class GenerationJobService {
                 log.debug("Ignored cancellation request for job {}: it already entered the non-cancellable persistence phase", jobId);
                 return false;
             }
-            JobTranscript transcript = transcriptMap.get(key);
-            if (transcript == null || !transcript.jobId().equals(jobId) || !transcript.userLogin().equals(user.getLogin())) {
+            GenerationJobReplayStore.CancellationReplayState replayState = replayStore.cancellationReplayState(job);
+            if (replayState == null || !replayState.userLogin().equals(user.getLogin())) {
                 return false;
             }
-            cancelled = terminalizeCancellation(key, job, transcript, USER_CANCELLATION_MESSAGE);
+            if (replayState.done()) {
+                return isCancelled(jobId);
+            }
+            cancellationMap.set(job.jobId(), Boolean.TRUE);
+            cancellationEvent = replayStore.appendCancellation(job, USER_CANCELLATION_MESSAGE);
         }
         finally {
             jobMap.unlock(key);
         }
-        if (!cancelled) {
+        if (cancellationEvent == null) {
             return false;
         }
+        publishCancellation(user.getLogin(), jobId, cancellationEvent);
         interruptCluster(jobId);
         return true;
     }
@@ -569,7 +437,8 @@ public class GenerationJobService {
 
     boolean requestSystemCancellation(long exerciseId, String jobId, String message) {
         String key = key(exerciseId);
-        boolean cancelled;
+        ExerciseGenerationEventDTO cancellationEvent;
+        String userLogin;
         jobMap.lock(key);
         try {
             JobInfo job = jobMap.get(key);
@@ -580,46 +449,59 @@ public class GenerationJobService {
                 log.debug("Ignored system cancellation request for job {}: it already entered the non-cancellable persistence phase", jobId);
                 return false;
             }
-            JobTranscript transcript = transcriptMap.get(key);
-            cancelled = terminalizeCancellation(key, job, transcript, message);
+            GenerationJobReplayStore.CancellationReplayState replayState = replayStore.cancellationReplayState(job);
+            if (replayState == null || replayState.done()) {
+                return false;
+            }
+            cancellationMap.set(job.jobId(), Boolean.TRUE);
+            cancellationEvent = replayStore.appendCancellation(job, message);
+            userLogin = replayState.userLogin();
         }
         finally {
             jobMap.unlock(key);
         }
-        if (!cancelled) {
+        if (cancellationEvent == null) {
             return false;
         }
+        publishCancellation(userLogin, jobId, cancellationEvent);
         interruptCluster(jobId);
         return true;
     }
 
-    private boolean terminalizeCancellation(String key, JobInfo job, @Nullable JobTranscript transcript, String message) {
-        if (transcript == null || !transcript.jobId().equals(job.jobId()) || transcript.done()) {
-            return false;
+    private void publishCancellation(String userLogin, String jobId, ExerciseGenerationEventDTO cancellationEvent) {
+        try {
+            eventPublisher.publishEvent(new GenerationCancellationEvent(userLogin, jobId, cancellationEvent));
         }
-        cancellationMap.set(job.jobId(), Boolean.TRUE, JOB_TTL_SECONDS, TimeUnit.SECONDS);
-        List<ExerciseGenerationEventDTO> events = new ArrayList<>(transcript.events());
-        events.add(ExerciseGenerationEventDTO.of(ExerciseGenerationEventDTO.Type.CANCELLED, message));
-        while (events.size() > MAX_RETAINED_EVENTS) {
-            events.remove(1);
+        catch (RuntimeException e) {
+            log.warn("Could not publish the live cancellation event for generation job {}", jobId, e);
         }
-        transcriptMap.set(key, new JobTranscript(transcript.jobId(), transcript.userLogin(), transcript.exerciseId(), transcript.mode(), events, true), TRANSCRIPT_TTL_SECONDS,
-                TimeUnit.SECONDS);
-        retainFileChangesForTerminalReplay(job.exerciseId(), job.jobId());
-        return true;
     }
 
     private void interruptCluster(String jobId) {
         // Run the node-local interrupt once on this node and publish a cluster-wide interrupt so cancellation is prompt even when the request hits a different core node than the
         // one running the sandbox. The hook remains node-local because it closes over live sandbox objects; every node simply tries remove-and-run for the job id.
         runLocalCancelHook(jobId);
-        hazelcastInstance.<CancelRequest>getTopic(CANCEL_TOPIC_NAME).publish(new CancelRequest(jobId));
+        try {
+            hazelcastInstance.<CancelRequest>getTopic(CANCEL_TOPIC_NAME).publish(new CancelRequest(jobId));
+        }
+        catch (RuntimeException e) {
+            log.warn("Could not publish the cluster interrupt for cancelled generation job {}; workers will still observe the authoritative cancellation", jobId, e);
+        }
     }
 
     private void runLocalCancelHook(String jobId) {
         Runnable hook = cancelHooks.remove(jobId);
         if (hook != null) {
-            runCancelHook(jobId, hook);
+            dispatchCancelHook(jobId, hook);
+        }
+    }
+
+    private void dispatchCancelHook(String jobId, Runnable hook) {
+        try {
+            cancellationExecutor.execute(() -> runCancelHook(jobId, hook));
+        }
+        catch (RejectedExecutionException e) {
+            log.error("Cancel hook dispatch for job {} was rejected; the generation worker will still observe the authoritative cancellation", jobId, e);
         }
     }
 
@@ -628,7 +510,7 @@ public class GenerationJobService {
             hook.run();
         }
         catch (RuntimeException e) {
-            log.warn("Cancel hook for job {} failed: {}", jobId, e.getMessage());
+            log.warn("Cancel hook for job {} failed", jobId, e);
         }
     }
 
@@ -661,7 +543,7 @@ public class GenerationJobService {
                 // must not flip the job non-cancellable or allow the caller to persist.
                 return false;
             }
-            jobMap.set(key, job.withHeartbeat(Instant.now()).withCancellable(false), JOB_TTL_SECONDS, TimeUnit.SECONDS);
+            jobMap.set(key, job.withHeartbeat(Instant.now()).withCancellable(false));
         }
         finally {
             jobMap.unlock(key);
@@ -715,10 +597,10 @@ public class GenerationJobService {
             if (job == null || !job.jobId().equals(jobId) || localNodeId == null || (job.ownerNodeId() != null && !job.ownerNodeId().equals(localNodeId))) {
                 return false;
             }
-            jobMap.set(key, job.withHeartbeat(Instant.now()), JOB_TTL_SECONDS, TimeUnit.SECONDS);
-            if (generationBudgetService != null) {
-                generationBudgetService.refreshReservation(job.budgetReservationId());
+            if (generationBudgetService != null && !generationBudgetService.refreshReservation(job.budgetReservationId())) {
+                return false;
             }
+            jobMap.set(key, job.withHeartbeat(Instant.now()));
             return true;
         }
         finally {
@@ -744,12 +626,88 @@ public class GenerationJobService {
     }
 
     /**
+     * Claims the same distributed per-exercise slot as generation for one authorized external REST mutation. Holding a real slot, rather than performing a check only, prevents a
+     * generation from starting between the guard and the mutation.
+     *
+     * @param exerciseId the exercise being mutated
+     * @return an opaque token that must be released with {@link #clearExternalMutationSlot(long, String)}
+     */
+    public String claimExternalMutationSlot(long exerciseId) {
+        String token = EXTERNAL_MUTATION_JOB_PREFIX + UUID.randomUUID();
+        Instant startedAt = Instant.now();
+        JobInfo mutation = new JobInfo(token, "external", exerciseId, startedAt, null, localNodeId, startedAt, false, null);
+        claimSlot(key(exerciseId), mutation, "Exercise generation is running for this exercise; wait for it to finish before making changes.", "exerciseGenerationRunning");
+        return token;
+    }
+
+    /**
+     * Releases an external mutation slot without ever clearing a newer owner.
+     *
+     * @param exerciseId the exercise id
+     * @param token      the token returned from {@link #claimExternalMutationSlot(long)}
+     */
+    public void clearExternalMutationSlot(long exerciseId, String token) {
+        if (token.startsWith(EXTERNAL_MUTATION_JOB_PREFIX)) {
+            clearClaimedSlot(exerciseId, token);
+        }
+    }
+
+    /**
+     * Returns the external mutation currently blocking an exercise, if any.
+     *
+     * @param exerciseId the exercise id
+     * @return the active external mutation, if present
+     */
+    public Optional<ExternalMutationInfo> getExternalMutationInfo(long exerciseId) {
+        String key = key(exerciseId);
+        jobMap.lock(key);
+        try {
+            JobInfo job = jobMap.get(key);
+            if (job == null || !isExternalMutationJob(job)) {
+                return Optional.empty();
+            }
+            return Optional.of(new ExternalMutationInfo(exerciseId, job.jobId(), job.ownerNodeId(), job.startedAt()));
+        }
+        finally {
+            jobMap.unlock(key);
+        }
+    }
+
+    /**
+     * Value-guarded recovery for an external mutation whose owning JVM has been confirmed terminated. Cluster departure alone is insufficient because a partitioned request may
+     * still be writing.
+     *
+     * @param exerciseId the exercise id
+     * @param token      the exact external mutation token to recover
+     * @return whether a departed owner's matching slot was recovered
+     */
+    public boolean recoverExternalMutationSlot(long exerciseId, String token) {
+        if (!token.startsWith(EXTERNAL_MUTATION_JOB_PREFIX)) {
+            return false;
+        }
+        String key = key(exerciseId);
+        jobMap.lock(key);
+        try {
+            verifyExpectedDataMemberTopology();
+            JobInfo job = jobMap.get(key);
+            return job != null && job.jobId().equals(token) && isExternalMutationJob(job) && !ownerMemberIsPresent(job) && jobMap.remove(key, job);
+        }
+        finally {
+            jobMap.unlock(key);
+        }
+    }
+
+    /**
      * Releases a revert slot claimed with {@link #claimRevertSlot(User, long)}. Value-guarded so a delayed cleanup cannot clear a newer generation job.
      *
      * @param exerciseId the exercise id
      * @param token      the token returned from {@link #claimRevertSlot(User, long)}
      */
     public void clearRevertSlot(long exerciseId, String token) {
+        clearClaimedSlot(exerciseId, token);
+    }
+
+    private void clearClaimedSlot(long exerciseId, String token) {
         String key = key(exerciseId);
         jobMap.lock(key);
         try {
@@ -766,7 +724,7 @@ public class GenerationJobService {
     public void registerCancelHook(String jobId, Runnable hook) {
         cancelHooks.put(jobId, hook);
         if (isCancelled(jobId) && cancelHooks.remove(jobId, hook)) {
-            runCancelHook(jobId, hook);
+            dispatchCancelHook(jobId, hook);
         }
     }
 
@@ -786,26 +744,22 @@ public class GenerationJobService {
      */
     public void clearJob(long exerciseId, String jobId) {
         String key = key(exerciseId);
+        boolean released = false;
         jobMap.lock(key);
         try {
             JobInfo job = jobMap.get(key);
             if (job != null && job.jobId().equals(jobId)) {
                 jobMap.remove(key, job);
+                released = true;
             }
-            JobTranscript transcript = transcriptMap.get(key);
-            if (transcript != null && transcript.jobId().equals(jobId)) {
-                JobTranscript retainedTranscript = transcript.done() ? transcript
-                        : new JobTranscript(transcript.jobId(), transcript.userLogin(), transcript.exerciseId(), transcript.mode(), transcript.events(), true);
-                transcriptMap.set(key, retainedTranscript, TRANSCRIPT_TTL_SECONDS, TimeUnit.SECONDS);
-            }
+            replayStore.retainAfterJobCleared(exerciseId, jobId);
         }
         finally {
             jobMap.unlock(key);
         }
         cancellationMap.remove(jobId);
-        JobFileChangeIndex fileChangeIndex = fileChangeMap.get(key);
-        if (fileChangeIndex != null && fileChangeIndex.jobId().equals(jobId)) {
-            fileChangeMap.setTtl(key, TRANSCRIPT_TTL_SECONDS, TimeUnit.SECONDS);
+        if (released) {
+            publishExerciseState(exerciseId, jobId, false);
         }
     }
 
@@ -836,12 +790,18 @@ public class GenerationJobService {
 
     /**
      * Reclaims a stale slot only after Hazelcast confirms that its owner left the cluster. A stale heartbeat from a live member can be a scheduler pause, so a cancellable job is
-     * asked to stop while a non-cancellable persistence job retains its slot. Once the owner has left, no worker can finish either phase; the job becomes terminal and its slot and
-     * budget reservation are released for manual inspection and recovery.
+     * asked to stop while a non-cancellable persistence job retains its slot. Once a generation owner has left, the worker can no longer pass its ownership checks; the job becomes
+     * terminal and its slot is released. Its worst-case budget reservation remains until the rolling budget window expires because provider usage may have become billable before
+     * the owner disappeared. External requests remain fail-closed because they are not fenced by those checks.
      *
      * @return {@code true} when the slot was reclaimed
      */
     private boolean reclaimStaleJob(String key, JobInfo current, Instant now) {
+        // An external request is not fenced or hard-cancelled by Hazelcast membership loss. Retain its no-TTL slot until normal completion or explicit recovery after the JVM is
+        // terminated; clearing it here could overlap a partitioned writer with a new generation.
+        if (isExternalMutationJob(current)) {
+            return false;
+        }
         if (ownerMemberIsPresent(current)) {
             if (current.cancellable()) {
                 signalStaleLiveOwner(current, now);
@@ -867,26 +827,52 @@ public class GenerationJobService {
 
     private void signalStaleLiveOwner(JobInfo current, Instant now) {
         boolean alreadyCancelled = Boolean.TRUE.equals(cancellationMap.get(current.jobId()));
-        cancellationMap.set(current.jobId(), Boolean.TRUE, JOB_TTL_SECONDS, TimeUnit.SECONDS);
-        markStoppedTranscript(current, stoppedMessage(current, now));
-        retainFileChangesForTerminalReplay(current.exerciseId(), current.jobId());
+        cancellationMap.set(current.jobId(), Boolean.TRUE);
+        replayStore.terminalizeStoppedJob(current, stoppedMessage(current, now));
         if (!alreadyCancelled) {
             interruptCluster(current.jobId());
         }
     }
 
     private void stopActiveJob(String key, JobInfo current, Instant now) {
-        cancellationMap.set(current.jobId(), Boolean.TRUE, JOB_TTL_SECONDS, TimeUnit.SECONDS);
-        markStoppedTranscript(current, stoppedMessage(current, now));
-        retainFileChangesForTerminalReplay(current.exerciseId(), current.jobId());
-        jobMap.remove(key, current);
-        releaseBudgetReservation(current.budgetReservationId());
+        cancellationMap.set(current.jobId(), Boolean.TRUE, Math.max(1, maxJobDuration.toSeconds()), TimeUnit.SECONDS);
+        replayStore.terminalizeStoppedJob(current, stoppedMessage(current, now));
+        if (jobMap.remove(key, current)) {
+            replayStore.retainAfterJobCleared(current.exerciseId(), current.jobId());
+        }
+        retainUncertainBudgetReservation(current);
         interruptCluster(current.jobId());
+        if (isGenerationJob(current)) {
+            publishExerciseState(current.exerciseId(), current.jobId(), false);
+        }
+    }
+
+    static boolean isGenerationJob(JobInfo job) {
+        return !job.jobId().startsWith(REVERT_JOB_PREFIX) && !job.jobId().startsWith(EXTERNAL_MUTATION_JOB_PREFIX);
+    }
+
+    private boolean isExternalMutationJob(JobInfo job) {
+        return job.jobId().startsWith(EXTERNAL_MUTATION_JOB_PREFIX);
+    }
+
+    private void publishExerciseState(long exerciseId, String jobId, boolean running) {
+        try {
+            eventPublisher.publishEvent(new ExerciseGenerationStateChangedEvent(new ExerciseGenerationStateDTO(exerciseId, jobId, running)));
+        }
+        catch (RuntimeException e) {
+            log.warn("Could not publish shared generation state for exercise {} and job {}", exerciseId, jobId, e);
+        }
     }
 
     private void releaseBudgetReservation(@Nullable String budgetReservationId) {
         if (generationBudgetService != null) {
             generationBudgetService.releaseReservation(budgetReservationId);
+        }
+    }
+
+    private void retainUncertainBudgetReservation(JobInfo job) {
+        if (isGenerationJob(job) && generationBudgetService != null) {
+            generationBudgetService.retainReservationForBudgetWindow(job.budgetReservationId());
         }
     }
 
@@ -906,35 +892,15 @@ public class GenerationJobService {
         return "Generation stopped because the owning node stopped sending heartbeats. Review the exercise and repositories before use if this happened while saving.";
     }
 
-    private void markStoppedTranscript(JobInfo job, String message) {
-        String key = key(job.exerciseId());
-        JobTranscript transcript = transcriptMap.get(key);
-        if (transcript != null && transcript.jobId().equals(job.jobId()) && !transcript.done()) {
-            List<ExerciseGenerationEventDTO> events = new ArrayList<>(transcript.events());
-            ExerciseGenerationEventDTO terminalEvent = job.cancellable() ? ExerciseGenerationEventDTO.of(ExerciseGenerationEventDTO.Type.ERROR, message)
-                    : ExerciseGenerationEventDTO.done(message, ExerciseGenerationEventDTO.CompletionStatus.PARTIAL, null, true);
-            events.add(terminalEvent);
-            while (events.size() > MAX_RETAINED_EVENTS) {
-                events.remove(1);
-            }
-            transcriptMap.set(key, new JobTranscript(transcript.jobId(), transcript.userLogin(), transcript.exerciseId(), transcript.mode(), events, true), TRANSCRIPT_TTL_SECONDS,
-                    TimeUnit.SECONDS);
-        }
-    }
-
-    private void retainFileChangesForTerminalReplay(long exerciseId, String jobId) {
-        JobFileChangeIndex fileChangeIndex = fileChangeMap.get(key(exerciseId));
-        if (fileChangeIndex != null && fileChangeIndex.jobId().equals(jobId)) {
-            fileChangeMap.setTtl(key(exerciseId), TRANSCRIPT_TTL_SECONDS, TimeUnit.SECONDS);
-        }
-    }
-
     private static String key(long exerciseId) {
         return String.valueOf(exerciseId);
     }
 
     private Instant deadlineAt(Instant startedAt) {
         return startedAt.plus(maxJobDuration);
+    }
+
+    public record ExternalMutationInfo(long exerciseId, String token, @Nullable String ownerNodeId, Instant startedAt) {
     }
 
     public record JobInfo(String jobId, String userLogin, long exerciseId, Instant startedAt, @Nullable Instant deadlineAt, @Nullable String ownerNodeId,

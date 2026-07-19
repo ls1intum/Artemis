@@ -218,7 +218,7 @@ class ExerciseReviewRepositoryServiceTest {
     void shouldReturnValidationErrorWhenRepositoryUriIsMissingForFileValidation() {
         ConsistencyTargetRepositoryUris uris = new ConsistencyTargetRepositoryUris(Map.of(), Map.of());
 
-        Optional<String> validationError = repositoryService.validateFileExists(CommentThreadLocationType.TEMPLATE_REPO, null, "src/main/App.java", uris);
+        Optional<String> validationError = repositoryService.validateFileExists(CommentThreadLocationType.TEMPLATE_REPO, null, "src/main/App.java", uris, null);
 
         assertThat(validationError).contains("repository URI for TEMPLATE_REPO is missing");
     }
@@ -229,7 +229,7 @@ class ExerciseReviewRepositoryServiceTest {
         ConsistencyTargetRepositoryUris uris = new ConsistencyTargetRepositoryUris(Map.of(CommentThreadLocationType.TEMPLATE_REPO, templateUri), Map.of());
         when(gitService.getBareRepository(eq(templateUri), eq(false))).thenThrow(new RuntimeException("boom"));
 
-        Optional<String> validationError = repositoryService.validateFileExists(CommentThreadLocationType.TEMPLATE_REPO, null, "src/main/App.java", uris);
+        Optional<String> validationError = repositoryService.validateFileExists(CommentThreadLocationType.TEMPLATE_REPO, null, "src/main/App.java", uris, null);
 
         assertThat(validationError).isPresent();
         assertThat(validationError.get()).contains("file existence check failed");
@@ -242,7 +242,7 @@ class ExerciseReviewRepositoryServiceTest {
         ConsistencyTargetRepositoryUris uris = new ConsistencyTargetRepositoryUris(Map.of(), Map.of(77L, auxiliaryUri));
         when(gitService.getBareRepository(eq(auxiliaryUri), eq(false))).thenThrow(new RuntimeException("boom"));
 
-        Optional<String> validationError = repositoryService.validateFileExists(CommentThreadLocationType.AUXILIARY_REPO, 77L, "src/main/App.java", uris);
+        Optional<String> validationError = repositoryService.validateFileExists(CommentThreadLocationType.AUXILIARY_REPO, 77L, "src/main/App.java", uris, null);
 
         assertThat(validationError).isPresent();
         assertThat(validationError.get()).contains("file existence check failed");

@@ -88,19 +88,6 @@ class InteractiveSandboxReaperServiceTest {
         reaperService = new InteractiveSandboxReaperService(buildAgentConfiguration, applicationContext, relayHandler, taskScheduler);
         ReflectionTestUtils.setField(reaperService, "sandboxContainerExpiryMinutes", (int) EXPIRY_MINUTES);
         ReflectionTestUtils.setField(reaperService, "sandboxCleanupScheduleMinutes", 15);
-        ReflectionTestUtils.setField(reaperService, "maxGenerationSandboxSlots", 0);
-    }
-
-    @Test
-    void disabledHostingRunsOneCleanupWithoutSchedulingDockerScans() {
-        Container recentLeftover = sandboxContainer("recent-leftover", "recent", Instant.now().getEpochSecond());
-        givenContainers(recentLeftover);
-
-        reaperService.scheduleCleanup();
-
-        verify(dockerClient).listContainersCmd();
-        verify(dockerClient).removeContainerCmd("recent-leftover");
-        verify(taskScheduler, never()).scheduleAtFixedRate(any(Runnable.class), any(Instant.class), any());
     }
 
     private Semaphore sandboxSlotPermits() {

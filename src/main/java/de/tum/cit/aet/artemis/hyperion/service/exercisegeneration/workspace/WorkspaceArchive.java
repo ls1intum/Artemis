@@ -16,12 +16,13 @@ import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
-import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
+
+import de.tum.cit.aet.artemis.hyperion.service.HyperionSecretMaterialPolicy;
 
 /**
  * Builds and parses the tar archives used to move the whole workspace in and out of the sandbox in one operation.
@@ -43,11 +44,7 @@ public final class WorkspaceArchive {
 
     private static final int MAX_ARCHIVE_ENTRIES = 10_000;
 
-    private static final Set<String> CREDENTIAL_FILE_NAMES = Set.of(".env", ".npmrc", ".pypirc", ".netrc", ".git-credentials", "application_default_credentials.json",
-            "service-account.json", "id_rsa", "id_dsa", "id_ecdsa", "id_ed25519");
-
-    private static final Pattern HIGH_CONFIDENCE_SECRET = Pattern.compile(
-            "-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----|(?:^|[^A-Z0-9])AKIA[A-Z0-9]{16}(?:$|[^A-Z0-9])|(?:^|[^A-Za-z0-9])gh[pousr]_[A-Za-z0-9]{36,}(?:$|[^A-Za-z0-9])");
+    private static final HyperionSecretMaterialPolicy SECRET_MATERIAL_POLICY = new HyperionSecretMaterialPolicy();
 
     private static final Path ARCHIVE_ROOT = Path.of("/workspace-archive");
 
@@ -98,11 +95,13 @@ public final class WorkspaceArchive {
             for (Map.Entry<String, String> entry : textFiles.entrySet()) {
                 incrementEntryCount(entryCount);
                 byte[] content = entry.getValue().getBytes(StandardCharsets.UTF_8);
+                rejectSecretMaterial(entry.getKey(), content, HyperionSecretMaterialPolicy.Origin.WORKSPACE_ARCHIVE);
                 total = addToSeedTotal(total, content.length, entry.getKey());
                 writeFileEntry(tar, entry.getKey(), content, executableFiles.contains(entry.getKey()) ? MODE_EXECUTABLE : MODE_FILE);
             }
             for (Map.Entry<String, byte[]> entry : binaryFiles.entrySet()) {
                 incrementEntryCount(entryCount);
+                rejectSecretMaterial(entry.getKey(), entry.getValue(), HyperionSecretMaterialPolicy.Origin.WORKSPACE_ARCHIVE);
                 total = addToSeedTotal(total, entry.getValue().length, entry.getKey());
                 writeFileEntry(tar, entry.getKey(), entry.getValue(), executableFiles.contains(entry.getKey()) ? MODE_EXECUTABLE : MODE_FILE);
             }
@@ -122,6 +121,7 @@ public final class WorkspaceArchive {
             for (Map.Entry<String, String> entry : textFiles.entrySet()) {
                 incrementEntryCount(entryCount);
                 byte[] content = entry.getValue().getBytes(StandardCharsets.UTF_8);
+                rejectSecretMaterial(entry.getKey(), content, HyperionSecretMaterialPolicy.Origin.WORKSPACE_ARCHIVE);
                 total = addToSeedTotal(total, content.length, entry.getKey());
                 writeFileEntry(tar, entry.getKey(), content, executableTextFiles.contains(entry.getKey()) ? MODE_EXECUTABLE : MODE_FILE);
             }
@@ -151,26 +151,23 @@ public final class WorkspaceArchive {
                 incrementEntryCount(entryCount);
                 int mode = Files.isExecutable(path) ? MODE_EXECUTABLE : MODE_FILE;
                 String entryName = prefix + "/" + relative;
-                long size = Files.size(path);
-                if (size > MAX_FILE_BYTES) {
-                    throw new RejectedWorkspaceEntryException("Refusing an oversized workspace seed file (" + size + " bytes): " + entryName);
+                byte[] content = Files.readAllBytes(path);
+                if (content.length > MAX_FILE_BYTES) {
+                    throw new RejectedWorkspaceEntryException("Refusing an oversized workspace seed file (" + content.length + " bytes): " + safePath(entryName));
                 }
-                rejectCredentialMaterial(path, relative, entryName);
-                total = addToSeedTotal(total, size, entryName);
-                writeFileEntry(tar, entryName, path, size, mode);
+                rejectSecretMaterial(entryName, content, HyperionSecretMaterialPolicy.Origin.WORKSPACE_ARCHIVE);
+                total = addToSeedTotal(total, content.length, entryName);
+                writeFileEntry(tar, entryName, content, mode);
             }
         }
         return total;
     }
 
-    private static void rejectCredentialMaterial(Path path, String relative, String entryName) throws IOException {
-        String fileName = Path.of(relative).getFileName().toString().toLowerCase();
-        if (CREDENTIAL_FILE_NAMES.contains(fileName)) {
-            throw new RejectedWorkspaceEntryException("Refusing to send a credential file to the generation provider: " + entryName);
-        }
-        String content = new String(Files.readAllBytes(path), StandardCharsets.UTF_8);
-        if (HIGH_CONFIDENCE_SECRET.matcher(content).find()) {
-            throw new RejectedWorkspaceEntryException("Refusing to send credential material to the generation provider: " + entryName);
+    private static void rejectSecretMaterial(String logicalPath, byte[] content, HyperionSecretMaterialPolicy.Origin origin) {
+        HyperionSecretMaterialPolicy.Assessment assessment = SECRET_MATERIAL_POLICY.assess(logicalPath, content, origin);
+        if (!assessment.isSafe()) {
+            String description = assessment.category().orElseThrow() == HyperionSecretMaterialPolicy.Category.CREDENTIAL_FILE ? "a credential file" : "credential material";
+            throw new RejectedWorkspaceEntryException("Refusing to send " + description + " [" + assessment.category().orElseThrow() + "] to Hyperion at " + assessment.safePath());
         }
     }
 
@@ -194,36 +191,24 @@ public final class WorkspaceArchive {
         tar.closeArchiveEntry();
     }
 
-    private static void writeFileEntry(TarArchiveOutputStream tar, String name, Path file, long size, int mode) throws IOException {
-        validateSeedEntryName(name);
-        TarArchiveEntry entry = new TarArchiveEntry(name);
-        entry.setSize(size);
-        entry.setMode(mode);
-        tar.putArchiveEntry(entry);
-        try (InputStream input = Files.newInputStream(file)) {
-            input.transferTo(tar);
-        }
-        tar.closeArchiveEntry();
-    }
-
     private static void validateSeedEntryName(String name) {
         if (name == null || name.isEmpty() || name.contains("\\")) {
-            throw new RejectedWorkspaceEntryException("Refusing a non-canonical workspace seed path: " + name);
+            throw new RejectedWorkspaceEntryException("Refusing a non-canonical workspace seed path: " + safePath(name));
         }
         Path resolvedPath = ARCHIVE_ROOT.resolve(name).normalize();
         String canonicalName = resolvedPath.startsWith(ARCHIVE_ROOT) ? ARCHIVE_ROOT.relativize(resolvedPath).toString().replace('\\', '/') : "";
         if (!resolvedPath.startsWith(ARCHIVE_ROOT) || !canonicalName.equals(name)) {
-            throw new RejectedWorkspaceEntryException("Refusing a workspace seed path outside the archive root: " + name);
+            throw new RejectedWorkspaceEntryException("Refusing a workspace seed path outside the archive root: " + safePath(name));
         }
         if (name.equals(".git") || name.startsWith(".git/") || name.endsWith("/.git") || name.contains("/.git/")) {
-            throw new RejectedWorkspaceEntryException("Refusing workspace Git metadata: " + name);
+            throw new RejectedWorkspaceEntryException("Refusing workspace Git metadata: " + safePath(name));
         }
     }
 
     private static long addToSeedTotal(long total, long size, String name) {
         long nextTotal = total + size;
         if (nextTotal > MAX_TOTAL_BYTES) {
-            throw new RejectedWorkspaceEntryException("Refusing to build the workspace archive: total seed size exceeds " + MAX_TOTAL_BYTES + " bytes at " + name);
+            throw new RejectedWorkspaceEntryException("Refusing to build the workspace archive: total seed size exceeds " + MAX_TOTAL_BYTES + " bytes at " + safePath(name));
         }
         return nextTotal;
     }
@@ -257,32 +242,32 @@ public final class WorkspaceArchive {
                 continue;
             }
             if (!entry.isFile() || entry.isSymbolicLink() || entry.isLink() || entry.isFIFO() || entry.isCharacterDevice() || entry.isBlockDevice() || entry.isSparse()) {
-                throw new RejectedWorkspaceEntryException("Refusing a non-regular workspace entry from the copyOut archive: " + entry.getName());
+                throw new RejectedWorkspaceEntryException("Refusing a non-regular workspace entry from the copyOut archive: " + safePath(entry.getName()));
             }
             String name = entry.getName();
             if (name.startsWith("./")) {
                 name = name.substring(2);
             }
             if (!normalizedPrefix.isEmpty() && !name.startsWith(normalizedPrefix)) {
-                throw new RejectedWorkspaceEntryException("Refusing a workspace entry outside the expected archive prefix: " + entry.getName());
+                throw new RejectedWorkspaceEntryException("Refusing a workspace entry outside the expected archive prefix: " + safePath(entry.getName()));
             }
             if (!normalizedPrefix.isEmpty()) {
                 name = name.substring(normalizedPrefix.length());
             }
             Path resolvedPath = ARCHIVE_ROOT.resolve(name).normalize();
             if (!resolvedPath.startsWith(ARCHIVE_ROOT)) {
-                throw new RejectedWorkspaceEntryException("Refusing a workspace entry whose path escapes the archive root: " + entry.getName());
+                throw new RejectedWorkspaceEntryException("Refusing a workspace entry whose path escapes the archive root: " + safePath(entry.getName()));
             }
             if (name.contains("\\")) {
-                throw new RejectedWorkspaceEntryException("Refusing a workspace entry with a non-portable repository path: " + entry.getName());
+                throw new RejectedWorkspaceEntryException("Refusing a workspace entry with a non-portable repository path: " + safePath(entry.getName()));
             }
             String canonicalName = ARCHIVE_ROOT.relativize(resolvedPath).toString().replace('\\', '/');
             if (!canonicalName.equals(name)) {
-                throw new RejectedWorkspaceEntryException("Refusing a workspace entry with a non-canonical path: " + entry.getName());
+                throw new RejectedWorkspaceEntryException("Refusing a workspace entry with a non-canonical path: " + safePath(entry.getName()));
             }
             name = canonicalName;
             if (name.equals(".git") || name.startsWith(".git/") || name.endsWith("/.git") || name.contains("/.git/")) {
-                throw new RejectedWorkspaceEntryException("Refusing workspace Git metadata: " + entry.getName());
+                throw new RejectedWorkspaceEntryException("Refusing workspace Git metadata: " + safePath(entry.getName()));
             }
             if (name.isEmpty()) {
                 continue;
@@ -291,13 +276,14 @@ public final class WorkspaceArchive {
             // OOM'd. The declared size can understate a hostile body, so re-check the actual byte count after reading and cap the running total across entries as well.
             long declaredSize = entry.getSize();
             if (declaredSize > MAX_FILE_BYTES) {
-                throw new RejectedWorkspaceEntryException("Refusing an oversized workspace entry (" + declaredSize + " declared bytes): " + entry.getName());
+                throw new RejectedWorkspaceEntryException("Refusing an oversized workspace entry (" + declaredSize + " declared bytes): " + safePath(entry.getName()));
             }
             byte[] bytes = readEntryBytes(tar, entry.getName());
             total += bytes.length;
             if (total > MAX_TOTAL_BYTES) {
                 throw new RejectedWorkspaceEntryException("Refusing to read the workspace archive: total size exceeds " + MAX_TOTAL_BYTES + " bytes");
             }
+            rejectSecretMaterial(name, bytes, HyperionSecretMaterialPolicy.Origin.GENERATED_CANDIDATE);
             if (BinaryContent.isBinary(bytes)) {
                 binaryDigests.put(name, sha256(bytes));
             }
@@ -357,9 +343,13 @@ public final class WorkspaceArchive {
         while ((read = tar.read(buffer)) != -1) {
             out.write(buffer, 0, read);
             if (out.size() > MAX_FILE_BYTES) {
-                throw new RejectedWorkspaceEntryException("Refusing an oversized workspace entry (" + out.size() + " bytes): " + name);
+                throw new RejectedWorkspaceEntryException("Refusing an oversized workspace entry (" + out.size() + " bytes): " + safePath(name));
             }
         }
         return out.toByteArray();
+    }
+
+    private static String safePath(String logicalPath) {
+        return SECRET_MATERIAL_POLICY.assess(logicalPath, new byte[0], HyperionSecretMaterialPolicy.Origin.WORKSPACE_ARCHIVE).safePath();
     }
 }

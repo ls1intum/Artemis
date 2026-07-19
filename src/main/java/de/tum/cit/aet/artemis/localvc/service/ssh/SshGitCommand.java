@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.localvc.service.ssh;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
@@ -21,6 +22,7 @@ import org.eclipse.jgit.transport.UploadPack;
 import org.eclipse.jgit.util.FS;
 
 import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.core.exception.HttpStatusException;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCFetchPreUploadHookSSH;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCPostPushHook;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCPrePushHook;
@@ -116,15 +118,18 @@ public class SshGitCommand extends GitPackCommand {
                         uploadPack.upload(getInputStream(), getOutputStream(), getErrorStream());
                     }
                     case RemoteConfig.DEFAULT_RECEIVE_PACK -> {
-                        // Prepare ReceivePack handler
-                        ReceivePack receivePack = new ReceivePack(repository);
+                        var exercise = getServerSession().getAttribute(SshConstants.REPOSITORY_EXERCISE_KEY);
+                        try (var ignored = localVCServletService.claimProgrammingExerciseMutation(repository, exercise)) {
+                            // Prepare ReceivePack handler
+                            ReceivePack receivePack = new ReceivePack(repository);
 
-                        // Register pre- and post-receive hooks for Artemis push handling
-                        receivePack.setPreReceiveHook(new LocalVCPrePushHook(localVCServletService, user));
-                        receivePack.setPostReceiveHook(new LocalVCPostPushHook(localVCServletService, getServerSession(), user));
+                            // Register pre- and post-receive hooks for Artemis push handling
+                            receivePack.setPreReceiveHook(new LocalVCPrePushHook(localVCServletService, user));
+                            receivePack.setPostReceiveHook(new LocalVCPostPushHook(localVCServletService, getServerSession(), user));
 
-                        // Begin receive-pack operation
-                        receivePack.receive(getInputStream(), getOutputStream(), getErrorStream());
+                            // Begin receive-pack operation
+                            receivePack.receive(getInputStream(), getOutputStream(), getErrorStream());
+                        }
                     }
                     default -> throw new IllegalArgumentException("Unknown git command: " + command);
                 }
@@ -132,6 +137,18 @@ public class SshGitCommand extends GitPackCommand {
 
             // Notify SSH server of success
             onExit(0);
+        }
+        catch (HttpStatusException e) {
+            String message = "Push rejected: " + e.getMessage() + " Please retry the push later.";
+            try {
+                if (getErrorStream() != null) {
+                    getErrorStream().write((message + System.lineSeparator()).getBytes(StandardCharsets.UTF_8));
+                }
+            }
+            catch (IOException ignored) {
+                // The client may already have disconnected; the mutation lease was still released by try-with-resources.
+            }
+            onExit(-1, message);
         }
         catch (Throwable t) {
             // Notify SSH server of failure with the exception type

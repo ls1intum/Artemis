@@ -160,6 +160,19 @@ class HyperionProgrammingExerciseContextRendererServiceTest {
     }
 
     @Test
+    void getBuildEnvironmentContext_excludesSupportedSecretMaterial() throws IOException {
+        String githubSentinel = "ghp_ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghij";
+        FileUtils.writeStringToFile(tempDir.resolve("pom.xml").toFile(), "<project>safe</project>", StandardCharsets.UTF_8);
+        FileUtils.writeStringToFile(tempDir.resolve("gradle.properties").toFile(), githubSentinel, StandardCharsets.UTF_8);
+        Repository repository = mock(Repository.class);
+        when(repository.getLocalPath()).thenReturn(tempDir);
+
+        String result = contextRendererService.getBuildEnvironmentContext(repository);
+
+        assertThat(result).contains("pom.xml").doesNotContain("gradle.properties").doesNotContain(githubSentinel);
+    }
+
+    @Test
     void getBuildEnvironmentContext_withSymlinkedBuildFile_skipsSymlinkTarget() throws IOException {
         Path externalBuildFile = externalTempDir.resolve("hyperion-external-build-file.xml");
         FileUtils.writeStringToFile(externalBuildFile.toFile(), "<project>outside</project>", StandardCharsets.UTF_8);

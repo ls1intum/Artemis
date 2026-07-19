@@ -138,6 +138,7 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate, OnD
 
     // WARNING: Don't initialize variables in the declaration block. The method initializeProperties is responsible for this task.
     private readonly selectedFileValue = signal<string | undefined>(undefined);
+    private bypassNextUnloadWarning = false;
     unsavedFilesValue!: { [fileName: string]: string }; // {[fileName]: fileContent}; set in constructor via initializeProperties()
     readonly fileBadges = signal<{ [fileName: string]: FileBadge[] }>({});
     get selectedFile(): string | undefined {
@@ -420,10 +421,8 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate, OnD
         this.onCommit.emit();
     }
 
-    /**
-     * On successful pull during a refresh operation, we remove all unsaved files.
-     */
-    onRefreshFiles() {
+    /** Clears local editor state after a successful repository refresh. */
+    onRefreshFiles(): void {
         this.unsavedFiles = {};
         this.commitState = CommitState.CLEAN;
         this.onCommitStateChange.emit(this.commitState);
@@ -506,8 +505,16 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate, OnD
         return _isEmpty(this.unsavedFiles);
     }
 
+    allowNextUnloadWithoutConfirmation(): void {
+        this.bypassNextUnloadWarning = true;
+    }
+
     hasCleanRepositoryState(): boolean {
         return this.commitState === CommitState.CLEAN;
+    }
+
+    hasReviewCommentDrafts(): boolean {
+        return this.monacoEditor()?.hasReviewCommentDrafts() ?? false;
     }
 
     /**
@@ -536,6 +543,10 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate, OnD
      */
     @HostListener('window:beforeunload', ['$event'])
     unloadNotification(event: BeforeUnloadEvent) {
+        if (this.bypassNextUnloadWarning) {
+            this.bypassNextUnloadWarning = false;
+            return true;
+        }
         if (!this.canDeactivate()) {
             event.preventDefault();
             return this.translateService.instant('pendingChanges');

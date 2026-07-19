@@ -26,6 +26,8 @@ import org.springframework.test.util.ReflectionTestUtils;
  */
 class WorkspaceArchiveTest {
 
+    private static final String GITHUB_SENTINEL = "ghp_ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghij";
+
     @Test
     void roundTrip_preservesContentAndStripsPrefix() throws Exception {
         Map<String, String> files = new LinkedHashMap<>();
@@ -273,6 +275,46 @@ class WorkspaceArchiveTest {
         assertThatExceptionOfType(WorkspaceArchive.RejectedWorkspaceEntryException.class)
                 .isThrownBy(() -> WorkspaceArchive.buildWorkspaceTarStream(Map.of(), Map.of("tests", repo))).withMessageContaining("credential material")
                 .withMessageContaining("tests/fixture.txt");
+    }
+
+    @Test
+    void buildWorkspaceTar_rejectsSecretMaterialFromLiteralTextInputs() {
+        assertThatExceptionOfType(WorkspaceArchive.RejectedWorkspaceEntryException.class)
+                .isThrownBy(() -> WorkspaceArchive.buildWorkspaceTarStream(Map.of("solution/.env.production", "ordinary"), Map.of())).withMessageContaining("CREDENTIAL_FILE")
+                .withMessageContaining("solution/.env.production");
+
+        assertThatExceptionOfType(WorkspaceArchive.RejectedWorkspaceEntryException.class)
+                .isThrownBy(() -> WorkspaceArchive.buildWorkspaceTarStream(Map.of("problem-statement.md", GITHUB_SENTINEL), Map.of())).withMessageContaining("GITHUB_TOKEN")
+                .withMessageNotContaining(GITHUB_SENTINEL);
+    }
+
+    @Test
+    void buildFilesTar_rejectsSecretMaterialFromTextAndBinaryInputs() {
+        assertThatExceptionOfType(WorkspaceArchive.RejectedWorkspaceEntryException.class)
+                .isThrownBy(() -> WorkspaceArchive.buildFilesTarStream(Map.of("solution/notes.txt", GITHUB_SENTINEL), Map.of(), java.util.Set.of()))
+                .withMessageContaining("GITHUB_TOKEN").withMessageNotContaining(GITHUB_SENTINEL);
+
+        assertThatExceptionOfType(WorkspaceArchive.RejectedWorkspaceEntryException.class)
+                .isThrownBy(() -> WorkspaceArchive.buildFilesTarStream(Map.of(), Map.of("solution/keys/server.p12", new byte[] { 0, 1, 2 }), java.util.Set.of()))
+                .withMessageContaining("PRIVATE_KEY_CONTAINER").withMessageContaining("solution/keys/server.p12");
+    }
+
+    @Test
+    void readTar_rejectsGeneratedSecretMaterialBeforeReturningCandidate() throws Exception {
+        try (TarArchiveInputStream tar = new TarArchiveInputStream(packTar(Map.of("solution/.ENV.production", "ordinary".getBytes(StandardCharsets.UTF_8))))) {
+            assertThatExceptionOfType(WorkspaceArchive.RejectedWorkspaceEntryException.class).isThrownBy(() -> WorkspaceArchive.readTar(tar, "solution"))
+                    .withMessageContaining("CREDENTIAL_FILE").withMessageContaining(".ENV.production");
+        }
+
+        try (TarArchiveInputStream tar = new TarArchiveInputStream(packTar(Map.of("solution/fixture.txt", GITHUB_SENTINEL.getBytes(StandardCharsets.UTF_8))))) {
+            assertThatExceptionOfType(WorkspaceArchive.RejectedWorkspaceEntryException.class).isThrownBy(() -> WorkspaceArchive.readTar(tar, "solution"))
+                    .withMessageContaining("GITHUB_TOKEN").withMessageNotContaining(GITHUB_SENTINEL);
+        }
+
+        try (TarArchiveInputStream tar = new TarArchiveInputStream(packTar(Map.of("solution/keys/server.jks", new byte[] { 0, 1, 2 })))) {
+            assertThatExceptionOfType(WorkspaceArchive.RejectedWorkspaceEntryException.class).isThrownBy(() -> WorkspaceArchive.readTar(tar, "solution"))
+                    .withMessageContaining("PRIVATE_KEY_CONTAINER");
+        }
     }
 
     @Test

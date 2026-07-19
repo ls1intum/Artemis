@@ -258,6 +258,8 @@ public class ArtemisProperties {
 
             private int backupCount = 1;
 
+            private int expectedDataMemberCount = 1;
+
             public int getTimeToLiveSeconds() {
                 return timeToLiveSeconds;
             }
@@ -272,6 +274,14 @@ public class ArtemisProperties {
 
             public void setBackupCount(int backupCount) {
                 this.backupCount = backupCount;
+            }
+
+            public int getExpectedDataMemberCount() {
+                return expectedDataMemberCount;
+            }
+
+            public void setExpectedDataMemberCount(int expectedDataMemberCount) {
+                this.expectedDataMemberCount = expectedDataMemberCount;
             }
         }
     }

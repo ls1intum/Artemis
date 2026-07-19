@@ -100,6 +100,8 @@ public class HyperionProgrammingExerciseContextRendererService {
 
     private static final Logger log = LoggerFactory.getLogger(HyperionProgrammingExerciseContextRendererService.class);
 
+    private static final HyperionSecretMaterialPolicy SECRET_MATERIAL_POLICY = new HyperionSecretMaterialPolicy();
+
     private static final Set<String> EXCLUDED_DIRECTORIES = Set.of(".git", ".idea", ".vscode", "target", "build", "out", "bin", "node_modules", ".gradle", ".mvn", "dist", ".next",
             "coverage");
 
@@ -131,6 +133,8 @@ public class HyperionProgrammingExerciseContextRendererService {
             return "";
         }
         String problemStatement = Objects.requireNonNullElse(exercise.getProblemStatement(), "");
+        SECRET_MATERIAL_POLICY.requireSafe("problem_statement.md", problemStatement.getBytes(java.nio.charset.StandardCharsets.UTF_8),
+                HyperionSecretMaterialPolicy.Origin.CLASSIC_CONTEXT);
         ProgrammingLanguage language = exercise.getProgrammingLanguage();
         Map<String, String> templateRepoFiles = fetchRepoContents(exercise.getTemplateParticipation() == null ? null : exercise.getTemplateParticipation().getVcsRepositoryUri(),
                 "template", exercise.getId());
@@ -155,7 +159,7 @@ public class HyperionProgrammingExerciseContextRendererService {
             return repositoryService.getFilesContentFromBareRepositoryForLastCommit(localVCRepositoryUri);
         }
         catch (IOException ex) {
-            log.warn("Could not fetch {} repository contents for exercise {}", label, exerciseId, ex);
+            log.warn("Could not fetch {} repository contents for exercise {} ({})", label, exerciseId, ex.getClass().getSimpleName());
             return Map.of();
         }
     }
@@ -260,19 +264,25 @@ public class HyperionProgrammingExerciseContextRendererService {
         try {
             File repositoryRoot = repository.getLocalPath().toFile();
             if (!repositoryRoot.exists() || !repositoryRoot.isDirectory()) {
-                log.warn("Repository path does not exist or is not a directory: {}", repositoryRoot.getAbsolutePath());
+                log.warn("Repository path does not exist or is not a directory: {}", safePath(repositoryRoot.toPath()));
                 return "Repository structure could not be determined.";
             }
 
+            HyperionSecretMaterialPolicy.Assessment rootAssessment = SECRET_MATERIAL_POLICY.assess(repositoryRoot.getName(), new byte[0],
+                    HyperionSecretMaterialPolicy.Origin.CLASSIC_CONTEXT);
+            if (!rootAssessment.isSafe()) {
+                log.debug("Skipping Hyperion repository structure [{}]: {}", rootAssessment.category().orElseThrow(), rootAssessment.safePath());
+                return "Repository structure could not be determined.";
+            }
             StringBuilder structure = new StringBuilder();
             structure.append(repositoryRoot.getName()).append("/").append("\n");
-            generateTreeStructure(repositoryRoot, structure, "", true);
+            generateTreeStructure(repositoryRoot, repositoryRoot, structure, "");
 
             return structure.toString();
 
         }
         catch (Exception e) {
-            log.error("Failed to generate repository structure for repository: {}", repository.getLocalPath(), e);
+            log.error("Failed to generate repository structure for repository {} ({})", safePath(repository.getLocalPath()), e.getClass().getSimpleName());
             return "Repository structure could not be determined due to an error.";
         }
     }
@@ -294,10 +304,20 @@ public class HyperionProgrammingExerciseContextRendererService {
         }
 
         try (var walk = Files.walk(repositoryPath)) {
-            Map<String, String> buildFiles = walk.filter(path -> Files.isRegularFile(path, LinkOption.NOFOLLOW_LINKS))
-                    .filter(path -> isRelevantBuildEnvironmentFile(repositoryPath, path))
-                    .sorted(Comparator.comparing(path -> repositoryPath.relativize(path).toString(), String.CASE_INSENSITIVE_ORDER)).collect(TreeMap::new,
-                            (files, path) -> files.put(repositoryPath.relativize(path).toString().replace('\\', '/'), readBuildEnvironmentFile(path)), TreeMap::putAll);
+            Map<String, String> buildFiles = new TreeMap<>();
+            walk.filter(path -> Files.isRegularFile(path, LinkOption.NOFOLLOW_LINKS)).filter(path -> isRelevantBuildEnvironmentFile(repositoryPath, path))
+                    .sorted(Comparator.comparing(path -> repositoryPath.relativize(path).toString(), String.CASE_INSENSITIVE_ORDER)).forEach(path -> {
+                        String relativePath = repositoryPath.relativize(path).toString().replace('\\', '/');
+                        String content = readBuildEnvironmentFile(path);
+                        HyperionSecretMaterialPolicy.Assessment assessment = SECRET_MATERIAL_POLICY.assess(relativePath, content.getBytes(java.nio.charset.StandardCharsets.UTF_8),
+                                HyperionSecretMaterialPolicy.Origin.CLASSIC_CONTEXT);
+                        if (assessment.isSafe()) {
+                            buildFiles.put(relativePath, content);
+                        }
+                        else {
+                            log.debug("Skipping Hyperion build context file [{}]: {}", assessment.category().orElseThrow(), assessment.safePath());
+                        }
+                    });
 
             if (buildFiles.isEmpty()) {
                 return "No build environment files found.";
@@ -305,7 +325,7 @@ public class HyperionProgrammingExerciseContextRendererService {
             return renderRepository(buildFiles, "Build Environment Files");
         }
         catch (IOException | UncheckedIOException e) {
-            log.warn("Failed to render build environment context for repository {}: {}", repositoryPath, e.getMessage());
+            log.warn("Failed to render build environment context for repository {}", safePath(repositoryPath));
             return "Build environment files could not be determined.";
         }
     }
@@ -318,14 +338,21 @@ public class HyperionProgrammingExerciseContextRendererService {
      * @param prefix    the current line prefix for proper tree formatting
      * @param isLast    whether this is the last item in its parent directory
      */
-    private void generateTreeStructure(File directory, StringBuilder structure, String prefix, boolean isLast) {
+    private void generateTreeStructure(File repositoryRoot, File directory, StringBuilder structure, String prefix) {
         File[] files = directory.listFiles();
         if (files == null) {
             return;
         }
 
         // Filter out excluded directories and files
-        File[] filteredFiles = Arrays.stream(files).filter(file -> !EXCLUDED_DIRECTORIES.contains(file.getName()) && !EXCLUDED_FILES.contains(file.getName())).sorted((a, b) -> {
+        File[] filteredFiles = Arrays.stream(files).filter(file -> !EXCLUDED_DIRECTORIES.contains(file.getName()) && !EXCLUDED_FILES.contains(file.getName())).filter(file -> {
+            String relativePath = repositoryRoot.toPath().relativize(file.toPath()).toString().replace('\\', '/');
+            HyperionSecretMaterialPolicy.Assessment assessment = SECRET_MATERIAL_POLICY.assess(relativePath, new byte[0], HyperionSecretMaterialPolicy.Origin.CLASSIC_CONTEXT);
+            if (!assessment.isSafe()) {
+                log.debug("Skipping Hyperion repository structure entry [{}]: {}", assessment.category().orElseThrow(), assessment.safePath());
+            }
+            return assessment.isSafe();
+        }).sorted((a, b) -> {
             // Directories first, then files
             if (a.isDirectory() && !b.isDirectory()) {
                 return -1;
@@ -352,7 +379,7 @@ public class HyperionProgrammingExerciseContextRendererService {
             // Recursively process subdirectories
             if (file.isDirectory()) {
                 String newPrefix = prefix + (isLastFile ? "    " : "│   ");
-                generateTreeStructure(file, structure, newPrefix, false);
+                generateTreeStructure(repositoryRoot, file, structure, newPrefix);
             }
         }
     }
@@ -396,7 +423,7 @@ public class HyperionProgrammingExerciseContextRendererService {
             return content.substring(0, MAX_BUILD_ENVIRONMENT_FILE_CONTENT_LENGTH) + "\n... [truncated]";
         }
         catch (IOException e) {
-            log.warn("Failed to read build environment file {}: {}", path, e.getMessage());
+            log.warn("Failed to read build environment file {} ({})", safePath(path), e.getClass().getSimpleName());
             return "[Failed to read file]";
         }
     }
@@ -434,16 +461,21 @@ public class HyperionProgrammingExerciseContextRendererService {
                         .forEach(path -> {
                             try {
                                 String content = Files.readString(path);
-                                solutionCode.append("// File: ").append(repositoryPath.relativize(path)).append("\n");
-                                solutionCode.append(content).append("\n\n");
+                                String relativePath = repositoryPath.relativize(path).toString().replace('\\', '/');
+                                HyperionSecretMaterialPolicy.Assessment assessment = SECRET_MATERIAL_POLICY.assess(relativePath,
+                                        content.getBytes(java.nio.charset.StandardCharsets.UTF_8), HyperionSecretMaterialPolicy.Origin.CLASSIC_CONTEXT);
+                                if (assessment.isSafe()) {
+                                    solutionCode.append("// File: ").append(relativePath).append("\n");
+                                    solutionCode.append(content).append("\n\n");
+                                }
                             }
                             catch (IOException e) {
-                                log.warn("Failed to read file {}: {}", path, e.getMessage());
+                                log.warn("Failed to read solution context file {}", safePath(path));
                             }
                         });
             }
             catch (IOException e) {
-                log.error("Failed to scan solution repository for exercise {}: {}", exercise.getId(), e.getMessage());
+                log.error("Failed to scan solution repository for exercise {} ({})", exercise.getId(), e.getClass().getSimpleName());
                 return "Failed to read solution code. Please refer to the problem statement.";
             }
 
@@ -451,7 +483,7 @@ public class HyperionProgrammingExerciseContextRendererService {
 
         }
         catch (Exception e) {
-            log.error("Error accessing solution repository for exercise {}: {}", exercise.getId(), e.getMessage(), e);
+            log.error("Error accessing solution repository for exercise {} ({})", exercise.getId(), e.getClass().getSimpleName());
             throw new NetworkingException("Failed to access solution repository", e);
         }
     }
@@ -486,22 +518,32 @@ public class HyperionProgrammingExerciseContextRendererService {
                         .filter(path -> Files.isRegularFile(path, LinkOption.NOFOLLOW_LINKS))
                         .sorted(Comparator.comparing((Path path) -> isStructuralSpec(path) ? 0 : 1).thenComparing(Path::toString)).forEach(path -> {
                             try {
-                                testCode.append("// File: ").append(repositoryPath.relativize(path)).append("\n").append(Files.readString(path)).append("\n\n");
+                                String relativePath = repositoryPath.relativize(path).toString().replace('\\', '/');
+                                String content = Files.readString(path);
+                                HyperionSecretMaterialPolicy.Assessment assessment = SECRET_MATERIAL_POLICY.assess(relativePath,
+                                        content.getBytes(java.nio.charset.StandardCharsets.UTF_8), HyperionSecretMaterialPolicy.Origin.CLASSIC_CONTEXT);
+                                if (assessment.isSafe()) {
+                                    testCode.append("// File: ").append(relativePath).append("\n").append(content).append("\n\n");
+                                }
                             }
                             catch (IOException e) {
-                                log.warn("Failed to read test file {}: {}", path, e.getMessage());
+                                log.warn("Failed to read test context file {}", safePath(path));
                             }
                         });
             }
             return testCode.length() > 0 ? testCode.toString() : noTests;
         }
         catch (Exception e) {
-            log.warn("Could not read test repository for exercise {}: {}. Generating from the problem statement only.", exercise.getId(), e.getMessage());
+            log.warn("Could not read test repository for exercise {} ({}). Generating from the problem statement only.", exercise.getId(), e.getClass().getSimpleName());
             return noTests;
         }
     }
 
     private static boolean isStructuralSpec(Path path) {
         return "test.json".equals(path.getFileName().toString());
+    }
+
+    private static String safePath(Path path) {
+        return SECRET_MATERIAL_POLICY.assess(path == null ? null : path.toString(), new byte[0], HyperionSecretMaterialPolicy.Origin.CLASSIC_CONTEXT).safePath();
     }
 }

@@ -137,17 +137,15 @@ final class ProblemStatementBindingChecker {
     }
 
     /** Real gradable tests that production will grade but the problem statement does not expose via any {@code [task]} binding. */
-    static List<String> unboundGradableTestNames(String problemStatement, List<String> actualTestNames, int testCount, Set<String> seededStructuralTestNames) {
+    static List<String> unboundGradableTestNames(String problemStatement, List<String> actualTestNames, int testCount) {
         if (actualTestNames.isEmpty() || actualTestNames.size() < testCount) {
             return List.of();
         }
         Set<String> bound = boundTestNames(problemStatement).stream().map(ProblemStatementBindingChecker::normalizeTestName).collect(Collectors.toSet());
-        Set<String> seededStructural = seededStructuralTestNames == null ? Set.of()
-                : seededStructuralTestNames.stream().map(ProblemStatementBindingChecker::normalizeTestName).collect(Collectors.toSet());
         List<String> unbound = new ArrayList<>();
         for (String rawName : actualTestNames) {
             String normalized = normalizeTestName(rawName);
-            if (BuildGateTestNames.isBuildGate(normalized) || seededStructural.contains(normalized) || bound.contains(normalized)) {
+            if (BuildGateTestNames.isBuildGate(normalized) || bound.contains(normalized)) {
                 continue;
             }
             if (!unbound.contains(normalized)) {

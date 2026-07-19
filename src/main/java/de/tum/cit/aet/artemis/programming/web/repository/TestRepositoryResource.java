@@ -6,6 +6,7 @@ import java.security.Principal;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.OptionalLong;
 
 import jakarta.servlet.http.HttpServletRequest;
 
@@ -44,6 +45,7 @@ import de.tum.cit.aet.artemis.programming.domain.Repository;
 import de.tum.cit.aet.artemis.programming.dto.FileMove;
 import de.tum.cit.aet.artemis.programming.dto.RepositoryStatusDTO;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseMutationGuard;
 import de.tum.cit.aet.artemis.programming.service.RepositoryAccessService;
 import de.tum.cit.aet.artemis.programming.service.RepositoryService;
 
@@ -57,8 +59,10 @@ import de.tum.cit.aet.artemis.programming.service.RepositoryService;
 public class TestRepositoryResource extends RepositoryResource {
 
     public TestRepositoryResource(UserRepository userRepository, AuthorizationCheckService authCheckService, GitService gitService, RepositoryService repositoryService,
-            ProgrammingExerciseRepository programmingExerciseRepository, RepositoryAccessService repositoryAccessService, Optional<LocalVCServletService> localVCServletService) {
-        super(userRepository, authCheckService, gitService, repositoryService, programmingExerciseRepository, repositoryAccessService, localVCServletService);
+            ProgrammingExerciseRepository programmingExerciseRepository, RepositoryAccessService repositoryAccessService, Optional<LocalVCServletService> localVCServletService,
+            ProgrammingExerciseMutationGuard programmingExerciseMutationGuard) {
+        super(userRepository, authCheckService, gitService, repositoryService, programmingExerciseRepository, repositoryAccessService, localVCServletService,
+                programmingExerciseMutationGuard);
     }
 
     @Override
@@ -91,6 +95,13 @@ public class TestRepositoryResource extends RepositoryResource {
     @Override
     String getOrRetrieveBranchOfDomainObject(Long exerciseId) {
         return programmingExerciseRepository.findBranchByExerciseId(exerciseId);
+    }
+
+    @Override
+    OptionalLong getExerciseIdForMutation(Long exerciseId) {
+        ProgrammingExercise exercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId);
+        repositoryAccessService.checkAccessTestOrAuxRepositoryElseThrow(false, exercise, userRepository.getUserWithGroupsAndAuthorities(), "test");
+        return OptionalLong.of(exerciseId);
     }
 
     @Override
@@ -186,23 +197,25 @@ public class TestRepositoryResource extends RepositoryResource {
 
         ProgrammingExercise exercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId);
 
-        Repository repository;
         try {
             repositoryAccessService.checkAccessTestOrAuxRepositoryElseThrow(true, exercise, userRepository.getUserWithGroupsAndAuthorities(principal.getName()), "test");
-            repository = gitService.getOrCheckoutRepository(exercise.getVcsTestRepositoryUri(), true, true);
         }
         catch (AccessForbiddenException e) {
             FileSubmissionError error = new FileSubmissionError(exerciseId, "noPermissions");
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, error.getMessage(), error);
         }
-        catch (CheckoutConflictException | WrongRepositoryStateException ex) {
-            FileSubmissionError error = new FileSubmissionError(exerciseId, "checkoutConflict");
-            throw new ResponseStatusException(HttpStatus.CONFLICT, error.getMessage(), error);
-        }
-        catch (GitAPIException ex) {
-            FileSubmissionError error = new FileSubmissionError(exerciseId, "checkoutFailed");
-            throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, error.getMessage(), error);
-        }
-        return saveFilesAndCommitChanges(exerciseId, submissions, commit, repository);
+        return saveFilesAndCommitChanges(exerciseId, submissions, commit, () -> {
+            try {
+                return gitService.getOrCheckoutRepository(exercise.getVcsTestRepositoryUri(), true, true);
+            }
+            catch (CheckoutConflictException | WrongRepositoryStateException ex) {
+                FileSubmissionError error = new FileSubmissionError(exerciseId, "checkoutConflict");
+                throw new ResponseStatusException(HttpStatus.CONFLICT, error.getMessage(), error);
+            }
+            catch (GitAPIException ex) {
+                FileSubmissionError error = new FileSubmissionError(exerciseId, "checkoutFailed");
+                throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, error.getMessage(), error);
+            }
+        });
     }
 }

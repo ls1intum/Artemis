@@ -164,7 +164,7 @@ export class CodeEditorMonacoComponent implements OnDestroy {
     private pendingReviewRenderFile?: string;
     // Tracks the most-recently-requested file for the cascade so a slow load for an earlier file
     // does not run follow-up work (feedback widgets, review widgets, etc.) against the now-current file.
-    private pendingLoadFileName?: string;
+    private fileLoadGeneration = 0;
     private fileSyncReadySubscription?: Subscription;
     private fileSyncStateReplacedSubscription?: Subscription;
     private dirtySignalContentToSuppress = new Map<string, string>();
@@ -288,13 +288,9 @@ export class CodeEditorMonacoComponent implements OnDestroy {
             if (prevSelectedFile && this.fileSession()[prevSelectedFile]) {
                 this.fileSession()[prevSelectedFile].scrollTop = this.editor().getScrollTop();
             }
-            // Record the file we're about to load so a slow response for an earlier file
-            // cannot trigger feedback / review-comment rendering against the now-current file.
-            this.pendingLoadFileName = selectedFile;
+            const loadGeneration = ++this.fileLoadGeneration;
             await this.selectFileInEditor(selectedFile);
-            if (this.pendingLoadFileName !== selectedFile) {
-                // Another file load was requested while we were awaiting this one — drop all
-                // follow-up work; the newer cascade owns the editor state from here.
+            if (this.fileLoadGeneration !== loadGeneration || this.selectedFile() !== selectedFile) {
                 return;
             }
             this.setBuildAnnotations(this.annotationsArray);
@@ -307,7 +303,7 @@ export class CodeEditorMonacoComponent implements OnDestroy {
             this.pendingReviewRenderFile = selectedFile;
             this.tryRenderPendingReviewCommentWidgets(selectedFile);
         } else if (selectedFileChanged && !selectedFile) {
-            this.pendingLoadFileName = undefined;
+            this.fileLoadGeneration++;
             this.selectedFileAwaitingInitialSync.set(false);
         }
 
@@ -693,9 +689,14 @@ export class CodeEditorMonacoComponent implements OnDestroy {
      * The replacement updates model content via the binding and must not be interpreted as a
      * local user edit, so only the matching dirty signal for this file is suppressed.
      */
-    private onFileSyncStateReplaced(filePath: string, replacementContent: string): void {
+    private onFileSyncStateReplaced(filePath: string, replacementContent: string, contentDivergedFromBaseline?: boolean): void {
+        const normalizedReplacement = replacementContent.replace(/\r\n/g, '\n');
+        const persistedFallback = this.fileSession()[filePath]?.code.replace(/\r\n/g, '\n');
+        if (contentDivergedFromBaseline ?? (persistedFallback !== undefined && persistedFallback !== normalizedReplacement)) {
+            this.emitDirtySignalFromInitialSync(filePath, normalizedReplacement);
+        }
         if (this.selectedFile() === filePath) {
-            this.dirtySignalContentToSuppress.set(filePath, replacementContent.replace(/\r\n/g, '\n'));
+            this.dirtySignalContentToSuppress.set(filePath, normalizedReplacement);
             this.dirtySignalSuppressedDuringInitialSync.delete(filePath);
             this.selectedFileAwaitingInitialSync.set(false);
         }
@@ -891,7 +892,9 @@ export class CodeEditorMonacoComponent implements OnDestroy {
                         this.onError.emit('saveFailed');
                         return;
                     }
-                    this.onSavedFiles.emit({ [fileName]: undefined });
+                    if (this.fileSession()[fileName]?.code === currentText) {
+                        this.onSavedFiles.emit({ [fileName]: undefined });
+                    }
                     this.onInlineFixCommitted.emit();
                     this.exerciseReviewCommentService.markInlineFixAppliedInContext(commentId);
                 },
@@ -915,6 +918,10 @@ export class CodeEditorMonacoComponent implements OnDestroy {
 
     clearReviewCommentDrafts(): void {
         this.reviewCommentManager?.clearDrafts();
+    }
+
+    hasReviewCommentDrafts(): boolean {
+        return this.reviewCommentManager?.hasDrafts() ?? false;
     }
 
     /**

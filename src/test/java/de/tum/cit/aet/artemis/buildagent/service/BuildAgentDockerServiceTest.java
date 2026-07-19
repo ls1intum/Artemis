@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.buildagent.service;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doReturn;
@@ -19,10 +20,12 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestMethodOrder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import com.github.dockerjava.api.command.InfoCmd;
 import com.github.dockerjava.api.command.InspectImageCmd;
 import com.github.dockerjava.api.command.ListContainersCmd;
+import com.github.dockerjava.api.command.RemoveContainerCmd;
 import com.github.dockerjava.api.command.StopContainerCmd;
 import com.github.dockerjava.api.exception.NotFoundException;
 import com.github.dockerjava.api.exception.NotModifiedException;
@@ -190,5 +193,43 @@ class BuildAgentDockerServiceTest extends AbstractProgrammingIntegrationLocalCIL
 
         // Verify that removeContainerCmd() was called
         verify(dockerClient, times(1)).removeContainerCmd(anyString());
+    }
+
+    @Test
+    void startupCleanupRemovesOldGenerationSandboxesOnlyWhenHostingIsDisabled() {
+        Container sandbox = mock(Container.class);
+        String sandboxPrefix = InteractiveSandboxService.containerNamePrefix("agent");
+        doReturn(new String[] { "/" + sandboxPrefix + "7e916dbb-838e-4fac-852d-3854762812eb" }).when(sandbox).getNames();
+
+        assertThat(BuildAgentDockerService.shouldCleanUpOnStartup(sandbox, "local-ci-", sandboxPrefix, false)).isTrue();
+        assertThat(BuildAgentDockerService.shouldCleanUpOnStartup(sandbox, "local-ci-", sandboxPrefix, true)).isFalse();
+    }
+
+    @Test
+    void startupCleanupRetriesAfterListingFailureAndForceRemovesGenerationSandbox() {
+        ReflectionTestUtils.setField(buildAgentDockerService, "isFirstCleanup", true);
+        ReflectionTestUtils.setField(buildAgentDockerService, "maxGenerationSandboxSlots", 0);
+        ReflectionTestUtils.setField(buildAgentDockerService, "buildAgentShortName", "agent");
+
+        Container sandbox = mock(Container.class);
+        doReturn("sandbox-id").when(sandbox).getId();
+        doReturn(new String[] { "/" + InteractiveSandboxService.containerNamePrefix("agent") + "7e916dbb-838e-4fac-852d-3854762812eb" }).when(sandbox).getNames();
+        ListContainersCmd listContainersCmd = mock(ListContainersCmd.class);
+        doReturn(listContainersCmd).when(dockerClient).listContainersCmd();
+        doReturn(listContainersCmd).when(listContainersCmd).withShowAll(true);
+        doThrow(new RuntimeException("temporary listing failure")).doReturn(List.of(sandbox)).when(listContainersCmd).exec();
+        RemoveContainerCmd removeContainerCmd = mock(RemoveContainerCmd.class);
+        doReturn(removeContainerCmd).when(dockerClient).removeContainerCmd("sandbox-id");
+        doReturn(removeContainerCmd).when(removeContainerCmd).withForce(true);
+        doReturn(removeContainerCmd).when(removeContainerCmd).withRemoveVolumes(true);
+
+        buildAgentDockerService.cleanUpContainers();
+        buildAgentDockerService.cleanUpContainers();
+
+        verify(listContainersCmd, times(2)).exec();
+        verify(removeContainerCmd).withForce(true);
+        verify(removeContainerCmd).withRemoveVolumes(true);
+        verify(removeContainerCmd).exec();
+        verify(dockerClient, never()).stopContainerCmd("sandbox-id");
     }
 }

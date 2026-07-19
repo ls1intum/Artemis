@@ -89,8 +89,12 @@ artemis:
     conversion-service-url: http://localhost:8080
   hyperion:
     enabled: false  # Enable the Hyperion service on startup. Requires Spring AI (configured below).
+    exercise-generation:
+      enabled: false # Independently opt in to agentic whole-exercise generation. Also requires Hyperion, core, and LocalCI/LocalVC.
     generation:
       max-concurrent-jobs-per-core-node: 2 # Core-node worker cap with no waiting queue. Size together with provider limits and generation sandbox slots across build agents.
+      test-case-sync-timeout: PT10M # Allows LocalCI queueing plus the configured four-minute maximum build duration before finalizing a saved exercise.
+      test-case-sync-poll: PT3S
     agent:
       context-window-tokens: 128000
       max-turns: 40

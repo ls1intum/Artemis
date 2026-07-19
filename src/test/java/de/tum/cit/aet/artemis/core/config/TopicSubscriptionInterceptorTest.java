@@ -134,6 +134,26 @@ class TopicSubscriptionInterceptorTest extends AbstractSpringIntegrationIndepend
             when(principalMock.getName()).thenReturn(TEST_PREFIX + "student1");
             returnedValue = interceptor.preSend(msgMock, channel);
             assertThat(returnedValue).isNull();
+
+            // Public Hyperion exercise state contains no private run details, but remains exercise-editor scoped.
+            when(headerAccessorMock.getDestination()).thenReturn("/topic/hyperion/exercise-generation/exercises/" + exercise.getId() + "/state");
+            when(principalMock.getName()).thenReturn(TEST_PREFIX + "editor1");
+            assertThat(interceptor.preSend(msgMock, channel)).isEqualTo(msgMock);
+            when(principalMock.getName()).thenReturn(TEST_PREFIX + "tutor1");
+            assertThat(interceptor.preSend(msgMock, channel)).isNull();
+
+            when(headerAccessorMock.getDestination()).thenReturn("/user/topic/hyperion/exercise-generation/jobs/job-1");
+            when(principalMock.getName()).thenReturn(TEST_PREFIX + "editor1");
+            assertThat(interceptor.preSend(msgMock, channel)).isEqualTo(msgMock);
+
+            when(headerAccessorMock.getDestination()).thenReturn("/topic/hyperion/exercise-generation/jobs/job-1-user-victim-session");
+            assertThat(interceptor.preSend(msgMock, channel)).isNull();
+
+            when(headerAccessorMock.getDestination()).thenReturn("/topic/user-registry");
+            assertThat(interceptor.preSend(msgMock, channel)).isNull();
+
+            when(headerAccessorMock.getDestination()).thenReturn("/topic/unresolved-user");
+            assertThat(interceptor.preSend(msgMock, channel)).isNull();
         }
     }
 
@@ -167,6 +187,9 @@ class TopicSubscriptionInterceptorTest extends AbstractSpringIntegrationIndepend
             assertThat(interceptor.preSend(message, channel)).isNull();
 
             when(headerAccessor.getDestination()).thenReturn("/topic/exercise/" + exercise.getId() + "/newResults");
+            assertThat(interceptor.preSend(message, channel)).isNull();
+
+            when(headerAccessor.getDestination()).thenReturn("/user/victim/topic/hyperion/exercise-generation/jobs/forged");
             assertThat(interceptor.preSend(message, channel)).isNull();
 
             when(headerAccessor.getDestination()).thenReturn("/app/exercises/" + exercise.getId());

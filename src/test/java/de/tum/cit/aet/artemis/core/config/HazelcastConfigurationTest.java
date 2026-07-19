@@ -1,17 +1,26 @@
 package de.tum.cit.aet.artemis.core.config;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.HYPERION_ENABLED_PROPERTY_NAME;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALCI;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALVC;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.mockito.Mockito.mock;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.springframework.boot.web.server.autoconfigure.ServerProperties;
 import org.springframework.context.ApplicationContext;
 import org.springframework.core.env.Environment;
+import org.springframework.mock.env.MockEnvironment;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import com.hazelcast.config.Config;
@@ -33,10 +42,11 @@ class HazelcastConfigurationTest {
         HazelcastConfiguration hazelcastConfiguration = createHazelcastConfiguration();
         ArtemisProperties artemisProperties = new ArtemisProperties();
         artemisProperties.getCache().getHazelcast().setBackupCount(0);
+        artemisProperties.getCache().getHazelcast().setExpectedDataMemberCount(3);
         Config config = new Config();
 
         ReflectionTestUtils.invokeMethod(hazelcastConfiguration, "configureCacheMaps", config, artemisProperties);
-        ReflectionTestUtils.invokeMethod(hazelcastConfiguration, "configureSplitBrainProtection", config, true);
+        ReflectionTestUtils.invokeMethod(hazelcastConfiguration, "configureSplitBrainProtection", config, true, artemisProperties);
 
         SplitBrainProtectionConfig protectionConfig = config.getSplitBrainProtectionConfigs().get(SPLIT_BRAIN_PROTECTION_NAME);
         assertThat(protectionConfig).isNotNull();
@@ -50,6 +60,49 @@ class HazelcastConfigurationTest {
             assertThat(mapConfig.getBackupCount()).as("synchronous backup count for %s", mapName).isGreaterThanOrEqualTo(1);
             assertThat(mapConfig.getSplitBrainProtectionName()).as("split-brain protection for %s", mapName).isEqualTo(SPLIT_BRAIN_PROTECTION_NAME);
         }
+    }
+
+    @ParameterizedTest(name = "hyperion={0}, exerciseGeneration={1}, core={2}, localci={3}, localvc={4} => capability={5}")
+    @CsvSource({ "true,  true,  true,  true,  true,  true", "false, true,  true,  true,  true,  false", "true,  false, true,  true,  true,  false",
+            "true,  true,  false, true,  true,  false", "true,  true,  true,  false, true,  false", "true,  true,  true,  true,  false, false" })
+    void shouldAdvertiseExerciseGenerationCapabilityFromTheExactFeaturePredicate(boolean hyperionEnabled, boolean exerciseGenerationEnabled, boolean coreProfileActive,
+            boolean localCiProfileActive, boolean localVcProfileActive, boolean expectedCapability) {
+        MockEnvironment environment = new MockEnvironment().withProperty(HYPERION_ENABLED_PROPERTY_NAME, Boolean.toString(hyperionEnabled))
+                .withProperty(Constants.HYPERION_EXERCISE_GENERATION_ENABLED_PROPERTY_NAME, Boolean.toString(exerciseGenerationEnabled));
+        List<String> profiles = new ArrayList<>();
+        if (coreProfileActive) {
+            profiles.add(PROFILE_CORE);
+        }
+        if (localCiProfileActive) {
+            profiles.add(PROFILE_LOCALCI);
+        }
+        if (localVcProfileActive) {
+            profiles.add(PROFILE_LOCALVC);
+        }
+        environment.setActiveProfiles(profiles.toArray(String[]::new));
+        HazelcastConfiguration hazelcastConfiguration = createHazelcastConfiguration(environment);
+        Config config = new Config();
+
+        ReflectionTestUtils.invokeMethod(hazelcastConfiguration, "configureMemberAttributes", config);
+
+        assertThat(config.getMemberAttributeConfig().getAttribute(HazelcastConfiguration.HYPERION_EXERCISE_GENERATION_CAPABLE_MEMBER_ATTRIBUTE))
+                .isEqualTo(Boolean.toString(expectedCapability));
+    }
+
+    @ParameterizedTest
+    @CsvSource({ "1, 1", "2, 2", "3, 2", "4, 3" })
+    void shouldConfigureMajorityFromExpectedDataMemberCount(int expectedDataMemberCount, int expectedMajority) {
+        assertThat(HazelcastConfiguration.majorityForExpectedDataMemberCount(expectedDataMemberCount)).isEqualTo(expectedMajority);
+    }
+
+    @Test
+    void shouldRejectInvalidExpectedDataMemberCount() {
+        HazelcastConfiguration hazelcastConfiguration = createHazelcastConfiguration();
+        ArtemisProperties artemisProperties = new ArtemisProperties();
+        artemisProperties.getCache().getHazelcast().setExpectedDataMemberCount(0);
+
+        assertThatCode(() -> ReflectionTestUtils.invokeMethod(hazelcastConfiguration, "configureSplitBrainProtection", new Config(), true, artemisProperties))
+                .isInstanceOf(IllegalArgumentException.class).hasMessageContaining("expected-data-member-count");
     }
 
     @Test
@@ -70,7 +123,11 @@ class HazelcastConfigurationTest {
     }
 
     private HazelcastConfiguration createHazelcastConfiguration() {
-        return new HazelcastConfiguration(mock(ApplicationContext.class), new ServerProperties(), Optional.empty(), mock(EurekaInstanceHelper.class), mock(Environment.class),
+        return createHazelcastConfiguration(new MockEnvironment().withProperty(HYPERION_ENABLED_PROPERTY_NAME, "false"));
+    }
+
+    private HazelcastConfiguration createHazelcastConfiguration(Environment environment) {
+        return new HazelcastConfiguration(mock(ApplicationContext.class), new ServerProperties(), Optional.empty(), mock(EurekaInstanceHelper.class), environment,
                 Optional.empty());
     }
 }

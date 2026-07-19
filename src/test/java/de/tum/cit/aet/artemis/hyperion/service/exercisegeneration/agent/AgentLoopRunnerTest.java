@@ -4,8 +4,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import java.io.InputStream;
@@ -20,6 +22,7 @@ import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.ai.chat.messages.AssistantMessage;
+import org.springframework.ai.chat.messages.ToolResponseMessage;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.model.Generation;
@@ -34,8 +37,11 @@ import com.openai.errors.UnauthorizedException;
 import de.tum.cit.aet.artemis.buildagent.dto.SandboxExecResult;
 import de.tum.cit.aet.artemis.buildagent.dto.SandboxSessionSpec;
 import de.tum.cit.aet.artemis.buildagent.service.InteractiveSandbox;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.ProviderUsageSink;
 
 class AgentLoopRunnerTest {
+
+    private static final String GITHUB_SENTINEL = "ghp_ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghij";
 
     private static AgentLoopRunner newTestRunner(List<ChatModel> chatModels, int contextWindowTokens) {
         return newTestRunner(chatModels, contextWindowTokens, Duration.ofMinutes(5), new TestProviderFailureCooldown());
@@ -158,13 +164,14 @@ class AgentLoopRunnerTest {
         AgentLoopRunner runner = newTestRunner(List.of(chatModel), 128_000);
         SandboxAgentTools tools = new SandboxAgentTools(new FakeSandbox(), "fake-session");
         List<String> steps = new ArrayList<>();
-        List<ChatResponse> recorded = new ArrayList<>();
+        ProviderUsageSink usageSink = mock(ProviderUsageSink.class);
 
-        AgentLoopResult result = runner.run("system", "do it", tools, 10, () -> false, recorded::add, steps::add);
+        AgentLoopResult result = runner.run("system", "do it", tools, 10, () -> false, usageSink, steps::add);
 
         assertThat(result.status()).isEqualTo(AgentLoopResult.Status.ERROR);
         verify(chatModel, times(1)).call(any(Prompt.class));
-        assertThat(recorded).isEmpty();
+        verify(usageSink).markUncertain();
+        verify(usageSink, never()).accept(any());
         assertThat(steps).contains("The AI service could not complete the request.").noneMatch(step -> step.contains("read timed out"));
     }
 
@@ -192,19 +199,23 @@ class AgentLoopRunnerTest {
         ChatModel chatModel = mock(ChatModel.class);
         when(chatModel.call(any(Prompt.class))).thenThrow(new RuntimeException("HTTP 429 insufficient_quota: exceeded your current quota"));
         TestProviderFailureCooldown cooldown = new TestProviderFailureCooldown();
+        ProviderUsageSink firstUsageSink = mock(ProviderUsageSink.class);
 
         AgentLoopRunner runner = newTestRunner(List.of(chatModel), 128_000, Duration.ofMinutes(5), cooldown);
-        AgentLoopResult result = runner.run("system", "do it", new SandboxAgentTools(new FakeSandbox(), "fake-session"), 10, () -> false, null, null);
+        AgentLoopResult result = runner.run("system", "do it", new SandboxAgentTools(new FakeSandbox(), "fake-session"), 10, () -> false, firstUsageSink, null);
 
         assertThat(result.status()).isEqualTo(AgentLoopResult.Status.ERROR);
         verify(chatModel, times(1)).call(any(Prompt.class));
+        verify(firstUsageSink).markUncertain();
 
         ChatModel secondChatModel = mock(ChatModel.class);
+        ProviderUsageSink secondUsageSink = mock(ProviderUsageSink.class);
         AgentLoopRunner secondRunner = newTestRunner(List.of(secondChatModel), 128_000, Duration.ofMinutes(5), cooldown);
-        AgentLoopResult secondResult = secondRunner.run("system", "do it", new SandboxAgentTools(new FakeSandbox(), "fake-session"), 10, () -> false, null, null);
+        AgentLoopResult secondResult = secondRunner.run("system", "do it", new SandboxAgentTools(new FakeSandbox(), "fake-session"), 10, () -> false, secondUsageSink, null);
 
         assertThat(secondResult.status()).isEqualTo(AgentLoopResult.Status.ERROR);
         verify(secondChatModel, times(0)).call(any(Prompt.class));
+        verifyNoInteractions(secondUsageSink);
     }
 
     @Test
@@ -578,6 +589,34 @@ class AgentLoopRunnerTest {
     }
 
     @Test
+    void agentLoop_rejectsSupportedSecretMaterialBeforeInitialProviderCall() {
+        ChatModel chatModel = mock(ChatModel.class);
+        AgentLoopRunner runner = newTestRunner(List.of(chatModel), 128_000);
+
+        assertThatExceptionOfType(de.tum.cit.aet.artemis.hyperion.service.HyperionSecretMaterialPolicy.SecretMaterialException.class)
+                .isThrownBy(() -> runner.run("system", "instruction " + GITHUB_SENTINEL, new SandboxAgentTools(new FakeSandbox(), "fake-session"), 2, () -> false, null, null))
+                .withMessageContaining("GITHUB_TOKEN").withMessageNotContaining(GITHUB_SENTINEL);
+        verify(chatModel, times(0)).call(any(Prompt.class));
+    }
+
+    @Test
+    void agentLoop_recordingModelNeverReceivesSupportedSentinelFromToolObservation() {
+        ChatModel chatModel = mock(ChatModel.class);
+        when(chatModel.call(any(Prompt.class))).thenReturn(toolCallResponse("read_file", "{\"path\":\"solution/src/fixture.txt\"}"), textResponse("DONE"));
+        FakeSandbox sandbox = new FakeSandbox();
+        sandbox.files.put("/workspace/solution/src/fixture.txt", GITHUB_SENTINEL);
+
+        AgentLoopResult result = newTestRunner(List.of(chatModel), 128_000).run("system", "inspect the fixture", new SandboxAgentTools(sandbox, "fake-session"), 2, () -> false,
+                null, null);
+
+        ArgumentCaptor<Prompt> promptCaptor = ArgumentCaptor.forClass(Prompt.class);
+        verify(chatModel, times(2)).call(promptCaptor.capture());
+        assertThat(promptCaptor.getAllValues()).allSatisfy(prompt -> assertThat(renderPrompt(prompt)).doesNotContain(GITHUB_SENTINEL));
+        assertThat(renderPrompt(promptCaptor.getAllValues().get(1))).contains("GITHUB_TOKEN");
+        assertThat(result.status()).isEqualTo(AgentLoopResult.Status.COMPLETED);
+    }
+
+    @Test
     void agentLoop_invokesUsageSinkOncePerModelCall() {
         ChatModel chatModel = mock(ChatModel.class);
         when(chatModel.call(any(Prompt.class))).thenReturn(toolCallResponse("bash", "{\"command\":\"ls\"}"), textResponse("DONE"));
@@ -590,5 +629,18 @@ class AgentLoopRunnerTest {
 
         assertThat(result.status()).isEqualTo(AgentLoopResult.Status.COMPLETED);
         assertThat(recorded).hasSize(2);
+    }
+
+    private static String renderPrompt(Prompt prompt) {
+        StringBuilder rendered = new StringBuilder();
+        prompt.getInstructions().forEach(message -> {
+            if (message instanceof ToolResponseMessage toolResponse) {
+                toolResponse.getResponses().forEach(response -> rendered.append(response.responseData()).append('\n'));
+            }
+            else {
+                rendered.append(message.getText()).append('\n');
+            }
+        });
+        return rendered.toString();
     }
 }

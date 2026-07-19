@@ -200,6 +200,8 @@ public final class Constants {
 
     public static final String RESET_COURSE = "RESET_COURSE";
 
+    public static final String HYPERION_EXTERNAL_MUTATION_RECOVERY_ATTEMPT = "HYPERION_EXTERNAL_MUTATION_RECOVERY_ATTEMPT";
+
     public static final String DELETE_EXAM = "DELETE_EXAM";
 
     public static final String UPDATE_EXAM = "UPDATE_EXAM";
@@ -396,6 +398,11 @@ public final class Constants {
     public static final String MODULE_FEATURE_HYPERION = "hyperion";
 
     /**
+     * The name of the module feature used for whole programming exercise generation.
+     */
+    public static final String MODULE_FEATURE_HYPERION_EXERCISE_GENERATION = "hyperion-exercise-generation";
+
+    /**
      * The name of the module feature used for Iris / Pyris functionality.
      */
     public static final String MODULE_FEATURE_IRIS = "iris";
@@ -484,6 +491,8 @@ public final class Constants {
      * The name of the property used to enable or disable Hyperion functionality.
      */
     public static final String HYPERION_ENABLED_PROPERTY_NAME = "artemis.hyperion.enabled";
+
+    public static final String HYPERION_EXERCISE_GENERATION_ENABLED_PROPERTY_NAME = "artemis.hyperion.exercise-generation.enabled";
 
     /**
      * The name of the property used to enable or disable Iris / Pyris functionality.

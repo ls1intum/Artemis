@@ -286,7 +286,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             const entity = new ProgrammingExercise(new Course(), undefined);
             entity.id = 1;
             entity.assessmentType = AssessmentType.SEMI_AUTOMATIC;
-            entity.releaseDate = dayjs();
+            entity.releaseDate = dayjs().add(1, 'day');
             vi.spyOn(programmingExerciseService, 'update').mockReturnValue(
                 of(
                     new HttpResponse({
@@ -383,6 +383,20 @@ describe('ProgrammingExerciseUpdateComponent', () => {
     });
 
     describe('save with AI', () => {
+        it.each([undefined, dayjs().subtract(1, 'minute'), dayjs()])('requires a future release date before creating repositories', (releaseDate) => {
+            comp.programmingExercise = new ProgrammingExercise(course, undefined);
+            comp.programmingExercise.problemStatement = 'A sufficiently detailed exercise specification for generation.';
+            comp.programmingExercise.releaseDate = releaseDate;
+            comp.exerciseGenerationEnabled.set(true);
+            const setupSpy = vi.spyOn(programmingExerciseService, 'automaticSetup');
+            const warningSpy = vi.spyOn(TestBed.inject(AlertService), 'warning');
+
+            comp.saveWithAi();
+
+            expect(setupSpy).not.toHaveBeenCalled();
+            expect(warningSpy).toHaveBeenCalledWith('artemisApp.hyperion.generationActivity.unavailableHint');
+        });
+
         it('requires meaningful requirements before creating repositories', () => {
             comp.programmingExercise = new ProgrammingExercise(course, undefined);
             comp.programmingExercise.problemStatement = 'too short';
@@ -397,7 +411,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
 
         it('should call automatic setup with empty repositories and navigate to template editor', () => {
             const entity = new ProgrammingExercise(course, undefined);
-            entity.releaseDate = dayjs();
+            entity.releaseDate = dayjs().add(1, 'day');
             entity.course = course;
 
             const savedEntity = new ProgrammingExercise(course, undefined);
@@ -408,6 +422,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             comp.programmingExercise = entity;
             comp.backupExercise = {} as ProgrammingExercise;
             comp.hyperionEnabled = true;
+            comp.exerciseGenerationEnabled.set(true);
 
             const response$ = new Subject<HttpResponse<ProgrammingExercise>>();
             const setupSpy = vi.spyOn(programmingExerciseService, 'automaticSetup').mockReturnValue(response$);
@@ -429,7 +444,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
 
         it('should navigate to the exam template editor with auto-start state after AI exercise creation in exam mode', () => {
             const entity = new ProgrammingExercise(undefined, undefined);
-            entity.releaseDate = dayjs();
+            entity.releaseDate = dayjs().add(1, 'day');
             const exerciseGroup = new ExerciseGroup();
             exerciseGroup.id = 3;
             exerciseGroup.exam = { id: 9, course } as any;
@@ -442,6 +457,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             comp.programmingExercise = entity;
             comp.backupExercise = {} as ProgrammingExercise;
             comp.hyperionEnabled = true;
+            comp.exerciseGenerationEnabled.set(true);
 
             const response$ = new Subject<HttpResponse<ProgrammingExercise>>();
             vi.spyOn(programmingExerciseService, 'automaticSetup').mockReturnValue(response$);
@@ -457,14 +473,15 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             );
         });
 
-        it('should fall back to regular save when hyperion is disabled', () => {
+        it('should fall back to regular save when exercise generation is disabled', () => {
             const entity = new ProgrammingExercise(course, undefined);
-            entity.releaseDate = dayjs();
+            entity.releaseDate = dayjs().add(1, 'day');
             entity.course = course;
 
             comp.programmingExercise = entity;
             comp.backupExercise = {} as ProgrammingExercise;
-            comp.hyperionEnabled = false;
+            comp.hyperionEnabled = true;
+            comp.exerciseGenerationEnabled.set(false);
 
             const setupSpy = vi.spyOn(programmingExerciseService, 'automaticSetup').mockReturnValue(of(new HttpResponse({ body: entity })));
 
@@ -475,12 +492,13 @@ describe('ProgrammingExerciseUpdateComponent', () => {
 
         it('should reset generating flag on save error', () => {
             const entity = new ProgrammingExercise(course, undefined);
-            entity.releaseDate = dayjs();
+            entity.releaseDate = dayjs().add(1, 'day');
             entity.course = course;
 
             comp.programmingExercise = entity;
             comp.backupExercise = {} as ProgrammingExercise;
             comp.hyperionEnabled = true;
+            comp.exerciseGenerationEnabled.set(true);
 
             const response$ = new Subject<HttpResponse<ProgrammingExercise>>();
             vi.spyOn(programmingExerciseService, 'automaticSetup').mockReturnValue(response$);
@@ -496,13 +514,14 @@ describe('ProgrammingExerciseUpdateComponent', () => {
 
         it('should treat null id as a new exercise and use empty repositories setup', () => {
             const entity = new ProgrammingExercise(course, undefined);
-            entity.releaseDate = dayjs();
+            entity.releaseDate = dayjs().add(1, 'day');
             entity.course = course;
             entity.id = null as unknown as number;
 
             comp.programmingExercise = entity;
             comp.backupExercise = {} as ProgrammingExercise;
             comp.hyperionEnabled = true;
+            comp.exerciseGenerationEnabled.set(true);
 
             const setupSpy = vi.spyOn(programmingExerciseService, 'automaticSetup').mockReturnValue(of(new HttpResponse({ body: entity })));
 
@@ -513,14 +532,14 @@ describe('ProgrammingExerciseUpdateComponent', () => {
     });
 
     describe('generate with AI visibility', () => {
-        it('should only show for java when hyperion is enabled', () => {
+        it('should only show for Java when exercise generation is enabled', () => {
             const entity = new ProgrammingExercise(course, undefined);
             entity.programmingLanguage = ProgrammingLanguage.JAVA;
             entity.projectType = ProjectType.PLAIN_MAVEN;
 
             comp.programmingExercise = entity;
             comp.hyperionEnabled = true;
-            comp.localCiEnabledForAi.set(true);
+            comp.exerciseGenerationEnabled.set(true);
             comp.isImportFromExistingExercise = false;
             comp.isImportFromFile = false;
             comp.isImportFromSharing = false;
@@ -543,7 +562,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
 
             comp.programmingExercise = entity;
             comp.hyperionEnabled = true;
-            comp.localCiEnabledForAi.set(true);
+            comp.exerciseGenerationEnabled.set(true);
             comp.isImportFromExistingExercise = false;
             comp.isImportFromFile = false;
             comp.isImportFromSharing = false;
@@ -557,7 +576,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             entity.projectType = ProjectType.PLAIN_MAVEN;
             comp.programmingExercise = entity;
             comp.hyperionEnabled = true;
-            comp.localCiEnabledForAi.set(true);
+            comp.exerciseGenerationEnabled.set(true);
 
             expect(comp.showGenerateWithAi()).toBe(true);
         });
@@ -568,22 +587,18 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             entity.projectType = ProjectType.MAVEN_BLACKBOX;
             comp.programmingExercise = entity;
             comp.hyperionEnabled = true;
-            comp.localCiEnabledForAi.set(true);
+            comp.exerciseGenerationEnabled.set(true);
 
             expect(comp.showGenerateWithAi()).toBe(false);
         });
 
-        it('should NOT show under Jenkins (localci inactive), even with hyperion enabled and java', () => {
-            // Task A: the "Generate entire exercise" affordance is whole-exercise agentic generation, which the server gates to LocalCI, so the client hides it under Jenkins.
+        it('should hide when only other Hyperion features are enabled', () => {
             const entity = new ProgrammingExercise(course, undefined);
             entity.programmingLanguage = ProgrammingLanguage.JAVA;
-
+            entity.projectType = ProjectType.PLAIN_MAVEN;
             comp.programmingExercise = entity;
             comp.hyperionEnabled = true;
-            comp.localCiEnabledForAi.set(false);
-            comp.isImportFromExistingExercise = false;
-            comp.isImportFromFile = false;
-            comp.isImportFromSharing = false;
+            comp.exerciseGenerationEnabled.set(false);
 
             expect(comp.showGenerateWithAi()).toBe(false);
         });

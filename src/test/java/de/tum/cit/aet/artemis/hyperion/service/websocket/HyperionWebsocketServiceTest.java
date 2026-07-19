@@ -18,6 +18,10 @@ import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 
 import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
+import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationEventDTO;
+import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationStateDTO;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.ExerciseGenerationStateChangedEvent;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationCancellationEvent;
 
 class HyperionWebsocketServiceTest {
 
@@ -42,6 +46,26 @@ class HyperionWebsocketServiceTest {
         ArgumentCaptor<Object> payloadCaptor = ArgumentCaptor.forClass(Object.class);
         verify(messagingService).sendMessageToUser(eq("instructor1"), eq("/topic/hyperion/exercise-generation/jobs/job-42"), payloadCaptor.capture());
         assertThat(payloadCaptor.getValue()).isSameAs(payload);
+    }
+
+    @Test
+    void sendCancellation_forwardsTheRetainedTerminalEventToTheJobTopic() {
+        ExerciseGenerationEventDTO event = ExerciseGenerationEventDTO.of(ExerciseGenerationEventDTO.Type.CANCELLED, "cancelled");
+        when(messagingService.sendMessageToUser("instructor1", "/topic/hyperion/exercise-generation/jobs/job-42", event)).thenReturn(CompletableFuture.completedFuture(null));
+
+        service.sendCancellation(new GenerationCancellationEvent("instructor1", "job-42", event));
+
+        verify(messagingService).sendMessageToUser("instructor1", "/topic/hyperion/exercise-generation/jobs/job-42", event);
+    }
+
+    @Test
+    void broadcastExerciseState_usesThePublicExerciseTopic() {
+        ExerciseGenerationStateDTO state = new ExerciseGenerationStateDTO(42L, "job-42", true);
+        when(messagingService.sendMessage("/topic/hyperion/exercise-generation/exercises/42/state", state)).thenReturn(CompletableFuture.completedFuture(null));
+
+        service.broadcastExerciseState(new ExerciseGenerationStateChangedEvent(state));
+
+        verify(messagingService).sendMessage("/topic/hyperion/exercise-generation/exercises/42/state", state);
     }
 
     @Test

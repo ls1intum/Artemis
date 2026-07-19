@@ -1,6 +1,9 @@
 package de.tum.cit.aet.artemis.admin.web;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -11,12 +14,17 @@ import java.util.List;
 import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
+import org.mockito.InOrder;
+import org.springframework.boot.actuate.audit.AuditEvent;
+import org.springframework.boot.actuate.audit.AuditEventRepository;
 
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentInformation;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentStatus;
 import de.tum.cit.aet.artemis.buildagent.dto.GenerationSandboxSessionDTO;
 import de.tum.cit.aet.artemis.buildagent.service.RemoteInteractiveSandboxClient;
+import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationJobService;
 import de.tum.cit.aet.artemis.localci.exception.LocalCIException;
 import de.tum.cit.aet.artemis.localci.repository.BuildJobRepository;
@@ -111,14 +119,92 @@ class AdminBuildJobQueueResourceTest {
         assertThat(response.getStatusCode().value()).isEqualTo(404);
     }
 
+    @Test
+    void returnsExternalMutationForDiagnosis() {
+        GenerationJobService jobService = mock(GenerationJobService.class);
+        GenerationJobService.ExternalMutationInfo info = new GenerationJobService.ExternalMutationInfo(12L, "external-mutation-token", "node-1", Instant.EPOCH);
+        when(jobService.getExternalMutationInfo(12L)).thenReturn(Optional.of(info));
+        AdminBuildJobQueueResource resource = resource(mock(DistributedDataAccessService.class), Optional.empty(), Optional.of(jobService));
+
+        var response = resource.getExternalMutation(12L);
+
+        assertThat(response.getBody()).isEqualTo(info);
+    }
+
+    @Test
+    void recoversOnlyMatchingExternalMutation() {
+        GenerationJobService jobService = mock(GenerationJobService.class);
+        AuditEventRepository auditEventRepository = mock(AuditEventRepository.class);
+        GenerationJobService.ExternalMutationInfo info = new GenerationJobService.ExternalMutationInfo(12L, "external-mutation-token", "node-1", Instant.EPOCH);
+        when(jobService.getExternalMutationInfo(12L)).thenReturn(Optional.of(info));
+        when(jobService.recoverExternalMutationSlot(12L, "external-mutation-token")).thenReturn(true);
+        AdminBuildJobQueueResource resource = resource(mock(DistributedDataAccessService.class), Optional.empty(), Optional.of(jobService), auditEventRepository);
+
+        assertThat(resource.recoverExternalMutation(12L, "wrong", "owner terminated").getStatusCode().value()).isEqualTo(404);
+        assertThat(resource.recoverExternalMutation(12L, "external-mutation-token", " owner\r\nterminated ").getStatusCode().value()).isEqualTo(204);
+
+        ArgumentCaptor<AuditEvent> event = ArgumentCaptor.forClass(AuditEvent.class);
+        InOrder recoveryOrder = inOrder(auditEventRepository, jobService);
+        recoveryOrder.verify(auditEventRepository).add(event.capture());
+        recoveryOrder.verify(jobService).recoverExternalMutationSlot(12L, "external-mutation-token");
+        assertThat(event.getValue().getType()).isEqualTo(Constants.HYPERION_EXTERNAL_MUTATION_RECOVERY_ATTEMPT);
+        assertThat(event.getValue().getData()).containsEntry("exerciseId", 12L).containsEntry("ownerNodeId", "node-1").containsEntry("reason", "owner terminated");
+    }
+
+    @Test
+    void externalMutationRecoveryRequiresAnAuditReason() {
+        GenerationJobService jobService = mock(GenerationJobService.class);
+        AuditEventRepository auditEventRepository = mock(AuditEventRepository.class);
+        AdminBuildJobQueueResource resource = resource(mock(DistributedDataAccessService.class), Optional.empty(), Optional.of(jobService), auditEventRepository);
+
+        assertThat(resource.recoverExternalMutation(12L, "external-mutation-token", "  ").getStatusCode().value()).isEqualTo(400);
+        verify(jobService, never()).recoverExternalMutationSlot(12L, "external-mutation-token");
+        verify(auditEventRepository, never()).add(org.mockito.ArgumentMatchers.any());
+    }
+
+    @Test
+    void externalMutationRecoveryFailsClosedWhenAuditPersistenceFails() {
+        GenerationJobService jobService = mock(GenerationJobService.class);
+        AuditEventRepository auditEventRepository = mock(AuditEventRepository.class);
+        GenerationJobService.ExternalMutationInfo info = new GenerationJobService.ExternalMutationInfo(12L, "external-mutation-token", "node-1", Instant.EPOCH);
+        when(jobService.getExternalMutationInfo(12L)).thenReturn(Optional.of(info));
+        doThrow(new IllegalStateException("audit unavailable")).when(auditEventRepository).add(org.mockito.ArgumentMatchers.any());
+        AdminBuildJobQueueResource resource = resource(mock(DistributedDataAccessService.class), Optional.empty(), Optional.of(jobService), auditEventRepository);
+
+        assertThatThrownBy(() -> resource.recoverExternalMutation(12L, "external-mutation-token", "owner terminated")).isInstanceOf(IllegalStateException.class);
+        verify(jobService, never()).recoverExternalMutationSlot(12L, "external-mutation-token");
+    }
+
+    @Test
+    void externalMutationRecoveryAuditsAnUnknownLegacyOwner() {
+        GenerationJobService jobService = mock(GenerationJobService.class);
+        AuditEventRepository auditEventRepository = mock(AuditEventRepository.class);
+        GenerationJobService.ExternalMutationInfo info = new GenerationJobService.ExternalMutationInfo(12L, "external-mutation-token", null, Instant.EPOCH);
+        when(jobService.getExternalMutationInfo(12L)).thenReturn(Optional.of(info));
+        when(jobService.recoverExternalMutationSlot(12L, "external-mutation-token")).thenReturn(true);
+        AdminBuildJobQueueResource resource = resource(mock(DistributedDataAccessService.class), Optional.empty(), Optional.of(jobService), auditEventRepository);
+
+        assertThat(resource.recoverExternalMutation(12L, "external-mutation-token", "legacy owner unavailable").getStatusCode().value()).isEqualTo(204);
+
+        ArgumentCaptor<AuditEvent> event = ArgumentCaptor.forClass(AuditEvent.class);
+        verify(auditEventRepository).add(event.capture());
+        assertThat(event.getValue().getData()).containsEntry("ownerNodeId", "unknown");
+    }
+
     private static AdminBuildJobQueueResource resource(DistributedDataAccessService dataAccess, RemoteInteractiveSandboxClient sandboxClient, GenerationJobService jobService) {
         return new AdminBuildJobQueueResource(mock(SharedQueueManagementService.class), mock(BuildJobRepository.class), dataAccess, Optional.of(sandboxClient),
-                Optional.of(jobService));
+                Optional.of(jobService), mock(AuditEventRepository.class));
     }
 
     private static AdminBuildJobQueueResource resource(DistributedDataAccessService dataAccess, Optional<RemoteInteractiveSandboxClient> sandboxClient,
             Optional<GenerationJobService> jobService) {
-        return new AdminBuildJobQueueResource(mock(SharedQueueManagementService.class), mock(BuildJobRepository.class), dataAccess, sandboxClient, jobService);
+        return resource(dataAccess, sandboxClient, jobService, mock(AuditEventRepository.class));
+    }
+
+    private static AdminBuildJobQueueResource resource(DistributedDataAccessService dataAccess, Optional<RemoteInteractiveSandboxClient> sandboxClient,
+            Optional<GenerationJobService> jobService, AuditEventRepository auditEventRepository) {
+        return new AdminBuildJobQueueResource(mock(SharedQueueManagementService.class), mock(BuildJobRepository.class), dataAccess, sandboxClient, jobService,
+                auditEventRepository);
     }
 
     private static BuildAgentInformation agent(String name, int maxSandboxSlots) {

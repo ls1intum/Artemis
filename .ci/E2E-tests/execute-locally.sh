@@ -199,6 +199,11 @@ done
 
 TOTAL_PASSED=$((TOTAL_TESTS - TOTAL_FAILURES - TOTAL_ERRORS - TOTAL_SKIPPED))
 
+if [ -n "$TEST_FILTER" ] && [ "$TOTAL_TESTS" -gt 0 ] && [ "$TOTAL_SKIPPED" -eq "$TOTAL_TESTS" ]; then
+    echo "Filtered E2E run skipped every selected test. Check that the selected configuration enables the required test mode." >&2
+    EXIT_CODE=1
+fi
+
 if [ $TOTAL_TESTS -gt 0 ]; then
     echo "  Total:   $TOTAL_TESTS tests"
     echo "  Passed:  $TOTAL_PASSED"

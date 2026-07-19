@@ -12,6 +12,7 @@ import { AlertService } from 'app/foundation/service/alert.service';
 import {
     ExerciseGenerationFileChange,
     ExerciseGenerationRevertResult,
+    HyperionExerciseGenerationState,
     HyperionGenerationEvent,
     HyperionGenerationMessage,
     HyperionGenerationStatus,
@@ -47,6 +48,7 @@ function normalizeStatus(status: TestGenerationStatus): HyperionGenerationStatus
 class MockService {
     status: TestGenerationStatus | null = null;
     stream$ = new Subject<TestGenerationMessage>();
+    exerciseState$ = new Subject<HyperionExerciseGenerationState>();
     cancelCalls: [number, string][] = [];
 
     getStatus() {
@@ -67,6 +69,10 @@ class MockService {
 
     subscribeToStream(): Observable<HyperionGenerationMessage> {
         return this.stream$.pipe(map(normalizeMessage));
+    }
+
+    subscribeToExerciseState(): Observable<HyperionExerciseGenerationState> {
+        return this.exerciseState$;
     }
 }
 
@@ -113,6 +119,55 @@ describe('HyperionGenerationActivityComponent', () => {
 
         fixture.debugElement.query(By.css('[data-testid="hyperion-generation-start"]')).triggerEventHandler('onClick');
         expect(startRequested).toHaveBeenCalledOnce();
+    });
+
+    it('locks immediately when another instructor starts generation on the public exercise topic', () => {
+        const fixture = createWith(null);
+        service.status = { jobId: 'remote-job', running: true, ownedByCaller: false, events: [], fileChanges: [] };
+
+        service.exerciseState$.next({ exerciseId: 42, jobId: 'remote-job', running: true });
+        fixture.detectChanges();
+
+        expect(fixture.componentInstance.jobId()).toBe('remote-job');
+        expect(fixture.componentInstance.running()).toBe(true);
+        expect(fixture.componentInstance.ownedByCaller()).toBe(false);
+        expect(fixture.nativeElement.textContent).toContain('generationActivity.runningByAnotherInstructor');
+    });
+
+    it('does not let an older idle status response undo the public exercise lock', () => {
+        const staleIdleStatus = new Subject<HttpResponse<HyperionGenerationStatus>>();
+        const runningStatus = normalizeStatus({ jobId: 'remote-job', running: true, ownedByCaller: false, events: [], fileChanges: [] });
+        service.getStatus = vi
+            .fn()
+            .mockReturnValueOnce(staleIdleStatus)
+            .mockReturnValue(of(new HttpResponse({ body: runningStatus })));
+        const fixture = createWith(null);
+
+        service.exerciseState$.next({ exerciseId: 42, jobId: 'remote-job', running: true });
+        staleIdleStatus.next(new HttpResponse<HyperionGenerationStatus>({ body: null }));
+        fixture.detectChanges();
+
+        expect(service.getStatus).toHaveBeenCalledTimes(2);
+        expect(fixture.componentInstance.jobId()).toBe('remote-job');
+        expect(fixture.componentInstance.running()).toBe(true);
+        expect(fixture.componentInstance.ownedByCaller()).toBe(false);
+    });
+
+    it('reconciles immediately when the shared exercise topic releases the generation slot', () => {
+        const fixture = createWith({ jobId: 'remote-job', running: true, ownedByCaller: false, events: [], fileChanges: [] });
+        service.status = {
+            jobId: 'remote-job',
+            running: false,
+            ownedByCaller: false,
+            events: [{ type: 'DONE', completionStatus: 'SUCCESS', liveExerciseChanged: true }],
+            fileChanges: [],
+        };
+
+        service.exerciseState$.next({ exerciseId: 42, jobId: 'remote-job', running: false });
+        fixture.detectChanges();
+
+        expect(fixture.componentInstance.running()).toBe(false);
+        expect(fixture.componentInstance.events().map((event) => event.type)).toContain('DONE');
     });
 
     it('does not offer generation when the exercise is no longer eligible', () => {
@@ -416,7 +471,6 @@ describe('HyperionGenerationActivityComponent', () => {
         expect(fixture.nativeElement.querySelector('[data-testid="hyperion-generation-details"]')).not.toBeNull();
         expect(fixture.nativeElement.querySelectorAll('[data-testid="hyperion-generation-details-toggle"]')).toHaveLength(1);
         expect(document.activeElement).toBe(disclosure);
-        expect(fixture.nativeElement.querySelector('[data-testid="hyperion-generation-review"]')).not.toBeNull();
     });
 
     it('shows recent progress visually while announcing only the coarse running state', () => {
@@ -497,7 +551,9 @@ describe('HyperionGenerationActivityComponent', () => {
         expect(status.textContent).toContain('generationActivity.editorRefreshFailed');
         expect(status.textContent).toContain('generationActivity.persistence.saved');
 
-        fixture.nativeElement.querySelector('[data-testid="hyperion-editor-refresh-retry"] button').click();
+        const recoveryButton = fixture.nativeElement.querySelector('[data-testid="hyperion-editor-refresh-retry"]');
+        expect(recoveryButton.textContent).toContain('generationActivity.reloadSavedExercise');
+        recoveryButton.querySelector('button').click();
         expect(refreshRequested).toHaveBeenCalledOnce();
     });
 
@@ -544,7 +600,12 @@ describe('HyperionGenerationActivityComponent', () => {
         // Simulates a page opened while generation is finalizing: the component never actively observed the job (it was never `running`
         // here), but the retained status already carries a DONE event with liveExerciseChanged=true - the editor must still refresh,
         // otherwise it would keep showing the exercise as it was before the save.
-        service.status = { jobId: 'j1', running: false, events: [{ type: 'DONE', liveExerciseChanged: true }], fileChanges: [] };
+        service.status = {
+            jobId: 'j1',
+            running: false,
+            events: [{ type: 'DONE', liveExerciseChanged: true, savedRepositoryCommits: { template: 'template-commit' } }],
+            fileChanges: [],
+        };
         const fixture = TestBed.createComponent(HyperionGenerationActivityComponent);
         const completed = vi.fn();
         fixture.componentInstance.generationCompleted.subscribe(completed);
@@ -553,7 +614,7 @@ describe('HyperionGenerationActivityComponent', () => {
         fixture.detectChanges();
 
         expect(completed).toHaveBeenCalledOnce();
-        expect(completed.mock.calls[0][0]).toMatchObject({ liveExerciseChanged: true });
+        expect(completed.mock.calls[0][0]).toMatchObject({ jobId: 'j1', liveExerciseChanged: true, savedRepositoryCommits: { template: 'template-commit' } });
 
         // A subsequent background poll of the same terminal status must not emit a second refresh for the same job.
         (fixture.componentInstance as any).loadStatus(42, undefined, true);
@@ -663,7 +724,7 @@ describe('HyperionGenerationActivityComponent', () => {
         const fixture = createWith({
             jobId: 'job-42',
             running: false,
-            events: [{ type: 'DONE', liveExerciseChanged: true, savedRepositoryCommits: { solution: 'solution-commit', tests: 'tests-commit' } }],
+            events: [{ type: 'DONE', liveExerciseChanged: true, savedExerciseVersionId: 17, savedRepositoryCommits: { solution: 'solution-commit', tests: 'tests-commit' } }],
             fileChanges: [
                 fileChange('problem-statement.md', 'edit'),
                 fileChange('solution/src/Main.java', 'edit'),
@@ -681,7 +742,7 @@ describe('HyperionGenerationActivityComponent', () => {
         const fixture = createWith({
             jobId: 'job-42',
             running: false,
-            events: [{ type: 'DONE', liveExerciseChanged: true, savedRepositoryCommits: { template: 'template-commit' } }],
+            events: [{ type: 'DONE', liveExerciseChanged: true, savedExerciseVersionId: 17, savedRepositoryCommits: { template: 'template-commit' } }],
             fileChanges: [fileChange('template/src/Main.java', 'edit')],
         });
         const requested = vi.fn();
@@ -692,7 +753,22 @@ describe('HyperionGenerationActivityComponent', () => {
         expect(requested).toHaveBeenCalledExactlyOnceWith({ target: 'template', jobId: 'job-42', commitHash: 'template-commit' });
     });
 
-    it('restores only the problem-statement review action when retained status has no exact repository commits', () => {
+    it('emits the exact saved exercise version for problem-statement review', () => {
+        const fixture = createWith({
+            jobId: 'job-42',
+            running: false,
+            events: [{ type: 'DONE', liveExerciseChanged: true, savedExerciseVersionId: 17 }],
+            fileChanges: [fileChange('problem-statement.md', 'edit')],
+        });
+        const requested = vi.fn();
+        fixture.componentInstance.reviewRequested.subscribe(requested);
+
+        fixture.componentInstance.requestReview('problem-statement');
+
+        expect(requested).toHaveBeenCalledExactlyOnceWith({ target: 'problem-statement', jobId: 'job-42', savedExerciseVersionId: 17 });
+    });
+
+    it('does not offer an inexact review action when retained status has no saved artifact identity', () => {
         const fixture = createWith({
             jobId: 'job-42',
             mode: 'GENERATE',
@@ -703,15 +779,10 @@ describe('HyperionGenerationActivityComponent', () => {
             events: [],
             fileChanges: [],
         });
-        const requested = vi.fn();
-        fixture.componentInstance.reviewRequested.subscribe(requested);
         fixture.detectChanges();
 
         const actions = fixture.debugElement.queryAll(By.css('[data-testid="hyperion-generation-review-action"]'));
-        expect(actions.map((action) => action.attributes['data-review-target'])).toEqual(['problem-statement']);
-
-        fixture.debugElement.query(By.css('[data-review-target="problem-statement"]')).triggerEventHandler('onClick');
-        expect(requested).toHaveBeenCalledExactlyOnceWith({ target: 'problem-statement', jobId: 'job-42' });
+        expect(actions).toHaveLength(0);
     });
 
     it('does not offer saved-change review before persistence succeeds', () => {
@@ -897,6 +968,7 @@ describe('HyperionGenerationActivityComponent', () => {
         expect(component.verdict()?.mechanicallyVerified).toBe(true);
         expect(component.completionStatus()).toBe('NEEDS_REVIEW');
         expect(completed).toHaveBeenCalledExactlyOnceWith({
+            jobId: 'j1',
             mode: undefined,
             verdict: { mechanicallyVerified: true, solutionPassed: true, templateFailed: true, testCount: 5, reasons: [] },
             completionStatus: 'NEEDS_REVIEW',
@@ -1397,7 +1469,7 @@ describe('HyperionGenerationActivityComponent', () => {
         const review = vi.fn();
         fixture.componentInstance.reviewRequested.subscribe(review);
         fixture.componentInstance.requestReview('problem-statement');
-        expect(review).toHaveBeenCalledWith({ target: 'problem-statement', jobId: 'successful-adaptation' });
+        expect(review).not.toHaveBeenCalled();
 
         const confirmation = vi.spyOn(fixture.debugElement.injector.get(ConfirmationService), 'confirm');
         const success = vi.spyOn(TestBed.inject(AlertService), 'success');
@@ -1463,6 +1535,7 @@ describe('HyperionGenerationActivityComponent', () => {
         expect(component.running()).toBe(false);
         expect(component.completionStatus()).toBe('SUCCESS');
         expect(completed).toHaveBeenCalledExactlyOnceWith({
+            jobId: 'j1',
             mode: 'GENERATE',
             verdict: undefined,
             completionStatus: 'SUCCESS',
@@ -1508,6 +1581,7 @@ describe('HyperionGenerationActivityComponent', () => {
         expect(component.running()).toBe(false);
         expect(component.verdict()?.mechanicallyVerified).toBe(true);
         expect(completed).toHaveBeenCalledExactlyOnceWith({
+            jobId: 'j1',
             mode: undefined,
             verdict: { mechanicallyVerified: true, solutionPassed: true, templateFailed: true, testCount: 3, reasons: [] },
             completionStatus: undefined,

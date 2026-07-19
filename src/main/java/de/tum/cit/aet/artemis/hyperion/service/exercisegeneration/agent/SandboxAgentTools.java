@@ -14,6 +14,7 @@ import org.springframework.ai.tool.annotation.ToolParam;
 
 import de.tum.cit.aet.artemis.buildagent.dto.SandboxExecResult;
 import de.tum.cit.aet.artemis.buildagent.service.InteractiveSandbox;
+import de.tum.cit.aet.artemis.hyperion.service.HyperionSecretMaterialPolicy;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.AgentVerifyReport;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.DifferentialVerificationService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.ExerciseIntegrityGate;
@@ -28,6 +29,8 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
  * validity.
  */
 public class SandboxAgentTools {
+
+    private static final HyperionSecretMaterialPolicy SECRET_MATERIAL_POLICY = new HyperionSecretMaterialPolicy();
 
     private static final String WORKSPACE = "/workspace";
 
@@ -120,8 +123,13 @@ public class SandboxAgentTools {
         if (safe == null) {
             return invalidPathError(path);
         }
+        HyperionSecretMaterialPolicy.Assessment pathAssessment = SECRET_MATERIAL_POLICY.assess(safe, new byte[0], HyperionSecretMaterialPolicy.Origin.TOOL_OBSERVATION);
+        if (!pathAssessment.isSafe()) {
+            return SECRET_MATERIAL_POLICY.blockedObservation(pathAssessment);
+        }
         SandboxExecResult result = sandbox.exec(sessionId, FILE_OP_TIMEOUT, "cat", WORKSPACE + "/" + safe);
-        return result.isSuccess() ? result.stdout() : "ERROR: could not read '" + safe + "': " + result.combinedOutput();
+        String observation = result.isSuccess() ? result.stdout() : "ERROR: could not read '" + safe + "': " + result.combinedOutput();
+        return screenObservation(safe, observation);
     }
 
     /**
@@ -247,7 +255,7 @@ public class SandboxAgentTools {
             sandboxSessionTerminated = true;
             throw new LocalCIException("Sandbox command timed out and the sandbox session was terminated");
         }
-        return composeBashOutput(result, logPath);
+        return screenObservation("tool/bash", composeBashOutput(result, logPath));
     }
 
     boolean isSandboxSessionTerminated() {
@@ -296,7 +304,13 @@ public class SandboxAgentTools {
             return "ERROR: the verify tool is unavailable in this session. Fall back to `sh verify.sh solution` and `sh verify.sh template` via bash.";
         }
         AgentVerifyReport report = verifier.selfCheck(sandbox, sessionId, exercise, seedTestsFiles, adaptation);
-        return report.toObservation();
+        return screenObservation("tool/verify", report.toObservation());
+    }
+
+    private static String screenObservation(String logicalPath, String observation) {
+        HyperionSecretMaterialPolicy.Assessment assessment = SECRET_MATERIAL_POLICY.assess(logicalPath, observation.getBytes(StandardCharsets.UTF_8),
+                HyperionSecretMaterialPolicy.Origin.TOOL_OBSERVATION);
+        return assessment.isSafe() ? observation : SECRET_MATERIAL_POLICY.blockedObservation(assessment);
     }
 
     /**
@@ -375,7 +389,8 @@ public class SandboxAgentTools {
     }
 
     private static String invalidPathError(String path) {
-        return "ERROR: invalid path '" + path + "'. Use a workspace-relative path containing only letters, digits, '_', '.', '/', '-' and no '..'.";
+        String safePath = SECRET_MATERIAL_POLICY.assess(path, new byte[0], HyperionSecretMaterialPolicy.Origin.TOOL_OBSERVATION).safePath();
+        return "ERROR: invalid path '" + safePath + "'. Use a workspace-relative path containing only letters, digits, '_', '.', '/', '-' and no '..'.";
     }
 
     /**

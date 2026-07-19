@@ -416,6 +416,7 @@ if [ "$SKIP_SERVER" = false ]; then
 
     if [ "$RUN_HYPERION" = true ]; then
         export ARTEMIS_HYPERION_ENABLED="true"
+        export ARTEMIS_HYPERION_EXERCISEGENERATION_ENABLED="true"
         export ARTEMIS_CONTINUOUSINTEGRATION_BUILDAGENT_MAXGENERATIONSANDBOXSLOTS="1"
         export SPRING_AI_OPENAI_BASE_URL="http://127.0.0.1:${HYPERION_LLM_MOCK_PORT}/v1"
         export SPRING_AI_OPENAI_API_KEY="hyperion-e2e-dummy-key"
@@ -449,8 +450,8 @@ else
             echo -e "${RED}ERROR: Cannot reuse server: management info is unavailable.${NC}"
             exit 1
         fi
-        if ! grep -Eq '"activeModuleFeatures"[[:space:]]*:[[:space:]]*\[[^]]*"hyperion"' <<< "$SERVER_INFO"; then
-            echo -e "${RED}ERROR: Cannot reuse server for Hyperion: management info does not enable Hyperion.${NC}"
+        if ! grep -Eq '"activeModuleFeatures"[[:space:]]*:[[:space:]]*\[[^]]*"hyperion-exercise-generation"' <<< "$SERVER_INFO"; then
+            echo -e "${RED}ERROR: Cannot reuse server for Hyperion generation: management info does not enable exercise generation.${NC}"
             exit 1
         fi
         if ! HYPERION_HEALTH=$(curl -sf "http://127.0.0.1:${HYPERION_LLM_MOCK_PORT}/health"); then

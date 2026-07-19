@@ -14,6 +14,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
+import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.testcontainers.dockerclient.TransportConfig;
 import org.testcontainers.images.RemoteDockerImage;
@@ -37,6 +38,7 @@ import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseCreationUpdateService;
 
 /** Shared setup for deterministic mocked-model generation and adaptation tests that run the sandbox, builds, and verifier against Docker. */
+@TestPropertySource(properties = "artemis.continuous-integration.build-agent.max-generation-sandbox-slots=1")
 abstract class AbstractHyperionMockedLlmEndToEndTest extends AbstractProgrammingIntegrationLocalCILocalVCTestBase {
 
     @Autowired
@@ -94,7 +96,6 @@ abstract class AbstractHyperionMockedLlmEndToEndTest extends AbstractProgramming
         sharedQueueProcessingService.setPauseState(false);
         sharedQueueProcessingService.init();
         ((AtomicBoolean) Objects.requireNonNull(ReflectionTestUtils.getField(interactiveSandboxRelayHandler, "shuttingDown"))).set(false);
-        ReflectionTestUtils.setField(interactiveSandboxRelayHandler, "maxGenerationSandboxSlots", 1);
         interactiveSandboxRelayHandler.registerRequestListener();
         sharedQueueProcessingService.updateBuildAgentInformation();
 

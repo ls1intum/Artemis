@@ -137,4 +137,17 @@ class HyperionProgrammingLanguageContextFilterServiceTest {
         assertThat(filterService.filter(new LinkedHashMap<>(), ProgrammingLanguage.JAVA)).isEmpty();
         assertThat(filterService.filter(null, ProgrammingLanguage.JAVA)).isEmpty();
     }
+
+    @Test
+    void filter_excludesCredentialPathsAndSupportedMaterialWithoutBlockingOrdinarySource() {
+        String githubSentinel = "ghp_ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghij";
+        Map<String, String> files = new LinkedHashMap<>();
+        files.put(".env.production", "ordinary");
+        files.put("src/sentinel.txt", githubSentinel);
+        files.put("src/Example.java", "String token = \"token\"; String password = \"change-me\"; String apiKey = \"example\";");
+
+        Map<String, String> result = filterService.filter(files, ProgrammingLanguage.JAVA);
+
+        assertThat(result).containsOnlyKeys("src/Example.java");
+    }
 }

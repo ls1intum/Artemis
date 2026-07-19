@@ -185,7 +185,7 @@ public class BuildJobContainerService {
         int memorySwap = runConfig.memorySwap();
 
         List<String> envVars = new ArrayList<>();
-        if (useSystemProxy) {
+        if (useSystemProxy && !"none".equals(network)) {
             envVars.add("HTTP_PROXY=" + httpProxy);
             envVars.add("HTTPS_PROXY=" + httpsProxy);
             envVars.add("NO_PROXY=" + noProxy);

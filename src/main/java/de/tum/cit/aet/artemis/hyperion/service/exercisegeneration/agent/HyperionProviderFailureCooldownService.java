@@ -17,12 +17,12 @@ import org.springframework.stereotype.Service;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.map.IMap;
 
-import de.tum.cit.aet.artemis.hyperion.config.HyperionEnabled;
+import de.tum.cit.aet.artemis.hyperion.config.HyperionExerciseGenerationEnabled;
 
 /** Hazelcast-backed hard-failure cooldown so one core node's quota/auth failure protects all Hyperion generation workers. */
 @Lazy
 @Service
-@Conditional(HyperionEnabled.class)
+@Conditional(HyperionExerciseGenerationEnabled.class)
 public class HyperionProviderFailureCooldownService implements ProviderFailureCooldown {
 
     private static final String COOLDOWN_MAP_NAME = "hyperion-provider-failure-cooldowns";

@@ -149,6 +149,27 @@ public class ExerciseVersionService {
     }
 
     /**
+     * Creates an exercise version on the calling thread while preserving the non-critical failure semantics of asynchronous version creation.
+     *
+     * @param targetExercise the exercise to create a version of
+     * @param author         the user who created the version
+     */
+    public void createExerciseVersionSynchronously(Exercise targetExercise, User author) {
+        createExerciseVersionInternal(targetExercise, author);
+    }
+
+    /**
+     * Creates an exercise version on the calling thread using exact caller-captured repository commit IDs while preserving non-critical failure semantics.
+     *
+     * @param targetExercise      the exercise to create a version of
+     * @param author              the user who created the version
+     * @param repositoryCommitIds exact commit IDs keyed by repository type; missing entries are resolved normally
+     */
+    public void createExerciseVersionSynchronously(Exercise targetExercise, User author, Map<RepositoryType, String> repositoryCommitIds) {
+        createExerciseVersionInternal(targetExercise, author, repositoryCommitIds);
+    }
+
+    /**
      * Creates an exercise version, swallowing all failures. Runs on the {@code exerciseVersionExecutor} thread.
      * Exercise version creation is a non-critical side effect of saving an exercise: failures here (e.g.
      * serialization issues, DB errors) must not surface to the caller, since the exercise save itself has already
@@ -158,8 +179,12 @@ public class ExerciseVersionService {
      * @param author         The user who created the version
      */
     private void createExerciseVersionInternal(Exercise targetExercise, User author) {
+        createExerciseVersionInternal(targetExercise, author, Map.of());
+    }
+
+    private void createExerciseVersionInternal(Exercise targetExercise, User author, Map<RepositoryType, String> repositoryCommitIds) {
         try {
-            createExerciseVersionOrThrow(targetExercise, author);
+            createExerciseVersionOrThrow(targetExercise, author, repositoryCommitIds);
         }
         catch (RuntimeException e) {
             Long exerciseId = targetExercise == null ? null : targetExercise.getId();

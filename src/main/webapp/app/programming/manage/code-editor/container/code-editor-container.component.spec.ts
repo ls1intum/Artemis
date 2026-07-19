@@ -499,6 +499,18 @@ describe('CodeEditorContainerComponent', () => {
         expect(event.preventDefault).not.toHaveBeenCalled();
     });
 
+    it('should bypass the unload warning once after an explicit discard confirmation', () => {
+        const event = { preventDefault: vi.fn() } as any;
+        component.unsavedFiles = { 'src/main/App.java': 'x' };
+
+        component.allowNextUnloadWithoutConfirmation();
+
+        expect(component.unloadNotification(event)).toBe(true);
+        expect(event.preventDefault).not.toHaveBeenCalled();
+        expect(component.unloadNotification(event)).toBe('pendingChanges');
+        expect(event.preventDefault).toHaveBeenCalledOnce();
+    });
+
     it.each(Object.values(CommitState))('should report whether %s is a verified clean repository state', (commitState) => {
         component.commitState = commitState;
         expect(component.hasCleanRepositoryState()).toBe(commitState === CommitState.CLEAN);

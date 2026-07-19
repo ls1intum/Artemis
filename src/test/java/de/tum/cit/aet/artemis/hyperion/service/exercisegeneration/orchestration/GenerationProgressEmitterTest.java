@@ -100,4 +100,13 @@ class GenerationProgressEmitterTest {
         assertThat(recorded).hasSize(1);
         assertThat(recorded.getFirst().terminal()).isFalse();
     }
+
+    @Test
+    void rejectedEvent_isNotSentToTheLiveClient() {
+        GenerationProgressEmitter emitter = new GenerationProgressEmitter((event, terminal) -> false, sent::add);
+
+        emitter.milestone(ExerciseGenerationEventDTO.done("late success", ExerciseGenerationEventDTO.CompletionStatus.SUCCESS, null, true));
+
+        assertThat(sent).isEmpty();
+    }
 }

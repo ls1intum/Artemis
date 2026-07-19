@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.persistence;
 
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.EnumMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -186,10 +187,8 @@ public class ExerciseGenerationRevertService {
      * @param exerciseId the exercise whose baseline should no longer be offered for automatic revert
      */
     public void invalidateBaseline(long exerciseId) {
-        if (baselineMap.containsKey(exerciseId)) {
-            baselineMap.delete(exerciseId);
-            log.info("Invalidated the automatic-revert baseline for exercise {} because a later run's save was not cleanly verified", exerciseId);
-        }
+        baselineMap.delete(exerciseId);
+        log.info("Invalidated the automatic-revert baseline for exercise {} before a later run began durable mutation", exerciseId);
     }
 
     /**
@@ -323,8 +322,9 @@ public class ExerciseGenerationRevertService {
             }
             // Resynchronization triggers the canonical tests build after every required repository reset has completed.
             try {
+                Map<RepositoryType, String> revertedRepositoryHeads = captureRepositoryHeads(exercise, repositoryBranch, baseline);
                 fullyReverted = persistenceService.resyncAfterRevertWithSignal(exercise, user, testsBuildSignal, baseline.problemStatement(), baseline.title(),
-                        baseline.expectedProblemStatement(), baseline.expectedTitle());
+                        baseline.expectedProblemStatement(), baseline.expectedTitle(), revertedRepositoryHeads);
             }
             catch (RuntimeException e) {
                 log.error("Failed to trigger the grading re-sync after reverting exercise {}; retaining the baseline for retry", exercise.getId(), e);
@@ -332,6 +332,25 @@ public class ExerciseGenerationRevertService {
             }
         }
         return new RevertResult(fullyReverted, List.copyOf(reverted));
+    }
+
+    private Map<RepositoryType, String> captureRepositoryHeads(ProgrammingExercise exercise, String repositoryBranch, ExerciseGenerationBaseline baseline) {
+        Map<RepositoryType, String> heads = new EnumMap<>(RepositoryType.class);
+        for (RepositoryType repositoryType : REVERT_ORDER) {
+            LocalVCRepositoryUri uri = exercise.getRepositoryURI(repositoryType);
+            if (uri == null) {
+                continue;
+            }
+            String head = baseline.headFor(repositoryType);
+            if (head == null) {
+                head = gitService.getLastCommitHash(uri, repositoryBranch);
+            }
+            if (head == null) {
+                throw new IllegalStateException("Could not resolve the " + repositoryType + " repository HEAD after reverting it");
+            }
+            heads.put(repositoryType, head);
+        }
+        return Map.copyOf(heads);
     }
 
     private void refreshCachedCheckout(LocalVCRepositoryUri uri, String repositoryBranch) {

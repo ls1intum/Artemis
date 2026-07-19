@@ -157,13 +157,19 @@ export class ExerciseAPIRequests {
         exercise.teamAssignmentConfig = teamAssignmentConfig;
 
         const response = await this.page.request.post(`${PROGRAMMING_EXERCISE_BASE}/setup`, { data: exercise });
+        if (!response.ok()) {
+            throw new Error(`Programming exercise setup failed with HTTP ${response.status()} ${response.statusText()}`);
+        }
         return this.withKnownExerciseGroup(await response.json(), exerciseGroup);
     }
 
     async deleteProgrammingExercise(exerciseId: number) {
-        await this.page.request.delete(`${PROGRAMMING_EXERCISE_BASE}/${exerciseId}`, {
+        const response = await this.page.request.delete(`${PROGRAMMING_EXERCISE_BASE}/${exerciseId}`, {
             params: { deleteStudentReposBuildPlans: true, deleteBaseReposBuildPlans: true },
         });
+        if (!response.ok()) {
+            throw new Error(`Programming exercise deletion failed with HTTP ${response.status()} ${response.statusText()}`);
+        }
     }
 
     /**

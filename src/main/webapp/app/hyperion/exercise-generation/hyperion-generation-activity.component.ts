@@ -18,6 +18,7 @@ import { HyperionExerciseGenerationService } from 'app/hyperion/exercise-generat
 import {
     ExerciseGenerationFileChange,
     ExerciseGenerationRevertResult,
+    HyperionExerciseGenerationState,
     HyperionFileChangeRepo,
     HyperionGenerationCompletionStatus,
     HyperionGenerationEvent,
@@ -53,14 +54,17 @@ export interface HyperionReviewRequestedEvent {
     target: HyperionReviewTarget;
     jobId: string;
     commitHash?: string;
+    savedExerciseVersionId?: number;
 }
 
 export interface HyperionGenerationCompletedEvent {
+    jobId: string;
     mode?: HyperionGenerationMode;
     verdict?: HyperionGenerationVerdict;
     completionStatus?: HyperionGenerationCompletionStatus;
     liveExerciseChanged?: boolean;
     completedAt?: string;
+    savedRepositoryCommits?: { [key: string]: string };
 }
 
 @Component({
@@ -230,7 +234,10 @@ export class HyperionGenerationActivityComponent implements OnDestroy {
         }
         const terminal = this.latestTerminalEvent(this.events());
         const repositoryCommits = terminal?.savedRepositoryCommits;
-        return ['problem-statement', ...(['solution', 'template', 'tests'] as const).filter((repository) => repositoryCommits?.[repository])];
+        return [
+            ...(terminal?.savedExerciseVersionId ? (['problem-statement'] as const) : []),
+            ...(['solution', 'template', 'tests'] as const).filter((repository) => repositoryCommits?.[repository]),
+        ];
     });
     readonly reviewJobId = computed(() => (this.canNavigateFileChanges() ? this.jobId() : this.revertAvailable() ? this.revertJobId() : undefined));
 
@@ -247,6 +254,7 @@ export class HyperionGenerationActivityComponent implements OnDestroy {
 
     private streamSubscription?: Subscription;
     private streamJobId?: string;
+    private exerciseStateSubscription?: Subscription;
     private statusSubscription?: Subscription;
     private statusRequestInFlight = false;
     private pendingStatusLoad?: { exerciseId: number; expectedJobId?: string; background: boolean };
@@ -270,8 +278,10 @@ export class HyperionGenerationActivityComponent implements OnDestroy {
                 return;
             }
             this.loadedExerciseId = id;
+            this.closeExerciseState();
             this.reset();
             if (id !== undefined) {
+                this.openExerciseState(id);
                 this.loadStatus(id);
             }
         });
@@ -281,6 +291,7 @@ export class HyperionGenerationActivityComponent implements OnDestroy {
         this.destroyed = true;
         this.loadSequence++;
         this.closeStream();
+        this.closeExerciseState();
         this.statusSubscription?.unsubscribe();
         this.clearStreamLossRefresh();
         this.clearStatusRetry();
@@ -386,6 +397,10 @@ export class HyperionGenerationActivityComponent implements OnDestroy {
         const currentJobId = this.reviewJobId();
         if (currentJobId && this.reviewTargets().includes(target)) {
             const terminal = this.latestTerminalEvent(this.events());
+            if (target === 'problem-statement' && terminal?.savedExerciseVersionId) {
+                this.reviewRequested.emit({ target, jobId: currentJobId, savedExerciseVersionId: terminal.savedExerciseVersionId });
+                return;
+            }
             const commitHash = terminal?.savedRepositoryCommits?.[target];
             this.reviewRequested.emit(commitHash ? { target, jobId: currentJobId, commitHash } : { target, jobId: currentJobId });
         }
@@ -630,6 +645,52 @@ export class HyperionGenerationActivityComponent implements OnDestroy {
         return true;
     }
 
+    private openExerciseState(exerciseId: number): void {
+        const subscription = this.service
+            .subscribeToExerciseState(exerciseId)
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe({
+                next: (state) => this.handleExerciseState(state),
+                error: () => (this.exerciseStateSubscription = undefined),
+                complete: () => (this.exerciseStateSubscription = undefined),
+            });
+        this.exerciseStateSubscription = subscription.closed ? undefined : subscription;
+    }
+
+    private handleExerciseState(state: HyperionExerciseGenerationState): void {
+        const exerciseId = this.exerciseId();
+        if (this.destroyed || exerciseId === undefined || state.exerciseId !== exerciseId) {
+            return;
+        }
+        this.cancelStatusRequest();
+        if (state.running) {
+            const sameOwnedJob = this.jobId() === state.jobId && this.ownedByCaller();
+            if (this.jobId() !== state.jobId) {
+                this.closeStream();
+                this.jobId.set(state.jobId);
+                this.mode.set(undefined);
+                this.events.set([]);
+                this.clearFileChanges();
+            }
+            this.running.set(true);
+            if (!sameOwnedJob) {
+                this.ownedByCaller.set(false);
+                this.cancellable.set(false);
+            }
+            this.clearActiveStatusRefresh();
+            this.loadStatus(exerciseId, state.jobId, true);
+            return;
+        }
+        if (this.jobId() !== state.jobId) {
+            return;
+        }
+        this.running.set(false);
+        this.cancellable.set(false);
+        this.closeStream();
+        this.clearActiveStatusRefresh();
+        this.loadStatus(exerciseId, state.jobId, true);
+    }
+
     private handleMessage(message: HyperionGenerationMessage): void {
         this.clearStreamLossRefresh();
         if (isFileChange(message)) {
@@ -742,12 +803,16 @@ export class HyperionGenerationActivityComponent implements OnDestroy {
         }
         this.emittedTerminalJobs.add(jobId);
         const completedEvent: HyperionGenerationCompletedEvent = {
+            jobId,
             mode: this.mode(),
             verdict: event.verdict,
             completionStatus: event.completionStatus,
             liveExerciseChanged: event.liveExerciseChanged,
         };
         completedEvent.completedAt = event.timestamp;
+        if (event.savedRepositoryCommits !== undefined) {
+            completedEvent.savedRepositoryCommits = event.savedRepositoryCommits;
+        }
         this.generationCompleted.emit(completedEvent);
     }
 
@@ -933,13 +998,22 @@ export class HyperionGenerationActivityComponent implements OnDestroy {
         this.streamJobId = undefined;
     }
 
-    private reset(): void {
+    private closeExerciseState(): void {
+        this.exerciseStateSubscription?.unsubscribe();
+        this.exerciseStateSubscription = undefined;
+    }
+
+    private cancelStatusRequest(): void {
         this.loadSequence++;
-        this.closeStream();
         this.statusSubscription?.unsubscribe();
         this.statusSubscription = undefined;
         this.statusRequestInFlight = false;
         this.pendingStatusLoad = undefined;
+    }
+
+    private reset(): void {
+        this.cancelStatusRequest();
+        this.closeStream();
         this.clearStreamLossRefresh();
         this.clearStatusRetry();
         this.clearRevertAvailabilityRefresh();

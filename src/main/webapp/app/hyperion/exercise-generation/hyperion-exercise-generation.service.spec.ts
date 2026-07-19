@@ -63,4 +63,9 @@ describe('HyperionExerciseGenerationService', () => {
         service.subscribeToStream('j1').subscribe();
         expect(websocket.channels).toContain('/user/topic/hyperion/exercise-generation/jobs/j1');
     });
+
+    it('subscribes to the shared per-exercise state topic', () => {
+        service.subscribeToExerciseState(42).subscribe();
+        expect(websocket.channels).toContain('/topic/hyperion/exercise-generation/exercises/42/state');
+    });
 });

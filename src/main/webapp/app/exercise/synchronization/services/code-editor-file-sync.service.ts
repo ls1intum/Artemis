@@ -3,7 +3,7 @@ import { Observable, Subject, Subscription } from 'rxjs';
 import * as Y from 'yjs';
 import { Awareness, applyAwarenessUpdate, encodeAwarenessUpdate } from 'y-protocols/awareness';
 import { AccountService } from 'app/core/auth/account.service';
-import { Alert, AlertService, AlertType } from 'app/foundation/service/alert.service';
+import { AlertService, AlertType } from 'app/foundation/service/alert.service';
 import { generateUuid } from 'app/foundation/util/crypto.utils';
 import {
     ExerciseEditorSyncEvent,
@@ -53,7 +53,6 @@ const INITIAL_SYNC_FINALIZE_DELAY_MS = 500;
  * Late-arriving updates on the old path will be forwarded to the new path within this window.
  */
 const RENAME_REDIRECT_TTL_MS = 5000;
-const EXPECTED_COMMIT_GRACE_PERIOD_MS = 2000;
 
 type FileSyncEntry = {
     // Mutable — kept in sync with the fileDocs map key by remapFileKey/remapDirectoryKeys.
@@ -99,11 +98,6 @@ export class CodeEditorFileSyncService {
     private alertService = inject(AlertService);
 
     private exerciseId?: number;
-    private expectedRepositoryUpdate = false;
-    private expectedRepositoryUpdateCompletedAt?: number;
-    private suppressNextTimestampLessCommitUntil?: number;
-    private timestampLessExpectedCommitSeen = false;
-    private readonly newCommitAlerts = new Set<Alert>();
     private currentTarget?: ExerciseEditorSyncTarget;
     private auxiliaryRepositoryId?: number;
     private incomingMessageSubscription?: Subscription;
@@ -187,27 +181,7 @@ export class CodeEditorFileSyncService {
         this.exerciseId = undefined;
         this.currentTarget = undefined;
         this.auxiliaryRepositoryId = undefined;
-        this.expectedRepositoryUpdate = false;
-        this.expectedRepositoryUpdateCompletedAt = undefined;
-        this.suppressNextTimestampLessCommitUntil = undefined;
-        this.timestampLessExpectedCommitSeen = false;
         clearRemoteSelectionStyles();
-    }
-
-    beginExpectedRepositoryUpdate(operationCompletedAt?: number): void {
-        this.expectedRepositoryUpdate = true;
-        this.expectedRepositoryUpdateCompletedAt = operationCompletedAt;
-        this.suppressNextTimestampLessCommitUntil = undefined;
-        this.timestampLessExpectedCommitSeen = false;
-        this.dismissNewCommitAlerts();
-    }
-
-    endExpectedRepositoryUpdate(): void {
-        this.expectedRepositoryUpdate = false;
-        if (!this.timestampLessExpectedCommitSeen) {
-            this.suppressNextTimestampLessCommitUntil = Date.now() + EXPECTED_COMMIT_GRACE_PERIOD_MS;
-        }
-        this.dismissNewCommitAlerts();
     }
 
     /**
@@ -790,34 +764,12 @@ export class CodeEditorFileSyncService {
 
     // ── Private: Commit alert handler ────────────────────────────────────
 
-    private handleNewCommitAlert(message: ExerciseNewCommitAlertEvent): void {
-        const isLateTimestampLessExpectedCommit =
-            message.timestamp === undefined && this.suppressNextTimestampLessCommitUntil !== undefined && Date.now() <= this.suppressNextTimestampLessCommitUntil;
-        if (isLateTimestampLessExpectedCommit) {
-            this.suppressNextTimestampLessCommitUntil = undefined;
-            return;
-        }
-        const isExpectedByTimestamp =
-            this.expectedRepositoryUpdateCompletedAt !== undefined && message.timestamp !== undefined && message.timestamp <= this.expectedRepositoryUpdateCompletedAt;
-        const cannotDistinguishDuringRefresh = this.expectedRepositoryUpdate && (this.expectedRepositoryUpdateCompletedAt === undefined || message.timestamp === undefined);
-        if (isExpectedByTimestamp || cannotDistinguishDuringRefresh) {
-            if (this.expectedRepositoryUpdate && message.timestamp === undefined) {
-                this.timestampLessExpectedCommitSeen = true;
-            }
-            return;
-        }
-        const alert = this.alertService.addAlert({
+    private handleNewCommitAlert(_message: ExerciseNewCommitAlertEvent): void {
+        this.alertService.addAlert({
             type: AlertType.WARNING,
             message: 'artemisApp.exercise.codeEditorSync.newCommitAlert',
             timeout: 0,
-            onClose: (closedAlert) => this.newCommitAlerts.delete(closedAlert),
         });
-        this.newCommitAlerts.add(alert);
-    }
-
-    private dismissNewCommitAlerts(): void {
-        [...this.newCommitAlerts].forEach((alert) => alert.close());
-        this.newCommitAlerts.clear();
     }
 
     // ── Private: Message routing ─────────────────────────────────────────

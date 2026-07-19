@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BooleanSupplier;
 import java.util.stream.Stream;
@@ -33,6 +34,7 @@ import de.tum.cit.aet.artemis.core.service.TempFileUtilService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseVersionService;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionExerciseGenerationEnabled;
 import de.tum.cit.aet.artemis.hyperion.dto.GenerationMode;
+import de.tum.cit.aet.artemis.hyperion.service.HyperionSecretMaterialPolicy;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationOutcome;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.BuildGateTestNames;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.workspace.BinaryContent;
@@ -68,6 +70,8 @@ public class GenerationPersistenceService {
 
     private static final Logger log = LoggerFactory.getLogger(GenerationPersistenceService.class);
 
+    private static final HyperionSecretMaterialPolicy SECRET_MATERIAL_POLICY = new HyperionSecretMaterialPolicy();
+
     private final String defaultBranch;
 
     private final GitService gitService;
@@ -99,14 +103,16 @@ public class GenerationPersistenceService {
     private final Duration testCaseSyncPoll;
 
     @Autowired
-    public GenerationPersistenceService(@Value("${artemis.version-control.default-branch:main}") String defaultBranch, GitService gitService, RepositoryService repositoryService,
+    public GenerationPersistenceService(@Value("${artemis.version-control.default-branch:main}") String defaultBranch,
+            @Value("${artemis.hyperion.generation.test-case-sync-timeout:PT10M}") Duration testCaseSyncTimeout,
+            @Value("${artemis.hyperion.generation.test-case-sync-poll:PT3S}") Duration testCaseSyncPoll, GitService gitService, RepositoryService repositoryService,
             ProgrammingExerciseParticipationService participationService, ContinuousIntegrationTriggerService continuousIntegrationTriggerService,
             ProgrammingSubmissionService programmingSubmissionService, ExerciseVersionService exerciseVersionService, ProgrammingExerciseTestCaseRepository testCaseRepository,
             ResultRepository resultRepository, ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingExerciseTaskService programmingExerciseTaskService,
             ProblemStatementMetadataUpdateService problemStatementMetadataUpdateService, TempFileUtilService tempFileUtilService) {
         this(defaultBranch, gitService, repositoryService, participationService, continuousIntegrationTriggerService, programmingSubmissionService, exerciseVersionService,
                 testCaseRepository, resultRepository, programmingExerciseRepository, programmingExerciseTaskService, problemStatementMetadataUpdateService, tempFileUtilService,
-                TEST_CASE_SYNC_TIMEOUT, TEST_CASE_SYNC_POLL);
+                testCaseSyncTimeout, testCaseSyncPoll);
     }
 
     // Package-private so tests can inject a shrunken sync wait and exercise the build-completion wait without sleeping for seconds.
@@ -149,91 +155,29 @@ public class GenerationPersistenceService {
 
     private static final int MAX_TITLE_LENGTH = 255;
 
-    private static final Duration TEST_CASE_SYNC_TIMEOUT = Duration.ofMinutes(2);
-
-    private static final Duration TEST_CASE_SYNC_POLL = Duration.ofSeconds(3);
-
-    /**
-     * @param prePersistHeads           repository heads captured before this run's commits, keyed by the repositories it actually changed
-     * @param postPersistHeads          repository heads captured after this run's commits; empty when no repository needed a commit
-     * @param persistedProblemStatement the problem statement persisted after this run (unchanged from before the run when {@code metadataChanged} is {@code false})
-     * @param persistedTitle            the title persisted after this run (unchanged from before the run when {@code metadataChanged} is {@code false})
-     * @param repositoryBranch          the repository branch this run persisted against
-     * @param metadataChanged           whether the problem statement/title was actually written by this run
-     * @param savedExerciseVersionId    the id of the {@code ExerciseVersion} row created by this run, or {@code null} when no new version was recorded (e.g. a no-op run, or the
-     *                                      version service judged the snapshot unchanged)
-     */
     public record PersistResult(Map<RepositoryType, String> prePersistHeads, Map<RepositoryType, String> postPersistHeads, String persistedProblemStatement, String persistedTitle,
             String repositoryBranch, boolean metadataChanged, Long savedExerciseVersionId) {
 
-        // Convenience constructor for call sites (mostly tests) that do not care about the no-op / exact-version-identity fields this task added.
         public PersistResult(Map<RepositoryType, String> prePersistHeads, Map<RepositoryType, String> postPersistHeads, String persistedProblemStatement, String persistedTitle,
                 String repositoryBranch) {
             this(prePersistHeads, postPersistHeads, persistedProblemStatement, persistedTitle, repositoryBranch, true, null);
         }
     }
 
-    /**
-     * Persists a verified generated exercise.
-     * <p>
-     * The three repositories are committed in {@link #PERSIST_ORDER} (tests last, so the test-triggered build sees the final solution). Because they cannot commit atomically, each
-     * repository push uses the captured remote head as a ref lease. If a later repository fails, the already-committed repositories are force-reset to their captured commits
-     * ({@link #compensate}). The exercise version is recorded only after every repository has committed.
-     *
-     * @param exercise the exercise to persist into
-     * @param user     the instructor performing the generation (commit author)
-     * @param outcome  the mechanically verified generation outcome holding the produced files
-     * @return the pre- and post-persist commit HEADs captured for each changed repository. Returned only after every repository committed successfully, so the caller records a
-     *         revertible baseline exclusively for a persist that actually applied changes.
-     * @throws GenerationIncompleteException if a repository commit fails part-way through the sequence (the already-committed repositories are compensated first)
-     */
     public PersistResult persist(ProgrammingExercise exercise, User user, GenerationOutcome outcome) {
         return persist(exercise, user, outcome, exercise.getProblemStatement(), exercise.getTitle());
     }
 
-    /**
-     * Persists a verified generated exercise, refusing to overwrite problem statement/title edits made after the generation job started.
-     *
-     * @param exercise                 the exercise to update
-     * @param user                     the instructor performing the generation (commit author)
-     * @param outcome                  the mechanically verified generation outcome
-     * @param expectedProblemStatement the problem statement observed when the job started
-     * @param expectedTitle            the title observed when the job started
-     * @return the repository heads captured before and after persistence
-     */
     public PersistResult persist(ProgrammingExercise exercise, User user, GenerationOutcome outcome, String expectedProblemStatement, String expectedTitle) {
         return persist(exercise, user, outcome, expectedProblemStatement, expectedTitle, () -> true);
     }
 
-    /**
-     * Persists a verified generated exercise while aborting before durable mutations if this node no longer owns the job.
-     *
-     * @param exercise                 the exercise to update
-     * @param user                     the instructor performing the generation (commit author)
-     * @param outcome                  the mechanically verified generation outcome
-     * @param expectedProblemStatement the problem statement observed when the job started
-     * @param expectedTitle            the title observed when the job started
-     * @param stillOwnsMutationSlot    guard checked before durable mutations
-     * @return the repository heads captured before and after persistence
-     */
     public PersistResult persist(ProgrammingExercise exercise, User user, GenerationOutcome outcome, String expectedProblemStatement, String expectedTitle,
             BooleanSupplier stillOwnsMutationSlot) {
         return persistWithCommitMessage(exercise, user, outcome, expectedProblemStatement, expectedTitle, GenerationMode.GENERATE, "Generate exercise with Hyperion",
                 stillOwnsMutationSlot);
     }
 
-    /**
-     * Persists a verified generated exercise and includes its job id in repository commits for cross-repository diagnostics.
-     *
-     * @param exercise                 the exercise to update
-     * @param user                     the commit and version author
-     * @param outcome                  the mechanically verified generation outcome
-     * @param expectedProblemStatement the problem statement observed when the job started
-     * @param expectedTitle            the title observed when the job started
-     * @param jobId                    the generation job identifier
-     * @param stillOwnsMutationSlot    guard checked before durable mutations
-     * @return the repository heads captured before and after persistence
-     */
     public PersistResult persist(ProgrammingExercise exercise, User user, GenerationOutcome outcome, String expectedProblemStatement, String expectedTitle, String jobId,
             BooleanSupplier stillOwnsMutationSlot) {
         return persist(exercise, user, outcome, expectedProblemStatement, expectedTitle, jobId, GenerationMode.GENERATE, stillOwnsMutationSlot);
@@ -241,16 +185,30 @@ public class GenerationPersistenceService {
 
     public PersistResult persist(ProgrammingExercise exercise, User user, GenerationOutcome outcome, String expectedProblemStatement, String expectedTitle, String jobId,
             GenerationMode mode, BooleanSupplier stillOwnsMutationSlot) {
+        return persist(exercise, user, outcome, expectedProblemStatement, expectedTitle, jobId, mode, stillOwnsMutationSlot, () -> {
+        });
+    }
+
+    public PersistResult persist(ProgrammingExercise exercise, User user, GenerationOutcome outcome, String expectedProblemStatement, String expectedTitle, String jobId,
+            GenerationMode mode, BooleanSupplier stillOwnsMutationSlot, Runnable beforeDurableMutation) {
         String operation = mode == GenerationMode.ADAPT ? "Adapt" : "Generate";
         return persistWithCommitMessage(exercise, user, outcome, expectedProblemStatement, expectedTitle, mode, operation + " exercise with Hyperion (" + jobId + ")",
-                stillOwnsMutationSlot);
+                stillOwnsMutationSlot, beforeDurableMutation);
     }
 
     private PersistResult persistWithCommitMessage(ProgrammingExercise exercise, User user, GenerationOutcome outcome, String expectedProblemStatement, String expectedTitle,
             GenerationMode mode, String commitMessage, BooleanSupplier stillOwnsMutationSlot) {
+        return persistWithCommitMessage(exercise, user, outcome, expectedProblemStatement, expectedTitle, mode, commitMessage, stillOwnsMutationSlot, () -> {
+        });
+    }
+
+    private PersistResult persistWithCommitMessage(ProgrammingExercise exercise, User user, GenerationOutcome outcome, String expectedProblemStatement, String expectedTitle,
+            GenerationMode mode, String commitMessage, BooleanSupplier stillOwnsMutationSlot, Runnable beforeDurableMutation) {
         if (!outcome.isMechanicallyVerified()) {
             throw new IllegalArgumentException("Refusing to persist an exercise that did not pass mechanical verification");
         }
+        requirePersistenceInputsSafe(outcome);
+        Runnable beforeFirstDurableMutation = oneShot(beforeDurableMutation);
         String repositoryBranch = repositoryBranch(exercise);
         // Capture each repository's pre-persist HEAD before writing it, so a later failure can revert the already-committed repositories to a consistent pre-generation state.
         Map<RepositoryType, String> prePersistHashes = new EnumMap<>(RepositoryType.class);
@@ -281,7 +239,7 @@ public class GenerationPersistenceService {
                     testsBuildSignal = prepareTestsBuildSignal(exercise, null);
                 }
                 String commitHash = commitRepository(exercise, user, repositoryType, producedFiles, outcome.seedRepositoryHeads().get(repositoryType), repositoryBranch, mode,
-                        commitMessage, prePersistHashes, postPersistHashes);
+                        commitMessage, prePersistHashes, postPersistHashes, stillOwnsMutationSlot, beforeFirstDurableMutation);
                 if (commitHash != null) {
                     committed.add(repositoryType);
                     if (repositoryType == RepositoryType.TESTS) {
@@ -328,7 +286,7 @@ public class GenerationPersistenceService {
                 assertStillOwnsMutationSlot(stillOwnsMutationSlot);
                 // The metadata write and the task rebuild it drives are one narrow @Transactional database unit (see ProblemStatementMetadataUpdateService): either both land or
                 // neither does, so a task-rebuild failure never leaves a committed problem statement paired with a half-rebuilt task set.
-                saveProblemStatementIfUnchanged(exercise, producedProblemStatement, targetTitle, originalProblemStatement, originalTitle);
+                saveProblemStatementIfUnchanged(exercise, producedProblemStatement, targetTitle, originalProblemStatement, originalTitle, beforeFirstDurableMutation);
             }
             catch (RuntimeException e) {
                 throw new GenerationIncompleteException("Saving the generated exercise failed while updating the problem statement after committing " + committed
@@ -364,6 +322,23 @@ public class GenerationPersistenceService {
         MetadataSnapshot metadata = persistedMetadata.get();
         return new PersistResult(nonNullCopy(prePersistHashes), nonNullCopy(postPersistHashes), metadata.problemStatement(), metadata.title(), repositoryBranch,
                 shouldSaveProblemStatement, savedExerciseVersionId);
+    }
+
+    private static void requirePersistenceInputsSafe(GenerationOutcome outcome) {
+        String producedProblemStatement = outcome.producedProblemStatement();
+        SECRET_MATERIAL_POLICY.requireSafe("persistence/problem-statement.md",
+                producedProblemStatement == null ? new byte[0] : producedProblemStatement.getBytes(StandardCharsets.UTF_8), HyperionSecretMaterialPolicy.Origin.PERSISTENCE);
+        for (RepositoryType repositoryType : PERSIST_ORDER) {
+            Map<String, String> producedFiles = outcome.producedFiles(repositoryType);
+            if (producedFiles == null) {
+                continue;
+            }
+            for (Map.Entry<String, String> file : producedFiles.entrySet()) {
+                String content = file.getValue();
+                SECRET_MATERIAL_POLICY.requireSafe("persistence/" + repositoryType.name().toLowerCase(java.util.Locale.ROOT) + "/" + file.getKey(),
+                        content == null ? new byte[0] : content.getBytes(StandardCharsets.UTF_8), HyperionSecretMaterialPolicy.Origin.PERSISTENCE);
+            }
+        }
     }
 
     private boolean compensateAndResyncBaseline(ProgrammingExercise exercise, User user, String repositoryBranch, List<RepositoryType> committed,
@@ -417,6 +392,15 @@ public class GenerationPersistenceService {
         }
     }
 
+    private static Runnable oneShot(Runnable action) {
+        AtomicBoolean started = new AtomicBoolean(false);
+        return () -> {
+            if (started.compareAndSet(false, true)) {
+                action.run();
+            }
+        };
+    }
+
     /**
      * Re-synchronises the exercise after its repositories were force-reset back to a captured commit (the {@code revert this adaptation} affordance). The git reset itself is done
      * by the caller; this triggers the canonical tests build so test-case grading follows the reverted tests, re-applies the build-gate zero-weighting, and records a new exercise
@@ -440,11 +424,17 @@ public class GenerationPersistenceService {
 
     boolean resyncAfterRevertWithSignal(ProgrammingExercise exercise, User user, TestsBuildSignal testsBuildSignal, String problemStatement, String title,
             String expectedProblemStatement, String expectedTitle) {
+        return resyncAfterRevertWithSignal(exercise, user, testsBuildSignal, problemStatement, title, expectedProblemStatement, expectedTitle, Map.of());
+    }
+
+    boolean resyncAfterRevertWithSignal(ProgrammingExercise exercise, User user, TestsBuildSignal testsBuildSignal, String problemStatement, String title,
+            String expectedProblemStatement, String expectedTitle, Map<RepositoryType, String> repositoryCommitIds) {
         if (!restoreProblemStatementIfUnchanged(exercise, problemStatement, title, expectedProblemStatement, expectedTitle)) {
             return false;
         }
         try {
-            syncTestCasesAndRecordVersion(exercise, user, testsBuildSignal, true);
+            syncTestCasesAndRecordVersion(exercise, user, testsBuildSignal, true, () -> {
+            }, repositoryCommitIds);
             log.info("Re-synchronised exercise {} after reverting an adaptation", exercise.getId());
             return true;
         }
@@ -575,10 +565,12 @@ public class GenerationPersistenceService {
         return value == null ? null : value.replace("\r\n", "\n").replace('\r', '\n').trim();
     }
 
-    private void saveProblemStatementIfUnchanged(ProgrammingExercise exercise, String problemStatement, String title, String expectedProblemStatement, String expectedTitle) {
+    private void saveProblemStatementIfUnchanged(ProgrammingExercise exercise, String problemStatement, String title, String expectedProblemStatement, String expectedTitle,
+            Runnable beforeFirstDurableMutation) {
         String trimmedProblemStatement = problemStatement.trim();
         MetadataSnapshot current = currentMetadataMatchingSafeSave(exercise, expectedProblemStatement, expectedTitle, trimmedProblemStatement, title).orElseThrow(
                 () -> new IllegalStateException("The problem statement/title changed while Hyperion was saving the generated exercise; refusing to overwrite manual edits"));
+        beforeFirstDurableMutation.run();
         // Narrow @Transactional unit (metadata CAS write + task rebuild only, no Git/CI inside): a task-rebuild failure rolls the metadata write back too, instead of leaving a
         // committed statement paired with a half-rebuilt task set.
         int updatedRows = problemStatementMetadataUpdateService.updateProblemStatementAndTasks(exercise, trimmedProblemStatement, title, current.problemStatement(),
@@ -666,7 +658,8 @@ public class GenerationPersistenceService {
     }
 
     private String commitRepository(ProgrammingExercise exercise, User user, RepositoryType repositoryType, Map<String, String> producedFiles, String seedHead,
-            String repositoryBranch, GenerationMode mode, String commitMessage, Map<RepositoryType, String> prePersistHashes, Map<RepositoryType, String> postPersistHashes) {
+            String repositoryBranch, GenerationMode mode, String commitMessage, Map<RepositoryType, String> prePersistHashes, Map<RepositoryType, String> postPersistHashes,
+            BooleanSupplier stillOwnsMutationSlot, Runnable beforeFirstDurableMutation) {
         if (producedFiles == null || producedFiles.isEmpty()) {
             return null;
         }
@@ -696,7 +689,12 @@ public class GenerationPersistenceService {
             }
             gitService.stageAllChanges(repository);
             String postHash = gitService.commitStagedChanges(repository, commitMessage, user);
+            // The draft/ownership guard is intentionally adjacent to the external mutation. If eligibility changes while the push is in flight, the post-push check throws into
+            // the existing reconciliation path, which resets this exact leased commit before the outer persistence compensation handles earlier repositories.
+            assertStillOwnsMutationSlot(stillOwnsMutationSlot);
+            beforeFirstDurableMutation.run();
             gitService.pushCommitWithLease(repository, postHash, repositoryBranch, prePersistHead);
+            assertStillOwnsMutationSlot(stillOwnsMutationSlot);
             if (postHash != null) {
                 postPersistHashes.put(repositoryType, postHash);
             }
@@ -913,7 +911,7 @@ public class GenerationPersistenceService {
         try {
             ProgrammingExerciseParticipation solutionParticipation = participationService.retrieveSolutionParticipation(exercise);
             programmingSubmissionService.createSolutionParticipationSubmissionWithTypeTest(exercise.getId(), signal.testsCommitHash());
-            continuousIntegrationTriggerService.triggerBuild(solutionParticipation, signal.testsCommitHash(), RepositoryType.TESTS);
+            continuousIntegrationTriggerService.triggerRestrictedBuild(solutionParticipation, signal.testsCommitHash(), RepositoryType.TESTS);
             return signal;
         }
         catch (ContinuousIntegrationException e) {

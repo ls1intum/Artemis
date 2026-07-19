@@ -88,6 +88,8 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
 
     private static final Pattern EXERCISE_SYNCHRONIZATION_TOPIC_PATTERN = Pattern.compile("^/topic/exercises/(\\d+)/synchronization$");
 
+    private static final Pattern HYPERION_EXERCISE_STATE_TOPIC_PATTERN = Pattern.compile("^/topic/hyperion/exercise-generation/exercises/(\\d+)/state$");
+
     public static final String IP_ADDRESS = "IP_ADDRESS";
 
     private final ObjectMapper objectMapper;
@@ -367,7 +369,7 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
          * @param destination Destination topic to which the user wants to subscribe
          * @return flag whether subscription is allowed
          */
-        private boolean allowSubscription(@Nullable Principal principal, String destination) {
+        private boolean allowSubscription(@Nullable Principal principal, @Nullable String destination) {
             log.debug("{} wants to subscribe to {}", principal != null ? principal.getName() : "Anonymous", destination);
             /*
              * IMPORTANT: Avoid database calls in this method as much as possible (e.g. checking if the user
@@ -376,9 +378,21 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
              * If you need to do a database call, make sure to first check if the destination is valid for your specific
              * use case.
              */
-            if (principal == null) {
+            if (principal == null || destination == null) {
                 log.warn("Anonymous user tried to access the protected topic: {}", destination);
                 return false;
+            }
+
+            Optional<Long> hyperionExerciseId = getExerciseIdFromHyperionStateDestination(destination);
+            if (hyperionExerciseId.isPresent()) {
+                return authorizationCheckService.isAtLeastEditorInExercise(principal.getName(), hyperionExerciseId.get());
+            }
+            if (destination.equals("/topic/user-registry") || destination.equals("/topic/unresolved-user") || destination.equals("/topic/hyperion")
+                    || destination.startsWith("/topic/hyperion/")) {
+                return false;
+            }
+            if (destination.startsWith("/user/topic/hyperion/")) {
+                return true;
             }
 
             final var login = principal.getName();
@@ -430,10 +444,16 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
 
         /**
          * Clients may publish directly to collaboration topics after the same authorization checks used for subscriptions. Application destinations retain their existing Spring
-         * Security handling, while direct publication to any other broker topic is rejected.
+         * Security handling. Direct publication to user destinations or any other broker topic is rejected.
          */
         private boolean allowSend(@Nullable Principal principal, @Nullable String destination) {
-            if (destination == null || !destination.startsWith("/topic/")) {
+            if (destination == null) {
+                return true;
+            }
+            if (destination.startsWith("/user/")) {
+                return false;
+            }
+            if (!destination.startsWith("/topic/")) {
                 return true;
             }
             if (principal == null) {
@@ -490,5 +510,10 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
             return Optional.of(Long.valueOf(matcher.group(1)));
         }
         return Optional.empty();
+    }
+
+    private static Optional<Long> getExerciseIdFromHyperionStateDestination(String destination) {
+        var matcher = HYPERION_EXERCISE_STATE_TOPIC_PATTERN.matcher(destination);
+        return matcher.matches() ? Optional.of(Long.valueOf(matcher.group(1))) : Optional.empty();
     }
 }

@@ -16,7 +16,7 @@ import {
     isTemplateOrEmpty,
 } from 'app/programming/manage/shared/problem-statement.utils';
 import { LineChange } from 'app/programming/shared/utils/diff.utils';
-import { MODULE_FEATURE_HYPERION, PROFILE_LOCALCI } from 'app/app.constants';
+import { MODULE_FEATURE_HYPERION, MODULE_FEATURE_HYPERION_EXERCISE_GENERATION } from 'app/app.constants';
 
 /**
  * Callback interface that consumers implement to propagate state changes
@@ -98,7 +98,7 @@ export class ProblemStatementAiOperationsHelper {
         private readonly injector: Injector,
     ) {
         this.hyperionEnabled = profileService.isModuleFeatureActive(MODULE_FEATURE_HYPERION);
-        this.hyperionGenerationSupported = this.hyperionEnabled && profileService.isProfileActive(PROFILE_LOCALCI);
+        this.hyperionGenerationSupported = profileService.isModuleFeatureActive(MODULE_FEATURE_HYPERION_EXERCISE_GENERATION);
         this.isAiApplying = computed(() => this.isGeneratingOrRefining() || this.artemisIntelligenceService.isLoading());
         this.shouldShowGenerateButton = computed(() => isTemplateOrEmpty(this.currentProblemStatement(), this.templateProblemStatement(), this.templateLoaded()));
     }

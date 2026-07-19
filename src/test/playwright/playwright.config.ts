@@ -131,6 +131,7 @@ export default defineConfig({
             use: {
                 browserName: 'chromium',
                 viewport: { width: 1920, height: 1080 },
+                trace: 'retain-on-failure',
             },
         },
         // Tests with @multi-node tag. These exercise the clustered Hazelcast / ActiveMQ stack and

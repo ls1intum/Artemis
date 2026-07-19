@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.hyperion.dto;
+package de.tum.cit.aet.artemis.hyperion;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -12,6 +12,13 @@ import org.junit.jupiter.api.Test;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+
+import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationEventDTO;
+import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationFileChangeDTO;
+import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationRequestDTO;
+import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationStatusDTO;
+import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationVerdictDTO;
+import de.tum.cit.aet.artemis.hyperion.dto.GenerationMode;
 
 /**
  * Wire-format tests for exercise-generation DTOs.

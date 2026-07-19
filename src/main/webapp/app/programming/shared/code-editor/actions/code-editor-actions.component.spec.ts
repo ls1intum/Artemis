@@ -13,8 +13,7 @@ import { CodeEditorActionsComponent } from 'app/programming/shared/code-editor/a
 import { MockCodeEditorConflictStateService } from 'test/helpers/mocks/service/mock-code-editor-conflict-state.service';
 import { MockCodeEditorRepositoryFileService } from 'test/helpers/mocks/service/mock-code-editor-repository-file.service';
 import { MockCodeEditorRepositoryService } from 'test/helpers/mocks/service/mock-code-editor-repository.service';
-import { CommitState, DomainChange, DomainType, EditorState, FileSubmission, GitConflictState } from 'app/programming/shared/code-editor/model/code-editor.model';
-import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
+import { CommitState, EditorState, FileSubmission, GitConflictState } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { MockModule } from 'ng-mocks';
 import { MockTranslateService, TranslatePipeMock } from 'test/helpers/mocks/service/mock-translate.service';
 import { FeatureToggleDirective } from 'app/foundation/feature-toggle/feature-toggle.directive';
@@ -177,6 +176,22 @@ describe('CodeEditorActionsComponent', () => {
         expect(onSavedFilesSpy).toHaveBeenCalledWith(savedFilesResult);
 
         fixture.detectChanges();
+    });
+
+    it('should not report a file as saved when its content changed during the request', () => {
+        const saveObservable = new Subject<{ fileName: null }>();
+        const onSavedFilesSpy = vi.spyOn(comp.onSavedFiles, 'emit');
+        comp.editorState.set(EditorState.UNSAVED_CHANGES);
+        fixture.componentRef.setInput('unsavedFiles', { fileName: 'content being saved' });
+        fixture.detectChanges();
+        updateFilesStub.mockReturnValue(saveObservable);
+
+        comp.onSave();
+        fixture.componentRef.setInput('unsavedFiles', { fileName: 'newer collaborative edit' });
+        fixture.detectChanges();
+        saveObservable.next({ fileName: null });
+
+        expect(onSavedFilesSpy).not.toHaveBeenCalled();
     });
 
     it('should call repositoryFileService to save unsavedFiles and emit an error on failure', () => {
@@ -562,27 +577,6 @@ describe('CodeEditorActionsComponent', () => {
         expect(refreshFilesEmitStub).toHaveBeenCalledOnce();
         expect(comp.editorState()).toEqual(EditorState.CLEAN);
         expect(refreshResult).toHaveBeenCalledExactlyOnceWith(true);
-    });
-
-    it('should expose and cancel an external-update refresh while user actions are disabled', () => {
-        const pullTeardown = vi.fn();
-        pullStub.mockReturnValue(new Observable<void>(() => pullTeardown));
-        fixture.componentRef.setInput('disableActions', true);
-
-        const subscription = comp.refreshAfterExternalUpdate().subscribe();
-
-        expect(pullStub).toHaveBeenCalledOnce();
-        expect(comp.editorState()).toBe(EditorState.REFRESHING);
-        subscription.unsubscribe();
-        expect(pullTeardown).toHaveBeenCalledOnce();
-    });
-
-    it('uses the explicit editor domain for an external-update refresh', () => {
-        const domain: DomainChange = [DomainType.PARTICIPATION, { id: 17 } as Participation];
-
-        comp.refreshAfterExternalUpdate(domain).subscribe();
-
-        expect(pullStub).toHaveBeenCalledExactlyOnceWith(domain);
     });
 
     it('should emit internet-disconnected refresh error on pull failure', () => {

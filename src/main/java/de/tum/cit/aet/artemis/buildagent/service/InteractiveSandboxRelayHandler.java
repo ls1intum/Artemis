@@ -38,10 +38,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationContext;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
+import de.tum.cit.aet.artemis.buildagent.config.GenerationSandboxHostingEnabled;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentInformation;
 import de.tum.cit.aet.artemis.buildagent.dto.GenerationSandboxSessionDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.SandboxExecResult;
@@ -57,6 +59,7 @@ import de.tum.cit.aet.artemis.localci.service.distributed.api.topic.DistributedT
 @Lazy(false)
 @Component
 @Profile(PROFILE_BUILDAGENT)
+@Conditional(GenerationSandboxHostingEnabled.class)
 public class InteractiveSandboxRelayHandler {
 
     private static final Logger log = LoggerFactory.getLogger(InteractiveSandboxRelayHandler.class);
@@ -188,10 +191,6 @@ public class InteractiveSandboxRelayHandler {
                 if (!isAdvertisedInstance()) {
                     return;
                 }
-                if (shuttingDown.get()) {
-                    publishResponse(SandboxOpResponse.failure(request.correlationId(), "Build agent '" + buildAgentShortName + "' " + DRAINING_REFUSAL_MARKER + "."));
-                    return;
-                }
                 RequestClaim claim = claimRequest(request);
                 if (claim.completedResponse() != null) {
                     publishResponse(claim.completedResponse());
@@ -199,6 +198,12 @@ public class InteractiveSandboxRelayHandler {
                 }
                 if (!claim.accepted()) {
                     log.debug("Ignoring retried sandbox request {} ({}) while the original operation is still running", request.correlationId(), request.op());
+                    return;
+                }
+                if (shuttingDown.get()) {
+                    SandboxOpResponse response = SandboxOpResponse.failure(request.correlationId(), "Build agent '" + buildAgentShortName + "' " + DRAINING_REFUSAL_MARKER + ".");
+                    rememberCompletedResponse(response);
+                    publishResponse(response);
                     return;
                 }
                 try {
@@ -333,8 +338,9 @@ public class InteractiveSandboxRelayHandler {
             }
         }
         catch (Exception e) {
-            log.warn("Interactive sandbox relay operation {} ({}) failed on agent '{}': {}", request.op(), request.correlationId(), buildAgentShortName, e.getMessage());
-            response = SandboxOpResponse.failure(request.correlationId(), e.getMessage());
+            log.warn("Interactive sandbox relay operation {} ({}) failed on agent '{}' ({})", request.op(), request.correlationId(), buildAgentShortName,
+                    e.getClass().getSimpleName());
+            response = SandboxOpResponse.failure(request.correlationId(), "Interactive sandbox " + request.op() + " operation failed.");
         }
         finally {
             operationLock.unlock();

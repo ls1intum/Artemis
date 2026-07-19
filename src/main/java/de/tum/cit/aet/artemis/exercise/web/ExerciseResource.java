@@ -60,6 +60,7 @@ import de.tum.cit.aet.artemis.plagiarism.api.PlagiarismCaseApi;
 import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismCaseInfoDTO;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseMutationGuard;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.service.QuizBatchService;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorParticipationStatus;
@@ -105,11 +106,13 @@ public class ExerciseResource {
 
     private final Optional<PlagiarismCaseApi> plagiarismCaseApi;
 
+    private final ProgrammingExerciseMutationGuard programmingExerciseMutationGuard;
+
     public ExerciseResource(ExerciseService exerciseService, ExerciseDeletionService exerciseDeletionService, ParticipationService participationService,
             UserRepository userRepository, Optional<ExamDateApi> examDateApi, AuthorizationCheckService authCheckService, TutorParticipationService tutorParticipationService,
             ProgrammingExerciseRepository programmingExerciseRepository, GradingCriterionRepository gradingCriterionRepository, ExerciseRepository exerciseRepository,
             QuizBatchService quizBatchService, ParticipationRepository participationRepository, ExerciseVersionService exerciseVersionService,
-            Optional<ExamAccessApi> examAccessApi, Optional<PlagiarismCaseApi> plagiarismCaseApi) {
+            Optional<ExamAccessApi> examAccessApi, Optional<PlagiarismCaseApi> plagiarismCaseApi, ProgrammingExerciseMutationGuard programmingExerciseMutationGuard) {
         this.exerciseService = exerciseService;
         this.exerciseDeletionService = exerciseDeletionService;
         this.participationService = participationService;
@@ -125,6 +128,7 @@ public class ExerciseResource {
         this.exerciseVersionService = exerciseVersionService;
         this.examAccessApi = examAccessApi;
         this.plagiarismCaseApi = plagiarismCaseApi;
+        this.programmingExerciseMutationGuard = programmingExerciseMutationGuard;
     }
 
     /**
@@ -400,9 +404,20 @@ public class ExerciseResource {
         log.debug("toggleSecondCorrectionEnabled for exercise with id: {}", exerciseId);
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, exercise, null);
-        boolean updatedExercise = exerciseRepository.toggleSecondCorrection(exercise);
-        exerciseVersionService.createExerciseVersion(exercise);
-        return ResponseEntity.ok(updatedExercise);
+        var user = userRepository.getUser();
+        var mutationLease = exercise instanceof ProgrammingExercise ? programmingExerciseMutationGuard.claimExternalMutation(exerciseId)
+                : programmingExerciseMutationGuard.claimExternalMutation(java.util.OptionalLong.empty());
+        try (mutationLease) {
+            exercise = exerciseRepository.findByIdElseThrow(exerciseId);
+            boolean updatedExercise = exerciseRepository.toggleSecondCorrection(exercise);
+            if (exercise instanceof ProgrammingExercise) {
+                exerciseVersionService.createExerciseVersionSynchronously(exercise, user);
+            }
+            else {
+                exerciseVersionService.createExerciseVersion(exercise, user);
+            }
+            return ResponseEntity.ok(updatedExercise);
+        }
     }
 
     /**

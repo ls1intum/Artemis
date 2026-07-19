@@ -51,7 +51,7 @@
         <p-message severity="error" class="mb-3 block" jhiTranslate="artemisApp.buildAgents.generationSandboxes.cancelFailed" />
     }
     @if (released()) {
-        <p-message severity="success" class="mb-3 block" role="status" jhiTranslate="artemisApp.buildAgents.generationSandboxes.released" />
+        <p-message severity="info" class="mb-3 block" role="status" jhiTranslate="artemisApp.buildAgents.generationSandboxes.endedAfterCancellationRequest" />
     } @else if (naturallyEnded()) {
         <p-message severity="info" class="mb-3 block" role="status" jhiTranslate="artemisApp.buildAgents.generationSandboxes.completed" />
     } @else if (cancellationRequested()) {
@@ -67,7 +67,7 @@
                     [severity]="released() || naturallyEnded() ? 'secondary' : 'info'"
                     [value]="
                         (released()
-                            ? 'artemisApp.buildAgents.generationSandboxes.cancelled'
+                            ? 'artemisApp.buildAgents.generationSandboxes.endedStatus'
                             : naturallyEnded()
                               ? 'artemisApp.buildAgents.generationSandboxes.completedStatus'
                               : cancellationRequested()

@@ -1,11 +1,13 @@
 package de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.critic;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import java.time.Duration;
@@ -14,6 +16,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -28,11 +32,14 @@ import org.springframework.ai.openai.OpenAiChatOptions;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.ProviderUsageSink;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.ProviderFailureCooldown;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 
 class SpecFidelityCriticServiceTest {
+
+    private static final String GITHUB_SENTINEL = "ghp_ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghij";
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -79,6 +86,20 @@ class SpecFidelityCriticServiceTest {
             Map.of("src/Graphemes.java", "class Graphemes { int count(String value) { return value.length(); } }"), RepositoryType.TEMPLATE,
             Map.of("src/Graphemes.java", "class Graphemes { int count(String value) { return 0; } }"), RepositoryType.TESTS,
             Map.of("test/GraphemesTest.java", "class GraphemesTest { void cjk() { assertEquals(2, count(\"\u6f22\u5b57\")); } }"));
+
+    @Test
+    void supportedSecretInGeneratedCandidatePreventsEveryCriticProviderCall() {
+        ChatModel chatModel = mock(ChatModel.class);
+        when(chatModel.getOptions()).thenReturn(ChatOptions.builder().build());
+        SpecFidelityCriticService critic = new SpecFidelityCriticService(ChatClient.create(chatModel), objectMapper);
+        Map<RepositoryType, Map<String, String>> artifacts = Map.of(RepositoryType.SOLUTION, Map.of("src/Fixture.java", GITHUB_SENTINEL), RepositoryType.TEMPLATE,
+                Map.of("src/Fixture.java", "class Fixture {}"), RepositoryType.TESTS, Map.of("test/FixtureTest.java", "class FixtureTest {}"));
+
+        assertThatExceptionOfType(de.tum.cit.aet.artemis.hyperion.service.HyperionSecretMaterialPolicy.SecretMaterialException.class)
+                .isThrownBy(() -> critic.critique("brief", "# Problem", List.of("fixture"), artifacts, null)).withMessageContaining("GITHUB_TOKEN")
+                .withMessageNotContaining(GITHUB_SENTINEL);
+        verify(chatModel, never()).call(any(Prompt.class));
+    }
 
     @Test
     void blockingContractReviewMapsAcceptanceBlockersAndIncludesExecutableEvidence() {
@@ -676,10 +697,43 @@ class SpecFidelityCriticServiceTest {
         when(chatModel.call(any(Prompt.class))).thenThrow(new RuntimeException("gpu timeout"));
         when(chatModel.getOptions()).thenReturn(ChatOptions.builder().build());
         SpecFidelityCriticService critic = new SpecFidelityCriticService(ChatClient.create(chatModel), objectMapper);
+        ProviderUsageSink usageSink = mock(ProviderUsageSink.class);
 
-        SpecFidelityReport report = critic.critique(UNICODE_BRIEF, "A clean problem statement.", List.of("test_x"));
+        SpecFidelityReport report = critic.critique(UNICODE_BRIEF, "A clean problem statement.", List.of("test_x"), usageSink);
 
         assertThat(report.findings()).hasSize(2).allMatch(finding -> finding.kind() == SpecFidelityReport.Kind.QUALITY_REVIEW_UNAVAILABLE);
+        verify(chatModel, times(2)).call(any(Prompt.class));
+        verify(usageSink, times(2)).markUncertain();
+        verify(usageSink, never()).accept(any());
+    }
+
+    @Test
+    void cancellationAfterContractResponse_skipsRemainingReviewerCalls() {
+        ChatModel chatModel = mock(ChatModel.class);
+        when(chatModel.call(any(Prompt.class))).thenReturn(jsonResponse("{}"));
+        when(chatModel.getOptions()).thenReturn(ChatOptions.builder().build());
+        SpecFidelityCriticService critic = new SpecFidelityCriticService(ChatClient.create(chatModel), objectMapper);
+        AtomicBoolean cancelled = new AtomicBoolean();
+
+        critic.critique(UNICODE_BRIEF, "Count graphemes.", List.of("cjk"), COMPLETE_ARTIFACTS, response -> cancelled.set(true), cancelled::get);
+
+        verify(chatModel, times(1)).call(any(Prompt.class));
+    }
+
+    @Test
+    void cancellationAfterOracleResponse_skipsCorrectionCall() {
+        ChatModel chatModel = mock(ChatModel.class);
+        when(chatModel.call(any(Prompt.class))).thenReturn(jsonResponse("{}"), rawResponse("""
+                {"mutantChecks":[{"mutant":"ignore CJK input","killed":false,"sourceQuote":"requirement absent from brief",
+                    "reason":"the assertion does not cover it"}],"uncovered":[],"weakOracle":[]}
+                """));
+        when(chatModel.getOptions()).thenReturn(ChatOptions.builder().build());
+        SpecFidelityCriticService critic = new SpecFidelityCriticService(ChatClient.create(chatModel), objectMapper);
+        AtomicBoolean cancelled = new AtomicBoolean();
+        AtomicInteger responses = new AtomicInteger();
+
+        critic.critique(UNICODE_BRIEF, "Count graphemes.", List.of("cjk"), COMPLETE_ARTIFACTS, response -> cancelled.set(responses.incrementAndGet() == 2), cancelled::get);
+
         verify(chatModel, times(2)).call(any(Prompt.class));
     }
 
@@ -690,20 +744,24 @@ class SpecFidelityCriticServiceTest {
         when(failingModel.getOptions()).thenReturn(ChatOptions.builder().build());
         ProviderFailureCooldown cooldown = inMemoryCooldown();
         SpecFidelityCriticService failingCritic = new SpecFidelityCriticService(ChatClient.create(failingModel), objectMapper, "configured-model", Duration.ofMinutes(5), cooldown);
+        ProviderUsageSink firstUsageSink = mock(ProviderUsageSink.class);
 
-        SpecFidelityReport firstReport = failingCritic.critique(UNICODE_BRIEF, "A clean problem statement.", List.of("test_x"));
+        SpecFidelityReport firstReport = failingCritic.critique(UNICODE_BRIEF, "A clean problem statement.", List.of("test_x"), firstUsageSink);
 
         assertThat(firstReport.findings()).hasSize(2).allMatch(finding -> finding.kind() == SpecFidelityReport.Kind.QUALITY_REVIEW_UNAVAILABLE);
         verify(failingModel, times(1)).call(any(Prompt.class));
+        verify(firstUsageSink).markUncertain();
 
         ChatModel nextModel = mock(ChatModel.class);
         when(nextModel.getOptions()).thenReturn(ChatOptions.builder().build());
         SpecFidelityCriticService nextCritic = new SpecFidelityCriticService(ChatClient.create(nextModel), objectMapper, "configured-model", Duration.ofMinutes(5), cooldown);
+        ProviderUsageSink nextUsageSink = mock(ProviderUsageSink.class);
 
-        SpecFidelityReport nextReport = nextCritic.critique(UNICODE_BRIEF, "Another candidate.", List.of("test_x"));
+        SpecFidelityReport nextReport = nextCritic.critique(UNICODE_BRIEF, "Another candidate.", List.of("test_x"), nextUsageSink);
 
         assertThat(nextReport.findings()).hasSize(2).allMatch(finding -> finding.kind() == SpecFidelityReport.Kind.QUALITY_REVIEW_UNAVAILABLE);
         verify(nextModel, never()).call(any(Prompt.class));
+        verifyNoInteractions(nextUsageSink);
     }
 
     @Test

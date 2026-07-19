@@ -882,6 +882,18 @@ class DifferentialVerificationServiceTest {
     }
 
     @Test
+    void shouldRejectExerciseWithOnlyBuildGateTests() {
+        List<String> all = List.of("TestConfigure", "CompileSort", "BuildTests");
+        String ps = "# Sort\n[task][Build](TestConfigure,CompileSort,BuildTests)\n";
+
+        VerificationResult result = verify(resultWithFails(0, all, List.of()), resultWithFails(0, all, List.of()), ps);
+
+        assertThat(result.mechanicallyVerified()).isFalse();
+        assertThat(result.templateFailed()).isFalse();
+        assertThat(result.reasons()).anyMatch(reason -> reason.contains("at least one behavioural test"));
+    }
+
+    @Test
     void shouldAcceptWhenFrameworkPrefixedBuildGatePassesOnTemplate() {
         // Build gates carry the framework suite prefix (production composes "<suite>.<testcase>" from multiple top-level suites); exemption keys on the final dot-segment, and
         // prefixed behaviour tests must still fail on the template.
@@ -1262,13 +1274,13 @@ class DifferentialVerificationServiceTest {
         }
 
         @Test
-        void acceptsWhenAnAutoSeededStructuralTestPassesButBehaviouralTasksStillFail() {
+        void rejectsWhenAnAutoSeededStructuralTestIsHiddenFromTheTaskChecklist() {
             List<String> all = List.of("sortsUnsortedArray", "sortsArrayWithDuplicates", "testClass[Sorter]");
             List<String> failedOnTemplate = List.of("sortsUnsortedArray", "sortsArrayWithDuplicates");
             VerificationResult result = verifyWithSeededStructural(resultWithFails(0, all, List.of()), resultWithFails(1, all, failedOnTemplate), PROBLEM_STATEMENT_WITH_TASK,
                     Set.of("testClass[Sorter]"));
-            assertThat(result.mechanicallyVerified()).as("a seeded structural check may pass when every student task still requires behaviour").isTrue();
-            assertThat(result.reasons()).noneMatch(r -> r.contains("testClass[Sorter]"));
+            assertThat(result.mechanicallyVerified()).isFalse();
+            assertThat(result.reasons()).anyMatch(r -> r.contains("not bound by any [task]") && r.contains("testClass[Sorter]"));
         }
 
         @Test

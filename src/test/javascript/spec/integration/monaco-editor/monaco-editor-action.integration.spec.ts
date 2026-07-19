@@ -26,6 +26,11 @@ import { TranslateService } from '@ngx-translate/core';
 import { MockThemeService } from 'test/helpers/mocks/service/mock-theme.service';
 import { ThemeService } from 'app/core/theme/shared/theme.service';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { signal } from '@angular/core';
+import { Subject } from 'rxjs';
+import { RewriteAction } from 'app/editor/monaco-editor/model/actions/artemis-intelligence/rewrite.action';
+import RewritingVariant from 'app/editor/monaco-editor/model/actions/artemis-intelligence/rewriting-variant';
+import { ArtemisIntelligenceService } from 'app/editor/monaco-editor/model/actions/artemis-intelligence/artemis-intelligence.service';
 
 describe('MonacoEditorActionIntegration', () => {
     let fixture: ComponentFixture<MonacoEditorComponent>;
@@ -86,6 +91,49 @@ describe('MonacoEditorActionIntegration', () => {
         comp.setText('');
         action.executeInCurrentEditor();
         expect(comp.getText()).toBe(defaultText);
+    });
+
+    it('does not apply a delayed rewrite to a replacement model after generation locks the editor', () => {
+        let pending = false;
+        const response = new Subject<{ result: string; inconsistencies: undefined; suggestions: undefined; improvement: undefined }>();
+        const intelligenceService = { rewrite: vi.fn().mockReturnValue(response) } as unknown as ArtemisIntelligenceService;
+        const action = new RewriteAction(
+            intelligenceService,
+            RewritingVariant.PROBLEM_STATEMENT,
+            1,
+            signal({ result: '', inconsistencies: undefined, suggestions: undefined, improvement: undefined }),
+            () => !pending,
+        );
+        comp.setText('original');
+        comp.registerAction(action);
+        action.executeInCurrentEditor();
+
+        comp.changeModel('replacement.md', 'replacement');
+        pending = true;
+        response.next({ result: 'rewritten', inconsistencies: undefined, suggestions: undefined, improvement: undefined });
+
+        expect(comp.getText()).toBe('replacement');
+    });
+
+    it.each([
+        { Action: AttachmentAction, fileName: 'image.png' },
+        { Action: UrlAction, fileName: 'document.pdf' },
+    ])('does not apply a delayed $Action.name upload completion to a pending replacement model', async ({ Action, fileName }) => {
+        let pending = false;
+        const action = new Action();
+        action.setExecutionGuard(() => !pending);
+        comp.setText('original');
+        comp.registerAction(action);
+        let complete!: () => void;
+        const upload = new Promise<void>((resolve) => (complete = resolve));
+        const completion = upload.then(() => action.executeInCurrentEditor({ text: fileName, url: `/files/${fileName}` }));
+
+        comp.changeModel('replacement.md', 'replacement');
+        pending = true;
+        complete();
+        await completion;
+
+        expect(comp.getText()).toBe('replacement');
     });
 
     it('should not access the clipboard if no upload callback is specified', async () => {

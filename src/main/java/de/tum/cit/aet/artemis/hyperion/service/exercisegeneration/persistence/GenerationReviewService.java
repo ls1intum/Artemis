@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.persistence;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,6 +25,7 @@ import de.tum.cit.aet.artemis.hyperion.dto.ArtifactLocationDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ConsistencyIssueDTO;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.critic.SpecFidelityReport;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 
 /** Attaches automated quality findings to a saved exercise so instructors can review, discuss, and adapt it in the normal editor. */
 @Lazy
@@ -58,12 +60,22 @@ public class GenerationReviewService {
      * @return the number of created threads, zero for an empty report, or {@link #REVIEW_COMMENTS_FAILED} when attachment failed
      */
     public int attachFindings(ProgrammingExercise exercise, User user, SpecFidelityReport report) {
+        return attachFindingsInternal(exercise, user, report, null, Map.of());
+    }
+
+    public int attachFindings(ProgrammingExercise exercise, User user, SpecFidelityReport report, long savedExerciseVersionId, Map<RepositoryType, String> savedRepositoryHeads) {
+        return attachFindingsInternal(exercise, user, report, savedExerciseVersionId, savedRepositoryHeads);
+    }
+
+    private int attachFindingsInternal(ProgrammingExercise exercise, User user, SpecFidelityReport report, Long savedExerciseVersionId,
+            Map<RepositoryType, String> savedRepositoryHeads) {
         List<ConsistencyIssueDTO> findings = toReviewFindings(report);
         if (findings.isEmpty()) {
             return 0;
         }
         try {
-            List<CommentThread> createdThreads = exerciseReviewService.createConsistencyCheckThreads(exercise.getId(), findings, user);
+            List<CommentThread> createdThreads = savedExerciseVersionId == null ? exerciseReviewService.createConsistencyCheckThreads(exercise.getId(), findings, user)
+                    : exerciseReviewService.createConsistencyCheckThreads(exercise.getId(), findings, user, savedExerciseVersionId, savedRepositoryHeads);
             for (CommentThread thread : createdThreads) {
                 CommentThreadDTO createdThread = new CommentThreadDTO(thread, CommentDTO.fromThread(thread));
                 exerciseEditorSyncService.broadcastReviewThreadUpdate(exercise.getId(), ReviewThreadSyncDTO.threadCreated(createdThread));

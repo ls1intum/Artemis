@@ -29,6 +29,8 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
  */
 class SandboxAgentToolsTest {
 
+    private static final String GITHUB_SENTINEL = "ghp_ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghij";
+
     /** Records commands and serves canned file content keyed by absolute container path. */
     private static final class RecordingSandbox implements InteractiveSandbox {
 
@@ -85,6 +87,26 @@ class SandboxAgentToolsTest {
         String result = tools.readFile("../secret");
         assertThat(result).startsWith("ERROR: invalid path");
         assertThat(sandbox.execCount).isZero();
+    }
+
+    @Test
+    void readFile_blocksSupportedSecretMaterialWithoutReturningTheMatch() {
+        RecordingSandbox sandbox = new RecordingSandbox();
+        sandbox.files.put("/workspace/solution/src/fixture.txt", "before " + GITHUB_SENTINEL + " after");
+
+        String result = new SandboxAgentTools(sandbox, "s").readFile("solution/src/fixture.txt");
+
+        assertThat(result).contains("GITHUB_TOKEN").contains("solution/src/fixture.txt").doesNotContain(GITHUB_SENTINEL).doesNotContain("before").doesNotContain("after");
+    }
+
+    @Test
+    void readFile_blocksCanonicalCredentialPathEvenWithOrdinaryContent() {
+        RecordingSandbox sandbox = new RecordingSandbox();
+        sandbox.files.put("/workspace/solution/.env.production", "ordinary");
+
+        String result = new SandboxAgentTools(sandbox, "s").readFile("solution/.env.production");
+
+        assertThat(result).contains("CREDENTIAL_FILE").contains("solution/.env.production").doesNotContain("ordinary");
     }
 
     @Test
@@ -246,6 +268,15 @@ class SandboxAgentToolsTest {
     }
 
     @Test
+    void bash_blocksSupportedSecretMaterialWithoutReturningTheMatch() {
+        String wrapperOutput = "__HYP_META__ rc=0 bytes=43 lines=1\n" + GITHUB_SENTINEL;
+
+        String result = new SandboxAgentTools(new ScriptedSandbox(bashStdout(0, wrapperOutput)), "s").bash("printenv");
+
+        assertThat(result).contains("GITHUB_TOKEN").contains("tool/bash").doesNotContain(GITHUB_SENTINEL);
+    }
+
+    @Test
     void bash_largeOutput_appendsSpillMarkerWithReadInstructions() {
         String body = "x".repeat(10_000);
         String out = new SandboxAgentTools(new ScriptedSandbox(bashStdout(1, "__HYP_META__ rc=1 bytes=50000 lines=900\n" + body)), "s").bash("sh verify.sh solution");
@@ -351,6 +382,20 @@ class SandboxAgentToolsTest {
 
         String out = new SandboxAgentTools(sandbox, "s", verifier, exercise).verify();
         assertThat(out).isEqualTo(report.toObservation());
+    }
+
+    @Test
+    void verify_blocksSupportedSecretMaterialWithoutReturningTheMatch() {
+        RecordingSandbox sandbox = new RecordingSandbox();
+        ProgrammingExercise exercise = new ProgrammingExercise();
+        DifferentialVerificationService verifier = mock(DifferentialVerificationService.class);
+        AgentVerifyReport report = new AgentVerifyReport(0, false, List.of(), 0, false, false, List.of(), List.of(), List.of(), List.of(), false,
+                List.of("failure " + GITHUB_SENTINEL));
+        when(verifier.selfCheck(eq(sandbox), eq("s"), eq(exercise), eq(Map.of()), eq(false))).thenReturn(report);
+
+        String result = new SandboxAgentTools(sandbox, "s", verifier, exercise).verify();
+
+        assertThat(result).contains("GITHUB_TOKEN").contains("tool/verify").doesNotContain(GITHUB_SENTINEL).doesNotContain("failure");
     }
 
     @Test

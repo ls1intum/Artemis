@@ -35,6 +35,9 @@ public final class LanguageGenerationProfile {
         if (exercise == null || exercise.getProgrammingLanguage() != ProgrammingLanguage.JAVA) {
             return false;
         }
+        if (exercise.getAuxiliaryRepositories() != null && !exercise.getAuxiliaryRepositories().isEmpty()) {
+            return false;
+        }
         ProjectType projectType = exercise.getProjectType();
         return projectType == null || SUPPORTED_JAVA_PROJECT_TYPES.contains(projectType);
     }

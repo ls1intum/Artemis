@@ -204,10 +204,6 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy {
         return this.refreshRepository();
     }
 
-    refreshAfterExternalUpdate(domain?: DomainChange): Observable<boolean> {
-        return this.refreshRepository(domain);
-    }
-
     private refreshRepository(domain?: DomainChange): Observable<boolean> {
         this.editorState.set(EditorState.REFRESHING);
         return this.repositoryService.pull(domain).pipe(
@@ -248,7 +244,12 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy {
             return this.repositoryFileService.updateFiles(unsavedFiles, andCommit).pipe(
                 tap((fileSubmission: FileSubmission | FileSubmissionError) => {
                     if (!('error' in fileSubmission)) {
-                        this.onSavedFiles.emit(fileSubmission);
+                        const completedFiles = Object.fromEntries(
+                            Object.entries(fileSubmission).filter(([fileName, error]) => error || this.unsavedFiles()[fileName] === unsavedFilesValue[fileName]),
+                        );
+                        if (!_isEmpty(completedFiles)) {
+                            this.onSavedFiles.emit(completedFiles);
+                        }
                     }
                 }),
                 catchError((error: Error) => {

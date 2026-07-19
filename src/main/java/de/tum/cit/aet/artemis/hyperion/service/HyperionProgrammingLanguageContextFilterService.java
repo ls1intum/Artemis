@@ -34,6 +34,8 @@ public class HyperionProgrammingLanguageContextFilterService {
 
     private static final Logger log = LoggerFactory.getLogger(HyperionProgrammingLanguageContextFilterService.class);
 
+    private static final HyperionSecretMaterialPolicy SECRET_MATERIAL_POLICY = new HyperionSecretMaterialPolicy();
+
     /** Pluggable strategy contract for language-specific file filtering. */
     public interface Strategy {
 
@@ -70,7 +72,7 @@ public class HyperionProgrammingLanguageContextFilterService {
             ".java", ".py", ".c", ".h", ".cpp", ".hpp", ".cs", ".js", ".ts", ".html", ".css", ".scss", ".kt", ".swift", ".php", ".rb", ".go", ".rs", ".dart", ".asm", ".s", ".inc",
             ".vhd", ".vhdl", ".hs", ".ml", ".lua", ".pl", ".sh", ".bat", ".cmd", ".ps1",
             // Data / Config
-            ".xml", ".json", ".yaml", ".yml", ".toml", ".properties", ".gradle", ".sql", ".ini", ".conf", ".config", ".env",
+            ".xml", ".json", ".yaml", ".yml", ".toml", ".properties", ".gradle", ".sql", ".ini", ".conf", ".config",
             // Docs
             ".md", ".txt", ".csv", ".adoc", ".rst");
 
@@ -169,6 +171,13 @@ public class HyperionProgrammingLanguageContextFilterService {
                     continue;
                 }
 
+                HyperionSecretMaterialPolicy.Assessment secretAssessment = SECRET_MATERIAL_POLICY.assess(filePath,
+                        content == null ? new byte[0] : content.getBytes(java.nio.charset.StandardCharsets.UTF_8), HyperionSecretMaterialPolicy.Origin.CLASSIC_CONTEXT);
+                if (!secretAssessment.isSafe()) {
+                    log.debug("Skipping Hyperion context file [{}]: {}", secretAssessment.category().orElseThrow(), secretAssessment.safePath());
+                    continue;
+                }
+
                 // 1. Exclude based on Patterns (Global + Specific)
                 Path pathObj = Path.of(filePath);
                 if (excludeMatchers.stream().anyMatch(m -> m.matches(pathObj))) {
@@ -189,7 +198,7 @@ public class HyperionProgrammingLanguageContextFilterService {
 
                 // 3. If not in the safety net, skip the file (likely binary or unsupported)
                 if (!isSafeText) {
-                    log.debug("Skipping potentially binary or unknown file: {}", filePath);
+                    log.debug("Skipping potentially binary or unknown file: {}", secretAssessment.safePath());
                     continue;
                 }
                 // 4. File Size check

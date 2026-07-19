@@ -127,6 +127,9 @@ public class BuildAgentDockerService {
     @Value("${artemis.continuous-integration.build-agent.short-name}")
     private String buildAgentShortName;
 
+    @Value("${artemis.continuous-integration.build-agent.max-generation-sandbox-slots:0}")
+    private int maxGenerationSandboxSlots;
+
     private static final String AMD64_ARCHITECTURE = "amd64";
 
     private static final String ARM64_ARCHITECTURE = "arm64";
@@ -153,8 +156,9 @@ public class BuildAgentDockerService {
      * Cleans up dangling build containers from the system. This method differentiates between the initial cleanup
      * and subsequent cleanups to handle containers differently based on their age and status.
      * <p>
-     * For the initial cleanup, it removes all containers that match the build container prefix, assuming these containers
-     * are left from before the application started. For subsequent cleanups, it only removes containers that are older
+     * For the initial cleanup, it removes all containers that match the build container prefix. When generation hosting is disabled, it also removes generation sandboxes owned by
+     * this build agent, which covers capacity being changed to zero. Enabled generation hosting performs its own startup reconciliation before accepting work. For subsequent
+     * cleanups, this method only removes build containers that are older
      * than a specified age threshold (defaulted to 5 minutes), targeting containers likely stuck or inactive.
      * <p>
      * Detailed steps include:
@@ -176,12 +180,11 @@ public class BuildAgentDockerService {
         }
 
         DockerClient dockerClient = buildAgentConfiguration.getDockerClient();
+        String sandboxContainerPrefix = InteractiveSandboxService.containerNamePrefix(buildAgentShortName);
         if (isFirstCleanup) {
-            // Cleanup all dangling build containers after the application has started
             try {
                 danglingBuildContainers = dockerClient.listContainersCmd().withShowAll(true).exec().stream()
-                        .filter(container -> container.getNames() != null && container.getNames().length > 0 && container.getNames()[0].startsWith("/" + buildContainerPrefix))
-                        .toList();
+                        .filter(container -> shouldCleanUpOnStartup(container, buildContainerPrefix, sandboxContainerPrefix, maxGenerationSandboxSlots > 0)).toList();
             }
             catch (Exception ex) {
                 if (DockerUtil.isDockerNotAvailable(ex)) {
@@ -205,8 +208,9 @@ public class BuildAgentDockerService {
 
             try {
                 danglingBuildContainers = dockerClient.listContainersCmd().withShowAll(true).exec().stream()
-                        .filter(container -> container.getNames() != null && container.getNames().length > 0 && container.getNames()[0].startsWith("/" + buildContainerPrefix))
-                        .filter(container -> (now - container.getCreated()) > ageThreshold).toList();
+                        .filter(container -> isExpiredBuildContainer(container, now, ageThreshold)
+                                || maxGenerationSandboxSlots <= 0 && InteractiveSandboxService.hasSandboxContainerName(container, sandboxContainerPrefix))
+                        .toList();
             }
             catch (Exception ex) {
                 if (DockerUtil.isDockerNotAvailable(ex)) {
@@ -220,9 +224,38 @@ public class BuildAgentDockerService {
 
         if (!danglingBuildContainers.isEmpty()) {
             log.info("Found {} dangling build containers", danglingBuildContainers.size());
-            danglingBuildContainers.forEach(container -> buildJobContainerService.stopUnresponsiveContainer(container.getId()));
+            danglingBuildContainers.forEach(container -> {
+                if (maxGenerationSandboxSlots <= 0 && InteractiveSandboxService.hasSandboxContainerName(container, sandboxContainerPrefix)) {
+                    forceRemoveContainer(dockerClient, container.getId());
+                }
+                else {
+                    buildJobContainerService.stopUnresponsiveContainer(container.getId());
+                }
+            });
         }
         log.info("Cleanup dangling build containers done");
+    }
+
+    private boolean isExpiredBuildContainer(Container container, long now, long ageThreshold) {
+        return container.getNames() != null && container.getNames().length > 0 && container.getNames()[0].startsWith("/" + buildContainerPrefix)
+                && now - container.getCreated() > ageThreshold;
+    }
+
+    private void forceRemoveContainer(DockerClient dockerClient, String containerId) {
+        try (var removeCommand = dockerClient.removeContainerCmd(containerId).withForce(true).withRemoveVolumes(true)) {
+            removeCommand.exec();
+        }
+        catch (NotFoundException ignored) {
+            log.debug("Generation sandbox {} was already removed", containerId);
+        }
+        catch (RuntimeException ex) {
+            log.warn("Could not remove generation sandbox {} during cleanup: {}", containerId, ex.getMessage());
+        }
+    }
+
+    static boolean shouldCleanUpOnStartup(Container container, String buildContainerPrefix, String sandboxContainerPrefix, boolean generationHostingEnabled) {
+        return container.getNames() != null && container.getNames().length > 0 && (container.getNames()[0].startsWith("/" + buildContainerPrefix)
+                || !generationHostingEnabled && InteractiveSandboxService.hasSandboxContainerName(container, sandboxContainerPrefix));
     }
 
     /**

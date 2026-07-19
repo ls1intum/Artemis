@@ -5,6 +5,7 @@
              Set to false when using an external preview component (e.g., in the code editor view). -->
         <jhi-markdown-editor-monaco
             class="overflow-hidden flex-grow-1"
+            [attr.inert]="isGeneratingOrRefining() ? '' : null"
             [mode]="mode()"
             [domainActions]="domainActions"
             [artemisIntelligenceActions]="artemisIntelligenceActions()"

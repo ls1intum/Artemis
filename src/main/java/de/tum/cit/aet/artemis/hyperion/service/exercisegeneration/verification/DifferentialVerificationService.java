@@ -394,8 +394,10 @@ public class DifferentialVerificationService {
         boolean solutionPassed = checkSolutionPasses(solution, reasons);
         boolean noDuplicateTestNames = checkNoDuplicateTestNames(solution, reasons);
         boolean templateBuildSound = checkTemplateBuildSound(solution, template, reasons);
-        List<String> gradableTestsPassingOnTemplate = templateBuildSound ? gradableTestsPassingOnTemplate(solution, template, seededStructuralTestNames) : List.of();
-        boolean templateFailed = templateBuildSound && checkNoGradableTestPassesTemplate(gradableTestsPassingOnTemplate, reasons);
+        List<String> behaviouralTestNames = behaviouralTestNames(solution, seededStructuralTestNames);
+        boolean hasBehaviouralTests = checkHasBehaviouralTests(behaviouralTestNames, reasons);
+        List<String> gradableTestsPassingOnTemplate = templateBuildSound && hasBehaviouralTests ? gradableTestsPassingOnTemplate(behaviouralTestNames, template) : List.of();
+        boolean templateFailed = templateBuildSound && hasBehaviouralTests && checkNoGradableTestPassesTemplate(gradableTestsPassingOnTemplate, reasons);
 
         // The exercise must bind its tests to the problem statement via [task][title](testNames), else the student sees no task checklist.
         String problemStatement = producedProblemStatement != null ? producedProblemStatement : readProblemStatement(sandbox, sessionId);
@@ -418,7 +420,7 @@ public class DifferentialVerificationService {
         boolean taskBindingsResolve = checkTaskBindingsResolve(unresolvedTaskBindings, solution, problemStatementHasTasks, reasons);
         List<String> duplicateTaskBindings = ProblemStatementBindingChecker.duplicateTaskBindings(problemStatement);
         boolean noDuplicateTaskBindings = checkNoDuplicateTaskBindings(duplicateTaskBindings, problemStatementHasTasks, reasons);
-        List<String> unboundGradableTests = ProblemStatementBindingChecker.unboundGradableTestNames(problemStatement, solution.testNames(), testCount, seededStructuralTestNames);
+        List<String> unboundGradableTests = ProblemStatementBindingChecker.unboundGradableTestNames(problemStatement, solution.testNames(), testCount);
         boolean allGradableTestsBound = checkAllGradableTestsBound(unboundGradableTests, problemStatementHasTasks, taskBindingsResolve, reasons);
         boolean solutionScaClean = checkSolutionScaClean(exercise, solution, reasons);
 
@@ -560,24 +562,35 @@ public class DifferentialVerificationService {
         return true;
     }
 
-    /**
-     * The starter-credit policy (see class javadoc): the exact solution test names that are neither a build/compile/configure gate ({@link BuildGateTestNames}, which legitimately
-     * passes on both builds by design) nor a seeded structural test ({@code seededStructuralTestNames}, the authoritative names {@link StructuralOracleSeedingService} just
-     * injected — never a name-shape guess, so a real behaviour test cannot gain the exemption merely by being named like one) yet still pass on the template. Every one of these is
-     * accidental free credit for a student who has not started; the caller must reject on any non-empty result.
-     *
-     * @return the exact, parser-form test names that must fail on the template but do not (empty when every one of them correctly fails)
-     */
-    private static List<String> gradableTestsPassingOnTemplate(BuildSummary solution, BuildSummary template, Set<String> seededStructuralTestNames) {
+    /** Returns the real behavioural tests after excluding build gates and the structural checks seeded by Artemis. */
+    private static List<String> behaviouralTestNames(BuildSummary solution, Set<String> seededStructuralTestNames) {
         Set<String> structural = seededStructuralTestNames == null ? Set.of()
                 : seededStructuralTestNames.stream().map(ProblemStatementBindingChecker::normalizeTestName).collect(Collectors.toSet());
-        Set<String> templateFailed = template.testFailedNames().stream().map(ProblemStatementBindingChecker::normalizeTestName).collect(Collectors.toSet());
-        List<String> passing = new ArrayList<>();
+        List<String> behavioural = new ArrayList<>();
         for (String rawName : solution.testNames()) {
             String normalized = ProblemStatementBindingChecker.normalizeTestName(rawName);
             if (isBuildGateTest(normalized) || structural.contains(normalized)) {
                 continue;
             }
+            behavioural.add(rawName);
+        }
+        return behavioural;
+    }
+
+    private static boolean checkHasBehaviouralTests(List<String> behaviouralTestNames, List<String> reasons) {
+        if (!behaviouralTestNames.isEmpty()) {
+            return true;
+        }
+        reasons.add("The exercise has no behavioural tests. Add at least one behavioural test that passes on the solution and fails on the template; build gates and structural "
+                + "checks alone do not verify the required student behaviour.");
+        return false;
+    }
+
+    private static List<String> gradableTestsPassingOnTemplate(List<String> behaviouralTestNames, BuildSummary template) {
+        Set<String> templateFailed = template.testFailedNames().stream().map(ProblemStatementBindingChecker::normalizeTestName).collect(Collectors.toSet());
+        List<String> passing = new ArrayList<>();
+        for (String rawName : behaviouralTestNames) {
+            String normalized = ProblemStatementBindingChecker.normalizeTestName(rawName);
             if (!templateFailed.contains(normalized)) {
                 passing.add(rawName);
             }

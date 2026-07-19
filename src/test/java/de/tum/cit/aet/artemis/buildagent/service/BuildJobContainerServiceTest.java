@@ -169,6 +169,19 @@ class BuildJobContainerServiceTest extends AbstractArtemisBuildAgentTest {
     }
 
     @Test
+    void networkDisabledContainerDoesNotReceiveProxyConfiguration() {
+        ReflectionTestUtils.setField(buildJobContainerService, "useSystemProxy", true);
+        ReflectionTestUtils.setField(buildJobContainerService, "httpProxy", "http://proxy.invalid");
+        ReflectionTestUtils.setField(buildJobContainerService, "httpsProxy", "https://proxy.invalid");
+        ReflectionTestUtils.setField(buildJobContainerService, "noProxy", "localhost");
+
+        buildJobContainerService.configureContainer(CONTAINER_NAME, IMAGE_NAME, BUILD_SCRIPT, new DockerRunConfig(List.of(), "none", 0, 0, 0));
+
+        verify(createContainerCmd).withEnv(List.of("SCRIPT=" + BUILD_SCRIPT));
+        assertThat(captureHostConfig().getNetworkMode()).isEqualTo("none");
+    }
+
+    @Test
     void testRunScriptInContainerExecutesSynchronously() {
         int exitCode = buildJobContainerService.runScriptInContainer(DUMMY_CONTAINER_ID, "build-job-1");
 

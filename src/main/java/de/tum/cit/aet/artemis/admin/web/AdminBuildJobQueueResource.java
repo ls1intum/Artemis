@@ -4,10 +4,13 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALCI;
 
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.boot.actuate.audit.AuditEvent;
+import org.springframework.boot.actuate.audit.AuditEventRepository;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Slice;
@@ -33,7 +36,9 @@ import de.tum.cit.aet.artemis.buildagent.dto.FinishedBuildJobDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.GenerationSandboxSessionDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.ResultQueueItem;
 import de.tum.cit.aet.artemis.buildagent.service.RemoteInteractiveSandboxClient;
+import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.FinishedBuildJobPageableSearchDTO;
+import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin;
 import de.tum.cit.aet.artemis.core.util.SliceUtil;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationJobService;
@@ -61,16 +66,19 @@ public class AdminBuildJobQueueResource {
 
     private final Optional<GenerationJobService> generationJobService;
 
+    private final AuditEventRepository auditEventRepository;
+
     private static final Logger log = LoggerFactory.getLogger(AdminBuildJobQueueResource.class);
 
     public AdminBuildJobQueueResource(SharedQueueManagementService localCIBuildJobQueueService, BuildJobRepository buildJobRepository,
-            DistributedDataAccessService distributedDataAccessService, Optional<RemoteInteractiveSandboxClient> sandboxClient,
-            Optional<GenerationJobService> generationJobService) {
+            DistributedDataAccessService distributedDataAccessService, Optional<RemoteInteractiveSandboxClient> sandboxClient, Optional<GenerationJobService> generationJobService,
+            AuditEventRepository auditEventRepository) {
         this.localCIBuildJobQueueService = localCIBuildJobQueueService;
         this.buildJobRepository = buildJobRepository;
         this.distributedDataAccessService = distributedDataAccessService;
         this.sandboxClient = sandboxClient;
         this.generationJobService = generationJobService;
+        this.auditEventRepository = auditEventRepository;
     }
 
     /**
@@ -112,6 +120,49 @@ public class AdminBuildJobQueueResource {
     public ResponseEntity<Void> cancelGenerationJob(@PathVariable long exerciseId, @PathVariable String jobId) {
         boolean cancelled = generationJobService.map(service -> service.requestSystemCancellation(exerciseId, jobId)).orElse(false);
         return cancelled ? ResponseEntity.noContent().build() : ResponseEntity.notFound().build();
+    }
+
+    /**
+     * Returns the fail-closed external mutation slot for operational diagnosis.
+     *
+     * @param exerciseId the exercise id
+     * @return the active mutation, or 404 when none exists
+     */
+    @GetMapping("exercises/{exerciseId}/hyperion-external-mutation")
+    public ResponseEntity<GenerationJobService.ExternalMutationInfo> getExternalMutation(@PathVariable long exerciseId) {
+        return generationJobService.flatMap(service -> service.getExternalMutationInfo(exerciseId)).map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
+    }
+
+    /**
+     * Recovers a wedged external mutation after the owning JVM has been confirmed terminated. The expected token prevents delayed recovery from clearing a newer owner.
+     *
+     * @param exerciseId the exercise id
+     * @param token      the expected mutation token
+     * @param reason     the incident reason recorded in the persistent audit log
+     * @return 204 when recovered, 400 for a missing reason, otherwise 404
+     */
+    @DeleteMapping("exercises/{exerciseId}/hyperion-external-mutations/{token}")
+    public ResponseEntity<Void> recoverExternalMutation(@PathVariable long exerciseId, @PathVariable String token, @RequestParam String reason) {
+        if (reason.isBlank()) {
+            return ResponseEntity.badRequest().build();
+        }
+        Optional<GenerationJobService> service = generationJobService;
+        Optional<GenerationJobService.ExternalMutationInfo> mutation = service.flatMap(value -> value.getExternalMutationInfo(exerciseId))
+                .filter(info -> info.token().equals(token));
+        if (mutation.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+        GenerationJobService.ExternalMutationInfo info = mutation.orElseThrow();
+        String auditReason = reason.replaceAll("[\\r\\n\\t]+", " ").replaceAll(" +", " ").trim();
+        if (auditReason.length() > 500) {
+            auditReason = auditReason.substring(0, 500);
+        }
+        String ownerNodeId = info.ownerNodeId() == null ? "unknown" : info.ownerNodeId();
+        auditEventRepository.add(new AuditEvent(SecurityUtils.getCurrentUserLogin().orElse("unknown"), Constants.HYPERION_EXTERNAL_MUTATION_RECOVERY_ATTEMPT,
+                Map.of("exerciseId", exerciseId, "token", token, "ownerNodeId", ownerNodeId, "startedAt", info.startedAt().toString(), "reason", auditReason)));
+        boolean recovered = service.orElseThrow().recoverExternalMutationSlot(exerciseId, token);
+        log.info("External mutation recovery attempt for exercise {} and owner {} completed with recovered={}", exerciseId, info.ownerNodeId(), recovered);
+        return recovered ? ResponseEntity.noContent().build() : ResponseEntity.notFound().build();
     }
 
     /**

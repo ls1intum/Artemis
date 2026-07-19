@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.critic;
 
+import java.nio.charset.StandardCharsets;
 import java.text.Normalizer;
 import java.time.Duration;
 import java.util.ArrayList;
@@ -9,6 +10,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -33,6 +35,8 @@ import com.knuddels.jtokkit.api.EncodingType;
 
 import de.tum.cit.aet.artemis.admin.service.LLMTokenUsageService;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionExerciseGenerationEnabled;
+import de.tum.cit.aet.artemis.hyperion.service.HyperionSecretMaterialPolicy;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.ProviderUsageSink;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.ProviderFailureCooldown;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.DifferentialVerificationService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
@@ -63,6 +67,8 @@ import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 public class SpecFidelityCriticService {
 
     private static final Logger log = LoggerFactory.getLogger(SpecFidelityCriticService.class);
+
+    private static final HyperionSecretMaterialPolicy SECRET_MATERIAL_POLICY = new HyperionSecretMaterialPolicy();
 
     /** Per-pass cap for visible output plus hidden reasoning. A review makes two baseline calls and at most one bounded oracle-correction call. */
     private static final int CRITIC_MAX_OUTPUT_TOKENS = 32_768;
@@ -309,12 +315,29 @@ public class SpecFidelityCriticService {
      */
     public SpecFidelityReport critique(@Nullable String brief, @Nullable String problemStatement, List<String> testNames, Map<RepositoryType, Map<String, String>> artifacts,
             @Nullable Consumer<ChatResponse> usageSink) {
+        return critique(brief, problemStatement, testNames, artifacts, usageSink, () -> false);
+    }
+
+    /**
+     * Reviews complete generated artifacts while allowing a running generation to stop between provider calls.
+     *
+     * @param brief            the instructor's brief to critique coverage against
+     * @param problemStatement the produced problem statement
+     * @param testNames        the task-bound test names produced for the exercise
+     * @param artifacts        the generated repository files grouped by repository type
+     * @param usageSink        receives reviewer token usage; {@code null} skips accounting
+     * @param cancelled        reports whether generation has been cancelled
+     * @return the full-artifact report
+     */
+    public SpecFidelityReport critique(@Nullable String brief, @Nullable String problemStatement, List<String> testNames, Map<RepositoryType, Map<String, String>> artifacts,
+            @Nullable Consumer<ChatResponse> usageSink, BooleanSupplier cancelled) {
+        requireReviewInputsSafe(brief, problemStatement, testNames, artifacts, null);
         List<SpecFidelityReport.Finding> findings = new ArrayList<>(detectMechanicsLeaks(problemStatement));
         if (!hasCompleteArtifactSet(artifacts)) {
             findings.addAll(reviewUnavailable(null, "The generated solution, template, or tests snapshot was missing."));
             return new SpecFidelityReport(List.copyOf(findings));
         }
-        findings.addAll(reviewArtifacts(brief, problemStatement, testNames, artifacts, null, usageSink));
+        findings.addAll(reviewArtifacts(brief, problemStatement, testNames, artifacts, null, usageSink, cancelled));
         return new SpecFidelityReport(List.copyOf(findings));
     }
 
@@ -331,12 +354,30 @@ public class SpecFidelityCriticService {
      */
     public SpecFidelityReport critiqueAdaptation(@Nullable String brief, @Nullable String problemStatement, List<String> testNames, String adaptationChanges,
             Map<RepositoryType, Map<String, String>> artifacts, @Nullable Consumer<ChatResponse> usageSink) {
+        return critiqueAdaptation(brief, problemStatement, testNames, adaptationChanges, artifacts, usageSink, () -> false);
+    }
+
+    /**
+     * Reviews a mechanically verified adaptation while allowing a running generation to stop between provider calls.
+     *
+     * @param brief             the instructor's adaptation request
+     * @param problemStatement  the produced problem statement
+     * @param testNames         the produced test identifiers
+     * @param adaptationChanges the baseline-to-candidate diff
+     * @param artifacts         the generated repository files grouped by repository type
+     * @param usageSink         receives reviewer token usage; {@code null} skips accounting
+     * @param cancelled         reports whether generation has been cancelled
+     * @return the full-artifact and adaptation-scope report
+     */
+    public SpecFidelityReport critiqueAdaptation(@Nullable String brief, @Nullable String problemStatement, List<String> testNames, String adaptationChanges,
+            Map<RepositoryType, Map<String, String>> artifacts, @Nullable Consumer<ChatResponse> usageSink, BooleanSupplier cancelled) {
+        requireReviewInputsSafe(brief, problemStatement, testNames, artifacts, adaptationChanges);
         List<SpecFidelityReport.Finding> findings = new ArrayList<>(detectMechanicsLeaks(problemStatement));
         if (!hasCompleteArtifactSet(artifacts)) {
             findings.addAll(reviewUnavailable(adaptationChanges, "The generated solution, template, or tests snapshot was missing."));
             return new SpecFidelityReport(List.copyOf(findings));
         }
-        findings.addAll(reviewArtifacts(brief, problemStatement, testNames, artifacts, adaptationChanges, usageSink));
+        findings.addAll(reviewArtifacts(brief, problemStatement, testNames, artifacts, adaptationChanges, usageSink, cancelled));
         return new SpecFidelityReport(List.copyOf(findings));
     }
 
@@ -350,6 +391,32 @@ public class SpecFidelityCriticService {
         return Map.of(RepositoryType.SOLUTION, Map.of("src/ReviewFixture.java", "class ReviewFixture {}"), RepositoryType.TEMPLATE,
                 Map.of("src/ReviewFixture.java", "class ReviewFixture {}"), RepositoryType.TESTS,
                 Map.of("test-names.txt", testNames.isEmpty() ? "(no test names)" : String.join("\n", testNames)));
+    }
+
+    private static void requireReviewInputsSafe(@Nullable String brief, @Nullable String problemStatement, List<String> testNames,
+            @Nullable Map<RepositoryType, Map<String, String>> artifacts, @Nullable String adaptationChanges) {
+        requireReviewTextSafe("critic/brief", brief);
+        requireReviewTextSafe("critic/problem-statement.md", problemStatement);
+        requireReviewTextSafe("critic/adaptation-changes", adaptationChanges);
+        for (int index = 0; index < testNames.size(); index++) {
+            requireReviewTextSafe("critic/test-name-" + index, testNames.get(index));
+        }
+        if (artifacts == null) {
+            return;
+        }
+        for (Map.Entry<RepositoryType, Map<String, String>> repository : artifacts.entrySet()) {
+            if (repository.getValue() == null) {
+                continue;
+            }
+            for (Map.Entry<String, String> file : repository.getValue().entrySet()) {
+                requireReviewTextSafe("critic/" + repository.getKey().name().toLowerCase(java.util.Locale.ROOT) + "/" + file.getKey(), file.getValue());
+            }
+        }
+    }
+
+    private static void requireReviewTextSafe(String logicalPath, @Nullable String content) {
+        SECRET_MATERIAL_POLICY.requireSafe(logicalPath, content == null ? new byte[0] : content.getBytes(StandardCharsets.UTF_8),
+                HyperionSecretMaterialPolicy.Origin.GENERATED_CANDIDATE);
     }
 
     private static boolean hasCompleteArtifactSet(Map<RepositoryType, Map<String, String>> artifacts) {
@@ -376,7 +443,7 @@ public class SpecFidelityCriticService {
 
     /** Runs two bounded, specialized full-artifact review passes and fails closed when either verdict is incomplete. */
     private List<SpecFidelityReport.Finding> reviewArtifacts(@Nullable String brief, @Nullable String problemStatement, List<String> testNames,
-            Map<RepositoryType, Map<String, String>> artifacts, @Nullable String adaptationChanges, @Nullable Consumer<ChatResponse> usageSink) {
+            Map<RepositoryType, Map<String, String>> artifacts, @Nullable String adaptationChanges, @Nullable Consumer<ChatResponse> usageSink, BooleanSupplier cancelled) {
         String effectiveBrief = brief == null ? "" : brief.strip();
         if (adaptationChanges != null && adaptationChanges.isBlank()) {
             String requestedChange = effectiveBrief.isBlank() ? "the requested adaptation" : truncate(effectiveBrief);
@@ -403,11 +470,18 @@ public class SpecFidelityCriticService {
         boolean expectApiChecks = artifacts.getOrDefault(RepositoryType.SOLUTION, Map.of()).values().stream().filter(java.util.Objects::nonNull)
                 .anyMatch(content -> content.contains("public "));
         boolean expectTestChecks = !testNames.isEmpty();
+        if (cancelled.getAsBoolean()) {
+            return List.of();
+        }
         List<SpecFidelityReport.Finding> contractFindings = callReviewerSafely(ReviewPass.CONTRACT, CONTRACT_REVIEW_SYSTEM_PROMPT, userPrompt, adaptationChanges != null,
                 contractGroundingSource, expectExampleChecks, expectApiChecks, expectTestChecks, false, usageSink);
+        if (cancelled.getAsBoolean()) {
+            return contractFindings == null ? List.of() : contractFindings;
+        }
         List<SpecFidelityReport.Finding> oracleFindings = callReviewerSafely(ReviewPass.ORACLE, ORACLE_REVIEW_SYSTEM_PROMPT, userPrompt, false, authoritativeSource, false, false,
                 false, expectTestChecks, usageSink);
-        if (oracleFindings != null && hasUngroundedOracleReview(oracleFindings) && userPrompt.length() + ORACLE_REVIEW_CORRECTION.length() <= MAX_REVIEW_INPUT_CHARS) {
+        if (!cancelled.getAsBoolean() && oracleFindings != null && hasUngroundedOracleReview(oracleFindings)
+                && userPrompt.length() + ORACLE_REVIEW_CORRECTION.length() <= MAX_REVIEW_INPUT_CHARS) {
             List<SpecFidelityReport.Finding> correctedOracleFindings = callReviewerSafely(ReviewPass.ORACLE, ORACLE_REVIEW_SYSTEM_PROMPT, userPrompt + ORACLE_REVIEW_CORRECTION,
                     false, authoritativeSource, false, false, false, expectTestChecks, usageSink);
             if (correctedOracleFindings != null && !hasUngroundedOracleReview(correctedOracleFindings)) {
@@ -491,8 +565,17 @@ public class SpecFidelityCriticService {
         if (configuredModel != null) {
             options.model(configuredModel);
         }
-        ChatResponse response = providerFailureCooldown.execute(ProviderFailureCooldown.keyForModel(configuredModel), providerHardFailureCooldown,
-                () -> chatClient.prompt().system(systemPrompt).user(userPrompt).options(options).call().chatResponse());
+        ChatResponse response;
+        try {
+            response = providerFailureCooldown.execute(ProviderFailureCooldown.keyForModel(configuredModel), providerHardFailureCooldown,
+                    () -> chatClient.prompt().system(systemPrompt).user(userPrompt).options(options).call().chatResponse());
+        }
+        catch (RuntimeException e) {
+            if (!(e instanceof ProviderFailureCooldown.ProviderInCooldownException) && usageSink instanceof ProviderUsageSink providerUsageSink) {
+                providerUsageSink.markUncertain();
+            }
+            throw e;
+        }
         if (usageSink != null) {
             usageSink.accept(response);
         }

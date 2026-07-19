@@ -7,14 +7,19 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
+import org.eclipse.jgit.http.server.ServletUtils;
+import org.eclipse.jgit.lib.Repository;
 import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.filter.OncePerRequestFilter;
 
+import de.tum.cit.aet.artemis.core.exception.HttpStatusException;
 import de.tum.cit.aet.artemis.localvc.exception.LocalVCAuthException;
 import de.tum.cit.aet.artemis.localvc.exception.LocalVCForbiddenException;
 import de.tum.cit.aet.artemis.localvc.exception.LocalVCInternalException;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseMutationGuard;
 import de.tum.cit.aet.artemis.programming.web.repository.RepositoryActionType;
 
 /**
@@ -47,6 +52,23 @@ public class LocalVCPushFilter extends OncePerRequestFilter {
             return;
         }
 
-        filterChain.doFilter(servletRequest, servletResponse);
+        if (!"POST".equals(servletRequest.getMethod())) {
+            filterChain.doFilter(servletRequest, servletResponse);
+            return;
+        }
+
+        Repository repository = ServletUtils.getRepository(servletRequest);
+        ProgrammingExercise exercise = (ProgrammingExercise) servletRequest.getAttribute(LocalVCServletService.AUTHORIZED_EXERCISE_ATTRIBUTE);
+        final ProgrammingExerciseMutationGuard.MutationLease mutationLease;
+        try {
+            mutationLease = localVCServletService.claimProgrammingExerciseMutation(repository, exercise);
+        }
+        catch (HttpStatusException e) {
+            servletResponse.sendError(e.getStatusCode().value(), e.getMessage() + " Please retry the push later.");
+            return;
+        }
+        try (mutationLease) {
+            filterChain.doFilter(servletRequest, servletResponse);
+        }
     }
 }

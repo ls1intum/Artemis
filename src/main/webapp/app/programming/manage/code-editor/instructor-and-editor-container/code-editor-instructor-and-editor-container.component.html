@@ -493,6 +493,7 @@
                         (diffLineChange)="onDiffLineChange($event)"
                         class="flex-grow-1 overflow-auto"
                         (instructionChange)="onInstructionChanged($event)"
+                        (hasUnsavedChanges)="onProblemStatementUnsavedChangesChanged($event)"
                         (onProblemStatementSaved)="onProblemStatementSaved()"
                         (onInlineRefinement)="onInlineRefinement($event)"
                         (onNavigateToReviewCommentLocation)="onNavigateToReviewCommentLocation($event)"
@@ -508,6 +509,7 @@
             <ng-container editorBottomPanel>
                 @if (showGenerationActivity()) {
                     <p-confirmDialog key="hyperionGenerateConfirmation" />
+                    <p-confirmDialog key="hyperionReloadSavedExerciseConfirmation" />
                     <jhi-hyperion-generation-activity
                         [exerciseId]="exercise?.id"
                         [startAllowed]="canGenerateExercise()"

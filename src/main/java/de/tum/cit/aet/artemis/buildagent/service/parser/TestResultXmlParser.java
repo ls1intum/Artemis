@@ -29,11 +29,13 @@ public class TestResultXmlParser {
     // https://stackoverflow.com/a/4237934
     private static final String INVALID_XML_CHARS = "[^\t\r\n -\uD7FF\uE000-�\uD800\uDC00-\uDBFF\uDFFF]";
 
-    private static final Pattern XML_DTD_OR_ENTITY_DECLARATION = Pattern.compile("<!(DOCTYPE|ENTITY)\\b", Pattern.CASE_INSENSITIVE);
+    private static final String XML_MISC_BEFORE_ROOT = "(?:<\\?(?:[^?]|\\?[^>])*\\?>|<!--(?:-?[^-])*-->|\\s)*";
+
+    private static final Pattern XML_DTD_DECLARATION = Pattern.compile("^" + XML_MISC_BEFORE_ROOT + "<!DOCTYPE\\b", Pattern.DOTALL);
 
     // The root element can be preceded by processing instructions (<? ... ?>), comments (<!-- ... -->) and whitespace.
     // Comments cannot contain the string "--".
-    private static final Pattern XML_ROOT_TAG_IS_TESTSUITES = Pattern.compile("^(<\\?([^?]|\\?[^>])*\\?>|<!--(-?[^-])*-->|\\s)*<testsuites(\\s|/?>)", Pattern.DOTALL);
+    private static final Pattern XML_ROOT_TAG_IS_TESTSUITES = Pattern.compile("^" + XML_MISC_BEFORE_ROOT + "<testsuites(\\s|/?>)", Pattern.DOTALL);
 
     private static XmlMapper createXmlMapper() {
         XMLInputFactory inputFactory = XMLInputFactory.newFactory();
@@ -113,7 +115,7 @@ public class TestResultXmlParser {
      */
     public static void processTestResultFile(String testResultFileString, List<LocalCITestJobDTO> failedTests, List<LocalCITestJobDTO> successfulTests) throws IOException {
         testResultFileString = testResultFileString.replaceAll(INVALID_XML_CHARS, "");
-        if (XML_DTD_OR_ENTITY_DECLARATION.matcher(testResultFileString).find()) {
+        if (XML_DTD_DECLARATION.matcher(testResultFileString).find()) {
             throw new IOException("JUnit XML with DTD or entity declarations is not accepted");
         }
 

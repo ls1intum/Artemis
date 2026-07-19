@@ -284,7 +284,7 @@ class InteractiveSandboxRelayRoundTripTest {
 
             assertThatExceptionOfType(LocalCIException.class)
                     .isThrownBy(() -> harness.client().copyIn(handle, "/workspace", new ByteArrayInputStream(tarWithSingleFile("file.txt", "content"))))
-                    .withMessageContaining("copy timed out");
+                    .withMessageContaining("Interactive sandbox COPY_IN operation failed");
 
             assertThat(harness.client().createSession(sessionSpec("replacement-job"))).isEqualTo(AGENT_SHORT_NAME + "::" + replacementContainer);
         }
@@ -447,7 +447,8 @@ class InteractiveSandboxRelayRoundTripTest {
 
     @Test
     void exec_rejectsAnUnownedContainerId() {
-        assertThatExceptionOfType(LocalCIException.class).isThrownBy(() -> client.exec(handle(), Duration.ofSeconds(1), "echo", "unsafe")).withMessageContaining("not owned");
+        assertThatExceptionOfType(LocalCIException.class).isThrownBy(() -> client.exec(handle(), Duration.ofSeconds(1), "echo", "unsafe"))
+                .withMessageContaining("Interactive sandbox EXEC operation failed");
 
         verify(localSandbox, never()).exec(anyString(), any(), any(String[].class));
     }
@@ -491,6 +492,27 @@ class InteractiveSandboxRelayRoundTripTest {
 
         assertThat(matchingResponses).hasValue(2);
         verify(localSandbox, times(1)).createSession(any());
+    }
+
+    @Test
+    void drainingHandlerReplaysCompletedCreateInsteadOfReturningAnAmbiguousDecline() throws Exception {
+        String correlationId = "corr-completed-before-drain";
+        SandboxOpRequest request = SandboxOpRequest.create(correlationId, AGENT_SHORT_NAME, sessionSpec());
+        assertThat(handler.claimRequest(request).accepted()).isTrue();
+        handler.rememberCompletedResponse(SandboxOpResponse.ok(correlationId, CONTAINER_ID));
+        BlockingQueue<SandboxOpResponse> matchingResponses = responsesFor(correlationId);
+        AtomicBoolean shuttingDown = (AtomicBoolean) ReflectionTestUtils.getField(handler, "shuttingDown");
+        shuttingDown.set(true);
+        try {
+            requestsTopic.publish(request);
+            SandboxOpResponse replayed = matchingResponses.poll(5, TimeUnit.SECONDS);
+            assertThat(replayed).isNotNull();
+            assertThat(replayed.success()).isTrue();
+            assertThat(replayed.sessionId()).isEqualTo(CONTAINER_ID);
+        }
+        finally {
+            shuttingDown.set(false);
+        }
     }
 
     @Test
@@ -1027,7 +1049,8 @@ class InteractiveSandboxRelayRoundTripTest {
             doThrow(new LocalCIException("remove failed")).when(harness.localSandbox()).destroySession(CONTAINER_ID);
             when(harness.localSandbox().sessionExists(CONTAINER_ID)).thenReturn(true);
 
-            assertThatExceptionOfType(LocalCIException.class).isThrownBy(() -> harness.client().destroySession(handle)).withMessageContaining("remove failed");
+            assertThatExceptionOfType(LocalCIException.class).isThrownBy(() -> harness.client().destroySession(handle))
+                    .withMessageContaining("Interactive sandbox DESTROY operation failed");
             assertThatExceptionOfType(LocalCIException.class).isThrownBy(() -> harness.client().createSession(sessionSpec("other-job")))
                     .withMessageContaining("generation sandbox slot capacity");
         }
@@ -1080,7 +1103,7 @@ class InteractiveSandboxRelayRoundTripTest {
             String handle = harness.client().createSession(sessionSpec());
 
             assertThatExceptionOfType(LocalCIException.class).isThrownBy(() -> harness.client().exec(handle, Duration.ofSeconds(1), "sleep", "10"))
-                    .withMessageContaining("Docker response lost");
+                    .withMessageContaining("Interactive sandbox EXEC operation failed");
             assertThat(harness.client().createSession(sessionSpec())).isEqualTo(handle);
         }
     }

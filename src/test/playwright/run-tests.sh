@@ -85,15 +85,19 @@ if [ ${#TEST_PATHS[@]} -gt 0 ]; then
     # Filtered paths may belong to only one process, so empty selections are expected.
     echo "--- Running parallel tests ---"
     run_playwright parallel --project=fast-tests --project=slow-tests --pass-with-no-tests "${TEST_PATHS[@]}"
-    echo "--- Running Hyperion tests ---"
-    run_playwright sequential --project=hyperion-tests --pass-with-no-tests "${TEST_PATHS[@]}"
+    if [ "$HYPERION_LLM_MODE" = "mock" ]; then
+        echo "--- Running Hyperion tests ---"
+        run_playwright sequential --project=hyperion-tests --pass-with-no-tests "${TEST_PATHS[@]}"
+    fi
 else
     echo "Running all tests"
 
     echo "--- Running parallel tests ---"
     run_playwright parallel e2e --project=fast-tests --project=slow-tests
-    echo "--- Running Hyperion tests ---"
-    run_playwright sequential e2e --project=hyperion-tests
+    if [ "$HYPERION_LLM_MODE" = "mock" ]; then
+        echo "--- Running Hyperion tests ---"
+        run_playwright sequential e2e --project=hyperion-tests
+    fi
 fi
 
 # Run the @multi-node project only when the surrounding stack opts in via env var. The multi-node

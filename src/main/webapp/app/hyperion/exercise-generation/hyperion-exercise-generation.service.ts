@@ -5,6 +5,7 @@ import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { HyperionExerciseGenerationApi } from 'app/openapi/api/hyperion-exercise-generation-api';
 import {
     ExerciseGenerationRevertResult,
+    HyperionExerciseGenerationState,
     HyperionGenerationJobStart,
     HyperionGenerationMessage,
     HyperionGenerationRequest,
@@ -61,5 +62,10 @@ export class HyperionExerciseGenerationService {
      */
     subscribeToStream(jobId: string): Observable<HyperionGenerationMessage> {
         return this.websocketService.subscribe<HyperionGenerationMessage>(`/user/topic/hyperion/exercise-generation/jobs/${jobId}`);
+    }
+
+    /** Subscribes to the shared lock state for one exercise. Generation details remain on the owner-only job topic. */
+    subscribeToExerciseState(exerciseId: number): Observable<HyperionExerciseGenerationState> {
+        return this.websocketService.subscribe<HyperionExerciseGenerationState>(`/topic/hyperion/exercise-generation/exercises/${exerciseId}/state`);
     }
 }

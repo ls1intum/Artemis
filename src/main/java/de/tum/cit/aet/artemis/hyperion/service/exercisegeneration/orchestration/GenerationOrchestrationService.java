@@ -224,6 +224,8 @@ public class GenerationOrchestrationService {
             String producedProblemStatement = "";
             // Recomputed each attempt; the final attempt's report rides the outcome.
             SpecFidelityReport specFidelityReport = SpecFidelityReport.empty();
+            @Nullable
+            VerificationRequest lastRejectedVerificationRequest = null;
             for (int attempt = 1; attempt <= MAX_GENERATION_ATTEMPTS; attempt++) {
                 loopResult = agentLoopRunner.run(systemPrompt, currentPrompt, tools, maxTurns, cancelled, effectiveUsageSink, progress);
                 log.info("Exercise generation attempt {} took {} turn(s)", attempt, loopResult.turns());
@@ -259,8 +261,8 @@ public class GenerationOrchestrationService {
                             cancelledResult(loopResult));
                 }
 
-                // Seed Java structural tests when the produced solution/template structures differ. The returned set is the list of names just injected; the verifier exempts a
-                // [task] bound to one from the binding-resolution gate (the agent could not bind tests seeded after it ran) while still requiring solution-pass/template-fail.
+                // Seed Java structural tests when the produced solution/template structures differ. Their authoritative names can resolve task bindings, but the verifier still
+                // requires every seeded grading check to appear in the student checklist; a first-attempt omission is returned to the agent for repair.
                 Set<String> seededStructuralTestNames = structuralOracleSeeder.seedIfStructuralDiff(sandbox, sessionId, exercise);
                 if (cancelled.getAsBoolean()) {
                     if (lastMechanicallyVerifiedCandidate != null) {
@@ -293,14 +295,16 @@ public class GenerationOrchestrationService {
                 addIfExtractionFailed(extractionFailed, producedTests, RepositoryType.TESTS);
                 addIfExtractionFailed(extractionFailed, producedTemplate, RepositoryType.TEMPLATE);
                 addIfExtractionFailed(extractionFailed, producedSolution, RepositoryType.SOLUTION);
+                Map<RepositoryType, Map<String, String>> candidateFiles = copyProducedFiles(producedFilesByType);
                 if (extractionFailed.isEmpty()) {
                     if (hasProducedChanges(baselineRepositoryFiles, producedFilesByType, baselineProblemStatement, producedProblemStatement)) {
-                        lastExtractedCandidate = new ExtractedCandidate(loopResult, copyProducedFiles(producedFilesByType), producedProblemStatement);
+                        lastExtractedCandidate = new ExtractedCandidate(loopResult, candidateFiles, producedProblemStatement);
                     }
                 }
                 VerificationRequest verificationRequest = new VerificationRequest(testsSeedSnapshot, baselineRepositoryFiles.getOrDefault(RepositoryType.TEMPLATE, Map.of()),
-                        baselineRepositoryFiles.getOrDefault(RepositoryType.SOLUTION, Map.of()), producedTests.files(), producedTemplate.files(), producedSolution.files(),
-                        extractionFailed, seededStructuralTestNames, baselineGradedTestNames, producedProblemStatement, mode == GenerationMode.ADAPT);
+                        baselineRepositoryFiles.getOrDefault(RepositoryType.SOLUTION, Map.of()), candidateFiles.getOrDefault(RepositoryType.TESTS, Map.of()),
+                        candidateFiles.getOrDefault(RepositoryType.TEMPLATE, Map.of()), candidateFiles.getOrDefault(RepositoryType.SOLUTION, Map.of()),
+                        Set.copyOf(extractionFailed), Set.copyOf(seededStructuralTestNames), baselineGradedTestNames, producedProblemStatement, mode == GenerationMode.ADAPT);
                 if (cancelled.getAsBoolean()) {
                     if (lastMechanicallyVerifiedCandidate != null) {
                         return preserveCandidate(lastMechanicallyVerifiedCandidate, sandbox, sessionId, workspaceSeed);
@@ -308,10 +312,13 @@ public class GenerationOrchestrationService {
                     return stopOrPreserve(sandbox, sessionId, workspaceSeed, placeholderReplacements, baselineRepositoryFiles, baselineProblemStatement,
                             cancelledResult(loopResult));
                 }
+                if (lastRejectedVerificationRequest != null && lastRejectedVerificationRequest.equals(verificationRequest)) {
+                    emit(progress, "The agent resubmitted the unchanged rejected candidate; stopping without repeating the same verification.");
+                    break;
+                }
                 // The authoritative pass re-seeds its pristine script, discards old reports, and builds from fresh temporary directories before parsing the result independently.
                 InteractiveSandbox activeSandbox = sandbox;
                 GenerationWorkspaceService.WorkspaceSeed activeWorkspaceSeed = workspaceSeed;
-                Map<RepositoryType, Map<String, String>> candidateFiles = copyProducedFiles(producedFilesByType);
                 String candidateProblemStatement = producedProblemStatement;
                 Runnable restoreCandidate = () -> {
                     activeSandbox.resetSession(activeSessionId);
@@ -322,6 +329,9 @@ public class GenerationOrchestrationService {
                 };
                 verification = verifyWithInfrastructureRetry(sandbox, sessionId, exercise, verificationRequest, restoreCandidate, cancelled, progress);
                 emit(progress, verification.report());
+                if (!verification.mechanicallyVerified() && extractionFailed.isEmpty()) {
+                    lastRejectedVerificationRequest = verificationRequest;
+                }
                 if (verification.mechanicallyVerified()) {
                     lastMechanicallyVerifiedCandidate = new CandidateSnapshot(loopResult, verification, copyProducedFiles(producedFilesByType), producedProblemStatement,
                             SpecFidelityReport.qualityReviewUnavailable("Generation stopped before the mechanically verified candidate received its full-artifact review."));
@@ -342,7 +352,7 @@ public class GenerationOrchestrationService {
                             ? renderAdaptationChanges(baselineProblemStatement, producedProblemStatement, baselineRepositoryFiles, producedFilesByType)
                             : null;
                     specFidelityReport = runSpecFidelityCritic(reviewBrief, producedProblemStatement, exercise.getProgrammingLanguage(), producedFilesByType, adaptationChanges,
-                            effectiveUsageSink, progress);
+                            effectiveUsageSink, cancelled, progress);
                     lastMechanicallyVerifiedCandidate = new CandidateSnapshot(loopResult, verification, copyProducedFiles(producedFilesByType), producedProblemStatement,
                             specFidelityReport);
                     if (cancelled.getAsBoolean()) {
@@ -574,11 +584,12 @@ public class GenerationOrchestrationService {
      * @return the report (possibly empty); never {@code null}
      */
     private SpecFidelityReport runSpecFidelityCritic(String brief, String problemStatement, @Nullable ProgrammingLanguage language,
-            Map<RepositoryType, Map<String, String>> producedArtifacts, @Nullable String adaptationChanges, Consumer<ChatResponse> usageSink, Consumer<String> progress) {
+            Map<RepositoryType, Map<String, String>> producedArtifacts, @Nullable String adaptationChanges, Consumer<ChatResponse> usageSink, BooleanSupplier cancelled,
+            Consumer<String> progress) {
         try {
             List<String> testNames = extractTaskBoundTestNames(problemStatement);
-            SpecFidelityReport report = adaptationChanges == null ? specFidelityCritic.critique(brief, problemStatement, testNames, producedArtifacts, usageSink)
-                    : specFidelityCritic.critiqueAdaptation(brief, problemStatement, testNames, adaptationChanges, producedArtifacts, usageSink);
+            SpecFidelityReport report = adaptationChanges == null ? specFidelityCritic.critique(brief, problemStatement, testNames, producedArtifacts, usageSink, cancelled)
+                    : specFidelityCritic.critiqueAdaptation(brief, problemStatement, testNames, adaptationChanges, producedArtifacts, usageSink, cancelled);
             if (adaptationChanges != null && adaptationChanges.contains(CHANGE_SUMMARY_TRUNCATED)) {
                 List<SpecFidelityReport.Finding> combined = new ArrayList<>(report.findings());
                 combined.addAll(SpecFidelityReport.adaptationScopeUnavailable("The bounded change summary was truncated, so not every changed line could be reviewed.").findings());

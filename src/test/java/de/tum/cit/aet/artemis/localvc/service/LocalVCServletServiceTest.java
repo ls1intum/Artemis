@@ -9,11 +9,16 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.net.URI;
+import java.nio.file.Path;
 import java.util.Optional;
+import java.util.OptionalLong;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import jakarta.servlet.http.HttpServletRequest;
 
 import org.apache.sshd.server.session.ServerSession;
+import org.eclipse.jgit.lib.Repository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -28,16 +33,23 @@ import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.exercise.service.ExerciseVersionService;
 import de.tum.cit.aet.artemis.localci.service.ci.ContinuousIntegrationTriggerService;
 import de.tum.cit.aet.artemis.programming.domain.AuthenticationMechanism;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
+import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryVCSAccessToken;
+import de.tum.cit.aet.artemis.programming.domain.SolutionProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.repository.ParticipationVCSAccessTokenRepository;
 import de.tum.cit.aet.artemis.programming.repository.RepositoryVCSAccessTokenRepository;
 import de.tum.cit.aet.artemis.programming.service.AuxiliaryRepositoryService;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseMutationGuard;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseParticipationService;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseTestCaseChangedService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingMessagingService;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingSubmissionMessagingService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingSubmissionService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingTriggerService;
 import de.tum.cit.aet.artemis.programming.service.RepositoryAccessService;
@@ -73,6 +85,18 @@ class LocalVCServletServiceTest {
 
     @Mock
     private ProgrammingSubmissionService programmingSubmissionService;
+
+    @Mock
+    private ProgrammingSubmissionMessagingService programmingSubmissionMessagingService;
+
+    @Mock
+    private ProgrammingExerciseTestCaseChangedService programmingExerciseTestCaseChangedService;
+
+    @Mock
+    private ExerciseVersionService exerciseVersionService;
+
+    @Mock
+    private ProgrammingExerciseMutationGuard programmingExerciseMutationGuard;
 
     @Mock
     private ProgrammingMessagingService programmingMessagingService;
@@ -129,6 +153,7 @@ class LocalVCServletServiceTest {
         ReflectionTestUtils.setField(localVCServletService, "vcsAccessLogService", Optional.of(vcsAccessLogService));
 
         ReflectionTestUtils.setField(localVCServletService, "localVCBasePath", java.nio.file.Path.of("/tmp/test-repos"));
+        ReflectionTestUtils.setField(localVCServletService, "localVCBaseUri", URI.create("http://localhost"));
     }
 
     @Test
@@ -279,5 +304,58 @@ class LocalVCServletServiceTest {
         // WRITE -> PUSH_FAIL, READ -> CLONE_FAIL
         assertThat(RepositoryActionType.PUSH_FAIL).isNotNull();
         assertThat(RepositoryActionType.CLONE_FAIL).isNotNull();
+    }
+
+    @Test
+    void processNewPushDoesNotReturnBeforeExerciseVersionCapture() {
+        Repository repository = mock(Repository.class);
+        SolutionProgrammingExerciseParticipation solutionParticipation = new SolutionProgrammingExerciseParticipation();
+        ProgrammingSubmission submission = new ProgrammingSubmission();
+        AtomicBoolean exerciseVersionCaptured = new AtomicBoolean();
+        String projectKey = testExercise.getProjectKey();
+        Path repositoryPath = Path.of("/tmp/test-repos", projectKey, projectKey.toLowerCase() + "-tests.git");
+
+        when(repository.getDirectory()).thenReturn(repositoryPath.toFile());
+        when(exerciseVersionService.isRepositoryTypeVersionable(RepositoryType.TESTS)).thenReturn(true);
+        org.mockito.Mockito.doAnswer(invocation -> {
+            exerciseVersionCaptured.set(true);
+            return null;
+        }).when(exerciseVersionService).createExerciseVersionSynchronously(testExercise, testUser, java.util.Map.of(RepositoryType.TESTS, "commit-hash"));
+        when(programmingSubmissionService.createSolutionParticipationSubmissionWithTypeTest(testExercise.getId(), "commit-hash")).thenReturn(submission);
+
+        localVCServletService.processNewPush("commit-hash", repository, testUser, Optional.of(testExercise), Optional.of(solutionParticipation), Optional.empty());
+
+        assertThat(exerciseVersionCaptured).isTrue();
+    }
+
+    @Test
+    void claimProgrammingExerciseMutationClaimsVersionableStaffRepository() {
+        Repository repository = mock(Repository.class);
+        Path repositoryPath = Path.of("/tmp/test-repos", testExercise.getProjectKey(), testExercise.getProjectKey().toLowerCase() + "-exercise.git");
+        var expectedLease = new ProgrammingExerciseMutationGuard.MutationLease(() -> {
+        });
+        when(repository.getDirectory()).thenReturn(repositoryPath.toFile());
+        when(exerciseVersionService.isRepositoryTypeVersionable(RepositoryType.TEMPLATE)).thenReturn(true);
+        when(programmingExerciseMutationGuard.claimExternalMutation(testExercise.getId())).thenReturn(expectedLease);
+
+        var lease = localVCServletService.claimProgrammingExerciseMutation(repository, testExercise);
+
+        assertThat(lease).isSameAs(expectedLease);
+    }
+
+    @Test
+    void claimProgrammingExerciseMutationKeepsUserRepositoryUnguarded() {
+        Repository repository = mock(Repository.class);
+        Path repositoryPath = Path.of("/tmp/test-repos", testExercise.getProjectKey(), testExercise.getProjectKey().toLowerCase() + "-testuser.git");
+        var expectedLease = new ProgrammingExerciseMutationGuard.MutationLease(() -> {
+        });
+        when(repository.getDirectory()).thenReturn(repositoryPath.toFile());
+        when(exerciseVersionService.isRepositoryTypeVersionable(RepositoryType.USER)).thenReturn(false);
+        when(programmingExerciseMutationGuard.claimExternalMutation(OptionalLong.empty())).thenReturn(expectedLease);
+
+        var lease = localVCServletService.claimProgrammingExerciseMutation(repository, testExercise);
+
+        assertThat(lease).isSameAs(expectedLease);
+        verify(programmingExerciseMutationGuard).claimExternalMutation(OptionalLong.empty());
     }
 }
