@@ -74,6 +74,13 @@ public class Lti13Service {
 
     private static final String IRIS_PATH_PATTERN = "/courses/{courseId}/iris";
 
+    /**
+     * Legacy Iris deep-link path. Deep links issued before the student course analytics dashboard was removed still
+     * point to {@code /courses/{courseId}/dashboard} in external LMSes. They must keep launching Iris, so the pattern
+     * stays recognized and legacy launch targets are normalized to {@link #IRIS_PATH_PATTERN} (see {@link #normalizeLegacyIrisTargetLink}).
+     */
+    private static final String IRIS_LEGACY_DASHBOARD_PATH_PATTERN = "/courses/{courseId}/dashboard";
+
     private static final String LEARNING_PATH_PATH_PATTERN = "/courses/{courseId}/learning-path";
 
     private static final String COURSE_PATH_PATTERN = "/courses/{courseId}/**";
@@ -105,7 +112,8 @@ public class Lti13Service {
     private final RestTemplate restTemplate;
 
     private static final Map<String, DeepLinkingType> TARGET_LINK_PATTERNS = Map.of(COMPETENCY_PATH_PATTERN, DeepLinkingType.COMPETENCY, LEARNING_PATH_PATH_PATTERN,
-            DeepLinkingType.LEARNING_PATH, IRIS_PATH_PATTERN, DeepLinkingType.IRIS, LECTURE_PATH_PATTERN, DeepLinkingType.LECTURE);
+            DeepLinkingType.LEARNING_PATH, IRIS_PATH_PATTERN, DeepLinkingType.IRIS, IRIS_LEGACY_DASHBOARD_PATH_PATTERN, DeepLinkingType.IRIS, LECTURE_PATH_PATTERN,
+            DeepLinkingType.LECTURE);
 
     public Lti13Service(UserRepository userRepository, ExerciseRepository exerciseRepository, Optional<LectureRepositoryApi> lectureRepositoryApi,
             CourseRepository courseRepository, Lti13ResourceLaunchRepository launchRepository, LtiService ltiService, ResultRepository resultRepository,
@@ -407,6 +415,30 @@ public class Lti13Service {
 
         log.info("No specific content type detected in target link: {}", targetLinkUrl);
         throw new BadRequestAlertException("Content type not found", "LTI", "ltiContentTypeNotFound");
+    }
+
+    /**
+     * Normalizes a legacy Iris deep-link target that still points to the removed course dashboard route
+     * ({@code /courses/{courseId}/dashboard}) to the current Iris route ({@code /courses/{courseId}/iris}). Deep links
+     * issued before the dashboard removal are persisted in external LMSes and must keep launching Iris. Non-legacy or
+     * malformed target links are returned unchanged.
+     *
+     * @param targetLinkUri the target link URI from the LTI launch
+     * @return the normalized target link URI, or the original one if it is not a legacy dashboard link
+     */
+    public String normalizeLegacyIrisTargetLink(String targetLinkUri) {
+        try {
+            URI uri = new URI(targetLinkUri);
+            String path = uri.getPath();
+            if (path != null && new AntPathMatcher().match(IRIS_LEGACY_DASHBOARD_PATH_PATTERN, path)) {
+                String normalizedPath = path.substring(0, path.length() - "/dashboard".length()) + "/iris";
+                return UriComponentsBuilder.fromUri(uri).replacePath(normalizedPath).build().toUriString();
+            }
+        }
+        catch (URISyntaxException ex) {
+            log.info("Malformed target link URL while normalizing legacy Iris link: {}", targetLinkUri);
+        }
+        return targetLinkUri;
     }
 
     private void createOrUpdateResourceLaunch(Lti13LaunchRequest launchRequest, User user, Exercise exercise) {

@@ -611,6 +611,16 @@ class Lti13ServiceTest {
     }
 
     @Test
+    void getTargetLinkType_legacyIrisDashboardPath() {
+        // Deep links issued before the dashboard removal still point to /dashboard and must keep resolving to IRIS
+        String targetLinkUrl = "https://some-artemis-domain.org/courses/123/dashboard";
+
+        DeepLinkingType linkType = lti13Service.getTargetLinkType(targetLinkUrl);
+
+        assertThat(linkType).isEqualTo(DeepLinkingType.IRIS);
+    }
+
+    @Test
     void getTargetLinkType_learningPath() {
         String targetLinkUrl = "https://some-artemis-domain.org/courses/123/learning-path";
 
@@ -700,6 +710,43 @@ class Lti13ServiceTest {
         boolean result = lti13Service.hasTargetLinkWithoutExercise(targetLinkUrl, targetLecture);
 
         assertThat(result).isTrue();
+    }
+
+    @Test
+    void hasTargetLinkWithoutExercise_legacyIrisDashboardPath() {
+        String targetLinkUrl = "https://some-artemis-domain.org/courses/123/dashboard";
+        Optional<Lecture> targetLecture = Optional.empty();
+
+        boolean result = lti13Service.hasTargetLinkWithoutExercise(targetLinkUrl, targetLecture);
+
+        assertThat(result).isTrue();
+    }
+
+    @Test
+    void normalizeLegacyIrisTargetLink_rewritesLegacyDashboardToIris() {
+        String legacyTargetLink = "https://some-artemis-domain.org/courses/123/dashboard";
+
+        String normalized = lti13Service.normalizeLegacyIrisTargetLink(legacyTargetLink);
+
+        assertThat(normalized).isEqualTo("https://some-artemis-domain.org/courses/123/iris");
+    }
+
+    @Test
+    void normalizeLegacyIrisTargetLink_leavesCurrentIrisLinkUnchanged() {
+        String currentTargetLink = "https://some-artemis-domain.org/courses/123/iris";
+
+        String normalized = lti13Service.normalizeLegacyIrisTargetLink(currentTargetLink);
+
+        assertThat(normalized).isEqualTo(currentTargetLink);
+    }
+
+    @Test
+    void normalizeLegacyIrisTargetLink_leavesUnrelatedLinkUnchanged() {
+        String unrelatedTargetLink = "https://some-artemis-domain.org/courses/123/exercises/42";
+
+        String normalized = lti13Service.normalizeLegacyIrisTargetLink(unrelatedTargetLink);
+
+        assertThat(normalized).isEqualTo(unrelatedTargetLink);
     }
 
     private State getValidStateForNewResult(Result result) {
