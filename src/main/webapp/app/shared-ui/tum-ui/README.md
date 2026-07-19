@@ -37,16 +37,16 @@ back to PrimeNG only for widgets the kit does not provide yet.
 
 ## Components
 
-This is the first step of the kit. It ships the button, tag, tooltip, and popover, plus the shared
-overlay substrate they build on. The data table, paginator, and date picker follow in a second step.
-
-| Component       | Selector                                   | Purpose                                                                                                             |
-| --------------- | ------------------------------------------ | ------------------------------------------------------------------------------------------------------------------ |
-| Button          | `tum-ui-button`                            | Native `<button>` with severity / size / outlined / text variants; forwards `ariaLabel` for icon-only use.         |
-| Tag             | `tum-ui-tag`                               | Presentational status pill (tinted background, accessible label).                                                  |
-| Tooltip         | `[tumUiTooltip]`                           | Hover + focus tooltip on the shared overlay, with `aria-describedby` wiring.                                        |
-| Popover         | `tum-ui-popover` + `[tumUiPopoverTrigger]` | Content-projected `role="dialog"` panel; closes on backdrop click + Escape, traps focus.                           |
-| Overlay service | `TumUiOverlayService`                      | Shared CDK overlay substrate (connected positioning, flip, reposition-on-scroll, backdrop) that the tooltip and popover (and later the date picker) build on. |
+| Component       | Selector                                   | Purpose                                                                                                                                    |
+| --------------- | ------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| Button          | `tum-ui-button`                            | Native `<button>` with severity / size / outlined / text variants; forwards `ariaLabel` for icon-only use.                                 |
+| Tag             | `tum-ui-tag`                               | Presentational status pill (tinted background, accessible label).                                                                          |
+| Tooltip         | `[tumUiTooltip]`                           | Hover + focus tooltip on the shared overlay, with `aria-describedby` wiring.                                                               |
+| Popover         | `tum-ui-popover` + `[tumUiPopoverTrigger]` | Content-projected `role="dialog"` panel; closes on backdrop click + Escape, traps focus.                                                   |
+| Table           | `tum-ui-table<T>`                          | Generic CDK-table data grid: dynamic columns, single-column server-side sort, server-side paging, global search, row actions, striped / scrollable. |
+| Paginator       | `tum-ui-paginator`                         | First / prev / numbered page buttons / next / last + page-size selector; emits `pageChange` / `pageSizeChange`.                            |
+| Date picker     | `tum-ui-date-picker`                       | `dayjs`-backed date + time picker with a hand-built calendar; implements the Signal Forms `FormValueControl` contract.                     |
+| Overlay service | `TumUiOverlayService`                      | Shared CDK overlay substrate (connected positioning, flip, reposition-on-scroll, backdrop) that tooltip / popover / date picker build on.  |
 
 Each component lives in its own folder with a colocated `*.spec.ts`. Variant class maps live in a small
 `*.variants.ts` (a local, dependency-free take on class-variance-authority).
