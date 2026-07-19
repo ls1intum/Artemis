@@ -18,9 +18,13 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import java.net.URI;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -60,8 +64,10 @@ import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
 import de.tum.cit.aet.artemis.communication.util.ConversationUtilService;
+import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
+import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.core.util.PageableSearchUtilService;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
@@ -72,6 +78,7 @@ import de.tum.cit.aet.artemis.exercise.domain.TeamAssignmentConfig;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
 import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
+import de.tum.cit.aet.artemis.exercise.service.ExerciseDeletionService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
 import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseIntegrationTestService;
@@ -159,6 +166,9 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
 
     @Autowired
     private ExerciseService exerciseService;
+
+    @Autowired
+    private ExerciseDeletionService exerciseDeletionService;
 
     @Autowired
     private ObjectMapper objectMapper;
@@ -635,6 +645,42 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
 
         request.delete("/api/quiz/quiz-exercises/" + quizExercise.getId(), OK);
         assertThat(quizExerciseTestRepository.findOneWithQuestionsAndStatistics(quizExercise.getId())).as("Exercise is deleted correctly").isNull();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testDeleteQuizExerciseViaSharedDeletionPathRemovesDragAndDropImages() throws Exception {
+        // Regression test for the drag-and-drop image cleanup: course, exam and exercise-group deletions delete quizzes through the shared ExerciseDeletionService, not through the
+        // QuizExerciseDeletionResource REST endpoint. Since the former @PostRemove file-lifecycle callbacks were dropped when drag items moved into the question JSON column, the
+        // image files must be removed by the shared deletion path; otherwise these bulk deletions would leak every drag-and-drop image.
+        QuizExercise quizExercise = createQuizOnServer(ZonedDateTime.now().plusHours(5), null, QuizMode.SYNCHRONIZED);
+
+        List<Path> imageFiles = collectDragAndDropImageFiles(quizExercise);
+        assertThat(imageFiles).as("The quiz has drag-and-drop image files on disk").isNotEmpty();
+        assertThat(imageFiles).as("All drag-and-drop image files exist before deletion").allMatch(Files::exists);
+
+        // delete via the shared deletion path (as used by course/exam/exercise-group deletion), bypassing the REST endpoint
+        exerciseDeletionService.delete(quizExercise.getId(), false);
+
+        assertThat(quizExerciseTestRepository.findOneWithQuestionsAndStatistics(quizExercise.getId())).as("Exercise is deleted correctly").isNull();
+        assertThat(imageFiles).as("Drag-and-drop image files are removed by the shared deletion path").noneMatch(Files::exists);
+    }
+
+    private List<Path> collectDragAndDropImageFiles(QuizExercise quizExercise) {
+        List<Path> imageFiles = new ArrayList<>();
+        for (QuizQuestion question : quizExercise.getQuizQuestions()) {
+            if (question instanceof DragAndDropQuestion dragAndDropQuestion) {
+                if (dragAndDropQuestion.getBackgroundFilePath() != null) {
+                    imageFiles.add(FilePathConverter.fileSystemPathForExternalUri(URI.create(dragAndDropQuestion.getBackgroundFilePath()), FilePathType.DRAG_AND_DROP_BACKGROUND));
+                }
+                for (DragItem dragItem : dragAndDropQuestion.getDragItems()) {
+                    if (dragItem.getPictureFilePath() != null) {
+                        imageFiles.add(FilePathConverter.fileSystemPathForExternalUri(URI.create(dragItem.getPictureFilePath()), FilePathType.DRAG_ITEM));
+                    }
+                }
+            }
+        }
+        return imageFiles;
     }
 
     @Test

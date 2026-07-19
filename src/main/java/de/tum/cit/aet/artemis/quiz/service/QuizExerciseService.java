@@ -53,6 +53,7 @@ import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDTO;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.exception.FilePathParsingException;
 import de.tum.cit.aet.artemis.core.service.messaging.InstanceMessageSendService;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.core.util.FileUtil;
@@ -829,6 +830,44 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
                 .flatMap(entry -> entry.getValue().stream().map(path -> FilePathConverter.fileSystemPathForExternalUri(URI.create(path), entry.getKey()))).filter(Objects::nonNull)
                 .toList();
         FileUtil.deleteFiles(allFilesToRemoveMerged);
+    }
+
+    /**
+     * Deletes all drag-and-drop image files (question background images and drag-item pictures) of the given quiz exercise from the file system.
+     * <p>
+     * These files used to be removed by the {@code @PostRemove} lifecycle callbacks on {@code DragAndDropQuestion}/{@code DragItem}. Now that drag-and-drop content lives inside
+     * the
+     * question's JSON {@code content} column and is no longer made up of JPA entities, the cleanup must be triggered explicitly from every quiz deletion entry point. It is invoked
+     * from the shared {@link de.tum.cit.aet.artemis.exercise.service.ExerciseDeletionService#delete} path so that course, exam, and exercise-group deletions clean up the images
+     * too,
+     * not only the direct REST deletion.
+     *
+     * @param quizExerciseId the id of the quiz exercise whose drag-and-drop images should be deleted
+     */
+    public void deleteDragAndDropImages(long quizExerciseId) {
+        QuizExercise quizExercise = quizExerciseRepository.findByIdWithQuestionsElseThrow(quizExerciseId);
+        Map<FilePathType, Set<String>> imagePaths = getAllPathsFromDragAndDropQuestionsOfExercise(quizExercise);
+        List<Path> filesToDelete = imagePaths.entrySet().stream().flatMap(entry -> entry.getValue().stream().map(path -> resolveFileSystemPathForDeletion(path, entry.getKey())))
+                .filter(Objects::nonNull).toList();
+        FileUtil.deleteFiles(filesToDelete);
+    }
+
+    /**
+     * Resolves a stored external file URI to its file-system path for deletion, returning {@code null} (and logging) instead of throwing when the path cannot be parsed, so a
+     * single malformed path does not abort the deletion of the remaining files.
+     *
+     * @param pathString   the stored external file URI
+     * @param filePathType the type of file the path refers to
+     * @return the resolved file-system path, or {@code null} if it could not be resolved
+     */
+    private Path resolveFileSystemPathForDeletion(String pathString, FilePathType filePathType) {
+        try {
+            return FilePathConverter.fileSystemPathForExternalUri(URI.create(pathString), filePathType);
+        }
+        catch (FilePathParsingException e) {
+            log.warn("Could not resolve file {} for deletion", pathString);
+            return null;
+        }
     }
 
     private Map<FilePathType, Set<String>> getAllPathsFromDragAndDropQuestionsOfExercise(QuizExercise quizExercise) {

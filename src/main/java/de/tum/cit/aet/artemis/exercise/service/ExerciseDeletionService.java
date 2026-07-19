@@ -203,6 +203,12 @@ public class ExerciseDeletionService {
             programmingExerciseDeletionService.delete(exercise.getId(), deleteBaseReposBuildPlans);
         }
         else {
+            // Quiz drag-and-drop image files were formerly removed by @PostRemove callbacks on the (now JSON-backed) drag items and questions. Since these are no longer JPA
+            // entities, every quiz deletion entry point must trigger the file cleanup explicitly; doing it here in the shared deletion path covers course, exam, and
+            // exercise-group deletions, not only the direct REST deletion in QuizExerciseDeletionResource.
+            if (exercise instanceof QuizExercise) {
+                quizExerciseService.deleteDragAndDropImages(exerciseId);
+            }
             // fetch the exercise again to allow Hibernate to delete it properly
             exercise = exerciseRepository.findByIdWithStudentParticipationsElseThrow(exerciseId);
             exerciseRepository.delete(exercise);
