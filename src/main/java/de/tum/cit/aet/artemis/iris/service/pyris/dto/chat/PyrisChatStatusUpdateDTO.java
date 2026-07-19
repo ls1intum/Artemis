@@ -17,18 +17,25 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStatusErrorDTO;
 public record PyrisChatStatusUpdateDTO(@Nullable String result, PyrisRunState runState, @Nullable PyrisStatusErrorDTO error, @Nullable String sessionTitle,
         @Nullable List<String> suggestions, @Nullable List<LLMRequest> tokens, @Nullable List<MemirisMemoryDTO> accessedMemories, @Nullable List<MemirisMemoryDTO> createdMemories,
         @Nullable String partialResult, @Nullable Integer partialSeq, @Nullable List<PyrisActivityDTO> activities, @Nullable Integer activitySeq,
-        @JsonProperty("final") @Nullable Boolean finalResult) {
+        @JsonProperty("final") @Nullable Boolean finalResult, @Nullable PyrisSuggestedContextDTO suggestedContext) {
+
+    public PyrisChatStatusUpdateDTO(@Nullable String result, PyrisRunState runState, @Nullable PyrisStatusErrorDTO error, @Nullable String sessionTitle,
+            @Nullable List<String> suggestions, @Nullable List<LLMRequest> tokens, @Nullable List<MemirisMemoryDTO> accessedMemories,
+            @Nullable List<MemirisMemoryDTO> createdMemories, @Nullable String partialResult, @Nullable Integer partialSeq, @Nullable List<PyrisActivityDTO> activities,
+            @Nullable Integer activitySeq, @Nullable Boolean finalResult) {
+        this(result, runState, error, sessionTitle, suggestions, tokens, accessedMemories, createdMemories, partialResult, partialSeq, activities, activitySeq, finalResult, null);
+    }
 
     public PyrisChatStatusUpdateDTO(@Nullable String result, PyrisRunState runState, @Nullable PyrisStatusErrorDTO error, @Nullable String sessionTitle,
             @Nullable List<String> suggestions, @Nullable List<LLMRequest> tokens, @Nullable List<MemirisMemoryDTO> accessedMemories,
             @Nullable List<MemirisMemoryDTO> createdMemories, @Nullable String partialResult, @Nullable Integer partialSeq, @Nullable List<PyrisActivityDTO> activities,
             @Nullable Integer activitySeq) {
-        this(result, runState, error, sessionTitle, suggestions, tokens, accessedMemories, createdMemories, partialResult, partialSeq, activities, activitySeq, null);
+        this(result, runState, error, sessionTitle, suggestions, tokens, accessedMemories, createdMemories, partialResult, partialSeq, activities, activitySeq, null, null);
     }
 
     public PyrisChatStatusUpdateDTO(@Nullable String result, PyrisRunState runState, @Nullable PyrisStatusErrorDTO error, @Nullable String sessionTitle,
             @Nullable List<String> suggestions, @Nullable List<LLMRequest> tokens, @Nullable List<MemirisMemoryDTO> accessedMemories,
             @Nullable List<MemirisMemoryDTO> createdMemories) {
-        this(result, runState, error, sessionTitle, suggestions, tokens, accessedMemories, createdMemories, null, null, null, null, null);
+        this(result, runState, error, sessionTitle, suggestions, tokens, accessedMemories, createdMemories, null, null, null, null, null, null);
     }
 }

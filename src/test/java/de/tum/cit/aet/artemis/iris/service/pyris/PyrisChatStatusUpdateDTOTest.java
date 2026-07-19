@@ -8,6 +8,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
+import de.tum.cit.aet.artemis.iris.domain.session.IrisChatMode;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.PyrisChatStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisActivityKind;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisActivityState;
@@ -32,6 +33,41 @@ class PyrisChatStatusUpdateDTOTest {
         assertThat(dto.runState()).isEqualTo(PyrisRunState.RUNNING);
         assertThat(dto.partialResult()).isEqualTo("Hello");
         assertThat(dto.partialSeq()).isEqualTo(7);
+    }
+
+    @Test
+    void deserializesSuggestedContext() throws JsonProcessingException {
+        String json = """
+                {
+                    "runState": "RUNNING",
+                    "result": "answer",
+                    "final": true,
+                    "suggestedContext": {
+                        "mode": "PROGRAMMING_EXERCISE_CHAT",
+                        "entityId": 42
+                    }
+                }
+                """;
+
+        var dto = objectMapper.readValue(json, PyrisChatStatusUpdateDTO.class);
+
+        assertThat(dto.suggestedContext()).isNotNull();
+        assertThat(dto.suggestedContext().mode()).isEqualTo(IrisChatMode.PROGRAMMING_EXERCISE_CHAT);
+        assertThat(dto.suggestedContext().entityId()).isEqualTo(42L);
+    }
+
+    @Test
+    void deserializesWithoutSuggestedContext() throws JsonProcessingException {
+        String json = """
+                {
+                    "runState": "RUNNING",
+                    "result": "answer"
+                }
+                """;
+
+        var dto = objectMapper.readValue(json, PyrisChatStatusUpdateDTO.class);
+
+        assertThat(dto.suggestedContext()).isNull();
     }
 
     @Test
