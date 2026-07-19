@@ -13,6 +13,7 @@ import { Exercise, getCourseFromExercise } from 'app/exercise/shared/entities/ex
 import { Authority, IS_AT_LEAST_ADMIN, IS_AT_LEAST_SUPER_ADMIN, IS_AT_LEAST_TUTOR } from 'app/foundation/constants/authority.constants';
 import { TranslateService } from '@ngx-translate/core';
 import { EntityResponseType } from 'app/assessment/shared/services/complaint.service';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
 import dayjs from 'dayjs/esm';
 import { addPublicFilePrefix } from 'app/app.constants';
 import { LLMSelectionDecision } from 'app/account/user/shared/dto/updateLLMSelectionDecision.dto';
@@ -320,8 +321,10 @@ export class AccountService implements IAccountService {
 
             // Return a NEW object rather than mutating in place: a signal compares with Object.is, so returning the
             // same reference emits no notification and (under zoneless change detection) nothing re-renders — the
-            // account picture would not refresh after upload / edit / delete. Mirrors setUserLLMSelectionDecision.
-            return Object.assign({}, currentUserIdentity, { imageUrl: url });
+            // account picture would not refresh after upload / edit / delete.
+            const updatedUserIdentity = deepClone(currentUserIdentity);
+            updatedUserIdentity.imageUrl = url;
+            return updatedUserIdentity;
         });
     }
 
@@ -425,8 +428,10 @@ export class AccountService implements IAccountService {
 
                     // Return a NEW object rather than mutating in place: a signal compares with Object.is, so
                     // returning the same reference emits no notification and (under zoneless change detection) any
-                    // dependent view would not react to the toggled setting. Mirrors setImageUrl / setUserLLMSelectionDecision.
-                    return Object.assign({}, currentUserIdentity, { memirisEnabled });
+                    // dependent view would not react to the toggled setting. Mirrors setImageUrl.
+                    const updatedUserIdentity = deepClone(currentUserIdentity);
+                    updatedUserIdentity.memirisEnabled = memirisEnabled;
+                    return updatedUserIdentity;
                 });
             },
             error: (_) => {},
