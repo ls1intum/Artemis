@@ -6,7 +6,7 @@
  * - Forwarding criteria and readonly flags to structured layout
  */
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { Component, Directive, Pipe, PipeTransform, input } from '@angular/core';
+import { Component, Directive, input } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { TranslateService, TranslateStore } from '@ngx-translate/core';
@@ -41,25 +41,26 @@ class StructuredLayoutStubComponent {
     criteria = input<GradingCriterion[]>();
 }
 
-@Pipe({
-    name: 'htmlForMarkdown',
+@Directive({
+    selector: '[jhiMarkdown]',
     standalone: true,
+    host: { '[innerHTML]': "'converted:' + jhiMarkdown()" },
 })
-class HtmlForMarkdownPipeStub implements PipeTransform {
-    transform = vi.fn((value: string) => `converted:${value}`);
+class StubMarkdownDirective {
+    jhiMarkdown = input<string>();
 }
 
 describe('ResizableInstructionsComponent', () => {
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [ResizableInstructionsComponent, FaIconStubComponent, TranslateDirectiveStub, StructuredLayoutStubComponent, HtmlForMarkdownPipeStub],
+            imports: [ResizableInstructionsComponent, FaIconStubComponent, TranslateDirectiveStub, StructuredLayoutStubComponent, StubMarkdownDirective],
             providers: [
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: TranslateStore, useValue: {} },
             ],
         })
             .overrideComponent(ResizableInstructionsComponent, {
-                set: { imports: [FaIconStubComponent, TranslateDirectiveStub, StructuredLayoutStubComponent, HtmlForMarkdownPipeStub] },
+                set: { imports: [FaIconStubComponent, TranslateDirectiveStub, StructuredLayoutStubComponent, StubMarkdownDirective] },
             })
             .compileComponents();
     });

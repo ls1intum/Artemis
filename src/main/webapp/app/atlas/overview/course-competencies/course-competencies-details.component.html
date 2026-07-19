@@ -28,7 +28,7 @@
                         }
                     </h3>
                     @if (competency.description) {
-                        <div class="markdown-preview" [innerHTML]="competency.description | htmlForMarkdown"></div>
+                        <div class="markdown-preview" [jhiMarkdown]="competency.description"></div>
                     }
                 </div>
                 @if (competency.softDueDate) {

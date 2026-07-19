@@ -3,7 +3,7 @@ import DOMPurify, { Config } from 'dompurify';
 import type { PluginSimple } from 'markdown-it';
 import type Token from 'markdown-it/lib/token.mjs';
 import MarkdownItKatex from '@vscode/markdown-it-katex';
-import hljs from 'highlight.js';
+import hljs from 'app/foundation/util/highlight-languages.util';
 import TurndownService from 'turndown';
 import MarkdownIt from 'markdown-it';
 import { markdownItGitHubAlerts } from 'app/foundation/util/markdown-github-alerts.plugin';
