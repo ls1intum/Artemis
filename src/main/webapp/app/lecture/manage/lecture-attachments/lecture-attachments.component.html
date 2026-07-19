@@ -56,7 +56,7 @@
                                                 </td>
                                                 <td>
                                                     @if (!isDownloadingAttachmentLink()) {
-                                                        <a class="text-primary" (click)="downloadAttachment(attachment.name || '', attachment.linkUrl || '')">
+                                                        <a class="text-primary" (click)="downloadAttachment(attachment.name || '', attachment.linkUrl || '', attachment.version)">
                                                             {{ attachment.name }}
                                                         </a>
                                                     } @else if (isDownloadingAttachmentLink() === attachment.linkUrl) {

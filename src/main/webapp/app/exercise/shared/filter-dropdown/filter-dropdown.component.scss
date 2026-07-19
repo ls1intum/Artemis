@@ -47,7 +47,9 @@ jhi-filter-dropdown {
 
         // Add funnel icon before placeholder text when no filter is active
         .p-select-label::before {
-            font-family: 'primeicons';
+            // primeicons is an icon font; a generic fallback would render meaningless glyphs, so it is intentionally omitted
+            // stylelint-disable-next-line font-family-no-missing-generic-family-keyword
+            font-family: primeicons;
             content: '\e94c';
             margin-right: 0.5rem;
             font-style: normal;

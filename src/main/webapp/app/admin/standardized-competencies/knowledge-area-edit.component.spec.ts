@@ -5,7 +5,6 @@
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ReactiveFormsModule } from '@angular/forms';
 import { MockComponent, MockDirective, MockModule, MockPipe } from 'ng-mocks';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -24,8 +23,6 @@ import { SelectModule } from 'primeng/select';
 import { MessageModule } from 'primeng/message';
 
 describe('KnowledgeAreaEditComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let componentFixture: ComponentFixture<KnowledgeAreaEditComponent>;
     let component: KnowledgeAreaEditComponent;
 

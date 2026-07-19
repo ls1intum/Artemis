@@ -9,10 +9,8 @@ import { SortDirective } from 'app/foundation/sort/directive/sort.directive';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('ImportCompetenciesTableComponent', () => {
-    setupTestBed({ zoneless: true });
     let componentFixture: ComponentFixture<ImportCompetenciesTableComponent>;
     let component: ImportCompetenciesTableComponent;
 

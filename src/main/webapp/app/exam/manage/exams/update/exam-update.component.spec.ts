@@ -39,7 +39,6 @@ import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.
 import { By } from '@angular/platform-browser';
 import { toGradingScaleDTO } from 'app/assessment/shared/entities/grading-scale-dto.model';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 @Component({
     template: '',
@@ -47,8 +46,6 @@ import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 class DummyComponent {}
 
 describe('ExamUpdateComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: ExamUpdateComponent;
     let fixture: ComponentFixture<ExamUpdateComponent>;
     let examManagementService: ExamManagementService;
@@ -185,6 +182,54 @@ describe('ExamUpdateComponent', () => {
             examWithoutExercises.examStudentReviewStart = undefined;
             fixture.changeDetectorRef.detectChanges();
             expect(component.isValidConfiguration).toBe(false);
+        });
+
+        it('should invalidate the configuration when an exam text exceeds the maximum length', () => {
+            examWithoutExercises.visibleDate = dayjs().add(1, 'hours');
+            examWithoutExercises.startDate = dayjs().add(2, 'hours');
+            examWithoutExercises.endDate = dayjs().add(3, 'hours');
+            examWithoutExercises.workingTime = 3600;
+            fixture.changeDetectorRef.detectChanges();
+            expect(component.isValidConfiguration).toBe(true);
+
+            examWithoutExercises.confirmationStartText = 'a'.repeat(10001);
+            fixture.changeDetectorRef.detectChanges();
+            expect(component.isExamTextTooLong(examWithoutExercises.confirmationStartText)).toBe(true);
+            expect(component.areExamTextsValid).toBe(false);
+            expect(component.isValidConfiguration).toBe(false);
+
+            examWithoutExercises.confirmationStartText = 'a'.repeat(10000);
+            fixture.changeDetectorRef.detectChanges();
+            expect(component.isExamTextTooLong(examWithoutExercises.confirmationStartText)).toBe(false);
+            expect(component.areExamTextsValid).toBe(true);
+            expect(component.isValidConfiguration).toBe(true);
+        });
+
+        it('should invalidate the configuration when any of the individual exam texts exceeds the maximum length', () => {
+            fixture.changeDetectorRef.detectChanges();
+            const tooLong = 'a'.repeat(10001);
+            expect(component.areExamTextsValid).toBe(true);
+
+            examWithoutExercises.startText = tooLong;
+            expect(component.areExamTextsValid).toBe(false);
+            examWithoutExercises.startText = undefined;
+
+            examWithoutExercises.endText = tooLong;
+            expect(component.areExamTextsValid).toBe(false);
+            examWithoutExercises.endText = undefined;
+
+            examWithoutExercises.confirmationEndText = tooLong;
+            expect(component.areExamTextsValid).toBe(false);
+            examWithoutExercises.confirmationEndText = undefined;
+
+            expect(component.areExamTextsValid).toBe(true);
+        });
+
+        it('should treat missing or exactly-limit exam texts as within the limit', () => {
+            expect(component.isExamTextTooLong(undefined)).toBe(false);
+            expect(component.isExamTextTooLong('')).toBe(false);
+            expect(component.isExamTextTooLong('a'.repeat(10000))).toBe(false);
+            expect(component.isExamTextTooLong('a'.repeat(10001))).toBe(true);
         });
 
         it('should show channel name input for test exams', async () => {
@@ -687,6 +732,15 @@ describe('ExamUpdateComponent', () => {
             const invalidSpy = vi.spyOn(ngForm.form, 'invalid', 'get').mockReturnValue(false);
             fixture.changeDetectorRef.detectChanges();
 
+            // The `[disabled]` binding reads the non-signal `isValidConfiguration` getter and the `editForm.form.invalid`
+            // template ref. Under Angular's zoneless change detection, mutating the (non-signal) exam object does not mark
+            // the view for refresh, so `detectChanges()` alone leaves the host binding stale. `markForCheck()` dirties the
+            // view and `whenStable()` flushes the zoneless scheduler so the binding is re-evaluated.
+            const refreshBinding = async () => {
+                fixture.changeDetectorRef.markForCheck();
+                await fixture.whenStable();
+            };
+
             //Step 1: Test case where the configuration and the form are valid
             expect(component.isValidConfiguration).toBe(true);
             let button = fixture.debugElement.query(By.directive(ButtonComponent)).componentInstance;
@@ -694,7 +748,7 @@ describe('ExamUpdateComponent', () => {
 
             // Step 2: Test case where the configuration is invalid
             examWithoutExercises.startDate = now.add(5, 'hours');
-            fixture.changeDetectorRef.detectChanges();
+            await refreshBinding();
 
             expect(component.isValidConfiguration).toBe(false);
             button = fixture.debugElement.query(By.directive(ButtonComponent)).componentInstance;
@@ -704,7 +758,7 @@ describe('ExamUpdateComponent', () => {
             examWithoutExercises.startDate = now.add(2, 'hours');
             examWithoutExercises.endDate = now.add(3, 'hours');
             invalidSpy.mockReturnValue(true);
-            fixture.changeDetectorRef.detectChanges();
+            await refreshBinding();
 
             expect(component.isValidConfiguration).toBe(true);
             button = fixture.debugElement.query(By.directive(ButtonComponent)).componentInstance;

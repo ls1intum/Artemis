@@ -3,7 +3,6 @@ import { By } from '@angular/platform-browser';
 import { DynamicDialogRef } from 'primeng/dynamicdialog';
 import { MockComponent, MockProvider } from 'ng-mocks';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 import { ZipBuilder } from 'app/foundation/util/zip.util';
 import { UMLDiagramType } from '@tumaet/apollon';
@@ -22,8 +21,6 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { TranslateService } from '@ngx-translate/core';
 
 describe('ExerciseImportFromFileComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: ExerciseImportFromFileComponent;
     let fixture: ComponentFixture<ExerciseImportFromFileComponent>;
     let dialogRef: DynamicDialogRef;

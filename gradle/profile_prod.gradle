@@ -7,6 +7,10 @@ springBoot {
     buildInfo()
 }
 
+bootJar {
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+}
+
 bootRun {
     args = []
     // Required by the Weaviate Java client v6, which uses Gson's reflection-based serialization on internal java.lang classes.
