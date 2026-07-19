@@ -235,6 +235,7 @@ public class PublicAccountResource {
      */
     @GetMapping("login-options")
     @EnforceNothing
+    @LimitRequestsPerMinute(type = RateLimitType.ACCOUNT_MANAGEMENT)
     public ResponseEntity<LoginOptionsDTO> getLoginOptions(@RequestParam("usernameOrEmail") String usernameOrEmail) {
         LoginOptionsDTO loginOptions = loginOptionsService.getLoginOptions(usernameOrEmail);
         return ResponseEntity.ok(loginOptions);
