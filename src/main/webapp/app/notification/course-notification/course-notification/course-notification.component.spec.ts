@@ -88,6 +88,20 @@ describe('CourseNotificationComponent', () => {
         expect(componentAsAny.notificationType()).toBe('newPostNotification');
     });
 
+    it('should render markdown-bearing parameters to plain text (resolved asynchronously)', async () => {
+        const notification = createMockNotification(2, 102, 'newPostNotification', { postMarkdownContent: '**bold** _italic_' });
+        fixture.componentRef.setInput('courseNotification', notification);
+        fixture.detectChanges();
+
+        expect(componentAsAny.notificationInitialized()).toBe(false);
+
+        // Rendering markdown lazily loads the pipeline, so the parameter is populated after a microtask.
+        await vi.waitFor(() => {
+            expect(componentAsAny.notificationParameters()?.postMarkdownContent).toBe('bold italic');
+        });
+        expect(componentAsAny.notificationInitialized()).toBe(true);
+    });
+
     it('should show close button when isShowClose is true', () => {
         fixture.componentRef.setInput('isShowClose', true);
         fixture.detectChanges();
@@ -130,6 +144,18 @@ describe('CourseNotificationComponent', () => {
 
         const notificationWrap = fixture.debugElement.query(By.css('.course-notification-wrap'));
         expect(notificationWrap.classes['is-unseen']).toBeFalsy();
+    });
+
+    it('should add is-fluid class and host fluid class only when fluid is true', () => {
+        fixture.componentRef.setInput('fluid', false);
+        fixture.detectChanges();
+        expect(fixture.debugElement.query(By.css('.course-notification-wrap')).classes['is-fluid']).toBeFalsy();
+        expect((fixture.nativeElement as HTMLElement).classList.contains('fluid')).toBe(false);
+
+        fixture.componentRef.setInput('fluid', true);
+        fixture.detectChanges();
+        expect(fixture.debugElement.query(By.css('.course-notification-wrap')).classes['is-fluid']).toBe(true);
+        expect((fixture.nativeElement as HTMLElement).classList.contains('fluid')).toBe(true);
     });
 
     it('should show profile picture when author details are present', () => {

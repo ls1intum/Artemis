@@ -12,16 +12,11 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import org.awaitility.core.ThrowingRunnable;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.security.concurrent.DelegatingSecurityContextRunnable;
-import org.springframework.security.core.context.SecurityContext;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.assessment.domain.ParticipantScore;
@@ -33,8 +28,8 @@ import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyLectureUnitLink;
 import de.tum.cit.aet.artemis.atlas.dto.metrics.CompetencyInformationDTO;
 import de.tum.cit.aet.artemis.atlas.dto.metrics.LectureUnitInformationDTO;
 import de.tum.cit.aet.artemis.atlas.dto.metrics.ResourceTimestampDTO;
-import de.tum.cit.aet.artemis.atlas.dto.metrics.StudentMetricsDTO;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyRepository;
+import de.tum.cit.aet.artemis.atlas.service.LearningMetricsService;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
@@ -46,9 +41,16 @@ import de.tum.cit.aet.artemis.lecture.service.LectureUnitService;
 import de.tum.cit.aet.artemis.lecture.util.LectureUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
+/**
+ * Tests the student course metrics computation in {@link LearningMetricsService}. The metrics are consumed by Iris
+ * (see {@code IrisChatPipelineExecutionService}), which calls the service directly via {@code LearningMetricsApi}.
+ */
 class MetricsIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     private static final String TEST_PREFIX = "metricsintegration";
+
+    @Autowired
+    private LearningMetricsService learningMetricsService;
 
     @Autowired
     private ExerciseMetricsRepository exerciseMetricsRepository;
@@ -100,22 +102,12 @@ class MetricsIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     @Nested
-    class PreAuthorize {
-
-        @Test
-        @WithMockUser(username = TEST_PREFIX + "user1337", roles = "INSTRUCTOR")
-        void shouldReturnForbiddenForUserNotInCourse() throws Exception {
-            request.get("/api/atlas/metrics/courses/" + course.getId() + "/student", HttpStatus.FORBIDDEN, StudentMetricsDTO.class);
-        }
-    }
-
-    @Nested
     class ExerciseMetrics {
 
         @Test
         @WithMockUser(username = STUDENT_OF_COURSE, roles = "USER")
-        void shouldReturnExerciseInformation() throws Exception {
-            final var result = request.get("/api/atlas/metrics/courses/" + course.getId() + "/student", HttpStatus.OK, StudentMetricsDTO.class);
+        void shouldReturnExerciseInformation() {
+            final var result = learningMetricsService.getStudentCourseMetrics(userID, course.getId());
             assertThat(result).isNotNull();
             assertThat(result.exerciseMetrics()).isNotNull();
             final var exerciseInformation = result.exerciseMetrics().exerciseInformation();
@@ -129,8 +121,8 @@ class MetricsIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
         @Test
         @WithMockUser(username = STUDENT_OF_COURSE, roles = "USER")
-        void shouldReturnCategories() throws Exception {
-            final var result = request.get("/api/atlas/metrics/courses/" + course.getId() + "/student", HttpStatus.OK, StudentMetricsDTO.class);
+        void shouldReturnCategories() {
+            final var result = learningMetricsService.getStudentCourseMetrics(userID, course.getId());
             assertThat(result).isNotNull();
             assertThat(result.exerciseMetrics()).isNotNull();
             final var categories = result.exerciseMetrics().categories();
@@ -147,16 +139,8 @@ class MetricsIntegrationTest extends AbstractSpringIntegrationIndependentTest {
             final var exercises = exerciseTestRepository.findAllExercisesByCourseIdWithEagerParticipation(course.getId());
 
             // we do not need to create new rated scores here as the ParticipantScoreScheduleService will create them for us, we just have to account for the async execution
-            // we have to pass the security context to the runnable as otherwise the user is unauthenticated and the request fails with a 401
-            SecurityContext context = SecurityContextHolder.getContext();
-            ThrowingRunnable assertion = () -> new DelegatingSecurityContextRunnable(() -> {
-                final StudentMetricsDTO result;
-                try {
-                    result = request.get("/api/atlas/metrics/courses/" + course.getId() + "/student", HttpStatus.OK, StudentMetricsDTO.class);
-                }
-                catch (Exception e) {
-                    throw new RuntimeException(e);
-                }
+            await().untilAsserted(() -> {
+                final var result = learningMetricsService.getStudentCourseMetrics(userID, course.getId());
                 assertThat(result).isNotNull();
                 assertThat(result.exerciseMetrics()).isNotNull();
                 final var averageScores = result.exerciseMetrics().averageScore();
@@ -168,8 +152,7 @@ class MetricsIntegrationTest extends AbstractSpringIntegrationIndependentTest {
                                 .average().orElse(0.0)));
 
                 assertThat(averageScores).isEqualTo(expectedAverageScores);
-            }, context).run();
-            await().untilAsserted(assertion);
+            });
         }
 
         @Test
@@ -177,16 +160,8 @@ class MetricsIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         void shouldReturnScore() {
             final var exercises = exerciseRepository.findAllExercisesByCourseId(course.getId());
             // we do not need to create new rated scores here as the ParticipantScoreScheduleService will create them for us, we just have to account for the async execution
-            // we have to pass the security context to the runnable as otherwise the user is unauthenticated and the request fails with a 401
-            SecurityContext context = SecurityContextHolder.getContext();
-            ThrowingRunnable assertion = () -> new DelegatingSecurityContextRunnable(() -> {
-                final StudentMetricsDTO result;
-                try {
-                    result = request.get("/api/atlas/metrics/courses/" + course.getId() + "/student", HttpStatus.OK, StudentMetricsDTO.class);
-                }
-                catch (Exception e) {
-                    throw new RuntimeException(e);
-                }
+            await().untilAsserted(() -> {
+                final var result = learningMetricsService.getStudentCourseMetrics(userID, course.getId());
                 assertThat(result).isNotNull();
                 assertThat(result.exerciseMetrics()).isNotNull();
                 final var score = result.exerciseMetrics().score();
@@ -197,16 +172,13 @@ class MetricsIntegrationTest extends AbstractSpringIntegrationIndependentTest {
                         .filter(Optional::isPresent).map(Optional::get).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
 
                 assertThat(score).isEqualTo(expectedScores);
-            }, context).run();
-
-            await().untilAsserted(assertion);
-
+            });
         }
 
         @Test
         @WithMockUser(username = STUDENT_OF_COURSE, roles = "USER")
-        void shouldReturnAverageLatestSubmission() throws Exception {
-            final var result = request.get("/api/atlas/metrics/courses/" + course.getId() + "/student", HttpStatus.OK, StudentMetricsDTO.class);
+        void shouldReturnAverageLatestSubmission() {
+            final var result = learningMetricsService.getStudentCourseMetrics(userID, course.getId());
             assertThat(result).isNotNull();
             assertThat(result.exerciseMetrics()).isNotNull();
             final var averageLatestSubmissions = result.exerciseMetrics().averageLatestSubmission();
@@ -226,8 +198,8 @@ class MetricsIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
         @Test
         @WithMockUser(username = STUDENT_OF_COURSE, roles = "USER")
-        void shouldReturnLatestSubmission() throws Exception {
-            final var result = request.get("/api/atlas/metrics/courses/" + course.getId() + "/student", HttpStatus.OK, StudentMetricsDTO.class);
+        void shouldReturnLatestSubmission() {
+            final var result = learningMetricsService.getStudentCourseMetrics(userID, course.getId());
             assertThat(result).isNotNull();
             assertThat(result.exerciseMetrics()).isNotNull();
             final var latestSubmissions = result.exerciseMetrics().latestSubmission();
@@ -292,17 +264,8 @@ class MetricsIntegrationTest extends AbstractSpringIntegrationIndependentTest {
             final var exercises = exerciseRepository.findAllExercisesByCourseId(course.getId());
 
             // we do not need to create new rated scores here as the ParticipantScoreScheduleService will create them for us, we just have to account for the async execution
-            // we have to pass the security context to the runnable as otherwise the user is unauthenticated and the request fails with a 401
-            SecurityContext context = SecurityContextHolder.getContext();
-            ThrowingRunnable assertion = () -> new DelegatingSecurityContextRunnable(() -> {
-
-                final StudentMetricsDTO result;
-                try {
-                    result = request.get("/api/atlas/metrics/courses/" + course.getId() + "/student", HttpStatus.OK, StudentMetricsDTO.class);
-                }
-                catch (Exception e) {
-                    throw new RuntimeException(e);
-                }
+            await().untilAsserted(() -> {
+                final var result = learningMetricsService.getStudentCourseMetrics(userID, course.getId());
                 assertThat(result).isNotNull();
                 assertThat(result.exerciseMetrics()).isNotNull();
                 final var completed = result.exerciseMetrics().completed();
@@ -312,8 +275,7 @@ class MetricsIntegrationTest extends AbstractSpringIntegrationIndependentTest {
                         .collect(Collectors.toSet());
 
                 assertThat(completed).isEqualTo(expectedCompleted);
-            }, context).run();
-            await().untilAsserted(assertion);
+            });
         }
     }
 
@@ -322,10 +284,10 @@ class MetricsIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
         @Test
         @WithMockUser(username = STUDENT_OF_COURSE, roles = "USER")
-        void shouldReturnCompetencyInformation() throws Exception {
+        void shouldReturnCompetencyInformation() {
             course.setCompetencies(Set.of(competencyUtilService.createCompetency(course)));
 
-            final var result = request.get("/api/atlas/metrics/courses/" + course.getId() + "/student", HttpStatus.OK, StudentMetricsDTO.class);
+            final var result = learningMetricsService.getStudentCourseMetrics(userID, course.getId());
             assertThat(result).isNotNull();
             assertThat(result.competencyMetrics()).isNotNull();
 
@@ -344,7 +306,7 @@ class MetricsIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
         @Test
         @WithMockUser(username = STUDENT_OF_COURSE, roles = "USER")
-        void shouldReturnLectureUnitInformation() throws Exception {
+        void shouldReturnLectureUnitInformation() {
             final var testLecture = lectureUtilService.createLecture(course);
             final var lectureUnit = lectureUtilService.createTextUnit(testLecture);
             Competency competency = competencyUtilService.createCompetency(course);
@@ -352,7 +314,7 @@ class MetricsIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
             course.addLectures(testLecture);
 
-            final var result = request.get("/api/atlas/metrics/courses/" + course.getId() + "/student", HttpStatus.OK, StudentMetricsDTO.class);
+            final var result = learningMetricsService.getStudentCourseMetrics(userID, course.getId());
             assertThat(result).isNotNull();
             assertThat(result.lectureUnitStudentMetricsDTO()).isNotNull();
             final var lectureUnitInformation = result.lectureUnitStudentMetricsDTO().lectureUnitInformation();
