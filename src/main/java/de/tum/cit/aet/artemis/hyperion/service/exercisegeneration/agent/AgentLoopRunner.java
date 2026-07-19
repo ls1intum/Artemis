@@ -34,7 +34,6 @@ import org.springframework.ai.tool.method.MethodToolCallbackProvider;
 import com.knuddels.jtokkit.api.EncodingType;
 
 import de.tum.cit.aet.artemis.hyperion.service.HyperionSecretMaterialPolicy;
-import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.ProviderUsageSink;
 import de.tum.cit.aet.artemis.localci.exception.LocalCIException;
 
 /**
@@ -494,16 +493,9 @@ public class AgentLoopRunner {
             }
             try {
                 requirePromptSafe(prompt);
-                ChatResponse response;
-                try {
-                    response = providerFailureCooldown.execute(providerFailureKey, providerHardFailureCooldown, () -> chatModel.call(prompt));
-                }
-                catch (RuntimeException e) {
-                    if (!(e instanceof ProviderFailureCooldown.ProviderInCooldownException)) {
-                        markUsageUncertain(usageSink);
-                    }
-                    throw e;
-                }
+                // A thrown call yields no response to meter; its spend is bounded by the retry policy and turn budget,
+                // and the loop's own error handling reports the failure. Only a successful response feeds the usage sink.
+                ChatResponse response = providerFailureCooldown.execute(providerFailureKey, providerHardFailureCooldown, () -> chatModel.call(prompt));
                 emitUsage(usageSink, response);
                 if (!isEmptyResponse(response)) {
                     return response;
@@ -792,16 +784,7 @@ public class AgentLoopRunner {
         if (cancelled.getAsBoolean()) {
             throw new CancellationException("Generation was cancelled before conversation compaction");
         }
-        ChatResponse response;
-        try {
-            response = providerFailureCooldown.execute(ProviderFailureCooldown.keyForModel(configuredModel), providerHardFailureCooldown, () -> chatModel.call(prompt));
-        }
-        catch (RuntimeException e) {
-            if (!(e instanceof ProviderFailureCooldown.ProviderInCooldownException)) {
-                markUsageUncertain(usageSink);
-            }
-            throw e;
-        }
+        ChatResponse response = providerFailureCooldown.execute(ProviderFailureCooldown.keyForModel(configuredModel), providerHardFailureCooldown, () -> chatModel.call(prompt));
         emitUsage(usageSink, response);
         String text = extractText(response);
         if (text == null || text.isBlank()) {
@@ -898,12 +881,6 @@ public class AgentLoopRunner {
     private static void emitUsage(@Nullable Consumer<ChatResponse> usageSink, @Nullable ChatResponse response) {
         if (usageSink != null && response != null) {
             usageSink.accept(response);
-        }
-    }
-
-    private static void markUsageUncertain(@Nullable Consumer<ChatResponse> usageSink) {
-        if (usageSink instanceof ProviderUsageSink providerUsageSink) {
-            providerUsageSink.markUncertain();
         }
     }
 }

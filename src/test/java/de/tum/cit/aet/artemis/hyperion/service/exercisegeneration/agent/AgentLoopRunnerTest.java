@@ -170,7 +170,9 @@ class AgentLoopRunnerTest {
 
         assertThat(result.status()).isEqualTo(AgentLoopResult.Status.ERROR);
         verify(chatModel, times(1)).call(any(Prompt.class));
-        verify(usageSink).markUncertain();
+        // A thrown call yields no response to meter; it must NOT be escalated through the uncertainty path,
+        // which would terminalize the whole job as cancelled instead of letting the loop report the failure.
+        verify(usageSink, never()).markUncertain();
         verify(usageSink, never()).accept(any());
         assertThat(steps).contains("The AI service could not complete the request.").noneMatch(step -> step.contains("read timed out"));
     }
@@ -206,7 +208,7 @@ class AgentLoopRunnerTest {
 
         assertThat(result.status()).isEqualTo(AgentLoopResult.Status.ERROR);
         verify(chatModel, times(1)).call(any(Prompt.class));
-        verify(firstUsageSink).markUncertain();
+        verify(firstUsageSink, never()).markUncertain();
 
         ChatModel secondChatModel = mock(ChatModel.class);
         ProviderUsageSink secondUsageSink = mock(ProviderUsageSink.class);

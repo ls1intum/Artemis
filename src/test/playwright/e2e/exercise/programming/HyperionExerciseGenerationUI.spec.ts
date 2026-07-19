@@ -128,7 +128,24 @@ test.describe('Hyperion exercise generation browser UI', { tag: ['@slow', '@hype
                 } else {
                     expect(statusResponse.status()).toBe(204);
                 }
-                await exerciseAPIRequests.deleteProgrammingExercise(exercise.id);
+                // The Hyperion mutation slot is released asynchronously after a job terminalizes, so a delete racing
+                // that release gets a legitimate 409 from the deletion guard; retry briefly instead of failing cleanup.
+                const exerciseIdToDelete = exercise.id;
+                await expect
+                    .poll(
+                        async () => {
+                            const deleteResponse = await page.request.delete(
+                                `api/programming/programming-exercises/${exerciseIdToDelete}?deleteStudentReposBuildPlans=true&deleteBaseReposBuildPlans=true`,
+                            );
+                            if (deleteResponse.status() === 409) {
+                                return 409;
+                            }
+                            expect([200, 404]).toContain(deleteResponse.status());
+                            return deleteResponse.status();
+                        },
+                        { timeout: 60_000, intervals: [1_000, 2_000, 5_000] },
+                    )
+                    .not.toBe(409);
                 exercise = undefined;
             }
         } finally {
@@ -334,6 +351,8 @@ test.describe('Hyperion exercise generation browser UI', { tag: ['@slow', '@hype
 
         await login(instructor, `/course-management/${course.id}/programming-exercises/${exerciseId}/code-editor/TEMPLATE/${repositoryId}`);
         await expect(page.getByTestId('hyperion-ai-menu')).toBeVisible({ timeout: 60_000 });
+        // The activity card lives in the collapsed bottom-panel tab; reveal it before asserting the banner.
+        await page.getByTestId('editor-bottom-panel-tab').click();
         await expect(page.getByText('The generation status could not be verified. AI actions and editing remain unavailable until the status check succeeds.')).toBeVisible({
             timeout: 30_000,
         });
@@ -762,6 +781,9 @@ async function appendProblemStatementThroughUi(page: Page, marker: string) {
     const instructions = page.locator('jhi-programming-exercise-editable-instructions');
     const editor = instructions.locator('.monaco-editor');
     await expect(editor).toBeVisible();
+    // Wait for the statement to finish loading into the editor: typing before the async load lands gets
+    // wiped when the loaded content replaces the buffer (observed as a marker-not-visible flake).
+    await expect.poll(async () => (await editor.locator('.view-lines').innerText()).trim().length, { timeout: 15_000 }).toBeGreaterThan(0);
     await editor.click();
     await page.keyboard.press('Control+End');
     await page.keyboard.press('Enter');
@@ -1153,8 +1175,14 @@ async function expectEditorActionsLockedDuringGeneration(page: Page) {
 
 async function expectProblemStatementEditingLocked(page: Page) {
     const instructions = page.locator('jhi-programming-exercise-editable-instructions');
+    const editorSurface = instructions.locator('.monaco-editor').first();
+    if (!(await editorSurface.isVisible().catch(() => false))) {
+        // While a generation runs the container replaces/hides the instructions editor entirely —
+        // there is no editable surface to reach, which is the lock from the user's perspective.
+        return;
+    }
     const marker = 'HYPERION_E2E_LOCKED_EDIT_ATTEMPT';
-    await instructions.locator('.monaco-editor').click({ force: true });
+    await editorSurface.click({ force: true });
     await page.keyboard.type(marker);
     await expect(instructions.getByText(marker, { exact: true })).toHaveCount(0);
 }

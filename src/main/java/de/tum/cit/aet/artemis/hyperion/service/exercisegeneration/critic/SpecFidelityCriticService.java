@@ -36,7 +36,6 @@ import com.knuddels.jtokkit.api.EncodingType;
 import de.tum.cit.aet.artemis.admin.service.LLMTokenUsageService;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionExerciseGenerationEnabled;
 import de.tum.cit.aet.artemis.hyperion.service.HyperionSecretMaterialPolicy;
-import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.ProviderUsageSink;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.ProviderFailureCooldown;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.DifferentialVerificationService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
@@ -565,17 +564,10 @@ public class SpecFidelityCriticService {
         if (configuredModel != null) {
             options.model(configuredModel);
         }
-        ChatResponse response;
-        try {
-            response = providerFailureCooldown.execute(ProviderFailureCooldown.keyForModel(configuredModel), providerHardFailureCooldown,
-                    () -> chatClient.prompt().system(systemPrompt).user(userPrompt).options(options).call().chatResponse());
-        }
-        catch (RuntimeException e) {
-            if (!(e instanceof ProviderFailureCooldown.ProviderInCooldownException) && usageSink instanceof ProviderUsageSink providerUsageSink) {
-                providerUsageSink.markUncertain();
-            }
-            throw e;
-        }
+        // A thrown call yields no response to meter and the critic is advisory: its failure must never escalate into
+        // stopping the whole generation job via the usage sink's uncertainty path.
+        ChatResponse response = providerFailureCooldown.execute(ProviderFailureCooldown.keyForModel(configuredModel), providerHardFailureCooldown,
+                () -> chatClient.prompt().system(systemPrompt).user(userPrompt).options(options).call().chatResponse());
         if (usageSink != null) {
             usageSink.accept(response);
         }

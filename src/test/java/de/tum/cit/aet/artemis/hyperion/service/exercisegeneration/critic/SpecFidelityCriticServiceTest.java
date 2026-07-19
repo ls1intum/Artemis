@@ -715,7 +715,8 @@ class SpecFidelityCriticServiceTest {
 
         assertThat(report.findings()).hasSize(2).allMatch(finding -> finding.kind() == SpecFidelityReport.Kind.QUALITY_REVIEW_UNAVAILABLE);
         verify(chatModel, times(2)).call(any(Prompt.class));
-        verify(usageSink, times(2)).markUncertain();
+        // The critic is advisory: its provider failures must never reach the uncertainty path, which would stop the whole generation job.
+        verify(usageSink, never()).markUncertain();
         verify(usageSink, never()).accept(any());
     }
 
@@ -762,7 +763,7 @@ class SpecFidelityCriticServiceTest {
 
         assertThat(firstReport.findings()).hasSize(2).allMatch(finding -> finding.kind() == SpecFidelityReport.Kind.QUALITY_REVIEW_UNAVAILABLE);
         verify(failingModel, times(1)).call(any(Prompt.class));
-        verify(firstUsageSink).markUncertain();
+        verify(firstUsageSink, never()).markUncertain();
 
         ChatModel nextModel = mock(ChatModel.class);
         when(nextModel.getOptions()).thenReturn(ChatOptions.builder().build());
