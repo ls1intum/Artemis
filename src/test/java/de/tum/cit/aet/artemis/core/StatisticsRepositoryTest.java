@@ -26,10 +26,18 @@ import de.tum.cit.aet.artemis.admin.domain.StatisticsView;
 import de.tum.cit.aet.artemis.admin.dto.StatisticsEntry;
 import de.tum.cit.aet.artemis.admin.repository.PersistenceAuditEventRepository;
 import de.tum.cit.aet.artemis.admin.repository.StatisticsRepository;
+import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
+import de.tum.cit.aet.artemis.assessment.domain.Result;
+import de.tum.cit.aet.artemis.assessment.test_repository.ResultTestRepository;
 import de.tum.cit.aet.artemis.core.config.audit.AuditEventConstants;
 import de.tum.cit.aet.artemis.core.domain.SpanType;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
+import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
+import de.tum.cit.aet.artemis.text.domain.TextExercise;
+import de.tum.cit.aet.artemis.text.domain.TextSubmission;
+import de.tum.cit.aet.artemis.text.util.TextExerciseUtilService;
 
 class StatisticsRepositoryTest extends AbstractSpringIntegrationIndependentTest {
 
@@ -46,6 +54,15 @@ class StatisticsRepositoryTest extends AbstractSpringIntegrationIndependentTest 
 
     @Autowired
     private UserTestRepository userTestRepository;
+
+    @Autowired
+    private TextExerciseUtilService textExerciseUtilService;
+
+    @Autowired
+    private ParticipationUtilService participationUtilService;
+
+    @Autowired
+    private ResultTestRepository resultTestRepository;
 
     private ZonedDateTime startDate;
 
@@ -127,6 +144,40 @@ class StatisticsRepositoryTest extends AbstractSpringIntegrationIndependentTest 
         assertThat(entryList).as("no slot counts the excluded test user").allSatisfy((entry) -> assertThat(entry.getAmount()).isEqualTo(1));
 
         persistenceAuditEventRepository.deleteAll();
+    }
+
+    /**
+     * Tests that example results (from example submissions) are excluded from the created-results statistics.
+     * The rewritten queries filter the denormalized {@code r.exerciseId} directly, so example results must be
+     * excluded explicitly to preserve the previous behaviour, where the submission → participation → exercise join
+     * dropped them (example submissions have no participation).
+     */
+    @Test
+    void testCreatedResultsForCourseExcludesExampleResults() {
+        SecurityUtils.setAuthorizationObject();
+        userUtilService.addUsers(TEST_PREFIX, 1, 0, 0, 0);
+        Course course = textExerciseUtilService.addCourseWithOneReleasedTextExercise();
+        TextExercise exercise = (TextExercise) course.getExercises().iterator().next();
+        var now = ZonedDateTime.now();
+        var completionDate = now.minusMinutes(30);
+
+        // a normal result for the exercise -> must be counted
+        var normalSubmission = new TextSubmission();
+        normalSubmission.setSubmissionDate(now.minusHours(1));
+        var savedNormalSubmission = participationUtilService.addSubmission(exercise, normalSubmission, TEST_PREFIX + "student1");
+        participationUtilService.addResultToSubmission(AssessmentType.MANUAL, completionDate, savedNormalSubmission);
+
+        // an example result for the same exercise -> must be excluded
+        var exampleSubmission = new TextSubmission();
+        exampleSubmission.setSubmissionDate(now.minusHours(1));
+        var savedExampleSubmission = participationUtilService.addSubmission(exercise, exampleSubmission, TEST_PREFIX + "student1");
+        Result exampleResult = participationUtilService.addResultToSubmission(AssessmentType.MANUAL, completionDate, savedExampleSubmission);
+        exampleResult.setExampleResult(true);
+        resultTestRepository.save(exampleResult);
+
+        List<StatisticsEntry> createdResults = statisticsRepository.getCreatedResultsForCourse(now.minusDays(1), now.plusDays(1), List.of(exercise.getId()));
+        long total = createdResults.stream().mapToLong(StatisticsEntry::getAmount).sum();
+        assertThat(total).as("example results are excluded from the created-results statistics").isEqualTo(1);
     }
 
     /**
