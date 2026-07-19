@@ -14,6 +14,7 @@ import { MockAlertService } from 'test/helpers/mocks/service/mock-alert.service'
 import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
+import { BuildPhase } from 'app/programming/shared/entities/build-plan-phases.model';
 
 describe('LocalCIBuildPlanEditorComponent', () => {
     let fixture: ComponentFixture<LocalCIBuildPlanEditorComponent>;
@@ -23,7 +24,7 @@ describe('LocalCIBuildPlanEditorComponent', () => {
     let programmingExerciseService: ProgrammingExerciseService;
     let buildPlanConfigurationService: BuildPlanConfigurationService;
 
-    const phases = [{ name: 'compile', script: 'echo compile', condition: 'ALWAYS', forceRun: false, resultPaths: [] }];
+    const phases: BuildPhase[] = [{ name: 'compile', script: 'echo compile', condition: 'ALWAYS', forceRun: false, resultPaths: [] }];
     const buildPlanConfiguration = JSON.stringify({ phases, dockerImage: 'some-image' });
 
     beforeEach(() => {

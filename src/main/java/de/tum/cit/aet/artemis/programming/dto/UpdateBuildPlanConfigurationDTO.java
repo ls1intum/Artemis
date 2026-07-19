@@ -7,6 +7,7 @@ import jakarta.validation.constraints.PositiveOrZero;
 import org.jspecify.annotations.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
 
 /**
  * DTO for updating the build plan configuration of a programming exercise from the dedicated build plan editor.
@@ -19,5 +20,6 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
  * @param dockerFlags    the serialized Docker flags (network, CPU, memory, environment variables), or null
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record UpdateBuildPlanConfigurationDTO(@Valid @NotNull BuildPlanPhasesDTO buildPlan, @PositiveOrZero int timeoutSeconds, @Nullable String dockerFlags) {
 }
