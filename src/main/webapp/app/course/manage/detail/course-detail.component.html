@@ -32,9 +32,7 @@
                 </div>
             </div>
         }
-        <!-- Sentinel element observed by IntersectionObserver; charts load when it enters the viewport -->
-        <div #chartsViewport></div>
-        @defer (on viewport(chartsViewport)) {
+        @defer (on viewport) {
             <div class="col-12">
                 <div class="row">
                     <div class="col-xxl-4">

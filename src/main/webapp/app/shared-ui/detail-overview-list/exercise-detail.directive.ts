@@ -45,34 +45,10 @@ export class ExerciseDetailDirective implements OnInit, OnDestroy {
             [DetailType.ExerciseCategories]: ExerciseCategoriesDetailComponent,
         };
 
-        // Heavy programming components — dynamically imported only when this
-        // specific detail type is present in the rendered list.
-        const lazyLoaders: Partial<Record<DetailType, () => Promise<Type<unknown>>>> = {
-            [DetailType.ProgrammingRepositoryButtons]: () =>
-                import('app/shared-ui/detail-overview-list/components/programming-repository-buttons-detail/programming-repository-buttons-detail.component').then(
-                    (m) => m.ProgrammingRepositoryButtonsDetailComponent,
-                ),
-            [DetailType.ProgrammingAuxiliaryRepositoryButtons]: () =>
-                import('./components/programming-auxiliary-repository-buttons-detail/programming-auxiliary-repository-buttons-detail.component').then(
-                    (m) => m.ProgrammingAuxiliaryRepositoryButtonsDetailComponent,
-                ),
-            [DetailType.ProgrammingTestStatus]: () =>
-                import('app/shared-ui/detail-overview-list/components/programming-test-status-detail/programming-test-status-detail.component').then(
-                    (m) => m.ProgrammingTestStatusDetailComponent,
-                ),
-            [DetailType.ProgrammingDiffReport]: () =>
-                import('app/shared-ui/detail-overview-list/components/programming-diff-report-detail/programming-diff-report-detail.component').then(
-                    (m) => m.ProgrammingDiffReportDetailComponent,
-                ),
-        };
-
         let detailComponent: Type<unknown> | undefined = eagerMap[shownDetail.type];
 
         if (!detailComponent) {
-            const loader = lazyLoaders[shownDetail.type];
-            if (loader) {
-                detailComponent = await loader();
-            }
+            detailComponent = await this.loadProgrammingDetailComponent(shownDetail.type);
         }
 
         if (destroyed || !detailComponent) {
@@ -97,6 +73,35 @@ export class ExerciseDetailDirective implements OnInit, OnDestroy {
     private assignAttributes(detail: ShownDetail) {
         if (this.componentRef) {
             this.componentRef.setInput('detail', detail);
+        }
+    }
+
+    /**
+     * Heavy programming components — dynamically imported only when this specific detail type
+     * is present in the rendered list. Dispatched via an explicit switch (rather than an
+     * object/function lookup keyed by {@link DetailType}) so the import to run is always
+     * statically determined, not retrieved from data.
+     */
+    private async loadProgrammingDetailComponent(type: DetailType): Promise<Type<unknown> | undefined> {
+        switch (type) {
+            case DetailType.ProgrammingRepositoryButtons:
+                return import('app/shared-ui/detail-overview-list/components/programming-repository-buttons-detail/programming-repository-buttons-detail.component').then(
+                    (m) => m.ProgrammingRepositoryButtonsDetailComponent,
+                );
+            case DetailType.ProgrammingAuxiliaryRepositoryButtons:
+                return import('./components/programming-auxiliary-repository-buttons-detail/programming-auxiliary-repository-buttons-detail.component').then(
+                    (m) => m.ProgrammingAuxiliaryRepositoryButtonsDetailComponent,
+                );
+            case DetailType.ProgrammingTestStatus:
+                return import('app/shared-ui/detail-overview-list/components/programming-test-status-detail/programming-test-status-detail.component').then(
+                    (m) => m.ProgrammingTestStatusDetailComponent,
+                );
+            case DetailType.ProgrammingDiffReport:
+                return import('app/shared-ui/detail-overview-list/components/programming-diff-report-detail/programming-diff-report-detail.component').then(
+                    (m) => m.ProgrammingDiffReportDetailComponent,
+                );
+            default:
+                return undefined;
         }
     }
 }
