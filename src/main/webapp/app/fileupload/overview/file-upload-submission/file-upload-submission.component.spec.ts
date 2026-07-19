@@ -16,6 +16,7 @@ import 'app/foundation/util/array.extension';
 
 import { FileUploadSubmissionComponent } from './file-upload-submission.component';
 import { FileUploadSubmissionService } from '../file-upload-submission.service';
+import { FileUploadAssessmentService } from 'app/fileupload/manage/assess/file-upload-assessment.service';
 import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
 import { FileUploadParticipation, FileUploadSubmission } from 'app/fileupload/shared/entities/file-upload-submission.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
@@ -47,6 +48,7 @@ describe('FileUploadSubmissionComponent', () => {
     let component: FileUploadSubmissionComponent;
     let fixture: ComponentFixture<FileUploadSubmissionComponent>;
     let fileUploadSubmissionService: FileUploadSubmissionService;
+    let fileUploadAssessmentService: FileUploadAssessmentService;
     let alertService: AlertService;
     let participationWebsocketService: ParticipationWebsocketService;
     let fileService: FileService;
@@ -186,6 +188,7 @@ describe('FileUploadSubmissionComponent', () => {
         component = fixture.componentInstance;
 
         fileUploadSubmissionService = TestBed.inject(FileUploadSubmissionService);
+        fileUploadAssessmentService = TestBed.inject(FileUploadAssessmentService);
         alertService = TestBed.inject(AlertService);
         participationWebsocketService = TestBed.inject(ParticipationWebsocketService);
         fileService = TestBed.inject(FileService);
@@ -262,6 +265,38 @@ describe('FileUploadSubmissionComponent', () => {
 
             expect(component.isOwnerOfParticipation()).toBe(true);
             expect(accountService.isOwnerOfParticipation).toHaveBeenCalledWith(participation);
+        });
+
+        it('should default to non-owner without explicit or legacy ownership data', async () => {
+            const exercise = createExercise();
+            const submission = createSubmission(exercise);
+            submission.participation = Object.assign(new FileUploadParticipation(), submission.participation);
+            vi.spyOn(fileUploadSubmissionService, 'getDataForFileUploadEditor').mockReturnValue(of(submission));
+
+            fixture.detectChanges();
+            await fixture.whenStable();
+
+            expect(component.isOwnerOfParticipation()).toBe(false);
+            expect(accountService.isOwnerOfParticipation).not.toHaveBeenCalled();
+        });
+
+        it('should load the completed assessment result for a submitted DTO', async () => {
+            const exercise = createExercise();
+            const submission = createSubmittedSubmission(exercise);
+            const initialResult = createResult(submission);
+            const assessmentResult = createResult(submission);
+            assessmentResult.id = 1000;
+            submission.results = [initialResult];
+            submission.participation = Object.assign(new FileUploadParticipation(), submission.participation, { isOwner: true });
+            vi.spyOn(fileUploadSubmissionService, 'getDataForFileUploadEditor').mockReturnValue(of(submission));
+            const getAssessmentSpy = vi.spyOn(fileUploadAssessmentService, 'getAssessment').mockReturnValue(of(assessmentResult));
+
+            fixture.detectChanges();
+            await fixture.whenStable();
+
+            expect(getAssessmentSpy).toHaveBeenCalledWith(submission.id);
+            expect(component.result()).toBe(assessmentResult);
+            expect(component.submissionFile()).toBeUndefined();
         });
 
         it('should ignore a submission without participation', async () => {
