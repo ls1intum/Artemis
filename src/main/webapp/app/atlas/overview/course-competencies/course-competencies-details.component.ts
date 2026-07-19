@@ -37,7 +37,7 @@ import { SidePanelComponent } from 'app/shared-ui/side-panel/side-panel.componen
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ArtemisTimeAgoPipe } from 'app/foundation/pipes/artemis-time-ago.pipe';
-import { HtmlForMarkdownPipe } from 'app/foundation/pipes/html-for-markdown.pipe';
+import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
 import { FireworksComponent } from 'app/atlas/overview/fireworks/fireworks.component';
 import { ScienceEventType } from 'app/foundation/science/science.model';
 import { ScienceService } from 'app/foundation/science/science.service';
@@ -62,7 +62,7 @@ import { ScienceService } from 'app/foundation/science/science.service';
         HelpIconComponent,
         ArtemisTranslatePipe,
         ArtemisTimeAgoPipe,
-        HtmlForMarkdownPipe,
+        MarkdownDirective,
     ],
 })
 export class CourseCompetenciesDetailsComponent implements OnInit, OnDestroy {
