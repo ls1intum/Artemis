@@ -80,8 +80,15 @@ public interface ParticipationVCSAccessTokenRepository extends ArtemisJpaReposit
     @Query("""
             SELECT new de.tum.cit.aet.artemis.programming.dto.VcsAccessTokenOverviewDTO(
                 t.id,
-                t.participation.exercise.title)
+                COALESCE(course.title, examCourse.title),
+                exercise.title)
             FROM ParticipationVCSAccessToken t
+                JOIN t.participation p
+                JOIN p.exercise exercise
+                LEFT JOIN exercise.course course
+                LEFT JOIN exercise.exerciseGroup exerciseGroup
+                LEFT JOIN exerciseGroup.exam exam
+                LEFT JOIN exam.course examCourse
             WHERE t.user.id = :userId
             """)
     List<VcsAccessTokenOverviewDTO> findOverviewsByUserId(@Param("userId") long userId);

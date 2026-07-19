@@ -45,8 +45,9 @@ public class VcsAccessTokenOverviewService {
     public List<VcsAccessTokenOverviewDTO> getTokenOverviewForUser(long userId) {
         List<VcsAccessTokenOverviewDTO> tokens = new ArrayList<>(participationVCSAccessTokenRepository.findOverviewsByUserId(userId));
         tokens.addAll(repositoryVCSAccessTokenRepository.findOverviewsByUserId(userId));
-        tokens.sort(Comparator.comparing(VcsAccessTokenOverviewDTO::exerciseTitle, Comparator.nullsLast(String.CASE_INSENSITIVE_ORDER))
-                .thenComparing(VcsAccessTokenOverviewDTO::tokenType).thenComparingLong(VcsAccessTokenOverviewDTO::id));
+        tokens.sort(Comparator.comparing(VcsAccessTokenOverviewDTO::courseTitle, Comparator.nullsLast(String.CASE_INSENSITIVE_ORDER))
+                .thenComparing(VcsAccessTokenOverviewDTO::exerciseTitle, Comparator.nullsLast(String.CASE_INSENSITIVE_ORDER)).thenComparing(VcsAccessTokenOverviewDTO::tokenType)
+                .thenComparingLong(VcsAccessTokenOverviewDTO::id));
         return tokens;
     }
 

@@ -8,8 +8,9 @@
             "vcsAccessTokenSettings": "VCS Token",
             "vcsAccessTokensOverview": {
                 "title": "Access Tokens",
-                "description": "An overview of the VCS access tokens you can use to clone repositories over HTTPS. Each token is limited to a single repository. If you revoke a token, a new one is created automatically the next time you open the clone dialog for that repository.",
+                "description": "An overview of the VCS access tokens you can use to clone repositories over HTTPS. Each token is limited to a single repository. Revoking a token disables it immediately; for participation and base repositories, a new token is created automatically the next time you open the clone dialog.",
                 "table": {
+                    "course": "Course",
                     "exercise": "Exercise",
                     "repository": "Repository",
                     "empty": "You do not have any VCS access tokens yet."
@@ -26,7 +27,7 @@
                 },
                 "revoke": {
                     "label": "Revoke",
-                    "question": "Are you sure you want to revoke this VCS access token? A new one is created automatically the next time you open the clone dialog for this repository.",
+                    "question": "Are you sure you want to revoke this VCS access token? It stops working immediately. For a participation or base repository, a new token is created automatically the next time you open the clone dialog.",
                     "success": "The VCS access token was revoked."
                 }
             },

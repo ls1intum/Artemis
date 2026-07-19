@@ -8,8 +8,9 @@
             "vcsAccessTokenSettings": "VCS Token",
             "vcsAccessTokensOverview": {
                 "title": "Zugriffstokens",
-                "description": "Eine Übersicht der VCS-Zugriffstokens, mit denen du Repositories über HTTPS klonen kannst. Jedes Token ist auf ein einzelnes Repository beschränkt. Wenn du ein Token widerrufst, wird beim nächsten Öffnen des Klon-Dialogs für dieses Repository automatisch ein neues erstellt.",
+                "description": "Eine Übersicht der VCS-Zugriffstokens, mit denen du Repositories über HTTPS klonen kannst. Jedes Token ist auf ein einzelnes Repository beschränkt. Das Widerrufen eines Tokens deaktiviert es sofort; für Teilnahme- und Basis-Repositories wird beim nächsten Öffnen des Klon-Dialogs automatisch ein neues erstellt.",
                 "table": {
+                    "course": "Kurs",
                     "exercise": "Aufgabe",
                     "repository": "Repository",
                     "empty": "Du hast noch keine VCS-Zugriffstokens."
@@ -26,7 +27,7 @@
                 },
                 "revoke": {
                     "label": "Widerrufen",
-                    "question": "Möchtest du dieses VCS-Zugriffstoken wirklich widerrufen? Beim nächsten Öffnen des Klon-Dialogs für dieses Repository wird automatisch ein neues erstellt.",
+                    "question": "Möchtest du dieses VCS-Zugriffstoken wirklich widerrufen? Es funktioniert sofort nicht mehr. Für ein Teilnahme- oder Basis-Repository wird beim nächsten Öffnen des Klon-Dialogs automatisch ein neues erstellt.",
                     "success": "Das VCS-Zugriffstoken wurde widerrufen."
                 }
             },

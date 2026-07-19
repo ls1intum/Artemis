@@ -18,9 +18,9 @@ describe('VcsAccessTokenOverviewComponent', () => {
     const alertServiceMock = { error: vi.fn(), success: vi.fn(), addAlert: vi.fn() };
 
     const tokens: VcsAccessTokenOverview[] = [
-        { id: 1, tokenType: VcsAccessTokenType.REPOSITORY, repositoryType: RepositoryType.TEMPLATE, exerciseTitle: 'Exercise A' },
-        { id: 2, tokenType: VcsAccessTokenType.REPOSITORY, repositoryType: RepositoryType.USER, exerciseTitle: 'Exercise B', studentLogin: 'student1' },
-        { id: 3, tokenType: VcsAccessTokenType.PARTICIPATION, exerciseTitle: 'Exercise C' },
+        { id: 1, tokenType: VcsAccessTokenType.REPOSITORY, repositoryType: RepositoryType.TEMPLATE, courseTitle: 'Course One', exerciseTitle: 'Exercise A' },
+        { id: 2, tokenType: VcsAccessTokenType.REPOSITORY, repositoryType: RepositoryType.USER, courseTitle: 'Course Two', exerciseTitle: 'Exercise B', studentLogin: 'student1' },
+        { id: 3, tokenType: VcsAccessTokenType.PARTICIPATION, courseTitle: 'Course One', exerciseTitle: 'Exercise C' },
     ];
 
     beforeEach(async () => {
@@ -48,7 +48,7 @@ describe('VcsAccessTokenOverviewComponent', () => {
         expect(comp['rows']()).toHaveLength(3);
     });
 
-    it('filters by the search term (exercise title and student login) client-side', () => {
+    it('filters by the search term (course title, exercise title and student login) client-side', () => {
         comp.ngOnInit();
 
         comp.onDataRequest({ page: 0, pageSize: 20, searchTerm: 'student1' });
@@ -56,6 +56,9 @@ describe('VcsAccessTokenOverviewComponent', () => {
 
         comp.onDataRequest({ page: 0, pageSize: 20, searchTerm: 'exercise c' });
         expect(comp['rows']().map((token) => token.id)).toEqual([3]);
+
+        comp.onDataRequest({ page: 0, pageSize: 20, searchTerm: 'course two' });
+        expect(comp['rows']().map((token) => token.id)).toEqual([2]);
     });
 
     it('paginates the tokens client-side', () => {

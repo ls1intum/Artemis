@@ -508,6 +508,7 @@ class RepositoryVcsAccessTokenIntegrationTest extends AbstractProgrammingIntegra
         assertThat(overview).isNotEmpty().allSatisfy(dto -> assertThat(dto.tokenType()).isEqualTo(VcsAccessTokenType.REPOSITORY));
         assertThat(overview).anySatisfy(dto -> {
             assertThat(dto.repositoryType()).isEqualTo(RepositoryType.TEMPLATE);
+            assertThat(dto.courseTitle()).isEqualTo(course.getTitle());
             assertThat(dto.exerciseTitle()).isEqualTo(exercise.getTitle());
             assertThat(dto.studentLogin()).isNull();
         });
@@ -526,7 +527,10 @@ class RepositoryVcsAccessTokenIntegrationTest extends AbstractProgrammingIntegra
         List<VcsAccessTokenOverviewDTO> overview = request.getList("/api/programming/vcs-access-tokens", HttpStatus.OK, VcsAccessTokenOverviewDTO.class);
 
         assertThat(overview).isNotEmpty().allSatisfy(dto -> assertThat(dto.tokenType()).isEqualTo(VcsAccessTokenType.PARTICIPATION));
-        assertThat(overview).anySatisfy(dto -> assertThat(dto.exerciseTitle()).isEqualTo(exercise.getTitle()));
+        assertThat(overview).anySatisfy(dto -> {
+            assertThat(dto.courseTitle()).isEqualTo(course.getTitle());
+            assertThat(dto.exerciseTitle()).isEqualTo(exercise.getTitle());
+        });
     }
 
     @Test

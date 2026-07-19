@@ -38,6 +38,7 @@ export class VcsAccessTokenOverviewComponent implements OnInit {
     protected readonly repositoryColumnTemplate = viewChild<CellTemplateRef<VcsAccessTokenOverview>>('repositoryColumn');
 
     protected readonly columns = computed<ColumnDef<VcsAccessTokenOverview>[]>(() => [
+        { field: 'courseTitle', headerKey: 'artemisApp.userSettings.vcsAccessTokensOverview.table.course', sort: true },
         { field: 'exerciseTitle', headerKey: 'artemisApp.userSettings.vcsAccessTokensOverview.table.exercise', sort: true },
         { headerKey: 'artemisApp.userSettings.vcsAccessTokensOverview.table.repository', templateRef: this.repositoryColumnTemplate() },
     ]);
@@ -96,12 +97,18 @@ export class VcsAccessTokenOverviewComponent implements OnInit {
         let filtered = this.allTokens();
         const term = event.searchTerm?.toLowerCase();
         if (term) {
-            filtered = filtered.filter((token) => (token.exerciseTitle ?? '').toLowerCase().includes(term) || (token.studentLogin ?? '').toLowerCase().includes(term));
+            filtered = filtered.filter(
+                (token) =>
+                    (token.courseTitle ?? '').toLowerCase().includes(term) ||
+                    (token.exerciseTitle ?? '').toLowerCase().includes(term) ||
+                    (token.studentLogin ?? '').toLowerCase().includes(term),
+            );
         }
         const sorted = [...filtered];
-        if (event.sort?.field === 'exerciseTitle') {
-            const direction = event.sort.direction === 'asc' ? 1 : -1;
-            sorted.sort((a, b) => (a.exerciseTitle ?? '').localeCompare(b.exerciseTitle ?? '') * direction);
+        const sortField = event.sort?.field;
+        if (sortField === 'courseTitle' || sortField === 'exerciseTitle') {
+            const direction = event.sort!.direction === 'asc' ? 1 : -1;
+            sorted.sort((a, b) => (a[sortField] ?? '').localeCompare(b[sortField] ?? '') * direction);
         }
         this.totalCount.set(sorted.length);
         const from = event.page * event.pageSize;
