@@ -12,7 +12,7 @@
                 <p jhiTranslate="artemisApp.standardizedCompetency.manage.import.format.text1"></p>
                 <p jhiTranslate="artemisApp.standardizedCompetency.manage.import.format.text2"></p>
                 <p jhiTranslate="artemisApp.standardizedCompetency.manage.import.format.text3"></p>
-                <div [innerHTML]="importExample | htmlForMarkdown"></div>
+                <div [jhiMarkdown]="importExample"></div>
             </div>
         }
     </div>
