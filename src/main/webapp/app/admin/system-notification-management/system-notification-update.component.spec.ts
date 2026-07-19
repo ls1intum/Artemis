@@ -5,7 +5,6 @@
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { of } from 'rxjs';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
@@ -31,8 +30,6 @@ import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { AdminSystemNotificationService } from 'app/core/notification/system-notification/admin-system-notification.service';
 
 describe('SystemNotificationManagementUpdateComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<SystemNotificationManagementUpdateComponent>;
     let component: SystemNotificationManagementUpdateComponent;
     let adminService: AdminSystemNotificationService;

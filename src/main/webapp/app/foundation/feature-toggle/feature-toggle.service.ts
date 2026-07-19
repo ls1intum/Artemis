@@ -17,7 +17,6 @@ export enum FeatureToggle {
     LearningPaths = 'LearningPaths',
     Science = 'Science',
     StandardizedCompetencies = 'StandardizedCompetencies',
-    StudentCourseAnalyticsDashboard = 'StudentCourseAnalyticsDashboard',
     TutorSuggestions = 'TutorSuggestions',
     AtlasML = 'AtlasML',
     AtlasAgent = 'AtlasAgent',

@@ -1,11 +1,9 @@
 import { vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ColorSelectorComponent } from 'app/shared-ui/color-selector/color-selector.component';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ARTEMIS_DEFAULT_COLOR } from 'app/app.constants';
 
 describe('ColorSelectorComponent', () => {
-    setupTestBed({ zoneless: true });
     let component: ColorSelectorComponent;
     let fixture: ComponentFixture<ColorSelectorComponent>;
 
