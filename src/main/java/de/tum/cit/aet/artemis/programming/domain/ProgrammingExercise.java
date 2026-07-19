@@ -103,6 +103,10 @@ public class ProgrammingExercise extends Exercise {
     private ZonedDateTime buildAndTestStudentSubmissionsAfterDueDate;
 
     @Nullable
+    @Column(name = "iris_in_class_quiz_timer", table = "programming_exercise_details")
+    private ZonedDateTime irisInClassQuizTimer;
+
+    @Nullable
     @Column(name = "test_cases_changed", table = "programming_exercise_details")
     private Boolean testCasesChanged = false;   // default value
 
@@ -552,6 +556,15 @@ public class ProgrammingExercise extends Exercise {
 
     public void setBuildAndTestStudentSubmissionsAfterDueDate(@Nullable ZonedDateTime buildAndTestStudentSubmissionsAfterDueDate) {
         this.buildAndTestStudentSubmissionsAfterDueDate = buildAndTestStudentSubmissionsAfterDueDate;
+    }
+
+    @Nullable
+    public ZonedDateTime getIrisInClassQuizTimer() {
+        return irisInClassQuizTimer;
+    }
+
+    public void setIrisInClassQuizTimer(@Nullable ZonedDateTime irisInClassQuizTimer) {
+        this.irisInClassQuizTimer = irisInClassQuizTimer;
     }
 
     public boolean getTestCasesChanged() {

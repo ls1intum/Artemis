@@ -1154,4 +1154,18 @@ export class IrisChatService implements OnDestroy {
     public setShouldReopenChat(value: boolean): void {
         this.shouldReopenChatSubject.next(value);
     }
+
+    public startInClassPromptingMode(): Observable<void> {
+        return from(this.clearChat()).pipe(
+            switchMap(() => {
+                if (!this.sessionHttpIdentifier) {
+                    throw new Error('Session http identifier not set');
+                }
+
+                return this.http.startInClassPromptingMode(this.sessionHttpIdentifier);
+            }),
+            map(() => undefined),
+            catchError(() => throwError(() => new Error(IrisErrorMessageKey.START_PROMPTING_FAILED))),
+        );
+    }
 }

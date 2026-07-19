@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { HttpClient, HttpResponse } from '@angular/common/http';
+import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable, map } from 'rxjs';
 import { QAExchangeDTO } from 'app/iris/shared/entities/iris-qa-exchange-dto.model';
 import { IrisAssessment } from 'app/iris/shared/entities/iris-assessment.model';
@@ -42,10 +42,13 @@ export class IrisAssessmentReviewService {
         return this.http.get<IrisAssessment>(`${this.resourceUrl}/${assessmentId}`, { observe: 'response' });
     }
 
-    findAllParticipationsNonZeroLatestScoreByProgrammingExercise(exerciseId: number): Observable<HttpResponse<ProgrammingExerciseStudentParticipation[]>> {
+    findAllParticipationsNonZeroLatestScoreByProgrammingExercise(exerciseId: number, inClass = false): Observable<HttpResponse<ProgrammingExerciseStudentParticipation[]>> {
+        const params = inClass ? new HttpParams().set('inClass', inClass) : undefined;
+
         return this.http
             .get<ProgrammingExerciseStudentParticipation[]>(`${this.programmingExerciseResourceUrl}/${exerciseId}/participations/non-zero-latest-score`, {
                 observe: 'response',
+                params,
             })
             .pipe(map((res: HttpResponse<ProgrammingExerciseStudentParticipation[]>) => this.participationService.processParticipationEntityArrayResponseType(res)));
     }

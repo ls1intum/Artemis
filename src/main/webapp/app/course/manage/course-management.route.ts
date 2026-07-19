@@ -313,6 +313,23 @@ export const courseManagementRoutes: Routes = [
                         },
                     },
                     {
+                        path: 'iris-assessment-in-class',
+                        loadComponent: () =>
+                            import('app/iris/overview/understanding-assessment/assessment-review-overview/iris-assessment-review-overview.component').then(
+                                (m) => m.IrisAssessmentReviewOverviewComponent,
+                            ),
+                        data: {
+                            authorities: IS_AT_LEAST_INSTRUCTOR,
+                            pageTitle: 'artemisApp.iris.assessmentReviewOverview.title',
+                            loadWithExercises: true,
+                            showStartInClassQuizButton: true,
+                        },
+                        canActivate: [UserRouteAccessService, IrisGuard],
+                        resolve: {
+                            course: CourseManagementResolve,
+                        },
+                    },
+                    {
                         path: 'iris-settings',
                         loadComponent: () =>
                             import('app/iris/manage/settings/iris-course-settings-update/iris-course-settings-update.component').then((m) => m.IrisCourseSettingsUpdateComponent),

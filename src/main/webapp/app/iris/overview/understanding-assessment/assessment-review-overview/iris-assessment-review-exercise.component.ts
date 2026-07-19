@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, ViewEncapsulation, computed, inject, input, output } from '@angular/core';
+import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { PROFILE_LOCALCI } from 'app/app.constants';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { RouterLink } from '@angular/router';
@@ -7,7 +8,7 @@ import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.serv
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/entities/participation/programming-exercise-student-participation.model';
-import { faFolderOpen, faListAlt, faTable } from '@fortawesome/free-solid-svg-icons';
+import { faBrain, faFolderOpen, faListAlt, faQuestionCircle, faTable } from '@fortawesome/free-solid-svg-icons';
 import { faFileCode } from '@fortawesome/free-regular-svg-icons';
 import { ExerciseCacheService } from 'app/exercise/services/exercise-cache.service';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -20,6 +21,11 @@ import { RepositoryType } from 'app/programming/shared/code-editor/model/code-ed
 import { IrisReviewAssessmentButtonComponent } from 'app/iris/overview/understanding-assessment/shared/iris-assessment-button/iris-review-assessment-button.component';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { DataTableComponent } from 'app/shared/data-table/data-table.component';
+import { IrisAssessmentQuizService } from 'app/iris/overview/services/iris-assessment-quiz.service';
+import { catchError, merge, of, switchMap, take } from 'rxjs';
+import { map } from 'rxjs/operators';
+import { QuizTimerBarComponent } from 'app/iris/overview/understanding-assessment/quiz-timer-bar/quiz-timer-bar.component';
+import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 
 interface AssessmentParticipationViewModel extends ProgrammingExerciseStudentParticipation {
     readonly participationLink?: Array<string | number>;
@@ -44,6 +50,8 @@ interface AssessmentParticipationViewModel extends ProgrammingExerciseStudentPar
         IrisReviewAssessmentButtonComponent,
         FaIconComponent,
         DataTableComponent,
+        QuizTimerBarComponent,
+        HelpIconComponent,
     ],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -52,13 +60,17 @@ export class IrisAssessmentReviewExerciseComponent {
     exercise = input.required<ProgrammingExercise>();
     course = input.required<Course>();
     isLoading = input(false);
+    showStartInClassQuizButton = input(false);
 
     refresh = output<void>();
 
     protected readonly faFolderOpen = faFolderOpen;
     protected readonly faListAlt = faListAlt;
+    protected readonly faBrain = faBrain;
     protected readonly faFileCode = faFileCode;
     protected readonly faTable = faTable;
+    protected readonly faQuestionCircle = faQuestionCircle;
+
     protected readonly RepositoryType = RepositoryType;
     protected readonly ExerciseType = ExerciseType;
     protected readonly FeatureToggle = FeatureToggle;
@@ -68,8 +80,33 @@ export class IrisAssessmentReviewExerciseComponent {
     protected readonly nameSortFieldProperty = 'student.name';
 
     private profileService = inject(ProfileService);
+    private assessmentQuizService = inject(IrisAssessmentQuizService);
 
     protected readonly localCIEnabled = this.profileService.isProfileActive(PROFILE_LOCALCI);
+    private readonly exerciseId = computed(() => this.exercise().id);
+
+    protected readonly activeInClassQuiz = toSignal(
+        toObservable(this.exerciseId).pipe(
+            switchMap((exerciseId) => {
+                if (exerciseId === undefined) {
+                    return of(undefined);
+                }
+
+                return merge(
+                    this.assessmentQuizService.getActiveInClassQuiz(exerciseId).pipe(
+                        map((response) => response.body ?? undefined),
+                        catchError(() => of(undefined)),
+                    ),
+                    this.assessmentQuizService.currentInClassQuizForExercise(exerciseId),
+                );
+            }),
+        ),
+        { initialValue: undefined },
+    );
+
+    protected readonly inClassQuizButtonLabel = computed(() =>
+        this.activeInClassQuiz() ? 'artemisApp.iris.assessmentInClassQuiz.restart' : 'artemisApp.iris.assessmentInClassQuiz.start',
+    );
 
     protected readonly participationRows = computed<AssessmentParticipationViewModel[]>(() =>
         this.participations().map((participation) => ({
@@ -96,4 +133,25 @@ export class IrisAssessmentReviewExerciseComponent {
     ]);
 
     protected readonly exerciseScoresLink = computed(() => ['/course-management', this.course().id, 'programming-exercises', this.exercise().id, 'scores']);
+
+    startInClassQuiz(): void {
+        const exerciseId = this.exercise().id;
+
+        if (exerciseId === undefined) {
+            return;
+        }
+
+        this.assessmentQuizService
+            .startInClassQuiz(exerciseId)
+            .pipe(take(1))
+            .subscribe(() => this.refresh.emit());
+    }
+
+    handleInClassQuizTimerExpired(): void {
+        const exerciseId = this.exercise().id;
+
+        if (exerciseId !== undefined) {
+            this.assessmentQuizService.clearActiveInClassQuiz(exerciseId);
+        }
+    }
 }

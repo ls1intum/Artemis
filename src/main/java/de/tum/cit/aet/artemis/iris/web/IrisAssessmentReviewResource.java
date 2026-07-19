@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
@@ -31,7 +32,6 @@ import de.tum.cit.aet.artemis.iris.dto.IrisQAExchangeDTO;
 import de.tum.cit.aet.artemis.iris.repository.IrisAssessmentRepository;
 import de.tum.cit.aet.artemis.iris.service.IrisAssessmentService;
 import de.tum.cit.aet.artemis.iris.service.session.IrisExerciseChatSessionService;
-import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseStudentParticipationRepository;
 
@@ -143,23 +143,31 @@ public class IrisAssessmentReviewResource {
      * GET programming-exercises/{exerciseId}/participations/non-zero-latest-score : get all the participations for a programming exercise if latest score > 0 was achieved
      *
      * @param exerciseId The exerciseId of the programming exercise
+     * @param inClass    Whether the request is for the Iris in-class assessment overview
      * @return A list of all programming student participations for the exercise
      */
     @GetMapping("programming-exercises/{exerciseId}/participations/non-zero-latest-score")
     @EnforceAtLeastTutorInExercise
-    public ResponseEntity<Set<IrisAssessmentProgrammingStudentParticipationDTO>> getAllParticipationsNonZeroLatestScoreForExercise(@PathVariable Long exerciseId) {
-        log.debug("REST request to get all Participations with non-zero highest score for Exercise {}", exerciseId);
+    public ResponseEntity<Set<IrisAssessmentProgrammingStudentParticipationDTO>> getAllParticipationsNonZeroLatestScoreForExercise(@PathVariable Long exerciseId,
+            @RequestParam(defaultValue = "false") boolean inClass) {
+        log.info("REST request to get all Participations with non-zero highest score for Exercise {} for Iris assessment overview, inClass: {}", exerciseId, inClass);
+        return ResponseEntity.ok(getAllParticipationsNonZeroLatestScoreForExerciseId(exerciseId, inClass));
+    }
+
+    private Set<IrisAssessmentProgrammingStudentParticipationDTO> getAllParticipationsNonZeroLatestScoreForExerciseId(long exerciseId, boolean inClass) {
         Exercise exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
-        Set<ProgrammingExerciseStudentParticipation> participations = programmingExerciseStudentParticipationRepository
-                .findAllWithEagerSubmissionsAndEagerResultsAndEagerStudentAndEagerAssessmentByExerciseId(exercise.getId()).stream()
-                .filter(p -> p.findLatestResult() != null && p.findLatestResult().getScore() > 0).collect(Collectors.toSet());
+        var participations = inClass
+                ? programmingExerciseStudentParticipationRepository.findAllWithEagerSubmissionsAndEagerResultsAndEagerStudentAndEagerAssessmentInClassByExerciseId(exercise.getId())
+                : programmingExerciseStudentParticipationRepository.findAllWithEagerSubmissionsAndEagerResultsAndEagerStudentAndEagerAssessmentByExerciseId(exercise.getId());
+
+        var filteredParticipations = participations.stream().filter(p -> p.findLatestResult() != null && p.findLatestResult().getScore() > 0).collect(Collectors.toSet());
 
         Map<Long, Integer> submissionCountMap = studentParticipationRepository.countSubmissionsPerParticipationByExerciseIdAsMap(exerciseId);
-        participations.forEach(participation -> participation.setSubmissionCount(submissionCountMap.get(participation.getId())));
-        Set<IrisAssessmentProgrammingStudentParticipationDTO> participationDTOs = participations.stream().filter(participation -> participation.getParticipant() != null)
-                .map(IrisAssessmentProgrammingStudentParticipationDTO::of).collect(Collectors.toSet());
+        filteredParticipations.forEach(participation -> participation.setSubmissionCount(submissionCountMap.get(participation.getId())));
+        Set<IrisAssessmentProgrammingStudentParticipationDTO> participationDTOs = filteredParticipations.stream().filter(participation -> participation.getParticipant() != null)
+                .map(p -> IrisAssessmentProgrammingStudentParticipationDTO.of(p, inClass)).collect(Collectors.toSet());
 
-        return ResponseEntity.ok(participationDTOs);
+        return participationDTOs;
     }
 
     private Exercise validate(Exercise exercise) {

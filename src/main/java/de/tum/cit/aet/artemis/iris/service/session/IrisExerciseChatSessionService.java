@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.iris.service.session;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_IRIS;
 
+import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
@@ -46,7 +47,6 @@ import de.tum.cit.aet.artemis.iris.dto.IrisCombinedProgrammingExerciseChatSubSet
 import de.tum.cit.aet.artemis.iris.dto.IrisCombinedPromptUserSubSettingsDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisQAExchangeDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisQuizTimerDTO;
-import de.tum.cit.aet.artemis.iris.repository.IrisAssessmentRepository;
 import de.tum.cit.aet.artemis.iris.repository.IrisExerciseChatSessionRepository;
 import de.tum.cit.aet.artemis.iris.repository.IrisMessageRepository;
 import de.tum.cit.aet.artemis.iris.repository.IrisSessionRepository;
@@ -58,6 +58,7 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.PyrisChatStatusUpdateD
 import de.tum.cit.aet.artemis.iris.service.pyris.event.NewResultEvent;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.TrackedSessionBasedPyrisJob;
 import de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService;
+import de.tum.cit.aet.artemis.iris.service.websocket.IrisAssessmentQuizWebsocketService;
 import de.tum.cit.aet.artemis.iris.service.websocket.IrisChatWebsocketService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
@@ -90,6 +91,10 @@ public class IrisExerciseChatSessionService extends AbstractIrisChatSessionServi
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
+    private final ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository;
+
+    private final ProgrammingSubmissionRepository programmingSubmissionRepository;
+
     private final IrisExerciseChatSessionRepository irisExerciseChatSessionRepository;
 
     private final SubmissionRepository submissionRepository;
@@ -100,11 +105,13 @@ public class IrisExerciseChatSessionService extends AbstractIrisChatSessionServi
 
     private final IrisAssessmentService irisAssessmentService;
 
-    private final IrisAssessmentRepository irisAssessmentRepository;
+    private final IrisAssessmentQuizWebsocketService irisAssessmentQuizWebsocketService;
 
     private final TaskScheduler taskScheduler;
 
     private final Map<Long, ScheduledFuture<?>> quizTimers = new ConcurrentHashMap<>();
+
+    private final Map<Long, ScheduledFuture<?>> inClassQuizTimers = new ConcurrentHashMap<>();
 
     public IrisExerciseChatSessionService(IrisMessageService irisMessageService, IrisMessageRepository irisMessageRepository, LLMTokenUsageService llmTokenUsageService,
             IrisSettingsService irisSettingsService, IrisChatWebsocketService irisChatWebsocketService, AuthorizationCheckService authCheckService,
@@ -112,7 +119,7 @@ public class IrisExerciseChatSessionService extends AbstractIrisChatSessionServi
             ProgrammingSubmissionRepository programmingSubmissionRepository, IrisRateLimitService rateLimitService, PyrisPipelineService pyrisPipelineService,
             ProgrammingExerciseRepository programmingExerciseRepository, ObjectMapper objectMapper, IrisExerciseChatSessionRepository irisExerciseChatSessionRepository,
             SubmissionRepository submissionRepository, ExerciseRepository exerciseRepository, UserRepository userRepository, IrisAssessmentService irisAssessmentService,
-            IrisAssessmentRepository irisAssessmentRepository, TaskScheduler taskScheduler) {
+            IrisAssessmentQuizWebsocketService irisAssessmentQuizWebsocketService, TaskScheduler taskScheduler) {
         super(irisSessionRepository, programmingSubmissionRepository, programmingExerciseStudentParticipationRepository, objectMapper, irisMessageService, irisMessageRepository,
                 irisChatWebsocketService, llmTokenUsageService);
         this.irisSettingsService = irisSettingsService;
@@ -122,12 +129,14 @@ public class IrisExerciseChatSessionService extends AbstractIrisChatSessionServi
         this.rateLimitService = rateLimitService;
         this.pyrisPipelineService = pyrisPipelineService;
         this.programmingExerciseRepository = programmingExerciseRepository;
+        this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
+        this.programmingSubmissionRepository = programmingSubmissionRepository;
         this.irisExerciseChatSessionRepository = irisExerciseChatSessionRepository;
         this.submissionRepository = submissionRepository;
         this.exerciseRepository = exerciseRepository;
         this.userRepository = userRepository;
         this.irisAssessmentService = irisAssessmentService;
-        this.irisAssessmentRepository = irisAssessmentRepository;
+        this.irisAssessmentQuizWebsocketService = irisAssessmentQuizWebsocketService;
         this.taskScheduler = taskScheduler;
     }
 
@@ -352,8 +361,10 @@ public class IrisExerciseChatSessionService extends AbstractIrisChatSessionServi
 
         var student = studentParticipation.getStudent().orElseThrow();
 
-        // An Assessment object is needed because from now on are Iris Pipeline Events saved (even when no assessment session is started)
-        irisAssessmentRepository.findByExerciseIdAndStudentId(exercise.getId(), student.getId()).orElseGet(() -> irisAssessmentService.createNewAssessment(studentParticipation));
+        // An Assessment object is needed because from now on Iris pipeline events are saved (even when no assessment session is started).
+        if (studentParticipation.getIrisAssessment() == null) {
+            irisAssessmentService.createNewAssessment(studentParticipation);
+        }
 
         var session = getCurrentSessionOrCreateIfNotExistsInternal(exercise, student, false);
 
@@ -477,6 +488,26 @@ public class IrisExerciseChatSessionService extends AbstractIrisChatSessionServi
     }
 
     public IrisProgrammingExerciseChatSession startPromptingModeForCurrentSession(ProgrammingExercise exercise, User user) {
+        return startPromptingModeForCurrentSession(exercise, user, false);
+    }
+
+    public IrisProgrammingExerciseChatSession startInClassPromptingModeForCurrentSession(ProgrammingExercise exercise, User user) {
+        validateInClassQuizIsActiveOrElseThrow(exercise);
+        return startPromptingModeForCurrentSession(exercise, user, true);
+    }
+
+    public boolean latestSubmissionHasPoints(ProgrammingExercise exercise, User user) {
+        return programmingExerciseStudentParticipationRepository.findByExerciseIdAndStudentLogin(exercise.getId(), user.getLogin())
+                .flatMap(participation -> programmingSubmissionRepository.findFirstByParticipationIdWithResultsOrderBySubmissionDateDesc(participation.getId()))
+                .map(Submission::getLatestResult).map(result -> result.getScore() != null && result.getScore() > 0).orElse(false);
+    }
+
+    public boolean isInClassQuizAlreadyDone(ProgrammingExercise exercise, User user) {
+        return programmingExerciseStudentParticipationRepository.findByExerciseIdAndStudentLogin(exercise.getId(), user.getLogin())
+                .map(ProgrammingExerciseStudentParticipation::getIrisAssessmentInClass).map(assessment -> assessment.getVerdict() != null).orElse(false);
+    }
+
+    private IrisProgrammingExerciseChatSession startPromptingModeForCurrentSession(ProgrammingExercise exercise, User user, boolean inClassQuiz) {
         user.hasAcceptedExternalLLMUsageElseThrow();
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.STUDENT, exercise, user);
         irisSettingsService.isEnabledForElseThrow(IrisSubSettingsType.PROMPT_USER, exercise);
@@ -484,8 +515,9 @@ public class IrisExerciseChatSessionService extends AbstractIrisChatSessionServi
 
         var session = getCurrentSessionOrCreateIfNotExistsInternal(exercise, user, false);
         session.setInPromptingModePipeline(true);
+        session.setInClassQuiz(inClassQuiz);
         irisExerciseChatSessionRepository.save(session);
-        irisAssessmentService.resetVerdictAndReasoning(user, exercise);
+        irisAssessmentService.resetVerdictAndReasoning(user, exercise, inClassQuiz);
 
         try {
             // Run async to allow the session to be returned immediately
@@ -499,6 +531,44 @@ public class IrisExerciseChatSessionService extends AbstractIrisChatSessionServi
         }
 
         return session;
+    }
+
+    /**
+     * Starts the instructor-controlled in-class quiz window for an exercise.
+     *
+     * @param exercise the exercise for which the in-class quiz should be made available
+     * @return timer information for the active in-class quiz window
+     */
+    public IrisQuizTimerDTO startInClassQuiz(ProgrammingExercise exercise) {
+        irisSettingsService.isEnabledForElseThrow(IrisSubSettingsType.PROMPT_USER, exercise);
+        checkIfExamExercise(exercise);
+        irisAssessmentService.deleteInClassAssessmentsForExercise(exercise);
+
+        var settings = irisSettingsService.getCombinedIrisSettingsFor(exercise, true).irisPromptUserSettings();
+        var timeLimit = settings.timeLimitInClass() * 60;
+        var expiresAt = ZonedDateTime.now().plusMinutes(settings.timeLimitInClass());
+
+        exercise.setIrisInClassQuizTimer(expiresAt);
+        programmingExerciseRepository.save(exercise);
+        scheduleInClassQuizTimerCleanup(exercise.getId(), expiresAt);
+        irisAssessmentQuizWebsocketService.sendInClassQuizStarted(exercise.getId());
+
+        return new IrisQuizTimerDTO(expiresAt, timeLimit);
+    }
+
+    public IrisQuizTimerDTO getActiveInClassQuiz(ProgrammingExercise exercise) {
+        var expiresAt = exercise.getIrisInClassQuizTimer();
+        if (expiresAt == null) {
+            return null;
+        }
+
+        if (!expiresAt.isAfter(ZonedDateTime.now())) {
+            clearInClassQuizTimer(exercise, expiresAt);
+            return null;
+        }
+
+        var remainingSeconds = Math.max(Duration.between(ZonedDateTime.now(), expiresAt).toSeconds(), 0);
+        return new IrisQuizTimerDTO(expiresAt, Math.toIntExact(remainingSeconds));
     }
 
     /**
@@ -607,5 +677,30 @@ public class IrisExerciseChatSessionService extends AbstractIrisChatSessionServi
         if (future != null) {
             future.cancel(false);
         }
+    }
+
+    private void validateInClassQuizIsActiveOrElseThrow(ProgrammingExercise exercise) {
+        if (getActiveInClassQuiz(exercise) == null) {
+            throw new ConflictException("The in-class quiz timer has expired or is not active", "Iris", "irisInClassQuizExpired");
+        }
+    }
+
+    private void scheduleInClassQuizTimerCleanup(long exerciseId, ZonedDateTime expiresAt) {
+        var previousTimer = inClassQuizTimers.remove(exerciseId);
+        if (previousTimer != null) {
+            previousTimer.cancel(false);
+        }
+
+        var future = taskScheduler.schedule(() -> programmingExerciseRepository.findById(exerciseId).ifPresent(exercise -> clearInClassQuizTimer(exercise, expiresAt)),
+                expiresAt.toInstant());
+        inClassQuizTimers.put(exerciseId, future);
+    }
+
+    private void clearInClassQuizTimer(ProgrammingExercise exercise, ZonedDateTime expectedExpiresAt) {
+        if (Objects.equals(exercise.getIrisInClassQuizTimer(), expectedExpiresAt)) {
+            exercise.setIrisInClassQuizTimer(null);
+            programmingExerciseRepository.save(exercise);
+        }
+        inClassQuizTimers.remove(exercise.getId());
     }
 }

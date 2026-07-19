@@ -5,12 +5,14 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_IRIS;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastInstructorInExercise;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastStudentInExercise;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisSubSettingsType;
 import de.tum.cit.aet.artemis.iris.dto.IrisQuizTimerDTO;
@@ -91,6 +93,72 @@ public class IrisAssessmentQuizResource {
         var user = userRepository.getUserWithGroupsAndAuthorities();
 
         return ResponseEntity.ok(irisExerciseChatSessionService.startTimerForCurrentSession(exercise, user));
+    }
+
+    /**
+     * PATCH programming-exercises/{exerciseId}/assessment-quiz/in-class/start: Starts the instructor-controlled in-class quiz window.
+     *
+     * @param exerciseId of the exercise
+     * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body the corresponding timer data
+     */
+    @PatchMapping("{exerciseId}/assessment-quiz/in-class/start")
+    @EnforceAtLeastInstructorInExercise
+    public ResponseEntity<IrisQuizTimerDTO> startInClassQuiz(@PathVariable Long exerciseId) {
+        var exercise = exerciseRepository.findByIdElseThrow(exerciseId);
+
+        irisSettingsService.isEnabledForElseThrow(IrisSubSettingsType.PROMPT_USER, exercise);
+
+        return ResponseEntity.ok(irisExerciseChatSessionService.startInClassQuiz(exercise));
+    }
+
+    /**
+     * GET programming-exercises/{exerciseId}/assessment-quiz/in-class: Gets the active instructor-controlled in-class quiz window.
+     *
+     * @param exerciseId of the exercise
+     * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body the timer data, or {@code null} if no timer is active
+     */
+    @GetMapping("{exerciseId}/assessment-quiz/in-class")
+    @EnforceAtLeastStudentInExercise
+    public ResponseEntity<IrisQuizTimerDTO> getActiveInClassQuiz(@PathVariable Long exerciseId) {
+        var exercise = exerciseRepository.findByIdElseThrow(exerciseId);
+
+        irisSettingsService.isEnabledForElseThrow(IrisSubSettingsType.PROMPT_USER, exercise);
+
+        return ResponseEntity.ok(irisExerciseChatSessionService.getActiveInClassQuiz(exercise));
+    }
+
+    /**
+     * GET programming-exercises/{exerciseId}/assessment-quiz/latest-submission-has-points: Checks whether the current user's latest submission has points.
+     *
+     * @param exerciseId of the exercise
+     * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and a boolean body
+     */
+    @GetMapping("{exerciseId}/assessment-quiz/latest-submission-has-points")
+    @EnforceAtLeastStudentInExercise
+    public ResponseEntity<Boolean> latestSubmissionHasPoints(@PathVariable Long exerciseId) {
+        var exercise = exerciseRepository.findByIdElseThrow(exerciseId);
+
+        irisSettingsService.isEnabledForElseThrow(IrisSubSettingsType.PROMPT_USER, exercise);
+        var user = userRepository.getUserWithGroupsAndAuthorities();
+
+        return ResponseEntity.ok(irisExerciseChatSessionService.latestSubmissionHasPoints(exercise, user));
+    }
+
+    /**
+     * GET programming-exercises/{exerciseId}/assessment-quiz/in-class/completed: Checks whether the current user already completed the in-class quiz.
+     *
+     * @param exerciseId of the exercise
+     * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and a boolean body
+     */
+    @GetMapping("{exerciseId}/assessment-quiz/in-class/completed")
+    @EnforceAtLeastStudentInExercise
+    public ResponseEntity<Boolean> isInClassQuizAlreadyDone(@PathVariable Long exerciseId) {
+        var exercise = exerciseRepository.findByIdElseThrow(exerciseId);
+
+        irisSettingsService.isEnabledForElseThrow(IrisSubSettingsType.PROMPT_USER, exercise);
+        var user = userRepository.getUserWithGroupsAndAuthorities();
+
+        return ResponseEntity.ok(irisExerciseChatSessionService.isInClassQuizAlreadyDone(exercise, user));
     }
 
     /**

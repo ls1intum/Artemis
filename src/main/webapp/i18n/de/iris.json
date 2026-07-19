@@ -319,10 +319,11 @@
                 "tooltip": "Aktiviere oder deaktiviere Iris für deinen Kurs. Um benutzerdefinierte Anweisungen zu konfigurieren, klicke auf die Schaltfläche 'Konfigurieren'."
             },
             "assessmentAttentionCenter": {
-                "tooltip": "Hier wird gezeigt, ob Bewertungen von Iris überprüft werden müssen. Klicke auf den Knopf, um zur allgemeinen Übersicht der Bewertungen zu gelangen.",
+                "title": "Iris Bewertung",
+                "tooltip": "Hier wird gezeigt, ob Bewertungen von Iris überprüft werden müssen. Klicke auf den Knopf, um zur allgemeinen Übersicht der Bewertungen zu gelangen. Über den Präsenzquiz-Knopf kommst du zur Übersicht, in der du das Präsenzquiz starten und die Ergebnisse einsehen kannst.",
                 "state": {
-                    "needsAttention": "Ausstehende Überprüfung von auffälligen Bewertungen",
-                    "nothingToDo": "Keine auffälligen Bewertungen zu überprüfen"
+                    "needsAttention": "Nicht überprüfte auffällige Bewertungen",
+                    "nothingToDo": "Alle auffälligen Bewertungen überprüft"
                 }
             },
             "chatHistory": {
@@ -418,6 +419,11 @@
                     "detailsLoadFailed": "Fehler beim Laden der Erinnerungsdetails."
                 }
             },
+            "assessmentInClassQuiz": {
+                "open": "Präsenzquiz",
+                "start": "Präsenzquiz starten",
+                "restart": "Präsenzquiz neu starten"
+            },
             "assessmentReviewOverview": {
                 "title": "Iris Bewertungen",
                 "showMissingAssessment": "Fehlende Bewertung",
@@ -425,7 +431,9 @@
                 "showUnsuspicious": "Unauffällig",
                 "showRejected": "Abgelehnt",
                 "showAccepted": "Akzeptiert",
-                "showAll": "Kein Filter"
+                "showAll": "Kein Filter",
+                "nonZeroLatestScoreTooltip": "Es werden nur Aufgaben mit Teilnahmen angezeigt, deren letzte Abgabe eine Punktzahl größer als null erreicht hat.",
+                "inClassQuizTooltip": "Der Präsenzquiz-Knopf startet das Präsenzquiz; teilnehmen können nur Studierende, deren letzte Abgabe Punkte erreicht hat."
             },
             "assessmentReview": {
                 "title": "Iris Bewertungsergebnisse",

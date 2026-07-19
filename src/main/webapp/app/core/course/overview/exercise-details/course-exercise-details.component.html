@@ -54,6 +54,7 @@
                     />
                     @if (exercise.type === PROGRAMMING && !exercise.exerciseGroup && irisSettings?.irisPromptUserSettings?.enabled) {
                         <jhi-start-prompting-button [exercise]="exercise" [smallButtons]="false" [participation]="gradedStudentParticipation" />
+                        <jhi-start-in-class-quiz-button [exercise]="exercise" [smallButtons]="false" [participation]="gradedStudentParticipation" />
                     }
                 </div>
                 <!-- RESULTS START -->

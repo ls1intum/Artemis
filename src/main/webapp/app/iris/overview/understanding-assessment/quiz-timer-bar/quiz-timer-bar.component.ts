@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, effect, input, output, signal } from '@angular/core';
 import { faStopwatch } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import dayjs from 'dayjs/esm';
 
 @Component({
@@ -15,6 +15,7 @@ export class QuizTimerBarComponent {
     timeLimit = input(0);
     timerExpiresAt = input<dayjs.Dayjs>();
     open = input(false);
+    showProgress = input(true);
     readonly timerExpired = output<void>();
 
     protected readonly faStopwatch = faStopwatch;
@@ -24,6 +25,23 @@ export class QuizTimerBarComponent {
     private readonly remainingSeconds = signal<number | undefined>(undefined);
 
     protected readonly displayedRemainingSeconds = computed(() => this.remainingSeconds() ?? this.timeLimit());
+
+    protected readonly displayedRemainingTime = computed(() => {
+        const remainingSeconds = this.displayedRemainingSeconds();
+
+        if (remainingSeconds < 60) {
+            return remainingSeconds.toString();
+        }
+
+        const minutes = Math.floor(remainingSeconds / 60);
+        const seconds = remainingSeconds % 60;
+
+        return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+    });
+
+    protected readonly remainingTimeTranslationKey = computed(() =>
+        this.displayedRemainingSeconds() >= 60 ? 'artemisApp.exerciseChatbot.timeLeft' : 'artemisApp.exerciseChatbot.secondsLeft',
+    );
 
     protected readonly progress = computed(() => {
         const timeLimit = this.timeLimit();

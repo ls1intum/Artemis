@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, ViewEncapsulation, computed, inject, signal } from '@angular/core';
+import { HttpResponse } from '@angular/common/http';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { DataTableComponent } from 'app/shared/data-table/data-table.component';
 import { ActivatedRoute } from '@angular/router';
@@ -7,7 +8,7 @@ import { Observable, catchError, finalize, forkJoin, map, of, switchMap, tap } f
 import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/entities/participation/programming-exercise-student-participation.model';
 import { IrisVerdict, IrisVerdictReview } from 'app/iris/shared/entities/iris-verdict.model';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { faFilter, faSync } from '@fortawesome/free-solid-svg-icons';
+import { faFilter, faQuestionCircle, faSync } from '@fortawesome/free-solid-svg-icons';
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -19,6 +20,7 @@ import { NgxDatatableModule } from '@siemens/ngx-datatable';
 import { MultiSelectModule } from 'primeng/multiselect';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { IrisAssessmentReviewService } from 'app/iris/overview/services/iris-assessment-review.service';
+import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 
 /**
  * Filter properties for a result
@@ -58,6 +60,7 @@ interface FilterOption {
         FormsModule,
         NgxDatatableModule,
         MultiSelectModule,
+        HelpIconComponent,
     ],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -70,6 +73,7 @@ export class IrisAssessmentReviewOverviewComponent {
 
     protected readonly faSync = faSync;
     protected readonly faFilter = faFilter;
+    protected readonly faQuestionCircle = faQuestionCircle;
 
     /**
      * An empty array means that no verdict filter is active, i.e. all participations are shown.
@@ -79,6 +83,9 @@ export class IrisAssessmentReviewOverviewComponent {
     protected readonly searchTerm = signal('');
     protected readonly exercises = signal<ExerciseViewModel[]>([]);
     protected readonly course = toSignal(this.route.data.pipe(map((data) => data['course'] as Course)), { requireSync: true });
+    protected readonly showStartInClassQuizButton = toSignal(this.route.data.pipe(map((data) => !!data['showStartInClassQuizButton'])), {
+        requireSync: true,
+    });
     protected readonly isLoading = signal(true);
 
     private readonly normalizedSearchTerm = computed(() => this.searchTerm().trim().toLowerCase());
@@ -160,9 +167,9 @@ export class IrisAssessmentReviewOverviewComponent {
                 map((results) => results.filter((result) => result.enabled).map((result) => result.exercise as ProgrammingExercise)),
                 switchMap((exercises) => {
                     const participationRequests = exercises.map((exercise) =>
-                        this.assessmentReviewService
-                            .findAllParticipationsNonZeroLatestScoreByProgrammingExercise(exercise.id!)
-                            .pipe(map((response) => this.createExerciseViewModel(exercise, response.body ?? []))),
+                        this.findAllParticipationsNonZeroLatestScoreByProgrammingExercise(exercise.id!).pipe(
+                            map((response) => this.createExerciseViewModel(exercise, response.body ?? [])),
+                        ),
                     );
 
                     return participationRequests.length > 0 ? forkJoin(participationRequests) : of([]);
@@ -188,9 +195,9 @@ export class IrisAssessmentReviewOverviewComponent {
         this.isLoading.set(true);
 
         const requests = this.exercises().map((viewModel) =>
-            this.assessmentReviewService
-                .findAllParticipationsNonZeroLatestScoreByProgrammingExercise(viewModel.exercise.id!)
-                .pipe(map((response) => this.createExerciseViewModel(viewModel.exercise, response.body ?? []))),
+            this.findAllParticipationsNonZeroLatestScoreByProgrammingExercise(viewModel.exercise.id!).pipe(
+                map((response) => this.createExerciseViewModel(viewModel.exercise, response.body ?? [])),
+            ),
         );
 
         (requests.length > 0 ? forkJoin(requests) : of([])).pipe(finalize(() => this.isLoading.set(false))).subscribe((exercises) => this.exercises.set(exercises));
@@ -203,6 +210,10 @@ export class IrisAssessmentReviewOverviewComponent {
             participations,
             searchedAndFilteredParticipations: participations,
         };
+    }
+
+    private findAllParticipationsNonZeroLatestScoreByProgrammingExercise(exerciseId: number): Observable<HttpResponse<ProgrammingExerciseStudentParticipation[]>> {
+        return this.assessmentReviewService.findAllParticipationsNonZeroLatestScoreByProgrammingExercise(exerciseId, this.showStartInClassQuizButton());
     }
 
     private filterParticipationBySelectedFilters(participation: ProgrammingExerciseStudentParticipation, filters: readonly FilterProp[]): boolean {

@@ -67,7 +67,8 @@
             }
             },
             "onlyPromptingEnabled": "Exercise Chat ist deaktiviert. Ich überprüfe nur dein Verständnis."
-            "secondsLeft": "Sekunden übrig"
+            "secondsLeft": "Sekunden übrig",
+            "timeLeft": "übrig"
         }
     }
 }

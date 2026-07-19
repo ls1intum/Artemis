@@ -27,6 +27,9 @@ public interface IrisAssessmentRepository extends ArtemisJpaRepository<IrisAsses
     @EntityGraph(type = LOAD, attributePaths = { "reasoning" })
     Optional<IrisAssessment> findWithReasoningByExerciseIdAndStudentId(long exerciseId, long studentId);
 
+    @EntityGraph(type = LOAD, attributePaths = { "reasoning" })
+    Optional<IrisAssessment> findWithReasoningById(long id);
+
     default IrisAssessment findWithReasoningAndExerciseAndCourseByIdElseThrow(long participationId) {
         return getValueElseThrow(findWithReasoningAndExerciseAndCourseById(participationId), participationId);
     }

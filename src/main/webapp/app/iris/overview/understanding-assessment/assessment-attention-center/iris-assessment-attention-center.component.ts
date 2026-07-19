@@ -5,7 +5,7 @@ import { combineLatest, of } from 'rxjs';
 import { catchError, map, switchMap } from 'rxjs/operators';
 import { Course } from 'app/course/shared/entities/course.model';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
-import { faBrain } from '@fortawesome/free-solid-svg-icons';
+import { faBrain, faListAlt } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { CardWrapperComponent } from 'app/shared-ui/card-wrapper/card-wrapper.component';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
@@ -22,6 +22,7 @@ import { ButtonComponent, ButtonSize, ButtonType } from 'app/shared-ui/component
 })
 export class IrisAssessmentAttentionCenterComponent {
     protected readonly faBrain = faBrain;
+    protected readonly faListAlt = faListAlt;
 
     course = input.required<Course>();
     assessmentEnabled = input.required<boolean>();
@@ -29,6 +30,7 @@ export class IrisAssessmentAttentionCenterComponent {
     private courseManagementService = inject(CourseManagementService);
 
     protected readonly reviewLink = computed(() => ['/course-management', this.course().id, 'iris-assessment']);
+    protected readonly inClassQuizLink = computed(() => ['/course-management', this.course().id, 'iris-assessment-in-class']);
 
     protected readonly needsAttention = toSignal(
         combineLatest([toObservable(this.course), toObservable(this.assessmentEnabled)]).pipe(

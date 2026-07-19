@@ -205,7 +205,11 @@ public interface ProgrammingExerciseStudentParticipationRepository extends Artem
     Optional<ProgrammingExerciseStudentParticipation> findWithTeamStudentsById(long participationId);
 
     @EntityGraph(attributePaths = { "submissions", "submissions.results", "student", "irisAssessment" })
-    List<ProgrammingExerciseStudentParticipation> findAllWithEagerSubmissionsAndEagerResultsAndEagerStudentAndEagerAssessmentByExerciseId(@Param("exerciseId") long exerciseId);
+    Set<ProgrammingExerciseStudentParticipation> findAllWithEagerSubmissionsAndEagerResultsAndEagerStudentAndEagerAssessmentByExerciseId(@Param("exerciseId") long exerciseId);
+
+    @EntityGraph(attributePaths = { "submissions", "submissions.results", "student", "irisAssessmentInClass" })
+    Set<ProgrammingExerciseStudentParticipation> findAllWithEagerSubmissionsAndEagerResultsAndEagerStudentAndEagerAssessmentInClassByExerciseId(
+            @Param("exerciseId") long exerciseId);
 
     default Optional<ProgrammingExerciseStudentParticipation> findByIdWithAllResultsAndRelatedSubmissions(long participationId) {
         return findByIdWithAllResultsAndRelatedSubmissions(participationId, ZonedDateTime.now());

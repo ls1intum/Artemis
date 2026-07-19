@@ -3,12 +3,14 @@ package de.tum.cit.aet.artemis.iris.service;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_IRIS;
 
 import java.util.ArrayList;
+import java.util.Objects;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.cit.aet.artemis.assessment.repository.StudentScoreRepository;
 import de.tum.cit.aet.artemis.core.domain.Course;
@@ -29,6 +31,7 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.PyrisChatStatusUpdateD
 import de.tum.cit.aet.artemis.iris.service.pyris.job.TrackedSessionBasedPyrisJob;
 import de.tum.cit.aet.artemis.iris.service.session.IrisUnsupportedExerciseTypeException;
 import de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseStudentParticipationRepository;
@@ -74,7 +77,11 @@ public class IrisAssessmentService {
     }
 
     public void saveAndHandleVerdict(User user, Exercise exercise, IrisVerdictDTO verdictDTO) {
-        IrisAssessment assessment = irisAssessmentRepository.findWithReasoningByExerciseIdAndStudentId(exercise.getId(), user.getId()).orElseThrow();
+        saveAndHandleVerdict(user, exercise, verdictDTO, false);
+    }
+
+    public void saveAndHandleVerdict(User user, Exercise exercise, IrisVerdictDTO verdictDTO, boolean inClass) {
+        IrisAssessment assessment = findOrCreateAssessment(user, exercise, inClass, true);
 
         assessment.setVerdict(verdictDTO.verdict());
         addReasoningInternal(assessment, verdictDTO.reasoning());
@@ -85,7 +92,11 @@ public class IrisAssessmentService {
     }
 
     public void addReasoning(User user, Exercise exercise, String reasoning) {
-        IrisAssessment assessment = irisAssessmentRepository.findWithReasoningByExerciseIdAndStudentId(exercise.getId(), user.getId()).orElseThrow();
+        addReasoning(user, exercise, reasoning, false);
+    }
+
+    public void addReasoning(User user, Exercise exercise, String reasoning, boolean inClass) {
+        IrisAssessment assessment = findOrCreateAssessment(user, exercise, inClass, true);
         addReasoningInternal(assessment, reasoning);
         irisAssessmentRepository.save(assessment);
     }
@@ -104,7 +115,11 @@ public class IrisAssessmentService {
     }
 
     public void resetVerdictAndReasoning(User user, Exercise exercise) {
-        IrisAssessment assessment = irisAssessmentRepository.findByExerciseIdAndStudentId(exercise.getId(), user.getId()).orElseThrow();
+        resetVerdictAndReasoning(user, exercise, false);
+    }
+
+    public void resetVerdictAndReasoning(User user, Exercise exercise, boolean inClass) {
+        IrisAssessment assessment = findOrCreateAssessment(user, exercise, inClass, false);
 
         assessment.setVerdict(null);
         assessment.setReasoning(new ArrayList<>());
@@ -152,7 +167,11 @@ public class IrisAssessmentService {
     }
 
     public void saveNewLastEvent(String event, User user, Exercise exercise) {
-        IrisAssessment assessment = irisAssessmentRepository.findByExerciseIdAndStudentId(exercise.getId(), user.getId()).orElseThrow();
+        saveNewLastEvent(event, user, exercise, false);
+    }
+
+    public void saveNewLastEvent(String event, User user, Exercise exercise, boolean inClass) {
+        IrisAssessment assessment = findOrCreateAssessment(user, exercise, inClass, false);
         assessment.setLastEvent(IrisPipeEvent.valueOf(event));
         irisAssessmentRepository.save(assessment);
 
@@ -172,19 +191,21 @@ public class IrisAssessmentService {
             throw new IrisUnsupportedExerciseTypeException("Iris is not supported for exam exercises");
         }
 
-        saveNewLastEvent(statusUpdate.event(), user, exercise);
+        var inClassQuiz = session.isInClassQuiz();
+        saveNewLastEvent(statusUpdate.event(), user, exercise, inClassQuiz);
 
         switch (IrisPipeEvent.valueOf(statusUpdate.event())) {
             case IrisPipeEvent.PROMPTING_FINISHED:
                 irisSettingsService.isEnabledForElseThrow(IrisSubSettingsType.PROMPT_USER, exercise);
                 session.setInPromptingModePipeline(false);
+                session.setInClassQuiz(false);
                 irisExerciseChatSessionRepository.save(session);
 
                 try {
                     if (statusUpdate.verdict() == null) {
                         throw new Error("Prompting finished without verdict");
                     }
-                    saveAndHandleVerdict(user, exercise, statusUpdate.verdict());
+                    saveAndHandleVerdict(user, exercise, statusUpdate.verdict(), inClassQuiz);
                 }
                 catch (Exception e) {
                     log.error("Error while processing prompting mode verdict and reasoning {}", statusUpdate.verdict(), e);
@@ -196,7 +217,7 @@ public class IrisAssessmentService {
                     if (statusUpdate.verdict() == null) {
                         throw new Error("Answer has no verdict");
                     }
-                    addReasoning(user, exercise, statusUpdate.verdict().reasoning());
+                    addReasoning(user, exercise, statusUpdate.verdict().reasoning(), inClassQuiz);
 
                     session.setQuestionsAsked(session.getQuestionsAsked() + 1);
                     irisExerciseChatSessionRepository.save(session);
@@ -222,15 +243,54 @@ public class IrisAssessmentService {
     }
 
     public IrisAssessment createNewAssessment(ProgrammingExerciseStudentParticipation participation) {
+        return createNewAssessment(participation, false);
+    }
+
+    public IrisAssessment createNewAssessment(ProgrammingExerciseStudentParticipation participation, boolean inClass) {
         var student = participation.getStudent().orElseThrow();
         var exercise = participation.getExercise();
 
         var newAssessment = irisAssessmentRepository.save(new IrisAssessment(student, exercise));
 
-        participation.setIrisAssessment(newAssessment);
+        if (inClass) {
+            participation.setIrisAssessmentInClass(newAssessment);
+        }
+        else {
+            participation.setIrisAssessment(newAssessment);
+        }
         programmingExerciseStudentParticipationRepository.save(participation);
 
         return newAssessment;
 
+    }
+
+    @Transactional
+    public void deleteInClassAssessmentsForExercise(ProgrammingExercise exercise) {
+        var participations = programmingExerciseStudentParticipationRepository
+                .findAllWithEagerSubmissionsAndEagerResultsAndEagerStudentAndEagerAssessmentInClassByExerciseId(exercise.getId());
+        var assessments = participations.stream().map(ProgrammingExerciseStudentParticipation::getIrisAssessmentInClass).filter(Objects::nonNull).toList();
+
+        if (assessments.isEmpty()) {
+            return;
+        }
+
+        participations.forEach(participation -> participation.setIrisAssessmentInClass(null));
+        programmingExerciseStudentParticipationRepository.saveAll(participations);
+        irisAssessmentRepository.deleteAll(assessments);
+    }
+
+    private IrisAssessment findOrCreateAssessment(User user, Exercise exercise, boolean inClass, boolean withReasoning) {
+        var participation = programmingExerciseStudentParticipationRepository.findByExerciseIdAndStudentLogin(exercise.getId(), user.getLogin()).orElseThrow();
+        var assessment = inClass ? participation.getIrisAssessmentInClass() : participation.getIrisAssessment();
+
+        if (assessment == null) {
+            return createNewAssessment(participation, inClass);
+        }
+
+        if (withReasoning) {
+            return irisAssessmentRepository.findWithReasoningById(assessment.getId()).orElseThrow();
+        }
+
+        return assessment;
     }
 }

@@ -1,16 +1,26 @@
 @if (course().isAtLeastInstructor && this.assessmentEnabled()) {
-    <jhi-card-wrapper title="entity.assessmentAttentionCenter">
+    <jhi-card-wrapper title="artemisApp.iris.assessmentAttentionCenter.title">
         <div class="d-flex justify-content-center align-items-center mt-n1 pt-2 pb-1 mb-3">
             <fa-icon [icon]="faBrain" class="me-2" size="lg" />
 
             <jhi-help-icon text="artemisApp.iris.assessmentAttentionCenter.tooltip" class="ms-1" />
         </div>
-        <jhi-button
-            [btnType]="needsAttention() ? ButtonType.ERROR : ButtonType.SUCCESS"
-            [btnSize]="ButtonSize.MEDIUM"
-            [title]="needsAttention() ? 'artemisApp.iris.assessmentAttentionCenter.state.needsAttention' : 'artemisApp.iris.assessmentAttentionCenter.state.nothingToDo'"
-            [routerLink]="reviewLink()"
-            [jhiFeatureToggle]="FeatureToggle.PromptingMode"
-        />
+        <div class="d-flex flex-wrap justify-content-center gap-2">
+            <jhi-button
+                [btnType]="needsAttention() ? ButtonType.ERROR : ButtonType.SUCCESS"
+                [btnSize]="ButtonSize.MEDIUM"
+                [title]="needsAttention() ? 'artemisApp.iris.assessmentAttentionCenter.state.needsAttention' : 'artemisApp.iris.assessmentAttentionCenter.state.nothingToDo'"
+                [routerLink]="reviewLink()"
+                [jhiFeatureToggle]="FeatureToggle.PromptingMode"
+            />
+            <jhi-button
+                [btnType]="ButtonType.PRIMARY"
+                [btnSize]="ButtonSize.MEDIUM"
+                [title]="'artemisApp.iris.assessmentInClassQuiz.open'"
+                [icon]="faListAlt"
+                [routerLink]="inClassQuizLink()"
+                [jhiFeatureToggle]="FeatureToggle.PromptingMode"
+            />
+        </div>
     </jhi-card-wrapper>
 }

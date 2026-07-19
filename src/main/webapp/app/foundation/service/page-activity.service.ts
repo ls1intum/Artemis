@@ -8,6 +8,7 @@ export class PageActivityService {
 
     readonly pageLeaving$: Observable<void> = merge(
         fromEvent(document, 'visibilitychange').pipe(filter(() => document.visibilityState === 'hidden')),
+        fromEvent(window, 'blur'),
         fromEvent(window, 'pagehide'),
         this.router.events.pipe(filter((event) => event instanceof NavigationStart)),
     ).pipe(

@@ -51,4 +51,20 @@
         border-top-width: 1px;
         opacity: 1;
     }
+
+    &.compact {
+        display: inline-flex;
+        align-items: center;
+        background: transparent;
+
+        .display {
+            max-height: none;
+            min-height: auto;
+            padding: 0;
+        }
+
+        &.open {
+            border-top-width: 0;
+        }
+    }
 }

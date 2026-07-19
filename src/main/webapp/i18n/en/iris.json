@@ -319,10 +319,11 @@
                 "tooltip": "Enable or disable Iris for your course. To configure custom instructions, click the configure button."
             },
             "assessmentAttentionCenter": {
-                "tooltip": "Here is shown whether there are any Iris-Assessments to inspect. Click on the button to get to the general overview of assessments.",
+                "title": "Iris Assessment",
+                "tooltip": "Here is shown whether there are any Iris-Assessments to inspect. Click on the button to get to the general overview of assessments. Use the in-class quiz button to open the overview where you can start the in-class quiz and inspect the results.",
                 "state": {
-                    "needsAttention": "Suspicious results need reviews",
-                    "nothingToDo": "No suspicious results to inspect"
+                    "needsAttention": "Unreviewed Suspicious results",
+                    "nothingToDo": "All suspicious results reviewed"
                 }
             },
             "chatHistory": {
@@ -418,6 +419,11 @@
                     "detailsLoadFailed": "Failed to load memory details."
                 }
             },
+            "assessmentInClassQuiz": {
+                "open": "In-class quiz",
+                "start": "Start in-class quiz",
+                "restart": "Restart in-class quiz"
+            },
             "assessmentReviewOverview": {
                 "title": "Iris Assessments",
                 "showMissingAssessment": "Missing assessment",
@@ -425,7 +431,9 @@
                 "showUnsuspicious": "Unsuspicious",
                 "showRejected": "Rejected",
                 "showAccepted": "Accepted",
-                "showAll": "No filter"
+                "showAll": "No filter",
+                "nonZeroLatestScoreTooltip": "Only exercises with participations whose latest submission achieved a score greater than zero are shown.",
+                "inClassQuizTooltip": "The in-class quiz button starts the in-class quiz; only participants whose latest submission achieved points can take part."
             },
             "assessmentReview": {
                 "title": "Iris Assessment Results",

@@ -361,7 +361,6 @@
         "actions": "Actions",
         "quickActions": "Quick Actions",
         "controlCenter": "Control Center",
-        "assessmentAttentionCenter": "Iris Assessment Results",
         "action": {
             "add": "Add",
             "addblob": "Add blob",

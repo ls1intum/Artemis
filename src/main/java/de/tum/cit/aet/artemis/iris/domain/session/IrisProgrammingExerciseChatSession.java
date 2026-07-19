@@ -27,6 +27,10 @@ public class IrisProgrammingExerciseChatSession extends IrisChatSession {
     private boolean inPromptingModePipeline = false;
 
     @JsonIgnore
+    @Column(name = "in_class_quiz")
+    private boolean inClassQuiz = false;
+
+    @JsonIgnore
     @Column(name = "questions_asked")
     private int questionsAsked = 0;
 
@@ -62,6 +66,14 @@ public class IrisProgrammingExerciseChatSession extends IrisChatSession {
 
     public void setInPromptingModePipeline(boolean inPromptingModePipeline) {
         this.inPromptingModePipeline = inPromptingModePipeline;
+    }
+
+    public boolean isInClassQuiz() {
+        return inClassQuiz;
+    }
+
+    public void setInClassQuiz(boolean inClassQuiz) {
+        this.inClassQuiz = inClassQuiz;
     }
 
     public int getQuestionsAsked() {

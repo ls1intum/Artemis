@@ -5,6 +5,24 @@
 
     @if (!exercise().exerciseGroup) {
         <div class="d-flex gap-2 ms-auto">
+            @if (showStartInClassQuizButton()) {
+                <span class="d-inline-flex align-items-center gap-1">
+                    @if (activeInClassQuiz(); as inClassQuiz) {
+                        <jhi-quiz-timer-bar
+                            [open]="true"
+                            [timeLimit]="inClassQuiz.timeLimit"
+                            [timerExpiresAt]="inClassQuiz.timerExpiresAt"
+                            [showProgress]="false"
+                            (timerExpired)="handleInClassQuizTimerExpired()"
+                        />
+                    }
+                    <jhi-help-icon text="artemisApp.iris.assessmentReviewOverview.inClassQuizTooltip" class="ms-1" />
+                    <button class="btn btn-primary btn-sm" type="button" (click)="startInClassQuiz()">
+                        <fa-icon [icon]="faBrain" />
+                        <span class="d-none d-md-inline" [jhiTranslate]="inClassQuizButtonLabel()"></span>
+                    </button>
+                </span>
+            }
             <a [routerLink]="['/course-management', course().id, exercise().type + '-exercises', exercise().id, 'participations']" class="btn btn-primary btn-sm">
                 <fa-icon [icon]="faListAlt" />
                 <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.participations"></span>

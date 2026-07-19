@@ -77,6 +77,25 @@ public class IrisPromptingModeResource {
     }
 
     /**
+     * PATCH programming-exercises/{exerciseId}/sessions/current/prompting/in-class: Activates in-class prompting mode in the current Iris session for the programming exercise.
+     *
+     * @param exerciseId of the exercise
+     * @return the {@link ResponseEntity} with status {@code 200 (Ok)} or {@code 409 (Conflict)} if the in-class quiz timer is not active anymore
+     */
+    @PatchMapping("programming-exercises/{exerciseId}/sessions/current/prompting/in-class")
+    @EnforceAtLeastStudentInExercise
+    public ResponseEntity<Void> startInClassPromptingModeForCurrentSession(@PathVariable Long exerciseId) {
+        var exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
+        ProgrammingExercise programmingExercise = validateExercise(exercise);
+
+        irisSettingsService.isEnabledForElseThrow(IrisSubSettingsType.PROMPT_USER, exercise);
+        var user = userRepository.getUserWithGroupsAndAuthorities();
+
+        irisExerciseChatSessionService.startInClassPromptingModeForCurrentSession(programmingExercise, user);
+        return ResponseEntity.ok().build();
+    }
+
+    /**
      * GET participations/{participationId}/latest-event: Gets the latest Iris pipeline event for the assessment of a participation.
      *
      * @param participationId of the participation

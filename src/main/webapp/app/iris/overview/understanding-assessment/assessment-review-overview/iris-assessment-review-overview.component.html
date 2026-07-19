@@ -41,10 +41,11 @@
                 </p-multiselect>
             </div>
         </div>
+        <jhi-help-icon text="artemisApp.iris.assessmentReviewOverview.nonZeroLatestScoreTooltip" class="ms-1" />
     </div>
 
     <div class="p-2">
-        <div class="button-toolbar">
+        <div class="button-toolbar d-flex align-items-center gap-2">
             <button class="btn btn-primary btn-sm" (click)="refresh()">
                 <fa-icon [icon]="faSync" />
                 <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.refresh"></span>
@@ -92,6 +93,7 @@
                             [participations]="value.searchedAndFilteredParticipations"
                             [course]="course()"
                             [isLoading]="isLoading()"
+                            [showStartInClassQuizButton]="showStartInClassQuizButton()"
                             (refresh)="refresh()"
                         />
                     }

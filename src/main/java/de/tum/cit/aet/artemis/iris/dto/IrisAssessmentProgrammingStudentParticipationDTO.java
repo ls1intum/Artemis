@@ -17,16 +17,17 @@ public record IrisAssessmentProgrammingStudentParticipationDTO(Long id, Integer 
         StudentIrisAssessmentDTO student, IrisAssessmentForParticipationDTO irisAssessment) implements Serializable {
 
     @Nullable
-    public static IrisAssessmentProgrammingStudentParticipationDTO of(ProgrammingExerciseStudentParticipation participation, @Nullable String buildPlanUrl) {
+    public static IrisAssessmentProgrammingStudentParticipationDTO of(ProgrammingExerciseStudentParticipation participation, boolean inClass, @Nullable String buildPlanUrl) {
         return Optional.ofNullable(participation)
                 .map(value -> new IrisAssessmentProgrammingStudentParticipationDTO(value.getId(), value.getSubmissionCount(), value.getRepositoryUri(), value.getBuildPlanId(),
-                        buildPlanUrl, StudentIrisAssessmentDTO.of(value.getStudent().orElse(null)), IrisAssessmentForParticipationDTO.of(value.getIrisAssessment())))
+                        buildPlanUrl, StudentIrisAssessmentDTO.of(value.getStudent().orElse(null)),
+                        IrisAssessmentForParticipationDTO.of(inClass ? value.getIrisAssessmentInClass() : value.getIrisAssessment())))
                 .orElse(null);
     }
 
     @Nullable
-    public static IrisAssessmentProgrammingStudentParticipationDTO of(ProgrammingExerciseStudentParticipation participation) {
-        return of(participation, null);
+    public static IrisAssessmentProgrammingStudentParticipationDTO of(ProgrammingExerciseStudentParticipation participation, boolean inClass) {
+        return of(participation, inClass, null);
     }
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)

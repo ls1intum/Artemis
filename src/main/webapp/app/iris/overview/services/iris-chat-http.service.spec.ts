@@ -98,6 +98,18 @@ describe('IrisChatHttpService', () => {
             req.flush(returnedFromService);
         });
 
+        it('should start in-class prompting mode', fakeAsync(() => {
+            service
+                .startInClassPromptingMode(ChatServiceMode.PROGRAMMING_EXERCISE + '/' + irisExercise.id!)
+                .pipe(take(1))
+                .subscribe((resp) => expect(resp.body).toBeNull());
+
+            const req = httpMock.expectOne(`api/iris/programming-exercises/${irisExercise.id}/sessions/current/prompting/in-class`);
+            expect(req.request.method).toBe('PATCH');
+            req.flush(null);
+            tick();
+        }));
+
         afterEach(() => {
             httpMock.verify();
         });

@@ -172,6 +172,14 @@ export class IrisChatHttpService {
         return this.httpClient.patch<IrisSessionDTO>(`${this.apiPrefix}/programming-exercises/${exerciseId}/sessions/current/prompting`, null, { observe: 'response' });
     }
 
+    startInClassPromptingMode(identifier: string): Response<void> {
+        const exerciseId = identifier.split('/').pop();
+        if (!exerciseId) {
+            throw new Error('Exercise id is missing from the session identifier');
+        }
+        return this.httpClient.patch<void>(`${this.apiPrefix}/programming-exercises/${exerciseId}/sessions/current/prompting/in-class`, null, { observe: 'response' });
+    }
+
     getLatestEvent(participationId: number): Observable<IrisPipeEventDTO> {
         return this.httpClient.get<IrisPipeEventDTO>(`${this.apiPrefix}/participations/${participationId}/latest-event`);
     }
