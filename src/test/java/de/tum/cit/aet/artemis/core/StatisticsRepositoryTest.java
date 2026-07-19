@@ -27,6 +27,7 @@ import de.tum.cit.aet.artemis.admin.dto.StatisticsEntry;
 import de.tum.cit.aet.artemis.admin.repository.PersistenceAuditEventRepository;
 import de.tum.cit.aet.artemis.admin.repository.StatisticsRepository;
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
+import de.tum.cit.aet.artemis.assessment.domain.ExampleSubmission;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.test_repository.ResultTestRepository;
 import de.tum.cit.aet.artemis.core.config.audit.AuditEventConstants;
@@ -34,6 +35,7 @@ import de.tum.cit.aet.artemis.core.domain.SpanType;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
+import de.tum.cit.aet.artemis.exercise.service.SubmissionService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.domain.TextSubmission;
@@ -63,6 +65,9 @@ class StatisticsRepositoryTest extends AbstractSpringIntegrationIndependentTest 
 
     @Autowired
     private ResultTestRepository resultTestRepository;
+
+    @Autowired
+    private SubmissionService submissionService;
 
     private ZonedDateTime startDate;
 
@@ -161,18 +166,19 @@ class StatisticsRepositoryTest extends AbstractSpringIntegrationIndependentTest 
         var now = ZonedDateTime.now();
         var completionDate = now.minusMinutes(30);
 
-        // a normal result for the exercise -> must be counted
+        // a normal (student-participation-backed) result -> must be counted
         var normalSubmission = new TextSubmission();
         normalSubmission.setSubmissionDate(now.minusHours(1));
         var savedNormalSubmission = participationUtilService.addSubmission(exercise, normalSubmission, TEST_PREFIX + "student1");
         participationUtilService.addResultToSubmission(AssessmentType.MANUAL, completionDate, savedNormalSubmission);
 
-        // an example result for the same exercise -> must be excluded
-        var exampleSubmission = new TextSubmission();
-        exampleSubmission.setSubmissionDate(now.minusHours(1));
-        var savedExampleSubmission = participationUtilService.addSubmission(exercise, exampleSubmission, TEST_PREFIX + "student1");
-        Result exampleResult = participationUtilService.addResultToSubmission(AssessmentType.MANUAL, completionDate, savedExampleSubmission);
+        // a real example submission has no participation; its flagged result must be excluded, exactly as the previous
+        // submission -> participation -> exercise join excluded it
+        ExampleSubmission exampleSubmission = participationUtilService.addExampleSubmission(participationUtilService.generateExampleSubmission("example text", exercise, true));
+        assertThat(exampleSubmission.getSubmission().getParticipation()).as("example submissions have no participation").isNull();
+        Result exampleResult = submissionService.saveNewEmptyResult(exampleSubmission.getSubmission(), exercise.getId());
         exampleResult.setExampleResult(true);
+        exampleResult.setCompletionDate(completionDate);
         resultTestRepository.save(exampleResult);
 
         List<StatisticsEntry> createdResults = statisticsRepository.getCreatedResultsForCourse(now.minusDays(1), now.plusDays(1), List.of(exercise.getId()));
