@@ -171,6 +171,10 @@ jobs:
       # upload`); `build-war` itself runs read-only. `packages: write` is for the GHCR push.
       contents: write
       packages: write
+      # Ceiling for chunk-eager-quality: `pull-requests: write` to post/update its PR comment,
+      # `actions: read` to resolve and download develop's report artifact from another run.
+      pull-requests: write
+      actions: read
     with:
       commit_sha: ${{ github.event.pull_request.head.sha || github.sha }}
       is_pr: ${{ github.event_name == 'pull_request' }}
@@ -180,6 +184,7 @@ jobs:
       # tag case is covered by the `release` event rather than a `push: refs/tags/*` arm.
       is_release_build: ${{ github.event_name == 'release' || (github.event_name == 'push' && (github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/heads/release/'))) }}
       release_tag: ${{ github.event.release.tag_name || '' }}
+      pr_number: ${{ github.event.pull_request.number || 0 }}
 
   test:
     name: Test

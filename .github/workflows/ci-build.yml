@@ -27,6 +27,10 @@ on:
         description: 'Tag name of the release. Empty when is_release is false.'
         required: true
         type: string
+      pr_number:
+        description: 'PR number for chunk-eager-quality''s comment posting; 0 when not a PR (matches ci-e2e.yml''s convention).'
+        required: true
+        type: number
 
 # Default-deny at workflow level; each job grants only what it needs.
 permissions: {}
@@ -83,7 +87,17 @@ jobs:
         # output directory, anything written there before Gradle even starts would be wiped again
         # before the first task runs. build/webapp-dist is not declared as any task's output, so
         # it survives; the `webapp` Gradle task picks it up from there.
-        run: pnpm run clean-www && pnpm run prebuild && pnpm exec ng build --configuration production --optimization=false && mv build/resources/main/static build/webapp-dist
+        run: pnpm run clean-www && pnpm run prebuild && pnpm exec ng build --configuration production --optimization=false --stats-json && mv build/resources/main/static build/webapp-dist
+      - name: Generate eager-chunk loading report
+        # Feeds the chunk-eager-quality job below (PR runs) and, on develop pushes, becomes the
+        # next baseline that PR runs compare against. See supporting_scripts/chunk-eager-loading/README.md.
+        run: node supporting_scripts/chunk-eager-loading/analyze_eager_chunks.mjs build/webapp-dist/stats.json --out chunk-eager-report.json
+      - name: Upload eager-chunk report artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: chunk-eager-report
+          path: chunk-eager-report.json
+          if-no-files-found: error
       - name: Build .war
         # SBOM generation (cdxgen + cyclonedxBom) adds ~60s to a cold WAR build and is only
         # needed for release-eligible artifacts, so `-Psbom` is gated behind `is_release_build`
@@ -138,6 +152,132 @@ jobs:
           name: Artemis.war
           path: build/libs/Artemis-*.war
           if-no-files-found: error
+
+  # Compares this PR's eager-chunk report (uploaded by build-war above) against the latest report
+  # published by a develop push, and posts/updates a PR comment with the result. No dedicated
+  # build: reuses build-war's own build, and develop's side is whatever the last develop push
+  # already computed (see the "Generate eager-chunk loading report" step above), not rebuilt here.
+  # Advisory only (never fails the job) -- this is a brand-new, unproven check; see
+  # supporting_scripts/chunk-eager-loading/README.md before making it build-blocking.
+  chunk-eager-quality:
+    name: Client Eager-Chunk Loading Report
+    needs: build-war
+    if: ${{ inputs.is_pr }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      pull-requests: write
+      actions: read
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ inputs.commit_sha }}
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '${{ env.node }}'
+      - name: Download this PR's report
+        uses: actions/download-artifact@v8
+        with:
+          name: chunk-eager-report
+          path: pr-report
+      - name: Resolve develop's latest commit
+        id: develop-sha
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -Eeuo pipefail
+          sha=$(gh api "repos/${{ github.repository }}/commits/develop" --jq .sha)
+          echo "sha=${sha}" >> "$GITHUB_OUTPUT"
+      - name: Resolve develop's report run
+        id: resolve-develop-run
+        # Bootstraps false on the very first run of this check (before this PR has ever merged,
+        # no develop push has published a chunk-eager-report yet) -- don't fail the job over it,
+        # just skip the comparison. Self-resolves once this PR merges and develop rebuilds once.
+        continue-on-error: true
+        uses: ./.github/actions/resolve-artifact-run
+        with:
+          workflow: ci.yml
+          sha: ${{ steps.develop-sha.outputs.sha }}
+          artifact-name: chunk-eager-report
+          branch: develop
+          token: ${{ github.token }}
+      - name: Download develop's report
+        if: steps.resolve-develop-run.outcome == 'success'
+        uses: actions/download-artifact@v8
+        with:
+          name: chunk-eager-report
+          path: develop-report
+          run-id: ${{ steps.resolve-develop-run.outputs.run-id }}
+          github-token: ${{ github.token }}
+      - name: Diff against develop
+        if: steps.resolve-develop-run.outcome == 'success'
+        id: diff
+        # diff_eager_chunks.mjs exits 1 when it finds a regression -- that's an expected,
+        # meaningful outcome (advisory reporting, not a merge gate), not a step failure. Without
+        # this, a *detected* regression would fail this step and skip every step after it
+        # (their `if:` conditions are implicitly ANDed with success()) -- silencing the comment
+        # exactly when there's something to report.
+        continue-on-error: true
+        run: |
+          node supporting_scripts/chunk-eager-loading/diff_eager_chunks.mjs \
+            pr-report/chunk-eager-report.json \
+            --baseline develop-report/chunk-eager-report.json \
+            --out chunk-diff-report.md
+      - name: Find existing PR comment
+        if: steps.resolve-develop-run.outcome == 'success'
+        id: find-comment
+        continue-on-error: true  # cosmetic lookup; a transient API blip must not fail the job
+        uses: actions/github-script@v9
+        env:
+          PR_NUMBER: ${{ inputs.pr_number }}
+        with:
+          result-encoding: string
+          script: |
+            const prNumber = Number(process.env.PR_NUMBER);
+            const marker = '<!-- Chunk Eager-Loading Report -->';
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: prNumber,
+              per_page: 100,
+            });
+            const found = comments.find((c) => c.body && c.body.includes(marker));
+            return found ? String(found.id) : '';
+      - name: Post eager-chunk report comment
+        if: steps.resolve-develop-run.outcome == 'success'
+        uses: actions/github-script@v9
+        continue-on-error: true  # cosmetic PR comment; must not fail the job over an API blip
+        env:
+          PR_NUMBER: ${{ inputs.pr_number }}
+          EXISTING_COMMENT_ID: ${{ steps.find-comment.outputs.result }}
+        with:
+          script: |
+            const fs = require('fs');
+            const prNumber = Number(process.env.PR_NUMBER);
+            const existingCommentId = Number(process.env.EXISTING_COMMENT_ID) || null;
+
+            let body;
+            try {
+              body = fs.readFileSync('chunk-diff-report.md', 'utf8');
+            } catch {
+              return;
+            }
+            body += `\n\n🔗 [Workflow Run](${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId})`;
+            body += `\n<!-- Chunk Eager-Loading Report -->`;
+
+            if (existingCommentId) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner, repo: context.repo.repo,
+                comment_id: existingCommentId, body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner, repo: context.repo.repo,
+                issue_number: prNumber, body,
+              });
+            }
 
   # Release-asset upload, split out so it is the ONLY job holding `contents: write` (mirrors the
   # save-docker-tag split). Downloads the WAR `build-war` produced and attaches it to the release.
