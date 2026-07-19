@@ -72,7 +72,7 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { FormsModule } from '@angular/forms';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { AsPipe } from 'app/foundation/pipes/as.pipe';
-import { HtmlForMarkdownPipe } from 'app/foundation/pipes/html-for-markdown.pipe';
+import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
 import { ChatHistoryItemComponent } from './chat-history-item/chat-history-item.component';
 import { formatDate } from '@angular/common';
 import { MenuModule } from 'primeng/menu';
@@ -138,7 +138,7 @@ const LIVE_DRAFT_CATCH_UP_MS = 400;
         ButtonComponent,
         ArtemisTranslatePipe,
         AsPipe,
-        HtmlForMarkdownPipe,
+        MarkdownDirective,
         ChatHistoryItemComponent,
         SearchFilterComponent,
         IrisCitationTextComponent,
@@ -1210,6 +1210,16 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
             }
         };
         this.settleScrollRafId = window.requestAnimationFrame(settle);
+    }
+
+    /**
+     * Restarts the initial-history settle window when lazily rendered markdown changes the message height.
+     * Do not move a user who has scrolled up or disturb the explicit exchange anchor used for new messages.
+     */
+    protected onMessageMarkdownRendered(): void {
+        if (this.isScrolledToBottom() && !this.exchangeAnchorActive) {
+            this.scrollToBottomSettled();
+        }
     }
 
     /**

@@ -18,7 +18,7 @@ import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-title.directive';
 import { TableModule } from 'primeng/table';
 import { ButtonModule } from 'primeng/button';
-import { DateTimePickerType, FormDateTimePickerComponent } from 'app/shared-ui/date-time-picker/date-time-picker.component';
+import { TumUiDatePickerComponent } from 'app/shared-ui/tum-ui/date-picker/tum-ui-date-picker.component';
 
 /**
  * Admin component for managing data cleanup operations.
@@ -37,7 +37,7 @@ import { DateTimePickerType, FormDateTimePickerComponent } from 'app/shared-ui/d
         CleanupOperationModalComponent,
         TableModule,
         ButtonModule,
-        FormDateTimePickerComponent,
+        TumUiDatePickerComponent,
         FaIconComponent,
     ],
     changeDetection: ChangeDetectionStrategy.OnPush,
@@ -60,7 +60,6 @@ export class CleanupServiceComponent implements OnInit {
         deleteOldSubmissionVersions: 'deleteSubmissionVersions',
         deleteOldFeedback: 'deleteFeedback',
     };
-    protected readonly DateTimePickerType = DateTimePickerType;
 
     /** Whether the cleanup operation modal is visible */
     showCleanupModal = signal<boolean>(false);
@@ -76,6 +75,8 @@ export class CleanupServiceComponent implements OnInit {
             deleteTo: dayjs().subtract(6, 'months'),
             lastExecuted: undefined,
             datesValid: signal(true),
+            deleteFromValid: signal(true),
+            deleteToValid: signal(true),
         },
         {
             name: 'deletePlagiarismComparisons',
@@ -83,6 +84,8 @@ export class CleanupServiceComponent implements OnInit {
             deleteTo: dayjs().subtract(6, 'months'),
             lastExecuted: undefined,
             datesValid: signal(true),
+            deleteFromValid: signal(true),
+            deleteToValid: signal(true),
         },
         {
             name: 'deleteNonRatedResults',
@@ -90,6 +93,8 @@ export class CleanupServiceComponent implements OnInit {
             deleteTo: dayjs().subtract(6, 'months'),
             lastExecuted: undefined,
             datesValid: signal(true),
+            deleteFromValid: signal(true),
+            deleteToValid: signal(true),
         },
         {
             name: 'deleteOldRatedResults',
@@ -97,6 +102,8 @@ export class CleanupServiceComponent implements OnInit {
             deleteTo: dayjs().subtract(6, 'months'),
             lastExecuted: undefined,
             datesValid: signal(true),
+            deleteFromValid: signal(true),
+            deleteToValid: signal(true),
         },
         {
             name: 'deleteOldSubmissionVersions',
@@ -104,6 +111,8 @@ export class CleanupServiceComponent implements OnInit {
             deleteTo: dayjs().subtract(6, 'months'),
             lastExecuted: undefined,
             datesValid: signal(true),
+            deleteFromValid: signal(true),
+            deleteToValid: signal(true),
         },
     ]);
 
@@ -133,13 +142,13 @@ export class CleanupServiceComponent implements OnInit {
         operation.datesValid.set(datesValid);
     }
 
-    onDeleteFromChange(operation: CleanupOperation, value: dayjs.Dayjs | Date | null | undefined): void {
-        operation.deleteFrom = value ? dayjs(value) : undefined;
+    onDeleteFromChange(operation: CleanupOperation, value: dayjs.Dayjs | undefined): void {
+        operation.deleteFrom = value;
         this.validateDates(operation);
     }
 
-    onDeleteToChange(operation: CleanupOperation, value: dayjs.Dayjs | Date | null | undefined): void {
-        operation.deleteTo = value ? dayjs(value) : undefined;
+    onDeleteToChange(operation: CleanupOperation, value: dayjs.Dayjs | undefined): void {
+        operation.deleteTo = value;
         this.validateDates(operation);
     }
 
