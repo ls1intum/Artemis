@@ -113,9 +113,9 @@ describe('VcsAccessTokenOverviewComponent', () => {
     });
 
     it('maps every token to a short repository-type label', () => {
-        expect(comp.tokenTypeLabelKey(tokens[0])).toBe('artemisApp.userSettings.vcsAccessTokensOverview.type.template');
-        expect(comp.tokenTypeLabelKey(tokens[1])).toBe('artemisApp.userSettings.vcsAccessTokensOverview.type.assignment');
-        expect(comp.tokenTypeLabelKey(tokens[2])).toBe('artemisApp.userSettings.vcsAccessTokensOverview.type.participation');
+        expect(comp['tokenTypeLabelKey'](tokens[0])).toBe('artemisApp.userSettings.vcsAccessTokensOverview.type.template');
+        expect(comp['tokenTypeLabelKey'](tokens[1])).toBe('artemisApp.userSettings.vcsAccessTokensOverview.type.assignment');
+        expect(comp['tokenTypeLabelKey'](tokens[2])).toBe('artemisApp.userSettings.vcsAccessTokensOverview.type.participation');
     });
 
     it('revokes a token, removes it from the list and reports success', () => {
