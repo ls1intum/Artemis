@@ -305,6 +305,9 @@ public class LearningObjectImportService {
         newExercise.setMaxPoints(sourceExercise.getMaxPoints());
         newExercise.setBonusPoints(sourceExercise.getBonusPoints());
         newExercise.setIncludedInOverallScore(sourceExercise.getIncludedInOverallScore());
+        // presentationScoreEnabled has a non-null default (false) on a fresh exercise, so the import service's backfill
+        // cannot recover it; copy it explicitly so a source with presentation scoring enabled is not silently disabled.
+        newExercise.setPresentationScoreEnabled(sourceExercise.getPresentationScoreEnabled());
         // mode also has a non-null default, so the import service's backfill cannot recover it; copy it explicitly so a
         // TEAM source is not silently imported as INDIVIDUAL (the import service then copies the team config).
         newExercise.setMode(sourceExercise.getMode());
