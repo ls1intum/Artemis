@@ -105,7 +105,7 @@ public class SpecFidelityCriticService {
             Respond with ONLY this complete JSON shape; every array is mandatory for this contract review:
             {"exampleChecks": [{"claim":"verbatim outcome claim","computedOutcome":"independently replayed outcome","consistent":true,"reason":"calculation"}],
              "apiChecks": [{"symbol":"exact tested public symbol","discoverable":true,"reason":"statement/template evidence"}],
-             "templateChecks": [{"test":"task-bound test or task group","targetReached":true,"reason":"first starter failure on its call path"}],
+             "templateChecks": [{"test":"task-bound test or task group","targetReached":true,"reason":"first starter failure on its call path, or the quoted teaching-scaffold gap"}],
              "contradictions": [{"requirement":"...","sourceQuote":"exact quote from PRIMARY SOURCE REQUIREMENTS or PRODUCED PROBLEM STATEMENT","reason":"conflicting artifact evidence"}],
              "hiddenRequirements": [{"requirement":"...","sourceQuote":"exact quote from PRIMARY SOURCE REQUIREMENTS or PRODUCED PROBLEM STATEMENT","reason":"test/API evidence"}],
              "missingExamples": [{"behaviour":"...","reason":"..."}],
@@ -148,6 +148,11 @@ public class SpecFidelityCriticService {
             Trace each task through the starter. A task reaches its target when the first failure is the intended placeholder in the method or class that task asks the student to implement. \
             It does not reach its target only when an unrelated prerequisite fails before the target call. Missing implementation is not itself a template gap. Report only missing APIs, \
             uncompilable scaffolding, or unrelated blockers that prevent incremental work.
+
+            Also fail a templateCheck when the house teaching scaffold is missing: a stubbed member whose doc comment does not restate its student-visible contract, a statement task with \
+            no imperative TODO at the place the work happens (including a breadcrumb for a type the student must still create), or a solution/template diff that changes documentation \
+            or comments beyond the implementation itself. Quote the exact stub signature, doc text, TODO line, or diff line verbatim from the artifacts above as reason evidence; omit \
+            the check instead of guessing when no such artifact text exists.
 
             Return every failed check. When a check category has no failures, return only one representative passing check for that category. Any false check is itself a blocker and need not \
             be repeated in a finding array. Do not assess mutation coverage in this pass. Do not treat test names or comments as proof. Missing examples and conservative scope additions are \
@@ -675,8 +680,10 @@ public class SpecFidelityCriticService {
             }
             for (TemplateCheckItem item : parsed.templateChecks()) {
                 if (!item.targetReached() && findings.size() < MAX_REVIEW_FINDINGS) {
+                    // reason may report either an unreached starter target or a missing teaching-scaffold element (contract doc, TODO anchor, non-student diff); both are
+                    // rendered generically since the reason text itself names the specific failure.
                     findings.add(new SpecFidelityReport.Finding(SpecFidelityReport.Kind.TEMPLATE_QUALITY_GAP, truncate(item.test().strip()),
-                            "The starter fails before this task-specific check reaches its target: " + item.reason().strip()));
+                            "This task-specific starter check failed: " + item.reason().strip()));
                 }
             }
             appendGroundedBlockingFindings(findings, parsed.contradictions(), authoritativeSource, SpecFidelityReport.Kind.CONTRACT_CONTRADICTION,
@@ -980,8 +987,9 @@ public class SpecFidelityCriticService {
                     .append(finding.requirement()).append("\". ").append(finding.detail());
             case WEAK_TEST_ORACLE ->
                 builder.append("\n- Strengthen the tests so this specific wrong implementation fails: \"").append(finding.requirement()).append("\". ").append(finding.detail());
-            case TEMPLATE_QUALITY_GAP -> builder.append("\n- Improve the starter so students can work incrementally and receive task-specific feedback: \"")
-                    .append(finding.requirement()).append("\". ").append(finding.detail());
+            case TEMPLATE_QUALITY_GAP ->
+                builder.append("\n- Improve the starter so students can work incrementally, understand each stub's contract, and receive task-specific " + "feedback: \"")
+                        .append(finding.requirement()).append("\". ").append(finding.detail());
             case QUALITY_REVIEW_UNAVAILABLE -> builder.append("\n- The full-artifact quality review was unavailable; do not claim semantic quality without a complete review.");
         }
     }

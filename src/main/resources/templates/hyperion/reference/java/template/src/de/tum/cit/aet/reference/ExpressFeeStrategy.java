@@ -2,6 +2,8 @@ package de.tum.cit.aet.reference;
 
 public class ExpressFeeStrategy {
 
+    // TODO: Make this class implement the FeeStrategy interface as well.
+
     private static final double RATE_PER_KG = 3.5;
 
     private static final double SURCHARGE = 5.0;

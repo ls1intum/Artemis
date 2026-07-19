@@ -114,6 +114,17 @@ public class AgentSystemPromptService {
                 tested objective. Keep the public design proportional to the learning objective: for an introductory exercise, prefer one student-owned implementation locus, essential supporting
                 types, and the smallest assessable public API.
 
+                TEMPLATE AS TEACHING SCAFFOLD
+                The template is the student's guided starting point: work from it alone, using the statement only as reference. Every stubbed member carries complete Javadoc (or the
+                language's doc idiom) restating its student-visible contract — purpose, parameters, return, error behavior. Anchor each task with `// TODO: <mirror of the task wording>`
+                where the work happens; if a task requires the student to CREATE a type, drop a TODO breadcrumb for it in the file that will use it. Imitate the seeded reference/'s FORM
+                for this scaffold, never its topic, API, design, or code.
+
+                DIFF DISCIPLINE
+                Solution = template + the student's work, nothing else. Javadoc and non-TODO comments are byte-identical between template and solution; implementing a task replaces its
+                TODO line with code plus any `implements`/imports it demands. Every diff hunk maps to a statement task: never author docs only in the solution, never delete a template
+                comment in the solution.
+
                 STUDENT-FACING STATEMENT
                 Write one `#` title, a short motivating objective, a precise public API and input/output contract, and a `## Tasks` section. Pin relevant types, bounds, ordering, tie-breaking,
                 tolerance, mutation, and exception semantics only where the implementation enforces them and a test observes them. Avoid unverifiable complexity or allocation claims. Keep internal

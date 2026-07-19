@@ -20,8 +20,8 @@ import de.tum.cit.aet.artemis.programming.domain.ProjectType;
 /** Unit tests for generation prompting and the production Java capability contract. */
 class AgentSystemPromptServiceTest {
 
-    /** Leaves about 28% headroom over the largest representative Java prompt while preventing another unbounded failure-diary prompt. */
-    private static final int MAX_SYSTEM_PROMPT_CHARS = 10_000;
+    /** Leaves headroom over the largest representative Java prompt (incl. the template-scaffold/diff-discipline rules) while preventing another unbounded failure-diary prompt. */
+    private static final int MAX_SYSTEM_PROMPT_CHARS = 12_000;
 
     // No LocalCI services -> the generic build fallback, enough to assert the build-context section renders.
     private final AgentSystemPromptService systemPromptService = new AgentSystemPromptService(new SandboxBuildCommandService(Optional.empty(), Optional.empty()));
@@ -119,6 +119,23 @@ class AgentSystemPromptServiceTest {
 
         assertThat(prompt).contains("complete non-persisted worked exercise", "inspect its statement", "solution/template delta", "tests", "Artemis/Ares relationships")
                 .contains("Never copy its topic, API, design, or code");
+    }
+
+    @Test
+    void build_templateScaffoldingRequiresJavadocAndTodoAnchors() {
+        String prompt = systemPromptService.build(exerciseWith(ProgrammingLanguage.JAVA, "")).replaceAll("\\s+", " ");
+
+        assertThat(prompt).contains("TEMPLATE AS TEACHING SCAFFOLD", "work from it alone, using the statement only as reference")
+                .contains("complete Javadoc (or the language's doc idiom) restating its student-visible contract").contains("// TODO: <mirror of the task wording>")
+                .contains("drop a TODO breadcrumb for it in the file that will use it");
+    }
+
+    @Test
+    void build_diffDisciplineRequiresByteIdenticalCommentsAndTaskMappedHunks() {
+        String prompt = systemPromptService.build(exerciseWith(ProgrammingLanguage.JAVA, "")).replaceAll("\\s+", " ");
+
+        assertThat(prompt).contains("DIFF DISCIPLINE", "Javadoc and non-TODO comments are byte-identical between template and solution")
+                .contains("Every diff hunk maps to a statement task").contains("never author docs only in the solution, never delete a template comment in the solution");
     }
 
     @Test

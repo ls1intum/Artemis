@@ -44,7 +44,11 @@ public record SpecFidelityReport(List<Finding> findings) {
         HIDDEN_GRADED_REQUIREMENT,
         /** Plausible contract-breaking implementations are not distinguished by the generated assertions. */
         WEAK_TEST_ORACLE,
-        /** The starter code prevents meaningful incremental work or task-specific feedback. */
+        /**
+         * The starter code prevents meaningful incremental work or task-specific feedback, or ships without the house teaching scaffold: a stubbed member's doc comment does not
+         * restate its student-visible contract, a statement task has no imperative TODO anchor at the place the work happens, or the solution/template diff carries non-student
+         * documentation changes.
+         */
         TEMPLATE_QUALITY_GAP,
         /** The automated full-artifact quality review could not produce a complete verdict. */
         QUALITY_REVIEW_UNAVAILABLE

@@ -6,6 +6,12 @@ public class ExpressFeeStrategy implements FeeStrategy {
 
     private static final double SURCHARGE = 5.0;
 
+    /**
+     * Calculates the express shipping fee.
+     *
+     * @param weightKg the package weight in kilograms
+     * @return the fee in euros
+     */
     @Override
     public double calculateFee(double weightKg) {
         return weightKg * RATE_PER_KG + SURCHARGE;

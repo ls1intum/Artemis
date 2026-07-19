@@ -132,6 +132,60 @@ class SpecFidelityCriticServiceTest {
                         .contains("assertEquals(2, count(\"\u6f22\u5b57\"))").contains("Do not treat test names or comments as proof"));
     }
 
+    /** The teaching-scaffold axis (missing contract doc, missing TODO anchor, or a non-student solution/template diff) folds into the same TEMPLATE_QUALITY_GAP kind. */
+    @Test
+    void templateQualityGapReviewSurfacesMissingTeachingScaffoldWithQuotedEvidence() {
+        ChatModel chatModel = mock(ChatModel.class);
+        when(chatModel.call(any(Prompt.class))).thenReturn(rawResponse("""
+                {"exampleChecks":[],
+                 "apiChecks":[],
+                 "templateChecks":[{"test":"count","targetReached":false,
+                     "reason":"the stub's doc comment does not restate its contract: the solution's Javadoc reads 'Returns the number of user-perceived characters in value.' but \
+                the template's count(String value) method has no doc comment at all"}],
+                 "contradictions":[],
+                 "hiddenRequirements":[],"templateGaps":[],"missingExamples":[],"invented":[],
+                 "unrequestedChanges":[],"missingRequestedChanges":[]}
+                """), rawResponse("""
+                {"mutantChecks":[{"mutant":"return 0","killed":true,"reason":"the cjk assertion kills it"}],
+                 "uncovered":[],"weakOracle":[]}
+                """));
+        when(chatModel.getOptions()).thenReturn(ChatOptions.builder().build());
+        SpecFidelityCriticService critic = new SpecFidelityCriticService(ChatClient.create(chatModel), objectMapper);
+
+        SpecFidelityReport report = critic.critique(UNICODE_BRIEF, "Count graphemes.", List.of("cjk"), COMPLETE_ARTIFACTS, null);
+
+        assertThat(report.findings()).extracting(SpecFidelityReport.Finding::kind).containsExactly(SpecFidelityReport.Kind.TEMPLATE_QUALITY_GAP);
+        assertThat(report.findings()).singleElement().satisfies(finding -> {
+            assertThat(finding.requirement()).isEqualTo("count");
+            assertThat(finding.detail()).contains("Returns the number of user-perceived characters in value.", "has no doc comment at all");
+        });
+        assertThat(report.hasBlockingFindings()).isTrue();
+    }
+
+    /** The reviewer prompt wires the scaffold-quality instructions into the same templateChecks axis, without a schema change. */
+    @Test
+    void contractReviewPromptInstructsScaffoldQualityChecks() {
+        ChatModel chatModel = mock(ChatModel.class);
+        when(chatModel.call(any(Prompt.class))).thenReturn(rawResponse("""
+                {"exampleChecks":[],"apiChecks":[],
+                 "templateChecks":[{"test":"cjk","targetReached":true,"reason":"the assertion reaches count"}],
+                 "contradictions":[],"hiddenRequirements":[],"templateGaps":[],"missingExamples":[],"invented":[],
+                 "unrequestedChanges":[],"missingRequestedChanges":[]}
+                """), rawResponse("""
+                {"mutantChecks":[{"mutant":"return 0","killed":true,"reason":"the assertion kills it"}],
+                 "uncovered":[],"weakOracle":[]}
+                """));
+        when(chatModel.getOptions()).thenReturn(ChatOptions.builder().build());
+        SpecFidelityCriticService critic = new SpecFidelityCriticService(ChatClient.create(chatModel), objectMapper);
+
+        critic.critique(UNICODE_BRIEF, "Count graphemes.", List.of("cjk"), COMPLETE_ARTIFACTS, null);
+
+        ArgumentCaptor<Prompt> prompts = ArgumentCaptor.forClass(Prompt.class);
+        verify(chatModel, times(2)).call(prompts.capture());
+        assertThat(prompts.getAllValues().get(0).getInstructions().getFirst().getText()).contains("house teaching scaffold", "restate its student-visible contract",
+                "imperative TODO", "breadcrumb for a type the student must still create", "solution/template diff");
+    }
+
     @Test
     void focusedReviewPassesAcceptOnlyTheirOwnEvidenceShape() {
         ChatModel chatModel = mock(ChatModel.class);
