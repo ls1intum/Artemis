@@ -5,13 +5,13 @@ import { GradingCriterion } from 'app/exercise/structured-grading-criterion/grad
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { StructuredGradingInstructionsAssessmentLayoutComponent } from 'app/assessment/manage/structured-grading-instructions-assessment-layout/structured-grading-instructions-assessment-layout.component';
-import { HtmlForMarkdownPipe } from 'app/foundation/pipes/html-for-markdown.pipe';
+import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
 
 @Component({
     selector: 'jhi-resizable-instructions',
     templateUrl: './resizable-instructions.component.html',
     styleUrls: ['./resizable-instructions.component.scss'],
-    imports: [FaIconComponent, TranslateDirective, StructuredGradingInstructionsAssessmentLayoutComponent, HtmlForMarkdownPipe],
+    imports: [FaIconComponent, TranslateDirective, StructuredGradingInstructionsAssessmentLayoutComponent, MarkdownDirective],
 })
 export class ResizableInstructionsComponent {
     criteria = input.required<GradingCriterion[]>();
