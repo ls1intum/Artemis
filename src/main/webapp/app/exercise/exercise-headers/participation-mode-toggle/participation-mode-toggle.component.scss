@@ -1,6 +1,3 @@
-$practice-color: #3e8acc;
-$graded-color: #28a745;
-
 .participation-mode {
     display: inline-flex;
     align-items: center;
@@ -19,54 +16,62 @@ $graded-color: #28a745;
     cursor: default;
 }
 
-// The active toggle option / badge has a neutral gray fill inside a neutral gray border, with the
-// text and icon in the mode color (blue practice, green graded).
-.participation-mode {
-    ::ng-deep .p-togglebutton-checked {
-        background: var(--p-surface-100, #f3f4f6);
-        background-clip: padding-box;
-        border-color: var(--p-content-border-color, #d1d5db);
-    }
+// background-clip has no PrimeNG design token, so the selected fill is clipped to the padding box here
+// (keeps the fill from bleeding under the border). This is the only remaining ::ng-deep in the component.
+.participation-mode ::ng-deep .p-togglebutton-checked {
+    background-clip: padding-box;
+}
+
+// Light mode: near-white selected fill with a gray border. Scoped to light mode so these token overrides
+// don't apply in dark mode, where the dark block below takes over.
+:host-context([prime-ng-use-dark-theme='false']) .participation-mode {
+    --p-togglebutton-checked-background: var(--p-surface-100);
+    --p-togglebutton-content-checked-background: var(--p-surface-0);
+    --p-togglebutton-checked-border-color: var(--p-content-border-color);
 
     #participation-mode-badge {
-        background: var(--p-surface-100, #f3f4f6);
-        background-clip: padding-box;
-        border: 1px solid var(--p-content-border-color, #d1d5db);
+        background: var(--p-surface-100);
+        border: 1px solid var(--p-content-border-color);
     }
 }
 
+// Dark mode: mirror light mode's "lighter pill in a gray frame" — the button root/frame keeps the track
+// colour and only the content pill is lighter. Set via design tokens, which win by cascade regardless of
+// the theme rule's specificity.
 :host-context([prime-ng-use-dark-theme='true']) .participation-mode {
-    ::ng-deep .p-togglebutton-checked {
-        background: var(--p-surface-800, #262b31);
-    }
+    // Unselected buttons and the selected button's frame: the darker track shade.
+    --p-togglebutton-background: var(--p-surface-800);
+    --p-togglebutton-hover-background: var(--p-surface-800);
+    --p-togglebutton-border-color: var(--p-surface-800);
+    --p-togglebutton-checked-background: var(--p-surface-800);
+    --p-togglebutton-checked-border-color: var(--p-surface-800);
+
+    // Selected pill: the lighter shade.
+    --p-togglebutton-content-checked-background: var(--p-surface-600);
 
     #participation-mode-badge {
-        background: var(--p-surface-800, #262b31);
+        background: var(--p-surface-600);
     }
 }
 
+// Mode colours (theme-aware semantic tokens): blue for practice, green for graded. The checked toggle
+// label + icon are coloured via the toggle's own design token; the fa-icon inherits currentColor.
 .participation-mode--practice {
-    ::ng-deep .p-togglebutton-checked .participation-mode__item,
-    ::ng-deep .p-togglebutton-checked .participation-mode__item * {
-        color: $practice-color;
-    }
+    --p-togglebutton-checked-color: var(--primary);
 
     #participation-mode-badge,
     #participation-mode-badge .participation-mode__item,
     #participation-mode-badge .participation-mode__item * {
-        color: $practice-color;
+        color: var(--primary);
     }
 }
 
 .participation-mode--graded {
-    ::ng-deep .p-togglebutton-checked .participation-mode__item,
-    ::ng-deep .p-togglebutton-checked .participation-mode__item * {
-        color: $graded-color;
-    }
+    --p-togglebutton-checked-color: var(--success);
 
     #participation-mode-badge,
     #participation-mode-badge .participation-mode__item,
     #participation-mode-badge .participation-mode__item * {
-        color: $graded-color;
+        color: var(--success);
     }
 }
