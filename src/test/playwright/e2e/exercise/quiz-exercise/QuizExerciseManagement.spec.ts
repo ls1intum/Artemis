@@ -1,7 +1,7 @@
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import multipleChoiceTemplate from '../../../fixtures/exercise/quiz/multiple_choice/template.json';
 import { admin } from '../../../support/users';
-import { generateUUID } from '../../../support/utils';
+import { generateUUID, readResponseJson } from '../../../support/utils';
 import { test } from '../../../support/fixtures';
 import { expect } from '@playwright/test';
 import { promises as fs } from 'fs';
@@ -33,7 +33,7 @@ test.describe('Quiz Exercise Management', { tag: '@fast' }, () => {
             const title = 'Multiple Choice Quiz';
             await quizExerciseCreation.addMultipleChoiceQuestion(title);
             const quizResponse = await quizExerciseCreation.saveQuiz();
-            const quiz: QuizExercise = await quizResponse.json();
+            const quiz: QuizExercise = await readResponseJson(quizResponse);
             createdQuizId = quiz.id;
             await page.goto(`/course-management/${course.id}/quiz-exercises/${quiz.id}/preview`);
             await page.waitForLoadState('domcontentloaded');
@@ -53,7 +53,7 @@ test.describe('Quiz Exercise Management', { tag: '@fast' }, () => {
             });
             await quizExerciseCreation.createAndEditMultipleChoiceQuestionInVisualMode(title, answerOptions);
             const quizResponse = await quizExerciseCreation.saveQuiz();
-            const quiz: QuizExercise = await quizResponse.json();
+            const quiz: QuizExercise = await readResponseJson(quizResponse);
             createdQuizId = quiz.id;
             await page.goto(`/course-management/${course.id}/quiz-exercises/${quiz.id}/preview`);
             await page.waitForLoadState('domcontentloaded');
@@ -67,7 +67,7 @@ test.describe('Quiz Exercise Management', { tag: '@fast' }, () => {
             const title = 'Short Answer Quiz';
             await quizExerciseCreation.addShortAnswerQuestion(title);
             const quizResponse = await quizExerciseCreation.saveQuiz();
-            const quiz: QuizExercise = await quizResponse.json();
+            const quiz: QuizExercise = await readResponseJson(quizResponse);
             createdQuizId = quiz.id;
             await page.goto(`/course-management/${course.id}/quiz-exercises/${quiz.id}/preview`);
             await page.waitForLoadState('domcontentloaded');
@@ -84,7 +84,7 @@ test.describe('Quiz Exercise Management', { tag: '@fast' }, () => {
             const quizQuestionTitle = 'Quiz Question';
             await quizExerciseCreation.addDragAndDropQuestion(quizQuestionTitle);
             const response = await quizExerciseCreation.saveQuiz();
-            const quiz = await response.json();
+            const quiz = await readResponseJson(response);
             createdQuizId = quiz.id;
             await page.goto(`/course-management/${course.id}/quiz-exercises/${quiz.id}/preview`);
             await page.waitForLoadState('domcontentloaded');

@@ -32,7 +32,6 @@ import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.notification.domain.CourseNotification;
 import de.tum.cit.aet.artemis.notification.domain.CourseNotificationParameter;
 import de.tum.cit.aet.artemis.notification.domain.NotificationChannelOption;
-import de.tum.cit.aet.artemis.notification.domain.UserCourseNotificationStatus;
 import de.tum.cit.aet.artemis.notification.domain.UserCourseNotificationStatusType;
 import de.tum.cit.aet.artemis.notification.domain.course_notifications.CourseNotificationCategory;
 import de.tum.cit.aet.artemis.notification.dto.CourseNotificationDTO;
@@ -128,14 +127,12 @@ class CourseNotificationServiceTest {
         CourseNotification entity = createTestCourseNotificationEntity(1L);
         CourseNotificationParameter param1 = new CourseNotificationParameter(entity, "key1", "value1");
         CourseNotificationParameter param2 = new CourseNotificationParameter(entity, "key2", "value2");
-        entity.setParameters(Set.of(param1, param2));
-        UserCourseNotificationStatus status = new UserCourseNotificationStatus();
-        status.setCourseNotification(entity);
-        status.setStatus(UserCourseNotificationStatusType.SEEN);
 
-        PageImpl<CourseNotificationWithStatusDTO> page = new PageImpl<>(List.of(new CourseNotificationWithStatusDTO(entity, status)));
+        PageImpl<CourseNotificationWithStatusDTO> page = new PageImpl<>(List.of(new CourseNotificationWithStatusDTO(entity.getId(), entity.getCourse().getId(), entity.getType(),
+                entity.getCreationDate(), UserCourseNotificationStatusType.SEEN)));
 
         when(courseNotificationRepository.findCourseNotificationsByUserIdAndCourseIdAndStatusNotArchived(userId, courseId, pageable)).thenReturn(page);
+        when(courseNotificationParameterRepository.findByCourseNotificationIdEquals(entity.getId())).thenReturn(Set.of(param1, param2));
         when(courseNotificationRegistryService.getNotificationClass(any())).thenReturn((Class) TestNotification.class);
 
         CourseNotificationPageableDTO<CourseNotificationDTO> result = courseNotificationService.getCourseNotifications(pageable, courseId, userId);

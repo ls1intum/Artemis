@@ -1,5 +1,4 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TestBed } from '@angular/core/testing';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { of } from 'rxjs';
@@ -15,8 +14,6 @@ import { TranslateService } from '@ngx-translate/core';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 
 describe('TutorialGroupManagementResolve', () => {
-    setupTestBed({ zoneless: true });
-
     let resolver: TutorialGroupManagementCourseResolver;
     let service: CourseManagementService;
     let router: Router;

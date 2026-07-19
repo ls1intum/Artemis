@@ -1,4 +1,3 @@
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TableLazyLoadEvent, TablePageEvent } from 'primeng/table';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -11,8 +10,6 @@ interface TestData {
 }
 
 describe('TableViewComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: TableViewComponent<TestData>;
     let fixture: ComponentFixture<TableViewComponent<TestData>>;
 

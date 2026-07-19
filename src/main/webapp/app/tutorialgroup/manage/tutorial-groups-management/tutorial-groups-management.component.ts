@@ -24,10 +24,9 @@ import { TutorialGroupFreeDaysOverviewComponent } from 'app/tutorialgroup/shared
 import { TutorialGroupsConfigurationService } from 'app/tutorialgroup/manage/service/tutorial-groups-configuration.service';
 import { CourseTitleBarActionsDirective } from 'app/course/shared/directives/course-title-bar-actions.directive';
 import { tutorialGroupsConfigurationEntityFromDto } from 'app/tutorialgroup/shared/entities/tutorial-groups-configuration-dto.model';
-import { TutorialGroupApiService } from 'app/openapi/api/tutorialGroupApi.service';
-import { HttpResponse } from '@angular/common/http';
+import { TutorialGroupApi } from 'app/openapi/api/tutorial-group-api';
 import { map } from 'rxjs/operators';
-import { convertTutorialGroupResponseArrayDatesFromServer } from 'app/tutorialgroup/shared/util/convertTutorialGroupEntityDates';
+import { convertTutorialGroupArrayDatesFromServer } from 'app/tutorialgroup/shared/util/convertTutorialGroupEntityDates';
 
 @Component({
     selector: 'jhi-tutorial-groups-management',
@@ -54,7 +53,7 @@ import { convertTutorialGroupResponseArrayDatesFromServer } from 'app/tutorialgr
     ],
 })
 export class TutorialGroupsManagementComponent implements OnInit, OnDestroy {
-    private tutorialGroupApiService = inject(TutorialGroupApiService);
+    private tutorialGroupApiService = inject(TutorialGroupApi);
     private activatedRoute = inject(ActivatedRoute);
     private alertService = inject(AlertService);
     private tutorialGroupsConfigurationService = inject(TutorialGroupsConfigurationService);
@@ -98,8 +97,8 @@ export class TutorialGroupsManagementComponent implements OnInit, OnDestroy {
         this.isLoading.set(true);
 
         const tutorialGroupObservable = this.tutorialGroupApiService
-            .getTutorialGroupsForCourse(this.courseId(), 'response')
-            .pipe(map((res: HttpResponse<TutorialGroup[]>) => convertTutorialGroupResponseArrayDatesFromServer(res)));
+            .getTutorialGroupsForCourse(this.courseId())
+            .pipe(map((tutorialGroups: TutorialGroup[]) => convertTutorialGroupArrayDatesFromServer(tutorialGroups)));
         const tutorialGroupsConfigurationObservable = this.tutorialGroupsConfigurationService.getOneOfCourse(this.course().id!);
 
         combineLatest([tutorialGroupObservable, tutorialGroupsConfigurationObservable])
@@ -110,8 +109,7 @@ export class TutorialGroupsManagementComponent implements OnInit, OnDestroy {
                 takeUntil(this.ngUnsubscribe),
             )
             .subscribe({
-                next: ([tutorialGroupsRes, configurationRes]) => {
-                    const tutorialGroups = tutorialGroupsRes.body!;
+                next: ([tutorialGroups, configurationRes]) => {
                     tutorialGroups.sort((a, b) => {
                         if (a.isUserTutor && !b.isUserTutor) {
                             return -1;

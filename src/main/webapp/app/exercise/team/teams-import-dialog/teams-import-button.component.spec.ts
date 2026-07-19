@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { DebugElement } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { DialogService } from 'primeng/dynamicdialog';
@@ -18,8 +17,6 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { TranslateService } from '@ngx-translate/core';
 
 describe('TeamsImportButtonComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let comp: TeamsImportButtonComponent;
     let fixture: ComponentFixture<TeamsImportButtonComponent>;
     let debugElement: DebugElement;

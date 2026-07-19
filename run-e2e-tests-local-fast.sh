@@ -690,6 +690,10 @@ if [ $TOTAL_TESTS -gt 0 ]; then
             # Build a grep pattern from failed test names (escape regex special chars)
             RERUN_PATTERN=""
             for name in "${FAIL_NAMES[@]}"; do
+                # The $ and () inside the single-quoted sed script are regex metacharacters, not shell
+                # expansions, so they are intentionally literal (SC2016); sed is clearer here than a
+                # bash parameter expansion (SC2001).
+                # shellcheck disable=SC2001,SC2016
                 escaped=$(echo "$name" | sed 's/[.[\*^$()+?{|]/\\&/g')
                 if [ -z "$RERUN_PATTERN" ]; then
                     RERUN_PATTERN="$escaped"

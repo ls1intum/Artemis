@@ -200,14 +200,14 @@ jhi-iris-citation-text {
         pointer-events: auto;
 
         &:focus-visible {
-            outline: 2px solid currentColor;
+            outline: 2px solid currentcolor;
             outline-offset: 1px;
         }
 
         svg {
             width: 12px;
             height: 12px;
-            color: currentColor;
+            color: currentcolor;
         }
     }
 

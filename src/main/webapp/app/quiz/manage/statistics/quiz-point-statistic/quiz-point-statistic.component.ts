@@ -1,4 +1,5 @@
 import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
+import { TooltipItem } from 'chart.js';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AbstractQuizStatisticComponent } from 'app/quiz/manage/statistics/quiz-statistics';
 import { AccountService } from 'app/core/auth/account.service';
@@ -219,6 +220,10 @@ export class QuizPointStatisticComponent extends AbstractQuizStatisticComponent 
 
         // add Axes-labels based on selected language
         this.setAxisLabels('artemisApp.showStatistic.quizPointStatistic.xAxes', 'artemisApp.showStatistic.quizPointStatistic.yAxes');
+    }
+
+    protected override formatTooltipLabel(item: TooltipItem<'bar'>): string {
+        return this.tooltipLine('artemisApp.showStatistic.tooltip.pointRange', item.parsed.y ?? 0);
     }
 
     /**

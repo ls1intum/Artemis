@@ -5,7 +5,6 @@
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { Subject, of, throwError } from 'rxjs';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
@@ -59,8 +58,6 @@ const testBedProviders = [
 ];
 
 describe('UserManagementUpdateComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: UserManagementUpdateComponent;
     let fixture: ComponentFixture<UserManagementUpdateComponent>;
     let adminUserService: AdminUserService;
@@ -786,8 +783,6 @@ describe('UserManagementUpdateComponent', () => {
  * p-checkbox's onChange and cancel the toggle. A single rendered control must toggle exactly once.
  */
 describe('UserManagementUpdateComponent global-role checkbox rendering', () => {
-    setupTestBed({ zoneless: true });
-
     let component: UserManagementUpdateComponent;
     let fixture: ComponentFixture<UserManagementUpdateComponent>;
 

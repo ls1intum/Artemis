@@ -3,9 +3,8 @@ import { CdkScrollable } from '@angular/cdk/scrolling';
 import { Params, RouterOutlet } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Observable, Subscription, of, throwError } from 'rxjs';
-import { AccountService } from 'app/core/auth/account.service';
 import { CourseOverviewGuard } from 'app/course/overview/course-overview/course-overview-guard';
-import { COURSE_OVERVIEW_GUARDED_ROUTE_PATHS, CourseOverviewRoutePath } from 'app/course/overview/courses.route';
+import { COURSE_OVERVIEW_GUARDED_ROUTE_PATHS } from 'app/course/overview/courses.route';
 import { catchError, map } from 'rxjs/operators';
 import dayjs from 'dayjs/esm';
 import { NgClass, NgTemplateOutlet } from '@angular/common';
@@ -65,7 +64,6 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
     private examParticipationService = inject(ExamParticipationService);
     private sidebarItemService = inject(CourseSidebarItemService);
     private calendarService = inject(CalendarService);
-    private accountService = inject(AccountService);
     private courseOverviewGuard = inject(CourseOverviewGuard);
     private courseTitleBarService = inject(CourseTitleBarService);
 
@@ -233,12 +231,9 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
         const currentCourse = this.course();
 
         // Use the service to get sidebar items
-        const defaultItems = this.sidebarItemService.getStudentDefaultItems(currentCourse?.studentCourseAnalyticsDashboardEnabled, currentCourse?.trainingEnabled);
+        const defaultItems = this.sidebarItemService.getStudentDefaultItems(currentCourse?.trainingEnabled);
         if (currentCourse?.irisEnabledInCourse) {
-            const irisItem = this.sidebarItemService.getIrisItem();
-            const dashboardIndex = defaultItems.findIndex((item) => item.routerLink === 'dashboard');
-            const insertIndex = dashboardIndex >= 0 ? dashboardIndex + 1 : 0;
-            defaultItems.splice(insertIndex, 0, irisItem);
+            defaultItems.unshift(this.sidebarItemService.getIrisItem());
         }
         sidebarItems.push(...defaultItems);
 
@@ -425,10 +420,8 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
         if (!childPath || !COURSE_OVERVIEW_GUARDED_ROUTE_PATHS.has(childPath)) {
             return;
         }
-        // The user is only needed for the dashboard fallback decision (AI opt-out); at this point the identity is already resolved
-        const user = childPath === CourseOverviewRoutePath.DASHBOARD ? this.accountService.userIdentity() : undefined;
         // handleReturn navigates away synchronously when access is denied; subscribe to make the consumption explicit
-        this.courseOverviewGuard.handleReturn(course, childPath, user).subscribe();
+        this.courseOverviewGuard.handleReturn(course, childPath).subscribe();
     }
 
     override ngOnDestroy() {

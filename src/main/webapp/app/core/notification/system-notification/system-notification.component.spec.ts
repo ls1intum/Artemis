@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import dayjs from 'dayjs/esm';
@@ -19,8 +18,6 @@ import { SystemNotificationService } from 'app/core/notification/system-notifica
 import * as navbarUtil from 'app/foundation/util/navbar.util';
 
 describe('System Notification Component', () => {
-    setupTestBed({ zoneless: true });
-
     let systemNotificationComponent: SystemNotificationComponent;
     let systemNotificationComponentFixture: ComponentFixture<SystemNotificationComponent>;
     let systemNotificationService: SystemNotificationService;

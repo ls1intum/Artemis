@@ -1,5 +1,4 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ExerciseFilterModalComponent } from 'app/exercise/exercise-filter/exercise-filter-modal.component';
 import { NgbActiveModal, NgbTypeaheadSelectItemEvent } from '@ng-bootstrap/ng-bootstrap';
 import { ExerciseCategoryFilterOption } from 'app/foundation/types/exercise-filter';
@@ -69,7 +68,6 @@ const POINTS_FILTER: RangeFilter = {
 };
 
 describe('ExerciseFilterModalComponent', () => {
-    setupTestBed({ zoneless: true });
     let component: ExerciseFilterModalComponent;
     let fixture: ComponentFixture<ExerciseFilterModalComponent>;
     let activeModal: NgbActiveModal;
