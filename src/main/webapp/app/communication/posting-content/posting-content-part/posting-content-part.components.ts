@@ -21,7 +21,7 @@ import { DialogService } from 'primeng/dynamicdialog';
 import { AccountService } from 'app/core/auth/account.service';
 import { RouterLink } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { HtmlForPostingMarkdownPipe } from 'app/foundation/pipes/html-for-posting-markdown.pipe';
+import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FileService } from 'app/foundation/service/file.service';
 
@@ -29,7 +29,7 @@ import { FileService } from 'app/foundation/service/file.service';
     selector: 'jhi-posting-content-part',
     templateUrl: './posting-content-part.component.html',
     styleUrls: ['../../metis.component.scss'],
-    imports: [RouterLink, FaIconComponent, HtmlForPostingMarkdownPipe, TranslateDirective],
+    imports: [RouterLink, FaIconComponent, MarkdownDirective, TranslateDirective],
     providers: [DialogService],
 })
 export class PostingContentPartComponent implements OnInit {
