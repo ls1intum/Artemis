@@ -9,11 +9,11 @@ import {CalloutVariant} from "../../src/components/Callout/Callout.types";
 
 # Keycloak OIDC Setup for Local Development
 
-This guide outlines how to boot an isolated local mock environment representing the University Identity Provider using Keycloak. 
+This guide outlines how to boot an isolated local mock environment representing the University Identity Provider using Keycloak.
 The accompanying test configuration initializes a dedicated `artemis-oidc` realm sandbox complete with automatic claim mappers, group hierarchies, and pre-synchronized core test profiles.
 
 <Callout variant={CalloutVariant.info}>
-    This ecosystem is strictly required when testing decentralized authentication mechanisms. 
+    This ecosystem is strictly required when testing decentralized authentication mechanisms.
     If your scope does not touch OIDC features, you may safely bypass this container setup.
 </Callout>
 
@@ -23,7 +23,7 @@ The accompanying test configuration initializes a dedicated `artemis-oidc` realm
 
 <Callout variant={CalloutVariant.warning}>
     <b>Prerequisite: Operational Core Infrastructure</b><br/>
-    Before setting up the Keycloak environment, ensure that your local Artemis core database infrastructure (e.g., MySQL via <code>docker compose -f docker/artemis-dev-mysql.yml up -d</code>) is active. 
+    Before setting up the Keycloak environment, ensure that your local Artemis core database infrastructure (e.g., MySQL via <code>docker compose -f docker/artemis-dev-mysql.yml up -d</code>) is active.
     Without the underlying database running, Keycloak will authenticate successfully, but the callback pipeline inside Artemis will collapse with a <code>Communications link failure</code> database exception. See the general docker infrastructure setup guide for details.
 </Callout>
 
@@ -114,7 +114,7 @@ secure: false
 
 ## Step 4: Verification and Test Account Matrix
 
-The Keycloak instance automatically imports a complete matrix containing 20 pre-synchronized test user configurations. 
+The Keycloak instance automatically imports a complete matrix containing 20 pre-synchronized test user configurations.
 
 This layout mirrors the internal relational structure of the main Artemis database, mapping directly to specific test ranges. Use the matching credentials (`username` / `username`) to verify different permission scopes:
 
@@ -130,4 +130,4 @@ This layout mirrors the internal relational structure of the main Artemis databa
 ## Troubleshooting & Debugging
 
 ### Can't connect to Keycloak server
-Ensure the container state is fully active. If you notice the container stuck in a `Created` state, check the diagnostic outputs (`docker logs artemis-keycloak-oidc`). 
+Ensure the container state is fully active. If you notice the container stuck in a `Created` state, check the diagnostic outputs (`docker logs artemis-keycloak-oidc`).
