@@ -1,7 +1,7 @@
 import { Component, inject } from '@angular/core';
 import { CompetencyService } from 'app/atlas/manage/services/competency.service';
 import { CourseImportStandardizedCourseCompetenciesComponent } from 'app/atlas/manage/import-standardized-competencies/course-import-standardized-course-competencies.component';
-import { HtmlForMarkdownPipe } from 'app/foundation/pipes/html-for-markdown.pipe';
+import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
 import { DocumentationButtonComponent } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
 import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -23,7 +23,7 @@ import { KnowledgeAreaTreeComponent } from 'app/atlas/shared/standardized-compet
         StandardizedCompetencyFilterComponent,
         StandardizedCompetencyDetailComponent,
         KnowledgeAreaTreeComponent,
-        HtmlForMarkdownPipe,
+        MarkdownDirective,
         DocumentationButtonComponent,
         ButtonComponent,
         TranslateDirective,
