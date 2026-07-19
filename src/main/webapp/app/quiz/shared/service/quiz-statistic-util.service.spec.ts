@@ -1,7 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { MockProvider } from 'ng-mocks';
 import { QuizStatisticUtil } from './quiz-statistic-util.service';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
@@ -11,8 +10,6 @@ import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 
 describe('QuizStatisticUtil', () => {
-    setupTestBed({ zoneless: true });
-
     let service: QuizStatisticUtil;
     let router: Router;
 

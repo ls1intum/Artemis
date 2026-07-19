@@ -13,7 +13,6 @@
     margin-bottom: 0.75rem;
     line-height: 1.4;
     overflow-wrap: anywhere;
-    word-break: break-word;
     hyphens: auto;
     color: var(--body-color);
 }
@@ -82,7 +81,6 @@
 .mcq-option-text {
     flex: 1;
     overflow-wrap: anywhere;
-    word-break: break-word;
     hyphens: auto;
     color: var(--body-color);
 }
@@ -131,7 +129,6 @@
     line-height: 1.4;
     color: var(--body-color);
     overflow-wrap: anywhere;
-    word-break: break-word;
     hyphens: auto;
     position: relative;
     z-index: 100;

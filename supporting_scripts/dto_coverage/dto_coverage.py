@@ -12,7 +12,7 @@ Changelog (2025-10-07):
 """
 
 from __future__ import annotations
-import argparse, json, os, re, sys, csv
+import argparse, json, re, sys, csv
 from pathlib import Path
 from typing import Dict, List, Tuple, Optional
 

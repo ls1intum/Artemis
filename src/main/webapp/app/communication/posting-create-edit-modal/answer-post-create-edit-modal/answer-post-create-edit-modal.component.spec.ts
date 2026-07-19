@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MetisService } from 'app/communication/service/metis.service';
 import { MockMetisService } from 'test/helpers/mocks/service/mock-metis-service.service';
@@ -15,8 +14,6 @@ import { MockViewContainerRef } from 'test/helpers/mocks/service/mock-view-conta
 import { metisAnswerPostToCreateUser1, metisAnswerPostUser2, metisResolvingAnswerPostUser1 } from 'test/helpers/sample/metis-sample-data';
 
 describe('AnswerPostCreateEditModalComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: AnswerPostCreateEditModalComponent;
     let fixture: ComponentFixture<AnswerPostCreateEditModalComponent>;
     let metisService: MetisService;

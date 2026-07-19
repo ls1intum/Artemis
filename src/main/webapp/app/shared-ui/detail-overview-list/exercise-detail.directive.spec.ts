@@ -1,7 +1,6 @@
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ExerciseDetailDirective } from 'app/shared-ui/detail-overview-list/exercise-detail.directive';
-import { Component, viewChild } from '@angular/core';
+import { Component, signal, viewChild } from '@angular/core';
 import type {
     BooleanDetail,
     DateDetail,
@@ -29,16 +28,15 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { vi } from 'vitest';
 
 @Component({
-    template: ` <div jhiExerciseDetail [detail]="detail"></div>`,
+    template: ` <div jhiExerciseDetail [detail]="detail()"></div>`,
     imports: [ExerciseDetailDirective],
 })
 class TestDetailHostComponent {
     directive = viewChild.required(ExerciseDetailDirective);
-    detail: Detail;
+    detail = signal<Detail>(undefined);
 }
 
 describe('ExerciseDetailDirective', () => {
-    setupTestBed({ zoneless: true });
     let component: TestDetailHostComponent;
     let fixture: ComponentFixture<TestDetailHostComponent>;
 
@@ -110,7 +108,7 @@ describe('ExerciseDetailDirective', () => {
 
     async function checkComponentForDetailWasNotCreated(detailToBeChecked: NotShownDetail) {
         const createComponentSpy = vi.spyOn(component.directive().viewContainerRef, 'createComponent');
-        component.detail = detailToBeChecked;
+        component.detail.set(detailToBeChecked);
         fixture.changeDetectorRef.detectChanges();
         await component.directive().ngOnInit();
 
@@ -119,7 +117,7 @@ describe('ExerciseDetailDirective', () => {
 
     async function checkComponentForDetailWasCreated(detailToBeChecked: ShownDetail, expectedComponent: any) {
         const createComponentSpy = vi.spyOn(component.directive().viewContainerRef, 'createComponent').mockReturnValue({ setInput: vi.fn(), destroy: vi.fn() } as any);
-        component.detail = detailToBeChecked;
+        component.detail.set(detailToBeChecked);
         fixture.changeDetectorRef.detectChanges();
         await component.directive().ngOnInit();
 

@@ -34,7 +34,7 @@ import { AUTOSAVE_CHECK_INTERVAL, AUTOSAVE_EXERCISE_INTERVAL, AUTOSAVE_TEAM_EXER
 import { ComponentCanDeactivate } from 'app/foundation/guard/can-deactivate.model';
 import { ExerciseSubmission } from 'app/exercise/shared/exercise-submission.interface';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { HtmlForMarkdownPipe } from 'app/foundation/pipes/html-for-markdown.pipe';
+import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
 import { ResizeableContainerComponent } from 'app/shared-ui/resizeable-container/resizeable-container.component';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
@@ -65,7 +65,7 @@ import { UnifiedFeedbackComponent } from 'app/shared/components/unified-feedback
         TranslateDirective,
         RatingComponent,
         ComplaintsStudentViewComponent,
-        HtmlForMarkdownPipe,
+        MarkdownDirective,
         UnifiedFeedbackComponent,
     ],
 })

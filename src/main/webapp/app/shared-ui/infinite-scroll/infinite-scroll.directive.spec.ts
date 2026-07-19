@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ApplicationRef, Component, signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { InfiniteScrollDirective } from 'app/shared-ui/infinite-scroll/infinite-scroll.directive';
@@ -58,8 +57,6 @@ class TestHostComponent {
 }
 
 describe('InfiniteScrollDirective', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<TestHostComponent>;
     let host: TestHostComponent;
     let savedIntersectionObserver: typeof IntersectionObserver;
