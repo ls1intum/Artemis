@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.modeling.apollon;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.net.URI;
 import java.time.ZonedDateTime;
 import java.util.HashSet;
 import java.util.List;
@@ -79,6 +80,26 @@ class ApollonDiagramResourceIntegrationTest extends AbstractSpringIntegrationInd
         assertThat(persisted.getCourseId()).isEqualTo(course1.getId());
         assertThat(persisted.getJsonRepresentation()).isEqualTo(JSON_REPRESENTATION);
         assertThat(apollonDiagramRepository.findDiagramsByCourseId(course1.getId())).as("exactly one diagram persisted for the course").hasSize(1);
+    }
+
+    /**
+     * The Location header of the 201 response must point at the GET route ({@code courses/{courseId}/apollon-diagrams/{id}}),
+     * including the course id segment - a client following it must be able to fetch the created diagram.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void testCreateApollonDiagram_returnsLocationHeader() throws Exception {
+        apollonDiagram.setCourseId(course1.getId());
+        apollonDiagram.setJsonRepresentation(JSON_REPRESENTATION);
+
+        URI location = request.post("/api/modeling/courses/" + course1.getId() + "/apollon-diagrams", apollonDiagram, HttpStatus.CREATED);
+
+        assertThat(location).isNotNull();
+        assertThat(location.getPath()).as("Location header must include the course id segment matching the GET route")
+                .matches("/api/modeling/courses/" + course1.getId() + "/apollon-diagrams/\\d+");
+
+        ApollonDiagramDTO fetched = request.get(location.getPath(), HttpStatus.OK, ApollonDiagramDTO.class);
+        assertThat(fetched.title()).as("Location header resolves to the created diagram").isEqualTo(apollonDiagram.getTitle());
     }
 
     @Test

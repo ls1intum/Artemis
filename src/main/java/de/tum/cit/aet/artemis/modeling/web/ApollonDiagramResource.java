@@ -87,7 +87,7 @@ public class ApollonDiagramResource {
 
         ApollonDiagram apollonDiagram = dto.toEntity();
         ApollonDiagram result = apollonDiagramRepository.save(apollonDiagram);
-        return ResponseEntity.created(new URI("/api/modeling/apollon-diagrams/" + result.getId())).body(ApollonDiagramDTO.of(result));
+        return ResponseEntity.created(new URI("/api/modeling/courses/" + courseId + "/apollon-diagrams/" + result.getId())).body(ApollonDiagramDTO.of(result));
     }
 
     /**
