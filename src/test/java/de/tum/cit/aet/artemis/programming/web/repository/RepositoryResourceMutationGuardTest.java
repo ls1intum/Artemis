@@ -43,6 +43,7 @@ import de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.Repository;
+import de.tum.cit.aet.artemis.programming.domain.SolutionProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.repository.AuxiliaryRepositoryRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
@@ -105,17 +106,22 @@ class RepositoryResourceMutationGuardTest {
     void participationMutationGuard_onlyProtectsHyperionTemplateAndSolutionArtifacts() {
         long studentParticipationId = 11L;
         long templateParticipationId = 12L;
+        long solutionParticipationId = 13L;
         ParticipationRepository participationRepository = mock(ParticipationRepository.class);
         ProgrammingExerciseStudentParticipation studentParticipation = mock(ProgrammingExerciseStudentParticipation.class);
         TemplateProgrammingExerciseParticipation templateParticipation = mock(TemplateProgrammingExerciseParticipation.class);
+        SolutionProgrammingExerciseParticipation solutionParticipation = mock(SolutionProgrammingExerciseParticipation.class);
         when(participationRepository.findByIdElseThrow(studentParticipationId)).thenReturn(studentParticipation);
         when(participationRepository.findByIdElseThrow(templateParticipationId)).thenReturn(templateParticipation);
+        when(participationRepository.findByIdElseThrow(solutionParticipationId)).thenReturn(solutionParticipation);
         ProgrammingExerciseRepository programmingExerciseRepository = mock(ProgrammingExerciseRepository.class);
         when(programmingExerciseRepository.getProgrammingExerciseFromParticipation(templateParticipation)).thenReturn(exercise());
+        when(programmingExerciseRepository.getProgrammingExerciseFromParticipation(solutionParticipation)).thenReturn(exercise());
         RepositoryProgrammingExerciseParticipationResource resource = participationResource(participationRepository, programmingExerciseRepository);
 
         assertThat(resource.getExerciseIdForMutation(studentParticipationId)).isEmpty();
         assertThat(resource.getExerciseIdForMutation(templateParticipationId)).hasValue(EXERCISE_ID);
+        assertThat(resource.getExerciseIdForMutation(solutionParticipationId)).hasValue(EXERCISE_ID);
     }
 
     @Test

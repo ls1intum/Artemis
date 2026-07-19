@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.hyperion.config;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.HYPERION_ENABLED_PROPERTY_NAME;
+import static de.tum.cit.aet.artemis.core.config.Constants.HYPERION_EXERCISE_GENERATION_ENABLED_PROPERTY_NAME;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALCI;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALVC;
@@ -30,6 +31,19 @@ class HyperionExerciseGenerationContextTest {
                     .doesNotHaveBean(GenerationPersistenceService.class).doesNotHaveBean(DifferentialVerificationService.class).doesNotHaveBean(AgentLoopRunner.class)
                     .doesNotHaveBean(HyperionProviderFailureCooldownService.class);
             assertThat(context.containsBean("hyperionGenerationExecutor")).isFalse();
+        });
+    }
+
+    @Test
+    void registersGenerationBeansWhenExerciseGenerationIsExplicitlyEnabled() {
+        // Every generation bean here is @Lazy, so this only needs the HyperionExerciseGenerationEnabled condition to flip and the bean definitions to resolve their declared
+        // type — it does not require constructing the full production dependency graph (sandbox, git, workspace services, etc.), mirroring the disabled-path test's mechanism
+        // with the opposite property value.
+        contextRunner.withPropertyValues(HYPERION_EXERCISE_GENERATION_ENABLED_PROPERTY_NAME + "=true").run(context -> {
+            assertThat(context).hasSingleBean(HyperionExerciseGenerationResource.class).hasSingleBean(GenerationOrchestrationService.class)
+                    .hasSingleBean(GenerationPersistenceService.class).hasSingleBean(DifferentialVerificationService.class).hasSingleBean(AgentLoopRunner.class)
+                    .hasSingleBean(HyperionProviderFailureCooldownService.class);
+            assertThat(context.containsBean("hyperionGenerationExecutor")).isTrue();
         });
     }
 

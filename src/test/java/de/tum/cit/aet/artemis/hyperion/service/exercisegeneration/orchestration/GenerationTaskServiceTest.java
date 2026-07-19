@@ -135,7 +135,14 @@ class GenerationTaskServiceTest {
 
     @Test
     void reloadedExerciseWithAuxiliaryRepositoryStopsBeforeOrchestration() {
-        exercise.setAuxiliaryRepositories(List.of(new AuxiliaryRepository()));
+        // The event carries the original (detached) exercise, which must NOT have the auxiliary repository itself: only the freshly reloaded copy returned by the repository
+        // does. This proves the guard reads the reloaded entity rather than trivially re-checking the same object reference passed in the event.
+        ProgrammingExercise reloadedExercise = new ProgrammingExercise();
+        reloadedExercise.setId(EXERCISE_ID);
+        reloadedExercise.setProgrammingLanguage(ProgrammingLanguage.JAVA);
+        reloadedExercise.setReleaseDate(ZonedDateTime.now().plusDays(1));
+        reloadedExercise.setAuxiliaryRepositories(List.of(new AuxiliaryRepository()));
+        when(programmingExerciseRepository.findWithAllParticipationsAndBuildConfigById(EXERCISE_ID)).thenReturn(Optional.of(reloadedExercise));
 
         taskService.runAsync(new GenerationStartedEvent(JOB_ID, user, exercise, "make it", GenerationMode.GENERATE));
 
@@ -502,8 +509,15 @@ class GenerationTaskServiceTest {
 
     @Test
     void noOpPersist_reportsHonestlyWithoutRecordingABaselineOrAttachingReviewFindings() {
-        when(persistenceService.persist(any(), any(), any(), any(), any(), anyString(), any(), any(), any()))
-                .thenReturn(new GenerationPersistenceService.PersistResult(Map.of(), Map.of(), exercise.getProblemStatement(), exercise.getTitle(), "main", false, null));
+        when(persistenceService.persist(any(), any(), any(), any(), any(), anyString(), any(), any(), any())).thenAnswer(invocation -> {
+            // The stub genuinely reaches the branch (it reads the same beforeDurableMutation callback argument the production GenerationPersistenceService receives) instead of
+            // being blind to its existence via a plain thenReturn(...). A truly no-op persist (nothing committed, metadata unchanged) never reaches a durable mutation in the real
+            // service, so it legitimately never invokes this callback; see mechanicallyVerifiedRun_persistsExactlyOnceAndDestroysTheSandbox above for the sibling "call" branch,
+            // which does invoke it and asserts invalidateBaseline() fires.
+            Runnable beforeDurableMutation = invocation.getArgument(8);
+            assertThat(beforeDurableMutation).isNotNull();
+            return new GenerationPersistenceService.PersistResult(Map.of(), Map.of(), exercise.getProblemStatement(), exercise.getTitle(), "main", false, null);
+        });
 
         run(GenerationMode.ADAPT, outcomeWith(AgentLoopResult.Status.COMPLETED, new VerificationResult(true, true, true, 3, List.of())));
 

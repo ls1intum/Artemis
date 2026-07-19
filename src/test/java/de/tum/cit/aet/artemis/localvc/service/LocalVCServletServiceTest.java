@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -13,7 +14,6 @@ import java.net.URI;
 import java.nio.file.Path;
 import java.util.Optional;
 import java.util.OptionalLong;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 import jakarta.servlet.http.HttpServletRequest;
 
@@ -22,6 +22,7 @@ import org.eclipse.jgit.lib.Repository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InOrder;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -307,25 +308,24 @@ class LocalVCServletServiceTest {
     }
 
     @Test
-    void processNewPushDoesNotReturnBeforeExerciseVersionCapture() {
+    void processNewPushCapturesTheExerciseVersionBeforeCreatingTheTestSubmission() {
         Repository repository = mock(Repository.class);
         SolutionProgrammingExerciseParticipation solutionParticipation = new SolutionProgrammingExerciseParticipation();
         ProgrammingSubmission submission = new ProgrammingSubmission();
-        AtomicBoolean exerciseVersionCaptured = new AtomicBoolean();
         String projectKey = testExercise.getProjectKey();
         Path repositoryPath = Path.of("/tmp/test-repos", projectKey, projectKey.toLowerCase() + "-tests.git");
 
         when(repository.getDirectory()).thenReturn(repositoryPath.toFile());
         when(exerciseVersionService.isRepositoryTypeVersionable(RepositoryType.TESTS)).thenReturn(true);
-        org.mockito.Mockito.doAnswer(invocation -> {
-            exerciseVersionCaptured.set(true);
-            return null;
-        }).when(exerciseVersionService).createExerciseVersionSynchronously(testExercise, testUser, java.util.Map.of(RepositoryType.TESTS, "commit-hash"));
         when(programmingSubmissionService.createSolutionParticipationSubmissionWithTypeTest(testExercise.getId(), "commit-hash")).thenReturn(submission);
 
         localVCServletService.processNewPush("commit-hash", repository, testUser, Optional.of(testExercise), Optional.of(solutionParticipation), Optional.empty());
 
-        assertThat(exerciseVersionCaptured).isTrue();
+        // Proves the actual ordering guarantee (exercise version capture happens-before the test submission is created), rather than merely observing a flag flipped
+        // sometime during the call.
+        InOrder inOrder = inOrder(exerciseVersionService, programmingSubmissionService);
+        inOrder.verify(exerciseVersionService).createExerciseVersionSynchronously(testExercise, testUser, java.util.Map.of(RepositoryType.TESTS, "commit-hash"));
+        inOrder.verify(programmingSubmissionService).createSolutionParticipationSubmissionWithTypeTest(testExercise.getId(), "commit-hash");
     }
 
     @Test
@@ -357,5 +357,21 @@ class LocalVCServletServiceTest {
 
         assertThat(lease).isSameAs(expectedLease);
         verify(programmingExerciseMutationGuard).claimExternalMutation(OptionalLong.empty());
+    }
+
+    @Test
+    void claimProgrammingExerciseMutationClaimsVersionableAuxiliaryRepository() {
+        Repository repository = mock(Repository.class);
+        Path repositoryPath = Path.of("/tmp/test-repos", testExercise.getProjectKey(), testExercise.getProjectKey().toLowerCase() + "-customrepo.git");
+        var expectedLease = new ProgrammingExerciseMutationGuard.MutationLease(() -> {
+        });
+        when(repository.getDirectory()).thenReturn(repositoryPath.toFile());
+        when(auxiliaryRepositoryService.isAuxiliaryRepositoryOfExercise("customrepo", testExercise)).thenReturn(true);
+        when(exerciseVersionService.isRepositoryTypeVersionable(RepositoryType.AUXILIARY)).thenReturn(true);
+        when(programmingExerciseMutationGuard.claimExternalMutation(testExercise.getId())).thenReturn(expectedLease);
+
+        var lease = localVCServletService.claimProgrammingExerciseMutation(repository, testExercise);
+
+        assertThat(lease).isSameAs(expectedLease);
     }
 }

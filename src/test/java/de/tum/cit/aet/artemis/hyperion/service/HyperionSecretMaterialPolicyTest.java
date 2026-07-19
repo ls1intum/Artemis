@@ -49,6 +49,15 @@ class HyperionSecretMaterialPolicyTest {
         assertThat(policy.assess("src/fixture.txt", bytes("prefix " + content + " suffix"), HyperionSecretMaterialPolicy.Origin.PROVIDER_PROMPT).category()).contains(category);
     }
 
+    @ParameterizedTest
+    @ValueSource(strings = { "ghp_", "gho_", "ghu_", "ghs_", "ghr_" })
+    void assessRejectsEveryGithubTokenPrefix(String prefix) {
+        String token = prefix + "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghij";
+
+        assertThat(policy.assess("src/fixture.txt", bytes("prefix " + token + " suffix"), HyperionSecretMaterialPolicy.Origin.PROVIDER_PROMPT).category())
+                .contains(HyperionSecretMaterialPolicy.Category.GITHUB_TOKEN);
+    }
+
     private static Stream<Arguments> supportedProviderTokens() {
         return Stream.of(Arguments.of("AKIAIOSFODNN7EXAMPLE", HyperionSecretMaterialPolicy.Category.AWS_ACCESS_KEY_ID),
                 Arguments.of(GITHUB_SENTINEL, HyperionSecretMaterialPolicy.Category.GITHUB_TOKEN),

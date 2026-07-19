@@ -142,7 +142,10 @@ class HyperionProgrammingLanguageContextFilterServiceTest {
     void filter_excludesCredentialPathsAndSupportedMaterialWithoutBlockingOrdinarySource() {
         String githubSentinel = "ghp_ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghij";
         Map<String, String> files = new LinkedHashMap<>();
-        files.put(".env.production", "ordinary");
+        // ".json" is an otherwise-safe extension (passes the pre-existing SAFE_EXTENSIONS net), so this fixture isolates the HyperionSecretMaterialPolicy credential-path gate:
+        // it is rejected only because "service-account.json" is a named credential file, not because of the old extension safety net (which a ".env.production"-style filename
+        // would already fail on its own, since ".production" is not a safe extension).
+        files.put("service-account.json", "{\"private_key\": \"-----BEGIN PRIVATE KEY-----\\nfixture-key-material\\n-----END PRIVATE KEY-----\"}");
         files.put("src/sentinel.txt", githubSentinel);
         files.put("src/Example.java", "String token = \"token\"; String password = \"change-me\"; String apiKey = \"example\";");
 

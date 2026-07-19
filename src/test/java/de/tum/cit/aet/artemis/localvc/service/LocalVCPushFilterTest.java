@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.localvc.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -83,6 +84,20 @@ class LocalVCPushFilterTest {
         assertThat(response.getStatus()).isEqualTo(409);
         assertThat(response.getErrorMessage()).contains("retry");
         verify(filterChain, never()).doFilter(request, response);
+    }
+
+    @Test
+    void getRequestSkipsTheMutationGuardAndPassesThroughTheFilterChain() throws Exception {
+        LocalVCServletService localVCServletService = mock(LocalVCServletService.class);
+        LocalVCPushFilter filter = new LocalVCPushFilter(localVCServletService);
+        MockHttpServletRequest request = new MockHttpServletRequest(HttpMethod.GET.name(), "/git/TEST/test-exercise.git/info/refs");
+        MockHttpServletResponse response = new MockHttpServletResponse();
+        FilterChain filterChain = mock(FilterChain.class);
+
+        filter.doFilterInternal(request, response, filterChain);
+
+        verify(filterChain).doFilter(request, response);
+        verify(localVCServletService, never()).claimProgrammingExerciseMutation(any(), any());
     }
 
     private static MockHttpServletRequest receivePackRequest() {

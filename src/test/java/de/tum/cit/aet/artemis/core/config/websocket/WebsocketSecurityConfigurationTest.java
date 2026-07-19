@@ -13,6 +13,8 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.messaging.access.intercept.MessageMatcherDelegatingAuthorizationManager;
 
+import de.tum.cit.aet.artemis.core.security.Role;
+
 class WebsocketSecurityConfigurationTest {
 
     private final WebsocketSecurityConfiguration configuration = new WebsocketSecurityConfiguration();
@@ -30,8 +32,38 @@ class WebsocketSecurityConfigurationTest {
         assertThat(manager.authorize(() -> authentication, subscription("/topic/exercises/42/synchronization")).isGranted()).isTrue();
     }
 
+    @Test
+    void nonAdminIsDeniedOnTheAdminOnlyTopicMatcher() {
+        var manager = configuration.authorizationManager(MessageMatcherDelegatingAuthorizationManager.builder());
+        var authentication = UsernamePasswordAuthenticationToken.authenticated("user", "password", List.of(new SimpleGrantedAuthority("ROLE_USER")));
+
+        assertThat(manager.authorize(() -> authentication, subscription("/topic")).isGranted()).isFalse();
+    }
+
+    @Test
+    void adminIsGrantedOnTheAdminOnlyTopicMatcher() {
+        var manager = configuration.authorizationManager(MessageMatcherDelegatingAuthorizationManager.builder());
+        var authentication = UsernamePasswordAuthenticationToken.authenticated("admin", "password", List.of(new SimpleGrantedAuthority(Role.ADMIN.getAuthority())));
+
+        assertThat(manager.authorize(() -> authentication, subscription("/topic")).isGranted()).isTrue();
+    }
+
+    @Test
+    void unmatchedDestinationHitsTheCatchAllDenyAll() {
+        var manager = configuration.authorizationManager(MessageMatcherDelegatingAuthorizationManager.builder());
+        var authentication = UsernamePasswordAuthenticationToken.authenticated("user", "password", List.of(new SimpleGrantedAuthority("ROLE_USER")));
+
+        // A DISCONNECT frame is neither MESSAGE nor SUBSCRIBE (so simpTypeMatchers(...).denyAll() does not apply), and its destination matches none of the /topic
+        // matchers, so this must fall through to the anyMessage().denyAll() catch-all.
+        assertThat(manager.authorize(() -> authentication, message(StompCommand.DISCONNECT, "/queue/unmatched")).isGranted()).isFalse();
+    }
+
     private Message<byte[]> subscription(String destination) {
-        var accessor = StompHeaderAccessor.create(StompCommand.SUBSCRIBE);
+        return message(StompCommand.SUBSCRIBE, destination);
+    }
+
+    private Message<byte[]> message(StompCommand command, String destination) {
+        var accessor = StompHeaderAccessor.create(command);
         accessor.setDestination(destination);
         return MessageBuilder.createMessage(new byte[0], accessor.getMessageHeaders());
     }

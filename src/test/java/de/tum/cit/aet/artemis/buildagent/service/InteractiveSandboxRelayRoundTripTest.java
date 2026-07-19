@@ -284,7 +284,7 @@ class InteractiveSandboxRelayRoundTripTest {
 
             assertThatExceptionOfType(LocalCIException.class)
                     .isThrownBy(() -> harness.client().copyIn(handle, "/workspace", new ByteArrayInputStream(tarWithSingleFile("file.txt", "content"))))
-                    .withMessageContaining("Interactive sandbox COPY_IN operation failed");
+                    .withMessageContaining("copy timed out");
 
             assertThat(harness.client().createSession(sessionSpec("replacement-job"))).isEqualTo(AGENT_SHORT_NAME + "::" + replacementContainer);
         }
@@ -448,7 +448,7 @@ class InteractiveSandboxRelayRoundTripTest {
     @Test
     void exec_rejectsAnUnownedContainerId() {
         assertThatExceptionOfType(LocalCIException.class).isThrownBy(() -> client.exec(handle(), Duration.ofSeconds(1), "echo", "unsafe"))
-                .withMessageContaining("Interactive sandbox EXEC operation failed");
+                .withMessageContaining("is not owned by this relay");
 
         verify(localSandbox, never()).exec(anyString(), any(), any(String[].class));
     }
@@ -1049,8 +1049,7 @@ class InteractiveSandboxRelayRoundTripTest {
             doThrow(new LocalCIException("remove failed")).when(harness.localSandbox()).destroySession(CONTAINER_ID);
             when(harness.localSandbox().sessionExists(CONTAINER_ID)).thenReturn(true);
 
-            assertThatExceptionOfType(LocalCIException.class).isThrownBy(() -> harness.client().destroySession(handle))
-                    .withMessageContaining("Interactive sandbox DESTROY operation failed");
+            assertThatExceptionOfType(LocalCIException.class).isThrownBy(() -> harness.client().destroySession(handle)).withMessageContaining("remove failed");
             assertThatExceptionOfType(LocalCIException.class).isThrownBy(() -> harness.client().createSession(sessionSpec("other-job")))
                     .withMessageContaining("generation sandbox slot capacity");
         }
@@ -1103,7 +1102,7 @@ class InteractiveSandboxRelayRoundTripTest {
             String handle = harness.client().createSession(sessionSpec());
 
             assertThatExceptionOfType(LocalCIException.class).isThrownBy(() -> harness.client().exec(handle, Duration.ofSeconds(1), "sleep", "10"))
-                    .withMessageContaining("Interactive sandbox EXEC operation failed");
+                    .withMessageContaining("Docker response lost");
             assertThat(harness.client().createSession(sessionSpec())).isEqualTo(handle);
         }
     }

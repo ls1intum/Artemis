@@ -104,8 +104,10 @@ class StaticCodeAnalysisResourceMutationGuardTest {
         StaticCodeAnalysisResource resource = new StaticCodeAnalysisResource(mock(AuthorizationCheckService.class), repository, staticCodeAnalysisService,
                 mock(StaticCodeAnalysisCategoryRepository.class), mutationGuard, userRepository, exerciseVersionService);
 
-        resource.updateStaticCodeAnalysisCategories(TARGET_EXERCISE_ID, Set.of());
+        var response = resource.updateStaticCodeAnalysisCategories(TARGET_EXERCISE_ID, Set.of());
 
+        assertThat(response.getStatusCode().value()).isEqualTo(200);
+        assertThat(response.getBody()).isEqualTo(Set.of());
         assertThat(leaseHeld).isFalse();
     }
 

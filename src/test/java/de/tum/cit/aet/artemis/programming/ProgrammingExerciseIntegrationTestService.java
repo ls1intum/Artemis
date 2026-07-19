@@ -756,8 +756,9 @@ public class ProgrammingExerciseIntegrationTestService {
         var programmingExerciseServer = request.get(path, HttpStatus.OK, ProgrammingExercise.class);
         checkTemplateAndSolutionParticipationsFromServer(programmingExerciseServer);
         assertThat(programmingExerciseServer.getStudentParticipations()).hasSize(1);
-        assertThat(programmingExerciseServer.getNumberOfParticipations())
-                .isEqualTo((long) programmingExerciseStudentParticipationRepository.findByExerciseId(programmingExercise.getId()).size());
+        // Two participations were created above (instructor1, student1); pinning the literal catches a regression where the count silently drifts from what this test
+        // actually set up, which the previous self-referential query-based assertion could not.
+        assertThat(programmingExerciseServer.getNumberOfParticipations()).isEqualTo(2L);
     }
 
     void testGetProgrammingExerciseWithJustTemplateAndSolutionParticipation(boolean withSubmissionResults) throws Exception {

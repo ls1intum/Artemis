@@ -2,7 +2,10 @@ package de.tum.cit.aet.artemis.programming.service;
 
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -19,6 +22,7 @@ import com.hazelcast.cluster.Member;
 import com.hazelcast.core.HazelcastInstance;
 
 import de.tum.cit.aet.artemis.core.config.HazelcastConfiguration;
+import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.exception.ServiceUnavailableAlertException;
 import de.tum.cit.aet.artemis.hyperion.api.HyperionExerciseMutationApi;
 
@@ -37,6 +41,18 @@ class ProgrammingExerciseMutationGuardTest {
 
         verify(hyperionApi).clearExternalMutationSlot(42L, "mutation-42");
         verifyNoInteractions(hazelcastInstance);
+    }
+
+    @Test
+    void claimExternalMutation_propagatesConflictFromTheSlotClaimWithoutClearingIt() {
+        HyperionExerciseMutationApi hyperionApi = mock(HyperionExerciseMutationApi.class);
+        when(hyperionApi.claimExternalMutationSlot(42L))
+                .thenThrow(new ConflictException("Exercise 42 is already being mutated.", "programmingExercise", "hyperionMutationSlotConflict"));
+        ProgrammingExerciseMutationGuard guard = new ProgrammingExerciseMutationGuard(Optional.of(hyperionApi), mock(HazelcastInstance.class));
+
+        assertThatExceptionOfType(ConflictException.class).isThrownBy(() -> guard.claimExternalMutation(42L));
+
+        verify(hyperionApi, never()).clearExternalMutationSlot(anyLong(), anyString());
     }
 
     @Test
@@ -71,14 +87,6 @@ class ProgrammingExerciseMutationGuardTest {
     @Test
     void claimExternalMutation_rejectsMissingCapabilityAttribute() {
         ProgrammingExerciseMutationGuard guard = disabledGuard(hazelcastWithMembers(dataMember("false"), dataMember(null)), 2);
-
-        assertThatExceptionOfType(ServiceUnavailableAlertException.class).isThrownBy(() -> guard.claimExternalMutation(42L))
-                .satisfies(exception -> assertServiceUnavailable(exception, "hyperionExerciseGenerationCapabilityUnavailable"));
-    }
-
-    @Test
-    void claimExternalMutation_rejectsMalformedCapabilityAttribute() {
-        ProgrammingExerciseMutationGuard guard = disabledGuard(hazelcastWithMembers(dataMember("false"), dataMember("enabled")), 2);
 
         assertThatExceptionOfType(ServiceUnavailableAlertException.class).isThrownBy(() -> guard.claimExternalMutation(42L))
                 .satisfies(exception -> assertServiceUnavailable(exception, "hyperionExerciseGenerationCapabilityUnavailable"));

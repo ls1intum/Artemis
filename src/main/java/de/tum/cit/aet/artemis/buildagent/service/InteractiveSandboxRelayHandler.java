@@ -34,6 +34,7 @@ import jakarta.annotation.PreDestroy;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -340,7 +341,7 @@ public class InteractiveSandboxRelayHandler {
         catch (Exception e) {
             log.warn("Interactive sandbox relay operation {} ({}) failed on agent '{}' ({})", request.op(), request.correlationId(), buildAgentShortName,
                     e.getClass().getSimpleName());
-            response = SandboxOpResponse.failure(request.correlationId(), "Interactive sandbox " + request.op() + " operation failed.");
+            response = SandboxOpResponse.failure(request.correlationId(), "Interactive sandbox " + request.op() + " operation failed: " + sanitizedCauseMessage(e));
         }
         finally {
             operationLock.unlock();
@@ -602,6 +603,15 @@ public class InteractiveSandboxRelayHandler {
 
     private static SandboxOpResponse deadlineExpiredResponse(SandboxOpRequest request) {
         return SandboxOpResponse.failure(request.correlationId(), "Interactive sandbox request deadline expired before execution completed.");
+    }
+
+    /** A short, single-line, length-bounded rendering of the failure cause to include in the response sent back to the blocked caller. */
+    private static String sanitizedCauseMessage(Exception e) {
+        String message = e.getMessage();
+        if (StringUtils.isBlank(message)) {
+            message = e.getClass().getSimpleName();
+        }
+        return StringUtils.abbreviate(message.replaceAll("\\s+", " ").trim(), 200);
     }
 
     /** Re-packs a decoded tar stream for bounded transport through the relay. */

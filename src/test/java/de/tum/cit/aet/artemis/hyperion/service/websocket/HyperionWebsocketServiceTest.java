@@ -69,6 +69,16 @@ class HyperionWebsocketServiceTest {
     }
 
     @Test
+    void broadcastExerciseState_swallowsRuntimeException_soAFailingBroadcastNeverPropagates() {
+        ExerciseGenerationStateDTO state = new ExerciseGenerationStateDTO(42L, "job-42", true);
+        when(messagingService.sendMessage("/topic/hyperion/exercise-generation/exercises/42/state", state)).thenThrow(new IllegalStateException("broker unavailable"));
+
+        // A broker/messaging failure raised synchronously by sendMessage() itself must not propagate: the event listener would otherwise blow up whatever code published the
+        // ExerciseGenerationStateChangedEvent.
+        assertThatCode(() -> service.broadcastExerciseState(new ExerciseGenerationStateChangedEvent(state))).doesNotThrowAnyException();
+    }
+
+    @Test
     void send_swallowsExecutionException_soADeliveryFailureNeverAbortsTheRun() {
         CompletableFuture<Void> failed = CompletableFuture.failedFuture(new ExecutionException("broker down", new IllegalStateException()));
         when(messagingService.sendMessageToUser(eq("instructor1"), anyString(), any())).thenReturn(failed);

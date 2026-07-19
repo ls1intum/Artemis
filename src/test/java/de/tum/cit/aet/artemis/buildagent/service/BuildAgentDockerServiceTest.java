@@ -205,8 +205,14 @@ class BuildAgentDockerServiceTest extends AbstractProgrammingIntegrationLocalCIL
         assertThat(BuildAgentDockerService.shouldCleanUpOnStartup(sandbox, "local-ci-", sandboxPrefix, true)).isFalse();
     }
 
+    /**
+     * Production has no retry loop: a listing failure during the first cleanup is caught, logged, and the method returns. But the {@code finally} block always flips
+     * {@code isFirstCleanup} to {@code false} regardless of success or failure, so the *next* {@link BuildAgentDockerService#cleanUpContainers()} invocation runs the
+     * subsequent-cleanup branch (age/sandbox-disabled filter) rather than retrying the first-cleanup listing. That second, independent call is what force-removes the
+     * generation sandbox here.
+     */
     @Test
-    void startupCleanupRetriesAfterListingFailureAndForceRemovesGenerationSandbox() {
+    void firstCleanupListingFailureStillResetsFlagSoNextInvocationForceRemovesGenerationSandbox() {
         ReflectionTestUtils.setField(buildAgentDockerService, "isFirstCleanup", true);
         ReflectionTestUtils.setField(buildAgentDockerService, "maxGenerationSandboxSlots", 0);
         ReflectionTestUtils.setField(buildAgentDockerService, "buildAgentShortName", "agent");

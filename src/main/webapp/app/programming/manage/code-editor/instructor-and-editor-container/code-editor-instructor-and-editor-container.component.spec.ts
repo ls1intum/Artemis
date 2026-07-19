@@ -1937,6 +1937,39 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Adapt with feedback'
         expect((comp as any).generationRefreshPending()).toBe(true);
     });
 
+    it('warns and does not reload when a generation revert arrives while the editor is dirty', () => {
+        const reloadEditor = vi.spyOn(comp as any, 'reloadEditor').mockImplementation(() => undefined);
+        setCodeEditorContainer(comp, { canDeactivate: () => false, hasCleanRepositoryState: () => false });
+        const warning = vi.spyOn(TestBed.inject(AlertService), 'warning');
+
+        (comp as any).onHyperionGenerationReverted('2024-01-01T00:00:00Z');
+
+        expect(reloadEditor).not.toHaveBeenCalled();
+        expect(warning).toHaveBeenCalledWith('artemisApp.hyperion.generationActivity.refreshBlockedByLocalEdits');
+    });
+
+    it('reloads a clean editor exactly once when a generation revert arrives', () => {
+        const reloadEditor = vi.spyOn(comp as any, 'reloadEditor').mockImplementation(() => undefined);
+        setCodeEditorContainer(comp, { canDeactivate: () => true, hasCleanRepositoryState: () => true });
+        setEditableInstructions(comp, { unsavedChangesValue: () => false });
+
+        (comp as any).onHyperionGenerationReverted('2024-01-01T00:00:00Z');
+
+        expect(reloadEditor).toHaveBeenCalledOnce();
+        expect((comp as any).generationRefreshPending()).toBe(true);
+    });
+
+    it('does not double-reload when a generation revert fires twice, guarded by generationRefreshPending rather than a job-id dedup', () => {
+        const reloadEditor = vi.spyOn(comp as any, 'reloadEditor').mockImplementation(() => undefined);
+        setCodeEditorContainer(comp, { canDeactivate: () => true, hasCleanRepositoryState: () => true });
+        setEditableInstructions(comp, { unsavedChangesValue: () => false });
+
+        (comp as any).onHyperionGenerationReverted('2024-01-01T00:00:00Z');
+        (comp as any).onHyperionGenerationReverted('2024-01-01T00:00:01Z');
+
+        expect(reloadEditor).toHaveBeenCalledOnce();
+    });
+
     it('preserves edits made while generation is running even when the editor was clean at admission', () => {
         const reloadEditor = vi.spyOn(comp as any, 'reloadEditor').mockImplementation(() => undefined);
         setCodeEditorContainer(comp, { canDeactivate: () => true, hasCleanRepositoryState: () => true });

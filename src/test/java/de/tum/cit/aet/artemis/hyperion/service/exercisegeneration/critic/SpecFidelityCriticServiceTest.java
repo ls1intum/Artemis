@@ -283,6 +283,18 @@ class SpecFidelityCriticServiceTest {
     }
 
     @Test
+    void cancelledBeforeTheFirstReviewerCall_skipsEveryProviderCallAndReturnsNoFindings() {
+        ChatModel chatModel = mock(ChatModel.class);
+        when(chatModel.getOptions()).thenReturn(ChatOptions.builder().build());
+        SpecFidelityCriticService critic = new SpecFidelityCriticService(ChatClient.create(chatModel), objectMapper);
+
+        SpecFidelityReport report = critic.critique(UNICODE_BRIEF, "# Rover", List.of("turnsLeft"), COMPLETE_ARTIFACTS, null, () -> true);
+
+        assertThat(report.findings()).isEmpty();
+        verify(chatModel, never()).call(any(Prompt.class));
+    }
+
+    @Test
     void artifactSetBeyondBoundedReviewInputFailsClosedWithoutCallingTheModel() {
         ChatModel chatModel = mock(ChatModel.class);
         when(chatModel.getOptions()).thenReturn(ChatOptions.builder().build());
