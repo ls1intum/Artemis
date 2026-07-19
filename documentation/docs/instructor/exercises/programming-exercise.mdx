@@ -341,7 +341,7 @@ This can be used for providing additional resources or overwriting template sour
 - **Package Name**: The package name for this exercise. Not available for all languages
 - **Enable Static Code Analysis**: Enable automated code quality checks. **Cannot be changed after creation**. See Static Code Analysis Configuration section below
 - **Sequential Test Runs**: First run structural, then behavioral tests. Helps students focus on immediate challenges. Not compatible with static code analysis. **Cannot be changed after creation**
-- **Customize Build Configuration**: Customize the build plan of your exercise. Available for all languages with Local CI and Jenkins. Can also be customized after creation
+- **Build plan**: A default build plan is created for your exercise. You can customize it after creation on the dedicated build plan editor page, see [Adapt Build Phases](#adapt-build-phases-optional). Available for all languages with Local CI and Jenkins
 
 </details>
 
@@ -944,8 +944,8 @@ Alternatively, the mirror can be baked into the Docker image used for the build 
 **Only available with [Integrated Code Lifecycle](/instructor/integrations/integrated-code-lifecycle)**
 
 Instructors can configure the build phases.
-To do this, check the **Customize Build Configuration** option in the exercise creation, edit, or import screen. All changes apply to all builds (template, solution, and student submissions).
-You can view the configured build plan on the exercise's detail or edit page.
+A new exercise starts with a default build plan for its programming language. To adapt it, open the exercise's detail page and click **Edit build plan**. All changes apply to all builds (template, solution, and student submissions).
+The build plan editor shows the template and solution build status next to the configuration, so you can immediately see whether your changes still build. You can also view the configured build plan on the exercise's detail page.
 
 <Image src={buildPlanPhases} alt="Build Plan Configuration" size={ImageSize.large} caption="Build Plan Configuration" />
 
