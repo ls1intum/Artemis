@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
@@ -417,6 +418,7 @@ class GenerationJobServiceTest {
         try {
             discard = executor.submit(() -> jobService.discardRetainedRun(exerciseId, jobId));
             assertThat(lockAttempted.await(2, TimeUnit.SECONDS)).isTrue();
+            assertThat(discard.isDone()).isFalse();
             assertThat(transcriptMap().get(key)).isNotNull();
         }
         finally {
@@ -473,6 +475,7 @@ class GenerationJobServiceTest {
         try {
             Future<Optional<ExerciseGenerationStatusDTO>> status = executor.submit(() -> jobService.getStatus(owner, exercise));
             assertThat(lockAttempted.await(5, TimeUnit.SECONDS)).isTrue();
+            assertThat(status.isDone()).isFalse();
 
             jobMap.unlock(key);
             lockHeld.set(false);
@@ -843,8 +846,14 @@ class GenerationJobServiceTest {
         }, mock(LLMTokenUsageService.class), budgetService, Duration.ofMinutes(35), Duration.ofMinutes(30));
         service.init();
         String jobId = service.startJob(user("owner"), exercise(exerciseId), "go", GenerationMode.GENERATE, "reservation-225");
+        @SuppressWarnings("unchecked")
+        IMap<String, GenerationJobService.JobInfo> jobMap = (IMap<String, GenerationJobService.JobInfo>) ReflectionTestUtils.getField(service, "jobMap");
+        Instant heartbeatBeforeAttempt = jobMap.get(String.valueOf(exerciseId)).lastHeartbeatOrStartedAt();
 
         assertThat(service.heartbeat(exerciseId, jobId)).isFalse();
+
+        // The budget-reservation guard must short-circuit before the jobMap write, not merely report failure while still refreshing liveness.
+        assertThat(jobMap.get(String.valueOf(exerciseId)).lastHeartbeatOrStartedAt()).isEqualTo(heartbeatBeforeAttempt);
     }
 
     @Test
@@ -1018,7 +1027,7 @@ class GenerationJobServiceTest {
     }
 
     @Test
-    void staleHeartbeat_reclaimsNonCancellablePersistenceSlotAfterOwnerLeavesCluster() {
+    void staleHeartbeat_retainsNonCancellablePersistenceSlotAfterOwnerLeavesCluster() {
         long exerciseId = 228L;
         ProgrammingExercise exercise = exercise(exerciseId);
         User owner = user("owner");
@@ -1033,18 +1042,39 @@ class GenerationJobServiceTest {
 
         shortTimeoutService.clearStaleJobs();
 
+        // Cluster membership loss is a failure-detector result, not proof that the departed owner's Git/DB persistence request has actually stopped (GC pause, partition,
+        // false-positive detection). The non-cancellable slot must be retained so a replacement generation cannot interleave with an un-fenced writer, even though the owner is
+        // absent from the local membership view.
+        assertThat(shortTimeoutService.hasActiveJob(exerciseId)).isTrue();
         assertThat(shortTimeoutService.getStatus(owner, exercise)).hasValueSatisfying(status -> {
-            assertThat(status.running()).isFalse();
-            assertThat(status.events().getLast()).satisfies(event -> {
-                assertThat(event.completionStatus()).isEqualTo(ExerciseGenerationEventDTO.CompletionStatus.PARTIAL);
-                assertThat(event.liveExerciseChanged()).isTrue();
-                assertThat(event.message()).contains("saving");
-            });
+            assertThat(status.running()).isTrue();
+            assertThat(status.jobId()).isEqualTo(jobId);
+            assertThat(status.cancellable()).isFalse();
         });
-        assertThat(shortTimeoutService.hasActiveJob(exerciseId)).isFalse();
-        verify(budgetService).retainReservationForBudgetWindow("reservation-228");
+        verify(budgetService, never()).retainReservationForBudgetWindow("reservation-228");
         verify(budgetService, never()).releaseReservation("reservation-228");
-        assertThat(shortTimeoutService.startJob(owner, exercise, "new", GenerationMode.GENERATE)).isNotBlank();
+        assertThatExceptionOfType(ConflictException.class).isThrownBy(() -> shortTimeoutService.startJob(owner, exercise, "new", GenerationMode.GENERATE));
+    }
+
+    @Test
+    void staleHeartbeat_retainsNonCancellableRevertSlotAfterOwnerLeavesCluster() {
+        long exerciseId = 229L;
+        ProgrammingExercise exercise = exercise(exerciseId);
+        User owner = user("owner");
+        String token = jobService.claimRevertSlot(owner, exerciseId);
+        forceJobHeartbeat(exerciseId, token, Instant.now().minus(Duration.ofMinutes(10)));
+        forceJobOwner(exerciseId, "departed-node");
+        GenerationJobService shortTimeoutService = new GenerationJobService(hazelcastInstance, event -> {
+        }, mock(LLMTokenUsageService.class), Duration.ofMinutes(1), Duration.ofSeconds(30));
+        shortTimeoutService.init();
+
+        shortTimeoutService.clearStaleJobs();
+
+        // Same fail-closed rule as the persistence barrier above: a departed owner mid force-reset may still be writing to the Git server, so the revert barrier must not be
+        // freed just because the owner left the cluster view. Both a new generation and a new revert must conflict with the retained slot.
+        assertThat(shortTimeoutService.hasActiveJob(exerciseId)).isTrue();
+        assertThatExceptionOfType(ConflictException.class).isThrownBy(() -> shortTimeoutService.startJob(owner, exercise, "new", GenerationMode.GENERATE));
+        assertThatExceptionOfType(ConflictException.class).isThrownBy(() -> shortTimeoutService.claimRevertSlot(owner, exerciseId));
     }
 
     @Test
@@ -1237,6 +1267,42 @@ class GenerationJobServiceTest {
             assertThat(status.running()).isFalse();
             assertThat(status.fileChanges()).singleElement().extracting(ExerciseGenerationFileChangeDTO::path).isEqualTo("solution/Before.java");
         });
+    }
+
+    @Test
+    void startJob_whenTranscriptInitializationFails_releasesSlotAndAllowsRetry() {
+        long exerciseId = 82L;
+        String key = String.valueOf(exerciseId);
+        GenerationJobReplayStore replayStore = (GenerationJobReplayStore) ReflectionTestUtils.getField(jobService, "replayStore");
+        IMap<String, GenerationJobService.JobTranscript> originalTranscriptMap = transcriptMap();
+        IMap<String, GenerationJobService.JobTranscript> failingTranscriptMap = spy(originalTranscriptMap);
+        doThrow(new IllegalStateException("transcript initialization failed")).when(failingTranscriptMap).set(eq(key), any(GenerationJobService.JobTranscript.class));
+        ReflectionTestUtils.setField(replayStore, "transcriptMap", failingTranscriptMap);
+
+        assertThatExceptionOfType(IllegalStateException.class).isThrownBy(() -> jobService.startJob(user("owner"), exercise(exerciseId), "go", GenerationMode.GENERATE))
+                .withMessageContaining("transcript initialization failed");
+
+        ReflectionTestUtils.setField(replayStore, "transcriptMap", originalTranscriptMap);
+        assertThat(jobService.hasActiveJob(exerciseId)).isFalse();
+        assertThat(jobService.startJob(user("owner"), exercise(exerciseId), "retry", GenerationMode.GENERATE)).isNotBlank();
+    }
+
+    @Test
+    void startJob_whenFileChangeInitializationFails_releasesSlotAndAllowsRetry() {
+        long exerciseId = 83L;
+        String key = String.valueOf(exerciseId);
+        GenerationJobReplayStore replayStore = (GenerationJobReplayStore) ReflectionTestUtils.getField(jobService, "replayStore");
+        IMap<String, GenerationJobService.JobFileChangeIndex> originalFileChangeMap = fileChangeMap();
+        IMap<String, GenerationJobService.JobFileChangeIndex> failingFileChangeMap = spy(originalFileChangeMap);
+        doThrow(new IllegalStateException("file-change initialization failed")).when(failingFileChangeMap).set(eq(key), any(GenerationJobService.JobFileChangeIndex.class));
+        ReflectionTestUtils.setField(replayStore, "fileChangeMap", failingFileChangeMap);
+
+        assertThatExceptionOfType(IllegalStateException.class).isThrownBy(() -> jobService.startJob(user("owner"), exercise(exerciseId), "go", GenerationMode.GENERATE))
+                .withMessageContaining("file-change initialization failed");
+
+        ReflectionTestUtils.setField(replayStore, "fileChangeMap", originalFileChangeMap);
+        assertThat(jobService.hasActiveJob(exerciseId)).isFalse();
+        assertThat(jobService.startJob(user("owner"), exercise(exerciseId), "retry", GenerationMode.GENERATE)).isNotBlank();
     }
 
 }

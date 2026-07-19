@@ -789,10 +789,20 @@ public class GenerationJobService {
     }
 
     /**
-     * Reclaims a stale slot only after Hazelcast confirms that its owner left the cluster. A stale heartbeat from a live member can be a scheduler pause, so a cancellable job is
-     * asked to stop while a non-cancellable persistence job retains its slot. Once a generation owner has left, the worker can no longer pass its ownership checks; the job becomes
-     * terminal and its slot is released. Its worst-case budget reservation remains until the rolling budget window expires because provider usage may have become billable before
-     * the owner disappeared. External requests remain fail-closed because they are not fenced by those checks.
+     * Reclaims a stale slot only after Hazelcast confirms that its owner left the cluster, and only while the job is still cancellable. A stale heartbeat from a live member can
+     * be a scheduler pause, so a cancellable job is asked to stop while it keeps its slot until the worker actually drains. Once a <em>cancellable</em> generation owner has
+     * left, the worker can no longer pass its ownership checks; the job becomes terminal and its slot is released. Its worst-case budget reservation remains until the rolling
+     * budget window expires because provider usage may have become billable before the owner disappeared.
+     * <p>
+     * A <em>non-cancellable</em> job (generation past {@link #enterNonCancellablePhase(long, String)}, or a {@code revert-*} slot) is never automatically removed, regardless of
+     * heartbeat age or owner membership: absence from the local Hazelcast membership view is a failure-detector result (GC pause, network partition, false-positive detection),
+     * not proof that the owning JVM — and any Git/DB request it already issued before durable persistence or a revert reset — has actually stopped. Reclaiming the slot here
+     * could let a replacement generation start and interleave with an un-fenced writer still completing a mutation. This generalizes the same fail-closed rule already applied
+     * to {@code external-mutation-*} slots below. Availability is sacrificed only in this precisely unknowable state; the slot requires the same kind of audited, exact-token
+     * recovery as an external mutation to be released (see {@link #recoverExternalMutationSlot(long, String)}).
+     * <p>
+     * TODO(pe-stale-owner report, "Simplest safe fix" item 3 / "Tests" items 4-6): generalizing the audited exact-token recovery workflow to generation/revert slots, and the
+     * in-flight-latch partition-race and multi-member integration tests, are out of scope for this change and are left for a follow-up.
      *
      * @return {@code true} when the slot was reclaimed
      */
@@ -802,10 +812,21 @@ public class GenerationJobService {
         if (isExternalMutationJob(current)) {
             return false;
         }
-        if (ownerMemberIsPresent(current)) {
-            if (current.cancellable()) {
-                signalStaleLiveOwner(current, now);
+        if (!current.cancellable()) {
+            // Durable persistence/revert mutation may already be in flight. Fail closed: retain the slot so a replacement claim conflicts instead of possibly overlapping the
+            // old owner's un-fenced Git/DB writes. Only log when the owner is actually absent — a live owner with a merely stale heartbeat was already silently retained before
+            // this change (e.g. a scheduler pause), and that is not a new, actionable condition for an operator.
+            if (!ownerMemberIsPresent(current)) {
+                log.warn(
+                        "Retaining non-cancellable generation slot for job {} (exercise {}) after its owner {} left the Hazelcast cluster: cluster departure does not prove that "
+                                + "the in-flight persistence/revert mutation has stopped. The slot stays claimed to block a replacement job; release it only via audited, "
+                                + "exact-token manual recovery once the old owner and its Git/DB requests are confirmed quiescent.",
+                        current.jobId(), current.exerciseId(), current.ownerNodeId());
             }
+            return false;
+        }
+        if (ownerMemberIsPresent(current)) {
+            signalStaleLiveOwner(current, now);
             return false;
         }
         stopActiveJob(key, current, now);
