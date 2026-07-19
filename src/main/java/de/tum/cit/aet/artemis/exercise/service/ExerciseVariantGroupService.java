@@ -96,9 +96,14 @@ public class ExerciseVariantGroupService {
         }
         exercise.setExerciseVariantGroup(group);
         if (group != null && exercise instanceof ProgrammingExercise programmingExercise) {
-            // Persist the membership change, then route the timeline through the programming update flow so the
-            // build-and-test date is recomputed and the scheduled build/test operations are refreshed (a plain save
-            // would leave the old tasks scheduled).
+            // Validate the prospective timeline BEFORE persisting the membership: the group's timeline can be legal at
+            // group level but rejected by the programming validation (e.g. its example-solution-date rule is stricter),
+            // and a rejected assignment must not leave the exercise grouped. The membership save must still happen
+            // before the timeline update, because the programming update flow reloads the exercise by id. That flow is
+            // required so the build-and-test date is recomputed and the scheduled build/test operations are refreshed
+            // (a plain save would leave the old tasks scheduled).
+            applyGroupTimeline(group, programmingExercise);
+            validateDates(programmingExercise);
             exerciseRepository.save(programmingExercise);
             updateProgrammingExerciseTimeline(programmingExercise, group);
             return;

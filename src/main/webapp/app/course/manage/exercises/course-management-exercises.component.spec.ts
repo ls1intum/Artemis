@@ -27,6 +27,9 @@ import { QuizExercise, QuizMode, QuizStatus } from 'app/quiz/shared/entities/qui
 import { CourseExerciseCard } from 'app/course/manage/exercises/course-exercise-cards';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { MockAlertService } from 'test/helpers/mocks/service/mock-alert.service';
+import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { PROFILE_LOCALCI } from 'app/app.constants';
 import { TranslateService } from '@ngx-translate/core';
 import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
 
@@ -81,6 +84,7 @@ describe('Course Management Exercises Component', () => {
                 MockProvider(FileUploadExerciseService),
                 MockProvider(ModelingExerciseService),
                 MockProvider(ProgrammingExerciseService),
+                { provide: ProfileService, useClass: MockProfileService },
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
@@ -328,6 +332,27 @@ describe('Course Management Exercises Component', () => {
             expect(textDelete).toHaveBeenCalled();
             expect(errors).toHaveLength(1);
             expect(errors[0]).not.toBe('');
+        });
+
+        it('forwards the delete dialog cleanup flags to each selected programming exercise deletion', () => {
+            comp.toggleSelection(1);
+            comp.toggleSelection(2);
+
+            comp.deleteSelectedExercises({ deleteStudentReposBuildPlans: true, deleteBaseReposBuildPlans: true });
+
+            expect(programmingDelete).toHaveBeenCalledWith(1, true, true);
+            // Non-programming deletions ignore the cleanup flags.
+            expect(textDelete).toHaveBeenCalledWith(2);
+        });
+
+        it('reflects the LocalCI profile in localCIEnabled (gating the cleanup checkboxes)', () => {
+            // The default mock profile has no active profiles, so the checkboxes are offered (non-LocalCI setup).
+            expect(comp['localCIEnabled']()).toBe(false);
+
+            const profileService = TestBed.inject(ProfileService);
+            vi.spyOn(profileService, 'isProfileActive').mockImplementation((profile: string) => profile === PROFILE_LOCALCI);
+            const localCIComp = TestBed.createComponent(CourseManagementExercisesComponent).componentInstance;
+            expect(localCIComp['localCIEnabled']()).toBe(true);
         });
 
         it('deletes quiz, modeling and file-upload exercises via their services', () => {
@@ -592,16 +617,6 @@ describe('Course Management Exercises Component', () => {
             expect(comp.exercises().map((e) => e.id)).toEqual([2]);
             expect(comp.groups()[0].exercises).toHaveLength(0);
             expect(comp.selectedIds().has(1)).toBe(false);
-        });
-
-        it('reorders a card`s exercises in place', () => {
-            comp.onViewChange('list');
-            const card = comp.cards()[0];
-            const reversed = [...card.exercises].reverse();
-
-            comp.onTableRowsReordered(card, reversed);
-
-            expect(comp.cards()[0].exercises).toEqual(reversed);
         });
     });
 });

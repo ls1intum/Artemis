@@ -91,6 +91,19 @@ describe('ExerciseGroupEditModalComponent', () => {
         expect(component.isSaveDisabled()).toBe(true);
     });
 
+    it('marks the title invalid when longer than 255 characters and disables save', () => {
+        fixture.componentRef.setInput('group', buildGroup());
+        fixture.detectChanges();
+
+        component.draftTitle.set('x'.repeat(256));
+        expect(component.isTitleValid()).toBe(false);
+        expect(component.isSaveDisabled()).toBe(true);
+
+        component.draftTitle.set('x'.repeat(255));
+        expect(component.isTitleValid()).toBe(true);
+        expect(component.isSaveDisabled()).toBe(false);
+    });
+
     it('includes the build-and-test date only when the group has a programming member', () => {
         fixture.componentRef.setInput('group', buildGroup({ exercises: [{ id: 5, type: ExerciseType.TEXT } as Exercise] }));
         fixture.detectChanges();

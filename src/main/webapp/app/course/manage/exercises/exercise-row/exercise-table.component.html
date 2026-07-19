@@ -4,6 +4,7 @@
     [cdkDropListData]="sortedExercises()"
     [cdkDropListConnectedTo]="connectedDropLists()"
     [cdkDropListDisabled]="!showDragHandle()"
+    cdkDropListSortingDisabled
     (cdkDropListDropped)="onDrop($event)"
 >
     <p-table [value]="rows()" [rowTrackBy]="rowTrackBy" size="small" styleClass="p-datatable-sm" [scrollable]="true">

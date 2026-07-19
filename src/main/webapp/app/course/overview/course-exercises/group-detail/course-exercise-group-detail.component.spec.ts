@@ -17,7 +17,9 @@ import { ProgrammingExercisePlantUmlExtensionWrapper } from 'app/programming/sha
 import { ArtemisServerDateService } from 'app/foundation/service/server-date.service';
 import { ScoresStorageService } from 'app/course/manage/course-scores/scores-storage.service';
 import { Course } from 'app/course/shared/entities/course.model';
-import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { Exercise, ExerciseType, IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { ParticipationService } from 'app/exercise/participation/participation.service';
+import { MockParticipationService } from 'test/helpers/mocks/service/mock-participation.service';
 
 describe('CourseExerciseGroupDetailComponent', () => {
     let fixture: ComponentFixture<CourseExerciseGroupDetailComponent>;
@@ -26,13 +28,35 @@ describe('CourseExerciseGroupDetailComponent', () => {
 
     const GROUP_ID = 10;
 
-    /** Two exercises in group 10 (cap 15), each worth 10 points, participations 101 and 102. */
+    /** Two exercises in group 10 (cap 15), each worth 10 points and fully included in the score, participations 101 and 102. */
     function exercisesInGroup(groupMaxPoints: number | undefined): Exercise[] {
         const reference = { id: GROUP_ID, title: 'Sorting variants', maxPoints: groupMaxPoints };
         return [
-            { id: 1, type: ExerciseType.TEXT, maxPoints: 10, exerciseVariantGroup: reference, studentParticipations: [{ id: 101 }], problemStatement: 'a' } as unknown as Exercise,
-            { id: 2, type: ExerciseType.TEXT, maxPoints: 10, exerciseVariantGroup: reference, studentParticipations: [{ id: 102 }], problemStatement: 'b' } as unknown as Exercise,
+            {
+                id: 1,
+                type: ExerciseType.TEXT,
+                maxPoints: 10,
+                includedInOverallScore: IncludedInOverallScore.INCLUDED_COMPLETELY,
+                exerciseVariantGroup: reference,
+                studentParticipations: [{ id: 101 }],
+                problemStatement: 'a',
+            } as unknown as Exercise,
+            {
+                id: 2,
+                type: ExerciseType.TEXT,
+                maxPoints: 10,
+                includedInOverallScore: IncludedInOverallScore.INCLUDED_COMPLETELY,
+                exerciseVariantGroup: reference,
+                studentParticipations: [{ id: 102 }],
+                problemStatement: 'b',
+            } as unknown as Exercise,
         ];
+    }
+
+    /** An additional variant of the given inclusion type worth 10 points, joining group 10. */
+    function extraVariant(includedInOverallScore: IncludedInOverallScore, groupMaxPoints: number | undefined): Exercise {
+        const reference = { id: GROUP_ID, title: 'Sorting variants', maxPoints: groupMaxPoints };
+        return { id: 3, type: ExerciseType.TEXT, maxPoints: 10, includedInOverallScore, exerciseVariantGroup: reference, problemStatement: 'c' } as unknown as Exercise;
     }
 
     async function setup(exercises: Exercise[], options?: { getExerciseDetails?: () => Observable<HttpResponse<{ exercise: Exercise }>> }): Promise<void> {
@@ -57,6 +81,7 @@ describe('CourseExerciseGroupDetailComponent', () => {
                 MockProvider(ArtemisServerDateService, { now: () => dayjs() }),
                 MockProvider(DomSanitizer, { bypassSecurityTrustHtml: (value: string) => value }),
                 { provide: ScoresStorageService, useValue: { getStoredAchievedGroupPoints: (_courseId: number, groupId: number) => storedGroupPoints.get(groupId) } },
+                { provide: ParticipationService, useClass: MockParticipationService },
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
@@ -134,6 +159,23 @@ describe('CourseExerciseGroupDetailComponent', () => {
         it('treats a zero cap as a binding cap that discards all group points', async () => {
             await setup(exercisesInGroup(0));
             expect(comp().effectiveGroupMaxPoints()).toBe(0);
+            expect(comp().capReducesMaxPoints()).toBe(true);
+        });
+
+        it('excludes a bonus variant from the maximum, matching the server inclusion rule', async () => {
+            // Two INCLUDED_COMPLETELY variants (10 each) + one INCLUDED_AS_BONUS variant: the course maximum only counts
+            // the first two, so the cap of 25 is not binding even though the raw sum of all variants would be 30.
+            await setup([...exercisesInGroup(25), extraVariant(IncludedInOverallScore.INCLUDED_AS_BONUS, 25)]);
+            expect(comp().exerciseSumMaxPoints()).toBe(20);
+            expect(comp().effectiveGroupMaxPoints()).toBe(20);
+            expect(comp().capReducesMaxPoints()).toBe(false);
+        });
+
+        it('excludes a not-included variant from the maximum, matching the server inclusion rule', async () => {
+            await setup([...exercisesInGroup(15), extraVariant(IncludedInOverallScore.NOT_INCLUDED, 15)]);
+            expect(comp().exerciseSumMaxPoints()).toBe(20);
+            // The cap of 15 binds against the included sum of 20, not the raw sum of 30.
+            expect(comp().effectiveGroupMaxPoints()).toBe(15);
             expect(comp().capReducesMaxPoints()).toBe(true);
         });
     });
@@ -258,12 +300,20 @@ describe('CourseExerciseGroupDetailComponent', () => {
     });
 
     describe('helpers', () => {
-        it('returns the first participation and the exercise link', async () => {
+        it('returns the graded participation and the exercise link', async () => {
             await setup(exercisesInGroup(undefined));
             const exercise = comp().exercises()[0];
             expect(comp().exerciseParticipation(exercise)?.id).toBe(101);
             expect(comp().exerciseParticipation({} as Exercise)).toBeUndefined();
             expect(comp().exerciseLink(exercise)).toBe('/courses/1/exercises/1');
+        });
+
+        it('selects the graded participation even when a practice run is listed first', async () => {
+            // The dashboard response includes practice test runs in unspecified order; the card must not show them.
+            const exercises = exercisesInGroup(undefined);
+            exercises[0].studentParticipations = [{ id: 201, testRun: true } as StudentParticipation, { id: 101 } as StudentParticipation];
+            await setup(exercises);
+            expect(comp().exerciseParticipation(comp().exercises()[0])?.id).toBe(101);
         });
     });
 });

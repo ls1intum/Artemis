@@ -40,6 +40,7 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 })
 export class ExerciseGroupEditModalComponent {
     protected readonly faCircleInfo = faCircleInfo;
+    protected readonly MAX_TITLE_LENGTH = MAX_TITLE_LENGTH;
 
     /** The group being edited, supplied by the dialog opener via {@code inputValues.group}. */
     readonly group = input.required<CourseExerciseGroup>();
@@ -92,7 +93,11 @@ export class ExerciseGroupEditModalComponent {
         return items;
     });
 
-    readonly isTitleValid = computed(() => this.draftTitle().trim().length > 0);
+    /** Mirrors the server-side constraints: non-blank and at most 255 characters (the title column is varchar(255)). */
+    readonly isTitleValid = computed(() => {
+        const title = this.draftTitle().trim();
+        return title.length > 0 && title.length <= MAX_TITLE_LENGTH;
+    });
     readonly timelineStatus = signal<ExerciseTimelineStatus>({ valid: true, empty: true });
     readonly isSaveDisabled = computed(() => !this.isTitleValid() || !this.timelineStatus().valid);
 
@@ -148,6 +153,9 @@ export class ExerciseGroupEditModalComponent {
         );
     }
 }
+
+/** Maximum group title length, matching the server's @Size(max = 255) constraint and the varchar(255) column. */
+const MAX_TITLE_LENGTH = 255;
 
 /** Compares two optional dayjs values by instant, treating both-undefined as equal. */
 function datesEqual(a: dayjs.Dayjs | undefined, b: dayjs.Dayjs | undefined): boolean {

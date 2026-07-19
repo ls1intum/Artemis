@@ -346,7 +346,9 @@ export class CourseScoresComponent implements OnInit {
     }
 
     /**
-     * Calculates the reachable presentation points and adds them to the max number of overall points
+     * Calculates the reachable presentation points and adds them to the max number of overall points. The uncapped
+     * maximum receives them as well, so the exported relation "uncapped - excess variant points = overall" also holds
+     * for the maximum row; the excess variant points themselves are unaffected by presentations.
      */
     private calculateReachablePresentationPoints() {
         const scale = this.gradingScale();
@@ -360,6 +362,7 @@ export class CourseScoresComponent implements OnInit {
             const course = this.course();
             this.maxNumberOfPresentationPoints.set(roundValueSpecifiedByCourseSettings(reachablePresentationPoints, course));
             this.maxNumberOfOverallPoints.set(maxOverall + this.maxNumberOfPresentationPoints());
+            this.maxNumberOfUncappedPoints.set(this.maxNumberOfUncappedPoints() + this.maxNumberOfPresentationPoints());
         }
     }
 
@@ -427,7 +430,9 @@ export class CourseScoresComponent implements OnInit {
     }
 
     /**
-     * Updates the students' statistics with the presentation points.
+     * Updates the students' statistics with the presentation points. Both the credited overall points and the uncapped
+     * points receive them, so the exported relation "uncapped - excess variant points = overall" keeps holding; the
+     * excess variant points themselves are unaffected by presentations.
      * @param studentStatistics
      */
     private addPresentationPointsForStudent(studentStatistics: CourseScoresStudentStatistics) {
@@ -442,6 +447,7 @@ export class CourseScoresComponent implements OnInit {
 
             studentStatistics.presentationPoints = roundValueSpecifiedByCourseSettings(presentationPoints, course);
             studentStatistics.overallPoints += studentStatistics.presentationPoints;
+            studentStatistics.overallPointsUncapped += studentStatistics.presentationPoints;
         }
     }
 

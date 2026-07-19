@@ -47,7 +47,7 @@
                 "noGroup": "Keine Gruppe",
                 "none": "keine",
                 "empty": "Keine Aufgaben",
-                "dragTooltip": "Ziehen, um neu zu sortieren oder zwischen Gruppen zu verschieben",
+                "dragTooltip": "Ziehen, um zwischen Gruppen zu verschieben",
                 "nonIndividualQuizTooltip": "Synchronisierte und Batch-Quizze haben einen einzigen gemeinsamen Durchlauf und können keiner Gruppe hinzugefügt werden."
             },
             "addModal": {

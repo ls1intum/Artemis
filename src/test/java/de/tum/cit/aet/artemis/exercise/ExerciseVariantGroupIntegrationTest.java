@@ -2,10 +2,12 @@ package de.tum.cit.aet.artemis.exercise;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 
+import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -131,6 +133,22 @@ class ExerciseVariantGroupIntegrationTest extends AbstractSpringIntegrationIndep
     void testCreateExerciseVariantGroup_negativeMaxPointsBadRequest() throws Exception {
         CreateExerciseVariantGroupDTO negativeMaxPoints = new CreateExerciseVariantGroupDTO("Loop variants", -5.0, null, null, null, null, null, null);
         request.postWithResponseBody(groupsUrl(), negativeMaxPoints, ExerciseVariantGroupDTO.class, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void testCreateExerciseVariantGroup_titleTooLongBadRequest() throws Exception {
+        // The title column is varchar(255), so a longer title must fail validation instead of reaching persistence.
+        CreateExerciseVariantGroupDTO tooLongTitle = new CreateExerciseVariantGroupDTO("x".repeat(256), null, null, null, null, null, null, null);
+        request.postWithResponseBody(groupsUrl(), tooLongTitle, ExerciseVariantGroupDTO.class, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void testUpdateExerciseVariantGroup_titleTooLongBadRequest() throws Exception {
+        ExerciseVariantGroupDTO created = createGroupAsEditor();
+        UpdateExerciseVariantGroupDTO tooLongTitle = new UpdateExerciseVariantGroupDTO(created.id(), "x".repeat(256), null, null, null, null, null, null, null);
+        request.putWithResponseBody(groupsUrl() + "/" + created.id(), tooLongTitle, ExerciseVariantGroupDTO.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -357,6 +375,30 @@ class ExerciseVariantGroupIntegrationTest extends AbstractSpringIntegrationIndep
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void testAssignProgrammingExerciseInvalidTimeline_badRequestLeavesExerciseUngrouped() throws Exception {
+        ZonedDateTime release = ZonedDateTime.now().plusDays(1).truncatedTo(ChronoUnit.MILLIS);
+        ZonedDateTime exampleSolutionBeforeDue = ZonedDateTime.now().plusDays(3).truncatedTo(ChronoUnit.MILLIS);
+        ZonedDateTime due = ZonedDateTime.now().plusDays(7).truncatedTo(ChronoUnit.MILLIS);
+        // Valid at group level (exampleSolution >= release), but the programming exercise (INCLUDED_COMPLETELY) requires
+        // exampleSolution >= dueDate. The rejected assignment must not persist the membership: the programming path used
+        // to save the exercise before validating the adopted timeline, leaving it grouped with its old dates.
+        CreateExerciseVariantGroupDTO createDTO = new CreateExerciseVariantGroupDTO("Programming variants", null, release, null, due, null, exampleSolutionBeforeDue, null);
+        ExerciseVariantGroupDTO created = request.postWithResponseBody(groupsUrl(), createDTO, ExerciseVariantGroupDTO.class, HttpStatus.CREATED);
+        ProgrammingExercise programmingExercise = programmingExerciseUtilService.addProgrammingExerciseToCourse(course);
+        ProgrammingExercise before = (ProgrammingExercise) exerciseRepository.findByIdElseThrow(programmingExercise.getId());
+        String assignUrl = "/api/exercise/courses/" + course.getId() + "/exercises/" + programmingExercise.getId() + "/variant-group";
+
+        request.put(assignUrl, new ExerciseVariantGroupAssignmentDTO(created.id()), HttpStatus.BAD_REQUEST);
+
+        ProgrammingExercise reloaded = (ProgrammingExercise) exerciseRepository.findByIdElseThrow(programmingExercise.getId());
+        assertThat(reloaded.getExerciseVariantGroup()).isNull();
+        assertThat(zonedToInstant(reloaded.getReleaseDate())).isEqualTo(zonedToInstant(before.getReleaseDate()));
+        assertThat(zonedToInstant(reloaded.getDueDate())).isEqualTo(zonedToInstant(before.getDueDate()));
+        assertThat(reloaded.getExampleSolutionPublicationDate()).isNull();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void testAssignExerciseFromAnotherCourseBadRequest() throws Exception {
         ExerciseVariantGroupDTO created = createGroupAsEditor();
         Course otherCourse = textExerciseUtilService.addCourseWithOneReleasedTextExercise("Other");
@@ -517,6 +559,11 @@ class ExerciseVariantGroupIntegrationTest extends AbstractSpringIntegrationIndep
         group.setMaxPoints(100.0);
         quiz.setExerciseVariantGroup(exerciseVariantGroupRepository.save(group));
         return exerciseRepository.save(quiz);
+    }
+
+    /** Compares dates as instants (PostgreSQL stores timestamps as UTC), tolerating unset dates. */
+    private static Instant zonedToInstant(@Nullable ZonedDateTime date) {
+        return date != null ? date.toInstant() : null;
     }
 
     /** The association is LAZY, so an unfetched read path serializes it as null rather than throwing — assert it is really there. */

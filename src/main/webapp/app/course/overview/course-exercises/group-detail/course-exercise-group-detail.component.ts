@@ -4,7 +4,7 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faCircleInfo, faLayerGroup } from '@fortawesome/free-solid-svg-icons';
-import { DifficultyLevel, Exercise, getIcon } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { DifficultyLevel, Exercise, IncludedInOverallScore, getIcon } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { CourseExerciseGroup, buildGroupsFromExercises } from 'app/exercise/shared/entities/exercise/course-exercise-group.model';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
@@ -20,6 +20,7 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { ExerciseHeadersInformationComponent } from 'app/exercise/exercise-headers/exercise-headers-information/exercise-headers-information.component';
 import { InformationBox, InformationBoxComponent } from 'app/shared-ui/information-box/information-box.component';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
+import { ParticipationService } from 'app/exercise/participation/participation.service';
 import { Course } from 'app/course/shared/entities/course.model';
 import { ArtemisServerDateService } from 'app/foundation/service/server-date.service';
 import { ScoresStorageService } from 'app/course/manage/course-scores/scores-storage.service';
@@ -63,6 +64,7 @@ export class CourseExerciseGroupDetailComponent {
 
     private readonly serverDateService = inject(ArtemisServerDateService);
     private readonly scoresStorageService = inject(ScoresStorageService);
+    private readonly participationService = inject(ParticipationService);
     private readonly now = this.serverDateService.now();
 
     private readonly groupId = signal<number | undefined>(undefined);
@@ -84,8 +86,16 @@ export class CourseExerciseGroupDetailComponent {
     });
     protected readonly exercises = computed<Exercise[]>(() => this.group()?.exercises ?? []);
 
-    /** Sum of maxPoints across all exercises in the group. */
-    protected readonly exerciseSumMaxPoints = computed<number>(() => this.exercises().reduce((sum, ex) => sum + (ex.maxPoints ?? 0), 0));
+    /**
+     * Sum of maxPoints across the group's exercises that count toward the course maximum. Only INCLUDED_COMPLETELY
+     * variants are summed, matching the server's inclusion rule (CourseScoreCalculationService only adds those to the
+     * course maximum before applying the group cap) — bonus or not-included variants must not inflate the denominator.
+     */
+    protected readonly exerciseSumMaxPoints = computed<number>(() =>
+        this.exercises()
+            .filter((exercise) => exercise.includedInOverallScore === IncludedInOverallScore.INCLUDED_COMPLETELY)
+            .reduce((sum, ex) => sum + (ex.maxPoints ?? 0), 0),
+    );
 
     /**
      * The group's true maximum contribution to the course score: the sum of the variants' max points, capped at the
@@ -278,8 +288,13 @@ export class CourseExerciseGroupDetailComponent {
         );
     }
 
+    /**
+     * The graded participation for the given variant. The dashboard response intentionally includes practice test runs
+     * in unspecified order, so picking the first entry could show practice points/status on the card while the group
+     * total and the normal course rows use the graded participation.
+     */
     protected exerciseParticipation(exercise: Exercise): StudentParticipation | undefined {
-        return exercise.studentParticipations?.[0];
+        return this.participationService.getSpecificStudentParticipation(exercise.studentParticipations ?? [], false);
     }
 
     protected exerciseLink(exercise: Exercise): string {

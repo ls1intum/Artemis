@@ -70,6 +70,9 @@
                                     </button>
                                 }
                                 <jhi-programming-assessment-repo-export [programmingExercises]="selectedProgrammingExercises()" />
+                                @if (course()?.isAtLeastInstructor) {
+                                    <jhi-exercise-scores-export-button [exercises]="selectedProgrammingExercises()" />
+                                }
                                 <button pButton type="button" severity="primary" [outlined]="true" size="small" (click)="consistencyCheckSelected()">
                                     <fa-icon [icon]="faCheckDouble" />
                                     <span jhiTranslate="artemisApp.consistencyCheck.button"></span>
@@ -91,7 +94,15 @@
                                             : ('artemisApp.exercise.delete.realCourse' | artemisTranslate),
                                     }"
                                     [requireConfirmationOnlyForAdditionalChecks]="true"
-                                    (delete)="deleteSelectedExercises()"
+                                    [additionalChecks]="
+                                        selectedProgrammingExercises().length > 0 && !localCIEnabled()
+                                            ? {
+                                                  deleteStudentReposBuildPlans: 'artemisApp.programmingExercise.delete.studentReposBuildPlans',
+                                                  deleteBaseReposBuildPlans: 'artemisApp.programmingExercise.delete.baseReposBuildPlans',
+                                              }
+                                            : {}
+                                    "
+                                    (delete)="deleteSelectedExercises($event)"
                                     [dialogError]="selectedDeleteError$"
                                 >
                                     <fa-icon [icon]="faTrash" />
@@ -139,7 +150,6 @@
                             [selectedIds]="selectedIds()"
                             [groups]="groups()"
                             (groupChange)="onTableGroupChange($event)"
-                            (rowsReordered)="onTableRowsReordered(card, $event)"
                             (exerciseUpdated)="onExerciseUpdated($event)"
                             (exerciseDeleted)="onExerciseDeleted($event)"
                             (selectionToggle)="toggleSelection($event)"

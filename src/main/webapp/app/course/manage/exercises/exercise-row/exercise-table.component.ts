@@ -13,7 +13,7 @@ import { SelectModule } from 'primeng/select';
 import { CheckboxModule } from 'primeng/checkbox';
 import { TagModule } from 'primeng/tag';
 import { TooltipModule } from 'primeng/tooltip';
-import { CdkDrag, CdkDragDrop, CdkDragHandle, CdkDragPreview, CdkDropList, moveItemInArray } from '@angular/cdk/drag-drop';
+import { CdkDrag, CdkDragDrop, CdkDragHandle, CdkDragPreview, CdkDropList } from '@angular/cdk/drag-drop';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -28,8 +28,6 @@ import { ExerciseActionsComponent } from 'app/course/manage/exercises/exercise-r
 type TagSeverity = 'success' | 'secondary' | 'info' | 'warn' | 'danger' | 'contrast';
 
 type SortColumn = 'title' | 'dueDate' | 'points' | 'difficulty';
-/** Sentinel sort state set after a manual drag-and-drop reorder: no column is sorted, rows keep their dragged order. */
-type SortState = SortColumn | 'manual';
 
 const DIFFICULTY_ORDER: Record<string, number> = {
     [DifficultyLevel.EASY]: 0,
@@ -130,7 +128,6 @@ export class ExerciseTableComponent {
     readonly connectedDropLists = input<string[]>([]);
 
     readonly groupChange = output<TableGroupChange>();
-    readonly rowsReordered = output<Exercise[]>();
     readonly exerciseUpdated = output<Exercise>();
     readonly exerciseDeleted = output<Exercise>();
     readonly selectionToggle = output<number>();
@@ -143,16 +140,12 @@ export class ExerciseTableComponent {
     protected readonly faCaretUp = faCaretUp;
     protected readonly faCaretDown = faCaretDown;
 
-    readonly sortColumn = signal<SortState>('title');
+    readonly sortColumn = signal<SortColumn>('title');
     readonly sortAsc = signal(true);
 
     readonly sortedExercises = computed(() => {
         const col = this.sortColumn();
         const asc = this.sortAsc();
-        // Manual order: a drag-and-drop reorder takes precedence over column sorting until a header is clicked again.
-        if (col === 'manual') {
-            return [...this.exercises()];
-        }
         return [...this.exercises()].sort((a, b) => {
             let cmp = 0;
             switch (col) {
@@ -310,13 +303,9 @@ export class ExerciseTableComponent {
     }
 
     onDrop(event: CdkDragDrop<Exercise[]>): void {
-        if (event.previousContainer === event.container) {
-            // Reorder within this group: keep the dragged order and stop applying column sorting.
-            const reordered = [...this.sortedExercises()];
-            moveItemInArray(reordered, event.previousIndex, event.currentIndex);
-            this.sortColumn.set('manual');
-            this.rowsReordered.emit(reordered);
-        } else {
+        // Same-container drops are ignored: a manual order would only live in the rendered card and be discarded by the
+        // next rebuild (search, view switch, group refresh, reload), so drag-and-drop is limited to moving between groups.
+        if (event.previousContainer !== event.container) {
             // Dropped from another group's table: move the exercise into this table's group.
             this.groupChange.emit({ exercise: event.item.data, group: this.group() });
         }

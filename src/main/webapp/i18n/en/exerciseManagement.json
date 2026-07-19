@@ -47,7 +47,7 @@
                 "noGroup": "No group",
                 "none": "none",
                 "empty": "No exercises",
-                "dragTooltip": "Drag to reorder or move between groups",
+                "dragTooltip": "Drag to move between groups",
                 "nonIndividualQuizTooltip": "Synchronized and batched quizzes have a single shared run and cannot be added to a group."
             },
             "addModal": {

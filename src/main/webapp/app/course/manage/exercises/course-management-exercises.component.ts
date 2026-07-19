@@ -37,6 +37,9 @@ import { ProgrammingExercise } from 'app/programming/shared/entities/programming
 import { ProgrammingExerciseEditSelectedComponent } from 'app/programming/manage/edit-selected/programming-exercise-edit-selected.component';
 import { ConsistencyCheckComponent } from 'app/programming/manage/consistency-check/consistency-check.component';
 import { ProgrammingAssessmentRepoExportButtonComponent } from 'app/programming/manage/assess/repo-export/export-button/programming-assessment-repo-export-button.component';
+import { ExerciseScoresExportButtonComponent } from 'app/exercise/exercise-scores/export-button/exercise-scores-export-button.component';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { PROFILE_LOCALCI } from 'app/app.constants';
 import { QuizExercise, QuizMode } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { QuizExerciseService } from 'app/quiz/manage/service/quiz-exercise.service';
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
@@ -89,6 +92,7 @@ const VIEW_STORAGE_KEY = 'artemis.exerciseManagement.view';
         ExerciseTableComponent,
         ExerciseAddModalComponent,
         ProgrammingAssessmentRepoExportButtonComponent,
+        ExerciseScoresExportButtonComponent,
         DeleteButtonDirective,
         SearchFilterComponent,
         ArtemisDatePipe,
@@ -188,7 +192,11 @@ export class CourseManagementExercisesComponent implements OnInit {
     private readonly deleteDialogService = inject(DeleteDialogService);
     private readonly alertService = inject(AlertService);
     private readonly localStorageService = inject(LocalStorageService);
+    private readonly profileService = inject(ProfileService);
     private readonly destroyRef = inject(DestroyRef);
+
+    /** Under LocalCI repositories and build plans live inside Artemis, so the delete dialog offers no external cleanup checks. */
+    protected readonly localCIEnabled = signal(true);
 
     private readonly groupDeleteError = new Subject<string>();
     private readonly selectedDeleteError = new Subject<string>();
@@ -202,6 +210,7 @@ export class CourseManagementExercisesComponent implements OnInit {
         if (storedView && this.viewOptions.some((option) => option.value === storedView)) {
             this.view.set(storedView);
         }
+        this.localCIEnabled.set(this.profileService.isProfileActive(PROFILE_LOCALCI));
     }
 
     ngOnInit(): void {
@@ -307,7 +316,7 @@ export class CourseManagementExercisesComponent implements OnInit {
      * {@code jhiDeleteButton} directive on confirm. Reloads from the server afterwards (rather than pruning locally) so
      * the view reflects the true state even on a partial failure; errors are surfaced through {@link selectedDeleteError}.
      */
-    deleteSelectedExercises(): void {
+    deleteSelectedExercises(event: { [key: string]: boolean } = {}): void {
         const exercisesToDelete = this.selectedExercises();
         const courseId = this.course()?.id;
         if (exercisesToDelete.length === 0 || courseId === undefined) {
@@ -318,7 +327,7 @@ export class CourseManagementExercisesComponent implements OnInit {
         // delete into an emitted error value so forkJoin still waits for the rest, then we reload once and surface
         // any error. (merge(...) would unsubscribe the remaining in-flight deletes as soon as one failed.)
         const deletionObservables = exercisesToDelete.map((exercise) =>
-            this.deleteObservableFor(exercise).pipe(
+            this.deleteObservableFor(exercise, event).pipe(
                 map(() => undefined),
                 catchError((error: HttpErrorResponse) => of(error)),
             ),
@@ -334,12 +343,13 @@ export class CourseManagementExercisesComponent implements OnInit {
         });
     }
 
-    /** Resolves the type-specific deletion request for a single exercise. */
-    private deleteObservableFor(exercise: Exercise): Observable<HttpResponse<void>> {
+    /** Resolves the type-specific deletion request for a single exercise, forwarding the delete dialog's cleanup checks. */
+    private deleteObservableFor(exercise: Exercise, event: { [key: string]: boolean }): Observable<HttpResponse<void>> {
         switch (exercise.type) {
             case ExerciseType.PROGRAMMING:
-                // Matches this view's single-exercise delete: repos and build plans are not removed (no extra checks).
-                return this.programmingExerciseService.delete(exercise.id!, false, false);
+                // The repository/build-plan cleanup checks are only offered on non-LocalCI setups (see the bulk delete
+                // button's additionalChecks); the flags default to false when the dialog showed no checkboxes.
+                return this.programmingExerciseService.delete(exercise.id!, event.deleteStudentReposBuildPlans ?? false, event.deleteBaseReposBuildPlans ?? false);
             case ExerciseType.QUIZ:
                 return this.quizExerciseService.delete(exercise.id!);
             case ExerciseType.TEXT:
@@ -450,11 +460,6 @@ export class CourseManagementExercisesComponent implements OnInit {
             }
         }
         this.selectedIds.set(current);
-    }
-
-    onTableRowsReordered(card: CourseExerciseCard, reorderedExercises: Exercise[]): void {
-        card.exercises = reorderedExercises;
-        this.cards.set([...this.cards()]);
     }
 
     onExerciseUpdated(updated: Exercise): void {

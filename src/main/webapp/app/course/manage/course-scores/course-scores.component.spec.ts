@@ -438,6 +438,51 @@ describe('CourseScoresComponent', () => {
         expect(component.studentStatistics()[0].overallPointsUncapped).toBe(20);
     });
 
+    it('should keep uncapped - excess = overall when a binding variant cap combines with graded presentations', () => {
+        const variantGroup = { id: 100, maxPoints: 10 };
+        const makeVariant = (id: number) =>
+            ({
+                title: `variant ${id}`,
+                id,
+                dueDate: dayjs().add(5, 'minutes'),
+                type: ExerciseType.TEXT,
+                includedInOverallScore: IncludedInOverallScore.INCLUDED_COMPLETELY,
+                maxPoints: 10,
+                bonusPoints: 0,
+                exerciseVariantGroup: variantGroup,
+            }) as Exercise;
+        const variantCourse = { courseId: 1, exercises: [makeVariant(101), makeVariant(102)], accuracyOfScores: 1 } as Course;
+        const variantGradeInfo: CourseGradeInformationDTO = {
+            // Both variants solved fully (20 uncapped, capped to 10) and both presentations held with full marks.
+            gradeScores: [createGradeScore(1, 1, 101, 100, 100), createGradeScore(2, 1, 102, 100, 100)],
+            students: [{ id: 1, login: 'user1login', firstName: 'user1', lastName: '', name: 'user1', email: 'user1mail' }],
+        };
+
+        vi.spyOn(courseManagementService, 'findWithExercises').mockReturnValue(of(new HttpResponse({ body: variantCourse })));
+        vi.spyOn(courseManagementService, 'findGradeScores').mockReturnValue(of(variantGradeInfo));
+        vi.spyOn(gradingService, 'findGradingScaleForCourse').mockReturnValue(
+            of(new HttpResponse<GradingScaleDTO>({ body: toGradingScaleDTO(gradingScaleWithGradedPresentations) })),
+        );
+        vi.spyOn(plagiarismCasesService, 'getCoursePlagiarismCasesForScores').mockReturnValue(of(new HttpResponse<PlagiarismCaseDTO[]>({ body: [] })));
+
+        fixture.detectChanges();
+
+        // Presentations add 25% weight on top of the capped max of 10: (-10 / (25 - 100)) * 100 * 25 / 100 = 3.3 (rounded).
+        expect(component.maxNumberOfPresentationPoints()).toBe(3.3);
+        const student = component.studentStatistics()[0];
+        expect(student.presentationPoints).toBe(3.3);
+        // Presentation points count toward both the credited and the uncapped totals, while the excess column stays a
+        // pure variant-cap difference — so the exported relation uncapped - excess = overall holds for both rows.
+        expect(student.overallPoints).toBe(13.3);
+        expect(student.overallPointsUncapped).toBe(23.3);
+        expect(student.excessVariantPoints).toBe(10);
+        expect(student.overallPointsUncapped - student.excessVariantPoints).toBe(student.overallPoints);
+        expect(component.maxNumberOfOverallPoints()).toBe(13.3);
+        expect(component.maxNumberOfUncappedPoints()).toBe(23.3);
+        expect(component.maxNumberOfExcessVariantPoints()).toBe(10);
+        expect(component.maxNumberOfUncappedPoints() - component.maxNumberOfExcessVariantPoints()).toBe(component.maxNumberOfOverallPoints());
+    });
+
     it('should not show the variant columns when the group cap cannot reduce any points', () => {
         // The group's cap (50) is higher than the combined points of its variants (20), so it can never bite.
         const variantGroup = { id: 100, maxPoints: 50 };

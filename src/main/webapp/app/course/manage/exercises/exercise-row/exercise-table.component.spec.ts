@@ -92,16 +92,18 @@ describe('ExerciseTableComponent', () => {
             expect(component.sortedExercises().map((e) => e.id)).toEqual([1, 2]);
         });
 
-        it('keeps the manual order after a drag-and-drop reorder', () => {
+        it('ignores a drop within the same table (no persisted order exists, so reordering is not offered)', () => {
+            const group: CourseExerciseGroup = { id: 10, exercises: [] };
+            fixture.componentRef.setInput('group', group);
             fixture.componentRef.setInput('exercises', [dated1, dated2]);
-            const reordered: Exercise[][] = [];
-            component.rowsReordered.subscribe((rows) => reordered.push(rows));
+            const changes: TableGroupChange[] = [];
+            component.groupChange.subscribe((c) => changes.push(c));
 
             const container = { id: 'same' } as any;
             component.onDrop({ previousContainer: container, container, previousIndex: 0, currentIndex: 1 } as CdkDragDrop<Exercise[]>);
 
-            expect(component.sortColumn()).toBe('manual');
-            expect(reordered[0].map((e) => e.id)).toEqual([2, 1]);
+            expect(changes).toEqual([]);
+            expect(component.sortColumn()).toBe('title');
             expect(component.sortedExercises().map((e) => e.id)).toEqual([1, 2]);
         });
 
