@@ -3,7 +3,6 @@
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { of, throwError } from 'rxjs';
 
 import { WebsocketAdminComponent } from 'app/admin/websocket/websocket-admin.component';
@@ -12,8 +11,6 @@ import { WebsocketNode } from 'app/admin/websocket/websocket-node.model';
 import { AlertService } from 'app/foundation/service/alert.service';
 
 describe('WebsocketAdminComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: WebsocketAdminComponent;
     let mockService: any;
     let alertService: AlertService;

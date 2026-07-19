@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CourseDetailDoughnutChartComponent } from 'app/course/manage/detail/course-detail-doughnut-chart.component';
 import { DoughnutChartType } from 'app/course/manage/detail/course-detail.component';
@@ -16,8 +15,6 @@ import { UIChart } from 'primeng/chart';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 describe('CourseDetailDoughnutChartComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<CourseDetailDoughnutChartComponent>;
     let component: CourseDetailDoughnutChartComponent;
     let componentRef: ComponentRef<CourseDetailDoughnutChartComponent>;

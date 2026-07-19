@@ -172,7 +172,6 @@ jobs:
       contents: write
       packages: write
     with:
-      branch_name: ${{ github.event.pull_request.head.ref || github.ref_name }}
       commit_sha: ${{ github.event.pull_request.head.sha || github.sha }}
       is_pr: ${{ github.event_name == 'pull_request' }}
       is_internal_pr: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository }}

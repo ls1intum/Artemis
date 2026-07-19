@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { CommonModule } from '@angular/common';
@@ -18,8 +17,6 @@ import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('CourseNotificationComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: CourseNotificationComponent;
     let fixture: ComponentFixture<CourseNotificationComponent>;
     let courseNotificationService: CourseNotificationService;
@@ -133,6 +130,18 @@ describe('CourseNotificationComponent', () => {
 
         const notificationWrap = fixture.debugElement.query(By.css('.course-notification-wrap'));
         expect(notificationWrap.classes['is-unseen']).toBeFalsy();
+    });
+
+    it('should add is-fluid class and host fluid class only when fluid is true', () => {
+        fixture.componentRef.setInput('fluid', false);
+        fixture.detectChanges();
+        expect(fixture.debugElement.query(By.css('.course-notification-wrap')).classes['is-fluid']).toBeFalsy();
+        expect((fixture.nativeElement as HTMLElement).classList.contains('fluid')).toBe(false);
+
+        fixture.componentRef.setInput('fluid', true);
+        fixture.detectChanges();
+        expect(fixture.debugElement.query(By.css('.course-notification-wrap')).classes['is-fluid']).toBe(true);
+        expect((fixture.nativeElement as HTMLElement).classList.contains('fluid')).toBe(true);
     });
 
     it('should show profile picture when author details are present', () => {

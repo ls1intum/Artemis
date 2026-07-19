@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Data, Router } from '@angular/router';
 import { BehaviorSubject, of } from 'rxjs';
@@ -23,8 +22,6 @@ import { IrisCourseSettingsWithRateLimitDTO } from 'app/iris/shared/entities/set
 import { OrganizationManagementService } from 'app/admin/organization-management/organization-management.service';
 
 describe('Course Management Detail Component', () => {
-    setupTestBed({ zoneless: true });
-
     let component: CourseDetailComponent;
     let fixture: ComponentFixture<CourseDetailComponent>;
     let courseManagementService: CourseManagementService;

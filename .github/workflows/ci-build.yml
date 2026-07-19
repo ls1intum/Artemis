@@ -3,10 +3,6 @@ name: Build
 on:
   workflow_call:
     inputs:
-      branch_name:
-        description: 'Head branch/ref the build represents (used for the release-image checkout ref).'
-        required: true
-        type: string
       commit_sha:
         description: 'SHA the build is for. PR builds use the PR head SHA, not the merge commit.'
         required: true
@@ -207,8 +203,13 @@ jobs:
         uses: docker/metadata-action@030e881283bb7a6894de51c315a6bfe6a94e05cf  # v6.0.0
         with:
           images: ghcr.io/ls1intum/artemis
+          # `type=ref,event=pr` → `pr-<N>` (priority 600, stays `meta.outputs.version`, so the
+          # `docker-tag` artifact and e2e-setup are unaffected). The `sha-<commit>` tag is built from
+          # `inputs.commit_sha` (the PR head this build checked out, not the merge commit), so it equals
+          # the SHA a deploy resolves; `type=sha` is avoided because it reads github.sha = the merge commit.
           tags: |
             type=ref,event=pr
+            type=raw,value=sha-${{ inputs.commit_sha }}
       - name: Build and push (linux/amd64)
         uses: docker/build-push-action@f9f3042f7e2789586610d6e8b85c8f03e5195baf  # v7.2.0
         with:
@@ -249,16 +250,18 @@ jobs:
       packages: write
     uses: ls1intum/.github/.github/workflows/build-and-push-docker-image.yml@v1.2.0
     with:
-      ref: ${{ inputs.branch_name }}
+      # Check out the exact commit the sha-<commit> tag names (not the mutable branch tip), so image
+      # content and the tag stay pinned to the same commit. The `type=ref` tags come from the event
+      # context, not this ref, so they are unaffected.
+      ref: ${{ inputs.commit_sha }}
       image-name: ls1intum/artemis
       docker-file: ./docker/artemis/Dockerfile
-      # `type=ref,event=tag` is the release tag (e.g. "1.2.3"); `event=branch` covers
-      # `develop`/`main`/`release/*` pushes; `type=sha` guarantees at least one tag even
-      # on edge events so `image_tag` is never empty (downstream e2e-setup pulls by tag).
+      # `type=ref` gives the release tag or branch name; `sha-<commit>` is the immutable per-commit
+      # handle deployments pull by. The reusable turns the bare `sha-<sha>` line into `type=raw`.
       tags: |
         type=ref,event=tag
         type=ref,event=branch
-        type=sha,prefix=sha-
+        sha-${{ inputs.commit_sha }}
 
   # Mirrors the `docker-tag` artifact upload from `docker-pr` for the release path so that
   # .github/actions/e2e-setup can consume it uniformly regardless of which docker job produced

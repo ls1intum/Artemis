@@ -1,5 +1,4 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { EnvironmentInjector, runInInjectionContext } from '@angular/core';
@@ -16,8 +15,6 @@ import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 
 describe('QuizAiQuestionRefinementPanelComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<QuizAiQuestionRefinementPanelComponent>;
     let component: QuizAiQuestionRefinementPanelComponent;
     let quizAiGenerationService: QuizAiGenerationService;

@@ -4,7 +4,6 @@ import { TranslateService } from '@ngx-translate/core';
 import { MockPipe } from 'ng-mocks';
 import { Subject, of, throwError } from 'rxjs';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { GlobalSearchLectureResultsComponent } from './global-search-lecture-results.component';
@@ -34,8 +33,6 @@ const mockResultNoSnippet: LectureSearchResult = {
 const mockSearchService = { search: vi.fn() };
 
 describe('GlobalSearchLectureResultsComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: GlobalSearchLectureResultsComponent;
     let fixture: ComponentFixture<GlobalSearchLectureResultsComponent>;
 

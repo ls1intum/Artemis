@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CourseDashboardComponent } from 'app/course/overview/course-dashboard/course-dashboard.component';
 import { By } from '@angular/platform-browser';
@@ -46,8 +45,6 @@ class MockCourseChatbotComponent {
 type CourseDashboardInternals = { courseChatbot: () => { isChatHistoryOpen: () => boolean; toggleChatHistory: () => void } | undefined };
 
 describe('CourseDashboardComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: CourseDashboardComponent;
     let fixture: ComponentFixture<CourseDashboardComponent>;
     let debugElement: DebugElement;

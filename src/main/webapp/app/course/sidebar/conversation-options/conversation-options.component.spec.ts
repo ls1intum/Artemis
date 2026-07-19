@@ -1,6 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { DialogService } from 'primeng/dynamicdialog';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -38,7 +37,6 @@ examples.forEach((conversation) => {
     const testDescription = conversation();
 
     describe('ConversationOptionsComponent with ' + (testDescription instanceof ChannelDTO ? testDescription.subType + ' ' : '') + testDescription.type, () => {
-        setupTestBed({ zoneless: true });
         let component: ConversationOptionsComponent;
         let fixture: ComponentFixture<ConversationOptionsComponent>;
         let conversationService: ConversationService;
