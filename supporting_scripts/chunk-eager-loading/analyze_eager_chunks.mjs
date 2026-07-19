@@ -127,13 +127,26 @@ function gitFallback(args) {
  * Every report embeds provenance -- which commit/branch it was built from -- because any report
  * this script produces might later be used as another run's baseline (see ci-build.yml's
  * chunk-eager-quality job: it diffs a PR's report against whatever develop's last report was).
- * Prefers CI-provided env vars (set automatically on every GitHub Actions runner) over shelling
- * out to git, since a CI checkout may be shallow/detached in ways that make git commands unreliable.
+ *
+ * For `pull_request`-triggered runs, GITHUB_SHA/GITHUB_REF_NAME are NOT the PR's real head commit
+ * or branch -- GitHub Actions checks out a synthetic merge commit for that event and sets those
+ * two vars to describe *it* (ref name literally becomes "<pr-number>/merge"), confirmed by
+ * inspecting a real run's uploaded artifact. CHUNK_REPORT_SHA/CHUNK_REPORT_BRANCH are explicit
+ * overrides set by ci-build.yml's "Generate eager-chunk loading report" step (from
+ * `inputs.commit_sha` / `github.head_ref`, which resolve correctly); GITHUB_SHA/GITHUB_REF_NAME
+ * remain the fallback for push-triggered (develop) runs, which have no such synthetic ref.
  */
+// `??` only falls through on null/undefined -- ci-build.yml sets CHUNK_REPORT_BRANCH from
+// `github.head_ref`, which GitHub Actions evaluates to an empty string (not unset) on
+// push-triggered runs, so a plain `??` chain would silently pick '' over the real fallback.
+function firstNonEmpty(...values) {
+    return values.find((v) => v != null && v !== '') ?? 'unknown';
+}
+
 function resolveMeta() {
     return {
-        sourceCommit: process.env.GITHUB_SHA ?? gitFallback(['rev-parse', 'HEAD']) ?? 'unknown',
-        sourceBranch: process.env.GITHUB_REF_NAME ?? gitFallback(['rev-parse', '--abbrev-ref', 'HEAD']) ?? 'unknown',
+        sourceCommit: firstNonEmpty(process.env.CHUNK_REPORT_SHA, process.env.GITHUB_SHA, gitFallback(['rev-parse', 'HEAD'])),
+        sourceBranch: firstNonEmpty(process.env.CHUNK_REPORT_BRANCH, process.env.GITHUB_REF_NAME, gitFallback(['rev-parse', '--abbrev-ref', 'HEAD'])),
     };
 }
 

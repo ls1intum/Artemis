@@ -91,6 +91,16 @@ jobs:
       - name: Generate eager-chunk loading report
         # Feeds the chunk-eager-quality job below (PR runs) and, on develop pushes, becomes the
         # next baseline that PR runs compare against. See supporting_scripts/chunk-eager-loading/README.md.
+        #
+        # CHUNK_REPORT_SHA/_BRANCH override GITHUB_SHA/GITHUB_REF_NAME, which for pull_request
+        # runs describe a synthetic merge commit (ref literally becomes "<pr-number>/merge"), not
+        # the PR's real head -- confirmed by inspecting a real run's uploaded artifact. `inputs.commit_sha`
+        # and `github.head_ref` resolve correctly in both the PR and push (develop) cases;
+        # `github.head_ref` is empty on push events, so the script's own GITHUB_REF_NAME fallback
+        # (correctly "develop" there, no synthetic ref involved) takes over.
+        env:
+          CHUNK_REPORT_SHA: ${{ inputs.commit_sha }}
+          CHUNK_REPORT_BRANCH: ${{ github.head_ref }}
         run: node supporting_scripts/chunk-eager-loading/analyze_eager_chunks.mjs build/webapp-dist/stats.json --out chunk-eager-report.json
       - name: Upload eager-chunk report artifact
         uses: actions/upload-artifact@v7
