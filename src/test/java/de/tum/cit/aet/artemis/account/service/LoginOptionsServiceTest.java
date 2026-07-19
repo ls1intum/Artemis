@@ -29,7 +29,7 @@ import de.tum.cit.aet.artemis.account.service.ldap.LdapUserService;
  * Verifies that the service correctly determines login options based on DB status and LDAP fallback.
  */
 @ExtendWith(MockitoExtension.class)
-public class LoginOptionsServiceTest {
+class LoginOptionsServiceTest {
 
     @Mock
     private UserRepository userRepository;
