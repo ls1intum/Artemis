@@ -2821,8 +2821,11 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
                         assertThat(quiz.isRandomizeQuestionOrder()).as("randomizeQuestionOrder must be preserved").isTrue();
                         assertThat(quiz.getAllowedNumberOfAttempts()).as("allowedNumberOfAttempts must be preserved").isEqualTo(1);
                         assertThat(quiz.getDuration()).as("duration must be preserved").isEqualTo(10);
-                        // Quiz batches should NOT be imported for exam exercises (exam controls timing)
-                        assertThat(quiz.getQuizBatches()).as("quiz batches must not be imported for exam exercises").isNullOrEmpty();
+                        // Quiz batches should NOT be imported for exam exercises (exam controls timing).
+                        // Re-fetch with quizBatches eagerly loaded: the exam re-fetch above does not join them, so accessing
+                        // the lazy collection directly on `quiz` would throw LazyInitializationException outside a session.
+                        QuizExercise quizWithBatches = quizExerciseRepository.findWithEagerBatchesById(quiz.getId()).orElseThrow();
+                        assertThat(quizWithBatches.getQuizBatches()).as("quiz batches must not be imported for exam exercises").isNullOrEmpty();
                     }
                     default -> {
                         // no additional assertions for other types
