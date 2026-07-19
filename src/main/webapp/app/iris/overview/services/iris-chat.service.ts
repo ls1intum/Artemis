@@ -24,6 +24,7 @@ import { randomInt } from 'app/foundation/util/utils';
 import { IrisCitationMetaDTO } from 'app/iris/shared/entities/iris-citation-meta-dto.model';
 import { ChatServiceMode, SessionContext, sameSessionContext } from 'app/iris/shared/entities/iris-session-context.model';
 import { IrisChatContextService } from 'app/iris/overview/services/iris-chat-context.service';
+import { contextFromSwitchMarker, parseContextSwitchMarker } from 'app/iris/overview/context-selection/iris-context.util';
 import { parseJson } from 'app/foundation/util/json.util';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { IrisActivityItem, IrisRunState, IrisStatusError } from 'app/iris/shared/entities/iris-activity.model';
@@ -693,6 +694,9 @@ export class IrisChatService implements OnDestroy {
                 this.activities.next([]);
             }
         }
+        if (payload.message?.sender === IrisSender.CTXSWAP) {
+            this.adoptSwitchedContext(this.mapMessageDTO(payload.message));
+        }
         if (payload.message?.id) {
             this.replaceOrAddMessage(this.mapMessageDTO(payload.message), !isIntermediateMessage);
         }
@@ -704,6 +708,24 @@ export class IrisChatService implements OnDestroy {
 
     private isIntermediateMessagePayload(payload: IrisChatWebsocketDTO): boolean {
         return payload.final === false || payload.message?.final === false;
+    }
+
+    /**
+     * The server pushes a CTXSWAP marker for every context switch, including switches it applied
+     * without a client-staged pending context (automatic context switching by the pipeline).
+     * Adopt the marker's target as the committed context so the selector chip and the sidebar
+     * entry follow such switches; for a client-staged switch this re-commits the same context.
+     */
+    private adoptSwitchedContext(message: IrisMessage): void {
+        const ctx = contextFromSwitchMarker(parseContextSwitchMarker(message.content), this.getCourseId());
+        if (!ctx) {
+            return;
+        }
+        this.contextService.commitSentContext(ctx);
+        const updatedSessions = this.chatSessions
+            .getValue()
+            .map((session) => (session.id === this.sessionId ? { ...session, mode: ctx.mode, entityId: ctx.entityId, entityName: ctx.entityName ?? session.entityName } : session));
+        this.chatSessions.next(updatedSessions);
     }
 
     private handlePartialWebsocketMessage(payload: IrisChatWebsocketDTO): void {

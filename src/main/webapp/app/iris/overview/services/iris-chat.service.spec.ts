@@ -631,6 +631,53 @@ describe('IrisChatService', () => {
         expect(await firstValueFrom(service.currentLiveAssistantDraft())).toBeUndefined();
     });
 
+    describe('automatic context switch adoption', () => {
+        const ctxswapMessage = (marker: object): IrisChatWebsocketDTO =>
+            ({
+                type: IrisChatWebsocketPayloadType.MESSAGE,
+                message: {
+                    sender: IrisSender.CTXSWAP,
+                    id: 77,
+                    content: [{ type: 'json', attributes: marker }],
+                    sentAt: '2024-01-01T10:00:00Z',
+                },
+            }) as IrisChatWebsocketDTO;
+
+        it('should commit the marker context and update the sidebar entry on an incoming CTXSWAP message', async () => {
+            const websocketSubject = new Subject<IrisChatWebsocketDTO>();
+            const sidebarSessions = [{ id, title: 'Chat', creationDate: new Date(), mode: ChatServiceMode.COURSE, entityId: id } as IrisSessionDTO];
+            await startSessionWithWebsocket(websocketSubject, sidebarSessions);
+
+            websocketSubject.next(ctxswapMessage({ transition: 'added', entityMode: ChatServiceMode.PROGRAMMING_EXERCISE, entityId: 11, name: 'Sorting' }));
+
+            expect(service.committedContext()).toEqual({ mode: ChatServiceMode.PROGRAMMING_EXERCISE, entityId: 11, entityName: 'Sorting' });
+            expect(service.chatSessions.getValue().find((session) => session.id === id)).toMatchObject({
+                mode: ChatServiceMode.PROGRAMMING_EXERCISE,
+                entityId: 11,
+                entityName: 'Sorting',
+            });
+        });
+
+        it('should commit the course context on a removed transition', async () => {
+            const websocketSubject = new Subject<IrisChatWebsocketDTO>();
+            await startSessionWithWebsocket(websocketSubject);
+
+            websocketSubject.next(ctxswapMessage({ transition: 'removed' }));
+
+            expect(service.committedContext()).toEqual({ mode: ChatServiceMode.COURSE, entityId: courseId });
+        });
+
+        it('should ignore a CTXSWAP message with an incomplete marker', async () => {
+            const websocketSubject = new Subject<IrisChatWebsocketDTO>();
+            await startSessionWithWebsocket(websocketSubject);
+            const committedBefore = service.committedContext();
+
+            websocketSubject.next(ctxswapMessage({ transition: 'changed' }));
+
+            expect(service.committedContext()).toEqual(committedBefore);
+        });
+    });
+
     describe('run-state frame policy', () => {
         const runningActivity = (idValue: string, name = 'lecture_content_retrieval'): IrisActivityItem => ({
             id: idValue,
