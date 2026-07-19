@@ -39,3 +39,4 @@ networks:
     artemis:
         driver: "bridge"
         name: artemis
+        
