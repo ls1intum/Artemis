@@ -26,17 +26,22 @@ import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.context.MessageSource;
 
+import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.admin.domain.LLMRequest;
 import de.tum.cit.aet.artemis.admin.domain.LLMServiceType;
 import de.tum.cit.aet.artemis.admin.domain.LLMTokenUsageTrace;
 import de.tum.cit.aet.artemis.admin.service.LLMTokenUsageService;
+import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
+import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageSender;
+import de.tum.cit.aet.artemis.iris.domain.session.IrisChatMode;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatSession;
 import de.tum.cit.aet.artemis.iris.dto.IrisMessageResponseDTO;
 import de.tum.cit.aet.artemis.iris.dto.MemirisMemoryDTO;
@@ -48,6 +53,7 @@ import de.tum.cit.aet.artemis.iris.service.IrisMessageService;
 import de.tum.cit.aet.artemis.iris.service.IrisRateLimitService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisJobService;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.PyrisChatStatusUpdateDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.PyrisSuggestedContextDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisActivityDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisActivityKind;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisActivityState;
@@ -57,6 +63,7 @@ import de.tum.cit.aet.artemis.iris.service.pyris.job.PyrisJob;
 import de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService;
 import de.tum.cit.aet.artemis.iris.service.websocket.IrisChatWebsocketService;
 import de.tum.cit.aet.artemis.lecture.api.LectureRepositoryApi;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseStudentParticipationRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingSubmissionRepository;
 
@@ -74,6 +81,12 @@ class IrisChatSessionServiceStatusUpdateTest {
 
     private PyrisJobService pyrisJobService;
 
+    private UserRepository userRepository;
+
+    private ExerciseRepository exerciseRepository;
+
+    private IrisChatSessionRepository irisChatSessionRepository;
+
     private IrisChatSessionService irisChatSessionService;
 
     @BeforeEach
@@ -84,12 +97,15 @@ class IrisChatSessionServiceStatusUpdateTest {
         irisChatWebsocketService = mock(IrisChatWebsocketService.class);
         llmTokenUsageService = mock(LLMTokenUsageService.class);
         pyrisJobService = mock(PyrisJobService.class);
+        userRepository = mock(UserRepository.class);
+        exerciseRepository = mock(ExerciseRepository.class);
+        irisChatSessionRepository = mock(IrisChatSessionRepository.class);
 
         irisChatSessionService = new IrisChatSessionService(irisMessageService, irisMessageRepository, llmTokenUsageService, mock(IrisSettingsService.class),
-                irisChatWebsocketService, mock(AuthorizationCheckService.class), irisSessionRepository, mock(IrisChatSessionRepository.class),
+                irisChatWebsocketService, mock(AuthorizationCheckService.class), irisSessionRepository, irisChatSessionRepository,
                 mock(ProgrammingExerciseStudentParticipationRepository.class), mock(ProgrammingSubmissionRepository.class), mock(IrisRateLimitService.class),
-                JsonObjectMapper.get(), mock(ExerciseRepository.class), mock(SubmissionRepository.class), mock(CourseRepository.class), Optional.<LectureRepositoryApi>empty(),
-                mock(IrisCitationService.class), mock(MessageSource.class), mock(IrisChatPipelineExecutionService.class), pyrisJobService);
+                JsonObjectMapper.get(), exerciseRepository, mock(SubmissionRepository.class), mock(CourseRepository.class), Optional.<LectureRepositoryApi>empty(),
+                mock(IrisCitationService.class), mock(MessageSource.class), mock(IrisChatPipelineExecutionService.class), pyrisJobService, userRepository);
     }
 
     @Test
@@ -246,5 +262,74 @@ class IrisChatSessionServiceStatusUpdateTest {
 
         verify(irisChatWebsocketService).sendMessage(eq(session), eq(savedMessage), eq(PyrisRunState.RUNNING), isNull(), isNull(), anyList(), eq("run-1"), isNull(), isNull(),
                 eq(false));
+    }
+
+    @Test
+    void statusUpdateWithSuggestedContextAppliesContextSwitch() {
+        var session = new IrisChatSession();
+        session.setId(2L);
+        session.setUserId(5L);
+        session.setCourseId(1L);
+        session.setMode(IrisChatMode.COURSE_CHAT);
+        session.setEntityId(1L);
+        when(irisSessionRepository.findByIdElseThrow(2L)).thenReturn(session);
+
+        var user = new User();
+        user.setId(5L);
+        when(userRepository.findByIdWithGroupsAndAuthoritiesElseThrow(5L)).thenReturn(user);
+
+        var course = new Course();
+        course.setId(1L);
+        var exercise = new ProgrammingExercise();
+        exercise.setId(11L);
+        exercise.setTitle("Sorting");
+        exercise.setCourse(course);
+        when(exerciseRepository.findByIdElseThrow(11L)).thenReturn(exercise);
+
+        when(irisMessageService.saveMessage(any(IrisMessage.class), eq(session), eq(IrisMessageSender.CTXSWAP))).thenAnswer(invocation -> {
+            var message = invocation.getArgument(0, IrisMessage.class);
+            message.setId(300L);
+            return message;
+        });
+
+        var job = new ChatJob("run-1", 1L, 2L, 3L, null, null, null);
+        var suggestedContext = new PyrisSuggestedContextDTO(IrisChatMode.PROGRAMMING_EXERCISE_CHAT, 11L);
+        var statusUpdate = new PyrisChatStatusUpdateDTO(null, PyrisRunState.RUNNING, null, null, null, null, null, null, null, null, null, null, null, suggestedContext);
+
+        irisChatSessionService.handleStatusUpdate(job, statusUpdate);
+
+        assertThat(session.getMode()).isEqualTo(IrisChatMode.PROGRAMMING_EXERCISE_CHAT);
+        assertThat(session.getEntityId()).isEqualTo(11L);
+        verify(irisChatSessionRepository).save(session);
+        var markerCaptor = ArgumentCaptor.forClass(IrisMessage.class);
+        verify(irisMessageService).saveMessage(markerCaptor.capture(), eq(session), eq(IrisMessageSender.CTXSWAP));
+        verify(irisChatWebsocketService).sendMessage(eq(session), eq(markerCaptor.getValue()), isNull(), isNull());
+    }
+
+    @Test
+    void invalidSuggestedContextIsIgnoredWithoutFailingTheStatusUpdate() {
+        var session = new IrisChatSession();
+        session.setId(2L);
+        session.setUserId(5L);
+        session.setCourseId(1L);
+        session.setMode(IrisChatMode.COURSE_CHAT);
+        session.setEntityId(1L);
+        when(irisSessionRepository.findByIdElseThrow(2L)).thenReturn(session);
+
+        var user = new User();
+        user.setId(5L);
+        when(userRepository.findByIdWithGroupsAndAuthoritiesElseThrow(5L)).thenReturn(user);
+        when(exerciseRepository.findByIdElseThrow(999L)).thenThrow(new EntityNotFoundException("Exercise", 999L));
+
+        var job = new ChatJob("run-1", 1L, 2L, 3L, null, null, null);
+        var suggestedContext = new PyrisSuggestedContextDTO(IrisChatMode.PROGRAMMING_EXERCISE_CHAT, 999L);
+        var statusUpdate = new PyrisChatStatusUpdateDTO(null, PyrisRunState.RUNNING, null, null, null, null, null, null, null, null, null, null, null, suggestedContext);
+
+        irisChatSessionService.handleStatusUpdate(job, statusUpdate);
+
+        assertThat(session.getMode()).isEqualTo(IrisChatMode.COURSE_CHAT);
+        assertThat(session.getEntityId()).isEqualTo(1L);
+        verify(irisMessageService, never()).saveMessage(any(IrisMessage.class), eq(session), eq(IrisMessageSender.CTXSWAP));
+        verify(irisChatSessionRepository, never()).save(any(IrisChatSession.class));
     }
 }

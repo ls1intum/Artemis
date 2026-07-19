@@ -32,6 +32,7 @@ import de.tum.cit.aet.artemis.iris.service.IrisCitationService;
 import de.tum.cit.aet.artemis.iris.service.IrisMessageService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisJobService;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.PyrisChatStatusUpdateDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.PyrisSuggestedContextDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisRunState;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.TrackedSessionBasedPyrisJob;
 import de.tum.cit.aet.artemis.iris.service.websocket.IrisChatWebsocketService;
@@ -179,6 +180,13 @@ public abstract class AbstractIrisChatSessionService<S extends IrisSession> impl
                 : (S) irisSessionRepository.findByIdElseThrow(job.sessionId());
 
         String sessionTitle = AbstractIrisChatSessionService.setSessionTitle(session, statusUpdate.sessionTitle(), irisSessionRepository);
+
+        // Apply an automatic context switch before the assistant message is saved so the CTXSWAP
+        // marker lands between the user message and the answer, mirroring the manual switch order.
+        if (statusUpdate.suggestedContext() != null) {
+            handleSuggestedContextChange(session, statusUpdate.suggestedContext());
+        }
+
         TrackedSessionBasedPyrisJob updatedJob;
         if (statusUpdate.result() != null) {
             updatedJob = Boolean.FALSE.equals(statusUpdate.finalResult()) ? handleIntermediateResultStatusUpdate(job, statusUpdate, session, sessionTitle)
@@ -291,6 +299,17 @@ public abstract class AbstractIrisChatSessionService<S extends IrisSession> impl
             return builder;
         });
         return job.withTraceId(llmTokenUsage.getId());
+    }
+
+    /**
+     * Applies a context change suggested by the Pyris pipeline (automatic context switching).
+     * The default implementation is a no-op; only session types that support context switching
+     * override it. Implementations must not throw — a rejected switch must not fail the status update.
+     *
+     * @param session          The session the status update belongs to
+     * @param suggestedContext The context suggested by the pipeline
+     */
+    protected void handleSuggestedContextChange(S session, PyrisSuggestedContextDTO suggestedContext) {
     }
 
     /**
