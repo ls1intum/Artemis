@@ -2,8 +2,11 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { of, throwError } from 'rxjs';
 import { HttpErrorResponse, provideHttpClient } from '@angular/common/http';
+import { provideRouter } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { MockDeleteDialogService } from 'test/helpers/mocks/service/mock-delete-dialog.service';
+import { DeleteDialogService } from 'app/shared-ui/delete-dialog/service/delete-dialog.service';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { VcsAccessTokenOverviewComponent } from 'app/account/user/settings/vcs-access-token-overview/vcs-access-token-overview.component';
@@ -18,9 +21,36 @@ describe('VcsAccessTokenOverviewComponent', () => {
     const alertServiceMock = { error: vi.fn(), success: vi.fn(), addAlert: vi.fn() };
 
     const tokens: VcsAccessTokenOverview[] = [
-        { id: 1, tokenType: VcsAccessTokenType.REPOSITORY, repositoryType: RepositoryType.TEMPLATE, courseTitle: 'Course One', exerciseTitle: 'Exercise A' },
-        { id: 2, tokenType: VcsAccessTokenType.REPOSITORY, repositoryType: RepositoryType.USER, courseTitle: 'Course Two', exerciseTitle: 'Exercise B', studentLogin: 'student1' },
-        { id: 3, tokenType: VcsAccessTokenType.PARTICIPATION, courseTitle: 'Course One', exerciseTitle: 'Exercise C' },
+        {
+            id: 1,
+            tokenType: VcsAccessTokenType.REPOSITORY,
+            repositoryType: RepositoryType.TEMPLATE,
+            courseId: 10,
+            courseTitle: 'Course One',
+            exerciseId: 100,
+            exerciseTitle: 'Exercise A',
+            repositoryUri: 'https://artemis.tum.de/git/COURSE1/exercise-a-template.git',
+        },
+        {
+            id: 2,
+            tokenType: VcsAccessTokenType.REPOSITORY,
+            repositoryType: RepositoryType.USER,
+            courseId: 20,
+            courseTitle: 'Course Two',
+            exerciseId: 200,
+            exerciseTitle: 'Exercise B',
+            studentLogin: 'student1',
+            repositoryUri: 'https://artemis.tum.de/git/COURSE2/exercise-b-student1.git',
+        },
+        {
+            id: 3,
+            tokenType: VcsAccessTokenType.PARTICIPATION,
+            courseId: 10,
+            courseTitle: 'Course One',
+            exerciseId: 300,
+            exerciseTitle: 'Exercise C',
+            repositoryUri: 'https://artemis.tum.de/git/COURSE1/exercise-c.git',
+        },
     ];
 
     beforeEach(async () => {
@@ -31,8 +61,10 @@ describe('VcsAccessTokenOverviewComponent', () => {
             providers: [
                 { provide: VcsAccessTokenOverviewService, useValue: serviceMock },
                 { provide: TranslateService, useClass: MockTranslateService },
+                { provide: DeleteDialogService, useClass: MockDeleteDialogService },
                 { provide: AlertService, useValue: alertServiceMock },
                 provideHttpClient(),
+                provideRouter([]),
             ],
         }).compileComponents();
         fixture = TestBed.createComponent(VcsAccessTokenOverviewComponent);
@@ -48,7 +80,7 @@ describe('VcsAccessTokenOverviewComponent', () => {
         expect(comp['rows']()).toHaveLength(3);
     });
 
-    it('filters by the search term (course title, exercise title and student login) client-side', () => {
+    it('filters by the search term (course, exercise, student login, repository type and URI) client-side', () => {
         comp.ngOnInit();
 
         comp.onDataRequest({ page: 0, pageSize: 20, searchTerm: 'student1' });
@@ -58,6 +90,14 @@ describe('VcsAccessTokenOverviewComponent', () => {
         expect(comp['rows']().map((token) => token.id)).toEqual([3]);
 
         comp.onDataRequest({ page: 0, pageSize: 20, searchTerm: 'course two' });
+        expect(comp['rows']().map((token) => token.id)).toEqual([2]);
+
+        // Repository type label (only the template token maps to the "template" label / URI).
+        comp.onDataRequest({ page: 0, pageSize: 20, searchTerm: 'template' });
+        expect(comp['rows']().map((token) => token.id)).toEqual([1]);
+
+        // Repository URI fragment.
+        comp.onDataRequest({ page: 0, pageSize: 20, searchTerm: 'exercise-b-student1' });
         expect(comp['rows']().map((token) => token.id)).toEqual([2]);
     });
 
@@ -72,6 +112,12 @@ describe('VcsAccessTokenOverviewComponent', () => {
         expect(comp['rows']().map((token) => token.id)).toEqual([3]);
     });
 
+    it('maps every token to a short repository-type label', () => {
+        expect(comp.tokenTypeLabelKey(tokens[0])).toBe('artemisApp.userSettings.vcsAccessTokensOverview.type.template');
+        expect(comp.tokenTypeLabelKey(tokens[1])).toBe('artemisApp.userSettings.vcsAccessTokensOverview.type.assignment');
+        expect(comp.tokenTypeLabelKey(tokens[2])).toBe('artemisApp.userSettings.vcsAccessTokensOverview.type.participation');
+    });
+
     it('revokes a token, removes it from the list and reports success', () => {
         comp.ngOnInit();
         comp.onDataRequest({ page: 0, pageSize: 20 });
@@ -82,6 +128,17 @@ describe('VcsAccessTokenOverviewComponent', () => {
         expect(comp['rows']().map((token) => token.id)).toEqual([1, 3]);
         expect(comp['totalCount']()).toBe(2);
         expect(alertServiceMock.success).toHaveBeenCalledWith('artemisApp.userSettings.vcsAccessTokensOverview.revoke.success');
+    });
+
+    it('revokes a token through the confirmation dialog', () => {
+        comp.ngOnInit();
+        comp.onDataRequest({ page: 0, pageSize: 20 });
+
+        // The mock delete dialog immediately triggers the confirm callback, so this drives the full revoke flow.
+        comp['openRevokeDialog'](tokens[0]);
+
+        expect(serviceMock.revokeToken).toHaveBeenCalledWith(VcsAccessTokenType.REPOSITORY, 1);
+        expect(comp['rows']().map((token) => token.id)).toEqual([2, 3]);
     });
 
     it('reports an error and shows no tokens when loading fails', () => {

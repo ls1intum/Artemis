@@ -167,11 +167,11 @@ A student can only access their own assignment repository, and write access to i
 
 ### Which scoped token is provided automatically
 
-| Who                       | Repository                          | Automatically generated token                                                     |
-| ------------------------- | ----------------------------------- | --------------------------------------------------------------------------------- |
-| Student                   | Own assignment repository           | Participation token                                                               |
-| Tutor, editor, instructor | Template, test, solution, auxiliary | Repository token                                                                  |
-| Tutor, editor, instructor | Student assignment repositories     | Repository token (issued on request; automatic clone-dialog provisioning planned) |
+| Who                       | Repository                          | Automatically generated token |
+| ------------------------- | ----------------------------------- | ----------------------------- |
+| Student                   | Own assignment repository           | Participation token           |
+| Tutor, editor, instructor | Template, test, solution, auxiliary | Repository token              |
+| Tutor, editor, instructor | Student assignment repositories     | Repository token              |
 
 A scoped token only identifies you; it never widens your access.
 The permissions in the matrix above are re-evaluated on every Git operation, so a tutor's repository token grants read-only access while an editor's grants push access.
@@ -182,8 +182,8 @@ Course staff (tutors, editors, and instructors) receive a repository-scoped toke
 Like the participation token for students, it is provisioned automatically and provided through the code button dialog.
 This means staff can clone base repositories over HTTPS without entering an account password.
 
-A repository-scoped token can also be issued for an individual student's assignment repository, so that staff can work with a specific student repository over HTTPS without falling back to a broad personal token or a password.
-Such a student-repository token is only ever created on request for the exact repository a staff member needs, and only for staff who may already read that repository.
+The same applies to an individual student's assignment repository: when staff open the clone dialog for a student's repository in course management, a repository-scoped token for exactly that repository is provisioned automatically, so staff can work with a specific student repository over HTTPS without falling back to a broad personal token or a password.
+Such a student-repository token is only ever created for the exact repository a staff member opens, and only for staff who may already read that repository.
 
 The token is bound to exactly one repository URI.
 For example, a token generated for the template repository cannot be used for the solution, test, auxiliary, or any student assignment repository.
@@ -191,8 +191,7 @@ The token only authenticates the user; the usual permission checks still apply o
 
 Repository-scoped staff tokens are created in the following situations:
 
-- when staff open the clone dialog for a base repository and no token exists yet
-- when a staff member requests access to an individual student's assignment repository
+- when staff open the clone dialog for a base repository or a student's assignment repository and no token exists yet
 - when staff are added to a course through course management
 - when a programming exercise is created or updated
 
@@ -208,8 +207,8 @@ It never shows the token value itself, only this metadata.
 
 From the overview you can revoke an individual token.
 Revoking a token immediately invalidates it.
-For participation and base repositories, a fresh token is created automatically the next time you open the clone dialog, so revoking those never permanently locks you out of a repository you are allowed to access.
-A revoked student-repository staff token is not yet re-issued through the clone dialog (see the planned integration above), so only revoke it when you no longer need that access.
+A fresh token is created automatically the next time you open that repository's clone dialog, so revoking a token never permanently locks you out of a repository you are allowed to access.
+This applies to all automatically provisioned tokens: your participation tokens as well as repository-scoped staff tokens for base and student assignment repositories.
 
 <Image src={vcsAccessTokensOverviewImg} alt={'The Access Tokens overview in the user settings, listing the tokens for one exercise with a revoke action'} size={ImageSize.large} />
 
@@ -217,7 +216,7 @@ A revoked student-repository staff token is not yet re-issued through the clone 
 
 Instructors can create a user access token in **Profile > Settings > VCS token**.
 This token is broader than a repository-scoped token: it can authenticate Git operations for all repositories that the user account is allowed to access.
-Use it when you need one token for several repositories, for automation, or for staff access to student assignment repositories until repository-scoped staff tokens are available there.
+Use it when you need one token for several repositories or for automation. For everyday staff access to individual student assignment repositories, prefer the automatically provisioned repository-scoped token instead.
 
 Treat user access tokens like passwords.
 Never share them, never commit them to version control, and revoke them immediately if they might have been exposed.

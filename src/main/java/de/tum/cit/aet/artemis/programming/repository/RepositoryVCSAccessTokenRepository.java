@@ -96,9 +96,14 @@ public interface RepositoryVCSAccessTokenRepository extends ArtemisJpaRepository
             SELECT new de.tum.cit.aet.artemis.programming.dto.VcsAccessTokenOverviewDTO(
                 t.id,
                 t.repositoryType,
+                COALESCE(course.id, examCourse.id),
                 COALESCE(course.title, examCourse.title),
+                exam.id,
+                exerciseGroup.id,
+                exercise.id,
                 exercise.title,
-                student.login)
+                student.login,
+                t.repositoryUri)
             FROM RepositoryVCSAccessToken t
                 JOIN t.exercise exercise
                 LEFT JOIN exercise.course course

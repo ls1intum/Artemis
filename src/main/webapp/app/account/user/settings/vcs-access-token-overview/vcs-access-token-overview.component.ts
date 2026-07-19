@@ -2,44 +2,55 @@ import { ChangeDetectionStrategy, Component, OnInit, TrackByFunction, computed, 
 import { HttpErrorResponse } from '@angular/common/http';
 import { Subject } from 'rxjs';
 import { faTrash } from '@fortawesome/free-solid-svg-icons';
-import { ButtonModule } from 'primeng/button';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { TranslateService } from '@ngx-translate/core';
 import { TumUiTableComponent } from 'app/shared-ui/tum-ui/table/tum-ui-table.component';
 import { CellTemplateRef, ColumnDef, TumUiTableQueryEvent } from 'app/shared-ui/tum-ui/table/tum-ui-table.types';
+import { TumUiButtonComponent } from 'app/shared-ui/tum-ui/button/tum-ui-button.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { onError } from 'app/foundation/util/global.utils';
-import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
+import { ActionType, DeleteDialogData } from 'app/shared-ui/delete-dialog/delete-dialog.model';
+import { DeleteDialogService } from 'app/shared-ui/delete-dialog/service/delete-dialog.service';
+import { ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
+import { RouterLink } from '@angular/router';
 import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { VcsAccessTokenOverviewService } from 'app/account/user/settings/vcs-access-token-overview/vcs-access-token-overview.service';
 import { VcsAccessTokenOverview, VcsAccessTokenType } from 'app/account/user/settings/vcs-access-token-overview/vcs-access-token-overview.model';
 
+const TYPE_LABEL_KEY_PREFIX = 'artemisApp.userSettings.vcsAccessTokensOverview.type.';
+
 /**
  * User-settings page listing the VCS access tokens the current user owns (participation tokens plus repository-scoped staff tokens) and letting them revoke individual tokens.
- * The token secret is never shown here — only display metadata. Revoking a token simply lets the next clone-dialog visit re-mint a fresh one. The list is small, so it is loaded in
- * full and the tum-ui table paginates, sorts, and filters it client-side.
+ * The token secret is never shown here — only display metadata (course, exercise, a short repository type and the repository URI). Revoking a token simply lets the next
+ * clone-dialog visit re-mint a fresh one. The list is small, so it is loaded in full and the tum-ui table paginates, sorts, and filters it client-side.
  */
 @Component({
     selector: 'jhi-vcs-access-token-overview',
     templateUrl: './vcs-access-token-overview.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [TumUiTableComponent, TranslateDirective, ArtemisTranslatePipe, FaIconComponent, ButtonModule, DeleteButtonDirective],
+    imports: [TumUiTableComponent, TumUiButtonComponent, TranslateDirective, ArtemisTranslatePipe, RouterLink],
 })
 export class VcsAccessTokenOverviewComponent implements OnInit {
     private readonly service = inject(VcsAccessTokenOverviewService);
     private readonly alertService = inject(AlertService);
+    private readonly deleteDialogService = inject(DeleteDialogService);
+    private readonly translateService = inject(TranslateService);
 
     private readonly allTokens = signal<VcsAccessTokenOverview[]>([]);
     protected readonly rows = signal<VcsAccessTokenOverview[]>([]);
     protected readonly totalCount = signal(0);
     protected readonly isLoading = signal(false);
 
+    protected readonly courseColumnTemplate = viewChild<CellTemplateRef<VcsAccessTokenOverview>>('courseColumn');
+    protected readonly exerciseColumnTemplate = viewChild<CellTemplateRef<VcsAccessTokenOverview>>('exerciseColumn');
+    protected readonly typeColumnTemplate = viewChild<CellTemplateRef<VcsAccessTokenOverview>>('typeColumn');
     protected readonly repositoryColumnTemplate = viewChild<CellTemplateRef<VcsAccessTokenOverview>>('repositoryColumn');
 
     protected readonly columns = computed<ColumnDef<VcsAccessTokenOverview>[]>(() => [
-        { field: 'courseTitle', headerKey: 'artemisApp.userSettings.vcsAccessTokensOverview.table.course', sort: true },
-        { field: 'exerciseTitle', headerKey: 'artemisApp.userSettings.vcsAccessTokensOverview.table.exercise', sort: true },
+        { field: 'courseTitle', headerKey: 'artemisApp.userSettings.vcsAccessTokensOverview.table.course', sort: true, templateRef: this.courseColumnTemplate() },
+        { field: 'exerciseTitle', headerKey: 'artemisApp.userSettings.vcsAccessTokensOverview.table.exercise', sort: true, templateRef: this.exerciseColumnTemplate() },
+        { headerKey: 'artemisApp.userSettings.vcsAccessTokensOverview.table.type', templateRef: this.typeColumnTemplate() },
         { headerKey: 'artemisApp.userSettings.vcsAccessTokensOverview.table.repository', templateRef: this.repositoryColumnTemplate() },
     ]);
 
@@ -97,12 +108,7 @@ export class VcsAccessTokenOverviewComponent implements OnInit {
         let filtered = this.allTokens();
         const term = event.searchTerm?.toLowerCase();
         if (term) {
-            filtered = filtered.filter(
-                (token) =>
-                    (token.courseTitle ?? '').toLowerCase().includes(term) ||
-                    (token.exerciseTitle ?? '').toLowerCase().includes(term) ||
-                    (token.studentLogin ?? '').toLowerCase().includes(term),
-            );
+            filtered = filtered.filter((token) => this.searchHaystack(token).includes(term));
         }
         const sorted = [...filtered];
         const sortField = event.sort?.field;
@@ -113,6 +119,62 @@ export class VcsAccessTokenOverviewComponent implements OnInit {
         this.totalCount.set(sorted.length);
         const from = event.page * event.pageSize;
         this.rows.set(sorted.slice(from, from + event.pageSize));
+    }
+
+    /**
+     * The lowercased, searchable text of a token: its course, exercise, student login, repository URI and (translated) short repository-type label. Used for the client-side
+     * global search so the user can filter by any of the columns, including the repository type and URI.
+     *
+     * @param token the token to build the search text for
+     */
+    private searchHaystack(token: VcsAccessTokenOverview): string {
+        return [token.courseTitle, token.exerciseTitle, token.studentLogin, token.repositoryUri, this.translateService.instant(this.tokenTypeLabelKey(token))]
+            .filter(Boolean)
+            .join(' ')
+            .toLowerCase();
+    }
+
+    /**
+     * The i18n key of the short label describing a token's repository type (e.g. "Template", "Assignment") or, for a participation token, "Participation".
+     *
+     * @param token the token to label
+     */
+    protected tokenTypeLabelKey(token: VcsAccessTokenOverview): string {
+        if (token.tokenType === VcsAccessTokenType.PARTICIPATION) {
+            return `${TYPE_LABEL_KEY_PREFIX}participation`;
+        }
+        switch (token.repositoryType) {
+            case RepositoryType.TEMPLATE:
+                return `${TYPE_LABEL_KEY_PREFIX}template`;
+            case RepositoryType.SOLUTION:
+                return `${TYPE_LABEL_KEY_PREFIX}solution`;
+            case RepositoryType.TESTS:
+                return `${TYPE_LABEL_KEY_PREFIX}tests`;
+            case RepositoryType.AUXILIARY:
+                return `${TYPE_LABEL_KEY_PREFIX}auxiliary`;
+            case RepositoryType.USER:
+                return `${TYPE_LABEL_KEY_PREFIX}assignment`;
+            default:
+                return `${TYPE_LABEL_KEY_PREFIX}repository`;
+        }
+    }
+
+    /**
+     * Opens the confirmation dialog for revoking the given token. Confirming triggers {@link revokeToken}; the shared delete dialog surfaces any server error via {@link dialogError$}.
+     *
+     * @param token the token the user wants to revoke
+     */
+    protected openRevokeDialog(token: VcsAccessTokenOverview): void {
+        const deleteDialogData: DeleteDialogData = {
+            requireConfirmationOnlyForAdditionalChecks: false,
+            deleteQuestion: 'artemisApp.userSettings.vcsAccessTokensOverview.revoke.question',
+            translateValues: {},
+            actionType: ActionType.Delete,
+            buttonType: ButtonType.ERROR,
+            delete: () => this.revokeToken(token),
+            dialogError: this.dialogError$,
+        };
+        this.deleteDialogService.openDeleteDialog(deleteDialogData, true);
     }
 
     /**

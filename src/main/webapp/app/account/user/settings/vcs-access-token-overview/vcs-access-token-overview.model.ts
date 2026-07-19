@@ -16,9 +16,17 @@ export interface VcsAccessTokenOverview {
     tokenType: VcsAccessTokenType;
     // Only set for repository-scoped tokens (TEMPLATE, SOLUTION, TESTS, AUXILIARY or USER); undefined for participation tokens.
     repositoryType?: RepositoryType;
-    // The course the token's exercise belongs to (disambiguates exercises with the same title across courses).
+    // The course the token's exercise belongs to (disambiguates exercises with the same title across courses); id for linking, title for display.
+    courseId?: number;
     courseTitle?: string;
+    // For an exam exercise, the exam and exercise-group ids so the client can build the correct exercise link; undefined for a regular course exercise.
+    examId?: number;
+    exerciseGroupId?: number;
+    // The programming exercise the token's repository belongs to; id for linking, title for display.
+    exerciseId?: number;
     exerciseTitle?: string;
     // Only set for a repository-scoped USER token: the login of the student whose assignment repository the token grants access to.
     studentLogin?: string;
+    // The canonical URI of the repository the token grants access to, so it is unambiguous which repository is meant.
+    repositoryUri?: string;
 }

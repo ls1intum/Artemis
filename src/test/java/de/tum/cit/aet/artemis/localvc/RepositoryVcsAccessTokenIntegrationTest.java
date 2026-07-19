@@ -498,9 +498,9 @@ class RepositoryVcsAccessTokenIntegrationTest extends AbstractProgrammingIntegra
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void getVcsAccessTokenOverview_returnsOwnRepositoryTokensWithMetadataOnly() throws Exception {
         User tutor = userUtilService.getUserByLogin(TEST_PREFIX + "tutor1");
-        repositoryVcsAccessTokenService.getOrCreateToken(tutor, exercise, RepositoryType.TEMPLATE, null);
+        RepositoryVCSAccessToken templateToken = repositoryVcsAccessTokenService.getOrCreateToken(tutor, exercise, RepositoryType.TEMPLATE, null);
         ProgrammingExerciseStudentParticipation studentParticipation = participationUtilService.addStudentParticipationForProgrammingExercise(exercise, TEST_PREFIX + "student1");
-        repositoryVcsAccessTokenService.getOrCreateStudentRepositoryToken(tutor, exercise, studentParticipation);
+        RepositoryVCSAccessToken studentToken = repositoryVcsAccessTokenService.getOrCreateStudentRepositoryToken(tutor, exercise, studentParticipation);
 
         List<VcsAccessTokenOverviewDTO> overview = request.getList("/api/programming/vcs-access-tokens", HttpStatus.OK, VcsAccessTokenOverviewDTO.class);
 
@@ -508,13 +508,22 @@ class RepositoryVcsAccessTokenIntegrationTest extends AbstractProgrammingIntegra
         assertThat(overview).isNotEmpty().allSatisfy(dto -> assertThat(dto.tokenType()).isEqualTo(VcsAccessTokenType.REPOSITORY));
         assertThat(overview).anySatisfy(dto -> {
             assertThat(dto.repositoryType()).isEqualTo(RepositoryType.TEMPLATE);
+            assertThat(dto.courseId()).isEqualTo(course.getId());
             assertThat(dto.courseTitle()).isEqualTo(course.getTitle());
+            // A regular course exercise has no exam or exercise group.
+            assertThat(dto.examId()).isNull();
+            assertThat(dto.exerciseGroupId()).isNull();
+            assertThat(dto.exerciseId()).isEqualTo(exercise.getId());
             assertThat(dto.exerciseTitle()).isEqualTo(exercise.getTitle());
             assertThat(dto.studentLogin()).isNull();
+            assertThat(dto.repositoryUri()).isEqualTo(templateToken.getRepositoryUri());
         });
         assertThat(overview).anySatisfy(dto -> {
             assertThat(dto.repositoryType()).isEqualTo(RepositoryType.USER);
+            assertThat(dto.courseId()).isEqualTo(course.getId());
+            assertThat(dto.exerciseId()).isEqualTo(exercise.getId());
             assertThat(dto.studentLogin()).isEqualTo(TEST_PREFIX + "student1");
+            assertThat(dto.repositoryUri()).isEqualTo(studentToken.getRepositoryUri());
         });
     }
 
@@ -522,14 +531,17 @@ class RepositoryVcsAccessTokenIntegrationTest extends AbstractProgrammingIntegra
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void getVcsAccessTokenOverview_returnsOwnParticipationToken() throws Exception {
         // Creating the participation also creates the student's own participation token.
-        participationUtilService.addStudentParticipationForProgrammingExercise(exercise, TEST_PREFIX + "student1");
+        ProgrammingExerciseStudentParticipation participation = participationUtilService.addStudentParticipationForProgrammingExercise(exercise, TEST_PREFIX + "student1");
 
         List<VcsAccessTokenOverviewDTO> overview = request.getList("/api/programming/vcs-access-tokens", HttpStatus.OK, VcsAccessTokenOverviewDTO.class);
 
         assertThat(overview).isNotEmpty().allSatisfy(dto -> assertThat(dto.tokenType()).isEqualTo(VcsAccessTokenType.PARTICIPATION));
         assertThat(overview).anySatisfy(dto -> {
+            assertThat(dto.courseId()).isEqualTo(course.getId());
             assertThat(dto.courseTitle()).isEqualTo(course.getTitle());
+            assertThat(dto.exerciseId()).isEqualTo(exercise.getId());
             assertThat(dto.exerciseTitle()).isEqualTo(exercise.getTitle());
+            assertThat(dto.repositoryUri()).isEqualTo(participation.getRepositoryUri());
         });
     }
 

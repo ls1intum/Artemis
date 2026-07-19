@@ -14,41 +14,59 @@
     />
 </div>
 
+<ng-template #courseColumn let-params>
+    @let token = params.data;
+    @if (token.courseId && token.courseTitle) {
+        <a [routerLink]="['/course-management', token.courseId]" target="_blank" rel="noopener noreferrer">{{ token.courseTitle }}</a>
+    } @else {
+        <span>{{ token.courseTitle }}</span>
+    }
+</ng-template>
+
+<ng-template #exerciseColumn let-params>
+    @let token = params.data;
+    @if (token.courseId && token.exerciseId && token.exerciseTitle) {
+        @if (token.examId && token.exerciseGroupId) {
+            <a
+                [routerLink]="['/course-management', token.courseId, 'exams', token.examId, 'exercise-groups', token.exerciseGroupId, 'programming-exercises', token.exerciseId]"
+                target="_blank"
+                rel="noopener noreferrer"
+                >{{ token.exerciseTitle }}</a
+            >
+        } @else {
+            <a [routerLink]="['/course-management', token.courseId, 'programming-exercises', token.exerciseId]" target="_blank" rel="noopener noreferrer">{{
+                token.exerciseTitle
+            }}</a>
+        }
+    } @else {
+        <span>{{ token.exerciseTitle }}</span>
+    }
+</ng-template>
+
+<ng-template #typeColumn let-params>
+    @let token = params.data;
+    <span>{{ tokenTypeLabelKey(token) | artemisTranslate }}</span>
+    @if (token.studentLogin) {
+        <span class="text-muted-color"> · {{ token.studentLogin }}</span>
+    }
+</ng-template>
+
 <ng-template #repositoryColumn let-params>
     @let token = params.data;
-    @switch (token.tokenType) {
-        @case (VcsAccessTokenType.PARTICIPATION) {
-            <span jhiTranslate="artemisApp.userSettings.vcsAccessTokensOverview.repository.ownParticipation"></span>
-        }
-        @default {
-            @switch (token.repositoryType) {
-                @case (RepositoryType.USER) {
-                    <span jhiTranslate="artemisApp.userSettings.vcsAccessTokensOverview.repository.studentAssignment" [translateValues]="{ student: token.studentLogin }"></span>
-                }
-                @default {
-                    <span>{{ 'artemisApp.userSettings.vcsAccessTokensOverview.repository.type.' + token.repositoryType | artemisTranslate }}</span>
-                }
-            }
-        }
+    @if (token.repositoryUri) {
+        <span class="font-mono text-sm break-all">{{ token.repositoryUri }}</span>
     }
 </ng-template>
 
 <ng-template #tokenActions let-token>
     <div class="flex items-center justify-end">
-        <button
-            pButton
+        <tum-ui-button
             severity="danger"
             size="small"
-            [renderButtonStyle]="false"
-            jhiDeleteButton
-            deleteQuestion="artemisApp.userSettings.vcsAccessTokensOverview.revoke.question"
-            (delete)="revokeToken(token)"
-            [dialogError]="dialogError$"
-            (click)="$event.stopPropagation()"
+            [icon]="faTrash"
+            [ariaLabel]="'artemisApp.userSettings.vcsAccessTokensOverview.revoke.label' | artemisTranslate"
+            (clicked)="$event.stopPropagation(); openRevokeDialog(token)"
             data-testid="revoke-token-btn"
-        >
-            <fa-icon [icon]="faTrash" />
-            <span class="sr-only" jhiTranslate="artemisApp.userSettings.vcsAccessTokensOverview.revoke.label"></span>
-        </button>
+        />
     </div>
 </ng-template>
