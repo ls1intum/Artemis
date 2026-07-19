@@ -1,6 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComplaintService } from 'app/assessment/shared/services/complaint.service';
 import { Complaint, ComplaintType } from 'app/assessment/shared/entities/complaint.model';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
@@ -22,7 +21,6 @@ import { Team } from 'app/exercise/shared/entities/team/team.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 
 describe('ComplaintService', () => {
-    setupTestBed({ zoneless: true });
     let complaintService: ComplaintService;
     let accountService: AccountService;
     let httpMock: HttpTestingController;

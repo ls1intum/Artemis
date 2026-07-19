@@ -69,23 +69,23 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
     // :exerciseId -> Load exercise and select template repository
     // :exerciseId/:participationId -> Load exercise and select repository according to participationId
     // :exerciseId/test -> Load exercise and select test repository
-    paramSub: Subscription;
+    paramSub?: Subscription;
 
     // Contains all participations (template, solution, assignment)
-    exercise: ProgrammingExercise;
-    course: Course;
+    exercise!: ProgrammingExercise; // set in ngOnInit() from the loadExercise() route flow
+    course!: Course; // set in ngOnInit() from the loaded exercise
     // Can only be undefined when the test repository is selected.
     selectedParticipation?: TemplateProgrammingExerciseParticipation | SolutionProgrammingExerciseParticipation | ProgrammingExerciseStudentParticipation;
     // Stores which repository is selected atm.
     // Needs to be set additionally to selectedParticipation as the test repository does not have a participation
     // I am not sure if I can default initialize it like this, but I need to, to correctly show issues
-    selectedRepository: RepositoryType;
-    selectedRepositoryId: number;
+    selectedRepository!: RepositoryType; // set in ngOnInit() during domain selection before template/methods read it
+    selectedRepositoryId!: number; // set in ngOnInit() during domain selection (auxiliary repository)
     selectedAuxiliaryRepositoryName?: string;
 
     // Fires when the selected domain changes.
     // This can either be a participation (solution, template, assignment) or the test repository.
-    domainChangeSubscription: Subscription;
+    domainChangeSubscription?: Subscription;
 
     // State variables.
     // Signal-backed so its async transitions (set inside the participation-fetch subscribe and the
@@ -94,7 +94,7 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
     // stuck and the editor page blank.
     readonly loadingState = signal(LOADING_STATE.CLEAR);
 
-    protected isCreateAssignmentRepoDisabled: boolean;
+    protected isCreateAssignmentRepoDisabled!: boolean; // set in ngOnInit()'s participation-fetch subscribe
     /** Debounced tick stream consumed by the sidebar preview */
     previewEvents$ = this.problemStatementChanges$.pipe(
         debounceTime(200),
@@ -114,7 +114,7 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
         if (this.paramSub) {
             this.paramSub.unsubscribe();
         }
-        this.paramSub = this.route!.params.subscribe((params) => {
+        this.paramSub = this.route.params.subscribe((params) => {
             const exerciseId = Number(params['exerciseId']);
             const repositoryType = params['repositoryType'];
             const repositoryId = Number(params['repositoryId']);
@@ -216,13 +216,18 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
      * @param preferredParticipationId
      */
     private getNextAvailableParticipation(preferredParticipationId: number): Participation | undefined {
+        type ProgrammingParticipation = TemplateProgrammingExerciseParticipation | SolutionProgrammingExerciseParticipation | ProgrammingExerciseStudentParticipation;
         const availableParticipations = [
             this.exercise.templateParticipation,
             this.exercise.solutionParticipation,
-            this.exercise.studentParticipations && this.exercise.studentParticipations.length ? this.exercise.studentParticipations[0] : undefined,
-        ].filter(Boolean);
-        const selectedParticipation = availableParticipations.find(({ id }: ProgrammingExerciseStudentParticipation) => id === preferredParticipationId);
-        return [selectedParticipation, ...availableParticipations].filter(Boolean).find(({ repositoryUri }: ProgrammingExerciseStudentParticipation) => !!repositoryUri);
+            this.exercise.studentParticipations && this.exercise.studentParticipations.length
+                ? (this.exercise.studentParticipations[0] as ProgrammingExerciseStudentParticipation)
+                : undefined,
+        ].filter((participation): participation is ProgrammingParticipation => participation != undefined);
+        const selectedParticipation = availableParticipations.find(({ id }: ProgrammingParticipation) => id === preferredParticipationId);
+        return [selectedParticipation, ...availableParticipations]
+            .filter((participation): participation is ProgrammingParticipation => participation != undefined)
+            .find(({ repositoryUri }: ProgrammingParticipation) => !!repositoryUri);
     }
 
     /**
@@ -234,7 +239,7 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
             .subscribeDomainChange()
             .pipe(
                 filter((domain) => !!domain),
-                map((domain) => domain as DomainChange),
+                map((domain) => domain),
                 tap(([domainType, domainValue]) => {
                     this.applyDomainChange(domainType, domainValue);
                 }),
@@ -242,7 +247,7 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
             .subscribe();
     }
 
-    protected applyDomainChange(domainType: any, domainValue: any) {
+    protected applyDomainChange(domainType: DomainChange[0], domainValue: DomainChange[1]) {
         if (this.codeEditorContainer() != undefined) {
             this.codeEditorContainer()!.initializeProperties();
         }
@@ -250,9 +255,9 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
         this.fileSyncService.reset();
         if (domainType === DomainType.AUXILIARY_REPOSITORY) {
             this.selectedRepository = RepositoryType.AUXILIARY;
-            this.selectedRepositoryId = domainValue.id;
+            this.selectedRepositoryId = domainValue.id!;
         } else if (domainType === DomainType.PARTICIPATION) {
-            this.setSelectedParticipation(domainValue.id);
+            this.setSelectedParticipation(domainValue.id!);
         } else {
             this.selectedParticipation = this.exercise.templateParticipation!;
             this.selectedRepository = RepositoryType.TESTS;
@@ -283,7 +288,7 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
             (this.selectedParticipation as SolutionProgrammingExerciseParticipation).programmingExercise = exercise;
         } else if (this.exercise.studentParticipations?.length && participationId === this.exercise.studentParticipations[0].id) {
             this.selectedRepository = RepositoryType.ASSIGNMENT;
-            this.selectedParticipation = this.exercise.studentParticipations[0] as ProgrammingExerciseStudentParticipation;
+            this.selectedParticipation = this.exercise.studentParticipations[0];
             this.selectedParticipation.exercise = exercise;
         } else {
             this.onError('participationNotFound');
@@ -400,11 +405,12 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
     deleteAssignmentParticipation() {
         this.loadingState.set(LOADING_STATE.DELETING_ASSIGNMENT_REPO);
         if (this.selectedRepository === RepositoryType.ASSIGNMENT) {
-            this.selectTemplateParticipation();
+            void this.selectTemplateParticipation();
         }
         const assignmentParticipationId = this.exercise.studentParticipations![0].id!;
         this.exercise.studentParticipations = [];
-        this.participationService!.delete(assignmentParticipationId, { deleteBuildPlan: true, deleteRepository: true })
+        this.participationService
+            .delete(assignmentParticipationId, { deleteBuildPlan: true, deleteRepository: true })
             .pipe(
                 catchError(() => throwError(() => new Error('participationCouldNotBeDeleted'))),
                 tap(() => {
@@ -475,7 +481,7 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
             this.currentFileBinding = undefined;
             // Late leader replacement can carry content originally seeded from Windows peers.
             // Normalize + enforce LF to keep local model offsets consistent with Y.Text.
-            const replacedText = this.normalizeLineEndings(replacedState.text.toString());
+            const replacedText = this.normalizeLineEndings(replacedState.text.toJSON());
             model.setValue(replacedText);
             this.enforceLfEol(model);
             this.createFileBinding(replacedState, model, editorInstance);

@@ -1,4 +1,5 @@
 import {
+    faAnglesRight,
     faArrowDown,
     faCheck,
     faChevronDown,
@@ -37,14 +38,13 @@ import {
 } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
-import { MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { Clipboard } from '@angular/cdk/clipboard';
 import { IrisAssistantMessage, IrisMessage, IrisSender } from 'app/iris/shared/entities/iris-message.model';
 import { IrisErrorMessageKey } from 'app/iris/shared/entities/iris-errors.model';
+import { IrisMessageContextDTO } from 'app/iris/shared/entities/iris-message-context-dto.model';
 import { ButtonComponent, ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
 import { TranslateService } from '@ngx-translate/core';
 import { IrisLogoComponent, IrisLogoSize } from 'app/iris/overview/iris-logo/iris-logo.component';
-import { IrisStageDTO, IrisStageStateDTO } from 'app/iris/shared/entities/iris-stage-dto.model';
 import { IrisStatusService } from 'app/iris/overview/services/iris-status.service';
 import {
     IrisMessageContent,
@@ -61,28 +61,30 @@ import {
 import { IrisMcqQuestionComponent } from 'app/iris/overview/mcq-question/iris-mcq-question.component';
 import { IrisMcqCarouselComponent } from 'app/iris/overview/mcq-question/iris-mcq-carousel.component';
 import { AccountService } from 'app/core/auth/account.service';
-import { ChatServiceMode, IrisChatService } from 'app/iris/overview/services/iris-chat.service';
+import { ChatServiceMode, IrisChatService, IrisLiveAssistantDraft } from 'app/iris/overview/services/iris-chat.service';
 import { IrisChatHttpService } from 'app/iris/overview/services/iris-chat-http.service';
 import * as _ from 'lodash-es';
 import { IrisCitationMetaDTO } from 'app/iris/shared/entities/iris-citation-meta-dto.model';
 import { IrisCitationTextComponent } from 'app/iris/overview/citation-text/iris-citation-text.component';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute, Params, RouterLink } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FormsModule } from '@angular/forms';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { AsPipe } from 'app/foundation/pipes/as.pipe';
-import { HtmlForMarkdownPipe } from 'app/foundation/pipes/html-for-markdown.pipe';
+import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
 import { ChatHistoryItemComponent } from './chat-history-item/chat-history-item.component';
 import { formatDate } from '@angular/common';
 import { MenuModule } from 'primeng/menu';
 import { MenuItem } from 'primeng/api';
 import { IrisSessionDTO } from 'app/iris/shared/entities/iris-session-dto.model';
 import { SearchFilterComponent } from 'app/shared-ui/search-filter/search-filter.component';
+import { CourseSidebarToggleButtonComponent } from 'app/course/shared/course-sidebar-toggle-button/course-sidebar-toggle-button.component';
 import { LLMSelectionModalService } from 'app/logos/llm-selection-popup.service';
 import { LLMSelectionDecision, LLM_MODAL_DISMISSED } from 'app/account/user/shared/dto/updateLLMSelectionDecision.dto';
 import { ChatStatusBarComponent } from 'app/iris/overview/base-chatbot/chat-status-bar/chat-status-bar.component';
 import { IrisThinkingBubbleComponent } from 'app/iris/overview/base-chatbot/iris-thinking-bubble/iris-thinking-bubble.component';
+import { IrisActivityFeedComponent } from 'app/iris/overview/base-chatbot/iris-activity-feed/iris-activity-feed.component';
 import { AboutIrisModalComponent } from 'app/iris/overview/about-iris-modal/about-iris-modal.component';
 import { IrisOnboardingService } from 'app/iris/overview/iris-onboarding-modal/iris-onboarding.service';
 import { IrisChatMemoriesIndicatorComponent } from 'app/iris/overview/base-chatbot/memories-indicator/iris-chat-memories-indicator.component';
@@ -90,6 +92,9 @@ import { MemirisMemory } from 'app/iris/shared/entities/memiris.model';
 import { EXERCISE_PLACEHOLDER_LABEL_KEYS, LECTURE_PLACEHOLDER_LABEL_KEYS } from './iris-chatbot-placeholder-labels';
 import { createActiveSuggestionChips } from './iris-chatbot-suggestion-chips';
 import { ContextSelectionComponent } from 'app/iris/overview/context-selection/context-selection.component';
+import { IrisContextSwitchDividerComponent } from 'app/iris/overview/context-selection/iris-context-switch-divider.component';
+import { routeForContext } from 'app/iris/overview/context-selection/iris-context.util';
+import { IrisActivityItem, IrisActivityState, IrisRunState } from 'app/iris/shared/entities/iris-activity.model';
 
 // Session history time bucket boundaries (in days ago)
 const YESTERDAY_OFFSET = 1;
@@ -108,6 +113,10 @@ const COPY_FEEDBACK_DURATION_MS = 1500;
 // Interval (in ms) between placeholder label cycling
 const PLACEHOLDER_CYCLE_INTERVAL_MS = 5000;
 const PLACEHOLDER_FADE_DURATION_MS = 300;
+
+// Interval (in ms) for client-side streamed draft reveal.
+const LIVE_DRAFT_ANIMATION_TICK_MS = 50;
+const LIVE_DRAFT_CATCH_UP_MS = 400;
 
 @Component({
     selector: 'jhi-iris-base-chatbot',
@@ -129,7 +138,7 @@ const PLACEHOLDER_FADE_DURATION_MS = 300;
         ButtonComponent,
         ArtemisTranslatePipe,
         AsPipe,
-        HtmlForMarkdownPipe,
+        MarkdownDirective,
         ChatHistoryItemComponent,
         SearchFilterComponent,
         IrisCitationTextComponent,
@@ -137,9 +146,12 @@ const PLACEHOLDER_FADE_DURATION_MS = 300;
         IrisMcqCarouselComponent,
         IrisChatMemoriesIndicatorComponent,
         IrisThinkingBubbleComponent,
+        IrisActivityFeedComponent,
         ConfirmDialogModule,
         MenuModule,
         ContextSelectionComponent,
+        IrisContextSwitchDividerComponent,
+        CourseSidebarToggleButtonComponent,
     ],
     providers: [ConfirmationService],
     changeDetection: ChangeDetectionStrategy.OnPush,
@@ -148,9 +160,7 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     protected accountService = inject(AccountService);
     protected translateService = inject(TranslateService);
     private readonly dialogService = inject(DialogService);
-    private readonly matDialog = inject(MatDialog);
     private aboutIrisDialogRef: DynamicDialogRef<AboutIrisModalComponent> | undefined;
-    private aboutIrisMatDialogRef: MatDialogRef<AboutIrisModalComponent> | undefined;
     private readonly alertService = inject(AlertService);
     private readonly confirmationService = inject(ConfirmationService);
 
@@ -178,11 +188,12 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     protected readonly faThumbsDown = faThumbsDown;
     protected readonly faPenToSquare = faPenToSquare;
     protected readonly faLink = faLink;
-    protected readonly faMagnifyingGlass = faMagnifyingGlass;
     protected readonly faCircleNotch = faCircleNotch;
     protected readonly faCopy = faCopy;
     protected readonly faCheck = faCheck;
     protected readonly faChevronDown = faChevronDown;
+    protected readonly faAnglesRight = faAnglesRight;
+    protected readonly faMagnifyingGlass = faMagnifyingGlass;
 
     // Types
     protected readonly IrisLogoSize = IrisLogoSize;
@@ -202,18 +213,22 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
         return message.content?.some((c) => isMcqContent(c) || isMcqSetContent(c)) ?? false;
     }
 
+    private readonly currentChatMode = computed(() => this.chatService.displayContext()?.mode);
+    readonly relatedEntityRoute = computed<string | undefined>(() =>
+        this.computeRelatedEntityRoute(this.chatService.committedContext()?.mode, this.chatService.committedContext()?.entityId),
+    );
+    readonly relatedEntityLinkButtonLabel = computed<string | undefined>(() => this.computeRelatedEntityLinkButtonLabel(this.chatService.committedContext()?.mode));
+
     // Observable-derived signals (using toSignal for reactive state)
-    private readonly currentRelatedEntityId = toSignal(this.chatService.currentRelatedEntityId(), { initialValue: undefined });
-    private readonly currentChatMode = toSignal(this.chatService.currentChatMode(), { initialValue: undefined });
-    readonly relatedEntityRoute = computed<string | undefined>(() => this.computeRelatedEntityRoute(this.currentChatMode(), this.currentRelatedEntityId()));
-    readonly relatedEntityLinkButtonLabel = computed<string | undefined>(() => this.computeRelatedEntityLinkButtonLabel(this.currentChatMode()));
 
     readonly currentSessionId = toSignal(this.chatService.currentSessionId(), { initialValue: undefined });
     readonly chatSessions = toSignal(this.chatService.availableChatSessions(), { initialValue: [] as IrisSessionDTO[] });
-    readonly stages = toSignal(this.chatService.currentStages(), { initialValue: [] as IrisStageDTO[] });
+    readonly runInfo = toSignal(this.chatService.currentRunInfo(), { initialValue: undefined });
+    readonly activities = toSignal(this.chatService.currentActivities(), { initialValue: [] as IrisActivityItem[] });
     readonly suggestions = toSignal(this.chatService.currentSuggestions(), { initialValue: [] as string[] });
     readonly error = toSignal(this.chatService.currentError(), { initialValue: undefined });
     readonly numNewMessages = toSignal(this.chatService.currentNumNewMessages(), { initialValue: 0 });
+    readonly liveAssistantDraft = toSignal(this.chatService.currentLiveAssistantDraft(), { initialValue: undefined });
     readonly rateLimitInfo = toSignal(this.statusService.currentRatelimitInfo(), { requireSync: true });
     readonly active = toSignal(this.statusService.getActiveStatus(), { initialValue: true });
     readonly citationInfo = toSignal(this.chatService.currentCitationInfo(), { initialValue: [] as IrisCitationMetaDTO[] });
@@ -227,18 +242,17 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     private readonly initialLoadComplete = toSignal(this.chatService.initialLoadComplete$, { initialValue: false });
 
     // Computed state
-    readonly hasActiveStage = computed(() => this.stages()?.some((stage) => [IrisStageStateDTO.IN_PROGRESS, IrisStageStateDTO.NOT_STARTED].includes(stage.state)) ?? false);
-    readonly shouldShowStatusBar = computed(
-        () => this.stages()?.some((stage) => !stage.internal && ![IrisStageStateDTO.DONE, IrisStageStateDTO.SKIPPED].includes(stage.state)) ?? false,
+    readonly runningActivity = computed(() => this.activities().find((activity) => activity.state === IrisActivityState.RUNNING));
+    readonly awaitingAnswer = this.chatService.awaitingAnswer;
+    readonly thinkingMessage = computed(() => this.translateService.instant('artemisApp.iris.thinking'));
+    readonly shouldShowThinkingBubble = computed(() => this.awaitingAnswer() && !this.runningActivity() && !this.liveAssistantDraft());
+    readonly shouldShowStatusBar = computed(() => this.runInfo()?.state === IrisRunState.FAILED);
+    readonly isEmptyState = computed(
+        () => !this.messages()?.length && !this.liveAssistantDraft() && !this.shouldShowThinkingBubble() && !this.activities().length && !this.isEmbeddedChat(),
     );
-    readonly activeChatMessage = computed(() => {
-        const stages = this.stages();
-        if (!stages) return undefined;
-        const active = stages.find((s) => s.state === IrisStageStateDTO.IN_PROGRESS && s.chatMessage);
-        return active?.chatMessage;
-    });
-    readonly isEmptyState = computed(() => !this.messages()?.length && !this.isEmbeddedChat());
-    readonly hasCurrentSessionContent = computed(() => (this.messages()?.length ?? 0) > 0);
+    readonly hasCurrentSessionContent = computed(
+        () => (this.messages()?.length ?? 0) > 0 || !!this.liveAssistantDraft() || this.shouldShowThinkingBubble() || this.activities().length > 0,
+    );
     readonly hasSessionSwitcher = computed(
         () => (this.layout() === 'widget' || this.layout() === 'embedded') && this.showWidgetHeader() && (this.hasCurrentSessionContent() || this.hasPastSessions()),
     );
@@ -287,8 +301,8 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
         () =>
             this.isLoading() ||
             !this.active() ||
-            !!(this.rateLimitInfo()?.rateLimit && this.rateLimitInfo()!.currentMessageCount === this.rateLimitInfo()!.rateLimit) ||
-            this.hasActiveStage(),
+            !!(this.rateLimitInfo()?.rateLimit && this.rateLimitInfo().currentMessageCount === this.rateLimitInfo().rateLimit) ||
+            this.awaitingAnswer(),
     );
     readonly isSendDisabled = computed(() => !this.newMessageTextContent().trim() || this.isInputDisabled());
     readonly canShowSuggestions = computed(
@@ -296,23 +310,23 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
             !!this.suggestions()?.length &&
             this.isAIEnabled() &&
             this.active() &&
-            (!this.rateLimitInfo()?.rateLimit || this.rateLimitInfo()!.currentMessageCount !== this.rateLimitInfo()!.rateLimit) &&
-            !this.hasActiveStage(),
+            (!this.rateLimitInfo()?.rateLimit || this.rateLimitInfo().currentMessageCount !== this.rateLimitInfo().rateLimit) &&
+            !this.awaitingAnswer(),
     );
     readonly isScrolledToBottom = signal(true);
-    // While true, the view is force-kept at the bottom as new content (the echoed user
-    // message, the thinking bubble, the streamed response) arrives asynchronously after a
-    // send. It is set on send and cleared only by a genuine upward user gesture (wheel /
-    // touch) so the scroll handler's intermediate readings cannot un-pin us mid-stream.
-    private forcePinToBottom = false;
-    // Tracks whether the response stream has actually started since the last send, so the
-    // pin is not released during the initial gap before the first websocket update arrives.
-    private pinSawStreaming = false;
-    // requestAnimationFrame id for the active post-send pin scroll loop, if any.
-    private pinScrollRafId: number | undefined;
+    readonly exchangeSpacerPx = signal(0);
+    private pendingAnchorScroll = false;
+    private anchoredMessageId: number | undefined;
+    private exchangeAnchorActive = false;
     // requestAnimationFrame id and remaining-frame counter for the initial-load settle scroll.
     private settleScrollRafId: number | undefined;
     private settleScrollFrames = 0;
+    readonly displayedLiveAssistantDraftText = signal('');
+    private liveAssistantDraftTargetText = '';
+    private liveAssistantDraftRunId: string | undefined;
+    private pendingFinalizedLiveAssistantDraftRunId: string | undefined;
+    private liveDraftAnimationIntervalId: ReturnType<typeof setInterval> | undefined;
+    private draftSwapScrollRafId: number | undefined;
     readonly resendAnimationActive = signal(false);
     readonly clickedSuggestion = signal<string | undefined>(undefined);
     private readonly isSuggestionAnimating = signal(false);
@@ -345,6 +359,8 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     readonly isChatGptWrapper = input<boolean>(false);
     readonly layout = input<'client' | 'widget' | 'embedded'>('client');
     readonly aboutIrisDialogTransport = input<'automatic' | 'material' | 'dynamic'>('automatic');
+    /** Optional function provider that returns a list of context objects for the current message */
+    readonly contextProvider = input<(() => IrisMessageContextDTO[]) | undefined>(undefined);
     readonly fullSizeToggle = output<void>();
     readonly closeClicked = output<void>();
 
@@ -473,6 +489,18 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
         return this.getAccessedMemories(message).length > 0 || this.getCreatedMemories(message).length > 0;
     }
 
+    protected getActivities(message: IrisMessage): IrisActivityItem[] {
+        return message.sender === IrisSender.LLM ? (message.activities ?? []) : [];
+    }
+
+    protected activityTrailSummary(activities: IrisActivityItem[]): string {
+        const totalDurationMillis = activities.reduce((sum, activity) => sum + (activity.durationMillis ?? 0), 0);
+        return this.translateService.instant('artemisApp.iris.activities.trailSummary', {
+            count: activities.length,
+            duration: (totalDurationMillis / 1000).toFixed(1),
+        });
+    }
+
     private startCycling(): void {
         if (this.cycleIntervalId) return;
         this.cycleIntervalId = setInterval(() => {
@@ -523,7 +551,7 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
         }
 
         // Handle route query params (irisQuestion)
-        this.route.queryParams?.pipe(takeUntilDestroyed()).subscribe((params: any) => {
+        this.route.queryParams?.pipe(takeUntilDestroyed()).subscribe((params: Params) => {
             if (params?.irisQuestion) {
                 this.newMessageTextContent.set(params.irisQuestion);
             }
@@ -533,9 +561,14 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
         effect((onCleanup) => {
             const sessionId = this.currentSessionId();
             if (this.previousSessionId !== sessionId) {
+                this.resetLiveAssistantDraftState();
                 this.animatingMessageIds.set(new Set<number>());
                 this.shouldAnimate = false;
                 this.isScrolledToBottom.set(true);
+                this.pendingAnchorScroll = false;
+                this.anchoredMessageId = undefined;
+                this.exchangeAnchorActive = false;
+                this.exchangeSpacerPx.set(0);
                 const timeoutId = setTimeout(() => (this.shouldAnimate = true));
                 onCleanup(() => clearTimeout(timeoutId));
             }
@@ -545,15 +578,45 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
         // Handle message scroll on new messages
         effect((onCleanup) => {
             const rawMessages = this.rawMessages();
+            // A count increase landing exactly as the streamed draft disappeared is the
+            // draft's own finalization: the persisted message replacing the live bubble.
+            const isDraftFinalization =
+                rawMessages.length > this.previousMessageCount &&
+                !this.liveAssistantDraft() &&
+                (this.liveAssistantDraftRunId !== undefined || this.pendingFinalizedLiveAssistantDraftRunId !== undefined) &&
+                !this.isIntermediateAssistantMessage(rawMessages.at(-1));
             if (rawMessages.length !== this.previousMessageCount) {
                 // Initial history load (e.g. after a page refresh): the batch lands at once and
                 // its content keeps growing the scroll height for several frames, so use the
                 // settling scroll to land exactly at the bottom instead of a tiny bit short.
                 const isInitialLoad = this.previousMessageCount === 0 && rawMessages.length > 0;
-                if (this.forcePinToBottom) {
-                    // Just sent a message: instant scroll so we stay glued to the bottom as
-                    // the echoed message / response grow the content (no smooth-scroll race).
-                    this.scrollToBottom('auto');
+                if (isDraftFinalization) {
+                    this.exchangeAnchorActive = false;
+                    this.pendingFinalizedLiveAssistantDraftRunId = undefined;
+                    this.liveAssistantDraftRunId = undefined;
+                    this.preserveScrollAcrossDraftSwap();
+                } else if (this.isIntermediateAssistantMessage(rawMessages.at(-1))) {
+                    this.pendingFinalizedLiveAssistantDraftRunId = undefined;
+                    this.liveAssistantDraftRunId = undefined;
+                } else if (this.pendingAnchorScroll && rawMessages.length > this.previousMessageCount) {
+                    const lastMessage = rawMessages.at(-1);
+                    if (lastMessage?.sender === IrisSender.USER && lastMessage.id !== undefined) {
+                        this.pendingAnchorScroll = false;
+                        this.anchoredMessageId = lastMessage.id;
+                        this.exchangeAnchorActive = true;
+                        setTimeout(() => this.scrollAnchoredMessageToTop());
+                    }
+                } else if (
+                    this.exchangeAnchorActive &&
+                    rawMessages.length > this.previousMessageCount &&
+                    !this.liveAssistantDraft() &&
+                    rawMessages.at(-1)?.sender === IrisSender.LLM
+                ) {
+                    // A non-streamed answer (response streaming disabled, or an older Pyris that only
+                    // sends the final MESSAGE) completes without a live draft ever existing, so the
+                    // draft-finalization branch above never runs. Release the anchor here so the
+                    // exchange spacer collapses instead of leaving blank space below the finished exchange.
+                    this.exchangeAnchorActive = false;
                 } else if (isInitialLoad && this.isScrolledToBottom()) {
                     this.scrollToBottomSettled();
                 } else if (this.isScrolledToBottom() && !this.isSuggestionAnimating()) {
@@ -562,8 +625,12 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
                 const timeoutId = setTimeout(() => this.messageTextarea()?.nativeElement?.focus(), 10);
                 onCleanup(() => clearTimeout(timeoutId));
             }
-            // Track new messages for animation (compare against previous IDs, not current)
-            if (this.shouldAnimate) {
+            // Track new messages for animation (compare against previous IDs, not current).
+            // A message that finalizes a streamed draft must NOT get the entrance
+            // animation: its content is already fully visible in the draft bubble, and
+            // the animation renders it at height 0 (grid-template-rows: 0fr) growing to
+            // full size — collapsing the scroll content and snapping the viewport.
+            if (this.shouldAnimate && !isDraftFinalization) {
                 // Use untracked to read current value without creating a dependency
                 // (otherwise updating animatingMessageIds would retrigger this effect infinitely)
                 const newAnimatingIds = new Set(untracked(() => this.animatingMessageIds()));
@@ -587,36 +654,27 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
             }
         });
 
-        // Release the post-send bottom pin once the response stream has settled. We only
-        // release after the exchange has actually started (a stage went active), so the
-        // initial gap between send and the first websocket update doesn't release early.
-        // A genuine upward gesture also releases it (see onMessagesUserScroll).
+        // Scroll when the idle thinking bubble appears for flows that start without an explicit send.
         effect(() => {
-            const streaming = this.hasActiveStage() || !!this.activeChatMessage();
-            if (this.forcePinToBottom) {
-                if (streaming) {
-                    this.pinSawStreaming = true;
-                } else if (this.pinSawStreaming) {
-                    this.releasePinToBottom();
-                }
+            if (this.shouldShowThinkingBubble() && !this.pendingAnchorScroll && !this.exchangeAnchorActive && this.isScrolledToBottom()) {
+                this.scrollToBottom('smooth');
             }
         });
 
-        // Release the pin (and stop the RAF loop) if the send fails before the stream ever
-        // starts. Without a stage going active, pinSawStreaming stays false, so the settle
-        // effect above can never release — the loop would otherwise spin forever. This path
-        // only fires on a genuine error signal, never during the normal pre-stream gap.
+        // Drive streamed assistant draft display.
         effect(() => {
-            if (this.error() && this.forcePinToBottom && !this.pinSawStreaming) {
-                this.releasePinToBottom();
-            }
+            this.handleLiveAssistantDraftChange(this.liveAssistantDraft());
         });
 
-        // Scroll when thinking bubble appears, if the user is at the bottom or just sent a message
-        effect(() => {
-            if (this.activeChatMessage() && (this.forcePinToBottom || this.isScrolledToBottom())) {
-                this.scrollToBottom(this.forcePinToBottom ? 'auto' : 'smooth');
-            }
+        // Keep enough room below the anchored user message while streaming content changes height.
+        effect((onCleanup) => {
+            this.rawMessages();
+            this.displayedLiveAssistantDraftText();
+            this.shouldShowThinkingBubble();
+            this.activities();
+            this.canShowSuggestions();
+            const rafId = window.requestAnimationFrame(() => this.updateExchangeSpacer());
+            onCleanup(() => window.cancelAnimationFrame(rafId));
         });
 
         // Reset clicked suggestion when new suggestions arrive and scroll to show them
@@ -645,7 +703,12 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
             }
         }, 150);
         this.destroyRef.onDestroy(() => clearTimeout(focusTimeoutId));
-        this.destroyRef.onDestroy(() => this.releasePinToBottom());
+        this.destroyRef.onDestroy(() => this.resetLiveAssistantDraftState());
+        this.destroyRef.onDestroy(() => {
+            if (this.draftSwapScrollRafId !== undefined) {
+                window.cancelAnimationFrame(this.draftSwapScrollRafId);
+            }
+        });
         this.destroyRef.onDestroy(() => {
             if (this.settleScrollRafId !== undefined) {
                 window.cancelAnimationFrame(this.settleScrollRafId);
@@ -672,7 +735,6 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
         });
         this.destroyRef.onDestroy(() => {
             this.aboutIrisDialogRef?.close();
-            this.aboutIrisMatDialogRef?.close();
         });
 
         // Placeholder cycling lifecycle
@@ -747,6 +809,10 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
         return _.cloneDeep(rawMessages);
     }
 
+    private isIntermediateAssistantMessage(message: IrisMessage | undefined): boolean {
+        return message?.sender === IrisSender.LLM && message.final === false;
+    }
+
     ngAfterViewInit() {
         // Enable animations after initial messages have loaded
         // Delay ensures initial message batch doesn't trigger animations
@@ -805,36 +871,23 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
         const content = this.newMessageTextContent().trim();
         if (content) {
             this.isLoading.set(true);
+            const provider = this.contextProvider();
+            const context = provider ? provider() : undefined;
+
             this.chatService
-                .sendMessage(content)
+                .sendMessage(content, {}, context && context.length > 0 ? context : undefined)
                 .pipe(takeUntilDestroyed(this.destroyRef))
                 .subscribe({
                     next: () => {
                         this.isLoading.set(false);
                     },
                     error: () => {
-                        // Send failed before any stage started: release the bottom pin and stop
-                        // the RAF loop here, since no stream will arrive to settle it (the
-                        // pinSawStreaming release path never runs). Done only on the send error,
-                        // not during the normal pre-stream gap.
                         this.isLoading.set(false);
-                        if (!this.pinSawStreaming) {
-                            this.releasePinToBottom();
-                        }
                     },
                 });
             this.newMessageTextContent.set('');
-            // User explicitly sent a message: follow it to the bottom and keep the view
-            // pinned there while the echoed message, thinking bubble and streamed response
-            // arrive asynchronously via WebSocket. Pinning is released by a real upward
-            // gesture (see onMessagesUserScroll).
-            this.forcePinToBottom = true;
-            this.pinSawStreaming = false;
-            this.isScrolledToBottom.set(true);
-            this.scrollToBottom('auto');
-            // Keep following the bottom frame-by-frame as the message, thinking bubble and
-            // response render asynchronously, so the user is taken down as soon as they appear.
-            this.startPinScrollLoop();
+            // The echoed user message renders asynchronously; anchor it after the DOM exists.
+            this.pendingAnchorScroll = true;
         }
         this.resetChatBodyHeight();
     }
@@ -868,11 +921,15 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
      * @param helpful A boolean indicating if the message is helpful or not.
      */
     rateMessage(message: IrisMessage, helpful?: boolean) {
-        if (message.sender !== IrisSender.LLM) {
+        if (!this.canRateMessage(message)) {
             return;
         }
         message.helpful = !!helpful;
         this.chatService.rateMessage(message, helpful).pipe(takeUntilDestroyed(this.destroyRef)).subscribe();
+    }
+
+    protected canRateMessage(message: IrisMessage): message is IrisAssistantMessage {
+        return message.sender === IrisSender.LLM && message.final !== false;
     }
 
     onMcqAnswerChanged(message: IrisMessage, event: { selectedIndex: number | undefined; submitted: boolean }): void {
@@ -953,6 +1010,167 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     }
 
     /**
+     * Keeps the user's reading position stable while the ephemeral draft bubble is
+     * replaced by the persisted final message. The swap spans two render frames
+     * (message added, draft removed); restoring the captured scrollTop on the frames
+     * after the swap prevents the browser from clamping/shifting the viewport.
+     */
+    private preserveScrollAcrossDraftSwap(): void {
+        const container = this.messagesElement()?.nativeElement as HTMLElement | undefined;
+        if (!container) {
+            return;
+        }
+        const scrollTopBeforeSwap = container.scrollTop;
+        let remainingFrames = 3;
+        const restore = () => {
+            container.scrollTop = scrollTopBeforeSwap;
+            remainingFrames -= 1;
+            if (remainingFrames > 0) {
+                this.draftSwapScrollRafId = window.requestAnimationFrame(restore);
+            } else {
+                this.draftSwapScrollRafId = undefined;
+            }
+        };
+        if (this.draftSwapScrollRafId !== undefined) {
+            window.cancelAnimationFrame(this.draftSwapScrollRafId);
+        }
+        this.draftSwapScrollRafId = window.requestAnimationFrame(restore);
+    }
+
+    private handleLiveAssistantDraftChange(draft: IrisLiveAssistantDraft | undefined): void {
+        if (!draft) {
+            if (this.liveAssistantDraftRunId !== undefined) {
+                this.pendingFinalizedLiveAssistantDraftRunId = this.liveAssistantDraftRunId;
+            }
+            this.clearLiveAssistantDraftAnimation();
+            this.liveAssistantDraftRunId = undefined;
+            return;
+        }
+
+        const isNewRun = draft.runId !== this.liveAssistantDraftRunId;
+        if (isNewRun) {
+            this.liveAssistantDraftRunId = draft.runId;
+            this.pendingFinalizedLiveAssistantDraftRunId = undefined;
+            this.liveAssistantDraftTargetText = '';
+            this.displayedLiveAssistantDraftText.set('');
+        }
+
+        this.updateLiveAssistantDraftTargetText(draft.text);
+    }
+
+    private updateLiveAssistantDraftTargetText(text: string): void {
+        const displayedText = this.displayedLiveAssistantDraftText();
+        const displayedLength = Array.from(displayedText).length;
+        const targetLength = Array.from(text).length;
+
+        if (targetLength < displayedLength) {
+            this.liveAssistantDraftTargetText = displayedText;
+        } else {
+            this.liveAssistantDraftTargetText = text;
+            if (targetLength === displayedLength && text !== displayedText) {
+                this.displayedLiveAssistantDraftText.set(text);
+            }
+        }
+
+        if (Array.from(this.liveAssistantDraftTargetText).length > Array.from(this.displayedLiveAssistantDraftText()).length) {
+            this.ensureLiveAssistantDraftAnimationLoop();
+        } else {
+            this.stopLiveAssistantDraftAnimationLoop();
+        }
+    }
+
+    private ensureLiveAssistantDraftAnimationLoop(): void {
+        if (this.liveDraftAnimationIntervalId !== undefined) {
+            return;
+        }
+        this.liveDraftAnimationIntervalId = setInterval(() => this.advanceLiveAssistantDraftAnimation(), LIVE_DRAFT_ANIMATION_TICK_MS);
+    }
+
+    private advanceLiveAssistantDraftAnimation(): void {
+        const displayedCodePoints = Array.from(this.displayedLiveAssistantDraftText());
+        const targetCodePoints = Array.from(this.liveAssistantDraftTargetText);
+        const remainingCharacters = targetCodePoints.length - displayedCodePoints.length;
+        if (remainingCharacters <= 0) {
+            this.stopLiveAssistantDraftAnimationLoop();
+            return;
+        }
+
+        const ticksPerSnapshot = LIVE_DRAFT_CATCH_UP_MS / LIVE_DRAFT_ANIMATION_TICK_MS;
+        const charactersToReveal = Math.max(1, Math.ceil(remainingCharacters / ticksPerSnapshot));
+        const nextLength = Math.min(targetCodePoints.length, displayedCodePoints.length + charactersToReveal);
+        this.displayedLiveAssistantDraftText.set(targetCodePoints.slice(0, nextLength).join(''));
+
+        if (nextLength >= targetCodePoints.length) {
+            this.stopLiveAssistantDraftAnimationLoop();
+        }
+    }
+
+    private clearLiveAssistantDraftAnimation(): void {
+        this.stopLiveAssistantDraftAnimationLoop();
+        this.liveAssistantDraftTargetText = '';
+        this.displayedLiveAssistantDraftText.set('');
+    }
+
+    private stopLiveAssistantDraftAnimationLoop(): void {
+        if (this.liveDraftAnimationIntervalId !== undefined) {
+            clearInterval(this.liveDraftAnimationIntervalId);
+            this.liveDraftAnimationIntervalId = undefined;
+        }
+    }
+
+    private resetLiveAssistantDraftState(): void {
+        this.clearLiveAssistantDraftAnimation();
+        this.liveAssistantDraftRunId = undefined;
+        this.pendingFinalizedLiveAssistantDraftRunId = undefined;
+    }
+
+    private scrollAnchoredMessageToTop(): void {
+        const container: HTMLElement | undefined = this.messagesElement()?.nativeElement;
+        const anchorElement = container ? this.findAnchoredMessageElement(container) : undefined;
+        if (!container || !anchorElement) {
+            return;
+        }
+        this.updateExchangeSpacer();
+        container.scrollTo({
+            top: this.getAnchorTop(container, anchorElement),
+            behavior: 'smooth',
+        });
+    }
+
+    private updateExchangeSpacer(): void {
+        const container: HTMLElement | undefined = this.messagesElement()?.nativeElement;
+        const spacerElement = container?.querySelector<HTMLElement>('.stream-exchange-spacer');
+        const anchorElement = container ? this.findAnchoredMessageElement(container) : undefined;
+        if (!container || !spacerElement || !anchorElement) {
+            return;
+        }
+
+        const contentSansSpacer = container.scrollHeight - spacerElement.offsetHeight;
+        const needed = Math.max(0, this.getAnchorTop(container, anchorElement) + container.clientHeight - contentSansSpacer);
+        const nextHeight = this.exchangeAnchorActive ? needed : Math.min(spacerElement.offsetHeight, needed);
+        this.setExchangeSpacerHeight(spacerElement, nextHeight);
+    }
+
+    private findAnchoredMessageElement(container: HTMLElement): HTMLElement | undefined {
+        if (this.anchoredMessageId === undefined) {
+            return undefined;
+        }
+        return container.querySelector<HTMLElement>(`[data-message-id="${this.anchoredMessageId}"]`) ?? undefined;
+    }
+
+    private getAnchorTop(container: HTMLElement, anchorElement: HTMLElement): number {
+        const containerRect = container.getBoundingClientRect();
+        const anchorRect = anchorElement.getBoundingClientRect();
+        return anchorRect.top - containerRect.top + container.scrollTop;
+    }
+
+    private setExchangeSpacerHeight(spacerElement: HTMLElement, height: number): void {
+        const normalizedHeight = Math.max(0, height);
+        this.exchangeSpacerPx.set(normalizedHeight);
+        spacerElement.style.height = `${normalizedHeight}px`;
+    }
+
+    /**
      * Scrolls the chat body to the bottom.
      * @param behavior - The scroll behavior.
      */
@@ -995,34 +1213,12 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     }
 
     /**
-     * While the post-send pin is active, keep the view glued to the bottom on every animation
-     * frame. The user message, thinking bubble and streamed response all render asynchronously
-     * after onSend(); a single scroll call would run before they exist, so we follow the growing
-     * content frame-by-frame until the pin is released (gesture or stream settled).
+     * Restarts the initial-history settle window when lazily rendered markdown changes the message height.
+     * Do not move a user who has scrolled up or disturb the explicit exchange anchor used for new messages.
      */
-    private startPinScrollLoop() {
-        if (this.pinScrollRafId !== undefined) return;
-        const step = () => {
-            if (!this.forcePinToBottom) {
-                this.pinScrollRafId = undefined;
-                return;
-            }
-            const messagesElement: HTMLElement | undefined = this.messagesElement()?.nativeElement;
-            if (messagesElement) {
-                messagesElement.scrollTop = messagesElement.scrollHeight;
-            }
-            this.pinScrollRafId = window.requestAnimationFrame(step);
-        };
-        this.pinScrollRafId = window.requestAnimationFrame(step);
-    }
-
-    /** Releases the post-send bottom pin and stops the frame-by-frame scroll loop. */
-    private releasePinToBottom() {
-        this.forcePinToBottom = false;
-        this.pinSawStreaming = false;
-        if (this.pinScrollRafId !== undefined) {
-            window.cancelAnimationFrame(this.pinScrollRafId);
-            this.pinScrollRafId = undefined;
+    protected onMessageMarkdownRendered(): void {
+        if (this.isScrolledToBottom() && !this.exchangeAnchorActive) {
+            this.scrollToBottomSettled();
         }
     }
 
@@ -1129,26 +1325,8 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     checkChatScroll() {
         const messagesElement = this.messagesElement()?.nativeElement;
         if (!messagesElement) return;
-        // While pinned (just after a send), ignore intermediate scroll readings produced by
-        // programmatic scrolling and async content growth so they cannot un-pin the view.
-        if (this.forcePinToBottom) {
-            this.isScrolledToBottom.set(true);
-            return;
-        }
         const { scrollTop, scrollHeight, clientHeight } = messagesElement;
         this.isScrolledToBottom.set(scrollTop >= scrollHeight - clientHeight - 50);
-    }
-
-    /**
-     * Handles a genuine upward scroll gesture (wheel up or touch drag) from the user.
-     * Releases the post-send bottom pin so the user can freely scroll the history.
-     */
-    onMessagesUserScroll(event: WheelEvent | TouchEvent) {
-        if (!this.forcePinToBottom) return;
-        // Wheel up (deltaY < 0) or any touch drag means the user wants to leave the bottom.
-        if (event instanceof WheelEvent && event.deltaY >= 0) return;
-        this.releasePinToBottom();
-        this.checkChatScroll();
     }
 
     onSuggestionClick(suggestion: string) {
@@ -1241,7 +1419,7 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
             return false;
         }
 
-        const currentEntityId = this.currentRelatedEntityId();
+        const currentEntityId = this.chatService.displayContext()?.entityId;
         if (currentEntityId === undefined) {
             return session.entityId === undefined;
         }
@@ -1301,59 +1479,29 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     }
 
     openNewSession() {
-        if (this.isChatHistoryAvailable()) {
-            // Dashboard: always create a new session with the course as context
-            const courseId = this.chatService.getCourseId();
-            if (courseId !== undefined) {
-                this.chatService.switchToNewSession(ChatServiceMode.COURSE, courseId);
-                return;
-            }
-        }
-        this.chatService.clearChat();
+        // startFreshChat() re-applies the lecture/exercise page context itself once the new session
+        // loads, so we no longer stage it here — see the JSDoc on IrisChatService.startFreshChat.
+        this.chatService.startFreshChat();
     }
 
     openAboutIrisModal(): void {
         if (this.onboardingService.currentStep() === 3) {
             this.onboardingService.onboardingEvent$.next({ type: 'aboutIrisOpened' });
         }
-        // The floating exercise chat widget lives inside a CDK MatDialog overlay and uses CSS
-        // transforms for drag/resize. In that specific case the About dialog must also use CDK
-        // to escape the widget's stacking context. Other Iris hosts with widget-like layout,
-        // such as the lecture fullscreen sidebar, should keep using PrimeNG.
-        if (this.shouldUseMaterialAboutDialog()) {
-            this.aboutIrisMatDialogRef?.close();
-            this.aboutIrisMatDialogRef = this.matDialog.open(AboutIrisModalComponent, {
-                hasBackdrop: true,
-                disableClose: true,
-                panelClass: 'about-iris-dialog',
-                backdropClass: 'about-iris-backdrop',
+        // The About dialog always uses PrimeNG's DynamicDialog. It is portaled to <body>, so it
+        // escapes the stacking context of the floating chat widget (itself a DynamicDialog) and
+        // renders above it regardless of the host layout (sidebar, lecture sidebar, or widget).
+        this.aboutIrisDialogRef?.close();
+        this.aboutIrisDialogRef =
+            this.dialogService.open(AboutIrisModalComponent, {
+                modal: true,
+                closable: false,
+                showHeader: false,
+                styleClass: 'about-iris-dialog',
+                maskStyleClass: 'about-iris-dialog',
                 width: '40rem',
-                maxWidth: '95vw',
-            });
-        } else {
-            this.aboutIrisDialogRef?.close();
-            this.aboutIrisDialogRef =
-                this.dialogService.open(AboutIrisModalComponent, {
-                    modal: true,
-                    closable: false,
-                    showHeader: false,
-                    styleClass: 'about-iris-dialog',
-                    maskStyleClass: 'about-iris-dialog',
-                    width: '40rem',
-                    breakpoints: { '640px': '95vw' },
-                }) ?? undefined;
-        }
-    }
-
-    private shouldUseMaterialAboutDialog(): boolean {
-        const transport = this.aboutIrisDialogTransport();
-        if (transport === 'material') {
-            return true;
-        }
-        if (transport === 'dynamic') {
-            return false;
-        }
-        return this.layout() === 'widget';
+                breakpoints: { '640px': '95vw' },
+            }) ?? undefined;
     }
 
     setSearchValue(searchValue: string) {
@@ -1381,18 +1529,7 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     }
 
     private computeRelatedEntityRoute(currentChatMode: ChatServiceMode | undefined, currentRelatedEntityId: number | undefined): string | undefined {
-        if (!currentChatMode || !currentRelatedEntityId) {
-            return undefined;
-        }
-        switch (currentChatMode) {
-            case ChatServiceMode.PROGRAMMING_EXERCISE:
-            case ChatServiceMode.TEXT_EXERCISE:
-                return `../exercises/${currentRelatedEntityId}`;
-            case ChatServiceMode.LECTURE:
-                return `../lectures/${currentRelatedEntityId}`;
-            default:
-                return undefined;
-        }
+        return routeForContext(this.chatService.getCourseId(), currentChatMode, currentRelatedEntityId);
     }
 
     private computeRelatedEntityLinkButtonLabel(currentChatMode: ChatServiceMode | undefined): string | undefined {

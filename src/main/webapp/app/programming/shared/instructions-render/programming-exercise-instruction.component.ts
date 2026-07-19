@@ -111,9 +111,9 @@ export class ProgrammingExerciseInstructionComponent implements OnInit, OnDestro
     protected readonly renderedMarkdown = signal<SafeHtml | undefined>(undefined);
     private injectableContentForMarkdownCallbacks: Array<() => void> = [];
 
-    markdownExtensions: PluginSimple[];
-    private injectableContentFoundSubscription: Subscription;
-    private generateHtmlSubscription: Subscription;
+    markdownExtensions?: PluginSimple[];
+    private injectableContentFoundSubscription?: Subscription;
+    private generateHtmlSubscription?: Subscription;
     private testCases?: ProgrammingExerciseTestCase[];
 
     private problemStatementUpdateSubject = new Subject<void>();
@@ -190,7 +190,7 @@ export class ProgrammingExerciseInstructionComponent implements OnInit, OnDestro
         if (participationChanged || generateHtmlEventsChanged) {
             if (this.generateHtmlSubscription) {
                 this.generateHtmlSubscription.unsubscribe();
-                this.generateHtmlSubscription = undefined!;
+                this.generateHtmlSubscription = undefined;
             }
             const generateHtmlEvents = this.generateHtmlEvents();
             if (generateHtmlEvents) {
@@ -286,7 +286,7 @@ export class ProgrammingExerciseInstructionComponent implements OnInit, OnDestro
             this.participationSubscription.unsubscribe();
         }
         this.participationSubscription = this.participationWebsocketService
-            .subscribeForLatestResultOfParticipation(this.participation()!.id!, this.personalParticipation(), this.exercise()!.id!)
+            .subscribeForLatestResultOfParticipation(this.participation()!.id!, this.personalParticipation(), this.exercise()!.id)
             .pipe(filter((result) => !!result))
             .subscribe((result: Result) => {
                 this.latestResult = result;
@@ -391,7 +391,7 @@ export class ProgrammingExerciseInstructionComponent implements OnInit, OnDestro
     loadLatestResult(): Observable<Result | undefined> {
         return this.programmingExerciseParticipationService.getLatestResultWithFeedback(this.participation()!.id!).pipe(
             catchError(() => of(undefined)),
-            mergeMap((latestResult: Result) => (latestResult && !latestResult.feedbacks ? this.loadAndAttachResultDetails(latestResult) : of(latestResult))),
+            mergeMap((latestResult: Result | undefined) => (latestResult && !latestResult.feedbacks ? this.loadAndAttachResultDetails(latestResult) : of(latestResult))),
         );
     }
 
@@ -402,10 +402,10 @@ export class ProgrammingExerciseInstructionComponent implements OnInit, OnDestro
      */
     loadAndAttachResultDetails(result: Result): Observable<Result> {
         const currentParticipation = this.participation();
-        return this.resultService.getFeedbackDetailsForResult(currentParticipation!.id!, result).pipe(
+        return this.resultService.getFeedbackDetailsForResult(currentParticipation!.id, result).pipe(
             map((res) => res && res.body),
-            map((feedbacks: Feedback[]) => {
-                result.feedbacks = feedbacks;
+            map((feedbacks: Feedback[] | null) => {
+                result.feedbacks = feedbacks ?? undefined;
                 return result;
             }),
             catchError(() => of(result)),
@@ -420,8 +420,8 @@ export class ProgrammingExerciseInstructionComponent implements OnInit, OnDestro
             examExerciseUpdateHighlighterComponent.outdatedProblemStatement &&
             examExerciseUpdateHighlighterComponent.updatedProblemStatement
         ) {
-            const outdatedMarkdown = htmlForMarkdown(examExerciseUpdateHighlighterComponent.outdatedProblemStatement, this.markdownExtensions);
-            const updatedMarkdown = htmlForMarkdown(examExerciseUpdateHighlighterComponent.updatedProblemStatement, this.markdownExtensions);
+            const outdatedMarkdown = htmlForMarkdown(examExerciseUpdateHighlighterComponent.outdatedProblemStatement, this.markdownExtensions ?? []);
+            const updatedMarkdown = htmlForMarkdown(examExerciseUpdateHighlighterComponent.updatedProblemStatement, this.markdownExtensions ?? []);
             const diffedMarkdown = diff(outdatedMarkdown, updatedMarkdown);
             const markdownWithoutTasks = this.prepareTasks(diffedMarkdown);
             const markdownWithTableStyles = this.addStylesForTables(markdownWithoutTasks);
@@ -430,7 +430,7 @@ export class ProgrammingExerciseInstructionComponent implements OnInit, OnDestro
             this.scheduleContentInjection(true);
         } else if (this.exercise()?.problemStatement?.trim()) {
             this.injectableContentForMarkdownCallbacks = [];
-            const renderedProblemStatement = htmlForMarkdown(this.exercise()!.problemStatement!, this.markdownExtensions);
+            const renderedProblemStatement = htmlForMarkdown(this.exercise()!.problemStatement, this.markdownExtensions ?? []);
             const markdownWithoutTasks = this.prepareTasks(renderedProblemStatement);
             const markdownWithTableStyles = this.addStylesForTables(markdownWithoutTasks);
             this.renderedMarkdown.set(this.sanitizer.bypassSecurityTrustHtml(markdownWithTableStyles ?? markdownWithoutTasks));
@@ -472,7 +472,7 @@ export class ProgrammingExerciseInstructionComponent implements OnInit, OnDestro
             return;
         } else {
             const parser = new DOMParser();
-            const doc = parser.parseFromString(markdownWithoutTasks as string, 'text/html');
+            const doc = parser.parseFromString(markdownWithoutTasks, 'text/html');
             const tables = doc.querySelectorAll('table');
 
             tables.forEach((table) => {

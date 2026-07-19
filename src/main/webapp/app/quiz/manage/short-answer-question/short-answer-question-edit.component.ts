@@ -47,7 +47,7 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { TranslateService } from '@ngx-translate/core';
 import { QuizScoringInfoModalComponent } from '../quiz-scoring-info-modal/quiz-scoring-info-modal.component';
 import { MatchPercentageInfoModalComponent } from '../match-percentage-info-modal/match-percentage-info-modal.component';
-import { CdkDrag, CdkDragPlaceholder, CdkDragPreview, CdkDropList, CdkDropListGroup } from '@angular/cdk/drag-drop';
+import { CdkDrag, CdkDragDrop, CdkDragPlaceholder, CdkDragPreview, CdkDropList, CdkDropListGroup } from '@angular/cdk/drag-drop';
 import { NgClass } from '@angular/common';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { SelectModule } from 'primeng/select';
@@ -105,7 +105,7 @@ export class ShortAnswerQuestionEditComponent implements OnInit, AfterViewInit, 
     insertShortAnswerSpotAction = new InsertShortAnswerSpotAction(this.insertShortAnswerOptionAction);
 
     // eslint-disable-next-line localRules/prefer-signal-template-state -- backs deep [(ngModel)] two-way targets (e.g. [(ngModel)]="shortAnswerQuestion.title") and in-template property writes (e.g. (click)="shortAnswerQuestion.invalid = true") whose in-place mutations cannot be intercepted to commit a signal rebuild
-    shortAnswerQuestion: ShortAnswerQuestion;
+    shortAnswerQuestion!: ShortAnswerQuestion; // assigned in the constructor effect() once the question() input is present
 
     question = input<QuizQuestion>();
     questionIndex = input.required<number>();
@@ -136,7 +136,7 @@ export class ShortAnswerQuestionEditComponent implements OnInit, AfterViewInit, 
     /** For visual mode **/
     readonly textParts = signal<(string | undefined)[][]>([]);
 
-    backupQuestion: ShortAnswerQuestion;
+    backupQuestion!: ShortAnswerQuestion; // set in the constructor effect() as a deep copy of the question input
 
     // Icons
     faBan = faBan;
@@ -520,11 +520,11 @@ export class ShortAnswerQuestionEditComponent implements OnInit, AfterViewInit, 
      * @param spot {object} the spot involved
      * @param dragEvent {object} the solution involved (may be a copy at this point)
      */
-    onDragDrop(spot: ShortAnswerSpot, dragEvent: any): void {
-        let dragItem = dragEvent.item.data;
+    onDragDrop(spot: ShortAnswerSpot, dragEvent: CdkDragDrop<ShortAnswerSolution>): void {
+        let dragItem: ShortAnswerSolution | undefined = dragEvent.item.data;
         // Replace dragItem with original (because it may be a copy)
         dragItem = this.shortAnswerQuestion.solutions?.find((originalDragItem) =>
-            dragItem.id ? originalDragItem.id === dragItem.id : originalDragItem.tempID === dragItem.tempID,
+            dragItem!.id ? originalDragItem.id === dragItem!.id : originalDragItem.tempID === dragItem!.tempID,
         );
 
         if (!dragItem) {
@@ -761,7 +761,7 @@ export class ShortAnswerQuestionEditComponent implements OnInit, AfterViewInit, 
      */
     setQuestionText(textPartId: string): void {
         const rowColumn: string[] = textPartId.split('-').slice(1);
-        this.textParts()[Number(rowColumn[0])][Number(rowColumn[1])] = (<HTMLInputElement>document.getElementById(textPartId)).value;
+        this.textParts()[Number(rowColumn[0])][Number(rowColumn[1])] = (document.getElementById(textPartId) as HTMLInputElement).value;
         this.shortAnswerQuestion.text = this.textParts()
             .map((textPart) => textPart.join(' '))
             .join('\n');

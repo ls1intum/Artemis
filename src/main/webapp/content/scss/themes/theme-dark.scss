@@ -41,7 +41,8 @@ html {
 @import '../global';
 
 // Needed for highlighting code in the markdown editor
-@import 'node_modules/highlight.js/styles/monokai.css';
+/* Bare specifier (not 'node_modules/…') so Tailwind's PostCSS @import resolver can resolve this .css file. */
+@import 'highlight.js/styles/monokai.css';
 
 .blockquote {
     &-footer {
@@ -157,38 +158,6 @@ html {
     color: lighten($primary, 30) !important;
 }
 
-.owl-dt-control-button {
-    color: white !important;
-
-    .owl-dt-control-button-arrow {
-        svg {
-            fill: white !important;
-        }
-    }
-}
-
-.owl-dt-timer-content .owl-dt-timer-input {
-    background: transparentize(#fff, 0.95) !important;
-    color: white !important;
-}
-
-.owl-dt-calendar-table .owl-dt-calendar-cell-today:not(.owl-dt-calendar-cell-selected) {
-    border-color: rgba(255, 255, 255, 0.2);
-}
-
-.owl-dt-container {
-    background-color: lighten($neutral-dark, 5) !important;
-}
-
-.owl-dt-calendar-table {
-    .owl-dt-calendar-header {
-        color: $gray-300 !important;
-    }
-
-    .owl-dt-calendar-cell-content {
-        color: white !important;
-    }
-}
 .bg-light {
     background: transparentize(white, 0.95) !important;
 }
@@ -220,16 +189,13 @@ input:-webkit-autofill:active {
     box-shadow: inset 0 0 20px 20px $input-color;
 }
 
-// Feature toggle cards & course overview cards
+// Course overview cards. Backgrounds sit on the cool slate surface ramp so they stay
+// consistent with the dark chrome (keep these on the slate steps, not off-ramp neutral greys).
 :root {
-    --feature-card-active-bg: #2e4a3a;
-    --feature-card-disabled-bg: #4a2e2e;
-    --feature-card-inactive-bg: #3a3a3a;
-    --feature-card-heading-color: #fff;
-    --onboarding-page-bg: #1a1a1a;
-    --onboarding-content-bg: #1a1a1a;
-    --onboarding-input-bg: #000;
-    --overview-card-bg: #1a1a1a;
-    --overview-card-nested-bg: #3a3a3a;
-    --overview-card-hover-bg: #4a4a4a;
+    --onboarding-page-bg: #16191d;
+    --onboarding-content-bg: #16191d;
+    --onboarding-input-bg: #101214;
+    --overview-card-bg: #16191d;
+    --overview-card-nested-bg: #343a42;
+    --overview-card-hover-bg: #434c56;
 }

@@ -9,16 +9,14 @@
     <div>
         <div class="px-3 pb-3 pt-2 scrollable-content">
             <!-- HEADER INFORMATION START -->
-            <div class="d-flex align-items-center justify-content-between">
+            <div class="d-flex align-items-center gap-2">
+                @if (isSidebarCollapsed()) {
+                    <jhi-course-sidebar-toggle-button [isCollapsed]="isSidebarCollapsed()" (toggleSidebar)="toggleSidebar()" />
+                }
                 <h5 class="my-2">
                     <fa-icon class="me-2" [icon]="faChalkboardTeacher" />
                     {{ lecture.title }}
                 </h5>
-                @if (lecture.course?.isAtLeastEditor) {
-                    <div class="col-auto d-flex align-items-center">
-                        <button id="manageLectureButton" class="btn btn-secondary" (click)="redirectToLectureManagement()" jhiTranslate="artemisApp.courseOverview.manage"></button>
-                    </div>
-                }
             </div>
 
             <hr class="mt-2 mb-3" />
@@ -44,7 +42,7 @@
                             </div>
                         </div>
                         <div class="row mb-2 markdown-preview">
-                            <div class="col-12 col-md-12 markdown-preview" [innerHTML]="lecture.description | htmlForMarkdown"></div>
+                            <div class="col-12 col-md-12 markdown-preview" [jhiMarkdown]="lecture.description"></div>
                         </div>
                     }
                     <!-- LECTURE UNITS START-->
@@ -64,7 +62,7 @@
                         </div>
                     }
                     @for (lectureUnit of lectureUnits(); track lectureUnit.id) {
-                        <div class="row m-0 mt-3">
+                        <div class="row m-0 mt-3" [attr.data-unit-id]="lectureUnit.id">
                             <div class="col p-0">
                                 @switch (lectureUnit.type) {
                                     @case (LectureUnitType.EXERCISE) {
@@ -78,6 +76,7 @@
                                             [targetTimestamp]="lectureUnit.id === targetUnitId() ? targetVideoTimestamp() : undefined"
                                             [targetPdfPage]="lectureUnit.id === targetUnitId() ? targetPdfPage() : undefined"
                                             [irisSettings]="irisSettings()"
+                                            [contextsProvider]="contextsProvider"
                                             (onCompletion)="completeLectureUnit($event)"
                                         />
                                     }
@@ -116,7 +115,7 @@
                                     <li class="mb-3">
                                         <h5 class="mb-1">
                                             @if (!isDownloadingLink()) {
-                                                <a class="text-primary" (click)="downloadAttachment(attachment.linkUrl, attachment.name)">
+                                                <a class="text-primary" (click)="downloadAttachment(attachment.linkUrl, attachment.name, attachment.version)">
                                                     {{ attachment.name }}
                                                 </a>
                                             }
@@ -152,7 +151,7 @@
             </div>
         </div>
         @if (irisSettings()?.settings?.enabled && !lecture.isTutorialLecture) {
-            <jhi-exercise-chatbot-button [mode]="ChatServiceMode.LECTURE" />
+            <jhi-exercise-chatbot-button [mode]="ChatServiceMode.LECTURE" [contextProvider]="contextProvider()" />
         }
     </div>
 }

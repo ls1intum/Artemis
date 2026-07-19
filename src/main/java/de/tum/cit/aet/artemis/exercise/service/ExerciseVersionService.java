@@ -9,16 +9,20 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.Executor;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
@@ -41,7 +45,7 @@ import de.tum.cit.aet.artemis.modeling.api.ModelingRepositoryApi;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.quiz.repository.QuizExerciseRepository;
-import de.tum.cit.aet.artemis.text.repository.TextExerciseRepository;
+import de.tum.cit.aet.artemis.text.api.TextRepositoryApi;
 
 @Profile(PROFILE_CORE)
 @Service
@@ -61,7 +65,7 @@ public class ExerciseVersionService {
 
     private final QuizExerciseRepository quizExerciseRepository;
 
-    private final TextExerciseRepository textExerciseRepository;
+    private final Optional<TextRepositoryApi> textRepositoryApi;
 
     private final Optional<ModelingRepositoryApi> modelingRepositoryApi;
 
@@ -77,18 +81,22 @@ public class ExerciseVersionService {
 
     private final ApplicationEventPublisher eventPublisher;
 
-    private final com.fasterxml.jackson.databind.ObjectMapper objectMapper;
+    private final ObjectMapper objectMapper;
+
+    // Executor for versioning work. In production it delegates to the shared async pool so exercise updates do not
+    // block on versioning; under the test profile it is synchronous, keeping versioning-triggering tests deterministic.
+    private final Executor exerciseVersionExecutor;
 
     public ExerciseVersionService(ExerciseVersionRepository exerciseVersionRepository, GitService gitService, ProgrammingExerciseRepository programmingExerciseRepository,
-            QuizExerciseRepository quizExerciseRepository, TextExerciseRepository textExerciseRepository, Optional<ModelingRepositoryApi> modelingRepositoryApi,
+            QuizExerciseRepository quizExerciseRepository, Optional<TextRepositoryApi> textRepositoryApi, Optional<ModelingRepositoryApi> modelingRepositoryApi,
             Optional<FileUploadApi> fileUploadApi, UserRepository userRepository, ExerciseEditorSyncService exerciseEditorSyncService, ChannelRepository channelRepository,
-            ExerciseReviewVersionChangeService exerciseReviewVersionChangeService, ApplicationEventPublisher eventPublisher,
-            com.fasterxml.jackson.databind.ObjectMapper objectMapper) {
+            ExerciseReviewVersionChangeService exerciseReviewVersionChangeService, ApplicationEventPublisher eventPublisher, ObjectMapper objectMapper,
+            @Qualifier("exerciseVersionTaskExecutor") Executor exerciseVersionExecutor) {
         this.exerciseVersionRepository = exerciseVersionRepository;
         this.gitService = gitService;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.quizExerciseRepository = quizExerciseRepository;
-        this.textExerciseRepository = textExerciseRepository;
+        this.textRepositoryApi = textRepositoryApi;
         this.modelingRepositoryApi = modelingRepositoryApi;
         this.fileUploadApi = fileUploadApi;
         this.userRepository = userRepository;
@@ -97,6 +105,7 @@ public class ExerciseVersionService {
         this.exerciseReviewVersionChangeService = exerciseReviewVersionChangeService;
         this.eventPublisher = eventPublisher;
         this.objectMapper = objectMapper;
+        this.exerciseVersionExecutor = exerciseVersionExecutor;
     }
 
     /**
@@ -119,20 +128,32 @@ public class ExerciseVersionService {
      * @param targetExercise The exercise to create a version of
      */
     public void createExerciseVersion(Exercise targetExercise) {
+        // Resolve the current user on the request thread: the async executor thread has no SecurityContext.
         User user = userRepository.getUser();
         createExerciseVersion(targetExercise, user);
     }
 
     /**
-     * Creates an exercise version. This function would fetch the exercise eagerly
-     * that corresponds to its type,
-     * initialize an {@link ExerciseSnapshotDTO} and create a new
-     * {@link ExerciseVersion} to persist.
+     * Requests the (asynchronous) creation of an exercise version. This schedules the actual work on the
+     * {@code exerciseVersionExecutor} and returns immediately, so exercise updates do not block the end user while
+     * versioning executes (which may involve slower-than-usual queries and git access). Under the {@code test} profile
+     * the executor is synchronous, so versioning still completes before the calling test continues.
      *
      * @param targetExercise The exercise to create a version of
      * @param author         The user who created the version
      */
     public void createExerciseVersion(Exercise targetExercise, User author) {
+        exerciseVersionExecutor.execute(() -> createExerciseVersionInternal(targetExercise, author));
+    }
+
+    /**
+     * Creates an exercise version: fetches the exercise eagerly for its type, initializes an {@link ExerciseSnapshotDTO}
+     * and persists a new {@link ExerciseVersion}. Runs on the {@code exerciseVersionExecutor} thread.
+     *
+     * @param targetExercise The exercise to create a version of
+     * @param author         The user who created the version
+     */
+    private void createExerciseVersionInternal(Exercise targetExercise, User author) {
         if (author == null) {
             log.error("No active user during exercise version creation check");
             return;
@@ -150,7 +171,8 @@ public class ExerciseVersionService {
             ExerciseVersion exerciseVersion = new ExerciseVersion();
             exerciseVersion.setExerciseId(targetExercise.getId());
             exerciseVersion.setAuthorId(author.getId());
-            ExerciseSnapshotDTO rawSnapshot = ExerciseSnapshotDTO.of(exercise, gitService);
+            var programmingCommitHashes = ExerciseVersionCommitHashResolver.resolveForExercise(exercise, gitService);
+            ExerciseSnapshotDTO rawSnapshot = ExerciseSnapshotDTO.of(exercise, programmingCommitHashes);
             // Normalize through JSON round-trip to ensure consistent null/empty list handling
             // (@JsonInclude(NON_EMPTY) causes empty lists to become null after deserialization)
             ExerciseSnapshotDTO exerciseSnapshot = objectMapper.readValue(objectMapper.writeValueAsString(rawSnapshot), ExerciseSnapshotDTO.class);
@@ -210,7 +232,7 @@ public class ExerciseVersionService {
         Exercise fetched = switch (exerciseType) {
             case PROGRAMMING -> programmingExerciseRepository.findForVersioningById(exercise.getId()).orElse(null);
             case QUIZ -> quizExerciseRepository.findForVersioningById(exercise.getId()).orElse(null);
-            case TEXT -> textExerciseRepository.findForVersioningById(exercise.getId()).orElse(null);
+            case TEXT -> textRepositoryApi.flatMap(api -> api.findForVersioningById(exercise.getId())).orElse(null);
             case MODELING -> modelingRepositoryApi.flatMap(api -> api.findForVersioningById(exercise.getId())).orElse(null);
             case FILE_UPLOAD -> fileUploadApi.flatMap(api -> api.findForVersioningById(exercise.getId())).orElse(null);
         };

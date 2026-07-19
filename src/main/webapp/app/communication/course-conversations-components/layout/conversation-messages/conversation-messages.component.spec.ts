@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ConversationMessagesComponent } from 'app/communication/course-conversations-components/layout/conversation-messages/conversation-messages.component';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -61,8 +60,6 @@ class InfiniteScrollStubDirective {
 }
 examples.forEach((activeConversation) => {
     describe('ConversationMessagesComponent with ' + (getAsChannelDTO(activeConversation)?.isAnnouncementChannel ? 'announcement ' : '') + activeConversation.type, () => {
-        setupTestBed({ zoneless: true });
-
         let component: ConversationMessagesComponent;
         let fixture: ComponentFixture<ConversationMessagesComponent>;
         let metisService: MetisService;
@@ -671,10 +668,10 @@ examples.forEach((activeConversation) => {
         });
 
         it('should return true if at least one unread post is visible', () => {
-            const mockPostId = 1;
+            const mockPostId: number = 1;
             component.unreadPosts = [{ id: mockPostId } as any];
 
-            vi.spyOn(component as any, 'isPostVisible').mockImplementation((id: number) => id === mockPostId);
+            vi.spyOn(component as any, 'isPostVisible').mockImplementation((...args: unknown[]) => args[0] === mockPostId);
 
             const result = (component as any).isAnyUnreadPostVisible();
             expect(result).toBe(true);

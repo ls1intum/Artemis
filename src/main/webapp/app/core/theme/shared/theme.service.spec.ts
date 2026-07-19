@@ -1,12 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { THEME_LOCAL_STORAGE_KEY, THEME_OVERRIDE_ID, Theme, ThemeService } from 'app/core/theme/shared/theme.service';
 import { TestBed } from '@angular/core/testing';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 
 describe('ThemeService', () => {
-    setupTestBed({ zoneless: true });
-
     let service: ThemeService;
     let localStorageService: LocalStorageService;
 
@@ -91,6 +88,7 @@ describe('ThemeService', () => {
 
         expect(linkElement.remove).toHaveBeenCalledOnce();
         expect(service.currentTheme()).toBe(Theme.DARK);
+        expect(document.documentElement.getAttribute('data-theme')).toBe('dark');
 
         service.applyThemePreference(Theme.LIGHT);
         TestBed.tick();
@@ -99,6 +97,7 @@ describe('ThemeService', () => {
         expect(documentGetElementMock).toHaveBeenNthCalledWith(3, THEME_OVERRIDE_ID);
         expect(linkElement.remove).toHaveBeenCalledTimes(2);
         expect(service.currentTheme()).toBe(Theme.LIGHT);
+        expect(document.documentElement.getAttribute('data-theme')).toBe('light');
     });
 
     it('bumps appliedThemeRevision only once the theme stylesheet is in effect', () => {

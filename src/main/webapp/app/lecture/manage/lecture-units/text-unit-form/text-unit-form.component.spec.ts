@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { By } from '@angular/platform-browser';
@@ -14,7 +13,6 @@ import dayjs from 'dayjs/esm';
 import { MockComponent, MockModule, MockPipe } from 'ng-mocks';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
-import { OwlDateTimeModule, OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 import { MockResizeObserver } from 'test/helpers/mocks/service/mock-resize-observer';
 import { MarkdownEditorMonacoComponent } from 'app/editor/markdown-editor/monaco/markdown-editor-monaco.component';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
@@ -48,8 +46,6 @@ class MockLocalStorageService {
 }
 
 describe('TextUnitFormComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let textUnitFormComponentFixture: ComponentFixture<TextUnitFormComponent>;
     let textUnitFormComponent: TextUnitFormComponent;
     let mockLocalStorageService: MockLocalStorageService;
@@ -63,8 +59,6 @@ describe('TextUnitFormComponent', () => {
                 ReactiveFormsModule,
                 FormsModule,
                 MockModule(NgbTooltipModule),
-                OwlDateTimeModule,
-                OwlNativeDateTimeModule,
                 FontAwesomeTestingModule,
                 TextUnitFormComponent,
                 MockComponent(MarkdownEditorMonacoComponent),

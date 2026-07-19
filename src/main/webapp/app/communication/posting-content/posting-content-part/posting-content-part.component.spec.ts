@@ -1,11 +1,12 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { DebugElement } from '@angular/core';
+import { DebugElement, Directive, computed, inject, input } from '@angular/core';
+import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
+import { htmlForMarkdown } from 'app/foundation/util/markdown.conversion.util';
+import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
 import { ActivatedRoute, Router } from '@angular/router';
 import { PostingContentPartComponent } from 'app/communication/posting-content/posting-content-part/posting-content-part.components';
 import { PostingContentPart, ReferenceType } from 'app/communication/metis.util';
-import { HtmlForPostingMarkdownPipe } from 'app/foundation/pipes/html-for-posting-markdown.pipe';
 import { getElement, getElements } from 'test/helpers/utils/general-test.utils';
 import { MockQueryParamsDirective, MockRouterLinkDirective } from 'test/helpers/mocks/directive/mock-router-link.directive';
 import { MockFileService } from 'test/helpers/mocks/service/mock-file.service';
@@ -15,15 +16,49 @@ import { User } from 'app/account/user/user.model';
 import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
 import { FileService } from 'app/foundation/service/file.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
+import { DialogService } from 'primeng/dynamicdialog';
+import { EnlargeSlideImageComponent } from 'app/communication/posting-content/enlarge-slide-image/enlarge-slide-image.component';
+
+/**
+ * Synchronous stand-in for the real (lazy, async) MarkdownDirective so these tests can assert the rendered
+ * markdown structure without awaiting the dynamic import. It uses the real conversion util, so the produced
+ * HTML matches production. The async behavior of the real directive is covered by its own spec.
+ *
+ * Note: this stand-in only models posting mode (the only mode this component uses) and therefore always
+ * renders with line breaks enabled; it does not mirror the directive's `markdownLineBreaks` input.
+ */
+@Directive({
+    selector: '[jhiMarkdown]',
+    host: { '[innerHTML]': 'rendered()' },
+})
+class SyncMarkdownDirective {
+    private readonly sanitizer = inject(DomSanitizer);
+    readonly jhiMarkdown = input<string>();
+    readonly markdownPosting = input(false);
+    readonly markdownContentBeforeReference = input(true);
+    readonly markdownAllowedTags = input<string[]>();
+    readonly markdownAllowedAttributes = input<string[]>();
+    readonly rendered = computed<SafeHtml>(() => {
+        const text = this.jhiMarkdown();
+        if (!text) {
+            return '';
+        }
+        let html = htmlForMarkdown(text, [], this.markdownAllowedTags(), this.markdownAllowedAttributes(), true);
+        if (this.markdownPosting()) {
+            const position = this.markdownContentBeforeReference() ? html.lastIndexOf('<p>') : html.indexOf('<p>');
+            html = html.slice(0, position) + html.slice(position).replace('<p>', '<p class="inline-paragraph">');
+        }
+        return this.sanitizer.bypassSecurityTrustHtml(html);
+    });
+}
 
 describe('PostingContentPartComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: PostingContentPartComponent;
     let fixture: ComponentFixture<PostingContentPartComponent>;
     let debugElement: DebugElement;
     let router: Router;
     let fileService: FileService;
+    let dialogService: DialogService;
     let openAttachmentSpy: ReturnType<typeof vi.spyOn>;
     let navigateByUrlSpy: ReturnType<typeof vi.spyOn>;
     let accountService: AccountService;
@@ -36,12 +71,9 @@ describe('PostingContentPartComponent', () => {
     });
 
     beforeEach(async () => {
-        await TestBed.configureTestingModule({
-            imports: [
-                HtmlForPostingMarkdownPipe, // we want to test against the rendered string, therefore we cannot mock the pipe
-                MockRouterLinkDirective,
-                MockQueryParamsDirective,
-            ],
+        const mockDialogService = { open: vi.fn() } as unknown as DialogService;
+        TestBed.configureTestingModule({
+            imports: [MockRouterLinkDirective, MockQueryParamsDirective],
             providers: [
                 { provide: FileService, useClass: MockFileService },
                 {
@@ -54,13 +86,25 @@ describe('PostingContentPartComponent', () => {
                 },
                 { provide: AccountService, useClass: MockAccountService },
             ],
-        });
+        })
+            // DialogService is provided at the component level, so override it on the component for the mock to take effect.
+            .overrideComponent(PostingContentPartComponent, {
+                set: { providers: [{ provide: DialogService, useValue: mockDialogService }] },
+            })
+            // Swap the lazy/async MarkdownDirective for a synchronous stand-in so we can assert the rendered markdown.
+            .overrideComponent(PostingContentPartComponent, {
+                remove: { imports: [MarkdownDirective] },
+                add: { imports: [SyncMarkdownDirective] },
+            });
+        await TestBed.compileComponents();
         fixture = TestBed.createComponent(PostingContentPartComponent);
         component = fixture.componentInstance;
         debugElement = fixture.debugElement;
         router = TestBed.inject(Router);
         fileService = TestBed.inject(FileService);
         accountService = TestBed.inject(AccountService);
+        // DialogService is provided at the component level, so resolve it from the component's own injector.
+        dialogService = fixture.debugElement.injector.get(DialogService);
         navigateByUrlSpy = vi.spyOn(router, 'navigateByUrl');
         openAttachmentSpy = vi.spyOn(fileService, 'downloadFile');
         contentBeforeReference = '**Be aware**\n\n I want to reference the following Post ';
@@ -217,6 +261,23 @@ describe('PostingContentPartComponent', () => {
             referenceLink.click();
             expect(enlargeImageSpy).toHaveBeenCalledOnce();
             expect(enlargeImageSpy).toHaveBeenCalledWith(imageURL);
+        });
+
+        it('should open the enlarge slide image dialog with the correct config when enlargeImage is called', () => {
+            const slideToReference = '/path/x.png';
+
+            component.enlargeImage(slideToReference);
+
+            expect(dialogService.open).toHaveBeenCalledOnce();
+            expect(dialogService.open).toHaveBeenCalledWith(
+                EnlargeSlideImageComponent,
+                expect.objectContaining({
+                    data: { slideToReference },
+                    modal: true,
+                    dismissableMask: true,
+                    closeOnEscape: true,
+                }),
+            );
         });
 
         it('should trigger userReferenceClicked event for different user logins', () => {

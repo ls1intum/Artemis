@@ -1,5 +1,4 @@
 import { TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { Observable, Subject } from 'rxjs';
 import { HyperionEvent, HyperionWebsocketService } from 'app/hyperion/services/hyperion-websocket.service';
@@ -28,8 +27,6 @@ class MockWebsocketService {
 }
 
 describe('HyperionWebsocketService', () => {
-    setupTestBed({ zoneless: true });
-
     let service: HyperionWebsocketService;
     let mockWs: MockWebsocketService;
 
@@ -62,8 +59,9 @@ describe('HyperionWebsocketService', () => {
         const subj = mockWs.subjects.get(ch)!;
         subj.next({ type: 'STARTED' });
         subj.next({ type: 'PROGRESS', iteration: 2 });
+        subj.next({ type: 'FILE_DELETED', path: 'src/main/java/Obsolete.java', iteration: 2 });
 
-        expect(events).toEqual([{ type: 'STARTED' }, { type: 'PROGRESS', iteration: 2 }]);
+        expect(events).toEqual([{ type: 'STARTED' }, { type: 'PROGRESS', iteration: 2 }, { type: 'FILE_DELETED', path: 'src/main/java/Obsolete.java', iteration: 2 }]);
         expect(errors).toHaveLength(0);
         expect(completes).toHaveLength(0);
     });

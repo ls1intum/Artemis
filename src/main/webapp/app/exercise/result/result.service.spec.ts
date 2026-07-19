@@ -1,6 +1,5 @@
 import { expect, vi } from 'vitest';
 import { TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { HttpClient, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { TranslateService } from '@ngx-translate/core';
@@ -40,7 +39,6 @@ vi.mock('@sentry/angular', async () => {
 });
 
 describe('ResultService', () => {
-    setupTestBed({ zoneless: true });
     let resultService: ResultService;
     let translateService: TranslateService;
     let http: HttpClient;
@@ -378,7 +376,7 @@ describe('ResultService', () => {
             const participation: StudentParticipation = { testRun: true, type: ParticipationType.STUDENT };
             const result: Result = {};
             expect(ResultService.evaluateBadge(participation, result)).toEqual({
-                class: 'bg-secondary',
+                severity: 'secondary',
                 text: 'artemisApp.result.practice',
                 tooltip: 'artemisApp.result.practiceTooltip',
             });
@@ -388,7 +386,7 @@ describe('ResultService', () => {
             const participation: Participation = {};
             const result: Result = { rated: true };
             expect(ResultService.evaluateBadge(participation, result)).toEqual({
-                class: 'bg-success',
+                severity: 'success',
                 text: 'artemisApp.result.graded',
                 tooltip: 'artemisApp.result.gradedTooltip',
             });
@@ -398,7 +396,7 @@ describe('ResultService', () => {
             const participation: Participation = {};
             const result: Result = { rated: false };
             expect(ResultService.evaluateBadge(participation, result)).toEqual({
-                class: 'bg-info',
+                severity: 'info',
                 text: 'artemisApp.result.notGraded',
                 tooltip: 'artemisApp.result.notGradedTooltip',
             });

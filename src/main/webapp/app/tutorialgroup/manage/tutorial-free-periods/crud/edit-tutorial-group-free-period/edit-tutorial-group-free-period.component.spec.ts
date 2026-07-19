@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockProvider } from 'ng-mocks';
 import { AlertService } from 'app/foundation/service/alert.service';
@@ -19,13 +18,10 @@ import { Course } from 'app/course/shared/entities/course.model';
 import { TutorialGroupsConfiguration } from 'app/tutorialgroup/shared/entities/tutorial-groups-configuration.model';
 import { generateExampleTutorialGroupsConfiguration } from 'test/helpers/sample/tutorialgroup/tutorialGroupsConfigurationExampleModels';
 import { TutorialGroupFreePeriodFormComponent } from 'app/tutorialgroup/manage/tutorial-free-periods/crud/tutorial-free-period-form/tutorial-group-free-period-form.component';
-import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { TutorialGroupFreePeriodsManagementComponent } from 'app/tutorialgroup/manage/tutorial-free-periods/tutorial-free-periods-management/tutorial-group-free-periods-management.component';
 describe('EditTutorialGroupFreePeriodComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<EditTutorialGroupFreePeriodComponent>;
     let component: EditTutorialGroupFreePeriodComponent;
     let periodService: TutorialGroupFreePeriodService;
@@ -38,7 +34,7 @@ describe('EditTutorialGroupFreePeriodComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [EditTutorialGroupFreePeriodComponent, OwlNativeDateTimeModule],
+            imports: [EditTutorialGroupFreePeriodComponent],
             providers: [MockProvider(TutorialGroupFreePeriodService), MockProvider(AlertService), { provide: TranslateService, useClass: MockTranslateService }],
         }).compileComponents();
         setUpTestComponent(generateExampleTutorialGroupFreePeriod({}));

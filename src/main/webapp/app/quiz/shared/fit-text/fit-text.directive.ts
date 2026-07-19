@@ -12,7 +12,7 @@ export class FitTextDirective implements AfterViewInit, OnInit, OnDestroy {
     minFontSize = input<number | 'inherit'>(0);
     maxFontSize = input<number | 'inherit'>(Number.POSITIVE_INFINITY);
     delay = input(100);
-    innerHTML = input<any>();
+    innerHTML = input<string>();
     fontUnit = input<'px' | 'em' | string>('px');
 
     private readonly fitTextElement: HTMLElement;
@@ -21,10 +21,10 @@ export class FitTextDirective implements AfterViewInit, OnInit, OnDestroy {
     private readonly lineHeight: string;
     private readonly display: string;
     private fitTextParent: HTMLElement;
-    private fitTextMinFontSize: number;
-    private fitTextMaxFontSize: number;
+    private fitTextMinFontSize!: number; // set in ngOnInit() before any font-size calculation
+    private fitTextMaxFontSize!: number; // set in ngOnInit() before any font-size calculation
     private calcSize = 10;
-    private resizeTimeout: NodeJS.Timeout;
+    private resizeTimeout?: NodeJS.Timeout;
 
     private isFirstCompression = true;
     private isFirstInnerHTML = true;
@@ -71,8 +71,8 @@ export class FitTextDirective implements AfterViewInit, OnInit, OnDestroy {
     public ngOnInit() {
         const minFontSize = this.minFontSize();
         const maxFontSize = this.maxFontSize();
-        this.fitTextMinFontSize = minFontSize === 'inherit' ? Number(this.computed.fontSize) : minFontSize!;
-        this.fitTextMaxFontSize = maxFontSize === 'inherit' ? Number(this.computed.fontSize) : maxFontSize!;
+        this.fitTextMinFontSize = minFontSize === 'inherit' ? Number(this.computed.fontSize) : minFontSize;
+        this.fitTextMaxFontSize = maxFontSize === 'inherit' ? Number(this.computed.fontSize) : maxFontSize;
     }
 
     public ngAfterViewInit() {

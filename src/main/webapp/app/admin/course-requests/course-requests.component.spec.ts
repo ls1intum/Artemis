@@ -5,23 +5,19 @@
  */
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { of, throwError } from 'rxjs';
 import { HttpErrorResponse, provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { PaginatorState } from 'primeng/paginator';
-import { TranslateModule } from '@ngx-translate/core';
+import { provideTranslateService } from '@ngx-translate/core';
 import dayjs from 'dayjs/esm';
 
-import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 import { CourseRequestsComponent } from 'app/admin/course-requests/course-requests.component';
 import { CourseRequestService } from 'app/course/request/course-request.service';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { CourseRequest, CourseRequestStatus, CourseRequestsAdminOverview } from 'app/course/request/course-request.model';
 
 describe('CourseRequestsComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: CourseRequestsComponent;
     let courseRequestService: CourseRequestService;
     let alertService: AlertService;
@@ -79,12 +75,13 @@ describe('CourseRequestsComponent', () => {
         vi.clearAllMocks();
 
         await TestBed.configureTestingModule({
-            imports: [CourseRequestsComponent, TranslateModule.forRoot(), OwlNativeDateTimeModule],
+            imports: [CourseRequestsComponent],
             providers: [
                 provideHttpClient(),
                 provideHttpClientTesting(),
                 { provide: CourseRequestService, useValue: mockCourseRequestService },
                 { provide: AlertService, useValue: mockAlertService },
+                provideTranslateService(),
             ],
         }).compileComponents();
 
@@ -261,35 +258,21 @@ describe('CourseRequestsComponent', () => {
         });
     });
 
-    describe('badgeClass', () => {
-        it('should return bg-success for ACCEPTED status', () => {
-            expect(component.badgeClass(CourseRequestStatus.ACCEPTED)).toBe('bg-success');
+    describe('badgeSeverity', () => {
+        it('should return success for ACCEPTED status', () => {
+            expect(component.badgeSeverity(CourseRequestStatus.ACCEPTED)).toBe('success');
         });
 
-        it('should return bg-danger for REJECTED status', () => {
-            expect(component.badgeClass(CourseRequestStatus.REJECTED)).toBe('bg-danger');
+        it('should return danger for REJECTED status', () => {
+            expect(component.badgeSeverity(CourseRequestStatus.REJECTED)).toBe('danger');
         });
 
-        it('should return bg-secondary for PENDING status', () => {
-            expect(component.badgeClass(CourseRequestStatus.PENDING)).toBe('bg-secondary');
+        it('should return secondary for PENDING status', () => {
+            expect(component.badgeSeverity(CourseRequestStatus.PENDING)).toBe('secondary');
         });
 
-        it('should return bg-secondary for undefined status', () => {
-            expect(component.badgeClass(undefined)).toBe('bg-secondary');
-        });
-    });
-
-    describe('formatInstructorCount', () => {
-        it('should return "No" for undefined count', () => {
-            expect(component.formatInstructorCount(undefined)).toBe('No');
-        });
-
-        it('should return "No" for zero count', () => {
-            expect(component.formatInstructorCount(0)).toBe('No');
-        });
-
-        it('should return "Yes (count)" for positive count', () => {
-            expect(component.formatInstructorCount(3)).toBe('Yes (3)');
+        it('should return secondary for undefined status', () => {
+            expect(component.badgeSeverity(undefined)).toBe('secondary');
         });
     });
 

@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormControl, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
@@ -40,11 +39,8 @@ import { ProgrammingLanguage } from 'app/programming/shared/entities/programming
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 import { FileService } from 'app/foundation/service/file.service';
-import { OwlDateTimeModule, OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 
 describe('Course Management Update Component', () => {
-    setupTestBed({ zoneless: true });
-
     let comp: CourseUpdateComponent;
     let fixture: ComponentFixture<CourseUpdateComponent>;
     let courseManagementService: CourseManagementService;
@@ -97,7 +93,7 @@ describe('Course Management Update Component', () => {
         (Intl as any).supportedValuesOf = () => [validTimeZone];
 
         await TestBed.configureTestingModule({
-            imports: [CourseUpdateComponent, ReactiveFormsModule, FormsModule, ImageCropperComponent, NgbTooltipModule, OwlDateTimeModule, OwlNativeDateTimeModule],
+            imports: [CourseUpdateComponent, ReactiveFormsModule, FormsModule, ImageCropperComponent, NgbTooltipModule],
             providers: [
                 { provide: ActivatedRoute, useValue: route },
                 LocalStorageService,
@@ -1335,8 +1331,6 @@ describe('Course Management Update Component', () => {
 });
 
 describe('Course Management Student Course Analytics Dashboard Update', () => {
-    setupTestBed({ zoneless: true });
-
     const validTimeZone = 'Europe/Berlin';
     let fixture: ComponentFixture<CourseUpdateComponent>;
     let accountService: AccountService;
@@ -1348,7 +1342,7 @@ describe('Course Management Student Course Analytics Dashboard Update', () => {
         (Intl as any).supportedValuesOf = () => [validTimeZone];
 
         await TestBed.configureTestingModule({
-            imports: [CourseUpdateComponent, ReactiveFormsModule, FormsModule, ImageCropperComponent, NgbTooltipModule, OwlDateTimeModule, OwlNativeDateTimeModule],
+            imports: [CourseUpdateComponent, ReactiveFormsModule, FormsModule, ImageCropperComponent, NgbTooltipModule],
             providers: [
                 provideHttpClient(),
                 provideHttpClientTesting(),
@@ -1446,8 +1440,6 @@ describe('Course Management Student Course Analytics Dashboard Update', () => {
 });
 
 describe('Course Management Update Component Create', () => {
-    setupTestBed({ zoneless: true });
-
     const validTimeZone = 'Europe/Berlin';
     let component: CourseUpdateComponent;
     let fixture: ComponentFixture<CourseUpdateComponent>;
@@ -1457,7 +1449,7 @@ describe('Course Management Update Component Create', () => {
         (Intl as any).supportedValuesOf = () => [validTimeZone];
 
         await TestBed.configureTestingModule({
-            imports: [CourseUpdateComponent, ReactiveFormsModule, FormsModule, ImageCropperComponent, NgbTooltipModule, OwlDateTimeModule, OwlNativeDateTimeModule],
+            imports: [CourseUpdateComponent, ReactiveFormsModule, FormsModule, ImageCropperComponent, NgbTooltipModule],
             providers: [
                 provideHttpClient(),
                 provideHttpClientTesting(),

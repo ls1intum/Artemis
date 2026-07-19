@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TestBed } from '@angular/core/testing';
 import { WebauthnService } from './webauthn.service';
 import { WebauthnApiService } from './webauthn-api.service';
@@ -14,6 +13,12 @@ import * as credentialOptionUtil from './util/credential-option.util';
 import { encodeAsBase64Url } from 'app/foundation/util/base64.util';
 import { AccountService } from 'app/core/auth/account.service';
 import { signal } from '@angular/core';
+import { captureException } from '@sentry/angular';
+
+vi.mock('@sentry/angular', async (importOriginal) => ({
+    ...(await importOriginal<typeof import('@sentry/angular')>()),
+    captureException: vi.fn(),
+}));
 
 type MockedWebauthnApiService = {
     getAuthenticationOptions: ReturnType<typeof vi.fn>;
@@ -34,8 +39,6 @@ type MockedAccountService = {
 const CONDITIONAL_MEDIATION_REFRESH_INTERVAL_MS = 4 * 60 * 1000 + 45 * 1000;
 
 describe('WebauthnService', () => {
-    setupTestBed({ zoneless: true });
-
     let service: WebauthnService;
     let webauthnApiService: MockedWebauthnApiService;
     let alertService: MockedAlertService;
@@ -50,6 +53,7 @@ describe('WebauthnService', () => {
     const originalCredentials = navigator.credentials;
 
     beforeEach(() => {
+        vi.mocked(captureException).mockClear();
         const webauthnApiServiceMock = {
             getAuthenticationOptions: vi.fn(),
             loginWithPasskey: vi.fn(),
@@ -203,7 +207,7 @@ describe('WebauthnService', () => {
 
             await expect(service.loginWithPasskey()).rejects.toThrow(InvalidCredentialError);
             expect(alertService.addErrorAlert).toHaveBeenCalledWith('artemisApp.userSettings.passkeySettingsPage.error.invalidCredential');
-            expect(console.error).toHaveBeenCalled();
+            expect(vi.mocked(captureException)).toHaveBeenCalled();
         });
 
         it('should rethrow NotAllowedError without showing alert when user cancels authenticator dialog', async () => {
@@ -221,7 +225,7 @@ describe('WebauthnService', () => {
 
             await expect(service.loginWithPasskey()).rejects.toThrow(genericError);
             expect(alertService.addErrorAlert).toHaveBeenCalledWith('artemisApp.userSettings.passkeySettingsPage.error.login');
-            expect(console.error).toHaveBeenCalledWith(genericError);
+            expect(vi.mocked(captureException)).toHaveBeenCalledWith(genericError);
         });
 
         it('should handle error from webauthnApiService.loginWithPasskey', async () => {
@@ -233,7 +237,7 @@ describe('WebauthnService', () => {
 
             await expect(service.loginWithPasskey()).rejects.toThrow(apiError);
             expect(alertService.addErrorAlert).toHaveBeenCalledWith('artemisApp.userSettings.passkeySettingsPage.error.login');
-            expect(console.error).toHaveBeenCalledWith(apiError);
+            expect(vi.mocked(captureException)).toHaveBeenCalledWith(apiError);
         });
 
         it('should call accountService.identity after successful login', async () => {

@@ -8,8 +8,7 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { CommonModule } from '@angular/common';
 import { addPublicFilePrefix } from 'app/app.constants';
 import { faTimes } from '@fortawesome/free-solid-svg-icons';
-import { ArtemisMarkdownService } from 'app/foundation/service/markdown.service';
-import { DomSanitizer } from '@angular/platform-browser';
+import { renderPostingMarkdownToHtml } from 'app/foundation/util/markdown-render.util';
 import { RouterLink } from '@angular/router';
 
 /**
@@ -22,11 +21,12 @@ import { RouterLink } from '@angular/router';
     imports: [FaIconComponent, ProfilePictureComponent, TranslateDirective, CommonModule, RouterLink],
     templateUrl: './course-notification.component.html',
     styleUrls: ['./course-notification.component.scss'],
+    // Mirror the `fluid` input onto the host so the (inline by default) host and its inline-block
+    // child can be made block-level in fluid mode, giving `width: 100%` a definite containing block.
+    host: { '[class.fluid]': 'fluid()' },
 })
 export class CourseNotificationComponent {
     private readonly courseNotificationService: CourseNotificationService = inject(CourseNotificationService);
-    private readonly markdownService: ArtemisMarkdownService = inject(ArtemisMarkdownService);
-    private readonly sanitizer: DomSanitizer = inject(DomSanitizer);
 
     readonly onCloseClicked = output<void>();
 
@@ -36,6 +36,9 @@ export class CourseNotificationComponent {
     readonly isHideTime = input<boolean>(false);
     readonly isRedirectToUrl = input<boolean>(false);
     readonly displayTimeInMilliseconds = input<number | undefined>(undefined);
+    // When true, the card fills the available width and grows in height (used in the overview
+    // overlay). The transient popup toast keeps the default fixed size.
+    readonly fluid = input<boolean>(false);
 
     protected readonly faIcon = signal<IconDefinition>(undefined!);
     protected readonly notificationParameters = signal<{ [key: string]: unknown }>(undefined!);
@@ -59,55 +62,73 @@ export class CourseNotificationComponent {
         effect(() => {
             const notification = this.courseNotification();
             untracked(() => {
-                this.faIcon.set(this.courseNotificationService.getIconFromType(notification.notificationType));
-                // For translations, we pass all parameters and the course name and id so they can automatically be used.
-                const notificationParameters: { [key: string]: unknown } = {
-                    ...Object.entries(notification.parameters!).reduce(
-                        (acc, [key, value]) => {
-                            if (!value || !CourseNotificationService.NOTIFICATION_MARKDOWN_PARAMETERS.includes(key)) {
-                                acc[key] = value;
-                            } else {
-                                let sanitized = this.sanitizer.sanitize(1, this.markdownService.safeHtmlForPostingMarkdown(value!.toString())) || '';
-                                // Iteratively strip HTML tags to prevent incomplete sanitization (e.g. nested tags like <scr<script>ipt>)
-                                let previous: string;
-                                do {
-                                    previous = sanitized;
-                                    sanitized = sanitized.replace(/<[^>]*>/g, '');
-                                } while (sanitized !== previous);
-                                acc[key] = sanitized;
-                            }
-
-                            return acc;
-                        },
-                        {} as Record<string, any>,
-                    ),
-                    courseName: notification.courseName,
-                    courseId: notification.courseId,
-                };
-                this.notificationParameters.set(notificationParameters);
-                this.notificationType.set(notification.notificationType!);
-                this.notificationUrl.set(this.parseUrlToRouterObject(notification.relativeWebAppUrl!));
-                this.notificationTimeTranslationKey.set(this.courseNotificationService.getDateTranslationKey(notification));
-                this.notificationTimeTranslationParameters.set(this.courseNotificationService.getDateTranslationParams(notification));
-                if ('authorName' in notificationParameters && 'authorImageUrl' in notificationParameters && 'authorId' in notificationParameters) {
-                    this.authorName.set(notificationParameters.authorName as string);
-                    this.authorId.set(notificationParameters.authorId as number);
-                    this.authorImageUrl.set(notificationParameters.authorImageUrl as string);
-                    this.isAuthorBot.set(notificationParameters.authorIsBot === true);
-                    this.isShowProfilePicture.set(true);
-                } else if ('replyAuthorName' in notificationParameters && 'replyImageUrl' in notificationParameters && 'replyAuthorId' in notificationParameters) {
-                    this.authorName.set(notificationParameters.replyAuthorName as string);
-                    this.authorId.set(notificationParameters.replyAuthorId as number);
-                    this.authorImageUrl.set(notificationParameters.replyImageUrl as string);
-                    this.isAuthorBot.set(notificationParameters.replyIsBot === true);
-                    this.isShowProfilePicture.set(true);
-                } else {
-                    this.isAuthorBot.set(false);
-                    this.isShowProfilePicture.set(false);
-                }
-                this.notificationInitialized.set(true);
+                void this.initializeNotification(notification);
             });
         });
+    }
+
+    /**
+     * Builds the translation parameters and metadata signals for the given notification. Markdown-valued
+     * parameters are rendered and reduced to plain text via the lazily-loaded markdown pipeline, so this
+     * runs asynchronously (the pipeline is no longer part of the eager bundle).
+     */
+    private async initializeNotification(notification: CourseNotification): Promise<void> {
+        // Do not keep rendering the previous notification while markdown parameters for a replacement input are
+        // still being converted asynchronously.
+        this.notificationInitialized.set(false);
+        this.faIcon.set(this.courseNotificationService.getIconFromType(notification.notificationType));
+        // For translations, we pass all parameters and the course name and id so they can automatically be used.
+        const notificationParameters: { [key: string]: unknown } = {
+            courseName: notification.courseName,
+            courseId: notification.courseId,
+        };
+        for (const [key, value] of Object.entries(notification.parameters ?? {})) {
+            if (!value || !CourseNotificationService.NOTIFICATION_MARKDOWN_PARAMETERS.includes(key)) {
+                notificationParameters[key] = value;
+            } else {
+                // Render markdown, then iteratively strip HTML tags to plain text (handles nested tags like
+                // <scr<script>ipt>). The conversion util already sanitizes the HTML via DOMPurify. If the lazy
+                // markdown chunk fails to load, fall back to the raw value rather than leak an unhandled rejection.
+                let sanitized: string;
+                try {
+                    sanitized = await renderPostingMarkdownToHtml(value.toString());
+                } catch {
+                    sanitized = value.toString();
+                }
+                let previous: string;
+                do {
+                    previous = sanitized;
+                    sanitized = sanitized.replace(/<[^>]*>/g, '');
+                } while (sanitized !== previous);
+                notificationParameters[key] = sanitized;
+            }
+        }
+        // A newer notification may have arrived while awaiting the lazy markdown render; discard this stale run.
+        if (this.courseNotification() !== notification) {
+            return;
+        }
+        this.notificationParameters.set(notificationParameters);
+        this.notificationType.set(notification.notificationType!);
+        this.notificationUrl.set(this.parseUrlToRouterObject(notification.relativeWebAppUrl!));
+        this.notificationTimeTranslationKey.set(this.courseNotificationService.getDateTranslationKey(notification));
+        this.notificationTimeTranslationParameters.set(this.courseNotificationService.getDateTranslationParams(notification));
+        if ('authorName' in notificationParameters && 'authorImageUrl' in notificationParameters && 'authorId' in notificationParameters) {
+            this.authorName.set(notificationParameters.authorName as string);
+            this.authorId.set(notificationParameters.authorId as number);
+            this.authorImageUrl.set(notificationParameters.authorImageUrl as string);
+            this.isAuthorBot.set(notificationParameters.authorIsBot === true);
+            this.isShowProfilePicture.set(true);
+        } else if ('replyAuthorName' in notificationParameters && 'replyImageUrl' in notificationParameters && 'replyAuthorId' in notificationParameters) {
+            this.authorName.set(notificationParameters.replyAuthorName as string);
+            this.authorId.set(notificationParameters.replyAuthorId as number);
+            this.authorImageUrl.set(notificationParameters.replyImageUrl as string);
+            this.isAuthorBot.set(notificationParameters.replyIsBot === true);
+            this.isShowProfilePicture.set(true);
+        } else {
+            this.isAuthorBot.set(false);
+            this.isShowProfilePicture.set(false);
+        }
+        this.notificationInitialized.set(true);
     }
 
     /**

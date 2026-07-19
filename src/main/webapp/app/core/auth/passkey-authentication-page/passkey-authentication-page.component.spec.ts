@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { of } from 'rxjs';
@@ -20,8 +19,6 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { MockComponent, MockDirective } from 'ng-mocks';
 
 describe('PasskeyAuthenticationPageComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: PasskeyAuthenticationPageComponent;
     let fixture: ComponentFixture<PasskeyAuthenticationPageComponent>;
     let accountService: AccountService;
@@ -265,9 +262,9 @@ describe('PasskeyAuthenticationPageComponent', () => {
         const instructionSpans = fixture.nativeElement.querySelectorAll('p.text-wrap span[jhiTranslate]');
         expect(instructionSpans.length).toBeGreaterThanOrEqual(3);
 
-        const startSpan = Array.from(instructionSpans).find((span: HTMLElement) => span.getAttribute('jhiTranslate') === 'global.menu.admin.passkeyApprovalInstructions.start') as
-            | HTMLElement
-            | undefined;
+        const startSpan = Array.from<HTMLElement>(instructionSpans).find(
+            (span: HTMLElement) => span.getAttribute('jhiTranslate') === 'global.menu.admin.passkeyApprovalInstructions.start',
+        );
         expect(startSpan).toBeTruthy();
 
         const link = fixture.nativeElement.querySelector('a[routerLink="/user-settings/passkeys"]');
@@ -276,9 +273,9 @@ describe('PasskeyAuthenticationPageComponent', () => {
         const linkSpan = link.querySelector('span[jhiTranslate="global.menu.admin.passkeyApprovalInstructions.link"]');
         expect(linkSpan).toBeTruthy();
 
-        const endSpan = Array.from(instructionSpans).find((span: HTMLElement) => span.getAttribute('jhiTranslate') === 'global.menu.admin.passkeyApprovalInstructions.end') as
-            | HTMLElement
-            | undefined;
+        const endSpan = Array.from<HTMLElement>(instructionSpans).find(
+            (span: HTMLElement) => span.getAttribute('jhiTranslate') === 'global.menu.admin.passkeyApprovalInstructions.end',
+        );
         expect(endSpan).toBeTruthy();
     });
 

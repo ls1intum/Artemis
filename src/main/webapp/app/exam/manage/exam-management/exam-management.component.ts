@@ -61,10 +61,10 @@ export class ExamManagementComponent implements OnInit, OnDestroy {
     readonly exams = signal<Exam[]>(undefined!);
     predicate: string;
     ascending: boolean;
-    eventSubscriber: Subscription;
+    eventSubscriber?: Subscription;
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
-    currentTime: dayjs.Dayjs;
+    currentTime = dayjs();
 
     // Icons
     faSort = faSort;
@@ -186,7 +186,7 @@ export class ExamManagementComponent implements OnInit, OnDestroy {
         dialogRef?.onClose.subscribe((exam: Exam | undefined) => {
             if (exam) {
                 importBaseRoute.push(exam.id);
-                this.router.navigate(importBaseRoute);
+                void this.router.navigate(importBaseRoute);
             }
         });
     }

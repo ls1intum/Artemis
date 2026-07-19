@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import dayjs from 'dayjs/esm';
 import { BehaviorSubject, Subject, distinctUntilChanged, lastValueFrom, of } from 'rxjs';
 import { User } from 'app/account/user/user.model';
@@ -49,6 +48,9 @@ type SubmissionServicePrivates = {
     submissionTopicsSubscribed: Map<number, string>;
     DEFAULT_EXPECTED_RESULT_ETA: number;
     currentExpectedQueueEstimate: number;
+    currentExpectedResultETA: number;
+    getExpectedRemainingTimeForBuild: (submission: ProgrammingSubmission) => number;
+    getExpectedRemainingTimeForQueue: (submission: ProgrammingSubmission) => number;
     fetchLatestPendingSubmissionByParticipationId: (participationId: number) => unknown;
     setupWebsocketSubscriptionForLatestPendingSubmission: (participationId: number, exerciseId: number, personal: boolean) => unknown;
     subscribeForNewResult: (participationId: number, exerciseId: number, personal: boolean) => unknown;
@@ -57,9 +59,14 @@ type SubmissionServicePrivates = {
 
 const priv = (service: ProgrammingSubmissionService): SubmissionServicePrivates => service as unknown as SubmissionServicePrivates;
 
-describe('ProgrammingSubmissionService', () => {
-    setupTestBed({ zoneless: true });
+/**
+ * Converts an internal {participationId -> submission} map into the list shape the latest-pending-submissions endpoint
+ * returns (one entry per participation, submission undefined when there is no pending submission).
+ */
+const toPendingSubmissionList = (state: { [participationId: number]: ProgrammingSubmission | undefined }): { participationId: number; submission?: ProgrammingSubmission }[] =>
+    Object.entries(state).map(([participationId, submission]) => ({ participationId: parseInt(participationId, 10), submission }));
 
+describe('ProgrammingSubmissionService', () => {
     let websocketService: WebsocketService;
     let httpService: HttpClient;
     let participationWebsocketService: ParticipationWebsocketService;
@@ -156,7 +163,7 @@ describe('ProgrammingSubmissionService', () => {
     });
 
     it('should return cached subject as Observable for provided participation if exists', () => {
-        const cachedSubject = new BehaviorSubject(undefined);
+        const cachedSubject = new BehaviorSubject<ProgrammingSubmissionStateObj | undefined>(undefined);
         const fetchLatestPendingSubmissionSpy = vi.spyOn(priv(submissionService), 'fetchLatestPendingSubmissionByParticipationId');
         const setupWebsocketSubscriptionSpy = vi.spyOn(priv(submissionService), 'setupWebsocketSubscriptionForLatestPendingSubmission');
         const subscribeForNewResultSpy = vi.spyOn(priv(submissionService), 'subscribeForNewResult');
@@ -453,7 +460,10 @@ describe('ProgrammingSubmissionService', () => {
         const participation3 = { id: 4 } as StudentParticipation;
         let submissionState, submission;
 
-        const pendingSubmissions = { [participation1.id!]: currentSubmission, [participation2.id!]: currentSubmission2 };
+        const pendingSubmissions = [
+            { participationId: participation1.id!, submission: currentSubmission },
+            { participationId: participation2.id!, submission: currentSubmission2 },
+        ];
 
         const fetchLatestPendingSubmissionSpy = vi.spyOn(priv(submissionService), 'fetchLatestPendingSubmissionByParticipationId');
 
@@ -491,7 +501,7 @@ describe('ProgrammingSubmissionService', () => {
         const exerciseId = 10;
         const submissionState: ExerciseSubmissionState = {};
         const fetchLatestPendingSubmissionsByExerciseIdSpy = vi.spyOn(priv(submissionService), 'fetchLatestPendingSubmissionsByExerciseId');
-        httpGetStub.mockReturnValue(of(submissionState));
+        httpGetStub.mockReturnValue(of([]));
 
         let receivedSubmissionState: ExerciseSubmissionState = {};
         submissionService.getSubmissionStateOfExercise(exerciseId).subscribe((state) => (receivedSubmissionState = state));
@@ -510,7 +520,7 @@ describe('ProgrammingSubmissionService', () => {
             2: { submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, submission: undefined, participationId: 2 },
         };
         const fetchLatestPendingSubmissionsByExerciseIdSpy = vi.spyOn(priv(submissionService), 'fetchLatestPendingSubmissionsByExerciseId');
-        httpGetStub.mockReturnValue(of(submissionState));
+        httpGetStub.mockReturnValue(of(toPendingSubmissionList(submissionState)));
 
         let receivedSubmissionState: ExerciseSubmissionState = {};
         submissionService.getSubmissionStateOfExercise(exerciseId).subscribe((state) => (receivedSubmissionState = state));
@@ -524,7 +534,10 @@ describe('ProgrammingSubmissionService', () => {
     it('should recalculate the result eta based on the number of open submissions', () => {
         const exerciseId = 10;
         // Simulate 340 participations with one pending submission each.
-        const submissionState = _range(340).reduce((acc, n) => ({ ...acc, [n]: { submissionDate: dayjs().subtract(1, 'minutes') } as ProgrammingSubmission }), {});
+        const submissionState = _range(340).reduce<Record<string, ProgrammingSubmission>>(
+            (acc, n) => ({ ...acc, [n]: { submissionDate: dayjs().subtract(1, 'minutes') } as ProgrammingSubmission }),
+            {},
+        );
         const expectedSubmissionState = Object.entries(submissionState).reduce(
             (acc, [participationID, submission]: [string, ProgrammingSubmission]) => ({
                 ...acc,
@@ -533,7 +546,7 @@ describe('ProgrammingSubmissionService', () => {
             {},
         );
         const fetchLatestPendingSubmissionsByExerciseIdSpy = vi.spyOn(priv(submissionService), 'fetchLatestPendingSubmissionsByExerciseId');
-        httpGetStub.mockReturnValue(of(submissionState));
+        httpGetStub.mockReturnValue(of(toPendingSubmissionList(submissionState)));
 
         let receivedSubmissionState: ExerciseSubmissionState = {};
         submissionService.getSubmissionStateOfExercise(exerciseId).subscribe((state) => (receivedSubmissionState = state));
@@ -757,6 +770,39 @@ describe('ProgrammingSubmissionService', () => {
         } finally {
             vi.useRealTimers();
         }
+    });
+
+    describe('getExpectedRemainingTimeForBuild / getExpectedRemainingTimeForQueue', () => {
+        afterEach(() => {
+            vi.useRealTimers();
+        });
+
+        it('subtracts the elapsed time since submission from the result ETA, preserving millisecond precision', () => {
+            vi.useFakeTimers();
+            vi.setSystemTime(new Date('2026-07-02T12:00:00.000Z'));
+            priv(submissionService).currentExpectedResultETA = 120_000;
+            // 29_500 ms elapsed → 120_000 - 29_500 = 90_500 (the previous Date.parse-based impl truncated the .500 → 90_000)
+            const submission = { submissionDate: dayjs('2026-07-02T11:59:30.500Z') } as ProgrammingSubmission;
+            expect(priv(submissionService).getExpectedRemainingTimeForBuild(submission)).toBe(90_500);
+        });
+
+        it('subtracts the elapsed time since submission from the queue estimate', () => {
+            vi.useFakeTimers();
+            vi.setSystemTime(new Date('2026-07-02T12:00:00.000Z'));
+            priv(submissionService).currentExpectedQueueEstimate = 60_000;
+            const submission = { submissionDate: dayjs('2026-07-02T11:59:45.000Z') } as ProgrammingSubmission;
+            expect(priv(submissionService).getExpectedRemainingTimeForQueue(submission)).toBe(45_000);
+        });
+
+        it('treats a missing submissionDate as now, returning the full ETA/estimate rather than NaN', () => {
+            vi.useFakeTimers();
+            vi.setSystemTime(new Date('2026-07-02T12:00:00.000Z'));
+            priv(submissionService).currentExpectedResultETA = 120_000;
+            priv(submissionService).currentExpectedQueueEstimate = 60_000;
+            const submission = { submissionDate: undefined } as ProgrammingSubmission;
+            expect(priv(submissionService).getExpectedRemainingTimeForBuild(submission)).toBe(120_000);
+            expect(priv(submissionService).getExpectedRemainingTimeForQueue(submission)).toBe(60_000);
+        });
     });
 
     describe('authentication state changes', () => {

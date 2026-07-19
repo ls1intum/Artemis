@@ -46,7 +46,6 @@ export abstract class CourseImportStandardizedCourseCompetenciesComponent extend
     protected translateService = inject(TranslateService);
     protected sortService = inject(SortService);
 
-    /** Reference to the knowledge area tree component for tree control */
     private readonly knowledgeAreaTree = viewChild(KnowledgeAreaTreeComponent);
 
     protected override get knowledgeAreaTreeComponent(): KnowledgeAreaTreeComponent | undefined {
@@ -56,7 +55,7 @@ export abstract class CourseImportStandardizedCourseCompetenciesComponent extend
     protected selectedCompetencies: StandardizedCompetencyForImport[] = [];
     protected selectedCompetency?: StandardizedCompetencyForImport;
     protected sourceString = '';
-    protected courseId: number;
+    protected courseId!: number; // set in ngOnInit() from the route paramMap
     protected sources: Source[] = [];
     protected readonly isLoading = signal(false);
     protected isSubmitted = false;
@@ -140,7 +139,7 @@ export abstract class CourseImportStandardizedCourseCompetenciesComponent extend
                 next: (countImportedCompetencies) => {
                     this.isSubmitted = true;
                     this.alertService.success('artemisApp.standardizedCompetency.courseImport.success', { count: countImportedCompetencies });
-                    this.router.navigate(['../'], { relativeTo: this.activatedRoute });
+                    void this.router.navigate(['../'], { relativeTo: this.activatedRoute });
                 },
                 error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
                 complete: () => {
@@ -150,7 +149,7 @@ export abstract class CourseImportStandardizedCourseCompetenciesComponent extend
     }
 
     protected cancel() {
-        this.router.navigate(['../'], { relativeTo: this.activatedRoute });
+        void this.router.navigate(['../'], { relativeTo: this.activatedRoute });
     }
 
     /**

@@ -75,7 +75,7 @@ export class ProgrammingExerciseWebsocketService implements OnDestroy, IProgramm
      */
     private initTestCaseStateSubscription(programmingExerciseId: number) {
         const testCaseTopic = `/topic/programming-exercises/${programmingExerciseId}/test-cases-changed`;
-        this.subjects[programmingExerciseId] = new BehaviorSubject(undefined);
+        this.subjects[programmingExerciseId] = new BehaviorSubject<boolean | undefined>(undefined);
         this.connections[programmingExerciseId] = this.websocketService
             .subscribe<boolean>(testCaseTopic)
             .pipe(tap((testCasesChanged) => this.notifySubscribers(programmingExerciseId, testCasesChanged)))
@@ -91,6 +91,6 @@ export class ProgrammingExerciseWebsocketService implements OnDestroy, IProgramm
      */
     getTestCaseState(programmingExerciseId: number) {
         const existingSubject = this.subjects[programmingExerciseId];
-        return (existingSubject || this.initTestCaseStateSubscription(programmingExerciseId)).asObservable().pipe(filter((val) => val !== undefined)) as Observable<boolean>;
+        return (existingSubject || this.initTestCaseStateSubscription(programmingExerciseId)).asObservable().pipe(filter((val) => val !== undefined));
     }
 }

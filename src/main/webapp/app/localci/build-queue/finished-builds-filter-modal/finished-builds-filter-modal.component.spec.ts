@@ -1,20 +1,17 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 import { FinishedBuildJobFilter, FinishedBuildsFilterModalComponent } from 'app/localci/build-queue/finished-builds-filter-modal/finished-builds-filter-modal.component';
 import dayjs from 'dayjs/esm';
 import { FinishedBuildJob } from 'app/localci/shared/entities/build-job.model';
 import { TriggeredByPushTo } from 'app/programming/shared/entities/repository-info.model';
 import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
+import { AutoCompleteCompleteEvent } from 'primeng/autocomplete';
 import { MockProvider } from 'ng-mocks';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 
 describe('FinishedBuildsFilterModalComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: FinishedBuildsFilterModalComponent;
     let fixture: ComponentFixture<FinishedBuildsFilterModalComponent>;
 
@@ -58,7 +55,7 @@ describe('FinishedBuildsFilterModalComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [OwlNativeDateTimeModule, FinishedBuildsFilterModalComponent],
+            imports: [FinishedBuildsFilterModalComponent],
             providers: [{ provide: TranslateService, useClass: MockTranslateService }, MockProvider(DynamicDialogRef), { provide: DynamicDialogConfig, useValue: { data: {} } }],
         }).compileComponents();
 
@@ -75,6 +72,17 @@ describe('FinishedBuildsFilterModalComponent', () => {
     it('should return correct build agent addresses', () => {
         component.finishedBuildJobs = mockFinishedJobs;
         expect(component.buildAgentAddresses).toEqual(['agent5', 'agent6']);
+    });
+
+    it('should suggest all addresses on an empty query (focus discoverability) and filter on a term', () => {
+        component.finishedBuildJobs = mockFinishedJobs;
+
+        // Empty query is the focus case ([completeOnFocus]=true) — must surface all agent addresses.
+        component.searchBuildAgentAddresses({ query: '' } as unknown as AutoCompleteCompleteEvent);
+        expect(component.buildAgentAddressSuggestions()).toEqual(['agent5', 'agent6']);
+
+        component.searchBuildAgentAddresses({ query: 'agent5' } as unknown as AutoCompleteCompleteEvent);
+        expect(component.buildAgentAddressSuggestions()).toEqual(['agent5']);
     });
 
     it('should return correct number of filters applied', () => {
@@ -133,7 +141,7 @@ describe('FinishedBuildsFilterModalComponent', () => {
 
         TestBed.resetTestingModule();
         await TestBed.configureTestingModule({
-            imports: [OwlNativeDateTimeModule, FinishedBuildsFilterModalComponent],
+            imports: [FinishedBuildsFilterModalComponent],
             providers: [
                 { provide: TranslateService, useClass: MockTranslateService },
                 MockProvider(DynamicDialogRef),

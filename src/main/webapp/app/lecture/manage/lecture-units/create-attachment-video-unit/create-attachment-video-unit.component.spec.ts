@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import dayjs from 'dayjs/esm';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockProvider } from 'ng-mocks';
@@ -14,7 +13,6 @@ import { Attachment, AttachmentType } from 'app/lecture/shared/entities/attachme
 import { AttachmentVideoUnit } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
 import { By } from '@angular/platform-browser';
 import { objectToJsonBlob } from 'app/foundation/util/blob-util';
-import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 import { TranslateService } from '@ngx-translate/core';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { AccountService } from 'app/core/auth/account.service';
@@ -26,13 +24,11 @@ import { MockAccountService } from 'test/helpers/mocks/service/mock-account.serv
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 
 describe('CreateAttachmentVideoUnitComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let createAttachmentVideoUnitComponentFixture: ComponentFixture<CreateAttachmentVideoUnitComponent>;
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [OwlNativeDateTimeModule],
+            imports: [],
             providers: [
                 MockProvider(AttachmentVideoUnitService),
                 MockProvider(AlertService),
@@ -50,6 +46,7 @@ describe('CreateAttachmentVideoUnitComponent', () => {
                                             case 'lectureId':
                                                 return 1;
                                         }
+                                        return null;
                                     },
                                 }),
                                 parent: {
@@ -59,6 +56,7 @@ describe('CreateAttachmentVideoUnitComponent', () => {
                                                 case 'courseId':
                                                     return 1;
                                             }
+                                            return null;
                                         },
                                     }),
                                 },

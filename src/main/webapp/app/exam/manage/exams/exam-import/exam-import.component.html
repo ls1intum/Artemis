@@ -20,7 +20,7 @@
                     <span class="ms-3" jhiTranslate="artemisApp.exercise.import.loading"></span>
                 }
             </div>
-            <table class="table table-striped flex">
+            <table class="table table-striped">
                 <thead class="thead-dark">
                     <tr jhiSort [(predicate)]="sortedColumn" [(ascending)]="listSorting" (sortChange)="sortRows()" class="flex-row">
                         <th jhiSortBy="ID" class="col-1">
@@ -35,7 +35,7 @@
                             <span jhiTranslate="artemisApp.exercise.import.table.course"></span>
                             <fa-icon [icon]="faSort" />
                         </th>
-                        <th jhiSortBy="EXAM_MODE" class="col-4">
+                        <th jhiSortBy="EXAM_MODE" class="col-2">
                             <span jhiTranslate="artemisApp.examManagement.testExam.examMode"></span>
                             <fa-icon [icon]="faSort" />
                         </th>
@@ -75,16 +75,7 @@
                 </tbody>
             </table>
             <div class="d-flex justify-content-between p-2">
-                <ngb-pagination
-                    [maxSize]="5"
-                    [rotate]="true"
-                    [ellipses]="true"
-                    [boundaryLinks]="true"
-                    [collectionSize]="total()"
-                    [(page)]="state.page"
-                    [pageSize]="state.pageSize"
-                    (pageChange)="onPageChange($event)"
-                />
+                <p-paginator [first]="(state.page - 1) * state.pageSize" [rows]="state.pageSize" [totalRecords]="total()" (onPageChange)="onPaginatorPageChange($event)" />
             </div>
         </div>
     }

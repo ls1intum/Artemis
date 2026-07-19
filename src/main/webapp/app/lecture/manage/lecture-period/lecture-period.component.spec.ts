@@ -1,6 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { FormDateTimePickerComponent } from 'app/shared-ui/date-time-picker/date-time-picker.component';
 import { MockComponent, MockPipe } from 'ng-mocks';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
@@ -9,24 +8,14 @@ import { LectureUpdatePeriodComponent } from 'app/lecture/manage/lecture-period/
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { OwlDateTimeModule, OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 
 describe('LectureWizardPeriodComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<LectureUpdatePeriodComponent>;
     let component: LectureUpdatePeriodComponent;
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [
-                LectureUpdatePeriodComponent,
-                MockPipe(ArtemisTranslatePipe),
-                MockComponent(FormDateTimePickerComponent),
-                FontAwesomeModule,
-                OwlDateTimeModule,
-                OwlNativeDateTimeModule,
-            ],
+            imports: [LectureUpdatePeriodComponent, MockPipe(ArtemisTranslatePipe), MockComponent(FormDateTimePickerComponent), FontAwesomeModule],
             providers: [{ provide: TranslateService, useClass: MockTranslateService }],
         }).compileComponents();
 

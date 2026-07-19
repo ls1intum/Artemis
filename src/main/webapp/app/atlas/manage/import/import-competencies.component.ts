@@ -18,7 +18,7 @@ import { CompetencySearchComponent } from 'app/atlas/manage/import/competency-se
 })
 export class ImportCompetenciesComponent extends ImportCourseCompetenciesComponent {
     entityType = CourseCompetencyType.COMPETENCY;
-    allowRelationImport = true;
+    override allowRelationImport = true;
 
     private readonly competencyService = inject(CompetencyService);
 
@@ -27,7 +27,7 @@ export class ImportCompetenciesComponent extends ImportCourseCompetenciesCompone
             next: (res) => {
                 this.alertService.success('artemisApp.competency.import.success', { numCompetencies: res.body?.length ?? 0 });
                 this.isSubmitted = true;
-                this.router.navigate(['../'], { relativeTo: this.activatedRoute });
+                void this.router.navigate(['../'], { relativeTo: this.activatedRoute });
             },
             error: (error: HttpErrorResponse) => onError(this.alertService, error),
         });

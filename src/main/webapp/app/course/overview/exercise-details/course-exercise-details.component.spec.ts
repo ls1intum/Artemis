@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
@@ -33,7 +33,6 @@ import { ExerciseActionButtonComponent } from 'app/shared-ui/components/buttons/
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { ArtemisTimeAgoPipe } from 'app/foundation/pipes/artemis-time-ago.pipe';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { HtmlForMarkdownPipe } from 'app/foundation/pipes/html-for-markdown.pipe';
 import { cloneDeep } from 'lodash-es';
 import dayjs from 'dayjs/esm';
 import { MockComponent, MockDirective, MockInstance, MockPipe, MockProvider } from 'ng-mocks';
@@ -97,8 +96,6 @@ import { ResetRepoButtonComponent } from 'app/course/overview/exercise-details/r
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 
 describe('CourseExerciseDetailsComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let comp: CourseExerciseDetailsComponent;
     let fixture: ComponentFixture<CourseExerciseDetailsComponent>;
     let exerciseService: ExerciseService;
@@ -167,7 +164,7 @@ describe('CourseExerciseDetailsComponent', () => {
                 FaIconComponent,
                 MockPipe(ArtemisTranslatePipe),
                 MockPipe(ArtemisTimeAgoPipe),
-                MockPipe(HtmlForMarkdownPipe),
+                MockDirective(MarkdownDirective),
                 MockComponent(HeaderExercisePageWithDetailsComponent),
                 MockComponent(ExerciseDetailsStudentActionsComponent),
                 MockComponent(SubmissionResultStatusComponent),
@@ -596,11 +593,14 @@ describe('CourseExerciseDetailsComponent', () => {
         expect(discussionSection).toBeTruthy();
     });
 
-    it('should propagate a newly started participation into the cached course so the sidebar updates live', () => {
+    it('should propagate a newly started participation into the cached course so the sidebar updates live, preserving the fully-loaded marker', () => {
         const courseStorageService = TestBed.inject(CourseStorageService);
         const cachedExercise = { id: exercise.id, studentParticipations: [] } as unknown as Exercise;
         const cachedCourse = { id: 1, exercises: [cachedExercise] } as unknown as Course;
         vi.spyOn(courseStorageService, 'getCourse').mockReturnValue(cachedCourse);
+        // The parent course overview has fully loaded the course; enriching it in place must keep the marker the
+        // CourseOverviewGuard relies on, otherwise switching to a guarded tab would silently skip the access check.
+        vi.spyOn(courseStorageService, 'isCourseFullyLoaded').mockReturnValue(true);
         const updateCourseSpy = vi.spyOn(courseStorageService, 'updateCourse').mockImplementation(() => {});
 
         comp.courseId = 1;
@@ -609,7 +609,7 @@ describe('CourseExerciseDetailsComponent', () => {
 
         comp.onNewParticipation(newParticipation);
 
-        expect(updateCourseSpy).toHaveBeenCalledWith(cachedCourse);
+        expect(updateCourseSpy).toHaveBeenCalledWith(cachedCourse, true);
         expect(cachedExercise.studentParticipations).toContain(newParticipation);
     });
 
@@ -631,7 +631,8 @@ describe('CourseExerciseDetailsComponent', () => {
 
         comp.onNewParticipation(existingParticipation);
 
-        expect(updateCourseSpy).toHaveBeenCalledWith(cachedCourse);
+        // isCourseFullyLoaded is not stubbed here, so the real (empty) marker set returns false: the in-place update preserves it
+        expect(updateCourseSpy).toHaveBeenCalledWith(cachedCourse, false);
         // onNewParticipation now merges submissions into a fresh participation object (so prior attempts survive and
         // the signal change is detected), so assert by id rather than reference identity.
         expect(cachedExercise.studentParticipations?.some((p) => p.id === existingParticipation.id)).toBe(true);

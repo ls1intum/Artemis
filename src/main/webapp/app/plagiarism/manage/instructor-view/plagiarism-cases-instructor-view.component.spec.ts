@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { PlagiarismCasesInstructorViewComponent } from 'app/plagiarism/manage/instructor-view/plagiarism-cases-instructor-view.component';
 import { PlagiarismCasesService } from 'app/plagiarism/shared/services/plagiarism-cases.service';
@@ -15,7 +14,6 @@ import dayjs from 'dayjs/esm';
 import { DocumentationButtonComponent } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
 import { MockComponent } from 'ng-mocks';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { PlagiarismSubmission } from 'app/plagiarism/shared/entities/PlagiarismSubmission';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { ProgressBarComponent } from 'app/exercise/dashboards/tutor-participation-graph/progress-bar/progress-bar.component';
@@ -33,8 +31,6 @@ vi.mock('app/foundation/util/download.util', () => ({
 }));
 
 describe('Plagiarism Cases Instructor View Component', () => {
-    setupTestBed({ zoneless: true });
-
     let component: PlagiarismCasesInstructorViewComponent;
     let fixture: ComponentFixture<PlagiarismCasesInstructorViewComponent>;
     let plagiarismCasesService: PlagiarismCasesService;
@@ -54,12 +50,6 @@ describe('Plagiarism Cases Instructor View Component', () => {
         type: ExerciseType.TEXT,
     } as TextExercise;
 
-    const studentLoginA = 'studentA';
-    const plagiarismSubmission1 = {
-        id: 1,
-        studentLogin: studentLoginA,
-    } as PlagiarismSubmission;
-
     const plagiarismCase1 = {
         id: 1,
         exercise: exercise1,
@@ -72,13 +62,9 @@ describe('Plagiarism Cases Instructor View Component', () => {
         verdictDate: date,
         post: {
             id: 1,
-            answers: [
-                {
-                    author: { id: 1 },
-                },
-            ],
         },
-        plagiarismSubmissions: [plagiarismSubmission1],
+        plagiarismSubmissionCount: 1,
+        hasStudentAnswer: true,
     } as PlagiarismCase;
     const plagiarismCase2 = {
         id: 2,

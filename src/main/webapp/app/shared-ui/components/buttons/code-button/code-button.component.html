@@ -22,10 +22,10 @@
         @if (selectedAuthenticationMechanism() === RepositoryAuthenticationMethod.SSH && areAnySshKeysExpired()) {
             <div class="alert alert-warning" [innerHTML]="sshKeysExpiredTip()"></div>
         }
-        @if (selectedAuthenticationMechanism() === RepositoryAuthenticationMethod.Token && isInCourseManagement() && !userTokenPresent()) {
+        @if (selectedAuthenticationMechanism() === RepositoryAuthenticationMethod.Token && usesStaffUserToken() && !userTokenPresent()) {
             <div class="alert alert-warning" [innerHTML]="tokenMissingTip()"></div>
         }
-        @if (selectedAuthenticationMechanism() === RepositoryAuthenticationMethod.Token && isInCourseManagement() && userTokenPresent() && !userTokenStillValid()) {
+        @if (selectedAuthenticationMechanism() === RepositoryAuthenticationMethod.Token && usesStaffUserToken() && userTokenPresent() && !userTokenStillValid()) {
             <div class="alert alert-warning" [innerHTML]="tokenExpiredTip()"></div>
         }
         <h5 [jhiTranslate]="clonedHeadline()"></h5>
@@ -74,8 +74,7 @@
                 class="clone-url url-box-remove-line-left url-box-remove-line-right"
                 [cdkCopyToClipboard]="getHttpOrSshRepositoryUri(false)"
                 (cdkCopyToClipboardCopied)="copyEnabled() ? onCopyFinished($event) : null"
-                >{{ getHttpOrSshRepositoryUri() }} </pre
-            >
+                >{{ getHttpOrSshRepositoryUri() }} </pre>
             <div class="d-flex align-items-center">
                 <a
                     [style.flex]="1"

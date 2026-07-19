@@ -3,7 +3,6 @@
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { HttpHeaders, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ActivatedRoute, Router } from '@angular/router';
 import { PaginatorState } from 'primeng/paginator';
@@ -37,8 +36,6 @@ function getDate(isToday = true) {
 }
 
 describe('AuditsComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let comp: AuditsComponent;
     let fixture: ComponentFixture<AuditsComponent>;
     let service: AuditsService;
@@ -109,6 +106,30 @@ describe('AuditsComponent', () => {
             vi.setSystemTime(new Date(2019, 1, 20, 0, 0, 0));
             comp.ngOnInit();
             expect(comp.fromDate()).toBe('2019-01-20');
+        });
+    });
+
+    describe('picker value round-trip', () => {
+        // The picker emits a Date/dayjs; the audits filter stores yyyy-MM-dd strings in the URL. The conversion
+        // must use dayjs format tokens (YYYY-MM-DD), not Angular DatePipe tokens, or the URL value is malformed
+        // (e.g. "yyyy-06-We") and the picker can never round-trip it back.
+        it('stores a picker date as a yyyy-MM-dd string', () => {
+            comp.updateFromDate(new Date(2026, 5, 17, 0, 0, 0));
+            expect(comp.fromDate()).toBe('2026-06-17');
+            comp.updateToDate(new Date(2026, 5, 20, 0, 0, 0));
+            expect(comp.toDate()).toBe('2026-06-20');
+        });
+
+        it('clears the filter for an invalid picker value instead of keeping the previous date', () => {
+            comp.updateFromDate(new Date(2026, 5, 17, 0, 0, 0));
+
+            // The template passes undefined when fromPicker.isValid() is false (an invalid manual entry the picker
+            // keeps visible via keepInvalid); the previous valid date must not be written back, so the filter
+            // clears and canLoad() becomes false, pausing transition() rather than navigating with a stale value.
+            comp.updateFromDate(undefined);
+
+            expect(comp.fromDate()).toBe('');
+            expect(comp.canLoad()).toBe(false);
         });
     });
 

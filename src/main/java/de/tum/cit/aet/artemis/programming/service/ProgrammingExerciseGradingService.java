@@ -57,6 +57,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.SolutionProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.StaticCodeAnalysisCategory;
 import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExerciseParticipation;
+import de.tum.cit.aet.artemis.programming.domain.build.BuildLogEntry;
 import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.LockRepositoryPolicy;
 import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.SubmissionPenaltyPolicy;
 import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.SubmissionPolicy;
@@ -111,13 +112,16 @@ public class ProgrammingExerciseGradingService {
 
     private final FeedbackService feedbackService;
 
+    private final MavenCentralRateLimitNotificationService mavenCentralRateLimitNotificationService;
+
     public ProgrammingExerciseGradingService(StudentParticipationRepository studentParticipationRepository, ResultRepository resultRepository,
             Optional<ContinuousIntegrationResultService> continuousIntegrationResultService, ProgrammingExerciseTestCaseRepository testCaseRepository,
             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository, FeedbackService feedbackService,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository, ProgrammingSubmissionRepository programmingSubmissionRepository,
             AuditEventRepository auditEventRepository, GroupNotificationService groupNotificationService, ResultService resultService, ExerciseDateService exerciseDateService,
             SubmissionPolicyService submissionPolicyService, ProgrammingExerciseRepository programmingExerciseRepository, BuildLogEntryService buildLogService,
-            StaticCodeAnalysisCategoryRepository staticCodeAnalysisCategoryRepository, ProgrammingExerciseFeedbackCreationService feedbackCreationService) {
+            StaticCodeAnalysisCategoryRepository staticCodeAnalysisCategoryRepository, ProgrammingExerciseFeedbackCreationService feedbackCreationService,
+            MavenCentralRateLimitNotificationService mavenCentralRateLimitNotificationService) {
         this.studentParticipationRepository = studentParticipationRepository;
         this.continuousIntegrationResultService = continuousIntegrationResultService;
         this.resultRepository = resultRepository;
@@ -135,6 +139,7 @@ public class ProgrammingExerciseGradingService {
         this.staticCodeAnalysisCategoryRepository = staticCodeAnalysisCategoryRepository;
         this.feedbackCreationService = feedbackCreationService;
         this.feedbackService = feedbackService;
+        this.mavenCentralRateLimitNotificationService = mavenCentralRateLimitNotificationService;
     }
 
     /**
@@ -200,6 +205,10 @@ public class ProgrammingExerciseGradingService {
                 var buildLogs = buildResult.extractBuildLogs();
 
                 if (latestSubmission.isBuildFailed()) {
+                    // Check the unfiltered logs (asynchronously, so result processing is not delayed), as the filtering below can remove dependency download errors.
+                    // Pass an immutable snapshot of the log messages, because the entries are truncated and filtered in place below while the async check runs.
+                    var buildLogMessages = buildLogs.stream().map(BuildLogEntry::getLog).toList();
+                    mavenCentralRateLimitNotificationService.notifyInstructorsIfBuildWasRateLimited(exercise.getId(), programmingLanguage, buildLogMessages);
                     buildLogs = buildLogService.removeUnnecessaryLogsForProgrammingLanguage(buildLogs, programmingLanguage);
                     var savedBuildLogs = buildLogService.saveBuildLogs(buildLogs, latestSubmission);
 
@@ -809,8 +818,13 @@ public class ProgrammingExerciseGradingService {
 
         points = Math.max(0, points);
 
+        double maxPoints = scoreCalculationData.exercise().getMaxPoints();
+        if (maxPoints <= 0.0) {
+            return 0.0;
+        }
+
         // The score is calculated as a percentage of the maximum points
-        return points / scoreCalculationData.exercise().getMaxPoints() * 100.0;
+        return points / maxPoints * 100.0;
     }
 
     /**

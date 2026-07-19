@@ -846,23 +846,31 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
 
     /**
      * Validates score settings
-     * 1. The maxScore needs to be greater than 0
+     * 1. The maxScore needs to be greater than 0, except for not included programming exercises
      * 2. If the specified amount of bonus points is valid depending on the IncludedInOverallScore value
      */
     public void validateScoreSettings() {
-        // Check if max score is set
-        if (getMaxPoints() == null || getMaxPoints() <= 0) {
+        // Check IncludedInOverallScore
+        if (getIncludedInOverallScore() == null) {
+            throw new BadRequestAlertException("The IncludedInOverallScore-property must be set", "Exercise", "includedInOverallScoreNotSet");
+        }
+
+        if (this instanceof ProgrammingExercise && getIncludedInOverallScore() == IncludedInOverallScore.NOT_INCLUDED) {
+            if (getMaxPoints() == null) {
+                setMaxPoints(0.0);
+            }
+            else if (getMaxPoints() < 0) {
+                throw new BadRequestAlertException("The max points must not be negative", "Exercise", "maxScoreInvalid");
+            }
+        }
+        // Check if max score is set for exercises that contribute to the score calculation.
+        else if (getMaxPoints() == null || getMaxPoints() <= 0) {
             throw new BadRequestAlertException("The max points needs to be greater than 0", "Exercise", "maxScoreInvalid");
         }
 
         if (getBonusPoints() == null || getBonusPoints() < 0) {
             // Correct invalid bonusPoints to default value (prevents invalid state)
             setBonusPoints(0.0);
-        }
-
-        // Check IncludedInOverallScore
-        if (getIncludedInOverallScore() == null) {
-            throw new BadRequestAlertException("The IncludedInOverallScore-property must be set", "Exercise", "includedInOverallScoreNotSet");
         }
 
         if (!getIncludedInOverallScore().validateBonusPoints(getBonusPoints())) {

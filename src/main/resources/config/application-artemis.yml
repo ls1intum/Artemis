@@ -90,13 +90,15 @@ artemis:
   hyperion:
     enabled: false  # Set this to true to enable the hyperion service on startup, requires Spring AI to be configured below.
   llm:  # Shared LLM configuration for Spring AI-based services (Hyperion, Atlas)
-    # Token costs (EUR per million tokens). Baselines incl. gpt-5.4 / gpt-5.4-mini are seeded in
-    # LLMModelCostConfiguration; add entries here only to override or register a model (dotted keys
-    # must be bracket-quoted, e.g. "[gpt-5.4]").
-    model-costs:
-      gpt-5-mini:
-        input-cost-per-million-eur: 0.23
-        output-cost-per-million-eur: 1.84
+    # Token costs (EUR per million tokens). Baselines (gpt-5-mini, gpt-5.4, gpt-5.4-mini) are seeded in
+    # LLMModelCostConfiguration. Add entries here only to override or register a model. Keep this commented:
+    # an active entry here uses a literal key (e.g. gpt-5-mini) that would collide with the same model
+    # configured via environment variables (where it arrives stripped, e.g. gpt5mini). Dotted keys must be
+    # bracket-quoted, e.g. "[gpt-5.4]".
+    # model-costs:
+    #   "[gpt-5.4]":
+    #     input-cost-per-million-eur: 2.30
+    #     output-cost-per-million-eur: 13.80
   atlas:
     # *-model values are Azure deployment aliases — replace with your own deployment names.
     chat-model: gpt-5.4-mini
@@ -108,6 +110,12 @@ artemis:
       model: gpt-5.4
       temperature: 1.0
       reasoning-effort: medium
+      # Automatic competency orchestration (Feature.AtlasAgent). Disabled by default;
+      # admins flip the toggle to opt the instance in. The scheduler ticks at scheduler-rate-ms and only
+      # claims a course's bucket once debounce-window-seconds have elapsed since the last content edit.
+      debounce-window-seconds: 1800
+      max-daily-orchestrations: 10
+      scheduler-rate-ms: 30000
     atlasml:
       enabled: false # If disabled, no artifacts of the AtlasML service are accessible. This might impact the experience for instructors, i.e. some of the AI recommendations are not available.
       base-url: <your-atlasml-url> # Required address to you own AtlasML instance
@@ -133,6 +141,7 @@ artemis:
     enabled: false
     url: <your-pyris-url>
     secret-token: <your-secret>
+    response-streaming-enabled: true
     dashboard:
       max-query-window-days: 90
       stale-threshold-minutes: 5

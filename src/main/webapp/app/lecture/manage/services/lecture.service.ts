@@ -202,6 +202,7 @@ export class LectureService {
                 return this.convertLectureDatesFromServer(lecture)!;
             });
         }
+        return undefined;
     }
 
     private sendTitlesToEntityTitleService(lecture: Lecture | undefined | null) {

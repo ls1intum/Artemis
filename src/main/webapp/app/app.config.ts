@@ -8,10 +8,8 @@ import { ApplicationConfig, ErrorHandler, LOCALE_ID, importProvidersFrom, inject
 import { Title } from '@angular/platform-browser';
 import { provideRouter, withRouterConfig } from '@angular/router';
 import { ServiceWorkerModule } from '@angular/service-worker';
-import { NgbDateAdapter } from '@ng-bootstrap/ng-bootstrap';
 import { MissingTranslationHandler, provideTranslateService } from '@ngx-translate/core';
 import routes from 'app/app.routes';
-import { NgbDateDayjsAdapter } from 'app/core/config/datepicker-adapter';
 import { missingTranslationHandler, translateHttpLoaderProviders } from 'app/core/config/translation.config';
 import { ArtemisVersionInterceptor, WINDOW_INJECTOR_TOKEN } from 'app/core/interceptor/artemis-version.interceptor';
 import { AuthExpiredInterceptor } from 'app/core/interceptor/auth-expired.interceptor';
@@ -26,11 +24,9 @@ import { JhiLanguageHelper } from 'app/core/language/shared/language.helper';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { lastValueFrom } from 'rxjs';
 import { SentryErrorHandler } from 'app/core/sentry/sentry.error-handler';
-import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { LoadingNotificationInterceptor } from 'app/core/loading-notification/loading-notification.interceptor';
 import { ArtemisNavigationUtilService } from 'app/foundation/util/navigation.utils';
-import { Configuration } from 'app/openapi/configuration';
 import { providePrimeNG } from 'primeng/config';
 import { DialogService } from 'primeng/dynamicdialog';
 import { AuraArtemis } from './primeng-artemis-theme';
@@ -42,7 +38,7 @@ export const appConfig: ApplicationConfig = {
         // NB: `BrowserModule` is intentionally NOT listed here. Standalone Angular apps bootstrap
         // via `bootstrapApplication` and don't need `BrowserModule`; its providers (notably
         // DOM/debug helpers) otherwise pull the `_debug_node` chunk (~160 KB) into production.
-        importProvidersFrom(ScrollingModule, OwlNativeDateTimeModule),
+        importProvidersFrom(ScrollingModule),
         provideTranslateService({
             loader: translateHttpLoaderProviders,
             missingTranslationHandler: {
@@ -62,7 +58,6 @@ export const appConfig: ApplicationConfig = {
         provideHttpClient(withInterceptorsFromDi()),
         Title,
         { provide: LOCALE_ID, useValue: 'en' },
-        { provide: NgbDateAdapter, useClass: NgbDateDayjsAdapter },
         // Sentry's TraceService / BrowserTracing is no longer eagerly wired up from here. The
         // tracing integration is attached by `SentryErrorHandler.initSentry()` once the profile
         // is known, so production traffic keeps full Sentry performance coverage while the
@@ -92,7 +87,9 @@ export const appConfig: ApplicationConfig = {
                       // from booting. We log so the failure is observable but recover by rendering
                       // the landing page (or sign-in if the user navigates there manually).
                       .catch((error) => {
-                          // eslint-disable-next-line no-undef
+                          // Runs inside APP_INITIALIZER, before AppComponent initializes Sentry (see app.main), so
+                          // captureException would be a no-op here; log to the console so the failure stays observable.
+                          // eslint-disable-next-line no-console, no-undef -- app-initializer diagnostic; Sentry is not yet initialized
                           console.warn('SAML2 second-step exchange failed during app initialization', error);
                           return undefined;
                       })
@@ -113,7 +110,9 @@ export const appConfig: ApplicationConfig = {
             // and a flaky i18n endpoint must degrade gracefully (missing-key placeholders, same as
             // the previous fire-and-forget behavior) rather than block the SPA from booting at all.
             const translationsLoaded = lastValueFrom(translateService.use(languageKey)).catch((error) => {
-                // eslint-disable-next-line no-undef
+                // Runs inside APP_INITIALIZER, before AppComponent initializes Sentry (see app.main), so
+                // captureException would be a no-op here; log to the console so a flaky i18n load stays observable.
+                // eslint-disable-next-line no-console, no-undef -- app-initializer diagnostic; Sentry is not yet initialized
                 console.warn('Translation load failed during app initialization', error);
                 return undefined;
             });
@@ -162,7 +161,6 @@ export const appConfig: ApplicationConfig = {
             useClass: ArtemisVersionInterceptor,
             multi: true,
         },
-        { provide: Configuration, useFactory: () => new Configuration({ withCredentials: true, basePath: '' }) },
         providePrimeNG({
             theme: {
                 preset: AuraArtemis,

@@ -14,14 +14,11 @@ import { CourseCompetencyFormData } from 'app/atlas/manage/forms/course-competen
 import { By } from '@angular/platform-browser';
 import { CommonCourseCompetencyFormComponent } from 'app/atlas/manage/forms/common-course-competency-form.component';
 import { CourseCompetencyService } from 'app/atlas/shared/services/course-competency.service';
-import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 import { MockResizeObserver } from 'test/helpers/mocks/service/mock-resize-observer';
 import { MarkdownEditorMonacoComponent } from 'app/editor/markdown-editor/monaco/markdown-editor-monaco.component';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('CompetencyFormComponent', () => {
-    setupTestBed({ zoneless: true });
     let competencyFormComponentFixture: ComponentFixture<CompetencyFormComponent>;
     let competencyFormComponent: CompetencyFormComponent;
 
@@ -29,7 +26,7 @@ describe('CompetencyFormComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [OwlNativeDateTimeModule, CommonCourseCompetencyFormComponent, MockComponent(MarkdownEditorMonacoComponent)],
+            imports: [CommonCourseCompetencyFormComponent, MockComponent(MarkdownEditorMonacoComponent)],
             declarations: [],
             providers: [
                 MockProvider(CourseCompetencyService, {

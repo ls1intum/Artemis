@@ -1,5 +1,4 @@
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { BrowserTestingModule, platformBrowserTesting } from '@angular/platform-browser/testing';
 import { ActivatedRoute } from '@angular/router';
@@ -35,8 +34,6 @@ import { ProgrammingExerciseInstructorRepoDownloadComponent } from 'app/programm
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 
 describe('RepositoryViewComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: RepositoryViewComponent;
     let fixture: ComponentFixture<RepositoryViewComponent>;
     let mockDomainService: Partial<DomainService>;
@@ -234,6 +231,34 @@ describe('RepositoryViewComponent', () => {
         // Expect subscription to be unsubscribed
         expect(component.differentParticipationSub?.closed).toBe(true);
         expect(component.paramSub?.closed).toBe(true);
+    });
+
+    it('should clear stale participation when switching from TEMPLATE to TESTS repository type', () => {
+        const mockExercise: ProgrammingExercise = {
+            id: 1,
+            templateParticipation: { id: 2, repositoryUri: 'template-repo-uri' },
+            testRepositoryUri: 'test-repo-uri',
+            numberOfAssessmentsOfCorrectionRounds: [new DueDateStat()],
+            studentAssignedTeamIdComputed: true,
+            secondCorrectionEnabled: true,
+        };
+        const mockExerciseResponse: HttpResponse<ProgrammingExercise> = new HttpResponse({ body: mockExercise });
+        vi.spyOn(programmingExerciseService, 'findWithTemplateAndSolutionParticipationAndLatestResults').mockReturnValue(of(mockExerciseResponse));
+
+        activatedRoute.setParameters({ exerciseId: 1, repositoryType: 'TEMPLATE' });
+        component.ngOnInit();
+
+        expect(component.participation()).toEqual(mockExercise.templateParticipation);
+        expect(component.repositoryUri()).toBe('template-repo-uri');
+
+        activatedRoute.setParameters({ exerciseId: 1, repositoryType: 'TESTS' });
+
+        expect(component.participation()).toBeUndefined();
+        expect(component.repositoryUri()).toBe('test-repo-uri');
+        expect(component.auxiliaryRepositoryId()).toBeUndefined();
+        expect(component.domainService.setDomain).toHaveBeenLastCalledWith([DomainType.TEST_REPOSITORY, mockExercise]);
+
+        component.ngOnDestroy();
     });
 
     it('should load AUXILIARY repository type', () => {

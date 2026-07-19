@@ -5,15 +5,14 @@
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { BehaviorSubject, of, throwError } from 'rxjs';
 import { ActivatedRoute, Router } from '@angular/router';
 import { PaginatorState } from 'primeng/paginator';
+import { SortEvent } from 'primeng/api';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { TranslateService } from '@ngx-translate/core';
 import dayjs from 'dayjs/esm';
-import '@angular/localize/init';
 import { HttpErrorResponse, HttpHeaders, HttpResponse } from '@angular/common/http';
 
 import { SystemNotificationManagementComponent } from 'app/admin/system-notification-management/system-notification-management.component';
@@ -28,8 +27,6 @@ import { SystemNotificationService } from 'app/core/notification/system-notifica
 import { AdminSystemNotificationService } from 'app/core/notification/system-notification/admin-system-notification.service';
 
 describe('SystemNotificationManagementComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<SystemNotificationManagementComponent>;
     let component: SystemNotificationManagementComponent;
     let router: MockRouter;
@@ -198,6 +195,53 @@ describe('SystemNotificationManagementComponent', () => {
         });
     });
 
+    describe('onTableSort (PrimeNG table)', () => {
+        it('ignores events without a field', () => {
+            const transitionSpy = vi.spyOn(component, 'transition');
+
+            component.onTableSort({} as SortEvent);
+
+            expect(transitionSpy).not.toHaveBeenCalled();
+        });
+
+        it('does not reload when the sort is unchanged (breaks the infinite-fetch loop, issue #13263)', () => {
+            // PrimeNG re-emits onSort with the current sort whenever the table value changes.
+            component.predicate.set('id');
+            component.reverse.set(true);
+            const transitionSpy = vi.spyOn(component, 'transition');
+
+            component.onTableSort({ field: 'id', order: 1 } as SortEvent);
+
+            expect(transitionSpy).not.toHaveBeenCalled();
+            expect(component.predicate()).toBe('id');
+            expect(component.reverse()).toBe(true);
+        });
+
+        it('reloads when the sort field changes', () => {
+            component.predicate.set('id');
+            component.reverse.set(true);
+            const transitionSpy = vi.spyOn(component, 'transition').mockImplementation(() => {});
+
+            component.onTableSort({ field: 'title', order: 1 } as SortEvent);
+
+            expect(component.predicate()).toBe('title');
+            expect(component.reverse()).toBe(true);
+            expect(transitionSpy).toHaveBeenCalledOnce();
+        });
+
+        it('reloads when only the sort order changes', () => {
+            component.predicate.set('id');
+            component.reverse.set(true);
+            const transitionSpy = vi.spyOn(component, 'transition').mockImplementation(() => {});
+
+            component.onTableSort({ field: 'id', order: -1 } as SortEvent);
+
+            expect(component.predicate()).toBe('id');
+            expect(component.reverse()).toBe(false);
+            expect(transitionSpy).toHaveBeenCalledOnce();
+        });
+    });
+
     describe('getNotificationState', () => {
         it('should return SCHEDULED for future notifications', () => {
             const notification = new SystemNotification();
@@ -284,20 +328,6 @@ describe('SystemNotificationManagementComponent', () => {
             const result = component.sort();
 
             expect(result).toEqual(['id,asc']);
-        });
-    });
-
-    describe('trackIdentity', () => {
-        it('should return notification id', () => {
-            const notification = { id: 5 } as SystemNotification;
-
-            expect(component.trackIdentity(0, notification)).toBe(5);
-        });
-
-        it('should return -1 when id is undefined', () => {
-            const notification = {} as SystemNotification;
-
-            expect(component.trackIdentity(0, notification)).toBe(-1);
         });
     });
 

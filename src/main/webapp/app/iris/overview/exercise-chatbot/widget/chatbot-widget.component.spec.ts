@@ -1,13 +1,12 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { BreakpointObserver, BreakpointState, Breakpoints } from '@angular/cdk/layout';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { IrisChatbotWidgetComponent } from 'app/iris/overview/exercise-chatbot/widget/chatbot-widget.component';
 import { IrisChatService } from 'app/iris/overview/services/iris-chat.service';
 import { IrisBaseChatbotComponent } from 'app/iris/overview/base-chatbot/iris-base-chatbot.component';
 import { MockIrisBaseChatbotComponent } from 'app/iris/overview/exercise-chatbot/widget/chatbot-widget.component.mock';
 import { MockProvider } from 'ng-mocks';
-import { MAT_DIALOG_DATA, MatDialog } from '@angular/material/dialog';
+import { DynamicDialogRef } from 'primeng/dynamicdialog';
 import { NavigationStart, Router } from '@angular/router';
 import { BehaviorSubject, Subject } from 'rxjs';
 import { By } from '@angular/platform-browser';
@@ -20,12 +19,10 @@ function pointer(target: EventTarget, type: string, clientX: number, clientY: nu
 }
 
 describe('IrisChatbotWidgetComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: IrisChatbotWidgetComponent;
     let fixture: ComponentFixture<IrisChatbotWidgetComponent>;
     let breakpoint$: BehaviorSubject<BreakpointState>;
-    let dialog: MatDialog;
+    let dialogRef: DynamicDialogRef;
     let routerEvents$: Subject<unknown>;
 
     beforeEach(async () => {
@@ -38,9 +35,8 @@ describe('IrisChatbotWidgetComponent', () => {
             imports: [IrisChatbotWidgetComponent],
             providers: [
                 MockProvider(IrisChatService),
-                { provide: MatDialog, useValue: { closeAll: vi.fn() } },
+                { provide: DynamicDialogRef, useValue: { close: vi.fn() } },
                 { provide: Router, useValue: { events: routerEvents$.asObservable() } },
-                { provide: MAT_DIALOG_DATA, useValue: { isChatGptWrapper: false } },
                 {
                     provide: BreakpointObserver,
                     useValue: {
@@ -59,7 +55,7 @@ describe('IrisChatbotWidgetComponent', () => {
         fixture = TestBed.createComponent(IrisChatbotWidgetComponent);
         component = fixture.componentInstance;
 
-        dialog = TestBed.inject(MatDialog);
+        dialogRef = TestBed.inject(DynamicDialogRef);
         fixture.detectChanges();
     });
 
@@ -71,18 +67,18 @@ describe('IrisChatbotWidgetComponent', () => {
         expect(component).toBeTruthy();
     });
 
-    it('should call closeAll on dialog when closeChat is called', () => {
-        const closeAllSpy = vi.spyOn(dialog, 'closeAll');
+    it('should close the dialog when closeChat is called', () => {
+        const closeSpy = vi.spyOn(dialogRef, 'close');
         component.closeChat();
-        expect(closeAllSpy).toHaveBeenCalled();
+        expect(closeSpy).toHaveBeenCalled();
     });
 
-    it('should close all dialogs on NavigationStart', () => {
-        const closeAllSpy = vi.spyOn(dialog, 'closeAll');
+    it('should close the dialog on NavigationStart', () => {
+        const closeSpy = vi.spyOn(dialogRef, 'close');
 
         routerEvents$.next(new NavigationStart(1, '/somewhere'));
 
-        expect(closeAllSpy).toHaveBeenCalled();
+        expect(closeSpy).toHaveBeenCalled();
     });
 
     it('should toggle fullSize and call setPositionAndScale when toggleFullSize is called', () => {
@@ -132,9 +128,10 @@ describe('IrisChatbotWidgetComponent', () => {
             matches: true,
             breakpoints: { [Breakpoints.Handset]: true },
         });
-        // Setup DOM
+        // Setup DOM — the widget now lives in a PrimeNG DynamicDialog, so its bounding container
+        // is the dialog mask wrapper (.p-dialog-mask).
         const overlay = document.createElement('div');
-        overlay.className = 'cdk-overlay-container';
+        overlay.className = 'p-dialog-mask';
 
         overlay.getBoundingClientRect = vi.fn(() => ({
             x: 0,
@@ -162,16 +159,16 @@ describe('IrisChatbotWidgetComponent', () => {
         document.body.removeChild(widget);
     });
 
-    it('should not throw if cdk-overlay-container or chat-widget is missing in setPositionAndScale', () => {
+    it('should not throw if the dialog mask or chat-widget is missing in setPositionAndScale', () => {
         expect(() => component.setPositionAndScale()).not.toThrow();
     });
 
-    /** Builds the overlay container + a chat widget (with header) in the DOM and wires the pointer handlers. */
+    /** Builds the dialog mask container + a chat widget (with header) in the DOM and wires the pointer handlers. */
     function setupWidget(rect: { left: number; top: number; width: number; height: number }): { overlay: HTMLElement; widget: HTMLElement; header: HTMLElement } {
         // Ensure the component binds to OUR test widget (not the one rendered by the fixture template).
-        document.querySelectorAll('.chat-widget, .cdk-overlay-container').forEach((el) => el.remove());
+        document.querySelectorAll('.chat-widget, .p-dialog-mask, .cdk-overlay-container').forEach((el) => el.remove());
         const overlay = document.createElement('div');
-        overlay.className = 'cdk-overlay-container';
+        overlay.className = 'p-dialog-mask';
         overlay.getBoundingClientRect = vi.fn(() => ({ x: 0, y: 0, width: 1000, height: 1000, top: 0, right: 1000, bottom: 1000, left: 0, toJSON: () => {} }));
         document.body.appendChild(overlay);
 

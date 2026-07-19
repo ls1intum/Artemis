@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import dayjs from 'dayjs/esm';
 import { OnlineUnitFormComponent, OnlineUnitFormData } from 'app/lecture/manage/lecture-units/online-unit-form/online-unit-form.component';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
@@ -11,7 +10,6 @@ import { OnlineUnitService } from 'app/lecture/manage/lecture-units/services/onl
 import { OnlineResourceDTO } from 'app/lecture/manage/lecture-units/online-resource-dto.model';
 import { HttpResponse } from '@angular/common/http';
 import { of } from 'rxjs';
-import { OwlDateTimeModule, OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
@@ -22,8 +20,6 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 
 describe('OnlineUnitFormComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let onlineUnitFormComponentFixture: ComponentFixture<OnlineUnitFormComponent>;
     let onlineUnitFormComponent: OnlineUnitFormComponent;
 
@@ -33,8 +29,6 @@ describe('OnlineUnitFormComponent', () => {
                 ReactiveFormsModule,
                 FormsModule,
                 MockModule(NgbTooltipModule),
-                OwlDateTimeModule,
-                OwlNativeDateTimeModule,
                 FontAwesomeTestingModule,
                 OnlineUnitFormComponent,
                 FormDateTimePickerComponent,

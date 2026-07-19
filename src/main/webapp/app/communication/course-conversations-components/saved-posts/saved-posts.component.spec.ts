@@ -1,5 +1,4 @@
 import { type Mocked, afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { SavedPostsComponent } from 'app/communication/course-conversations-components/saved-posts/saved-posts.component';
 import { SavedPostService } from 'app/communication/service/saved-post.service';
@@ -13,10 +12,9 @@ import { PostingSummaryComponent } from 'app/communication/course-conversations-
 import { AlertService } from 'app/foundation/service/alert.service';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { CourseSidebarService } from 'app/course/overview/services/course-sidebar.service';
 
 describe('SavedPostsComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: SavedPostsComponent;
     let fixture: ComponentFixture<SavedPostsComponent>;
     let savedPostService: Mocked<SavedPostService>;
@@ -155,6 +153,14 @@ describe('SavedPostsComponent', () => {
             component['onTriggerNavigateToPost'](mockPosting);
 
             expect(emitSpy).toHaveBeenCalledWith(mockPosting);
+        });
+
+        it('should open the sidebar when openSidebar is called', () => {
+            const openSidebarSpy = vi.spyOn(TestBed.inject(CourseSidebarService), 'openSidebar');
+
+            component['openSidebar']();
+
+            expect(openSidebarSpy).toHaveBeenCalledOnce();
         });
     });
 

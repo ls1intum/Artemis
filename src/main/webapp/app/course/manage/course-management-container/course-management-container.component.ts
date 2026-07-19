@@ -1,11 +1,11 @@
 import { AfterViewInit, Component, DestroyRef, ElementRef, OnDestroy, OnInit, inject, signal, viewChild } from '@angular/core';
+import { CdkScrollable } from '@angular/cdk/scrolling';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { NavigationEnd, RouterLink, RouterOutlet } from '@angular/router';
+import { NavigationEnd, Params, RouterOutlet } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Observable, Subject, of } from 'rxjs';
 import { distinctUntilChanged, filter, map, startWith } from 'rxjs/operators';
 import { NgClass, NgTemplateOutlet } from '@angular/common';
-import { MatSidenav, MatSidenavContainer, MatSidenavContent } from '@angular/material/sidenav';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
 
 import {
@@ -27,7 +27,6 @@ import {
     faWrench,
 } from '@fortawesome/free-solid-svg-icons';
 import { FeatureToggle, FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
-import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { CourseExamArchiveButtonComponent } from 'app/shared-ui/components/buttons/course-exam-archive-button/course-exam-archive-button.component';
 import { CourseSidebarComponent, SidebarItem } from 'app/course/shared/course-sidebar/course-sidebar.component';
 import { EventManager } from 'app/foundation/service/event-manager.service';
@@ -65,6 +64,7 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { IS_AT_LEAST_ADMIN } from 'app/foundation/constants/authority.constants';
 import { Subscription } from 'rxjs';
 import { convertDateFromServer } from 'app/foundation/util/date.utils';
+import { AutoOrchestrationNotificationService } from 'app/atlas/shared/services/auto-orchestration-notification.service';
 
 @Component({
     selector: 'jhi-course-management-container',
@@ -72,14 +72,10 @@ import { convertDateFromServer } from 'app/foundation/util/date.utils';
     styleUrls: ['course-management-container.component.scss'],
     providers: [MetisConversationService],
     imports: [
+        CdkScrollable,
         NgClass,
-        MatSidenavContainer,
-        MatSidenavContent,
-        MatSidenav,
-        RouterLink,
         RouterOutlet,
         NgTemplateOutlet,
-        TranslateDirective,
         CourseSidebarComponent,
         CourseExamArchiveButtonComponent,
         CourseTitleBarComponent,
@@ -97,6 +93,10 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
     private readonly sidebarItemService = inject(CourseSidebarItemService);
     private readonly courseAdminService = inject(CourseAdminService);
     private readonly websocketService = inject(WebsocketService);
+    private readonly autoOrchestrationNotificationService = inject(AutoOrchestrationNotificationService);
+
+    private autoOrchestrationCourseId?: number;
+    private autoOrchestrationActive = false;
 
     protected readonly faTimes = faTimes;
     protected readonly faEye = faEye;
@@ -130,7 +130,6 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
     private learningPathsActive = signal(false);
     courseBody = viewChild<ElementRef<HTMLElement>>('courseBodyContainer');
     isSettingsPage = signal(false);
-    studentViewLink = signal<string[]>([]);
 
     // Stream of finalized URLs (after redirects), seeded with the current URL for reloads
     private readonly finalizedUrl$ = this.router.events.pipe(
@@ -167,8 +166,8 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
         | undefined
     >(undefined);
 
-    async ngOnInit() {
-        this.route.firstChild?.params.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params: { courseId: string }) => {
+    override async ngOnInit() {
+        this.route.firstChild?.params.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params: Params) => {
             const id = Number(params.courseId);
             this.handleCourseIdChange(id);
             this.checkIfSettingsPage();
@@ -181,17 +180,30 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
                 this.learningPathsActive.set(isActive);
             });
 
+        this.featureToggleService
+            .getFeatureToggleActive(FeatureToggle.AtlasAgent)
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe((isActive) => {
+                this.autoOrchestrationActive = isActive;
+                const currentCourseId = this.courseId();
+                if (isActive && currentCourseId !== undefined) {
+                    this.subscribeToAutoOrchestrationNotifications(currentCourseId);
+                } else if (!isActive && this.autoOrchestrationCourseId !== undefined) {
+                    this.autoOrchestrationNotificationService.unsubscribeFromCourse(this.autoOrchestrationCourseId);
+                    this.autoOrchestrationCourseId = undefined;
+                }
+            });
+
         await super.ngOnInit();
 
         // Subscribe to course modifications and reload the course after a change.
         this.eventSubscriber = this.eventManager.subscribe('courseModification', () => {
-            this.subscribeToCourseUpdates(this.courseId()!);
+            this.subscribeToCourseUpdates(this.courseId());
         });
     }
 
-    protected handleNavigationEndActions(): void {
+    protected override handleNavigationEndActions(): void {
         this.checkIfSettingsPage();
-        this.determineStudentViewLink();
     }
 
     private checkIfSettingsPage() {
@@ -202,9 +214,23 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
 
     handleCourseIdChange(courseId: number): void {
         this.courseId.set(courseId);
-        this.determineStudentViewLink();
         this.subscribeToCourseUpdates(courseId);
         this.subscribeToOperationProgress(courseId);
+        this.subscribeToAutoOrchestrationNotifications(courseId);
+    }
+
+    private subscribeToAutoOrchestrationNotifications(courseId: number) {
+        if (!this.autoOrchestrationActive) {
+            return;
+        }
+        if (this.autoOrchestrationCourseId === courseId) {
+            return;
+        }
+        if (this.autoOrchestrationCourseId !== undefined) {
+            this.autoOrchestrationNotificationService.unsubscribeFromCourse(this.autoOrchestrationCourseId);
+        }
+        this.autoOrchestrationNotificationService.subscribeToCourse(courseId);
+        this.autoOrchestrationCourseId = courseId;
     }
 
     private subscribeToOperationProgress(courseId: number) {
@@ -225,61 +251,22 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
         this.operationProgress.set(undefined);
         // Navigate to course list after closing a completed delete operation
         if (progress?.operationType === CourseOperationType.DELETE) {
-            this.router.navigate(['/course-management']);
+            void this.router.navigate(['/course-management']);
         }
-    }
-
-    determineStudentViewLink() {
-        const courseIdString = this.courseId().toString();
-        const routerUrl = this.router.url;
-        const baseStudentPath = ['/courses', courseIdString];
-
-        const routeMappings = [
-            { urlPart: 'exams', targetPath: [...baseStudentPath, 'exams'] },
-            { urlPart: 'exercises', targetPath: [...baseStudentPath, 'exercises'] },
-            { urlPart: 'lectures', targetPath: [...baseStudentPath, 'lectures'] },
-            { urlPart: 'communication', targetPath: [...baseStudentPath, 'communication'] },
-            { urlPart: 'learning-path-management', targetPath: [...baseStudentPath, 'learning-path'] },
-            { urlPart: 'competency-management', targetPath: [...baseStudentPath, 'competencies'] },
-            { urlPart: 'faqs', targetPath: [...baseStudentPath, 'faq'] },
-            {
-                urlPart: ['tutorial-groups', 'tutorial-groups-checklist'],
-                targetPath: [...baseStudentPath, 'tutorial-groups'],
-                matcher: (url: string | string[], parts: string[]) => parts.some((part) => url.includes(part)),
-            },
-            { urlPart: 'course-statistics', targetPath: [...baseStudentPath, 'statistics'] },
-        ];
-
-        const defaultPath = [...baseStudentPath, 'dashboard'];
-
-        const matchedRoute = routeMappings.find((route) => {
-            if (route.matcher) {
-                return route.matcher(routerUrl, Array.isArray(route.urlPart) ? route.urlPart : [route.urlPart]);
-            }
-            return routerUrl.includes(route.urlPart);
-        });
-
-        // Hide Student View button for routes that have no corresponding student view
-        if (routerUrl.includes('build-overview')) {
-            this.studentViewLink.set([]);
-            return;
-        }
-
-        this.studentViewLink.set(matchedRoute ? matchedRoute.targetPath : defaultPath);
     }
 
     private subscribeToCourseUpdates(courseId: number) {
         this.courseSub?.unsubscribe();
         this.courseSub = this.courseManagementService.find(courseId).subscribe((courseResponse) => {
             if (courseResponse.body) {
-                this.course.set(courseResponse.body!);
+                this.course.set(courseResponse.body);
             }
             this.sidebarItems.set(this.getSidebarItems());
         });
     }
 
     loadCourse(): Observable<void> {
-        return this.courseManagementService.findOneForDashboard(this.courseId()!).pipe(
+        return this.courseManagementService.findOneForDashboard(this.courseId()).pipe(
             map((res: HttpResponse<Course>) => {
                 if (res.body) {
                     this.course.set(res.body);
@@ -292,7 +279,7 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
         return this.communicationRouteLoaded();
     }
 
-    protected handleComponentActivation(componentRef: any): void {
+    protected handleComponentActivation(componentRef: unknown): void {
         if (
             componentRef instanceof CourseDetailComponent ||
             componentRef instanceof CourseManagementExercisesComponent ||
@@ -416,11 +403,15 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
         return irisItems;
     }
 
-    ngOnDestroy() {
+    override ngOnDestroy() {
         super.ngOnDestroy();
         this.courseSub?.unsubscribe();
         this.progressSubscription?.unsubscribe();
         this.eventSubscriber?.unsubscribe();
+        if (this.autoOrchestrationCourseId !== undefined) {
+            this.autoOrchestrationNotificationService.unsubscribeFromCourse(this.autoOrchestrationCourseId);
+            this.autoOrchestrationCourseId = undefined;
+        }
     }
 
     fetchCourseDeletionSummary(): Observable<EntitySummaryCategory[]> {

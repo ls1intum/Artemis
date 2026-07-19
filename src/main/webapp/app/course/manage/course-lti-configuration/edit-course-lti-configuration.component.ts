@@ -14,7 +14,8 @@ import { LtiConfigurationService } from 'app/admin/lti-configuration/lti-configu
 import { ITEMS_PER_PAGE } from 'app/foundation/constants/pagination.constants';
 import { HttpHeaders, HttpResponse } from '@angular/common/http';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { NgbDropdown, NgbDropdownButtonItem, NgbDropdownItem, NgbDropdownMenu, NgbDropdownToggle, NgbPagination, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { NgbDropdown, NgbDropdownButtonItem, NgbDropdownItem, NgbDropdownMenu, NgbDropdownToggle, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { PaginatorModule, PaginatorState } from 'primeng/paginator';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { KeyValuePipe } from '@angular/common';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -36,7 +37,7 @@ import { IS_AT_LEAST_ADMIN } from 'app/foundation/constants/authority.constants'
         NgbDropdownButtonItem,
         NgbDropdownItem,
         NgbTooltip,
-        NgbPagination,
+        PaginatorModule,
         FaIconComponent,
         KeyValuePipe,
         ArtemisTranslatePipe,
@@ -62,7 +63,7 @@ export class EditCourseLtiConfigurationComponent implements OnInit {
 
     readonly course = signal<Course>(undefined!);
     readonly onlineCourseConfiguration = signal<OnlineCourseConfiguration>(undefined!);
-    onlineCourseConfigurationForm: FormGroup;
+    onlineCourseConfigurationForm!: FormGroup; // built in ngOnInit()
     readonly ltiConfiguredPlatforms = signal<LtiPlatformConfiguration[]>([]);
 
     readonly page = signal(1);
@@ -113,12 +114,20 @@ export class EditCourseLtiConfigurationComponent implements OnInit {
     }
 
     transition(): void {
-        this.router.navigate(['/admin/lti-configuration'], {
+        void this.router.navigate(['/admin/lti-configuration'], {
             queryParams: {
                 page: this.page(),
                 sort: ['id', 'asc'],
             },
         });
+    }
+
+    /**
+     * Handles a PrimeNG paginator page change. The event page is 0-indexed, so it is converted to the 1-indexed page.
+     */
+    onPageChange(event: PaginatorState): void {
+        this.page.set((event.page ?? 0) + 1);
+        this.transition();
     }
 
     /**
@@ -162,7 +171,7 @@ export class EditCourseLtiConfigurationComponent implements OnInit {
      * Returns to the lti configuration page
      */
     navigateToLtiConfigurationPage() {
-        this.router.navigate(['course-management', this.course().id!.toString(), 'lti-configuration']);
+        void this.router.navigate(['course-management', this.course().id!.toString(), 'lti-configuration']);
     }
 
     setPlatform(platform: LtiPlatformConfiguration) {

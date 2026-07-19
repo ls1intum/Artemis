@@ -21,7 +21,7 @@ export class ProgrammingExerciseExampleSolutionRepoDownloadComponent extends Pro
     readonly includeTests = input<boolean>();
     readonly displayedOnExamSummary = input(false);
 
-    exportRepository() {
+    override exportRepository() {
         const exerciseId = this.exerciseId();
         if (exerciseId) {
             this.programmingExerciseService.exportStudentRequestedRepository(exerciseId, this.includeTests() ?? false).subscribe((response) => {

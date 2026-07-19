@@ -58,7 +58,7 @@ export abstract class CalendarOverviewComponent {
                     const courseIdParameter = parameterMap.get('courseId');
                     return courseIdParameter !== null ? Number(courseIdParameter) : undefined;
                 }),
-                distinctUntilChanged(),
+                distinctUntilChanged<number | undefined>(),
             ),
             { initialValue: undefined },
         );

@@ -1,5 +1,4 @@
 import { vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { Component, DebugElement } from '@angular/core';
@@ -13,15 +12,16 @@ import { Subject } from 'rxjs';
 
 @Component({
     selector: 'jhi-test-component',
-    template: '<button jhiDeleteButton [actionType]="actionType" entityTitle="title" deleteQuestion="question" deleteConfirmationText="text"></button>',
+    template:
+        '<button jhiDeleteButton [renderButtonStyle]="renderStyle" [actionType]="actionType" entityTitle="title" deleteQuestion="question" deleteConfirmationText="text"></button>',
     imports: [DeleteButtonDirective],
 })
 class TestComponent {
     actionType = ActionType.Delete;
+    renderStyle = true;
 }
 
 describe('DeleteDialogDirective', () => {
-    setupTestBed({ zoneless: true });
     let comp: TestComponent;
     let fixture: ComponentFixture<TestComponent>;
     let debugElement: DebugElement;
@@ -83,6 +83,18 @@ describe('DeleteDialogDirective', () => {
         expect(directiveInstance.entityTitle()).toBe('title');
         expect(directiveInstance.deleteQuestion()).toBe('question');
         expect(directiveInstance.deleteConfirmationText()).toBe('text');
+    });
+
+    it('should give the PrimeNG-styled (icon-only) button a translated aria-label and no Bootstrap span/classes', () => {
+        comp.renderStyle = false;
+        fixture.detectChanges();
+
+        expect(debugElement.query(By.css('.d-none.d-xl-inline'))).toBeNull();
+        expect(debugElement.query(By.css('.btn'))).toBeNull();
+
+        // The icon-only path has no visible text, so the directive must supply an accessible name.
+        const button = debugElement.query(By.css('button[jhiDeleteButton]'));
+        expect(button.nativeElement.getAttribute('aria-label')).toContain('entity.action.delete');
     });
 
     it('on click should call delete dialog service', () => {

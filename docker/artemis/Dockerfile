@@ -22,7 +22,7 @@ ARG WAR_FILE_STAGE="builder"
 #-----------------------------------------------------------------------------------------------------------------------
 # build stage
 #-----------------------------------------------------------------------------------------------------------------------
-FROM --platform=$BUILDPLATFORM docker.io/library/eclipse-temurin:25-jdk AS builder
+FROM --platform=$BUILDPLATFORM docker.io/library/eclipse-temurin:25.0.3_9-jdk AS builder
 
 # python3/build-essential were previously installed defensively for npm deps that
 # trigger node-gyp; no current Artemis dep needs that. If a future dep does, the
@@ -39,8 +39,6 @@ COPY package.json pnpm-lock.yaml pnpm-workspace.yaml .npmrc ./
 # be present at install time (pnpm applies patches during resolution, not via a
 # postinstall hook like patch-package did).
 COPY patches patches/
-# also copy this script which is required by postinstall lifecycle hook
-COPY src/main/webapp/app/lecture/manage/pdf-preview/pdfjs_copy_worker_script.mjs ./src/main/webapp/app/lecture/manage/pdf-preview/
 
 # One Gradle invocation does both the cache config and the pnpm install. The
 # BuildKit pnpm-store cache mount below is reused on warm builds; pnpm's
@@ -87,12 +85,15 @@ COPY ./build/libs/*.war Artemis.war
 #-----------------------------------------------------------------------------------------------------------------------
 # war file stage (decides whether an external .war file will be used or the Docker built .war file)
 #-----------------------------------------------------------------------------------------------------------------------
+# WAR_FILE_STAGE resolves to a build stage defined above (builder / external_builder), not an
+# external image, so there is no version tag to pin (DL3006 is a false positive here).
+# hadolint ignore=DL3006
 FROM ${WAR_FILE_STAGE} AS war_file
 
 #-----------------------------------------------------------------------------------------------------------------------
 # runtime stage
 #-----------------------------------------------------------------------------------------------------------------------
-FROM docker.io/library/eclipse-temurin:25-jdk AS runtime
+FROM docker.io/library/eclipse-temurin:25.0.3_9-jdk AS runtime
 
 #default path of the built .war files
 ARG WAR_FILE_PATH="/opt/artemis/build/libs"
@@ -102,6 +103,9 @@ ARG GID=1337
 
 # Docker Compose: wget (healthcheck docker compose)
 # Artemis: graphviz, locales
+# Not pinning apt versions (DL3008): these are base-image system packages whose pinned versions age
+# out of the Debian repos and would break the image build over time.
+# hadolint ignore=DL3008
 RUN echo "Installing needed dependencies" \
   && apt-get update && apt-get install -y --no-install-recommends locales graphviz wget \
   && apt-get clean \
@@ -129,11 +133,28 @@ WORKDIR /opt/artemis
 
 COPY --chown=artemis:artemis --from=war_file ${WAR_FILE_PATH}/*.war Artemis.war
 
+RUN set -eu; \
+  war_entries="$(jar tf Artemis.war)"; \
+  if ! printf '%s\n' "$war_entries" | grep -qx 'WEB-INF/classes/static/index.html'; then \
+    echo "Artemis.war does not contain WEB-INF/classes/static/index.html. The Angular client is missing from the deployable WAR."; \
+    exit 1; \
+  fi; \
+  if ! printf '%s\n' "$war_entries" | grep -Eq '^WEB-INF/classes/static/main-.*\.js$'; then \
+    echo "Artemis.war does not contain a WEB-INF/classes/static/main-*.js bundle. The Angular client build is incomplete."; \
+    exit 1; \
+  fi
+
 VOLUME ["/opt/artemis/config"]
 VOLUME ["/opt/artemis/data"]
 VOLUME ["/opt/artemis/public/content"]
 
-EXPOSE 8080
+EXPOSE 8080 5701 7921
+
+# Mirrors docker/artemis.yml's compose-level healthcheck so `docker run`/`docker ps` report
+# health even for anyone running the raw image directly, outside the provided compose files.
+# When run via compose, the service's own `healthcheck:` block there takes precedence over this.
+HEALTHCHECK --interval=1s --timeout=5s --start-period=600s --retries=3 \
+  CMD wget -q -t1 -T5 -O - http://localhost:8080/management/health/readiness | grep -xq '{"status":"UP"}' || exit 1
 
 # use exec format (square brackets) as otherwise the shell fromat will not forward signals
 CMD [ "java", \

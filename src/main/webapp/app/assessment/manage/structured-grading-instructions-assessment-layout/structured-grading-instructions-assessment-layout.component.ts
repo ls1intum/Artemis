@@ -7,13 +7,13 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
-import { HtmlForMarkdownPipe } from 'app/foundation/pipes/html-for-markdown.pipe';
+import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
 
 @Component({
     selector: 'jhi-structured-grading-instructions-assessment-layout',
     templateUrl: './structured-grading-instructions-assessment-layout.component.html',
     styleUrls: ['./structured-grading-instructions-assessment-layout.component.scss'],
-    imports: [FaIconComponent, TranslateDirective, ExpandableSectionComponent, NgbTooltip, HelpIconComponent, HtmlForMarkdownPipe],
+    imports: [FaIconComponent, TranslateDirective, ExpandableSectionComponent, NgbTooltip, HelpIconComponent, MarkdownDirective],
 })
 export class StructuredGradingInstructionsAssessmentLayoutComponent implements OnInit {
     public readonly criteria = input.required<GradingCriterion[]>();
@@ -81,9 +81,9 @@ export class StructuredGradingInstructionsAssessmentLayoutComponent implements O
      * @param {Object} instruction - The SGI element that should be connected with the feedback on drop
      * the corresponding drop method is in AssessmentDetailComponent
      */
-    drag(event: any, instruction: GradingInstruction) {
+    drag(event: DragEvent, instruction: GradingInstruction) {
         // The mimetype has to be text/plain to enable dragging into an external application, e.g, Apollon
-        event.dataTransfer.setData('text/plain', JSON.stringify(instruction));
+        event.dataTransfer?.setData('text/plain', JSON.stringify(instruction));
     }
     /**
      * disables drag if on readOnly mode

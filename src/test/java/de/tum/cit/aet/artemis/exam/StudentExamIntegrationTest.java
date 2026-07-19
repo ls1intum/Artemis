@@ -139,6 +139,7 @@ import de.tum.cit.aet.artemis.quiz.test_repository.QuizSubmissionTestRepository;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationJenkinsLocalVCTest;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.domain.TextSubmission;
+import de.tum.cit.aet.artemis.text.dto.TextSubmissionRequestDTO;
 
 class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCTest {
 
@@ -842,6 +843,34 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
 
         assertThat(capturedEvent.newWorkingTime()).isEqualTo(newWorkingTime);
         assertThat(capturedEvent.oldWorkingTime()).isEqualTo(oldWorkingTime);
+        // The event also carries the exam's current schedule so a conducting student can refresh the countdown (#13071).
+        var examDb = examRepository.findById(exam1.getId()).orElseThrow();
+        assertThat(capturedEvent.newStartDate()).isEqualTo(examDb.getStartDate().toInstant());
+        assertThat(capturedEvent.newEndDate()).isEqualTo(examDb.getEndDate().toInstant());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testUpdateWorkingTimeTestExamDoesNotCarrySchedule() throws Exception {
+        // For a test exam the exam start/end dates are only the availability window, not the student's conduction window
+        // (which is derived from their individual startedDate). A working time update must therefore NOT carry them, so
+        // the client keeps recomputing the timer from the student's startedDate rather than the wrong exam start (#13071).
+        int newWorkingTime = 180 * 60;
+        testExam1.setVisibleDate(ZonedDateTime.now().minusMinutes(1));
+        testExam1.setStartDate(ZonedDateTime.now().minusMinutes(1));
+        testExam1.setEndDate(ZonedDateTime.now().plusHours(1));
+        testExam1 = examRepository.save(testExam1);
+
+        StudentExam result = request.patchWithResponseBody(
+                "/api/exam/courses/" + course1.getId() + "/exams/" + testExam1.getId() + "/student-exams/" + studentExamForTestExam1.getId() + "/working-time", newWorkingTime,
+                StudentExam.class, HttpStatus.OK);
+        assertThat(result.getWorkingTime()).isEqualTo(newWorkingTime);
+
+        var capturedEvent = (WorkingTimeUpdateEventDTO) captureExamLiveEventForId(studentExamForTestExam1.getId(), false);
+        assertThat(capturedEvent.newWorkingTime()).isEqualTo(newWorkingTime);
+        // Even though the (test) exam has start/end dates set above, the schedule must be omitted for test exams.
+        assertThat(capturedEvent.newStartDate()).isNull();
+        assertThat(capturedEvent.newEndDate()).isNull();
     }
 
     private ExamLiveEventBaseDTO captureExamLiveEventForId(Long studentExamOrExamId, boolean examWide) {
@@ -1478,7 +1507,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
                 var textSubmission = (TextSubmission) submission;
                 final var newText = "New Text";
                 textSubmission.setText(newText);
-                request.put("/api/text/exercises/" + exercise.getId() + "/text-submissions", textSubmission, HttpStatus.OK);
+                request.put("/api/text/exercises/" + exercise.getId() + "/text-submissions", toRequestDTO(textSubmission), HttpStatus.OK);
                 var savedTextSubmission = (TextSubmission) submissionRepository.findById(textSubmission.getId()).orElseThrow();
                 // check that the submission was saved
                 assertThat(newText).isEqualTo(savedTextSubmission.getText());
@@ -1589,6 +1618,10 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
             }
         });
         assertVersionedSubmission(quizSubmission);
+    }
+
+    private static TextSubmissionRequestDTO toRequestDTO(TextSubmission submission) {
+        return new TextSubmissionRequestDTO(submission.getId(), submission.getText(), submission.getLanguage(), submission.isSubmitted());
     }
 
     private void assertVersionedSubmission(Submission submission) {
@@ -1973,7 +2006,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
                     var textSubmission = (TextSubmission) submission;
                     final var newText = "New Text";
                     textSubmission.setText(newText);
-                    request.put("/api/text/exercises/" + exercise.getId() + "/text-submissions", textSubmission, HttpStatus.OK);
+                    request.put("/api/text/exercises/" + exercise.getId() + "/text-submissions", toRequestDTO(textSubmission), HttpStatus.OK);
                 }
                 case QuizExercise quizExercise -> submitQuizInExam(quizExercise, (QuizSubmission) submission);
                 case FileUploadExercise ignored -> {
@@ -2455,6 +2488,28 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testTestExamTestRunConductionDoesNotCreateAdditionalParticipations() throws Exception {
+        Exam testExam = examUtilService.addTestExam(course1);
+        testExam = examUtilService.addTextModelingProgrammingExercisesToExam(testExam, false, true);
+        StudentExam testRun = createTestRun(testExam);
+        User instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
+
+        Set<Long> participationIdsBeforeConduction = testRun.getExercises().stream()
+                .flatMap(exercise -> studentParticipationRepository.findByExerciseIdAndStudentId(exercise.getId(), instructor.getId()).stream()).map(StudentParticipation::getId)
+                .collect(Collectors.toSet());
+        assertThat(participationIdsBeforeConduction).hasSize(testRun.getExercises().size());
+
+        userUtilService.changeUser(TEST_PREFIX + "instructor1");
+        request.get("/api/exam/courses/" + course1.getId() + "/exams/" + testExam.getId() + "/test-runs/" + testRun.getId() + "/conduction", HttpStatus.OK, StudentExam.class);
+
+        Set<Long> participationIdsAfterConduction = testRun.getExercises().stream()
+                .flatMap(exercise -> studentParticipationRepository.findByExerciseIdAndStudentId(exercise.getId(), instructor.getId()).stream()).map(StudentParticipation::getId)
+                .collect(Collectors.toSet());
+        assertThat(participationIdsAfterConduction).isEqualTo(participationIdsBeforeConduction);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testSubmitTestRun() throws Exception {
         var testRun = createTestRun();
         userUtilService.changeUser(TEST_PREFIX + "instructor1");
@@ -2517,7 +2572,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
 
         // Simulate the student saving the text submission during the exam (the code path that was broken for test runs)
         textSubmission.setText("Updated text submission during test run");
-        request.put("/api/text/exercises/" + textExercise.getId() + "/text-submissions", textSubmission, HttpStatus.OK);
+        request.put("/api/text/exercises/" + textExercise.getId() + "/text-submissions", toRequestDTO(textSubmission), HttpStatus.OK);
     }
 
     @Test
@@ -3001,7 +3056,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
             // Given
             final String changedAnswer = "This is a changed and submitted answer";
             textSubmission.setText(changedAnswer);
-            request.put("/api/text/exercises/" + textExercise.getId() + "/text-submissions", textSubmission, HttpStatus.OK);
+            request.put("/api/text/exercises/" + textExercise.getId() + "/text-submissions", toRequestDTO(textSubmission), HttpStatus.OK);
 
             final String changedModel = "This is a changed and submitted model";
             final String changedExplanation = "This is a changed and submitted explanation";

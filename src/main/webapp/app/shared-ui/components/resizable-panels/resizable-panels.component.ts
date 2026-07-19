@@ -4,10 +4,12 @@ import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { faChevronRight } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgTemplateOutlet } from '@angular/common';
+import { CdkScrollable } from '@angular/cdk/scrolling';
 import { SplitterModule } from 'primeng/splitter';
 import { TabsModule } from 'primeng/tabs';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { parseJson } from 'app/foundation/util/json.util';
 
 @Directive({ selector: 'ng-template[jhiPanel]' })
 export class PanelDirective {
@@ -22,7 +24,7 @@ export class PanelDirective {
     selector: 'jhi-resizable-panels',
     templateUrl: './resizable-panels.component.html',
     styleUrls: ['./resizable-panels.component.scss'],
-    imports: [FaIconComponent, NgTemplateOutlet, SplitterModule, TabsModule, TranslateDirective, ArtemisTranslatePipe],
+    imports: [CdkScrollable, FaIconComponent, NgTemplateOutlet, SplitterModule, TabsModule, TranslateDirective, ArtemisTranslatePipe],
 })
 export class ResizablePanelsComponent implements AfterViewInit, OnDestroy {
     private readonly elementRef = inject(ElementRef);
@@ -158,7 +160,7 @@ export class ResizablePanelsComponent implements AfterViewInit, OnDestroy {
                 return;
             }
             // Matches PrimeNG's Splitter stateStorage format: JSON.stringify(number[]).
-            const parsed: unknown = JSON.parse(raw);
+            const parsed = parseJson<number[]>(raw);
             // Only seed a usable split: two finite numbers, a positive left, and a right above the collapse
             // threshold. A near-zero/degenerate stored value (external tampering, legacy data) is ignored so the
             // initial render never restores a jammed sliver (restoreUsableSplit only runs on expand, not on seed).
@@ -169,7 +171,7 @@ export class ResizablePanelsComponent implements AfterViewInit, OnDestroy {
                 parsed[0] > 0 &&
                 parsed[1] > this.collapseSnapPercent()
             ) {
-                this.savedSizes.set(parsed as number[]);
+                this.savedSizes.set(parsed);
             }
         } catch {
             // Malformed or unavailable storage (private mode / no window); the in-memory default applies.

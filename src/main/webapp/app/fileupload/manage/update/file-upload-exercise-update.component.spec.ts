@@ -67,11 +67,10 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ActivatedRoute, Data, Params, UrlSegment, provideRouter } from '@angular/router';
 import { BehaviorSubject, of, throwError } from 'rxjs';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { TranslateModule } from '@ngx-translate/core';
+import { provideTranslateService } from '@ngx-translate/core';
 import { MockComponent, MockDirective } from 'ng-mocks';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import dayjs from 'dayjs/esm';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 import 'app/foundation/util/array.extension';
 
@@ -106,7 +105,7 @@ import { GradingInstructionsDetailsComponent } from 'app/exercise/structured-gra
 import { DocumentationButtonComponent } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
 import { FormStatusBarComponent } from 'app/shared-ui/form/form-status-bar/form-status-bar.component';
 import { FormFooterComponent } from 'app/shared-ui/form/form-footer/form-footer.component';
-import { CategorySelectorComponent } from 'app/exercise/category-selector/category-selector.component';
+import { CategorySelectorPrimengComponent } from 'app/exercise/category-selector-primeng/category-selector-primeng.component';
 import { DifficultyPickerComponent } from 'app/exercise/difficulty-picker/difficulty-picker.component';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { CompetencySelectionComponent } from 'app/atlas/shared/competency-selection/competency-selection.component';
@@ -145,8 +144,6 @@ class StubExerciseTitleChannelNameComponent {
 }
 
 describe('FileUploadExerciseUpdateComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: FileUploadExerciseUpdateComponent;
     let fixture: ComponentFixture<FileUploadExerciseUpdateComponent>;
     let fileUploadExerciseService: FileUploadExerciseService;
@@ -180,12 +177,12 @@ describe('FileUploadExerciseUpdateComponent', () => {
     };
 
     beforeEach(async () => {
-        routeData$ = new BehaviorSubject({ fileUploadExercise: createExercise(createCourse()) });
+        routeData$ = new BehaviorSubject<Data>({ fileUploadExercise: createExercise(createCourse()) });
         routeUrl$ = new BehaviorSubject([{ path: 'new' }] as UrlSegment[]);
-        routeParams$ = new BehaviorSubject({ courseId: 123 });
+        routeParams$ = new BehaviorSubject<Params>({ courseId: 123 });
 
         await TestBed.configureTestingModule({
-            imports: [FileUploadExerciseUpdateComponent, TranslateModule.forRoot()],
+            imports: [FileUploadExerciseUpdateComponent],
             providers: [
                 provideHttpClient(),
                 provideHttpClientTesting(),
@@ -245,6 +242,7 @@ describe('FileUploadExerciseUpdateComponent', () => {
                         reloadEvents: vi.fn(),
                     },
                 },
+                provideTranslateService(),
             ],
         })
             .overrideComponent(FileUploadExerciseUpdateComponent, {
@@ -264,7 +262,7 @@ describe('FileUploadExerciseUpdateComponent', () => {
                         MockComponent(DocumentationButtonComponent),
                         MockComponent(FormStatusBarComponent),
                         MockComponent(FormFooterComponent),
-                        MockComponent(CategorySelectorComponent),
+                        MockComponent(CategorySelectorPrimengComponent),
                         MockComponent(DifficultyPickerComponent),
                         MockComponent(HelpIconComponent),
                         MockComponent(CompetencySelectionComponent),

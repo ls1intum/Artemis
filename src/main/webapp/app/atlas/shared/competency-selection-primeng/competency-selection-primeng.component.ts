@@ -61,6 +61,7 @@ export class CompetencySelectionPrimengComponent implements OnInit, ControlValue
     exerciseDescription = input<string | undefined>(undefined);
 
     valueChange = output<CompetencyLearningObjectLink[] | undefined>();
+    availableCount = output<number>();
 
     readonly disabled = signal(false);
     // selected competencies
@@ -83,7 +84,7 @@ export class CompetencySelectionPrimengComponent implements OnInit, ControlValue
 
     protected readonly FeatureToggle = FeatureToggle;
 
-    _onChange = (_value: any) => {};
+    _onChange = (_value: CompetencyLearningObjectLink[] | undefined) => {};
 
     protected readonly HIGH_COMPETENCY_LINK_WEIGHT = HIGH_COMPETENCY_LINK_WEIGHT;
     protected readonly MEDIUM_COMPETENCY_LINK_WEIGHT = MEDIUM_COMPETENCY_LINK_WEIGHT;
@@ -99,6 +100,8 @@ export class CompetencySelectionPrimengComponent implements OnInit, ControlValue
         // it's an explicit design decision to not clutter every component that uses this component with the need to check if the atlas profile is enabled
         if (this.profileService.isModuleFeatureActive(MODULE_FEATURE_ATLAS)) {
             this.initialize();
+        } else {
+            this.availableCount.emit(0);
         }
     }
 
@@ -142,6 +145,7 @@ export class CompetencySelectionPrimengComponent implements OnInit, ControlValue
      * @param competencies The competencies of the course
      */
     setCompetencyLinks(competencies: CourseCompetency[]) {
+        this.availableCount.emit(competencies.length);
         const competencyLinks = competencies.map((competency) => {
             // Remove unnecessary properties
             competency.course = undefined;
@@ -150,15 +154,12 @@ export class CompetencySelectionPrimengComponent implements OnInit, ControlValue
         });
         this.competencyLinks.set(competencyLinks);
         this.checkboxStates.set(
-            competencyLinks.reduce(
-                (states, competencyLink) => {
-                    if (competencyLink.competency?.id) {
-                        states[competencyLink.competency.id] = !!this.selectedCompetencyLinks?.find((value) => value.competency?.id === competencyLink.competency?.id);
-                    }
-                    return states;
-                },
-                {} as Record<number, boolean>,
-            ),
+            competencyLinks.reduce<Record<number, boolean>>((states, competencyLink) => {
+                if (competencyLink.competency?.id) {
+                    states[competencyLink.competency.id] = !!this.selectedCompetencyLinks?.find((value) => value.competency?.id === competencyLink.competency?.id);
+                }
+                return states;
+            }, {}),
         );
     }
 
@@ -246,23 +247,20 @@ export class CompetencySelectionPrimengComponent implements OnInit, ControlValue
         // Rebuild checkbox states to match the current selection
         const selectedIds = new Set((this.selectedCompetencyLinks ?? []).map((l) => l.competency?.id).filter(Boolean));
         this.checkboxStates.set(
-            this.competencyLinks()!.reduce(
-                (states, cl) => {
-                    if (cl.competency?.id) {
-                        states[cl.competency.id] = selectedIds.has(cl.competency.id);
-                    }
-                    return states;
-                },
-                {} as Record<number, boolean>,
-            ),
+            this.competencyLinks()!.reduce<Record<number, boolean>>((states, cl) => {
+                if (cl.competency?.id) {
+                    states[cl.competency.id] = selectedIds.has(cl.competency.id);
+                }
+                return states;
+            }, {}),
         );
     }
 
-    registerOnChange(fn: any): void {
+    registerOnChange(fn: (value: CompetencyLearningObjectLink[] | undefined) => void): void {
         this._onChange = fn;
     }
 
-    registerOnTouched(_fn: any): void {}
+    registerOnTouched(_fn: () => void): void {}
 
     suggestCompetencies(): void {
         if (!this.exerciseDescription()?.trim()) {
@@ -276,7 +274,7 @@ export class CompetencySelectionPrimengComponent implements OnInit, ControlValue
         const requestBody = { description: this.exerciseDescription(), course_id: courseId?.toString() };
 
         this.http
-            .post<{ competencies: any[] }>('/api/atlas/competencies/suggest', requestBody)
+            .post<{ competencies: { id: number | string }[] }>('/api/atlas/competencies/suggest', requestBody)
             .pipe(
                 finalize(() => {
                     this.isSuggesting.set(false);

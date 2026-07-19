@@ -1,6 +1,6 @@
-import { Component, DestroyRef, OnDestroy, OnInit, inject, signal } from '@angular/core';
+import { Component, DestroyRef, OnDestroy, OnInit, computed, inject, signal, viewChildren } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { MODULE_FEATURE_IRIS, addPublicFilePrefix } from 'app/app.constants';
 import { downloadStream } from 'app/foundation/util/download.util';
@@ -29,14 +29,16 @@ import { AttachmentVideoUnitComponent } from '../attachment-video-unit/attachmen
 import { TextUnitComponent } from '../text-unit/text-unit.component';
 import { OnlineUnitComponent } from '../online-unit/online-unit.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { CourseSidebarToggleButtonComponent } from 'app/course/shared/course-sidebar-toggle-button/course-sidebar-toggle-button.component';
 import { DiscussionSectionComponent } from 'app/communication/shared/discussion-section/discussion-section.component';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { HtmlForMarkdownPipe } from 'app/foundation/pipes/html-for-markdown.pipe';
+import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
 import { IrisExerciseChatbotButtonComponent } from 'app/iris/overview/exercise-chatbot/exercise-chatbot-button.component';
 import { FileService } from 'app/foundation/service/file.service';
 import { ScienceService } from 'app/foundation/science/science.service';
 import { InformationBox, InformationBoxComponent, InformationBoxContent } from 'app/shared-ui/information-box/information-box.component';
+import { IrisMessageContextDTO, IrisSlidesContextDTO, IrisVideoContextDTO, LectureContextsProvider } from 'app/iris/shared/entities/iris-message-context-dto.model';
 
 export interface LectureUnitCompletionEvent {
     lectureUnit: LectureUnit;
@@ -54,11 +56,12 @@ export interface LectureUnitCompletionEvent {
         TextUnitComponent,
         OnlineUnitComponent,
         FaIconComponent,
+        CourseSidebarToggleButtonComponent,
         DiscussionSectionComponent,
         UpperCasePipe,
         ArtemisDatePipe,
         ArtemisTranslatePipe,
-        HtmlForMarkdownPipe,
+        MarkdownDirective,
         IrisExerciseChatbotButtonComponent,
         InformationBoxComponent,
     ],
@@ -69,7 +72,6 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
     private readonly lectureUnitService = inject(LectureUnitService);
     private readonly activatedRoute = inject(ActivatedRoute);
     private readonly fileService = inject(FileService);
-    private readonly router = inject(Router);
     private readonly profileService = inject(ProfileService);
     private readonly irisSettingsService = inject(IrisSettingsService);
     private readonly scienceService = inject(ScienceService);
@@ -91,14 +93,29 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
     readonly lectureUnits = signal<LectureUnit[]>([]);
     readonly hasPdfLectureUnit = signal(false);
     readonly irisSettings = signal<IrisCourseSettingsWithRateLimitDTO | undefined>(undefined);
-    paramsSubscription: Subscription;
-    courseParamsSubscription: Subscription;
+    paramsSubscription?: Subscription;
+    courseParamsSubscription?: Subscription;
     irisEnabled = false;
     readonly informationBoxData = signal<InformationBox[]>([]);
+
+    readonly isSidebarCollapsed = signal(false);
+    private readonly sidebarToggle = signal<(() => void) | undefined>(undefined);
+    readonly toggleSidebar = (): void => this.sidebarToggle()?.();
 
     readonly targetUnitId = signal<number | undefined>(undefined);
     readonly targetVideoTimestamp = signal<number | undefined>(undefined);
     readonly targetPdfPage = signal<number | undefined>(undefined);
+
+    // ViewChildren to access all attachment/video unit components
+    private readonly attachmentVideoUnits = viewChildren(AttachmentVideoUnitComponent);
+
+    // Context provider for the chatbot
+    readonly contextsProvider: LectureContextsProvider = {
+        getVisibleContexts: () => this.collectVisibleContexts(),
+    };
+
+    /** Context provider function for the chatbot button */
+    readonly contextProvider = computed<(() => IrisMessageContextDTO[]) | undefined>(() => () => this.collectVisibleContexts());
 
     ngOnInit(): void {
         this.irisEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_IRIS);
@@ -188,13 +205,13 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
         }
     }
 
-    redirectToLectureManagement(): void {
-        const lecture = this.lecture();
-        this.router.navigate(['course-management', lecture?.course?.id, 'lectures', lecture?.id]);
+    setSidebarToggle(isCollapsed: boolean, toggleSidebar: () => void): void {
+        this.isSidebarCollapsed.set(isCollapsed);
+        this.sidebarToggle.set(toggleSidebar);
     }
 
     attachmentNotReleased(attachment: Attachment): boolean {
-        return attachment.releaseDate != undefined && !dayjs(attachment.releaseDate).isBefore(dayjs())!;
+        return attachment.releaseDate != undefined && !dayjs(attachment.releaseDate).isBefore(dayjs());
     }
 
     attachmentExtension(attachment: Attachment): string {
@@ -205,10 +222,10 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
         return attachment.link.split('.').pop()!;
     }
 
-    downloadAttachment(downloadUrl?: string, downloadName?: string): void {
+    downloadAttachment(downloadUrl?: string, downloadName?: string, version?: number): void {
         if (!this.isDownloadingLink() && downloadUrl && downloadName) {
             this.isDownloadingLink.set(downloadUrl);
-            this.fileService.downloadFileByAttachmentName(downloadUrl, downloadName);
+            this.fileService.downloadFileByAttachmentName(downloadUrl, downloadName, version);
             this.isDownloadingLink.set(undefined);
         }
     }
@@ -228,7 +245,10 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
     }
 
     completeLectureUnit(event: LectureUnitCompletionEvent): void {
-        this.lectureUnitService.completeLectureUnit(this.lecture()!, event);
+        this.lectureUnitService.completeLectureUnit(this.lecture()!, event, () => {
+            // Replace the unit with a new reference so the card's signal input reacts and the checkmark updates immediately.
+            this.lectureUnits.update((units) => units.map((unit) => (unit.id === event.lectureUnit.id ? Object.assign({}, unit, { completed: event.completed }) : unit)));
+        });
     }
 
     private ensureValidDeepLinkTargets(): void {
@@ -278,5 +298,101 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
     ngOnDestroy() {
         this.paramsSubscription?.unsubscribe();
         this.courseParamsSubscription?.unsubscribe();
+    }
+
+    private isElementVisible(element: Element | null): boolean {
+        if (!element) return false;
+        const rect = element.getBoundingClientRect();
+        const vh = window.innerHeight || document.documentElement.clientHeight;
+        const vw = window.innerWidth || document.documentElement.clientWidth;
+        return rect.top < vh && rect.bottom > 0 && rect.left < vw && rect.right > 0;
+    }
+
+    /**
+     * Collects context from all visible and expanded attachment/video units.
+     * Uses a snapshot-based approach: calculates visibility at the moment this method is called
+     * (when the user sends a message) rather than continuously tracking visibility.
+     * Returns a list of video and/or slides context objects.
+     *
+     * Visibility: Any part of the element visible in the viewport counts.
+     */
+    private collectVisibleContexts(): IrisMessageContextDTO[] {
+        const units = this.attachmentVideoUnits();
+        if (!units || units.length === 0) {
+            return [];
+        }
+
+        const contexts: IrisMessageContextDTO[] = [];
+
+        units.forEach((unitComponent) => {
+            const unit = unitComponent.lectureUnit();
+            const unitId = unit?.id;
+
+            // Skip if no ID or unit is collapsed
+            if (!unitId || unitComponent.isCollapsed()) {
+                return;
+            }
+
+            // Snapshot: Calculate visibility NOW (when message is sent)
+            const element = document.querySelector(`[data-unit-id="${unitId}"]`);
+            if (!element) {
+                return;
+            }
+
+            // Check if any part of unit is in viewport
+            const isUnitVisible = this.isElementVisible(element);
+
+            if (!isUnitVisible) {
+                return; // Unit not visible → skip
+            }
+
+            // Unit is visible → check individual materials (PDF viewer, video player)
+            const provider = unitComponent.contextProvider();
+            if (!provider) {
+                return;
+            }
+
+            // Check if PDF viewer is visible
+            const pdfViewer = element.querySelector('jhi-pdf-viewer');
+            if (pdfViewer) {
+                const isPdfVisible = this.isElementVisible(pdfViewer);
+
+                if (isPdfVisible) {
+                    const pdfPage = provider.getCurrentPdfPage?.();
+                    if (pdfPage != null) {
+                        const slidesContext: IrisSlidesContextDTO = {
+                            type: 'slides',
+                            lectureUnitId: unitId,
+                            page: pdfPage,
+                        };
+                        contexts.push(slidesContext);
+                    }
+                }
+            }
+
+            // Check if video player is visible
+            const videoPlayer = element.querySelector('jhi-video-player, jhi-youtube-player');
+            if (videoPlayer) {
+                const isVideoVisible = this.isElementVisible(videoPlayer);
+
+                if (isVideoVisible) {
+                    // Only include video context if it has been played (not just showing thumbnail)
+                    const hasBeenPlayed = provider.hasVideoBeenPlayed?.() ?? false;
+                    if (hasBeenPlayed) {
+                        const videoTimestamp = provider.getCurrentVideoTimestamp?.();
+                        if (videoTimestamp != null) {
+                            const videoContext: IrisVideoContextDTO = {
+                                type: 'video',
+                                lectureUnitId: unitId,
+                                timestamp: videoTimestamp,
+                            };
+                            contexts.push(videoContext);
+                        }
+                    }
+                }
+            }
+        });
+
+        return contexts;
     }
 }

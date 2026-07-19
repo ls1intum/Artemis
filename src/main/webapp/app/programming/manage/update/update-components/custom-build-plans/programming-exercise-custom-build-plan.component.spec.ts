@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { signal } from '@angular/core';
 import { MockComponent, MockDirective } from 'ng-mocks';
@@ -16,8 +15,6 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { LegacyBuildPlanConverterService } from 'app/programming/shared/services/legacy-build-plan-converter.service';
 
 describe('ProgrammingExerciseCustomBuildPlanComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<ProgrammingExerciseCustomBuildPlanComponent>;
     let comp: ProgrammingExerciseCustomBuildPlanComponent;
     let programmingExercise: ProgrammingExercise;
@@ -197,7 +194,7 @@ describe('ProgrammingExerciseCustomBuildPlanComponent', () => {
     });
 
     it('should reset custom build plan when template loading fails', () => {
-        programmingExercise.buildConfig!.buildPlanConfiguration = 'x';
+        programmingExercise.buildConfig!.buildPlanConfiguration = undefined;
         programmingExercise.buildConfig!.buildScript = 'y';
         buildPhasesTemplateServiceMock.fetchTemplate.mockImplementation(() => {
             buildPlanSignal.set(undefined);
@@ -269,6 +266,27 @@ describe('ProgrammingExerciseCustomBuildPlanComponent', () => {
         const legacyService = TestBed.inject(LegacyBuildPlanConverterService);
         vi.spyOn(legacyService, 'convertLegacyBuildPlanConfiguration').mockReturnValue(legacyPhases);
         comp.ngOnInit();
+        expect(buildPlanSignal()).toEqual(legacyPhases);
+    });
+
+    it('should convert legacy build plan on init when build script is missing but old actions config exists', () => {
+        const legacyPhases: BuildPlanPhases = {
+            phases: [{ name: 'script', script: 'legacy actions', condition: 'ALWAYS', forceRun: false, resultPaths: ['test.xml'] }],
+            dockerImage: 'legacy:1.0',
+        };
+        const legacyBuildPlanConfiguration = JSON.stringify({
+            metadata: { docker: { image: 'legacy:1.0' } },
+            actions: [{ script: './gradlew test', results: [{ path: 'test.xml' }] }],
+        });
+        programmingExercise.buildConfig!.buildPlanConfiguration = legacyBuildPlanConfiguration;
+        programmingExercise.buildConfig!.buildScript = '';
+        programmingExercise.programmingLanguage = ProgrammingLanguage.JAVA;
+        const legacyService = TestBed.inject(LegacyBuildPlanConverterService);
+        const converterSpy = vi.spyOn(legacyService, 'convertLegacyBuildPlanConfiguration').mockReturnValue(legacyPhases);
+
+        comp.ngOnInit();
+
+        expect(converterSpy).toHaveBeenCalledWith('', legacyBuildPlanConfiguration);
         expect(buildPlanSignal()).toEqual(legacyPhases);
     });
 

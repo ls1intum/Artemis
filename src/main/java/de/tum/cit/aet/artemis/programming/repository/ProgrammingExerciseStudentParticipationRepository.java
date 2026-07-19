@@ -110,8 +110,19 @@ public interface ProgrammingExerciseStudentParticipationRepository extends Artem
             """)
     Optional<ProgrammingExerciseStudentParticipation> findTeamParticipationByExerciseIdAndStudentId(@Param("exerciseId") long exerciseId, @Param("studentId") long studentId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "submissions.results" })
-    List<ProgrammingExerciseStudentParticipation> findWithSubmissionsAndResultsByExerciseId(long exerciseId);
+    /**
+     * Returns the ids of all student participations of the given programming exercise. Used to build a per-participation
+     * result without loading the participations (and their submissions/results) themselves.
+     *
+     * @param exerciseId the id of the programming exercise
+     * @return the ids of all student participations of the exercise
+     */
+    @Query("""
+            SELECT p.id
+            FROM ProgrammingExerciseStudentParticipation p
+            WHERE p.exercise.id = :exerciseId
+            """)
+    List<Long> findStudentParticipationIdsByExerciseId(@Param("exerciseId") long exerciseId);
 
     @EntityGraph(type = LOAD, attributePaths = { "submissions", "team.students" })
     List<ProgrammingExerciseStudentParticipation> findWithSubmissionsAndTeamStudentsByExerciseId(long exerciseId);

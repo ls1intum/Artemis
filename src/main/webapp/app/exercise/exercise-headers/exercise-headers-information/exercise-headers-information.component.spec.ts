@@ -1,8 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
-import { TranslateModule } from '@ngx-translate/core';
+import { provideTranslateService } from '@ngx-translate/core';
 
 import { ExerciseHeadersInformationComponent } from 'app/exercise/exercise-headers/exercise-headers-information/exercise-headers-information.component';
 import { MockProvider } from 'ng-mocks';
@@ -24,7 +23,6 @@ import { DialogService } from 'primeng/dynamicdialog';
 import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
 
 describe('ExerciseHeadersInformationComponent', () => {
-    setupTestBed({ zoneless: true });
     let component: ExerciseHeadersInformationComponent;
     let fixture: ComponentFixture<ExerciseHeadersInformationComponent>;
 
@@ -39,7 +37,7 @@ describe('ExerciseHeadersInformationComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [ExerciseHeadersInformationComponent, TranslateModule.forRoot(), NgbTooltipModule],
+            imports: [ExerciseHeadersInformationComponent, NgbTooltipModule],
             providers: [
                 MockProvider(ExerciseService),
                 MockProvider(ComplaintService),
@@ -47,6 +45,7 @@ describe('ExerciseHeadersInformationComponent', () => {
                 { provide: DialogService, useClass: MockDialogService },
                 provideHttpClient(),
                 provideHttpClientTesting(),
+                provideTranslateService(),
             ],
         }).compileComponents();
 

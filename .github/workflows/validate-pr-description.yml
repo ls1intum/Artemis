@@ -4,6 +4,9 @@ on:
     pull_request_target:
         types: [opened, edited, ready_for_review, synchronize, reopened]
 
+permissions:
+  contents: read
+
 jobs:
     validate-pr-description:
         # Only run on non-draft PRs targeting develop from non-forked repos

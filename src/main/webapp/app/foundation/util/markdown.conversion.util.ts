@@ -3,7 +3,7 @@ import DOMPurify, { Config } from 'dompurify';
 import type { PluginSimple } from 'markdown-it';
 import type Token from 'markdown-it/lib/token.mjs';
 import MarkdownItKatex from '@vscode/markdown-it-katex';
-import hljs from 'highlight.js';
+import hljs from 'app/foundation/util/highlight-languages.util';
 import TurndownService from 'turndown';
 import MarkdownIt from 'markdown-it';
 import { markdownItGitHubAlerts } from 'app/foundation/util/markdown-github-alerts.plugin';
@@ -182,7 +182,7 @@ export function htmlForMarkdown(
         markdownRender = markdownRender.slice(0, -1);
     }
 
-    const purifyParameters = {} as Config;
+    const purifyParameters: Config = {};
     // Prevents sanitizer from deleting <testid>id</testid>
     purifyParameters['ADD_TAGS'] = ['testid'];
     if (allowedHtmlTags) {
@@ -191,7 +191,7 @@ export function htmlForMarkdown(
     if (allowedHtmlAttributes) {
         purifyParameters['ALLOWED_ATTR'] = allowedHtmlAttributes;
     }
-    return DOMPurify.sanitize(markdownRender, purifyParameters) as string;
+    return DOMPurify.sanitize(markdownRender, purifyParameters);
 }
 
 export function markdownForHtml(htmlText: string): string {

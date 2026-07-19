@@ -34,11 +34,10 @@ import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/com
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ActivatedRoute, Data, Params, UrlSegment, provideRouter } from '@angular/router';
 import { BehaviorSubject, Subject, of, throwError } from 'rxjs';
-import { TranslateModule } from '@ngx-translate/core';
+import { provideTranslateService } from '@ngx-translate/core';
 import { MockComponent, MockDirective } from 'ng-mocks';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import dayjs from 'dayjs/esm';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { Component, input, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -71,7 +70,7 @@ import { GradingInstructionsDetailsComponent } from 'app/exercise/structured-gra
 import { DocumentationButtonComponent } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
 import { FormStatusBarComponent } from 'app/shared-ui/form/form-status-bar/form-status-bar.component';
 import { FormFooterComponent } from 'app/shared-ui/form/form-footer/form-footer.component';
-import { CategorySelectorComponent } from 'app/exercise/category-selector/category-selector.component';
+import { CategorySelectorPrimengComponent } from 'app/exercise/category-selector-primeng/category-selector-primeng.component';
 import { DifficultyPickerComponent } from 'app/exercise/difficulty-picker/difficulty-picker.component';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { CompetencySelectionComponent } from 'app/atlas/shared/competency-selection/competency-selection.component';
@@ -135,8 +134,6 @@ class StubTeamConfigFormGroupComponent {
 }
 
 describe('TextExercise Management Update Component', () => {
-    setupTestBed({ zoneless: true });
-
     let component: TextExerciseUpdateComponent;
     let fixture: ComponentFixture<TextExerciseUpdateComponent>;
     let textExerciseService: TextExerciseService;
@@ -167,12 +164,12 @@ describe('TextExercise Management Update Component', () => {
     };
 
     beforeEach(async () => {
-        routeData$ = new BehaviorSubject({ textExercise: createExercise(createCourse()) });
+        routeData$ = new BehaviorSubject<Data>({ textExercise: createExercise(createCourse()) });
         routeUrl$ = new BehaviorSubject([{ path: 'new' }] as UrlSegment[]);
-        routeParams$ = new BehaviorSubject({ courseId: 1 });
+        routeParams$ = new BehaviorSubject<Params>({ courseId: 1 });
 
         await TestBed.configureTestingModule({
-            imports: [TextExerciseUpdateComponent, TranslateModule.forRoot()],
+            imports: [TextExerciseUpdateComponent],
             providers: [
                 provideHttpClient(),
                 provideHttpClientTesting(),
@@ -234,6 +231,7 @@ describe('TextExercise Management Update Component', () => {
                     },
                 },
                 { provide: ProfileService, useClass: MockProfileService },
+                provideTranslateService(),
             ],
         })
             .overrideComponent(TextExerciseUpdateComponent, {
@@ -253,7 +251,7 @@ describe('TextExercise Management Update Component', () => {
                         MockComponent(DocumentationButtonComponent),
                         MockComponent(FormStatusBarComponent),
                         MockComponent(FormFooterComponent),
-                        MockComponent(CategorySelectorComponent),
+                        MockComponent(CategorySelectorPrimengComponent),
                         MockComponent(DifficultyPickerComponent),
                         MockComponent(HelpIconComponent),
                         MockComponent(CompetencySelectionComponent),

@@ -1,6 +1,6 @@
 import { Page, expect } from '@playwright/test';
 import { BASE_API } from '../../../constants';
-import { getExercise } from '../../../utils';
+import { getExercise, setMonacoEditorContentByLocator } from '../../../utils';
 import { Fixtures } from '../../../../fixtures/fixtures';
 
 export class OnlineEditorPage {
@@ -14,10 +14,6 @@ export class OnlineEditorPage {
         return getExercise(this.page, exerciseID).locator('#cardFiles');
     }
 
-    findEditorTextField(exerciseID: number) {
-        return getExercise(this.page, exerciseID).locator('.view-lines').first();
-    }
-
     async typeSubmission(exerciseID: number, submission: ProgrammingExerciseSubmission) {
         for (const newFile of submission.files) {
             if (submission.createFilesInRootFolder) {
@@ -26,19 +22,15 @@ export class OnlineEditorPage {
                 await this.createFileInRootPackage(exerciseID, newFile.name, submission.packageName!);
             }
             const fileContent = await Fixtures.get(newFile.path);
-            const editorElement = this.findEditorTextField(exerciseID);
-            await editorElement.click();
-            await editorElement.evaluate(
-                (element, { fileContent }) => {
-                    const clipboardData = new DataTransfer();
-                    const format = 'text/plain';
-                    clipboardData.setData(format, fileContent);
-                    const event = new ClipboardEvent('paste', { clipboardData });
-                    element.dispatchEvent(event);
-                },
-                { fileContent: fileContent! },
-            );
-            await this.page.waitForTimeout(500);
+            // Set the file content through the Monaco API (with a verify-and-retry + sustained-value
+            // check) rather than dispatching a synthetic ClipboardEvent paste. Monaco's paste handler
+            // lives on a hidden textarea, so a synthetic paste on `.view-lines` is occasionally dropped
+            // — most often when the JS main thread is saturated under heavy multi-node load. A dropped
+            // paste committed an empty file on submit, producing a spurious 0% build result (the
+            // "Re-renders the sidebar card" test failed exactly this way). setMonacoEditorContentByLocator
+            // confirms Monaco actually holds the content before we submit.
+            const editorContainer = getExercise(this.page, exerciseID).locator('jhi-code-editor-monaco');
+            await setMonacoEditorContentByLocator(this.page, editorContainer, fileContent!);
         }
         await this.page.waitForTimeout(500);
     }

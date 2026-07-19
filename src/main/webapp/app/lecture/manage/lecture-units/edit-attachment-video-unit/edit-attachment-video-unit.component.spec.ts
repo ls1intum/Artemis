@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import type { MockInstance } from 'vitest';
 import dayjs from 'dayjs/esm';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
@@ -13,7 +12,6 @@ import { AttachmentVideoUnit } from '../../../shared/entities/lecture-unit/attac
 import { Attachment, AttachmentType } from '../../../shared/entities/attachment.model';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { By } from '@angular/platform-browser';
-import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 
 import { TranslateService } from '@ngx-translate/core';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
@@ -25,8 +23,6 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { objectToJsonBlob } from 'app/foundation/util/blob-util';
 
 describe('EditAttachmentVideoUnitComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<EditAttachmentVideoUnitComponent>;
     let attachmentVideoUnitService: AttachmentVideoUnitService;
     let router: Router;
@@ -39,7 +35,7 @@ describe('EditAttachmentVideoUnitComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [OwlNativeDateTimeModule],
+            imports: [],
             providers: [
                 MockProvider(AttachmentVideoUnitService),
                 MockProvider(AlertService),
@@ -54,9 +50,10 @@ describe('EditAttachmentVideoUnitComponent', () => {
                         paramMap: of({
                             get: (key: string) => {
                                 switch (key) {
-                                    case 'attachmentUnitId':
+                                    case 'attachmentVideoUnitId':
                                         return 1;
                                 }
+                                return null;
                             },
                         }),
                         parent: {
@@ -67,6 +64,7 @@ describe('EditAttachmentVideoUnitComponent', () => {
                                             case 'lectureId':
                                                 return 1;
                                         }
+                                        return null;
                                     },
                                 }),
                             },

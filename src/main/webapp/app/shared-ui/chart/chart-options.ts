@@ -68,13 +68,24 @@ export interface ChartSelectEvent {
     meta?: ChartSeriesEntry;
 }
 
+/** Narrows the `unknown` `element` of PrimeNG's chart select event to the fields we read. */
+function isChartDataElement(element: unknown): element is { datasetIndex: number; index: number } {
+    return (
+        typeof element === 'object' &&
+        element !== null &&
+        typeof (element as { datasetIndex?: unknown }).datasetIndex === 'number' &&
+        typeof (element as { index?: unknown }).index === 'number'
+    );
+}
+
 /**
  * Maps the payload of p-chart's (onDataSelect) output to a {@link ChartSelectEvent}.
+ * PrimeNG types the event's `element` as `unknown`, so it is narrowed before use.
  * Returns undefined for clicks that did not hit a data element or hit a reference line.
  */
-export function toChartSelectEvent(event: { element?: { datasetIndex: number; index: number } }, data: ChartData): ChartSelectEvent | undefined {
+export function toChartSelectEvent(event: { element?: unknown }, data: ChartData): ChartSelectEvent | undefined {
     const element = event?.element;
-    if (!element) {
+    if (!isChartDataElement(element)) {
         return undefined;
     }
     const dataset = data.datasets?.[element.datasetIndex];
@@ -101,18 +112,36 @@ function tickCallback(formatter: (value: number | string) => string, isCategoryA
     };
 }
 
-function buildScale(axis: ChartAxisConfig | undefined, options: { stacked?: boolean; isCategoryAxis: boolean; percent?: boolean }) {
+/** The subset of chart.js scale options that {@link buildScale} sets; `ticks` is optional on purpose (see below). */
+interface BuiltScaleOptions {
+    display: boolean;
+    stacked: boolean;
+    min?: number;
+    max?: number;
+    title?: { display: boolean; text: string };
+    grid?: { display: boolean };
+    ticks?: { callback: (this: Scale, value: number | string) => string };
+}
+
+function buildScale(axis: ChartAxisConfig | undefined, options: { stacked?: boolean; isCategoryAxis: boolean; percent?: boolean }): BuiltScaleOptions {
     const percentFormatter = (value: number | string) => `${value}%`;
     const formatter = axis?.tickFormatter ?? (options.percent ? percentFormatter : undefined);
-    return {
+    const scale: BuiltScaleOptions = {
         display: axis?.display ?? true,
         stacked: options.stacked ?? false,
         min: axis?.min,
         max: axis?.max ?? (options.percent ? 100 : undefined),
         title: axis?.label ? { display: true, text: axis.label } : undefined,
-        ticks: formatter ? { callback: tickCallback(formatter, options.isCategoryAxis) } : undefined,
         grid: options.isCategoryAxis ? { display: false } : undefined,
     };
+    // Only set `ticks` when a custom formatter is required. Passing `ticks: undefined` explicitly
+    // overrides chart.js' default category tick callback, which makes a category axis fall back to
+    // rendering the numeric data index instead of the label from `data.labels` (e.g. 0, 1, 2 instead
+    // of the quiz question numbers). Omitting the key keeps the built-in label rendering intact.
+    if (formatter) {
+        scale.ticks = { callback: tickCallback(formatter, options.isCategoryAxis) };
+    }
+    return scale;
 }
 
 function buildLegend(legend: BaseChartConfig['legend']) {
@@ -177,7 +206,7 @@ export function barChartOptions(config: BarChartConfig): ChartOptions<'bar'> {
                   }
                 : { display: false },
         },
-    } as ChartOptions<'bar'>;
+    };
 }
 
 /**
@@ -202,7 +231,7 @@ export function lineChartOptions(config: LineChartConfig): ChartOptions<'line'> 
             tooltip: buildTooltip(config.tooltip),
             datalabels: { display: false },
         },
-    } as ChartOptions<'line'>;
+    };
 }
 
 /**
@@ -222,5 +251,5 @@ export function doughnutChartOptions(config: DoughnutChartConfig): ChartOptions<
             tooltip: buildTooltip(config.tooltip),
             datalabels: { display: false },
         },
-    } as ChartOptions<'doughnut'>;
+    };
 }

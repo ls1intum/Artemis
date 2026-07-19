@@ -180,6 +180,9 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
     @EntityGraph(type = LOAD, attributePaths = { "feedbacks", "feedbacks.testCase", "submission" })
     Optional<Result> findResultWithSubmissionAndFeedbacksTestCasesById(long resultId);
 
+    @EntityGraph(type = LOAD, attributePaths = { "submission", "submission.participation" })
+    Optional<Result> findResultWithSubmissionAndParticipationById(long resultId);
+
     /**
      * Finds the first result by participation ID, including its submission, feedback, and test cases, ordered by completion date in descending order.
      * This method avoids in-memory paging by retrieving the first result directly from the database.
@@ -782,9 +785,9 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
                 totalPoints = feedback.computeTotalScore(totalPoints, gradingInstructions);
             }
             else {
-                // in case no structured grading instruction was applied on the assessment model we just sum the feedback credit
-                // TODO: what happens if getCredits is null?
-                totalPoints += feedback.getCredits();
+                // in case no structured grading instruction was applied on the assessment model we just sum the feedback credit.
+                // A comment-only feedback carries no credits (null); treat it as 0 so score calculation (e.g. during re-evaluation) does not fail.
+                totalPoints += Objects.requireNonNullElse(feedback.getCredits(), 0.0);
             }
         }
         return totalPoints;

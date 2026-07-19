@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ApplicationRef } from '@angular/core';
 import { MockComponent, MockDirective, MockModule } from 'ng-mocks';
@@ -11,6 +10,7 @@ import { MatchPercentageInfoModalComponent } from 'app/quiz/manage/match-percent
 import { CdkDrag, CdkDragHandle, CdkDragPlaceholder, CdkDropList, CdkDropListGroup } from '@angular/cdk/drag-drop';
 import { ShortAnswerSpot } from 'app/quiz/shared/entities/short-answer-spot.model';
 import { ShortAnswerSolution } from 'app/quiz/shared/entities/short-answer-solution.model';
+import { CdkDragDrop } from '@angular/cdk/drag-drop';
 import { ShortAnswerMapping } from 'app/quiz/shared/entities/short-answer-mapping.model';
 import { ScoringType } from 'app/quiz/shared/entities/quiz-question.model';
 import { cloneDeep } from 'lodash-es';
@@ -57,8 +57,6 @@ const mapping2 = new ShortAnswerMapping(spot2, shortAnswerSolution2);
 question.correctMappings = [mapping1, mapping2];
 
 describe('ShortAnswerQuestionEditComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<ShortAnswerQuestionEditComponent>;
     let component: ShortAnswerQuestionEditComponent;
 
@@ -337,7 +335,7 @@ describe('ShortAnswerQuestionEditComponent', () => {
             item: {
                 data: testSolution1,
             },
-        };
+        } as unknown as CdkDragDrop<ShortAnswerSolution>;
 
         fixture.detectChanges();
         component.onDragDrop(dropSpot, event);

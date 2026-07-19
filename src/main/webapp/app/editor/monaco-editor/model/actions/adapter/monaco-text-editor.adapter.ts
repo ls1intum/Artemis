@@ -196,7 +196,7 @@ export class MonacoTextEditorAdapter implements TextEditor {
 
     addPasteListener(callback: (insertedText: string) => void | Promise<void>): Disposable {
         return this.editor.onDidPaste((pasteEvent) => {
-            callback(this.getTextAtRange(this.fromMonacoRange(pasteEvent.range)));
+            void callback(this.getTextAtRange(this.fromMonacoRange(pasteEvent.range)));
         });
     }
 
