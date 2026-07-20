@@ -678,6 +678,19 @@ public class DifferentialVerificationService {
     }
 
     /**
+     * Public seam for the staged runner's compile gates: until the first verification (or in-loop self-check) runs, {@code /opt/hyperion/verify.sh} still holds the
+     * readiness-probe variant from session bootstrap, whose fixture is already consumed — invoking it fails with "build-readiness fixture is unavailable" (exit 66).
+     * Idempotent: re-renders and overwrites the pristine script.
+     *
+     * @param sandbox   the sandbox hosting the workspace
+     * @param sessionId the sandbox session
+     * @param exercise  the exercise whose build recipe the script encodes
+     */
+    public void ensurePristineVerifyScript(InteractiveSandbox sandbox, String sessionId, ProgrammingExercise exercise) {
+        seedPristineVerifyScript(sandbox, sessionId, exercise);
+    }
+
+    /**
      * Recreates the verifier control directory and renders a fresh {@code verify.sh}. This discards any files left by the agent or an earlier in-loop verification before the
      * authoritative pass.
      */

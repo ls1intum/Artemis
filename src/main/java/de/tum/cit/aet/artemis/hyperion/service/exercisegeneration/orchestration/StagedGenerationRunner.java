@@ -290,8 +290,8 @@ public class StagedGenerationRunner {
     private GateResult evaluateGate(GenerationStage stage, InteractiveSandbox sandbox, String sessionId, ProgrammingExercise exercise, Map<String, String> seedTestsFiles) {
         return switch (stage) {
             case DESIGN -> checkDesignGate(sandbox, sessionId);
-            case SOLUTION -> checkCompileGate(sandbox, sessionId, "solution", "reference solution");
-            case TEMPLATE -> checkTemplateGate(sandbox, sessionId);
+            case SOLUTION -> checkCompileGate(sandbox, sessionId, exercise, "solution", "reference solution");
+            case TEMPLATE -> checkTemplateGate(sandbox, sessionId, exercise);
             case TESTS -> checkTestsGate(sandbox, sessionId, exercise, seedTestsFiles);
             case STATEMENT -> checkStatementGate(sandbox, sessionId);
         };
@@ -310,7 +310,7 @@ public class StagedGenerationRunner {
         return GateResult.passed("");
     }
 
-    private GateResult checkCompileGate(InteractiveSandbox sandbox, String sessionId, String repositoryDirectory, String label) {
+    private GateResult checkCompileGate(InteractiveSandbox sandbox, String sessionId, ProgrammingExercise exercise, String repositoryDirectory, String label) {
         // A direct `mvn compile` in the workspace CANNOT work here: the sandbox mounts /root/.m2 read-only and has no network egress, so plugin resolution fails
         // (observed live: "Read-only file system" then "Could not transfer artifact"). The pristine verify.sh is the only grader-faithful build path — it stages the
         // workspace into a writable /tmp build dir with the pre-warmed repository. At the solution/template stages the test suite is still the empty stripped scaffold,
@@ -318,6 +318,8 @@ public class StagedGenerationRunner {
         String repositorySelector = "solution".equals(repositoryDirectory) ? "solution" : "template";
         SandboxExecResult result;
         try {
+            // Until the first verification runs, /opt/hyperion/verify.sh is still the consumed readiness-probe variant (exits 66) — re-seed the real script first.
+            verifier.ensurePristineVerifyScript(sandbox, sessionId, exercise);
             result = sandbox.exec(sessionId, COMPILE_TIMEOUT, "sh", "-c",
                     "cd " + GenerationWorkspaceService.WORKSPACE + " && sh " + SandboxBuildCommandService.PRISTINE_VERIFY_PATH + " " + repositorySelector);
         }
@@ -333,8 +335,8 @@ public class StagedGenerationRunner {
         return GateResult.passed("");
     }
 
-    private GateResult checkTemplateGate(InteractiveSandbox sandbox, String sessionId) {
-        GateResult compile = checkCompileGate(sandbox, sessionId, "template", "template");
+    private GateResult checkTemplateGate(InteractiveSandbox sandbox, String sessionId, ProgrammingExercise exercise) {
+        GateResult compile = checkCompileGate(sandbox, sessionId, exercise, "template", "template");
         if (!compile.passed()) {
             return compile;
         }
