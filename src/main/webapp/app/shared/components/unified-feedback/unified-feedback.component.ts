@@ -3,7 +3,7 @@ import { NgClass } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TooltipModule } from 'primeng/tooltip';
 import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
-import { faCheck, faExclamationTriangle, faMessage, faQuestionCircle, faTimes, faTrashAlt } from '@fortawesome/free-solid-svg-icons';
+import { faCheck, faExclamationTriangle, faMessage, faMinus, faQuestionCircle, faTimes, faTrashAlt } from '@fortawesome/free-solid-svg-icons';
 import {
     FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER,
     FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER,
@@ -85,7 +85,7 @@ export class UnifiedFeedbackComponent {
     private readonly feedbackTypeConfigs: Record<FeedbackType, FeedbackTypeConfig> = {
         correct: { icon: faCheck, alertClass: 'alert-success' },
         needs_revision: { icon: faMessage, alertClass: 'alert-primary' },
-        not_attempted: { icon: faTimes, alertClass: 'alert-secondary' },
+        not_attempted: { icon: faMinus, alertClass: 'alert-secondary' },
         non_compliant: { icon: faTimes, alertClass: 'alert-danger' },
     };
 

@@ -3,6 +3,7 @@ import { UnifiedFeedbackComponent } from './unified-feedback.component';
 import { TranslateService, provideTranslateService } from '@ngx-translate/core';
 import { FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER } from 'app/assessment/shared/entities/feedback.model';
 import { vi } from 'vitest';
+import { faMinus } from '@fortawesome/free-solid-svg-icons';
 
 describe('UnifiedFeedbackComponent', () => {
     let component: UnifiedFeedbackComponent;
@@ -219,6 +220,12 @@ describe('UnifiedFeedbackComponent', () => {
         fixture.detectChanges();
         expect(component.inferredType()).toBe('not_attempted');
         expect(component.inferredAlertClass()).toBe('alert-secondary');
+    });
+
+    it('should expose the faMinus icon for not_attempted', () => {
+        fixture.componentRef.setInput('type', 'not_attempted');
+        fixture.detectChanges();
+        expect(component.inferredIcon()).toBe(faMinus);
     });
 
     it('should expose alert-danger for non_compliant', () => {
