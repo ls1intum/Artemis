@@ -1,16 +1,22 @@
 package de.tum.cit.aet.artemis.presentation.domain;
 
 import java.time.ZonedDateTime;
+import java.util.HashSet;
+import java.util.Set;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.JoinTable;
+import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.course.domain.Course;
 
@@ -42,6 +48,10 @@ public class PresentationAssessment extends DomainObject {
     @ManyToOne(fetch = FetchType.LAZY)
     @JsonIgnoreProperties(value = "presentationAssessments", allowSetters = true)
     private Course course;
+
+    @ManyToMany
+    @JoinTable(name = "presentation_assessment_student", joinColumns = @JoinColumn(name = "presentation_assessment_id", referencedColumnName = "id"), inverseJoinColumns = @JoinColumn(name = "student_id", referencedColumnName = "id"))
+    private Set<User> students = new HashSet<>();
 
     public String getTitle() {
         return title;
@@ -89,5 +99,13 @@ public class PresentationAssessment extends DomainObject {
 
     public void setCourse(Course course) {
         this.course = course;
+    }
+
+    public Set<User> getStudents() {
+        return students;
+    }
+
+    public void setStudents(Set<User> students) {
+        this.students = students;
     }
 }

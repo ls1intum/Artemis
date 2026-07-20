@@ -70,6 +70,33 @@
         </form>
     }
 
+    @if (showForm() && presentationStudentCourse()) {
+        <div class="border rounded p-3 mb-4">
+            <jhi-course-group
+                [allGroupUsers]="assignedStudents()"
+                [courseGroup]="studentsCourseGroup"
+                [isLoadingAllGroupUsers]="isLoadingAssignedStudents()"
+                [isAdmin]="false"
+                [course]="presentationStudentCourse()!"
+                [addUserToGroup]="addStudentToPresentation"
+                [removeUserFromGroup]="removeStudentFromPresentation"
+                [handleUsersSizeChange]="handleAssignedStudentsSizeChange"
+                [exportFileName]="studentExportFilename()"
+                [userSearch]="studentSearch"
+                (importFinish)="editedAssessment() && loadAssignedStudents(editedAssessment()!)"
+            >
+                <span>
+                    <span>{{ studentSectionTitle() }} - </span>
+                    @if (filteredAssignedStudentsSize() < assignedStudents().length) {
+                        <span>{{ filteredAssignedStudentsSize() }} <span jhiTranslate="artemisApp.course.courseGroup.outOf"></span> </span>
+                    }
+                    {{ assignedStudents().length }}
+                    <span jhiTranslate="artemisApp.course.students"></span>
+                </span>
+            </jhi-course-group>
+        </div>
+    }
+
     @if (presentationAssessments().length) {
         <div class="table-responsive">
             <table class="table table-striped">

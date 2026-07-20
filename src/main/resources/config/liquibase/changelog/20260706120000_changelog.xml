@@ -54,4 +54,37 @@
                                  referencedTableName="course"
                                  onDelete="CASCADE"/>
     </changeSet>
+
+    <changeSet id="20260706120000-5" author="artemis">
+        <createTable tableName="presentation_assessment_student">
+            <column name="presentation_assessment_id" type="bigint">
+                <constraints nullable="false"/>
+            </column>
+            <column name="student_id" type="bigint">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <addPrimaryKey tableName="presentation_assessment_student"
+                       columnNames="presentation_assessment_id, student_id"
+                       constraintName="pk_presentation_assessment_student"/>
+
+        <addForeignKeyConstraint baseColumnNames="presentation_assessment_id"
+                                 baseTableName="presentation_assessment_student"
+                                 constraintName="fk_presentation_assessment_student_assessment_id"
+                                 referencedColumnNames="id"
+                                 referencedTableName="presentation_assessment"
+                                 onDelete="CASCADE"/>
+
+        <addForeignKeyConstraint baseColumnNames="student_id"
+                                 baseTableName="presentation_assessment_student"
+                                 constraintName="fk_presentation_assessment_student_student_id"
+                                 referencedColumnNames="id"
+                                 referencedTableName="jhi_user"
+                                 onDelete="CASCADE"/>
+
+        <createIndex indexName="idx_presentation_assessment_student_student_id" tableName="presentation_assessment_student">
+            <column name="student_id"/>
+        </createIndex>
+    </changeSet>
 </databaseChangeLog>

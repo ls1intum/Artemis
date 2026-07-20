@@ -7,6 +7,7 @@ import java.util.Optional;
 
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.stereotype.Repository;
 
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
@@ -23,4 +24,7 @@ public interface PresentationAssessmentRepository extends ArtemisJpaRepository<P
     List<PresentationAssessment> findAllByCourseId(long courseId);
 
     Optional<PresentationAssessment> findByIdAndCourseId(long id, long courseId);
+
+    @EntityGraph(attributePaths = "students")
+    Optional<PresentationAssessment> findWithStudentsByIdAndCourseId(long id, long courseId);
 }

@@ -12,6 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
+import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.presentation.domain.PresentationAssessment;
@@ -189,6 +190,46 @@ class PresentationAssessmentIntegrationTest extends AbstractSpringIntegrationInd
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void addStudentToPresentationAssessment_shouldAssignCourseStudent() throws Exception {
+        request.postWithoutLocation(getStudentsUrl(course, presentationAssessment) + "/" + TEST_PREFIX + "student1", null, HttpStatus.OK, null);
+
+        PresentationAssessment storedAssessment = presentationAssessmentRepository.findWithStudentsByIdAndCourseId(presentationAssessment.getId(), course.getId()).orElseThrow();
+        assertThat(storedAssessment.getStudents()).extracting(User::getLogin).containsExactly(TEST_PREFIX + "student1");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void addStudentToPresentationAssessment_withUserNotInCourse_shouldReturnBadRequest() throws Exception {
+        userUtilService.addUsers("otherpresentationstudent", 1, 0, 0, 0);
+
+        request.postWithoutLocation(getStudentsUrl(course, presentationAssessment) + "/otherpresentationstudentstudent1", null, HttpStatus.BAD_REQUEST, null);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void getPresentationAssessmentStudents_shouldReturnAssignedStudents() throws Exception {
+        presentationAssessment.getStudents().add(userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
+        presentationAssessmentRepository.save(presentationAssessment);
+
+        List<User> result = request.getList(getStudentsUrl(course, presentationAssessment), HttpStatus.OK, User.class);
+
+        assertThat(result).extracting(User::getLogin).containsExactly(TEST_PREFIX + "student1");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void removeStudentFromPresentationAssessment_shouldRemoveAssignedStudent() throws Exception {
+        presentationAssessment.getStudents().add(userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
+        presentationAssessmentRepository.save(presentationAssessment);
+
+        request.delete(getStudentsUrl(course, presentationAssessment) + "/" + TEST_PREFIX + "student1", HttpStatus.NO_CONTENT);
+
+        PresentationAssessment storedAssessment = presentationAssessmentRepository.findWithStudentsByIdAndCourseId(presentationAssessment.getId(), course.getId()).orElseThrow();
+        assertThat(storedAssessment.getStudents()).isEmpty();
+    }
+
+    @Test
     void deleteCourse_withPresentationAssessment_shouldCascadeDeletePresentationAssessment() {
         Long presentationAssessmentId = presentationAssessment.getId();
 
@@ -205,5 +246,9 @@ class PresentationAssessmentIntegrationTest extends AbstractSpringIntegrationInd
 
     private String getAssessmentUrl(Course course, PresentationAssessment presentationAssessment) {
         return getBaseUrl(course) + "/" + presentationAssessment.getId();
+    }
+
+    private String getStudentsUrl(Course course, PresentationAssessment presentationAssessment) {
+        return getAssessmentUrl(course, presentationAssessment) + "/students";
     }
 }

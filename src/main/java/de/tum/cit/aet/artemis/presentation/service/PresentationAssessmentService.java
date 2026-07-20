@@ -3,11 +3,14 @@ package de.tum.cit.aet.artemis.presentation.service;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.List;
+import java.util.Set;
 
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.course.domain.Course;
@@ -25,8 +28,11 @@ public class PresentationAssessmentService {
 
     private final PresentationAssessmentRepository presentationAssessmentRepository;
 
-    public PresentationAssessmentService(PresentationAssessmentRepository presentationAssessmentRepository) {
+    private final UserRepository userRepository;
+
+    public PresentationAssessmentService(PresentationAssessmentRepository presentationAssessmentRepository, UserRepository userRepository) {
         this.presentationAssessmentRepository = presentationAssessmentRepository;
+        this.userRepository = userRepository;
     }
 
     /**
@@ -97,6 +103,53 @@ public class PresentationAssessmentService {
     public void delete(long courseId, long assessmentId) {
         PresentationAssessment presentationAssessment = findByIdAndCourseIdElseThrow(courseId, assessmentId);
         presentationAssessmentRepository.delete(presentationAssessment);
+    }
+
+    /**
+     * Find all students assigned to a presentation assessment.
+     *
+     * @param courseId     the course id
+     * @param assessmentId the presentation assessment id
+     * @return the assigned students
+     */
+    public Set<User> findStudents(long courseId, long assessmentId) {
+        return findWithStudentsByIdAndCourseIdElseThrow(courseId, assessmentId).getStudents();
+    }
+
+    /**
+     * Add a course student to a presentation assessment.
+     *
+     * @param course       the owning course
+     * @param assessmentId the presentation assessment id
+     * @param studentLogin the login of the student to add
+     */
+    public void addStudent(Course course, long assessmentId, String studentLogin) {
+        PresentationAssessment presentationAssessment = findWithStudentsByIdAndCourseIdElseThrow(course.getId(), assessmentId);
+        User student = userRepository.findOneWithGroupsAndAuthoritiesByLogin(studentLogin)
+                .orElseThrow(() -> new EntityNotFoundException("User with login " + studentLogin + " does not exist"));
+        if (!student.getGroups().contains(course.getStudentGroupName())) {
+            throw new BadRequestAlertException("The user is not a student in the course", PresentationAssessment.ENTITY_NAME, "studentNotInCourse");
+        }
+        presentationAssessment.getStudents().add(student);
+        presentationAssessmentRepository.save(presentationAssessment);
+    }
+
+    /**
+     * Remove a student from a presentation assessment.
+     *
+     * @param courseId     the course id
+     * @param assessmentId the presentation assessment id
+     * @param studentLogin the login of the student to remove
+     */
+    public void removeStudent(long courseId, long assessmentId, String studentLogin) {
+        PresentationAssessment presentationAssessment = findWithStudentsByIdAndCourseIdElseThrow(courseId, assessmentId);
+        presentationAssessment.getStudents().removeIf(student -> studentLogin.equals(student.getLogin()));
+        presentationAssessmentRepository.save(presentationAssessment);
+    }
+
+    private PresentationAssessment findWithStudentsByIdAndCourseIdElseThrow(long courseId, long assessmentId) {
+        return presentationAssessmentRepository.findWithStudentsByIdAndCourseId(assessmentId, courseId)
+                .orElseThrow(() -> new EntityNotFoundException(PresentationAssessment.ENTITY_NAME, assessmentId));
     }
 
     private void applyDto(PresentationAssessment presentationAssessment, PresentationAssessmentDTO dto) {

@@ -5,6 +5,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
+import java.util.Set;
 
 import jakarta.validation.Valid;
 
@@ -22,6 +23,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
@@ -139,6 +141,58 @@ public class PresentationAssessmentResource {
         Course course = courseRepository.findByIdElseThrow(courseId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
         presentationAssessmentService.delete(courseId, assessmentId);
+        return ResponseEntity.noContent().build();
+    }
+
+    /**
+     * GET /courses/{courseId}/presentation-assessments/{assessmentId}/students : get students assigned to a presentation assessment.
+     *
+     * @param courseId     the course id
+     * @param assessmentId the presentation assessment id
+     * @return the ResponseEntity with status 200 (OK) and the assigned students
+     */
+    @GetMapping("courses/{courseId}/presentation-assessments/{assessmentId}/students")
+    @EnforceAtLeastInstructor
+    public ResponseEntity<Set<User>> getPresentationAssessmentStudents(@PathVariable long courseId, @PathVariable long assessmentId) {
+        log.debug("REST request to get students for presentation assessment {} in course {}", assessmentId, courseId);
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
+        return ResponseEntity.ok(presentationAssessmentService.findStudents(courseId, assessmentId));
+    }
+
+    /**
+     * POST /courses/{courseId}/presentation-assessments/{assessmentId}/students/{studentLogin} : add a student to a presentation assessment.
+     *
+     * @param courseId     the course id
+     * @param assessmentId the presentation assessment id
+     * @param studentLogin the login of the student to add
+     * @return the ResponseEntity with status 200 (OK)
+     */
+    @PostMapping("courses/{courseId}/presentation-assessments/{assessmentId}/students/{studentLogin}")
+    @EnforceAtLeastInstructor
+    public ResponseEntity<Void> addStudentToPresentationAssessment(@PathVariable long courseId, @PathVariable long assessmentId, @PathVariable String studentLogin) {
+        log.debug("REST request to add student {} to presentation assessment {} in course {}", studentLogin, assessmentId, courseId);
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
+        presentationAssessmentService.addStudent(course, assessmentId, studentLogin);
+        return ResponseEntity.ok().build();
+    }
+
+    /**
+     * DELETE /courses/{courseId}/presentation-assessments/{assessmentId}/students/{studentLogin} : remove a student from a presentation assessment.
+     *
+     * @param courseId     the course id
+     * @param assessmentId the presentation assessment id
+     * @param studentLogin the login of the student to remove
+     * @return the ResponseEntity with status 204 (No Content)
+     */
+    @DeleteMapping("courses/{courseId}/presentation-assessments/{assessmentId}/students/{studentLogin}")
+    @EnforceAtLeastInstructor
+    public ResponseEntity<Void> removeStudentFromPresentationAssessment(@PathVariable long courseId, @PathVariable long assessmentId, @PathVariable String studentLogin) {
+        log.debug("REST request to remove student {} from presentation assessment {} in course {}", studentLogin, assessmentId, courseId);
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
+        presentationAssessmentService.removeStudent(courseId, assessmentId, studentLogin);
         return ResponseEntity.noContent().build();
     }
 }

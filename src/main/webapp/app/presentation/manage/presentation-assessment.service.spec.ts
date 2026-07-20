@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
@@ -9,8 +8,6 @@ import { PresentationAssessmentService } from 'app/presentation/manage/presentat
 import { PresentationAssessment } from 'app/presentation/shared/entities/presentation-assessment.model';
 
 describe('PresentationAssessmentService', () => {
-    setupTestBed({ zoneless: true });
-
     let service: PresentationAssessmentService;
     let httpMock: HttpTestingController;
 
@@ -81,6 +78,34 @@ describe('PresentationAssessmentService', () => {
         });
 
         const req = httpMock.expectOne({ method: 'DELETE', url: `${resourceUrl}/1` });
+        req.flush(null);
+    });
+
+    it('should find assigned presentation students', () => {
+        service.findStudents(courseId, 1).subscribe((response) => {
+            expect(response.body).toHaveLength(1);
+            expect(response.body?.[0].login).toBe('student1');
+        });
+
+        const req = httpMock.expectOne({ method: 'GET', url: `${resourceUrl}/1/students` });
+        req.flush([{ id: 1, login: 'student1' }]);
+    });
+
+    it('should add a student to a presentation assessment', () => {
+        service.addStudent(courseId, 1, 'student1').subscribe((response) => {
+            expect(response.ok).toBe(true);
+        });
+
+        const req = httpMock.expectOne({ method: 'POST', url: `${resourceUrl}/1/students/student1` });
+        req.flush(null);
+    });
+
+    it('should remove a student from a presentation assessment', () => {
+        service.removeStudent(courseId, 1, 'student1').subscribe((response) => {
+            expect(response.ok).toBe(true);
+        });
+
+        const req = httpMock.expectOne({ method: 'DELETE', url: `${resourceUrl}/1/students/student1` });
         req.flush(null);
     });
 });
