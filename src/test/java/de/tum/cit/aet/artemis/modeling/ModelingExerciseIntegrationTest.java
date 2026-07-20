@@ -1360,6 +1360,23 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void reEvaluateModelingExercise_invalidPlagiarismDetectionConfig_badRequest() throws Exception {
+        var validConfig = PlagiarismDetectionConfig.createDefault();
+        classExercise.setPlagiarismDetectionConfig(validConfig);
+        modelingExerciseTestRepository.save(classExercise);
+
+        ObjectNode body = (ObjectNode) request.getObjectMapper().valueToTree(UpdateModelingExerciseDTO.of(classExercise));
+        ((ObjectNode) body.get("plagiarismDetectionConfig")).put("continuousPlagiarismControlPlagiarismCaseStudentResponsePeriod", 6);
+
+        request.putWithResponseBody("/api/modeling/modeling-exercises/" + classExercise.getId() + "/re-evaluate?deleteFeedback=false", body, ModelingExerciseResponseDTO.class,
+                HttpStatus.BAD_REQUEST);
+
+        ModelingExercise persisted = modelingExerciseTestRepository.findForVersioningById(classExercise.getId()).orElseThrow();
+        assertThat(persisted.getPlagiarismDetectionConfig().getContinuousPlagiarismControlPlagiarismCaseStudentResponsePeriod()).isEqualTo(7);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createModelingExercise_courseExercise_persistsDefaultPlagiarismDetectionConfig() throws Exception {
         // The create path fills the default for course exercises when the request omits the config, so it is not persisted
         // as null. Pin that here.
