@@ -1,5 +1,6 @@
 import { Component, inject, input } from '@angular/core';
-import { faLightbulb } from '@fortawesome/free-solid-svg-icons';
+import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
+import { faLightbulb, faWandMagicSparkles } from '@fortawesome/free-solid-svg-icons';
 import { TranslateService } from '@ngx-translate/core';
 import { Feedback, FeedbackSuggestionType } from 'app/assessment/shared/entities/feedback.model';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
@@ -11,6 +12,9 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
     templateUrl: './feedback-suggestion-badge.component.html',
     styleUrls: ['./feedback-suggestion-badge.component.scss'],
     imports: [NgbTooltip, FaIconComponent, TranslateDirective],
+    host: {
+        '[class.suggestion-badge-host--footer]': "variant() === 'footer'",
+    },
 })
 export class FeedbackSuggestionBadgeComponent {
     private translateService = inject(TranslateService);
@@ -19,8 +23,15 @@ export class FeedbackSuggestionBadgeComponent {
 
     readonly useDefaultText = input(false);
 
+    readonly variant = input<'overlay' | 'footer'>('overlay');
+
     // Icons
     faLightbulb = faLightbulb;
+    faWandMagicSparkles = faWandMagicSparkles;
+
+    get icon(): IconDefinition {
+        return this.variant() === 'footer' ? this.faWandMagicSparkles : this.faLightbulb;
+    }
 
     get text(): string {
         const feedbackSuggestionType = Feedback.getFeedbackSuggestionType(this.feedback());

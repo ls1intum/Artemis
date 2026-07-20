@@ -4,10 +4,27 @@
     height: 12px;
 }
 
+:host(.suggestion-badge-host--footer) {
+    display: block;
+    height: auto;
+    width: 100%;
+}
+
 .suggestion-badge {
     position: absolute;
     top: -8px;
     vertical-align: middle;
     background-color: var(--feedback-suggestions-primary);
     cursor: default;
+}
+
+.suggestion-badge--footer {
+    position: static;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    width: 100%;
+    padding: 0;
+    background-color: transparent;
+    color: var(--feedback-suggestions-primary);
 }
