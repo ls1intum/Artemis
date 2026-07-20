@@ -1,6 +1,8 @@
 #!/bin/sh
 
 CONFIGURATION=$1
+# $2 (test framework) is part of the positional CLI contract but is currently unused in this script.
+# shellcheck disable=SC2034
 TEST_FRAMEWORK=$2
 TEST_PATHS=$3  # Optional: space-separated list of test paths to run (passed through as-is, e.g., "e2e/exam/ e2e/atlas/")
 

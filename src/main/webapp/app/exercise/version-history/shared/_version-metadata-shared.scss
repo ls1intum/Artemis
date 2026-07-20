@@ -54,13 +54,13 @@
         color: var(--text-color-secondary);
         font-size: 0.9rem;
         min-width: 0;
-        word-break: break-word;
+        overflow-wrap: anywhere;
     }
 
     .metadata-row__value {
         text-align: left;
         font-weight: 500;
         min-width: 0;
-        word-break: break-word;
+        overflow-wrap: anywhere;
     }
 }

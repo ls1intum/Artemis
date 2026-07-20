@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.Executor;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -15,6 +16,7 @@ import jakarta.ws.rs.BadRequestException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
@@ -94,9 +96,14 @@ public class QuizSubmissionService extends AbstractQuizSubmissionService<QuizSub
 
     private final WebsocketMessagingService websocketMessagingService;
 
+    // Executor for the (asynchronous) quiz statistics update. Delegates to the shared pool in production and is
+    // synchronous under the test profile.
+    private final Executor quizStatisticsExecutor;
+
     public QuizSubmissionService(QuizSubmissionRepository quizSubmissionRepository, ResultRepository resultRepository, SubmissionVersionService submissionVersionService,
             QuizExerciseRepository quizExerciseRepository, ParticipationService participationService, QuizBatchService quizBatchService, QuizStatisticService quizStatisticService,
-            StudentParticipationRepository studentParticipationRepository, WebsocketMessagingService websocketMessagingService) {
+            StudentParticipationRepository studentParticipationRepository, WebsocketMessagingService websocketMessagingService,
+            @Qualifier("quizStatisticsTaskExecutor") Executor quizStatisticsExecutor) {
         super(submissionVersionService);
         this.quizSubmissionRepository = quizSubmissionRepository;
         this.resultRepository = resultRepository;
@@ -106,6 +113,7 @@ public class QuizSubmissionService extends AbstractQuizSubmissionService<QuizSub
         this.quizStatisticService = quizStatisticService;
         this.studentParticipationRepository = studentParticipationRepository;
         this.websocketMessagingService = websocketMessagingService;
+        this.quizStatisticsExecutor = quizStatisticsExecutor;
     }
 
     /**
@@ -168,8 +176,14 @@ public class QuizSubmissionService extends AbstractQuizSubmissionService<QuizSub
         // save result to store score
         resultRepository.save(result);
 
-        // add result to statistics
-        quizStatisticService.recalculateStatistics(quizExercise);
+        // Update the quiz statistics asynchronously: statistics are only relevant for instructors, so the student must
+        // not wait for them. Previously this ran a full recalculation synchronously, iterating every participation of
+        // the quiz with several queries each, which took many seconds per submission on popular practice quizzes. The
+        // async task incrementally adds just this result (the same O(1) mechanism used for live and exam submissions),
+        // loading the quiz and result freshly by id so it never mutates the entities used to build this response.
+        long resultId = result.getId();
+        long quizExerciseId = quizExercise.getId();
+        quizStatisticsExecutor.execute(() -> quizStatisticService.updateStatisticsForNewResult(quizExerciseId, resultId));
 
         log.debug("submit practice quiz finished: {}", quizSubmission);
         return result;

@@ -1,6 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 import { CollapsableAssessmentInstructionsComponent } from 'app/assessment/manage/assessment-instructions/collapsable-assessment-instructions/collapsable-assessment-instructions.component';
 import { NO_ERRORS_SCHEMA } from '@angular/core';
@@ -9,7 +8,6 @@ import { TranslateService } from '@ngx-translate/core';
 import { mockExercise } from 'test/helpers/mocks/service/mock-team.service';
 
 describe('CollapsableAssessmentInstructionsComponent', () => {
-    setupTestBed({ zoneless: true });
     let component: CollapsableAssessmentInstructionsComponent;
     let fixture: ComponentFixture<CollapsableAssessmentInstructionsComponent>;
 

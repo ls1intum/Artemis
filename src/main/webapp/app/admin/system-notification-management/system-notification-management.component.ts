@@ -235,8 +235,16 @@ export class SystemNotificationManagementComponent implements OnInit, OnDestroy 
         if (!event.field) {
             return;
         }
+        const reverse = (event.order ?? 1) === 1;
+        // PrimeNG re-emits `onSort` whenever the table's `[value]` changes (because `customSort` is enabled
+        // and a `sortField` is bound), not only on user interaction. Reloading unconditionally would assign a
+        // new `notifications` array in `onSuccess`, which changes `[value]` again and re-triggers `onSort` -
+        // an infinite fetch loop (issue #13263). Only react when the sort actually changed.
+        if (event.field === this.predicate() && reverse === this.reverse()) {
+            return;
+        }
         this.predicate.set(event.field);
-        this.reverse.set((event.order ?? 1) === 1);
+        this.reverse.set(reverse);
         this.transition();
     }
 

@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MetisService } from 'app/communication/service/metis.service';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
@@ -15,8 +14,6 @@ import { AnswerPost } from 'app/communication/shared/entities/answer-post.model'
 import { LinkPreviewComponent } from 'app/communication/link-preview/components/link-preview/link-preview.component';
 
 describe('LinkPreviewComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: LinkPreviewComponent;
     let fixture: ComponentFixture<LinkPreviewComponent>;
     let metisService: MetisService;

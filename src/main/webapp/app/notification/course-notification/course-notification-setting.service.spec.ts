@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TestBed } from '@angular/core/testing';
 import { HttpTestingController } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
@@ -16,8 +15,6 @@ import { BehaviorSubject, distinctUntilChanged, firstValueFrom } from 'rxjs';
 import { User } from 'app/account/user/user.model';
 
 describe('CourseNotificationSettingService', () => {
-    setupTestBed({ zoneless: true });
-
     let service: CourseNotificationSettingService;
     let httpMock: HttpTestingController;
 

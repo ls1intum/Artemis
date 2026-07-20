@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MetisService } from 'app/communication/service/metis.service';
 import { DebugElement } from '@angular/core';
@@ -53,8 +52,6 @@ import { CourseSidebarService } from 'app/course/overview/services/course-sideba
 import { DialogService } from 'primeng/dynamicdialog';
 
 describe('PostingReactionsBarComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: PostingReactionsBarComponent<Posting>;
     let fixture: ComponentFixture<PostingReactionsBarComponent<Posting>>;
     let debugElement: DebugElement;

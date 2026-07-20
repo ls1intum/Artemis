@@ -21,10 +21,8 @@ import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.serv
 import { MODULE_FEATURE_ATLAS } from 'app/app.constants';
 import { CompetencySelectionComponent } from 'app/atlas/shared/competency-selection/competency-selection.component';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('CompetencySelection', () => {
-    setupTestBed({ zoneless: true });
     let fixture: ComponentFixture<CompetencySelectionComponent>;
     let component: CompetencySelectionComponent;
     let courseStorageService: CourseStorageService;

@@ -12,10 +12,8 @@ import { of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 import { CompetencyContributionCardDTO } from 'app/atlas/shared/entities/competency.model';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('CompetencyContributionComponent', () => {
-    setupTestBed({ zoneless: true });
     let fixture: ComponentFixture<CompetencyContributionComponent>;
     let courseCompetencyService: CourseCompetencyService;
     let getCompetencyContributionsForExerciseStub: ReturnType<typeof vi.spyOn>;
