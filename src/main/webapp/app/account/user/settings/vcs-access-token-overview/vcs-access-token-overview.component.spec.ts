@@ -118,6 +118,42 @@ describe('VcsAccessTokenOverviewComponent', () => {
         expect(comp['tokenTypeLabelKey'](tokens[2])).toBe('artemisApp.userSettings.vcsAccessTokensOverview.type.participation');
     });
 
+    it('links staff repository tokens to course management and participation tokens to the student routes', () => {
+        // Repository (staff) token -> course-management (staff have access there).
+        expect(comp['courseLink'](tokens[0])).toEqual(['/course-management', 10]);
+        expect(comp['exerciseLink'](tokens[0])).toEqual(['/course-management', 10, 'programming-exercises', 100]);
+        // Participation token -> student-facing routes (the owner may be a student without course-management access).
+        expect(comp['courseLink'](tokens[2])).toEqual(['/courses', 10]);
+        expect(comp['exerciseLink'](tokens[2])).toEqual(['/courses', 10, 'exercises', 300]);
+    });
+
+    it('routes exam exercises through the exam (participation) or exercise group (staff)', () => {
+        const staffExamToken: VcsAccessTokenOverview = {
+            id: 9,
+            tokenType: VcsAccessTokenType.REPOSITORY,
+            repositoryType: RepositoryType.TEMPLATE,
+            courseId: 10,
+            courseTitle: 'Course One',
+            examId: 5,
+            exerciseGroupId: 7,
+            exerciseId: 100,
+            exerciseTitle: 'Exam Exercise',
+        };
+        expect(comp['exerciseLink'](staffExamToken)).toEqual(['/course-management', 10, 'exams', 5, 'exercise-groups', 7, 'programming-exercises', 100]);
+
+        const participationExamToken: VcsAccessTokenOverview = {
+            id: 8,
+            tokenType: VcsAccessTokenType.PARTICIPATION,
+            courseId: 10,
+            courseTitle: 'Course One',
+            examId: 5,
+            exerciseGroupId: 7,
+            exerciseId: 100,
+            exerciseTitle: 'Exam Exercise',
+        };
+        expect(comp['exerciseLink'](participationExamToken)).toEqual(['/courses', 10, 'exams', 5]);
+    });
+
     it('revokes a token, removes it from the list and reports success', () => {
         comp.ngOnInit();
         comp.onDataRequest({ page: 0, pageSize: 20 });

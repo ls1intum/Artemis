@@ -160,6 +160,40 @@ export class VcsAccessTokenOverviewComponent implements OnInit {
     }
 
     /**
+     * The router link to the token's course, or {@code undefined} if the course is unknown. Participation tokens belong to the current user (who may be a student without
+     * course-management access), so they link to the student-facing course page; repository-scoped staff tokens link to course management.
+     *
+     * @param token the token whose course to link to
+     */
+    protected courseLink(token: VcsAccessTokenOverview): (string | number)[] | undefined {
+        if (!token.courseId) {
+            return undefined;
+        }
+        return token.tokenType === VcsAccessTokenType.PARTICIPATION ? ['/courses', token.courseId] : ['/course-management', token.courseId];
+    }
+
+    /**
+     * The router link to the token's exercise, or {@code undefined} if it cannot be built. The target depends on the token kind so it never points a user at a page they cannot open:
+     * participation tokens (owned by the current user, possibly a student) use the student-facing routes, while repository-scoped staff tokens use the course-management routes.
+     * Exam exercises are routed through their exam (and, for staff, exercise group).
+     *
+     * @param token the token whose exercise to link to
+     */
+    protected exerciseLink(token: VcsAccessTokenOverview): (string | number)[] | undefined {
+        if (!token.courseId || !token.exerciseId) {
+            return undefined;
+        }
+        if (token.tokenType === VcsAccessTokenType.PARTICIPATION) {
+            // Student-facing routes: exam exercises are reached through the exam, regular exercises through the exercise page.
+            return token.examId ? ['/courses', token.courseId, 'exams', token.examId] : ['/courses', token.courseId, 'exercises', token.exerciseId];
+        }
+        // Staff repository token: course-management routes (staff have access there).
+        return token.examId && token.exerciseGroupId
+            ? ['/course-management', token.courseId, 'exams', token.examId, 'exercise-groups', token.exerciseGroupId, 'programming-exercises', token.exerciseId]
+            : ['/course-management', token.courseId, 'programming-exercises', token.exerciseId];
+    }
+
+    /**
      * Opens the confirmation dialog for revoking the given token. Confirming triggers {@link revokeToken}; the shared delete dialog surfaces any server error via {@link dialogError$}.
      *
      * @param token the token the user wants to revoke

@@ -16,8 +16,8 @@
 
 <ng-template #courseColumn let-params>
     @let token = params.data;
-    @if (token.courseId && token.courseTitle) {
-        <a [routerLink]="['/course-management', token.courseId]" target="_blank" rel="noopener noreferrer">{{ token.courseTitle }}</a>
+    @if (courseLink(token); as link) {
+        <a [routerLink]="link" target="_blank" rel="noopener noreferrer">{{ token.courseTitle }}</a>
     } @else {
         <span>{{ token.courseTitle }}</span>
     }
@@ -25,19 +25,8 @@
 
 <ng-template #exerciseColumn let-params>
     @let token = params.data;
-    @if (token.courseId && token.exerciseId && token.exerciseTitle) {
-        @if (token.examId && token.exerciseGroupId) {
-            <a
-                [routerLink]="['/course-management', token.courseId, 'exams', token.examId, 'exercise-groups', token.exerciseGroupId, 'programming-exercises', token.exerciseId]"
-                target="_blank"
-                rel="noopener noreferrer"
-                >{{ token.exerciseTitle }}</a
-            >
-        } @else {
-            <a [routerLink]="['/course-management', token.courseId, 'programming-exercises', token.exerciseId]" target="_blank" rel="noopener noreferrer">{{
-                token.exerciseTitle
-            }}</a>
-        }
+    @if (exerciseLink(token); as link) {
+        <a [routerLink]="link" target="_blank" rel="noopener noreferrer">{{ token.exerciseTitle }}</a>
     } @else {
         <span>{{ token.exerciseTitle }}</span>
     }
@@ -54,7 +43,7 @@
 <ng-template #repositoryColumn let-params>
     @let token = params.data;
     @if (token.repositoryUri) {
-        <span class="font-mono text-sm break-all">{{ token.repositoryUri }}</span>
+        <span class="block max-w-xs truncate font-mono text-xs text-muted-color" [title]="token.repositoryUri">{{ token.repositoryUri }}</span>
     }
 </ng-template>
 
