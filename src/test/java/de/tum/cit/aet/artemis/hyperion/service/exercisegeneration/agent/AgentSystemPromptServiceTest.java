@@ -168,8 +168,31 @@ class AgentSystemPromptServiceTest {
         String prompt = systemPromptService.build(exerciseWithStatement("Calculate a score from a collection of events.")).replaceAll("\\s+", " ");
 
         assertThat(prompt).contains("Keep the public design proportional to the learning objective", "non-degenerate witnesses",
-                "one line per independently actionable student implementation seam", "One task is correct when the exercise has one coherent student implementation seam",
+                "one line per independently actionable student implementation seam", "never one task for the whole exercise unless it is genuinely one seam",
                 "byte-identical to the solution");
+    }
+
+    // Task binding granularity: a task groups ALL of one seam's test partitions under a single [task] line — never one task per test, never one task for the
+    // whole exercise unless it is genuinely a single seam. Encoded generally (no scenario-specific numbers) in both the design schema and the shared bindings rule.
+
+    @Test
+    void build_taskGranularity_groupsSeamPartitionsAndRejectsPerTestOrWholeExerciseTasks() {
+        String prompt = systemPromptService.build(exerciseWith(ProgrammingLanguage.JAVA, "")).replaceAll("\\s+", " ");
+
+        assertThat(prompt).contains("grouping every test partition it needs", "never one row per test", "never one for the whole exercise unless it is genuinely one seam")
+                .contains("Group ALL of a seam's test partitions under its one line", "never bind one task per test",
+                        "never one task for the whole exercise unless it is genuinely one seam");
+    }
+
+    // Documentation must originate in the solution (STAGE 1), never be authored later in the template (STAGE 2) — the live defect was javadoc replaced by terse
+    // impl comments because docs were effectively written at the template stage while the solution shipped doc-light.
+
+    @Test
+    void build_documentationOriginatesInTheSolutionNeverAuthoredLaterInTheTemplate() {
+        String prompt = systemPromptService.build(exerciseWith(ProgrammingLanguage.JAVA, "")).replaceAll("\\s+", " ");
+
+        assertThat(prompt).contains("Write complete Javadoc on every public member now", "the template inherits it verbatim", "never defer docs to that stage",
+                "If a doc is missing from the solution, add it there first and re-derive", "never author docs only in the template");
     }
 
     // GENERATE mode's grounded workflow is staged (design -> solution -> template -> differential tests -> statement) so each artifact is authored from the previous

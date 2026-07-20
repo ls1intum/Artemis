@@ -104,4 +104,15 @@ class ExerciseGenerationDtoTest {
         assertThat(json.get("ownedByCaller").asBoolean()).isFalse();
         assertThat(json.get("cancellable").asBoolean()).isFalse();
     }
+
+    @Test
+    void status_omitsDesignDocumentWhenAbsent_butIncludesItWhenCaptured() throws Exception {
+        JsonNode withoutDesignDocument = mapper
+                .readTree(mapper.writeValueAsString(new ExerciseGenerationStatusDTO("job", false, null, List.of(), List.of(), true, null, null, true, false, null)));
+        assertThat(withoutDesignDocument.has("designDocument")).isFalse();
+
+        JsonNode withDesignDocument = mapper.readTree(
+                mapper.writeValueAsString(new ExerciseGenerationStatusDTO("job", false, null, List.of(), List.of(), true, null, null, true, false, "## Classes\n| Foo | role |")));
+        assertThat(withDesignDocument.get("designDocument").asText()).isEqualTo("## Classes\n| Foo | role |");
+    }
 }

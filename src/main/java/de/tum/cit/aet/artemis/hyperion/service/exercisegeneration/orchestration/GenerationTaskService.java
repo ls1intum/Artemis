@@ -175,6 +175,11 @@ public class GenerationTaskService {
             try (GenerationOutcome outcome = orchestrator.generate(exercise, user, userPrompt, jobId, event.mode(),
                     () -> jobService.isCancelled(jobId) || deadlineExceeded.get() || tokenBudgetExceeded.get() || tokenAccountingFailed.get() || heartbeatLost.get(),
                     emitter::progress, fileChangeSink, usageSink)) {
+                // Surface the staged workspace's DESIGN.md as an observable intermediate result as soon as the outcome lands, regardless of the terminal branch below, so
+                // stage-0 quality is inspectable through the status/replay API even when the run does not end up saved.
+                if (outcome.designDocument() != null) {
+                    jobService.recordDesignDocument(exerciseId, jobId, outcome.designDocument());
+                }
                 if (tokenAccountingFailed.get()) {
                     emitter.milestone(ExerciseGenerationEventDTO.of(ExerciseGenerationEventDTO.Type.CANCELLED,
                             "Generation stopped because token usage could not be accounted for. Nothing was changed."));

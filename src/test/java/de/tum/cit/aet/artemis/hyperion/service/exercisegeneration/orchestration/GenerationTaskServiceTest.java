@@ -260,6 +260,23 @@ class GenerationTaskServiceTest {
     }
 
     @Test
+    void mechanicallyVerifiedRun_recordsTheCapturedDesignDocumentAsSoonAsTheOutcomeLands() {
+        GenerationOutcome outcome = new GenerationOutcome(new AgentLoopResult(AgentLoopResult.Status.COMPLETED, 5, "done"), new VerificationResult(true, true, true, 3, List.of()),
+                SESSION_ID, orchestrator, sandbox, Map.of(), "", SpecFidelityReport.empty(), Map.of(), "## Classes\n| Foo | role |");
+
+        run(GenerationMode.GENERATE, outcome);
+
+        verify(jobService).recordDesignDocument(EXERCISE_ID, JOB_ID, "## Classes\n| Foo | role |");
+    }
+
+    @Test
+    void run_withoutACapturedDesignDocument_neverRecordsOne() {
+        run(GenerationMode.GENERATE, outcomeWith(AgentLoopResult.Status.CANCELLED, null));
+
+        verify(jobService, never()).recordDesignDocument(anyLong(), anyString(), any());
+    }
+
+    @Test
     void heartbeatFailure_doesNotSuppressLaterHeartbeatAttempts() {
         ArgumentCaptor<Runnable> heartbeat = ArgumentCaptor.forClass(Runnable.class);
         when(jobService.heartbeat(EXERCISE_ID, JOB_ID)).thenThrow(new IllegalStateException("cluster temporarily unavailable")).thenReturn(true);

@@ -407,6 +407,21 @@ class HyperionExerciseGenerationResourceTest {
     }
 
     @Test
+    void getExerciseGenerationStatus_preservesDesignDocumentThroughTheRevertInfoRemap() {
+        ExerciseGenerationStatusDTO status = new ExerciseGenerationStatusDTO("job-42", false, GenerationMode.GENERATE, List.of(), List.of(), false, null, null, true, false,
+                "## Classes\n| Foo | role |");
+        when(programmingExerciseRepository.findWithAllParticipationsAndBuildConfigById(1L)).thenReturn(Optional.of(testExercise));
+        when(userRepository.getUserWithGroupsAndAuthorities()).thenReturn(testUser);
+        when(jobService.getStatus(testUser, testExercise)).thenReturn(Optional.of(status));
+        when(generationRevertService.findRevertibleRun(1L)).thenReturn(Optional.empty());
+
+        ResponseEntity<ExerciseGenerationStatusDTO> response = resource.getExerciseGenerationStatus(1L);
+
+        assertThat(response.getBody()).isNotNull();
+        assertThat(response.getBody().designDocument()).isEqualTo("## Classes\n| Foo | role |");
+    }
+
+    @Test
     void getExerciseGenerationStatus_whenOnlyRevertBaselineRemains_returnsRevertCapability() {
         when(programmingExerciseRepository.findWithAllParticipationsAndBuildConfigById(1L)).thenReturn(Optional.of(testExercise));
         when(userRepository.getUserWithGroupsAndAuthorities()).thenReturn(testUser);

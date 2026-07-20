@@ -122,9 +122,10 @@ public class AgentSystemPromptService {
             ARTEMIS TASK BINDINGS
             Use one line per independently actionable student implementation seam:
               [task][Short human title](exactTestNameA,exactTestNameB)
-            Copy test names verbatim from `verify`; never guess, rename, add parentheses, or remove prefixes. One task is correct when the exercise has one coherent student implementation seam;
-            split only independently actionable targets. Every behavioural test appears exactly once. Do not bind build gates, aggregates, harness checks, or structural checks already satisfied
-            by the template. Titles describe behaviour without exposing raw test names. The exact lowercase `[task]` keyword is required.
+            Copy test names verbatim from `verify`; never guess, rename, add parentheses, or remove prefixes. Group ALL of a seam's test partitions under its one line; never
+            bind one task per test, and never one task for the whole exercise unless it is genuinely one seam. Every behavioural test appears exactly once. Do not bind build gates,
+            aggregates, harness checks, or structural checks already satisfied by the template. Titles describe behaviour without exposing raw test names. The exact lowercase `[task]`
+            keyword is required.
 
             """;
 
@@ -140,20 +141,23 @@ public class AgentSystemPromptService {
     private static final String STAGE_0_DESIGN_INSTRUCTIONS = """
             STAGE 0 — DESIGN FIRST: before touching any repository, write `/workspace/DESIGN.md` (workspace root only; never persisted into solution, template, or tests)
             with exactly these sections: `## Classes` (a table: name | role | given-complete-in-template | student-implements-stubbed | student-creates-absent-from-template),
-            `## Public API` (signatures only), `## Tasks` (one row per task seam: task title, the test partitions that will grade it — e.g. typical / empty / boundary /
-            invalid), `## Diagram` (yes/no + one-line why, per the diagram rule below). Choose the smallest design the source requirements support; do not create one test
-            or task per sentence. Update DESIGN.md whenever a later stage forces a design change — it must always describe the final exercise truthfully.
+            `## Public API` (signatures only), `## Tasks` (one row per seam — an independently actionable student-work unit, e.g. a method/class/behavior cluster —
+            grouping every test partition it needs; never one row per test, never one for the whole exercise unless it is genuinely one seam), `## Diagram` (yes/no +
+            one-line why, per the diagram rule below). Choose the smallest design the source requirements support; do not create one test or task per sentence. Update
+            DESIGN.md whenever a later stage forces a design change — it must always describe the final exercise truthfully.
             """;
 
     private static final String STAGE_1_SOLUTION_INSTRUCTIONS = """
             STAGE 1 — SOLUTION: implement the reference solution per DESIGN.md. Execute every worked example from the requirements against the real solution in the
             sandbox (a throwaway run under /tmp, never committed) and fix the SOLUTION or the EXAMPLE when they disagree — never patch code to match a wrong number.
+            Write complete Javadoc on every public member now; the template inherits it verbatim — never defer docs to that stage.
             """;
 
     private static final String STAGE_2_TEMPLATE_INSTRUCTIONS = """
             STAGE 2 — TEMPLATE: derive the template FROM the finished solution: copy it, then remove exactly the student work DESIGN.md marks stubbed or absent (stub
             bodies keep their Javadoc plus an in-body TODO and a placeholder throw; a student-created type is omitted entirely, with TODO breadcrumbs in the template
             files that collaborate with it) so the template still compiles. On every shared file, Javadoc and non-TODO comments stay byte-identical to the solution.
+            If a doc is missing from the solution, add it there first and re-derive; never author docs only in the template.
             """;
 
     private static final String STAGE_3_TESTS_INSTRUCTIONS = """

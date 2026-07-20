@@ -1480,6 +1480,7 @@ components:
           enum: [GENERATE, ADAPT]
         ownedByCaller: {type: boolean}
         cancellable: {type: boolean}
+        designDocument: {type: string}
     ExerciseGenerationEvent:
       type: object
       required: [type, timestamp]
