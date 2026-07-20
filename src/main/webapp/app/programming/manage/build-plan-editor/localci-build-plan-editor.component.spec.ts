@@ -115,6 +115,19 @@ describe('LocalCIBuildPlanEditorComponent', () => {
         expect(comp.isSaving()).toBe(false);
     });
 
+    it('should trim surrounding whitespace from the docker image before saving', () => {
+        comp.programmingExercise.set({ id: 7, buildConfig: {} } as unknown as ProgrammingExercise);
+        comp.phases.set(phases);
+        comp.dockerImage.set('  some-image  ');
+        comp.timeout.set(120);
+        const updateStub = vi.spyOn(buildPlanConfigurationService, 'updateBuildPlanConfiguration').mockReturnValue(of(new HttpResponse<object>({ body: {} })));
+
+        comp.submit();
+
+        // the image is validated trimmed, so the whitespace must not end up in the stored configuration
+        expect(updateStub).toHaveBeenCalledWith(7, expect.objectContaining({ buildPlan: { phases, dockerImage: 'some-image' } }));
+    });
+
     it('should surface an error alert when saving fails', () => {
         comp.programmingExercise.set({ id: 7, buildConfig: {} } as unknown as ProgrammingExercise);
         comp.phases.set(phases);

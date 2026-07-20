@@ -5,6 +5,7 @@ import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.verify;
 
+import java.time.ZonedDateTime;
 import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -14,6 +15,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.domain.build.BuildPhaseCondition;
 import de.tum.cit.aet.artemis.programming.dto.BuildPhaseDTO;
 import de.tum.cit.aet.artemis.programming.dto.BuildPlanPhasesDTO;
 import de.tum.cit.aet.artemis.programming.dto.UpdateBuildPlanConfigurationDTO;
@@ -42,6 +44,11 @@ class ProgrammingExerciseBuildConfigResourceIntegrationTest extends AbstractProg
 
     private static BuildPhaseDTO phase(String name) {
         return new BuildPhaseDTO(name, "echo " + name, null, false, List.of());
+    }
+
+    private static BuildPhaseDTO afterDueDatePhase(String name) {
+        // a phase that only runs after the due date has to produce results, otherwise it is not relevant for the rebuild
+        return new BuildPhaseDTO(name, "echo " + name, BuildPhaseCondition.AFTER_DUE_DATE, false, List.of("results/*.xml"));
     }
 
     private static UpdateBuildPlanConfigurationDTO configurationWith(List<BuildPhaseDTO> phases, int timeoutSeconds) {
@@ -118,5 +125,37 @@ class ProgrammingExerciseBuildConfigResourceIntegrationTest extends AbstractProg
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void testRejectsEmptyPhases() throws Exception {
         request.put(buildConfigEndpoint(), configurationWith(List.of(), 0), HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void testAddingAfterDueDatePhaseSchedulesTheRebuild() throws Exception {
+        doNothing().when(programmingTriggerService).triggerTemplateAndSolutionBuild(anyLong());
+        programmingExercise.setDueDate(ZonedDateTime.now().plusDays(1));
+        programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(null);
+        programmingExerciseRepository.save(programmingExercise);
+
+        request.put(buildConfigEndpoint(), configurationWith(List.of(phase("compile"), afterDueDatePhase("test")), 240), HttpStatus.OK);
+
+        // adding a phase that runs after the due date has to schedule the rebuild, exactly as the full exercise update does
+        var updated = programmingExerciseRepository.findByIdElseThrow(programmingExercise.getId());
+        assertThat(updated.getBuildAndTestStudentSubmissionsAfterDueDate()).isNotNull();
+        assertThat(updated.getBuildAndTestStudentSubmissionsAfterDueDate()).isAfter(programmingExercise.getDueDate());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void testRemovingAfterDueDatePhaseClearsTheRebuildDate() throws Exception {
+        doNothing().when(programmingTriggerService).triggerTemplateAndSolutionBuild(anyLong());
+        programmingExercise.setDueDate(ZonedDateTime.now().plusDays(1));
+        programmingExerciseRepository.save(programmingExercise);
+        request.put(buildConfigEndpoint(), configurationWith(List.of(phase("compile"), afterDueDatePhase("test")), 240), HttpStatus.OK);
+        assertThat(programmingExerciseRepository.findByIdElseThrow(programmingExercise.getId()).getBuildAndTestStudentSubmissionsAfterDueDate()).isNotNull();
+
+        request.put(buildConfigEndpoint(), configurationWith(List.of(phase("compile"), phase("test")), 240), HttpStatus.OK);
+
+        // without a phase that runs after the due date, the exercise must not keep a stale rebuild date
+        var updated = programmingExerciseRepository.findByIdElseThrow(programmingExercise.getId());
+        assertThat(updated.getBuildAndTestStudentSubmissionsAfterDueDate()).isNull();
     }
 }

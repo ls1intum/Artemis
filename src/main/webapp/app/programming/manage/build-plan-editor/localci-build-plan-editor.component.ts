@@ -142,7 +142,8 @@ export class LocalCIBuildPlanEditorComponent implements OnInit {
         this.isSaving.set(true);
         this.buildPlanConfigurationService
             .updateBuildPlanConfiguration(exercise.id, {
-                buildPlan: { phases: this.phases(), dockerImage: this.dockerImage() || undefined },
+                // the image is validated trimmed, so it is also stored trimmed instead of keeping the whitespace an instructor pasted
+                buildPlan: { phases: this.phases(), dockerImage: this.dockerImage().trim() || undefined },
                 timeoutSeconds: this.timeout(),
                 dockerFlags: exercise.buildConfig?.dockerFlags,
             })
