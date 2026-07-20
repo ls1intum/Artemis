@@ -30,10 +30,8 @@ import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { MockExerciseService } from 'test/helpers/mocks/service/mock-exercise.service';
 import { mapCompetencyLinks, toCompetencyExerciseLinkDTO } from 'app/atlas/shared/dto/competency-exercise-link-dto';
 import { CompetencyProgressDTO, CompetencyWithTailRelationResponseDTO, CourseCompetencyResponseDTO, toCompetency } from 'app/atlas/shared/dto/course-competency-response.dto';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('CompetencyService', () => {
-    setupTestBed({ zoneless: true });
     let competencyService: CompetencyService;
     let httpTestingController: HttpTestingController;
     let defaultCompetencyDtos: CourseCompetencyResponseDTO[];

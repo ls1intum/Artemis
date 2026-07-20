@@ -1,7 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
-import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { TranslateService, provideTranslateService } from '@ngx-translate/core';
 import { ResultHistoryDropdownComponent } from './result-history-dropdown.component';
 import { MockProvider } from 'ng-mocks';
 import { FeedbackComponent } from 'app/exercise/feedback/feedback.component';
@@ -21,8 +20,6 @@ import { Participation } from 'app/exercise/shared/entities/participation/partic
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 
 describe('ResultHistoryDropdownComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: ResultHistoryDropdownComponent;
     let fixture: ComponentFixture<ResultHistoryDropdownComponent>;
     let mockRouter: MockRouter;
@@ -35,7 +32,7 @@ describe('ResultHistoryDropdownComponent', () => {
         mockRouter = new MockRouter();
 
         await TestBed.configureTestingModule({
-            imports: [ResultHistoryDropdownComponent, TranslateModule.forRoot()],
+            imports: [ResultHistoryDropdownComponent],
             providers: [
                 MockProvider(ResultService),
                 MockProvider(ExerciseService),
@@ -43,6 +40,7 @@ describe('ResultHistoryDropdownComponent', () => {
                 { provide: Router, useValue: mockRouter },
                 provideHttpClient(),
                 provideHttpClientTesting(),
+                provideTranslateService(),
             ],
         })
             .compileComponents()
@@ -391,6 +389,7 @@ describe('ResultHistoryDropdownComponent', () => {
                     closable: true,
                     closeOnEscape: true,
                     dismissableMask: true,
+                    focusOnShow: false,
                     inputValues: expect.objectContaining({ exercise: defaultExercise, result, participation }),
                 }),
             );

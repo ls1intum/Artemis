@@ -143,6 +143,8 @@ export class ResultHistoryDropdownComponent {
 
     toggleResultsPopover(event: Event) {
         const popover = this.resultsPopover();
+        // Popover.overlayVisible is a plain boolean field, so read it directly (do not invoke it).
+        // When the popover is already open, close it; otherwise open it anchored to the dropdown arrow.
         if (popover?.overlayVisible) {
             popover.hide();
         } else {
@@ -278,6 +280,9 @@ export class ResultHistoryDropdownComponent {
             closable: true,
             closeOnEscape: true,
             dismissableMask: true,
+            // Don't auto-focus the first focusable element on show: in a long feedback list it is often
+            // a link below the fold, which the browser scrolls into view and makes the modal open scrolled down.
+            focusOnShow: false,
             inputValues: {
                 exercise,
                 result,

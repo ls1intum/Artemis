@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ThemeSwitchComponent } from 'app/core/theme/theme-switch.component';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Theme, ThemeService } from 'app/core/theme/shared/theme.service';
@@ -8,8 +7,6 @@ import { MockDirective } from 'ng-mocks';
 import { MockThemeService } from 'test/helpers/mocks/service/mock-theme.service';
 
 describe('ThemeSwitchComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: ThemeSwitchComponent;
     let fixture: ComponentFixture<ThemeSwitchComponent>;
     let themeService: ThemeService;

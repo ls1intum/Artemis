@@ -28,6 +28,14 @@ $menu-width-open: 220px;
 }
 
 /*
+ * Base text color for nav links. A layered `text-color` template utility would lose to the unlayered global
+ * `a { color: $link-color }` rule in global.scss (unlayered beats layered), so the color must be set here.
+ */
+.nav-link-sidebar {
+    color: var(--p-text-color);
+}
+
+/*
  * Hover / router-active state for nav links. Stateful selectors plus an `!important` override of the global
  * anchor hover style, so they cannot be plain template utilities.
  */

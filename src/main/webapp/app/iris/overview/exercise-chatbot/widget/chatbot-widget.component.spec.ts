@@ -1,7 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { BreakpointObserver, BreakpointState, Breakpoints } from '@angular/cdk/layout';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { IrisChatbotWidgetComponent } from 'app/iris/overview/exercise-chatbot/widget/chatbot-widget.component';
 import { IrisChatService } from 'app/iris/overview/services/iris-chat.service';
 import { IrisBaseChatbotComponent } from 'app/iris/overview/base-chatbot/iris-base-chatbot.component';
@@ -20,8 +19,6 @@ function pointer(target: EventTarget, type: string, clientX: number, clientY: nu
 }
 
 describe('IrisChatbotWidgetComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: IrisChatbotWidgetComponent;
     let fixture: ComponentFixture<IrisChatbotWidgetComponent>;
     let breakpoint$: BehaviorSubject<BreakpointState>;
