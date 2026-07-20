@@ -287,8 +287,8 @@ public class ExamSubmissionService {
      *
      * @param answer1 a quiz submission
      * @param answer2 a quiz submission to be compared with {@code submission1} for equality
-     * @return {@code true} if the quiz submissions are equal to each other and {@code false} otherwise
-     * @throws RuntimeException if the answer types are not supported
+     * @return {@code true} if the quiz submissions are equal to each other and {@code false} otherwise; unsupported or
+     *         mismatched answer types are logged and also yield {@code false}
      */
     public static boolean isContentEqualTo(SubmittedAnswer answer1, SubmittedAnswer answer2) {
         return switch (answer1) {
