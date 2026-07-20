@@ -150,10 +150,6 @@ public class CourseUpdateResource {
             if (!changedGroupNames.isEmpty()) {
                 throw new BadRequestAlertException("You are not allowed to change the group names of a course", Course.ENTITY_NAME, "groupNamesCannotChange", true);
             }
-            // instructors are not allowed to change the dashboard settings
-            if (existingCourse.getStudentCourseAnalyticsDashboardEnabled() != courseUpdateDTO.studentCourseAnalyticsDashboardEnabled()) {
-                throw new BadRequestAlertException("You are not allowed to change the dashboard settings of a course", Course.ENTITY_NAME, "dashboardSettingsCannotChange", true);
-            }
         }
 
         if (courseUpdateDTO.title().length() > MAX_TITLE_LENGTH) {

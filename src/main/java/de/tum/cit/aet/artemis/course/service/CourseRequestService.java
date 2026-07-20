@@ -309,7 +309,6 @@ public class CourseRequestService {
         course.setOnlineCourse(Boolean.FALSE);
         course.setEnrollmentEnabled(Boolean.FALSE);
         course.setLearningPathsEnabled(false);
-        course.setStudentCourseAnalyticsDashboardEnabled(false);
         course.setAccuracyOfScores(1);
         course.setCourseInformationSharingConfiguration(CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING);
 
