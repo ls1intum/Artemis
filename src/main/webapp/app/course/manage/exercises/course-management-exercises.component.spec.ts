@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
@@ -43,6 +43,7 @@ describe('Course Management Exercises Component', () => {
     let deleteDialogService: DeleteDialogService;
     let modalService: NgbModal;
     let dialogOnClose: Subject<unknown>;
+    const routerMock = { navigate: vi.fn() };
 
     const buildExercises = (): Exercise[] => [
         { id: 1, title: 'Intro Programming', type: ExerciseType.PROGRAMMING } as Exercise,
@@ -66,6 +67,7 @@ describe('Course Management Exercises Component', () => {
             imports: [CourseManagementExercisesComponent],
             providers: [
                 { provide: ActivatedRoute, useValue: route },
+                { provide: Router, useValue: routerMock },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: AlertService, useClass: MockAlertService },
                 MockProvider(DialogService),
@@ -617,6 +619,14 @@ describe('Course Management Exercises Component', () => {
             expect(comp.exercises().map((e) => e.id)).toEqual([2]);
             expect(comp.groups()[0].exercises).toHaveLength(0);
             expect(comp.selectedIds().has(1)).toBe(false);
+        });
+
+        it('navigates to the generated variant’s type-aware editor when the wizard confirms it', () => {
+            const variant = { id: 4711, type: ExerciseType.QUIZ, course: { id: 7 } } as Exercise;
+
+            comp.onVariantAdded(variant);
+
+            expect(routerMock.navigate).toHaveBeenCalledWith(['/course-management', 7, 'quiz-exercises', 4711, 'edit']);
         });
     });
 });
