@@ -8,10 +8,9 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { ActivatedRoute, ParamMap, Params, Router, convertToParamMap, provideRouter } from '@angular/router';
 import { BehaviorSubject, of, throwError } from 'rxjs';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { TranslateModule } from '@ngx-translate/core';
+import { provideTranslateService } from '@ngx-translate/core';
 import { MockComponent } from 'ng-mocks';
 import dayjs from 'dayjs/esm';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 import 'app/foundation/util/array.extension';
 
@@ -48,8 +47,6 @@ import { SubmissionExerciseType } from 'app/exercise/shared/entities/submission/
 import { SubmissionType } from 'app/exercise/shared/entities/submission/submission-type.model';
 
 describe('FileUploadAssessmentComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: FileUploadAssessmentComponent;
     let fixture: ComponentFixture<FileUploadAssessmentComponent>;
     let httpMock: HttpTestingController;
@@ -140,7 +137,7 @@ describe('FileUploadAssessmentComponent', () => {
         );
 
         await TestBed.configureTestingModule({
-            imports: [FileUploadAssessmentComponent, TranslateModule.forRoot()],
+            imports: [FileUploadAssessmentComponent],
             providers: [
                 provideHttpClient(),
                 provideHttpClientTesting(),
@@ -192,6 +189,7 @@ describe('FileUploadAssessmentComponent', () => {
                         downloadFile: vi.fn(),
                     },
                 },
+                provideTranslateService(),
             ],
         })
             .overrideComponent(FileUploadAssessmentComponent, {

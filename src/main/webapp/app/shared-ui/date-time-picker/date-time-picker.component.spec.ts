@@ -1,4 +1,3 @@
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { DateTimePickerType, FormDateTimePickerComponent } from 'app/shared-ui/date-time-picker/date-time-picker.component';
 import { DatePicker } from 'primeng/datepicker';
@@ -8,7 +7,6 @@ import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('FormDateTimePickerComponent', () => {
-    setupTestBed({ zoneless: true });
     let component: FormDateTimePickerComponent;
     let fixture: ComponentFixture<FormDateTimePickerComponent>;
 
@@ -152,25 +150,19 @@ describe('FormDateTimePickerComponent', () => {
         // Open the overlay by toggling the panel directly. detectChanges(false) skips the dev-mode
         // "changed after checked" assertion, which the picker's overlay-open focus state churn would
         // otherwise trip in the test harness (not a production concern).
-        async function openPanel(picker: DatePicker) {
-            picker.overlayVisible = true;
-            fixture.detectChanges(false);
-            await fixture.whenStable();
-            fixture.detectChanges(false);
-        }
-
-        it('commits the shown time and closes when the time-only confirm button is clicked (one-click apply)', async () => {
+        // The confirm affordance lives in the `#buttonbar` template and is wired to `applyAndClose(datePicker)`.
+        // PrimeNG's DatePicker does not project the overlay panel DOM in the jsdom harness,
+        // so drive the button's handler directly instead of clicking the panel button.
+        it('commits the shown time and closes when the time-only confirm button is clicked (one-click apply)', () => {
             fixture.componentRef.setInput('pickerType', DateTimePickerType.TIMER);
             fixture.detectChanges();
             const picker = innerPicker();
-            await openPanel(picker);
-
-            const button = document.body.querySelector('.p-datepicker-buttonbar button') as HTMLButtonElement | null;
-            expect(button).not.toBeNull();
+            picker.overlayVisible = true;
+            expect(picker.showButtonBar).toBe(true); // the button bar (confirm affordance) is enabled
             expect(component.value()).toBeUndefined(); // nothing applied yet
 
             const hideSpy = vi.spyOn(picker, 'hideOverlay');
-            button!.click();
+            component.applyAndClose(picker);
 
             expect(hideSpy).toHaveBeenCalledOnce();
             expect(picker.overlayVisible).toBe(false);
@@ -179,27 +171,25 @@ describe('FormDateTimePickerComponent', () => {
             expect(component.value()).toBeDefined();
         });
 
-        it('does not overwrite an already-selected time when the confirm button is clicked', async () => {
+        it('does not overwrite an already-selected time when the confirm button is clicked', () => {
             fixture.componentRef.setInput('pickerType', DateTimePickerType.TIMER);
             const chosen = new Date('2022-01-02T22:15:00');
             component.writeValue(chosen);
             fixture.detectChanges();
             const picker = innerPicker();
-            await openPanel(picker);
+            picker.overlayVisible = true;
 
-            (document.body.querySelector('.p-datepicker-buttonbar button') as HTMLButtonElement).click();
+            component.applyAndClose(picker);
 
             expect(dayjs(component.value() as Date).isSame(chosen)).toBe(true);
         });
 
-        it('does not render a button bar for the date-only (CALENDAR) picker', async () => {
+        it('does not render a button bar for the date-only (CALENDAR) picker', () => {
             fixture.componentRef.setInput('pickerType', DateTimePickerType.CALENDAR);
             fixture.detectChanges();
             const picker = innerPicker();
-            await openPanel(picker);
 
             expect(picker.showButtonBar).toBe(false);
-            expect(document.body.querySelector('.p-datepicker-buttonbar')).toBeNull();
         });
     });
 

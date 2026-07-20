@@ -3,7 +3,7 @@ import dayjs from 'dayjs';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { ExamMode } from '../../../support/constants';
 
-import { dayjsToString, generateUUID, trimDate } from '../../../support/utils';
+import { dayjsToString, generateUUID, readResponseJson, trimDate } from '../../../support/utils';
 import { test } from '../../../support/fixtures';
 import { expect } from '@playwright/test';
 import { SEED_COURSES } from '../../../support/seedData';
@@ -47,7 +47,7 @@ test.describe('Test Exam creation/deletion', { tag: '@fast' }, () => {
         await examCreation.setConfirmationEndText(examData.confirmationEndText);
 
         const examResponse = await examCreation.submit();
-        exam = { ...(await examResponse.json()), course };
+        exam = { ...(await readResponseJson(examResponse)), course };
         expect(examResponse.status()).toBe(201);
         expect(exam.title).toBe(examData.title);
         expect(exam.examMode).toBe(ExamMode.TEST);

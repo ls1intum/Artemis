@@ -46,6 +46,13 @@ export type BuildTimingInfo = {
 
 export type ExerciseSubmissionState = { [participationId: number]: ProgrammingSubmissionStateObj };
 
+/**
+ * The latest pending submission of a single participation, as returned by the exercise-wide latest-pending-submissions
+ * endpoint. There is one entry per student participation; {@code submission} is undefined when the participation has no
+ * pending submission. The submission only carries the minimal fields the client needs (id, commit hash, submission date).
+ */
+export type PendingProgrammingSubmission = { participationId: number; submission?: ProgrammingSubmission };
+
 type ProgrammingSubmissionError = { error: string; participationId: number };
 
 /**
@@ -220,17 +227,29 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
 
     /**
      * Fetch the latest pending submission for all participations of a given exercise.
-     * Returns an empty array if the api request fails.
+     * Returns an empty map if the api request fails.
+     *
+     * The server returns one entry per student participation ({@link PendingProgrammingSubmission}); the entry's
+     * submission is undefined when the participation currently has no pending submission. We keep an entry (with an
+     * undefined submission) for every participation so the downstream setup still primes the per-participation
+     * build-state cache and websocket subscriptions.
      *
      * This method is private on purpose as subscribers should not try to load initial data!
      * A separate initial fetch is not necessary as this service takes care of it and provides a BehaviorSubject.
      *
      * @param exerciseId of programming exercise.
      */
-    private fetchLatestPendingSubmissionsByExerciseId(exerciseId: number): Observable<{ [participationId: number]: ProgrammingSubmission }> {
-        return this.http
-            .get<{ [participationId: number]: ProgrammingSubmission }>(`api/programming/programming-exercises/${exerciseId}/latest-pending-submissions`)
-            .pipe(catchError(() => of([])));
+    private fetchLatestPendingSubmissionsByExerciseId(exerciseId: number): Observable<{ [participationId: number]: ProgrammingSubmission | undefined }> {
+        return this.http.get<PendingProgrammingSubmission[]>(`api/programming/programming-exercises/${exerciseId}/latest-pending-submissions`).pipe(
+            map((entries) => {
+                const submissionsByParticipationId: { [participationId: number]: ProgrammingSubmission | undefined } = {};
+                for (const entry of entries) {
+                    submissionsByParticipationId[entry.participationId] = entry.submission;
+                }
+                return submissionsByParticipationId;
+            }),
+            catchError(() => of({})),
+        );
     }
 
     public fetchQueueReleaseDateEstimationByParticipationId(participationId: number): Observable<dayjs.Dayjs | undefined> {
@@ -716,7 +735,7 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
             .pipe(
                 map(Object.entries),
                 map(this.mapParticipationIdToNumber),
-                switchMap((submissions: Array<[number, ProgrammingSubmission]>) => {
+                switchMap((submissions: Array<[number, ProgrammingSubmission | undefined]>) => {
                     if (!submissions.length) {
                         // No pending submissions: emit nothing so the downstream reduce emits its `{}` seed
                         // (an empty ExerciseSubmissionState). EMPTY completes without a value and keeps the
@@ -857,8 +876,8 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
         );
     }
 
-    private mapParticipationIdToNumber(submissions: Array<[string, ProgrammingSubmission]>): Array<[number, ProgrammingSubmission]> {
-        return submissions.map(([participationId, submission]): [number, ProgrammingSubmission] => [parseInt(participationId, 10), submission]);
+    private mapParticipationIdToNumber(submissions: Array<[string, ProgrammingSubmission | undefined]>): Array<[number, ProgrammingSubmission | undefined]> {
+        return submissions.map(([participationId, submission]): [number, ProgrammingSubmission | undefined] => [parseInt(participationId, 10), submission]);
     }
 
     private mapToExerciseBuildState(exerciseSubmissionState: ExerciseSubmissionState, programmingSubmissionState: ProgrammingSubmissionStateObj) {

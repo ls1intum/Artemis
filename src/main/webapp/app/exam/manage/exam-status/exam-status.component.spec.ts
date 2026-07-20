@@ -15,7 +15,6 @@ import { Course } from 'app/course/shared/entities/course.model';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ExamMode } from 'app/exam/shared/entities/exam-mode.model';
 
 enum DateOffsetType {
@@ -24,8 +23,6 @@ enum DateOffsetType {
 }
 
 describe('ExamStatusComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<ExamStatusComponent>;
     let component: ExamStatusComponent;
     let examChecklistService: ExamChecklistService;

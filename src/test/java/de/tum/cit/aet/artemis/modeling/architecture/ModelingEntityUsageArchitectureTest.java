@@ -16,9 +16,10 @@ class ModelingEntityUsageArchitectureTest extends AbstractModuleEntityUsageArchi
     }
 
     // TODO: Reduce this to 0 by returning DTOs instead of entities
+    // ApollonDiagramResource endpoints now return ApollonDiagramDTO; the remaining 19 are exercise/submission/assessment endpoints.
     @Override
     protected int getExpectedEntityReturnViolations() {
-        return 23;
+        return 19;
     }
 
     // TODO: Reduce this to 0 by accepting DTOs instead of entities in @RequestBody/@RequestPart

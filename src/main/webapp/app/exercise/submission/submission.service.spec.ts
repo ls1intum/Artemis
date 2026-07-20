@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { SubmissionService, SubmissionWithComplaintDTO } from 'app/exercise/submission/submission.service';
 import { TestBed } from '@angular/core/testing';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
@@ -18,8 +17,6 @@ import { Complaint } from 'app/assessment/shared/entities/complaint.model';
 import { SubmissionType } from 'app/exercise/shared/entities/submission/submission-type.model';
 
 describe('Submission Service', () => {
-    setupTestBed({ zoneless: true });
-
     let service: SubmissionService;
     let httpMock: HttpTestingController;
     let expectedResult: any;

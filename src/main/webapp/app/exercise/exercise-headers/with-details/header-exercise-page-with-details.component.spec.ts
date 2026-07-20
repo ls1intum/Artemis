@@ -1,6 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { MockComponent, MockPipe } from 'ng-mocks';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { HeaderExercisePageWithDetailsComponent } from 'app/exercise/exercise-headers/with-details/header-exercise-page-with-details.component';
@@ -23,8 +22,6 @@ import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.m
 import { SubmissionType } from 'app/exercise/shared/entities/submission/submission-type.model';
 
 describe('HeaderExercisePageWithDetails', () => {
-    setupTestBed({ zoneless: true });
-
     let component: HeaderExercisePageWithDetailsComponent;
     let fixture: ComponentFixture<HeaderExercisePageWithDetailsComponent>;
 

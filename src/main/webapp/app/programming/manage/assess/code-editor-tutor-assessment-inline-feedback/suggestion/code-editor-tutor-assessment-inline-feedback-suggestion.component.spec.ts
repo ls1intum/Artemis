@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { Feedback } from 'app/assessment/shared/entities/feedback.model';
@@ -12,8 +11,6 @@ import { TranslateService } from '@ngx-translate/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 describe('CodeEditorTutorAssessmentInlineFeedbackSuggestionComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: CodeEditorTutorAssessmentInlineFeedbackSuggestionComponent;
     let fixture: ComponentFixture<CodeEditorTutorAssessmentInlineFeedbackSuggestionComponent>;
 

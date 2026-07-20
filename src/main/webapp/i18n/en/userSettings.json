@@ -231,7 +231,8 @@
                     "NEW_PASSKEY_ADDED": "New Passkey Added",
                     "VCS_TOKEN_EXPIRED": "VCS Token Expired",
                     "SSH_KEY_EXPIRED": "SSH Key Expired",
-                    "MAINTENANCE": "Planned Maintenance Announcements"
+                    "MAINTENANCE": "Planned Maintenance Announcements",
+                    "MAVEN_CENTRAL_RATE_LIMIT": "Failing Exercise Builds due to Maven Central Rate Limits (Instructors)"
                 },
                 "viewPasskeySettings": "View Passkey Settings",
                 "viewVcsTokenSettings": "View VCS Token Settings",

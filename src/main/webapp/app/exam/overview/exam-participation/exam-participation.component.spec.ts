@@ -65,12 +65,9 @@ import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.serv
 import { CourseExerciseService } from 'app/exercise/course-exercises/course-exercise.service';
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { ExamMode } from 'app/exam/shared/entities/exam-mode.model';
 describe('ExamParticipationComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<ExamParticipationComponent>;
     let comp: ExamParticipationComponent;
     let examParticipationService: ExamParticipationService;

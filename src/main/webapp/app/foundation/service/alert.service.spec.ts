@@ -1,15 +1,12 @@
 import { HttpErrorResponse, HttpHeaders } from '@angular/common/http';
 import { TestBed, inject } from '@angular/core/testing';
-import { MissingTranslationHandler, TranslateModule, TranslateService } from '@ngx-translate/core';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { MissingTranslationHandler, TranslateService, provideTranslateService } from '@ngx-translate/core';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { missingTranslationHandler } from 'app/core/config/translation.config';
 import { Alert, AlertCreationProperties, AlertService, AlertType } from 'app/foundation/service/alert.service';
 import { EventManager } from 'app/foundation/service/event-manager.service';
 
 describe('Alert Service Test', () => {
-    setupTestBed({ zoneless: true });
-
     const alertSample = {
         type: AlertType.SUCCESS,
         message: 'Hello Jhipster',
@@ -25,8 +22,9 @@ describe('Alert Service Test', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [
-                TranslateModule.forRoot({
+            imports: [],
+            providers: [
+                provideTranslateService({
                     missingTranslationHandler: {
                         provide: MissingTranslationHandler,
                         useFactory: missingTranslationHandler,

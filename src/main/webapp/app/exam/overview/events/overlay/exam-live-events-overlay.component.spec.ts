@@ -8,13 +8,10 @@ import { ExamExerciseUpdateService } from 'app/exam/manage/services/exam-exercis
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 
 describe('ExamLiveEventsOverlayComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: ExamLiveEventsOverlayComponent;
     let fixture: ComponentFixture<ExamLiveEventsOverlayComponent>;
     let mockLiveEventsService: ExamParticipationLiveEventsService;

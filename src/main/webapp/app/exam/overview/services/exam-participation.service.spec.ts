@@ -21,10 +21,7 @@ import { GradeType } from 'app/assessment/shared/entities/grading-scale.model';
 import { HttpErrorResponse, HttpHeaders, provideHttpClient } from '@angular/common/http';
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 describe('ExamParticipationService', () => {
-    setupTestBed({ zoneless: true });
-
     let service: ExamParticipationService;
     let httpMock: HttpTestingController;
     let exam: Exam;

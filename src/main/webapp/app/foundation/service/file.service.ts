@@ -76,9 +76,10 @@ export class FileService {
      *
      * @param downloadUrl url that is stored in the attachment model
      * @param downloadName the name given to the attachment
+     * @param version attachment version used to invalidate cached downloads after a replacement
      */
-    downloadFileByAttachmentName(downloadUrl: string, downloadName: string) {
-        const normalizedDownloadUrl = this.createAttachmentFileUrl(downloadUrl, downloadName, true);
+    downloadFileByAttachmentName(downloadUrl: string, downloadName: string, version?: number) {
+        const normalizedDownloadUrl = this.createAttachmentFileUrl(downloadUrl, downloadName, true, version);
         const newWindow = window.open('about:blank');
         newWindow!.location.href = normalizedDownloadUrl;
         return newWindow;
@@ -90,14 +91,30 @@ export class FileService {
      * @param downloadUrl url that is stored in the attachment model
      * @param downloadName the name given to the attachment
      * @param encodeName whether or not to encode the downloadName
+     * @param version attachment version used to invalidate cached downloads after a replacement
      */
-    createAttachmentFileUrl(downloadUrl: string, downloadName: string, encodeName: boolean) {
+    createAttachmentFileUrl(downloadUrl: string, downloadName: string, encodeName: boolean, version?: number) {
         const downloadUrlComponents = downloadUrl.split('/');
         // take the last element
         const extension = downloadUrlComponents.pop()!.split('.').pop();
         const restOfUrl = downloadUrlComponents.join('/');
         const encodedDownloadName = encodeName ? encodeURIComponent(downloadName + '.' + extension) : downloadName + '.' + extension;
-        return restOfUrl + '/' + encodedDownloadName;
+        const attachmentUrl = restOfUrl + '/' + encodedDownloadName;
+        return this.addAttachmentVersionToUrl(attachmentUrl, version);
+    }
+
+    /**
+     * Adds the attachment version to a URL so replacements use a new browser cache entry.
+     *
+     * @param attachmentUrl attachment URL to version
+     * @param version attachment version used to invalidate cached downloads after a replacement
+     */
+    addAttachmentVersionToUrl(attachmentUrl: string, version?: number | null): string {
+        if (version === undefined || version === null) {
+            return attachmentUrl;
+        }
+        const separator = attachmentUrl.includes('?') ? '&' : '?';
+        return `${attachmentUrl}${separator}version=${version}`;
     }
 
     /**

@@ -7,7 +7,6 @@
  * - Assessment event tracking
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ManualTextSelectionComponent } from 'app/text/manage/assess/manual-text-selection/manual-text-selection.component';
 import { TextAssessmentEventType } from 'app/text/shared/entities/text-assesment-event.model';
@@ -27,7 +26,6 @@ import { SubmissionExerciseType } from 'app/exercise/shared/entities/submission/
 import { SubmissionType } from 'app/exercise/shared/entities/submission/submission-type.model';
 
 describe('ManualTextSelectionComponent', () => {
-    setupTestBed({ zoneless: true });
     let component: ManualTextSelectionComponent;
     let fixture: ComponentFixture<ManualTextSelectionComponent>;
 

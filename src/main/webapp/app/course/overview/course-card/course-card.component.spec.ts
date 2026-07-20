@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CourseCardComponent } from 'app/course/overview/course-card/course-card.component';
 import { Course } from 'app/course/shared/entities/course.model';
@@ -21,8 +20,6 @@ import { ChartModule, UIChart } from 'primeng/chart';
 import { SubmissionExerciseType } from 'app/exercise/shared/entities/submission/submission-exercise-type.model';
 
 describe('CourseCardComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<CourseCardComponent>;
     let component: CourseCardComponent;
     let scoresStorageService: ScoresStorageService;

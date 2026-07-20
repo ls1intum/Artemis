@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, computed, forwardRef, input, model, output, signal, viewChild } from '@angular/core';
+import { AfterViewInit, Component, computed, forwardRef, input, output, signal, viewChild } from '@angular/core';
 import { ControlValueAccessor, FormsModule, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { faClock, faQuestionCircle, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
@@ -18,8 +18,8 @@ export enum DateTimePickerType {
 
 @Component({
     selector: 'jhi-date-time-picker',
-    templateUrl: `./date-time-picker.component.html`,
-    styleUrls: [`./date-time-picker.component.scss`],
+    templateUrl: './date-time-picker.component.html',
+    styleUrls: ['./date-time-picker.component.scss'],
     providers: [
         {
             provide: NG_VALUE_ACCESSOR,
@@ -54,7 +54,11 @@ export class FormDateTimePickerComponent implements ControlValueAccessor, AfterV
     // pickers share a page (e.g. the audits from/to filter).
     inputId = input<string>('date-input-field');
     labelTooltip = input<string>();
-    value = model<dayjs.Dayjs | Date | null>();
+    // Internal CVA value holder. Not a public input/model: consumers bind the value via the
+    // ControlValueAccessor (formControlName / ngModel), never via [value]/[(value)]. Keeping it a
+    // plain signal avoids the model's implicit `valueChange` output colliding with the explicit
+    // `valueChange` notification below (Angular 22 NG1054).
+    value = signal<dayjs.Dayjs | Date | null | undefined>(undefined);
     disabled = input<boolean>(false);
     error = input<boolean>();
     warning = input<boolean>();

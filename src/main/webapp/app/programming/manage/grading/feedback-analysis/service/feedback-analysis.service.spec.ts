@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { FeedbackAnalysisService, FeedbackDetail } from 'app/programming/manage/grading/feedback-analysis/service/feedback-analysis.service';
@@ -8,8 +7,6 @@ import { SortingOrder } from 'app/foundation/pagination/pageable-table';
 import { ChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
 
 describe('FeedbackAnalysisService', () => {
-    setupTestBed({ zoneless: true });
-
     let service: FeedbackAnalysisService;
     let httpMock: HttpTestingController;
 

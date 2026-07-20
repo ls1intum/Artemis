@@ -2521,6 +2521,28 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testTestExamTestRunConductionDoesNotCreateAdditionalParticipations() throws Exception {
+        Exam testExam = examUtilService.addTestExam(course1);
+        testExam = examUtilService.addTextModelingProgrammingExercisesToExam(testExam, false, true);
+        StudentExam testRun = createTestRun(testExam);
+        User instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
+
+        Set<Long> participationIdsBeforeConduction = testRun.getExercises().stream()
+                .flatMap(exercise -> studentParticipationRepository.findByExerciseIdAndStudentId(exercise.getId(), instructor.getId()).stream()).map(StudentParticipation::getId)
+                .collect(Collectors.toSet());
+        assertThat(participationIdsBeforeConduction).hasSize(testRun.getExercises().size());
+
+        userUtilService.changeUser(TEST_PREFIX + "instructor1");
+        request.get("/api/exam/courses/" + course1.getId() + "/exams/" + testExam.getId() + "/test-runs/" + testRun.getId() + "/conduction", HttpStatus.OK, StudentExam.class);
+
+        Set<Long> participationIdsAfterConduction = testRun.getExercises().stream()
+                .flatMap(exercise -> studentParticipationRepository.findByExerciseIdAndStudentId(exercise.getId(), instructor.getId()).stream()).map(StudentParticipation::getId)
+                .collect(Collectors.toSet());
+        assertThat(participationIdsAfterConduction).isEqualTo(participationIdsBeforeConduction);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testSubmitTestRun() throws Exception {
         var testRun = createTestRun();
         userUtilService.changeUser(TEST_PREFIX + "instructor1");

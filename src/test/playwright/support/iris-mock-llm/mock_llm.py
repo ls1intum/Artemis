@@ -358,6 +358,7 @@ class MockLLMHandler(BaseHTTPRequestHandler):
         log(f"unhandled POST {self.path}")
         self._respond(404, {"error": {"message": f"Unknown endpoint: {self.path}", "type": "invalid_request_error"}})
 
+    # pylint: disable-next=redefined-builtin
     def log_message(self, format: str, *args) -> None:  # noqa: A002 - argument name must match the BaseHTTPRequestHandler.log_message override
         return
 

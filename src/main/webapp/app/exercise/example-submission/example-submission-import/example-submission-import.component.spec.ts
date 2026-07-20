@@ -6,7 +6,6 @@ import { TranslateService } from '@ngx-translate/core';
 import { DynamicDialogRef } from 'primeng/dynamicdialog';
 import { Subject, of } from 'rxjs';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 import { ExampleSubmissionService } from 'app/assessment/shared/services/example-submission.service';
 import { ExampleSubmissionImportComponent } from 'app/exercise/example-submission/example-submission-import/example-submission-import.component';
@@ -22,8 +21,6 @@ import { ParticipationType } from 'app/exercise/shared/entities/participation/pa
 import { SubmissionType } from 'app/exercise/shared/entities/submission/submission-type.model';
 
 describe('ExampleSubmissionImportComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: ExampleSubmissionImportComponent;
     let fixture: ComponentFixture<ExampleSubmissionImportComponent>;
     let pagingService: ExampleSubmissionImportPagingService;
@@ -94,7 +91,9 @@ describe('ExampleSubmissionImportComponent', () => {
         component.searchTerm = 'search';
         await vi.advanceTimersByTimeAsync(300);
 
-        expect(searchSpy).toHaveBeenCalledExactlyOnceWith(component.state, { exerciseId: 3 });
+        // The dialog also loads once on init (see the shared ImportComponent regression test), so the paging
+        // service is called for both; assert the search-triggered call passes the exercise id.
+        expect(searchSpy).toHaveBeenCalledWith(component.state, { exerciseId: 3 });
     });
 
     it('should set the submission size when retrieving search results', async () => {
@@ -103,7 +102,7 @@ describe('ExampleSubmissionImportComponent', () => {
         component.searchTerm = 'search';
         await vi.advanceTimersByTimeAsync(300);
 
-        expect(getSubmissionSizeSpy).toHaveBeenCalledExactlyOnceWith(submission, exercise);
+        expect(getSubmissionSizeSpy).toHaveBeenCalledWith(submission, exercise);
         expect(component.content().resultsOnPage[0].submissionSize).toBe(2);
     });
 

@@ -7,7 +7,6 @@ import dayjs from 'dayjs/esm';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ExamMode } from 'app/exam/shared/entities/exam-mode.model';
 
 let fixture: ComponentFixture<ExamGeneralInformationComponent>;
@@ -29,8 +28,6 @@ let exam = {
 let studentExam = { id: 1, exam, user, workingTime: 60, submitted: true } as StudentExam;
 
 describe('ExamGeneralInformationComponent', () => {
-    setupTestBed({ zoneless: true });
-
     beforeEach(() => {
         exam = { id: 1, title: 'ExamForTesting', startDate, endDate, examMode: ExamMode.REAL } as Exam;
         studentExam = { id: 1, exam, user, workingTime: 60, submitted: true } as StudentExam;

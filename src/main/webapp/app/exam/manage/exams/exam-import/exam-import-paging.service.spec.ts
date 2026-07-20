@@ -10,12 +10,9 @@ import { Exam } from 'app/exam/shared/entities/exam.model';
 import { ExamImportPagingService } from 'app/exam/manage/exams/exam-import/exam-import-paging.service';
 import { provideHttpClient } from '@angular/common/http';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ExamMode } from 'app/exam/shared/entities/exam-mode.model';
 
 describe('Exam Import Paging Service', () => {
-    setupTestBed({ zoneless: true });
-
     let service: ExamImportPagingService;
     let httpMock: HttpTestingController;
 

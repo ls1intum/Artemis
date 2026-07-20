@@ -20,7 +20,7 @@
                     <span class="ms-3" jhiTranslate="artemisApp.exercise.import.loading"></span>
                 }
             </div>
-            <table class="table table-striped flex">
+            <table class="table table-striped">
                 <thead class="thead-dark">
                     <tr jhiSort [(predicate)]="sortedColumn" [(ascending)]="listSorting" (sortChange)="sortRows()" class="flex-row">
                         <th jhiSortBy="ID" class="col-1">
@@ -35,7 +35,7 @@
                             <span jhiTranslate="artemisApp.exercise.import.table.course"></span>
                             <fa-icon [icon]="faSort" />
                         </th>
-                        <th jhiSortBy="EXAM_MODE" class="col-4">
+                        <th jhiSortBy="EXAM_MODE" class="col-2">
                             <span jhiTranslate="artemisApp.examManagement.testExam.examMode"></span>
                             <fa-icon [icon]="faSort" />
                         </th>

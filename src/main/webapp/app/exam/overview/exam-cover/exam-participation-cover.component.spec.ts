@@ -30,12 +30,9 @@ import { MockExamParticipationService } from 'test/helpers/mocks/service/mock-ex
 import { MockArtemisServerDateService } from 'test/helpers/mocks/service/mock-server-date.service';
 import { ExamLiveEventsButtonComponent } from 'app/exam/overview/events/button/exam-live-events-button.component';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ExamMode } from 'app/exam/shared/entities/exam-mode.model';
 
 describe('ExamParticipationCoverComponent', () => {
-    setupTestBed({ zoneless: true });
-
     const course = { id: 456 } as Course;
     let exam: Exam;
     let studentExam: StudentExam;

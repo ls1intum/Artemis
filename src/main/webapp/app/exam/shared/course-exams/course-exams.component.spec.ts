@@ -1,7 +1,6 @@
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
@@ -33,8 +32,6 @@ import { ExamWorkingTimeDTO } from 'app/exam/shared/entities/exam-working-time-d
 import { ExamMode } from 'app/exam/shared/entities/exam-mode.model';
 
 describe('CourseExamsComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: CourseExamsComponent;
     let componentFixture: ComponentFixture<CourseExamsComponent>;
     let courseStorageService: CourseStorageService;
