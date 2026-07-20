@@ -1360,6 +1360,45 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void getModelingExercise_carriesStoredPlagiarismDetectionConfig_andEchoedUpdateKeepsIt() throws Exception {
+        // plagiarismDetectionConfig is LAZY and open-in-view is off, so the detail endpoint has to fetch it. If it does
+        // not, the response omits the stored config, the edit form falls back to its defaults, and the next save from
+        // that form silently overwrites the instructor's settings. Every value here is deliberately non-default.
+        var storedConfig = new PlagiarismDetectionConfig();
+        storedConfig.setContinuousPlagiarismControlEnabled(true);
+        storedConfig.setContinuousPlagiarismControlPostDueDateChecksEnabled(true);
+        storedConfig.setContinuousPlagiarismControlPlagiarismCaseStudentResponsePeriod(9);
+        storedConfig.setSimilarityThreshold(42);
+        storedConfig.setMinimumScore(13);
+        storedConfig.setMinimumSize(7);
+        classExercise.setPlagiarismDetectionConfig(storedConfig);
+        classExercise = modelingExerciseTestRepository.save(classExercise);
+
+        var fetched = request.get("/api/modeling/modeling-exercises/" + classExercise.getId(), HttpStatus.OK, ModelingExerciseResponseDTO.class);
+        assertThat(fetched.plagiarismDetectionConfig()).as("the detail response must carry the stored plagiarism config").isNotNull();
+        assertThat(fetched.plagiarismDetectionConfig().similarityThreshold()).isEqualTo(42);
+        assertThat(fetched.plagiarismDetectionConfig().minimumScore()).isEqualTo(13);
+        assertThat(fetched.plagiarismDetectionConfig().minimumSize()).isEqualTo(7);
+        assertThat(fetched.plagiarismDetectionConfig().continuousPlagiarismControlEnabled()).isTrue();
+        assertThat(fetched.plagiarismDetectionConfig().continuousPlagiarismControlPlagiarismCaseStudentResponsePeriod()).isEqualTo(9);
+
+        // Echo the fetched config back the way the edit form does, changing something unrelated.
+        var echoed = UpdateModelingExerciseDTO.of(classExercise);
+        var body = (ObjectNode) request.getObjectMapper().valueToTree(echoed);
+        body.set("plagiarismDetectionConfig", request.getObjectMapper().valueToTree(fetched.plagiarismDetectionConfig()));
+        body.put("title", "Echoed update");
+        request.putWithResponseBody("/api/modeling/modeling-exercises", body, ModelingExerciseResponseDTO.class, HttpStatus.OK);
+
+        var persisted = modelingExerciseTestRepository.findForVersioningById(classExercise.getId()).orElseThrow();
+        assertThat(persisted.getPlagiarismDetectionConfig().getSimilarityThreshold()).isEqualTo(42);
+        assertThat(persisted.getPlagiarismDetectionConfig().getMinimumScore()).isEqualTo(13);
+        assertThat(persisted.getPlagiarismDetectionConfig().getMinimumSize()).isEqualTo(7);
+        assertThat(persisted.getPlagiarismDetectionConfig().isContinuousPlagiarismControlEnabled()).isTrue();
+        assertThat(persisted.getPlagiarismDetectionConfig().getContinuousPlagiarismControlPlagiarismCaseStudentResponsePeriod()).isEqualTo(9);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void reEvaluateModelingExercise_invalidPlagiarismDetectionConfig_badRequest() throws Exception {
         var validConfig = PlagiarismDetectionConfig.createDefault();
         classExercise.setPlagiarismDetectionConfig(validConfig);
