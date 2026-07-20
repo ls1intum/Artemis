@@ -49,6 +49,20 @@ public class HyperionProblemStatementGenerationService {
      */
     private static final double DRAFT_TEMPERATURE = 0.7;
 
+    /** Reads the draft style guide from the classpath (the same file GenerationWorkspaceService seeds as reference/style/draft-statement.md). */
+    private static String loadDraftStyleGuide() {
+        try (var stream = HyperionProblemStatementGenerationService.class.getResourceAsStream("/templates/hyperion/style/draft-statement.md")) {
+            if (stream == null) {
+                return "";
+            }
+            return new String(stream.readAllBytes(), java.nio.charset.StandardCharsets.UTF_8);
+        }
+        catch (java.io.IOException e) {
+            log.warn("Could not load the draft style guide; rendering the prompt without it", e);
+            return "";
+        }
+    }
+
     /** Fresh builder per call: the ChatClient consumes a mutable options builder. */
     private static OpenAiChatOptions.Builder draftOptions() {
         return OpenAiChatOptions.builder().temperature(DRAFT_TEMPERATURE);
@@ -111,7 +125,8 @@ public class HyperionProblemStatementGenerationService {
         String sanitizedPrompt = sanitizeInput(userPrompt);
         validateUserPrompt(sanitizedPrompt, "ProblemStatementGeneration");
 
-        String systemPrompt = templateService.render("/prompts/hyperion/generate_draft_problem_statement_system.st", Map.of());
+        // Single source of truth: the draft style guide is the same file seeded into the agent workspace; injecting it here avoids a hand-maintained mirror in the prompt.
+        String systemPrompt = templateService.render("/prompts/hyperion/generate_draft_problem_statement_system.st", Map.of("draftStyleGuide", loadDraftStyleGuide()));
 
         Map<String, String> userVariables = Map.of("userPrompt", sanitizedPrompt, "courseTitle", getSanitizedCourseTitle(course), "courseDescription",
                 getSanitizedCourseDescription(course));

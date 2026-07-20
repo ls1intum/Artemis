@@ -1,9 +1,7 @@
 # Draft problem statement
 
 Role: an instructor-reviewable spec written BEFORE any tests, solution, or template exist -- the seed the
-instructor edits, not a finished graded artifact. Note: the draft LLM call renders a standalone system prompt,
-not this workspace, so `generate_draft_problem_statement_system.st` mirrors this guide's core rules inline;
-keep the two in sync.
+instructor edits, not a finished graded artifact.
 
 ## Structure
 
@@ -28,7 +26,7 @@ only when the brief is design-oriented; otherwise describe behavior, not shapes.
 
 ## Exemplar
 
-Tiny neutral domain: a coffee shop's loyalty program (never shipping fees, never sorting).
+Tiny neutral domain: a coffee shop's loyalty program, deliberately distinct from the seeded reference exercise's domain.
 
 ```markdown
 # Loyalty Points
