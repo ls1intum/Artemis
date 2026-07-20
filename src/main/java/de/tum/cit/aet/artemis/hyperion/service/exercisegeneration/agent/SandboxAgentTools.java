@@ -82,6 +82,13 @@ public class SandboxAgentTools {
     private boolean sandboxSessionTerminated;
 
     /**
+     * The stage this session is currently running, set by the orchestrator via {@link #enterStage} before it starts each stage's bounded agent loop. {@code null} (the default)
+     * means the session is unstaged — the legacy single-loop behavior, where every tool behaves exactly as it always has. Volatile because the orchestrator and the agent loop
+     * are not guaranteed to run on the same thread across a stage transition, even though a single stage's tool calls are always serial.
+     */
+    private volatile GenerationStage currentStage;
+
+    /**
      * @param sandbox   the sandbox session the tools operate on
      * @param sessionId the session handle
      * @param verifier  the authoritative verifier the {@code verify} tool reuses for the in-loop self-check
@@ -147,7 +154,7 @@ public class SandboxAgentTools {
             return invalidPathError(path);
         }
         if (!isWritableGenerationPath(safe)) {
-            return "ERROR: write only problem-statement.md or files inside solution/, template/, or tests/. Workspace build infrastructure is managed by Artemis.";
+            return "ERROR: write only DESIGN.md, problem-statement.md, or files inside solution/, template/, or tests/. Workspace build infrastructure is managed by Artemis.";
         }
         if (isManagedBuildInfrastructurePath(safe)) {
             return immutableHarnessError(safe);
@@ -207,7 +214,7 @@ public class SandboxAgentTools {
             return invalidPathError(path);
         }
         if (!isWritableGenerationPath(safe)) {
-            return "ERROR: delete only problem-statement.md or files inside solution/, template/, or tests/. Workspace build infrastructure is managed by Artemis.";
+            return "ERROR: delete only DESIGN.md, problem-statement.md, or files inside solution/, template/, or tests/. Workspace build infrastructure is managed by Artemis.";
         }
         if (isManagedBuildInfrastructurePath(safe)) {
             return immutableHarnessError(safe);
@@ -263,6 +270,16 @@ public class SandboxAgentTools {
     }
 
     /**
+     * Called by the orchestrator before starting a stage's bounded agent loop, so the tools that follow behave according to that stage's rules (currently: {@link #verify}'s
+     * availability). Never called for an unstaged (legacy single-loop) session, which leaves {@link #currentStage} {@code null}.
+     *
+     * @param stage the stage the orchestrator is about to run
+     */
+    public void enterStage(GenerationStage stage) {
+        this.currentStage = stage;
+    }
+
+    /**
      * Composes the model-facing result: parses the leading {@code __HYP_META__} line for the real exit code and size, then returns the exit code, the output tail, and — when the
      * output exceeded the tail — a marker pointing at the spill file.
      */
@@ -295,11 +312,21 @@ public class SandboxAgentTools {
 
     /**
      * Runs the authoritative differential self-check and returns structured, actionable feedback.
+     * <p>
+     * In a staged session ({@link #currentStage} set), {@code verify} runs full differential builds only in the {@link GenerationStage#SOLUTION} and {@link GenerationStage#TESTS}
+     * stages — those are the stages where a real build/example-replay probe is worth its cost. In {@link GenerationStage#DESIGN}, {@link GenerationStage#TEMPLATE}, and
+     * {@link GenerationStage#STATEMENT} it returns a short advisory instead: those stages' output is checked by the orchestrator's stage gate, not by an in-loop build. An
+     * unstaged session ({@code currentStage} {@code null}) keeps the legacy behavior: always available.
      *
-     * @return the agent-readable observation (solution/template test outcomes, exact test names to bind, current verdict), or an error message if the verifier is unavailable
+     * @return the agent-readable observation (solution/template test outcomes, exact test names to bind, current verdict), a stage advisory, or an error message if the verifier
+     *         is unavailable
      */
     @Tool(name = "verify", description = AgentToolDescriptions.VERIFY)
     public String verify() {
+        GenerationStage stage = currentStage;
+        if (stage == GenerationStage.DESIGN || stage == GenerationStage.TEMPLATE || stage == GenerationStage.STATEMENT) {
+            return AgentSystemPromptService.STAGE_VERIFY_ADVISORY;
+        }
         if (verifier == null || exercise == null) {
             return "ERROR: the verify tool is unavailable in this session. Fall back to `sh verify.sh solution` and `sh verify.sh template` via bash.";
         }
@@ -369,8 +396,13 @@ public class SandboxAgentTools {
         return false;
     }
 
+    /**
+     * Whether a file may be written or deleted through {@link #writeFile}/{@link #deleteFile}. {@code DESIGN.md} is the one workspace-root file allowed: it is the agent's
+     * working-memory design note (see {@link GenerationStage#DESIGN}), never read by repository extraction, and legitimately updated from any stage — including legacy
+     * (unstaged) sessions and every staged one — whenever a later stage forces a design change.
+     */
     private static boolean isWritableGenerationPath(String safe) {
-        return safe.equals("problem-statement.md") || safe.startsWith("solution/") || safe.startsWith("template/") || safe.startsWith("tests/");
+        return safe.equals("DESIGN.md") || safe.equals("problem-statement.md") || safe.startsWith("solution/") || safe.startsWith("template/") || safe.startsWith("tests/");
     }
 
     private static String immutableHarnessError(String safe) {

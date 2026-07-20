@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration;
 
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.LinkedHashSet;
@@ -28,6 +29,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.buildagent.dto.SandboxExecResult;
 import de.tum.cit.aet.artemis.buildagent.dto.SandboxSessionContext;
 import de.tum.cit.aet.artemis.buildagent.dto.SandboxSessionSpec;
 import de.tum.cit.aet.artemis.buildagent.service.InteractiveSandbox;
@@ -82,6 +84,9 @@ public class GenerationOrchestrationService {
     /** First attempt plus three bounded repair iterations, leaving room for a semantic repair after mechanical setup problems. */
     private static final int MAX_GENERATION_ATTEMPTS = 4;
 
+    /** Best-effort read timeout for capturing {@code DESIGN.md} once after the agent loop finishes, for {@link GenerationOutcome#designDocument()}. */
+    private static final Duration DESIGN_DOCUMENT_READ_TIMEOUT = Duration.ofSeconds(30);
+
     // Optional so a core-only node (where no build agent is co-located to host the sandbox) still starts; absence is reported only when a run is attempted.
     private final Optional<InteractiveSandbox> interactiveSandbox;
 
@@ -106,10 +111,17 @@ public class GenerationOrchestrationService {
     // absent the baseline is empty and the total-wipe gate stays inert (fail-open), consistent with every other doubt-on-read-back gate.
     private final Optional<ProgrammingExerciseTestCaseRepository> testCaseRepository;
 
+    // Runs one attempt as five enforced, gated stages (design/solution/template/tests/statement) instead of one open-ended agent-loop call. Gated by stagedGenerationEnabled
+    // so it applies only where its Java-only, single-language contract holds (see the applicability check at the call site).
+    private final StagedGenerationRunner stagedGenerationRunner;
+
+    private final boolean stagedGenerationEnabled;
+
     public GenerationOrchestrationService(Optional<InteractiveSandbox> interactiveSandbox, GenerationWorkspaceService workspace, AgentLoopRunner agentLoopRunner,
             DifferentialVerificationService verifier, AgentSystemPromptService systemPromptService, StructuralOracleSeedingService structuralOracleSeeder,
             SpecFidelityCriticService specFidelityCritic, GenerationJobService jobService, Optional<ProgrammingExerciseTestCaseRepository> testCaseRepository,
-            @Value("${artemis.hyperion.agent.max-turns:60}") int maxTurns) {
+            @Value("${artemis.hyperion.agent.max-turns:60}") int maxTurns, StagedGenerationRunner stagedGenerationRunner,
+            @Value("${artemis.hyperion.agent.staged-generation:true}") boolean stagedGenerationEnabled) {
         if (maxTurns <= 0) {
             throw new IllegalArgumentException("artemis.hyperion.agent.max-turns must be positive");
         }
@@ -123,6 +135,8 @@ public class GenerationOrchestrationService {
         this.specFidelityCritic = specFidelityCritic;
         this.jobService = jobService;
         this.testCaseRepository = testCaseRepository;
+        this.stagedGenerationRunner = stagedGenerationRunner;
+        this.stagedGenerationEnabled = stagedGenerationEnabled;
     }
 
     private InteractiveSandbox requireSandbox() {
@@ -215,6 +229,10 @@ public class GenerationOrchestrationService {
             // must fail a
             // meaningful fraction; problem statement must bind tasks), so this loop turns a "builds but not quite right" first attempt into a mechanically verified candidate that
             // persistence saves for instructor review (see GenerationPersistenceService) rather than an auto-published exercise.
+            // Java/GENERATE is the only contract StagedGenerationRunner supports today (see its javadoc); ADAPT and every other language keep the original single, open-ended
+            // agent-loop call unchanged. Decided once per run — the mode and language do not change across repair attempts.
+            boolean useStagedGeneration = stagedGenerationEnabled && mode == GenerationMode.GENERATE && exercise.getProgrammingLanguage() == ProgrammingLanguage.JAVA;
+
             String currentPrompt = firstPrompt;
             AgentLoopResult loopResult = null;
             VerificationResult verification = null;
@@ -227,7 +245,10 @@ public class GenerationOrchestrationService {
             @Nullable
             VerificationRequest lastRejectedVerificationRequest = null;
             for (int attempt = 1; attempt <= MAX_GENERATION_ATTEMPTS; attempt++) {
-                loopResult = agentLoopRunner.run(systemPrompt, currentPrompt, tools, maxTurns, cancelled, effectiveUsageSink, progress);
+                loopResult = useStagedGeneration
+                        ? stagedGenerationRunner.run(exercise, baseTools, tools, currentPrompt, testsSeedSnapshot, sandbox, activeSessionId, cancelled, effectiveUsageSink,
+                                progress, () -> structuralOracleSeeder.seedIfStructuralDiff(sandbox, activeSessionId, exercise))
+                        : agentLoopRunner.run(systemPrompt, currentPrompt, tools, maxTurns, cancelled, effectiveUsageSink, progress);
                 log.info("Exercise generation attempt {} took {} turn(s)", attempt, loopResult.turns());
 
                 if (loopResult.status() == AgentLoopResult.Status.CANCELLED) {
@@ -410,7 +431,7 @@ public class GenerationOrchestrationService {
             }
 
             return new GenerationOutcome(loopResult, verification, sessionId, this, sandbox, producedFilesByType, producedProblemStatement, specFidelityReport,
-                    workspaceSeed.repositoryHeads());
+                    workspaceSeed.repositoryHeads(), readDesignDocument(sandbox, sessionId));
         }
         catch (RuntimeException e) {
             // A build interrupted by the cancel hook surfaces as a throw; report it as a clean cancellation.
@@ -838,6 +859,25 @@ public class GenerationOrchestrationService {
                     exception.getClass().getSimpleName());
             emit(progress, "The verification infrastructure failed; retrying the same exercise without asking the AI to regenerate it.");
             return verifier.verify(sandbox, sessionId, exercise, request, restoreCandidate);
+        }
+    }
+
+    /**
+     * Best-effort, read-once capture of the workspace's {@code DESIGN.md} for {@link GenerationOutcome#designDocument()}; {@code null} when the file was never written or
+     * could not be read (e.g. the sandbox session no longer exists). Never persisted into any repository.
+     */
+    @Nullable
+    private static String readDesignDocument(@Nullable InteractiveSandbox sandbox, @Nullable String sessionId) {
+        if (sandbox == null || sessionId == null) {
+            return null;
+        }
+        try {
+            SandboxExecResult result = sandbox.exec(sessionId, DESIGN_DOCUMENT_READ_TIMEOUT, "cat", GenerationWorkspaceService.WORKSPACE + "/DESIGN.md");
+            return result != null && result.isSuccess() ? result.stdout() : null;
+        }
+        catch (RuntimeException e) {
+            log.debug("Could not read DESIGN.md after generation for diagnostics: {}", e.getMessage());
+            return null;
         }
     }
 

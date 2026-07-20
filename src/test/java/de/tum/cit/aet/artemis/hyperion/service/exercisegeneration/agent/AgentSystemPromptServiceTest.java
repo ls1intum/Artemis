@@ -209,6 +209,97 @@ class AgentSystemPromptServiceTest {
                 .contains("post-loop verification determines save eligibility");
     }
 
+    // buildStage(): the orchestrator-enforced staged workflow's per-stage system prompt. Each stage sees only its own STAGE N instructions plus the shared header (security
+    // boundary, workspace/reference layout, THE CONTRACT) and the shared stage-close line that keeps `submit` scoped to that stage alone, never the whole exercise.
+
+    private static final Map<GenerationStage, String> STAGE_HEADERS = Map.of(GenerationStage.DESIGN, "STAGE 0 — DESIGN FIRST", GenerationStage.SOLUTION, "STAGE 1 — SOLUTION",
+            GenerationStage.TEMPLATE, "STAGE 2 — TEMPLATE", GenerationStage.TESTS, "STAGE 3 — TESTS", GenerationStage.STATEMENT, "STAGE 4 — STATEMENT");
+
+    private static final String STAGE_CLOSE_LINE_MARKER = "calling `submit` means THIS STAGE's goal is met";
+
+    /** Asserts every stage header EXCEPT {@code own} is absent from the prompt, so each stage prompt carries only its own STAGE N instructions. */
+    private static void assertOnlyOwnStageHeaderPresent(String prompt, GenerationStage own) {
+        for (GenerationStage other : GenerationStage.values()) {
+            if (other != own) {
+                assertThat(prompt).as("stage %s must not leak stage %s's header", own, other).doesNotContain(STAGE_HEADERS.get(other));
+            }
+        }
+        assertThat(prompt).contains(STAGE_HEADERS.get(own));
+    }
+
+    @Test
+    void buildStage_everyStage_sharesTheSecurityBoundaryWorkspaceAndContractHeader() {
+        ProgrammingExercise exercise = exerciseWith(ProgrammingLanguage.JAVA, "");
+        for (GenerationStage stage : GenerationStage.values()) {
+            String prompt = systemPromptService.buildStage(exercise, stage);
+            assertThat(prompt).as("stage %s", stage).contains("SECURITY BOUNDARY").contains("WORKSPACE").contains("THE CONTRACT")
+                    .contains("reference/: complete non-persisted worked exercise").contains("reference/style/: per-artifact style guides")
+                    .contains("THIS EXERCISE'S BUILD CONTEXT").contains(STAGE_CLOSE_LINE_MARKER);
+        }
+    }
+
+    @Test
+    void buildStage_design_carriesOnlyItsOwnStageAndPointsAtItsOwnSchemaAsTheStyleGuide() {
+        String prompt = systemPromptService.buildStage(exerciseWith(ProgrammingLanguage.JAVA, ""), GenerationStage.DESIGN);
+
+        assertOnlyOwnStageHeaderPresent(prompt, GenerationStage.DESIGN);
+        assertThat(prompt).contains("write `/workspace/DESIGN.md`").contains("STYLE GUIDE: the `## Classes`").contains("there is no separate reference/style file for the design")
+                .doesNotContain("Earlier stages already produced").doesNotContain("reference/style/solution.md").doesNotContain("reference/style/template.md")
+                .doesNotContain("reference/style/tests.md").doesNotContain("reference/style/final-statement.md");
+    }
+
+    @Test
+    void buildStage_solution_carriesOnlyItsOwnStageAndNamesDesignAsAlreadyProduced() {
+        String prompt = systemPromptService.buildStage(exerciseWith(ProgrammingLanguage.JAVA, ""), GenerationStage.SOLUTION);
+
+        assertOnlyOwnStageHeaderPresent(prompt, GenerationStage.SOLUTION);
+        assertThat(prompt).contains("Earlier stages already produced: DESIGN.md.").contains("Execute every worked example from the requirements against the real solution")
+                .contains("reference/style/solution.md");
+    }
+
+    @Test
+    void buildStage_template_carriesOnlyItsOwnStageAndTheTeachingScaffoldAndDiffDisciplineRules() {
+        String prompt = systemPromptService.buildStage(exerciseWith(ProgrammingLanguage.JAVA, ""), GenerationStage.TEMPLATE);
+
+        assertOnlyOwnStageHeaderPresent(prompt, GenerationStage.TEMPLATE);
+        assertThat(prompt).contains("Earlier stages already produced: DESIGN.md and the reference solution.").contains("derive the template FROM the finished solution")
+                .contains("TEMPLATE AS TEACHING SCAFFOLD").contains("DIFF DISCIPLINE").contains("byte-identical between template and solution")
+                .contains("reference/style/template.md");
+    }
+
+    @Test
+    void buildStage_tests_carriesOnlyItsOwnStageAndNamesDesignSolutionAndTemplateAsAlreadyProduced() {
+        String prompt = systemPromptService.buildStage(exerciseWith(ProgrammingLanguage.JAVA, ""), GenerationStage.TESTS);
+
+        assertOnlyOwnStageHeaderPresent(prompt, GenerationStage.TESTS);
+        assertThat(prompt).contains("Earlier stages already produced: DESIGN.md, the reference solution, and the template.")
+                .contains("partition at a time from DESIGN.md's task table").contains("reference/style/tests.md")
+                // Statement-only sections must not leak into the TESTS stage prompt.
+                .doesNotContain("STUDENT-FACING STATEMENT").doesNotContain("ARTEMIS TASK BINDINGS");
+    }
+
+    @Test
+    void buildStage_statement_carriesOnlyItsOwnStageAndTheStatementAndTaskBindingRules() {
+        String prompt = systemPromptService.buildStage(exerciseWith(ProgrammingLanguage.JAVA, ""), GenerationStage.STATEMENT);
+
+        assertOnlyOwnStageHeaderPresent(prompt, GenerationStage.STATEMENT);
+        assertThat(prompt).contains("Earlier stages already produced: DESIGN.md, the reference solution, the template, and the differential tests.")
+                .contains("write the statement last, from DESIGN.md and the verified test names").contains("STUDENT-FACING STATEMENT").contains("ARTEMIS TASK BINDINGS")
+                .contains("[task][Short human title](exactTestNameA,exactTestNameB)").contains("reference/style/final-statement.md");
+    }
+
+    @Test
+    void buildStage_isAlwaysShorterThanTheFullSingleLoopPromptAndWithinBudget() {
+        ProgrammingExercise exercise = exerciseWith(ProgrammingLanguage.JAVA, "");
+        String fullPrompt = systemPromptService.build(exercise);
+
+        for (GenerationStage stage : GenerationStage.values()) {
+            int stageLength = systemPromptService.buildStage(exercise, stage).length();
+            assertThat(stageLength).as("stage %s prompt length vs full prompt length %d", stage, fullPrompt.length()).isLessThan(fullPrompt.length())
+                    .isLessThanOrEqualTo(MAX_SYSTEM_PROMPT_CHARS);
+        }
+    }
+
     @Test
     void build_doesNotLetTheAgentAuthorizeNewGradedRequirementsThroughItsStatement() {
         String prompt = systemPromptService.build(exerciseWithStatement("Implement a bounded counter."));

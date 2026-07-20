@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import java.io.InputStream;
@@ -166,6 +167,34 @@ class SandboxAgentToolsTest {
         assertThat(tools.writeFile("solution/build.gradle", "plugins { id 'java' }")).contains("build infrastructure is seeded and managed by Artemis");
         assertThat(tools.writeFile("template/buildSrc/src/main/java/FakePlugin.java", "class FakePlugin {}")).contains("build infrastructure is seeded and managed by Artemis");
         assertThat(sandbox.execCount).isZero();
+    }
+
+    @Test
+    void writeFile_acceptsDesignMdAtTheWorkspaceRootInEveryStageAndInLegacyMode() {
+        // DESIGN.md is the one workspace-root file allowed: working memory for the staged workflow, never persisted by extraction, updatable from any stage (or legacy/unstaged
+        // sessions, where currentStage stays null).
+        RecordingSandbox sandbox = new RecordingSandbox();
+        SandboxAgentTools legacy = new SandboxAgentTools(sandbox, "s");
+        assertThat(legacy.writeFile("DESIGN.md", "## Classes")).startsWith("Wrote ");
+
+        for (GenerationStage stage : GenerationStage.values()) {
+            SandboxAgentTools staged = new SandboxAgentTools(new RecordingSandbox(), "s");
+            staged.enterStage(stage);
+            assertThat(staged.writeFile("DESIGN.md", "## Classes")).as("stage %s", stage).startsWith("Wrote ");
+        }
+    }
+
+    @Test
+    void writeFile_designMdContentRoundTripsThroughReadFile() {
+        RecordingSandbox sandbox = new RecordingSandbox();
+        SandboxAgentTools tools = new SandboxAgentTools(sandbox, "s");
+
+        String written = tools.writeFile("DESIGN.md", "## Classes\n| Foo | role |\n");
+        assertThat(written).isEqualTo("Wrote " + "## Classes\n| Foo | role |\n".length() + " characters to DESIGN.md");
+
+        // The recording sandbox only serves 'cat' against content it was told to hold; simulate the write landing so the round trip is observable through readFile.
+        sandbox.files.put("/workspace/DESIGN.md", "## Classes\n| Foo | role |\n");
+        assertThat(tools.readFile("DESIGN.md")).isEqualTo("## Classes\n| Foo | role |\n");
     }
 
     @Test
@@ -403,6 +432,61 @@ class SandboxAgentToolsTest {
         // No verifier (two-arg ctor): the tool must point at the bash fallback rather than NPE.
         String out = new SandboxAgentTools(new RecordingSandbox(), "s").verify();
         assertThat(out).startsWith("ERROR: the verify tool is unavailable").contains("sh verify.sh solution");
+    }
+
+    // Stage-aware verify(): DESIGN, TEMPLATE, and STATEMENT short-circuit to an advisory instead of running builds; SOLUTION and TESTS (and an unstaged/legacy null stage) still
+    // delegate to the wired verifier.
+
+    private static SandboxAgentTools toolsWiredToAVerifier(RecordingSandbox sandbox, ProgrammingExercise exercise, DifferentialVerificationService verifier,
+            AgentVerifyReport report) {
+        when(verifier.selfCheck(eq(sandbox), eq("s"), eq(exercise), eq(Map.of()), eq(false))).thenReturn(report);
+        return new SandboxAgentTools(sandbox, "s", verifier, exercise);
+    }
+
+    @Test
+    void verify_inDesignTemplateOrStatementStage_returnsAdvisoryInsteadOfRunningBuilds() {
+        // No stubbing on the verifier mock at all (an unstubbed selfCheck() call would return null and blow up toObservation()), so the test fails loudly if the advisory branch
+        // ever falls through to the real differential.
+        RecordingSandbox sandbox = new RecordingSandbox();
+        ProgrammingExercise exercise = new ProgrammingExercise();
+        DifferentialVerificationService verifier = mock(DifferentialVerificationService.class);
+
+        for (GenerationStage stage : List.of(GenerationStage.DESIGN, GenerationStage.TEMPLATE, GenerationStage.STATEMENT)) {
+            SandboxAgentTools tools = new SandboxAgentTools(sandbox, "s", verifier, exercise);
+            tools.enterStage(stage);
+
+            String out = tools.verify();
+
+            assertThat(out).as("stage %s", stage).isEqualTo(AgentSystemPromptService.STAGE_VERIFY_ADVISORY).contains("SOLUTION and TESTS stages");
+        }
+        verifyNoInteractions(verifier);
+    }
+
+    @Test
+    void verify_inSolutionOrTestsStage_stillDelegatesToTheVerifier() {
+        RecordingSandbox sandbox = new RecordingSandbox();
+        ProgrammingExercise exercise = new ProgrammingExercise();
+        AgentVerifyReport report = new AgentVerifyReport(2, true, List.of(), 2, true, true, List.of(), List.of("t_a"), List.of(), List.of(), true, List.of());
+
+        for (GenerationStage stage : List.of(GenerationStage.SOLUTION, GenerationStage.TESTS)) {
+            DifferentialVerificationService verifier = mock(DifferentialVerificationService.class);
+            SandboxAgentTools tools = toolsWiredToAVerifier(sandbox, exercise, verifier, report);
+            tools.enterStage(stage);
+
+            assertThat(tools.verify()).as("stage %s", stage).isEqualTo(report.toObservation());
+        }
+    }
+
+    @Test
+    void verify_withNoStageEntered_keepsTheLegacyUnstagedBehaviorAndDelegates() {
+        // enterStage() never called (currentStage stays null): the legacy single-loop path, where verify is always available.
+        RecordingSandbox sandbox = new RecordingSandbox();
+        ProgrammingExercise exercise = new ProgrammingExercise();
+        DifferentialVerificationService verifier = mock(DifferentialVerificationService.class);
+        AgentVerifyReport report = new AgentVerifyReport(2, true, List.of(), 2, true, true, List.of(), List.of("t_a"), List.of(), List.of(), true, List.of());
+        SandboxAgentTools tools = toolsWiredToAVerifier(sandbox, exercise, verifier, report);
+
+        assertThat(tools.verify()).isEqualTo(report.toObservation());
     }
 
     @Test

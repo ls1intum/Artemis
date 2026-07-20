@@ -81,6 +81,8 @@ class GenerationOrchestrationServiceTest {
 
     private GenerationJobService jobService;
 
+    private StagedGenerationRunner stagedGenerationRunner;
+
     private GenerationOrchestrationService service;
 
     private ProgrammingExercise exercise;
@@ -101,6 +103,7 @@ class GenerationOrchestrationServiceTest {
         structuralOracleSeeder = mock(StructuralOracleSeedingService.class);
         specFidelityCritic = mock(SpecFidelityCriticService.class);
         jobService = mock(GenerationJobService.class);
+        stagedGenerationRunner = mock(StagedGenerationRunner.class);
 
         when(sandbox.createSession(any())).thenReturn(SESSION_ID);
         when(systemPromptService.build(any(), any())).thenReturn("SYSTEM_PROMPT");
@@ -126,8 +129,14 @@ class GenerationOrchestrationServiceTest {
     }
 
     private GenerationOrchestrationService newService() {
+        // Staged generation disabled by default so the existing battery of tests below keeps exercising the original single-agent-loop-call path unmodified; a dedicated test
+        // below constructs the flag=true variant to prove the delegation seam itself.
+        return newService(false);
+    }
+
+    private GenerationOrchestrationService newService(boolean stagedGenerationEnabled) {
         return new GenerationOrchestrationService(Optional.of(sandbox), workspace, agentLoopRunner, verifier, systemPromptService, structuralOracleSeeder, specFidelityCritic,
-                jobService, Optional.of(testCaseRepository), 100);
+                jobService, Optional.of(testCaseRepository), 100, stagedGenerationRunner, stagedGenerationEnabled);
     }
 
     private static AgentLoopResult completed() {
@@ -226,6 +235,35 @@ class GenerationOrchestrationServiceTest {
 
         verify(agentLoopRunner, times(1)).run(anyString(), anyString(), any(), anyInt(), any(), any(), any());
         verify(verifier, times(1)).verify(any(), anyString(), any(), any(VerificationRequest.class), any(Runnable.class));
+    }
+
+    @Test
+    void stagedGenerationEnabled_generateJava_delegatesToStagedGenerationRunnerInsteadOfTheSingleAgentLoopCall() {
+        GenerationOrchestrationService stagedService = newService(true);
+        when(stagedGenerationRunner.run(any(), any(), any(), anyString(), any(), any(), anyString(), any(), any(), any(), any())).thenReturn(completed());
+        when(verifier.verify(any(), anyString(), any(), any(VerificationRequest.class), any(Runnable.class))).thenReturn(accepted());
+
+        try (GenerationOutcome outcome = stagedService.generate(exercise, user, "Build a bubble sort exercise.", JOB_ID, GenerationMode.GENERATE, () -> false, null, null, null)) {
+            assertThat(outcome.isMechanicallyVerified()).isTrue();
+        }
+
+        verify(stagedGenerationRunner, times(1)).run(any(), any(), any(), anyString(), any(), any(), anyString(), any(), any(), any(), any());
+        verify(agentLoopRunner, never()).run(anyString(), anyString(), any(), anyInt(), any(), any(), any());
+    }
+
+    @Test
+    void stagedGenerationDisabled_generateJava_usesTheSingleAgentLoopCallDirectly() {
+        // service (built by newService()) has staged generation disabled, matching the default in every other test in this file: flag off must be a no-op, leaving the
+        // original single, open-ended agent-loop call as the only path — the seam introduced for staged generation must not change existing behaviour.
+        when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(completed());
+        when(verifier.verify(any(), anyString(), any(), any(VerificationRequest.class), any(Runnable.class))).thenReturn(accepted());
+
+        try (GenerationOutcome outcome = generate(() -> false)) {
+            assertThat(outcome.isMechanicallyVerified()).isTrue();
+        }
+
+        verify(agentLoopRunner, times(1)).run(anyString(), anyString(), any(), anyInt(), any(), any(), any());
+        verify(stagedGenerationRunner, never()).run(any(), any(), any(), anyString(), any(), any(), anyString(), any(), any(), any(), any());
     }
 
     @Test
