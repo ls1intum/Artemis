@@ -122,6 +122,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.LockRepositoryPolicy;
+import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.SubmissionPenaltyPolicy;
 import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.SubmissionPolicy;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingSubmissionTestRepository;
 import de.tum.cit.aet.artemis.programming.util.LocalRepository;
@@ -2388,6 +2389,60 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
         assertThat(afterSubmit.getAttempt()).as("attempt must survive the hand-in, it numbers repeated test-exam attempts").isEqualTo(3);
         assertThat(afterSubmit.getPresentationScore()).as("presentationScore must survive the hand-in").isEqualTo(7.0);
         assertThat(afterSubmit.getInitializationState()).as("a FINISHED participation must not regress to INITIALIZED").isEqualTo(InitializationState.FINISHED);
+    }
+
+    /**
+     * Pins the two student-facing programming fields on the live conduction wire.
+     * <p>
+     * {@code allowOnlineEditor} gates the embedded editor ({@code programming-exam-submission.component.html}) and the
+     * "offline IDE only" branches of the exam navigation. The fixture is deliberately an ONLINE-EDITOR-ONLY exercise
+     * ({@code allowOfflineIde = false}), which is the case that degrades worst: without the field the student gets a
+     * 200 with no editor and no offline fallback either.
+     * <p>
+     * {@code submissionPolicy} feeds the remaining-submissions indicator
+     * ({@code ProgrammingSubmissionPolicyStatusComponent} reads {@code active}, {@code submissionLimit}, {@code type}
+     * and {@code exceedingPenalty}). {@code prepareStudentExamForConduction} loads the policy onto the exercise, so
+     * dropping it from the projection means the backend keeps enforcing a limit the student cannot see. Non-default
+     * values throughout, so a projection that emitted the field but not its contents still fails.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testConductionWireCarriesProgrammingEditorGateAndSubmissionPolicy() throws Exception {
+        StudentExam studentExam = prepareStudentExamsForConduction(false, true, 1).getFirst();
+        long programmingExerciseId = studentExam.getExercises().stream().filter(ProgrammingExercise.class::isInstance).findFirst().orElseThrow().getId();
+        // reload a clean instance: the exercise hanging off the student exam carries a detached participations
+        // collection, and saving that graph would cascade an orphan removal onto the student's participations
+        ProgrammingExercise programmingExercise = (ProgrammingExercise) exerciseRepository.findById(programmingExerciseId).orElseThrow();
+        programmingExercise.setAllowOnlineEditor(true);
+        programmingExercise.setAllowOfflineIde(false);
+        programmingExercise = (ProgrammingExercise) exerciseRepository.save(programmingExercise);
+
+        SubmissionPenaltyPolicy submissionPolicy = new SubmissionPenaltyPolicy();
+        submissionPolicy.setActive(true);
+        submissionPolicy.setSubmissionLimit(5);
+        submissionPolicy.setExceedingPenalty(2.0);
+        programmingExerciseUtilService.addSubmissionPolicyToExercise(submissionPolicy, programmingExercise);
+
+        userUtilService.changeUser(TEST_PREFIX + "student1");
+        JsonNode conductionWire = request.get("/api/exam/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/" + studentExam.getId() + "/conduction",
+                HttpStatus.OK, JsonNode.class);
+
+        JsonNode programmingNode = null;
+        for (JsonNode exercise : conductionWire.get("exercises")) {
+            if (exercise.path("id").asLong() == programmingExercise.getId()) {
+                programmingNode = exercise;
+            }
+        }
+        assertThat(programmingNode).as("conduction wire must carry the programming exercise").isNotNull();
+        assertThat(programmingNode.path("allowOnlineEditor").asBoolean()).as("allowOnlineEditor must be on the conduction wire, else the online editor never renders").isTrue();
+
+        JsonNode policyNode = programmingNode.get("submissionPolicy");
+        assertThat(policyNode).as("conduction wire must carry the active submission policy").isNotNull();
+        assertThat(policyNode.path("active").asBoolean()).isTrue();
+        assertThat(policyNode.path("submissionLimit").asInt()).isEqualTo(5);
+        assertThat(policyNode.path("type").asText()).as("type is the discriminator the client's SubmissionPolicyType switches on").isEqualTo("submission_penalty");
+        assertThat(policyNode.path("exceedingPenalty").asDouble()).isEqualTo(2.0);
+        deleteExamWithInstructor(exam1);
     }
 
     /**
