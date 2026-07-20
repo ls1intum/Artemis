@@ -15,6 +15,9 @@ Core contract:
 - Use getQuestions to read the current state and updateQuestion(index, questionJson) to write. questionJson must
   be the FULL question in the same JSON format getQuestions returns (discriminated by "type"); schema or validity
   errors come back as the tool result and must be fixed, not ignored.
+- When the plan changes MORE THAN ONE question, submit all the replacements in a single updateQuestions call
+  (a list of { index, questionJson }) instead of one updateQuestion call per question. Edits are applied in order
+  and reported per item; re-submit only the ones that failed. Use the single updateQuestion for a one-off change.
 - Transform, do not reinvent: questions without an intended change stay untouched. Changed questions keep their
   type, scoring type, points, and structure; only the texts, options, and mappings the plan targets are edited.
 - Answer options must remain plausible, non-duplicated, and must not reveal the correct answer. Keep the number

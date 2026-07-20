@@ -148,6 +148,15 @@ class ExerciseVariantGenerationIntegrationTest extends AbstractSpringIntegration
         return quizExerciseRepository.save(quiz);
     }
 
+    /** Two multiple-choice questions so the batch-replace test edits several questions of the same type in one call. */
+    private QuizExercise createTwoMcQuiz(Course course) {
+        QuizExercise quiz = QuizExerciseFactory.generateQuizExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(1), QuizMode.INDIVIDUAL, course);
+        quiz.addQuestion(QuizExerciseFactory.createMultipleChoiceQuestion());
+        quiz.addQuestion(QuizExerciseFactory.createMultipleChoiceQuestion());
+        quiz.setMaxPoints(quiz.getOverallQuizPoints());
+        return quizExerciseRepository.save(quiz);
+    }
+
     // --- Scripted ChatModel -----------------------------------------------------------------------------
 
     private record ScriptedModel(AtomicInteger planningCalls, AtomicInteger agentRounds, AtomicInteger critiqueCalls, AtomicInteger failureSummaryCalls) {
@@ -239,6 +248,31 @@ class ExerciseVariantGenerationIntegrationTest extends AbstractSpringIntegration
         }
     }
 
+    /**
+     * A batch agent round: read all questions, re-title EVERY question, and write them back through the real
+     * updateQuestions tool in a single call (performance lever A1, quiz side).
+     */
+    private String applyBatchRetitleEdit(List<ToolCallback> tools) {
+        try {
+            String questionsJson = callTool(tools, "getQuestions", objectMapper.createObjectNode().toString());
+            ArrayNode questions = (ArrayNode) objectMapper.readTree(questionsJson);
+            ArrayNode edits = objectMapper.createArrayNode();
+            for (int index = 0; index < questions.size(); index++) {
+                ObjectNode question = (ObjectNode) questions.get(index);
+                question.put("title", REWRITTEN_QUESTION_TITLE + " " + index);
+                edits.add(objectMapper.createObjectNode().put("index", index).put("questionJson", question.toString()));
+            }
+            String updateResult = callTool(tools, "updateQuestions", objectMapper.createObjectNode().set("edits", edits).toString());
+            toolTranscript.add("updateQuestions: " + updateResult);
+            callTool(tools, "finish", objectMapper.createObjectNode().put("summary", "Re-themed all questions to the cargo bay domain in one batch").toString());
+            return "done";
+        }
+        catch (Exception e) {
+            toolTranscript.add("agent scripting failed: " + e);
+            return "agent scripting failed: " + e.getMessage();
+        }
+    }
+
     private static String callTool(List<ToolCallback> tools, String name, String jsonArguments) {
         ToolCallback tool = tools.stream().filter(callback -> callback.getToolDefinition().name().equals(name)).findFirst()
                 .orElseThrow(() -> new IllegalStateException("Tool " + name + " is not part of the round's toolset"));
@@ -313,6 +347,30 @@ class ExerciseVariantGenerationIntegrationTest extends AbstractSpringIntegration
 
         // Terminal jobs can no longer be cancelled.
         request.delete("/api/hyperion/variant-jobs/" + jobId, HttpStatus.CONFLICT);
+    }
+
+    @Test
+    @WithMockUser(username = EDITOR_LOGIN, roles = "EDITOR")
+    void shouldReplaceMultipleQuizQuestionsInOneBatchCall() throws Exception {
+        QuizExercise twoMcQuiz = createTwoMcQuiz(course);
+        ScriptedModel script = scriptChatModel(PLAN_JSON, this::applyBatchRetitleEdit, List.of());
+
+        String jobId = startJob(twoMcQuiz.getId(), domainChangeRequest(standalonePlacement()));
+        VariantJob job = awaitTerminal(jobId, EDITOR_LOGIN);
+
+        assertThat(job.getPhase()).isEqualTo(VariantJobPhase.COMPLETED);
+        assertThat(script.agentRounds()).hasValue(1);
+        // One batch call reported both replacements and the running total.
+        assertThat(toolTranscript).anySatisfy(entry -> assertThat(entry).contains("2 of 2 question(s) updated"));
+
+        // Both questions of the clone carry their new per-index title; the source is untouched.
+        QuizExercise variant = quizExerciseRepository.findByIdWithQuestionsElseThrow(job.getVariantExerciseId());
+        assertThat(variant.isValid()).isTrue();
+        assertThat(variant.getQuizQuestions()).hasSize(2);
+        assertThat(variant.getQuizQuestions().get(0).getTitle()).isEqualTo(REWRITTEN_QUESTION_TITLE + " 0");
+        assertThat(variant.getQuizQuestions().get(1).getTitle()).isEqualTo(REWRITTEN_QUESTION_TITLE + " 1");
+        QuizExercise source = quizExerciseRepository.findByIdWithQuestionsElseThrow(twoMcQuiz.getId());
+        assertThat(source.getQuizQuestions().get(0).getTitle()).isNotEqualTo(REWRITTEN_QUESTION_TITLE + " 0");
     }
 
     @Test

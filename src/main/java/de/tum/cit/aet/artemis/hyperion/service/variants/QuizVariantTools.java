@@ -15,6 +15,7 @@ import org.springframework.ai.tool.annotation.Tool;
 import org.springframework.ai.tool.annotation.ToolParam;
 import org.springframework.ai.tool.method.MethodToolCallbackProvider;
 
+import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -128,46 +129,10 @@ class QuizVariantTools implements VariantToolset {
             // statistic objects, and a lazy statistic proxy on this detached instance would throw a
             // LazyInitializationException on save.
             QuizExercise quiz = quizExerciseRepository.findByIdWithQuestionsAndStatisticsElseThrow(quizExerciseId);
-            List<QuizQuestion> questions = quiz.getQuizQuestions();
-            if (index < 0 || index >= questions.size()) {
-                return "Error: question index " + index + " is out of range — the quiz has " + questions.size() + " question(s) (indices 0-" + (questions.size() - 1) + ").";
+            String error = replaceQuestion(quiz, index, questionJson);
+            if (error != null) {
+                return "Error: " + error;
             }
-            QuizQuestion existing = questions.get(index);
-            if (existing == null) {
-                return "Error: there is no question at index " + index + " (the question list has a gap at this position).";
-            }
-            QuizQuestion updated;
-            try {
-                updated = objectMapper.readValue(questionJson, QuizQuestion.class);
-            }
-            catch (Exception parseError) {
-                // Schema violations go back to the model as the tool result.
-                return "Error: the question JSON is invalid: " + parseError.getMessage() + " Use exactly the format getQuestions returns, including the \"type\" field.";
-            }
-            if (!existing.getClass().equals(updated.getClass())) {
-                return "Error: the question type must not change (existing question " + index + " is of type '" + existing.getClass().getSimpleName() + "').";
-            }
-            String imageError = checkImagesUnchanged(existing, updated);
-            if (imageError != null) {
-                return imageError;
-            }
-            updated.setId(existing.getId());
-            // Keep the persisted statistic: the JSON payload has none, and QuizService.save would otherwise
-            // create a second statistic for the same question. The save path reconciles the statistic's
-            // counters with the (possibly changed) options/spots, same as the quiz editor's update flow.
-            updated.setQuizQuestionStatistic(existing.getQuizQuestionStatistic());
-            if (!updated.isValid()) {
-                return "Error: the updated question is not valid (check: non-empty title/text, at least one correct multiple-choice option, "
-                        + "consistent drag-and-drop/short-answer mappings, valid scoring type). Fix the question and try again.";
-            }
-            questions.set(index, updated);
-            // The child side owns every FK here (question -> exercise, option/mapping -> question, statistic ->
-            // question), and all those back-references are @JsonIgnore'd, so they are null on the deserialized
-            // instance. Saving without restoring them writes NULL FKs: the question row is orphaned and the
-            // @OrderColumn list comes back with a null gap (observed as an NPE in VERIFYING). Same wiring as
-            // QuizConfiguration.reconnectJSONIgnoreAttributes, but only for the replaced question — the full
-            // reconnect walks lazy statistic-counter collections this detached graph has not fetched.
-            reconnectReplacedQuestion(quiz, updated);
             quizExerciseService.save(quiz);
             log.debug("Variant job {}: replaced quiz question {} of exercise {}", jobId, index, quizExerciseId);
             return "Question " + index + " updated. " + (quiz.isValid() ? "The quiz is currently valid." : "The quiz is NOT valid yet — use validateQuiz for details.");
@@ -175,6 +140,111 @@ class QuizVariantTools implements VariantToolset {
         catch (Exception e) {
             return "Error: could not update question " + index + ": " + e.getMessage();
         }
+    }
+
+    /** One question replacement for the batch {@link #updateQuestions} tool: the target index and its new JSON. */
+    public record QuestionEdit(@JsonPropertyDescription("the 0-based index of the question to replace (order of getQuestions)") Integer index,
+            @JsonPropertyDescription("the full new question as JSON, in the same format getQuestions returns, including the \"type\" discriminator") String questionJson) {
+    }
+
+    @Tool(description = "Replace MULTIPLE questions of the variant quiz in a SINGLE call. Strongly prefer this over several updateQuestion calls when re-theming more than one "
+            + "question: pass all the { index, questionJson } edits at once. Edits are applied in order and each is reported independently as updated or with a precise error; "
+            + "a failed edit never blocks the others, and only the successful edits are persisted (once, at the end). Same rules as updateQuestion: keep each question's type and "
+            + "element ids, and keep drag-and-drop image paths exactly as they are.")
+    public String updateQuestions(@ToolParam(description = "the question replacements to apply; each has index and questionJson") List<QuestionEdit> edits) {
+        String stop = stopNotice();
+        if (stop != null) {
+            return stop;
+        }
+        if (edits == null || edits.isEmpty()) {
+            return "Error: no question edits were provided. Pass at least one { index, questionJson } edit.";
+        }
+        try {
+            QuizExercise quiz = quizExerciseRepository.findByIdWithQuestionsAndStatisticsElseThrow(quizExerciseId);
+            StringBuilder report = new StringBuilder();
+            int appliedCount = 0;
+            for (int position = 0; position < edits.size(); position++) {
+                QuestionEdit edit = edits.get(position);
+                report.append("Edit ").append(position + 1);
+                if (edit == null || edit.index() == null) {
+                    report.append(": Error: the \"index\" argument is required — pass the 0-based question index from getQuestions.\n");
+                    continue;
+                }
+                report.append(" (question ").append(edit.index()).append("): ");
+                if (edit.questionJson() == null || edit.questionJson().isBlank()) {
+                    report.append("Error: the \"questionJson\" argument is required — pass the full question JSON.\n");
+                    continue;
+                }
+                String error = replaceQuestion(quiz, edit.index(), edit.questionJson());
+                if (error != null) {
+                    report.append("Error: ").append(error).append('\n');
+                    continue;
+                }
+                appliedCount++;
+                report.append("updated.\n");
+            }
+            if (appliedCount > 0) {
+                quizExerciseService.save(quiz);
+                log.debug("Variant job {}: replaced {} quiz question(s) of exercise {}", jobId, appliedCount, quizExerciseId);
+            }
+            report.append(appliedCount).append(" of ").append(edits.size()).append(" question(s) updated. ")
+                    .append(quiz.isValid() ? "The quiz is currently valid." : "The quiz is NOT valid yet — use validateQuiz for details.");
+            return report.toString();
+        }
+        catch (Exception e) {
+            return "Error: could not update the questions: " + e.getMessage();
+        }
+    }
+
+    /**
+     * Replaces the question at {@code index} of {@code quiz} in memory with the deserialized {@code questionJson}
+     * (id, statistic, and child back-references restored). Shared by the single {@link #updateQuestion} and the
+     * batch {@link #updateQuestions} tools so the validation and reconnection rules are defined once; the caller
+     * saves the quiz. Returns a precise, model-facing reason (WITHOUT an "Error: " prefix) on rejection, or
+     * {@code null} when the replacement was applied.
+     */
+    private String replaceQuestion(QuizExercise quiz, int index, String questionJson) {
+        List<QuizQuestion> questions = quiz.getQuizQuestions();
+        if (index < 0 || index >= questions.size()) {
+            return "question index " + index + " is out of range — the quiz has " + questions.size() + " question(s) (indices 0-" + (questions.size() - 1) + ").";
+        }
+        QuizQuestion existing = questions.get(index);
+        if (existing == null) {
+            return "there is no question at index " + index + " (the question list has a gap at this position).";
+        }
+        QuizQuestion updated;
+        try {
+            updated = objectMapper.readValue(questionJson, QuizQuestion.class);
+        }
+        catch (Exception parseError) {
+            // Schema violations go back to the model as the tool result.
+            return "the question JSON is invalid: " + parseError.getMessage() + " Use exactly the format getQuestions returns, including the \"type\" field.";
+        }
+        if (!existing.getClass().equals(updated.getClass())) {
+            return "the question type must not change (existing question " + index + " is of type '" + existing.getClass().getSimpleName() + "').";
+        }
+        String imageError = checkImagesUnchanged(existing, updated);
+        if (imageError != null) {
+            return imageError;
+        }
+        updated.setId(existing.getId());
+        // Keep the persisted statistic: the JSON payload has none, and QuizService.save would otherwise
+        // create a second statistic for the same question. The save path reconciles the statistic's
+        // counters with the (possibly changed) options/spots, same as the quiz editor's update flow.
+        updated.setQuizQuestionStatistic(existing.getQuizQuestionStatistic());
+        if (!updated.isValid()) {
+            return "the updated question is not valid (check: non-empty title/text, at least one correct multiple-choice option, "
+                    + "consistent drag-and-drop/short-answer mappings, valid scoring type). Fix the question and try again.";
+        }
+        questions.set(index, updated);
+        // The child side owns every FK here (question -> exercise, option/mapping -> question, statistic ->
+        // question), and all those back-references are @JsonIgnore'd, so they are null on the deserialized
+        // instance. Saving without restoring them writes NULL FKs: the question row is orphaned and the
+        // @OrderColumn list comes back with a null gap (observed as an NPE in VERIFYING). Same wiring as
+        // QuizConfiguration.reconnectJSONIgnoreAttributes, but only for the replaced question — the full
+        // reconnect walks lazy statistic-counter collections this detached graph has not fetched.
+        reconnectReplacedQuestion(quiz, updated);
+        return null;
     }
 
     @Tool(description = "Validate the variant quiz: overall validity and a per-question report. Fix all reported problems before you finish.")
@@ -240,12 +310,12 @@ class QuizVariantTools implements VariantToolset {
             return null;
         }
         if (!Objects.equals(existingDnd.getBackgroundFilePath(), updatedDnd.getBackgroundFilePath())) {
-            return "Error: the background image path of a drag-and-drop question must not change (keep \"" + existingDnd.getBackgroundFilePath() + "\").";
+            return "the background image path of a drag-and-drop question must not change (keep \"" + existingDnd.getBackgroundFilePath() + "\").";
         }
         Set<String> existingPicturePaths = picturePaths(existingDnd);
         Set<String> updatedPicturePaths = picturePaths(updatedDnd);
         if (!existingPicturePaths.containsAll(updatedPicturePaths)) {
-            return "Error: drag item image paths must not be added or changed — only text and mappings may be edited. Existing picture paths: " + existingPicturePaths;
+            return "drag item image paths must not be added or changed — only text and mappings may be edited. Existing picture paths: " + existingPicturePaths;
         }
         return null;
     }
