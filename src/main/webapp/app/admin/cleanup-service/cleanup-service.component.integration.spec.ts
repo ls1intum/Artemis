@@ -7,7 +7,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { CleanupServiceComponent } from 'app/admin/cleanup-service/cleanup-service.component';
 import { DataCleanupService } from 'app/admin/cleanup-service/data-cleanup.service';
-import { FormDateTimePickerComponent } from 'app/shared-ui/date-time-picker/date-time-picker.component';
+import { TumUiDatePickerComponent } from 'app/shared-ui/tum-ui/date-picker/tum-ui-date-picker.component';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('CleanupServiceComponent date range integration', () => {
@@ -33,9 +33,9 @@ describe('CleanupServiceComponent date range integration', () => {
         fixture.detectChanges();
     });
 
-    function datePickers(operationName: string): FormDateTimePickerComponent[] {
+    function datePickers(operationName: string): TumUiDatePickerComponent[] {
         const row = fixture.debugElement.query(By.css(`[data-testid="cleanup-row-${operationName}"]`));
-        return row.queryAll(By.directive(FormDateTimePickerComponent)).map((debugElement) => debugElement.componentInstance as FormDateTimePickerComponent);
+        return row.queryAll(By.directive(TumUiDatePickerComponent)).map((debugElement) => debugElement.componentInstance as TumUiDatePickerComponent);
     }
 
     it('should recover when the to-date corrects an invalid date range', () => {
@@ -43,13 +43,15 @@ describe('CleanupServiceComponent date range integration', () => {
         const [fromPicker, toPicker] = datePickers(operation.name);
         const invalidFrom = operation.deleteTo!.add(1, 'day');
 
-        fromPicker.updateField(invalidFrom.toDate());
+        // Writing the picker's value model emits its valueChange (the model output) exactly as user input would,
+        // so the template's (valueChange)="onDeleteFromChange(operation, $event)" handler runs with the new date.
+        fromPicker.value.set(invalidFrom);
         fixture.detectChanges();
 
         expect(operation.datesValid()).toBe(false);
 
         const correctedTo = invalidFrom.add(1, 'day');
-        toPicker.updateField(correctedTo.toDate());
+        toPicker.value.set(correctedTo);
         fixture.detectChanges();
 
         expect(operation.deleteFrom?.toISOString()).toBe(invalidFrom.toISOString());
@@ -62,17 +64,39 @@ describe('CleanupServiceComponent date range integration', () => {
         const [fromPicker, toPicker] = datePickers(operation.name);
         const invalidTo = operation.deleteFrom!.subtract(1, 'day');
 
-        toPicker.updateField(invalidTo.toDate());
+        toPicker.value.set(invalidTo);
         fixture.detectChanges();
 
         expect(operation.datesValid()).toBe(false);
 
         const correctedFrom = invalidTo.subtract(1, 'day');
-        fromPicker.updateField(correctedFrom.toDate());
+        fromPicker.value.set(correctedFrom);
         fixture.detectChanges();
 
         expect(operation.deleteFrom?.toISOString()).toBe(correctedFrom.toISOString());
         expect(operation.deleteTo?.toISOString()).toBe(invalidTo.toISOString());
         expect(operation.datesValid()).toBe(true);
+    });
+
+    it('disables the destructive Execute button when a date field is overwritten with unparseable text', () => {
+        const operation = component.cleanupOperations()[1];
+        const row = fixture.debugElement.query(By.css(`[data-testid="cleanup-row-${operation.name}"]`));
+        const executeButton = () => row.query(By.css('[data-testid="execute-operation"]')).nativeElement as HTMLButtonElement;
+
+        // Valid seeded range → Execute enabled.
+        expect(executeButton().disabled).toBe(false);
+
+        // Overwrite the "from" field with garbage. This is the keepInvalid path: the picker does NOT emit
+        // valueChange (so operation.deleteFrom keeps its stale valid date and datesValid stays true), but it
+        // DOES emit parseValidChange(false). The Execute button must reflect that and disable — otherwise the admin
+        // could run the destructive cleanup against a stale range while the field shows unparseable text.
+        const fromInput = row.query(By.css('[data-testid="delete-from-picker"] [data-testid="tum-ui-date-picker-input"]')).nativeElement as HTMLInputElement;
+        fromInput.value = 'not a date';
+        fromInput.dispatchEvent(new Event('input'));
+        fixture.detectChanges();
+
+        expect(operation.datesValid()).toBe(true); // value unchanged (keepInvalid), so the range check still passes
+        expect(operation.deleteFromValid()).toBe(false); // but the typed text no longer parses
+        expect(executeButton().disabled).toBe(true);
     });
 });

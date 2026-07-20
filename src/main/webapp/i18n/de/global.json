@@ -326,7 +326,27 @@
             "dev": "Development",
             "test": "Testserver"
         },
-        "item-count": "Zeige {{first}} bis {{second}} von {{total}} Einträgen"
+        "item-count": "Zeige {{first}} bis {{second}} von {{total}} Einträgen",
+        "paginator": {
+            "first": "Erste Seite",
+            "previous": "Vorherige Seite",
+            "next": "Nächste Seite",
+            "last": "Letzte Seite",
+            "rowsPerPage": "Einträge pro Seite"
+        },
+        "datePicker": {
+            "open": "Kalender öffnen",
+            "clear": "Löschen",
+            "done": "Fertig",
+            "time": "Uhrzeit",
+            "hour": "Stunde",
+            "minute": "Minute",
+            "incrementHour": "Stunde erhöhen",
+            "decrementHour": "Stunde verringern",
+            "incrementMinute": "Minute erhöhen",
+            "decrementMinute": "Minute verringern",
+            "invalid": "Bitte ein gültiges Datum mit Uhrzeit eingeben."
+        }
     },
     "entity": {
         "actions": "Aktionen",
@@ -495,7 +515,6 @@
         "lectures": "Vorlesungen",
         "competencies": "Kompetenzen",
         "learningPath": "Lernpfad",
-        "dashboard": "Übersichtsseite",
         "iris": "Iris",
         "tutorialGroups": "Übungsgruppen",
         "statistics": "Kursstatistiken",

@@ -86,13 +86,13 @@
                             <a [routerLink]="[faq.id, 'edit']">{{ faq.id }}</a>
                         </td>
                         <td>
-                            <p class="markdown-preview" [innerHTML]="faq.questionTitle | htmlForMarkdown"></p>
+                            <p class="markdown-preview" [jhiMarkdown]="faq.questionTitle"></p>
                         </td>
                         <td>
-                            <p class="markdown-preview" [innerHTML]="faq.questionAnswer | htmlForMarkdown"></p>
+                            <p class="markdown-preview" [jhiMarkdown]="faq.questionAnswer"></p>
                         </td>
                         <td>
-                            <p class="markdown-preview" [innerHTML]="faq.faqState | htmlForMarkdown"></p>
+                            <p class="markdown-preview" [jhiMarkdown]="faq.faqState"></p>
                         </td>
                         <td>
                             <div class="d-flex">

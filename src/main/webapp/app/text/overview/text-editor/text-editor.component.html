@@ -122,7 +122,7 @@
             <ng-container right-body>
                 @if (textExercise()!.problemStatement) {
                     <p class="markdown-preview mb-3">
-                        <span [innerHTML]="textExercise()!.problemStatement! | htmlForMarkdown"></span>
+                        <span [jhiMarkdown]="textExercise()!.problemStatement!"></span>
                     </p>
                 }
             </ng-container>
