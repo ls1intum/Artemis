@@ -2346,6 +2346,51 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
     }
 
     /**
+     * Regression for the reconstructed-participation merge. {@link de.tum.cit.aet.artemis.exam.service.StudentExamSubmitMapper}
+     * hands {@code ExamQuizService.evaluateQuizParticipationsForTestRunAndTestExam} a participation carrying only the
+     * fields the submit path needs (id, participant, exercise, testRun, INITIALIZED). Saving that id-bearing partial
+     * entity merges it over the persisted row and wipes every column it does not carry.
+     * <p>
+     * The assertions re-read the row from the database after the hand-in has completed, so they see the persisted
+     * columns rather than the warm in-memory object that would hide the clobber. {@code attempt} is the field that
+     * tells repeated test-exam attempts apart; test exams reach this same code path.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testSubmitKeepsPersistedQuizParticipationMetadata() throws Exception {
+        var testRun = createTestRun();
+        userUtilService.changeUser(TEST_PREFIX + "instructor1");
+        var testRunResponse = request.get("/api/exam/courses/" + course1.getId() + "/exams/" + testRunExam.getId() + "/test-runs/" + testRun.getId() + "/conduction", HttpStatus.OK,
+                StudentExam.class);
+
+        QuizExercise quizExercise = (QuizExercise) testRunResponse.getExercises().stream().filter(QuizExercise.class::isInstance).findFirst().orElseThrow();
+        long participationId = quizExercise.getStudentParticipations().iterator().next().getId();
+
+        // stamp the persisted row with the metadata the reconstruction never carries; truncated to milliseconds so the
+        // values survive the database round-trip exactly (PostgreSQL keeps microseconds, not nanoseconds)
+        ZonedDateTime initializationDate = ZonedDateTime.now().minusHours(2).truncatedTo(ChronoUnit.MILLIS);
+        ZonedDateTime individualDueDate = ZonedDateTime.now().plusHours(2).truncatedTo(ChronoUnit.MILLIS);
+        StudentParticipation beforeSubmit = studentParticipationRepository.findById(participationId).orElseThrow();
+        beforeSubmit.setInitializationDate(initializationDate);
+        beforeSubmit.setIndividualDueDate(individualDueDate);
+        beforeSubmit.setAttempt(3);
+        beforeSubmit.setPresentationScore(7.0);
+        beforeSubmit.setInitializationState(InitializationState.FINISHED);
+        studentParticipationRepository.save(beforeSubmit);
+
+        request.postWithoutResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + testRunExam.getId() + "/student-exams/submit", testRunResponse, HttpStatus.OK, null);
+
+        StudentParticipation afterSubmit = studentParticipationRepository.findById(participationId).orElseThrow();
+        assertThat(afterSubmit.getInitializationDate()).as("initializationDate must survive the hand-in").isNotNull();
+        assertThat(afterSubmit.getInitializationDate().toInstant()).isEqualTo(initializationDate.toInstant());
+        assertThat(afterSubmit.getIndividualDueDate()).as("individualDueDate must survive the hand-in").isNotNull();
+        assertThat(afterSubmit.getIndividualDueDate().toInstant()).isEqualTo(individualDueDate.toInstant());
+        assertThat(afterSubmit.getAttempt()).as("attempt must survive the hand-in, it numbers repeated test-exam attempts").isEqualTo(3);
+        assertThat(afterSubmit.getPresentationScore()).as("presentationScore must survive the hand-in").isEqualTo(7.0);
+        assertThat(afterSubmit.getInitializationState()).as("a FINISHED participation must not regress to INITIALIZED").isEqualTo(InitializationState.FINISHED);
+    }
+
+    /**
      * Asserts that the given {@code exercises} wire node carries the quiz solutions the summary UI renders: at least one
      * multiple-choice option flagged {@code isCorrect} and non-empty {@code correctMappings} on drag-and-drop /
      * short-answer questions.

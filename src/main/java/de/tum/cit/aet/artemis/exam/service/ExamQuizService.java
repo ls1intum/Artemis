@@ -93,7 +93,16 @@ public class ExamQuizService {
                         result.rated(true);
                     }
                     result = resultRepository.save(result);
-                    studentParticipationRepository.save(participation);
+                    // The participation reaching this method is reconstructed at the controller boundary from the slim
+                    // submit body (see StudentExamSubmitMapper): it carries only what the submit path needs — id,
+                    // participant, exercise, testRun and INITIALIZED. Saving that id-bearing partial entity merges it
+                    // over the persisted row, which nulls initializationDate, individualDueDate and presentationScore,
+                    // resets attempt to 0 (so repeated test-exam attempts lose their number) and can regress a
+                    // FINISHED participation to INITIALIZED. The row already exists and this evaluation changes nothing
+                    // on it, so only persist a participation that is not stored yet.
+                    if (participation.getId() == null) {
+                        studentParticipationRepository.save(participation);
+                    }
                     result.setSubmission(quizSubmission);
                     quizSubmission.addResult(result);
                 }
