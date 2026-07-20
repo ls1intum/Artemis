@@ -171,12 +171,12 @@ public class LectureResource {
                     channelName, course == null ? null : CourseDTO.from(course));
         }
 
-        public record CourseDTO(Long id, String title, String shortName, String studentGroupName, String teachingAssistantGroupName, String editorGroupName,
+        public record CourseDTO(Long id, String title, String shortName, String semester, String studentGroupName, String teachingAssistantGroupName, String editorGroupName,
                 String instructorGroupName) {
 
             public static CourseDTO from(@NonNull Course course) {
-                return new CourseDTO(course.getId(), course.getTitle(), course.getShortName(), course.getStudentGroupName(), course.getTeachingAssistantGroupName(),
-                        course.getEditorGroupName(), course.getInstructorGroupName());
+                return new CourseDTO(course.getId(), course.getTitle(), course.getShortName(), course.getSemester(), course.getStudentGroupName(),
+                        course.getTeachingAssistantGroupName(), course.getEditorGroupName(), course.getInstructorGroupName());
             }
         }
     }
@@ -267,9 +267,12 @@ public class LectureResource {
      */
     @GetMapping("lectures")
     @EnforceAtLeastEditor
-    public ResponseEntity<SearchResultPageDTO<Lecture>> getAllLecturesOnPage(SearchTermPageableSearchDTO<String> search) {
+    public ResponseEntity<SearchResultPageDTO<SimpleLectureDTO>> getAllLecturesOnPage(SearchTermPageableSearchDTO<String> search) {
         final var user = userRepository.getUserWithGroupsAndAuthorities();
-        return ResponseEntity.ok(lectureService.getAllOnPageWithSize(search, user));
+        final SearchResultPageDTO<Lecture> lecturePage = lectureService.getAllOnPageWithSize(search, user);
+        // The import search table only displays the lecture title and its course's title/semester; channel name is not needed here
+        final List<SimpleLectureDTO> lectureDtos = lecturePage.getResultsOnPage().stream().map(lecture -> SimpleLectureDTO.from(lecture, null)).toList();
+        return ResponseEntity.ok(new SearchResultPageDTO<>(lectureDtos, lecturePage.getNumberOfPages()));
     }
 
     /**
