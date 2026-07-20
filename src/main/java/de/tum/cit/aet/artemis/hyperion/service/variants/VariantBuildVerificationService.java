@@ -1,7 +1,10 @@
 package de.tum.cit.aet.artemis.hyperion.service.variants;
 
 import java.time.Instant;
+import java.util.EnumMap;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -134,12 +137,7 @@ public class VariantBuildVerificationService {
      */
     public BuildResultOutcome waitForBuildResult(ProgrammingExercise exercise, String commitHash, RepositoryType repositoryType, Instant notBefore) throws InterruptedException {
         long startTime = System.currentTimeMillis();
-        ProgrammingExerciseParticipation participation = switch (repositoryType) {
-            case TEMPLATE -> templateProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(exercise.getId()).orElse(null);
-            // tests also use solution participation
-            case SOLUTION, TESTS -> solutionProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(exercise.getId()).orElse(null);
-            default -> null;
-        };
+        ProgrammingExerciseParticipation participation = resolveParticipation(exercise, repositoryType);
         if (participation == null) {
             log.warn("Could not find participation for repoType {} in exercise {}", repositoryType, exercise.getId());
             return new BuildResultOutcome(null, BuildResultState.PARTICIPATION_NOT_FOUND);
@@ -169,6 +167,83 @@ public class VariantBuildVerificationService {
         }
         log.warn("Timed out waiting for build result for commit {} in exercise {} after {} polls ({}ms)", commitHash, exercise.getId(), pollCount, TIMEOUT);
         return new BuildResultOutcome(null, BuildResultState.TIMED_OUT);
+    }
+
+    /**
+     * A build that has been triggered and whose result is awaited by {@link #waitForBuildResults}: the commit
+     * it was triggered for (log context only) and the trigger time that bounds result freshness.
+     *
+     * @param commitHash  the commit the build was triggered for
+     * @param triggeredAt only results completed after this instant are accepted for this build
+     */
+    public record PendingBuild(String commitHash, Instant triggeredAt) {
+    }
+
+    /**
+     * Joint variant of {@link #waitForBuildResult}: waits for the results of SEVERAL repository-type builds that
+     * were triggered together, under a SINGLE shared timeout. The builds run concurrently in CI, so waiting for
+     * them jointly costs about the slower build instead of the sum — this is the point of triggering both before
+     * waiting for either. Each repository type is polled against its own participation with its own freshness
+     * bound, so results stay attributed per type exactly as the single-build poll does.
+     *
+     * Intended for SOLUTION + TEMPLATE, whose participations are distinct; TESTS shares the solution
+     * participation and must be built on its own (a tests change invalidates the other builds anyway).
+     *
+     * @param exercise the exercise whose participations are polled
+     * @param pending  the awaited builds keyed by repository type
+     * @return one outcome per requested repository type
+     * @throws InterruptedException when the polling thread is interrupted
+     */
+    public Map<RepositoryType, BuildResultOutcome> waitForBuildResults(ProgrammingExercise exercise, Map<RepositoryType, PendingBuild> pending) throws InterruptedException {
+        Map<RepositoryType, BuildResultOutcome> outcomes = new EnumMap<>(RepositoryType.class);
+        Map<RepositoryType, ProgrammingExerciseParticipation> awaited = new EnumMap<>(RepositoryType.class);
+        for (RepositoryType repositoryType : pending.keySet()) {
+            ProgrammingExerciseParticipation participation = resolveParticipation(exercise, repositoryType);
+            if (participation == null) {
+                log.warn("Could not find participation for repoType {} in exercise {}", repositoryType, exercise.getId());
+                outcomes.put(repositoryType, new BuildResultOutcome(null, BuildResultState.PARTICIPATION_NOT_FOUND));
+            }
+            else {
+                awaited.put(repositoryType, participation);
+            }
+        }
+        long startTime = System.currentTimeMillis();
+        while (!awaited.isEmpty() && System.currentTimeMillis() - startTime < TIMEOUT) {
+            Iterator<Map.Entry<RepositoryType, ProgrammingExerciseParticipation>> iterator = awaited.entrySet().iterator();
+            while (iterator.hasNext()) {
+                Map.Entry<RepositoryType, ProgrammingExerciseParticipation> entry = iterator.next();
+                RepositoryType repositoryType = entry.getKey();
+                PendingBuild pendingBuild = pending.get(repositoryType);
+                try {
+                    Optional<Result> result = resultRepository.findFirstWithSubmissionAndFeedbacksAndTestCasesByParticipationIdOrderByCompletionDateDesc(entry.getValue().getId());
+                    if (result.isPresent() && isFreshEnough(result.get(), pendingBuild.triggeredAt())) {
+                        outcomes.put(repositoryType,
+                                new BuildResultOutcome(result.get(), hasReachedTargetResult(repositoryType, result.get()) ? BuildResultState.SUCCESS : BuildResultState.FAILED));
+                        iterator.remove();
+                    }
+                }
+                catch (Exception e) {
+                    log.warn("Exception while polling for {} build result for commit {}: {}. Continuing...", repositoryType, pendingBuild.commitHash(), e.getMessage());
+                }
+            }
+            if (!awaited.isEmpty()) {
+                Thread.sleep(POLL_INTERVAL);
+            }
+        }
+        for (RepositoryType repositoryType : awaited.keySet()) {
+            log.warn("Timed out waiting for {} build result in exercise {} after {}ms", repositoryType, exercise.getId(), TIMEOUT);
+            outcomes.put(repositoryType, new BuildResultOutcome(null, BuildResultState.TIMED_OUT));
+        }
+        return outcomes;
+    }
+
+    private ProgrammingExerciseParticipation resolveParticipation(ProgrammingExercise exercise, RepositoryType repositoryType) {
+        return switch (repositoryType) {
+            case TEMPLATE -> templateProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(exercise.getId()).orElse(null);
+            // tests also use the solution participation
+            case SOLUTION, TESTS -> solutionProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(exercise.getId()).orElse(null);
+            default -> null;
+        };
     }
 
     /**

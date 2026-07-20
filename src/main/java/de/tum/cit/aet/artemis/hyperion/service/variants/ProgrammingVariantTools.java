@@ -27,6 +27,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.hyperion.service.variants.VariantBuildVerificationService.BuildResultOutcome;
+import de.tum.cit.aet.artemis.hyperion.service.variants.VariantBuildVerificationService.PendingBuild;
 import de.tum.cit.aet.artemis.localvc.service.GitService;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.programming.domain.FileType;
@@ -559,6 +560,58 @@ class ProgrammingVariantTools implements VariantToolset {
         }
         catch (GitAPIException | RuntimeException e) {
             return "Error: could not run the build for the " + repositoryType + " repository: " + e.getMessage();
+        }
+    }
+
+    @Tool(description = "Commit, push, and trigger the SOLUTION and TEMPLATE CI builds TOGETHER, then wait for BOTH results in one call. "
+            + "Strongly prefer this over two separate runBuild calls whenever you need to check both (a green verify or a repair cycle): the two builds are independent and run "
+            + "concurrently, so waiting jointly takes about as long as the slower single build instead of the sum of the two. "
+            + "SOLUTION must pass 100% of tests; TEMPLATE must compile and execute at least one test but score 0%. "
+            + "For the TESTS repository use runBuild — a tests change invalidates both other builds and must be rebuilt first on its own.")
+    public String runBuilds() {
+        String stop = stopNotice();
+        if (stop != null) {
+            return stop;
+        }
+        Map<RepositoryType, PendingBuild> pending = new EnumMap<>(RepositoryType.class);
+        StringBuilder report = new StringBuilder();
+        for (RepositoryType repositoryType : List.of(RepositoryType.SOLUTION, RepositoryType.TEMPLATE)) {
+            try {
+                Repository checkout = checkout(repositoryType);
+                repositoryService.commitChanges(checkout, user);
+                LocalVCRepositoryUri repositoryUri = exercise.getRepositoryURI(repositoryType);
+                String commitHash = gitService.getLastCommitHash(repositoryUri);
+                ProgrammingExerciseParticipation participation = resolveParticipation(repositoryType);
+                Instant triggeredAt = Instant.now();
+                buildTrigger.triggerBuild(participation, commitHash, repositoryType);
+                pending.put(repositoryType, new PendingBuild(commitHash, triggeredAt));
+            }
+            catch (ContinuousIntegrationException e) {
+                report.append("Error: could not trigger the ").append(repositoryType).append(" build: ").append(e.getMessage()).append('\n');
+            }
+            catch (GitAPIException | RuntimeException e) {
+                report.append("Error: could not prepare the ").append(repositoryType).append(" build: ").append(e.getMessage()).append('\n');
+            }
+        }
+        if (pending.isEmpty()) {
+            return report.append("No builds were triggered.").toString();
+        }
+        try {
+            Map<RepositoryType, BuildResultOutcome> outcomes = buildVerificationService.waitForBuildResults(exercise, pending);
+            for (RepositoryType repositoryType : List.of(RepositoryType.SOLUTION, RepositoryType.TEMPLATE)) {
+                BuildResultOutcome outcome = outcomes.get(repositoryType);
+                if (outcome == null) {
+                    continue;
+                }
+                String description = describeOutcome(repositoryType, outcome);
+                lastBuildResults.put(repositoryType, description);
+                report.append("=== ").append(repositoryType).append(" build ===\n").append(description).append('\n');
+            }
+            return report.toString();
+        }
+        catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            return "Error: the build wait was interrupted.";
         }
     }
 

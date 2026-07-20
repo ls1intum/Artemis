@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.hyperion.service.variants;
 
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.EnumMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -27,6 +28,7 @@ import de.tum.cit.aet.artemis.hyperion.dto.VariantGenerationRequestDTO;
 import de.tum.cit.aet.artemis.hyperion.service.HyperionConsistencyCheckService;
 import de.tum.cit.aet.artemis.hyperion.service.HyperionProgrammingExerciseContextRendererService;
 import de.tum.cit.aet.artemis.hyperion.service.variants.VariantBuildVerificationService.BuildResultOutcome;
+import de.tum.cit.aet.artemis.hyperion.service.variants.VariantBuildVerificationService.PendingBuild;
 import de.tum.cit.aet.artemis.localci.service.ci.ContinuousIntegrationTriggerService;
 import de.tum.cit.aet.artemis.localvc.service.GitService;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
@@ -195,11 +197,9 @@ public class ProgrammingVariantAdapters implements VariantTypeAdapters {
 
         // Gate 1: fresh builds for BOTH repositories — solution must pass 100%, template must fail with tests
         // present. Builds are always re-triggered with a freshness bound so a test-repo change can never smuggle
-        // a stale green result past the gate (build-dependency constraint).
-        verifyBuild(exercise, RepositoryType.SOLUTION, VerificationReport.VerificationGate.SOLUTION_BUILD, "The solution repository build must compile and pass 100% of tests.",
-                findings);
-        verifyBuild(exercise, RepositoryType.TEMPLATE, VerificationReport.VerificationGate.TEMPLATE_BUILD,
-                "The template repository build must execute at least one test and score 0%.", findings);
+        // a stale green result past the gate (build-dependency constraint). Both are triggered together and
+        // awaited jointly: they run concurrently in CI, so the gate costs about the slower build, not the sum.
+        verifyBuilds(exercise, findings);
 
         // Gate 3: semantic consistency between problem statement and artifacts — only worth
         // its LLM cost once the deterministic gates are green.
@@ -322,13 +322,29 @@ public class ProgrammingVariantAdapters implements VariantTypeAdapters {
         return shortName.length() > 25 ? shortName.substring(0, 25) : shortName;
     }
 
-    private void verifyBuild(ProgrammingExercise exercise, RepositoryType repositoryType, VerificationReport.VerificationGate gate, String target,
-            List<VerificationReport.VerificationFinding> findings) {
-        try {
+    /** Per-repository-type verification spec: which gate a build finding belongs to and the target it must reach. */
+    private record BuildGate(VerificationReport.VerificationGate gate, String target) {
+    }
+
+    /**
+     * Gate 1 for both build repositories: trigger the SOLUTION and TEMPLATE builds together, then wait for both
+     * under a single shared timeout. The builds run concurrently in CI, so joint waiting costs about the slower
+     * build instead of the sum of the two.
+     */
+    private void verifyBuilds(ProgrammingExercise exercise, List<VerificationReport.VerificationFinding> findings) {
+        Map<RepositoryType, BuildGate> gates = new EnumMap<>(RepositoryType.class);
+        gates.put(RepositoryType.SOLUTION, new BuildGate(VerificationReport.VerificationGate.SOLUTION_BUILD, "The solution repository build must compile and pass 100% of tests."));
+        gates.put(RepositoryType.TEMPLATE,
+                new BuildGate(VerificationReport.VerificationGate.TEMPLATE_BUILD, "The template repository build must execute at least one test and score 0%."));
+
+        Map<RepositoryType, PendingBuild> pending = new EnumMap<>(RepositoryType.class);
+        for (Map.Entry<RepositoryType, BuildGate> entry : gates.entrySet()) {
+            RepositoryType repositoryType = entry.getKey();
+            BuildGate buildGate = entry.getValue();
             LocalVCRepositoryUri repositoryUri = exercise.getRepositoryURI(repositoryType);
             if (repositoryUri == null) {
-                findings.add(new VerificationReport.VerificationFinding(gate, "No " + repositoryType + " repository URI found for the variant exercise."));
-                return;
+                findings.add(new VerificationReport.VerificationFinding(buildGate.gate(), "No " + repositoryType + " repository URI found for the variant exercise."));
+                continue;
             }
             String commitHash = gitService.getLastCommitHash(repositoryUri);
             ProgrammingExerciseParticipation participation = switch (repositoryType) {
@@ -338,26 +354,38 @@ public class ProgrammingVariantAdapters implements VariantTypeAdapters {
             Instant triggeredAt = Instant.now();
             try {
                 continuousIntegrationTriggerService.triggerBuild(participation, commitHash, repositoryType);
+                pending.put(repositoryType, new PendingBuild(commitHash, triggeredAt));
             }
             catch (ContinuousIntegrationException e) {
-                findings.add(new VerificationReport.VerificationFinding(gate, "Could not trigger the " + repositoryType + " build: " + e.getMessage()));
-                return;
+                findings.add(new VerificationReport.VerificationFinding(buildGate.gate(), "Could not trigger the " + repositoryType + " build: " + e.getMessage()));
             }
-            BuildResultOutcome outcome = buildVerificationService.waitForBuildResult(exercise, commitHash, repositoryType, triggeredAt);
-            switch (outcome.state()) {
-                case SUCCESS -> log.debug("Verification build for {} of exercise {} reached its target", repositoryType, exercise.getId());
-                case FAILED ->
-                    findings.add(new VerificationReport.VerificationFinding(gate, target + " Current result: " + buildVerificationService.describeBuildResult(outcome.result())));
-                // Distinct detail for CI timeouts.
-                case TIMED_OUT -> findings.add(new VerificationReport.VerificationFinding(gate,
-                        "The " + repositoryType + " build result did not arrive within the timeout (BuildResultState.TIMED_OUT). " + target));
-                case PARTICIPATION_NOT_FOUND, CI_TRIGGER_FAILED ->
-                    findings.add(new VerificationReport.VerificationFinding(gate, "The " + repositoryType + " build could not be verified: " + outcome.state()));
+        }
+        if (pending.isEmpty()) {
+            return;
+        }
+        try {
+            Map<RepositoryType, BuildResultOutcome> outcomes = buildVerificationService.waitForBuildResults(exercise, pending);
+            for (Map.Entry<RepositoryType, BuildResultOutcome> entry : outcomes.entrySet()) {
+                addBuildFinding(exercise, entry.getKey(), gates.get(entry.getKey()), entry.getValue(), findings);
             }
         }
         catch (InterruptedException e) {
             Thread.currentThread().interrupt();
-            throw new IllegalStateException("Interrupted while waiting for the " + repositoryType + " verification build", e);
+            throw new IllegalStateException("Interrupted while waiting for the verification builds", e);
+        }
+    }
+
+    private void addBuildFinding(ProgrammingExercise exercise, RepositoryType repositoryType, BuildGate buildGate, BuildResultOutcome outcome,
+            List<VerificationReport.VerificationFinding> findings) {
+        switch (outcome.state()) {
+            case SUCCESS -> log.debug("Verification build for {} of exercise {} reached its target", repositoryType, exercise.getId());
+            case FAILED -> findings.add(new VerificationReport.VerificationFinding(buildGate.gate(),
+                    buildGate.target() + " Current result: " + buildVerificationService.describeBuildResult(outcome.result())));
+            // Distinct detail for CI timeouts.
+            case TIMED_OUT -> findings.add(new VerificationReport.VerificationFinding(buildGate.gate(),
+                    "The " + repositoryType + " build result did not arrive within the timeout (BuildResultState.TIMED_OUT). " + buildGate.target()));
+            case PARTICIPATION_NOT_FOUND, CI_TRIGGER_FAILED ->
+                findings.add(new VerificationReport.VerificationFinding(buildGate.gate(), "The " + repositoryType + " build could not be verified: " + outcome.state()));
         }
     }
 
