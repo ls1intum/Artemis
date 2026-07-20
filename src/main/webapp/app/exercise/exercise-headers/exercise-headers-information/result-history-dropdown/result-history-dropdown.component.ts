@@ -140,6 +140,8 @@ export class ResultHistoryDropdownComponent {
 
     toggleResultsPopover(event: Event) {
         const popover = this.resultsPopover();
+        // Popover.overlayVisible is a plain boolean field, so read it directly (do not invoke it).
+        // When the popover is already open, close it; otherwise open it anchored to the dropdown arrow.
         if (popover?.overlayVisible) {
             popover.hide();
         } else {

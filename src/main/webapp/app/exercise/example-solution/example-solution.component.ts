@@ -8,12 +8,12 @@ import { HeaderExercisePageWithDetailsComponent } from '../exercise-headers/with
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ModelingEditorComponent } from '../../modeling/shared/modeling-editor/modeling-editor.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { HtmlForMarkdownPipe } from 'app/foundation/pipes/html-for-markdown.pipe';
+import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
 
 @Component({
     selector: 'jhi-example-solution',
     templateUrl: './example-solution.component.html',
-    imports: [HeaderExercisePageWithDetailsComponent, TranslateDirective, ModelingEditorComponent, ArtemisTranslatePipe, HtmlForMarkdownPipe],
+    imports: [HeaderExercisePageWithDetailsComponent, TranslateDirective, ModelingEditorComponent, ArtemisTranslatePipe, MarkdownDirective],
 })
 export class ExampleSolutionComponent implements OnInit {
     private exerciseService = inject(ExerciseService);

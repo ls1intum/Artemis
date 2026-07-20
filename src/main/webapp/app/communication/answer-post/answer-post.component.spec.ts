@@ -1,11 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { AnswerPostComponent } from 'app/communication/answer-post/answer-post.component';
 import { DebugElement, signal } from '@angular/core';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
-import { MockComponent, MockDirective, MockPipe, ngMocks } from 'ng-mocks';
-import { HtmlForMarkdownPipe } from 'app/foundation/pipes/html-for-markdown.pipe';
+import { MockComponent, MockDirective, ngMocks } from 'ng-mocks';
 import { By } from '@angular/platform-browser';
 import { PostingContentComponent } from 'app/communication/posting-content/posting-content.components';
 import { metisPostExerciseUser1, metisResolvingAnswerPostUser1, post } from 'test/helpers/sample/metis-sample-data';
@@ -35,8 +34,6 @@ import { MockAccountService } from 'test/helpers/mocks/service/mock-account.serv
 import { DialogService } from 'primeng/dynamicdialog';
 
 describe('AnswerPostComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: AnswerPostComponent;
     let fixture: ComponentFixture<AnswerPostComponent>;
     let debugElement: DebugElement;
@@ -52,7 +49,7 @@ describe('AnswerPostComponent', () => {
                 OverlayModule,
                 AnswerPostComponent,
                 FaIconComponent,
-                MockPipe(HtmlForMarkdownPipe),
+                MockDirective(MarkdownDirective),
                 MockComponent(PostingContentComponent),
                 MockComponent(PostingHeaderComponent),
                 MockComponent(AnswerPostCreateEditModalComponent),

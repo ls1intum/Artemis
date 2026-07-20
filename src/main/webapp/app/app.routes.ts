@@ -60,7 +60,11 @@ const routes: Routes = [
         path: 'admin',
         data: {
             authorities: IS_AT_LEAST_ADMIN,
-            usesModuleBackground: true,
+            // The AdminContainerComponent is a self-contained layout: it renders its own module-bg sidebar and
+            // module-bg content cards on the plain page background, exactly like the course layouts. It must NOT be
+            // wrapped in the global `module-bg m-3 p-3` card (usesModuleBackground) — that double background makes
+            // the sidebar (same module-bg) blend into the wrapper (invisible) and adds excessive left/right margin.
+            usesModuleBackground: false,
         },
         canActivate: [UserRouteAccessService, PasskeyAuthenticationGuard],
         loadChildren: () => import('app/admin/admin.routes'),

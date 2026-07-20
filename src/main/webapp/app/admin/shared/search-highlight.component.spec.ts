@@ -1,12 +1,9 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 import { SearchHighlightComponent } from 'app/admin/shared/search-highlight.component';
 
 describe('SearchHighlightComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<SearchHighlightComponent>;
 
     beforeEach(async () => {

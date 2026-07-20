@@ -1,9 +1,11 @@
 import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
 import dayjs from 'dayjs/esm';
-import { CleanupOperation } from 'app/admin/cleanup-service/cleanup-operation.model';
+import { CleanupOperation, OperationName } from 'app/admin/cleanup-service/cleanup-operation.model';
 import { convertDateFromServer } from 'app/foundation/util/date.utils';
-import { HttpResponse } from '@angular/common/http';
-import { CleanupServiceExecutionRecordDTO, DataCleanupService } from 'app/admin/cleanup-service/data-cleanup.service';
+import { HttpErrorResponse } from '@angular/common/http';
+import { DataCleanupService } from 'app/admin/cleanup-service/data-cleanup.service';
+import { AlertService } from 'app/foundation/service/alert.service';
+import { onError } from 'app/foundation/util/global.utils';
 import { faTrash } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
@@ -16,7 +18,7 @@ import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-title.directive';
 import { TableModule } from 'primeng/table';
 import { ButtonModule } from 'primeng/button';
-import { DateTimePickerType, FormDateTimePickerComponent } from 'app/shared-ui/date-time-picker/date-time-picker.component';
+import { TumUiDatePickerComponent } from 'app/shared-ui/tum-ui/date-picker/tum-ui-date-picker.component';
 
 /**
  * Admin component for managing data cleanup operations.
@@ -35,16 +37,29 @@ import { DateTimePickerType, FormDateTimePickerComponent } from 'app/shared-ui/d
         CleanupOperationModalComponent,
         TableModule,
         ButtonModule,
-        FormDateTimePickerComponent,
+        TumUiDatePickerComponent,
         FaIconComponent,
     ],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class CleanupServiceComponent implements OnInit {
     private readonly dataCleanupService = inject(DataCleanupService);
+    private readonly alertService = inject(AlertService);
 
     protected readonly faTrash = faTrash;
-    protected readonly DateTimePickerType = DateTimePickerType;
+
+    // Maps each client operation to the server CleanupJobType.label() it corresponds to. The names differ for
+    // several jobs (e.g. 'deleteOldRatedResults' -> server 'deleteRatedResults'), so the execution records must
+    // be matched by this explicit job type, NOT by array position (which silently mislabels dates if the server
+    // ever changes the order or the set of returned job types).
+    private readonly serverJobTypeByName: Record<OperationName, string> = {
+        deleteOrphans: 'deleteOrphans',
+        deletePlagiarismComparisons: 'deletePlagiarismComparisons',
+        deleteNonRatedResults: 'deleteNonRatedResults',
+        deleteOldRatedResults: 'deleteRatedResults',
+        deleteOldSubmissionVersions: 'deleteSubmissionVersions',
+        deleteOldFeedback: 'deleteFeedback',
+    };
 
     /** Whether the cleanup operation modal is visible */
     showCleanupModal = signal<boolean>(false);
@@ -60,6 +75,8 @@ export class CleanupServiceComponent implements OnInit {
             deleteTo: dayjs().subtract(6, 'months'),
             lastExecuted: undefined,
             datesValid: signal(true),
+            deleteFromValid: signal(true),
+            deleteToValid: signal(true),
         },
         {
             name: 'deletePlagiarismComparisons',
@@ -67,6 +84,8 @@ export class CleanupServiceComponent implements OnInit {
             deleteTo: dayjs().subtract(6, 'months'),
             lastExecuted: undefined,
             datesValid: signal(true),
+            deleteFromValid: signal(true),
+            deleteToValid: signal(true),
         },
         {
             name: 'deleteNonRatedResults',
@@ -74,6 +93,8 @@ export class CleanupServiceComponent implements OnInit {
             deleteTo: dayjs().subtract(6, 'months'),
             lastExecuted: undefined,
             datesValid: signal(true),
+            deleteFromValid: signal(true),
+            deleteToValid: signal(true),
         },
         {
             name: 'deleteOldRatedResults',
@@ -81,6 +102,8 @@ export class CleanupServiceComponent implements OnInit {
             deleteTo: dayjs().subtract(6, 'months'),
             lastExecuted: undefined,
             datesValid: signal(true),
+            deleteFromValid: signal(true),
+            deleteToValid: signal(true),
         },
         {
             name: 'deleteOldSubmissionVersions',
@@ -88,6 +111,8 @@ export class CleanupServiceComponent implements OnInit {
             deleteTo: dayjs().subtract(6, 'months'),
             lastExecuted: undefined,
             datesValid: signal(true),
+            deleteFromValid: signal(true),
+            deleteToValid: signal(true),
         },
     ]);
 
@@ -96,19 +121,19 @@ export class CleanupServiceComponent implements OnInit {
     }
 
     loadLastExecutions(): void {
-        this.dataCleanupService.getLastExecutions().subscribe((executionRecordsBody: HttpResponse<CleanupServiceExecutionRecordDTO[]>) => {
-            const executionRecords = executionRecordsBody.body!;
-            if (executionRecords && executionRecords.length > 0) {
+        this.dataCleanupService.getLastExecutions().subscribe({
+            next: (response) => {
+                const executionRecords = response.body ?? [];
+                // Match by server job type, not array position (see serverJobTypeByName).
+                const executionDateByJobType = new Map(executionRecords.map((record) => [record.jobType, record.executionDate]));
                 this.cleanupOperations.update((operations) =>
-                    operations.map((operation, index) => {
-                        const executionRecord = executionRecords[index];
-                        if (executionRecord && executionRecord.executionDate) {
-                            return { ...operation, lastExecuted: convertDateFromServer(executionRecord.executionDate) };
-                        }
-                        return operation;
+                    operations.map((operation) => {
+                        const executionDate = executionDateByJobType.get(this.serverJobTypeByName[operation.name]);
+                        return executionDate ? { ...operation, lastExecuted: convertDateFromServer(executionDate) } : operation;
                     }),
                 );
-            }
+            },
+            error: (error: HttpErrorResponse) => onError(this.alertService, error),
         });
     }
 
@@ -117,13 +142,13 @@ export class CleanupServiceComponent implements OnInit {
         operation.datesValid.set(datesValid);
     }
 
-    onDeleteFromChange(operation: CleanupOperation, value: dayjs.Dayjs | Date | null | undefined): void {
-        operation.deleteFrom = value ? dayjs(value) : undefined;
+    onDeleteFromChange(operation: CleanupOperation, value: dayjs.Dayjs | undefined): void {
+        operation.deleteFrom = value;
         this.validateDates(operation);
     }
 
-    onDeleteToChange(operation: CleanupOperation, value: dayjs.Dayjs | Date | null | undefined): void {
-        operation.deleteTo = value ? dayjs(value) : undefined;
+    onDeleteToChange(operation: CleanupOperation, value: dayjs.Dayjs | undefined): void {
+        operation.deleteTo = value;
         this.validateDates(operation);
     }
 

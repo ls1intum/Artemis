@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockPipe } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -17,8 +16,6 @@ import { provideRouter } from '@angular/router';
 import { LangChangeEvent } from '@ngx-translate/core';
 
 describe('ChatHistoryItemComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: ChatHistoryItemComponent;
     let fixture: ComponentFixture<ChatHistoryItemComponent>;
 

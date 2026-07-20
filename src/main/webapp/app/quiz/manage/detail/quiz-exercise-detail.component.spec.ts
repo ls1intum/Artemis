@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
@@ -22,8 +21,6 @@ import { CompetencyExerciseLink, CourseCompetency } from 'app/atlas/shared/entit
 import { DetailType } from 'app/shared-ui/detail-overview-list/detail-overview-list.component';
 
 describe('QuizExercise Details Component', () => {
-    setupTestBed({ zoneless: true });
-
     let comp: QuizExerciseDetailComponent;
     let fixture: ComponentFixture<QuizExerciseDetailComponent>;
     let quizExerciseService: QuizExerciseService;

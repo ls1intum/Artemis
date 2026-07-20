@@ -15,7 +15,6 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { TranslateService } from '@ngx-translate/core';
 import { provideRouter } from '@angular/router';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 let fixture: ComponentFixture<ExamStartInformationComponent>;
@@ -37,8 +36,6 @@ let exam = {
 let studentExam = { id: 1, exam, user, workingTime: 60, submitted: true } as StudentExam;
 
 describe('ExamStartInformationComponent', () => {
-    setupTestBed({ zoneless: true });
-
     beforeEach(() => {
         exam = { id: 1, title: 'ExamForTesting', examMaxPoints: 10, startDate, endDate, testExam: false } as Exam;
         studentExam = { id: 1, exam, user, workingTime: 60, submitted: true } as StudentExam;

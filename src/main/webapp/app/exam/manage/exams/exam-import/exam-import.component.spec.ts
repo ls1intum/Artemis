@@ -29,11 +29,8 @@ import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.serv
 import { MODULE_FEATURE_TEXT } from 'app/app.constants';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('Exam Import Component', () => {
-    setupTestBed({ zoneless: true });
-
     let component: ExamImportComponent;
     let fixture: ComponentFixture<ExamImportComponent>;
     let dialogRef: DynamicDialogRef;
