@@ -464,6 +464,15 @@ describe('Metis Service', () => {
         expect(generalRouterLink).toBeUndefined();
     });
 
+    it('should link a general channel without a subtype reference to the Iris page', () => {
+        metisService.setCourse(course);
+        const channelDTO = new ChannelDTO();
+        channelDTO.subType = ChannelSubType.GENERAL;
+
+        expect(metisService.getLinkForChannelSubType(channelDTO)).toBe(`/courses/${metisCourse.id}/iris`);
+        expect(metisService.getLinkForGeneral()).toBe(`/courses/${metisCourse.id}/iris`);
+    });
+
     it('should determine the query param for a reference to a post in a conversation', () => {
         metisService.setCourse(course);
         const referenceLinkComponents = metisService.getQueryParamsForPost(metisPostInChannel);
