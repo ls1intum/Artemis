@@ -1,7 +1,7 @@
 import { DifficultyLevel, Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { QuizQuestionType } from 'app/quiz/shared/entities/quiz-question.model';
-import { VariantGenerationRequest } from 'app/openapi/model/variantGenerationRequest';
+import { VariantGenerationRequest } from 'app/openapi/model/variant-generation-request';
 
 export type PlacementChoice = 'existing-group' | 'new-group' | 'standalone';
 

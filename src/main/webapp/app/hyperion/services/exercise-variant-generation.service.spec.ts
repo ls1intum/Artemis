@@ -4,8 +4,8 @@ import { Subject, of } from 'rxjs';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ExerciseVariantGenerationService } from 'app/hyperion/services/exercise-variant-generation.service';
 import { ExerciseVariantWebsocketService, VariantGenerationEvent } from 'app/hyperion/services/exercise-variant-websocket.service';
-import { HyperionExerciseVariantApiService } from 'app/openapi/api/hyperionExerciseVariantApi.service';
-import { VariantJob } from 'app/openapi/model/variantJob';
+import { HyperionExerciseVariantApi } from 'app/openapi/api/hyperion-exercise-variant-api';
+import { VariantJob } from 'app/openapi/model/variant-job';
 
 /**
  * Vitest specs for ExerciseVariantGenerationService.
@@ -46,7 +46,7 @@ describe('ExerciseVariantGenerationService', () => {
         TestBed.configureTestingModule({
             providers: [
                 ExerciseVariantGenerationService,
-                { provide: HyperionExerciseVariantApiService, useValue: apiMock },
+                { provide: HyperionExerciseVariantApi, useValue: apiMock },
                 { provide: ExerciseVariantWebsocketService, useValue: websocketMock },
             ],
         });

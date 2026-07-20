@@ -10,7 +10,7 @@ import { ExerciseVariantGroupDTO, ExerciseVariantGroupService } from 'app/course
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { DifficultyLevel, Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { VariantGenerationRequest } from 'app/openapi/model/variantGenerationRequest';
+import { VariantGenerationRequest } from 'app/openapi/model/variant-generation-request';
 import { QuizExercise, QuizMode } from 'app/quiz/shared/entities/quiz-exercise.model';
 
 /**

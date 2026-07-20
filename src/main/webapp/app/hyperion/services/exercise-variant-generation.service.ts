@@ -1,9 +1,9 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { Observable, Subscription, map, tap } from 'rxjs';
-import { HyperionExerciseVariantApiService } from 'app/openapi/api/hyperionExerciseVariantApi.service';
-import { VariantGenerationRequest } from 'app/openapi/model/variantGenerationRequest';
-import { VariantJob } from 'app/openapi/model/variantJob';
-import { VariantJobDetail } from 'app/openapi/model/variantJobDetail';
+import { HyperionExerciseVariantApi } from 'app/openapi/api/hyperion-exercise-variant-api';
+import { VariantGenerationRequest } from 'app/openapi/model/variant-generation-request';
+import { VariantJob } from 'app/openapi/model/variant-job';
+import { VariantJobDetail } from 'app/openapi/model/variant-job-detail';
 import { ExerciseVariantWebsocketService, VariantGenerationEvent, isTerminalVariantPhase } from 'app/hyperion/services/exercise-variant-websocket.service';
 
 /**
@@ -15,7 +15,7 @@ import { ExerciseVariantWebsocketService, VariantGenerationEvent, isTerminalVari
  */
 @Injectable({ providedIn: 'root' })
 export class ExerciseVariantGenerationService {
-    private readonly api = inject(HyperionExerciseVariantApiService);
+    private readonly api = inject(HyperionExerciseVariantApi);
     private readonly websocketService = inject(ExerciseVariantWebsocketService);
 
     private readonly jobSubscriptions = new Map<string, Subscription>();

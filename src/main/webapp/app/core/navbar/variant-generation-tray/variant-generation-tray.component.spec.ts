@@ -14,7 +14,7 @@ import { ExerciseVariantGenerationService } from 'app/hyperion/services/exercise
 import { isTerminalVariantPhase } from 'app/hyperion/services/exercise-variant-websocket.service';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ExerciseVariantAiModalWizardComponent } from 'app/course/manage/exercises/create-variant-modal/exercise-variant-ai-modal-wizard.component';
-import { VariantJob } from 'app/openapi/model/variantJob';
+import { VariantJob } from 'app/openapi/model/variant-job';
 
 /**
  * Vitest specs for the navbar job tray.

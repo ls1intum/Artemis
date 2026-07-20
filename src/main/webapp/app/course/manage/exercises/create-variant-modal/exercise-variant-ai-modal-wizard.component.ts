@@ -40,9 +40,9 @@ import { ExerciseVariantGroupDTO, ExerciseVariantGroupService } from 'app/course
 import { QuizExercise, QuizMode } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { ExerciseVariantGenerationService } from 'app/hyperion/services/exercise-variant-generation.service';
 import { VariantGenerationEvent, VariantJobPhase, isTerminalVariantPhase } from 'app/hyperion/services/exercise-variant-websocket.service';
-import { VariantGenerationRequest } from 'app/openapi/model/variantGenerationRequest';
-import { VariantPlacement } from 'app/openapi/model/variantPlacement';
-import { StepOutput } from 'app/openapi/model/stepOutput';
+import { VariantGenerationRequest, VariantGenerationRequestNarrativeStyleEnum } from 'app/openapi/model/variant-generation-request';
+import { VariantPlacement } from 'app/openapi/model/variant-placement';
+import { StepOutput } from 'app/openapi/model/step-output';
 import { PlacementChoice, adaptationChips, difficultyBadgeClass, difficultyLabel, durationDays } from './exercise-variant-ai-modal.utils';
 
 type WizardStep = 1 | 2 | 3 | 4 | 5;
@@ -65,7 +65,7 @@ const WIZARD_STEPS: ReadonlyArray<{ step: WizardStep; label: string; icon: IconD
  * fully creative storytelling, in ascending order. The tooltip carries the description; not selecting the
  * Storytelling card at all means "stay consistent with the source exercise's narrative" (server-side default).
  */
-const NARRATIVE_STYLES: ReadonlyArray<{ value: VariantGenerationRequest.NarrativeStyleEnum; label: string; description: string }> = [
+const NARRATIVE_STYLES: ReadonlyArray<{ value: VariantGenerationRequestNarrativeStyleEnum; label: string; description: string }> = [
     { value: 'TECHNICAL', label: 'Technical', description: 'No story — a plain, concise focus on the technical concepts.' },
     { value: 'REALISTIC', label: 'Realistic', description: 'A short real-world scenario introduces the task — the rest stays technical.' },
     { value: 'CREATIVE', label: 'Creative', description: 'A story carries the task — themed setting, named actors, story-driven examples.' },
@@ -143,7 +143,7 @@ export class ExerciseVariantAiModalWizardComponent implements OnDestroy {
     readonly changeDomain = signal(false);
     readonly domainText = signal('');
     readonly changeNarrative = signal(false);
-    readonly narrativeStyle = signal<VariantGenerationRequest.NarrativeStyleEnum>('TECHNICAL');
+    readonly narrativeStyle = signal<VariantGenerationRequestNarrativeStyleEnum>('TECHNICAL');
     readonly changeCustom = signal(false);
     readonly additionalInstructions = signal('');
 
