@@ -7,6 +7,7 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -28,6 +29,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InOrder;
+import org.springframework.ai.chat.messages.AssistantMessage;
+import org.springframework.ai.chat.messages.Message;
 
 import de.tum.cit.aet.artemis.buildagent.dto.SandboxExecResult;
 import de.tum.cit.aet.artemis.buildagent.dto.SandboxSessionSpec;
@@ -160,7 +163,22 @@ class StagedGenerationRunnerTest {
         when(exercise.getId()).thenReturn(1L);
         when(systemPromptService.buildStage(any(), any())).thenReturn("STAGE SYSTEM PROMPT");
         sandbox = new FakeSandbox();
-        runner = new StagedGenerationRunner(agentLoopRunner, systemPromptService, verifier);
+        // Most of these tests pin the pre-existing single-call-per-stage behaviour (mocking agentLoopRunner.run(...)); FRESH reproduces that exactly. The CONTINUOUS-specific
+        // tests below construct their own runner with "CONTINUOUS" and mock runSession(...) instead.
+        runner = new StagedGenerationRunner(agentLoopRunner, systemPromptService, verifier, "FRESH");
+    }
+
+    private static StagedGenerationRunner newContinuousRunner(AgentLoopRunner agentLoopRunner, AgentSystemPromptService systemPromptService,
+            DifferentialVerificationService verifier) {
+        return new StagedGenerationRunner(agentLoopRunner, systemPromptService, verifier, "CONTINUOUS");
+    }
+
+    private static AgentLoopRunner.AgentLoopSession session(AgentLoopResult result, List<Message> conversation) {
+        return new AgentLoopRunner.AgentLoopSession(result, conversation);
+    }
+
+    private static AssistantMessage assistantText(String text) {
+        return new AssistantMessage(text);
     }
 
     private static AgentLoopResult completed(int turns, String message) {
@@ -224,14 +242,15 @@ class StagedGenerationRunnerTest {
 
     @Test
     void designGateFailure_stopsBeforeSolutionStageAndReportsWhichSectionsAreMissing() {
-        sandbox.designMarkdown = "no headings here";
+        sandbox.designMarkdown = "no headings here"; // never fixed: the gated re-entry (see below) also fails, so the run stops after its one re-entry
         when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(completed(5, "design attempt"));
 
         AgentLoopResult result = run(NEVER_CANCELLED, Set::of);
 
-        assertThat(result.turns()).isEqualTo(5);
+        // The DESIGN gate's first failure is granted one re-entry (Mockito repeats the same canned response), which also fails, so the run stops with both attempts' turns.
+        assertThat(result.turns()).isEqualTo(5 + 5);
         assertThat(result.finalMessage()).contains("DESIGN.md is missing required section(s)").contains("## Classes");
-        verify(agentLoopRunner, times(1)).run(anyString(), anyString(), any(), anyInt(), any(), any(), any());
+        verify(agentLoopRunner, times(2)).run(anyString(), anyString(), any(), anyInt(), any(), any(), any());
     }
 
     @Test
@@ -246,45 +265,47 @@ class StagedGenerationRunnerTest {
 
     @Test
     void solutionGateFailure_compileError_stopsBeforeTemplateStage() {
-        sandbox.solutionCompileResult = new SandboxExecResult(1, "", "compile error: cannot find symbol", false);
+        sandbox.solutionCompileResult = new SandboxExecResult(1, "", "compile error: cannot find symbol", false); // never fixed
         when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(completed(5, "design"), completed(10, "solution attempt"));
 
         AgentLoopResult result = run(NEVER_CANCELLED, Set::of);
 
-        assertThat(result.turns()).isEqualTo(15);
+        // SOLUTION's first gate failure is granted one re-entry (Mockito repeats the last canned response for the extra call), which also fails.
+        assertThat(result.turns()).isEqualTo(5 + 10 + 10);
         assertThat(result.finalMessage()).contains("reference solution does not compile").contains("compile error");
-        verify(agentLoopRunner, times(2)).run(anyString(), anyString(), any(), anyInt(), any(), any(), any());
+        verify(agentLoopRunner, times(3)).run(anyString(), anyString(), any(), anyInt(), any(), any(), any());
     }
 
     @Test
     void templateGateFailure_degenerateCopy_stopsBeforeTestsStage() {
-        sandbox.diffExitCode = 0; // template byte-identical to the solution
+        sandbox.diffExitCode = 0; // template byte-identical to the solution, never fixed
         when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(completed(5, "design"), completed(10, "solution"),
                 completed(4, "template attempt"));
 
         AgentLoopResult result = run(NEVER_CANCELLED, Set::of);
 
         assertThat(result.finalMessage()).contains("byte-identical to the solution");
-        verify(agentLoopRunner, times(3)).run(anyString(), anyString(), any(), anyInt(), any(), any(), any());
+        // TEMPLATE's first gate failure is granted one re-entry, which also fails (the mocked degenerate-copy condition never changes).
+        verify(agentLoopRunner, times(4)).run(anyString(), anyString(), any(), anyInt(), any(), any(), any());
     }
 
     @Test
     void templateGateFailure_doesNotCompile_stopsBeforeTestsStage() {
-        sandbox.templateCompileResult = new SandboxExecResult(1, "", "compile error", false);
+        sandbox.templateCompileResult = new SandboxExecResult(1, "", "compile error", false); // never fixed
         when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(completed(5, "design"), completed(10, "solution"),
                 completed(4, "template attempt"));
 
         AgentLoopResult result = run(NEVER_CANCELLED, Set::of);
 
         assertThat(result.finalMessage()).contains("template does not compile");
-        verify(agentLoopRunner, times(3)).run(anyString(), anyString(), any(), anyInt(), any(), any(), any());
+        verify(agentLoopRunner, times(4)).run(anyString(), anyString(), any(), anyInt(), any(), any(), any());
     }
 
     @Test
     void testsGateFailure_stopsBeforeStatementStage_butStructuralSeedingAlreadyRan() {
         when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(completed(5, "design"), completed(10, "solution"),
                 completed(4, "template"), completed(12, "tests attempt"));
-        when(verifier.selfCheck(any(), anyString(), eq(exercise), any(), eq(false))).thenReturn(failingReport());
+        when(verifier.selfCheck(any(), anyString(), eq(exercise), any(), eq(false))).thenReturn(failingReport()); // never fixed
         AtomicInteger structuralSeedCalls = new AtomicInteger();
 
         AgentLoopResult result = run(NEVER_CANCELLED, () -> {
@@ -293,13 +314,14 @@ class StagedGenerationRunnerTest {
         });
 
         assertThat(result.finalMessage()).contains("do not yet satisfy the differential requirement");
+        // The structural-oracle seeding hook runs once when the TEMPLATE gate passes, regardless of how many times TESTS itself is re-entered.
         assertThat(structuralSeedCalls.get()).isEqualTo(1);
-        verify(agentLoopRunner, times(4)).run(anyString(), anyString(), any(), anyInt(), any(), any(), any());
+        verify(agentLoopRunner, times(5)).run(anyString(), anyString(), any(), anyInt(), any(), any(), any());
     }
 
     @Test
     void statementGateFailure_emptyStatement_reportsMissingOrEmpty() {
-        sandbox.problemStatement = "  ";
+        sandbox.problemStatement = "  "; // never fixed
         when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(completed(5, "design"), completed(10, "solution"),
                 completed(4, "template"), completed(12, "tests"), completed(5, "statement attempt"));
         when(verifier.selfCheck(any(), anyString(), eq(exercise), any(), eq(false))).thenReturn(passingReport());
@@ -307,7 +329,7 @@ class StagedGenerationRunnerTest {
         AgentLoopResult result = run(NEVER_CANCELLED, Set::of);
 
         assertThat(result.finalMessage()).contains("problem-statement.md is missing or empty");
-        verify(agentLoopRunner, times(5)).run(anyString(), anyString(), any(), anyInt(), any(), any(), any());
+        verify(agentLoopRunner, times(6)).run(anyString(), anyString(), any(), anyInt(), any(), any(), any());
     }
 
     @Test
@@ -376,5 +398,198 @@ class StagedGenerationRunnerTest {
         assertThat(StagedGenerationRunner.allocateStageBudget(22, 3, 73)).isEqualTo(25);
         assertThat(StagedGenerationRunner.allocateStageBudget(22, 60, 10)).as("the remaining pool caps an oversized rollover").isEqualTo(10);
         assertThat(StagedGenerationRunner.allocateStageBudget(5, 0, 1)).as("every stage gets at least the floor, even over a near-empty pool").isEqualTo(3);
+    }
+
+    // --- Gate observability (progress events on every gate evaluation) ---
+
+    @Test
+    void gateEvaluations_emitAPassOrFailProgressEventInTheExistingLabelVoice() {
+        when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(completed(3, "design done"), completed(10, "solution done"),
+                completed(4, "template done"), completed(12, "tests done"), completed(5, "statement done"));
+        when(verifier.selfCheck(any(), anyString(), eq(exercise), any(), eq(false))).thenReturn(passingReport());
+        List<String> progressEvents = new ArrayList<>();
+
+        AgentLoopResult result = runner.run(exercise, baseTools, baseTools, "brief", Map.of(), sandbox, "s", NEVER_CANCELLED, null, progressEvents::add, Set::of);
+
+        assertThat(result.status()).isEqualTo(AgentLoopResult.Status.COMPLETED);
+        assertThat(progressEvents).contains("Stage 1/5: design gate passed", "Stage 2/5: solution gate passed", "Stage 3/5: template gate passed", "Stage 4/5: tests gate passed",
+                "Stage 5/5: statement gate passed");
+    }
+
+    @Test
+    void gateEvaluations_emitABoundedFailureLineNamingTheFirstReportLine() {
+        sandbox.designMarkdown = "no headings here";
+        // Second (retry) attempt also fails, so the run stops with only one progress line per attempt to inspect.
+        when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(completed(5, "design attempt 1"), completed(3, "design attempt 2"));
+        List<String> progressEvents = new ArrayList<>();
+
+        runner.run(exercise, baseTools, baseTools, "brief", Map.of(), sandbox, "s", NEVER_CANCELLED, null, progressEvents::add, Set::of);
+
+        assertThat(progressEvents).anyMatch(event -> event
+                .equals("Stage 1/5: design gate failed: DESIGN.md is missing required section(s): [## Classes, ## Public API, " + "## Tasks]. Add them before continuing."));
+    }
+
+    // --- Gated re-entry: one retry per stage on the first gate failure, gate feedback fed back in ---
+
+    @Test
+    void gateFailure_reEntersTheSameStageOnceThenReturnsOnASecondFailure() {
+        sandbox.solutionCompileResult = new SandboxExecResult(1, "", "compile error: cannot find symbol", false); // never fixed: both attempts fail
+        when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(completed(5, "design"), completed(10, "solution attempt 1"),
+                completed(8, "solution attempt 2"));
+        List<String> progressEvents = new ArrayList<>();
+
+        AgentLoopResult result = runner.run(exercise, baseTools, baseTools, "brief", Map.of(), sandbox, "s", NEVER_CANCELLED, null, progressEvents::add, Set::of);
+
+        assertThat(result.finalMessage()).contains("reference solution does not compile").contains("compile error");
+        // budget accounting: the aggregated turn count includes both the failed first attempt and the re-entry.
+        assertThat(result.turns()).isEqualTo(5 + 10 + 8);
+        assertThat(progressEvents).contains("Stage 2/5: retrying after gate feedback");
+        verify(agentLoopRunner, times(3)).run(anyString(), anyString(), any(), anyInt(), any(), any(), any());
+    }
+
+    @Test
+    void gateFailure_reEntryThatFixesTheGate_continuesToTheNextStageWithTheFeedbackInThePrompt() {
+        sandbox.designMarkdown = "no headings here";
+        when(verifier.selfCheck(any(), anyString(), eq(exercise), any(), eq(false))).thenReturn(passingReport());
+        List<String> progressEvents = new ArrayList<>();
+        AtomicInteger callCount = new AtomicInteger();
+        when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenAnswer(invocation -> switch (callCount.incrementAndGet()) {
+            case 1 -> completed(5, "design attempt 1"); // fails the gate: missing headings
+            case 2 -> {
+                sandbox.designMarkdown = VALID_DESIGN_DOCUMENT; // the retry "writes" a fix, as a real agent turn would
+                yield completed(3, "design attempt 2");
+            }
+            case 3 -> completed(10, "solution");
+            case 4 -> completed(4, "template");
+            case 5 -> completed(12, "tests");
+            case 6 -> completed(5, "statement");
+            default -> throw new IllegalStateException("unexpected call " + callCount.get());
+        });
+
+        AgentLoopResult result = runner.run(exercise, baseTools, baseTools, "brief", Map.of(), sandbox, "s", NEVER_CANCELLED, null, progressEvents::add, Set::of);
+
+        assertThat(result.status()).isEqualTo(AgentLoopResult.Status.COMPLETED);
+        assertThat(result.finalMessage()).isEqualTo("statement");
+        assertThat(result.turns()).isEqualTo(5 + 3 + 10 + 4 + 12 + 5);
+        verify(agentLoopRunner, times(6)).run(anyString(), anyString(), any(), anyInt(), any(), any(), any());
+        assertThat(progressEvents).contains("Stage 1/5: retrying after gate feedback", "Stage 1/5: design gate passed")
+                .anyMatch(event -> event.startsWith("Stage 1/5: design gate failed"));
+
+        ArgumentCaptor<String> userPromptCaptor = ArgumentCaptor.forClass(String.class);
+        verify(agentLoopRunner, times(6)).run(anyString(), userPromptCaptor.capture(), any(), anyInt(), any(), any(), any());
+        assertThat(userPromptCaptor.getAllValues().get(1)).as("FRESH re-entry folds the gate feedback into the rebuilt stage prompt")
+                .contains("GATE FEEDBACK FROM THE PREVIOUS ATTEMPT AT THIS STAGE").contains("DESIGN.md is missing required section(s)");
+    }
+
+    @Test
+    void reentryCap_atMostTwoReentriesAcrossTheWholeRun() {
+        sandbox.designMarkdown = "no headings here"; // DESIGN gate fails first
+        sandbox.solutionCompileResult = new SandboxExecResult(1, "", "solution compile error", false); // SOLUTION gate fails first
+        sandbox.templateCompileResult = new SandboxExecResult(1, "", "template compile error", false); // TEMPLATE gate fails and gets NO re-entry (cap spent)
+        AtomicInteger callCount = new AtomicInteger();
+        when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenAnswer(invocation -> switch (callCount.incrementAndGet()) {
+            case 1 -> completed(5, "design attempt 1");
+            case 2 -> {
+                sandbox.designMarkdown = VALID_DESIGN_DOCUMENT;
+                yield completed(3, "design attempt 2");
+            }
+            case 3 -> completed(10, "solution attempt 1");
+            case 4 -> {
+                sandbox.solutionCompileResult = new SandboxExecResult(0, "", "", false);
+                yield completed(8, "solution attempt 2");
+            }
+            case 5 -> completed(4, "template attempt 1");
+            default -> throw new IllegalStateException("unexpected call " + callCount.get());
+        });
+
+        AgentLoopResult result = runner.run(exercise, baseTools, baseTools, "brief", Map.of(), sandbox, "s", NEVER_CANCELLED, null, null, Set::of);
+
+        assertThat(result.finalMessage()).as("the TEMPLATE gate failure is reported directly: the run's two-reentry cap was already spent by DESIGN and SOLUTION")
+                .contains("template does not compile");
+        assertThat(result.turns()).isEqualTo(5 + 3 + 10 + 8 + 4);
+        verify(agentLoopRunner, times(5)).run(anyString(), anyString(), any(), anyInt(), any(), any(), any());
+    }
+
+    // --- CONTINUOUS staged-context strategy: one carried conversation across stages (and re-entries) ---
+
+    @Test
+    void continuousMode_carriesTheConversationAcrossStagesFromStageTwoOnwards() {
+        AgentLoopRunner sessionAgentLoopRunner = mock(AgentLoopRunner.class);
+        StagedGenerationRunner continuousRunner = newContinuousRunner(sessionAgentLoopRunner, systemPromptService, verifier);
+        List<Message> convAfterDesign = List.of(assistantText("design done"));
+        List<Message> convAfterSolution = List.of(assistantText("solution done"));
+        List<Message> convAfterTemplate = List.of(assistantText("template done"));
+        List<Message> convAfterTests = List.of(assistantText("tests done"));
+        List<Message> convAfterStatement = List.of(assistantText("statement done"));
+        when(sessionAgentLoopRunner.runSession(anyString(), any(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(
+                session(completed(3, "design done"), convAfterDesign), session(completed(10, "solution done"), convAfterSolution),
+                session(completed(4, "template done"), convAfterTemplate), session(completed(12, "tests done"), convAfterTests),
+                session(completed(5, "statement done"), convAfterStatement));
+        when(verifier.selfCheck(any(), anyString(), eq(exercise), any(), eq(false))).thenReturn(passingReport());
+
+        AgentLoopResult result = continuousRunner.run(exercise, baseTools, baseTools, "brief", Map.of(), sandbox, "s", NEVER_CANCELLED, null, null, Set::of);
+
+        assertThat(result.status()).isEqualTo(AgentLoopResult.Status.COMPLETED);
+        assertThat(result.turns()).isEqualTo(3 + 10 + 4 + 12 + 5);
+        verify(sessionAgentLoopRunner, never()).run(anyString(), anyString(), any(), anyInt(), any(), any(), any());
+
+        @SuppressWarnings("unchecked")
+        ArgumentCaptor<List<Message>> priorConversationCaptor = ArgumentCaptor.forClass(List.class);
+        verify(sessionAgentLoopRunner, times(5)).runSession(anyString(), priorConversationCaptor.capture(), anyString(), any(), anyInt(), any(), any(), any());
+        List<List<Message>> priorConversations = priorConversationCaptor.getAllValues();
+        assertThat(priorConversations.get(0)).as("DESIGN is the first stage: nothing to carry yet").isNull();
+        assertThat(priorConversations.get(1)).as("SOLUTION carries DESIGN's returned conversation").isSameAs(convAfterDesign);
+        assertThat(priorConversations.get(2)).isSameAs(convAfterSolution);
+        assertThat(priorConversations.get(3)).isSameAs(convAfterTemplate);
+        assertThat(priorConversations.get(4)).isSameAs(convAfterTests);
+    }
+
+    @Test
+    void freshMode_neverUsesRunSessionOrCarriesAConversation() {
+        when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(completed(3, "design done"), completed(10, "solution done"),
+                completed(4, "template done"), completed(12, "tests done"), completed(5, "statement done"));
+        when(verifier.selfCheck(any(), anyString(), eq(exercise), any(), eq(false))).thenReturn(passingReport());
+
+        AgentLoopResult result = run(NEVER_CANCELLED, Set::of);
+
+        assertThat(result.status()).isEqualTo(AgentLoopResult.Status.COMPLETED);
+        verify(agentLoopRunner, never()).runSession(anyString(), any(), anyString(), any(), anyInt(), any(), any(), any());
+    }
+
+    @Test
+    void continuousMode_reEntry_appendsTheGateReportAsTheNextUserMessageInsteadOfARebuiltPrompt() {
+        AgentLoopRunner sessionAgentLoopRunner = mock(AgentLoopRunner.class);
+        StagedGenerationRunner continuousRunner = newContinuousRunner(sessionAgentLoopRunner, systemPromptService, verifier);
+        when(verifier.selfCheck(any(), anyString(), eq(exercise), any(), eq(false))).thenReturn(passingReport());
+        sandbox.designMarkdown = "no headings here";
+        List<Message> convAfterFailedDesign = List.of(assistantText("design attempt 1"));
+        List<Message> convAfterFixedDesign = List.of(assistantText("design attempt 2"));
+        AtomicInteger callCount = new AtomicInteger();
+        when(sessionAgentLoopRunner.runSession(anyString(), any(), anyString(), any(), anyInt(), any(), any(), any())).thenAnswer(invocation -> {
+            if (callCount.incrementAndGet() == 1) {
+                return session(completed(5, "design attempt 1"), convAfterFailedDesign);
+            }
+            sandbox.designMarkdown = VALID_DESIGN_DOCUMENT;
+            return session(completed(3, "design attempt 2"), convAfterFixedDesign);
+        });
+
+        continuousRunner.run(exercise, baseTools, baseTools, "brief", Map.of(), sandbox, "s", NEVER_CANCELLED, null, null, Set::of);
+
+        @SuppressWarnings("unchecked")
+        ArgumentCaptor<List<Message>> priorConversationCaptor = ArgumentCaptor.forClass(List.class);
+        ArgumentCaptor<String> userPromptCaptor = ArgumentCaptor.forClass(String.class);
+        verify(sessionAgentLoopRunner, org.mockito.Mockito.atLeast(2)).runSession(anyString(), priorConversationCaptor.capture(), userPromptCaptor.capture(), any(), anyInt(),
+                any(), any(), any());
+        assertThat(priorConversationCaptor.getAllValues().get(0)).isNull();
+        assertThat(priorConversationCaptor.getAllValues().get(1)).as("the retry carries the failed attempt's own returned conversation").isSameAs(convAfterFailedDesign);
+        assertThat(userPromptCaptor.getAllValues().get(1)).as("CONTINUOUS re-entry hands back only the gate report, not a rebuilt DESIGN.md/layout prompt")
+                .startsWith("The previous attempt at this stage did not pass its gate.").contains("DESIGN.md is missing required section(s)")
+                .doesNotContain("CURRENT WORKSPACE LAYOUT", "CURRENT DESIGN.md");
+    }
+
+    @Test
+    void constructor_rejectsAnUnknownStagedContextValue() {
+        org.assertj.core.api.Assertions.assertThatIllegalArgumentException()
+                .isThrownBy(() -> new StagedGenerationRunner(agentLoopRunner, systemPromptService, verifier, "sometimes")).withMessageContaining("staged-context");
     }
 }

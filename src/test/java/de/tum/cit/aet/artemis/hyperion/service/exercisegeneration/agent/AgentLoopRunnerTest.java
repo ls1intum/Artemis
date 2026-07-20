@@ -22,7 +22,9 @@ import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.ai.chat.messages.AssistantMessage;
+import org.springframework.ai.chat.messages.Message;
 import org.springframework.ai.chat.messages.ToolResponseMessage;
+import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.model.Generation;
@@ -631,6 +633,83 @@ class AgentLoopRunnerTest {
 
         assertThat(result.status()).isEqualTo(AgentLoopResult.Status.COMPLETED);
         assertThat(recorded).hasSize(2);
+    }
+
+    // --- runSession: carrying one logical conversation across several bounded run calls (staged generation continuity) ---
+
+    @Test
+    void runSession_nullPriorConversation_producesTheSameResultAsRun() {
+        ChatModel chatModelForRun = mock(ChatModel.class);
+        when(chatModelForRun.call(any(Prompt.class))).thenReturn(toolCallResponse("bash", "{\"command\":\"ls\"}"), textResponse("DONE"));
+        AgentLoopResult viaRun = newTestRunner(List.of(chatModelForRun), 128_000).run("system", "do it", new SandboxAgentTools(new FakeSandbox(), "fake-session"), 10, () -> false,
+                null, null);
+
+        ChatModel chatModelForSession = mock(ChatModel.class);
+        when(chatModelForSession.call(any(Prompt.class))).thenReturn(toolCallResponse("bash", "{\"command\":\"ls\"}"), textResponse("DONE"));
+        AgentLoopRunner.AgentLoopSession viaSession = newTestRunner(List.of(chatModelForSession), 128_000).runSession("system", null, "do it",
+                new SandboxAgentTools(new FakeSandbox(), "fake-session"), 10, () -> false, null, null);
+
+        assertThat(viaSession.result()).as("a null prior conversation must behave exactly like run()").isEqualTo(viaRun);
+        // The returned conversation excludes the system message but carries the rest of the exchange, ready to seed a later runSession call.
+        assertThat(viaSession.conversation()).hasSize(4);
+        assertThat(viaSession.conversation().get(0)).isInstanceOfSatisfying(UserMessage.class, message -> assertThat(message.getText()).isEqualTo("do it"));
+        assertThat(viaSession.conversation().getLast()).isInstanceOfSatisfying(AssistantMessage.class, message -> assertThat(message.getText()).isEqualTo("DONE"));
+    }
+
+    @Test
+    void runSession_continuesTheConversation_secondCallSeesTheFirstCallsAssistantTurn() {
+        ChatModel firstChatModel = mock(ChatModel.class);
+        when(firstChatModel.call(any(Prompt.class))).thenReturn(textResponse("MARKER_FROM_CALL_ONE"));
+        SandboxAgentTools tools = new SandboxAgentTools(new FakeSandbox(), "fake-session");
+
+        AgentLoopRunner.AgentLoopSession firstSession = newTestRunner(List.of(firstChatModel), 128_000).runSession("system stage 1", null, "do stage 1", tools, 10, () -> false,
+                null, null);
+        assertThat(firstSession.result().status()).isEqualTo(AgentLoopResult.Status.COMPLETED);
+        assertThat(firstSession.result().finalMessage()).isEqualTo("MARKER_FROM_CALL_ONE");
+
+        ChatModel secondChatModel = mock(ChatModel.class);
+        when(secondChatModel.call(any(Prompt.class))).thenReturn(textResponse("DONE"));
+
+        AgentLoopRunner.AgentLoopSession secondSession = newTestRunner(List.of(secondChatModel), 128_000).runSession("system stage 2", firstSession.conversation(), "do stage 2",
+                tools, 10, () -> false, null, null);
+
+        assertThat(secondSession.result().status()).isEqualTo(AgentLoopResult.Status.COMPLETED);
+        ArgumentCaptor<Prompt> promptCaptor = ArgumentCaptor.forClass(Prompt.class);
+        verify(secondChatModel).call(promptCaptor.capture());
+        // The second call's model prompt must contain the first call's assistant turn (proof the conversation was actually carried, not discarded), as well as the new
+        // stage's system/user prompts.
+        assertThat(renderPrompt(promptCaptor.getValue())).contains("MARKER_FROM_CALL_ONE").contains("system stage 2").contains("do stage 2");
+    }
+
+    @Test
+    void runSession_carriedConversationOverTheCompactionThreshold_getsCompactedAndKeepsTheSummarySentinel() {
+        // A carried conversation built directly (not via a prior run), so its size is under our control: 8 tool-call/tool-result turns of 8k characters each.
+        List<Message> priorConversation = new ArrayList<>();
+        priorConversation.add(new UserMessage("create a bubble-sort exercise"));
+        for (int i = 0; i < 8; i++) {
+            priorConversation.add(AssistantMessage.builder().content("")
+                    .toolCalls(List.of(new AssistantMessage.ToolCall("call-" + i, "function", "bash", "{\"command\":\"sh verify.sh solution\"}"))).build());
+            priorConversation.add(ToolResponseMessage.builder().responses(List.of(new ToolResponseMessage.ToolResponse("call-" + i, "bash", "x".repeat(8_000)))).build());
+        }
+        long priorConversationTokens = priorConversation.stream().mapToLong(AgentLoopRunner::estimateMessageTokens).sum();
+        // Sized so the very first (pre-compaction) call still fits (needs at least ~5_120 tokens of headroom below the window) while the post-turn compaction check fires
+        // (triggers once estimated usage exceeds window - 20_480): 12_800 headroom sits squarely between those two thresholds.
+        int contextWindowTokens = (int) (priorConversationTokens + 12_800);
+
+        ChatModel chatModel = mock(ChatModel.class);
+        when(chatModel.call(any(Prompt.class))).thenReturn(toolCallResponse("bash", "{\"command\":\"ls\"}"), // turn 1 of the main loop
+                textResponse("## Goal\nFinish the bubble-sort exercise.\n## Next steps\nWrite the tests.")); // the out-of-band compaction/summarization call
+
+        AgentLoopRunner runner = newTestRunner(List.of(chatModel), contextWindowTokens);
+        SandboxAgentTools tools = new SandboxAgentTools(new FakeSandbox(), "fake-session");
+
+        AgentLoopRunner.AgentLoopSession session = runner.runSession("system", priorConversation, "continue", tools, 1, () -> false, null, null);
+
+        assertThat(session.result().status()).isEqualTo(AgentLoopResult.Status.BUDGET_EXHAUSTED);
+        verify(chatModel, times(2)).call(any(Prompt.class)); // the main-loop turn, plus exactly one summarization call proves compaction actually ran
+        AgentLoopRunner.assertValidPairing(session.conversation()); // the compacted conversation still satisfies the tool-pairing contract
+        assertThat(session.conversation())
+                .anyMatch(message -> message.getText() != null && message.getText().contains("SESSION SUMMARY") && message.getText().contains("Finish the bubble-sort exercise"));
     }
 
     private static String renderPrompt(Prompt prompt) {

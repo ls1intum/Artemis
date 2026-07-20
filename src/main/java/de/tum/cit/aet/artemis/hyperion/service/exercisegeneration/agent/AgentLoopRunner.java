@@ -209,12 +209,14 @@ public class AgentLoopRunner {
     }
 
     /**
-     * Drives the agent loop for one Hyperion sandbox.
+     * Drives the agent loop for one Hyperion sandbox as a single fresh conversation.
      * <p>
      * The loop's only intrinsic bound is {@code maxTurns}; it enforces no wall-clock deadline. Cancellation is turn-granular — {@code cancelled} is polled once before each turn,
      * so a
      * cancel arriving mid-turn takes effect only after the current model call and its tool executions return. The caller owns prompt abort of a long-running tool: it registers a
      * cancel hook (see {@code GenerationJobService#registerCancelHook}) that tears down the sandbox session, which makes the in-flight tool call fail fast.
+     * <p>
+     * Equivalent to {@code runSession(systemPrompt, null, userPrompt, ...).result()}; see {@link #runSession} to span one logical conversation across multiple calls.
      *
      * @param systemPrompt the system prompt describing the task and the available tools
      * @param userPrompt   the initial user instruction
@@ -228,6 +230,38 @@ public class AgentLoopRunner {
      */
     public AgentLoopResult run(String systemPrompt, String userPrompt, Object tools, int maxTurns, BooleanSupplier cancelled, @Nullable Consumer<ChatResponse> usageSink,
             @Nullable Consumer<String> stepListener) {
+        return runSession(systemPrompt, null, userPrompt, tools, maxTurns, cancelled, usageSink, stepListener).result();
+    }
+
+    /**
+     * A {@link #runSession} outcome paired with the conversation it produced, so a caller can span one logical conversation across multiple {@code runSession} calls (each with
+     * its own system prompt, user prompt, and turn budget). {@code conversation} excludes the system message — the next call supplies its own via {@code systemPrompt}.
+     */
+    public record AgentLoopSession(AgentLoopResult result, List<Message> conversation) {
+    }
+
+    /**
+     * Like {@link #run}, but accepts the conversation returned by a prior {@code runSession} call so several bounded loop invocations can share one logical conversation (the
+     * model keeps everything it learned in earlier calls), and returns the resulting conversation so the caller can continue it again.
+     * <p>
+     * When {@code priorConversation} is {@code null} this behaves exactly like {@link #run}: a fresh two-message conversation (system, user). Otherwise the given
+     * {@code systemPrompt} replaces the system message, {@code priorConversation} is spliced in after it unchanged, and {@code userPrompt} is appended as the next turn before
+     * the loop continues — so in-loop compaction (which always protects the first two messages) keeps operating over the whole carried history exactly as it does within a
+     * single {@link #run} call.
+     *
+     * @param systemPrompt      the system prompt for this call (replaces whatever system message headed the prior conversation, if any)
+     * @param priorConversation the conversation returned by an earlier {@code runSession} call (system message excluded), or {@code null} to start fresh
+     * @param userPrompt        this call's instruction, appended after the prior conversation (or the sole initial instruction when starting fresh)
+     * @param tools             the tools object whose {@code @Tool} methods are exposed to the model (typically {@link SandboxAgentTools})
+     * @param maxTurns          the hard cap on model turns for this call (safety budget)
+     * @param cancelled         a supplier polled before each turn; if it returns {@code true} the loop stops cooperatively
+     * @param usageSink         invoked after every successful model call (the main loop call and the summarization call) with its {@link ChatResponse}, so the caller can record
+     *                              token usage; may be {@code null}
+     * @param stepListener      invoked after every step with a short human-readable progress line (tool calls, completion); may be {@code null}
+     * @return the loop outcome together with the resulting conversation (system message excluded), ready to be passed as {@code priorConversation} to a subsequent call
+     */
+    public AgentLoopSession runSession(String systemPrompt, @Nullable List<Message> priorConversation, String userPrompt, Object tools, int maxTurns, BooleanSupplier cancelled,
+            @Nullable Consumer<ChatResponse> usageSink, @Nullable Consumer<String> stepListener) {
         if (chatModel == null) {
             throw new IllegalStateException("No ChatModel is configured. Agentic generation is unavailable.");
         }
@@ -240,6 +274,9 @@ public class AgentLoopRunner {
         // Build OpenAiChatOptions (not a generic ToolCallingChatOptions): OpenAiChatModel#buildRequestPrompt casts the runtime options to OpenAiChatOptions, so a
         List<Message> conversation = new ArrayList<>();
         conversation.add(new SystemMessage(systemPrompt));
+        if (priorConversation != null) {
+            conversation.addAll(priorConversation);
+        }
         conversation.add(new UserMessage(userPrompt));
 
         Prompt prompt = new Prompt(conversation, agentOptions(toolCallbacks, conversation));
@@ -252,7 +289,7 @@ public class AgentLoopRunner {
         for (int turn = 1; turn <= maxTurns; turn++) {
             if (cancelled.getAsBoolean()) {
                 emit(stepListener, "Cancelling generation…");
-                return new AgentLoopResult(AgentLoopResult.Status.CANCELLED, turn - 1, lastAssistantText);
+                return session(AgentLoopResult.Status.CANCELLED, turn - 1, lastAssistantText, conversation);
             }
             // Tag any out-of-band events the tools emit this turn (e.g. streamed file changes) with the current turn number.
             if (tools instanceof TurnAware turnAware) {
@@ -263,16 +300,16 @@ public class AgentLoopRunner {
             ChatResponse response = callModel(prompt, turn, cancelled, usageSink, stepListener);
             if (response == null) {
                 if (cancelled.getAsBoolean()) {
-                    return new AgentLoopResult(AgentLoopResult.Status.CANCELLED, turn, lastAssistantText);
+                    return session(AgentLoopResult.Status.CANCELLED, turn, lastAssistantText, conversation);
                 }
-                return new AgentLoopResult(AgentLoopResult.Status.ERROR, turn, lastAssistantText);
+                return session(AgentLoopResult.Status.ERROR, turn, lastAssistantText, conversation);
             }
             // Strip leaked harmony control tokens from tool names before dispatch (see normalizeToolNames).
             response = normalizeToolNames(response);
             lastPromptTokens = promptTokensOf(response);
             if (cancelled.getAsBoolean()) {
                 emit(stepListener, "Cancelling generation…");
-                return new AgentLoopResult(AgentLoopResult.Status.CANCELLED, turn, lastAssistantText);
+                return session(AgentLoopResult.Status.CANCELLED, turn, lastAssistantText, conversation);
             }
 
             String assistantText = extractText(response);
@@ -281,9 +318,13 @@ public class AgentLoopRunner {
             }
 
             if (!response.hasToolCalls()) {
-                // No more tool calls: the model considers the task complete; the verifier decides whether it actually is.
+                // No more tool calls: the model considers the task complete; the verifier decides whether it actually is. Append this final turn before returning (unlike the
+                // mid-loop reassignment below, nothing else in this call needs `conversation` updated afterwards) so a caller carrying the conversation forward via
+                // runSession(...) does not lose the model's closing message.
                 emit(stepListener, "Preparing the exercise for verification.");
-                return new AgentLoopResult(AgentLoopResult.Status.COMPLETED, turn, lastAssistantText);
+                List<Message> completedConversation = new ArrayList<>(conversation);
+                completedConversation.add(response.getResult().getOutput());
+                return session(AgentLoopResult.Status.COMPLETED, turn, lastAssistantText, completedConversation);
             }
 
             List<AssistantMessage.ToolCall> toolCalls = response.getResult() != null && response.getResult().getOutput() != null ? response.getResult().getOutput().getToolCalls()
@@ -300,7 +341,7 @@ public class AgentLoopRunner {
                 toolExecutionResult = toolCallingManager.executeToolCalls(prompt, response);
                 if (isSandboxSessionTerminated(tools)) {
                     emit(stepListener, "The build environment stopped responding.");
-                    return new AgentLoopResult(AgentLoopResult.Status.ERROR, turn, lastAssistantText);
+                    return session(AgentLoopResult.Status.ERROR, turn, lastAssistantText, conversation);
                 }
                 consecutiveToolFailures = 0;
             }
@@ -308,14 +349,14 @@ public class AgentLoopRunner {
                 if (hasCause(e, LocalCIException.class)) {
                     log.warn("Agent loop lost its sandbox on turn {} ({})", turn, e.getClass().getSimpleName());
                     emit(stepListener, "The build environment stopped responding.");
-                    return new AgentLoopResult(AgentLoopResult.Status.ERROR, turn, lastAssistantText);
+                    return session(AgentLoopResult.Status.ERROR, turn, lastAssistantText, conversation);
                 }
                 // Unknown tool / malformed arguments surface here: feed the error back so the model can self-correct, only giving up after MAX_CONSECUTIVE_TOOL_FAILURES.
                 consecutiveToolFailures++;
                 log.warn("Agent loop tool execution failed on turn {} (consecutive failures: {}, type: {})", turn, consecutiveToolFailures, e.getClass().getSimpleName());
                 emit(stepListener, "The agent tried an unavailable action and is correcting it.");
                 if (consecutiveToolFailures >= MAX_CONSECUTIVE_TOOL_FAILURES) {
-                    return new AgentLoopResult(AgentLoopResult.Status.ERROR, turn, lastAssistantText);
+                    return session(AgentLoopResult.Status.ERROR, turn, lastAssistantText, conversation);
                 }
                 AssistantMessage failedTurn = response.getResult().getOutput();
                 conversation.add(failedTurn);
@@ -331,15 +372,17 @@ public class AgentLoopRunner {
                 continue;
             }
 
-            if (submitRequested) {
-                // End the loop so the authoritative post-loop verifier can determine save eligibility before the quality review optionally requests repairs.
-                emit(stepListener, "Submitting the exercise for verification.");
-                return new AgentLoopResult(AgentLoopResult.Status.COMPLETED, turn, lastAssistantText);
-            }
-
+            // Rebuild from the executed tool-call history (covers both the submit and the continuing paths), so a carried conversation reflects the submit turn too.
             conversation = new ArrayList<>(toolExecutionResult.conversationHistory());
             // Bound each result as it enters the context, so one oversized build log cannot blow the window before compaction runs.
             capToolResponses(conversation);
+
+            if (submitRequested) {
+                // End the loop so the authoritative post-loop verifier can determine save eligibility before the quality review optionally requests repairs.
+                emit(stepListener, "Submitting the exercise for verification.");
+                return session(AgentLoopResult.Status.COMPLETED, turn, lastAssistantText, conversation);
+            }
+
             // Budget-pressure nudge, appended after the conversation is rebuilt from the tool-execution history (otherwise it would be discarded with that rebuild).
             if (turn == maxTurns - 1) {
                 conversation.add(new UserMessage("You are close to the step limit. Finish the current change, make sure the build and tests reflect the intended outcome, "
@@ -350,7 +393,13 @@ public class AgentLoopRunner {
         }
 
         emit(stepListener, "The generation step limit was reached.");
-        return new AgentLoopResult(AgentLoopResult.Status.BUDGET_EXHAUSTED, maxTurns, lastAssistantText);
+        return session(AgentLoopResult.Status.BUDGET_EXHAUSTED, maxTurns, lastAssistantText, conversation);
+    }
+
+    /** Builds a session result, stripping the leading system message so the returned conversation is ready to pass as {@code priorConversation} to the next call. */
+    private static AgentLoopSession session(AgentLoopResult.Status status, int turns, String finalMessage, List<Message> conversation) {
+        List<Message> withoutSystemMessage = conversation.isEmpty() ? List.of() : new ArrayList<>(conversation.subList(1, conversation.size()));
+        return new AgentLoopSession(new AgentLoopResult(status, turns, finalMessage), withoutSystemMessage);
     }
 
     private static boolean hasCause(Throwable failure, Class<? extends Throwable> type) {

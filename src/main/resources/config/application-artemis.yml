@@ -99,6 +99,7 @@ artemis:
       context-window-tokens: 128000
       max-turns: 60 # staged workflow (design->solution->template->tests->statement) needs headroom for per-test differential checks
       staged-generation: true # Enforce the design->solution->template->tests->statement stage order (with a per-stage gate) for Java GENERATE runs; ADAPT and other languages are unaffected.
+      staged-context: CONTINUOUS # CONTINUOUS|FRESH. CONTINUOUS carries one logical conversation across all five stages (the model keeps what it learned in earlier stages); FRESH starts a blank conversation per stage.
       max-job-duration: PT30M # Admission-to-cooperative-cancellation deadline; keep provider/sandbox/repository timeouts bounded too.
       max-tokens-per-job: 3000000 # Post-response per-job spend guard; keep provider max-output/context limits aligned so one call cannot overshoot materially.
       token-budget-window: PT24H
