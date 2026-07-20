@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { SuspiciousSessionsComponent } from 'app/exam/manage/suspicious-behavior/suspicious-sessions/suspicious-sessions.component';
@@ -9,8 +8,6 @@ import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 import { SuspiciousExamSessions, SuspiciousSessionReason } from 'app/exam/shared/entities/exam-session.model';
 
 describe('SuspiciousSessionsComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: SuspiciousSessionsComponent;
     let fixture: ComponentFixture<SuspiciousSessionsComponent>;
     const studentExam = { id: 1, exam: { id: 1, course: { id: 1 } } } as StudentExam;

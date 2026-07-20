@@ -30,7 +30,7 @@
                     @for (item of group.items; track item.routerLink) {
                         <li>
                             <a
-                                class="nav-link-sidebar flex items-center px-3 py-2 whitespace-nowrap text-color no-underline"
+                                class="nav-link-sidebar flex items-center px-3 py-2 whitespace-nowrap no-underline"
                                 [attr.id]="item.testId"
                                 [class.collapsed]="isNavbarCollapsed()"
                                 [routerLink]="item.routerLink"

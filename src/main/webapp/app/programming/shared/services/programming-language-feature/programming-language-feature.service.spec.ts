@@ -1,5 +1,4 @@
 import { Mocked, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TestBed } from '@angular/core/testing';
 import { ProgrammingLanguageFeatureService } from './programming-language-feature.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
@@ -7,8 +6,6 @@ import { ProgrammingLanguageFeature } from 'app/core/layouts/profiles/profile-in
 import { ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
 
 describe('ProgrammingLanguageFeatureService', () => {
-    setupTestBed({ zoneless: true });
-
     let service: ProgrammingLanguageFeatureService;
     let mockProfileService: Mocked<ProfileService>;
 

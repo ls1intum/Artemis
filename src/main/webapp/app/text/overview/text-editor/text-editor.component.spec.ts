@@ -3,7 +3,7 @@
  * Tests text submission, participation management, and editor functionality.
  */
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import dayjs from 'dayjs/esm';
@@ -33,7 +33,6 @@ import { Feedback, FeedbackType } from 'app/assessment/shared/entities/feedback.
 import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
-import { HtmlForMarkdownPipe } from 'app/foundation/pipes/html-for-markdown.pipe';
 import { ResizeableContainerComponent } from 'app/shared-ui/resizeable-container/resizeable-container.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TeamParticipateInfoBoxComponent } from 'app/exercise/team/team-participate/team-participate-info-box.component';
@@ -71,7 +70,6 @@ class MockIrisExerciseChatbotButtonComponent {
 }
 
 describe('TextEditorComponent', () => {
-    setupTestBed({ zoneless: true });
     let comp: TextEditorComponent;
     let fixture: ComponentFixture<TextEditorComponent>;
     let textService: TextEditorService;
@@ -101,7 +99,7 @@ describe('TextEditorComponent', () => {
                 MockComponent(TextResultComponent),
                 MockComponent(ComplaintsFormComponent),
                 MockComponent(ComplaintsStudentViewComponent),
-                MockPipe(HtmlForMarkdownPipe),
+                MockDirective(MarkdownDirective),
                 MockPipe(ArtemisTranslatePipe),
                 MockComponent(ResizeableContainerComponent),
                 MockComponent(TeamParticipateInfoBoxComponent),
