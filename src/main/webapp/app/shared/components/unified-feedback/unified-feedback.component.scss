@@ -1,11 +1,11 @@
 .unified-feedback {
-    border-radius: var(--bs-border-radius);
-    border-left: 5px solid;
-    margin-bottom: 0.25rem;
+    border-radius: calc(var(--bs-border-radius) * 1.5);
+    border-left: 4px solid;
+    margin-bottom: 0.5rem;
     background-color: var(--bs-modal-bg, var(--bs-card-bg, var(--bs-body-bg)));
-    border-top: 1px solid var(--bs-border-color);
-    border-right: 1px solid var(--bs-border-color);
-    border-bottom: 1px solid var(--bs-border-color);
+    border-top: 1px solid color-mix(in srgb, var(--bs-border-color) 60%, transparent);
+    border-right: 1px solid color-mix(in srgb, var(--bs-border-color) 60%, transparent);
+    border-bottom: 1px solid color-mix(in srgb, var(--bs-border-color) 60%, transparent);
 
     &.alert-success {
         border-left-color: var(--bs-success);
@@ -86,6 +86,32 @@
     flex-shrink: 0;
 }
 
+.unified-feedback-icon-badge {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.75rem;
+    height: 1.75rem;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.unified-feedback.alert-success .unified-feedback-icon-badge {
+    background-color: color-mix(in srgb, var(--bs-success) 15%, transparent);
+}
+
+.unified-feedback.alert-danger .unified-feedback-icon-badge {
+    background-color: color-mix(in srgb, var(--bs-danger) 15%, transparent);
+}
+
+.unified-feedback.alert-secondary .unified-feedback-icon-badge {
+    background-color: color-mix(in srgb, var(--bs-secondary) 15%, transparent);
+}
+
+.unified-feedback.alert-primary .unified-feedback-icon-badge {
+    background-color: color-mix(in srgb, var(--bs-primary) 15%, transparent);
+}
+
 .unified-feedback.alert-success .unified-feedback-icon {
     color: var(--bs-success);
 }
@@ -161,22 +187,29 @@
     color: var(--bs-body-color);
     flex-shrink: 0;
     white-space: nowrap;
+    border-radius: 999px;
+    padding: 0.15rem 0.6rem;
+    background-color: var(--bs-tertiary-bg);
 }
 
 .unified-feedback.alert-success .unified-feedback-points {
     color: var(--bs-success);
+    background-color: color-mix(in srgb, var(--bs-success) 15%, transparent);
 }
 
 .unified-feedback.alert-danger .unified-feedback-points {
     color: var(--bs-danger);
+    background-color: color-mix(in srgb, var(--bs-danger) 15%, transparent);
 }
 
 .unified-feedback.alert-secondary .unified-feedback-points {
     color: var(--bs-secondary);
+    background-color: color-mix(in srgb, var(--bs-secondary) 15%, transparent);
 }
 
 .unified-feedback.alert-primary .unified-feedback-points {
     color: var(--bs-primary);
+    background-color: color-mix(in srgb, var(--bs-primary) 15%, transparent);
 }
 
 .unified-feedback-header-right {
@@ -200,14 +233,30 @@
 
 .unified-feedback-points-input {
     width: 4rem;
-    border: 1px solid var(--bs-border-color);
-    border-radius: var(--bs-border-radius);
-    padding: 0.25rem;
+    border: none;
+    border-radius: 999px;
+    padding: 0.15rem 0.6rem;
     font-weight: 600;
     font-size: 0.8rem;
     text-align: right;
-    background: var(--bs-body-bg);
+    background: var(--bs-tertiary-bg);
     color: inherit;
+}
+
+.unified-feedback.alert-success .unified-feedback-points-input {
+    background-color: color-mix(in srgb, var(--bs-success) 15%, transparent);
+}
+
+.unified-feedback.alert-danger .unified-feedback-points-input {
+    background-color: color-mix(in srgb, var(--bs-danger) 15%, transparent);
+}
+
+.unified-feedback.alert-secondary .unified-feedback-points-input {
+    background-color: color-mix(in srgb, var(--bs-secondary) 15%, transparent);
+}
+
+.unified-feedback.alert-primary .unified-feedback-points-input {
+    background-color: color-mix(in srgb, var(--bs-primary) 15%, transparent);
 }
 
 .unified-feedback-toolbar {

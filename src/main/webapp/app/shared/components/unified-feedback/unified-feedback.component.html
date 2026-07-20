@@ -13,7 +13,9 @@
         <div class="unified-feedback-main">
             <div class="unified-feedback-header">
                 <div class="unified-feedback-header-left">
-                    <fa-icon [icon]="inferredIcon()" class="unified-feedback-icon" />
+                    <span class="unified-feedback-icon-badge">
+                        <fa-icon [icon]="inferredIcon()" class="unified-feedback-icon" />
+                    </span>
                     @if (editable()) {
                         <input
                             class="unified-feedback-title-input"

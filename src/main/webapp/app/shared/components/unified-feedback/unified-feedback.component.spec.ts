@@ -162,6 +162,13 @@ describe('UnifiedFeedbackComponent', () => {
         expect(fixture.nativeElement.querySelector('.unified-feedback-text')?.innerHTML).toContain('<p>Hello</p>');
     });
 
+    it('should wrap the type icon in a circular icon badge', () => {
+        fixture.detectChanges();
+        const badge = fixture.nativeElement.querySelector('.unified-feedback-icon-badge');
+        expect(badge).toBeTruthy();
+        expect(badge.querySelector('fa-icon')).toBeTruthy();
+    });
+
     it('should use the original Athena suggestion title for adapted feedback', () => {
         fixture.componentRef.setInput('title', undefined);
         fixture.componentRef.setInput('feedback', { text: `${FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER}Missing null check` } as any);
