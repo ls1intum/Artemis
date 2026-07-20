@@ -11,7 +11,7 @@ import org.springframework.ai.tool.annotation.ToolParam;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationFileChangeDTO;
 
 /** Decorates sandbox tools with lightweight file-change notifications for the instructor UI. */
-public class FileChangeEmittingAgentTools implements TurnAware {
+public class FileChangeEmittingAgentTools implements TurnAware, SubmitVetoAware {
 
     private static final Logger log = LoggerFactory.getLogger(FileChangeEmittingAgentTools.class);
 
@@ -116,6 +116,11 @@ public class FileChangeEmittingAgentTools implements TurnAware {
 
     boolean isSandboxSessionTerminated() {
         return delegate.isSandboxSessionTerminated();
+    }
+
+    @Override
+    public boolean consumeSubmitVeto() {
+        return delegate.consumeSubmitVeto();
     }
 
     private void emit(String path, String action) {

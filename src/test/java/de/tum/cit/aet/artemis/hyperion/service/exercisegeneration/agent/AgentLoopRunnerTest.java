@@ -3,6 +3,8 @@ package de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -40,6 +42,9 @@ import de.tum.cit.aet.artemis.buildagent.dto.SandboxExecResult;
 import de.tum.cit.aet.artemis.buildagent.dto.SandboxSessionSpec;
 import de.tum.cit.aet.artemis.buildagent.service.InteractiveSandbox;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.ProviderUsageSink;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.StageCheckResult;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.StageCheckService;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 
 class AgentLoopRunnerTest {
 
@@ -395,6 +400,47 @@ class AgentLoopRunnerTest {
         assertThat(result.turns()).isEqualTo(1);
         assertThat(steps).filteredOn("Submitting the exercise for verification."::equals).hasSize(1);
         assertThat(sandbox.execCommands).as("the co-requested bash command was executed before the loop ended").anyMatch(command -> command.contains("ls"));
+    }
+
+    @Test
+    void agentLoop_submitVetoedByAStagedStageCheck_continuesTheLoopUntilAFixedResubmitEndsIt() {
+        // A staged session's submit() rejects the first attempt (the stage check fails), so the loop must NOT end on turn 1; the model then fixes the artifact and resubmits,
+        // and only that second, passing submit() ends the loop.
+        ProgrammingExercise exercise = mock(ProgrammingExercise.class);
+        StageCheckService stageCheckService = mock(StageCheckService.class);
+        when(stageCheckService.check(eq(GenerationStage.SOLUTION), any(), anyString(), eq(exercise), eq(Map.of()), any()))
+                .thenReturn(StageCheckResult.failed("the reference solution does not compile"), StageCheckResult.passed(""));
+        SandboxAgentTools tools = new SandboxAgentTools(new FakeSandbox(), "fake-session", null, exercise, Map.of(), false, stageCheckService);
+        tools.enterStage(GenerationStage.SOLUTION);
+
+        ChatModel chatModel = mock(ChatModel.class);
+        when(chatModel.call(any(Prompt.class))).thenReturn(toolCallResponse("submit", "{}"), toolCallResponse("write_file", "{\"path\":\"solution/A.java\",\"content\":\"fixed\"}"),
+                toolCallResponse("submit", "{}"));
+        AgentLoopRunner runner = newTestRunner(List.of(chatModel), 128_000);
+        List<String> steps = new ArrayList<>();
+
+        AgentLoopResult result = runner.run("system", "do it", tools, 10, () -> false, null, steps::add);
+
+        assertThat(result.status()).isEqualTo(AgentLoopResult.Status.COMPLETED);
+        assertThat(result.turns()).isEqualTo(3);
+        assertThat(steps).contains("Submit was rejected by the stage check; continuing to address the reported issues.");
+        verify(chatModel, times(3)).call(any(Prompt.class));
+    }
+
+    @Test
+    void agentLoop_nonStagedSubmit_isNeverVetoed_endsOnTheFirstCallEvenWhenTheToolsObjectImplementsSubmitVetoAware() {
+        // SandboxAgentTools always implements SubmitVetoAware, but an unstaged (legacy) session's submit() never sets the veto flag: the interface being implemented must not by
+        // itself change today's behavior.
+        ChatModel chatModel = mock(ChatModel.class);
+        when(chatModel.call(any(Prompt.class))).thenReturn(toolCallResponse("submit", "{}"), textResponse("must not be called"));
+        AgentLoopRunner runner = newTestRunner(List.of(chatModel), 128_000);
+        SandboxAgentTools tools = new SandboxAgentTools(new FakeSandbox(), "fake-session"); // currentStage stays null: unstaged/legacy
+
+        AgentLoopResult result = runner.run("system", "do it", tools, 10, () -> false, null, null);
+
+        assertThat(result.status()).isEqualTo(AgentLoopResult.Status.COMPLETED);
+        assertThat(result.turns()).isEqualTo(1);
+        verify(chatModel, times(1)).call(any(Prompt.class));
     }
 
     @Test

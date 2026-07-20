@@ -46,6 +46,7 @@ import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.SandboxA
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.critic.SpecFidelityCriticService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.critic.SpecFidelityReport;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.DifferentialVerificationService;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.StageCheckService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.StructuralOracleSeedingService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.VerificationRequest;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.VerificationResult;
@@ -117,11 +118,15 @@ public class GenerationOrchestrationService {
 
     private final boolean stagedGenerationEnabled;
 
+    // Wired into SandboxAgentTools so a staged session's verify/submit tools can dispatch to the current stage's mechanical check; unused by an unstaged (legacy) session, which
+    // never calls SandboxAgentTools#enterStage.
+    private final StageCheckService stageCheckService;
+
     public GenerationOrchestrationService(Optional<InteractiveSandbox> interactiveSandbox, GenerationWorkspaceService workspace, AgentLoopRunner agentLoopRunner,
             DifferentialVerificationService verifier, AgentSystemPromptService systemPromptService, StructuralOracleSeedingService structuralOracleSeeder,
             SpecFidelityCriticService specFidelityCritic, GenerationJobService jobService, Optional<ProgrammingExerciseTestCaseRepository> testCaseRepository,
             @Value("${artemis.hyperion.agent.max-turns:60}") int maxTurns, StagedGenerationRunner stagedGenerationRunner,
-            @Value("${artemis.hyperion.agent.staged-generation:true}") boolean stagedGenerationEnabled) {
+            @Value("${artemis.hyperion.agent.staged-generation:true}") boolean stagedGenerationEnabled, StageCheckService stageCheckService) {
         if (maxTurns <= 0) {
             throw new IllegalArgumentException("artemis.hyperion.agent.max-turns must be positive");
         }
@@ -137,6 +142,7 @@ public class GenerationOrchestrationService {
         this.testCaseRepository = testCaseRepository;
         this.stagedGenerationRunner = stagedGenerationRunner;
         this.stagedGenerationEnabled = stagedGenerationEnabled;
+        this.stageCheckService = stageCheckService;
     }
 
     private InteractiveSandbox requireSandbox() {
@@ -215,7 +221,7 @@ public class GenerationOrchestrationService {
             String systemPrompt = systemPromptService.build(exercise, mode);
             // The agent's `verify` tool runs the same differential as the post-loop gate so it sees the verdict in-loop (pass/fail tests, exact [task] names); the post-loop
             // verify(...) below stays the mechanical-verification decision.
-            SandboxAgentTools baseTools = new SandboxAgentTools(sandbox, sessionId, verifier, exercise, testsSeedSnapshot, mode == GenerationMode.ADAPT);
+            SandboxAgentTools baseTools = new SandboxAgentTools(sandbox, sessionId, verifier, exercise, testsSeedSnapshot, mode == GenerationMode.ADAPT, stageCheckService);
             // Wrap the tools in the file-change decorator when a sink is supplied, so each successful write/edit/delete emits a lightweight notification (path, repository bucket,
             // action, turn) for the instructor's live activity view — not the file content itself. The decorator re-exposes the same @Tool surface (the model sees the same tools)
             // and only adds emission.
@@ -248,10 +254,16 @@ public class GenerationOrchestrationService {
                 // Staged authoring applies to the FIRST attempt only: retry attempts carry a targeted repair prompt (verification reasons / critic findings), and the
                 // between-attempt workspace reset discards DESIGN.md — re-running the design stage against a repair brief fails its gate by construction. Repairs run the
                 // legacy single loop, which is built for surgical fixes on an existing workspace.
-                loopResult = useStagedGeneration && attempt == 1
+                boolean stagedAttempt = useStagedGeneration && attempt == 1;
+                loopResult = stagedAttempt
                         ? stagedGenerationRunner.run(exercise, baseTools, tools, currentPrompt, testsSeedSnapshot, sandbox, activeSessionId, cancelled, effectiveUsageSink,
                                 progress, () -> structuralOracleSeeder.seedIfStructuralDiff(sandbox, activeSessionId, exercise))
                         : agentLoopRunner.run(systemPrompt, currentPrompt, tools, maxTurns, cancelled, effectiveUsageSink, progress);
+                if (stagedAttempt) {
+                    // Unstage the shared tools instance again: a later repair attempt (below) reuses it through the legacy single-loop path, which must see currentStage back at
+                    // null rather than left at whichever stage the staged run last entered (STAGE_CHECK dispatch would otherwise leak into the repair loop's verify/submit).
+                    baseTools.exitStagedGeneration();
+                }
                 log.info("Exercise generation attempt {} took {} turn(s)", attempt, loopResult.turns());
 
                 if (loopResult.status() == AgentLoopResult.Status.CANCELLED) {

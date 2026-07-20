@@ -2,8 +2,12 @@ package de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
@@ -21,6 +25,8 @@ import de.tum.cit.aet.artemis.buildagent.dto.SandboxSessionSpec;
 import de.tum.cit.aet.artemis.buildagent.service.InteractiveSandbox;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.AgentVerifyReport;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.DifferentialVerificationService;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.StageCheckResult;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.StageCheckService;
 import de.tum.cit.aet.artemis.localci.exception.LocalCIException;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 
@@ -434,8 +440,8 @@ class SandboxAgentToolsTest {
         assertThat(out).startsWith("ERROR: the verify tool is unavailable").contains("sh verify.sh solution");
     }
 
-    // Stage-aware verify(): DESIGN, TEMPLATE, and STATEMENT short-circuit to an advisory instead of running builds; SOLUTION and TESTS (and an unstaged/legacy null stage) still
-    // delegate to the wired verifier.
+    // Stage-aware verify()/submit(): in a staged session every stage delegates to the wired StageCheckService for the CURRENT stage; an unstaged/legacy session (no enterStage()
+    // call) keeps the old always-on full-differential behavior via the verifier directly.
 
     private static SandboxAgentTools toolsWiredToAVerifier(RecordingSandbox sandbox, ProgrammingExercise exercise, DifferentialVerificationService verifier,
             AgentVerifyReport report) {
@@ -443,38 +449,95 @@ class SandboxAgentToolsTest {
         return new SandboxAgentTools(sandbox, "s", verifier, exercise);
     }
 
+    private static SandboxAgentTools stagedTools(InteractiveSandbox sandbox, ProgrammingExercise exercise, StageCheckService stageCheckService) {
+        return new SandboxAgentTools(sandbox, "s", null, exercise, Map.of(), false, stageCheckService);
+    }
+
     @Test
-    void verify_inDesignOrTemplateStage_returnsAdvisoryInsteadOfRunningBuilds() {
-        // No stubbing on the verifier mock at all (an unstubbed selfCheck() call would return null and blow up toObservation()), so the test fails loudly if the advisory branch
-        // ever falls through to the real differential.
+    void verify_inStagedSession_delegatesToTheStageCheckServiceForTheCurrentStageAndNeverTouchesTheVerifier() {
         RecordingSandbox sandbox = new RecordingSandbox();
         ProgrammingExercise exercise = new ProgrammingExercise();
         DifferentialVerificationService verifier = mock(DifferentialVerificationService.class);
+        StageCheckService stageCheckService = mock(StageCheckService.class);
 
-        for (GenerationStage stage : List.of(GenerationStage.DESIGN, GenerationStage.TEMPLATE)) {
-            SandboxAgentTools tools = new SandboxAgentTools(sandbox, "s", verifier, exercise);
+        for (GenerationStage stage : GenerationStage.values()) {
+            when(stageCheckService.check(eq(stage), eq(sandbox), eq("s"), eq(exercise), eq(Map.of()), any())).thenReturn(StageCheckResult.passed("stage " + stage + " note"));
+            SandboxAgentTools tools = new SandboxAgentTools(sandbox, "s", verifier, exercise, Map.of(), false, stageCheckService);
             tools.enterStage(stage);
 
             String out = tools.verify();
 
-            assertThat(out).as("stage %s", stage).isEqualTo(AgentSystemPromptService.STAGE_VERIFY_ADVISORY).contains("SOLUTION, TESTS, and STATEMENT stages");
+            assertThat(out).as("stage %s", stage).contains("MECHANICAL PRECHECK: PASS").contains("stage " + stage + " note");
         }
         verifyNoInteractions(verifier);
     }
 
     @Test
-    void verify_inSolutionOrTestsStage_stillDelegatesToTheVerifier() {
+    void verify_inStagedSession_reportsAFailingStageCheckAsAMechanicalPrecheckFailure() {
+        RecordingSandbox sandbox = new RecordingSandbox();
+        ProgrammingExercise exercise = new ProgrammingExercise();
+        StageCheckService stageCheckService = mock(StageCheckService.class);
+        when(stageCheckService.check(eq(GenerationStage.DESIGN), eq(sandbox), eq("s"), eq(exercise), eq(Map.of()), any()))
+                .thenReturn(StageCheckResult.failed("DESIGN.md is missing required section(s)"));
+        SandboxAgentTools tools = stagedTools(sandbox, exercise, stageCheckService);
+        tools.enterStage(GenerationStage.DESIGN);
+
+        String out = tools.verify();
+
+        assertThat(out).contains("MECHANICAL PRECHECK: FAIL").contains("DESIGN.md is missing required section(s)");
+    }
+
+    @Test
+    void verify_inTestsStage_returnsTheDifferentialObservationVerbatimWithoutDoublingTheVerdictLine() {
+        // The TESTS stage's observation already carries its own MECHANICAL PRECHECK line (AgentVerifyReport#toObservation()); verify() must not prepend a second one.
         RecordingSandbox sandbox = new RecordingSandbox();
         ProgrammingExercise exercise = new ProgrammingExercise();
         AgentVerifyReport report = new AgentVerifyReport(2, true, List.of(), 2, true, true, List.of(), List.of("t_a"), List.of(), List.of(), true, List.of());
+        StageCheckService stageCheckService = mock(StageCheckService.class);
+        when(stageCheckService.check(eq(GenerationStage.TESTS), eq(sandbox), eq("s"), eq(exercise), eq(Map.of()), any()))
+                .thenReturn(new StageCheckResult(true, report.toObservation(), report));
+        SandboxAgentTools tools = stagedTools(sandbox, exercise, stageCheckService);
+        tools.enterStage(GenerationStage.TESTS);
 
-        for (GenerationStage stage : List.of(GenerationStage.SOLUTION, GenerationStage.TESTS, GenerationStage.STATEMENT)) {
-            DifferentialVerificationService verifier = mock(DifferentialVerificationService.class);
-            SandboxAgentTools tools = toolsWiredToAVerifier(sandbox, exercise, verifier, report);
-            tools.enterStage(stage);
+        String out = tools.verify();
 
-            assertThat(tools.verify()).as("stage %s", stage).isEqualTo(report.toObservation());
-        }
+        assertThat(out).isEqualTo(report.toObservation());
+        assertThat(out.split("MECHANICAL PRECHECK:", -1)).as("the verdict line must appear exactly once").hasSize(2);
+    }
+
+    @Test
+    void verify_inStatementStage_resolvesBindingsAgainstTheTestsStagesExactTestNames() {
+        // The TESTS stage's report must be threaded into the STATEMENT stage's binding check, even though verify() never re-runs a build for STATEMENT.
+        RecordingSandbox sandbox = new RecordingSandbox();
+        ProgrammingExercise exercise = new ProgrammingExercise();
+        AgentVerifyReport testsReport = new AgentVerifyReport(2, true, List.of(), 2, true, true, List.of(), List.of("t_a"), List.of(), List.of(), true, List.of());
+        StageCheckService stageCheckService = mock(StageCheckService.class);
+        when(stageCheckService.check(eq(GenerationStage.TESTS), eq(sandbox), eq("s"), eq(exercise), eq(Map.of()), isNull()))
+                .thenReturn(new StageCheckResult(true, testsReport.toObservation(), testsReport));
+        when(stageCheckService.check(eq(GenerationStage.STATEMENT), eq(sandbox), eq("s"), eq(exercise), eq(Map.of()), eq(testsReport))).thenReturn(StageCheckResult.passed(""));
+        SandboxAgentTools tools = stagedTools(sandbox, exercise, stageCheckService);
+
+        tools.enterStage(GenerationStage.TESTS);
+        tools.verify();
+        tools.enterStage(GenerationStage.STATEMENT);
+        String out = tools.verify();
+
+        assertThat(out).contains("MECHANICAL PRECHECK: PASS");
+        verify(stageCheckService).check(eq(GenerationStage.STATEMENT), eq(sandbox), eq("s"), eq(exercise), eq(Map.of()), eq(testsReport));
+    }
+
+    @Test
+    void verify_inStagedSession_whenTheStageCheckServiceIsUnwired_returnsAnActionableFallbackInsteadOfTheLegacyDifferential() {
+        RecordingSandbox sandbox = new RecordingSandbox();
+        ProgrammingExercise exercise = new ProgrammingExercise();
+        DifferentialVerificationService verifier = mock(DifferentialVerificationService.class);
+        SandboxAgentTools tools = new SandboxAgentTools(sandbox, "s", verifier, exercise); // 4-arg ctor: stageCheckService is null
+        tools.enterStage(GenerationStage.SOLUTION);
+
+        String out = tools.verify();
+
+        assertThat(out).contains("ERROR").contains("stage-check service is unavailable");
+        verifyNoInteractions(verifier);
     }
 
     @Test
@@ -487,6 +550,147 @@ class SandboxAgentToolsTest {
         SandboxAgentTools tools = toolsWiredToAVerifier(sandbox, exercise, verifier, report);
 
         assertThat(tools.verify()).isEqualTo(report.toObservation());
+    }
+
+    // submit(): staged sessions run this stage's own check first and veto the loop-ending effect on a failure; unstaged sessions are never gated.
+
+    @Test
+    void submit_inStagedSession_rejectsAFailingStageCheckAndSetsTheVeto() {
+        RecordingSandbox sandbox = new RecordingSandbox();
+        ProgrammingExercise exercise = new ProgrammingExercise();
+        StageCheckService stageCheckService = mock(StageCheckService.class);
+        when(stageCheckService.check(eq(GenerationStage.SOLUTION), eq(sandbox), eq("s"), eq(exercise), eq(Map.of()), any()))
+                .thenReturn(StageCheckResult.failed("the reference solution does not compile"));
+        SandboxAgentTools tools = stagedTools(sandbox, exercise, stageCheckService);
+        tools.enterStage(GenerationStage.SOLUTION);
+
+        String out = tools.submit("done");
+
+        assertThat(out).startsWith("SUBMIT REJECTED").contains("the reference solution does not compile");
+        assertThat(tools.consumeSubmitVeto()).isTrue();
+        assertThat(tools.consumeSubmitVeto()).as("consuming the veto clears it").isFalse();
+    }
+
+    @Test
+    void submit_inStagedSession_afterAFixThatPasses_succeedsWithNoVeto() {
+        RecordingSandbox sandbox = new RecordingSandbox();
+        ProgrammingExercise exercise = new ProgrammingExercise();
+        StageCheckService stageCheckService = mock(StageCheckService.class);
+        when(stageCheckService.check(eq(GenerationStage.SOLUTION), eq(sandbox), eq("s"), eq(exercise), eq(Map.of()), any()))
+                .thenReturn(StageCheckResult.failed("the reference solution does not compile"), StageCheckResult.passed(""));
+        SandboxAgentTools tools = stagedTools(sandbox, exercise, stageCheckService);
+        tools.enterStage(GenerationStage.SOLUTION);
+
+        String rejected = tools.submit("done");
+        String accepted = tools.submit("done");
+
+        assertThat(rejected).startsWith("SUBMIT REJECTED");
+        assertThat(accepted).isEqualTo("Submitted for verification: done");
+        assertThat(tools.consumeSubmitVeto()).as("the passing resubmit must not leave a stale veto").isFalse();
+    }
+
+    @Test
+    void submit_inUnstagedLegacySession_isNeverGated() {
+        RecordingSandbox sandbox = new RecordingSandbox();
+        SandboxAgentTools tools = new SandboxAgentTools(sandbox, "s"); // currentStage stays null
+
+        assertThat(tools.submit(null)).isEqualTo("Submitted for verification.");
+        assertThat(tools.consumeSubmitVeto()).isFalse();
+    }
+
+    // Dirty-flag lifecycle: write/delete/bash mark the stage dirty; a passing check clears it; enterStage always resets to dirty.
+
+    @Test
+    void reuseCachedPassingCheck_isEmptyUntilAPassingCheckHasRunForThatStage() {
+        RecordingSandbox sandbox = new RecordingSandbox();
+        ProgrammingExercise exercise = new ProgrammingExercise();
+        StageCheckService stageCheckService = mock(StageCheckService.class);
+        SandboxAgentTools tools = stagedTools(sandbox, exercise, stageCheckService);
+        tools.enterStage(GenerationStage.SOLUTION);
+
+        assertThat(tools.reuseCachedPassingCheck(GenerationStage.SOLUTION)).isEmpty();
+    }
+
+    @Test
+    void reuseCachedPassingCheck_afterAPassingVerify_isPresentUntilAWriteFileMarksItDirtyAgain() {
+        RecordingSandbox sandbox = new RecordingSandbox();
+        ProgrammingExercise exercise = new ProgrammingExercise();
+        StageCheckService stageCheckService = mock(StageCheckService.class);
+        when(stageCheckService.check(eq(GenerationStage.SOLUTION), eq(sandbox), eq("s"), eq(exercise), eq(Map.of()), any())).thenReturn(StageCheckResult.passed("clean"));
+        SandboxAgentTools tools = stagedTools(sandbox, exercise, stageCheckService);
+        tools.enterStage(GenerationStage.SOLUTION);
+
+        tools.verify();
+        assertThat(tools.reuseCachedPassingCheck(GenerationStage.SOLUTION)).contains(new StageCheckResult(true, "clean", null));
+
+        tools.writeFile("solution/A.java", "x");
+        assertThat(tools.reuseCachedPassingCheck(GenerationStage.SOLUTION)).as("a write after the passing check must invalidate the cache").isEmpty();
+    }
+
+    @Test
+    void reuseCachedPassingCheck_afterAPassingVerify_isInvalidatedByDeleteFile() {
+        RecordingSandbox sandbox = new RecordingSandbox();
+        ProgrammingExercise exercise = new ProgrammingExercise();
+        StageCheckService stageCheckService = mock(StageCheckService.class);
+        when(stageCheckService.check(eq(GenerationStage.SOLUTION), eq(sandbox), eq("s"), eq(exercise), eq(Map.of()), any())).thenReturn(StageCheckResult.passed("clean"));
+        SandboxAgentTools tools = stagedTools(sandbox, exercise, stageCheckService);
+        tools.enterStage(GenerationStage.SOLUTION);
+
+        tools.verify();
+        assertThat(tools.reuseCachedPassingCheck(GenerationStage.SOLUTION)).isPresent();
+
+        tools.deleteFile("solution/Old.java");
+        assertThat(tools.reuseCachedPassingCheck(GenerationStage.SOLUTION)).isEmpty();
+    }
+
+    @Test
+    void reuseCachedPassingCheck_afterAPassingVerify_isInvalidatedByBashEvenThoughItSkipsTheWriteGuardrails() {
+        ScriptedSandbox sandbox = new ScriptedSandbox(bashStdout(0, "__HYP_META__ rc=0 bytes=1 lines=1\nx"));
+        ProgrammingExercise exercise = new ProgrammingExercise();
+        StageCheckService stageCheckService = mock(StageCheckService.class);
+        when(stageCheckService.check(eq(GenerationStage.SOLUTION), eq(sandbox), anyString(), eq(exercise), eq(Map.of()), any())).thenReturn(StageCheckResult.passed("clean"));
+        SandboxAgentTools tools = stagedTools(sandbox, exercise, stageCheckService);
+        tools.enterStage(GenerationStage.SOLUTION);
+
+        tools.verify();
+        assertThat(tools.reuseCachedPassingCheck(GenerationStage.SOLUTION)).isPresent();
+
+        tools.bash("ls");
+        assertThat(tools.reuseCachedPassingCheck(GenerationStage.SOLUTION)).isEmpty();
+    }
+
+    @Test
+    void reuseCachedPassingCheck_isClearedByEnterStageEvenForTheSameStage() {
+        RecordingSandbox sandbox = new RecordingSandbox();
+        ProgrammingExercise exercise = new ProgrammingExercise();
+        StageCheckService stageCheckService = mock(StageCheckService.class);
+        when(stageCheckService.check(eq(GenerationStage.SOLUTION), eq(sandbox), eq("s"), eq(exercise), eq(Map.of()), any())).thenReturn(StageCheckResult.passed("clean"));
+        SandboxAgentTools tools = stagedTools(sandbox, exercise, stageCheckService);
+        tools.enterStage(GenerationStage.SOLUTION);
+        tools.verify();
+        assertThat(tools.reuseCachedPassingCheck(GenerationStage.SOLUTION)).isPresent();
+
+        tools.enterStage(GenerationStage.SOLUTION); // a fresh re-entry into the same stage must not read a stale pass
+
+        assertThat(tools.reuseCachedPassingCheck(GenerationStage.SOLUTION)).isEmpty();
+    }
+
+    @Test
+    void reuseCachedPassingCheck_isClearedByExitStagedGeneration() {
+        RecordingSandbox sandbox = new RecordingSandbox();
+        ProgrammingExercise exercise = new ProgrammingExercise();
+        StageCheckService stageCheckService = mock(StageCheckService.class);
+        when(stageCheckService.check(eq(GenerationStage.STATEMENT), eq(sandbox), eq("s"), eq(exercise), eq(Map.of()), any())).thenReturn(StageCheckResult.passed(""));
+        SandboxAgentTools tools = stagedTools(sandbox, exercise, stageCheckService);
+        tools.enterStage(GenerationStage.STATEMENT);
+        tools.verify();
+        assertThat(tools.reuseCachedPassingCheck(GenerationStage.STATEMENT)).isPresent();
+
+        tools.exitStagedGeneration();
+
+        assertThat(tools.reuseCachedPassingCheck(GenerationStage.STATEMENT)).isEmpty();
+        // A legacy tool call after exiting staged mode must not be gated or dispatched through the (still-wired) stage-check service.
+        assertThat(tools.submit(null)).isEqualTo("Submitted for verification.");
     }
 
     @Test

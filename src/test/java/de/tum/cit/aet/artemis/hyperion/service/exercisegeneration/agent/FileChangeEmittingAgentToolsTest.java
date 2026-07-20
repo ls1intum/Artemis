@@ -107,4 +107,12 @@ class FileChangeEmittingAgentToolsTest {
         assertThat(tools.submit("done")).isEqualTo("submitted");
         assertThat(emitted).isEmpty();
     }
+
+    @Test
+    void consumeSubmitVetoDelegatesToTheWrappedTools() {
+        when(delegate.consumeSubmitVeto()).thenReturn(true, false);
+
+        assertThat(tools.consumeSubmitVeto()).isTrue();
+        assertThat(tools.consumeSubmitVeto()).isFalse();
+    }
 }

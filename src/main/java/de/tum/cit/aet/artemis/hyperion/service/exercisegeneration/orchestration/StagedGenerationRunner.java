@@ -5,6 +5,7 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
@@ -29,9 +30,9 @@ import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.AgentSys
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.GenerationStage;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.SandboxAgentTools;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.AgentVerifyReport;
-import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.DifferentialVerificationService;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.StageCheckResult;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.StageCheckService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.workspace.GenerationWorkspaceService;
-import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.workspace.SandboxBuildCommandService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 
 /**
@@ -82,20 +83,14 @@ public class StagedGenerationRunner {
 
     private static final Duration READ_TIMEOUT = Duration.ofSeconds(30);
 
-    private static final Duration COMPILE_TIMEOUT = Duration.ofMinutes(5);
-
-    private static final int MAX_GATE_OUTPUT_CHARS = 4_000;
-
     /** Bound on the gate-failure progress line (the full report still goes to the info log and the returned final message). */
     private static final int MAX_GATE_PROGRESS_CHARS = 140;
-
-    private static final List<String> REQUIRED_DESIGN_HEADINGS = List.of("## Classes", "## Public API", "## Tasks");
 
     private final AgentLoopRunner agentLoopRunner;
 
     private final AgentSystemPromptService systemPromptService;
 
-    private final DifferentialVerificationService verifier;
+    private final StageCheckService stageCheckService;
 
     private final StagedContext stagedContext;
 
@@ -126,11 +121,11 @@ public class StagedGenerationRunner {
         }
     }
 
-    public StagedGenerationRunner(AgentLoopRunner agentLoopRunner, AgentSystemPromptService systemPromptService, DifferentialVerificationService verifier,
+    public StagedGenerationRunner(AgentLoopRunner agentLoopRunner, AgentSystemPromptService systemPromptService, StageCheckService stageCheckService,
             @Value("${artemis.hyperion.agent.staged-context:CONTINUOUS}") String stagedContext) {
         this.agentLoopRunner = agentLoopRunner;
         this.systemPromptService = systemPromptService;
-        this.verifier = verifier;
+        this.stageCheckService = stageCheckService;
         this.stagedContext = StagedContext.parse(stagedContext);
     }
 
@@ -163,6 +158,7 @@ public class StagedGenerationRunner {
         String lastFinalMessage = "";
         AgentLoopResult.Status lastStatus = AgentLoopResult.Status.COMPLETED;
         String lastVerifyReport = null;
+        AgentVerifyReport lastTestsReport = null;
         // CONTINUOUS carries one logical conversation across every stage (and re-entry) via AgentLoopRunner#runSession; FRESH never populates this (stays null forever), so
         // every stage starts a brand-new conversation via the plain run() call, exactly as before this feature existed.
         List<Message> conversation = null;
@@ -218,10 +214,15 @@ public class StagedGenerationRunner {
                 }
                 lastStatus = result.status();
 
-                GateResult gate = evaluateGate(stage, sandbox, sessionId, exercise, seedTestsFiles);
-                emit(progress, gateProgressLabel(index, stage, gate));
+                GateEvaluation gateEvaluation = evaluateGate(stage, baseTools, sandbox, sessionId, exercise, seedTestsFiles, lastTestsReport);
+                StageCheckResult gate = gateEvaluation.result();
+                emit(progress, gateProgressLabel(index, stage, gate, gateEvaluation.reused()));
                 if (stage == GenerationStage.TESTS) {
-                    lastVerifyReport = gate.report();
+                    lastVerifyReport = gate.observation();
+                    lastTestsReport = gate.report();
+                    // The agent's own in-loop TESTS-stage checks may have set this already; setting it again from the runner's own official gate result (fresh or reused) covers
+                    // the case where the gate never went through the tools at all (a reused cache, or a TESTS turn that never called verify/submit), so STATEMENT is never blind.
+                    baseTools.recordLastTestsReport(gate.report());
                 }
 
                 if (gate.passed()) {
@@ -229,9 +230,9 @@ public class StagedGenerationRunner {
                     break;
                 }
 
-                log.info("Staged generation gate failed at stage {} for exercise {}: {}", stage, exercise.getId(), gate.report());
+                log.info("Staged generation gate failed at stage {} for exercise {}: {}", stage, exercise.getId(), gate.observation());
                 if (stageReentryUsed || reentriesRemaining <= 0 || remainingPool < MIN_STAGE_BUDGET) {
-                    return new AgentLoopResult(lastStatus, totalTurns, appendGateReport(lastFinalMessage, gate.report()));
+                    return new AgentLoopResult(lastStatus, totalTurns, appendGateReport(lastFinalMessage, gate.observation()));
                 }
                 // Cooperative cancellation between the failed attempt and its re-entry (the outer for-loop already checked before this stage's first attempt).
                 if (cancelled.getAsBoolean()) {
@@ -239,7 +240,7 @@ public class StagedGenerationRunner {
                 }
                 stageReentryUsed = true;
                 reentriesRemaining--;
-                gateFeedback = gate.report();
+                gateFeedback = gate.observation();
                 emit(progress, "Stage " + (index + 1) + "/" + STAGE_ORDER.size() + ": retrying after gate feedback");
                 allocation = allocateStageBudget(STAGE_BASE_BUDGETS[index], 0, remainingPool);
             }
@@ -256,10 +257,16 @@ public class StagedGenerationRunner {
         return new AgentLoopResult(lastStatus, totalTurns, lastFinalMessage);
     }
 
-    /** Builds the post-gate progress line: pass/fail in the same voice as {@link #STAGE_PROGRESS_LABELS}, bounding a failure's report to its first line, ~140 chars. */
-    private String gateProgressLabel(int index, GenerationStage stage, GateResult gate) {
+    /**
+     * Builds the post-gate progress line: pass/fail in the same voice as {@link #STAGE_PROGRESS_LABELS}, bounding a failure's report to its first line, ~140 chars. A passing
+     * gate that reused the tools' cached check (see {@link #evaluateGate}) instead of re-running it carries a suffix so the transcript stays honest about why it was instant.
+     */
+    private String gateProgressLabel(int index, GenerationStage stage, StageCheckResult gate, boolean reused) {
         String prefix = "Stage " + (index + 1) + "/" + STAGE_ORDER.size() + ": " + stage.displayName().toLowerCase(Locale.ROOT) + " gate ";
-        return gate.passed() ? prefix + "passed" : prefix + "failed: " + firstLineBounded(gate.report(), MAX_GATE_PROGRESS_CHARS);
+        if (!gate.passed()) {
+            return prefix + "failed: " + firstLineBounded(gate.observation(), MAX_GATE_PROGRESS_CHARS);
+        }
+        return reused ? prefix + "passed (reused in-stage check)" : prefix + "passed";
     }
 
     /** Extracts the first line of {@code text}, bounded to {@code maxChars} code points (an ellipsis marks truncation). Used to keep a gate-failure progress line short. */
@@ -287,96 +294,22 @@ public class StagedGenerationRunner {
         return Math.max(MIN_STAGE_BUDGET, Math.min(base + rollover, remainingPool));
     }
 
-    private GateResult evaluateGate(GenerationStage stage, InteractiveSandbox sandbox, String sessionId, ProgrammingExercise exercise, Map<String, String> seedTestsFiles) {
-        return switch (stage) {
-            case DESIGN -> checkDesignGate(sandbox, sessionId);
-            case SOLUTION -> checkCompileGate(sandbox, sessionId, exercise, "solution", "reference solution");
-            case TEMPLATE -> checkTemplateGate(sandbox, sessionId, exercise);
-            case TESTS -> checkTestsGate(sandbox, sessionId, exercise, seedTestsFiles);
-            case STATEMENT -> checkStatementGate(sandbox, sessionId);
-        };
+    /** One gate evaluation's outcome, together with whether it came from {@link SandboxAgentTools#reuseCachedPassingCheck} instead of a fresh {@link StageCheckService} call. */
+    private record GateEvaluation(StageCheckResult result, boolean reused) {
     }
 
-    private GateResult checkDesignGate(InteractiveSandbox sandbox, String sessionId) {
-        String designDocument = execRead(sandbox, sessionId, "cat", GenerationWorkspaceService.WORKSPACE + "/DESIGN.md");
-        if (designDocument.isBlank()) {
-            return GateResult.failed(
-                    "DESIGN.md is missing or empty. Write /workspace/DESIGN.md with the required '## Classes', '## Public API', and '## Tasks' sections before continuing.");
+    /**
+     * Evaluates one stage's exit gate: reuses the tools' cached passing check when nothing has changed since it ran (see {@link SandboxAgentTools#reuseCachedPassingCheck}) so a
+     * stage the agent already verified clean does not pay for a redundant check, and otherwise delegates to {@link StageCheckService}. This runner owns only stage sequencing,
+     * turn budgets, re-entry, and this cache consultation (see the class javadoc); it does not itself decide whether a stage's artifact passed.
+     */
+    private GateEvaluation evaluateGate(GenerationStage stage, SandboxAgentTools baseTools, InteractiveSandbox sandbox, String sessionId, ProgrammingExercise exercise,
+            Map<String, String> seedTestsFiles, @Nullable AgentVerifyReport lastTestsReport) {
+        Optional<StageCheckResult> reused = baseTools.reuseCachedPassingCheck(stage);
+        if (reused.isPresent()) {
+            return new GateEvaluation(reused.get(), true);
         }
-        List<String> missing = REQUIRED_DESIGN_HEADINGS.stream().filter(heading -> !designDocument.contains(heading)).toList();
-        if (!missing.isEmpty()) {
-            return GateResult.failed("DESIGN.md is missing required section(s): " + missing + ". Add them before continuing.");
-        }
-        return GateResult.passed("");
-    }
-
-    private GateResult checkCompileGate(InteractiveSandbox sandbox, String sessionId, ProgrammingExercise exercise, String repositoryDirectory, String label) {
-        // A direct `mvn compile` in the workspace CANNOT work here: the sandbox mounts /root/.m2 read-only and has no network egress, so plugin resolution fails
-        // (observed live: "Read-only file system" then "Could not transfer artifact"). The pristine verify.sh is the only grader-faithful build path — it stages the
-        // workspace into a writable /tmp build dir with the pre-warmed repository. At the solution/template stages the test suite is still the empty stripped scaffold,
-        // so its exit code degenerates to exactly a compile check.
-        String repositorySelector = "solution".equals(repositoryDirectory) ? "solution" : "template";
-        SandboxExecResult result;
-        try {
-            // Until the first verification runs, /opt/hyperion/verify.sh is still the consumed readiness-probe variant (exits 66) — re-seed the real script first.
-            verifier.ensurePristineVerifyScript(sandbox, sessionId, exercise);
-            result = sandbox.exec(sessionId, COMPILE_TIMEOUT, "sh", "-c",
-                    "cd " + GenerationWorkspaceService.WORKSPACE + " && sh " + SandboxBuildCommandService.PRISTINE_VERIFY_PATH + " " + repositorySelector);
-        }
-        catch (RuntimeException e) {
-            return GateResult.failed("Could not run the " + label + " compile check: " + e.getMessage());
-        }
-        if (result.timedOut()) {
-            return GateResult.failed("The " + label + " compile check timed out.");
-        }
-        if (!result.isSuccess()) {
-            return GateResult.failed("The " + label + " does not compile:\n" + boundedOutput(result.combinedOutput()));
-        }
-        return GateResult.passed("");
-    }
-
-    private GateResult checkTemplateGate(InteractiveSandbox sandbox, String sessionId, ProgrammingExercise exercise) {
-        GateResult compile = checkCompileGate(sandbox, sessionId, exercise, "template", "template");
-        if (!compile.passed()) {
-            return compile;
-        }
-        try {
-            SandboxExecResult diff = sandbox.exec(sessionId, COMPILE_TIMEOUT, "diff", "-rq", GenerationWorkspaceService.WORKSPACE + "/solution",
-                    GenerationWorkspaceService.WORKSPACE + "/template");
-            if (!diff.timedOut() && diff.exitCode() == 0) {
-                return GateResult.failed("The template is byte-identical to the solution (a degenerate copy). Remove the student work DESIGN.md marks stubbed or absent from "
-                        + "the template so it still compiles but no longer matches the solution.");
-            }
-        }
-        catch (RuntimeException e) {
-            // Advisory only: a tooling failure here must not block an otherwise sound template.
-            log.debug("Degenerate-copy check could not run (fail-open): {}", e.getMessage());
-        }
-        return GateResult.passed("");
-    }
-
-    private GateResult checkTestsGate(InteractiveSandbox sandbox, String sessionId, ProgrammingExercise exercise, Map<String, String> seedTestsFiles) {
-        AgentVerifyReport report;
-        try {
-            report = verifier.selfCheck(sandbox, sessionId, exercise, seedTestsFiles, false);
-        }
-        catch (RuntimeException e) {
-            return GateResult.failed("Could not run the differential self-check: " + e.getMessage());
-        }
-        String observation = report.toObservation();
-        if (report.solutionPassed() && report.templateFailed()) {
-            return GateResult.passed(observation);
-        }
-        return GateResult.failed("The tests do not yet satisfy the differential requirement (the solution must pass every test, the template must fail every "
-                + "task-bound behavioural test):\n" + observation);
-    }
-
-    private GateResult checkStatementGate(InteractiveSandbox sandbox, String sessionId) {
-        String statement = execRead(sandbox, sessionId, "cat", GenerationWorkspaceService.WORKSPACE + "/problem-statement.md");
-        if (statement.isBlank()) {
-            return GateResult.failed("problem-statement.md is missing or empty. Write the student-facing problem statement before submitting.");
-        }
-        return GateResult.passed("");
+        return new GateEvaluation(stageCheckService.check(stage, sandbox, sessionId, exercise, seedTestsFiles, lastTestsReport), false);
     }
 
     /**
@@ -426,13 +359,6 @@ public class StagedGenerationRunner {
         }
     }
 
-    private static String boundedOutput(@Nullable String output) {
-        if (output == null) {
-            return "";
-        }
-        return output.length() <= MAX_GATE_OUTPUT_CHARS ? output : output.substring(output.length() - MAX_GATE_OUTPUT_CHARS);
-    }
-
     private static String appendGateReport(String finalMessage, String gateReport) {
         if (gateReport == null || gateReport.isBlank()) {
             return finalMessage;
@@ -449,17 +375,5 @@ public class StagedGenerationRunner {
     /** Test hook: inject a deterministic clock so the wall-clock guard can be exercised without sleeping. */
     void setClockForTests(Supplier<Instant> clock) {
         this.clock = clock;
-    }
-
-    /** One stage gate's outcome: whether it passed, and its report text (a failure reason, or — for TESTS — the self-check observation carried into the next stage). */
-    private record GateResult(boolean passed, String report) {
-
-        static GateResult passed(String report) {
-            return new GateResult(true, report);
-        }
-
-        static GateResult failed(String report) {
-            return new GateResult(false, report);
-        }
     }
 }

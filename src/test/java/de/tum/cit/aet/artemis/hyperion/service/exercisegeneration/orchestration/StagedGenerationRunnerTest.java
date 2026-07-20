@@ -8,6 +8,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -18,6 +19,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
@@ -42,12 +44,17 @@ import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.Generati
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.SandboxAgentTools;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.AgentVerifyReport;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.DifferentialVerificationService;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.SingleBuildResult;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.StageCheckResult;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.StageCheckService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 
 /**
- * Unit tests for the enforced staged-generation runner: stage order and context, the shared turn-budget pool's rollover/cap/floor arithmetic, per-stage mechanical gates and
- * their short-circuit-on-failure behaviour, cooperative cancellation between stages, and the wall-clock guard. A fake sandbox serves canned command output keyed by the exact
- * commands the runner issues, following the same pattern as {@code SandboxAgentToolsTest}.
+ * Unit tests for the enforced staged-generation runner: stage order and context, the shared turn-budget pool's rollover/cap/floor arithmetic, cooperative cancellation between
+ * stages, and the wall-clock guard. Per-stage mechanical gate logic itself lives in {@link StageCheckService} and is unit-covered there
+ * ({@code StageCheckServiceTest}); this suite wires a real {@link StageCheckService} around a mocked {@link DifferentialVerificationService} so the runner's own orchestration
+ * (sequencing, budgets, re-entry, delegation) is exercised through the same seam production uses. A fake sandbox serves canned command output keyed by the exact commands the
+ * gates issue for the file-based checks (DESIGN.md, problem-statement.md, the template/solution diff), following the same pattern as {@code SandboxAgentToolsTest}.
  */
 class StagedGenerationRunnerTest {
 
@@ -75,10 +82,6 @@ class StagedGenerationRunnerTest {
 
         private String layout = "solution/pom.xml\ntemplate/pom.xml\ntests/pom.xml";
 
-        private SandboxExecResult solutionCompileResult = success();
-
-        private SandboxExecResult templateCompileResult = success();
-
         /** {@code diff -rq} exit code; 1 means the trees differ (the expected, healthy case). */
         private int diffExitCode = 1;
 
@@ -105,12 +108,6 @@ class StagedGenerationRunnerTest {
                 String script = command[2];
                 if (script.contains("find") && script.contains("head -80")) {
                     return new SandboxExecResult(0, layout, "", false);
-                }
-                if (script.contains("verify.sh solution")) {
-                    return solutionCompileResult;
-                }
-                if (script.contains("verify.sh template")) {
-                    return templateCompileResult;
                 }
             }
             if (command.length >= 1 && "diff".equals(command[0])) {
@@ -143,6 +140,8 @@ class StagedGenerationRunnerTest {
 
     private DifferentialVerificationService verifier;
 
+    private StageCheckService stageCheckService;
+
     private SandboxAgentTools baseTools;
 
     private ProgrammingExercise exercise;
@@ -153,6 +152,18 @@ class StagedGenerationRunnerTest {
 
     private static final BooleanSupplier NEVER_CANCELLED = () -> false;
 
+    /**
+     * A {@link SingleBuildResult} that satisfies the "compiled" definition ({@code testsRun > 0 || exitCode == 0}) with no tests run at all — the solution/template compile
+     * gates' default, healthy outcome before any test exists.
+     */
+    private static SingleBuildResult compiled() {
+        return new SingleBuildResult(0, 0, 0, List.of(), "");
+    }
+
+    private static SingleBuildResult compileFailure(String buildOutput) {
+        return new SingleBuildResult(1, 0, 0, List.of(), buildOutput);
+    }
+
     @BeforeEach
     void setUp() {
         agentLoopRunner = mock(AgentLoopRunner.class);
@@ -162,15 +173,17 @@ class StagedGenerationRunnerTest {
         exercise = mock(ProgrammingExercise.class);
         when(exercise.getId()).thenReturn(1L);
         when(systemPromptService.buildStage(any(), any())).thenReturn("STAGE SYSTEM PROMPT");
+        when(verifier.singleBuild(any(), anyString(), eq(exercise), eq("solution"))).thenReturn(compiled());
+        when(verifier.singleBuild(any(), anyString(), eq(exercise), eq("template"))).thenReturn(compiled());
+        stageCheckService = new StageCheckService(verifier);
         sandbox = new FakeSandbox();
         // Most of these tests pin the pre-existing single-call-per-stage behaviour (mocking agentLoopRunner.run(...)); FRESH reproduces that exactly. The CONTINUOUS-specific
         // tests below construct their own runner with "CONTINUOUS" and mock runSession(...) instead.
-        runner = new StagedGenerationRunner(agentLoopRunner, systemPromptService, verifier, "FRESH");
+        runner = new StagedGenerationRunner(agentLoopRunner, systemPromptService, stageCheckService, "FRESH");
     }
 
-    private static StagedGenerationRunner newContinuousRunner(AgentLoopRunner agentLoopRunner, AgentSystemPromptService systemPromptService,
-            DifferentialVerificationService verifier) {
-        return new StagedGenerationRunner(agentLoopRunner, systemPromptService, verifier, "CONTINUOUS");
+    private static StagedGenerationRunner newContinuousRunner(AgentLoopRunner agentLoopRunner, AgentSystemPromptService systemPromptService, StageCheckService stageCheckService) {
+        return new StagedGenerationRunner(agentLoopRunner, systemPromptService, stageCheckService, "CONTINUOUS");
     }
 
     private static AgentLoopRunner.AgentLoopSession session(AgentLoopResult result, List<Message> conversation) {
@@ -265,7 +278,7 @@ class StagedGenerationRunnerTest {
 
     @Test
     void solutionGateFailure_compileError_stopsBeforeTemplateStage() {
-        sandbox.solutionCompileResult = new SandboxExecResult(1, "", "compile error: cannot find symbol", false); // never fixed
+        when(verifier.singleBuild(any(), anyString(), eq(exercise), eq("solution"))).thenReturn(compileFailure("compile error: cannot find symbol")); // never fixed
         when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(completed(5, "design"), completed(10, "solution attempt"));
 
         AgentLoopResult result = run(NEVER_CANCELLED, Set::of);
@@ -291,7 +304,7 @@ class StagedGenerationRunnerTest {
 
     @Test
     void templateGateFailure_doesNotCompile_stopsBeforeTestsStage() {
-        sandbox.templateCompileResult = new SandboxExecResult(1, "", "compile error", false); // never fixed
+        when(verifier.singleBuild(any(), anyString(), eq(exercise), eq("template"))).thenReturn(compileFailure("compile error")); // never fixed
         when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(completed(5, "design"), completed(10, "solution"),
                 completed(4, "template attempt"));
 
@@ -433,7 +446,8 @@ class StagedGenerationRunnerTest {
 
     @Test
     void gateFailure_reEntersTheSameStageOnceThenReturnsOnASecondFailure() {
-        sandbox.solutionCompileResult = new SandboxExecResult(1, "", "compile error: cannot find symbol", false); // never fixed: both attempts fail
+        // never fixed: both attempts fail
+        when(verifier.singleBuild(any(), anyString(), eq(exercise), eq("solution"))).thenReturn(compileFailure("compile error: cannot find symbol"));
         when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(completed(5, "design"), completed(10, "solution attempt 1"),
                 completed(8, "solution attempt 2"));
         List<String> progressEvents = new ArrayList<>();
@@ -484,8 +498,10 @@ class StagedGenerationRunnerTest {
     @Test
     void reentryCap_atMostTwoReentriesAcrossTheWholeRun() {
         sandbox.designMarkdown = "no headings here"; // DESIGN gate fails first
-        sandbox.solutionCompileResult = new SandboxExecResult(1, "", "solution compile error", false); // SOLUTION gate fails first
-        sandbox.templateCompileResult = new SandboxExecResult(1, "", "template compile error", false); // TEMPLATE gate fails and gets NO re-entry (cap spent)
+        AtomicReference<SingleBuildResult> solutionBuild = new AtomicReference<>(compileFailure("solution compile error")); // SOLUTION gate fails first
+        when(verifier.singleBuild(any(), anyString(), eq(exercise), eq("solution"))).thenAnswer(invocation -> solutionBuild.get());
+        // TEMPLATE gate fails and gets NO re-entry (cap spent)
+        when(verifier.singleBuild(any(), anyString(), eq(exercise), eq("template"))).thenReturn(compileFailure("template compile error"));
         AtomicInteger callCount = new AtomicInteger();
         when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenAnswer(invocation -> switch (callCount.incrementAndGet()) {
             case 1 -> completed(5, "design attempt 1");
@@ -495,7 +511,7 @@ class StagedGenerationRunnerTest {
             }
             case 3 -> completed(10, "solution attempt 1");
             case 4 -> {
-                sandbox.solutionCompileResult = new SandboxExecResult(0, "", "", false);
+                solutionBuild.set(compiled());
                 yield completed(8, "solution attempt 2");
             }
             case 5 -> completed(4, "template attempt 1");
@@ -515,7 +531,7 @@ class StagedGenerationRunnerTest {
     @Test
     void continuousMode_carriesTheConversationAcrossStagesFromStageTwoOnwards() {
         AgentLoopRunner sessionAgentLoopRunner = mock(AgentLoopRunner.class);
-        StagedGenerationRunner continuousRunner = newContinuousRunner(sessionAgentLoopRunner, systemPromptService, verifier);
+        StagedGenerationRunner continuousRunner = newContinuousRunner(sessionAgentLoopRunner, systemPromptService, stageCheckService);
         List<Message> convAfterDesign = List.of(assistantText("design done"));
         List<Message> convAfterSolution = List.of(assistantText("solution done"));
         List<Message> convAfterTemplate = List.of(assistantText("template done"));
@@ -559,7 +575,7 @@ class StagedGenerationRunnerTest {
     @Test
     void continuousMode_reEntry_appendsTheGateReportAsTheNextUserMessageInsteadOfARebuiltPrompt() {
         AgentLoopRunner sessionAgentLoopRunner = mock(AgentLoopRunner.class);
-        StagedGenerationRunner continuousRunner = newContinuousRunner(sessionAgentLoopRunner, systemPromptService, verifier);
+        StagedGenerationRunner continuousRunner = newContinuousRunner(sessionAgentLoopRunner, systemPromptService, stageCheckService);
         when(verifier.selfCheck(any(), anyString(), eq(exercise), any(), eq(false))).thenReturn(passingReport());
         sandbox.designMarkdown = "no headings here";
         List<Message> convAfterFailedDesign = List.of(assistantText("design attempt 1"));
@@ -590,6 +606,57 @@ class StagedGenerationRunnerTest {
     @Test
     void constructor_rejectsAnUnknownStagedContextValue() {
         org.assertj.core.api.Assertions.assertThatIllegalArgumentException()
-                .isThrownBy(() -> new StagedGenerationRunner(agentLoopRunner, systemPromptService, verifier, "sometimes")).withMessageContaining("staged-context");
+                .isThrownBy(() -> new StagedGenerationRunner(agentLoopRunner, systemPromptService, stageCheckService, "sometimes")).withMessageContaining("staged-context");
+    }
+
+    // --- Clean-skip exit gate: a stage whose check already passed in-loop, with no edits since, is reused instead of re-checked ---
+
+    @Test
+    void exitGate_reusesTheToolsCachedPassingCheck_withoutCallingTheCheckServiceAgain() {
+        // A live DESIGN check would FAIL here (designMarkdown null), so the run only completes because the exit gate consulted the cache instead of re-running the check.
+        sandbox.designMarkdown = null;
+        when(baseTools.reuseCachedPassingCheck(GenerationStage.DESIGN)).thenReturn(Optional.of(StageCheckResult.passed("cached DESIGN observation")));
+        StageCheckService spiedService = spy(stageCheckService);
+        StagedGenerationRunner testRunner = new StagedGenerationRunner(agentLoopRunner, systemPromptService, spiedService, "FRESH");
+        when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(completed(3, "design done"), completed(10, "solution done"),
+                completed(4, "template done"), completed(12, "tests done"), completed(5, "statement done"));
+        when(verifier.selfCheck(any(), anyString(), eq(exercise), any(), eq(false))).thenReturn(passingReport());
+        List<String> progressEvents = new ArrayList<>();
+
+        AgentLoopResult result = testRunner.run(exercise, baseTools, baseTools, "brief", Map.of(), sandbox, "s", NEVER_CANCELLED, null, progressEvents::add, Set::of);
+
+        assertThat(result.status()).isEqualTo(AgentLoopResult.Status.COMPLETED);
+        assertThat(progressEvents).contains("Stage 1/5: design gate passed (reused in-stage check)");
+        verify(spiedService, never()).check(eq(GenerationStage.DESIGN), any(), anyString(), eq(exercise), any(), any());
+    }
+
+    @Test
+    void exitGate_whenTheToolsReportDirty_reCallsTheCheckServiceAndDoesNotAddTheReusedSuffix() {
+        // baseTools.reuseCachedPassingCheck(...) is unstubbed on the mock -> Optional.empty() (the default "dirty" state), so every stage's exit gate must call the live service.
+        StageCheckService spiedService = spy(stageCheckService);
+        StagedGenerationRunner testRunner = new StagedGenerationRunner(agentLoopRunner, systemPromptService, spiedService, "FRESH");
+        when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(completed(3, "design done"), completed(10, "solution done"),
+                completed(4, "template done"), completed(12, "tests done"), completed(5, "statement done"));
+        when(verifier.selfCheck(any(), anyString(), eq(exercise), any(), eq(false))).thenReturn(passingReport());
+        List<String> progressEvents = new ArrayList<>();
+
+        AgentLoopResult result = testRunner.run(exercise, baseTools, baseTools, "brief", Map.of(), sandbox, "s", NEVER_CANCELLED, null, progressEvents::add, Set::of);
+
+        assertThat(result.status()).isEqualTo(AgentLoopResult.Status.COMPLETED);
+        assertThat(progressEvents).contains("Stage 1/5: design gate passed", "Stage 2/5: solution gate passed").noneMatch(event -> event.contains("reused in-stage check"));
+        verify(spiedService, times(1)).check(eq(GenerationStage.DESIGN), any(), anyString(), eq(exercise), any(), any());
+        verify(spiedService, times(1)).check(eq(GenerationStage.SOLUTION), any(), anyString(), eq(exercise), any(), any());
+    }
+
+    @Test
+    void testsGate_recordsItsReportOnTheToolsInstanceForTheStatementStagesBindingCheck() {
+        when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(completed(3, "design done"), completed(10, "solution done"),
+                completed(4, "template done"), completed(12, "tests done"), completed(5, "statement done"));
+        when(verifier.selfCheck(any(), anyString(), eq(exercise), any(), eq(false))).thenReturn(passingReport());
+
+        AgentLoopResult result = run(NEVER_CANCELLED, Set::of);
+
+        assertThat(result.status()).isEqualTo(AgentLoopResult.Status.COMPLETED);
+        verify(baseTools).recordLastTestsReport(passingReport());
     }
 }

@@ -5,6 +5,7 @@ import java.time.Duration;
 import java.util.Base64;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -18,17 +19,20 @@ import de.tum.cit.aet.artemis.hyperion.service.HyperionSecretMaterialPolicy;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.AgentVerifyReport;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.DifferentialVerificationService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.ExerciseIntegrityGate;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.StageCheckResult;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.StageCheckService;
 import de.tum.cit.aet.artemis.localci.exception.LocalCIException;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 
 /**
  * The file, shell, and verification tools the exercise-generation agent calls, bound to one sandbox session. Created per session (holds the session id), so not a Spring bean.
  * <p>
- * The agent has a full shell safely because correctness is never judged from what these tools report. The {@code verify} tool runs the same differential as the authoritative
- * post-loop verifier (two fresh builds parsed with the production parsers) and returns structured feedback, but it is advisory only; the post-loop verifier decides mechanical
- * validity.
+ * The agent has a full shell safely because correctness is never judged from what these tools report. In a staged session, {@code verify} and the gating half of {@code submit}
+ * delegate to {@link StageCheckService} for the current stage's mechanical check (as cheap as that stage allows — a structure scan, one build, or the full differential); in an
+ * unstaged (legacy) session {@code verify} always runs the same differential as the authoritative post-loop verifier. Either way this is advisory only; the post-loop verifier
+ * decides mechanical validity.
  */
-public class SandboxAgentTools {
+public class SandboxAgentTools implements SubmitVetoAware {
 
     private static final HyperionSecretMaterialPolicy SECRET_MATERIAL_POLICY = new HyperionSecretMaterialPolicy();
 
@@ -59,17 +63,33 @@ public class SandboxAgentTools {
      */
     private static final Pattern MANGLED_ARRAY = Pattern.compile("^\\[\\S.*,.*]$", Pattern.DOTALL);
 
+    /**
+     * Marker line an observation carries when it already states its own pass/fail verdict (the TESTS stage's {@link AgentVerifyReport#toObservation()}), so the generic
+     * "MECHANICAL PRECHECK: PASS/FAIL" header {@link #formatStageCheckObservation} synthesizes for the other stages is not doubled up on top of it.
+     */
+    private static final String VERDICT_LINE_MARKER = "MECHANICAL PRECHECK:";
+
     private final InteractiveSandbox sandbox;
 
     private final String sessionId;
 
-    /** The authoritative verifier, reused by the {@code verify} tool to run the same differential as the post-loop mechanical gate; {@code null} disables the tool in tests. */
+    /**
+     * The authoritative verifier, reused by the {@code verify} tool to run the same differential as the post-loop mechanical gate in an unstaged session; {@code null} disables
+     * the legacy fallback in tests.
+     */
     @Nullable
     private final DifferentialVerificationService verifier;
 
     /** The exercise whose per-language {@code verify.sh} and SCA configuration the {@code verify} tool's differential uses; {@code null} disables the tool in tests. */
     @Nullable
     private final ProgrammingExercise exercise;
+
+    /**
+     * The per-stage mechanical gate, consulted by {@code verify} and the gating half of {@code submit} in a staged session; {@code null} in an unstaged session or a test that
+     * does not need staged dispatch.
+     */
+    @Nullable
+    private final StageCheckService stageCheckService;
 
     /** Seeded test files let the in-loop verifier distinguish untouched legacy tests from files authored or changed in this run. */
     private final Map<String, String> seedTestsFiles;
@@ -89,33 +109,75 @@ public class SandboxAgentTools {
     private volatile GenerationStage currentStage;
 
     /**
+     * Set by {@link #submit} when the current stage's mechanical check rejected the submission, so {@link AgentLoopRunner} keeps the loop going instead of ending the session;
+     * cleared by {@link #consumeSubmitVeto()}.
+     */
+    private volatile boolean submitVetoed;
+
+    /**
+     * Whether a file/shell tool has run since the last PASSING stage check, so a later check for the same stage cannot be skipped. Starts {@code true} (no passing check has
+     * run yet) and is reset by {@link #enterStage}.
+     */
+    private volatile boolean dirtySinceLastPassingCheck = true;
+
+    /**
+     * The stage {@link #cachedPassingCheck} applies to; consulted alongside {@link #dirtySinceLastPassingCheck} by {@link #reuseCachedPassingCheck} so a cache from an earlier
+     * stage can never be misread as current.
+     */
+    @Nullable
+    private volatile GenerationStage cachedStage;
+
+    /** The last PASSING stage check's result, reused by the orchestrator's exit gate when nothing has changed since (see {@link #reuseCachedPassingCheck}). */
+    @Nullable
+    private volatile StageCheckResult cachedPassingCheck;
+
+    /**
+     * The TESTS stage's most recent {@link AgentVerifyReport}, so the STATEMENT stage's binding check can resolve {@code [task]} names without its own build. Set both
+     * opportunistically by an in-loop TESTS-stage check and authoritatively by {@link #recordLastTestsReport} after the orchestrator's own TESTS gate resolves.
+     */
+    @Nullable
+    private volatile AgentVerifyReport lastTestsReport;
+
+    /**
      * @param sandbox   the sandbox session the tools operate on
      * @param sessionId the session handle
-     * @param verifier  the authoritative verifier the {@code verify} tool reuses for the in-loop self-check
+     * @param verifier  the authoritative verifier the {@code verify} tool reuses for the in-loop self-check in an unstaged session
      * @param exercise  the exercise whose {@code verify.sh}/SCA config the {@code verify} tool's differential uses
      */
     public SandboxAgentTools(InteractiveSandbox sandbox, String sessionId, DifferentialVerificationService verifier, ProgrammingExercise exercise) {
-        this(sandbox, sessionId, verifier, exercise, Map.of(), false);
+        this(sandbox, sessionId, verifier, exercise, Map.of(), false, null);
     }
 
+    /**
+     * @param sandbox           the sandbox session the tools operate on
+     * @param sessionId         the session handle
+     * @param verifier          the authoritative verifier the {@code verify} tool reuses for the in-loop self-check in an unstaged session
+     * @param exercise          the exercise whose {@code verify.sh}/SCA config the {@code verify} tool's differential uses
+     * @param seedTestsFiles    the tests-repository snapshot taken before generation
+     * @param adaptation        whether this run adapts an existing exercise
+     * @param stageCheckService the per-stage mechanical gate {@code verify}/{@code submit} delegate to once {@link #enterStage} has been called; {@code null} while a stage is
+     *                              active makes both tools report the stage-check service as unavailable rather than silently falling back to the unstaged differential
+     */
     public SandboxAgentTools(InteractiveSandbox sandbox, String sessionId, DifferentialVerificationService verifier, ProgrammingExercise exercise,
-            Map<String, String> seedTestsFiles, boolean adaptation) {
+            Map<String, String> seedTestsFiles, boolean adaptation, @Nullable StageCheckService stageCheckService) {
         this.sandbox = sandbox;
         this.sessionId = sessionId;
         this.verifier = verifier;
         this.exercise = exercise;
         this.seedTestsFiles = Map.copyOf(seedTestsFiles);
         this.adaptation = adaptation;
+        this.stageCheckService = stageCheckService;
     }
 
     /**
-     * Verify-free constructor: the verifier and exercise are absent, so the {@code verify} tool is never wired. Used by unit tests of the file/shell tools.
+     * Verify-free constructor: the verifier, exercise, and stage-check service are absent, so neither {@code verify} nor a gated {@code submit} is wired. Used by unit tests of
+     * the file/shell tools.
      *
      * @param sandbox   the sandbox session the tools operate on
      * @param sessionId the session handle
      */
     SandboxAgentTools(InteractiveSandbox sandbox, String sessionId) {
-        this(sandbox, sessionId, null, null, Map.of(), false);
+        this(sandbox, sessionId, null, null, Map.of(), false, null);
     }
 
     /**
@@ -164,7 +226,11 @@ public class SandboxAgentTools {
         String target = WORKSPACE + "/" + safe;
         String script = "mkdir -p \"$(dirname '" + target + "')\" && echo '" + encoded + "' | base64 -d > '" + target + "'";
         SandboxExecResult result = sandbox.exec(sessionId, FILE_OP_TIMEOUT, "sh", "-c", script);
-        return result.isSuccess() ? "Wrote " + content.length() + " characters to " + safe : "ERROR: could not write '" + safe + "': " + result.combinedOutput();
+        if (!result.isSuccess()) {
+            return "ERROR: could not write '" + safe + "': " + result.combinedOutput();
+        }
+        markDirty();
+        return "Wrote " + content.length() + " characters to " + safe;
     }
 
     /**
@@ -220,7 +286,11 @@ public class SandboxAgentTools {
             return immutableHarnessError(safe);
         }
         SandboxExecResult result = sandbox.exec(sessionId, FILE_OP_TIMEOUT, "rm", "-f", "--", WORKSPACE + "/" + safe);
-        return result.isSuccess() ? "Deleted " + safe : "ERROR: could not delete '" + safe + "': " + result.combinedOutput();
+        if (!result.isSuccess()) {
+            return "ERROR: could not delete '" + safe + "': " + result.combinedOutput();
+        }
+        markDirty();
+        return "Deleted " + safe;
     }
 
     /**
@@ -248,6 +318,10 @@ public class SandboxAgentTools {
         if (mutatesManagedBuildInfrastructure(command)) {
             return "exit=2\nDo not modify tests-repository build/harness files such as tests/pom.xml. They are seeded by Artemis and graded verbatim; edit only test source files under tests/test/<package path>/ instead.";
         }
+        // A shell command can mutate the workspace outside the write_file/edit_file/delete_file guardrails, so it always invalidates a cached passing stage check even though most
+        // bash calls are read-only inspection. Conservative by design: the one case the clean-skip exists for — a passing verify/submit immediately followed by the loop ending —
+        // never has a bash call in between, so this never costs that path anything.
+        markDirty();
         int sequence = bashSequence++;
         String logPath = SPILL_DIR + "/bash-" + sequence + ".log";
         // Run in a subshell so an `exit` inside (e.g. from verify.sh) cannot abort this wrapper before it reports the code and tail. Combined output is redirected, not piped
@@ -270,13 +344,63 @@ public class SandboxAgentTools {
     }
 
     /**
-     * Called by the orchestrator before starting a stage's bounded agent loop, so the tools that follow behave according to that stage's rules (currently: {@link #verify}'s
-     * availability). Never called for an unstaged (legacy single-loop) session, which leaves {@link #currentStage} {@code null}.
+     * Called by the orchestrator before starting a stage's bounded agent loop, so the tools that follow behave according to that stage's rules (currently: {@link #verify}'s and
+     * {@link #submit}'s dispatch to {@link StageCheckService}). Resets the clean/dirty tracking to dirty and drops any cached passing check, so a fresh stage (or a re-entry into
+     * the same stage after gate feedback) never reuses a pass computed before this call. Never called for an unstaged (legacy single-loop) session, which leaves
+     * {@link #currentStage} {@code null}.
      *
      * @param stage the stage the orchestrator is about to run
      */
     public void enterStage(GenerationStage stage) {
         this.currentStage = stage;
+        this.dirtySinceLastPassingCheck = true;
+        this.cachedStage = null;
+        this.cachedPassingCheck = null;
+    }
+
+    /**
+     * Called once by the orchestrator after the staged run finishes (successfully, on a gate failure, or on the wall-clock ceiling), so a later legacy single-loop repair
+     * attempt on this same shared tools instance (see the orchestrator's outer repair-attempt loop) is unstaged again instead of incorrectly keeping the last stage's dispatch —
+     * without this, {@code verify}/{@code submit} on a repair attempt would still route through {@link StageCheckService} for whichever stage the staged run last entered.
+     * Idempotent and safe to call even when no stage was ever entered.
+     */
+    public void exitStagedGeneration() {
+        this.currentStage = null;
+        this.dirtySinceLastPassingCheck = true;
+        this.cachedStage = null;
+        this.cachedPassingCheck = null;
+    }
+
+    /**
+     * Consulted by the orchestrator's per-stage exit gate so a stage whose check already passed — and which has seen no write/edit/delete/bash call since — does not pay for a
+     * redundant re-check; see {@link StagedGenerationRunner}. Not consulted by {@code verify}/{@code submit} themselves, which always run the live check (a passing check with no
+     * edits afterwards makes only the {@code exit gate} instant, per the staged-workflow prompt).
+     *
+     * @param stage the stage the orchestrator is about to gate
+     * @return the cached passing result if the stage matches and nothing has mutated the workspace since, otherwise empty
+     */
+    public Optional<StageCheckResult> reuseCachedPassingCheck(GenerationStage stage) {
+        if (!dirtySinceLastPassingCheck && stage.equals(cachedStage) && cachedPassingCheck != null) {
+            return Optional.of(cachedPassingCheck);
+        }
+        return Optional.empty();
+    }
+
+    /**
+     * Records the TESTS stage's authoritative {@link AgentVerifyReport} (whether freshly computed or reused from the cache), called by the orchestrator right after its TESTS
+     * gate resolves. Necessary because the orchestrator's own gate evaluation can bypass an in-loop {@code verify}/{@code submit} call entirely (a reused cache, or a TESTS-stage
+     * agent turn that never called either tool), in which case this field would otherwise stay unset and the STATEMENT stage's binding check would have no exact test names to
+     * resolve against.
+     *
+     * @param report the TESTS stage's report, or {@code null} if none is available
+     */
+    public void recordLastTestsReport(@Nullable AgentVerifyReport report) {
+        this.lastTestsReport = report;
+    }
+
+    /** Marks the current stage dirty: a write_file/edit_file/delete_file/bash call happened, so any cached passing check for it is no longer trustworthy. */
+    private void markDirty() {
+        this.dirtySinceLastPassingCheck = true;
     }
 
     /**
@@ -311,21 +435,21 @@ public class SandboxAgentTools {
     }
 
     /**
-     * Runs the authoritative differential self-check and returns structured, actionable feedback.
+     * Runs the mechanical precheck for the current session.
      * <p>
-     * In a staged session ({@link #currentStage} set), {@code verify} runs full differential builds only in the {@link GenerationStage#SOLUTION} and {@link GenerationStage#TESTS}
-     * stages — those are the stages where a real build/example-replay probe is worth its cost. In {@link GenerationStage#DESIGN}, {@link GenerationStage#TEMPLATE}, and
-     * {@link GenerationStage#STATEMENT} it returns a short advisory instead: those stages' output is checked by the orchestrator's stage gate, not by an in-loop build. An
-     * unstaged session ({@code currentStage} {@code null}) keeps the legacy behavior: always available.
+     * In a staged session ({@link #currentStage} set), {@code verify} delegates to {@link StageCheckService} for the CURRENT stage at that stage's right depth — a free structure
+     * scan for {@link GenerationStage#DESIGN}, one pristine build for {@link GenerationStage#SOLUTION} and {@link GenerationStage#TEMPLATE}, the full solution/template
+     * differential for {@link GenerationStage#TESTS} (identical to the unstaged path below), and a no-build binding check for {@link GenerationStage#STATEMENT} against the TESTS
+     * stage's exact test names. Every call re-runs the check (no cache); a passing call clears {@link #dirtySinceLastPassingCheck} for the orchestrator's exit gate to reuse (see
+     * {@link #reuseCachedPassingCheck}), but never skips itself. An unstaged session ({@code currentStage} {@code null}) keeps the legacy behavior: always the full differential.
      *
-     * @return the agent-readable observation (solution/template test outcomes, exact test names to bind, current verdict), a stage advisory, or an error message if the verifier
-     *         is unavailable
+     * @return the agent-readable observation carrying a {@code MECHANICAL PRECHECK: PASS/FAIL} verdict line, or an error message if neither path is wired
      */
     @Tool(name = "verify", description = AgentToolDescriptions.VERIFY)
     public String verify() {
         GenerationStage stage = currentStage;
-        if (stage == GenerationStage.DESIGN || stage == GenerationStage.TEMPLATE) {
-            return AgentSystemPromptService.STAGE_VERIFY_ADVISORY;
+        if (stage != null) {
+            return screenObservation("tool/verify", formatStageCheckObservation(runStageCheck(stage)));
         }
         if (verifier == null || exercise == null) {
             return "ERROR: the verify tool is unavailable in this session. Fall back to `sh verify.sh solution` and `sh verify.sh template` via bash.";
@@ -341,14 +465,74 @@ public class SandboxAgentTools {
     }
 
     /**
-     * Signals that the exercise is complete. The agent loop ends the session when this is called, and the authoritative verifier then decides mechanical validity independently.
+     * Signals that the exercise (or, in a staged session, this stage's artifact) is complete.
+     * <p>
+     * In a staged session, {@code submit} first re-runs the current stage's mechanical check itself (never trusting an earlier {@code verify} call, however recent) and, on
+     * failure, rejects the submission and vetoes the agent loop's normal "submit ends the session" effect (see {@link SubmitVetoAware}) so the loop keeps going instead of ending
+     * — the model must fix the reported issues and call {@code submit} again. An unstaged session is never gated: {@code submit} always ends the loop, exactly as before this
+     * seam existed.
      *
      * @param summary an optional one-line summary of what was created or changed
-     * @return a confirmation that the work was submitted for verification
+     * @return a confirmation that the work was submitted for verification, or (staged session, failing check) a rejection carrying the stage check's report
      */
     @Tool(name = "submit", description = AgentToolDescriptions.SUBMIT)
     public String submit(@ToolParam(required = false, description = AgentToolDescriptions.SUBMIT_SUMMARY) String summary) {
+        GenerationStage stage = currentStage;
+        if (stage != null) {
+            StageCheckResult result = runStageCheck(stage);
+            // Set unconditionally (not only on rejection): this call's outcome is authoritative for whether THIS submit is vetoed, so a passing resubmit can never be blocked by
+            // a veto a caller failed to consume after an earlier rejection.
+            submitVetoed = !result.passed();
+            if (submitVetoed) {
+                return screenObservation("tool/submit", "SUBMIT REJECTED — fix these and resubmit:\n" + formatStageCheckObservation(result));
+            }
+        }
         return "Submitted for verification" + (summary == null || summary.isBlank() ? "." : ": " + summary);
+    }
+
+    @Override
+    public boolean consumeSubmitVeto() {
+        boolean vetoed = submitVetoed;
+        submitVetoed = false;
+        return vetoed;
+    }
+
+    /**
+     * Runs the current stage's live mechanical check via {@link StageCheckService}, threading the TESTS stage's report into the STATEMENT stage's binding check and back out
+     * again, and updates the clean/dirty cache on a pass. Shared by {@link #verify} and the gating half of {@link #submit} so their dispatch, caching, and report-threading can
+     * never diverge.
+     *
+     * @param stage the current stage ({@link #currentStage}, guaranteed non-null by both callers)
+     * @return the stage's check result; a synthetic failure naming the missing wiring if {@link #stageCheckService} or {@link #exercise} is absent
+     */
+    private StageCheckResult runStageCheck(GenerationStage stage) {
+        if (stageCheckService == null || exercise == null) {
+            return StageCheckResult.failed("ERROR: the stage-check service is unavailable in this session.");
+        }
+        StageCheckResult result = stageCheckService.check(stage, sandbox, sessionId, exercise, seedTestsFiles, lastTestsReport);
+        if (stage == GenerationStage.TESTS && result.report() != null) {
+            lastTestsReport = result.report();
+        }
+        if (result.passed()) {
+            dirtySinceLastPassingCheck = false;
+            cachedStage = stage;
+            cachedPassingCheck = result;
+        }
+        return result;
+    }
+
+    /**
+     * Renders a stage check as the agent-facing observation: the TESTS stage's observation already carries its own {@code MECHANICAL PRECHECK: PASS/FAIL} verdict line (see
+     * {@link AgentVerifyReport#toObservation()}) and is returned verbatim; every other stage's observation gets that same verdict line synthesized on top, so {@code verify} and
+     * {@code submit} speak one consistent vocabulary regardless of which stage produced the result.
+     */
+    private static String formatStageCheckObservation(StageCheckResult result) {
+        String observation = result.observation();
+        if (observation != null && observation.contains(VERDICT_LINE_MARKER)) {
+            return observation;
+        }
+        String verdict = result.passed() ? "MECHANICAL PRECHECK: PASS" : "MECHANICAL PRECHECK: FAIL";
+        return observation == null || observation.isBlank() ? verdict : verdict + "\n" + observation;
     }
 
     /**

@@ -378,9 +378,16 @@ public class AgentLoopRunner {
             capToolResponses(conversation);
 
             if (submitRequested) {
-                // End the loop so the authoritative post-loop verifier can determine save eligibility before the quality review optionally requests repairs.
-                emit(stepListener, "Submitting the exercise for verification.");
-                return session(AgentLoopResult.Status.COMPLETED, turn, lastAssistantText, conversation);
+                if (isSubmitVetoed(tools)) {
+                    // A staged session's submit() already ran this stage's mechanical check itself and rejected it (see SubmitVetoAware); its rejection message is already the
+                    // tool result in `conversation`. Do not end the loop — fall through to the ordinary next-turn handling below so the model can fix the issues and resubmit.
+                    emit(stepListener, "Submit was rejected by the stage check; continuing to address the reported issues.");
+                }
+                else {
+                    // End the loop so the authoritative post-loop verifier can determine save eligibility before the quality review optionally requests repairs.
+                    emit(stepListener, "Submitting the exercise for verification.");
+                    return session(AgentLoopResult.Status.COMPLETED, turn, lastAssistantText, conversation);
+                }
             }
 
             // Budget-pressure nudge, appended after the conversation is rebuilt from the tool-execution history (otherwise it would be discarded with that rebuild).
@@ -417,6 +424,14 @@ public class AgentLoopRunner {
             case FileChangeEmittingAgentTools emittingTools -> emittingTools.isSandboxSessionTerminated();
             default -> false;
         };
+    }
+
+    /**
+     * Whether the {@code submit} call just executed this turn was rejected by the tools object and must not end the loop; see {@link SubmitVetoAware}. A tools object that does
+     * not implement the interface (or does not veto) never blocks the loop-ending effect, so this is a pure opt-in seam.
+     */
+    private static boolean isSubmitVetoed(Object tools) {
+        return tools instanceof SubmitVetoAware vetoAware && vetoAware.consumeSubmitVeto();
     }
 
     /**

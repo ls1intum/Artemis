@@ -49,6 +49,7 @@ import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.AgentSys
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.critic.SpecFidelityCriticService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.critic.SpecFidelityReport;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.DifferentialVerificationService;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.StageCheckService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.StructuralOracleSeedingService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.VerificationRequest;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.VerificationResult;
@@ -83,6 +84,8 @@ class GenerationOrchestrationServiceTest {
 
     private StagedGenerationRunner stagedGenerationRunner;
 
+    private StageCheckService stageCheckService;
+
     private GenerationOrchestrationService service;
 
     private ProgrammingExercise exercise;
@@ -104,6 +107,7 @@ class GenerationOrchestrationServiceTest {
         specFidelityCritic = mock(SpecFidelityCriticService.class);
         jobService = mock(GenerationJobService.class);
         stagedGenerationRunner = mock(StagedGenerationRunner.class);
+        stageCheckService = mock(StageCheckService.class);
 
         when(sandbox.createSession(any())).thenReturn(SESSION_ID);
         when(systemPromptService.build(any(), any())).thenReturn("SYSTEM_PROMPT");
@@ -136,7 +140,7 @@ class GenerationOrchestrationServiceTest {
 
     private GenerationOrchestrationService newService(boolean stagedGenerationEnabled) {
         return new GenerationOrchestrationService(Optional.of(sandbox), workspace, agentLoopRunner, verifier, systemPromptService, structuralOracleSeeder, specFidelityCritic,
-                jobService, Optional.of(testCaseRepository), 100, stagedGenerationRunner, stagedGenerationEnabled);
+                jobService, Optional.of(testCaseRepository), 100, stagedGenerationRunner, stagedGenerationEnabled, stageCheckService);
     }
 
     private static AgentLoopResult completed() {

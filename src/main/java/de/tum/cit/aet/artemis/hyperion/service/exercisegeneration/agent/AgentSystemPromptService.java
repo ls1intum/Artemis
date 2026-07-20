@@ -12,6 +12,7 @@ import de.tum.cit.aet.artemis.hyperion.config.HyperionExerciseGenerationEnabled;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationRequestDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.GenerationMode;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.profile.LanguageGenerationProfile;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.StageCheckService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.workspace.SandboxBuildCommandService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
@@ -213,10 +214,18 @@ public class AgentSystemPromptService {
             """;
 
     /**
-     * Reused verbatim by {@link SandboxAgentTools#verify()} so the advisory the tool returns matches what this prompt tells the agent to expect.
+     * How often and how cheaply to call {@code verify}/{@code submit} in the staged workflow: every stage's check is delegated to {@link StageCheckService} at that stage's own
+     * depth (a free scan, one build, or the full differential), so the agent should call it once per meaningful milestone, not after every edit, and trust the exit gate to reuse
+     * a still-clean pass instead of re-earning it.
      */
-    static final String STAGE_VERIFY_ADVISORY = "verify runs full differential builds and is available in the SOLUTION, TESTS, and STATEMENT stages; finish this stage's artifact and let the "
-            + "stage gate check it.";
+    private static final String STAGE_VERIFICATION_CADENCE = """
+            VERIFICATION CADENCE
+            Finish this stage's artifact, call `verify`, fix what it reports, and call `verify` again — repeat until it passes. SOLUTION and TEMPLATE checks cost about one
+            build each, so call `verify` once you believe the artifact is done, not after every small edit. In TESTS, batch tests per DESIGN.md task partition and call
+            `verify` only a few times per stage (at most a handful, never once per test). A passing `verify` with no edits afterwards makes the stage gate instant. `submit`
+            re-runs this stage's check itself and rejects with the same report if it still fails, so call it once you expect a pass.
+
+            """;
 
     /**
      * The line every stage prompt ends with, so the agent never confuses "this stage's `submit`" with "the whole exercise is done".
@@ -266,8 +275,8 @@ public class AgentSystemPromptService {
      * @return the stage-scoped system prompt
      */
     public String buildStage(ProgrammingExercise exercise, GenerationStage stage) {
-        return STAGE_INTRO + SECURITY_BOUNDARY + workspaceSection(exercise, GenerationMode.GENERATE) + THE_CONTRACT + STAGE_TOOLS_NOTE + stageSection(stage)
-                + LanguageGenerationProfile.guidanceFor(exercise);
+        return STAGE_INTRO + SECURITY_BOUNDARY + workspaceSection(exercise, GenerationMode.GENERATE) + THE_CONTRACT + STAGE_TOOLS_NOTE + STAGE_VERIFICATION_CADENCE
+                + stageSection(stage) + LanguageGenerationProfile.guidanceFor(exercise);
     }
 
     /**

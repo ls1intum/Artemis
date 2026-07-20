@@ -678,6 +678,29 @@ public class DifferentialVerificationService {
     }
 
     /**
+     * Runs one pristine build for a single assignment ({@code solution} or {@code template}) without a paired differential, for callers that only need "did it build, and which
+     * tests failed" before authoring the next stage — currently {@link StageCheckService}'s per-stage compile gates. Re-seeds the pristine verify script first (idempotent), the
+     * same as the two-build {@link #runDifferential}, so this is also the reseed point for a fresh session's very first build (see {@link #ensurePristineVerifyScript}).
+     * <p>
+     * Reuses the same build-and-parse machinery ({@link #runPristineBuildWithExecution}) that {@link #runDifferential} calls twice, so a single-assignment caller and the full
+     * differential can never observe a different build for the same assignment.
+     *
+     * @param sandbox    the open sandbox session the pristine build runs in
+     * @param sessionId  the sandbox session id
+     * @param exercise   the exercise being built (drives the per-language build recipe)
+     * @param assignment {@code solution} or {@code template}
+     * @return the bounded, caller-facing projection of the build
+     */
+    public SingleBuildResult singleBuild(InteractiveSandbox sandbox, String sessionId, ProgrammingExercise exercise, String assignment) {
+        ensurePristineVerifyScript(sandbox, sessionId, exercise);
+        String buildCommand = "solution".equals(assignment) ? sandboxBuildCommandService.pristineSolutionBuildCommand() : sandboxBuildCommandService.pristineTemplateBuildCommand();
+        PristineBuildExecution execution = runPristineBuildWithExecution(sandbox, sessionId, buildCommand, assignment);
+        BuildSummary summary = execution.summary();
+        return new SingleBuildResult(summary.exitCode(), summary.tests(), summary.failures(), summary.testFailedNames(),
+                boundedReadinessDiagnostic(execution.process().combinedOutput()));
+    }
+
+    /**
      * Public seam for the staged runner's compile gates: until the first verification (or in-loop self-check) runs, {@code /opt/hyperion/verify.sh} still holds the
      * readiness-probe variant from session bootstrap, whose fixture is already consumed — invoking it fails with "build-readiness fixture is unavailable" (exit 66).
      * Idempotent: re-renders and overwrites the pristine script.
