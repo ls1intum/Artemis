@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { UnifiedFeedbackComponent } from './unified-feedback.component';
 import { TranslateService, provideTranslateService } from '@ngx-translate/core';
-import { FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER } from 'app/assessment/shared/entities/feedback.model';
+import { FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER, Feedback } from 'app/assessment/shared/entities/feedback.model';
 import { vi } from 'vitest';
 import { faMinus } from '@fortawesome/free-solid-svg-icons';
 
@@ -408,5 +408,23 @@ describe('UnifiedFeedbackComponent', () => {
 
         expect(label?.textContent).toContain('Fixed rubric text');
         expect(pointsInput.disabled).toBe(true);
+    });
+
+    it('should render the AI suggestion badge inside a footer when the feedback is a suggestion', () => {
+        fixture.componentRef.setInput('isSuggestion', true);
+        fixture.componentRef.setInput('feedback', new Feedback());
+        fixture.detectChanges();
+
+        const footer = fixture.nativeElement.querySelector('.unified-feedback-footer');
+        expect(footer).toBeTruthy();
+        expect(footer.querySelector('jhi-feedback-suggestion-badge')).toBeTruthy();
+    });
+
+    it('should not render a footer when the feedback is not a suggestion', () => {
+        fixture.componentRef.setInput('isSuggestion', false);
+        fixture.componentRef.setInput('feedback', undefined);
+        fixture.detectChanges();
+
+        expect(fixture.nativeElement.querySelector('.unified-feedback-footer')).toBeNull();
     });
 });

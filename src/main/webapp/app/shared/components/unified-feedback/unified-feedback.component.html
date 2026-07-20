@@ -6,10 +6,6 @@
             </div>
         }
 
-        @if (feedback() && (isSuggestion() || Feedback.isFeedbackSuggestion(feedback()!))) {
-            <jhi-feedback-suggestion-badge [feedback]="feedback()!" [useDefaultText]="useDefaultFeedbackSuggestionBadgeText()" />
-        }
-
         <div class="unified-feedback-main">
             <div class="unified-feedback-header">
                 <div class="unified-feedback-header-left">
@@ -127,6 +123,11 @@
                 }
             } @else if (feedbackContent()) {
                 <div class="unified-feedback-text" [innerHTML]="feedbackContent()"></div>
+            }
+            @if (feedback() && (isSuggestion() || Feedback.isFeedbackSuggestion(feedback()!))) {
+                <div class="unified-feedback-footer">
+                    <jhi-feedback-suggestion-badge [feedback]="feedback()!" [useDefaultText]="useDefaultFeedbackSuggestionBadgeText()" variant="footer" />
+                </div>
             }
         </div>
     </div>

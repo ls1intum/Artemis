@@ -319,3 +319,10 @@
     margin-top: 0.25rem;
     font-size: 0.85rem;
 }
+
+.unified-feedback-footer {
+    display: flex;
+    margin-top: 0.5rem;
+    padding-top: 0.5rem;
+    border-top: 1px solid color-mix(in srgb, var(--bs-border-color) 60%, transparent);
+}
