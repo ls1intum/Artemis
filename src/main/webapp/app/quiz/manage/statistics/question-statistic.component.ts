@@ -7,7 +7,8 @@ import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { Subscription } from 'rxjs';
 import { SafeHtml } from '@angular/platform-browser';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Component, OnDestroy, OnInit, inject } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
+import { TooltipItem } from 'chart.js';
 import { CanBecomeInvalid } from 'app/quiz/shared/entities/drop-location.model';
 import { AbstractQuizStatisticComponent } from 'app/quiz/manage/statistics/quiz-statistics';
 
@@ -27,24 +28,27 @@ export abstract class QuestionStatisticComponent extends AbstractQuizStatisticCo
     protected quizExerciseService = inject(QuizExerciseService);
     protected websocketService = inject(WebsocketService);
 
-    question: QuizQuestion;
-    questionStatistic: QuizQuestionStatistic;
+    question!: QuizQuestion; // set in loadQuizCommon() before the chart is rendered
+    questionStatistic!: QuizQuestionStatistic; // set in loadQuizCommon() before the chart is rendered
 
-    quizExercise: QuizExercise;
-    questionIdParam: number;
-    sub: Subscription;
+    // A signal so that setting it after the (async) quiz load schedules zoneless change detection.
+    // As a plain field the initial load would not render until an unrelated event (e.g. a click),
+    // because the `@if (quizExercise())` guard keeps the chart (the only other signal consumer) out of the DOM.
+    readonly quizExercise = signal<QuizExercise>(undefined!); // set in loadQuizCommon() before it is read
+    questionIdParam!: number; // set in ngOnInit() from the route params
+    sub?: Subscription;
 
     // TODO: why do we have a second variable for labels?
     labels: string[] = [];
     // solutionLabels is currently only used for multiple choice questions
     solutionLabels: string[] = [];
 
-    ratedCorrectData: number;
-    unratedCorrectData: number;
+    ratedCorrectData = 0;
+    unratedCorrectData = 0;
 
-    maxScore: number;
+    maxScore = 0;
     showSolution = false;
-    websocketChannelForData: string;
+    websocketChannelForData!: string; // set in ngOnInit() from the route params before use
     private statisticSubscription?: Subscription;
 
     questionTextRendered?: SafeHtml;
@@ -140,8 +144,8 @@ export abstract class QuestionStatisticComponent extends AbstractQuizStatisticCo
             void this.router.navigateByUrl('courses');
         }
         // search selected question in quizExercise based on questionId
-        this.quizExercise = quiz;
-        const updatedQuestion = this.quizExercise.quizQuestions?.filter((question) => this.questionIdParam === question.id)[0];
+        this.quizExercise.set(quiz);
+        const updatedQuestion = this.quizExercise().quizQuestions?.filter((question) => this.questionIdParam === question.id)[0];
         // if anyone finds a way to the Website, with a wrong combination of QuizId and QuestionId, go back to Courses
         if (!updatedQuestion) {
             void this.router.navigateByUrl('courses');
@@ -208,5 +212,14 @@ export abstract class QuestionStatisticComponent extends AbstractQuizStatisticCo
 
         this.updateChartData();
         this.setAxisLabels('artemisApp.showStatistic.questionStatistic.xAxes', 'artemisApp.showStatistic.questionStatistic.yAxes');
+    }
+
+    protected override formatTooltipLabel(item: TooltipItem<'bar'>): string {
+        // The extra "correct solutions" bar (participants who answered the whole question correctly) is only
+        // appended to the data in the show-solution view (see loadDataInDiagram). In the default view the last
+        // bar is just the last answer option/element, so only treat it as the summary bar while the solution is shown.
+        const isCorrectSolutionBar = this.showSolution && item.dataIndex === this.data.length - 1;
+        const key = isCorrectSolutionBar ? 'artemisApp.showStatistic.tooltip.correctOverall' : 'artemisApp.showStatistic.tooltip.participantShare';
+        return this.tooltipLine(key, item.parsed.y ?? 0);
     }
 }

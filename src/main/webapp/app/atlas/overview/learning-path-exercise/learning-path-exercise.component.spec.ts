@@ -3,10 +3,8 @@ import { LearningPathExerciseComponent } from 'app/atlas/overview/learning-path-
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('LearningPathExerciseComponent', () => {
-    setupTestBed({ zoneless: true });
     let component: LearningPathExerciseComponent;
     let fixture: ComponentFixture<LearningPathExerciseComponent>;
 

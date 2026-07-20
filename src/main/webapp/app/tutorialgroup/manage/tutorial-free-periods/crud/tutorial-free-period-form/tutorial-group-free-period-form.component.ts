@@ -54,7 +54,7 @@ export class TutorialGroupFreePeriodFormComponent implements OnInit {
 
     faCalendarAlt = faCalendarAlt;
 
-    form: FormGroup;
+    form!: FormGroup; // built by initializeForm() in the constructor effect and ngOnInit, before any template/getter read
     // TimeFrame to store the current time frame of the form.
     protected readonly timeFrame = signal(TimeFrame.Day);
 

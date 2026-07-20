@@ -24,8 +24,8 @@ export class CreateTextUnitComponent implements OnInit {
 
     textUnitToCreate: TextUnit = new TextUnit();
     readonly isLoading = signal<boolean>(undefined!);
-    lectureId: number;
-    courseId: number;
+    lectureId!: number; // set in ngOnInit() from route params
+    courseId!: number; // set in ngOnInit() from route params
 
     ngOnInit(): void {
         const lectureRoute = this.activatedRoute.parent!.parent!;

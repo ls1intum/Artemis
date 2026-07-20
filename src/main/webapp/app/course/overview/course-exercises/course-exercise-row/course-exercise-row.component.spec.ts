@@ -1,10 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Component } from '@angular/core';
 import { By } from '@angular/platform-browser';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
-import { TranslateModule } from '@ngx-translate/core';
+import { provideTranslateService } from '@ngx-translate/core';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
@@ -45,8 +44,6 @@ import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.serv
 class DummyComponent {}
 
 describe('CourseExerciseRowComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<CourseExerciseRowComponent>;
     let getAllParticipationsStub: ReturnType<typeof vi.spyOn>;
     let participationWebsocketService: ParticipationWebsocketService;
@@ -54,7 +51,6 @@ describe('CourseExerciseRowComponent', () => {
     beforeEach(async () => {
         TestBed.configureTestingModule({
             imports: [
-                TranslateModule.forRoot(),
                 RouterModule.forRoot([
                     { path: 'courses/:courseId/exercises', component: DummyComponent },
                     { path: 'courses/:courseId/exercises/:exerciseId', component: DummyComponent },
@@ -83,6 +79,7 @@ describe('CourseExerciseRowComponent', () => {
                 LocalStorageService,
                 provideHttpClient(),
                 provideHttpClientTesting(),
+                provideTranslateService(),
             ],
         });
         TestBed.overrideComponent(CourseExerciseRowComponent, {

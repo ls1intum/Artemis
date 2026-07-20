@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
@@ -15,8 +14,6 @@ import { CourseAdminService } from 'app/course/manage/services/course-admin.serv
 import { provideHttpClient } from '@angular/common/http';
 
 describe('Course Admin Service', () => {
-    setupTestBed({ zoneless: true });
-
     let courseAdminService: CourseAdminService;
     let httpMock: HttpTestingController;
     const resourceUrl = 'api/admin/courses';

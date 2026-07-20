@@ -1,13 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Subject } from 'rxjs';
 import { LoadingNotificationComponent } from 'app/core/loading-notification/loading-notification.component';
 import { LoadingNotificationService } from 'app/core/loading-notification/loading-notification.service';
 
 describe('LoadingNotificationComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: LoadingNotificationComponent;
     let fixture: ComponentFixture<LoadingNotificationComponent>;
     let loadingNotificationServiceMock: LoadingNotificationService;
@@ -166,7 +163,7 @@ describe('LoadingNotificationComponent', () => {
         it('should unsubscribe from loadingStatus on destroy', () => {
             fixture.detectChanges();
 
-            const unsubscribeSpy = vi.spyOn(component.loadingSubscription, 'unsubscribe');
+            const unsubscribeSpy = vi.spyOn(component.loadingSubscription!, 'unsubscribe');
 
             component.ngOnDestroy();
 

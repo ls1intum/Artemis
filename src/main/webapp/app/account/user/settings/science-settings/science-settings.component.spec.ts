@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
@@ -19,8 +18,6 @@ import { UserSettingsService } from 'app/account/user/settings/directive/user-se
 import { of, throwError } from 'rxjs';
 
 describe('ScienceSettingsComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let comp: ScienceSettingsComponent;
     let fixture: ComponentFixture<ScienceSettingsComponent>;
 
@@ -108,5 +105,26 @@ describe('ScienceSettingsComponent', () => {
         expect(settingGetMock).toHaveBeenCalledOnce();
         // check if current settings are not empty
         expect(comp.userSettings()).toEqual(scienceSettingsStructure);
+    });
+
+    // Regression test for issue #13173: the inherited userSettings/settings signals must exist on the instance so the
+    // component actually renders. The previous spec never called detectChanges(), so a fully blank render slipped through.
+    it('should inherit the userSettings/settings signals from the base and render the settings content (issue #13173)', () => {
+        // The inherited fields must be callable signals, not undefined (a subclass field re-declaration would shadow them).
+        expect(typeof comp.userSettings).toBe('function');
+        expect(typeof comp.settings).toBe('function');
+
+        vi.spyOn(scienceSettingsServiceMock, 'getScienceSettings').mockReturnValue([scienceSetting]);
+        comp.ngOnInit();
+        fixture.detectChanges();
+
+        // The settings signal is populated (proving the inherited signal works, not undefined).
+        expect(comp.userSettings()).toBeTruthy();
+
+        const element: HTMLElement = fixture.nativeElement;
+        // The heading AND the unconditional info line below it must render. In the bug the component threw right after
+        // the heading, so only the <h2> showed and this info line (a plain sibling) was missing.
+        expect(element.querySelector('h2')).toBeTruthy();
+        expect(element.querySelector('.userSettings-info')).toBeTruthy();
     });
 });

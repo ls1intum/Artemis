@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
@@ -11,11 +10,9 @@ import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
 import { UserSettingsContainerComponent } from 'app/account/user/settings/user-settings-container/user-settings-container.component';
-import { MODULE_FEATURE_ATHENA, MODULE_FEATURE_IRIS } from 'app/app.constants';
+import { MODULE_FEATURE_ATHENA, MODULE_FEATURE_ATLAS, MODULE_FEATURE_IRIS } from 'app/app.constants';
 
 describe('UserSettingsContainerComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<UserSettingsContainerComponent>;
     let component: UserSettingsContainerComponent;
 
@@ -55,6 +52,29 @@ describe('UserSettingsContainerComponent', () => {
         vi.spyOn(component['profileService'], 'isModuleFeatureActive').mockReturnValue(false);
         component.ngOnInit();
         expect(component.isPasskeyEnabled()).toBe(false);
+    });
+
+    describe('science tab visibility', () => {
+        const queryScienceLink = (): HTMLElement | null => {
+            fixture.detectChanges();
+            return fixture.nativeElement.querySelector('a[routerLink="science"]');
+        };
+
+        it('should hide the science tab when the atlas module is inactive (issue #13173)', () => {
+            vi.spyOn(component['profileService'], 'isModuleFeatureActive').mockImplementation((feature) => feature !== MODULE_FEATURE_ATLAS);
+            component.ngOnInit();
+            expect(component.isScienceEnabled()).toBe(false);
+            expect(queryScienceLink()).toBeFalsy();
+        });
+
+        it('should show the science tab when the atlas module is active', () => {
+            vi.spyOn(component['profileService'], 'isModuleFeatureActive').mockImplementation((feature) => feature === MODULE_FEATURE_ATLAS);
+            component.ngOnInit();
+            expect(component.isScienceEnabled()).toBe(true);
+            const scienceLink = queryScienceLink();
+            expect(scienceLink).toBeTruthy();
+            expect(scienceLink?.getAttribute('jhiTranslate')).toBe('artemisApp.userSettings.scienceSettings');
+        });
     });
 
     describe('isAiEnabled behavior', () => {

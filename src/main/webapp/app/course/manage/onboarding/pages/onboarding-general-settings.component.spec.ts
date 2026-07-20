@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
 import { TranslateService } from '@ngx-translate/core';
@@ -22,8 +21,6 @@ import { of } from 'rxjs';
 import { DialogService } from 'primeng/dynamicdialog';
 
 describe('OnboardingGeneralSettingsComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let comp: OnboardingGeneralSettingsComponent;
     let fixture: ComponentFixture<OnboardingGeneralSettingsComponent>;
     let course: Course;

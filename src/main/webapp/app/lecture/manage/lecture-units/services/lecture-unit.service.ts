@@ -38,11 +38,13 @@ export class LectureUnitService {
         return this.httpClient.delete(`${this.resourceURL}/lectures/${lectureId}/lecture-units/${lectureUnitId}`, { observe: 'response' });
     }
 
-    completeLectureUnit(lecture: Lecture, event: LectureUnitCompletionEvent): void {
+    completeLectureUnit(lecture: Lecture, event: LectureUnitCompletionEvent, onSuccess?: () => void): void {
         if (event.lectureUnit.visibleToStudents && event.lectureUnit.completed !== event.completed) {
             this.setCompletion(event.lectureUnit.id!, lecture.id!, event.completed).subscribe({
                 next: () => {
                     event.lectureUnit.completed = event.completed;
+                    // Callers hold the unit in a signal; the callback lets them publish a new reference so the UI updates (zoneless change detection).
+                    onSuccess?.();
                 },
                 error: (res: HttpErrorResponse) => onError(this.alertService, res),
             });

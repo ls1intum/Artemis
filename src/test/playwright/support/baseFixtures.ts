@@ -3,7 +3,7 @@ import { addCoverageReport } from 'monocart-reporter';
 import fs from 'fs';
 import path from 'path';
 import { SEED_COURSES } from './seedData';
-import { addE2EInitScript } from './utils';
+import { addE2EInitScript, installApiResponseCapture } from './utils';
 
 /**
  * Lazy-loaded Angular routes that e2e tests commonly hit. Pre-warming these on each
@@ -67,7 +67,9 @@ async function prewarmChunks(browser: Browser): Promise<void> {
         return;
     }
 
-    const ctx = await browser.newContext({ ignoreHTTPSErrors: true });
+    // serviceWorkers: 'block' mirrors the global `use` option (manually created contexts don't inherit
+    // it) so the warm-up populates the same HTTP/disk caches the SW-free test contexts read from.
+    const ctx = await browser.newContext({ ignoreHTTPSErrors: true, serviceWorkers: 'block' });
     try {
         const url = new URL(baseURL);
         await ctx.addCookies([
@@ -120,6 +122,41 @@ const test = baseTest.extend<
             // Add shared init scripts that suppress overlays (notification popup, passkey modal)
             // which would block test interactions. See addE2EInitScript for details.
             await addE2EInitScript(page);
+
+            // Node-held capture of non-GET /api response bodies for the whole context (covers popups too).
+            // Works because serviceWorkers: 'block' keeps the Angular SW from handling /api fetches — with
+            // the SW allowed, routing never saw these requests and an earlier page-scoped capture was
+            // silently ineffective. See installApiResponseCapture for scope guards and error semantics.
+            await installApiResponseCapture(page.context());
+
+            // Eagerly read (and thereby memoize) each successful JSON /api response body the moment it
+            // arrives, so a test's later deferred `response.json()` reads from Playwright's in-Node cache
+            // instead of issuing a second CDP `Network.getResponseBody`. Two layers precede this one:
+            // `serviceWorkers: 'block'` removes the SW-served responses whose bodies CDP frequently cannot
+            // return at all, and the capture route above holds every non-GET /api body in Node memory.
+            // This listener narrows the remaining exposure — genuine buffer eviction of GET bodies under
+            // parallel CI load: `waitForResponse()` and this listener receive the SAME Response instance,
+            // and `Response.internalBody()` memoizes the buffer on first read, so pulling it here at the
+            // `response` event closes the arrival-to-read gap to ~0 — without touching the ~49 call sites.
+            //
+            // This is passive: reading a body never alters the response the page received, so it cannot
+            // change app behaviour, add latency, or re-issue requests.
+            // Scope guards, all required:
+            //  - `/api/` only + `application/json`: the bodies tests actually read; also excludes binary
+            //    downloads/exports (needless memory) and `text/event-stream` (Iris SSE) — calling `body()`
+            //    on a never-finishing stream would leak a pending read.
+            //  - status < 300: `body()` throws "unavailable for redirect responses" on 3xx.
+            // Memory stays bounded because Artemis uses a fresh context/page per test, so the memoized
+            // KB-scale JSON buffers are released at context teardown (this is NOT the reverted amplifier,
+            // which retained every body for the whole run and inflated a per-page CDP buffer).
+            page.on('response', (response) => {
+                const contentType = response.headers()['content-type'] ?? '';
+                if (response.request().url().includes('/api/') && response.status() < 300 && contentType.includes('application/json')) {
+                    // Fire-and-forget: a lost race here is caught (no unhandled rejection) and, for GETs,
+                    // still recoverable read-side via readResponseJson's fresh-request replay.
+                    void response.body().catch(() => {});
+                }
+            });
 
             const coverageEnabled = process.env.PLAYWRIGHT_COVERAGE !== 'off';
 

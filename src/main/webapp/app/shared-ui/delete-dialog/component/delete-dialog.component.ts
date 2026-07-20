@@ -45,7 +45,7 @@ export class DeleteDialogComponent implements OnInit {
     private destroyRef = inject(DestroyRef);
 
     readonly actionTypes = ActionType;
-    private delete: DeleteDialogDeleteHandler;
+    private delete!: DeleteDialogDeleteHandler; // set in ngOnInit() from dialog config data
 
     // Signals for reactive state
     submitDisabled = signal(false);
@@ -86,7 +86,7 @@ export class DeleteDialogComponent implements OnInit {
     // used by @for in the template
     objectKeys = Object.keys;
 
-    warningTextColor: string;
+    warningTextColor!: string; // set in ngOnInit() based on buttonType
 
     /**
      * Life cycle hook called by Angular to indicate that Angular is done creating the component
@@ -120,9 +120,9 @@ export class DeleteDialogComponent implements OnInit {
         }
         this.useFaCheckIcon.set(this.buttonType() !== ButtonType.ERROR);
         if (ButtonType.ERROR !== this.buttonType()) {
-            this.warningTextColor = 'text-default';
+            this.warningTextColor = '';
         } else {
-            this.warningTextColor = 'text-danger';
+            this.warningTextColor = 'text-state-danger';
         }
     }
 

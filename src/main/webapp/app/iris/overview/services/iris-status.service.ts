@@ -22,7 +22,7 @@ export class IrisStatusService implements OnDestroy {
     private profileService = inject(ProfileService);
 
     intervalId: ReturnType<typeof setInterval> | undefined;
-    websocketStatusSubscription: Subscription;
+    websocketStatusSubscription?: Subscription;
     disconnected = false;
 
     active = false;

@@ -1,4 +1,5 @@
 import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
+import { TooltipItem } from 'chart.js';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpResponse } from '@angular/common/http';
 import { AccountService } from 'app/core/auth/account.service';
@@ -32,11 +33,11 @@ export class QuizStatisticComponent extends AbstractQuizStatisticComponent imple
 
     label: string[] = [];
     backgroundColor: string[] = [];
-    ratedAverage: number;
-    unratedAverage: number;
+    ratedAverage = 0;
+    unratedAverage = 0;
 
-    maxScore: number;
-    websocketChannelForData: string;
+    maxScore!: number; // set in loadQuizSuccess() via calculateMaxScore() before loadData() reads it
+    websocketChannelForData!: string; // set in ngOnInit() from the route params
     private websocketSubscription?: Subscription;
 
     // Icons
@@ -156,5 +157,12 @@ export class QuizStatisticComponent extends AbstractQuizStatisticComponent imple
         this.setData(this.quizExercise().quizPointStatistic!);
         this.updateChartData();
         this.setAxisLabels('artemisApp.showStatistic.quizStatistic.xAxes', 'artemisApp.showStatistic.quizStatistic.yAxes');
+    }
+
+    protected override formatTooltipLabel(item: TooltipItem<'bar'>): string {
+        // the last bar aggregates the average across all questions rather than a single question
+        const isAverageBar = item.dataIndex === this.data.length - 1;
+        const key = isAverageBar ? 'artemisApp.showStatistic.tooltip.average' : 'artemisApp.showStatistic.tooltip.correctSolutions';
+        return this.tooltipLine(key, item.parsed.y ?? 0);
     }
 }

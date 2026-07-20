@@ -7,6 +7,7 @@ import static de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismStatus.CONFIRME
 import static de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismStatus.DENIED;
 import static de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismStatus.NONE;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatNoException;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
@@ -181,6 +182,26 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         course = textExerciseUtilService.addCourseWithOneReleasedTextExercise();
         textExercise = textExerciseRepository.findByCourseIdWithCategories(course.getId()).getFirst();
         competency = competencyUtilService.createCompetency(course);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void responseDtosMustNotHoldLiveLazyCategoriesCollection() {
+        // Load through a query that does NOT fetch the LAZY categories @ElementCollection: the repository transaction
+        // is closed when the factory runs, exactly like in a REST call (OSIV is off). Pre-fix, the record stored the
+        // live Hibernate collection and the dev-profile LoggingAspect's toString() threw LazyInitializationException.
+        TextExercise detached = textExerciseRepository.findById(textExercise.getId()).orElseThrow();
+
+        TextExerciseResponseDTO responseDTO = TextExerciseResponseDTO.of(detached);
+        assertThatNoException().as("toString on a DTO built from an exercise without fetched categories").isThrownBy(responseDTO::toString);
+        assertThat(responseDTO.categories()).as("uninitialized categories map to null instead of a live collection").isNull();
+
+        TextExerciseListItemDTO listItemDTO = TextExerciseListItemDTO.of(detached);
+        assertThatNoException().as("toString on a list-item DTO built from an exercise without fetched categories").isThrownBy(listItemDTO::toString);
+        assertThat(listItemDTO.categories()).as("uninitialized categories map to null instead of a live collection").isNull();
+
+        // The initialized path still carries the categories (setup loads via findByCourseIdWithCategories).
+        assertThat(TextExerciseResponseDTO.of(textExercise).categories()).isEqualTo(textExercise.getCategories());
     }
 
     @Test
@@ -1111,6 +1132,23 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
                 .isEqualTo(course.getTeachingAssistantGroupName());
         assertThat(textExerciseServer.course().instructorGroupName()).as("nested course carries the instructor group name used for access rights")
                 .isEqualTo(course.getInstructorGroupName());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void getTextExerciseCarriesLinkedCompetencyTitle() throws Exception {
+        // The exercise detail page renders the linked-competency names from competencyLinks[].competency.title.
+        // The competency DTO must therefore carry the title, not just the id (a previous DTO conversion dropped it,
+        // silently blanking the "Linked Competencies" section for every exercise).
+        textExercise.setCompetencyLinks(Set.of(new CompetencyExerciseLink(competency, textExercise, 1)));
+        textExerciseRepository.save(textExercise);
+
+        TextExerciseResponseDTO textExerciseServer = request.get("/api/text/text-exercises/" + textExercise.getId(), HttpStatus.OK, TextExerciseResponseDTO.class);
+
+        assertThat(textExerciseServer.competencyLinks()).as("the linked competency is returned").hasSize(1);
+        var returnedCompetency = textExerciseServer.competencyLinks().iterator().next().competency();
+        assertThat(returnedCompetency.id()).as("linked competency id is returned").isEqualTo(competency.getId());
+        assertThat(returnedCompetency.title()).as("linked competency title is returned so the detail page can render the competency name").isEqualTo(competency.getTitle());
     }
 
     @Test

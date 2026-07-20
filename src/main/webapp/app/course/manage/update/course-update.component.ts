@@ -115,7 +115,7 @@ export class CourseUpdateComponent implements OnInit {
     timeZones: string[] = [];
     originalTimeZone?: string;
 
-    courseForm: FormGroup;
+    courseForm!: FormGroup; // built in ngOnInit()
     // `course` is a deep object two-way bound via [(ngModel)]/[(markdown)]="course.X" in the template.
     // It is backed by a signal through a getter/setter facade so template reads stay reactive under zoneless,
     // while the template (and specs) keep reading/writing `course` and `course.X` unchanged. After deep
@@ -244,7 +244,6 @@ export class CourseUpdateComponent implements OnInit {
                 semester: new FormControl(this.course.semester),
                 testCourse: new FormControl(this.course.testCourse),
                 learningPathsEnabled: new FormControl(this.course.learningPathsEnabled),
-                studentCourseAnalyticsDashboardEnabled: new FormControl(this.course.studentCourseAnalyticsDashboardEnabled),
                 onlineCourse: new FormControl(this.course.onlineCourse),
                 complaintsEnabled: new FormControl(this.complaintsEnabled()),
                 requestMoreFeedbackEnabled: new FormControl(this.requestMoreFeedbackEnabled()),

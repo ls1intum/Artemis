@@ -1,5 +1,4 @@
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { EMPTY, Subject, firstValueFrom, of } from 'rxjs';
 import { ArtemisVersionInterceptor, WINDOW_INJECTOR_TOKEN } from 'app/core/interceptor/artemis-version.interceptor';
 import { AlertService, AlertType } from 'app/foundation/service/alert.service';
@@ -13,8 +12,6 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ApplicationRef } from '@angular/core';
 
 describe(`ArtemisVersionInterceptor`, () => {
-    setupTestBed({ zoneless: true });
-
     let alertService: AlertService;
     let swUpdate: any;
     let checkForUpdateSpy: any;

@@ -58,7 +58,7 @@ export class ExerciseFilterModalComponent implements OnInit {
     focus$ = new Subject<string>();
     click$ = new Subject<string>();
 
-    form: FormGroup;
+    form?: FormGroup;
 
     model?: string;
 

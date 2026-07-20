@@ -132,6 +132,11 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationIndepe
         complaintResponse.setReviewer(userUtilService.getUserByLogin(TEST_PREFIX + "tutor1"));
         complaintResponseTestRepository.save(complaintResponse);
 
+        // The assessment saved in setup schedules an asynchronous participant-score update that can re-create a
+        // participant_score during the delete cascade. Deletion is resilient to this by design (the
+        // participant_score -> result foreign keys are ON DELETE SET NULL and ParticipationDeletionService bulk
+        // deletes any re-created scores after the results are gone), so the delete must succeed without draining
+        // the scheduler first. This test deliberately does not drain, to keep exercising that race path.
         request.delete("/api/modeling/modeling-exercises/" + modelingExercise.getId(), HttpStatus.OK);
     }
 

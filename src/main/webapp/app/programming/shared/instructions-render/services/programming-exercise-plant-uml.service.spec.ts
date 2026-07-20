@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
@@ -9,8 +8,6 @@ import { ProgrammingExercisePlantUmlService } from './programming-exercise-plant
 import { Theme, ThemeService } from 'app/core/theme/shared/theme.service';
 
 describe('ProgrammingExercisePlantUmlService retry (minimal)', () => {
-    setupTestBed({ zoneless: true });
-
     let service: ProgrammingExercisePlantUmlService;
     let httpTestingController: HttpTestingController;
 

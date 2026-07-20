@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 import { ProgrammingExerciseBuildConfigurationComponent } from 'app/programming/manage/update/update-components/custom-build-plans/programming-exercise-build-configuration/programming-exercise-build-configuration.component';
@@ -15,8 +14,6 @@ import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 
 describe('ProgrammingExercise Docker Image', () => {
-    setupTestBed({ zoneless: true });
-
     let comp: ProgrammingExerciseBuildConfigurationComponent;
     let fixture: ComponentFixture<ProgrammingExerciseBuildConfigurationComponent>;
     const course = { id: 123 } as Course;

@@ -33,6 +33,7 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
 import { IdeSettingsService } from 'app/account/user/settings/ide-preferences/ide-settings.service';
 import { Ide } from 'app/account/user/settings/ide-preferences/ide.model';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
+import { captureException } from '@sentry/angular';
 
 export enum RepositoryAuthenticationMethod {
     Password = 'password',
@@ -98,11 +99,20 @@ export class CodeButtonComponent implements OnInit {
     // Fields (immutable after construction)
     sshEnabled = false;
     sshTemplateUrl?: string;
-    versionControlUrl: string;
+    versionControlUrl!: string; // set in ngOnInit() from profile info
     readonly isInCourseManagement = signal<boolean>(undefined!);
-    sshSettingsUrl: string;
-    vcsTokenSettingsUrl: string;
-    user: User;
+    sshSettingsUrl!: string; // set in configureTooltips() from ngOnInit()
+    vcsTokenSettingsUrl!: string; // set in configureTooltips() from ngOnInit()
+    user!: User; // set in ngOnInit() from accountService.identity()
+    // The current user's login as a signal (set in ngOnInit alongside `user`) so the token-loading effect and the
+    // usesStaffUserToken computed react once the user becomes known and can detect whether a participation is the user's own.
+    private readonly userLogin = signal<string | undefined>(undefined);
+    // Guards against reporting the same missing-token anomaly repeatedly (getHttpOrSshRepositoryUri runs on every change detection).
+    private vcsAccessTokenReportedMissing = false;
+    // Set once a participation VCS token request has terminally failed to yield a token (empty response or an error that
+    // is not the 404 → create fallback). Gates the missing-token Sentry report so it never fires while a token is still
+    // in flight (an expected transient state during which the clone URL simply omits the token).
+    private readonly participationTokenLoadFailed = signal(false);
     sshKeys?: UserSshPublicKey[];
 
     // Signals (we ideally declare everything related to change detection/UI to signals and leave component fields
@@ -164,11 +174,16 @@ export class CodeButtonComponent implements OnInit {
         const type = this.repositoryType();
         return type === RepositoryType.TEMPLATE || type === RepositoryType.SOLUTION || type === RepositoryType.TESTS || type === RepositoryType.AUXILIARY;
     });
+    // True when the clone URL must authenticate with the user's personal (staff) VCS access token instead of a
+    // participation token: course staff browsing another participant's repository in course management. The user's OWN
+    // participation (including an exam test run they conduct, which is served under a course-management URL) is excluded,
+    // because its participation-scoped token is available to (and owned by) the user and must be used instead.
+    usesStaffUserToken = computed(() => this.isInCourseManagement() && !this.isBaseRepository() && !this.isOwnParticipation(this.activeParticipation()));
 
     vscodeFallback: Ide = { name: 'VS Code', deepLink: 'vscode://vscode.git/clone?url={cloneUrl}' };
     programmingLanguageToIde: Map<ProgrammingLanguage, Ide> = new Map([[ProgrammingLanguage.EMPTY, this.vscodeFallback]]);
 
-    theiaPortalURL: string;
+    theiaPortalURL!: string; // set in initTheia() from ngOnInit()
 
     // Icons
     readonly faCode = faCode;
@@ -180,7 +195,7 @@ export class CodeButtonComponent implements OnInit {
 
         // we only loadVcsAccessToken if participations exist => reduces potentially repeated HTTP calls
         effect(() => {
-            if (this.isInCourseManagement() || this.isBaseRepository()) {
+            if (this.isBaseRepository()) {
                 return;
             }
             const participations = this.participations();
@@ -192,11 +207,19 @@ export class CodeButtonComponent implements OnInit {
     }
 
     async ngOnInit() {
+        // Populate the tooltip strings first. They only depend on window.location.origin and the loaded
+        // translations, not on the awaits below. The clone popover renders (and can be opened by the user)
+        // before ngOnInit's async work finishes; if the SSH-key-missing alert appears while these strings
+        // are still empty, the alert element has no text. Setting them up front guarantees the alert always
+        // renders its message as soon as it becomes visible.
+        this.configureTooltips();
+
         const user = await this.accountService.identity();
         if (!user) {
             return;
         }
         this.user = user;
+        this.userLogin.set(user.login);
 
         await this.checkForSshKeys();
 
@@ -216,7 +239,6 @@ export class CodeButtonComponent implements OnInit {
             this.versionControlUrl = profileInfo.versionControlUrl;
         }
 
-        this.configureTooltips();
         this.initTheia(profileInfo);
 
         void this.ideSettingsService.loadIdePreferences().then((programmingLanguageToIde) => {
@@ -237,7 +259,7 @@ export class CodeButtonComponent implements OnInit {
         this.selectedAuthenticationMechanism.set(RepositoryAuthenticationMethod.Token);
         if (this.isBaseRepository()) {
             this.copyEnabled.set(this.hasValidRepositoryAccessToken());
-        } else if (this.isInCourseManagement()) {
+        } else if (this.usesStaffUserToken()) {
             const stillValid = dayjs().isBefore(dayjs(this.user.vcsAccessTokenExpiryDate));
             const present = !!this.user.vcsAccessToken?.startsWith('vcpat');
             this.userTokenStillValid.set(stillValid);
@@ -305,9 +327,15 @@ export class CodeButtonComponent implements OnInit {
             return this.getSshCloneUrl(this.getRepositoryUri());
         }
         const url = this.getRepositoryUri();
+        const useToken = this.useToken() || alwaysUsetoken;
         const token = insertPlaceholder ? '**********' : this.getUsedToken(alwaysUsetoken);
 
-        const credentials = `://${this.user.login}${this.useToken() || alwaysUsetoken ? `:${token}` : ''}@`;
+        // Never interpolate a missing token into the clone URL: an undefined/empty token would produce a broken
+        // "://<login>:undefined@..." URL. If a token was expected but is unavailable, omit it entirely and report it.
+        if (useToken && !token) {
+            this.reportMissingVcsAccessToken();
+        }
+        const credentials = `://${this.user.login}${useToken && token ? `:${token}` : ''}@`;
 
         if (!url.includes('@')) {
             // the url has the format https://vcs-server.com
@@ -318,12 +346,49 @@ export class CodeButtonComponent implements OnInit {
         }
     }
 
+    /**
+     * Reports (once per component instance) that a clone URL had to be built without a VCS access token although one was
+     * expected, so the anomaly stays observable while the URL itself never leaks a literal "undefined". The known,
+     * already UI-surfaced cases are intentionally excluded: the personal staff token being absent (usesStaffUserToken)
+     * and base-repository tokens, which have their own dedicated error handling.
+     */
+    private reportMissingVcsAccessToken(): void {
+        // Only report once a participation token request has terminally failed; never while the token is still loading
+        // (the URL correctly omits the token during that transient window, so passive render must not raise an alarm).
+        if (this.vcsAccessTokenReportedMissing || this.isBaseRepository() || this.usesStaffUserToken() || !this.participationTokenLoadFailed()) {
+            return;
+        }
+        this.vcsAccessTokenReportedMissing = true;
+        const participation = this.activeParticipation();
+        captureException(
+            new Error(
+                `A VCS access token was expected but missing while building the clone URL (participationId=${participation?.id}, isInCourseManagement=${this.isInCourseManagement()}); the token was omitted from the URL.`,
+            ),
+        );
+    }
+
     loadVcsAccessTokensForAllParticipations() {
         this.participations().forEach((participation) => {
-            if (participation.id && !participation.vcsAccessToken) {
+            // Load the participation-scoped token only when the clone URL will actually use it: outside course management,
+            // or for the user's own participation inside course management (e.g. an exam test run the instructor conducts).
+            // For other participants' repositories in course management the personal staff token is used, and requesting
+            // their participation token would be forbidden server-side.
+            if ((!this.isInCourseManagement() || this.isOwnParticipation(participation)) && participation.id && !participation.vcsAccessToken) {
                 this.loadParticipationVcsAccessToken(participation);
             }
         });
+    }
+
+    /**
+     * Whether the given participation belongs to the currently logged-in user. Used to decide whether the participation's
+     * own VCS access token may be used (and loaded) even inside course management — e.g. an exam test run the instructor
+     * conducts for themselves. For participations of other users (a student's, another instructor's test run) this is false,
+     * so the personal staff token is used instead. Relies on the participation's `student` being populated, which is the
+     * case for the exam test run summary/conduction flows where this distinction matters.
+     */
+    private isOwnParticipation(participation: ProgrammingExerciseStudentParticipation | undefined): boolean {
+        const userLogin = this.userLogin();
+        return !!userLogin && participation?.student?.login === userLogin;
     }
 
     /**
@@ -340,14 +405,19 @@ export class CodeButtonComponent implements OnInit {
                     if (this.useToken()) {
                         this.copyEnabled.set(true);
                     }
+                } else {
+                    // The server answered without a token: terminal failure, no create fallback follows.
+                    this.participationTokenLoadFailed.set(true);
                 }
             },
             error: (error: HttpErrorResponse) => {
                 if (error.status == 404) {
                     this.createNewParticipationVcsAccessToken(participation);
-                }
-                if (error.status == 403) {
-                    this.alertService.warning('403 Forbidden');
+                } else {
+                    if (error.status == 403) {
+                        this.alertService.warning('403 Forbidden');
+                    }
+                    this.participationTokenLoadFailed.set(true);
                 }
             },
         });
@@ -366,12 +436,16 @@ export class CodeButtonComponent implements OnInit {
                     if (this.useToken()) {
                         this.copyEnabled.set(true);
                     }
+                } else {
+                    // Creating the token succeeded but returned no token: terminal failure.
+                    this.participationTokenLoadFailed.set(true);
                 }
             },
             error: (error: HttpErrorResponse) => {
                 if (error.status == 403) {
                     this.alertService.warning('403 Forbidden');
                 }
+                this.participationTokenLoadFailed.set(true);
             },
         });
     }
@@ -477,7 +551,7 @@ export class CodeButtonComponent implements OnInit {
                 // Never embed a token cached for a different repository (exact-URI scoped); only the token for the current repository is valid.
                 return this.hasValidRepositoryAccessToken() ? this.repositoryAccessToken() : undefined;
             }
-            if (this.isInCourseManagement()) {
+            if (this.usesStaffUserToken()) {
                 return this.user.vcsAccessToken;
             } else {
                 return this.activeParticipation()?.vcsAccessToken;

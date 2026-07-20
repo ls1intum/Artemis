@@ -1,7 +1,8 @@
-import { Component, computed, inject, signal, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal, viewChild } from '@angular/core';
 import { OrganizationManagementService } from 'app/admin/organization-management/organization-management.service';
 import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { Organization } from 'app/admin/organization-management/organization.model';
+import { ButtonModule } from 'primeng/button';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { TableLazyLoadEvent } from 'primeng/table';
 import { CellTemplateRef, ColumnDef, TableViewComponent, TableViewOptions } from 'app/shared-ui/table-view/table-view';
@@ -17,7 +18,8 @@ export interface OrganizationSelectorDialogData {
 @Component({
     selector: 'jhi-organization-selector',
     templateUrl: './organization-selector.component.html',
-    imports: [TranslateDirective, TableViewComponent],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    imports: [TranslateDirective, TableViewComponent, ButtonModule],
 })
 export class OrganizationSelectorComponent {
     readonly selectorTableOptions: TableViewOptions = {

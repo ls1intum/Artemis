@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TestBed } from '@angular/core/testing';
 import { BehaviorSubject, Observable, Subject, distinctUntilChanged, filter, firstValueFrom, of, throwError } from 'rxjs';
 import { ChatServiceMode, IrisChatService } from 'app/iris/overview/services/iris-chat.service';
@@ -30,15 +29,15 @@ import { Router } from '@angular/router';
 import { IrisSessionDTO } from 'app/iris/shared/entities/iris-session-dto.model';
 import { IrisSession } from 'app/iris/shared/entities/iris-session.model';
 import { IrisChatWebsocketDTO, IrisChatWebsocketPayloadType } from 'app/iris/shared/entities/iris-chat-websocket-dto.model';
+import { IrisSender } from 'app/iris/shared/entities/iris-message.model';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { User } from 'app/account/user/user.model';
 import { LLMSelectionDecision } from 'app/account/user/shared/dto/updateLLMSelectionDecision.dto';
+import { IrisSlidesContextDTO } from 'app/iris/shared/entities/iris-message-context-dto.model';
 import { IrisRateLimitInformation } from 'app/iris/shared/entities/iris-ratelimit-info.model';
 import { IrisActivityItem, IrisActivityKind, IrisActivityState, IrisRunState } from 'app/iris/shared/entities/iris-activity.model';
 
 describe('IrisChatService', () => {
-    setupTestBed({ zoneless: true });
-
     let service: IrisChatService;
     let httpService: IrisChatHttpService;
     let wsMock: IrisWebsocketService;
@@ -61,14 +60,12 @@ describe('IrisChatService', () => {
     const waitForSessionId = () => firstValueFrom(service.currentSessionId().pipe(filter((value): value is number => value !== undefined)));
 
     const waitForSessionIdValue = (expectedId: number) => firstValueFrom(service.currentSessionId().pipe(filter((value): value is number => value === expectedId)));
-    const waitForCurrentChatMode = () => firstValueFrom(service.currentChatMode().pipe(filter((value): value is ChatServiceMode => value !== undefined)));
-    const waitForCurrentRelatedEntityId = () => firstValueFrom(service.currentRelatedEntityId().pipe(filter((value): value is number => value !== undefined)));
     const startSessionWithWebsocket = async (websocketSubject: Subject<IrisChatWebsocketDTO>, chatSessions: IrisSessionDTO[] = []) => {
         vi.spyOn(httpService, 'getCurrentSessionOrCreateIfNotExists').mockReturnValue(of(mockServerSessionHttpResponseWithId(id)));
         vi.spyOn(httpService, 'getChatSessions').mockReturnValue(of(chatSessions));
         vi.spyOn(wsMock, 'subscribeToSession').mockReturnValue(websocketSubject.asObservable());
 
-        service.switchTo(ChatServiceMode.COURSE, id);
+        service.openChat(ChatServiceMode.COURSE, id);
         await waitForSessionId();
     };
 
@@ -101,66 +98,24 @@ describe('IrisChatService', () => {
         vi.restoreAllMocks();
     });
 
-    it('should change to an course chat and start new session', async () => {
+    it('should commit the course context and subscribe to its session via openChat', async () => {
         const httpStub = vi.spyOn(httpService, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(of(mockServerSessionHttpResponseWithEmptyConversation));
         vi.spyOn(httpService, 'getChatSessions').mockReturnValue(of([]));
         const wsStub = vi.spyOn(wsMock, 'subscribeToSession').mockReturnValueOnce(of());
-        service.switchTo(ChatServiceMode.COURSE, id);
+        service.openChat(ChatServiceMode.COURSE, id);
 
         expect(httpStub).toHaveBeenCalledWith(ChatServiceMode.COURSE, id);
         expect(wsStub).toHaveBeenCalledWith(id);
     });
 
-    it('should change to tutor chat and start new session', async () => {
+    it('should commit a non-course context and subscribe to its session via openChat', async () => {
         const httpStub = vi.spyOn(httpService, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(of(mockServerSessionHttpResponseWithEmptyConversation));
         vi.spyOn(httpService, 'getChatSessions').mockReturnValue(of([]));
         const wsStub = vi.spyOn(wsMock, 'subscribeToSession').mockReturnValueOnce(of());
-        service.switchTo(ChatServiceMode.PROGRAMMING_EXERCISE, id);
+        service.openChat(ChatServiceMode.PROGRAMMING_EXERCISE, id);
 
         expect(httpStub).toHaveBeenCalledWith(ChatServiceMode.PROGRAMMING_EXERCISE, id);
         expect(wsStub).toHaveBeenCalledWith(id);
-    });
-
-    describe('initialLoadComplete$', () => {
-        const collectInitialLoadValues = (): boolean[] => {
-            const values: boolean[] = [];
-            service.initialLoadComplete$.subscribe((value) => values.push(value));
-            return values;
-        };
-
-        it('should start false, flip to true after a successful session load, and reset on close-induced switch', async () => {
-            const values = collectInitialLoadValues();
-            expect(values).toEqual([false]);
-
-            vi.spyOn(httpService, 'getCurrentSessionOrCreateIfNotExists')
-                .mockReturnValueOnce(of(mockServerSessionHttpResponseWithEmptyConversation))
-                .mockReturnValueOnce(of(mockServerSessionHttpResponseWithEmptyConversation));
-            vi.spyOn(httpService, 'getChatSessions').mockReturnValue(of([]));
-            vi.spyOn(wsMock, 'subscribeToSession').mockReturnValue(of());
-            service.switchTo(ChatServiceMode.COURSE, id);
-            await waitForSessionId();
-
-            expect(values.at(-1)).toBe(true);
-
-            // Switching to a different context closes the previous session and rearms the gate.
-            service.switchTo(ChatServiceMode.PROGRAMMING_EXERCISE, id + 1);
-
-            expect(values).toContain(false);
-            // The new load completes synchronously via the mocked observable, so the latest value
-            // should be true again by the time we observe.
-            expect(values.at(-1)).toBe(true);
-        });
-
-        it('should still flip to true when the session load fails so consumers do not deadlock', async () => {
-            const values = collectInitialLoadValues();
-            expect(values).toEqual([false]);
-
-            vi.spyOn(httpService, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(throwError(() => new HttpErrorResponse({ status: 500 })));
-            vi.spyOn(httpService, 'getChatSessions').mockReturnValue(of([]));
-            service.switchTo(ChatServiceMode.COURSE, id);
-
-            expect(values.at(-1)).toBe(true);
-        });
     });
 
     it('should initialize current chat context from newly loaded session', async () => {
@@ -170,10 +125,10 @@ describe('IrisChatService', () => {
         vi.spyOn(httpService, 'getChatSessions').mockReturnValue(of([]));
         vi.spyOn(wsMock, 'subscribeToSession').mockReturnValueOnce(of());
 
-        service.switchTo(ChatServiceMode.PROGRAMMING_EXERCISE, relatedEntityId);
+        service.openChat(ChatServiceMode.PROGRAMMING_EXERCISE, relatedEntityId);
 
-        expect(await waitForCurrentChatMode()).toBe(ChatServiceMode.PROGRAMMING_EXERCISE);
-        expect(await waitForCurrentRelatedEntityId()).toBe(relatedEntityId);
+        expect(service.displayContext()?.mode).toBe(ChatServiceMode.PROGRAMMING_EXERCISE);
+        expect(service.displayContext()?.entityId).toBe(relatedEntityId);
     });
 
     it('should initialize current chat context from mode field', async () => {
@@ -188,10 +143,10 @@ describe('IrisChatService', () => {
         vi.spyOn(httpService, 'getChatSessions').mockReturnValue(of([]));
         vi.spyOn(wsMock, 'subscribeToSession').mockReturnValueOnce(of());
 
-        service.switchTo(ChatServiceMode.LECTURE, relatedEntityId);
+        service.openChat(ChatServiceMode.LECTURE, relatedEntityId);
 
-        expect(await waitForCurrentChatMode()).toBe(ChatServiceMode.LECTURE);
-        expect(await waitForCurrentRelatedEntityId()).toBe(relatedEntityId);
+        expect(service.displayContext()?.mode).toBe(ChatServiceMode.LECTURE);
+        expect(service.displayContext()?.entityId).toBe(relatedEntityId);
     });
 
     it('should send a message', async () => {
@@ -201,11 +156,11 @@ describe('IrisChatService', () => {
         vi.spyOn(wsMock, 'subscribeToSession').mockReturnValueOnce(of());
         const createdMessage = mockUserMessageWithContent(message);
         const stub = vi.spyOn(httpService, 'createMessage').mockReturnValueOnce(of({ body: createdMessage } as HttpResponse<IrisMessageResponseDTO>));
-        service.switchTo(ChatServiceMode.COURSE, id);
+        service.openChat(ChatServiceMode.COURSE, id);
         await waitForSessionId();
         await firstValueFrom(service.sendMessage(message));
 
-        expect(stub).toHaveBeenCalledWith(id, expect.anything());
+        expect(stub).toHaveBeenCalledWith(id, expect.objectContaining({ pendingContext: undefined }));
         const messages = await firstValueFrom(service.currentMessages());
         expect(messages).toHaveLength(mockConversation.messages!.length + 1);
         expect(messages.last()).toEqual(createdMessage);
@@ -218,11 +173,11 @@ describe('IrisChatService', () => {
         vi.spyOn(wsMock, 'subscribeToSession').mockReturnValueOnce(of(mockWebsocketStatusMessage));
         const stub = vi.spyOn(httpService, 'createMessage').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
 
-        service.switchTo(ChatServiceMode.COURSE, id);
+        service.openChat(ChatServiceMode.COURSE, id);
         await waitForSessionId();
         await firstValueFrom(service.sendMessage(message));
 
-        expect(stub).toHaveBeenCalledWith(id, expect.anything());
+        expect(stub).toHaveBeenCalledWith(id, expect.objectContaining({ pendingContext: undefined }));
         const error = await firstValueFrom(service.currentError());
         expect(error).toEqual(IrisErrorMessageKey.SEND_MESSAGE_FAILED);
     });
@@ -230,25 +185,222 @@ describe('IrisChatService', () => {
     it('should load existing messages on session creation', async () => {
         vi.spyOn(httpService, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(of(mockServerSessionHttpResponse));
         vi.spyOn(httpService, 'getChatSessions').mockReturnValue(of([]));
-        vi.spyOn(httpService, 'createSession').mockReturnValueOnce(of(mockServerSessionHttpResponseWithId(2)));
+        vi.spyOn(httpService, 'createCourseSession').mockReturnValueOnce(of(mockServerSessionHttpResponseWithId(2)));
         vi.spyOn(wsMock, 'subscribeToSession').mockReturnValueOnce(of());
-        service.switchTo(ChatServiceMode.COURSE, id);
+        service.openChat(ChatServiceMode.COURSE, id);
         await waitForSessionId();
         const messages = await firstValueFrom(service.currentMessages());
         expect(messages).toHaveLength(mockConversation.messages!.length);
     });
 
-    it('should clear chat', async () => {
-        vi.spyOn(httpService, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(of(mockServerSessionHttpResponse));
-        vi.spyOn(httpService, 'getChatSessions').mockReturnValue(of([]));
-        vi.spyOn(httpService, 'createSession').mockReturnValueOnce(of(mockServerSessionHttpResponseWithId(2, true)));
-        vi.spyOn(wsMock, 'subscribeToSession').mockReturnValue(of());
-        service.switchTo(ChatServiceMode.COURSE, id);
-        await waitForSessionId();
-        service.clearChat();
-        await waitForSessionIdValue(2);
-        const messages = await firstValueFrom(service.currentMessages());
-        expect(messages).toHaveLength(mockConversationWithNoMessages.messages!.length);
+    describe('stagePendingContext', () => {
+        it('should not call HTTP when stagePendingContext is invoked, only update dropdown signals', async () => {
+            vi.spyOn(httpService, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(of(mockServerSessionHttpResponseWithId(id)));
+            vi.spyOn(httpService, 'getChatSessions').mockReturnValue(of([]));
+            vi.spyOn(wsMock, 'subscribeToSession').mockReturnValueOnce(of());
+            const createMessageSpy = vi.spyOn(httpService, 'createMessage');
+
+            service.openChat(ChatServiceMode.COURSE, id);
+            await waitForSessionId();
+
+            const newEntityId = 42;
+            service.stagePendingContext(ChatServiceMode.LECTURE, newEntityId);
+
+            // No HTTP call: the change is purely local until the user sends a message
+            expect(createMessageSpy).not.toHaveBeenCalled();
+
+            // Dropdown reflects the new selection (committed-look)
+            expect(service.displayContext()?.mode).toBe(ChatServiceMode.LECTURE);
+            expect(service.displayContext()?.entityId).toBe(newEntityId);
+
+            // Messages and citations are untouched
+            expect(service.messages.getValue()).toEqual(mockConversation.messages);
+        });
+
+        it('should include pendingContext in the request DTO when context differs from session', async () => {
+            vi.spyOn(httpService, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(of(mockServerSessionHttpResponseWithId(id)));
+            vi.spyOn(httpService, 'getChatSessions').mockReturnValue(of([]));
+            vi.spyOn(wsMock, 'subscribeToSession').mockReturnValueOnce(of());
+            const createdMessage = mockUserMessageWithContent('hi');
+            const createMessageSpy = vi.spyOn(httpService, 'createMessage').mockReturnValueOnce(of({ body: createdMessage } as HttpResponse<IrisMessageResponseDTO>));
+
+            service.openChat(ChatServiceMode.COURSE, id);
+            await waitForSessionId();
+
+            const pendingEntityId = 42;
+            service.stagePendingContext(ChatServiceMode.LECTURE, pendingEntityId);
+            await firstValueFrom(service.sendMessage('hi'));
+
+            expect(createMessageSpy).toHaveBeenCalledWith(id, expect.objectContaining({ pendingContext: { mode: ChatServiceMode.LECTURE, entityId: pendingEntityId } }));
+            // After the send commits the switch, the override is cleared and committed is updated
+            expect(service['contextService']['_pending']()).toBeUndefined();
+            expect(service['contextService']['_committed']()).toEqual({ mode: ChatServiceMode.LECTURE, entityId: pendingEntityId });
+        });
+
+        it('should forward page context together with pendingContext', async () => {
+            vi.spyOn(httpService, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(of(mockServerSessionHttpResponseWithId(id)));
+            vi.spyOn(httpService, 'getChatSessions').mockReturnValue(of([]));
+            vi.spyOn(wsMock, 'subscribeToSession').mockReturnValueOnce(of());
+            const createdMessage = mockUserMessageWithContent('hi');
+            const createMessageSpy = vi.spyOn(httpService, 'createMessage').mockReturnValueOnce(of({ body: createdMessage } as HttpResponse<IrisMessageResponseDTO>));
+            const context: IrisSlidesContextDTO[] = [{ type: 'slides', lectureUnitId: 7, page: 3 }];
+
+            service.openChat(ChatServiceMode.COURSE, id);
+            await waitForSessionId();
+
+            service.stagePendingContext(ChatServiceMode.LECTURE, 42);
+            await firstValueFrom(service.sendMessage('hi', {}, context));
+
+            expect(createMessageSpy).toHaveBeenCalledWith(id, expect.objectContaining({ pendingContext: { mode: ChatServiceMode.LECTURE, entityId: 42 }, context }));
+        });
+
+        it('should not include pendingContext when user reverts to session current context before sending', async () => {
+            vi.spyOn(httpService, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(of(mockServerSessionHttpResponseWithId(id)));
+            vi.spyOn(httpService, 'getChatSessions').mockReturnValue(of([]));
+            vi.spyOn(wsMock, 'subscribeToSession').mockReturnValueOnce(of());
+            const createdMessage = mockUserMessageWithContent('hi');
+            const createMessageSpy = vi.spyOn(httpService, 'createMessage').mockReturnValueOnce(of({ body: createdMessage } as HttpResponse<IrisMessageResponseDTO>));
+
+            service.openChat(ChatServiceMode.COURSE, id);
+            await waitForSessionId();
+
+            // Pick a different context, then revert to the session's current context
+            service.stagePendingContext(ChatServiceMode.LECTURE, 42);
+            service.stagePendingContext(mockConversation.mode!, mockConversation.entityId!);
+
+            await firstValueFrom(service.sendMessage('hi'));
+
+            expect(createMessageSpy).toHaveBeenCalledWith(id, expect.objectContaining({ pendingContext: undefined }));
+        });
+    });
+
+    describe('startFreshChat', () => {
+        it('should close the active session and open a fresh COURSE session', async () => {
+            vi.spyOn(httpService, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(of(mockServerSessionHttpResponse));
+            vi.spyOn(httpService, 'getChatSessions').mockReturnValue(of([]));
+            vi.spyOn(httpService, 'createCourseSession').mockReturnValueOnce(of(mockServerSessionHttpResponseWithId(2, true)));
+            vi.spyOn(wsMock, 'subscribeToSession').mockReturnValue(of());
+            service.openChat(ChatServiceMode.COURSE, id);
+            await waitForSessionId();
+            service.startFreshChat();
+            await waitForSessionIdValue(2);
+            const messages = await firstValueFrom(service.currentMessages());
+            expect(messages).toHaveLength(mockConversationWithNoMessages.messages!.length);
+        });
+
+        it('should be a no-op when the current session is already an empty COURSE session for the same course', async () => {
+            // Session entityId must match the course id so isFreshCourseSession evaluates to true:
+            // adoptServerContext overwrites the committed context with the session's entityId.
+            const courseSession = { body: { ...mockConversationWithNoMessages, id: 999, entityId: courseId } } as HttpResponse<IrisSession>;
+            vi.spyOn(httpService, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(of(courseSession));
+            vi.spyOn(httpService, 'getChatSessions').mockReturnValue(of([]));
+            vi.spyOn(wsMock, 'subscribeToSession').mockReturnValue(of());
+            const createCourseSessionSpy = vi.spyOn(httpService, 'createCourseSession');
+
+            service.openChat(ChatServiceMode.COURSE, courseId);
+            await waitForSessionId();
+            expect(service.messages.getValue()).toEqual([]);
+
+            service.startFreshChat();
+
+            // No new session is created: the dashboard re-mount of a fresh empty chat must not churn.
+            expect(createCourseSessionSpy).not.toHaveBeenCalled();
+        });
+
+        it('should be a no-op when courseId is undefined', () => {
+            service.setCourseId(undefined);
+            routerMock.url = '/invalid-url';
+            const createCourseSessionSpy = vi.spyOn(httpService, 'createCourseSession');
+            const closeSpy = vi.spyOn(service as any, 'close');
+
+            service.startFreshChat();
+
+            expect(createCourseSessionSpy).not.toHaveBeenCalled();
+            expect(closeSpy).not.toHaveBeenCalled();
+        });
+    });
+
+    describe('openChat (course)', () => {
+        it('should skip reload when the course context is already committed', async () => {
+            // The session response must carry entityId === courseId so adoptServerContext keeps the committed
+            // context aligned with the requested course — otherwise the second call would treat
+            // the context as different and re-trigger closeAndStart.
+            const courseSession = { body: { ...mockConversationWithNoMessages, id: 999, entityId: courseId } } as HttpResponse<IrisSession>;
+            const httpStub = vi.spyOn(httpService, 'getCurrentSessionOrCreateIfNotExists').mockReturnValue(of(courseSession));
+            vi.spyOn(httpService, 'getChatSessions').mockReturnValue(of([]));
+            vi.spyOn(wsMock, 'subscribeToSession').mockReturnValue(of());
+
+            service.openChat(ChatServiceMode.COURSE, courseId);
+            expect(httpStub).toHaveBeenCalledTimes(1);
+
+            service.openChat(ChatServiceMode.COURSE, courseId);
+            // Same (mode, entityId) → openChat's sameSessionContext guard short-circuits closeAndStart.
+            expect(httpStub).toHaveBeenCalledTimes(1);
+        });
+
+        it('should set the pageContext to the COURSE entry', () => {
+            vi.spyOn(httpService, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(of(mockServerSessionHttpResponseWithEmptyConversation));
+            vi.spyOn(httpService, 'getChatSessions').mockReturnValue(of([]));
+            vi.spyOn(wsMock, 'subscribeToSession').mockReturnValueOnce(of());
+
+            service.openChat(ChatServiceMode.COURSE, courseId);
+
+            expect(service['contextService'].page()).toEqual({ mode: ChatServiceMode.COURSE, entityId: courseId });
+        });
+    });
+
+    describe('openChat', () => {
+        const lectureId = 555;
+
+        it('should set the page context to the requested (mode, entityId)', () => {
+            vi.spyOn(httpService, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(of(mockServerSessionHttpResponseWithEmptyConversation));
+            vi.spyOn(httpService, 'getChatSessions').mockReturnValue(of([]));
+            vi.spyOn(wsMock, 'subscribeToSession').mockReturnValue(of());
+
+            service.openChat(ChatServiceMode.LECTURE, lectureId);
+
+            expect(service['contextService'].page()).toEqual({ mode: ChatServiceMode.LECTURE, entityId: lectureId });
+        });
+
+        it('should resolve the session server-side via getCurrentSessionOrCreateIfNotExists', () => {
+            const httpStub = vi.spyOn(httpService, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(of(mockServerSessionHttpResponseWithEmptyConversation));
+            vi.spyOn(httpService, 'getChatSessions').mockReturnValue(of([]));
+            vi.spyOn(wsMock, 'subscribeToSession').mockReturnValue(of());
+
+            service.openChat(ChatServiceMode.LECTURE, lectureId);
+
+            // History matching now happens on the server: the client just forwards (mode, entityId) and the
+            // server returns the matching lecture chat or an empty course-session fallback.
+            expect(httpStub).toHaveBeenCalledWith(ChatServiceMode.LECTURE, lectureId);
+        });
+
+        it('should be a no-op when the page context is unchanged', () => {
+            const httpStub = vi.spyOn(httpService, 'getCurrentSessionOrCreateIfNotExists').mockReturnValue(of(mockServerSessionHttpResponseWithEmptyConversation));
+            vi.spyOn(httpService, 'getChatSessions').mockReturnValue(of([]));
+            vi.spyOn(wsMock, 'subscribeToSession').mockReturnValue(of());
+
+            service.openChat(ChatServiceMode.LECTURE, lectureId);
+            service.openChat(ChatServiceMode.LECTURE, lectureId);
+
+            // Re-opening the same page context short-circuits before re-resolving the session.
+            expect(httpStub).toHaveBeenCalledTimes(1);
+        });
+    });
+
+    describe('close', () => {
+        it('should leave the staged context to the context service (close only tears down session state)', () => {
+            // A lecture page can stage a pending context before any session has been loaded. close() clears
+            // session/message state but no longer owns the context lifecycle: the pending override is only
+            // discarded once the next session's server context is adopted.
+            service.stagePendingContext(ChatServiceMode.LECTURE, 7, 'Lecture 7');
+            expect(service.displayContext()).toBeDefined();
+
+            service['close']();
+            expect(service['contextService']['_pending']()).toEqual({ mode: ChatServiceMode.LECTURE, entityId: 7, entityName: 'Lecture 7' });
+
+            service['contextService'].adoptServerContext({ mode: ChatServiceMode.COURSE, entityId: courseId });
+            expect(service['contextService']['_pending']()).toBeUndefined();
+        });
     });
 
     it('should rate a message', async () => {
@@ -258,7 +410,7 @@ describe('IrisChatService', () => {
         const message = mockServerMessage;
         const updatedMessage = Object.assign({}, message, { helpful: true });
         vi.spyOn(httpService, 'rateMessage').mockReturnValueOnce(of({ body: updatedMessage } as unknown as HttpResponse<IrisMessageResponseDTO>));
-        service.switchTo(ChatServiceMode.COURSE, id);
+        service.openChat(ChatServiceMode.COURSE, id);
         await waitForSessionId();
         await firstValueFrom(service.rateMessage(message, true));
 
@@ -274,7 +426,7 @@ describe('IrisChatService', () => {
         message.id = mockClientMessage.id;
         vi.spyOn(httpService, 'resendMessage').mockReturnValueOnce(of({ body: message } as HttpResponse<IrisMessageResponseDTO>));
 
-        service.switchTo(ChatServiceMode.COURSE, id);
+        service.openChat(ChatServiceMode.COURSE, id);
         await waitForSessionId();
         await firstValueFrom(service.resendMessage(message));
 
@@ -291,11 +443,11 @@ describe('IrisChatService', () => {
         vi.spyOn(wsMock, 'subscribeToSession').mockReturnValueOnce(of(mockWebsocketStatusMessage));
         const stub = vi.spyOn(httpService, 'createMessage').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 429 })));
 
-        service.switchTo(ChatServiceMode.COURSE, id);
+        service.openChat(ChatServiceMode.COURSE, id);
         await waitForSessionId();
         await firstValueFrom(service.sendMessage(message));
 
-        expect(stub).toHaveBeenCalledWith(id, expect.anything());
+        expect(stub).toHaveBeenCalledWith(id, expect.objectContaining({ pendingContext: undefined }));
         const error = await firstValueFrom(service.currentError());
         expect(error).toEqual(IrisErrorMessageKey.RATE_LIMIT_EXCEEDED);
     });
@@ -307,11 +459,11 @@ describe('IrisChatService', () => {
         vi.spyOn(wsMock, 'subscribeToSession').mockReturnValueOnce(of(mockWebsocketStatusMessage));
         const stub = vi.spyOn(httpService, 'createMessage').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 403 })));
 
-        service.switchTo(ChatServiceMode.COURSE, id);
+        service.openChat(ChatServiceMode.COURSE, id);
         await waitForSessionId();
         await firstValueFrom(service.sendMessage(message));
 
-        expect(stub).toHaveBeenCalledWith(id, expect.anything());
+        expect(stub).toHaveBeenCalledWith(id, expect.objectContaining({ pendingContext: undefined }));
         const error = await firstValueFrom(service.currentError());
         expect(error).toEqual(IrisErrorMessageKey.IRIS_DISABLED);
     });
@@ -320,7 +472,7 @@ describe('IrisChatService', () => {
         vi.spyOn(httpService, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(of(mockServerSessionHttpResponseWithId(id)));
         vi.spyOn(httpService, 'getChatSessions').mockReturnValue(of([]));
         vi.spyOn(wsMock, 'subscribeToSession').mockReturnValueOnce(of(mockWebsocketStatusMessage));
-        service.switchTo(ChatServiceMode.PROGRAMMING_EXERCISE, id);
+        service.openChat(ChatServiceMode.PROGRAMMING_EXERCISE, id);
         await waitForSessionId();
         expect(service.runInfo.getValue()).toEqual({ runId: 'run-1', state: IrisRunState.RUNNING });
         expect(service.activities.getValue()).toEqual(mockWebsocketStatusMessage.activities);
@@ -345,7 +497,7 @@ describe('IrisChatService', () => {
                 }, 0);
             }),
         );
-        service.switchTo(ChatServiceMode.COURSE, id);
+        service.openChat(ChatServiceMode.COURSE, id);
         await waitForSessionId();
 
         expect(wsSpy).toHaveBeenCalledWith(id);
@@ -363,12 +515,77 @@ describe('IrisChatService', () => {
         vi.spyOn(httpService, 'getChatSessions').mockReturnValue(of([]));
         vi.spyOn(wsMock, 'subscribeToSession').mockReturnValueOnce(of(mockWebsocketServerMessage));
         const message = mockServerMessage2;
-        service.switchTo(ChatServiceMode.PROGRAMMING_EXERCISE, id);
+        service.openChat(ChatServiceMode.PROGRAMMING_EXERCISE, id);
         await waitForSessionId();
         const messages = await firstValueFrom(service.currentMessages());
         expect(messages).toHaveLength(mockConversation.messages!.length + 1);
         const lastMessage = messages.last();
         expect(lastMessage).toMatchObject({ sender: message.sender, id: message.id, content: message.content });
+    });
+
+    describe('message ordering', () => {
+        const sessionWithNoMessages = () => {
+            vi.spyOn(httpService, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(of(mockServerSessionHttpResponseWithId(id, true)));
+            vi.spyOn(httpService, 'getChatSessions').mockReturnValue(of([]));
+            const websocketSubject = new Subject<IrisChatWebsocketDTO>();
+            vi.spyOn(wsMock, 'subscribeToSession').mockReturnValueOnce(websocketSubject.asObservable());
+            return websocketSubject;
+        };
+
+        const websocketMessage = (messageId: number, sentAt: string): IrisChatWebsocketDTO =>
+            ({
+                type: IrisChatWebsocketPayloadType.MESSAGE,
+                message: {
+                    sender: IrisSender.LLM,
+                    id: messageId,
+                    content: [{ type: 'text', textContent: 'x' }],
+                    sentAt,
+                },
+                stages: [],
+            }) as IrisChatWebsocketDTO;
+
+        it('should order messages by sentAt regardless of which channel delivered them', async () => {
+            // A message can reach the client over the websocket and via the sendMessage HTTP response, so
+            // arrival order is racy. Here the HTTP-response message is processed first but carries the later
+            // sentAt, while the websocket message arrives afterwards with an earlier sentAt: it must end up
+            // first. (This is what guarantees a CTXSWAP divider renders before the message that triggered it.)
+            const websocketSubject = sessionWithNoMessages();
+            const httpMessage: IrisMessageResponseDTO = {
+                sender: IrisSender.USER,
+                id: 51,
+                content: [{ type: 'text', textContent: 'second' }],
+                sentAt: '2024-01-01T10:00:01Z',
+            };
+            vi.spyOn(httpService, 'createMessage').mockReturnValueOnce(of({ body: httpMessage } as HttpResponse<IrisMessageResponseDTO>));
+
+            service.openChat(ChatServiceMode.COURSE, id);
+            await waitForSessionId();
+            await firstValueFrom(service.sendMessage('second'));
+            websocketSubject.next(websocketMessage(50, '2024-01-01T10:00:00Z'));
+
+            const messages = await firstValueFrom(service.currentMessages());
+            expect(messages.map((message) => message.id)).toEqual([50, 51]);
+        });
+
+        it('should break ties on equal sentAt by id so the earlier-saved message comes first', async () => {
+            const websocketSubject = sessionWithNoMessages();
+            const sentAt = '2024-01-01T10:00:00Z';
+            const httpMessage: IrisMessageResponseDTO = {
+                sender: IrisSender.USER,
+                id: 61,
+                content: [{ type: 'text', textContent: 'tie' }],
+                sentAt,
+            };
+            vi.spyOn(httpService, 'createMessage').mockReturnValueOnce(of({ body: httpMessage } as HttpResponse<IrisMessageResponseDTO>));
+
+            service.openChat(ChatServiceMode.COURSE, id);
+            await waitForSessionId();
+            await firstValueFrom(service.sendMessage('tie'));
+            websocketSubject.next(websocketMessage(60, sentAt));
+
+            const messages = await firstValueFrom(service.currentMessages());
+            expect(messages.map((message) => message.id)).toEqual([60, 61]);
+        });
     });
 
     it('should set live assistant draft from websocket partial without incrementing new message counter', async () => {
@@ -409,7 +626,7 @@ describe('IrisChatService', () => {
         websocketSubject.next({ type: IrisChatWebsocketPayloadType.PARTIAL, runId: 'run-1', partialResult: 'Hello', partialSeq: 2 });
 
         vi.spyOn(httpService, 'getCurrentSessionOrCreateIfNotExists').mockReturnValue(of(mockServerSessionHttpResponseWithId(id + 1)));
-        service.switchTo(ChatServiceMode.PROGRAMMING_EXERCISE, id + 1);
+        service.openChat(ChatServiceMode.PROGRAMMING_EXERCISE, id + 1);
 
         expect(await firstValueFrom(service.currentLiveAssistantDraft())).toBeUndefined();
     });
@@ -653,7 +870,7 @@ describe('IrisChatService', () => {
             websocketSubject.next(statusFrame('run-1', IrisRunState.RUNNING, { activities: [runningActivity('act-1')], activitySeq: 1 }));
 
             vi.spyOn(httpService, 'getCurrentSessionOrCreateIfNotExists').mockReturnValue(of(mockServerSessionHttpResponseWithId(id + 1)));
-            service.switchTo(ChatServiceMode.PROGRAMMING_EXERCISE, id + 1);
+            service.openChat(ChatServiceMode.PROGRAMMING_EXERCISE, id + 1);
 
             expect(service.runInfo.getValue()).toBeUndefined();
             expect(service.activities.getValue()).toEqual([]);
@@ -719,7 +936,7 @@ describe('IrisChatService', () => {
         it('should switch if LLM usage is not required for the mode', async () => {
             accountService.userIdentity.set({ selectedLLMUsage: LLMSelectionDecision.CLOUD_AI } as User);
             service['hasJustAcceptedLLMUsage'] = false;
-            service['sessionContext'] = { mode: ChatServiceMode.TUTOR_SUGGESTION, entityId: 1 };
+            service['contextService']['_committed'].set({ mode: ChatServiceMode.TUTOR_SUGGESTION, entityId: 1 });
 
             const newSession = { id: 12, mode: ChatServiceMode.TUTOR_SUGGESTION, creationDate: new Date(), entityId: 1 } as IrisSessionDTO;
             const newSessionFull = { id: 12, mode: ChatServiceMode.TUTOR_SUGGESTION, creationDate: new Date(), entityId: 1, userId: 1 } as IrisSession;
@@ -743,7 +960,7 @@ describe('IrisChatService', () => {
         it('should switch if user has just accepted LLM usage', async () => {
             accountService.userIdentity.set({ selectedLLMUsage: LLMSelectionDecision.CLOUD_AI } as User);
             service['hasJustAcceptedLLMUsage'] = true;
-            service['sessionContext'] = { mode: ChatServiceMode.COURSE, entityId: 1 };
+            service['contextService']['_committed'].set({ mode: ChatServiceMode.COURSE, entityId: 1 });
 
             const newSession = { id: 12, mode: ChatServiceMode.COURSE, creationDate: new Date(), entityId: 1 } as IrisSessionDTO;
             const newSessionFull = { id: 12, mode: ChatServiceMode.COURSE, creationDate: new Date(), entityId: 1, userId: 1 } as IrisSession;
@@ -844,12 +1061,12 @@ describe('IrisChatService', () => {
             service.sessionId = 1;
 
             vi.spyOn(httpService, 'deleteSession').mockReturnValue(of(new HttpResponse<void>({ status: 204 })));
-            const clearChatSpy = vi.spyOn(service, 'clearChat');
+            const startFreshChatSpy = vi.spyOn(service, 'startFreshChat');
             const switchSpy = vi.spyOn(service, 'switchToSession');
 
             await firstValueFrom(service.deleteSession(1));
 
-            expect(clearChatSpy).not.toHaveBeenCalled();
+            expect(startFreshChatSpy).not.toHaveBeenCalled();
             expect(switchSpy).not.toHaveBeenCalled();
             expect(service.chatSessions.getValue()).toHaveLength(0);
             expect(service.sessionId).toBeUndefined();
@@ -896,6 +1113,12 @@ describe('IrisChatService', () => {
         beforeEach(() => {
             userMock.updateLLMSelectionDecision.mockReset();
             userMock.updateLLMSelectionDecision.mockReturnValue(of(new HttpResponse<void>()));
+            // Accepting consent runs closeAndStart(); give it a page context and stubbed session-loading deps
+            // so start() resolves quietly instead of throwing "Page context not set".
+            service['contextService'].setPageContext({ mode: ChatServiceMode.COURSE, entityId: courseId });
+            vi.spyOn(httpService, 'getCurrentSessionOrCreateIfNotExists').mockReturnValue(of(mockServerSessionHttpResponseWithEmptyConversation));
+            vi.spyOn(httpService, 'getChatSessions').mockReturnValue(of([]));
+            vi.spyOn(wsMock, 'subscribeToSession').mockReturnValue(of());
         });
 
         it('should emit llmOptedOut$ once after NO_AI is persisted successfully', () => {
@@ -980,7 +1203,7 @@ describe('IrisChatService', () => {
             scopedService.messages.next([mockServerMessage]);
             scopedService.chatSessions.next([{ id: 1 } as IrisSessionDTO]);
             scopedService.latestStartedSession = { id: 1 } as IrisSessionDTO;
-            scopedService['sessionContext'] = { mode: ChatServiceMode.COURSE, entityId: 1 };
+            scopedService['contextService']['_committed'].set({ mode: ChatServiceMode.COURSE, entityId: 1 });
             scopedService.hasJustAcceptedLLMUsage = true;
             scopedService.rateLimitInfo = { rateLimitTimeframeHours: 1 } as IrisRateLimitInformation;
 
@@ -990,7 +1213,7 @@ describe('IrisChatService', () => {
             expect(scopedService.messages.getValue()).toEqual([]);
             expect(scopedService.chatSessions.getValue()).toEqual([]);
             expect(scopedService.latestStartedSession).toBeUndefined();
-            expect(scopedService['sessionContext']).toBeUndefined();
+            expect(scopedService['contextService']['_committed']()).toBeUndefined();
             expect(scopedService.hasJustAcceptedLLMUsage).toBe(false);
             expect(scopedService.rateLimitInfo).toBeUndefined();
             // courseId is route-derived, not user-private — it is intentionally preserved so the next
@@ -1048,10 +1271,12 @@ describe('IrisChatService', () => {
         it('should cancel an in-flight session-loading subscription on logout so it cannot repopulate state', () => {
             const inFlight = new Subject<HttpResponse<IrisSession>>();
             const httpServiceMock = TestBed.inject(IrisChatHttpService);
-            vi.spyOn(httpServiceMock, 'createSession').mockReturnValue(inFlight.asObservable());
+            vi.spyOn(httpServiceMock, 'createCourseSession').mockReturnValue(inFlight.asObservable());
             vi.spyOn(httpServiceMock, 'getChatSessions').mockReturnValue(of([]));
 
-            scopedService.switchToNewSession(ChatServiceMode.COURSE, 1);
+            // startFreshChat only spins up a new session-loading subscription when the current session is non-empty.
+            scopedService.messages.next([mockServerMessage]);
+            scopedService.startFreshChat();
             expect(scopedService['sessionLoadingSubscription']).toBeDefined();
 
             authState.next(undefined);
@@ -1121,6 +1346,38 @@ describe('IrisChatService', () => {
             // The tap should have been gated by stateGeneration and therefore did NOT repopulate messages
             // for the previous user.
             expect(scopedService.messages.getValue()).toEqual([]);
+        });
+
+        it('should ignore an in-flight sendMessage response after switching to another session', async () => {
+            const inFlight = new Subject<HttpResponse<IrisMessageResponseDTO>>();
+            const httpServiceMock = TestBed.inject(IrisChatHttpService);
+            vi.spyOn(httpServiceMock, 'createMessage').mockReturnValue(inFlight.asObservable());
+
+            scopedService.sessionId = 1;
+            scopedService.messages.next([mockServerMessage]);
+            scopedService.chatSessions.next([
+                { id: 1, mode: ChatServiceMode.COURSE, entityId: 1 } as IrisSessionDTO,
+                { id: 2, mode: ChatServiceMode.COURSE, entityId: 2 } as IrisSessionDTO,
+            ]);
+            scopedService['contextService'].adoptServerContext({ mode: ChatServiceMode.COURSE, entityId: 1 });
+            scopedService.stagePendingContext(ChatServiceMode.LECTURE, 42);
+
+            const callerResult = firstValueFrom(scopedService.sendMessage('hi'));
+
+            scopedService.sessionId = 2;
+            scopedService.messages.next([mockServerMessage2]);
+            scopedService['contextService'].adoptServerContext({ mode: ChatServiceMode.COURSE, entityId: 2 });
+
+            inFlight.next({ body: mockServerMessage } as unknown as HttpResponse<IrisMessageResponseDTO>);
+            inFlight.complete();
+            await callerResult;
+
+            expect(scopedService.messages.getValue()).toEqual([mockServerMessage2]);
+            expect(scopedService.chatSessions.getValue()).toEqual([
+                { id: 1, mode: ChatServiceMode.COURSE, entityId: 1 },
+                { id: 2, mode: ChatServiceMode.COURSE, entityId: 2 },
+            ]);
+            expect(scopedService['contextService']['_committed']()).toEqual({ mode: ChatServiceMode.COURSE, entityId: 2 });
         });
 
         it('should not allow an in-flight requestTutorSuggestion catchError to surface an error after logout', async () => {

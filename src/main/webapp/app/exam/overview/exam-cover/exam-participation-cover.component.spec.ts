@@ -30,11 +30,8 @@ import { MockExamParticipationService } from 'test/helpers/mocks/service/mock-ex
 import { MockArtemisServerDateService } from 'test/helpers/mocks/service/mock-server-date.service';
 import { ExamLiveEventsButtonComponent } from 'app/exam/overview/events/button/exam-live-events-button.component';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('ExamParticipationCoverComponent', () => {
-    setupTestBed({ zoneless: true });
-
     const course = { id: 456 } as Course;
     let exam: Exam;
     let studentExam: StudentExam;
@@ -120,6 +117,28 @@ describe('ExamParticipationCoverComponent', () => {
         fixture.componentRef.setInput('startView', false);
         component.updateConfirmation();
         expect(component.endEnabled()).toBe(false);
+    });
+
+    it('should not reset the confirmation on a live schedule update while waiting for the exam start (issue #13071)', () => {
+        flushInputs();
+
+        // Student has confirmed and is counting down to the (pre-start) exam start.
+        component.confirmed = true;
+        component.startEnabled.set(true);
+        component.waitingForExamStart.set(true);
+
+        // A live schedule update replaces the exam object with a new start date.
+        const rescheduledExam = new Exam();
+        rescheduledExam.course = course;
+        rescheduledExam.id = 123;
+        rescheduledExam.testExam = false;
+        rescheduledExam.startDate = dayjs().add(2, 'minutes');
+        fixture.componentRef.setInput('exam', rescheduledExam);
+        flushInputs();
+
+        // The confirmation must survive so the countdown is not interrupted.
+        expect(component.confirmed).toBe(true);
+        expect(component.startEnabled()).toBe(true);
     });
 
     it('should start exam', async () => {
