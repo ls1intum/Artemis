@@ -3043,6 +3043,26 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
     }
 
     /**
+     * The server resolves the requested exercise ids straight from the exercise repository, which accepts any id, so it
+     * must reject ids that point outside the exam the test run belongs to. Otherwise an instructor could pull a foreign
+     * exam's exercise into a test run of their own exam.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testCreateTestRunRejectsExerciseOfAnotherExam() throws Exception {
+        Exam ownExam = examUtilService.addTextModelingProgrammingExercisesToExam(examUtilService.addExam(course1), false, true);
+        Exam foreignExam = examUtilService.addTextModelingProgrammingExercisesToExam(examUtilService.addExam(course1), false, true);
+
+        List<Long> exerciseIds = new ArrayList<>(ownExam.getExerciseGroups().stream().map(exerciseGroup -> exerciseGroup.getExercises().iterator().next().getId()).toList());
+        exerciseIds.add(foreignExam.getExerciseGroups().getFirst().getExercises().iterator().next().getId());
+        CreateTestRunDTO testRunConfiguration = new CreateTestRunDTO(ownExam.getId(), exerciseIds, 6000);
+
+        request.postWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + ownExam.getId() + "/test-runs", testRunConfiguration, StudentExamDTO.class,
+                HttpStatus.CONFLICT);
+        assertThat(studentExamRepository.findAllByExamId_AndTestRunIsTrue(ownExam.getId())).isEmpty();
+    }
+
+    /**
      * the server invokes SecurityUtils.setAuthorizationObject() so after invoking this method you need to "login" the user again
      *
      * @return the created test run

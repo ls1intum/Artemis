@@ -630,6 +630,14 @@ public class StudentExamResource {
         List<Long> exerciseIds = testRunConfiguration.exerciseIds() != null ? testRunConfiguration.exerciseIds() : List.of();
         // preserve the exact order of exerciseIds: StudentExam.exercises is an @OrderColumn list
         List<Exercise> exercises = exerciseIds.stream().map(exerciseRepository::findByIdElseThrow).toList();
+        // findByIdElseThrow resolves any exercise id, so without this check a test run could pull in an exercise from
+        // another exam or course; a test run may only contain exercises of the exam it belongs to
+        for (Exercise exercise : exercises) {
+            Exam exerciseExam = exercise.getExam();
+            if (exerciseExam == null || !exerciseExam.getId().equals(examId)) {
+                throw new ConflictException("The exercise does not belong to the exam", "Exercise", "exerciseExamConflict");
+            }
+        }
 
         StudentExam testRun = studentExamService.createTestRun(exam, exercises, testRunConfiguration.workingTime());
         return ResponseEntity.ok(StudentExamDTO.withUser(testRun));
