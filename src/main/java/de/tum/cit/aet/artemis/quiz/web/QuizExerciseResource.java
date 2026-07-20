@@ -28,6 +28,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.En
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.messaging.InstanceMessageSendService;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
+import de.tum.cit.aet.artemis.exercise.service.ExerciseVariantGroupService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseVersionService;
 import de.tum.cit.aet.artemis.quiz.domain.QuizAction;
 import de.tum.cit.aet.artemis.quiz.domain.QuizMode;
@@ -81,9 +82,12 @@ public class QuizExerciseResource {
 
     private final ExerciseVersionService exerciseVersionService;
 
+    private final ExerciseVariantGroupService exerciseVariantGroupService;
+
     public QuizExerciseResource(QuizExerciseService quizExerciseService, QuizMessagingService quizMessagingService, QuizExerciseRepository quizExerciseRepository,
             UserRepository userRepository, InstanceMessageSendService instanceMessageSendService, AuthorizationCheckService authCheckService, QuizBatchService quizBatchService,
-            QuizBatchRepository quizBatchRepository, QuizSubmissionService quizSubmissionService, ExerciseVersionService exerciseVersionService) {
+            QuizBatchRepository quizBatchRepository, QuizSubmissionService quizSubmissionService, ExerciseVersionService exerciseVersionService,
+            ExerciseVariantGroupService exerciseVariantGroupService) {
         this.quizExerciseService = quizExerciseService;
         this.quizMessagingService = quizMessagingService;
         this.quizExerciseRepository = quizExerciseRepository;
@@ -94,6 +98,7 @@ public class QuizExerciseResource {
         this.quizBatchRepository = quizBatchRepository;
         this.quizSubmissionService = quizSubmissionService;
         this.exerciseVersionService = exerciseVersionService;
+        this.exerciseVariantGroupService = exerciseVariantGroupService;
     }
 
     /**
@@ -134,6 +139,14 @@ public class QuizExerciseResource {
 
         if (quizExercise.isExamExercise()) {
             throw new BadRequestAlertException("These actions are not allowed for exam exercises", ENTITY_NAME, "notAllowedInExam");
+        }
+
+        // These actions exist only to move the quiz's dates, and a variant group owns its members' timeline. SET_VISIBLE
+        // (releaseDate) and END_NOW (dueDate) would otherwise desynchronize a member from its group; START_NOW and
+        // START_BATCH are already rejected further down, so guarding every action just gives them a clearer message.
+        if (exerciseVariantGroupService.findOwningGroup(quizExerciseId).isPresent()) {
+            throw new BadRequestAlertException("The timeline of an exercise in a variant group is managed by its group and must be changed there", ENTITY_NAME,
+                    "timelineManagedByVariantGroup");
         }
 
         // Each case persists its state change via targeted @Modifying UPDATEs on the scalar columns it actually changes.

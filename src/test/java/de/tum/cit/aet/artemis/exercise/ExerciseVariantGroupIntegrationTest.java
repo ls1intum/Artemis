@@ -31,10 +31,13 @@ import de.tum.cit.aet.artemis.exercise.repository.ExerciseTestRepository;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseVariantGroupRepository;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
+import de.tum.cit.aet.artemis.fileupload.dto.UpdateFileUploadExerciseDTO;
 import de.tum.cit.aet.artemis.fileupload.util.FileUploadExerciseUtilService;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
+import de.tum.cit.aet.artemis.modeling.dto.UpdateModelingExerciseDTO;
 import de.tum.cit.aet.artemis.modeling.util.ModelingExerciseUtilService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseTimelineUpdateDTO;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.domain.QuizMode;
@@ -43,12 +46,16 @@ import de.tum.cit.aet.artemis.quiz.util.QuizExerciseFactory;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentBatchTest;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.dto.TextExerciseResponseDTO;
+import de.tum.cit.aet.artemis.text.dto.UpdateTextExerciseDTO;
 import de.tum.cit.aet.artemis.text.util.TextExerciseFactory;
 import de.tum.cit.aet.artemis.text.util.TextExerciseUtilService;
 
 class ExerciseVariantGroupIntegrationTest extends AbstractSpringIntegrationIndependentBatchTest {
 
     private static final String TEST_PREFIX = "exvargrpinteg";
+
+    /** Title an update request sets alongside the (rejected) timeline change, to prove the rest of the update still lands. */
+    private static final String UPDATED_TITLE = "Renamed variant";
 
     @Autowired
     private RequestUtilService request;
@@ -609,6 +616,135 @@ class ExerciseVariantGroupIntegrationTest extends AbstractSpringIntegrationIndep
         QuizExerciseFactory.addQuestionsToQuizExercise(quizExercise);
         course.addExercises(quizExercise);
         return exerciseRepository.save(quizExercise);
+    }
+
+    /**
+     * The shared timeline is only an invariant if the server enforces it. The type-specific update endpoints apply the
+     * request's dates straight onto the managed entity, so a stale client — or a direct request — could otherwise leave a
+     * member with dates that differ from its group, changing student availability and build scheduling.
+     * <p>
+     * Endpoints where the dates are incidental among many other fields overwrite them from the group (so an unrelated
+     * edit still succeeds and the member's dates self-heal); endpoints that exist <em>only</em> to move dates reject the
+     * request instead, because silently ignoring it would return 200 while doing nothing.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void testUpdateTextExerciseCannotChangeGroupTimeline() throws Exception {
+        GroupTimeline timeline = createGroupWithTimelineFor(exercise.getId());
+        TextExercise toUpdate = (TextExercise) exerciseRepository.findByIdElseThrow(exercise.getId());
+        applyDifferentTimelineAndTitle(toUpdate);
+
+        request.putWithResponseBody("/api/text/text-exercises", UpdateTextExerciseDTO.of(toUpdate), TextExerciseResponseDTO.class, HttpStatus.OK);
+
+        assertTimelinePinnedToGroupAndTitleUpdated(exercise.getId(), timeline);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void testUpdateModelingExerciseCannotChangeGroupTimeline() throws Exception {
+        ModelingExercise modelingExercise = modelingExerciseUtilService.addModelingExerciseToCourse(course);
+        GroupTimeline timeline = createGroupWithTimelineFor(modelingExercise.getId());
+        ModelingExercise toUpdate = (ModelingExercise) exerciseRepository.findByIdElseThrow(modelingExercise.getId());
+        applyDifferentTimelineAndTitle(toUpdate);
+
+        request.putWithResponseBody("/api/modeling/modeling-exercises", UpdateModelingExerciseDTO.of(toUpdate), ModelingExercise.class, HttpStatus.OK);
+
+        assertTimelinePinnedToGroupAndTitleUpdated(modelingExercise.getId(), timeline);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void testUpdateFileUploadExerciseCannotChangeGroupTimeline() throws Exception {
+        ZonedDateTime now = ZonedDateTime.now();
+        FileUploadExercise fileUploadExercise = fileUploadExerciseUtilService.addFileUploadExercise(course, now.plusDays(1), null, now.plusDays(7), now.plusDays(14));
+        GroupTimeline timeline = createGroupWithTimelineFor(fileUploadExercise.getId());
+        FileUploadExercise toUpdate = (FileUploadExercise) exerciseRepository.findByIdElseThrow(fileUploadExercise.getId());
+        applyDifferentTimelineAndTitle(toUpdate);
+
+        request.putWithResponseBody("/api/fileupload/file-upload-exercises/" + fileUploadExercise.getId(), UpdateFileUploadExerciseDTO.of(toUpdate), FileUploadExercise.class,
+                HttpStatus.OK);
+
+        assertTimelinePinnedToGroupAndTitleUpdated(fileUploadExercise.getId(), timeline);
+    }
+
+    // The programming and quiz update endpoints are covered from their own test classes instead: a full
+    // PUT /programming-exercises needs the ProgrammingLanguageFeatureService that only the LocalCI/LocalVC profiles
+    // provide (see ProgrammingExerciseResourceTest), and the multipart quiz update needs the richer quiz fixture built by
+    // AbstractQuizExerciseIntegrationTest (see QuizExerciseIntegrationTest).
+
+    /**
+     * Unlike the endpoints above, this one exists solely to move dates, so it rejects group members rather than silently
+     * discarding the request. The guard lives in the resource: {@code ExerciseVariantGroupService} calls the underlying
+     * service directly when propagating group dates onto programming members and must not be blocked by its own invariant.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void testUpdateProgrammingExerciseTimelineForGroupMember_badRequest() throws Exception {
+        ProgrammingExercise programmingExercise = programmingExerciseUtilService.addProgrammingExerciseToCourse(course);
+        GroupTimeline timeline = createGroupWithTimelineFor(programmingExercise.getId());
+        ProgrammingExercise member = (ProgrammingExercise) exerciseRepository.findByIdElseThrow(programmingExercise.getId());
+        ProgrammingExerciseTimelineUpdateDTO timelineUpdate = new ProgrammingExerciseTimelineUpdateDTO(programmingExercise.getId(), timeline.release().plusDays(2), null,
+                timeline.due().plusDays(2), member.getAssessmentType(), timeline.assessmentDue().plusDays(2), null, null);
+
+        request.put("/api/programming/programming-exercises/timeline", timelineUpdate, HttpStatus.BAD_REQUEST);
+
+        assertMemberTimelinePinnedToGroup(programmingExercise.getId(), timeline);
+    }
+
+    /**
+     * {@code set-visible} writes the release date through a targeted {@code @Modifying} query that deliberately bypasses
+     * the usual validation, so it needs its own guard. Only individual-mode quizzes can be group members, and this action
+     * has no mode restriction — so without the guard it would silently desynchronize a member from its group.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void testSetVisibleOnGroupedQuiz_badRequest() throws Exception {
+        QuizExercise quiz = addQuizToCourse(QuizMode.INDIVIDUAL);
+        GroupTimeline timeline = createGroupWithTimelineFor(quiz.getId());
+
+        request.put("/api/quiz/quiz-exercises/" + quiz.getId() + "/set-visible", null, HttpStatus.BAD_REQUEST);
+
+        assertMemberTimelinePinnedToGroup(quiz.getId(), timeline);
+    }
+
+    /** The shared timeline a group imposes on its members, for asserting that member updates cannot move it. */
+    private record GroupTimeline(Long groupId, ZonedDateTime release, ZonedDateTime due, ZonedDateTime assessmentDue) {
+    }
+
+    /**
+     * Creates a group that defines every shared date itself and puts the given exercise in it. Defining all of them
+     * matters: an empty group otherwise adopts the joining exercise's values for the fields it leaves unset, which would
+     * make the expected timeline depend on whichever exercise the test happens to use.
+     */
+    private GroupTimeline createGroupWithTimelineFor(long exerciseId) throws Exception {
+        ZonedDateTime release = ZonedDateTime.now().plusDays(1).truncatedTo(ChronoUnit.MILLIS);
+        ZonedDateTime due = ZonedDateTime.now().plusDays(7).truncatedTo(ChronoUnit.MILLIS);
+        ZonedDateTime assessmentDue = ZonedDateTime.now().plusDays(14).truncatedTo(ChronoUnit.MILLIS);
+        CreateExerciseVariantGroupDTO createDTO = new CreateExerciseVariantGroupDTO("Loop variants", 100.0, release, null, due, assessmentDue, null, null);
+        ExerciseVariantGroupDTO created = request.postWithResponseBody(groupsUrl(), createDTO, ExerciseVariantGroupDTO.class, HttpStatus.CREATED);
+        assignToGroup(exerciseId, created.id());
+        return new GroupTimeline(created.id(), release, due, assessmentDue);
+    }
+
+    /** Moves every shared date and renames the exercise, so an update carries both a forbidden and a permitted change. */
+    private static void applyDifferentTimelineAndTitle(Exercise exercise) {
+        exercise.setTitle(UPDATED_TITLE);
+        exercise.setReleaseDate(ZonedDateTime.now().plusDays(2).truncatedTo(ChronoUnit.MILLIS));
+        exercise.setDueDate(ZonedDateTime.now().plusDays(20).truncatedTo(ChronoUnit.MILLIS));
+        exercise.setAssessmentDueDate(ZonedDateTime.now().plusDays(30).truncatedTo(ChronoUnit.MILLIS));
+    }
+
+    /** Asserts the member kept its group's timeline while the rest of the update was applied normally. */
+    private void assertTimelinePinnedToGroupAndTitleUpdated(long exerciseId, GroupTimeline timeline) {
+        assertMemberTimelinePinnedToGroup(exerciseId, timeline);
+        assertThat(exerciseRepository.findByIdElseThrow(exerciseId).getTitle()).isEqualTo(UPDATED_TITLE);
+    }
+
+    private void assertMemberTimelinePinnedToGroup(long exerciseId, GroupTimeline timeline) {
+        Exercise reloaded = exerciseRepository.findByIdElseThrow(exerciseId);
+        assertThat(zonedToInstant(reloaded.getReleaseDate())).isEqualTo(timeline.release().toInstant());
+        assertThat(zonedToInstant(reloaded.getDueDate())).isEqualTo(timeline.due().toInstant());
+        assertThat(zonedToInstant(reloaded.getAssessmentDueDate())).isEqualTo(timeline.assessmentDue().toInstant());
     }
 
     @Test

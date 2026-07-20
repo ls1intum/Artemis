@@ -5,6 +5,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 
@@ -113,6 +114,39 @@ public class ExerciseVariantGroupService {
         }
         validateDates(exercise);
         exerciseRepository.save(exercise);
+    }
+
+    /**
+     * Re-applies the owning group's shared timeline onto an exercise that is about to be updated, so a member can never
+     * be persisted with dates that differ from its group.
+     * <p>
+     * The group — not the request — is the source of truth for a member's timeline, so the incoming dates are silently
+     * overwritten rather than rejected: this is idempotent, keeps a stale client from failing an otherwise valid edit of
+     * some unrelated field, and lets the member's dates self-heal. The exercise's own (lazy, likely detached)
+     * {@code exerciseVariantGroup} is deliberately not read; the group is resolved by id instead. Callers must invoke
+     * this after applying their request DTO and before validating, and are responsible for persisting the exercise.
+     * <p>
+     * Endpoints whose <em>only</em> purpose is changing the timeline reject group members outright instead of calling
+     * this, because silently ignoring such a request would be misleading.
+     *
+     * @param exercise the exercise to pin to its group's timeline; unsaved or ungrouped exercises are left untouched
+     */
+    public void applyOwningGroupTimeline(Exercise exercise) {
+        if (exercise.getId() == null) {
+            // A brand-new exercise cannot be a group member yet, so there is no timeline to inherit.
+            return;
+        }
+        exerciseVariantGroupRepository.findByExerciseId(exercise.getId()).ifPresent(group -> applyGroupTimeline(group, exercise));
+    }
+
+    /**
+     * Resolves the group owning the given exercise, for callers that reject rather than overwrite timeline changes.
+     *
+     * @param exerciseId the id of the exercise to look up
+     * @return the owning group, or empty if the exercise is not a variant
+     */
+    public Optional<ExerciseVariantGroup> findOwningGroup(long exerciseId) {
+        return exerciseVariantGroupRepository.findByExerciseId(exerciseId);
     }
 
     /**
