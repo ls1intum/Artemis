@@ -848,6 +848,9 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
         assertThat(newModelingExercise.course()).as("course was not set for exam exercise").isNull();
         assertThat(newModelingExercise.exerciseGroup()).as("exerciseGroup was set for exam exercise").isNotNull();
         assertThat(newModelingExercise.exerciseGroup().id()).as("exerciseGroupId was set correctly").isEqualTo(exerciseGroup.getId());
+        assertThat(newModelingExercise.exerciseGroup().exam()).as("exam was set correctly").isNotNull();
+        assertThat(newModelingExercise.exerciseGroup().exam().course()).as("exam course was set correctly").isNotNull();
+        assertThat(newModelingExercise.exerciseGroup().exam().course().id()).as("exam course id was set correctly").isEqualTo(exerciseGroup.getExam().getCourse().getId());
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
@@ -1167,11 +1170,11 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
      * exact way the Angular client does: a JSON object whose {@code competencyLinks} and {@code categories} are explicit
      * arrays.
      * <p>
-     * Building the body as a JSON tree is essential: {@code UpdateModelingExerciseDTO} is annotated {@code @JsonInclude(NON_EMPTY)},
-     * so serializing the DTO directly would OMIT an empty collection and the server would see {@code null} ("leave unchanged")
-     * instead of {@code []} ("clear"). A {@code JsonNode} body serializes verbatim, so the returned {@link ObjectNode} lets a
-     * test send the collections exactly as the real client sends them (empty or populated), exercising the mutate/clear path
-     * the {@code .of(entity)} shortcut can never reach.
+     * Building the body as a JSON tree is essential: {@code UpdateModelingExerciseDTO} uses bare {@code @JsonInclude}, whose
+     * default is {@code ALWAYS}. Serializing the DTO directly therefore mirrors only the values produced by
+     * {@code .of(entity)}; it does not let the test choose whether a field is omitted, explicitly {@code null}, or an empty
+     * array. A {@code JsonNode} body serializes verbatim, so the returned {@link ObjectNode} lets the test control those exact
+     * wire values and send the collections as the real client does (empty or populated), exercising the mutate/clear path.
      *
      * @return the client-shaped request body, pre-populated from the persisted exercise (competencyLinks and categories non-empty)
      */
@@ -1185,8 +1188,9 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
     /**
      * Reproduces the real client PUT update with EXPLICIT empty {@code competencyLinks} and {@code categories} arrays on an
      * exercise that currently HAS a competency link and categories. This is the path that a {@code .of(entity)}-based test
-     * can never reach (NON_EMPTY masks the empty collections into {@code null}). The competency-link clear runs on the
-     * eagerly-fetched (populated) collection; the categories are replaced via the setter. Both must succeed with 200 and the
+     * cannot reach because that shortcut mirrors the entity's current collections instead of letting the test control the
+     * exact omitted, {@code null}, or empty wire values. The competency-link clear runs on the eagerly-fetched (populated)
+     * collection; the categories are replaced via the setter. Both must succeed with 200 and the
      * collections must be empty when reloaded from a fresh session.
      */
     @Test
