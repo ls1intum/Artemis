@@ -11,9 +11,9 @@
             "additionalFeedbackCommentPlaceholder": "Du kannst hier zusätzliches Feedback abgeben...",
             "suggestion": {
                 "default": "Vorschlag",
-                "suggested": "Offener Vorschlag",
+                "suggested": "KI-Feedback-Vorschlag",
                 "accepted": "Angenommener Vorschlag",
-                "adapted": "Angepasster Vorschlag"
+                "adapted": "Angepasster KI-Feedback-Vorschlag"
             },
             "suggestionTitle": {
                 "default": "Dieser Vorschlag wurde automatisch erstellt.",

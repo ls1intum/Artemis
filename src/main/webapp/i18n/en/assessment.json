@@ -11,9 +11,9 @@
             "additionalFeedbackCommentPlaceholder": "You can enter additional feedback here...",
             "suggestion": {
                 "default": "Suggestion",
-                "suggested": "Open Suggestion",
+                "suggested": "AI Feedback Suggestion",
                 "accepted": "Accepted Suggestion",
-                "adapted": "Adapted Suggestion"
+                "adapted": "Adapted AI Feedback Suggestion"
             },
             "suggestionTitle": {
                 "default": "This is an automatically generated feedback suggestion.",
