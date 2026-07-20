@@ -37,6 +37,11 @@ public record SubmissionPolicyForConductionDTO(Long id, String type, Boolean act
         if (submissionPolicy == null || !Hibernate.isInitialized(submissionPolicy)) {
             return null;
         }
+        // Pattern matching on the concrete policy type is safe here: SubmissionPolicy is annotated @ConcreteProxy, so
+        // Hibernate gives the real subclass rather than a generated proxy of the base class. Without that annotation a
+        // proxy would match neither case and the student would lose the policy display. The guard test
+        // testSubmissionPolicyProjectionResolvesConcreteTypeThroughHibernateProxy loads the policy as an initialized
+        // proxy and fails if the annotation is ever removed.
         String type = switch (submissionPolicy) {
             case LockRepositoryPolicy ignored -> "lock_repository";
             case SubmissionPenaltyPolicy ignored -> "submission_penalty";
