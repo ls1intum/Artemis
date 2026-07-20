@@ -46,6 +46,7 @@ export interface UpdateModelingExerciseDTO {
     // Mode and team configuration (only honored at creation time on the server)
     mode?: ExerciseMode;
     teamAssignmentConfig?: TeamAssignmentConfigDTO;
+    plagiarismDetectionConfig?: ModelingExercise['plagiarismDetectionConfig'];
 
     gradingCriteria?: GradingCriterion[];
     gradingInstructions?: string;
@@ -53,13 +54,8 @@ export interface UpdateModelingExerciseDTO {
     competencyLinks?: CompetencyLinkDTO[];
 }
 
-/**
- * DTO for importing modeling exercises. Superset of {@link UpdateModelingExerciseDTO} carrying the additional
- * configuration needed during import. Matches the server-side ImportModelingExerciseDTO record.
- */
-export interface ImportModelingExerciseDTO extends UpdateModelingExerciseDTO {
-    plagiarismDetectionConfig?: ModelingExercise['plagiarismDetectionConfig'];
-}
+/** DTO for importing modeling exercises. Matches the server-side ImportModelingExerciseDTO record. */
+export type ImportModelingExerciseDTO = UpdateModelingExerciseDTO;
 
 /**
  * Convert ModelingExercise → Update DTO.
@@ -101,6 +97,7 @@ export function toUpdateModelingExerciseDTO(modelingExercise: ModelingExercise):
         teamAssignmentConfig: modelingExercise.teamAssignmentConfig
             ? { minTeamSize: modelingExercise.teamAssignmentConfig.minTeamSize, maxTeamSize: modelingExercise.teamAssignmentConfig.maxTeamSize }
             : undefined,
+        plagiarismDetectionConfig: modelingExercise.plagiarismDetectionConfig,
         gradingCriteria: modelingExercise.gradingCriteria ?? [],
         gradingInstructions: modelingExercise.gradingInstructions,
         feedbackSuggestionModule: modelingExercise.feedbackSuggestionModule,
@@ -119,7 +116,5 @@ export function toUpdateModelingExerciseDTO(modelingExercise: ModelingExercise):
  * @returns the corresponding ImportModelingExerciseDTO
  */
 export function toImportModelingExerciseDTO(modelingExercise: ModelingExercise): ImportModelingExerciseDTO {
-    const dto: ImportModelingExerciseDTO = toUpdateModelingExerciseDTO(modelingExercise);
-    dto.plagiarismDetectionConfig = modelingExercise.plagiarismDetectionConfig;
-    return dto;
+    return toUpdateModelingExerciseDTO(modelingExercise);
 }

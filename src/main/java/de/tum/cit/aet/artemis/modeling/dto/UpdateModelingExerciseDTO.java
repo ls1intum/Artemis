@@ -19,6 +19,7 @@ import de.tum.cit.aet.artemis.lecture.dto.CompetencyLinkDTO;
 import de.tum.cit.aet.artemis.modeling.domain.DiagramType;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.modeling.util.ModelingDtoCollections;
+import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismDetectionConfigDTO;
 
 /**
  * DTO for creating and updating modeling exercises.
@@ -30,7 +31,8 @@ public record UpdateModelingExerciseDTO(Long id, String title, String channelNam
         Boolean presentationScoreEnabled, Boolean secondCorrectionEnabled, String feedbackSuggestionModule, String gradingInstructions, ZonedDateTime releaseDate,
         ZonedDateTime startDate, ZonedDateTime dueDate, ZonedDateTime assessmentDueDate, ZonedDateTime exampleSolutionPublicationDate, DiagramType diagramType,
         String exampleSolutionModel, String exampleSolutionExplanation, Long courseId, Long exerciseGroupId, ExerciseMode mode, TeamAssignmentConfigDTO teamAssignmentConfig,
-        List<GradingCriterionDTO> gradingCriteria, Set<CompetencyLinkDTO> competencyLinks) implements CompetencyLinksHolderDTO {
+        PlagiarismDetectionConfigDTO plagiarismDetectionConfig, List<GradingCriterionDTO> gradingCriteria, Set<CompetencyLinkDTO> competencyLinks)
+        implements CompetencyLinksHolderDTO {
 
     /**
      * Creates a DTO from a ModelingExercise entity.
@@ -54,6 +56,9 @@ public record UpdateModelingExerciseDTO(Long id, String title, String channelNam
         Set<CompetencyLinkDTO> competencyLinkDTOs = ModelingDtoCollections.setFromInitializedSet(exercise.getCompetencyLinks(), CompetencyLinkDTO::of);
         TeamAssignmentConfigDTO teamAssignmentConfig = Hibernate.isInitialized(exercise.getTeamAssignmentConfig()) ? TeamAssignmentConfigDTO.of(exercise.getTeamAssignmentConfig())
                 : null;
+        PlagiarismDetectionConfigDTO plagiarismDetectionConfig = Hibernate.isInitialized(exercise.getPlagiarismDetectionConfig())
+                ? PlagiarismDetectionConfigDTO.of(exercise.getPlagiarismDetectionConfig())
+                : null;
         // categories is a LAZY @ElementCollection; copy it (guarded) so the DTO never holds the live Hibernate persistent
         // set (a DTO toString via LoggingAspect would otherwise trigger a LazyInitializationException on Exercise.categories).
         Set<String> categories = ModelingDtoCollections.copyInitializedSet(exercise.getCategories());
@@ -63,6 +68,6 @@ public record UpdateModelingExerciseDTO(Long id, String title, String channelNam
                 exercise.getSecondCorrectionEnabled(), exercise.getFeedbackSuggestionModule(), exercise.getGradingInstructions(), exercise.getReleaseDate(),
                 exercise.getStartDate(), exercise.getDueDate(), exercise.getAssessmentDueDate(), exercise.getExampleSolutionPublicationDate(), exercise.getDiagramType(),
                 exercise.getExampleSolutionModel(), exercise.getExampleSolutionExplanation(), courseId, exerciseGroupId, exercise.getMode(), teamAssignmentConfig,
-                gradingCriterionDTOs, competencyLinkDTOs);
+                plagiarismDetectionConfig, gradingCriterionDTOs, competencyLinkDTOs);
     }
 }

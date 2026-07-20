@@ -1296,19 +1296,24 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
         config.setContinuousPlagiarismControlPlagiarismCaseStudentResponsePeriod(7);
         modelingExercise.setPlagiarismDetectionConfig(config);
 
-        // FIXME-DTO: UpdateModelingExerciseDTO does not carry plagiarismDetectionConfig, so the invalid config is never
-        // sent to the server and the previously asserted BAD_REQUEST validation on create can no longer be exercised
-        // through this boundary. Creation now succeeds with the server's default config (course exercises fall back to
-        // PlagiarismDetectionConfig.createDefault()). If create-time plagiarism config validation must remain reachable
-        // from the client, the create DTO needs a plagiarismDetectionConfig field.
-        request.postWithResponseBody("/api/modeling/modeling-exercises", UpdateModelingExerciseDTO.of(modelingExercise), ModelingExerciseResponseDTO.class, HttpStatus.CREATED);
+        request.postWithResponseBody("/api/modeling/modeling-exercises", UpdateModelingExerciseDTO.of(modelingExercise), ModelingExerciseResponseDTO.class, HttpStatus.BAD_REQUEST);
+
+        config.setSimilarityThreshold(50);
+        config.setMinimumScore(101); // invalid: above 100
+        request.postWithResponseBody("/api/modeling/modeling-exercises", UpdateModelingExerciseDTO.of(modelingExercise), ModelingExerciseResponseDTO.class, HttpStatus.BAD_REQUEST);
+
+        config.setMinimumScore(50);
+        config.setMinimumSize(-1); // invalid: negative
+        request.postWithResponseBody("/api/modeling/modeling-exercises", UpdateModelingExerciseDTO.of(modelingExercise), ModelingExerciseResponseDTO.class, HttpStatus.BAD_REQUEST);
+
+        config.setMinimumSize(50);
+        config.setContinuousPlagiarismControlPlagiarismCaseStudentResponsePeriod(32); // invalid: above 31
+        request.postWithResponseBody("/api/modeling/modeling-exercises", UpdateModelingExerciseDTO.of(modelingExercise), ModelingExerciseResponseDTO.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void updateModelingExercise_invalidPlagiarismDetectionConfig_doesNotAffectUpdate() throws Exception {
-        // With the DTO approach, PlagiarismDetectionConfig is not included in the UpdateModelingExerciseDTO.
-        // Invalid config set on the local object is never sent to the server, so the update succeeds with the stored config.
+    void updateModelingExercise_invalidPlagiarismDetectionConfig_badRequest() throws Exception {
         Course course = modelingExerciseUtilService.addCourseWithOneModelingExercise();
         ModelingExercise modelingExercise = (ModelingExercise) course.getExercises().iterator().next();
 
@@ -1319,14 +1324,18 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
         config.setContinuousPlagiarismControlPlagiarismCaseStudentResponsePeriod(7);
         modelingExercise.setPlagiarismDetectionConfig(config);
 
-        request.putWithResponseBody("/api/modeling/modeling-exercises", UpdateModelingExerciseDTO.of(modelingExercise), ModelingExerciseResponseDTO.class, HttpStatus.OK);
+        request.putWithResponseBody("/api/modeling/modeling-exercises", UpdateModelingExerciseDTO.of(modelingExercise), ModelingExerciseResponseDTO.class, HttpStatus.BAD_REQUEST);
+
+        config.setSimilarityThreshold(50);
+        config.setContinuousPlagiarismControlPlagiarismCaseStudentResponsePeriod(6); // invalid: below 7
+        request.putWithResponseBody("/api/modeling/modeling-exercises", UpdateModelingExerciseDTO.of(modelingExercise), ModelingExerciseResponseDTO.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createModelingExercise_courseExercise_persistsDefaultPlagiarismDetectionConfig() throws Exception {
-        // The flat create DTO does not carry a plagiarism detection config; the create path fills the default for course
-        // exercises (createAndSaveDefaultIfNullAndCourseExercise) so it is not persisted as null. Pin that here.
+        // The create path fills the default for course exercises when the request omits the config, so it is not persisted
+        // as null. Pin that here.
         ModelingExercise modelingExercise = ModelingExerciseFactory.createModelingExercise(classExercise.getCourseViaExerciseGroupOrCourseMember().getId());
         modelingExercise.setTitle("Course exercise with default plagiarism config");
         modelingExercise.setChannelName("test-modeling-channel-" + UUID.randomUUID().toString().substring(0, 8));
@@ -1338,6 +1347,56 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
         ModelingExercise reloaded = modelingExerciseTestRepository.findForVersioningById(created.id()).orElseThrow();
         assertThat(reloaded.getPlagiarismDetectionConfig()).as("course exercise create persists a non-null default plagiarism config").isNotNull();
         assertThat(reloaded.getPlagiarismDetectionConfig()).usingRecursiveComparison().ignoringFields("id").isEqualTo(PlagiarismDetectionConfig.createDefault());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void createAndUpdateModelingExercise_persistsProvidedPlagiarismDetectionConfig() throws Exception {
+        ModelingExercise exercise = ModelingExerciseFactory.createModelingExercise(classExercise.getCourseViaExerciseGroupOrCourseMember().getId());
+        exercise.setTitle("Exercise with custom plagiarism config");
+        exercise.setChannelName("test-modeling-channel-" + UUID.randomUUID().toString().substring(0, 8));
+        PlagiarismDetectionConfig createConfig = PlagiarismDetectionConfig.createDefault();
+        createConfig.setSimilarityThreshold(42);
+        exercise.setPlagiarismDetectionConfig(createConfig);
+
+        ModelingExerciseResponseDTO created = request.postWithResponseBody("/api/modeling/modeling-exercises", UpdateModelingExerciseDTO.of(exercise),
+                ModelingExerciseResponseDTO.class, HttpStatus.CREATED);
+        ModelingExercise reloaded = modelingExerciseTestRepository.findForVersioningById(created.id()).orElseThrow();
+        assertThat(reloaded.getPlagiarismDetectionConfig().getSimilarityThreshold()).isEqualTo(42);
+
+        ObjectNode updateBody = (ObjectNode) request.getObjectMapper().valueToTree(UpdateModelingExerciseDTO.of(reloaded));
+        ((ObjectNode) updateBody.get("plagiarismDetectionConfig")).put("similarityThreshold", 73);
+        request.putWithResponseBody("/api/modeling/modeling-exercises", updateBody, ModelingExerciseResponseDTO.class, HttpStatus.OK);
+
+        ModelingExercise updated = modelingExerciseTestRepository.findForVersioningById(created.id()).orElseThrow();
+        assertThat(updated.getPlagiarismDetectionConfig().getSimilarityThreshold()).isEqualTo(73);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void createModelingExercise_omittedIncludedInOverallScore_keepsEntityDefault() throws Exception {
+        ModelingExercise exercise = ModelingExerciseFactory.createModelingExercise(classExercise.getCourseViaExerciseGroupOrCourseMember().getId());
+        exercise.setTitle("Exercise without inclusion field");
+        exercise.setChannelName("test-modeling-channel-" + UUID.randomUUID().toString().substring(0, 8));
+        exercise.setIncludedInOverallScore(null);
+
+        ModelingExerciseResponseDTO created = request.postWithResponseBody("/api/modeling/modeling-exercises", UpdateModelingExerciseDTO.of(exercise),
+                ModelingExerciseResponseDTO.class, HttpStatus.CREATED);
+
+        assertThat(created.includedInOverallScore()).isEqualTo(IncludedInOverallScore.INCLUDED_COMPLETELY);
+        assertThat(modelingExerciseTestRepository.findById(created.id()).orElseThrow().getIncludedInOverallScore()).isEqualTo(IncludedInOverallScore.INCLUDED_COMPLETELY);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void updateModelingExercise_doesNotChangeDiagramType() throws Exception {
+        ObjectNode updateBody = (ObjectNode) request.getObjectMapper().valueToTree(UpdateModelingExerciseDTO.of(classExercise));
+        updateBody.put("diagramType", DiagramType.ActivityDiagram.name());
+
+        ModelingExerciseResponseDTO updated = request.putWithResponseBody("/api/modeling/modeling-exercises", updateBody, ModelingExerciseResponseDTO.class, HttpStatus.OK);
+
+        assertThat(updated.diagramType()).isEqualTo(DiagramType.ClassDiagram);
+        assertThat(modelingExerciseTestRepository.findById(classExercise.getId()).orElseThrow().getDiagramType()).isEqualTo(DiagramType.ClassDiagram);
     }
 
     @Test
@@ -1547,7 +1606,8 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
                 response.allowComplaintsForAutomaticAssessments(), response.allowFeedbackRequests(), response.presentationScoreEnabled(), response.secondCorrectionEnabled(),
                 response.feedbackSuggestionModule(), response.gradingInstructions(), response.releaseDate(), response.startDate(), response.dueDate(), response.assessmentDueDate(),
                 response.exampleSolutionPublicationDate(), response.diagramType(), response.exampleSolutionModel(), response.exampleSolutionExplanation(), response.courseId(),
-                response.exerciseGroupId(), response.mode(), response.teamAssignmentConfig(), response.gradingCriteria(), response.competencyLinks());
+                response.exerciseGroupId(), response.mode(), response.teamAssignmentConfig(), response.plagiarismDetectionConfig(), response.gradingCriteria(),
+                response.competencyLinks());
 
         request.putWithResponseBody("/api/modeling/modeling-exercises", editDto, ModelingExerciseResponseDTO.class, HttpStatus.OK);
     }

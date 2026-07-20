@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.modeling.web;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
@@ -262,16 +263,31 @@ public class ModelingAssessmentResource extends AssessmentResource {
         if (feedbackDTOs == null) {
             return new ArrayList<>();
         }
-        return feedbackDTOs.stream().map(this::feedbackFromDto).collect(Collectors.toCollection(ArrayList::new));
+
+        List<Long> longFeedbackIds = feedbackDTOs.stream().filter(dto -> dto.id() != null && dto.hasLongFeedbackText()).map(FeedbackDTO::id).distinct().toList();
+        Map<Long, Feedback> storedFeedbacksById;
+        Map<Long, String> storedLongTextsById;
+        if (longFeedbackIds.isEmpty()) {
+            storedFeedbacksById = Map.of();
+            storedLongTextsById = Map.of();
+        }
+        else {
+            storedFeedbacksById = feedbackRepository.findAllById(longFeedbackIds).stream()
+                    .collect(Collectors.toMap(Feedback::getId, feedback -> feedback, (first, second) -> first));
+            storedLongTextsById = longFeedbackTextRepository.findByFeedbackIds(longFeedbackIds).stream()
+                    .collect(Collectors.toMap(longFeedback -> longFeedback.getFeedback().getId(), LongFeedbackText::getText, (first, second) -> first));
+        }
+
+        return feedbackDTOs.stream().map(dto -> feedbackFromDto(dto, storedFeedbacksById, storedLongTextsById)).collect(Collectors.toCollection(ArrayList::new));
     }
 
-    private Feedback feedbackFromDto(final FeedbackDTO dto) {
+    private Feedback feedbackFromDto(final FeedbackDTO dto, Map<Long, Feedback> storedFeedbacksById, Map<Long, String> storedLongTextsById) {
         final Feedback feedback = new Feedback();
         // Preserve the id so an existing feedback is matched (not recreated) on re-save; the long-feedback persistence
         // and cleanup paths (ResultService) key on feedback id.
         feedback.setId(dto.id());
         feedback.setCredits(dto.credits());
-        feedback.setDetailText(detailTextFromDto(dto));
+        feedback.setDetailText(detailTextFromDto(dto, storedFeedbacksById, storedLongTextsById));
         feedback.setText(dto.text());
         feedback.setReference(dto.reference());
         feedback.setType(dto.type());
@@ -284,16 +300,17 @@ public class ModelingAssessmentResource extends AssessmentResource {
         return feedback;
     }
 
-    private String detailTextFromDto(final FeedbackDTO dto) {
+    private String detailTextFromDto(final FeedbackDTO dto, Map<Long, Feedback> storedFeedbacksById, Map<Long, String> storedLongTextsById) {
         if (!dto.hasLongFeedbackText() || dto.id() == null) {
             return dto.detailText();
         }
 
         // The read DTO can carry only the stored preview of long feedback, but the editor loads the full long text before
-        // changes. Reload the old full text only for preview-only saves; otherwise preserve the user's edited detail text.
-        final boolean dtoContainsOnlyPreview = feedbackRepository.findById(dto.id()).map(feedback -> Objects.equals(dto.detailText(), feedback.getDetailText())).orElse(false);
+        // changes. Restore old full texts only for preview-only saves; otherwise preserve the user's edited detail text.
+        // Both maps are loaded once per request so this conversion stays constant-query for large assessments.
+        final boolean dtoContainsOnlyPreview = storedFeedbacksById.containsKey(dto.id()) && Objects.equals(dto.detailText(), storedFeedbacksById.get(dto.id()).getDetailText());
         if (dto.detailText() == null || dtoContainsOnlyPreview) {
-            return longFeedbackTextRepository.findByFeedbackId(dto.id()).map(LongFeedbackText::getText).orElse(dto.detailText());
+            return storedLongTextsById.getOrDefault(dto.id(), dto.detailText());
         }
         return dto.detailText();
     }

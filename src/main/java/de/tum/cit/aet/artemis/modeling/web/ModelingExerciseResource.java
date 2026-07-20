@@ -220,9 +220,8 @@ public class ModelingExerciseResource {
             competencyExerciseLinkService.addCompetencyLinksForCreation(savedExercise, competencyLinks);
             savedExercise = modelingExerciseRepository.save(savedExercise);
         }
-        // The flat create DTO does not carry the plagiarism detection config (the client previously sent the default);
-        // fill and persist the default for course exercises so it is not stored as null. Done after the competency-link
-        // save so it operates on the fully persisted exercise.
+        // A client may omit the plagiarism detection config; fill and persist the default for course exercises so it is
+        // not stored as null. Done after the competency-link save so it operates on the fully persisted exercise.
         PlagiarismDetectionConfigHelper.createAndSaveDefaultIfNullAndCourseExercise(savedExercise, modelingExerciseRepository);
         final ModelingExercise result = savedExercise;
 
@@ -666,8 +665,11 @@ public class ModelingExerciseResource {
         }
         exercise.setFeedbackSuggestionModule(updateModelingExerciseDTO.feedbackSuggestionModule());
         exercise.setGradingInstructions(updateModelingExerciseDTO.gradingInstructions());
+        if (updateModelingExerciseDTO.plagiarismDetectionConfig() != null) {
+            exercise.setPlagiarismDetectionConfig(toPlagiarismDetectionConfig(updateModelingExerciseDTO.plagiarismDetectionConfig()));
+        }
 
-        exercise.setDiagramType(updateModelingExerciseDTO.diagramType());
+        // The diagram type is immutable after creation because changing it would invalidate existing submissions.
         exercise.setExampleSolutionModel(updateModelingExerciseDTO.exampleSolutionModel());
         exercise.setExampleSolutionExplanation(updateModelingExerciseDTO.exampleSolutionExplanation());
 
@@ -694,7 +696,10 @@ public class ModelingExerciseResource {
         exercise.setDifficulty(dto.difficulty());
         exercise.setMaxPoints(dto.maxPoints());
         exercise.setBonusPoints(dto.bonusPoints());
-        exercise.setIncludedInOverallScore(dto.includedInOverallScore());
+        // Keep the entity default when an older or third-party client omits this field.
+        if (dto.includedInOverallScore() != null) {
+            exercise.setIncludedInOverallScore(dto.includedInOverallScore());
+        }
         exercise.setReleaseDate(dto.releaseDate());
         exercise.setStartDate(dto.startDate());
         exercise.setDueDate(dto.dueDate());
@@ -715,6 +720,9 @@ public class ModelingExerciseResource {
         }
         if (dto.teamAssignmentConfig() != null) {
             exercise.setTeamAssignmentConfig(dto.teamAssignmentConfig().toEntity());
+        }
+        if (dto.plagiarismDetectionConfig() != null) {
+            exercise.setPlagiarismDetectionConfig(toPlagiarismDetectionConfig(dto.plagiarismDetectionConfig()));
         }
         if (dto.allowComplaintsForAutomaticAssessments() != null) {
             exercise.setAllowComplaintsForAutomaticAssessments(dto.allowComplaintsForAutomaticAssessments());

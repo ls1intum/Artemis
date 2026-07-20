@@ -92,16 +92,19 @@ describe('ModelingExercise Service', () => {
             .pipe(take(1))
             .subscribe((resp) => expect(resp.body).toEqual(expected));
         const req = httpMock.expectOne({ method: 'PUT' });
+        expect(req.request.body.plagiarismDetectionConfig).toEqual(expected.plagiarismDetectionConfig);
         req.flush(returnedFromService);
     });
 
     it('should send a flat course-exercise create body carrying courseId and no exerciseGroupId', () => {
         const course = { id: 42 } as unknown as ModelingExercise['course'];
         const exercise = new ModelingExercise(UMLDiagramType.ComponentDiagram, course, undefined);
+        exercise.plagiarismDetectionConfig = { ...exercise.plagiarismDetectionConfig, similarityThreshold: 42 };
         service.create(exercise).pipe(take(1)).subscribe();
         const req = httpMock.expectOne({ method: 'POST' });
         expect(req.request.body.courseId).toBe(42);
         expect(req.request.body.exerciseGroupId).toBeUndefined();
+        expect(req.request.body.plagiarismDetectionConfig).toEqual(exercise.plagiarismDetectionConfig);
         req.flush({ id: 1, ...exercise });
     });
 

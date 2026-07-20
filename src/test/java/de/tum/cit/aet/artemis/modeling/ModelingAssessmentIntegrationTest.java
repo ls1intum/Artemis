@@ -1098,6 +1098,33 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationIndepen
     }
 
     /**
+     * Performance guard: mapping preview-only long feedback DTOs must bulk-load both the stored previews and full texts.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void testSaveModelingAssessment_manyLongFeedbacks_hasBoundedQueryCount() throws Exception {
+        ModelingSubmission submission = modelingExerciseUtilService.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.54727.json",
+                TEST_PREFIX + "student1");
+        List<FeedbackDTO> longFeedbackDtos = new ArrayList<>();
+        for (int i = 0; i < 12; i++) {
+            String detailText = ("long feedback " + i + " ").repeat(Constants.FEEDBACK_DETAIL_TEXT_SOFT_MAX_LENGTH);
+            longFeedbackDtos.add(new FeedbackDTO(null, null, detailText, false, null, 1.0, null, FeedbackType.MANUAL_UNREFERENCED, null, null));
+        }
+        ResultDTO stored = request.putWithResponseBody(API_MODELING_SUBMISSIONS + submission.getId() + "/results/0/assessment", new ModelingAssessmentDTO(longFeedbackDtos, "text"),
+                ResultDTO.class, HttpStatus.OK);
+
+        List<FeedbackDTO> previewDtos = stored.feedbacks();
+        assertThat(previewDtos).allMatch(FeedbackDTO::hasLongFeedbackText);
+        ModelingAssessmentDTO body = new ModelingAssessmentDTO(previewDtos, "text");
+
+        // The shared persistence path still saves each feedback separately; this bound rules out the two extra per-item
+        // preview/full-text lookups that used to add 24 more queries for this payload.
+        assertThatDb(
+                () -> request.putWithResponseBody(API_MODELING_SUBMISSIONS + submission.getId() + "/results/" + stored.id() + "/assessment", body, ResultDTO.class, HttpStatus.OK))
+                .hasBeenCalledAtMostTimes(50);
+    }
+
+    /**
      * JPA obligation (query-count guard): fetching an assessment by submission id must not fan out into an N+1 explosion when
      * the DTO factory walks result -> submission -> participation -> student/team and feedbacks/assessor/assessmentNote.
      */
