@@ -2089,7 +2089,9 @@ components:
         job: {$ref: '#/components/schemas/VariantJob'}
         stepOutputs:
           type: object
-          additionalProperties: {$ref: '#/components/schemas/StepOutput'}
+          additionalProperties:
+            type: array
+            items: {$ref: '#/components/schemas/StepOutput'}
         request: {$ref: '#/components/schemas/VariantGenerationRequest'}
     CodeGenerationRequest:
       type: object

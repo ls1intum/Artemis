@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.hyperion.service.variants;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
@@ -215,14 +216,16 @@ public class ExerciseVariantJobService {
     }
 
     /**
-     * Stores a phase's step output on the job and publishes STEP_OUTPUT (expandable panels).
+     * Appends a phase's step output to the job's per-phase history and publishes STEP_OUTPUT (expandable
+     * panels). Outputs are never overwritten: a phase visited multiple times (verify/repair attempts) keeps
+     * every message, oldest first, so instructors can debug earlier failures after a later success.
      *
      * @param jobId  the job id
      * @param phase  the phase the output belongs to
      * @param output the output
      */
     public void recordStepOutput(String jobId, VariantJobPhase phase, StepOutput output) {
-        VariantJob job = mutate(jobId, mutableJob -> mutableJob.getStepOutputs().put(phase, output));
+        VariantJob job = mutate(jobId, mutableJob -> mutableJob.getStepOutputs().computeIfAbsent(phase, key -> new ArrayList<>()).add(output));
         publish(job, VariantGenerationEventDTO.stepOutput(phase, output.summary()));
     }
 

@@ -311,9 +311,11 @@ public class ExerciseVariantGenerationPipeline {
         }
         StringBuilder builder = new StringBuilder();
         for (VariantJobPhase phase : VariantJobPhase.values()) {
-            StepOutput output = job.getStepOutputs().get(phase);
-            if (output != null) {
-                builder.append(phase).append(": ").append(output.summary()).append('\n');
+            List<StepOutput> outputs = job.getStepOutputs().get(phase);
+            if (outputs != null) {
+                // Every recorded message, oldest first — earlier attempt failures are exactly what the
+                // failure summary needs to explain.
+                outputs.forEach(output -> builder.append(phase).append(": ").append(output.summary()).append('\n'));
             }
         }
         return builder.toString();

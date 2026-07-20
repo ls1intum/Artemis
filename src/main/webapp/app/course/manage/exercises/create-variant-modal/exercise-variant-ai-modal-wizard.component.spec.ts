@@ -319,3 +319,87 @@ describe('ExerciseVariantAiModalWizardComponent (storytelling)', () => {
         expect(request.narrativeStyle).toBeUndefined();
     });
 });
+
+/**
+ * Step-output history: a phase visited several times (verify/repair attempts) keeps every message. Expanding a
+ * step must show ALL messages, each in its own scrollable code field, oldest first (latest at the bottom) — an
+ * instructor debugging a job that failed twice and then succeeded needs the earlier errors, not just the last.
+ */
+describe('ExerciseVariantAiModalWizardComponent (step-output history)', () => {
+    setupTestBed({ zoneless: true });
+
+    let fixture: ComponentFixture<ExerciseVariantAiModalWizardComponent>;
+    let component: ExerciseVariantAiModalWizardComponent;
+
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
+            imports: [ExerciseVariantAiModalWizardComponent],
+            providers: [
+                {
+                    provide: ExerciseVariantGenerationService,
+                    useValue: {
+                        startGeneration: vi.fn().mockReturnValue(of('job-1')),
+                        jobEvents: vi.fn().mockReturnValue(of()),
+                        getJobDetail: vi.fn().mockReturnValue(
+                            of({
+                                job: { jobId: 'job-1', phase: 'VERIFYING', sourceExerciseTitle: 'Sorting', exerciseType: 'programming' },
+                                stepOutputs: {
+                                    VERIFYING: [
+                                        { summary: '2 finding(s) — attempt 1/3', detail: 'compiler error: CargoBay.java:12' },
+                                        { summary: 'All gates green', detail: 'solution build passed' },
+                                    ],
+                                },
+                                request: undefined,
+                            }),
+                        ),
+                        cancelJob: vi.fn().mockReturnValue(of(undefined)),
+                    },
+                },
+                { provide: ExerciseVariantGroupService, useValue: { getGroupsForCourse: vi.fn().mockReturnValue(of([])) } },
+                { provide: ExerciseService, useValue: { find: vi.fn().mockReturnValue(of({ body: undefined })) } },
+                {
+                    provide: TranslateService,
+                    useValue: { instant: (key: string) => key, get: (key: string) => of(key), onLangChange: of(), onTranslationChange: of(), onDefaultLangChange: of() },
+                },
+            ],
+        })
+            .overrideComponent(ExerciseVariantAiModalWizardComponent, {
+                remove: { imports: [ArtemisTranslatePipe] },
+                add: { imports: [MockPipe(ArtemisTranslatePipe, (key) => key)] },
+            })
+            .compileComponents();
+
+        fixture = TestBed.createComponent(ExerciseVariantAiModalWizardComponent);
+        component = fixture.componentInstance;
+        fixture.componentRef.setInput('monitorJobId', 'job-1');
+        fixture.componentRef.setInput('visible', true);
+        fixture.detectChanges();
+    });
+
+    afterEach(() => {
+        fixture.destroy();
+        TestBed.resetTestingModule();
+    });
+
+    it('shows the latest summary collapsed and every message expanded, latest at the bottom', () => {
+        const toggle = document.body.querySelector('[data-testid="variant-wizard-step-output-toggle"]');
+        expect(toggle?.textContent).toContain('All gates green');
+        expect(document.body.querySelectorAll('[data-testid="variant-wizard-step-output-detail"]')).toHaveLength(0);
+
+        component.toggleStepOutput('VERIFYING');
+        fixture.detectChanges();
+
+        const details = Array.from(document.body.querySelectorAll('[data-testid="variant-wizard-step-output-detail"]'));
+        expect(details).toHaveLength(2);
+        expect(details[0].textContent).toContain('compiler error: CargoBay.java:12');
+        expect(details[1].textContent).toContain('solution build passed');
+    });
+
+    it('appends live STEP_OUTPUT messages to the phase history instead of replacing them', () => {
+        component.stepOutputs.set({ VERIFYING: [{ summary: 'first', detail: 'first detail' }] });
+
+        component['recordStepOutput']('VERIFYING', { summary: 'second', detail: 'second detail' });
+
+        expect(component.stepOutputs()['VERIFYING'].map((output) => output.summary)).toEqual(['first', 'second']);
+    });
+});

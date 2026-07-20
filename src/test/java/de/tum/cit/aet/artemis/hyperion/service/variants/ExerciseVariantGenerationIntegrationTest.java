@@ -299,7 +299,7 @@ class ExerciseVariantGenerationIntegrationTest extends AbstractSpringIntegration
         // Every pipeline phase recorded its step output (the modal's expandable panels).
         assertThat(job.getStepOutputs()).containsKeys(VariantJobPhase.ANALYZING, VariantJobPhase.PLANNING, VariantJobPhase.PROVISIONING, VariantJobPhase.TRANSFORMING,
                 VariantJobPhase.VERIFYING);
-        assertThat(job.getStepOutputs().get(VariantJobPhase.TRANSFORMING).summary()).contains("Agent round 1");
+        assertThat(job.getStepOutputs().get(VariantJobPhase.TRANSFORMING).getFirst().summary()).contains("Agent round 1");
 
         // Tray list + monitor-modal detail endpoints see the finished job incl. the original request.
         List<VariantJobDTO> jobs = request.getList("/api/hyperion/variant-jobs", HttpStatus.OK, VariantJobDTO.class);
@@ -370,7 +370,13 @@ class ExerciseVariantGenerationIntegrationTest extends AbstractSpringIntegration
         assertThat(job.getPhase()).isEqualTo(VariantJobPhase.DRAFT_WITH_WARNINGS);
         assertThat(job.getWarnings()).isNotEmpty().anySatisfy(warning -> assertThat(warning).contains("QUIZ_CRITIQUE").contains("The requested domain change was not applied")
                 .contains("build logs omitted").doesNotContain("compiler output line"));
-        assertThat(job.getStepOutputs().get(VariantJobPhase.VERIFYING).detail()).contains("compiler output line");
+        // The verify history keeps ONE output per attempt, oldest first — earlier failures stay inspectable
+        // instead of being overwritten by the latest message (debugging aid for the modal's step panels).
+        List<StepOutput> verifyOutputs = job.getStepOutputs().get(VariantJobPhase.VERIFYING);
+        assertThat(verifyOutputs).hasSize(3);
+        assertThat(verifyOutputs.getFirst().summary()).contains("attempt 1/3");
+        assertThat(verifyOutputs.getLast().summary()).contains("attempt 3/3");
+        assertThat(verifyOutputs).allSatisfy(output -> assertThat(output.detail()).contains("compiler output line"));
         assertThat(script.agentRounds()).hasValue(3);
         assertThat(job.getStepOutputs()).containsKey(VariantJobPhase.REPAIRING);
         // The draft is kept for the instructor to repair in the editor.
@@ -491,11 +497,14 @@ class ExerciseVariantGenerationIntegrationTest extends AbstractSpringIntegration
         VariantJob job = jobService.startJob(initiator, sourceQuiz, domainChangeRequest(standalonePlacement()));
         jobService.recordChangePlan(job.getJobId(), new ChangePlan(PLANNED_TITLE, "statement", List.of("change"), List.of("invariant")));
         jobService.recordStepOutput(job.getJobId(), VariantJobPhase.PLANNING, new StepOutput("summary", "detail", java.time.Instant.now()));
+        // A second output for the same phase appends to the history instead of overwriting the first.
+        jobService.recordStepOutput(job.getJobId(), VariantJobPhase.PLANNING, new StepOutput("summary 2", "detail 2", java.time.Instant.now()));
 
         VariantJobDetailDTO detail = VariantJobDetailDTO.of(jobService.getJob(job.getJobId(), EDITOR_LOGIN).orElseThrow());
         assertThat(detail.job().variantExerciseTitle()).isEqualTo(PLANNED_TITLE);
         assertThat(detail.request().placement().type()).isEqualTo(VariantPlacementDTO.PlacementType.STANDALONE);
-        assertThat(detail.stepOutputs()).containsEntry(VariantJobPhase.PLANNING, new VariantJobDetailDTO.StepOutputDTO("summary", "detail"));
+        assertThat(detail.stepOutputs()).containsEntry(VariantJobPhase.PLANNING,
+                List.of(new VariantJobDetailDTO.StepOutputDTO("summary", "detail"), new VariantJobDetailDTO.StepOutputDTO("summary 2", "detail 2")));
         assertThat(Map.copyOf(detail.stepOutputs())).hasSize(1);
     }
 

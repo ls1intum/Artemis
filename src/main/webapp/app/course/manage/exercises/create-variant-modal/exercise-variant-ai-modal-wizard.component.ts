@@ -154,8 +154,12 @@ export class ExerciseVariantAiModalWizardComponent implements OnDestroy {
     readonly maxAttempts = signal<number | undefined>(undefined);
     /** Latest PROGRESS sub-label, e.g. "Building solution repository" — cleared on phase change. */
     readonly progressDetail = signal<string | undefined>(undefined);
-    /** Recorded step outputs per phase — live via STEP_OUTPUT events, full detail from the job-detail endpoint. */
-    readonly stepOutputs = signal<Record<string, StepOutput>>({});
+    /**
+     * Recorded step-output history per phase, oldest first — live via STEP_OUTPUT events, full detail from the
+     * job-detail endpoint. Every message is kept (one per verify/repair attempt), so an instructor can still
+     * inspect the earlier error messages after a retry succeeded.
+     */
+    readonly stepOutputs = signal<Record<string, StepOutput[]>>({});
     readonly expandedPhases = signal<Record<string, boolean>>({});
     readonly warnings = signal<string[]>([]);
     readonly failurePhase = signal<VariantJobPhase | undefined>(undefined);
@@ -257,12 +261,12 @@ export class ExerciseVariantAiModalWizardComponent implements OnDestroy {
     });
 
     /**
-     * Recorded step outputs in pipeline order — the result step's "what the AI did" summary; failed/warning
-     * summaries explain what was applied and where the instructor should continue.
+     * Recorded step-output histories in pipeline order — the result step's "what the AI did" summary;
+     * failed/warning summaries explain what was applied and where the instructor should continue.
      */
-    readonly recordedStepOutputs = computed<Array<{ phase: string; output: StepOutput }>>(() => {
+    readonly recordedStepOutputs = computed<Array<{ phase: string; outputs: StepOutput[] }>>(() => {
         const outputs = this.stepOutputs();
-        return [...GENERATION_PHASES, 'REPAIRING'].filter((phase) => outputs[phase]).map((phase) => ({ phase, output: outputs[phase] }));
+        return [...GENERATION_PHASES, 'REPAIRING'].filter((phase) => outputs[phase]?.length).map((phase) => ({ phase, outputs: outputs[phase] }));
     });
 
     readonly generationPhases = GENERATION_PHASES;
@@ -446,6 +450,11 @@ export class ExerciseVariantAiModalWizardComponent implements OnDestroy {
 
         this.variantAdded.emit(variant);
         this.close();
+    }
+
+    /** A phase's panel is expandable once at least one message carries a full log detail. */
+    hasAnyDetail(outputs: StepOutput[]): boolean {
+        return outputs.some((output) => !!output.detail);
     }
 
     toggleStepOutput(phase: string): void {
@@ -640,10 +649,11 @@ export class ExerciseVariantAiModalWizardComponent implements OnDestroy {
         }
     }
 
+    /** Appends a live event's output to the phase's history; the job-detail fetch replaces it with the full record. */
     private recordStepOutput(phase: string, output: StepOutput): void {
         this.stepOutputs.update((outputs) => {
             const updated = Object.assign({}, outputs);
-            updated[phase] = output;
+            updated[phase] = [...(updated[phase] ?? []), output];
             return updated;
         });
     }

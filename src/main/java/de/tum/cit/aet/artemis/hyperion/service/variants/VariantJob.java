@@ -63,7 +63,12 @@ public class VariantJob implements Serializable {
 
     private ChangePlan changePlan;
 
-    private Map<VariantJobPhase, StepOutput> stepOutputs = new EnumMap<>(VariantJobPhase.class);
+    /**
+     * Append-only output history per phase, oldest first. A phase can produce several outputs — VERIFYING and
+     * REPAIRING record one per attempt — and every one is kept: an instructor debugging a job that failed twice
+     * and then succeeded needs the earlier failures, not just the last message.
+     */
+    private Map<VariantJobPhase, List<StepOutput>> stepOutputs = new EnumMap<>(VariantJobPhase.class);
 
     private List<String> warnings = new ArrayList<>();
 
@@ -200,11 +205,11 @@ public class VariantJob implements Serializable {
         this.changePlan = changePlan;
     }
 
-    public Map<VariantJobPhase, StepOutput> getStepOutputs() {
+    public Map<VariantJobPhase, List<StepOutput>> getStepOutputs() {
         return stepOutputs;
     }
 
-    public void setStepOutputs(Map<VariantJobPhase, StepOutput> stepOutputs) {
+    public void setStepOutputs(Map<VariantJobPhase, List<StepOutput>> stepOutputs) {
         this.stepOutputs = stepOutputs;
     }
 

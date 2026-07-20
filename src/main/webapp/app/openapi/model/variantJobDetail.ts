@@ -14,7 +14,7 @@ import { VariantGenerationRequest } from './variantGenerationRequest';
 
 export interface VariantJobDetail { 
     job?: VariantJob;
-    stepOutputs?: { [key: string]: StepOutput; };
+    stepOutputs?: { [key: string]: Array<StepOutput>; };
     request?: VariantGenerationRequest;
 }
 

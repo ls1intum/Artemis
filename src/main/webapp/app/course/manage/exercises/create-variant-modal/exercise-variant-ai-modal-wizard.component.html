@@ -342,19 +342,27 @@
                             @if (i === currentPhaseIndex() && activeStepDetail(); as detail) {
                                 <span class="d-block text-muted small" data-testid="variant-wizard-step-detail">{{ detail }}</span>
                             }
-                            @if (stepOutputs()[phase]; as stepOutput) {
-                                <!-- Expandable only once the full log detail arrived — an arrow with an empty body
-                                     behind it is worse than no arrow. -->
-                                @if (stepOutput.detail) {
+                            @if (stepOutputs()[phase]; as outputs) {
+                                <!-- Expandable only once at least one full log detail arrived — an arrow with an
+                                     empty body behind it is worse than no arrow. Collapsed, the LATEST summary is
+                                     shown; expanded, EVERY recorded message renders as its own scrollable code
+                                     field, oldest first (latest at the bottom) — earlier attempt errors stay
+                                     inspectable after a later attempt succeeded. -->
+                                @if (hasAnyDetail(outputs)) {
                                     <a class="d-block small text-decoration-none pointer" (click)="toggleStepOutput(phase)" data-testid="variant-wizard-step-output-toggle">
                                         <fa-icon [icon]="expandedPhases()[phase] ? faChevronDown : faChevronRight" class="me-1" />
-                                        {{ stepOutput.summary }}
+                                        {{ outputs[outputs.length - 1].summary }}
                                     </a>
                                     @if (expandedPhases()[phase]) {
-                                        <pre class="step-output-detail" data-testid="variant-wizard-step-output-detail">{{ stepOutput.detail }}</pre>
+                                        @for (stepOutput of outputs; track $index) {
+                                            @if (stepOutput.detail) {
+                                                <div class="small text-muted mt-1">{{ stepOutput.summary }}</div>
+                                                <pre class="step-output-detail" data-testid="variant-wizard-step-output-detail">{{ stepOutput.detail }}</pre>
+                                            }
+                                        }
                                     }
                                 } @else {
-                                    <span class="d-block small text-muted">{{ stepOutput.summary }}</span>
+                                    <span class="d-block small text-muted">{{ outputs[outputs.length - 1].summary }}</span>
                                 }
                             }
                         </span>
@@ -496,16 +504,23 @@
                 @for (entry of recordedStepOutputs(); track entry.phase) {
                     <div class="step-summary__entry">
                         <span class="fw-semibold">{{ 'artemisApp.exerciseVariantGeneration.phase.' + entry.phase | artemisTranslate }}</span>
-                        @if (entry.output.detail) {
+                        <!-- Collapsed: the latest message's summary. Expanded: the phase's FULL history, each
+                             message in its own scrollable code field, latest at the bottom. -->
+                        @if (hasAnyDetail(entry.outputs)) {
                             <a class="d-block text-decoration-none pointer" (click)="toggleStepOutput(entry.phase)" data-testid="variant-wizard-summary-toggle">
                                 <fa-icon [icon]="expandedPhases()[entry.phase] ? faChevronDown : faChevronRight" class="me-1" />
-                                {{ entry.output.summary }}
+                                {{ entry.outputs[entry.outputs.length - 1].summary }}
                             </a>
                             @if (expandedPhases()[entry.phase]) {
-                                <pre class="step-output-detail" data-testid="variant-wizard-summary-detail">{{ entry.output.detail }}</pre>
+                                @for (stepOutput of entry.outputs; track $index) {
+                                    @if (stepOutput.detail) {
+                                        <div class="text-muted mt-1">{{ stepOutput.summary }}</div>
+                                        <pre class="step-output-detail" data-testid="variant-wizard-summary-detail">{{ stepOutput.detail }}</pre>
+                                    }
+                                }
                             }
                         } @else {
-                            <span class="d-block text-muted">{{ entry.output.summary }}</span>
+                            <span class="d-block text-muted">{{ entry.outputs[entry.outputs.length - 1].summary }}</span>
                         }
                     </div>
                 }

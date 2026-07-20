@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.hyperion.dto;
 
 import java.io.Serializable;
 import java.util.EnumMap;
+import java.util.List;
 import java.util.Map;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -14,13 +15,14 @@ import de.tum.cit.aet.artemis.hyperion.service.variants.VariantJobPhase;
  * GET /api/hyperion/variant-jobs/{jobId} (the modal shows the full inspection view).
  *
  * @param job         the summary view
- * @param stepOutputs per-phase outputs backing the expandable step panels: rendered plan,
- *                        provisioned exercise id, per-attempt transform summaries and diffs-of-record,
- *                        verification reports
+ * @param stepOutputs per-phase output histories backing the expandable step panels, oldest first: rendered
+ *                        plan, provisioned exercise id, per-attempt transform summaries and diffs-of-record,
+ *                        one verification report per attempt — earlier failures stay visible after a later
+ *                        success (debugging aid)
  * @param request     the original generation request — the modal's "what is being adapted" chips
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record VariantJobDetailDTO(VariantJobDTO job, Map<VariantJobPhase, StepOutputDTO> stepOutputs, VariantGenerationRequestDTO request) implements Serializable {
+public record VariantJobDetailDTO(VariantJobDTO job, Map<VariantJobPhase, List<StepOutputDTO>> stepOutputs, VariantGenerationRequestDTO request) implements Serializable {
 
     /**
      * Client-facing projection of one phase's StepOutput.
@@ -32,14 +34,14 @@ public record VariantJobDetailDTO(VariantJobDTO job, Map<VariantJobPhase, StepOu
     }
 
     /**
-     * Maps the Hazelcast job record including step outputs (EnumMap keeps pipeline/phase order).
+     * Maps the Hazelcast job record including step-output histories (EnumMap keeps pipeline/phase order).
      *
      * @param job the job record
      * @return the DTO
      */
     public static VariantJobDetailDTO of(VariantJob job) {
-        Map<VariantJobPhase, StepOutputDTO> stepOutputs = new EnumMap<>(VariantJobPhase.class);
-        job.getStepOutputs().forEach((phase, output) -> stepOutputs.put(phase, new StepOutputDTO(output.summary(), output.detail())));
+        Map<VariantJobPhase, List<StepOutputDTO>> stepOutputs = new EnumMap<>(VariantJobPhase.class);
+        job.getStepOutputs().forEach((phase, outputs) -> stepOutputs.put(phase, outputs.stream().map(output -> new StepOutputDTO(output.summary(), output.detail())).toList()));
         return new VariantJobDetailDTO(VariantJobDTO.of(job), stepOutputs, job.getRequest());
     }
 }
