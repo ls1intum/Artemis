@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { HttpHeaders, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
@@ -76,8 +75,6 @@ const coursesDashboard = { courses: coursesInDashboard } as CoursesForDashboardD
 class DummyComponent {}
 
 describe('CoursesComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: CoursesComponent;
     let fixture: ComponentFixture<CoursesComponent>;
     let courseService: CourseManagementService;

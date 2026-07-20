@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { OnlineUnitComponent } from 'app/lecture/overview/course-lectures/online-unit/online-unit.component';
 import { OnlineUnit } from 'app/lecture/shared/entities/lecture-unit/onlineUnit.model';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
@@ -12,8 +11,6 @@ import { MockScienceService } from 'test/helpers/mocks/service/mock-science-serv
 import { SafeResourceUrlPipe } from 'app/foundation/pipes/safe-resource-url.pipe';
 
 describe('OnlineUnitComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let scienceService: ScienceService;
 
     let component: OnlineUnitComponent;

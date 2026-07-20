@@ -22,7 +22,7 @@
                 }
             </span>
         </div>
-        <p-progressBar [value]="progressPercentage()" [showValue]="true" [style]="{ height: '1.5rem' }" />
+        <p-progressbar [value]="progressPercentage()" [showValue]="true" [style]="{ height: '1.5rem' }" />
         <div class="text-muted small mt-2">
             {{ 'artemisApp.examManagement.import.progress.counter' | artemisTranslate: { processed: processedExercises(), total: totalExercises() } }}
         </div>

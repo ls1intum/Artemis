@@ -1,6 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { AssessmentNoteComponent } from 'app/assessment/manage/assessment-note/assessment-note.component';
 import { AssessmentNote } from 'app/assessment/shared/entities/assessment-note.model';
 import { MockDirective, MockProvider } from 'ng-mocks';
@@ -8,7 +7,6 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { TranslateService } from '@ngx-translate/core';
 
 describe('AssessmentNoteComponent', () => {
-    setupTestBed({ zoneless: true });
     let component: AssessmentNoteComponent;
     let fixture: ComponentFixture<AssessmentNoteComponent>;
 

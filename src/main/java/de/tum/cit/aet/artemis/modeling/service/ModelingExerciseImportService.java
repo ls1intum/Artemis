@@ -70,7 +70,7 @@ public class ModelingExerciseImportService extends ExerciseImportService {
     public ModelingExercise importModelingExercise(ModelingExercise templateExercise, ModelingExercise importedExercise) {
         log.debug("Creating a new Exercise based on exercise {}", templateExercise.getId());
         Map<Long, GradingInstruction> gradingInstructionCopyTracker = new HashMap<>();
-        ModelingExercise newExercise = copyModelingExerciseBasis(importedExercise, gradingInstructionCopyTracker);
+        ModelingExercise newExercise = copyModelingExerciseBasis(importedExercise, templateExercise, gradingInstructionCopyTracker);
 
         var competencyLinks = competencyExerciseLinkService.extractCompetencyLinksForCreation(newExercise);
         ModelingExercise savedExercise = modelingExerciseRepository.save(newExercise);
@@ -98,14 +98,16 @@ public class ModelingExerciseImportService extends ExerciseImportService {
      * @return the cloned TextExercise basis
      */
     @NonNull
-    private ModelingExercise copyModelingExerciseBasis(Exercise importedExercise, Map<Long, GradingInstruction> gradingInstructionCopyTracker) {
+    private ModelingExercise copyModelingExerciseBasis(Exercise importedExercise, ModelingExercise templateExercise, Map<Long, GradingInstruction> gradingInstructionCopyTracker) {
         log.debug("Copying the exercise basis from {}", importedExercise);
         ModelingExercise newExercise = new ModelingExercise();
-        super.copyExerciseBasis(newExercise, importedExercise, gradingInstructionCopyTracker);
+        super.copyExerciseBasis(newExercise, importedExercise, templateExercise, gradingInstructionCopyTracker);
 
-        newExercise.setDiagramType(((ModelingExercise) importedExercise).getDiagramType());
-        newExercise.setExampleSolutionModel(((ModelingExercise) importedExercise).getExampleSolutionModel());
-        newExercise.setExampleSolutionExplanation(((ModelingExercise) importedExercise).getExampleSolutionExplanation());
+        // Prefer the intended exercise (honours edits from the standalone import form), fall back to the source content.
+        ModelingExercise imported = (ModelingExercise) importedExercise;
+        newExercise.setDiagramType(firstNonNull(imported.getDiagramType(), templateExercise.getDiagramType()));
+        newExercise.setExampleSolutionModel(firstNonNull(imported.getExampleSolutionModel(), templateExercise.getExampleSolutionModel()));
+        newExercise.setExampleSolutionExplanation(firstNonNull(imported.getExampleSolutionExplanation(), templateExercise.getExampleSolutionExplanation()));
         return newExercise;
     }
 

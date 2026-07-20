@@ -6,7 +6,6 @@ vi.mock('@sentry/angular', async (importOriginal) => ({
     ...(await importOriginal<typeof import('@sentry/angular')>()),
     captureException: vi.fn(),
 }));
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 import { BuildJobDetailComponent } from './build-job-detail.component';
 import { BuildOverviewService } from 'app/localci/build-queue/build-overview.service';
@@ -21,8 +20,6 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { BuildJobDetail } from 'app/localci/shared/entities/build-job.model';
 
 describe('BuildJobDetailComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: BuildJobDetailComponent;
     let fixture: ComponentFixture<BuildJobDetailComponent>;
     let buildQueueService: BuildOverviewService;

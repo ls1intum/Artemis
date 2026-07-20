@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
@@ -24,8 +23,6 @@ type LanguageInternals = ProgrammingExerciseLanguageComponent & {
 const internals = (c: ProgrammingExerciseLanguageComponent): LanguageInternals => c as LanguageInternals;
 
 describe('ProgrammingExerciseLanguageComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<ProgrammingExerciseLanguageComponent>;
     let comp: ProgrammingExerciseLanguageComponent;
 

@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
 import { OverlayModule } from '@angular/cdk/overlay';
 import { DOCUMENT } from '@angular/common';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
@@ -30,10 +30,9 @@ import { AccountService } from 'app/core/auth/account.service';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { HtmlForMarkdownPipe } from 'app/foundation/pipes/html-for-markdown.pipe';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
 import dayjs from 'dayjs/esm';
-import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
+import { MockComponent, MockDirective, MockProvider } from 'ng-mocks';
 import { of } from 'rxjs';
 import { MockQueryParamsDirective, MockRouterLinkDirective } from 'test/helpers/mocks/directive/mock-router-link.directive';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
@@ -58,8 +57,6 @@ import {
 import { getElement } from 'test/helpers/utils/general-test.utils';
 
 describe('PostComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: PostComponent;
     let fixture: ComponentFixture<PostComponent>;
     let debugElement: DebugElement;
@@ -92,7 +89,7 @@ describe('PostComponent', () => {
                 OverlayModule,
                 PostComponent,
                 FaIconComponent, // we want to test the type of rendered icons, therefore we cannot mock the component
-                MockPipe(HtmlForMarkdownPipe),
+                MockDirective(MarkdownDirective),
                 PostingHeaderComponent,
                 MockComponent(PostingContentComponent),
                 PostingFooterComponent,
