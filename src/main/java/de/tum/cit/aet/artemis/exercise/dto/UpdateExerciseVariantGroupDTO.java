@@ -5,6 +5,7 @@ import java.time.ZonedDateTime;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.PositiveOrZero;
+import jakarta.validation.constraints.Size;
 
 import org.jspecify.annotations.Nullable;
 
@@ -17,9 +18,9 @@ import de.tum.cit.aet.artemis.exercise.domain.ExerciseVariantGroup;
  * of this DTO; only the group's own settings can be changed.
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record UpdateExerciseVariantGroupDTO(@NotNull Long id, @NotBlank String title, @Nullable @PositiveOrZero Double maxPoints, @Nullable ZonedDateTime releaseDate,
-        @Nullable ZonedDateTime startDate, @Nullable ZonedDateTime dueDate, @Nullable ZonedDateTime assessmentDueDate, @Nullable ZonedDateTime exampleSolutionPublicationDate,
-        @Nullable ZonedDateTime buildAndTestStudentSubmissionsAfterDueDate) {
+public record UpdateExerciseVariantGroupDTO(@NotNull Long id, @NotBlank @Size(max = 255) String title, @Nullable @PositiveOrZero Double maxPoints,
+        @Nullable ZonedDateTime releaseDate, @Nullable ZonedDateTime startDate, @Nullable ZonedDateTime dueDate, @Nullable ZonedDateTime assessmentDueDate,
+        @Nullable ZonedDateTime exampleSolutionPublicationDate, @Nullable ZonedDateTime buildAndTestStudentSubmissionsAfterDueDate) {
 
     /**
      * Applies this DTO's settings to the given existing entity. The course link is intentionally left untouched.

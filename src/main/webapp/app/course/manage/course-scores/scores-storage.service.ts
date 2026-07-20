@@ -30,6 +30,12 @@ export class ScoresStorageService implements OnDestroy {
      */
     private storedParticipationResults: Map<number, ParticipationResultDTO> = new Map();
 
+    /**
+     * This nested map stores, per course id, the points the user earns from each exercise variant group (keyed by group id).
+     * The values are server-computed: capped at the group's maxPoints and adjusted for plagiarism verdicts.
+     */
+    private storedAchievedPointsPerVariantGroup: Map<number, Map<number, number>> = new Map();
+
     private currentUserId?: number;
     private authenticationStateSubscription: Subscription;
 
@@ -54,6 +60,7 @@ export class ScoresStorageService implements OnDestroy {
         this.storedTotalScores.clear();
         this.storedScoresPerExerciseType.clear();
         this.storedParticipationResults.clear();
+        this.storedAchievedPointsPerVariantGroup.clear();
     }
 
     getStoredTotalScores(courseId: number): CourseScores | undefined {
@@ -80,5 +87,22 @@ export class ScoresStorageService implements OnDestroy {
         for (const participationResult of participationResults ?? []) {
             this.storedParticipationResults.set(participationResult.participationId, participationResult);
         }
+    }
+
+    /**
+     * Returns the server-computed points the user earns from the given variant group in the given course (capped at
+     * the group's maxPoints if it has one, otherwise the raw sum), or {@code undefined} if no contribution was stored
+     * for it (e.g. no rated results in that group, or a course-wide plagiarism verdict zeroed the student's score).
+     */
+    getStoredAchievedGroupPoints(courseId: number, groupId: number): number | undefined {
+        return this.storedAchievedPointsPerVariantGroup.get(courseId)?.get(groupId);
+    }
+
+    setStoredAchievedPointsPerVariantGroup(courseId: number, achievedPointsPerVariantGroup?: { [groupId: number]: number }): void {
+        const perGroup = new Map<number, number>();
+        for (const [groupId, points] of Object.entries(achievedPointsPerVariantGroup ?? {})) {
+            perGroup.set(Number(groupId), points);
+        }
+        this.storedAchievedPointsPerVariantGroup.set(courseId, perGroup);
     }
 }

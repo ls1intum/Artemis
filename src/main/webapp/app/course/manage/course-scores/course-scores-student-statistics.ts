@@ -11,6 +11,9 @@ export class CourseScoresStudentStatistics {
     numberOfParticipatedExercises = 0;
     numberOfSuccessfulExercises = 0;
     overallPoints = 0;
+    // All points the student achieved, counting every exercise variant in full — i.e. before any variant group's
+    // maxPoints cap is applied. Equals overallPoints when no group exceeds its cap.
+    overallPointsUncapped = 0;
     // The points the student achieved that exceed an exercise variant group's maxPoints cap and therefore do NOT count
     // towards the grade (the uncapped total minus the credited overallPoints). 0 when no variant group exceeds its cap.
     // Stored as a positive magnitude; it is displayed with a leading minus to read as a deduction.

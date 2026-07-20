@@ -32,7 +32,6 @@ vi.mock('app/programming/shared/utils/diff.utils', async () => ({
     }),
 }));
 
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router } from '@angular/router';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
@@ -42,7 +41,7 @@ import { ProgrammingExerciseDetailComponent } from 'app/programming/manage/detai
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
 import { Course } from 'app/course/shared/entities/course.model';
-import { TranslateModule } from '@ngx-translate/core';
+import { provideTranslateService } from '@ngx-translate/core';
 import { StatisticsService } from 'app/exercise/statistics-graph/service/statistics.service';
 import { ExerciseManagementStatisticsDto } from 'app/exercise/statistics/exercise-management-statistics-dto';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
@@ -74,8 +73,6 @@ import { DocumentationButtonComponent } from 'app/shared-ui/components/buttons/d
  *  separate test spec file for sharing aspects of the programming details component. Could be merged into programming-exercise-detail.component.spec.ts on the long run.
  */
 describe('ProgrammingExerciseDetailComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let comp: ProgrammingExerciseDetailComponent;
     let fixture: ComponentFixture<ProgrammingExerciseDetailComponent>;
     let statisticsService: StatisticsService;
@@ -128,7 +125,7 @@ describe('ProgrammingExerciseDetailComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [TranslateModule.forRoot()],
+            imports: [],
             providers: [
                 MockProvider(AlertService),
                 MockProvider(ProgrammingLanguageFeatureService),
@@ -143,6 +140,7 @@ describe('ProgrammingExerciseDetailComponent', () => {
                 { provide: Router, useClass: MockRouter },
                 provideHttpClient(),
                 provideHttpClientTesting(),
+                provideTranslateService(),
             ],
         })
             // Mock the heavy presentational children so the eager zoneless render does not pull in

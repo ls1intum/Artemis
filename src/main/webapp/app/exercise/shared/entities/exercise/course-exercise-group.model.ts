@@ -72,7 +72,7 @@ export function buildGroupsFromExercises(exercises: Exercise[]): CourseExerciseG
             };
             groupsById.set(reference.id, group);
         }
-        group.exercises!.push(exercise);
+        (group.exercises ??= []).push(exercise);
     }
     return Array.from(groupsById.values());
 }

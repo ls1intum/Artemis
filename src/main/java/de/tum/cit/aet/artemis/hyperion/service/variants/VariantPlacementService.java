@@ -76,7 +76,7 @@ public class VariantPlacementService {
             case EXISTING_GROUP -> {
                 Course course = requireCourse(variant);
                 ExerciseVariantGroup group = exerciseVariantGroupRepository.findByIdAndCourseIdElseThrow(placement.existingGroupId(), course.getId());
-                exerciseVariantGroupService.assignExerciseToGroup(variant, group);
+                exerciseVariantGroupService.assignToGroup(variant, group);
                 log.debug("Placed variant exercise {} into existing variant group {}", variant.getId(), group.getId());
             }
             case NEW_GROUP -> {
@@ -90,7 +90,7 @@ public class VariantPlacementService {
                 // The wizard presents NEW_GROUP as "group the variant WITH its source": pull the source in first
                 // (so a date the wizard left empty is adopted from the source, not the clone), then the variant.
                 assignSourceToNewGroup(sourceExerciseId, group, course);
-                exerciseVariantGroupService.assignExerciseToGroup(variant, group);
+                exerciseVariantGroupService.assignToGroup(variant, group);
                 log.debug("Placed variant exercise {} into new variant group {}", variant.getId(), group.getId());
             }
         }
@@ -118,7 +118,7 @@ public class VariantPlacementService {
             log.warn("Not adding source quiz {} to new variant group {}: only individual-mode quizzes can join a group", sourceExerciseId, group.getId());
             return;
         }
-        exerciseVariantGroupService.assignExerciseToGroup(source, group);
+        exerciseVariantGroupService.assignToGroup(source, group);
         log.debug("Added source exercise {} to new variant group {}", sourceExerciseId, group.getId());
     }
 

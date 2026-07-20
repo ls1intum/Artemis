@@ -143,7 +143,7 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
     @ManyToOne
     private ExerciseGroup exerciseGroup;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "exercise_variant_group_id")
     @JsonIgnoreProperties("exercises")
     private ExerciseVariantGroup exerciseVariantGroup;
@@ -838,11 +838,10 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
     }
 
     /**
-     * Validates the base date combination shared by every exercise type (release/start/due/assessmentDue/exampleSolutionPublication
-     * ordering). Deliberately not overridden by {@link de.tum.cit.aet.artemis.quiz.domain.QuizExercise}, unlike {@link #validateDates()}:
-     * callers that hold a {@code QuizExercise} instance whose lazily-loaded {@code quizBatches} collection is not initialized (e.g. a
-     * detached entity loaded without that collection fetched) can call this method directly to run the base check without triggering a
-     * {@code LazyInitializationException} from the quiz-batch check that {@code QuizExercise.validateDates()} additionally performs.
+     * Validates the base date ordering shared by every exercise type (release/start/due/assessmentDue/exampleSolutionPublication).
+     * Intentionally {@code final} so it stays callable on a {@link de.tum.cit.aet.artemis.quiz.domain.QuizExercise} whose lazy
+     * {@code quizBatches} collection is not initialized, avoiding the {@code LazyInitializationException} that
+     * {@code QuizExercise.validateDates()}'s additional batch check would throw.
      *
      * @throws BadRequestAlertException if the dates are not valid
      */

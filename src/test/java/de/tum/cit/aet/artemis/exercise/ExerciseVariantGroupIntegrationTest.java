@@ -2,10 +2,12 @@ package de.tum.cit.aet.artemis.exercise;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 
+import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,17 +23,26 @@ import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseVariantGroup;
 import de.tum.cit.aet.artemis.exercise.dto.CreateExerciseVariantGroupDTO;
+import de.tum.cit.aet.artemis.exercise.dto.ExerciseDetailsDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseVariantGroupAssignmentDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseVariantGroupDTO;
 import de.tum.cit.aet.artemis.exercise.dto.UpdateExerciseVariantGroupDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseTestRepository;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseVariantGroupRepository;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
+import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
+import de.tum.cit.aet.artemis.fileupload.util.FileUploadExerciseUtilService;
+import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
+import de.tum.cit.aet.artemis.modeling.util.ModelingExerciseUtilService;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.domain.QuizMode;
+import de.tum.cit.aet.artemis.quiz.dto.exercise.QuizExerciseWithQuestionsDTO;
 import de.tum.cit.aet.artemis.quiz.util.QuizExerciseFactory;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentBatchTest;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
+import de.tum.cit.aet.artemis.text.dto.TextExerciseResponseDTO;
 import de.tum.cit.aet.artemis.text.util.TextExerciseFactory;
 import de.tum.cit.aet.artemis.text.util.TextExerciseUtilService;
 
@@ -56,6 +67,15 @@ class ExerciseVariantGroupIntegrationTest extends AbstractSpringIntegrationIndep
 
     @Autowired
     private ExerciseTestRepository exerciseRepository;
+
+    @Autowired
+    private ProgrammingExerciseUtilService programmingExerciseUtilService;
+
+    @Autowired
+    private ModelingExerciseUtilService modelingExerciseUtilService;
+
+    @Autowired
+    private FileUploadExerciseUtilService fileUploadExerciseUtilService;
 
     private Course course;
 
@@ -113,6 +133,22 @@ class ExerciseVariantGroupIntegrationTest extends AbstractSpringIntegrationIndep
     void testCreateExerciseVariantGroup_negativeMaxPointsBadRequest() throws Exception {
         CreateExerciseVariantGroupDTO negativeMaxPoints = new CreateExerciseVariantGroupDTO("Loop variants", -5.0, null, null, null, null, null, null);
         request.postWithResponseBody(groupsUrl(), negativeMaxPoints, ExerciseVariantGroupDTO.class, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void testCreateExerciseVariantGroup_titleTooLongBadRequest() throws Exception {
+        // The title column is varchar(255), so a longer title must fail validation instead of reaching persistence.
+        CreateExerciseVariantGroupDTO tooLongTitle = new CreateExerciseVariantGroupDTO("x".repeat(256), null, null, null, null, null, null, null);
+        request.postWithResponseBody(groupsUrl(), tooLongTitle, ExerciseVariantGroupDTO.class, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void testUpdateExerciseVariantGroup_titleTooLongBadRequest() throws Exception {
+        ExerciseVariantGroupDTO created = createGroupAsEditor();
+        UpdateExerciseVariantGroupDTO tooLongTitle = new UpdateExerciseVariantGroupDTO(created.id(), "x".repeat(256), null, null, null, null, null, null, null);
+        request.putWithResponseBody(groupsUrl() + "/" + created.id(), tooLongTitle, ExerciseVariantGroupDTO.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -339,6 +375,30 @@ class ExerciseVariantGroupIntegrationTest extends AbstractSpringIntegrationIndep
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void testAssignProgrammingExerciseInvalidTimeline_badRequestLeavesExerciseUngrouped() throws Exception {
+        ZonedDateTime release = ZonedDateTime.now().plusDays(1).truncatedTo(ChronoUnit.MILLIS);
+        ZonedDateTime exampleSolutionBeforeDue = ZonedDateTime.now().plusDays(3).truncatedTo(ChronoUnit.MILLIS);
+        ZonedDateTime due = ZonedDateTime.now().plusDays(7).truncatedTo(ChronoUnit.MILLIS);
+        // Valid at group level (exampleSolution >= release), but the programming exercise (INCLUDED_COMPLETELY) requires
+        // exampleSolution >= dueDate. The rejected assignment must not persist the membership: the programming path used
+        // to save the exercise before validating the adopted timeline, leaving it grouped with its old dates.
+        CreateExerciseVariantGroupDTO createDTO = new CreateExerciseVariantGroupDTO("Programming variants", null, release, null, due, null, exampleSolutionBeforeDue, null);
+        ExerciseVariantGroupDTO created = request.postWithResponseBody(groupsUrl(), createDTO, ExerciseVariantGroupDTO.class, HttpStatus.CREATED);
+        ProgrammingExercise programmingExercise = programmingExerciseUtilService.addProgrammingExerciseToCourse(course);
+        ProgrammingExercise before = (ProgrammingExercise) exerciseRepository.findByIdElseThrow(programmingExercise.getId());
+        String assignUrl = "/api/exercise/courses/" + course.getId() + "/exercises/" + programmingExercise.getId() + "/variant-group";
+
+        request.put(assignUrl, new ExerciseVariantGroupAssignmentDTO(created.id()), HttpStatus.BAD_REQUEST);
+
+        ProgrammingExercise reloaded = (ProgrammingExercise) exerciseRepository.findByIdElseThrow(programmingExercise.getId());
+        assertThat(reloaded.getExerciseVariantGroup()).isNull();
+        assertThat(zonedToInstant(reloaded.getReleaseDate())).isEqualTo(zonedToInstant(before.getReleaseDate()));
+        assertThat(zonedToInstant(reloaded.getDueDate())).isEqualTo(zonedToInstant(before.getDueDate()));
+        assertThat(reloaded.getExampleSolutionPublicationDate()).isNull();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void testAssignExerciseFromAnotherCourseBadRequest() throws Exception {
         ExerciseVariantGroupDTO created = createGroupAsEditor();
         Course otherCourse = textExerciseUtilService.addCourseWithOneReleasedTextExercise("Other");
@@ -362,6 +422,183 @@ class ExerciseVariantGroupIntegrationTest extends AbstractSpringIntegrationIndep
         request.put(assignUrl, new ExerciseVariantGroupAssignmentDTO(created.id()), HttpStatus.BAD_REQUEST);
 
         assertThat(exerciseRepository.findByIdElseThrow(examExercise.getId()).getExerciseVariantGroup()).isNull();
+    }
+
+    /**
+     * {@code exerciseVariantGroup} is a LAZY {@code @ManyToOne}, and Jackson (Hibernate7Module with
+     * WRITE_MISSING_ENTITIES_AS_NULL) serializes an unloaded proxy as {@code null} rather than throwing. A read path that
+     * forgets to fetch the association therefore fails *silently* — the group simply disappears from the response. These
+     * tests assert on the serialized HTTP response for that reason: a repository call would hand back a proxy and pass
+     * even when the JSON the client receives is null.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void testExerciseEndpointSerializesVariantGroup() throws Exception {
+        ExerciseVariantGroupDTO created = createGroupAsEditor();
+        assignToGroup(exercise.getId(), created.id());
+
+        Exercise loaded = request.get("/api/exercise/exercises/" + exercise.getId(), HttpStatus.OK, Exercise.class);
+
+        assertThat(loaded.getExerciseVariantGroup()).isNotNull();
+        assertThat(loaded.getExerciseVariantGroup().getMaxPoints()).isEqualTo(100.0);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void testExerciseDetailsEndpointSerializesVariantGroup() throws Exception {
+        createGroupAsEditorFor(exercise.getId());
+
+        ExerciseDetailsDTO details = request.get("/api/exercise/exercises/" + exercise.getId() + "/details", HttpStatus.OK, ExerciseDetailsDTO.class);
+
+        assertThat(details.exercise().getExerciseVariantGroup()).isNotNull();
+        assertThat(details.exercise().getExerciseVariantGroup().getMaxPoints()).isEqualTo(100.0);
+    }
+
+    /**
+     * The quiz edit page is served as a DTO that *reads* the association ({@code QuizExerciseWithoutQuestionsDTO} maps
+     * title/maxPoints/dates off it), so an unfetched proxy would not merely serialize as null here — it would trigger a
+     * proxy initialization outside the session.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void testQuizExerciseEndpointSerializesVariantGroup() throws Exception {
+        ExerciseVariantGroupDTO created = createGroupAsEditor();
+        QuizExercise quiz = addQuizToCourse(QuizMode.INDIVIDUAL);
+        assignToGroup(quiz.getId(), created.id());
+
+        QuizExerciseWithQuestionsDTO loaded = request.get("/api/quiz/quiz-exercises/" + quiz.getId(), HttpStatus.OK, QuizExerciseWithQuestionsDTO.class);
+
+        assertThat(loaded.quizExerciseWithoutQuestionsDTO().exerciseVariantGroup()).isNotNull();
+        assertThat(loaded.quizExerciseWithoutQuestionsDTO().exerciseVariantGroup().maxPoints()).isEqualTo(100.0);
+    }
+
+    /**
+     * The programming/modeling/file-upload edit pages serialize the exercise entity, so they carry the association only if
+     * their query fetches it. Each of these pages renders the timeline as read-only "locked to group" pickers, which is
+     * driven entirely by the group travelling with the exercise.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void testProgrammingExerciseEndpointSerializesVariantGroup() throws Exception {
+        ProgrammingExercise programmingExercise = programmingExerciseUtilService.addProgrammingExerciseToCourse(course);
+        createGroupAsEditorFor(programmingExercise.getId());
+
+        ProgrammingExercise loaded = request.get("/api/programming/programming-exercises/" + programmingExercise.getId(), HttpStatus.OK, ProgrammingExercise.class);
+
+        assertVariantGroupPresent(loaded);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void testModelingExerciseEndpointSerializesVariantGroup() throws Exception {
+        ModelingExercise modelingExercise = modelingExerciseUtilService.addModelingExerciseToCourse(course);
+        createGroupAsEditorFor(modelingExercise.getId());
+
+        ModelingExercise loaded = request.get("/api/modeling/modeling-exercises/" + modelingExercise.getId(), HttpStatus.OK, ModelingExercise.class);
+
+        assertVariantGroupPresent(loaded);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void testFileUploadExerciseEndpointSerializesVariantGroup() throws Exception {
+        ZonedDateTime now = ZonedDateTime.now();
+        FileUploadExercise fileUploadExercise = fileUploadExerciseUtilService.addFileUploadExercise(course, now.minusDays(1), now, now.plusDays(7), now.plusDays(14));
+        createGroupAsEditorFor(fileUploadExercise.getId());
+
+        FileUploadExercise loaded = request.get("/api/fileupload/file-upload-exercises/" + fileUploadExercise.getId(), HttpStatus.OK, FileUploadExercise.class);
+
+        assertVariantGroupPresent(loaded);
+    }
+
+    /**
+     * A student starting a grouped quiz must not blow up. The quiz DTO maps the variant group, and this endpoint loads the
+     * quiz without fetching it — so reading the group off the resulting proxy after the session closed threw
+     * {@code LazyInitializationException} and returned a 500. The group is instructor-facing and irrelevant to a student
+     * taking the quiz, so the DTO maps it to null here rather than the endpoint paying for a join it does not need.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testStartParticipationOnGroupedQuizDoesNotFail() throws Exception {
+        QuizExercise quiz = quizInGroup();
+
+        // Status only: the response DTO is polymorphic and has no Jackson creator. The point is that this used to be a 500.
+        request.postWithoutResponseBody("/api/quiz/quiz-exercises/" + quiz.getId() + "/start-participation", null, HttpStatus.OK);
+    }
+
+    /**
+     * The scores management view caps a group's variants at the group's maxPoints, which it can only do if every member
+     * carries its group — quizzes included. The other course-with-exercises test uses a text exercise; a quiz is a
+     * different entity subclass and is worth asserting separately.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void testCourseWithExercisesSerializesVariantGroupForQuiz() throws Exception {
+        QuizExercise quiz = quizInGroup();
+
+        Course loaded = request.get("/api/course/courses/" + course.getId() + "/with-exercises", HttpStatus.OK, Course.class);
+        Exercise loadedQuiz = loaded.getExercises().stream().filter(candidate -> candidate.getId().equals(quiz.getId())).findFirst().orElseThrow();
+
+        assertVariantGroupPresent(loadedQuiz);
+    }
+
+    /**
+     * Adds an individual-mode quiz to the course and puts it in a group. Built through the repositories rather than the
+     * REST endpoints, because the student-facing test below runs as a student, who may not create groups.
+     */
+    private QuizExercise quizInGroup() {
+        // Released in the past, so a student is actually allowed to start it.
+        ZonedDateTime release = ZonedDateTime.now().minusDays(1).truncatedTo(ChronoUnit.MILLIS);
+        ZonedDateTime due = ZonedDateTime.now().plusDays(7).truncatedTo(ChronoUnit.MILLIS);
+        QuizExercise quiz = QuizExerciseFactory.generateQuizExercise(release, due, QuizMode.INDIVIDUAL, course);
+        QuizExerciseFactory.addQuestionsToQuizExercise(quiz);
+        course.addExercises(quiz);
+
+        ExerciseVariantGroup group = new ExerciseVariantGroup();
+        group.setTitle("Loop variants");
+        group.setMaxPoints(100.0);
+        quiz.setExerciseVariantGroup(exerciseVariantGroupRepository.save(group));
+        return exerciseRepository.save(quiz);
+    }
+
+    /** Compares dates as instants (PostgreSQL stores timestamps as UTC), tolerating unset dates. */
+    private static Instant zonedToInstant(@Nullable ZonedDateTime date) {
+        return date != null ? date.toInstant() : null;
+    }
+
+    /** The association is LAZY, so an unfetched read path serializes it as null rather than throwing — assert it is really there. */
+    private static void assertVariantGroupPresent(Exercise loaded) {
+        assertThat(loaded.getExerciseVariantGroup()).isNotNull();
+        assertThat(loaded.getExerciseVariantGroup().getMaxPoints()).isEqualTo(100.0);
+        assertThat(loaded.getExerciseVariantGroup().getTitle()).isEqualTo("Loop variants");
+    }
+
+    /**
+     * The text exercise edit page is served as a DTO. Unlike the programming/modeling/file-upload pages (which serialize
+     * the entity and therefore carry the association for free), a DTO only exposes the fields it declares — so the group
+     * has to be mapped explicitly, or the edit form's locked-timeline pickers never see it.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void testTextExerciseEndpointSerializesVariantGroup() throws Exception {
+        createGroupAsEditorFor(exercise.getId());
+
+        TextExerciseResponseDTO loaded = request.get("/api/text/text-exercises/" + exercise.getId(), HttpStatus.OK, TextExerciseResponseDTO.class);
+
+        assertThat(loaded.exerciseVariantGroup()).isNotNull();
+        assertThat(loaded.exerciseVariantGroup().maxPoints()).isEqualTo(100.0);
+        assertThat(loaded.exerciseVariantGroup().title()).isEqualTo("Loop variants");
+    }
+
+    /** Creates a group and assigns the given exercise to it, returning the created group. */
+    private ExerciseVariantGroupDTO createGroupAsEditorFor(long exerciseId) throws Exception {
+        ExerciseVariantGroupDTO created = createGroupAsEditor();
+        assignToGroup(exerciseId, created.id());
+        return created;
+    }
+
+    private void assignToGroup(long exerciseId, Long groupId) throws Exception {
+        request.put("/api/exercise/courses/" + course.getId() + "/exercises/" + exerciseId + "/variant-group", new ExerciseVariantGroupAssignmentDTO(groupId), HttpStatus.OK);
     }
 
     /** Adds a quiz exercise with the given mode to the test course (separately from the released text exercise). */

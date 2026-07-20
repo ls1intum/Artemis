@@ -7,6 +7,7 @@
                 id="group-edit-title"
                 pInputText
                 class="w-100"
+                [attr.maxlength]="MAX_TITLE_LENGTH"
                 [ngModel]="draftTitle()"
                 (ngModelChange)="draftTitle.set($event)"
                 [placeholder]="'artemisApp.exerciseManagement.groupEdit.namePlaceholder' | artemisTranslate"
@@ -28,7 +29,6 @@
                 (ngModelChange)="draftMaxPoints.set($event ?? undefined)"
                 [min]="0"
                 [placeholder]="'artemisApp.exerciseManagement.groupEdit.maxPointsPlaceholder' | artemisTranslate"
-                styleClass="group-pts-input"
             />
         </div>
     </div>
@@ -36,16 +36,14 @@
     <!-- Dates -->
     <div>
         <div class="fw-semibold mb-2" jhiTranslate="artemisApp.exerciseManagement.groupEdit.dates"></div>
-        <div class="alert alert-warning py-1 px-2 small d-flex align-items-center gap-2 mb-2">
-            <i class="pi pi-exclamation-triangle"></i>
+        <p-message severity="warn" icon="pi pi-exclamation-triangle" size="small" styleClass="mb-2">
             <span jhiTranslate="artemisApp.exerciseManagement.groupEdit.datesOverrideWarning"></span>
-        </div>
+        </p-message>
         <jhi-exercise-timeline [timelineItems]="timelineItems()" (timelineStatusChange)="timelineStatus.set($event)" />
         @if (!timelineStatus().valid) {
-            <div class="alert alert-danger py-1 px-2 small d-flex align-items-center gap-2 mt-2">
-                <i class="pi pi-times-circle"></i>
+            <p-message severity="error" icon="pi pi-times-circle" size="small" styleClass="mt-2">
                 <span jhiTranslate="artemisApp.exerciseManagement.groupEdit.datesInvalidOrder"></span>
-            </div>
+            </p-message>
         }
     </div>
 </div>

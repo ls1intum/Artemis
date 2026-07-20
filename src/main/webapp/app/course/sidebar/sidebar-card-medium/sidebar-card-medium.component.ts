@@ -1,4 +1,4 @@
-import { Component, inject, input, output } from '@angular/core';
+import { Component, computed, inject, input, output } from '@angular/core';
 import { DifficultyLevel } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { SidebarEventService } from '../service/sidebar-event.service';
 import { ActivatedRoute, Router, RouterLink, RouterLinkActive } from '@angular/router';
@@ -25,6 +25,16 @@ export class SidebarCardMediumComponent {
     readonly pageChange = output<string | number>();
     /** Key used for grouping or categorizing sidebar items */
     readonly groupKey = input<string>();
+
+    /**
+     * True when this card is the header of a *connected* variant group (the group's own item carries its variants in
+     * `groupedItems`). The card styles itself accordingly — see the `.group-header` rules in the SCSS — so the
+     * accordion does not have to reach into this component's markup to do it.
+     */
+    protected readonly isConnectedGroupHeader = computed<boolean>(() => {
+        const item = this.sidebarItem();
+        return !!item.groupedItems?.length && !!item.groupConnected;
+    });
 
     onNonExamCardClicked() {
         if (this.sidebarItem().groupedItems?.length) {

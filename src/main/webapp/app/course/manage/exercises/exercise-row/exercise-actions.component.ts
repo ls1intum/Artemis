@@ -1,4 +1,5 @@
 import {
+    ChangeDetectionStrategy,
     ChangeDetectorRef,
     Component,
     DestroyRef,
@@ -37,9 +38,11 @@ import {
     faWrench,
 } from '@fortawesome/free-solid-svg-icons';
 import { TranslateService } from '@ngx-translate/core';
+import { ButtonModule } from 'primeng/button';
 import { Popover, PopoverModule } from 'primeng/popover';
 import { TooltipModule } from 'primeng/tooltip';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
 import { Exercise, ExerciseMode, ExerciseType, getExerciseUrlSegment } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { QuizExercise, QuizMode, QuizStatus } from 'app/quiz/shared/entities/quiz-exercise.model';
@@ -57,6 +60,11 @@ import { ProgrammingExerciseService } from 'app/programming/manage/services/prog
 import { ModelingExerciseService } from 'app/modeling/manage/services/modeling-exercise.service';
 import { ExerciseVariantAiModalWizardComponent } from 'app/course/manage/exercises/create-variant-modal/exercise-variant-ai-modal-wizard.component';
 import { supportsAiVariantGeneration } from 'app/course/manage/exercises/create-variant-modal/exercise-variant-ai-modal.utils';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { PROFILE_LOCALCI } from 'app/app.constants';
+
+/** The PrimeNG button severities the action buttons use. */
+type ActionSeverity = 'primary' | 'info' | 'success' | 'warn' | 'danger';
 
 /** A single collapsible main action rendered in the action row or the ellipsis overflow menu. */
 interface ActionItem {
@@ -64,7 +72,7 @@ interface ActionItem {
     /** i18n key for the button label, resolved via the `artemisTranslate` pipe. */
     labelKey: string;
     icon: IconProp;
-    styleClass: string;
+    severity: ActionSeverity;
     kind: 'link' | 'button' | 'delete';
     link?: (string | number)[];
     onClick?: () => void;
@@ -80,6 +88,29 @@ const GAP_PX = 4;
 const ELLIPSIS_WIDTH_PX = 40;
 const SAFETY_MARGIN_PX = 8;
 
+/**
+ * Keep-priority per action id when the row runs out of width: a lower number stays inline longer, a higher number
+ * collapses into the ellipsis menu first. Delete, Edit and Scores rank highest so every exercise type keeps the same
+ * three buttons inline; the type-specific extras (Preview, Solution, Statistics, Participations, …) all share
+ * {@link EXTRA_ACTION_PRIORITY} and therefore overflow first, in their original display order (the sort is stable).
+ */
+const ACTION_KEEP_PRIORITY: Readonly<Record<string, number>> = { delete: 0, edit: 1, scores: 2 };
+const EXTRA_ACTION_PRIORITY = 3;
+
+function keepPriorityOf(action: ActionItem): number {
+    return ACTION_KEEP_PRIORITY[action.id] ?? EXTRA_ACTION_PRIORITY;
+}
+
+/**
+ * Element width in fractional CSS pixels. `offsetWidth` / `clientWidth` round to whole pixels, and at a non-100% browser
+ * zoom the browser lays elements out on fractional boundaries — summing ~8 rounded-down button widths can then understate
+ * the real total by several pixels, enough to overrun the safety margin and clip the leftmost button. `getBoundingClientRect`
+ * keeps the fraction, so the overflow calculation stays exact at any zoom level.
+ */
+function widthOf(element: HTMLElement): number {
+    return element.getBoundingClientRect().width;
+}
+
 @Component({
     selector: 'jhi-exercise-actions',
     templateUrl: './exercise-actions.component.html',
@@ -88,13 +119,16 @@ const SAFETY_MARGIN_PX = 8;
         RouterLink,
         NgTemplateOutlet,
         FaIconComponent,
+        ButtonModule,
         PopoverModule,
         TooltipModule,
         ArtemisTranslatePipe,
+        TranslateDirective,
         DeleteButtonDirective,
         QuizExerciseLifecycleButtonsComponent,
         ExerciseVariantAiModalWizardComponent,
     ],
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ExerciseActionsComponent {
     readonly exercise = input.required<Exercise>();
@@ -106,10 +140,9 @@ export class ExerciseActionsComponent {
     /** A generated AI variant was confirmed in the wizard — the host refreshes the exercise/group view. */
     readonly variantAdded = output<Exercise>();
     /**
-     * Width (px) the actions column must reserve to keep this row's always-visible quiz lifecycle buttons plus the
-     * ellipsis trigger on screen — i.e. the point at which every collapsible main button has folded into the ellipsis.
-     * 0 for non-quiz rows. The table floors the shared column at the max reported across its rows (see exercise-table),
-     * so the column shrinks (collapsing the main buttons) before the table scrolls, never clipping the quiz buttons.
+     * Width (px) the actions column must reserve to keep this row's always-visible quiz buttons plus the ellipsis
+     * trigger on screen; 0 for non-quiz rows. The table floors the shared column at the max reported across its rows
+     * (see exercise-table), so the column collapses the main buttons before scrolling, never clipping the quiz buttons.
      */
     readonly quizActionsMinWidth = output<number>();
 
@@ -129,6 +162,9 @@ export class ExerciseActionsComponent {
     private readonly exerciseService = inject(ExerciseService);
     private readonly eventManager = inject(EventManager);
     private readonly translateService = inject(TranslateService);
+    private readonly profileService = inject(ProfileService);
+
+    private readonly localCIEnabled = this.profileService.isProfileActive(PROFILE_LOCALCI);
 
     private readonly menu = viewChild<Popover>('menu');
     /** The full-width action row; its width minus the quiz buttons is the budget for the collapsible main buttons. */
@@ -147,6 +183,9 @@ export class ExerciseActionsComponent {
     private readonly buttonWidths = signal<ReadonlyMap<string, number>>(new Map());
     /** Bumped on a language change so the (signal-unaware) translated measurements recompute. */
     private readonly languageVersion = signal(0);
+
+    /** Watches the inline buttons so {@link buttonWidths} tracks their real rendered width (see the constructor). */
+    private readonly buttonObserver = new ResizeObserver((entries) => this.onButtonsResized(entries));
 
     private readonly dialogErrorSource = new Subject<string>();
     readonly dialogError$ = this.dialogErrorSource.asObservable();
@@ -182,7 +221,7 @@ export class ExerciseActionsComponent {
                 id: 'teams',
                 labelKey: 'artemisApp.exercise.teams',
                 icon: faUsers,
-                styleClass: 'btn-primary',
+                severity: 'primary',
                 kind: 'link',
                 link: ['/course-management', cid, 'exercises', ex.id!, 'teams'],
             });
@@ -191,7 +230,7 @@ export class ExerciseActionsComponent {
             id: 'participations',
             labelKey: 'artemisApp.exercise.participations',
             icon: faListAlt,
-            styleClass: 'btn-primary',
+            severity: 'primary',
             kind: 'link',
             link: ['/course-management', cid, seg, ex.id!, 'participations'],
         });
@@ -199,7 +238,7 @@ export class ExerciseActionsComponent {
             id: 'scores',
             labelKey: 'entity.action.scores',
             icon: faTable,
-            styleClass: 'btn-info',
+            severity: 'info',
             kind: 'link',
             link: ['/course-management', cid, seg, ex.id!, 'scores'],
         });
@@ -209,7 +248,7 @@ export class ExerciseActionsComponent {
                 id: 'statistics',
                 labelKey: 'artemisApp.quizExercise.statistics',
                 icon: faChartBar,
-                styleClass: 'btn-info',
+                severity: 'info',
                 kind: 'link',
                 link: ['/course-management', cid, seg, ex.id!, 'quiz-point-statistic'],
             });
@@ -217,7 +256,7 @@ export class ExerciseActionsComponent {
                 id: 'preview',
                 labelKey: 'artemisApp.quizExercise.preview',
                 icon: faEye,
-                styleClass: 'btn-success',
+                severity: 'success',
                 kind: 'link',
                 link: ['/course-management', cid, seg, ex.id!, 'preview'],
             });
@@ -225,7 +264,7 @@ export class ExerciseActionsComponent {
                 id: 'solution',
                 labelKey: 'artemisApp.quizExercise.solution',
                 icon: faLightbulb,
-                styleClass: 'btn-success',
+                severity: 'success',
                 kind: 'link',
                 link: ['/course-management', cid, seg, ex.id!, 'solution'],
             });
@@ -234,7 +273,7 @@ export class ExerciseActionsComponent {
                     id: 're-evaluate',
                     labelKey: 'entity.action.re-evaluate',
                     icon: faRedo,
-                    styleClass: 'btn-warning',
+                    severity: 'warn',
                     kind: 'link',
                     link: ['/course-management', cid, seg, ex.id!, 're-evaluate'],
                 });
@@ -245,7 +284,7 @@ export class ExerciseActionsComponent {
                 id: 'examples',
                 labelKey: 'entity.action.exampleSubmissions',
                 icon: faClipboardList,
-                styleClass: 'btn-success',
+                severity: 'success',
                 kind: 'link',
                 link: ['/course-management', cid, seg, ex.id!, 'example-submissions'],
             });
@@ -258,7 +297,7 @@ export class ExerciseActionsComponent {
                 id: 'create-variant-ai',
                 labelKey: 'artemisApp.exerciseManagement.action.createVariantWithAi',
                 icon: faRobot,
-                styleClass: 'btn-warning',
+                severity: 'warn',
                 kind: 'button',
                 onClick: () => this.aiVariantModalVisible.set(true),
             });
@@ -270,7 +309,7 @@ export class ExerciseActionsComponent {
                 id: 'edit-in-editor',
                 labelKey: 'entity.action.editInEditor',
                 icon: faPencilAlt,
-                styleClass: 'btn-warning',
+                severity: 'warn',
                 kind: 'link',
                 link: ['/course-management', cid, 'programming-exercises', ex.id!, 'code-editor', RepositoryType.TEMPLATE, -1],
             });
@@ -281,7 +320,7 @@ export class ExerciseActionsComponent {
                     id: 'edit',
                     labelKey: 'entity.action.edit',
                     icon: faWrench,
-                    styleClass: 'btn-warning',
+                    severity: 'warn',
                     kind: 'link',
                     link: ['/course-management', cid, seg, ex.id!, 'edit'],
                 });
@@ -295,7 +334,7 @@ export class ExerciseActionsComponent {
                     id: 'edit',
                     labelKey: 'entity.action.edit',
                     icon: faWrench,
-                    styleClass: 'btn-warning',
+                    severity: 'warn',
                     kind: 'link',
                     link: ['/course-management', cid, seg, ex.id!, 'edit'],
                     disabled: editDisabled || undefined,
@@ -311,7 +350,7 @@ export class ExerciseActionsComponent {
         }
         // Deleting an exercise is an instructor-only action.
         if (ex.isAtLeastInstructor) {
-            items.push({ id: 'delete', labelKey: 'entity.action.delete', icon: faTrash, styleClass: 'btn-danger', kind: 'delete' });
+            items.push({ id: 'delete', labelKey: 'entity.action.delete', icon: faTrash, severity: 'danger', kind: 'delete' });
         }
         return items;
     });
@@ -345,20 +384,41 @@ export class ExerciseActionsComponent {
             return new Set();
         }
 
-        // Collapsing: reserve the ellipsis (plus the gap before it) and fill kept buttons from the right (Delete last).
+        // Collapsing: reserve the ellipsis (plus the gap before it) and keep buttons in priority order (Delete, Edit,
+        // Scores first, then the type-specific extras), stopping at the first that no longer fits. Keeping by priority
+        // rather than by position makes every exercise type keep the same core buttons inline; the template still
+        // renders the kept buttons in their original display order (only their `display` toggles).
         const budget = available - ELLIPSIS_WIDTH_PX - GAP_PX;
+        const byPriority = [...actions].sort((a, b) => keepPriorityOf(a) - keepPriorityOf(b));
+        const keptIds = new Set<string>();
         let used = 0;
-        let keepFrom = actions.length;
-        for (let i = actions.length - 1; i >= 0; i--) {
-            const addition = widthOf(actions[i]) + (keepFrom < actions.length ? GAP_PX : 0);
+        for (const action of byPriority) {
+            const addition = widthOf(action) + (keptIds.size > 0 ? GAP_PX : 0);
             if (used + addition <= budget) {
                 used += addition;
-                keepFrom = i;
+                keptIds.add(action.id);
             } else {
                 break;
             }
         }
-        return new Set(actions.slice(0, keepFrom).map((action) => action.id));
+        return new Set(actions.filter((action) => !keptIds.has(action.id)).map((action) => action.id));
+    });
+
+    /**
+     * The inline main buttons with their per-item render state precomputed, so the template reads plain fields instead of
+     * calling `signatureOf(...)` and `hiddenIds().has(...)` on every change-detection cycle. `context` is built here too
+     * so the `ngTemplateOutlet` binding keeps a stable object identity across cycles.
+     */
+    protected readonly inlineActions = computed(() => {
+        // The signature embeds a translated label, so re-derive it on a language switch.
+        this.languageVersion();
+        const hidden = this.hiddenIds();
+        return this.mainActions().map((action) => ({
+            action,
+            signature: this.signatureOf(action),
+            hidden: hidden.has(action.id),
+            context: { $implicit: action, inMenu: false },
+        }));
     });
 
     readonly hasOverflow = computed<boolean>(() => this.hiddenIds().size > 0);
@@ -367,6 +427,21 @@ export class ExerciseActionsComponent {
     readonly hiddenActions = computed<ActionItem[]>(() => this.mainActions().filter((action) => this.hiddenIds().has(action.id)));
 
     readonly deletionSummary = computed<Observable<EntitySummary>>(() => this.exerciseService.getDeletionSummary(this.exercise()));
+
+    /**
+     * Cleanup checkboxes for the delete dialog. Programming exercises on external CI expose an opt-out for deleting
+     * the base/student repositories and build plans; under LocalCI the checks stay hidden so the server applies its
+     * defaults (the flags are then undefined and the delete request omits the query parameters).
+     */
+    readonly deleteAdditionalChecks = computed((): { [key: string]: string } => {
+        if (this.exercise().type !== ExerciseType.PROGRAMMING || this.localCIEnabled) {
+            return {};
+        }
+        return {
+            deleteStudentReposBuildPlans: 'artemisApp.programmingExercise.delete.studentReposBuildPlans',
+            deleteBaseReposBuildPlans: 'artemisApp.programmingExercise.delete.baseReposBuildPlans',
+        };
+    });
 
     /** Placeholders for the delete confirmation question (`{{ courseType }}` / `{{ courseTitle }}`). */
     readonly deleteTranslateValues = computed<{ [key: string]: unknown }>(() => {
@@ -378,6 +453,8 @@ export class ExerciseActionsComponent {
     });
 
     constructor() {
+        this.destroyRef.onDestroy(() => this.buttonObserver.disconnect());
+
         // Translated labels have different widths per language; the measurements use TranslateService.instant (not a
         // signal), so on a language change drop the cached widths to re-measure and bump the version the quiz-width
         // effect watches. The buttons themselves update via the (impure) artemisTranslate pipe.
@@ -386,52 +463,56 @@ export class ExerciseActionsComponent {
             this.languageVersion.update((version) => version + 1);
         });
 
-        // Track the full row width: one cheap clientWidth read per resize tick, no per-button measuring. Flush change
-        // detection synchronously in the observer callback (which runs after layout but before paint) so the show/hide
-        // lands on the same frame — otherwise the toggle waits for the async scheduler and lags a frame behind a zoom.
+        // Track the row width and the width the always-visible quiz buttons reserve. Both are observed rather than read
+        // once: the quiz lifecycle buttons are PrimeNG, whose CSS is injected lazily, so a single measurement can catch
+        // them unstyled and too narrow. That would overstate the space left for the main buttons (available = row -
+        // quiz), keep more of them inline than actually fit, and clip the leftmost one against the cell's overflow. The
+        // observer also covers the quiz group appearing/disappearing on a lifecycle transition (it then reports 0, so no
+        // space stays reserved for buttons that are gone) and a language switch changing the labels' width.
+        //
+        // Change detection is flushed synchronously in the callback (which runs after layout but before paint) so the
+        // show/hide lands on the same frame — otherwise the toggle waits for the async scheduler and lags a frame.
         afterNextRender(() => {
             const rowEl = this.actionsRow()?.nativeElement;
-            if (!rowEl) {
-                return;
-            }
+            const quizEl = this.quizGroup()?.nativeElement;
+            const measure = () => {
+                if (rowEl) {
+                    this.rowWidth.set(widthOf(rowEl));
+                }
+                this.quizWidth.set(quizEl ? widthOf(quizEl) : 0);
+            };
+
             const observer = new ResizeObserver(() => {
-                this.rowWidth.set(rowEl.clientWidth);
+                measure();
                 this.changeDetectorRef.detectChanges();
             });
-            observer.observe(rowEl);
+            if (rowEl) {
+                observer.observe(rowEl);
+            }
+            if (quizEl) {
+                observer.observe(quizEl);
+            }
             this.destroyRef.onDestroy(() => observer.disconnect());
-            this.rowWidth.set(rowEl.clientWidth);
+            measure();
         });
 
-        // Measure the always-visible quiz buttons' width whenever the quiz state or language changes (they never
-        // collapse, so their reserved width just needs to stay accurate). Reset to 0 when a quiz transition removes the
-        // button group, so the overflow logic does not keep reserving space for buttons that are no longer rendered.
+        // Keep each distinct button's natural width up to date. A one-shot measurement is not enough: PrimeNG injects
+        // its button CSS lazily, so the first layout can report an unstyled (too narrow) width. Caching that would make
+        // the overflow calculation keep a button inline that does not actually fit, and the cell (overflow: hidden)
+        // would clip it. The observer re-reads a width whenever it genuinely changes — lazy CSS, a web font, a longer
+        // label — so the cache is self-correcting.
         afterRenderEffect(() => {
-            this.quizExercise();
+            // Re-observe whenever the buttons or their labels change. Observing an element always emits an initial
+            // callback, so this doubles as the seeding pass: it is what fills in a brand-new signature after a language
+            // switch, even when the translated label happens to render at exactly the same width (no resize to react
+            // to). The elements persist across a collapse — only their `display` toggles — so this does not re-run on
+            // every resize.
             this.languageVersion();
-            const quizEl = this.quizGroup()?.nativeElement;
-            this.quizWidth.set(quizEl ? quizEl.offsetWidth : 0);
-        });
-
-        // Measure each distinct button's natural width once (while it is visible) and cache it. Hidden buttons read 0,
-        // so we never overwrite a cached width; warm rows skip the measurement entirely.
-        afterRenderEffect(() => {
-            const actions = this.mainActions();
-            const current = this.buttonWidths();
-            if (actions.every((action) => current.has(this.signatureOf(action)))) {
-                return;
-            }
-            let next: Map<string, number> | undefined;
-            for (const ref of this.inlineItems()) {
-                const el = ref.nativeElement;
-                const signature = el.getAttribute('data-signature');
-                if (signature && el.offsetWidth > 0 && !current.has(signature)) {
-                    next ??= new Map(current);
-                    next.set(signature, el.offsetWidth);
-                }
-            }
-            if (next) {
-                this.buttonWidths.set(next);
+            this.mainActions();
+            const items = this.inlineItems();
+            this.buttonObserver.disconnect();
+            for (const ref of items) {
+                this.buttonObserver.observe(ref.nativeElement);
             }
         });
 
@@ -443,6 +524,31 @@ export class ExerciseActionsComponent {
             const quizWidth = this.quizWidth();
             this.quizActionsMinWidth.emit(quizWidth > 0 ? quizWidth + GAP_PX + ELLIPSIS_WIDTH_PX + SAFETY_MARGIN_PX : 0);
         });
+    }
+
+    /**
+     * Caches the measured width of every button that is currently laid out. Collapsed buttons are `display: none` and
+     * measure 0 — their last known width is kept, since that is exactly the width the overflow calculation needs in
+     * order to decide whether they could be shown again. Writes only on a real change, so toggling a button's
+     * visibility settles instead of feeding back into itself.
+     */
+    private onButtonsResized(entries: ResizeObserverEntry[]): void {
+        const current = this.buttonWidths();
+        let next: Map<string, number> | undefined;
+        for (const entry of entries) {
+            const element = entry.target as HTMLElement;
+            const signature = element.getAttribute('data-signature');
+            const width = widthOf(element);
+            if (signature && width > 0 && current.get(signature) !== width) {
+                next ??= new Map(current);
+                next.set(signature, width);
+            }
+        }
+        if (next) {
+            this.buttonWidths.set(next);
+            // Land the show/hide on this frame (the callback runs after layout, before paint), as the row observer does.
+            this.changeDetectorRef.detectChanges();
+        }
     }
 
     protected toggleMenu(event: Event): void {

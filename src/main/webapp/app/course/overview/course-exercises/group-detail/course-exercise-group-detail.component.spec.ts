@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
@@ -18,24 +17,46 @@ import { ProgrammingExercisePlantUmlExtensionWrapper } from 'app/programming/sha
 import { ArtemisServerDateService } from 'app/foundation/service/server-date.service';
 import { ScoresStorageService } from 'app/course/manage/course-scores/scores-storage.service';
 import { Course } from 'app/course/shared/entities/course.model';
-import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { ParticipationResultDTO } from 'app/course/shared/entities/course-for-dashboard-dto';
+import { Exercise, ExerciseType, IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { ParticipationService } from 'app/exercise/participation/participation.service';
+import { MockParticipationService } from 'test/helpers/mocks/service/mock-participation.service';
 
 describe('CourseExerciseGroupDetailComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<CourseExerciseGroupDetailComponent>;
-    let storedResults: Map<number, ParticipationResultDTO>;
+    /** Server-computed achieved points per variant group id, as the ScoresStorageService would hold after a dashboard load. */
+    let storedGroupPoints: Map<number, number>;
 
     const GROUP_ID = 10;
 
-    /** Two exercises in group 10 (cap 15), each worth 10 points, participations 101 and 102. */
+    /** Two exercises in group 10 (cap 15), each worth 10 points and fully included in the score, participations 101 and 102. */
     function exercisesInGroup(groupMaxPoints: number | undefined): Exercise[] {
         const reference = { id: GROUP_ID, title: 'Sorting variants', maxPoints: groupMaxPoints };
         return [
-            { id: 1, type: ExerciseType.TEXT, maxPoints: 10, exerciseVariantGroup: reference, studentParticipations: [{ id: 101 }], problemStatement: 'a' } as unknown as Exercise,
-            { id: 2, type: ExerciseType.TEXT, maxPoints: 10, exerciseVariantGroup: reference, studentParticipations: [{ id: 102 }], problemStatement: 'b' } as unknown as Exercise,
+            {
+                id: 1,
+                type: ExerciseType.TEXT,
+                maxPoints: 10,
+                includedInOverallScore: IncludedInOverallScore.INCLUDED_COMPLETELY,
+                exerciseVariantGroup: reference,
+                studentParticipations: [{ id: 101 }],
+                problemStatement: 'a',
+            } as unknown as Exercise,
+            {
+                id: 2,
+                type: ExerciseType.TEXT,
+                maxPoints: 10,
+                includedInOverallScore: IncludedInOverallScore.INCLUDED_COMPLETELY,
+                exerciseVariantGroup: reference,
+                studentParticipations: [{ id: 102 }],
+                problemStatement: 'b',
+            } as unknown as Exercise,
         ];
+    }
+
+    /** An additional variant of the given inclusion type worth 10 points, joining group 10. */
+    function extraVariant(includedInOverallScore: IncludedInOverallScore, groupMaxPoints: number | undefined): Exercise {
+        const reference = { id: GROUP_ID, title: 'Sorting variants', maxPoints: groupMaxPoints };
+        return { id: 3, type: ExerciseType.TEXT, maxPoints: 10, includedInOverallScore, exerciseVariantGroup: reference, problemStatement: 'c' } as unknown as Exercise;
     }
 
     async function setup(exercises: Exercise[], options?: { getExerciseDetails?: () => Observable<HttpResponse<{ exercise: Exercise }>> }): Promise<void> {
@@ -59,7 +80,8 @@ describe('CourseExerciseGroupDetailComponent', () => {
                 }),
                 MockProvider(ArtemisServerDateService, { now: () => dayjs() }),
                 MockProvider(DomSanitizer, { bypassSecurityTrustHtml: (value: string) => value }),
-                { provide: ScoresStorageService, useValue: { getStoredParticipationResult: (id: number) => storedResults.get(id) } },
+                { provide: ScoresStorageService, useValue: { getStoredAchievedGroupPoints: (_courseId: number, groupId: number) => storedGroupPoints.get(groupId) } },
+                { provide: ParticipationService, useClass: MockParticipationService },
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
@@ -76,6 +98,8 @@ describe('CourseExerciseGroupDetailComponent', () => {
         group: () => { id?: number; title?: string } | undefined;
         exercises: () => Exercise[];
         exerciseSumMaxPoints: () => number;
+        effectiveGroupMaxPoints: () => number;
+        capReducesMaxPoints: () => boolean;
         variantsInfoBoxData: () => InformationBox;
         pointsInfoBoxData: () => InformationBox;
         groupDateInfoBoxes: () => InformationBox[];
@@ -92,42 +116,68 @@ describe('CourseExerciseGroupDetailComponent', () => {
     }
 
     beforeEach(() => {
-        storedResults = new Map();
+        storedGroupPoints = new Map();
     });
 
     afterEach(() => {
         vi.restoreAllMocks();
     });
 
-    it('sums the server-provided results of the group members', async () => {
-        storedResults.set(101, { participationId: 101, rated: true, score: 80 });
-        storedResults.set(102, { participationId: 102, rated: true, score: 100 });
-        await setup(exercisesInGroup(undefined));
-        // 80% of 10 + 100% of 10 = 8 + 10 = 18 (no cap configured).
-        expect(achievedGroupPoints()).toBe(18);
+    it('surfaces the authoritative server-computed points for the group', async () => {
+        // The server already caps and plagiarism-adjusts this value; the component must display it verbatim.
+        storedGroupPoints.set(GROUP_ID, 13);
+        await setup(exercisesInGroup(15));
+        expect(achievedGroupPoints()).toBe(13);
     });
 
-    it('caps the summed points at the group maxPoints', async () => {
-        storedResults.set(101, { participationId: 101, rated: true, score: 80 });
-        storedResults.set(102, { participationId: 102, rated: true, score: 100 });
+    it('falls back to 0 when the server stored no contribution for the group', async () => {
+        // e.g. before the dashboard scores load, or when the group contributes nothing.
         await setup(exercisesInGroup(15));
-        // 18 achieved, capped at the group's 15.
-        expect(achievedGroupPoints()).toBe(15);
+        expect(achievedGroupPoints()).toBe(0);
     });
 
-    it('ignores unrated results', async () => {
-        storedResults.set(101, { participationId: 101, rated: true, score: 80 });
-        storedResults.set(102, { participationId: 102, rated: false, score: 100 });
-        await setup(exercisesInGroup(15));
-        // Only the rated result of exercise 1 counts: 8.
-        expect(achievedGroupPoints()).toBe(8);
-    });
+    describe('effectiveGroupMaxPoints', () => {
+        it('shows the variants sum when no cap is configured', async () => {
+            await setup(exercisesInGroup(undefined));
+            expect(comp().effectiveGroupMaxPoints()).toBe(20);
+            expect(comp().capReducesMaxPoints()).toBe(false);
+        });
 
-    it('ignores participations without a stored (server-computed) result', async () => {
-        storedResults.set(101, { participationId: 101, rated: true, score: 80 });
-        // Participation 102 has no stored result: it must not fall back to any local result.
-        await setup(exercisesInGroup(15));
-        expect(achievedGroupPoints()).toBe(8);
+        it('caps the maximum at a binding cap (below the variants sum)', async () => {
+            await setup(exercisesInGroup(15));
+            expect(comp().effectiveGroupMaxPoints()).toBe(15);
+            expect(comp().capReducesMaxPoints()).toBe(true);
+        });
+
+        it('ignores a cap that exceeds the variants sum and shows the sum instead', async () => {
+            await setup(exercisesInGroup(100));
+            // A student can never earn more than the 20 the variants offer, so the course maximum is 20, not 100.
+            expect(comp().effectiveGroupMaxPoints()).toBe(20);
+            expect(comp().capReducesMaxPoints()).toBe(false);
+        });
+
+        it('treats a zero cap as a binding cap that discards all group points', async () => {
+            await setup(exercisesInGroup(0));
+            expect(comp().effectiveGroupMaxPoints()).toBe(0);
+            expect(comp().capReducesMaxPoints()).toBe(true);
+        });
+
+        it('excludes a bonus variant from the maximum, matching the server inclusion rule', async () => {
+            // Two INCLUDED_COMPLETELY variants (10 each) + one INCLUDED_AS_BONUS variant: the course maximum only counts
+            // the first two, so the cap of 25 is not binding even though the raw sum of all variants would be 30.
+            await setup([...exercisesInGroup(25), extraVariant(IncludedInOverallScore.INCLUDED_AS_BONUS, 25)]);
+            expect(comp().exerciseSumMaxPoints()).toBe(20);
+            expect(comp().effectiveGroupMaxPoints()).toBe(20);
+            expect(comp().capReducesMaxPoints()).toBe(false);
+        });
+
+        it('excludes a not-included variant from the maximum, matching the server inclusion rule', async () => {
+            await setup([...exercisesInGroup(15), extraVariant(IncludedInOverallScore.NOT_INCLUDED, 15)]);
+            expect(comp().exerciseSumMaxPoints()).toBe(20);
+            // The cap of 15 binds against the included sum of 20, not the raw sum of 30.
+            expect(comp().effectiveGroupMaxPoints()).toBe(15);
+            expect(comp().capReducesMaxPoints()).toBe(true);
+        });
     });
 
     describe('group resolution', () => {
@@ -250,12 +300,20 @@ describe('CourseExerciseGroupDetailComponent', () => {
     });
 
     describe('helpers', () => {
-        it('returns the first participation and the exercise link', async () => {
+        it('returns the graded participation and the exercise link', async () => {
             await setup(exercisesInGroup(undefined));
             const exercise = comp().exercises()[0];
             expect(comp().exerciseParticipation(exercise)?.id).toBe(101);
             expect(comp().exerciseParticipation({} as Exercise)).toBeUndefined();
             expect(comp().exerciseLink(exercise)).toBe('/courses/1/exercises/1');
+        });
+
+        it('selects the graded participation even when a practice run is listed first', async () => {
+            // The dashboard response includes practice test runs in unspecified order; the card must not show them.
+            const exercises = exercisesInGroup(undefined);
+            exercises[0].studentParticipations = [{ id: 201, testRun: true } as StudentParticipation, { id: 101 } as StudentParticipation];
+            await setup(exercises);
+            expect(comp().exerciseParticipation(comp().exercises()[0])?.id).toBe(101);
         });
     });
 });

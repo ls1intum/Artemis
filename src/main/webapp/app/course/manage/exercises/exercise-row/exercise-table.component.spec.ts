@@ -1,25 +1,44 @@
+import { Component, input, output } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { provideRouter } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { CdkDragDrop } from '@angular/cdk/drag-drop';
 import dayjs from 'dayjs/esm';
 import { vi } from 'vitest';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { ExerciseTableComponent, TableGroupChange } from 'app/course/manage/exercises/exercise-row/exercise-table.component';
+import { ExerciseActionsComponent } from 'app/course/manage/exercises/exercise-row/exercise-actions.component';
 import { DifficultyLevel, Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { CourseExerciseGroup } from 'app/exercise/shared/entities/exercise/course-exercise-group.model';
+import { Course } from 'app/course/shared/entities/course.model';
 import { QuizExercise, QuizMode, QuizStatus } from 'app/quiz/shared/entities/quiz-exercise.model';
 
+/** Stands in for the real actions component, whose service tree is irrelevant to what the table template renders. */
+@Component({ selector: 'jhi-exercise-actions', template: '' })
+class ExerciseActionsStubComponent {
+    readonly exercise = input.required<Exercise>();
+    readonly courseId = input.required<number>();
+    readonly course = input<Course | undefined>(undefined);
+    readonly exerciseUpdated = output<Exercise>();
+    readonly exerciseDeleted = output<Exercise>();
+    readonly quizActionsMinWidth = output<number>();
+}
+
 describe('ExerciseTableComponent', () => {
-    setupTestBed({ zoneless: true });
     let component: ExerciseTableComponent;
     let fixture: ComponentFixture<ExerciseTableComponent>;
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
             imports: [ExerciseTableComponent],
-            providers: [{ provide: TranslateService, useClass: MockTranslateService }],
-        }).compileComponents();
+            // The row template renders RouterLink, so the rendering tests below need a router.
+            providers: [provideRouter([]), { provide: TranslateService, useClass: MockTranslateService }],
+        })
+            .overrideComponent(ExerciseTableComponent, {
+                remove: { imports: [ExerciseActionsComponent] },
+                add: { imports: [ExerciseActionsStubComponent] },
+            })
+            .compileComponents();
 
         fixture = TestBed.createComponent(ExerciseTableComponent);
         component = fixture.componentInstance;
@@ -73,16 +92,18 @@ describe('ExerciseTableComponent', () => {
             expect(component.sortedExercises().map((e) => e.id)).toEqual([1, 2]);
         });
 
-        it('keeps the manual order after a drag-and-drop reorder', () => {
+        it('ignores a drop within the same table (no persisted order exists, so reordering is not offered)', () => {
+            const group: CourseExerciseGroup = { id: 10, exercises: [] };
+            fixture.componentRef.setInput('group', group);
             fixture.componentRef.setInput('exercises', [dated1, dated2]);
-            const reordered: Exercise[][] = [];
-            component.rowsReordered.subscribe((rows) => reordered.push(rows));
+            const changes: TableGroupChange[] = [];
+            component.groupChange.subscribe((c) => changes.push(c));
 
             const container = { id: 'same' } as any;
             component.onDrop({ previousContainer: container, container, previousIndex: 0, currentIndex: 1 } as CdkDragDrop<Exercise[]>);
 
-            expect(component.sortColumn()).toBe('manual');
-            expect(reordered[0].map((e) => e.id)).toEqual([2, 1]);
+            expect(changes).toEqual([]);
+            expect(component.sortColumn()).toBe('title');
             expect(component.sortedExercises().map((e) => e.id)).toEqual([1, 2]);
         });
 
@@ -150,7 +171,7 @@ describe('ExerciseTableComponent', () => {
 
     describe('quiz actions column width', () => {
         it('keeps the largest reported width as the column floor', () => {
-            expect(component.actionsMinWidthVar()).toBeNull();
+            expect(component.actionsMinWidthVar()).toBeUndefined();
 
             component.onQuizActionsMinWidth(120);
             expect(component.actionsMinWidthVar()).toBe('120px');
@@ -239,11 +260,11 @@ describe('ExerciseTableComponent', () => {
             expect(component.icon(saved)).toBeDefined();
         });
 
-        it('maps difficulty to a badge class', () => {
-            expect(component.difficultyBadgeClass({ difficulty: DifficultyLevel.EASY } as Exercise)).toBe('bg-success');
-            expect(component.difficultyBadgeClass({ difficulty: DifficultyLevel.MEDIUM } as Exercise)).toBe('bg-warning');
-            expect(component.difficultyBadgeClass({ difficulty: DifficultyLevel.HARD } as Exercise)).toBe('bg-danger');
-            expect(component.difficultyBadgeClass({} as Exercise)).toBe('bg-secondary');
+        it('maps difficulty to a tag severity', () => {
+            expect(component.difficultySeverity({ difficulty: DifficultyLevel.EASY } as Exercise)).toBe('success');
+            expect(component.difficultySeverity({ difficulty: DifficultyLevel.MEDIUM } as Exercise)).toBe('warn');
+            expect(component.difficultySeverity({ difficulty: DifficultyLevel.HARD } as Exercise)).toBe('danger');
+            expect(component.difficultySeverity({} as Exercise)).toBe('secondary');
         });
 
         it('flags non-individual quizzes and provides a tooltip only for them', () => {
@@ -265,11 +286,12 @@ describe('ExerciseTableComponent', () => {
             expect(component.quizStatusLabel({ status: QuizStatus.OPEN_FOR_PRACTICE } as QuizExercise)).toBe('artemisApp.quizExercise.practiceMode');
             expect(component.quizStatusLabel({} as QuizExercise)).toBeUndefined();
 
-            expect(component.quizStatusClass({ status: QuizStatus.INVISIBLE } as QuizExercise)).toBe('bg-secondary');
-            expect(component.quizStatusClass({ status: QuizStatus.VISIBLE } as QuizExercise)).toBe('bg-info');
-            expect(component.quizStatusClass({ status: QuizStatus.ACTIVE } as QuizExercise)).toBe('bg-success');
-            expect(component.quizStatusClass({ status: QuizStatus.OPEN_FOR_PRACTICE } as QuizExercise)).toBe('bg-primary');
-            expect(component.quizStatusClass({} as QuizExercise)).toBe('bg-light text-dark');
+            expect(component.quizStatusSeverity({ status: QuizStatus.INVISIBLE } as QuizExercise)).toBe('secondary');
+            expect(component.quizStatusSeverity({ status: QuizStatus.VISIBLE } as QuizExercise)).toBe('info');
+            expect(component.quizStatusSeverity({ status: QuizStatus.ACTIVE } as QuizExercise)).toBe('success');
+            // Unset severity: the tag falls back to the brand primary colour.
+            expect(component.quizStatusSeverity({ status: QuizStatus.OPEN_FOR_PRACTICE } as QuizExercise)).toBeUndefined();
+            expect(component.quizStatusSeverity({} as QuizExercise)).toBe('secondary');
         });
 
         it('builds the quiz mode translation key', () => {
@@ -278,17 +300,107 @@ describe('ExerciseTableComponent', () => {
         });
 
         it('tracks quiz rows by lifecycle-relevant state and other rows by id', () => {
-            const trackBy = component['rowTrackBy'];
+            const trackKey = (exercise: Exercise) => component.exerciseTrackKey(exercise);
             const text = { id: 1, type: ExerciseType.TEXT } as Exercise;
-            expect(trackBy(0, text)).toBe(1);
+            expect(trackKey(text)).toBe(1);
 
             const draft = { type: ExerciseType.TEXT } as Exercise;
-            expect(trackBy(0, draft)).toBe(draft);
+            expect(trackKey(draft)).toBe(draft);
 
             const quiz = { id: 2, type: ExerciseType.QUIZ, status: QuizStatus.VISIBLE, visibleToStudents: true } as QuizExercise;
-            const key = trackBy(0, quiz);
+            const key = trackKey(quiz);
             expect(key).toContain('2|');
-            expect(trackBy(0, { ...quiz, status: QuizStatus.ACTIVE } as QuizExercise)).not.toBe(key);
+            expect(trackKey({ ...quiz, status: QuizStatus.ACTIVE } as QuizExercise)).not.toBe(key);
+        });
+    });
+
+    /**
+     * The row template reads precomputed `ExerciseRow` fields, and PrimeNG's `let-row` context is untyped, so a wrong
+     * field name would silently render nothing rather than fail to compile. These tests render the table for real.
+     */
+    describe('rendering', () => {
+        const quiz = {
+            id: 7,
+            title: 'Quiz exercise',
+            type: ExerciseType.QUIZ,
+            maxPoints: 10,
+            difficulty: DifficultyLevel.HARD,
+            quizMode: QuizMode.SYNCHRONIZED,
+            status: QuizStatus.VISIBLE,
+            dueDate: dayjs('2026-03-01T10:00:00Z'),
+        } as QuizExercise;
+
+        function renderRows(exercises: Exercise[]): HTMLElement {
+            fixture.componentRef.setInput('exercises', exercises);
+            fixture.detectChanges();
+            return fixture.nativeElement as HTMLElement;
+        }
+
+        it('renders a row per exercise with its title link, points and difficulty badge', () => {
+            const text = { id: 3, title: 'Text exercise', type: ExerciseType.TEXT, maxPoints: 5, difficulty: DifficultyLevel.EASY } as Exercise;
+            const element = renderRows([text]);
+
+            const link = element.querySelector('.col-title a') as HTMLAnchorElement;
+            expect(link.textContent).toContain('Text exercise');
+            expect(link.getAttribute('href')).toBe('/course-management/1/text-exercises/3');
+            expect(element.querySelector('.col-points')?.textContent).toContain('5pts');
+
+            const difficultyTag = element.querySelector('p-tag');
+            expect(difficultyTag?.textContent).toContain(DifficultyLevel.EASY);
+            // PrimeNG puts the severity class on the tag host element.
+            expect(difficultyTag?.classList).toContain('p-tag-success');
+        });
+
+        it('renders the effective dates of a row', () => {
+            // Scoped to the body cell: the header also carries `col-dates`.
+            const element = renderRows([quiz]);
+            expect(element.querySelector('td.col-dates')?.textContent).toContain('artemisApp.exercise.due');
+        });
+
+        it('renders the quiz status and mode badges for a quiz row', () => {
+            const element = renderRows([quiz]);
+            const tags = Array.from(element.querySelectorAll('p-tag')).map((tag) => tag.textContent ?? '');
+
+            expect(tags.some((text) => text.includes('artemisApp.quizExercise.quizStatus.visible'))).toBe(true);
+            expect(tags.some((text) => text.includes('artemisApp.quizExercise.quizMode.synchronized'))).toBe(true);
+        });
+
+        it('renders the "none" placeholder only when a row has neither categories nor a quiz badge', () => {
+            const bare = { id: 4, title: 'Bare', type: ExerciseType.TEXT, maxPoints: 1 } as Exercise;
+            expect(renderRows([bare]).textContent).toContain('artemisApp.exerciseManagement.table.none');
+            // The quiz row carries status and mode badges, so the categories cell must not fall back to the placeholder.
+            expect(renderRows([quiz]).querySelector('p-tag')).not.toBeNull();
+        });
+
+        it('disables the drag handle for a non-individual quiz', () => {
+            fixture.componentRef.setInput('showDragHandle', true);
+            const handle = renderRows([quiz]).querySelector('.drag-handle') as HTMLElement;
+            expect(handle.classList).toContain('disabled');
+        });
+
+        it('renders both the drag handle and the group dropdown when both are enabled (group view)', () => {
+            const text = { id: 3, title: 'Text exercise', type: ExerciseType.TEXT, maxPoints: 5, difficulty: DifficultyLevel.EASY } as Exercise;
+            const group: CourseExerciseGroup = { id: 10, title: 'Group A', exercises: [text] };
+            fixture.componentRef.setInput('groups', [group]);
+            fixture.componentRef.setInput('showDragHandle', true);
+            fixture.componentRef.setInput('showGroupSelector', true);
+
+            const element = renderRows([text]);
+            // Drag-and-drop and the per-row group dropdown coexist in the group view.
+            expect(element.querySelector('.drag-handle')).not.toBeNull();
+            expect(element.querySelector('p-select')).not.toBeNull();
+            // The group column replaces the difficulty column, so the difficulty badge is not rendered.
+            expect(element.querySelector('p-tag')).toBeNull();
+        });
+
+        it('reflects the active sort column in the header', () => {
+            renderRows([quiz]);
+            const titleHeader = fixture.nativeElement.querySelectorAll('th.sort-col')[0] as HTMLElement;
+            expect(titleHeader.getAttribute('aria-sort')).toBe('ascending');
+
+            component.sortBy('title');
+            fixture.detectChanges();
+            expect(titleHeader.getAttribute('aria-sort')).toBe('descending');
         });
     });
 });

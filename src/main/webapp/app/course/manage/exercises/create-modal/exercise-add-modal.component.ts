@@ -1,7 +1,6 @@
-import { Component, Type, computed, effect, inject, input, output, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, Type, computed, effect, inject, input, output, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
-import { TranslateService } from '@ngx-translate/core';
 import { DialogService } from 'primeng/dynamicdialog';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MODULE_FEATURE_FILEUPLOAD, MODULE_FEATURE_MODELING, MODULE_FEATURE_TEXT } from 'app/app.constants';
@@ -77,6 +76,7 @@ const EXERCISE_TYPE_CARDS: ExerciseTypeCard[] = [
     templateUrl: './exercise-add-modal.component.html',
     styleUrl: './exercise-add-modal.component.scss',
     imports: [DialogModule, ButtonModule, FaIconComponent, ArtemisTranslatePipe, TranslateDirective],
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ExerciseAddModalComponent {
     readonly visible = input<boolean>(false);
@@ -94,9 +94,9 @@ export class ExerciseAddModalComponent {
     private readonly programmingEnabled = toSignal(this.featureToggleService.getFeatureToggleActive(FeatureToggle.ProgrammingExercises), { initialValue: true });
 
     /**
-     * The exercise-type cards actually shown, gated the same way as the legacy add popover: text / modeling /
-     * file-upload are hidden when their module feature is inactive, and programming is hidden while its feature toggle
-     * is off. This keeps the modal from routing users into create/import screens for unavailable exercise types.
+     * The exercise-type cards actually shown, gated like the legacy add popover: text / modeling / file-upload are
+     * hidden when their module feature is inactive, and programming while its feature toggle is off. This keeps the
+     * modal from routing users into create/import screens for unavailable exercise types.
      */
     protected readonly exerciseTypeCards = computed<ExerciseTypeCard[]>(() =>
         EXERCISE_TYPE_CARDS.filter((card) => {
@@ -123,7 +123,6 @@ export class ExerciseAddModalComponent {
 
     private readonly router = inject(Router);
     private readonly dialogService = inject(DialogService);
-    private readonly translateService = inject(TranslateService);
 
     constructor() {
         effect(() => {
@@ -134,10 +133,6 @@ export class ExerciseAddModalComponent {
                 }
             }
         });
-    }
-
-    get dialogHeader(): string {
-        return this.translateService.instant('artemisApp.exerciseManagement.addModal.header');
     }
 
     close(): void {
@@ -157,10 +152,9 @@ export class ExerciseAddModalComponent {
     }
 
     /**
-     * Opens the regular Artemis exercise import dialog (the one used on develop) for the selected exercise type.
-     * Mirrors {@link ExerciseImportButtonComponent}: programming exercises use the tabbed variant (which also
-     * allows importing from a file), all other types use the direct import list. The dialog shows the real
-     * exercises returned by the paging endpoints.
+     * Opens the regular Artemis exercise import dialog for the selected exercise type. Mirrors
+     * {@link ExerciseImportButtonComponent}: programming exercises use the tabbed variant (which also allows importing
+     * from a file), all other types use the direct import list.
      */
     startImport(type: ExerciseType): void {
         this.close();

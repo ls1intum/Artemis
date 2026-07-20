@@ -20,7 +20,8 @@
             "noExercisesMatch": "Keine Aufgaben stimmen mit \"{{ search }}\" überein.",
             "selection": {
                 "count": "{{ count }} ausgewählt",
-                "deselectAll": "Auswahl aufheben"
+                "deselectAll": "Auswahl aufheben",
+                "editSelectedGroupLocked": "Aufgaben in einer Variantengruppe teilen sich die Zeitplanung der Gruppe. Bearbeite die Gruppe, um ihre Termine zu ändern."
             },
             "card": {
                 "all": "Alle Aufgaben",
@@ -47,7 +48,7 @@
                 "noGroup": "Keine Gruppe",
                 "none": "keine",
                 "empty": "Keine Aufgaben",
-                "dragTooltip": "Ziehen, um neu zu sortieren oder zwischen Gruppen zu verschieben",
+                "dragTooltip": "Ziehen, um zwischen Gruppen zu verschieben",
                 "nonIndividualQuizTooltip": "Synchronisierte und Batch-Quizze haben einen einzigen gemeinsamen Durchlauf und können keiner Gruppe hinzugefügt werden."
             },
             "addModal": {

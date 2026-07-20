@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CourseRegistrationComponent } from 'app/course/overview/course-registration/course-registration.component';
 import { Course } from 'app/course/shared/entities/course.model';
@@ -17,8 +16,6 @@ import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 
 describe('CourseRegistrationComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<CourseRegistrationComponent>;
     let component: CourseRegistrationComponent;
     let courseService: CourseManagementService;

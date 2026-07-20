@@ -80,8 +80,10 @@ public interface QuizExerciseRepository extends ArtemisJpaRepository<QuizExercis
     @EntityGraph(type = LOAD, attributePaths = { "quizQuestions", "quizPointStatistic", "quizQuestions.quizQuestionStatistic", "categories", "quizBatches" })
     Optional<QuizExercise> findWithEagerQuestionsAndStatisticsById(Long quizExerciseId);
 
+    // exerciseVariantGroup is LAZY, and QuizExerciseWithoutQuestionsDTO reads its title/maxPoints/dates, so it must be
+    // loaded here — otherwise the DTO mapping would trigger a proxy initialization outside the session.
     @EntityGraph(type = LOAD, attributePaths = { "quizQuestions", "quizPointStatistic", "quizQuestions.quizQuestionStatistic", "categories", "competencyLinks.competency",
-            "quizBatches", "gradingCriteria" })
+            "quizBatches", "gradingCriteria", "exerciseVariantGroup" })
     Optional<QuizExercise> findWithEagerQuestionsAndStatisticsAndCompetenciesAndBatchesAndGradingCriteriaById(Long quizExerciseId);
 
     @EntityGraph(type = LOAD, attributePaths = { "quizQuestions" })

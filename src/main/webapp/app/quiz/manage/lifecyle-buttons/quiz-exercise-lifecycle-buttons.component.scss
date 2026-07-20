@@ -1,12 +1,22 @@
-.btn {
-    border-radius: 0.5rem;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.35rem;
-    padding: 0.35rem 0.6rem;
-    margin: 0;
-    line-height: 1.2;
+// Keep the lifecycle labels ("Start Quiz", "Set Visible", …) on one line; the actions row reserves a measured
+// width for these buttons, which a wrapped label would silently understate.
+button {
     white-space: nowrap;
+}
+
+.batch-menu {
+    min-width: 15rem;
+
+    // Keeps a long batch list scrollable instead of growing the popover past the viewport.
+    &__list {
+        max-height: 16rem;
+        overflow-y: auto;
+    }
+}
+
+// The batch password is a literal value, so it reads as monospace.
+.batch-password {
+    font-family: monospace;
 }
 
 // The batch-menu popover renders its panel in the document body (appendTo="body") and is positioned from the Batches

@@ -148,7 +148,12 @@
                             @if (maxNumberOfPresentationPoints() > 0) {
                                 <th jhiSortBy="presentationPoints"><span jhiTranslate="artemisApp.instructorDashboard.presentationPoints"></span> <fa-icon [icon]="faSort" /></th>
                             }
-                            @if (courseHasExerciseVariants()) {
+                            @if (variantCapReducesPoints()) {
+                                <th jhiSortBy="overallPointsUncapped">
+                                    <span jhiTranslate="artemisApp.instructorDashboard.uncappedPoints"></span>
+                                    <jhi-help-icon text="artemisApp.instructorDashboard.uncappedPointsTooltip" />
+                                    <fa-icon [icon]="faSort" />
+                                </th>
                                 <th jhiSortBy="excessVariantPoints">
                                     <span jhiTranslate="artemisApp.instructorDashboard.excessVariantPoints"></span>
                                     <jhi-help-icon text="artemisApp.instructorDashboard.excessVariantPointsTooltip" />
@@ -180,8 +185,9 @@
                             @if (maxNumberOfPresentationPoints() > 0) {
                                 <th>{{ maxNumberOfPresentationPoints() }}</th>
                             }
-                            @if (courseHasExerciseVariants()) {
-                                <th>{{ localizeExcessVariantPoints(maxNumberOfExcessVariantPoints()) }}</th>
+                            @if (variantCapReducesPoints()) {
+                                <th>{{ localizedMaxUncappedPoints() }}</th>
+                                <th>{{ localizedMaxExcessVariantPoints() }}</th>
                             }
                             <th>{{ maxNumberOfOverallPoints() }}</th>
                             @if (gradingScaleExists()) {
@@ -220,8 +226,9 @@
                                     ({{ localize(roundScorePercentSpecifiedByCourseSettings(averageNumberOfPresentationPoints() / maxNumberOfPresentationPoints(), course()!)) }}%)
                                 </th>
                             }
-                            @if (courseHasExerciseVariants()) {
-                                <th>{{ localizeExcessVariantPoints(averageNumberOfExcessVariantPoints()) }}</th>
+                            @if (variantCapReducesPoints()) {
+                                <th>{{ localizedAverageUncappedPoints() }}</th>
+                                <th>{{ localizedAverageExcessVariantPoints() }}</th>
                             }
                             <th>
                                 {{ localize(averageNumberOfOverallPoints()) }}
@@ -268,7 +275,8 @@
                                         ({{ localize(roundScorePercentSpecifiedByCourseSettings(studentStat.presentationPoints / maxNumberOfPresentationPoints(), course()!)) }}%)
                                     </td>
                                 }
-                                @if (courseHasExerciseVariants()) {
+                                @if (variantCapReducesPoints()) {
+                                    <td>{{ localize(studentStat.overallPointsUncapped) }}</td>
                                     <td>{{ localizeExcessVariantPoints(studentStat.excessVariantPoints) }}</td>
                                 }
                                 <td>

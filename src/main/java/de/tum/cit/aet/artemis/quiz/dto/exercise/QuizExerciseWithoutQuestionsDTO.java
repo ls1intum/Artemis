@@ -50,9 +50,7 @@ public record QuizExerciseWithoutQuestionsDTO(Long id, String title, String shor
         if (Hibernate.isInitialized(quizBatches) && quizBatches != null) {
             quizBatchesDTOs = quizBatches.stream().map(QuizBatchDTO::of).collect(Collectors.toSet());
         }
-        ExerciseVariantGroupReferenceDTO variantGroupRef = quizExercise.getExerciseVariantGroup() != null
-                ? ExerciseVariantGroupReferenceDTO.of(quizExercise.getExerciseVariantGroup())
-                : null;
+        ExerciseVariantGroupReferenceDTO variantGroupRef = ExerciseVariantGroupReferenceDTO.ofNullable(quizExercise.getExerciseVariantGroup());
         return new QuizExerciseWithoutQuestionsDTO(quizExercise.getId(), quizExercise.getTitle(), quizExercise.getShortName(), quizExercise.getReleaseDate(),
                 quizExercise.getStartDate(), quizExercise.getDueDate(), quizExercise.getAssessmentDueDate(), quizExercise.getDifficulty(), quizExercise.isVisibleToStudents(),
                 CourseForQuizExerciseDTO.of(quizExercise.getCourseViaExerciseGroupOrCourseMember()), quizExercise.getType(), quizExercise.isRandomizeQuestionOrder(),

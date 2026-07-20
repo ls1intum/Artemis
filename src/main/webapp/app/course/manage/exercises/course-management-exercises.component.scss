@@ -1,6 +1,7 @@
 .controls {
     /* stylelint-disable-next-line selector-pseudo-element-no-unknown */
     ::ng-deep p-selectbutton .p-togglebutton {
+        height: auto;
         padding-block: 0.25rem;
 
         .p-togglebutton-content {
@@ -11,6 +12,52 @@
 
 .drag-handle {
     cursor: grab;
+}
+
+// Mass-actions bar: expand its height (and fade in) on appear instead of snapping in and shoving the
+// exercise cards down, and collapse it again on the last deselect. `overflow: hidden` clips the row
+// while the height animates; `max-height` is animatable where `height: auto` is not.
+.selection-entering {
+    display: block;
+    overflow: hidden;
+    animation: selection-expand 0.2s ease-in-out forwards;
+}
+
+.selection-leaving {
+    display: block;
+    overflow: hidden;
+    animation: selection-collapse 0.2s ease-in-out forwards;
+}
+
+@keyframes selection-expand {
+    from {
+        max-height: 0;
+        opacity: 0;
+    }
+
+    to {
+        max-height: 200px;
+        opacity: 1;
+    }
+}
+
+@keyframes selection-collapse {
+    from {
+        max-height: 200px;
+        opacity: 1;
+    }
+
+    to {
+        max-height: 0;
+        opacity: 0;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .selection-entering,
+    .selection-leaving {
+        animation: none;
+    }
 }
 
 /* Keep a too-wide table scrolling inside its panel, not the page: min-width:0 lets PrimeNG's grid
@@ -25,10 +72,16 @@
     min-width: 0;
 }
 
+// Lets the card shrink below its content's intrinsic width so the table inside can scroll instead of
+// stretching the page (the default `min-width: auto` on a flex item would prevent that).
+.exercise-card-host {
+    min-width: 0;
+}
+
 .cdk-drag-preview {
     box-shadow:
-        0 5px 5px -3px rgba(0, 0, 0, 0.2),
-        0 8px 10px 1px rgba(0, 0, 0, 0.14);
+        0 5px 5px -3px color-mix(in srgb, var(--black) 20%, transparent),
+        0 8px 10px 1px color-mix(in srgb, var(--black) 14%, transparent);
 }
 
 .cdk-drag-placeholder {

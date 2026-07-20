@@ -113,7 +113,7 @@ public class CourseScoreCalculationService {
         double reachableMaxPoints = 0.0;
         double reachablePresentationPoints = 0.0;
 
-        // Non-variant exercises: summed up exactly as before exercise variants were introduced.
+        // Non-variant exercises: summed up individually (unchanged by variant groups).
         for (var exercise : exercises) {
             if (isExerciseVariant(exercise)) {
                 continue;
@@ -146,9 +146,8 @@ public class CourseScoreCalculationService {
 
     /**
      * Calculates the max and reachable max points contributed by the exercise variant groups among the given exercises.
-     * The max points of the variants of a group are summed up and then capped at the group's configured maxPoints, so a
-     * group never contributes more than its cap. Exercises that are not variants are ignored here (they are summed up
-     * separately, exactly as before exercise variants were introduced).
+     * Each group's variant max points are summed and then capped at the group's configured maxPoints. Non-variant
+     * exercises are ignored here (they are summed up separately).
      *
      * @param exercises the exercises which are checked for variant group membership
      * @return the capped max and reachable max points contributed by the variant groups (presentation points are always 0)
@@ -304,6 +303,10 @@ public class CourseScoreCalculationService {
         // Get scores per exercise type for the course (used in course-statistics.component i.a.).
         Map<ExerciseType, CourseScoresDTO> scoresPerExerciseType = calculateCourseScoresForStudentParticipations(course, gradedStudentParticipations, userId, plagiarismCases);
 
+        // The capped, plagiarism-adjusted points each variant group contributes to the course score. Computed before the
+        // loop below nulls each participation's exercise, so the group membership is still available here.
+        Map<Long, Double> achievedPointsPerVariantGroup = calculateAchievedPointsPerVariantGroup(userId, gradedStudentParticipations, plagiarismCases);
+
         // Get participation results (used in course-statistics.component).
         Set<ParticipationResultDTO> participationResults = new HashSet<>();
         for (StudentParticipation studentParticipation : gradedStudentParticipations) {
@@ -319,7 +322,44 @@ public class CourseScoreCalculationService {
         return new CourseForDashboardDTO(course, totalScores, scoresPerExerciseType.get(ExerciseType.TEXT), scoresPerExerciseType.get(ExerciseType.PROGRAMMING),
                 scoresPerExerciseType.get(ExerciseType.MODELING), scoresPerExerciseType.get(ExerciseType.FILE_UPLOAD), scoresPerExerciseType.get(ExerciseType.QUIZ),
                 participationResults, userCourseNotificationStatusRepository.countUnseenCourseNotificationsForUserInCourse(userId, course.getId()),
-                includeIrisEnabledInCourse ? irisSettingsApi.map(api -> api.isIrisEnabledForCourse(course.getId())).orElse(false) : null);
+                includeIrisEnabledInCourse ? irisSettingsApi.map(api -> api.isIrisEnabledForCourse(course.getId())).orElse(false) : null, achievedPointsPerVariantGroup);
+    }
+
+    /**
+     * Calculates the points a student earns from each exercise variant group, with plagiarism verdicts applied, keyed
+     * by group id. Groups with a configured {@code maxPoints} are capped at it; groups without one (deliberately
+     * uncapped, see {@link ExerciseVariantGroup#getMaxPoints()}) are included at their raw, uncapped sum, so every
+     * group a student has a rated result in is present in the returned map. Mirrors the variant-group branch of
+     * {@link #calculateCourseScoreForStudentParticipations}: a course-wide {@link PlagiarismVerdict#PLAGIARISM} verdict
+     * zeroes the whole course (empty map), and each member's contribution runs through
+     * {@link #calculatePointsAchievedFromExercise}, which applies the per-exercise plagiarism point deduction.
+     *
+     * @param userId                  the id of the student whose per-group points are calculated
+     * @param participationsOfStudent the student's graded participations (exercises must still be attached)
+     * @param plagiarismCases         the plagiarism verdicts relevant for the student
+     * @return the plagiarism-adjusted points per variant group id (capped where a cap is configured); empty when no
+     *         variant group contributes
+     */
+    Map<Long, Double> calculateAchievedPointsPerVariantGroup(long userId, Collection<StudentParticipation> participationsOfStudent, Collection<PlagiarismCase> plagiarismCases) {
+        PlagiarismMapping plagiarismMapping = PlagiarismMapping.createFromPlagiarismCases(plagiarismCases);
+        if (plagiarismMapping.studentHasVerdict(userId, PlagiarismVerdict.PLAGIARISM)) {
+            return Map.of();
+        }
+        var plagiarismCasesForStudent = plagiarismMapping.getPlagiarismCasesForStudent(userId);
+        var achievedPointsPerVariantGroup = new VariantGroupCappedSum();
+        for (StudentParticipation participation : participationsOfStudent) {
+            Exercise exercise = participation.getExercise();
+            ExerciseVariantGroup variantGroup = exercise.getExerciseVariantGroup();
+            if (variantGroup == null || !includeIntoScoreCalculation(ExerciseCourseScoreDTO.from(exercise))) {
+                continue;
+            }
+            Result result = getResultForParticipation(participation, exercise.getDueDate());
+            if (result != null && result.isRated()) {
+                double pointsAchievedFromExercise = calculatePointsAchievedFromExercise(exercise, result, plagiarismCasesForStudent.get(exercise.getId()));
+                achievedPointsPerVariantGroup.add(variantGroup.getId(), variantGroup.getMaxPoints(), pointsAchievedFromExercise);
+            }
+        }
+        return achievedPointsPerVariantGroup.cappedPointsPerGroup();
     }
 
     /**
@@ -386,7 +426,7 @@ public class CourseScoreCalculationService {
         double presentationScore = 0;
         var plagiarismCasesForStudent = plagiarismMapping.getPlagiarismCasesForStudent(studentId);
 
-        // Non-variant exercises: summed up exactly as before exercise variants were introduced.
+        // Non-variant exercises: summed up individually (unchanged by variant groups).
         for (ExerciseCourseScoreDTO exercise : courseExercises) {
             if (isExerciseVariant(exercise)) {
                 continue;
@@ -424,10 +464,9 @@ public class CourseScoreCalculationService {
     }
 
     /**
-     * Calculates the points a student earns from the exercise variant groups among the given exercises. The points the
-     * student earns across the variants of a group are summed up and then capped at the group's configured maxPoints, so
-     * a group never contributes more than its cap. Exercises that are not variants are ignored here (they are summed up
-     * separately, exactly as before exercise variants were introduced).
+     * Calculates the points a student earns from the exercise variant groups among the given exercises. Each group's
+     * earned variant points are summed and then capped at the group's configured maxPoints. Non-variant exercises are
+     * ignored here (they are summed up separately).
      *
      * @param courseExercises           the exercises which are checked for variant group membership
      * @param gradeScoreDTOMap          the student's achieved scores per exercise id
@@ -509,7 +548,7 @@ public class CourseScoreCalculationService {
                     achievedPointsPerVariantGroup.add(variantGroup.getId(), variantGroup.getMaxPoints(), pointsAchievedFromExercise);
                 }
                 else {
-                    // Non-variant exercises: summed up exactly as before exercise variants were introduced.
+                    // Non-variant exercises: summed up individually (unchanged by variant groups).
                     pointsAchievedByStudentInCourse += pointsAchievedFromExercise;
                 }
             }
@@ -631,8 +670,8 @@ public class CourseScoreCalculationService {
 
     /**
      * Determines whether the given exercise is a variant of an exercise variant group with a configured points cap.
-     * Only such exercises are handled by the separate, capped variant-group computation; all other exercises (including
-     * those whose group has no configured cap) are summed up exactly as before exercise variants were introduced.
+     * Only such exercises go through the separate, capped variant-group computation; all others are summed up
+     * individually.
      *
      * @param exercise the exercise to check
      * @return {@code true} if the exercise belongs to a variant group that has a maxPoints cap
@@ -702,60 +741,4 @@ public class CourseScoreCalculationService {
         return calculateMaxAndReachablePoints(gradingScale, exercises).reachablePoints();
     }
 
-    /**
-     * Accumulates per-exercise point contributions while enforcing the cap of {@link ExerciseVariantGroup}s.
-     * <p>
-     * Contributions of exercises that do not belong to a variant group (or whose group has no configured cap) are summed
-     * up individually. Contributions of exercises in the same variant group are summed first and then capped at the
-     * group's configured {@code maxPoints}, so a group never contributes more than its cap to the {@link #total()}:
-     * {@code min(sum(contributions of the group's variants), cap)}.
-     */
-    private static final class VariantGroupCappedSum {
-
-        private double ungroupedSum = 0.0;
-
-        private final Map<Long, Double> sumPerVariantGroup = new HashMap<>();
-
-        private final Map<Long, Double> capPerVariantGroup = new HashMap<>();
-
-        /**
-         * Adds a single exercise's point contribution.
-         *
-         * @param variantGroupId        the id of the exercise's variant group, or {@code null} if it has none
-         * @param variantGroupMaxPoints the group's configured cap, or {@code null} if the exercise has no group or the group has no cap
-         * @param value                 the points the exercise contributes
-         */
-        void add(@Nullable Long variantGroupId, @Nullable Double variantGroupMaxPoints, double value) {
-            if (variantGroupId == null || variantGroupMaxPoints == null) {
-                ungroupedSum += value;
-            }
-            else {
-                sumPerVariantGroup.merge(variantGroupId, value, Double::sum);
-                capPerVariantGroup.put(variantGroupId, variantGroupMaxPoints);
-            }
-        }
-
-        /**
-         * @return the sum of all ungrouped contributions plus, for every variant group, the smaller of its summed
-         *         contributions and its cap
-         */
-        double total() {
-            double total = ungroupedSum;
-            for (var entry : sumPerVariantGroup.entrySet()) {
-                total += Math.min(entry.getValue(), capPerVariantGroup.get(entry.getKey()));
-            }
-            return total;
-        }
-
-        /**
-         * @return the sum of all contributions without applying any variant group cap (i.e. as if no group had a cap)
-         */
-        double uncappedTotal() {
-            double total = ungroupedSum;
-            for (var groupSum : sumPerVariantGroup.values()) {
-                total += groupSum;
-            }
-            return total;
-        }
-    }
 }

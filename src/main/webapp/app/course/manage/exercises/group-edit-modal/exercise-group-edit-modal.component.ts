@@ -1,10 +1,11 @@
-import { Component, computed, effect, inject, input, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, inject, input, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faCircleInfo } from '@fortawesome/free-solid-svg-icons';
 import { InputTextModule } from 'primeng/inputtext';
 import { InputNumberModule } from 'primeng/inputnumber';
 import { ButtonModule } from 'primeng/button';
+import { MessageModule } from 'primeng/message';
 import { TooltipModule } from 'primeng/tooltip';
 import { DynamicDialogRef } from 'primeng/dynamicdialog';
 import dayjs from 'dayjs/esm';
@@ -23,10 +24,23 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 @Component({
     selector: 'jhi-exercise-group-edit-modal',
     templateUrl: './exercise-group-edit-modal.component.html',
-    imports: [FormsModule, InputTextModule, InputNumberModule, ButtonModule, TooltipModule, FaIconComponent, ExerciseTimelineComponent, ArtemisTranslatePipe, TranslateDirective],
+    imports: [
+        FormsModule,
+        InputTextModule,
+        InputNumberModule,
+        ButtonModule,
+        MessageModule,
+        TooltipModule,
+        FaIconComponent,
+        ExerciseTimelineComponent,
+        ArtemisTranslatePipe,
+        TranslateDirective,
+    ],
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ExerciseGroupEditModalComponent {
     protected readonly faCircleInfo = faCircleInfo;
+    protected readonly MAX_TITLE_LENGTH = MAX_TITLE_LENGTH;
 
     /** The group being edited, supplied by the dialog opener via {@code inputValues.group}. */
     readonly group = input.required<CourseExerciseGroup>();
@@ -79,7 +93,11 @@ export class ExerciseGroupEditModalComponent {
         return items;
     });
 
-    readonly isTitleValid = computed(() => this.draftTitle().trim().length > 0);
+    /** Mirrors the server-side constraints: non-blank and at most 255 characters (the title column is varchar(255)). */
+    readonly isTitleValid = computed(() => {
+        const title = this.draftTitle().trim();
+        return title.length > 0 && title.length <= MAX_TITLE_LENGTH;
+    });
     readonly timelineStatus = signal<ExerciseTimelineStatus>({ valid: true, empty: true });
     readonly isSaveDisabled = computed(() => !this.isTitleValid() || !this.timelineStatus().valid);
 
@@ -135,6 +153,9 @@ export class ExerciseGroupEditModalComponent {
         );
     }
 }
+
+/** Maximum group title length, matching the server's @Size(max = 255) constraint and the varchar(255) column. */
+const MAX_TITLE_LENGTH = 255;
 
 /** Compares two optional dayjs values by instant, treating both-undefined as equal. */
 function datesEqual(a: dayjs.Dayjs | undefined, b: dayjs.Dayjs | undefined): boolean {

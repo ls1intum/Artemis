@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
@@ -28,12 +27,13 @@ import { QuizExercise, QuizMode, QuizStatus } from 'app/quiz/shared/entities/qui
 import { CourseExerciseCard } from 'app/course/manage/exercises/course-exercise-cards';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { MockAlertService } from 'test/helpers/mocks/service/mock-alert.service';
+import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { PROFILE_LOCALCI } from 'app/app.constants';
 import { TranslateService } from '@ngx-translate/core';
 import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
 
 describe('Course Management Exercises Component', () => {
-    setupTestBed({ zoneless: true });
-
     let comp: CourseManagementExercisesComponent;
     let fixture: ComponentFixture<CourseManagementExercisesComponent>;
     let variantGroupService: ExerciseVariantGroupService;
@@ -84,6 +84,7 @@ describe('Course Management Exercises Component', () => {
                 MockProvider(FileUploadExerciseService),
                 MockProvider(ModelingExerciseService),
                 MockProvider(ProgrammingExerciseService),
+                { provide: ProfileService, useClass: MockProfileService },
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
@@ -222,6 +223,19 @@ describe('Course Management Exercises Component', () => {
             comp.onTableSelectionAllChange(card, false);
             expect(comp.selectedCount()).toBe(0);
         });
+
+        it('flags a selection that contains a variant-group member', () => {
+            comp.exercises.set([
+                { id: 1, title: 'Grouped', type: ExerciseType.PROGRAMMING, exerciseVariantGroup: { id: 9 } } as Exercise,
+                { id: 2, title: 'Ungrouped', type: ExerciseType.PROGRAMMING } as Exercise,
+            ]);
+
+            comp.toggleSelection(2);
+            expect(comp.selectionHasGroupMember()).toBe(false);
+
+            comp.toggleSelection(1);
+            expect(comp.selectionHasGroupMember()).toBe(true);
+        });
     });
 
     describe('changeExerciseGroup', () => {
@@ -320,6 +334,27 @@ describe('Course Management Exercises Component', () => {
             expect(errors[0]).not.toBe('');
         });
 
+        it('forwards the delete dialog cleanup flags to each selected programming exercise deletion', () => {
+            comp.toggleSelection(1);
+            comp.toggleSelection(2);
+
+            comp.deleteSelectedExercises({ deleteStudentReposBuildPlans: true, deleteBaseReposBuildPlans: true });
+
+            expect(programmingDelete).toHaveBeenCalledWith(1, true, true);
+            // Non-programming deletions ignore the cleanup flags.
+            expect(textDelete).toHaveBeenCalledWith(2);
+        });
+
+        it('reflects the LocalCI profile in localCIEnabled (gating the cleanup checkboxes)', () => {
+            // The default mock profile has no active profiles, so the checkboxes are offered (non-LocalCI setup).
+            expect(comp['localCIEnabled']()).toBe(false);
+
+            const profileService = TestBed.inject(ProfileService);
+            vi.spyOn(profileService, 'isProfileActive').mockImplementation((profile: string) => profile === PROFILE_LOCALCI);
+            const localCIComp = TestBed.createComponent(CourseManagementExercisesComponent).componentInstance;
+            expect(localCIComp['localCIEnabled']()).toBe(true);
+        });
+
         it('deletes quiz, modeling and file-upload exercises via their services', () => {
             const quizDelete = vi.spyOn(TestBed.inject(QuizExerciseService), 'delete').mockReturnValue(of(new HttpResponse<void>()));
             const modelingDelete = vi.spyOn(TestBed.inject(ModelingExerciseService), 'delete').mockReturnValue(of(new HttpResponse<void>()));
@@ -355,6 +390,16 @@ describe('Course Management Exercises Component', () => {
             expect(openSpy).toHaveBeenCalledWith(ProgrammingExerciseEditSelectedComponent, expect.objectContaining({ size: 'xl' }));
             closed.next();
             expect(reloadSpy).toHaveBeenCalled();
+        });
+
+        it('does not open the edit-selected modal when a variant-group member is selected', () => {
+            comp.exercises.set([{ id: 1, title: 'Grouped', type: ExerciseType.PROGRAMMING, exerciseVariantGroup: { id: 9 } } as Exercise]);
+            const openSpy = vi.spyOn(modalService, 'open');
+            comp.toggleSelection(1);
+
+            comp.editSelectedExercises();
+
+            expect(openSpy).not.toHaveBeenCalled();
         });
 
         it('opens the consistency check dialog with the selected programming exercises', () => {
@@ -572,16 +617,6 @@ describe('Course Management Exercises Component', () => {
             expect(comp.exercises().map((e) => e.id)).toEqual([2]);
             expect(comp.groups()[0].exercises).toHaveLength(0);
             expect(comp.selectedIds().has(1)).toBe(false);
-        });
-
-        it('reorders a card`s exercises in place', () => {
-            comp.onViewChange('list');
-            const card = comp.cards()[0];
-            const reversed = [...card.exercises].reverse();
-
-            comp.onTableRowsReordered(card, reversed);
-
-            expect(comp.cards()[0].exercises).toEqual(reversed);
         });
     });
 });

@@ -146,10 +146,10 @@ public class QuizVariantAdapters implements VariantTypeAdapters {
         if (plan.problemStatement() != null && !plan.problemStatement().isBlank()) {
             original.setProblemStatement(plan.problemStatement());
         }
-        // Group placements require INDIVIDUAL mode — ExerciseVariantGroupService.assignExerciseToGroup rejects
-        // synchronized/batched quizzes (single shared run vs. per-student group timeline), so FINALIZING would
-        // always fail for such sources. Switch the clone's mode and drop the copied batches (they belong to the
-        // source's run mode); the source exercise itself stays untouched.
+        // Group placements require INDIVIDUAL mode — synchronized/batched quizzes have a single shared run and
+        // cannot share a per-student group timeline, so FINALIZING would place a variant that can never join its
+        // group. Switch the clone's mode and drop the copied batches (they belong to the source's run mode); the
+        // source exercise itself stays untouched.
         VariantPlacementDTO placement = request.placement();
         boolean groupPlacement = placement != null
                 && (placement.type() == VariantPlacementDTO.PlacementType.NEW_GROUP || placement.type() == VariantPlacementDTO.PlacementType.EXISTING_GROUP);

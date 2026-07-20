@@ -15,8 +15,8 @@
 
 // Callout banner explaining the variant mechanic.
 .variant-callout {
-    background-color: var(--bs-info-bg-subtle, rgba(13, 110, 253, 0.08));
-    border-left: 4px solid var(--bs-info, #0dcaf0);
+    background-color: color-mix(in srgb, var(--info) 8%, transparent);
+    border-left: 4px solid var(--info);
 }
 
 // Responsive grid: fills as many 480px columns as fit, collapsing to one on narrow viewports.
@@ -33,7 +33,7 @@
     flex-direction: column;
     overflow: hidden;
     background-color: var(--module-bg);
-    border: 1px solid var(--bs-border-color);
+    border: 1px solid var(--border-color);
     transition:
         border-color 0.15s ease-in-out,
         background-color 0.15s ease-in-out;
@@ -44,20 +44,20 @@
         position: absolute;
         inset: 0 auto 0 0;
         width: 5px;
-        background-color: var(--bs-secondary);
+        background-color: var(--secondary);
         pointer-events: none;
     }
 
     &--easy::before {
-        background-color: var(--bs-success);
+        background-color: var(--success);
     }
 
     &--medium::before {
-        background-color: var(--bs-warning);
+        background-color: var(--warning);
     }
 
     &--hard::before {
-        background-color: var(--bs-danger);
+        background-color: var(--danger);
     }
 
     &:hover {
@@ -144,13 +144,4 @@
     p {
         margin-bottom: 0.4rem;
     }
-}
-
-// Neutralise Bootstrap's .pe-auto (pointer-events: auto !important) on the result-history
-// trigger inside exercise-headers-information so the tooltip and popover don't fire on hover.
-// Higher specificity (.variant-card .pe-auto = 0,2,0) beats Bootstrap's class rule (0,1,0).
-/* stylelint-disable-next-line selector-pseudo-element-no-unknown */
-:host ::ng-deep .variant-card .pe-auto {
-    pointer-events: none !important;
-    cursor: default !important;
 }

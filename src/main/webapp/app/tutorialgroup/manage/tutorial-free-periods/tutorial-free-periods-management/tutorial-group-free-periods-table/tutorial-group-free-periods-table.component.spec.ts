@@ -1,5 +1,4 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TutorialGroupFreePeriodsTableComponent } from './tutorial-group-free-periods-table.component';
 import { TutorialGroupFreePeriod } from 'app/tutorialgroup/shared/entities/tutorial-group-free-day.model';
@@ -13,8 +12,6 @@ import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('TutorialGroupFreePeriodsTableComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: TutorialGroupFreePeriodsTableComponent;
     let fixture: ComponentFixture<TutorialGroupFreePeriodsTableComponent>;
 

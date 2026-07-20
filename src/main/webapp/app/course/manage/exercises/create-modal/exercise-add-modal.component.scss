@@ -1,6 +1,6 @@
 .tab-bar {
     display: flex;
-    border-bottom: 2px solid var(--bs-border-color);
+    border-bottom: 2px solid var(--border-color);
     gap: 0;
 }
 
@@ -12,17 +12,17 @@
     padding: 0.5rem 1.25rem;
     font-weight: 500;
     font-size: 0.9rem;
-    color: var(--bs-secondary-color);
+    color: var(--text-color-secondary);
     cursor: pointer;
     transition: all 0.15s ease;
 
     &:hover {
-        color: var(--bs-body-color);
+        color: var(--body-color);
     }
 
     &--active {
-        color: var(--bs-primary);
-        border-bottom-color: var(--bs-primary);
+        color: var(--primary);
+        border-bottom-color: var(--primary);
     }
 }
 
@@ -37,14 +37,14 @@
 }
 
 .exercise-card {
-    border: 1px solid var(--bs-border-color);
+    border: 1px solid var(--border-color);
     border-radius: 0.75rem;
     padding: 1.25rem 1rem;
     text-align: center;
     display: flex;
     flex-direction: column;
     align-items: center;
-    background: var(--bs-body-bg);
+    background: var(--body-bg);
     cursor: pointer;
     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     position: relative;
@@ -57,13 +57,13 @@
         left: 0;
         right: 0;
         height: 3px;
-        background: var(--card-accent, var(--bs-primary));
+        background: var(--card-accent, var(--primary));
         opacity: 0;
         transition: opacity 0.2s ease;
     }
 
     &:hover {
-        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+        box-shadow: 0 6px 20px color-mix(in srgb, var(--black) 10%, transparent);
         transform: translateY(-2px);
         border-color: transparent;
 
@@ -79,7 +79,7 @@
     }
 
     p {
-        color: var(--bs-secondary-color);
+        color: var(--text-color-secondary);
         font-size: 0.78rem;
         line-height: 1.4;
         margin-bottom: 0.75rem;
@@ -87,28 +87,30 @@
     }
 }
 
+// Per-exercise-type accent, set by `accentClass` in the component. The values live in the theme files
+// (--exercise-accent-*) so they stay theme-aware; this only selects which one applies.
 .card--programming {
-    --card-accent: #6366f1;
+    --card-accent: var(--exercise-accent-programming);
 }
 
 .card--quiz {
-    --card-accent: #f59e0b;
+    --card-accent: var(--exercise-accent-quiz);
 }
 
 .card--modeling {
-    --card-accent: #0ea5e9;
+    --card-accent: var(--exercise-accent-modeling);
 }
 
 .card--text {
-    --card-accent: #10b981;
+    --card-accent: var(--exercise-accent-text);
 }
 
 .card--fileupload {
-    --card-accent: #ec4899;
+    --card-accent: var(--exercise-accent-fileupload);
 }
 
 .card--group {
-    --card-accent: #8b5cf6;
+    --card-accent: var(--exercise-accent-group);
 }
 
 .card-icon-wrapper {
@@ -119,55 +121,16 @@
     align-items: center;
     justify-content: center;
     margin-bottom: 0.75rem;
-    color: var(--bs-white);
-    background: var(--card-accent, var(--bs-primary));
-    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.12);
+    color: var(--white);
+    background: var(--card-accent, var(--primary));
+    box-shadow: 0 3px 8px color-mix(in srgb, var(--black) 12%, transparent);
     font-size: 1.1rem;
 }
 
 .card-cta {
     font-weight: 600;
     font-size: 0.8rem;
-    color: var(--card-accent, var(--bs-primary));
+    color: var(--card-accent, var(--primary));
     display: inline-flex;
     align-items: center;
-}
-
-.import-list {
-    max-height: 300px;
-    overflow-y: auto;
-    border: 1px solid var(--bs-border-color);
-    border-radius: 0.5rem;
-}
-
-.import-item {
-    cursor: pointer;
-    transition: background 0.1s ease;
-
-    &:hover {
-        background: var(--bs-tertiary-bg);
-    }
-
-    &:last-child {
-        border-bottom: none !important;
-    }
-}
-
-.placeholder-panel {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
-    padding: 2rem 1rem;
-
-    .placeholder-icon {
-        font-size: 2.5rem;
-        color: var(--bs-secondary-color);
-        margin-bottom: 1rem;
-    }
-
-    h6 {
-        font-weight: 600;
-        margin-bottom: 0.5rem;
-    }
 }

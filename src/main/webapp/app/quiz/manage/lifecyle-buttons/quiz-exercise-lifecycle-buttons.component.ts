@@ -10,6 +10,8 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { ButtonModule } from 'primeng/button';
+import { TagModule } from 'primeng/tag';
 import { TooltipModule } from 'primeng/tooltip';
 import { Popover, PopoverModule } from 'primeng/popover';
 import { QuizExerciseDates } from 'app/quiz/shared/entities/quiz-exercise-dates.model';
@@ -22,7 +24,7 @@ import { QuizExerciseDates } from 'app/quiz/shared/entities/quiz-exercise-dates.
     // is tight — they are a related action group, and the exercise-management table measures their inline width to size
     // the actions column (a wrap would mis-measure it).
     host: { class: 'd-flex gap-1 align-items-center flex-nowrap' },
-    imports: [FaIconComponent, TranslateDirective, DeleteButtonDirective, ArtemisTranslatePipe, TooltipModule, PopoverModule],
+    imports: [FaIconComponent, TranslateDirective, DeleteButtonDirective, ArtemisTranslatePipe, ButtonModule, TagModule, TooltipModule, PopoverModule],
 })
 export class QuizExerciseLifecycleButtonsComponent {
     private quizExerciseService = inject(QuizExerciseService);

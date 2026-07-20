@@ -4,7 +4,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { DATE_TIME_PICKER_FORMAT, Exercise, ExerciseType, ProgrammingExerciseAssessmentType, ProgrammingLanguage, TIME_FORMAT } from './constants';
 import * as fs from 'fs';
 import { dirname } from 'path';
-import { Browser, Locator, Page, expect } from '@playwright/test';
+import { Browser, BrowserContext, Locator, Page, Request, Response, expect } from '@playwright/test';
 import { Course } from 'app/course/shared/entities/course.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { ExamAPIRequests } from './requests/ExamAPIRequests';
@@ -32,6 +32,133 @@ dayjs.extend(utc);
  */
 
 /**
+ * True for the Chrome DevTools Protocol body-eviction error, i.e.
+ * `response.json: Protocol error (Network.getResponseBody): No data found for resource ...`.
+ */
+function isResponseBodyEvicted(error: unknown): boolean {
+    const message = error instanceof Error ? error.message : String(error);
+    return message.includes('getResponseBody') || message.includes('No data found for resource');
+}
+
+/**
+ * Node-held bodies of non-GET /api responses, captured by {@link installApiResponseCapture}.
+ * Keyed by the Request instance — the same object `readResponseJson` sees via `response.request()`,
+ * so lookups are exact and entries are garbage-collected with their Request. Node memory is immune
+ * to Chromium's DevTools buffer eviction, making this the only reliable source for non-GET
+ * create/update/delete bodies, which must never be replayed read-side (side effects).
+ */
+const capturedApiResponseBodies = new WeakMap<Request, Buffer>();
+
+/**
+ * Capture non-GET /api response bodies at the network layer for a whole browser context:
+ * `route.fetch()` performs the request from Node, we keep the body in Node memory for
+ * {@link readResponseJson}, and fulfill the page with the same response. This only works because
+ * `serviceWorkers: 'block'` (playwright.config.ts) keeps the Angular service worker from handling
+ * /api fetches — Playwright routing never sees service-worker-handled requests, which is what
+ * defeated an earlier page-scoped version of this capture.
+ *
+ * Scope guards: GETs are never intercepted (SSE — GET text/event-stream, e.g. Iris — must not be
+ * fetched from Node, and GET evictions are recoverable read-side by replay), and multipart uploads
+ * are skipped (re-issuing a file upload from Node is riskier than the eviction it guards against).
+ *
+ * Error semantics matter here: `route.continue()` is only safe while the request has NOT been
+ * dispatched. Once `route.fetch()` has sent the request to the server, any failure afterwards must
+ * abort the routed request — continuing would dispatch it a second time and duplicate a
+ * non-idempotent side effect (e.g. create a second entity).
+ */
+export async function installApiResponseCapture(context: BrowserContext): Promise<void> {
+    await context.route(
+        (url) => url.pathname.includes('/api/'),
+        async (route) => {
+            const request = route.request();
+            const requestContentType = request.headers()['content-type'] ?? '';
+            if (request.method() === 'GET' || requestContentType.includes('multipart/form-data')) {
+                await route.continue();
+                return;
+            }
+            let apiResponse;
+            try {
+                // maxRedirects: 0 — fulfill the page with the raw response (including any 3xx) so the
+                // browser handles redirects itself; Node must not transparently follow a non-GET redirect.
+                apiResponse = await route.fetch({ maxRedirects: 0 });
+            } catch {
+                // route.fetch() rejected. We cannot distinguish a pre-dispatch failure from a transport
+                // failure that occurred after the server already received (and possibly executed) the
+                // request, so route.continue() is unsafe here — it would re-dispatch and could duplicate a
+                // non-idempotent side effect (e.g. create a second entity). Per the invariant documented
+                // above, any failure once route.fetch() has been called must abort; the page then sees a
+                // network error and Playwright retries the test.
+                await route.abort('failed').catch(() => {});
+                return;
+            }
+            try {
+                capturedApiResponseBodies.set(request, await apiResponse.body());
+                await route.fulfill({ response: apiResponse });
+            } catch {
+                // The server has already executed the request via route.fetch(); continue() would dispatch
+                // it a second time. Abort so the page sees a network error instead of a duplicated action.
+                await route.abort('failed').catch(() => {});
+            }
+        },
+    );
+}
+
+/**
+ * Read a Playwright {@link Response} body as JSON, resilient to Chrome's CDP
+ * "Network.getResponseBody: No data found for resource" failure.
+ *
+ * Two mechanisms feed this (see {@link installApiResponseCapture} and baseFixtures):
+ * `serviceWorkers: 'block'` removes the service-worker-served responses whose bodies CDP frequently
+ * cannot return at all, and the network-layer capture holds every non-GET /api body in Node memory.
+ * What remains is the rare genuine eviction of a just-arrived body from Chrome's bounded
+ * per-renderer network buffer under parallel E2E load. This helper hardens the common
+ * `await response.json()` pattern:
+ *   0. use the Node-held captured body when present — immune to CDP eviction;
+ *   1. read the body as JSON (fast path — the eager response-event read in baseFixtures usually
+ *      already memoized the buffer in Node);
+ *   2. on an eviction error, re-read the raw body once — catches a transient (non-eviction) CDP hiccup;
+ *   3. for idempotent **GET** requests, replay the request to fetch a fresh body — the only read-side
+ *      recovery from a true eviction (a non-idempotent request must not be replayed: it would repeat
+ *      the side effect, e.g. create a second entity);
+ *   4. otherwise throw a clear, retryable error so Playwright's test-level retry can absorb it.
+ *
+ * Historical note: an enlarged CDP network buffer and whole-run body retention were both reverted
+ * (they OOM-crashed Chromium under parallel CI load) — do not reintroduce those. A page-scoped
+ * route capture was also once removed because the service worker bypassed it; the context-scoped
+ * capture above works only in combination with `serviceWorkers: 'block'`.
+ */
+export async function readResponseJson<T = any>(response: Response): Promise<T> {
+    const capturedBody = capturedApiResponseBodies.get(response.request());
+    if (capturedBody) {
+        return JSON.parse(capturedBody.toString('utf-8')) as T;
+    }
+    try {
+        return (await response.json()) as T;
+    } catch (error) {
+        if (!isResponseBodyEvicted(error)) {
+            throw error;
+        }
+        try {
+            return JSON.parse((await response.body()).toString('utf-8')) as T;
+        } catch (bodyError) {
+            if (!isResponseBodyEvicted(bodyError)) {
+                throw bodyError;
+            }
+        }
+        const request = response.request();
+        if (request.method() === 'GET') {
+            const replay = await response.frame().page().request.fetch(request);
+            return (await replay.json()) as T;
+        }
+        throw new Error(
+            `Response body for ${request.method()} ${request.url()} was evicted from Chrome's network buffer before it could be read ` +
+                `(CDP Network.getResponseBody). A non-idempotent response cannot be recovered read-side; failing so Playwright retries.`,
+            { cause: error },
+        );
+    }
+}
+
+/**
  * Generates a unique identifier.
  */
 export function generateUUID() {
@@ -57,29 +184,24 @@ export async function enterDate(page: Page, selector: string, date: dayjs.Dayjs)
 export async function fillDateTimePicker(dateInputField: Locator, date: dayjs.Dayjs, format: string = DATE_TIME_PICKER_FORMAT) {
     const expectedValue = date.format(format);
     await expect(dateInputField).toBeEnabled();
-    // PrimeNG's date input is masked. Under load a keystroke can still be dropped even with a per-key delay —
-    // most often the very first character after clearing (e.g. the leading "0" of the day), which silently
-    // yields "1.06.2027" instead of "01.06.2027". Re-type until the field holds exactly the expected value.
-    for (let attempt = 0; attempt < 3; attempt++) {
+    // PrimeNG's masked datepicker input can still drop the first keystroke after a clear while the
+    // mask/focus state is settling (worse under load) — e.g. "0.09.2027" instead of "20.09.2027".
+    // Retry the whole clear+type until the field holds the expected value (web-first, self-healing).
+    await expect(async () => {
         await dateInputField.click();
-        // Wait until the input is actually focused before typing; otherwise the first character(s) can be
-        // dropped while focus is still settling. Clear any existing value via the keyboard so focus is kept.
+        // Wait until the input is actually focused before typing; clear via keyboard so focus is kept.
         await expect(dateInputField).toBeFocused();
         await dateInputField.press('ControlOrMeta+a');
         await dateInputField.press('Delete');
         // Ensure the clear has actually settled before typing, so the first keystroke is not swallowed while the
         // mask is still resetting (the root cause of the dropped leading character).
         await expect(dateInputField).toHaveValue('');
-        // PrimeNG's onUserInput only reacts to input events preceded by a keydown, so type with real
+        // PrimeNG's onUserInput only reacts to input events preceded by a keydown, so type real
         // keystrokes; a small per-key delay keeps the picker from dropping characters under load.
         await dateInputField.pressSequentially(expectedValue, { delay: 30 });
-        await dateInputField.press('Tab');
-        if ((await dateInputField.inputValue()) === expectedValue) {
-            return;
-        }
-    }
-    // Surface a clear assertion error if every attempt still dropped a character.
-    await expect(dateInputField).toHaveValue(expectedValue);
+        expect(await dateInputField.inputValue()).toBe(expectedValue);
+    }).toPass({ timeout: 15000 });
+    await dateInputField.press('Tab');
 }
 
 /**
@@ -394,7 +516,10 @@ export async function createFileWithContent(filePath: string, content: string) {
 }
 
 export async function newBrowserPage(browser: Browser) {
-    const context = await browser.newContext({ ignoreHTTPSErrors: true });
+    // serviceWorkers: 'block' mirrors the global `use` option in playwright.config.ts — manually created
+    // contexts do not inherit it, and an SW-controlled page would reintroduce the getResponseBody flake.
+    const context = await browser.newContext({ ignoreHTTPSErrors: true, serviceWorkers: 'block' });
+    await installApiResponseCapture(context);
     const page = await context.newPage();
     await addE2EInitScript(page);
     return page;

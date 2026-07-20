@@ -1,14 +1,19 @@
-import { Component, computed, inject, input, output, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, input, output, signal } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { TranslateService } from '@ngx-translate/core';
+import { EMPTY } from 'rxjs';
+import dayjs from 'dayjs/esm';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { faCaretDown, faCaretUp, faSort } from '@fortawesome/free-solid-svg-icons';
 import { TableModule } from 'primeng/table';
 import { SelectModule } from 'primeng/select';
 import { CheckboxModule } from 'primeng/checkbox';
+import { TagModule } from 'primeng/tag';
 import { TooltipModule } from 'primeng/tooltip';
-import { CdkDrag, CdkDragDrop, CdkDragHandle, CdkDragPreview, CdkDropList, moveItemInArray } from '@angular/cdk/drag-drop';
+import { CdkDrag, CdkDragDrop, CdkDragHandle, CdkDragPreview, CdkDropList } from '@angular/cdk/drag-drop';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -19,9 +24,10 @@ import { Course } from 'app/course/shared/entities/course.model';
 import { QuizExercise, QuizMode, QuizStatus } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { ExerciseActionsComponent } from 'app/course/manage/exercises/exercise-row/exercise-actions.component';
 
+/** The severities a PrimeNG `p-tag` accepts. */
+type TagSeverity = 'success' | 'secondary' | 'info' | 'warn' | 'danger' | 'contrast';
+
 type SortColumn = 'title' | 'dueDate' | 'points' | 'difficulty';
-/** Sentinel sort state set after a manual drag-and-drop reorder: no column is sorted, rows keep their dragged order. */
-type SortState = SortColumn | 'manual';
 
 const DIFFICULTY_ORDER: Record<string, number> = {
     [DifficultyLevel.EASY]: 0,
@@ -32,6 +38,40 @@ const DIFFICULTY_ORDER: Record<string, number> = {
 export interface TableGroupChange {
     exercise: Exercise;
     group: CourseExerciseGroup | undefined;
+}
+
+/**
+ * Everything one table row renders, derived once per row instead of per change-detection cycle. Template bindings must
+ * read these fields rather than call the (argument-taking) helper methods they are built from — a method call in a
+ * binding cannot be memoized by Angular and re-runs on every check, which on a table this size adds up.
+ */
+interface ExerciseRow {
+    /** The raw entity, still needed for drag payloads, the child components and the plain field reads. */
+    exercise: Exercise;
+    icon: IconProp;
+    titleLink: (string | number)[] | undefined;
+    releaseDate: dayjs.Dayjs | undefined;
+    dueDate: dayjs.Dayjs | undefined;
+    assessmentDueDate: dayjs.Dayjs | undefined;
+    difficultySeverity: TagSeverity;
+    owningGroupId: number | undefined;
+    isQuizNonIndividual: boolean;
+    nonIndividualQuizTooltip: string | undefined;
+    /** i18n key for the quiz status badge, or `undefined` when no badge should be shown. */
+    quizStatusLabel: string | undefined;
+    /** `undefined` renders the tag in the brand primary colour — see {@link ExerciseTableComponent.quizStatusSeverity}. */
+    quizStatusSeverity: TagSeverity | undefined;
+    /** i18n key for the quiz mode badge, or `undefined` when the quiz has no mode. */
+    quizModeKey: string | undefined;
+    hasCategories: boolean;
+    /** True when the row has neither categories nor any quiz badge, so the "none" placeholder is shown instead. */
+    showNoCategoriesPlaceholder: boolean;
+}
+
+/** Sort indicator (caret icon + `aria-sort` value) for one column header. */
+interface SortIndicator {
+    icon: IconProp;
+    ariaSort: 'ascending' | 'descending' | 'none';
 }
 
 @Component({
@@ -49,6 +89,7 @@ export interface TableGroupChange {
         TableModule,
         SelectModule,
         CheckboxModule,
+        TagModule,
         TooltipModule,
         CdkDropList,
         CdkDrag,
@@ -60,9 +101,16 @@ export interface TableGroupChange {
         ExerciseCategoriesComponent,
         ExerciseActionsComponent,
     ],
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ExerciseTableComponent {
     private readonly translateService = inject(TranslateService);
+
+    /**
+     * Emits on every language switch. `TranslateService.instant` is not signal-tracked, so any computed that builds a
+     * translated string must read this to be re-derived when the language changes (same approach as ArtemisTranslatePipe).
+     */
+    private readonly languageChange = toSignal(this.translateService.onLangChange ?? EMPTY);
 
     readonly exercises = input.required<Exercise[]>();
     readonly group = input<CourseExerciseGroup | undefined>(undefined);
@@ -80,33 +128,25 @@ export class ExerciseTableComponent {
     readonly connectedDropLists = input<string[]>([]);
 
     readonly groupChange = output<TableGroupChange>();
-    readonly rowsReordered = output<Exercise[]>();
     readonly exerciseUpdated = output<Exercise>();
     readonly exerciseDeleted = output<Exercise>();
     readonly variantAdded = output<Exercise>();
     readonly selectionToggle = output<number>();
     readonly selectionAllChange = output<boolean>();
 
-    protected readonly ExerciseType = ExerciseType;
+    /** Only the enums the template still references need a passthrough; the rest are used from TypeScript only. */
     protected readonly IncludedInOverallScore = IncludedInOverallScore;
-    protected readonly DifficultyLevel = DifficultyLevel;
-    protected readonly QuizStatus = QuizStatus;
-    protected readonly QuizMode = QuizMode;
 
     protected readonly faSort = faSort;
     protected readonly faCaretUp = faCaretUp;
     protected readonly faCaretDown = faCaretDown;
 
-    readonly sortColumn = signal<SortState>('title');
+    readonly sortColumn = signal<SortColumn>('title');
     readonly sortAsc = signal(true);
 
     readonly sortedExercises = computed(() => {
         const col = this.sortColumn();
         const asc = this.sortAsc();
-        // Manual order: a drag-and-drop reorder takes precedence over column sorting until a header is clicked again.
-        if (col === 'manual') {
-            return [...this.exercises()];
-        }
         return [...this.exercises()].sort((a, b) => {
             let cmp = 0;
             switch (col) {
@@ -138,6 +178,45 @@ export class ExerciseTableComponent {
         });
     });
 
+    /** The rendered rows: every value the row template needs, derived once per row rather than per change-detection cycle. */
+    readonly rows = computed<ExerciseRow[]>(() => {
+        // The tooltip is a translated string, so re-derive the rows on a language switch.
+        this.languageChange();
+        return this.sortedExercises().map((exercise) => {
+            const quiz = exercise.type === ExerciseType.QUIZ ? this.asQuiz(exercise) : undefined;
+            const quizStatusLabel = quiz ? this.quizStatusLabel(quiz) : undefined;
+            const hasCategories = (exercise.categories?.length ?? 0) > 0;
+            return {
+                exercise,
+                icon: this.icon(exercise),
+                titleLink: this.titleLink(exercise),
+                releaseDate: this.effectiveReleaseDate(exercise),
+                dueDate: this.effectiveDueDate(exercise),
+                assessmentDueDate: this.effectiveAssessmentDueDate(exercise),
+                difficultySeverity: this.difficultySeverity(exercise),
+                owningGroupId: this.owningGroupId(exercise),
+                isQuizNonIndividual: this.isQuizNonIndividual(exercise),
+                nonIndividualQuizTooltip: this.nonIndividualQuizTooltip(exercise),
+                quizStatusLabel,
+                quizStatusSeverity: quiz ? this.quizStatusSeverity(quiz) : undefined,
+                quizModeKey: quiz?.quizMode ? this.quizModeKey(quiz) : undefined,
+                hasCategories,
+                showNoCategoriesPlaceholder: !hasCategories && !quiz?.quizMode && !quizStatusLabel,
+            };
+        });
+    });
+
+    /** Caret icon and `aria-sort` value per sortable column, so the header does not call a method per binding. */
+    readonly sortIndicators = computed<Record<SortColumn, SortIndicator>>(() => {
+        const indicatorFor = (column: SortColumn): SortIndicator => ({ icon: this.sortIcon(column), ariaSort: this.ariaSort(column) });
+        return {
+            title: indicatorFor('title'),
+            dueDate: indicatorFor('dueDate'),
+            points: indicatorFor('points'),
+            difficulty: indicatorFor('difficulty'),
+        };
+    });
+
     /**
      * Largest actions-column width (px) any row has reported for its always-visible quiz buttons + ellipsis. Kept as a
      * running max so the shared column fits the widest quiz row. It only grows: if the widest quiz row later disappears
@@ -146,10 +225,10 @@ export class ExerciseTableComponent {
      * actions), so the column falls back to the narrow default and the ellipsis can collapse fully.
      */
     private readonly maxQuizActionsMinWidth = signal(0);
-    /** CSS value for the actions-column floor, or null when no quiz buttons are present (so the SCSS default applies). */
+    /** CSS value for the actions-column floor, or undefined when no quiz buttons are present (so the SCSS default applies). */
     readonly actionsMinWidthVar = computed(() => {
         const width = this.maxQuizActionsMinWidth();
-        return width > 0 ? `${width}px` : null;
+        return width > 0 ? `${width}px` : undefined;
     });
 
     onQuizActionsMinWidth(width: number): void {
@@ -186,13 +265,17 @@ export class ExerciseTableComponent {
         return map;
     });
 
-    readonly groupOptions = computed(() => [
-        { label: this.translateService.instant('artemisApp.exerciseManagement.table.noGroup'), value: undefined as number | undefined },
-        ...this.groups().map((g) => ({
-            label: g.title ?? this.translateService.instant('artemisApp.exerciseManagement.card.group', { id: g.id }),
-            value: g.id,
-        })),
-    ]);
+    readonly groupOptions = computed(() => {
+        // The labels are translated strings, so rebuild the options on a language switch.
+        this.languageChange();
+        return [
+            { label: this.translateService.instant('artemisApp.exerciseManagement.table.noGroup'), value: undefined as number | undefined },
+            ...this.groups().map((g) => ({
+                label: g.title ?? this.translateService.instant('artemisApp.exerciseManagement.card.group', { id: g.id }),
+                value: g.id,
+            })),
+        ];
+    });
 
     sortBy(col: SortColumn): void {
         if (this.sortColumn() === col) {
@@ -221,13 +304,9 @@ export class ExerciseTableComponent {
     }
 
     onDrop(event: CdkDragDrop<Exercise[]>): void {
-        if (event.previousContainer === event.container) {
-            // Reorder within this group: keep the dragged order and stop applying column sorting.
-            const reordered = [...this.sortedExercises()];
-            moveItemInArray(reordered, event.previousIndex, event.currentIndex);
-            this.sortColumn.set('manual');
-            this.rowsReordered.emit(reordered);
-        } else {
+        // Same-container drops are ignored: a manual order would only live in the rendered card and be discarded by the
+        // next rebuild (search, view switch, group refresh, reload), so drag-and-drop is limited to moving between groups.
+        if (event.previousContainer !== event.container) {
             // Dropped from another group's table: move the exercise into this table's group.
             this.groupChange.emit({ exercise: event.item.data, group: this.group() });
         }
@@ -270,16 +349,16 @@ export class ExerciseTableComponent {
         return effectiveDate(exercise, this.effectiveGroupFor(exercise), 'assessmentDueDate');
     }
 
-    difficultyBadgeClass(exercise: Exercise): string {
+    difficultySeverity(exercise: Exercise): TagSeverity {
         switch (exercise.difficulty) {
             case DifficultyLevel.EASY:
-                return 'bg-success';
+                return 'success';
             case DifficultyLevel.MEDIUM:
-                return 'bg-warning';
+                return 'warn';
             case DifficultyLevel.HARD:
-                return 'bg-danger';
+                return 'danger';
             default:
-                return 'bg-secondary';
+                return 'secondary';
         }
     }
 
@@ -304,15 +383,17 @@ export class ExerciseTableComponent {
         return exercise;
     }
 
-    protected readonly rowTrackBy = (_index: number, exercise: Exercise): unknown => {
+    exerciseTrackKey(exercise: Exercise): unknown {
         if (exercise.type !== ExerciseType.QUIZ || exercise.id === undefined) return exercise.id ?? exercise;
         const q = exercise as QuizExercise;
-        // In zoneless Angular, ngFor embedded views may not re-evaluate when let-exercise gets a new
+        // In zoneless Angular, ngFor embedded views may not re-evaluate when the row gets a new
         // object reference with the same id. Including the properties that drive lifecycle-button
         // rendering forces the row to be destroyed/recreated when they change, so the fresh
         // exercise-actions instance always sees the up-to-date exercise.
         return `${exercise.id}|${q.exerciseVariantGroup?.id ?? ''}|${q.status ?? ''}|${q.visibleToStudents ?? ''}`;
-    };
+    }
+
+    protected readonly rowTrackBy = (_index: number, row: ExerciseRow): unknown => this.exerciseTrackKey(row.exercise);
 
     /**
      * Only individual-mode quizzes support per-student dates, so only they can reasonably share a group's timeline.
@@ -347,18 +428,23 @@ export class ExerciseTableComponent {
         return `artemisApp.quizExercise.quizMode.${(exercise.quizMode ?? '').toLowerCase()}`;
     }
 
-    quizStatusClass(exercise: QuizExercise): string {
+    /**
+     * Practice mode returns `undefined` on purpose: `p-tag` applies a severity class only for the six named
+     * severities, so an unset severity falls back to the base tag, which the theme paints in the brand primary
+     * colour — the equivalent of the `bg-primary` badge this replaced, and distinct from the (cyan) visible state.
+     */
+    quizStatusSeverity(exercise: QuizExercise): TagSeverity | undefined {
         switch (exercise.status) {
             case QuizStatus.INVISIBLE:
-                return 'bg-secondary';
+                return 'secondary';
             case QuizStatus.VISIBLE:
-                return 'bg-info';
+                return 'info';
             case QuizStatus.ACTIVE:
-                return 'bg-success';
+                return 'success';
             case QuizStatus.OPEN_FOR_PRACTICE:
-                return 'bg-primary';
+                return undefined;
             default:
-                return 'bg-light text-dark';
+                return 'secondary';
         }
     }
 }

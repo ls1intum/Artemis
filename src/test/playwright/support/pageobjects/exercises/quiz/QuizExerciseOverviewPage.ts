@@ -1,5 +1,6 @@
 import { Page } from '@playwright/test';
 import { BASE_API } from '../../../constants';
+import { readResponseJson } from '../../../utils';
 import { QuizBatch } from 'app/quiz/shared/entities/quiz-exercise.model';
 
 export class QuizExerciseOverviewPage {
@@ -34,7 +35,7 @@ export class QuizExerciseOverviewPage {
         const responsePromise = this.page.waitForResponse(`${BASE_API}/quiz/quiz-exercises/${exerciseId}/add-batch`);
         await this.page.locator(`#instructor-quiz-add-${exerciseId}`).click();
         const response = await responsePromise;
-        return await response.json();
+        return await readResponseJson(response);
     }
 
     /**

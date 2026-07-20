@@ -1,6 +1,5 @@
 import { Component, input, output } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { RouterLink, provideRouter } from '@angular/router';
 import { NgTemplateOutlet } from '@angular/common';
 import { MockProvider } from 'ng-mocks';
@@ -27,6 +26,9 @@ import { ProgrammingExerciseService } from 'app/programming/manage/services/prog
 import { ModelingExerciseService } from 'app/modeling/manage/services/modeling-exercise.service';
 import { EntitySummary } from 'app/shared-ui/delete-dialog/delete-dialog.model';
 import { DeleteDialogService } from 'app/shared-ui/delete-dialog/service/delete-dialog.service';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
+import { PROFILE_LOCALCI } from 'app/app.constants';
 
 @Component({ selector: 'jhi-quiz-exercise-lifecycle-buttons', template: '' })
 class QuizLifecycleButtonsStubComponent {
@@ -36,8 +38,6 @@ class QuizLifecycleButtonsStubComponent {
 }
 
 describe('ExerciseActionsComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<ExerciseActionsComponent>;
     let component: ExerciseActionsComponent;
     let exerciseService: ExerciseService;
@@ -66,6 +66,7 @@ describe('ExerciseActionsComponent', () => {
                 MockProvider(ProgrammingExerciseService),
                 MockProvider(ModelingExerciseService),
                 MockProvider(DeleteDialogService),
+                { provide: ProfileService, useClass: MockProfileService },
             ],
         })
             .overrideComponent(ExerciseActionsComponent, {
@@ -252,6 +253,44 @@ describe('ExerciseActionsComponent', () => {
             expect(component.hasOverflow()).toBe(false);
             expect(component.hiddenActions()).toEqual([]);
         });
+
+        /** Seeds every current action's cached natural width to the same value, so only the row width drives collapsing. */
+        const seedEqualWidths = (buttonWidth: number): void => {
+            const widths = new Map<string, number>();
+            for (const action of component.mainActions()) {
+                widths.set(component['signatureOf'](action), buttonWidth);
+            }
+            component['buttonWidths'].set(widths);
+        };
+
+        it('keeps scores, edit and delete inline and overflows the type-specific quiz actions first', () => {
+            // Editor+instructor quiz: participations, scores, statistics, preview, solution, edit, delete.
+            const quiz = { id: 2, type: ExerciseType.QUIZ, title: 'Quiz', isAtLeastEditor: true, isAtLeastInstructor: true } as QuizExercise;
+            fixture.componentRef.setInput('exercise', quiz);
+
+            // Each button 100px wide. With a 360px row (available 352 after the safety margin, budget 308 after the
+            // ellipsis + gap) exactly three 100px buttons plus their gaps fit.
+            seedEqualWidths(100);
+            component['quizWidth'].set(0);
+            component['rowWidth'].set(360);
+
+            const hidden = component.hiddenActions().map((a) => a.id);
+            expect(component.hasOverflow()).toBe(true);
+            // The three highest-priority actions stay inline regardless of their display position.
+            expect(hidden).not.toContain('scores');
+            expect(hidden).not.toContain('edit');
+            expect(hidden).not.toContain('delete');
+            // The type-specific extras collapse into the ellipsis menu.
+            expect(hidden).toEqual(expect.arrayContaining(['participations', 'statistics', 'preview', 'solution']));
+        });
+
+        it('hides nothing when every button fits', () => {
+            seedEqualWidths(50);
+            component['quizWidth'].set(0);
+            component['rowWidth'].set(2000);
+            expect(component.hiddenIds().size).toBe(0);
+            expect(component.hasOverflow()).toBe(false);
+        });
     });
 
     describe('deletionSummary / deleteTranslateValues', () => {
@@ -284,7 +323,7 @@ describe('ExerciseActionsComponent', () => {
 
         it('runAction invokes the action onClick callback', () => {
             const onClick = vi.fn();
-            component['runAction']({ id: 'x', labelKey: 'k', icon: 'trash' as never, styleClass: '', kind: 'button', onClick });
+            component['runAction']({ id: 'x', labelKey: 'k', icon: 'trash' as never, severity: 'primary', kind: 'button', onClick });
             expect(onClick).toHaveBeenCalledOnce();
         });
     });
@@ -379,6 +418,32 @@ describe('ExerciseActionsComponent', () => {
             component['onDelete']({ deleteStudentReposBuildPlans: true, deleteBaseReposBuildPlans: false });
 
             expect(deleteSpy).toHaveBeenCalledWith(4, true, false);
+        });
+
+        it('offers the repo/build-plan cleanup checks for programming exercises when LocalCI is inactive', () => {
+            fixture.componentRef.setInput('exercise', textExercise({ id: 4, type: ExerciseType.PROGRAMMING }));
+
+            expect(component.deleteAdditionalChecks()).toEqual({
+                deleteStudentReposBuildPlans: 'artemisApp.programmingExercise.delete.studentReposBuildPlans',
+                deleteBaseReposBuildPlans: 'artemisApp.programmingExercise.delete.baseReposBuildPlans',
+            });
+        });
+
+        it('hides the cleanup checks when LocalCI is active', () => {
+            const profileService = TestBed.inject(ProfileService);
+            vi.spyOn(profileService, 'isProfileActive').mockImplementation((profile) => profile === PROFILE_LOCALCI);
+            const localCIFixture = TestBed.createComponent(ExerciseActionsComponent);
+            localCIFixture.componentRef.setInput('exercise', textExercise({ id: 4, type: ExerciseType.PROGRAMMING }));
+            localCIFixture.componentRef.setInput('courseId', 1);
+            localCIFixture.componentRef.setInput('course', course);
+
+            expect(localCIFixture.componentInstance.deleteAdditionalChecks()).toEqual({});
+        });
+
+        it('offers no cleanup checks for non-programming exercises', () => {
+            fixture.componentRef.setInput('exercise', textExercise({ id: 3, type: ExerciseType.TEXT }));
+
+            expect(component.deleteAdditionalChecks()).toEqual({});
         });
 
         it('surfaces an error via dialogError$ when deletion fails', () => {

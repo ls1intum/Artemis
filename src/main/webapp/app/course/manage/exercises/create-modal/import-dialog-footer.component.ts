@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { DynamicDialogRef } from 'primeng/dynamicdialog';
 import { ButtonModule } from 'primeng/button';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -15,14 +15,15 @@ export const IMPORT_DIALOG_BACK = '__import_dialog_back__';
  */
 @Component({
     selector: 'jhi-import-dialog-footer',
-    // Full-width flex pushes the button to the left edge of the dialog footer (PrimeNG right-aligns footers by default).
-    template: `<div class="d-flex justify-content-start w-100">
-        <p-button severity="secondary" [outlined]="true" size="small" (onClick)="back()">
-            <fa-icon [icon]="faArrowLeft" class="me-1" /><span jhiTranslate="entity.action.back"></span>
-        </p-button>
-    </div>`,
-    styles: [':host { width: 100%; }'],
+    template: `<p-button severity="secondary" [outlined]="true" size="small" (onClick)="back()">
+        <fa-icon [icon]="faArrowLeft" class="me-1" /><span jhiTranslate="entity.action.back"></span>
+    </p-button>`,
+    // The host is the row itself, so no wrapper element is needed. `flex: 1` claims the free space of a flex parent —
+    // which is what pushes the button to the left edge of a PrimeNG dialog footer, since those right-align by default.
+    // Unlike a hardcoded `width: 100%` it imposes nothing on a non-flex parent, so the component stays reusable.
+    styles: [':host { display: flex; justify-content: flex-start; flex: 1; }'],
     imports: [ButtonModule, FaIconComponent, TranslateDirective],
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ImportDialogFooterComponent {
     private readonly dialogRef = inject(DynamicDialogRef);

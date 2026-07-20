@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
@@ -33,8 +32,6 @@ import { BehaviorSubject, distinctUntilChanged } from 'rxjs';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 
 describe('Course Management Service', () => {
-    setupTestBed({ zoneless: true });
-
     let courseManagementService: CourseManagementService;
     let accountService: AccountService;
     let lectureService: LectureService;
@@ -260,6 +257,7 @@ describe('Course Management Service', () => {
         const setStoredTotalScoresSpy = vi.spyOn(scoresStorageService, 'setStoredTotalScores');
         const setStoredScoresPerExerciseTypeSpy = vi.spyOn(scoresStorageService, 'setStoredScoresPerExerciseType');
         const setParticipationResultsSpy = vi.spyOn(scoresStorageService, 'setStoredParticipationResults');
+        const setAchievedGroupPointsSpy = vi.spyOn(scoresStorageService, 'setStoredAchievedPointsPerVariantGroup');
         courseManagementService
             .findOneForDashboard(course.id!)
             .pipe(take(1))
@@ -267,6 +265,7 @@ describe('Course Management Service', () => {
                 expect(setStoredTotalScoresSpy).toHaveBeenCalledWith(course.id!, courseScores);
                 expect(setStoredScoresPerExerciseTypeSpy).toHaveBeenCalledWith(course.id!, scoresPerExerciseType);
                 expect(setParticipationResultsSpy).toHaveBeenCalledWith(courseForDashboard.participationResults);
+                expect(setAchievedGroupPointsSpy).toHaveBeenCalledWith(course.id!, courseForDashboard.achievedPointsPerVariantGroup);
             });
         const req = httpMock.expectOne({ method: 'GET', url: `${resourceUrl}/${course.id}/for-dashboard` });
         req.flush(courseForDashboard);
@@ -533,8 +532,6 @@ describe('Course Management Service', () => {
 });
 
 describe('CourseManagementService - authentication state changes', () => {
-    setupTestBed({ zoneless: true });
-
     let authState: BehaviorSubject<User | undefined>;
     let scoped: CourseManagementService;
     let scopedHttpMock: HttpTestingController;

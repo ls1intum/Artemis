@@ -15,6 +15,8 @@
             "file-uploadPoints": "Datei-Upload-Punkte (%)",
             "presentationPoints": "Präsentationspunkte (%)",
             "overallScore": "Gesamtpunkte (%)",
+            "uncappedPoints": "Ungekappte Punkte",
+            "uncappedPointsTooltip": "Die gesamten Punkte, die die studierende Person erreicht hat, inklusive der vollen Punkte jeder gelösten Aufgabenvariante, bevor die Maximalpunktzahl einer Variantengruppe als Obergrenze angewendet wird. Zieht man davon die überschüssigen Variantenpunkte ab, ergeben sich die Gesamtpunkte.",
             "excessVariantPoints": "Überschüssige Variantenpunkte",
             "excessVariantPointsTooltip": "Punkte, die die studierende Person über die Aufgabenvarianten erreicht hat, aber nicht für die Note zählen, weil die kombinierten Punkte einer Variantengruppe auf die Maximalpunktzahl der Gruppe begrenzt sind. Wird als negativer Abzug angezeigt.",
             "max": "Max",

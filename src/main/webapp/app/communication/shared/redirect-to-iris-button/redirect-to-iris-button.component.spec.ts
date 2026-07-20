@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ComponentRef } from '@angular/core';
 import { RedirectToIrisButtonComponent } from 'app/communication/shared/redirect-to-iris-button/redirect-to-iris-button.component';
@@ -19,8 +18,6 @@ import { IrisLogoSize } from 'app/iris/overview/iris-logo/iris-logo.component';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 
 describe('RedirectToIrisButtonComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: RedirectToIrisButtonComponent;
     let fixture: ComponentFixture<RedirectToIrisButtonComponent>;
     let componentRef: ComponentRef<RedirectToIrisButtonComponent>;
@@ -71,7 +68,7 @@ describe('RedirectToIrisButtonComponent', () => {
         const getCourseSettingsSpy = vi.spyOn(irisSettingsService, 'getCourseSettingsWithRateLimit').mockReturnValue(of(mockCourseSettings(1, true)));
         vi.spyOn(profileService, 'isModuleFeatureActive').mockReturnValue(true);
 
-        componentRef.setInput('course', { id: 1, studentCourseAnalyticsDashboardEnabled: false } as Course);
+        componentRef.setInput('course', { id: 1 } as Course);
 
         const mockChannelDTO = {
             type: ConversationType.CHANNEL,
@@ -92,7 +89,7 @@ describe('RedirectToIrisButtonComponent', () => {
         const getCourseSettingsSpy = vi.spyOn(irisSettingsService, 'getCourseSettingsWithRateLimit').mockReturnValue(of(mockCourseSettings(56, true)));
         vi.spyOn(profileService, 'isModuleFeatureActive').mockReturnValue(true);
 
-        componentRef.setInput('course', { id: 56, studentCourseAnalyticsDashboardEnabled: false } as Course);
+        componentRef.setInput('course', { id: 56 } as Course);
 
         const mockChannelDTO = {
             type: ConversationType.CHANNEL,
@@ -113,7 +110,7 @@ describe('RedirectToIrisButtonComponent', () => {
         const getCourseSettingsSpy = vi.spyOn(irisSettingsService, 'getCourseSettingsWithRateLimit').mockReturnValue(of(mockCourseSettings(64, true)));
         vi.spyOn(profileService, 'isModuleFeatureActive').mockReturnValue(true);
 
-        componentRef.setInput('course', { id: 64, studentCourseAnalyticsDashboardEnabled: true } as Course);
+        componentRef.setInput('course', { id: 64 } as Course);
 
         const mockChannelDTO = {
             type: ConversationType.CHANNEL,
@@ -134,7 +131,7 @@ describe('RedirectToIrisButtonComponent', () => {
         const getCourseSettingsSpy = vi.spyOn(irisSettingsService, 'getCourseSettingsWithRateLimit').mockReturnValue(of(mockCourseSettings(1, false)));
         vi.spyOn(profileService, 'isModuleFeatureActive').mockReturnValue(true);
 
-        componentRef.setInput('course', { id: 1, studentCourseAnalyticsDashboardEnabled: false } as Course);
+        componentRef.setInput('course', { id: 1 } as Course);
 
         const mockChannelDTO = {
             type: ConversationType.CHANNEL,
@@ -155,7 +152,7 @@ describe('RedirectToIrisButtonComponent', () => {
         const getCourseSettingsSpy = vi.spyOn(irisSettingsService, 'getCourseSettingsWithRateLimit').mockReturnValue(of(mockCourseSettings(42, false)));
         vi.spyOn(profileService, 'isModuleFeatureActive').mockReturnValue(true);
 
-        componentRef.setInput('course', { id: 42, studentCourseAnalyticsDashboardEnabled: true } as Course);
+        componentRef.setInput('course', { id: 42 } as Course);
 
         const mockChannelDTO = {
             type: ConversationType.CHANNEL,
@@ -176,7 +173,7 @@ describe('RedirectToIrisButtonComponent', () => {
         const getCourseSettingsSpy = vi.spyOn(irisSettingsService, 'getCourseSettingsWithRateLimit').mockReturnValue(of(mockCourseSettings(56, false)));
         vi.spyOn(profileService, 'isModuleFeatureActive').mockReturnValue(true);
 
-        componentRef.setInput('course', { id: 56, studentCourseAnalyticsDashboardEnabled: false } as Course);
+        componentRef.setInput('course', { id: 56 } as Course);
 
         const mockChannelDTO = {
             type: ConversationType.CHANNEL,
@@ -197,7 +194,7 @@ describe('RedirectToIrisButtonComponent', () => {
         const getSettingsSpy = vi.spyOn(irisSettingsService, 'getCourseSettingsWithRateLimit').mockReturnValue(throwError(() => new Error('Failed to fetch settings')));
         vi.spyOn(profileService, 'isModuleFeatureActive').mockReturnValue(true);
 
-        componentRef.setInput('course', { id: 1, studentCourseAnalyticsDashboardEnabled: false } as Course);
+        componentRef.setInput('course', { id: 1 } as Course);
 
         const mockChannelDTO = {
             type: ConversationType.CHANNEL,
@@ -218,7 +215,7 @@ describe('RedirectToIrisButtonComponent', () => {
         const getCourseSettingsSpy = vi.spyOn(irisSettingsService, 'getCourseSettingsWithRateLimit').mockReturnValue(of(mockCourseSettings(42, true)));
         vi.spyOn(profileService, 'isModuleFeatureActive').mockReturnValue(true);
 
-        componentRef.setInput('course', { id: 42, studentCourseAnalyticsDashboardEnabled: false } as Course);
+        componentRef.setInput('course', { id: 42 } as Course);
 
         const mockChannelDTO = {
             type: ConversationType.CHANNEL,

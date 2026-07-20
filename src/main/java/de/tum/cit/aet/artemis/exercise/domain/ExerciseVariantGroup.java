@@ -174,16 +174,13 @@ public class ExerciseVariantGroup extends DomainObject {
 
     /**
      * Checks whether this group's own timeline fields are internally consistent, mirroring the ordering rules
-     * {@link Exercise#validateDates()} applies to a single exercise (release &lt;= start &lt;= due, and the assessment due
-     * date not preceding release or due). {@link #buildAndTestStudentSubmissionsAfterDueDate} is exempt, since
-     * {@link de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise} itself does not enforce any ordering on that
-     * field either.
+     * {@link Exercise#validateDates()} applies to a single exercise (release &lt;= start &lt;= due, assessment due date
+     * not before release or due). {@link #buildAndTestStudentSubmissionsAfterDueDate} is exempt, matching
+     * {@link de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise}.
      * <p>
-     * The example solution publication date is only required to not precede the release date. Unlike a single exercise,
-     * the group has no {@link de.tum.cit.aet.artemis.assessment.domain.IncludedInOverallScore}, so the stricter
-     * "example solution not before the due date" rule (which {@code Exercise.validateDates()} waives for
-     * {@code NOT_INCLUDED} exercises) cannot be decided at group level. Each member exercise re-validates its own dates
-     * when the group timeline is applied to it, so this rule is still enforced per member for exercises that require it.
+     * The example solution date only needs to not precede the release date: the group has no
+     * {@link de.tum.cit.aet.artemis.assessment.domain.IncludedInOverallScore}, so the stricter "not before due date" rule
+     * cannot be decided here and is instead enforced per member when the group timeline is applied.
      *
      * @return {@code true} if the set dates do not contradict each other
      */

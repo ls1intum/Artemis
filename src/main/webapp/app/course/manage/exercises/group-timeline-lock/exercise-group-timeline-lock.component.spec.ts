@@ -1,5 +1,4 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockProvider } from 'ng-mocks';
 import { TranslateService } from '@ngx-translate/core';
@@ -17,8 +16,6 @@ import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 
 describe('ExerciseGroupTimelineLockComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<ExerciseGroupTimelineLockComponent>;
     let component: ExerciseGroupTimelineLockComponent;
     let service: ExerciseVariantGroupService;

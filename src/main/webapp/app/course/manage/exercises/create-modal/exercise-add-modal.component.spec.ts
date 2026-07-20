@@ -1,8 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Router, provideRouter } from '@angular/router';
-import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { TranslateService } from '@ngx-translate/core';
 import { Subject } from 'rxjs';
 
@@ -20,8 +18,6 @@ import { ExerciseImportTabsComponent } from 'app/exercise/import/exercise-import
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 
 describe('ExerciseAddModalComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<ExerciseAddModalComponent>;
     let component: ExerciseAddModalComponent;
     let profileService: ProfileService;
@@ -32,7 +28,6 @@ describe('ExerciseAddModalComponent', () => {
             imports: [ExerciseAddModalComponent],
             providers: [
                 provideRouter([]),
-                provideNoopAnimations(),
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: ProfileService, useClass: MockProfileService },
                 { provide: DialogService, useClass: MockDialogService },
@@ -103,8 +98,11 @@ describe('ExerciseAddModalComponent', () => {
             expect(emitted).toEqual([false]);
         });
 
-        it('resolves the dialog header through the translate service', () => {
-            expect(component.dialogHeader).toBe('artemisApp.exerciseManagement.addModal.header');
+        it('renders the translated dialog header', () => {
+            fixture.componentRef.setInput('visible', true);
+            fixture.detectChanges();
+            // The dialog is appended to the body, so it is not reachable from the fixture element.
+            expect(document.body.querySelector('.p-dialog-title')?.textContent).toBe('artemisApp.exerciseManagement.addModal.header');
         });
     });
 

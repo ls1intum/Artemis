@@ -1,5 +1,4 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { MockProvider } from 'ng-mocks';
 import { TranslateService } from '@ngx-translate/core';
 import { FormsModule } from '@angular/forms';
@@ -20,8 +19,6 @@ import { CourseExerciseGroup } from 'app/exercise/shared/entities/exercise/cours
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 
 describe('ExerciseGroupEditModalComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<ExerciseGroupEditModalComponent>;
     let component: ExerciseGroupEditModalComponent;
     let dialogRef: DynamicDialogRef;
@@ -92,6 +89,19 @@ describe('ExerciseGroupEditModalComponent', () => {
         component.draftTitle.set('   ');
         expect(component.isTitleValid()).toBe(false);
         expect(component.isSaveDisabled()).toBe(true);
+    });
+
+    it('marks the title invalid when longer than 255 characters and disables save', () => {
+        fixture.componentRef.setInput('group', buildGroup());
+        fixture.detectChanges();
+
+        component.draftTitle.set('x'.repeat(256));
+        expect(component.isTitleValid()).toBe(false);
+        expect(component.isSaveDisabled()).toBe(true);
+
+        component.draftTitle.set('x'.repeat(255));
+        expect(component.isTitleValid()).toBe(true);
+        expect(component.isSaveDisabled()).toBe(false);
     });
 
     it('includes the build-and-test date only when the group has a programming member', () => {

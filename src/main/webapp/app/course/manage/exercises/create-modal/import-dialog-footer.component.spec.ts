@@ -1,5 +1,4 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { MockProvider } from 'ng-mocks';
 import { TranslateService } from '@ngx-translate/core';
 import { DynamicDialogRef } from 'primeng/dynamicdialog';
@@ -8,8 +7,6 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { IMPORT_DIALOG_BACK, ImportDialogFooterComponent } from 'app/course/manage/exercises/create-modal/import-dialog-footer.component';
 
 describe('ImportDialogFooterComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<ImportDialogFooterComponent>;
     let component: ImportDialogFooterComponent;
     let dialogRef: DynamicDialogRef;

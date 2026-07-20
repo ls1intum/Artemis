@@ -38,6 +38,8 @@ import de.tum.cit.aet.artemis.exercise.dto.UpdateExerciseVariantGroupDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseVariantGroupRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseVariantGroupService;
+import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
+import de.tum.cit.aet.artemis.quiz.domain.QuizMode;
 
 /**
  * REST controller for managing {@link ExerciseVariantGroup}s, the course-owned groupings of interchangeable exercise
@@ -45,8 +47,7 @@ import de.tum.cit.aet.artemis.exercise.service.ExerciseVariantGroupService;
  * <p>
  * Authorization mirrors the rights for the exercises themselves: editors create, update and read groups (and assign
  * exercises to them), while only instructors may delete a group. Every endpoint additionally verifies that the targeted
- * group (and exercise) belongs to the course in the request path. The group/timeline semantics live in
- * {@link ExerciseVariantGroupService}, shared with the AI variant-generation finalizer.
+ * group (and exercise) belongs to the course in the request path.
  */
 @Profile(PROFILE_CORE)
 @Lazy
@@ -87,6 +88,7 @@ public class ExerciseVariantGroupResource {
     public ResponseEntity<ExerciseVariantGroupDTO> createExerciseVariantGroup(@Valid @RequestBody CreateExerciseVariantGroupDTO createDTO, @PathVariable Long courseId)
             throws URISyntaxException {
         log.debug("REST request to create ExerciseVariantGroup in course {} : {}", courseId, createDTO);
+        // Group creation and course attachment live in the service, shared with the AI variant-generation finalizer.
         ExerciseVariantGroup group = exerciseVariantGroupService.createGroup(courseId, createDTO.toEntity());
         return ResponseEntity.created(new URI("/api/exercise/courses/" + courseId + "/exercise-variant-groups/" + group.getId())).body(new ExerciseVariantGroupDTO(group));
     }
@@ -111,13 +113,9 @@ public class ExerciseVariantGroupResource {
         ExerciseVariantGroup group = exerciseVariantGroupRepository.findByIdAndCourseIdElseThrow(groupId, courseId);
         updateDTO.applyTo(group);
         group.validateDates();
-        // Variants share the group's timeline. Keep every member exercise's own dates in sync with the (possibly changed)
-        // group dates so they stay consistent wherever an exercise's dates are read (exercise lists, calendar, grading).
-        // This validates every member before persisting anything, then saves the group and its members — a rejected
-        // member timeline (400) therefore leaves the stored group unchanged.
-        exerciseVariantGroupService.applyGroupTimelineToMembers(group);
-        // Build the response from the loaded entity (its exercises were fetched); the save() return value is a re-merged
-        // instance whose lazy exercises collection cannot initialize once the session is closed (open-in-view is off).
+        exerciseVariantGroupService.saveWithTimelineAppliedToMembers(group);
+        // Build the response from the loaded entity (its exercises were fetched); save()'s re-merged return value has a
+        // lazy exercises collection that cannot initialize once the session closes (open-in-view is off).
         return ResponseEntity.ok(new ExerciseVariantGroupDTO(group));
     }
 
@@ -162,9 +160,9 @@ public class ExerciseVariantGroupResource {
     @EnforceAtLeastInstructorInCourse
     public ResponseEntity<Void> deleteExerciseVariantGroup(@PathVariable Long groupId, @PathVariable Long courseId) {
         log.debug("REST request to delete ExerciseVariantGroup {} in course {}", groupId, courseId);
-        // Load the group without its member exercises: keeping them out of the persistence context lets the
-        // ON DELETE SET NULL foreign key (see the Liquibase changelog) ungroup them, instead of Hibernate failing the
-        // flush because managed exercises still reference the removed group. The members survive, simply ungrouped.
+        // Load the group without its members so the ON DELETE SET NULL foreign key (see the Liquibase changelog) can
+        // ungroup them; loading them would make Hibernate's flush fail because managed exercises still reference the
+        // removed group. The members survive, simply ungrouped.
         ExerciseVariantGroup group = exerciseVariantGroupRepository.findByIdAndCourseIdWithoutExercisesElseThrow(groupId, courseId);
         exerciseVariantGroupRepository.delete(group);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, group.getTitle())).build();
@@ -190,9 +188,8 @@ public class ExerciseVariantGroupResource {
         log.debug("REST request to assign exercise {} in course {} to variant group {}", exerciseId, courseId, assignmentDTO.groupId());
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         if (exercise.isExamExercise()) {
-            // Variant groups are course-owned and carry a course timeline. An exam exercise reports its exam's course via
-            // getCourseViaExerciseGroupOrCourseMember(), so it would otherwise pass the ownership check below and be
-            // assigned to a course group, later breaking group timeline updates. Reject it up front.
+            // An exam exercise reports its exam's course, so it would pass the ownership check below and be assigned to
+            // a course-owned group, later breaking group timeline updates. Reject it up front.
             throw new BadRequestAlertException("Exam exercises cannot be assigned to a variant group", ENTITY_NAME, "examExerciseNotAllowed");
         }
         Course exerciseCourse = exercise.getCourseViaExerciseGroupOrCourseMember();
@@ -200,7 +197,12 @@ public class ExerciseVariantGroupResource {
             throw new BadRequestAlertException("The exercise does not belong to the course in the path", ENTITY_NAME, "courseIdMismatch");
         }
         ExerciseVariantGroup group = assignmentDTO.groupId() == null ? null : exerciseVariantGroupRepository.findByIdAndCourseIdElseThrow(assignmentDTO.groupId(), courseId);
-        exerciseVariantGroupService.assignExerciseToGroup(exercise, group);
+        if (group != null && exercise instanceof QuizExercise quizExercise && quizExercise.getQuizMode() != QuizMode.INDIVIDUAL) {
+            // Synchronized/batched quizzes have a single shared run and cannot reasonably share a group timeline with
+            // other variants, so only individual-mode quizzes (which already support per-student dates) may join a group.
+            throw new BadRequestAlertException("Only individual-mode quizzes can be added to an exercise group", ENTITY_NAME, "quizNotIndividual");
+        }
+        exerciseVariantGroupService.assignToGroup(exercise, group);
         return ResponseEntity.ok().build();
     }
 }
