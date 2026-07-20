@@ -1,5 +1,4 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { Router } from '@angular/router';
 import { computed, signal } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
@@ -20,8 +19,6 @@ import { VariantJob } from 'app/openapi/model/variant-job';
  * Vitest specs for the navbar job tray.
  */
 describe('VariantGenerationTrayComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<VariantGenerationTrayComponent>;
     let component: VariantGenerationTrayComponent;
     let jobs: ReturnType<typeof signal<VariantJob[]>>;

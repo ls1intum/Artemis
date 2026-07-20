@@ -1,5 +1,4 @@
 import { TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { Subject, of } from 'rxjs';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ExerciseVariantGenerationService } from 'app/hyperion/services/exercise-variant-generation.service';
@@ -11,8 +10,6 @@ import { VariantJob } from 'app/openapi/model/variant-job';
  * Vitest specs for ExerciseVariantGenerationService.
  */
 describe('ExerciseVariantGenerationService', () => {
-    setupTestBed({ zoneless: true });
-
     let service: ExerciseVariantGenerationService;
     let apiMock: {
         generateVariant: ReturnType<typeof vi.fn>;
