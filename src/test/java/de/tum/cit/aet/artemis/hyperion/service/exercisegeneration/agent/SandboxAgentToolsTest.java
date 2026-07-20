@@ -444,20 +444,20 @@ class SandboxAgentToolsTest {
     }
 
     @Test
-    void verify_inDesignTemplateOrStatementStage_returnsAdvisoryInsteadOfRunningBuilds() {
+    void verify_inDesignOrTemplateStage_returnsAdvisoryInsteadOfRunningBuilds() {
         // No stubbing on the verifier mock at all (an unstubbed selfCheck() call would return null and blow up toObservation()), so the test fails loudly if the advisory branch
         // ever falls through to the real differential.
         RecordingSandbox sandbox = new RecordingSandbox();
         ProgrammingExercise exercise = new ProgrammingExercise();
         DifferentialVerificationService verifier = mock(DifferentialVerificationService.class);
 
-        for (GenerationStage stage : List.of(GenerationStage.DESIGN, GenerationStage.TEMPLATE, GenerationStage.STATEMENT)) {
+        for (GenerationStage stage : List.of(GenerationStage.DESIGN, GenerationStage.TEMPLATE)) {
             SandboxAgentTools tools = new SandboxAgentTools(sandbox, "s", verifier, exercise);
             tools.enterStage(stage);
 
             String out = tools.verify();
 
-            assertThat(out).as("stage %s", stage).isEqualTo(AgentSystemPromptService.STAGE_VERIFY_ADVISORY).contains("SOLUTION and TESTS stages");
+            assertThat(out).as("stage %s", stage).isEqualTo(AgentSystemPromptService.STAGE_VERIFY_ADVISORY).contains("SOLUTION, TESTS, and STATEMENT stages");
         }
         verifyNoInteractions(verifier);
     }
@@ -468,7 +468,7 @@ class SandboxAgentToolsTest {
         ProgrammingExercise exercise = new ProgrammingExercise();
         AgentVerifyReport report = new AgentVerifyReport(2, true, List.of(), 2, true, true, List.of(), List.of("t_a"), List.of(), List.of(), true, List.of());
 
-        for (GenerationStage stage : List.of(GenerationStage.SOLUTION, GenerationStage.TESTS)) {
+        for (GenerationStage stage : List.of(GenerationStage.SOLUTION, GenerationStage.TESTS, GenerationStage.STATEMENT)) {
             DifferentialVerificationService verifier = mock(DifferentialVerificationService.class);
             SandboxAgentTools tools = toolsWiredToAVerifier(sandbox, exercise, verifier, report);
             tools.enterStage(stage);

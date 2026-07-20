@@ -245,7 +245,10 @@ public class GenerationOrchestrationService {
             @Nullable
             VerificationRequest lastRejectedVerificationRequest = null;
             for (int attempt = 1; attempt <= MAX_GENERATION_ATTEMPTS; attempt++) {
-                loopResult = useStagedGeneration
+                // Staged authoring applies to the FIRST attempt only: retry attempts carry a targeted repair prompt (verification reasons / critic findings), and the
+                // between-attempt workspace reset discards DESIGN.md — re-running the design stage against a repair brief fails its gate by construction. Repairs run the
+                // legacy single loop, which is built for surgical fixes on an existing workspace.
+                loopResult = useStagedGeneration && attempt == 1
                         ? stagedGenerationRunner.run(exercise, baseTools, tools, currentPrompt, testsSeedSnapshot, sandbox, activeSessionId, cancelled, effectiveUsageSink,
                                 progress, () -> structuralOracleSeeder.seedIfStructuralDiff(sandbox, activeSessionId, exercise))
                         : agentLoopRunner.run(systemPrompt, currentPrompt, tools, maxTurns, cancelled, effectiveUsageSink, progress);

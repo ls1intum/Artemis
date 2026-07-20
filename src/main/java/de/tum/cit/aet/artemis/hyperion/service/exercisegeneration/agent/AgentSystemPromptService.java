@@ -166,7 +166,8 @@ public class AgentSystemPromptService {
 
     private static final String STAGE_4_STATEMENT_INSTRUCTIONS = """
             STAGE 4 — STATEMENT: write the statement last, from DESIGN.md and the verified test names: one `[task]` line per DESIGN.md seam using the exact reported
-            names, the public API presented once and compactly, a diagram only if DESIGN.md said yes. Then independently replay every worked example, run `verify` once
+            names — bind the bare method names exactly as `verify` reports them, never prefixed with a class or package name — the public API presented once and compactly,
+            a diagram only if DESIGN.md said yes. Then independently replay every worked example, run `verify` once
             more, and submit only after `MECHANICAL PRECHECK: PASS`; authoritative post-loop verification determines save eligibility, and quality review may request repairs.
             """;
 
@@ -214,7 +215,7 @@ public class AgentSystemPromptService {
     /**
      * Reused verbatim by {@link SandboxAgentTools#verify()} so the advisory the tool returns matches what this prompt tells the agent to expect.
      */
-    static final String STAGE_VERIFY_ADVISORY = "verify runs full differential builds and is available in the SOLUTION and TESTS stages; finish this stage's artifact and let the "
+    static final String STAGE_VERIFY_ADVISORY = "verify runs full differential builds and is available in the SOLUTION, TESTS, and STATEMENT stages; finish this stage's artifact and let the "
             + "stage gate check it.";
 
     /**

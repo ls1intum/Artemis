@@ -324,7 +324,7 @@ public class SandboxAgentTools {
     @Tool(name = "verify", description = AgentToolDescriptions.VERIFY)
     public String verify() {
         GenerationStage stage = currentStage;
-        if (stage == GenerationStage.DESIGN || stage == GenerationStage.TEMPLATE || stage == GenerationStage.STATEMENT) {
+        if (stage == GenerationStage.DESIGN || stage == GenerationStage.TEMPLATE) {
             return AgentSystemPromptService.STAGE_VERIFY_ADVISORY;
         }
         if (verifier == null || exercise == null) {
