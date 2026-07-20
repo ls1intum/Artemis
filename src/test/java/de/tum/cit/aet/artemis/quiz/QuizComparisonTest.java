@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.quiz;
 
-import static de.tum.cit.aet.artemis.exam.service.StudentExamService.isContentEqualTo;
+import static de.tum.cit.aet.artemis.exam.util.SubmissionComparisonUtil.isContentEqualTo;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
 import java.time.ZonedDateTime;
