@@ -240,4 +240,32 @@ class StudentExamDtoWireContractTest extends AbstractSpringIntegrationIndependen
         assertThat(result).as("grade DTO wire must carry the result leaf").isNotNull();
         assertThat(result.path("hasComplaint").asBoolean()).as("hasComplaint must be true once a complaint was filed").isTrue();
     }
+
+    /**
+     * FINDING 4: {@code feedbackSuggestionModule} must survive onto the summary wire. It is not sensitive —
+     * {@code Exercise#filterSensitiveInformation} strips only the grading instructions and criteria — so the pre-DTO
+     * entity wire carried it, and {@code ExamRequestAiFeedbackButtonComponent} needs it both to show the Athena
+     * feedback button at all and to compute which exercises are eligible. The component's own unit tests fabricate the
+     * field, so only an endpoint-level assertion catches a projection that never asks for it.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void summaryWireCarriesFeedbackSuggestionModule() throws Exception {
+        textExercise.setFeedbackSuggestionModule("module_text_test");
+        exerciseRepository.save(textExercise);
+        StudentExam studentExam = createSubmittedStudentExamWithResult(false).studentExam();
+
+        JsonNode summaryWire = request.get("/api/exam/courses/" + course.getId() + "/exams/" + exam.getId() + "/student-exams/" + studentExam.getId() + "/summary", HttpStatus.OK,
+                JsonNode.class);
+
+        JsonNode exerciseNode = null;
+        for (JsonNode exercise : summaryWire.get("exercises")) {
+            if (exercise.path("id").asLong() == textExercise.getId()) {
+                exerciseNode = exercise;
+            }
+        }
+        assertThat(exerciseNode).as("summary wire must carry the text exercise").isNotNull();
+        assertThat(exerciseNode.path("feedbackSuggestionModule").asText()).as("feedbackSuggestionModule must be on the wire, else the AI feedback button never renders")
+                .isEqualTo("module_text_test");
+    }
 }
