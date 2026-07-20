@@ -150,7 +150,7 @@ public class SpecFidelityCriticService {
             uncompilable scaffolding, or unrelated blockers that prevent incremental work.
 
             Also fail a templateCheck when the house teaching scaffold is missing: a stubbed member whose doc comment does not restate its student-visible contract, a statement task with \
-            no imperative TODO at the place the work happens (including a breadcrumb for a type the student must still create), or a solution/template diff that changes documentation \
+            no imperative TODO at the place the work happens (inside the member body, not above the signature; including a breadcrumb for a type the student must still create), or a solution/template diff that changes documentation \
             or comments beyond the implementation itself. Quote the exact stub signature, doc text, TODO line, or diff line verbatim from the artifacts above as reason evidence; omit \
             the check instead of guessing when no such artifact text exists.
 

@@ -262,6 +262,27 @@ class HyperionProblemStatementGenerationServiceTest {
     }
 
     @Test
+    void generateProblemStatement_allowsPublicApiDetailsWhenInstructorAsksForStructuralDesign() {
+        String apiDraft = """
+                # Playlist Player
+
+                ## Public API
+                Students implement `List<Track> order(Playlist playlist)` behind a strategy interface.
+                """;
+        when(chatModel.call(any(Prompt.class))).thenAnswer(_ -> new ChatResponse(List.of(new Generation(new AssistantMessage(apiDraft)))));
+
+        var course = new Course();
+        course.setTitle("Test Course");
+        course.setDescription("Test Description");
+
+        // A design-oriented brief (pattern, UML, students define an interface) is asking the draft to talk about design — API details are on-topic, not invented.
+        ProblemStatementGenerationResponseDTO resp = hyperionProblemStatementGenerationService.generateProblemStatement(course,
+                "Create an exercise that teaches the strategy design pattern; students define the playback-order interface themselves and the statement should include a UML class diagram");
+
+        assertThat(resp.draftProblemStatement()).isEqualTo(apiDraft.trim());
+    }
+
+    @Test
     void generateProblemStatement_rejectsUnrequestedStudentTestingRequirements() {
         String artifactDraft = """
                 # Scheduler

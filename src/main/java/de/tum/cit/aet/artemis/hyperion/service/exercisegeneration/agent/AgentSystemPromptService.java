@@ -117,8 +117,11 @@ public class AgentSystemPromptService {
                 TEMPLATE AS TEACHING SCAFFOLD
                 The template is the student's guided starting point: work from it alone, using the statement only as reference. Every stubbed member carries complete Javadoc (or the
                 language's doc idiom) restating its student-visible contract — purpose, parameters, return, error behavior. Anchor each task with `// TODO: <mirror of the task wording>`
-                where the work happens; if a task requires the student to CREATE a type, drop a TODO breadcrumb for it in the file that will use it. Imitate the seeded reference/'s FORM
-                for this scaffold, never its topic, API, design, or code.
+                INSIDE the member body, directly above the placeholder throw — never between the doc comment and the signature, never between an annotation and the signature.
+                When the requirements say students define or create a type themselves, the template must NOT ship that type: omit its file, keep the template compiling without it
+                (wire `implements`/references to it only in the solution), anchor its creation with TODO breadcrumbs in the template files that will collaborate with it, and grade it
+                only through the seeded structural checks and reflection-based behaviour tests — a direct source reference to a missing type in the test sources breaks the template
+                build. Imitate the seeded reference/'s FORM for this scaffold, never its topic, API, design, or code.
 
                 DIFF DISCIPLINE
                 Solution = template + the student's work, nothing else. Javadoc and non-TODO comments are byte-identical between template and solution; implementing a task replaces its
@@ -135,7 +138,12 @@ public class AgentSystemPromptService {
                 constraints to make the tests more elaborate.
                 Provide representative worked examples only where they clarify important, non-obvious behaviour. Use a code block, table, or precise prose, whichever communicates the contract
                 most clearly. Examples must agree with the implementation and tests but must not reproduce a graded test's exact composite input. Use a smaller or materially different input that
-                teaches the rule without revealing the oracle. Use a precise API block for a multi-type design; add UML only when it materially clarifies that design.
+                teaches the rule without revealing the oracle. Use a precise API block for a multi-type design; add a class diagram only when it materially clarifies that design
+                (typically when students create types or wire a pattern). Diagrams must be PlantUML (`@startuml` … `@enduml`) — Artemis renders PlantUML; never draw ASCII-art or
+                Markdown box diagrams. In the diagram, link elements to their checks with Artemis' testsColor syntax — members as
+                `<color:testsColor(exactTestName)>+member()</color>`, relations as `Sub -up-|> Super #testsColor(exactTestName)` — using verbatim behavioural test names from `verify` or
+                seeded structural check names (`testClass[X]`, `testMethods[X]`, `testAttributes[X]`, `testConstructors[X]`) exactly as `verify` reports them; never invent names. End with
+                `hide empty fields` and `hide empty methods`.
 
                 ARTEMIS TASK BINDINGS
                 Use one line per independently actionable student implementation seam:

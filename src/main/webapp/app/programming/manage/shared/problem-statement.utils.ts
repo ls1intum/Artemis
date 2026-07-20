@@ -181,7 +181,15 @@ export function deriveProposedPackageName(title: string, language: ProgrammingLa
         return undefined;
     }
     const pascalCase = language === ProgrammingLanguage.SWIFT;
-    const joined = words.map((word) => (pascalCase ? word.charAt(0).toUpperCase() + word.slice(1).toLowerCase() : word.toLowerCase())).join('');
+    const normalizedWords = words.map((word) => (pascalCase ? word.charAt(0).toUpperCase() + word.slice(1).toLowerCase() : word.toLowerCase()));
+    // Truncate at a word boundary: a mid-word cut produces gibberish identifiers like "…playlistplayba".
+    let joined = '';
+    for (const word of normalizedWords) {
+        if (joined && (joined + word).length > MAX_PROPOSED_PACKAGE_NAME_LENGTH) {
+            break;
+        }
+        joined += word;
+    }
     const candidate = joined.replace(/^[0-9]+/, '').substring(0, MAX_PROPOSED_PACKAGE_NAME_LENGTH);
     if (!candidate) {
         return undefined;

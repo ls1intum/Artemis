@@ -127,8 +127,14 @@ final class HyperionUtils {
             "\\b(?:avoid|do not|don't|without|not)\\b[^.\\n]{0,100}\\b(?:exact|specific|particular|prescrib|assum)\\w*\\b[^.\\n]{0,100}\\b(?:class|method|api|implementation)\\b",
             Pattern.CASE_INSENSITIVE);
 
+    /**
+     * A brief that asks for a concrete API or for structural design (a pattern, a diagram, types the students define) is asking the draft to talk about design, so API details in
+     * the
+     * draft are on-topic rather than invented.
+     */
     private static final Pattern API_PERMISSION_REQUEST = Pattern.compile(
-            "\\b(?:public API|method signature|method signatures|specific class|specific method|fixed API|you may choose the public API|choose the public API)\\b",
+            "\\b(?:public API|method signature|method signatures|specific class|specific method|fixed API|"
+                    + "you may choose the public API|choose the public API|design pattern|UML|class diagram|architecture|define\\b[^.\\n]{0,60}\\binterface)\\b",
             Pattern.CASE_INSENSITIVE);
 
     private record ConditionalDraftArtifact(Pattern contentPattern, Pattern requestPattern) {

@@ -225,6 +225,15 @@ describe('ProblemStatementUtils', () => {
             expect(derived!.length).toBeLessThanOrEqual(32);
         });
 
+        it('should truncate at a word boundary instead of cutting mid-word', () => {
+            expect(deriveProposedPackageName('Strategy Based Music Playlist Playback', ProgrammingLanguage.JAVA)).toBe('strategybasedmusicplaylist');
+        });
+
+        it('should hard-cap a single overlong word', () => {
+            const derived = deriveProposedPackageName('Supercalifragilisticexpialidocious Adventures', ProgrammingLanguage.JAVA);
+            expect(derived).toBe('supercalifragilisticexpialidocio');
+        });
+
         it('should produce a PascalCase app name for Swift', () => {
             expect(deriveProposedPackageName('robot rover state', ProgrammingLanguage.SWIFT)).toBe('RobotRoverState');
         });

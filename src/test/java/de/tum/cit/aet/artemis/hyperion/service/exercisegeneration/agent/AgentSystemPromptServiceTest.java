@@ -127,7 +127,17 @@ class AgentSystemPromptServiceTest {
 
         assertThat(prompt).contains("TEMPLATE AS TEACHING SCAFFOLD", "work from it alone, using the statement only as reference")
                 .contains("complete Javadoc (or the language's doc idiom) restating its student-visible contract").contains("// TODO: <mirror of the task wording>")
-                .contains("drop a TODO breadcrumb for it in the file that will use it");
+                .contains("INSIDE the member body, directly above the placeholder throw").contains("the template must NOT ship that type")
+                .contains("a direct source reference to a missing type in the test sources breaks the template build");
+    }
+
+    @Test
+    void build_umlDiagramsLinkChecksThroughArtemisTestsColorSyntax() {
+        String prompt = systemPromptService.build(exerciseWith(ProgrammingLanguage.JAVA, "")).replaceAll("\\s+", " ");
+
+        assertThat(prompt).contains("testsColor", "<color:testsColor(exactTestName)>+member()</color>", "#testsColor(exactTestName)")
+                .contains("testClass[X]", "testMethods[X]", "testAttributes[X]", "testConstructors[X]").contains("hide empty fields")
+                .contains("never draw ASCII-art or Markdown box diagrams");
     }
 
     @Test
