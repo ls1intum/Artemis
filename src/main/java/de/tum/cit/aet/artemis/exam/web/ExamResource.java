@@ -1371,9 +1371,10 @@ public class ExamResource {
     public ResponseEntity<List<LockedExamSubmissionDTO>> getLockedSubmissionsForExam(@PathVariable Long courseId, @PathVariable Long examId) {
         log.debug("REST request to get all locked submissions for course : {}", courseId);
         long start = System.currentTimeMillis();
-        Course course = courseRepository.findWithEagerExercisesById(courseId);
+        // The locked submissions are loaded by exam id alone, so authorizing the course on its own would let an
+        // instructor pair a course they manage with another course's exam and read that exam's submissions.
+        examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
-        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, user);
 
         List<Submission> submissions = submissionService.getLockedSubmissions(examId, user);
         List<LockedExamSubmissionDTO> lockedSubmissions = submissions.stream().map(LockedExamSubmissionDTO::of).toList();
