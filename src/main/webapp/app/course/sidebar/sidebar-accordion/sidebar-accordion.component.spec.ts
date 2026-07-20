@@ -180,6 +180,50 @@ describe('SidebarAccordionComponent', () => {
         expect(itemHiddenDiv).toBeNull();
     });
 
+    describe('searching a variant group', () => {
+        // A variant-group card carries the group title and its members in groupedItems, but no type of its own,
+        // so searching for a member's title or type must still keep the whole group visible.
+        beforeEach(() => {
+            fixture.componentRef.setInput('groupedData', {
+                current: {
+                    entityData: [
+                        {
+                            title: 'Variant group',
+                            id: 10,
+                            size: 'M',
+                            groupedItems: [
+                                { title: 'Sorting algorithms', id: 11, size: 'M', type: 'programming' },
+                                { title: 'Binary trees', id: 12, size: 'M', type: 'modeling' },
+                            ],
+                        },
+                    ],
+                },
+            });
+        });
+
+        const groupIsVisible = (searchValue: string): boolean => {
+            fixture.componentRef.setInput('searchValue', searchValue);
+            fixture.changeDetectorRef.detectChanges();
+            return !!fixture.nativeElement.querySelector('#test-accordion-item-container-0')?.querySelector('.sidebar-group');
+        };
+
+        it('should keep the group when the search matches a member title', () => {
+            expect(groupIsVisible('Binary')).toBe(true);
+        });
+
+        it('should keep the group when the search matches a member type', () => {
+            expect(groupIsVisible('programming')).toBe(true);
+        });
+
+        it('should keep the group when the search matches the group title', () => {
+            expect(groupIsVisible('Variant')).toBe(true);
+        });
+
+        it('should hide the group when the search matches neither the group nor a member', () => {
+            expect(groupIsVisible('quiz')).toBe(false);
+        });
+    });
+
     it('should expand the group containing the selected item', () => {
         component.expandGroupWithSelectedItem();
         expect(component.collapseStateInternal()['future']).toBe(false);

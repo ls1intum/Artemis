@@ -1,5 +1,5 @@
 @for (groupKey of Object.keys(groupedData()); track groupKey; let i = $index) {
-    @if ((groupedData()[groupKey].entityData | searchFilter: ['title', 'type'] : searchValue())?.length || sidebarItemAlwaysShow()[groupKey]) {
+    @if ((groupedData()[groupKey].entityData | searchFilter: ['title', 'type'] : searchValue() : 'groupedItems')?.length || sidebarItemAlwaysShow()[groupKey]) {
         <div id="test-accordion-item-container-{{ i }}" class="pointer">
             <div
                 [id]="'test-accordion-item-header-' + groupKey"
@@ -12,7 +12,7 @@
                     }
                     {{ 'artemisApp.courseOverview.sidebar.' + groupKey | artemisTranslate | titlecase }}
                     @if (!groupedData()[groupKey].isHideCount) {
-                        ({{ (groupedData()[groupKey].entityData | searchFilter: ['title', 'type'] : searchValue())?.length }})
+                        ({{ (groupedData()[groupKey].entityData | searchFilter: ['title', 'type'] : searchValue() : 'groupedItems')?.length }})
                     }
                 </div>
                 <div class="icon-container pe-3">
@@ -22,7 +22,7 @@
                     <fa-icon [icon]="faChevronRight" class="rotate-icon chevron-position" [class.rotated]="!collapseStateInternal()[groupKey]" />
                 </div>
             </div>
-            @if ((groupedData()[groupKey].entityData | searchFilter: ['title', 'type'] : searchValue())?.length) {
+            @if ((groupedData()[groupKey].entityData | searchFilter: ['title', 'type'] : searchValue() : 'groupedItems')?.length) {
                 <div id="test-accordion-item-content" [ngbCollapse]="collapseStateInternal()[groupKey]" class="bg-module">
                     <div class="p-2">
                         @for (weekGroup of getGroupedByWeek(groupKey); track weekGroup.start?.valueOf(); let first = $first) {
@@ -41,7 +41,7 @@
                                 </div>
                             }
                             <div>
-                                @for (sidebarItem of weekGroup.items | searchFilter: ['title', 'type'] : searchValue(); let last = $last; track sidebarItem.id) {
+                                @for (sidebarItem of weekGroup.items | searchFilter: ['title', 'type'] : searchValue() : 'groupedItems'; let last = $last; track sidebarItem.id) {
                                     <div [ngClass]="{ 'mb-2': !last }">
                                         <!-- Optional nested group: the header card and its exercises sit inside one container -->
                                         @if (sidebarItem.groupedItems?.length) {
