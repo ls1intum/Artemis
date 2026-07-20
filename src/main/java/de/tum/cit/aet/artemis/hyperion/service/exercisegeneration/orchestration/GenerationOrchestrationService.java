@@ -283,7 +283,7 @@ public class GenerationOrchestrationService {
                     if (statementChanged || !erroredFiles.isEmpty()) {
                         return new GenerationOutcome(loopResult, null, sessionId, this, sandbox, erroredFiles, erroredStatement,
                                 SpecFidelityReport.qualityReviewUnavailable("The agent stopped before verification; the partial candidate requires manual review."),
-                                workspaceSeed.repositoryHeads());
+                                workspaceSeed.repositoryHeads(), readDesignDocument(sandbox, sessionId));
                     }
                     destroyQuietly(sandbox, sessionId);
                     return GenerationOutcome.error(loopResult);
@@ -462,7 +462,7 @@ public class GenerationOrchestrationService {
                         e.getClass().getSimpleName());
                 return new GenerationOutcome(lastMechanicallyVerifiedCandidate.loopResult(), lastMechanicallyVerifiedCandidate.verification(), sessionId, this, sandbox,
                         lastMechanicallyVerifiedCandidate.producedFiles(), lastMechanicallyVerifiedCandidate.problemStatement(), lastMechanicallyVerifiedCandidate.reviewReport(),
-                        workspaceSeed.repositoryHeads());
+                        workspaceSeed.repositoryHeads(), readDesignDocument(sandbox, sessionId));
             }
             if (lastExtractedCandidate != null && workspaceSeed != null) {
                 log.warn("Exercise generation failed while verifying an extracted candidate for exercise {}; preserving the captured work ({})", exercise.getId(),
@@ -470,7 +470,8 @@ public class GenerationOrchestrationService {
                 AgentLoopResult stopped = new AgentLoopResult(AgentLoopResult.Status.ERROR, lastExtractedCandidate.loopResult().turns(),
                         "Generation stopped before verification completed.");
                 return new GenerationOutcome(stopped, null, sessionId, this, sandbox, lastExtractedCandidate.producedFiles(), lastExtractedCandidate.problemStatement(),
-                        SpecFidelityReport.qualityReviewUnavailable("Generation stopped before the captured candidate could be fully verified."), workspaceSeed.repositoryHeads());
+                        SpecFidelityReport.qualityReviewUnavailable("Generation stopped before the captured candidate could be fully verified."), workspaceSeed.repositoryHeads(),
+                        readDesignDocument(sandbox, sessionId));
             }
             GenerationOutcome diagnosticError = captureUnexpectedFailure(sandbox, sessionId, workspaceSeed, placeholderReplacements, baselineRepositoryFiles,
                     baselineProblemStatement);
@@ -497,7 +498,7 @@ public class GenerationOrchestrationService {
 
     private GenerationOutcome preserveCandidate(CandidateSnapshot candidate, InteractiveSandbox sandbox, String sessionId, GenerationWorkspaceService.WorkspaceSeed workspaceSeed) {
         return new GenerationOutcome(candidate.loopResult(), candidate.verification(), sessionId, this, sandbox, candidate.producedFiles(), candidate.problemStatement(),
-                candidate.reviewReport(), workspaceSeed.repositoryHeads());
+                candidate.reviewReport(), workspaceSeed.repositoryHeads(), readDesignDocument(sandbox, sessionId));
     }
 
     private static Map<RepositoryType, Map<String, String>> copyProducedFiles(Map<RepositoryType, Map<String, String>> producedFiles) {
@@ -550,7 +551,8 @@ public class GenerationOrchestrationService {
         }
         AgentLoopResult loopResult = new AgentLoopResult(AgentLoopResult.Status.ERROR, 0, "Generation stopped unexpectedly before verification completed.");
         return new GenerationOutcome(loopResult, null, sessionId, this, sandbox, files, statement,
-                SpecFidelityReport.qualityReviewUnavailable("Generation stopped before the candidate could be fully verified."), workspaceSeed.repositoryHeads());
+                SpecFidelityReport.qualityReviewUnavailable("Generation stopped before the candidate could be fully verified."), workspaceSeed.repositoryHeads(),
+                readDesignDocument(sandbox, sessionId));
     }
 
     private Map<RepositoryType, Map<String, String>> captureRepositoryFiles(InteractiveSandbox sandbox, String sessionId, GenerationWorkspaceService.WorkspaceSeed workspaceSeed,
