@@ -13,7 +13,7 @@
                 <span class="ms-3" jhiTranslate="{{ 'artemisApp.' + entityName + '.import.loading' }}"></span>
             }
         </div>
-        <table class="table table-striped align-middle flex">
+        <table class="table table-striped align-middle">
             <thead class="thead-dark">
                 <tr (sortChange)="sortRows()" [(ascending)]="listSorting" [(predicate)]="sortedColumn" class="flex-row" jhiSort>
                     <!-- ID column, always present -->

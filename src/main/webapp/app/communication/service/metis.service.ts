@@ -557,11 +557,11 @@ export class MetisService implements OnDestroy {
     }
 
     /**
-     * returns the router link required for navigating to the dashboard
-     * @return {string} router link of the dashboard
+     * returns the router link required for navigating to Iris for a general course channel
+     * @return {string} router link of the Iris page
      */
     getLinkForGeneral(): string {
-        return `/courses/${this.getCourse().id}/dashboard`;
+        return `/courses/${this.getCourse().id}/iris`;
     }
 
     /**

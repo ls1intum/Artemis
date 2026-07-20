@@ -202,6 +202,15 @@ export class CourseNotificationOverviewComponent implements AfterViewInit {
      * @param notifications - The up-to-date list of notifications for the current course
      */
     private handleNotificationsUpdate(notifications: CourseNotification[]): void {
+        // Decide which scroll position to restore after the list re-renders:
+        // - Pagination update (`isLoading` was set by queryCurrentCategory): the list is currently replaced by the
+        //   loading spinner, which clamps the container's scrollTop to 0, so the live value is unusable. Restore
+        //   `savedScrollPosition` (captured when pagination was triggered) so infinite scroll stays in place.
+        // - Non-pagination update (e.g. closing/removing a single notification): `savedScrollPosition` is stale (it
+        //   only tracks the bottom), so keep the live position - otherwise the list would jump to the bottom.
+        const isPaginationUpdate = this.isLoading();
+        const currentScrollTop = this.scrollContainer()?.nativeElement.scrollTop ?? 0;
+
         this.notifications = notifications;
 
         this.filterNotificationsIntoCurrentCategory();
@@ -219,8 +228,9 @@ export class CourseNotificationOverviewComponent implements AfterViewInit {
             this.queryCount = 1;
 
             if (this.isShown()) {
+                const targetScrollTop = isPaginationUpdate ? this.savedScrollPosition : currentScrollTop;
                 setTimeout(() => {
-                    this.scrollContainer()!.nativeElement.scrollTop = this.savedScrollPosition;
+                    this.scrollContainer()!.nativeElement.scrollTop = targetScrollTop;
                 });
                 this.updateCurrentCategoryNotificationsToSeenOnServer();
             }

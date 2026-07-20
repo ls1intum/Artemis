@@ -9,7 +9,6 @@ import { CourseOverviewGuard } from 'app/course/overview/course-overview/course-
 import { LectureGuard } from 'app/lecture/shared/lecture-guard.service';
 
 export enum CourseOverviewRoutePath {
-    DASHBOARD = 'dashboard',
     IRIS = 'iris',
     EXERCISES = 'exercises',
     EXAMS = 'exams',
@@ -36,7 +35,6 @@ export enum CourseOverviewRoutePath {
  * never be subjected to the guard's access check.
  */
 export const COURSE_OVERVIEW_GUARDED_ROUTE_PATHS: ReadonlySet<string> = new Set([
-    CourseOverviewRoutePath.DASHBOARD,
     CourseOverviewRoutePath.IRIS,
     CourseOverviewRoutePath.EXAMS,
     CourseOverviewRoutePath.COMPETENCIES,
@@ -262,17 +260,6 @@ export const courseRoutes: Routes = [
                 ],
             },
             {
-                path: CourseOverviewRoutePath.DASHBOARD,
-                pathMatch: 'full',
-                loadComponent: () => import('app/course/overview/course-dashboard/course-dashboard.component').then((m) => m.CourseDashboardComponent),
-                data: {
-                    authorities: IS_AT_LEAST_STUDENT,
-                    pageTitle: 'overview.dashboard',
-                    hasSidebar: true,
-                },
-                canActivate: [UserRouteAccessService, CourseOverviewGuard],
-            },
-            {
                 path: CourseOverviewRoutePath.IRIS,
                 pathMatch: 'full',
                 loadComponent: () => import('app/iris/overview/course-iris/course-iris.component').then((m) => m.CourseIrisComponent),
@@ -422,7 +409,7 @@ export const courseRoutes: Routes = [
             },
             {
                 path: '',
-                redirectTo: CourseOverviewRoutePath.DASHBOARD, // dashboard will redirect to exercises if not enabled
+                redirectTo: CourseOverviewRoutePath.EXERCISES,
                 pathMatch: 'full',
             },
             {
