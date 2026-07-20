@@ -2430,6 +2430,52 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
     }
 
     /**
+     * Conduction counterpart to {@link #testTestRunSummaryWireServesQuizSolutionsBeforePublishResults()}: the test-run
+     * exemption is decided on the entity by {@code ExamService.loadQuizExercisesForStudentExam}, which masks only when
+     * {@code !(areResultsPublishedYet() || isTestRun())}. A test run therefore reaches the conduction projection with
+     * its solutions intact, and the projection must carry them through — that is what gives the instructor the
+     * right/wrong preview the test run exists for. Projecting conduction unconditionally through the solution-hidden
+     * quiz shape silently stripped them on a 200.
+     * <p>
+     * Note that a stripped test-run conduction wire still LOOKS solution-bearing at a glance: the short-answer
+     * projection keeps its {@code solutions} array (only {@code correctMappings} is dropped) and drag-and-drop keeps
+     * its {@code dragItems}. The assertion therefore checks the fields that actually reveal the answer — multiple-choice
+     * {@code isCorrect} and {@code correctMappings} — rather than the presence of a "solutions" key.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testTestRunConductionWireServesQuizSolutions() throws Exception {
+        var testRun = createTestRun();
+        // pin the interesting state: the real exam's results are NOT published, only the test-run exemption applies
+        testRunExam.setPublishResultsDate(ZonedDateTime.now().plusDays(1));
+        testRunExam = examRepository.save(testRunExam);
+
+        userUtilService.changeUser(TEST_PREFIX + "instructor1");
+        JsonNode conductionWire = request.get("/api/exam/courses/" + course1.getId() + "/exams/" + testRunExam.getId() + "/test-runs/" + testRun.getId() + "/conduction",
+                HttpStatus.OK, JsonNode.class);
+
+        assertExerciseWireCarriesQuizSolutions(conductionWire.get("exercises"), "test-run conduction");
+    }
+
+    /**
+     * Guards the other half of {@link #testTestRunConductionWireServesQuizSolutions()}: threading the test-run
+     * exemption into the conduction projection must not loosen the gate for a real student sitting the exam. A
+     * student's conduction wire stays solution-hidden.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testStudentConductionWireMasksQuizSolutions() throws Exception {
+        StudentExam studentExam = prepareStudentExamsForConduction(false, true, 1).getFirst();
+
+        userUtilService.changeUser(TEST_PREFIX + "student1");
+        JsonNode conductionWire = request.get("/api/exam/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/" + studentExam.getId() + "/conduction",
+                HttpStatus.OK, JsonNode.class);
+
+        assertExerciseWireMasksQuizSolutions(conductionWire.get("exercises"), "student conduction");
+        deleteExamWithInstructor(exam1);
+    }
+
+    /**
      * Pins the two student-facing programming fields on the live conduction wire.
      * <p>
      * {@code allowOnlineEditor} gates the embedded editor ({@code programming-exam-submission.component.html}) and the

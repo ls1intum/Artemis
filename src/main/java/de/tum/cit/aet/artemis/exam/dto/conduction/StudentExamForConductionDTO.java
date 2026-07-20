@@ -42,8 +42,13 @@ public record StudentExamForConductionDTO(long id, Integer workingTime, Boolean 
         List<ExamSessionForConductionDTO> examSessions = (entitySessions == null || !Hibernate.isInitialized(entitySessions)) ? null
                 : entitySessions.stream().map(ExamSessionForConductionDTO::of).toList();
         var entityExercises = studentExam.getExercises();
+        // Mirror the entity-level gate in ExamService.loadQuizExercisesForStudentExam, which masks a quiz only when
+        // !(areResultsPublishedYet() || isTestRun()). A test run therefore arrives here with its solutions intact —
+        // that right/wrong preview is the point of a test run — and projecting it through the solution-hidden quiz
+        // shape would strip them on a 200. A student sitting the exam still gets the masked shape.
+        boolean includeQuizSolutions = studentExam.isTestRun() || studentExam.areResultsPublishedYet();
         List<ExamExerciseForConductionDTO> exercises = (entityExercises == null || !Hibernate.isInitialized(entityExercises)) ? null
-                : entityExercises.stream().filter(Objects::nonNull).map(ExamExerciseForConductionDTO::of).toList();
+                : entityExercises.stream().filter(Objects::nonNull).map(exercise -> ExamExerciseForConductionDTO.of(exercise, includeQuizSolutions)).toList();
         return new StudentExamForConductionDTO(studentExam.getId(), studentExam.getWorkingTime(), studentExam.isStarted(), studentExam.getStartedDate(), studentExam.isSubmitted(),
                 studentExam.getSubmissionDate(), studentExam.isTestRun(), studentExam.isEnded(), studentExam.isFinished(), studentExam.getCreatedDate(),
                 UserNameDTO.of(studentExam.getUser()), ExamForConductionDTO.of(studentExam.getExam()), examSessions, exercises);
