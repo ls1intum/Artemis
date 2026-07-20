@@ -195,6 +195,46 @@ class GenerationWorkspaceServiceTest {
     }
 
     @Test
+    void readStyleGuides_loadsAllFiveArtifactGuidesRegardlessOfExerciseLanguage() {
+        // Unlike readReferenceSample, the style guides are language-agnostic prose (not source code), so the method takes no exercise/language parameter at all: it is seeded
+        // identically for every GENERATE run.
+        ResourceLoaderService resourceLoaderService = new ResourceLoaderService(new DefaultResourceLoader(), mock());
+        ReflectionTestUtils.setField(resourceLoaderService, "templateFileSystemPath", Optional.empty());
+        GenerationWorkspaceService service = new GenerationWorkspaceService(mock(), mock(), mock(), resourceLoaderService, tempFileUtilService());
+
+        Map<String, String> guides = service.readStyleGuides();
+
+        assertThat(guides).containsOnlyKeys("reference/style/draft-statement.md", "reference/style/final-statement.md", "reference/style/template.md",
+                "reference/style/solution.md", "reference/style/tests.md");
+        // Each guide states its role up front so the agent can tell them apart at a glance.
+        assertThat(guides.get("reference/style/draft-statement.md")).contains("BEFORE any tests");
+        assertThat(guides.get("reference/style/final-statement.md")).contains("CRITICAL POLICY");
+        assertThat(guides.get("reference/style/template.md")).contains("// TODO");
+        assertThat(guides.get("reference/style/solution.md")).contains("Diff discipline");
+        assertThat(guides.get("reference/style/tests.md")).contains("Ares conventions");
+        // The exemplars must never reuse the seeded worked-example domain's concrete types (shipping fees) or the classic sorting domain; guide prose is allowed to name
+        // "shipping" only as a negative instruction (e.g. "never shipping fees"), so assert on the domain's concrete identifiers instead of the bare word.
+        assertThat(guides.values()).noneMatch(content -> content.contains("ShippingCalculator") || content.contains("FeeStrategy"))
+                .noneMatch(content -> content.toLowerCase(java.util.Locale.ROOT).contains("bubblesort"));
+    }
+
+    @Test
+    void readStyleGuides_closesResourceStreams() throws Exception {
+        ResourceLoaderService resourceLoaderService = mock(ResourceLoaderService.class);
+        Resource resource = mock(Resource.class);
+        TrackingInputStream input = new TrackingInputStream("# Guide".getBytes(StandardCharsets.UTF_8));
+        when(resource.getURI()).thenReturn(java.net.URI.create("file:/templates/hyperion/style/draft-statement.md"));
+        when(resource.getInputStream()).thenReturn(input);
+        when(resourceLoaderService.getFileResources(any(Path.class)))
+                .thenAnswer(invocation -> invocation.<Path>getArgument(0).endsWith("style") ? new Resource[] { resource } : new Resource[0]);
+        GenerationWorkspaceService service = new GenerationWorkspaceService(mock(), mock(), mock(), resourceLoaderService, tempFileUtilService());
+
+        service.readStyleGuides();
+
+        assertThat(input.closed).isTrue();
+    }
+
+    @Test
     void buildReadinessFixture_isVerifierOwnedAndSupportsRegularAndSequentialHarnessLayouts() {
         ResourceLoaderService resourceLoaderService = new ResourceLoaderService(new DefaultResourceLoader(), mock());
         ReflectionTestUtils.setField(resourceLoaderService, "templateFileSystemPath", Optional.empty());

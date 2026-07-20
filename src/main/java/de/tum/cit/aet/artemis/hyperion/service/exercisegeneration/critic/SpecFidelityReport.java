@@ -46,8 +46,9 @@ public record SpecFidelityReport(List<Finding> findings) {
         WEAK_TEST_ORACLE,
         /**
          * The starter code prevents meaningful incremental work or task-specific feedback, or ships without the house teaching scaffold: a stubbed member's doc comment does not
-         * restate its student-visible contract, a statement task has no imperative TODO anchor at the place the work happens, or the solution/template diff carries non-student
-         * documentation changes.
+         * restate its student-visible contract, a statement task has no imperative TODO anchor at the place the work happens, the solution/template diff carries non-student
+         * documentation changes, or the produced problem statement reproduces a template stub's signature and javadoc verbatim (a fenced code-block duplicate) instead of a
+         * compact API surface, so the template stops being the single point-of-use reference for the API.
          */
         TEMPLATE_QUALITY_GAP,
         /** The automated full-artifact quality review could not produce a complete verdict. */

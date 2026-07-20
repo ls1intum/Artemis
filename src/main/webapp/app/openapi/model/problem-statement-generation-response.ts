@@ -15,4 +15,6 @@
 export interface ProblemStatementGenerationResponse {
     /** Draft problem statement text */
     draftProblemStatement?: string;
+    /** Advisory hygiene warnings about the draft to review before use; omitted when there are none */
+    hygieneWarnings?: Array<string>;
 }

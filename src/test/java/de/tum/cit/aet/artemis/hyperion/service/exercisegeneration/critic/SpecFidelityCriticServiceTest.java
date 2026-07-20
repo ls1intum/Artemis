@@ -183,7 +183,8 @@ class SpecFidelityCriticServiceTest {
         ArgumentCaptor<Prompt> prompts = ArgumentCaptor.forClass(Prompt.class);
         verify(chatModel, times(2)).call(prompts.capture());
         assertThat(prompts.getAllValues().get(0).getInstructions().getFirst().getText()).contains("house teaching scaffold", "restate its student-visible contract",
-                "imperative TODO", "breadcrumb for a type the student must still create", "solution/template diff");
+                "imperative TODO", "breadcrumb for a type the student must still create", "solution/template diff", "compact API surface",
+                "the template is the API reference at the point of use");
     }
 
     @Test
@@ -1037,6 +1038,108 @@ class SpecFidelityCriticServiceTest {
 
         assertThat(report.findings()).hasSizeLessThanOrEqualTo(12).extracting(SpecFidelityReport.Finding::kind).contains(SpecFidelityReport.Kind.WEAK_TEST_ORACLE);
         verify(chatModel, times(2)).call(any(Prompt.class));
+    }
+
+    /**
+     * A statement that fences a template stub's full signature and javadoc verbatim, instead of a compact API surface, is a house-teaching-scaffold gap and folds into the same
+     * TEMPLATE_QUALITY_GAP kind as the other scaffold checks (no schema change).
+     */
+    @Test
+    void templateQualityGapReviewSurfacesStatementDuplicationOfTemplateStubWithQuotedEvidence() {
+        ChatModel chatModel = mock(ChatModel.class);
+        when(chatModel.call(any(Prompt.class))).thenReturn(rawResponse("""
+                {"exampleChecks":[],
+                 "apiChecks":[],
+                 "templateChecks":[{"test":"count","targetReached":false,
+                     "reason":"the statement fences the entire template stub verbatim instead of a compact API surface: 'public int count(String value) { return 0; }'"}],
+                 "contradictions":[],
+                 "hiddenRequirements":[],"templateGaps":[],"missingExamples":[],"invented":[],
+                 "unrequestedChanges":[],"missingRequestedChanges":[]}
+                """), rawResponse("""
+                {"mutantChecks":[{"mutant":"return 0","killed":true,"reason":"the cjk assertion kills it"}],
+                 "uncovered":[],"weakOracle":[]}
+                """));
+        when(chatModel.getOptions()).thenReturn(ChatOptions.builder().build());
+        SpecFidelityCriticService critic = new SpecFidelityCriticService(ChatClient.create(chatModel), objectMapper);
+
+        SpecFidelityReport report = critic.critique(UNICODE_BRIEF, "Count graphemes.", List.of("cjk"), COMPLETE_ARTIFACTS, null);
+
+        assertThat(report.findings()).extracting(SpecFidelityReport.Finding::kind).containsExactly(SpecFidelityReport.Kind.TEMPLATE_QUALITY_GAP);
+        assertThat(report.findings()).singleElement()
+                .satisfies(finding -> assertThat(finding.detail()).contains("public int count(String value) { return 0; }", "compact API surface"));
+    }
+
+    /** The immediately preceding attempt's report is threaded into the next reviewer prompt as a PREVIOUS REVIEW section with a re-verification instruction. */
+    @Test
+    void continuityReview_threadsPreviousFindingsAndReVerificationInstructionIntoThePrompt() {
+        ChatModel chatModel = mock(ChatModel.class);
+        when(chatModel.call(any(Prompt.class))).thenReturn(rawResponse("""
+                {"exampleChecks":[],"apiChecks":[],
+                 "templateChecks":[{"test":"cjk","targetReached":true,"reason":"the assertion reaches count"}],
+                 "contradictions":[],"hiddenRequirements":[],"templateGaps":[],"missingExamples":[],"invented":[],
+                 "unrequestedChanges":[],"missingRequestedChanges":[]}
+                """), rawResponse("""
+                {"mutantChecks":[{"mutant":"return the UTF-16 length","killed":true,"reason":"the assertion now kills it"}],
+                 "uncovered":[],"weakOracle":[]}
+                """));
+        when(chatModel.getOptions()).thenReturn(ChatOptions.builder().build());
+        SpecFidelityCriticService critic = new SpecFidelityCriticService(ChatClient.create(chatModel), objectMapper);
+        SpecFidelityReport previousReport = new SpecFidelityReport(
+                List.of(new SpecFidelityReport.Finding(SpecFidelityReport.Kind.WEAK_TEST_ORACLE, "return the UTF-16 length", "no assertion uses a surrogate pair")));
+
+        critic.critique(UNICODE_BRIEF, "Count graphemes.", List.of("cjk"), COMPLETE_ARTIFACTS, null, () -> false, previousReport);
+
+        ArgumentCaptor<Prompt> prompts = ArgumentCaptor.forClass(Prompt.class);
+        verify(chatModel, times(2)).call(prompts.capture());
+        assertThat(prompts.getAllValues())
+                .allSatisfy(prompt -> assertThat(prompt.getContents()).contains("PREVIOUS REVIEW", "return the UTF-16 length", "no assertion uses a surrogate pair",
+                        "re-verify each item above", "omit it if resolved", "repeat it with fresh evidence if still open", "Do not re-litigate", "genuinely new findings"));
+    }
+
+    /** A prior finding the current pass no longer reports (the model considers it resolved) does not linger in the new report. */
+    @Test
+    void continuityReview_resolvedPriorFindingIsNotCarriedForwardWhenTheCurrentPassOmitsIt() {
+        ChatModel chatModel = mock(ChatModel.class);
+        when(chatModel.call(any(Prompt.class))).thenReturn(rawResponse("""
+                {"exampleChecks":[],"apiChecks":[],
+                 "templateChecks":[{"test":"cjk","targetReached":true,"reason":"the assertion reaches count"}],
+                 "contradictions":[],"hiddenRequirements":[],"templateGaps":[],"missingExamples":[],"invented":[],
+                 "unrequestedChanges":[],"missingRequestedChanges":[]}
+                """), rawResponse("""
+                {"mutantChecks":[{"mutant":"return the UTF-16 length","killed":true,"reason":"the assertion now kills it"}],
+                 "uncovered":[],"weakOracle":[]}
+                """));
+        when(chatModel.getOptions()).thenReturn(ChatOptions.builder().build());
+        SpecFidelityCriticService critic = new SpecFidelityCriticService(ChatClient.create(chatModel), objectMapper);
+        SpecFidelityReport previousReport = new SpecFidelityReport(
+                List.of(new SpecFidelityReport.Finding(SpecFidelityReport.Kind.WEAK_TEST_ORACLE, "return the UTF-16 length", "no assertion uses a surrogate pair")));
+
+        SpecFidelityReport report = critic.critique(UNICODE_BRIEF, "Count graphemes.", List.of("cjk"), COMPLETE_ARTIFACTS, null, () -> false, previousReport);
+
+        assertThat(report.hasFindings()).as("the mutant is now killed, so the previously reported finding is resolved and must not reappear").isFalse();
+    }
+
+    /** A first attempt has no history, so no PREVIOUS REVIEW section is rendered and the reviewer prompt is unchanged. */
+    @Test
+    void continuityReview_firstAttemptOmitsThePreviousReviewSection() {
+        ChatModel chatModel = mock(ChatModel.class);
+        when(chatModel.call(any(Prompt.class))).thenReturn(rawResponse("""
+                {"exampleChecks":[],"apiChecks":[],
+                 "templateChecks":[{"test":"cjk","targetReached":true,"reason":"the assertion reaches count"}],
+                 "contradictions":[],"hiddenRequirements":[],"templateGaps":[],"missingExamples":[],"invented":[],
+                 "unrequestedChanges":[],"missingRequestedChanges":[]}
+                """), rawResponse("""
+                {"mutantChecks":[{"mutant":"return 0","killed":true,"reason":"the assertion kills it"}],
+                 "uncovered":[],"weakOracle":[]}
+                """));
+        when(chatModel.getOptions()).thenReturn(ChatOptions.builder().build());
+        SpecFidelityCriticService critic = new SpecFidelityCriticService(ChatClient.create(chatModel), objectMapper);
+
+        critic.critique(UNICODE_BRIEF, "Count graphemes.", List.of("cjk"), COMPLETE_ARTIFACTS, null, () -> false, SpecFidelityReport.empty());
+
+        ArgumentCaptor<Prompt> prompts = ArgumentCaptor.forClass(Prompt.class);
+        verify(chatModel, times(2)).call(prompts.capture());
+        assertThat(prompts.getAllValues()).allSatisfy(prompt -> assertThat(prompt.getContents()).doesNotContain("PREVIOUS REVIEW"));
     }
 
     /** Retry rendering distinguishes advisory generation findings from blocking adaptation-scope findings and is empty for an empty report. */

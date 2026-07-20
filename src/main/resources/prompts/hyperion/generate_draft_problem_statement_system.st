@@ -34,3 +34,22 @@ The draft is written before tests exist. It must be a student-facing specificati
 - Avoid filler, sign-offs, and generic encouragement such as "Good luck".
 
 Write the draft so an instructor can review and then use Generate with AI to create the solution, template, tests, and final task bindings consistently.
+
+## STYLE GUIDE
+Mirrors `templates/hyperion/style/draft-statement.md` (this renderer has no file-include mechanism, so keep the two in sync by hand). Target shape: one `#` title, a short
+motivating intro, 2-4 requirement sections, boundary behavior only where load-bearing, and 1-2 worked examples with hand-verified arithmetic; no closing summary or recap.
+
+Below is an example of that shape for a neutral domain. Invent your own domain, names, and numbers for every draft; never reuse this one:
+
+# Loyalty Points
+A coffee shop credits loyalty points for purchases and lets members redeem them for discounts.
+
+## Earning Points
+Every purchase earns 1 point per whole dollar spent. A $12.75 purchase earns 12 points; a $0.40 purchase earns 0 points.
+
+## Redeeming Points
+Redeeming 50 points reduces the current total by $5.00. A member with 130 points can redeem at most 2 times (100 points) per purchase; the remaining 30 points carry over.
+
+## Example
+A member with 42 points makes a $30.00 purchase and tries to redeem once (50 points needed): insufficient, so the purchase completes at $30.00 and earns 30 more points,
+leaving 72 points banked.

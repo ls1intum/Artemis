@@ -121,7 +121,17 @@ class AgentSystemPromptServiceTest {
         String prompt = systemPromptService.build(exerciseWithStatement("Implement a bounded counter."), GenerationMode.GENERATE).replaceAll("\\s+", " ");
 
         assertThat(prompt).contains("complete non-persisted worked exercise", "inspect its statement", "solution/template delta", "tests", "Artemis/Ares relationships")
-                .contains("Never copy its topic, API, design, or code");
+                .contains("Never copy its topic, API, design, or code")
+                .contains("reference/style/", "per-artifact style guides", "imitate their FORM for statement, template, solution, and tests");
+    }
+
+    @Test
+    void build_statementMustNotDuplicateTemplateApiOrCode() {
+        String prompt = systemPromptService.build(exerciseWithStatement("Implement a bounded counter.")).replaceAll("\\s+", " ");
+
+        assertThat(prompt).contains("Present the public API exactly once and compactly")
+                .contains("never reproducing template code blocks, stub bodies, or javadoc that already live in the template")
+                .contains("the template is the API reference at the point of use");
     }
 
     @Test

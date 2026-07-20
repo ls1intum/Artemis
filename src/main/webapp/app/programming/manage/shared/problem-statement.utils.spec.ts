@@ -151,6 +151,10 @@ describe('ProblemStatementUtils', () => {
         it('should return true for valid draft', () => {
             expect(isValidGenerationResponse({ draftProblemStatement: 'Generated draft' })).toBeTruthy();
         });
+
+        it('should return true when the draft carries advisory hygiene warnings (they never block the draft)', () => {
+            expect(isValidGenerationResponse({ draftProblemStatement: 'Generated draft', hygieneWarnings: ['possible unrequested scope'] })).toBeTruthy();
+        });
     });
 
     describe('buildGlobalRefinementRequest', () => {

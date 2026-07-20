@@ -150,9 +150,10 @@ public class SpecFidelityCriticService {
             uncompilable scaffolding, or unrelated blockers that prevent incremental work.
 
             Also fail a templateCheck when the house teaching scaffold is missing: a stubbed member whose doc comment does not restate its student-visible contract, a statement task with \
-            no imperative TODO at the place the work happens (inside the member body, not above the signature; including a breadcrumb for a type the student must still create), or a solution/template diff that changes documentation \
-            or comments beyond the implementation itself. Quote the exact stub signature, doc text, TODO line, or diff line verbatim from the artifacts above as reason evidence; omit \
-            the check instead of guessing when no such artifact text exists.
+            no imperative TODO at the place the work happens (inside the member body, not above the signature; including a breadcrumb for a type the student must still create), a solution/template diff that changes documentation \
+            or comments beyond the implementation itself, or the statement reproduces a template stub's signature and javadoc verbatim as a fenced code block instead of a compact API surface (a \
+            signature list, table, or diagram; the template is the API reference at the point of use). Quote the exact stub signature, doc text, TODO line, diff line, or duplicated block's first \
+            line verbatim from the artifacts above as reason evidence; omit the check instead of guessing when no such artifact text exists.
 
             Return every failed check. When a check category has no failures, return only one representative passing check for that category. Any false check is itself a blocker and need not \
             be repeated in a finding array. Do not assess mutation coverage in this pass. Do not treat test names or comments as proof. Missing examples and conservative scope additions are \
@@ -319,7 +320,7 @@ public class SpecFidelityCriticService {
      */
     public SpecFidelityReport critique(@Nullable String brief, @Nullable String problemStatement, List<String> testNames, Map<RepositoryType, Map<String, String>> artifacts,
             @Nullable Consumer<ChatResponse> usageSink) {
-        return critique(brief, problemStatement, testNames, artifacts, usageSink, () -> false);
+        return critique(brief, problemStatement, testNames, artifacts, usageSink, () -> false, null);
     }
 
     /**
@@ -335,13 +336,33 @@ public class SpecFidelityCriticService {
      */
     public SpecFidelityReport critique(@Nullable String brief, @Nullable String problemStatement, List<String> testNames, Map<RepositoryType, Map<String, String>> artifacts,
             @Nullable Consumer<ChatResponse> usageSink, BooleanSupplier cancelled) {
+        return critique(brief, problemStatement, testNames, artifacts, usageSink, cancelled, null);
+    }
+
+    /**
+     * As {@link #critique(String, String, List, Map, Consumer, BooleanSupplier)}, but also threads the immediately preceding attempt's report into the reviewer prompt as a
+     * PREVIOUS REVIEW section (see {@link #renderPreviousReviewSection}): the reviewer re-verifies each prior finding as resolved or still-open before reporting genuinely new
+     * ones, so a bounded repair loop converges on a stable set of findings instead of re-rolling a fresh critique every attempt. {@code previousReport} is {@code null} for a
+     * first attempt.
+     *
+     * @param brief            the primary source requirements, or {@code null}
+     * @param problemStatement the produced problem statement, or {@code null}
+     * @param testNames        the reported gradable test names
+     * @param artifacts        the produced repository files by repository type
+     * @param usageSink        the provider usage sink, or {@code null}
+     * @param cancelled        the cooperative cancellation signal
+     * @param previousReport   the immediately preceding attempt's report, or {@code null} when there is none
+     * @return the full-artifact report
+     */
+    public SpecFidelityReport critique(@Nullable String brief, @Nullable String problemStatement, List<String> testNames, Map<RepositoryType, Map<String, String>> artifacts,
+            @Nullable Consumer<ChatResponse> usageSink, BooleanSupplier cancelled, @Nullable SpecFidelityReport previousReport) {
         requireReviewInputsSafe(brief, problemStatement, testNames, artifacts, null);
         List<SpecFidelityReport.Finding> findings = new ArrayList<>(detectMechanicsLeaks(problemStatement));
         if (!hasCompleteArtifactSet(artifacts)) {
             findings.addAll(reviewUnavailable(null, "The generated solution, template, or tests snapshot was missing."));
             return new SpecFidelityReport(List.copyOf(findings));
         }
-        findings.addAll(reviewArtifacts(brief, problemStatement, testNames, artifacts, null, usageSink, cancelled));
+        findings.addAll(reviewArtifacts(brief, problemStatement, testNames, artifacts, null, usageSink, cancelled, previousReport));
         return new SpecFidelityReport(List.copyOf(findings));
     }
 
@@ -358,7 +379,7 @@ public class SpecFidelityCriticService {
      */
     public SpecFidelityReport critiqueAdaptation(@Nullable String brief, @Nullable String problemStatement, List<String> testNames, String adaptationChanges,
             Map<RepositoryType, Map<String, String>> artifacts, @Nullable Consumer<ChatResponse> usageSink) {
-        return critiqueAdaptation(brief, problemStatement, testNames, adaptationChanges, artifacts, usageSink, () -> false);
+        return critiqueAdaptation(brief, problemStatement, testNames, adaptationChanges, artifacts, usageSink, () -> false, null);
     }
 
     /**
@@ -375,13 +396,33 @@ public class SpecFidelityCriticService {
      */
     public SpecFidelityReport critiqueAdaptation(@Nullable String brief, @Nullable String problemStatement, List<String> testNames, String adaptationChanges,
             Map<RepositoryType, Map<String, String>> artifacts, @Nullable Consumer<ChatResponse> usageSink, BooleanSupplier cancelled) {
+        return critiqueAdaptation(brief, problemStatement, testNames, adaptationChanges, artifacts, usageSink, cancelled, null);
+    }
+
+    /**
+     * As {@link #critiqueAdaptation(String, String, List, String, Map, Consumer, BooleanSupplier)}, but also threads the immediately preceding attempt's report into the
+     * reviewer prompt for continuity (see {@link #critique(String, String, List, Map, Consumer, BooleanSupplier, SpecFidelityReport)}).
+     *
+     * @param brief             the primary source requirements, or {@code null}
+     * @param problemStatement  the produced problem statement, or {@code null}
+     * @param testNames         the reported gradable test names
+     * @param adaptationChanges the rendered summary of what the adaptation changed
+     * @param artifacts         the produced repository files by repository type
+     * @param usageSink         the provider usage sink, or {@code null}
+     * @param cancelled         the cooperative cancellation signal
+     * @param previousReport    the immediately preceding attempt's report, or {@code null} when there is none
+     * @return the full-artifact and adaptation-scope report
+     */
+    public SpecFidelityReport critiqueAdaptation(@Nullable String brief, @Nullable String problemStatement, List<String> testNames, String adaptationChanges,
+            Map<RepositoryType, Map<String, String>> artifacts, @Nullable Consumer<ChatResponse> usageSink, BooleanSupplier cancelled,
+            @Nullable SpecFidelityReport previousReport) {
         requireReviewInputsSafe(brief, problemStatement, testNames, artifacts, adaptationChanges);
         List<SpecFidelityReport.Finding> findings = new ArrayList<>(detectMechanicsLeaks(problemStatement));
         if (!hasCompleteArtifactSet(artifacts)) {
             findings.addAll(reviewUnavailable(adaptationChanges, "The generated solution, template, or tests snapshot was missing."));
             return new SpecFidelityReport(List.copyOf(findings));
         }
-        findings.addAll(reviewArtifacts(brief, problemStatement, testNames, artifacts, adaptationChanges, usageSink, cancelled));
+        findings.addAll(reviewArtifacts(brief, problemStatement, testNames, artifacts, adaptationChanges, usageSink, cancelled, previousReport));
         return new SpecFidelityReport(List.copyOf(findings));
     }
 
@@ -447,7 +488,8 @@ public class SpecFidelityCriticService {
 
     /** Runs two bounded, specialized full-artifact review passes and fails closed when either verdict is incomplete. */
     private List<SpecFidelityReport.Finding> reviewArtifacts(@Nullable String brief, @Nullable String problemStatement, List<String> testNames,
-            Map<RepositoryType, Map<String, String>> artifacts, @Nullable String adaptationChanges, @Nullable Consumer<ChatResponse> usageSink, BooleanSupplier cancelled) {
+            Map<RepositoryType, Map<String, String>> artifacts, @Nullable String adaptationChanges, @Nullable Consumer<ChatResponse> usageSink, BooleanSupplier cancelled,
+            @Nullable SpecFidelityReport previousReport) {
         String effectiveBrief = brief == null ? "" : brief.strip();
         if (adaptationChanges != null && adaptationChanges.isBlank()) {
             String requestedChange = effectiveBrief.isBlank() ? "the requested adaptation" : truncate(effectiveBrief);
@@ -461,7 +503,7 @@ public class SpecFidelityCriticService {
         if (evidence.truncated()) {
             return reviewUnavailable(adaptationChanges, "The generated artifact set exceeded the bounded review input.");
         }
-        String userPrompt = renderUserPrompt(effectiveBrief, problemStatement, testNames, evidence.text(), adaptationChanges);
+        String userPrompt = renderUserPrompt(effectiveBrief, problemStatement, testNames, evidence.text(), adaptationChanges, previousReport);
         String authoritativeSource = effectiveBrief;
         // The contract pass's free-form contradiction/hidden-requirement/invented-requirement findings may legitimately quote either the instructor's brief or the produced
         // problem statement (e.g. an invented requirement is, by construction, only ever stated in the produced statement). The oracle pass's requirement-coverage claims
@@ -595,13 +637,31 @@ public class SpecFidelityCriticService {
         return (adaptationChanges == null ? SpecFidelityReport.qualityReviewUnavailable(detail) : SpecFidelityReport.adaptationScopeUnavailable(detail)).findings();
     }
 
-    private static String renderUserPrompt(String brief, @Nullable String problemStatement, List<String> testNames, String artifactEvidence, @Nullable String adaptationChanges) {
+    private static String renderUserPrompt(String brief, @Nullable String problemStatement, List<String> testNames, String artifactEvidence, @Nullable String adaptationChanges,
+            @Nullable SpecFidelityReport previousReport) {
         String tests = testNames.isEmpty() ? "(no tests were produced)" : String.join("\n", testNames);
         String changes = adaptationChanges == null ? "" : "\n\nADAPTATION CHANGES (baseline to candidate):\n" + (adaptationChanges.isBlank() ? "(no changes)" : adaptationChanges);
         return "PRIMARY SOURCE REQUIREMENTS:\n" + brief + "\n\nPRODUCED PROBLEM STATEMENT:\n"
                 + (problemStatement == null || problemStatement.isBlank() ? "(empty)" : problemStatement.strip()) + "\n\nTEST NAMES (navigation aid only; not coverage evidence) ("
-                + testNames.size() + "):\n" + tests + "\n\nMECHANICALLY VERIFIED CANDIDATE ARTIFACTS:\n" + artifactEvidence + changes
+                + testNames.size() + "):\n" + tests + "\n\nMECHANICALLY VERIFIED CANDIDATE ARTIFACTS:\n" + artifactEvidence + changes + renderPreviousReviewSection(previousReport)
                 + "\n\nDo not treat test names or comments as proof. Return the complete JSON verdict specified by the system prompt.";
+    }
+
+    /**
+     * Renders the continuity section so a repair attempt is reviewed against its history instead of re-rolling a fresh critique: every finding from the immediately preceding
+     * attempt is listed verbatim, and the reviewer is told to re-verify each before reporting anything new. Empty when there is no prior report to carry forward.
+     */
+    private static String renderPreviousReviewSection(@Nullable SpecFidelityReport previousReport) {
+        if (previousReport == null || previousReport.findings().isEmpty()) {
+            return "";
+        }
+        StringBuilder section = new StringBuilder("\n\nPREVIOUS REVIEW (your own prior verdict on this candidate):");
+        for (SpecFidelityReport.Finding finding : previousReport.findings()) {
+            section.append("\n- [").append(finding.kind()).append("] ").append(finding.requirement()).append(": ").append(finding.detail());
+        }
+        section.append("\nFirst re-verify each item above against the current artifacts: omit it if resolved, or repeat it with fresh evidence if still open. Do not "
+                + "re-litigate aspects you previously accepted unless those artifacts changed. Then report only genuinely new findings.");
+        return section.toString();
     }
 
     private record ArtifactEvidence(String text, boolean truncated) {
@@ -680,8 +740,8 @@ public class SpecFidelityCriticService {
             }
             for (TemplateCheckItem item : parsed.templateChecks()) {
                 if (!item.targetReached() && findings.size() < MAX_REVIEW_FINDINGS) {
-                    // reason may report either an unreached starter target or a missing teaching-scaffold element (contract doc, TODO anchor, non-student diff); both are
-                    // rendered generically since the reason text itself names the specific failure.
+                    // reason may report an unreached starter target, a missing teaching-scaffold element (contract doc, TODO anchor, non-student diff), or a statement/template
+                    // duplication gap; all are rendered generically since the reason text itself names the specific failure.
                     findings.add(new SpecFidelityReport.Finding(SpecFidelityReport.Kind.TEMPLATE_QUALITY_GAP, truncate(item.test().strip()),
                             "This task-specific starter check failed: " + item.reason().strip()));
                 }

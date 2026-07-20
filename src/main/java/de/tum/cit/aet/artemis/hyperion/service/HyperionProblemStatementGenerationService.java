@@ -8,6 +8,7 @@ import static de.tum.cit.aet.artemis.hyperion.service.HyperionUtils.stripLineNum
 import static de.tum.cit.aet.artemis.hyperion.service.HyperionUtils.stripWrapperMarkers;
 import static de.tum.cit.aet.artemis.hyperion.service.HyperionUtils.validateUserPrompt;
 
+import java.util.List;
 import java.util.Map;
 
 import org.jspecify.annotations.Nullable;
@@ -139,8 +140,9 @@ public class HyperionProblemStatementGenerationService {
                     "ProblemStatementGeneration.problemStatementGenerationNull");
         }
 
+        List<String> hygieneWarnings;
         try {
-            HyperionUtils.validateDraftProblemStatementHygiene(generatedProblemStatement, sanitizedPrompt, "ProblemStatementGeneration");
+            hygieneWarnings = HyperionUtils.validateDraftProblemStatementHygiene(generatedProblemStatement, sanitizedPrompt, "ProblemStatementGeneration");
         }
         catch (InternalServerErrorAlertException hygieneFailure) {
             log.info("Generated draft problem statement failed hygiene checks for course [{}]; retrying once with repair instructions", course.getId());
@@ -158,7 +160,8 @@ public class HyperionProblemStatementGenerationService {
                 throw new InternalServerErrorAlertException("Generated problem statement is null or empty", "ProblemStatement",
                         "ProblemStatementGeneration.problemStatementGenerationNull");
             }
-            HyperionUtils.validateDraftProblemStatementHygiene(generatedProblemStatement, sanitizedPrompt, "ProblemStatementGeneration");
+            // Only mechanically-certain artifacts throw here; advisory findings from the repaired draft are surfaced below, not retried again.
+            hygieneWarnings = HyperionUtils.validateDraftProblemStatementHygiene(generatedProblemStatement, sanitizedPrompt, "ProblemStatementGeneration");
         }
 
         // Validate response length
@@ -168,7 +171,7 @@ public class HyperionProblemStatementGenerationService {
                     "ProblemStatementGeneration.generatedProblemStatementTooLong");
         }
 
-        return new ProblemStatementGenerationResponseDTO(generatedProblemStatement);
+        return new ProblemStatementGenerationResponseDTO(generatedProblemStatement, hygieneWarnings);
     }
 
     @Nullable

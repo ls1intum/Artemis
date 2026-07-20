@@ -87,11 +87,23 @@ final class HyperionUtils {
 
     private static final Pattern FINAL_TASK_BINDING = Pattern.compile("\\[task]\\[[^\\]]*\\]\\((.*)\\)");
 
-    private static final List<Pattern> FORBIDDEN_DRAFT_ARTIFACTS = List.of(Pattern.compile("\\[\\s*tasks?\\s*]", Pattern.CASE_INSENSITIVE),
+    /**
+     * Mechanically-certain artifacts that would corrupt downstream generation if left in a draft (raw Artemis task
+     * bindings, PlantUML markers, and vocabulary that leaks the grading/repository machinery). These are the only
+     * findings serious enough to block the flow with a server error (after one repair retry); everything else is a
+     * quality opinion the instructor reviews and edits anyway, so it is surfaced as an advisory warning instead.
+     */
+    private static final List<Pattern> BLOCKING_DRAFT_ARTIFACTS = List.of(Pattern.compile("\\[\\s*tasks?\\s*]", Pattern.CASE_INSENSITIVE),
             Pattern.compile("@(?:start|end)uml", Pattern.CASE_INSENSITIVE), Pattern.compile("\\b(?:solution|template|test) repository\\b", Pattern.CASE_INSENSITIVE),
             Pattern.compile("\\b(?:verifier|test runner|hidden tests)\\b", Pattern.CASE_INSENSITIVE),
             Pattern.compile("\\btest(?:Class|Methods|Attributes|Constructors)\\[[^\\]]+]", Pattern.CASE_INSENSITIVE),
-            Pattern.compile("\\btest[A-Z][A-Za-z0-9_]*\\s*\\(", Pattern.CASE_INSENSITIVE), Pattern.compile("adjust accordingly in tests", Pattern.CASE_INSENSITIVE),
+            Pattern.compile("\\btest[A-Z][A-Za-z0-9_]*\\s*\\(", Pattern.CASE_INSENSITIVE));
+
+    /**
+     * Semantic/heuristic artifacts that are plausible but not mechanically certain (regex false positives are
+     * common here). These are downgraded to advisory warnings: reported alongside the draft, never blocking.
+     */
+    private static final List<Pattern> ADVISORY_DRAFT_ARTIFACTS = List.of(Pattern.compile("adjust accordingly in tests", Pattern.CASE_INSENSITIVE),
             Pattern.compile("^\\s*#{1,6}\\s*(?:instructor decisions?|open questions?|authoring notes?|drafting notes?)\\b", Pattern.CASE_INSENSITIVE | Pattern.MULTILINE),
             Pattern.compile("\\bconflict\\b[^\\n]{0,160}\\bdo\\s+\\*?\\*?not\\*?\\*?\\s+overlap\\b[^\\n]{0,160}\\bno conflict\\b", Pattern.CASE_INSENSITIVE));
 
@@ -248,28 +260,45 @@ final class HyperionUtils {
     }
 
     /**
-     * Rejects generation-only artifacts in early draft problem statements before they can seed exercise generation.
+     * Rejects mechanically-certain generation-only artifacts in early draft problem statements before they can seed
+     * exercise generation, and reports everything else as advisory warnings instead of blocking.
+     * <p>
+     * The semantic heuristics below (unrequested scope, public API details, contradictory examples, ...) are regex
+     * approximations of a quality opinion and are known to produce false positives. The instructor reviews and edits
+     * every draft anyway, so a wrong heuristic must never turn into a 500 for the whole generation flow. Only
+     * artifacts that would mechanically corrupt downstream exercise generation (raw task bindings, PlantUML markers,
+     * grading vocabulary) remain blocking.
+     *
+     * @param problemStatement the candidate draft/refined problem statement text
+     * @param sanitizedPrompt  the sanitized user prompt/instruction that produced the draft, used to determine
+     *                             whether flagged content was explicitly requested
+     * @param errorKeyPrefix   prefix for error keys (e.g. "ProblemStatementGeneration" or "ProblemStatementRefinement")
+     * @return advisory warning strings describing non-blocking hygiene concerns; empty (never null) when there are none
+     * @throws InternalServerErrorAlertException if a mechanically-certain blocking artifact is found
      */
-    static void validateDraftProblemStatementHygiene(String problemStatement, String sanitizedPrompt, String errorKeyPrefix) {
-        List<String> findings = new ArrayList<>();
-        if (FORBIDDEN_DRAFT_ARTIFACTS.stream().anyMatch(pattern -> pattern.matcher(problemStatement).find())) {
-            findings.add("forbidden draft artifact");
+    static List<String> validateDraftProblemStatementHygiene(String problemStatement, String sanitizedPrompt, String errorKeyPrefix) {
+        if (BLOCKING_DRAFT_ARTIFACTS.stream().anyMatch(pattern -> pattern.matcher(problemStatement).find())) {
+            throw new InternalServerErrorAlertException("Generated problem statement contains generation-only artifacts: forbidden draft artifact", "ProblemStatement",
+                    errorKeyPrefix + ".generatedProblemStatementContainsArtifacts");
+        }
+
+        List<String> warnings = new ArrayList<>();
+        if (ADVISORY_DRAFT_ARTIFACTS.stream().anyMatch(pattern -> pattern.matcher(problemStatement).find())) {
+            warnings.add(
+                    "The draft may reference authoring-process or grading-adjacent content (e.g. drafting notes, references to tests, or contradictory examples). Review and remove it if not intended for students.");
         }
         if (CONDITIONAL_DRAFT_ARTIFACTS.stream()
                 .anyMatch(artifact -> artifact.contentPattern().matcher(problemStatement).find() && !explicitlyRequestsArtifact(sanitizedPrompt, artifact))) {
-            findings.add("unrequested draft artifact");
+            warnings.add(
+                    "The draft may include optional extras, benchmarks, or file/interface assumptions (JSON, CSV, standard input, ...) that weren't explicitly requested. Review and trim if not intended.");
         }
         boolean apiAvoidanceRequested = API_AVOIDANCE_REQUEST.matcher(sanitizedPrompt).find();
         boolean apiExplicitlyPermitted = API_PERMISSION_REQUEST.matcher(sanitizedPrompt).find();
         boolean contradictsApiAvoidance = PUBLIC_API_DETAILS.matcher(problemStatement).find() && (apiAvoidanceRequested || !apiExplicitlyPermitted);
         if (contradictsApiAvoidance) {
-            findings.add("public API details");
+            warnings.add("The draft may include public API details (method signatures, class names) that weren't explicitly requested. Review and generalize if not intended.");
         }
-
-        if (!findings.isEmpty()) {
-            throw new InternalServerErrorAlertException("Generated problem statement contains generation-only artifacts: " + String.join(", ", findings), "ProblemStatement",
-                    errorKeyPrefix + ".generatedProblemStatementContainsArtifacts");
-        }
+        return warnings;
     }
 
     private static boolean explicitlyRequestsArtifact(String prompt, ConditionalDraftArtifact artifact) {

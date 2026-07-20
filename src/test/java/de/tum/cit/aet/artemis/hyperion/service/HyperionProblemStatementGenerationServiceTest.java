@@ -112,6 +112,10 @@ class HyperionProblemStatementGenerationServiceTest {
         assertThat(promptText).contains("deliberately avoid the domains that textbooks and tutorials most often use");
         assertThat(promptText).contains("Do not end with a summary or recap section");
         assertThat(promptText).doesNotContain("instructor-decisions section", "Instructor Decisions Before Final Generation");
+        // Style guide: a compact worked exemplar of the target shape (mirrors templates/hyperion/style/draft-statement.md), so the model has something to imitate rather than
+        // only prose rules to follow. The exemplar must stay in a neutral domain, never the seeded reference exercise's shipping-fee domain.
+        assertThat(promptText).contains("## STYLE GUIDE").contains("# Loyalty Points");
+        assertThat(promptText).doesNotContain("shipping", "Shipping");
     }
 
     @Test
@@ -133,7 +137,7 @@ class HyperionProblemStatementGenerationServiceTest {
     }
 
     @Test
-    void generateProblemStatement_rejectsAuthoringProcessSections() {
+    void generateProblemStatement_flagsAuthoringProcessSectionsAsAdvisoryWithoutBlocking() {
         String artifactDraft = """
                 # Library Checkout
 
@@ -148,8 +152,11 @@ class HyperionProblemStatementGenerationServiceTest {
         course.setTitle("Test Course");
         course.setDescription("Test Description");
 
-        assertThatThrownBy(() -> hyperionProblemStatementGenerationService.generateProblemStatement(course, "Create a compact library exercise"))
-                .isInstanceOf(InternalServerErrorAlertException.class).hasMessageContaining("generation-only artifacts");
+        // Authoring-process headings are a semantic heuristic, not a mechanically-certain artifact: the draft is
+        // still returned and applied, with an advisory warning for the instructor to review.
+        ProblemStatementGenerationResponseDTO resp = hyperionProblemStatementGenerationService.generateProblemStatement(course, "Create a compact library exercise");
+        assertThat(resp.draftProblemStatement()).isEqualTo(artifactDraft.trim());
+        assertThat(resp.hygieneWarnings()).isNotEmpty();
     }
 
     @Test
@@ -192,7 +199,7 @@ class HyperionProblemStatementGenerationServiceTest {
     }
 
     @Test
-    void generateProblemStatement_rejectsUnrequestedJsonExportEvenWhenUserAskedForGenericExport() {
+    void generateProblemStatement_flagsUnrequestedJsonExportAsAdvisoryEvenWhenUserAskedForGenericExport() {
         String artifactDraft = """
                 # Data Export
 
@@ -204,12 +211,13 @@ class HyperionProblemStatementGenerationServiceTest {
         course.setTitle("Test Course");
         course.setDescription("Test Description");
 
-        assertThatThrownBy(() -> hyperionProblemStatementGenerationService.generateProblemStatement(course, "Create a CSV export exercise"))
-                .isInstanceOf(InternalServerErrorAlertException.class).hasMessageContaining("generation-only artifacts");
+        ProblemStatementGenerationResponseDTO resp = hyperionProblemStatementGenerationService.generateProblemStatement(course, "Create a CSV export exercise");
+        assertThat(resp.draftProblemStatement()).isEqualTo(artifactDraft.trim());
+        assertThat(resp.hygieneWarnings()).isNotEmpty();
     }
 
     @Test
-    void generateProblemStatement_rejectsPublicApiDetailsWhenInstructorAvoidsExactNames() {
+    void generateProblemStatement_flagsPublicApiDetailsAsAdvisoryWhenInstructorAvoidsExactNames() {
         String artifactDraft = """
                 # Event Scheduler
 
@@ -224,8 +232,10 @@ class HyperionProblemStatementGenerationServiceTest {
         course.setTitle("Test Course");
         course.setDescription("Test Description");
 
-        assertThatThrownBy(() -> hyperionProblemStatementGenerationService.generateProblemStatement(course, "Avoid prescribing exact class names and method names"))
-                .isInstanceOf(InternalServerErrorAlertException.class).hasMessageContaining("generation-only artifacts");
+        ProblemStatementGenerationResponseDTO resp = hyperionProblemStatementGenerationService.generateProblemStatement(course,
+                "Avoid prescribing exact class names and method names");
+        assertThat(resp.draftProblemStatement()).isEqualTo(artifactDraft.trim());
+        assertThat(resp.hygieneWarnings()).isNotEmpty();
     }
 
     @Test
@@ -303,7 +313,7 @@ class HyperionProblemStatementGenerationServiceTest {
     }
 
     @Test
-    void generateProblemStatement_rejectsUnrequestedStudentTestingRequirements() {
+    void generateProblemStatement_flagsUnrequestedStudentTestingRequirementsAsAdvisory() {
         String artifactDraft = """
                 # Scheduler
 
@@ -315,12 +325,13 @@ class HyperionProblemStatementGenerationServiceTest {
         course.setTitle("Test Course");
         course.setDescription("Test Description");
 
-        assertThatThrownBy(() -> hyperionProblemStatementGenerationService.generateProblemStatement(course, "Create a scheduler exercise"))
-                .isInstanceOf(InternalServerErrorAlertException.class).hasMessageContaining("generation-only artifacts");
+        ProblemStatementGenerationResponseDTO resp = hyperionProblemStatementGenerationService.generateProblemStatement(course, "Create a scheduler exercise");
+        assertThat(resp.draftProblemStatement()).isEqualTo(artifactDraft.trim());
+        assertThat(resp.hygieneWarnings()).isNotEmpty();
     }
 
     @Test
-    void generateProblemStatement_rejectsUnrequestedUnitTestPromises() {
+    void generateProblemStatement_flagsUnrequestedUnitTestPromisesAsAdvisory() {
         String artifactDraft = """
                 # Rover
 
@@ -332,12 +343,13 @@ class HyperionProblemStatementGenerationServiceTest {
         course.setTitle("Test Course");
         course.setDescription("Test Description");
 
-        assertThatThrownBy(() -> hyperionProblemStatementGenerationService.generateProblemStatement(course, "Create a rover exercise"))
-                .isInstanceOf(InternalServerErrorAlertException.class).hasMessageContaining("generation-only artifacts");
+        ProblemStatementGenerationResponseDTO resp = hyperionProblemStatementGenerationService.generateProblemStatement(course, "Create a rover exercise");
+        assertThat(resp.draftProblemStatement()).isEqualTo(artifactDraft.trim());
+        assertThat(resp.hygieneWarnings()).isNotEmpty();
     }
 
     @Test
-    void generateProblemStatement_rejectsUnrequestedScopeCreepAndContradictoryExamples() {
+    void generateProblemStatement_flagsUnrequestedScopeCreepAndContradictoryExamplesAsAdvisory() {
         String artifactDraft = """
                 # Scheduler
 
@@ -354,12 +366,15 @@ class HyperionProblemStatementGenerationServiceTest {
         course.setTitle("Test Course");
         course.setDescription("Test Description");
 
-        assertThatThrownBy(() -> hyperionProblemStatementGenerationService.generateProblemStatement(course, "Create a scheduler exercise"))
-                .isInstanceOf(InternalServerErrorAlertException.class).hasMessageContaining("generation-only artifacts");
+        // Both the unrequested optional scope and the contradictory conflict/no-conflict example are semantic
+        // heuristics: the draft is returned with (at least) two advisory warnings instead of being blocked.
+        ProblemStatementGenerationResponseDTO resp = hyperionProblemStatementGenerationService.generateProblemStatement(course, "Create a scheduler exercise");
+        assertThat(resp.draftProblemStatement()).isEqualTo(artifactDraft.trim());
+        assertThat(resp.hygieneWarnings()).hasSizeGreaterThanOrEqualTo(2);
     }
 
     @Test
-    void generateProblemStatement_rejectsAnUnrequestedDeliverableAndDeliveryMechanism() {
+    void generateProblemStatement_flagsUnrequestedDeliverableAndDeliveryMechanismAsAdvisory() {
         String artifactDraft = """
                 # Library Checkout
 
@@ -374,8 +389,9 @@ class HyperionProblemStatementGenerationServiceTest {
         course.setTitle("Test Course");
         course.setDescription("Test Description");
 
-        assertThatThrownBy(() -> hyperionProblemStatementGenerationService.generateProblemStatement(course, "Create a compact library exercise"))
-                .isInstanceOf(InternalServerErrorAlertException.class).hasMessageContaining("generation-only artifacts");
+        ProblemStatementGenerationResponseDTO resp = hyperionProblemStatementGenerationService.generateProblemStatement(course, "Create a compact library exercise");
+        assertThat(resp.draftProblemStatement()).isEqualTo(artifactDraft.trim());
+        assertThat(resp.hygieneWarnings()).isNotEmpty();
     }
 
     @Test
@@ -403,7 +419,7 @@ class HyperionProblemStatementGenerationServiceTest {
     }
 
     @Test
-    void generateProblemStatement_rejectsJsonAsAnUnrequestedInputFormat() {
+    void generateProblemStatement_flagsJsonAsAnUnrequestedInputFormatAsAdvisory() {
         String artifactDraft = """
                 # Library Checkout
 
@@ -415,12 +431,13 @@ class HyperionProblemStatementGenerationServiceTest {
         course.setTitle("Test Course");
         course.setDescription("Test Description");
 
-        assertThatThrownBy(() -> hyperionProblemStatementGenerationService.generateProblemStatement(course, "Create a compact library exercise"))
-                .isInstanceOf(InternalServerErrorAlertException.class).hasMessageContaining("generation-only artifacts");
+        ProblemStatementGenerationResponseDTO resp = hyperionProblemStatementGenerationService.generateProblemStatement(course, "Create a compact library exercise");
+        assertThat(resp.draftProblemStatement()).isEqualTo(artifactDraft.trim());
+        assertThat(resp.hygieneWarnings()).isNotEmpty();
     }
 
     @Test
-    void generateProblemStatement_doesNotTreatANegatedOptionalRequestAsPermission() {
+    void generateProblemStatement_doesNotTreatANegatedOptionalRequestAsPermissionButOnlyFlagsAdvisory() {
         String artifactDraft = """
                 # Library Checkout
 
@@ -435,8 +452,9 @@ class HyperionProblemStatementGenerationServiceTest {
         course.setTitle("Test Course");
         course.setDescription("Test Description");
 
-        assertThatThrownBy(() -> hyperionProblemStatementGenerationService.generateProblemStatement(course, "Do not include an optional submission checklist"))
-                .isInstanceOf(InternalServerErrorAlertException.class).hasMessageContaining("generation-only artifacts");
+        ProblemStatementGenerationResponseDTO resp = hyperionProblemStatementGenerationService.generateProblemStatement(course, "Do not include an optional submission checklist");
+        assertThat(resp.draftProblemStatement()).isEqualTo(artifactDraft.trim());
+        assertThat(resp.hygieneWarnings()).isNotEmpty();
     }
 
     @Test

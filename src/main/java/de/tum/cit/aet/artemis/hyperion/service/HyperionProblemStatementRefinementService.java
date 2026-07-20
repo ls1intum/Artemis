@@ -368,6 +368,8 @@ public class HyperionProblemStatementRefinementService {
         String trimmedRefined = refinedProblemStatementText.trim();
 
         if (!HyperionUtils.containsFinalTaskBindings(originalProblemStatementText)) {
+            // Only mechanically-certain artifacts throw here; advisory findings are not surfaced by the refinement
+            // response DTO (out of scope for this endpoint) but no longer block the flow either.
             HyperionUtils.validateDraftProblemStatementHygiene(trimmedRefined, sanitizedInstruction, "ProblemStatementRefinement");
         }
 

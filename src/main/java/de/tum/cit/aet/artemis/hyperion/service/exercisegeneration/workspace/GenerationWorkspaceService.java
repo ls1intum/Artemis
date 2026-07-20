@@ -81,6 +81,9 @@ public class GenerationWorkspaceService {
 
     private static final String READINESS_SOURCE_DIR = "hyperion/readiness/java";
 
+    /** Classpath directory of language-agnostic per-artifact style guides, seeded under {@code reference/style/} for every GENERATE run regardless of exercise language. */
+    private static final String STYLE_GUIDE_SOURCE_DIR = "hyperion/style";
+
     private static final String REFERENCE_GUIDE = """
             # Worked exercise reference
 
@@ -96,6 +99,9 @@ public class GenerationWorkspaceService {
     private static final int MAX_REFERENCE_FILE_BYTES = 64_000;
 
     private static final int MAX_REFERENCE_TOTAL_BYTES = 512_000;
+
+    /** Total cap on the seeded style-guide payload; the guides are tiny prose files, so this stays far below {@link #MAX_REFERENCE_TOTAL_BYTES}. */
+    private static final int MAX_STYLE_GUIDE_TOTAL_BYTES = 96_000;
 
     private final GitService gitService;
 
@@ -170,9 +176,12 @@ public class GenerationWorkspaceService {
                 }
             }
             Map<String, String> referenceSample = mode == GenerationMode.GENERATE ? readReferenceSample(exercise) : Map.of();
+            Map<String, String> styleGuides = mode == GenerationMode.GENERATE ? readStyleGuides() : Map.of();
             textFiles.putAll(referenceSample);
+            textFiles.putAll(styleGuides);
             sandbox.copyIn(sessionId, WORKSPACE, WorkspaceArchive.buildWorkspaceTarStream(textFiles, repositoryTrees));
-            log.info("Seeded generation workspace for exercise {} ({} repositories, {} reference files)", exercise.getId(), repositoryTrees.size(), referenceSample.size());
+            log.info("Seeded generation workspace for exercise {} ({} repositories, {} reference files, {} style guides)", exercise.getId(), repositoryTrees.size(),
+                    referenceSample.size(), styleGuides.size());
             return new WorkspaceSeed(testsSeedSnapshot, Map.copyOf(repositoryHeads), Map.copyOf(repositoryMetadata), Map.copyOf(repositoryTextFiles),
                     Map.copyOf(repositoryBinaryFiles));
         }
@@ -254,6 +263,19 @@ public class GenerationWorkspaceService {
         boolean complete = reference.containsKey(REFERENCE_DIR + "/problem-statement.md") && hasReferenceArea(reference, "template") && hasReferenceArea(reference, "solution")
                 && hasReferenceArea(reference, "tests/test");
         return complete ? reference : Map.of();
+    }
+
+    /**
+     * Reads the language-agnostic per-artifact style guides (draft statement, final statement, template, solution, tests) from the classpath. Unlike {@link #readReferenceSample},
+     * this is not gated on Java: the guides are prose principles plus a small neutral exemplar, not language-specific source, so every GENERATE run benefits from them.
+     *
+     * @return the style guide files keyed by their archive-relative path under {@code reference/style/}, or empty if none could be read
+     */
+    Map<String, String> readStyleGuides() {
+        Map<String, String> guides = new LinkedHashMap<>();
+        int[] remainingBytes = { MAX_STYLE_GUIDE_TOTAL_BYTES };
+        addReferenceArea(guides, STYLE_GUIDE_SOURCE_DIR, "style", path -> path.endsWith(".md"), remainingBytes);
+        return guides;
     }
 
     Map<String, String> readBuildReadinessFixture(ProgrammingExercise exercise) {

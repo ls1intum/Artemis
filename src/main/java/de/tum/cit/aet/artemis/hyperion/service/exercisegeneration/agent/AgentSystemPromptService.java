@@ -82,7 +82,8 @@ public class AgentSystemPromptService {
         String testSourceGuidance = mode == GenerationMode.ADAPT ? "Edit only exercise-specific test sources required by the feedback; preserve all others."
                 : "Replace only exercise-specific test source files.";
         String referenceGuidance = mode == GenerationMode.GENERATE
-                ? "- reference/: complete non-persisted worked exercise; inspect its statement, solution/template delta, tests, and Artemis/Ares relationships. Never copy its topic, API, design, or code."
+                ? "- reference/: complete non-persisted worked exercise; inspect its statement, solution/template delta, tests, and Artemis/Ares relationships. Never copy its topic, API, design, or code.\n"
+                        + "- reference/style/: per-artifact style guides — imitate their FORM for statement, template, solution, and tests."
                 : "";
         String prompt = """
                 You author production-quality Java programming exercises for Artemis in the `/workspace` sandbox.
@@ -139,6 +140,9 @@ public class AgentSystemPromptService {
                 independently actionable student work, not by requirement sentences or test cases. Resolve or omit drafting notes and instructor decisions.
                 The produced statement documents the contract; it does not authorize new graded behavior. Ground observable rules in the primary source requirements rather than adding
                 constraints to make the tests more elaborate.
+                Present the public API exactly once and compactly — a short signature list, a table, or the PlantUML diagram — never reproducing template code blocks, stub bodies, or
+                javadoc that already live in the template; the template is the API reference at the point of use. The statement explains WHAT and WHY, not a restatement of code the
+                student can already read.
                 Provide representative worked examples only where they clarify important, non-obvious behaviour. Use a code block, table, or precise prose, whichever communicates the contract
                 most clearly. Examples must agree with the implementation and tests but must not reproduce a graded test's exact composite input. Use a smaller or materially different input that
                 teaches the rule without revealing the oracle. Use a precise API block for a multi-type design; add a class diagram only when it materially clarifies that design

@@ -1894,6 +1894,11 @@ components:
       properties:
         draftProblemStatement: {type: string, description: Draft problem statement
             text}
+        hygieneWarnings:
+          type: array
+          items: {type: string}
+          description: Advisory hygiene warnings about the draft to review before
+            use; omitted when there are none
     ShortAnswerSubmittedText:
       type: object
       properties:

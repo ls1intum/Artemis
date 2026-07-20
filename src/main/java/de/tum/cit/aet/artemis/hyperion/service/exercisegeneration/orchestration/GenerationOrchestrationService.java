@@ -351,8 +351,10 @@ public class GenerationOrchestrationService {
                     String adaptationChanges = mode == GenerationMode.ADAPT
                             ? renderAdaptationChanges(baselineProblemStatement, producedProblemStatement, baselineRepositoryFiles, producedFilesByType)
                             : null;
+                    // specFidelityReport still holds the previous attempt's report at this point (SpecFidelityReport.empty() on attempt 1 or after a mechanical rejection);
+                    // threading it through gives the critic continuity across repair attempts instead of re-rolling a fresh review each time.
                     specFidelityReport = runSpecFidelityCritic(reviewBrief, producedProblemStatement, exercise.getProgrammingLanguage(), producedFilesByType, adaptationChanges,
-                            effectiveUsageSink, cancelled, progress);
+                            effectiveUsageSink, cancelled, progress, specFidelityReport);
                     lastMechanicallyVerifiedCandidate = new CandidateSnapshot(loopResult, verification, copyProducedFiles(producedFilesByType), producedProblemStatement,
                             specFidelityReport);
                     if (cancelled.getAsBoolean()) {
@@ -581,15 +583,17 @@ public class GenerationOrchestrationService {
      * @param language          the exercise language (may be {@code null})
      * @param producedArtifacts the mechanically verified solution, template, and tests repositories
      * @param progress          the progress sink for a short transcript line
+     * @param previousReport    the immediately preceding attempt's report, threaded in for reviewer continuity; {@code null} on the first attempt
      * @return the report (possibly empty); never {@code null}
      */
     private SpecFidelityReport runSpecFidelityCritic(String brief, String problemStatement, @Nullable ProgrammingLanguage language,
             Map<RepositoryType, Map<String, String>> producedArtifacts, @Nullable String adaptationChanges, Consumer<ChatResponse> usageSink, BooleanSupplier cancelled,
-            Consumer<String> progress) {
+            Consumer<String> progress, @Nullable SpecFidelityReport previousReport) {
         try {
             List<String> testNames = extractTaskBoundTestNames(problemStatement);
-            SpecFidelityReport report = adaptationChanges == null ? specFidelityCritic.critique(brief, problemStatement, testNames, producedArtifacts, usageSink, cancelled)
-                    : specFidelityCritic.critiqueAdaptation(brief, problemStatement, testNames, adaptationChanges, producedArtifacts, usageSink, cancelled);
+            SpecFidelityReport report = adaptationChanges == null
+                    ? specFidelityCritic.critique(brief, problemStatement, testNames, producedArtifacts, usageSink, cancelled, previousReport)
+                    : specFidelityCritic.critiqueAdaptation(brief, problemStatement, testNames, adaptationChanges, producedArtifacts, usageSink, cancelled, previousReport);
             if (adaptationChanges != null && adaptationChanges.contains(CHANGE_SUMMARY_TRUNCATED)) {
                 List<SpecFidelityReport.Finding> combined = new ArrayList<>(report.findings());
                 combined.addAll(SpecFidelityReport.adaptationScopeUnavailable("The bounded change summary was truncated, so not every changed line could be reviewed.").findings());
