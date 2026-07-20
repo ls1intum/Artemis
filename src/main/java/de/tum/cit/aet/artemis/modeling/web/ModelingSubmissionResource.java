@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.modeling.web;
 
 import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
@@ -445,7 +446,7 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
             submission.setParticipation(studentParticipation);
 
             // Filter results within each submission based on assessment type and period
-            List<Result> filteredResults = submission.getResults().stream().filter(result -> {
+            List<Result> filteredResults = submission.getResults().stream().filter(Objects::nonNull).filter(result -> {
                 if (!validationResult.isAtLeastTutor) {
                     if (ExerciseDateService.isAfterAssessmentDueDate(validationResult.modelingExercise)) {
                         return true; // Include all results if the assessment period is over
@@ -457,7 +458,8 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
                 else {
                     return true; // Tutors and above can see all results
                 }
-            }).peek(Result::filterSensitiveInformation).sorted(Comparator.comparing(Result::getCompletionDate).reversed()).toList();
+            }).peek(Result::filterSensitiveInformation).sorted(Comparator.comparing(Result::getCompletionDate, Comparator.nullsLast(Comparator.naturalOrder())).reversed())
+                    .toList();
 
             // Set filtered results back into the submission if any results remain after filtering
             if (!filteredResults.isEmpty()) {
