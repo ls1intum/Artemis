@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.exam.dto;
 
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Objects;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
@@ -81,7 +82,7 @@ public record LockedExamSubmissionDTO(Long id, ZonedDateTime submissionDate, Str
         }
 
         List<LockedSubmissionResultDTO> resultDTOs = submission.getResults() == null ? List.of()
-                : submission.getResults().stream().filter(result -> result != null).map(LockedExamSubmissionDTO::toResultDTO).toList();
+                : submission.getResults().stream().filter(Objects::nonNull).map(LockedExamSubmissionDTO::toResultDTO).toList();
 
         return new LockedExamSubmissionDTO(submission.getId(), submission.getSubmissionDate(), submission.getSubmissionExerciseType(), participationDTO, resultDTOs);
     }
