@@ -8,8 +8,11 @@ import java.nio.file.Path;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.EnumMap;
+import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.eclipse.jgit.api.errors.GitAPIException;
@@ -19,6 +22,8 @@ import org.springframework.ai.tool.ToolCallback;
 import org.springframework.ai.tool.annotation.Tool;
 import org.springframework.ai.tool.annotation.ToolParam;
 import org.springframework.ai.tool.method.MethodToolCallbackProvider;
+
+import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.hyperion.service.variants.VariantBuildVerificationService.BuildResultOutcome;
@@ -291,20 +296,141 @@ class ProgrammingVariantTools implements VariantToolset {
             catch (IOException e) {
                 return "Error: file '" + path + "' does not exist in the " + repositoryType + " repository. Use listFiles to see the existing file paths.";
             }
-            int firstIndex = content.indexOf(search);
-            if (firstIndex < 0) {
-                return "Error: the search text was not found in '" + path + "'. Read the file again and use the exact current text.";
+            EditOutcome outcome = applySearchReplace(content, normalizedPath, search, replace);
+            if (outcome.failed()) {
+                return "Error: " + outcome.error();
             }
-            if (content.indexOf(search, firstIndex + 1) >= 0) {
-                return "Error: the search text occurs more than once in '" + path + "'. Extend the search text so it matches exactly one occurrence.";
-            }
-            String updated = content.substring(0, firstIndex) + replace + content.substring(firstIndex + search.length());
-            writeFileContent(checkout, normalizedPath, updated);
+            writeFileContent(checkout, normalizedPath, outcome.updatedContent());
             markTouched(repositoryType);
             return "Edit applied to '" + normalizedPath + "' in the " + repositoryType + " repository. Remember to run runBuild to verify your changes.";
         }
         catch (Exception e) {
             return "Error: could not edit '" + path + "' in the " + repositoryType + " repository: " + e.getMessage();
+        }
+    }
+
+    /**
+     * One search-and-replace edit for the batch {@link #applyEdits} tool. Same shape as a single
+     * {@link #applyEdit} call: a repository-relative {@code path}, the unique {@code search} text, and its
+     * {@code replace}ment.
+     */
+    public record BatchEdit(@JsonPropertyDescription("the file path relative to the repository root") String path,
+            @JsonPropertyDescription("the exact text to search for; must match exactly one occurrence in the (current) file") String search,
+            @JsonPropertyDescription("the replacement text") String replace) {
+    }
+
+    @Tool(description = "Apply MULTIPLE search-and-replace edits to files in ONE of the variant's repositories in a SINGLE call. "
+            + "Strongly prefer this over many separate applyEdit round trips: gather every edit for a repository (for example all occurrences of a rename across several files) "
+            + "and submit them as one batch. Edits are applied IN ORDER and each sees the effect of the previous ones. Each edit is reported independently as applied or with a "
+            + "precise error, and a failed edit never blocks the others — only re-submit the failed ones in a follow-up call. Each edit's search text must occur exactly once in "
+            + "its current file. Every file is editable, including build files (build.gradle, settings.gradle, pom.xml); only git's own .git directory is off limits.")
+    public String applyEdits(@ToolParam(description = "the repository: TEMPLATE, SOLUTION, or TESTS") String repository,
+            @ToolParam(description = "the edits to apply in order; each has path, search, and replace") List<BatchEdit> edits) {
+        String stop = stopNotice();
+        if (stop != null) {
+            return stop;
+        }
+        RepositoryType repositoryType = parseRepositoryType(repository);
+        if (repositoryType == null) {
+            return invalidRepositoryMessage(repository);
+        }
+        if (edits == null || edits.isEmpty()) {
+            return "Error: no edits were provided. Pass at least one { path, search, replace } edit.";
+        }
+        Repository checkout;
+        try {
+            checkout = checkout(repositoryType);
+        }
+        catch (Exception e) {
+            return "Error: could not access the " + repositoryType + " repository: " + e.getMessage();
+        }
+        // In-memory content per touched file so later edits see earlier ones (sequential semantics) and each
+        // file is read once and written once, instead of a read+delete+create per edit.
+        Map<String, String> contents = new HashMap<>();
+        Set<String> changedPaths = new LinkedHashSet<>();
+        StringBuilder report = new StringBuilder();
+        int appliedCount = 0;
+        for (int index = 0; index < edits.size(); index++) {
+            BatchEdit edit = edits.get(index);
+            report.append("Edit ").append(index + 1).append(" (").append(edit == null ? "?" : edit.path()).append("): ");
+            if (edit == null) {
+                report.append("Error: the edit entry is missing.\n");
+                continue;
+            }
+            String normalizedPath = normalizeWritablePath(edit.path());
+            if (normalizedPath == null) {
+                report.append("Error: '").append(edit.path()).append("' is not an editable path (must be relative to the repo root, no '..', not in .git).\n");
+                continue;
+            }
+            String content = contents.get(normalizedPath);
+            if (content == null) {
+                try {
+                    content = new String(repositoryService.getFile(checkout, normalizedPath), StandardCharsets.UTF_8);
+                }
+                catch (IOException e) {
+                    report.append("Error: file '").append(edit.path()).append("' does not exist. Use listFiles to see the existing file paths.\n");
+                    continue;
+                }
+                contents.put(normalizedPath, content);
+            }
+            EditOutcome outcome = applySearchReplace(content, normalizedPath, edit.search(), edit.replace());
+            if (outcome.failed()) {
+                report.append("Error: ").append(outcome.error()).append('\n');
+                continue;
+            }
+            contents.put(normalizedPath, outcome.updatedContent());
+            changedPaths.add(normalizedPath);
+            appliedCount++;
+            report.append("applied.\n");
+        }
+        for (String path : changedPaths) {
+            try {
+                writeFileContent(checkout, path, contents.get(path));
+            }
+            catch (IOException e) {
+                report.append("Error: could not write '").append(path).append("': ").append(e.getMessage()).append('\n');
+            }
+        }
+        if (appliedCount > 0) {
+            markTouched(repositoryType);
+        }
+        report.append(appliedCount).append(" of ").append(edits.size()).append(" edit(s) applied to the ").append(repositoryType)
+                .append(" repository. Remember to run runBuild to verify your changes.");
+        return report.toString();
+    }
+
+    /**
+     * Applies a single search-and-replace to {@code content} without touching the repository, so both the
+     * single {@link #applyEdit} tool and the batch {@link #applyEdits} tool share one definition of a valid
+     * edit (unique-match requirement, error wording). Returns the updated content or a precise error.
+     */
+    private static EditOutcome applySearchReplace(String content, String path, String search, String replace) {
+        if (search == null || search.isEmpty()) {
+            return EditOutcome.error("the search text must not be empty for '" + path + "'.");
+        }
+        int firstIndex = content.indexOf(search);
+        if (firstIndex < 0) {
+            return EditOutcome.error("the search text was not found in '" + path + "'. Read the file again and use the exact current text.");
+        }
+        if (content.indexOf(search, firstIndex + 1) >= 0) {
+            return EditOutcome.error("the search text occurs more than once in '" + path + "'. Extend the search text so it matches exactly one occurrence.");
+        }
+        return EditOutcome.ok(content.substring(0, firstIndex) + replace + content.substring(firstIndex + search.length()));
+    }
+
+    /** Result of {@link #applySearchReplace}: either the updated content or a precise, model-facing error. */
+    private record EditOutcome(String updatedContent, String error) {
+
+        static EditOutcome ok(String updatedContent) {
+            return new EditOutcome(updatedContent, null);
+        }
+
+        static EditOutcome error(String error) {
+            return new EditOutcome(null, error);
+        }
+
+        boolean failed() {
+            return error != null;
         }
     }
 
