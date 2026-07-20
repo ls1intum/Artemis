@@ -1374,7 +1374,13 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
         classExercise.setPlagiarismDetectionConfig(storedConfig);
         classExercise = modelingExerciseTestRepository.save(classExercise);
 
+        // The graph fetches example submissions through the nested exampleSubmissions.submission.results path rather
+        // than listing them separately, so pin that they still reach the response.
+        String validModel = TestResourceUtils.loadFileFromResources("test-data/model-submission/model.54727.json");
+        participationUtilService.addExampleSubmission(participationUtilService.generateExampleSubmission(validModel, classExercise, true));
+
         var fetched = request.get("/api/modeling/modeling-exercises/" + classExercise.getId(), HttpStatus.OK, ModelingExerciseResponseDTO.class);
+        assertThat(fetched.exampleSubmissions()).as("the nested graph path must still load example submissions").hasSize(1);
         assertThat(fetched.plagiarismDetectionConfig()).as("the detail response must carry the stored plagiarism config").isNotNull();
         assertThat(fetched.plagiarismDetectionConfig().similarityThreshold()).isEqualTo(42);
         assertThat(fetched.plagiarismDetectionConfig().minimumScore()).isEqualTo(13);

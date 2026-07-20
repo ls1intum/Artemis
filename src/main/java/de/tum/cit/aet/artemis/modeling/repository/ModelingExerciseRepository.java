@@ -38,8 +38,9 @@ public interface ModelingExerciseRepository extends ArtemisJpaRepository<Modelin
 
     // plagiarismDetectionConfig is LAZY and open-in-view is off. The edit form reads it from this endpoint, so without
     // it here the response omits a stored config, the form falls back to its defaults, and the next save overwrites
-    // the instructor's settings.
-    @EntityGraph(type = LOAD, attributePaths = { "exampleSubmissions", "teamAssignmentConfig", "categories", "competencyLinks.competency", "exampleSubmissions.submission.results",
+    // the instructor's settings. The nested exampleSubmissions.submission.results path already fetches
+    // exampleSubmissions, so it is not listed on its own.
+    @EntityGraph(type = LOAD, attributePaths = { "teamAssignmentConfig", "categories", "competencyLinks.competency", "exampleSubmissions.submission.results",
             "plagiarismDetectionConfig" })
     Optional<ModelingExercise> findWithEagerExampleSubmissionsAndCompetenciesById(Long exerciseId);
 
