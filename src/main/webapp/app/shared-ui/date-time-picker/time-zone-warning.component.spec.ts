@@ -1,12 +1,9 @@
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { TimeZoneWarningComponent } from 'app/shared-ui/date-time-picker/time-zone-warning.component';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('TimeZoneWarningComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: TimeZoneWarningComponent;
     let fixture: ComponentFixture<TimeZoneWarningComponent>;
 

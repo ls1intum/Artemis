@@ -70,6 +70,7 @@ describe('ExamUpdateComponent', () => {
         beforeEach(() => {
             examWithoutExercises = new Exam();
             examWithoutExercises.id = 1;
+            examWithoutExercises.examMode = ExamMode.REAL;
             course = new Course();
             course.id = 1;
             course.courseInformationSharingConfiguration = CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING;
@@ -484,7 +485,6 @@ describe('ExamUpdateComponent', () => {
         });
 
         it('should toggle save button disabled state based on form validity and configuration validity', async () => {
-            const now = dayjs().startOf('minute');
             examWithoutExercises.visibleDate = dayjs().add(1, 'hours');
             examWithoutExercises.startDate = dayjs().add(2, 'hours');
             examWithoutExercises.endDate = dayjs().add(3, 'hours');
@@ -510,7 +510,7 @@ describe('ExamUpdateComponent', () => {
             expect(button.disabled()).toBe(false);
 
             // Step 2: Test case where the configuration is invalid
-            examWithoutExercises.startDate = now.add(5, 'hours');
+            component.examConductionValid.set(false);
             await refreshBinding();
 
             expect(component.isValidConfiguration).toBe(false);
@@ -518,8 +518,7 @@ describe('ExamUpdateComponent', () => {
             expect(button.disabled()).toBe(true);
 
             // Step 3: Test case where the configuration is valid again, but the form is invalid
-            examWithoutExercises.startDate = now.add(2, 'hours');
-            examWithoutExercises.endDate = now.add(3, 'hours');
+            component.examConductionValid.set(true);
             invalidSpy.mockReturnValue(true);
             await refreshBinding();
 
