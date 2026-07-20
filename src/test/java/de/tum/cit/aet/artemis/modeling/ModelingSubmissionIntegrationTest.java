@@ -264,6 +264,7 @@ class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCI
         ModelingSubmission submission = ParticipationFactory.generateModelingSubmission(emptyUseCaseModel, false);
         submission.setExplanationText("This is a use case diagram.");
         ModelingSubmissionResponseDTO returnedSubmission = performInitialModelSubmission(useCaseExercise.getId(), submission);
+        assertTeamParticipationOwners(returnedSubmission);
         modelingExerciseUtilService.checkModelingSubmissionCorrectlyStored(returnedSubmission.id(), emptyUseCaseModel);
 
         userUtilService.changeUser(TEST_PREFIX + "student1");
@@ -279,6 +280,7 @@ class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCI
         String validUseCaseModel = TestResourceUtils.loadFileFromResources("test-data/model-submission/use-case-model.json");
         returnedSubmission = performUpdateOnModelSubmission(useCaseExercise.getId(),
                 new ModelingSubmissionRequestDTO(returnedSubmission.id(), validUseCaseModel, returnedSubmission.explanationText(), true));
+        assertTeamParticipationOwners(returnedSubmission);
         modelingExerciseUtilService.checkModelingSubmissionCorrectlyStored(returnedSubmission.id(), validUseCaseModel);
         checkDetailsHidden(returnedSubmission, true);
 
@@ -291,6 +293,7 @@ class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCI
 
         returnedSubmission = performUpdateOnModelSubmission(useCaseExercise.getId(),
                 new ModelingSubmissionRequestDTO(returnedSubmission.id(), returnedSubmission.model(), returnedSubmission.explanationText(), returnedSubmission.submitted()));
+        assertTeamParticipationOwners(returnedSubmission);
         userUtilService.changeUser(TEST_PREFIX + "student2");
         Optional<SubmissionVersion> newVersion = submissionVersionRepository.findLatestVersion(returnedSubmission.id());
         assertThat(newVersion.orElseThrow().getId()).as("submission version was not created").isEqualTo(version.get().getId());
@@ -1205,6 +1208,13 @@ class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCI
 
     private static ModelingSubmissionRequestDTO toRequest(ModelingSubmission submission) {
         return new ModelingSubmissionRequestDTO(submission.getId(), submission.getModel(), submission.getExplanationText(), submission.isSubmitted());
+    }
+
+    private void assertTeamParticipationOwners(ModelingSubmissionResponseDTO response) {
+        assertThat(response.participation()).as("participation is present").isNotNull();
+        assertThat(response.participation().team()).as("team is present").isNotNull();
+        assertThat(response.participation().team().students()).as("team members are present").isNotNull();
+        assertThat(response.participation().team().students()).extracting(UserNameDTO::login).containsExactlyInAnyOrder(TEST_PREFIX + "student1", TEST_PREFIX + "student2");
     }
 
     private ModelingSubmissionResponseDTO performInitialModelSubmission(Long exerciseId, ModelingSubmission submission) throws Exception {

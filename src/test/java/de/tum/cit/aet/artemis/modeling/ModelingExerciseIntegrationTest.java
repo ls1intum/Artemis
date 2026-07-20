@@ -984,9 +984,32 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
     }
 
     private void testCourseAndExamFilters(String title) throws Exception {
-        modelingExerciseUtilService.addCourseWithOneModelingExercise(title);
-        examUtilService.addCourseExamExerciseGroupWithOneModelingExercise(title + "-Morpork");
+        Course course = modelingExerciseUtilService.addCourseWithOneModelingExercise(title);
+        ModelingExercise courseExercise = (ModelingExercise) course.getExercises().iterator().next();
+        ModelingExercise examExercise = examUtilService.addCourseExamExerciseGroupWithOneModelingExercise(title + "-Morpork");
         exerciseIntegrationTestService.testCourseAndExamFilters("/api/modeling/modeling-exercises", title);
+
+        var search = pageableSearchUtilService.configureSearch(title);
+        var result = request.getSearchResult("/api/modeling/modeling-exercises", HttpStatus.OK, ModelingExerciseListItemDTO.class, pageableSearchUtilService.searchMapping(search));
+        assertThat(result.getResultsOnPage()).hasSize(2);
+
+        ModelingExerciseListItemDTO courseResult = result.getResultsOnPage().stream().filter(exercise -> exercise.id().equals(courseExercise.getId())).findFirst().orElseThrow();
+        assertThat(courseResult.courseId()).as("course id is present for course exercises").isEqualTo(course.getId());
+        assertThat(courseResult.course()).as("source course is present for course exercises").isNotNull();
+        assertThat(courseResult.course().id()).isEqualTo(course.getId());
+        assertThat(courseResult.course().title()).isEqualTo(course.getTitle());
+        assertThat(courseResult.exerciseGroup()).as("course exercises have no exam marker").isNull();
+
+        ModelingExerciseListItemDTO examResult = result.getResultsOnPage().stream().filter(exercise -> exercise.id().equals(examExercise.getId())).findFirst().orElseThrow();
+        assertThat(examResult.courseId()).as("exam exercises use the nested source course").isNull();
+        assertThat(examResult.course()).as("source course is present for exam exercises").isNotNull();
+        assertThat(examResult.course().id()).isEqualTo(examExercise.getCourseViaExerciseGroupOrCourseMember().getId());
+        assertThat(examResult.course().title()).isEqualTo(examExercise.getCourseViaExerciseGroupOrCourseMember().getTitle());
+        assertThat(examResult.examId()).isEqualTo(examExercise.getExam().getId());
+        assertThat(examResult.exerciseGroup()).as("exam marker is present").isNotNull();
+        assertThat(examResult.exerciseGroup().id()).isEqualTo(examExercise.getExerciseGroup().getId());
+        assertThat(examResult.exerciseGroup().exam()).as("exam reference is present").isNotNull();
+        assertThat(examResult.exerciseGroup().exam().id()).isEqualTo(examExercise.getExam().getId());
     }
 
     @Test
