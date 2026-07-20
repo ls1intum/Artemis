@@ -68,16 +68,28 @@ public class AgentSystemPromptService {
                         and every task-bound behavioural test fails on the template (a structural check may already pass). Run `verify` once more. Submit only after `MECHANICAL PRECHECK: PASS`; authoritative post-loop verification determines save eligibility, and quality review may request repairs.
                         """
                 : """
-                        1. Read the primary source requirements, then inspect the current problem statement, `solution`, `template`, and `tests`. The exercise source and test roots are clean;
-                        preserve the supplied harness and build files.
-                        2. Before editing, trace every observable behavioral rule, boundary, and exceptional case to meaningful executable evidence. Trace learning objectives and scope to the
-                        statement and conceptual tasks; do not create one test or task per sentence. Choose only the minimal API and behavior needed by the source requirements.
-                        3. Call `verify` early to observe the initial state, exact reported test names, binding problems, and build failures.
-                        4. Implement the smallest coherent exercise requested by the source requirements. Re-run `verify` after meaningful changes. Its structured solution/template results and final verdict are the
-                        authoritative evidence; raw shell exit codes are only debugging aids.
-                        5. Before submission, compare statement promises with executable assertions in both directions, independently replay each worked example, and confirm the solution passes and
-                        every task-bound behavioural test fails on the template for its intended reason (a structural check may already pass). Keep routine files byte-identical; map every intentional solution/template diff hunk to a task. Remove
-                        abandoned sources and run `verify` once more. Submit only after `MECHANICAL PRECHECK: PASS`; authoritative post-loop verification determines save eligibility, and quality review may request repairs.
+                        Author the exercise in this dependency order — design, then solution, then the template derived from it, then differential tests, then the statement last —
+                        because each stage needs the previous stage's real output, not a guess: the exercise source and test roots are clean; preserve the supplied harness and build files.
+
+                        STAGE 0 — DESIGN FIRST: before touching any repository, write `/workspace/DESIGN.md` (workspace root only; never persisted into solution, template, or tests)
+                        with exactly these sections: `## Classes` (a table: name | role | given-complete-in-template | student-implements-stubbed | student-creates-absent-from-template),
+                        `## Public API` (signatures only), `## Tasks` (one row per task seam: task title, the test partitions that will grade it — e.g. typical / empty / boundary /
+                        invalid), `## Diagram` (yes/no + one-line why, per the diagram rule below). Choose the smallest design the source requirements support; do not create one test
+                        or task per sentence. Update DESIGN.md whenever a later stage forces a design change — it must always describe the final exercise truthfully.
+                        STAGE 1 — SOLUTION: implement the reference solution per DESIGN.md. Execute every worked example from the requirements against the real solution in the
+                        sandbox (a throwaway run under /tmp, never committed) and fix the SOLUTION or the EXAMPLE when they disagree — never patch code to match a wrong number.
+                        STAGE 2 — TEMPLATE: derive the template FROM the finished solution: copy it, then remove exactly the student work DESIGN.md marks stubbed or absent (stub
+                        bodies keep their Javadoc plus an in-body TODO and a placeholder throw; a student-created type is omitted entirely, with TODO breadcrumbs in the template
+                        files that collaborate with it) so the template still compiles. On every shared file, Javadoc and non-TODO comments stay byte-identical to the solution.
+                        STAGE 3 — TESTS: run `verify` first — it reports binding problems and the seeded structural check names once template and solution diverge. Author tests one
+                        partition at a time from DESIGN.md's task table, re-running `verify` after each test or small batch: it must pass on the solution and fail on the template
+                        for its intended reason (a structural check may already pass). For a student-created type, follow the reflection pattern the seeded reference/tests demonstrate
+                        (its ShippingCalculator test reaches a solution-only class via ReflectionTestUtils so the same test still compiles against the template). If a differential
+                        run exposes a solution or template defect, fix it there, re-check that stage's guarantees (examples still replay, docs still byte-identical), and record the
+                        change in DESIGN.md; rewrite DESIGN.md before continuing if the design itself proves wrong twice.
+                        STAGE 4 — STATEMENT: write the statement last, from DESIGN.md and the verified test names: one `[task]` line per DESIGN.md seam using the exact reported
+                        names, the public API presented once and compactly, a diagram only if DESIGN.md said yes. Then independently replay every worked example, run `verify` once
+                        more, and submit only after `MECHANICAL PRECHECK: PASS`; authoritative post-loop verification determines save eligibility, and quality review may request repairs.
                         """;
         String testSourceGuidance = mode == GenerationMode.ADAPT ? "Edit only exercise-specific test sources required by the feedback; preserve all others."
                 : "Replace only exercise-specific test source files.";

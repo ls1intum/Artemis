@@ -22,9 +22,11 @@ class AgentSystemPromptServiceTest {
 
     /**
      * Leaves headroom over the largest representative Java prompt (incl. the template-scaffold/diff-discipline, PlantUML/testsColor, student-created-type, and anti-grading-context
-     * rules) while preventing another unbounded failure-diary prompt.
+     * rules, plus the GENERATE-mode staged workflow: DESIGN.md schema, solution-example-replay, template-derived-from-solution, per-test differential verify, and
+     * statement-written-last) while preventing another unbounded failure-diary prompt. Bumped from 13_500 when the staged workflow rewrite pushed the largest configuration
+     * (Gradle with SCA) to ~14.5k chars.
      */
-    private static final int MAX_SYSTEM_PROMPT_CHARS = 13_500;
+    private static final int MAX_SYSTEM_PROMPT_CHARS = 15_000;
 
     // No LocalCI services -> the generic build fallback, enough to assert the build-context section renders.
     private final AgentSystemPromptService systemPromptService = new AgentSystemPromptService(new SandboxBuildCommandService(Optional.empty(), Optional.empty()));
@@ -167,7 +169,44 @@ class AgentSystemPromptServiceTest {
 
         assertThat(prompt).contains("Keep the public design proportional to the learning objective", "non-degenerate witnesses",
                 "one line per independently actionable student implementation seam", "One task is correct when the exercise has one coherent student implementation seam",
-                "Keep routine files byte-identical");
+                "byte-identical to the solution");
+    }
+
+    // GENERATE mode's grounded workflow is staged (design -> solution -> template -> differential tests -> statement) so each artifact is authored from the previous
+    // stage's real output rather than emerging in an arbitrary order.
+
+    @Test
+    void build_generateModeStagesDesignBeforeSolutionTemplateTestsAndStatement() {
+        String prompt = systemPromptService.build(exerciseWith(ProgrammingLanguage.JAVA, "")).replaceAll("\\s+", " ");
+
+        assertThat(prompt).contains("STAGE 0", "STAGE 1", "STAGE 2", "STAGE 3", "STAGE 4")
+                .contains("write `/workspace/DESIGN.md`", "never persisted into solution, template, or tests")
+                .contains("## Classes", "given-complete-in-template", "student-implements-stubbed", "student-creates-absent-from-template")
+                .contains("## Public API", "## Tasks", "## Diagram");
+    }
+
+    @Test
+    void build_generateModeReplaysExamplesAgainstTheRealSolutionAndDerivesTheTemplateFromIt() {
+        String prompt = systemPromptService.build(exerciseWith(ProgrammingLanguage.JAVA, "")).replaceAll("\\s+", " ");
+
+        assertThat(prompt).contains("Execute every worked example from the requirements against the real solution in the").contains("never patch code to match a wrong number")
+                .contains("derive the template FROM the finished solution");
+    }
+
+    @Test
+    void build_generateModeAuthorsTestsOnePartitionAtATimeWithPerTestDifferentialVerify() {
+        String prompt = systemPromptService.build(exerciseWith(ProgrammingLanguage.JAVA, "")).replaceAll("\\s+", " ");
+
+        assertThat(prompt).contains("run `verify` first").contains("partition at a time from DESIGN.md's task table").contains("re-running `verify` after each test or small batch")
+                .contains("fail on the template for its intended reason").contains("ShippingCalculator test reaches a solution-only class via ReflectionTestUtils");
+    }
+
+    @Test
+    void build_generateModeWritesTheStatementLastFromDesignAndVerifiedTestNames() {
+        String prompt = systemPromptService.build(exerciseWith(ProgrammingLanguage.JAVA, "")).replaceAll("\\s+", " ");
+
+        assertThat(prompt).contains("write the statement last, from DESIGN.md and the verified test names").contains("MECHANICAL PRECHECK: PASS")
+                .contains("post-loop verification determines save eligibility");
     }
 
     @Test
@@ -295,7 +334,7 @@ class AgentSystemPromptServiceTest {
         String prompt = systemPromptService.build(exerciseWith(ProgrammingLanguage.JAVA, ""));
 
         assertThat(prompt).contains("THE CONTRACT", "ARTEMIS TASK BINDINGS", "GROUNDED WORKFLOW", "SAFE TOOL USE")
-                .contains("[task][Short human title](exactTestNameA,exactTestNameB)", "throw new UnsupportedOperationException", "tests/pom.xml", "Call `verify` early")
+                .contains("[task][Short human title](exactTestNameA,exactTestNameB)", "throw new UnsupportedOperationException", "tests/pom.xml", "run `verify` first")
                 .contains("Use `verify` for builds", "Never run repository Gradle/Maven directly", "Build manifests, wrappers").doesNotContain("raw build and debugging commands");
     }
 
