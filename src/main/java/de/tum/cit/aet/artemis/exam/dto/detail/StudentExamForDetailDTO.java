@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.exam.dto.detail;
 import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Objects;
 
 import org.hibernate.Hibernate;
 
@@ -68,7 +69,7 @@ public record StudentExamForDetailDTO(long id, Integer workingTime, Boolean star
         boolean includeQuizSolutions = studentExam.isTestRun() || studentExam.areResultsPublishedYet();
         var entityExercises = studentExam.getExercises();
         List<ExamExerciseForConductionDTO> exercises = (entityExercises == null || !Hibernate.isInitialized(entityExercises)) ? null
-                : entityExercises.stream().map(exercise -> ExamExerciseForConductionDTO.of(exercise, includeQuizSolutions)).toList();
+                : entityExercises.stream().filter(Objects::nonNull).map(exercise -> ExamExerciseForConductionDTO.of(exercise, includeQuizSolutions)).toList();
         return new StudentExamForDetailDTO(studentExam.getId(), studentExam.getWorkingTime(), studentExam.isStarted(), studentExam.getStartedDate(), studentExam.isSubmitted(),
                 studentExam.getSubmissionDate(), studentExam.isTestRun(), studentExam.isEnded(), studentExam.isFinished(), studentExam.getCreatedDate(),
                 UserForDetailDTO.of(studentExam.getUser()), ExamForSummaryDTO.of(studentExam.getExam()), examSessions, exercises);
