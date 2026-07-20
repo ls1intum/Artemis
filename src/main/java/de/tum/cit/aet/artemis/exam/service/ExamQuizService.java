@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.exam.service;
 
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -65,7 +66,11 @@ public class ExamQuizService {
      */
     public void evaluateQuizParticipationsForTestRunAndTestExam(StudentExam studentExam) {
         log.debug("Evaluating quiz participations for test run/test exam for student exam with id {}", studentExam.getId());
-        final var participations = studentExam.getExercises().stream()
+        // StudentExam.exercises is an @OrderColumn list, so Hibernate materializes a null for every gap in
+        // exercise_order. This runs after the student exam was already marked submitted, and it is not wrapped in the
+        // caller's try/catch, so dereferencing such a gap would answer the hand-in with a 500 on an exam the student
+        // can no longer resubmit.
+        final var participations = studentExam.getExercises().stream().filter(Objects::nonNull)
                 .flatMap(exercise -> exercise.getStudentParticipations().stream().filter(participation -> participation.getExercise() instanceof QuizExercise))
                 .collect(Collectors.toSet());
         submittedAnswerRepository.loadQuizSubmissionsSubmittedAnswers(participations);

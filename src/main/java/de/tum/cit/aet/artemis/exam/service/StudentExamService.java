@@ -315,8 +315,13 @@ public class StudentExamService {
     }
 
     private void saveSubmissions(StudentExam studentExam, User currentUser) {
+        // StudentExam.exercises is an @OrderColumn list, so Hibernate materializes a null for every gap in
+        // exercise_order. A null passes an `instanceof` filter, so without the explicit null check the gap would reach
+        // the participation query below (which is not covered by the per-exercise catch) and cost every exercise its
+        // last-second changes.
+        var exercises = studentExam.getExercises().stream().filter(Objects::nonNull).toList();
         // we only need to save submissions for modeling, text and quiz exercises;
-        var relevantExercises = studentExam.getExercises().stream().filter(ex -> !(ex instanceof ProgrammingExercise) && !(ex instanceof FileUploadExercise)).toList();
+        var relevantExercises = exercises.stream().filter(ex -> !(ex instanceof ProgrammingExercise) && !(ex instanceof FileUploadExercise)).toList();
         if (relevantExercises.isEmpty()) {
             // nothing to save
             return;
@@ -324,7 +329,7 @@ public class StudentExamService {
         // 4. DB Call: read
         List<StudentParticipation> existingRelevantParticipations = studentParticipationRepository.findByStudentExamWithEagerSubmissions(studentExam, relevantExercises);
 
-        for (Exercise exercise : studentExam.getExercises()) {
+        for (Exercise exercise : exercises) {
             // we do not apply the following checks for programming exercises or file upload exercises
             try {
                 saveSubmission(currentUser, existingRelevantParticipations, exercise);

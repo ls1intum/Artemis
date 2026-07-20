@@ -2392,6 +2392,44 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
     }
 
     /**
+     * Submit-path counterpart to {@link StudentExamProjectionNullExerciseTest}, which pins only that the RESPONSE
+     * projections drop null exercises. {@code StudentExam.exercises} is an {@code @OrderColumn} list, so a hole in
+     * {@code exercise_order} materializes as a null element, and a null passes every {@code instanceof} filter on the
+     * submit path. {@code ExamQuizService.evaluateQuizParticipationsForTestRunAndTestExam} runs after the exam was
+     * already marked submitted and outside the caller's try/catch, so dereferencing the gap answered the hand-in with
+     * a 500 on an exam the student can no longer resubmit.
+     * <p>
+     * Asserts the hand-in returns 200 and that the quiz which survived the gap was still evaluated (it got a result).
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testSubmitTestRunWithNullExerciseGapSucceedsAndStillEvaluatesQuiz() throws Exception {
+        var testRun = createTestRun();
+        userUtilService.changeUser(TEST_PREFIX + "instructor1");
+        var testRunResponse = request.get("/api/exam/courses/" + course1.getId() + "/exams/" + testRunExam.getId() + "/test-runs/" + testRun.getId() + "/conduction", HttpStatus.OK,
+                StudentExam.class);
+        QuizExercise quizExercise = (QuizExercise) testRunResponse.getExercises().stream().filter(QuizExercise.class::isInstance).findFirst().orElseThrow();
+
+        // punch a hole into exercise_order: prepending a null shifts every real exercise up one index and leaves
+        // index 0 without a row, which is exactly how a gap loads back
+        StudentExam persisted = studentExamRepository.findWithExercisesById(testRun.getId()).orElseThrow();
+        List<Exercise> exercisesWithGap = new ArrayList<>(persisted.getExercises());
+        exercisesWithGap.addFirst(null);
+        persisted.setExercises(exercisesWithGap);
+        studentExamRepository.save(persisted);
+        assertThat(studentExamRepository.findWithExercisesById(testRun.getId()).orElseThrow().getExercises()).as("the fixture must really produce a null gap").containsNull();
+
+        request.postWithoutResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + testRunExam.getId() + "/student-exams/submit", testRunResponse, HttpStatus.OK, null);
+
+        assertThat(studentExamRepository.findById(testRun.getId()).orElseThrow().isSubmitted()).isTrue();
+        var quizParticipations = studentParticipationRepository.findByExerciseIdAndStudentIdWithEagerSubmissionsResultsAndFeedbacks(quizExercise.getId(),
+                userUtilService.getUserByLogin(TEST_PREFIX + "instructor1").getId());
+        assertThat(quizParticipations).as("the quiz that survived the gap must still have a participation").isNotEmpty();
+        assertThat(quizParticipations.stream().flatMap(participation -> participation.getSubmissions().stream()).flatMap(submission -> submission.getResults().stream()))
+                .as("the quiz that survived the gap must still have been evaluated").isNotEmpty();
+    }
+
+    /**
      * Pins the two student-facing programming fields on the live conduction wire.
      * <p>
      * {@code allowOnlineEditor} gates the embedded editor ({@code programming-exam-submission.component.html}) and the
