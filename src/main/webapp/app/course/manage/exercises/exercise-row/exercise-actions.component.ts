@@ -57,6 +57,8 @@ import { FileUploadExerciseService } from 'app/fileupload/manage/services/file-u
 import { QuizExerciseService } from 'app/quiz/manage/service/quiz-exercise.service';
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
 import { ModelingExerciseService } from 'app/modeling/manage/services/modeling-exercise.service';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { PROFILE_LOCALCI } from 'app/app.constants';
 
 /** The PrimeNG button severities the action buttons use. */
 type ActionSeverity = 'primary' | 'info' | 'success' | 'warn' | 'danger';
@@ -151,6 +153,9 @@ export class ExerciseActionsComponent {
     private readonly exerciseService = inject(ExerciseService);
     private readonly eventManager = inject(EventManager);
     private readonly translateService = inject(TranslateService);
+    private readonly profileService = inject(ProfileService);
+
+    private readonly localCIEnabled = this.profileService.isProfileActive(PROFILE_LOCALCI);
 
     private readonly menu = viewChild<Popover>('menu');
     /** The full-width action row; its width minus the quiz buttons is the budget for the collapsible main buttons. */
@@ -400,6 +405,21 @@ export class ExerciseActionsComponent {
     readonly hiddenActions = computed<ActionItem[]>(() => this.mainActions().filter((action) => this.hiddenIds().has(action.id)));
 
     readonly deletionSummary = computed<Observable<EntitySummary>>(() => this.exerciseService.getDeletionSummary(this.exercise()));
+
+    /**
+     * Cleanup checkboxes for the delete dialog. Programming exercises on external CI expose an opt-out for deleting
+     * the base/student repositories and build plans; under LocalCI the checks stay hidden so the server applies its
+     * defaults (the flags are then undefined and the delete request omits the query parameters).
+     */
+    readonly deleteAdditionalChecks = computed((): { [key: string]: string } => {
+        if (this.exercise().type !== ExerciseType.PROGRAMMING || this.localCIEnabled) {
+            return {};
+        }
+        return {
+            deleteStudentReposBuildPlans: 'artemisApp.programmingExercise.delete.studentReposBuildPlans',
+            deleteBaseReposBuildPlans: 'artemisApp.programmingExercise.delete.baseReposBuildPlans',
+        };
+    });
 
     /** Placeholders for the delete confirmation question (`{{ courseType }}` / `{{ courseTitle }}`). */
     readonly deleteTranslateValues = computed<{ [key: string]: unknown }>(() => {

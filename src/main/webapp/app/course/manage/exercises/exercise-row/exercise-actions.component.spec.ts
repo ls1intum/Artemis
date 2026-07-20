@@ -26,6 +26,9 @@ import { ProgrammingExerciseService } from 'app/programming/manage/services/prog
 import { ModelingExerciseService } from 'app/modeling/manage/services/modeling-exercise.service';
 import { EntitySummary } from 'app/shared-ui/delete-dialog/delete-dialog.model';
 import { DeleteDialogService } from 'app/shared-ui/delete-dialog/service/delete-dialog.service';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
+import { PROFILE_LOCALCI } from 'app/app.constants';
 
 @Component({ selector: 'jhi-quiz-exercise-lifecycle-buttons', template: '' })
 class QuizLifecycleButtonsStubComponent {
@@ -63,6 +66,7 @@ describe('ExerciseActionsComponent', () => {
                 MockProvider(ProgrammingExerciseService),
                 MockProvider(ModelingExerciseService),
                 MockProvider(DeleteDialogService),
+                { provide: ProfileService, useClass: MockProfileService },
             ],
         })
             .overrideComponent(ExerciseActionsComponent, {
@@ -414,6 +418,32 @@ describe('ExerciseActionsComponent', () => {
             component['onDelete']({ deleteStudentReposBuildPlans: true, deleteBaseReposBuildPlans: false });
 
             expect(deleteSpy).toHaveBeenCalledWith(4, true, false);
+        });
+
+        it('offers the repo/build-plan cleanup checks for programming exercises when LocalCI is inactive', () => {
+            fixture.componentRef.setInput('exercise', textExercise({ id: 4, type: ExerciseType.PROGRAMMING }));
+
+            expect(component.deleteAdditionalChecks()).toEqual({
+                deleteStudentReposBuildPlans: 'artemisApp.programmingExercise.delete.studentReposBuildPlans',
+                deleteBaseReposBuildPlans: 'artemisApp.programmingExercise.delete.baseReposBuildPlans',
+            });
+        });
+
+        it('hides the cleanup checks when LocalCI is active', () => {
+            const profileService = TestBed.inject(ProfileService);
+            vi.spyOn(profileService, 'isProfileActive').mockImplementation((profile) => profile === PROFILE_LOCALCI);
+            const localCIFixture = TestBed.createComponent(ExerciseActionsComponent);
+            localCIFixture.componentRef.setInput('exercise', textExercise({ id: 4, type: ExerciseType.PROGRAMMING }));
+            localCIFixture.componentRef.setInput('courseId', 1);
+            localCIFixture.componentRef.setInput('course', course);
+
+            expect(localCIFixture.componentInstance.deleteAdditionalChecks()).toEqual({});
+        });
+
+        it('offers no cleanup checks for non-programming exercises', () => {
+            fixture.componentRef.setInput('exercise', textExercise({ id: 3, type: ExerciseType.TEXT }));
+
+            expect(component.deleteAdditionalChecks()).toEqual({});
         });
 
         it('surfaces an error via dialogError$ when deletion fails', () => {
