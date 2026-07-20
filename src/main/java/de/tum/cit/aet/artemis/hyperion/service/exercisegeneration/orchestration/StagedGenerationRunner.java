@@ -31,6 +31,7 @@ import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.SandboxA
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.AgentVerifyReport;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.DifferentialVerificationService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.workspace.GenerationWorkspaceService;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.workspace.SandboxBuildCommandService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 
 /**
@@ -310,10 +311,15 @@ public class StagedGenerationRunner {
     }
 
     private GateResult checkCompileGate(InteractiveSandbox sandbox, String sessionId, String repositoryDirectory, String label) {
+        // A direct `mvn compile` in the workspace CANNOT work here: the sandbox mounts /root/.m2 read-only and has no network egress, so plugin resolution fails
+        // (observed live: "Read-only file system" then "Could not transfer artifact"). The pristine verify.sh is the only grader-faithful build path — it stages the
+        // workspace into a writable /tmp build dir with the pre-warmed repository. At the solution/template stages the test suite is still the empty stripped scaffold,
+        // so its exit code degenerates to exactly a compile check.
+        String repositorySelector = "solution".equals(repositoryDirectory) ? "solution" : "template";
         SandboxExecResult result;
         try {
             result = sandbox.exec(sessionId, COMPILE_TIMEOUT, "sh", "-c",
-                    "cd " + GenerationWorkspaceService.WORKSPACE + "/" + repositoryDirectory + " && mvn -B -q -DskipTests compile");
+                    "cd " + GenerationWorkspaceService.WORKSPACE + " && sh " + SandboxBuildCommandService.PRISTINE_VERIFY_PATH + " " + repositorySelector);
         }
         catch (RuntimeException e) {
             return GateResult.failed("Could not run the " + label + " compile check: " + e.getMessage());

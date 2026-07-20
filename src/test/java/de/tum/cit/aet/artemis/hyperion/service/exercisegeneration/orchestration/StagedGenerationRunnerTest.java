@@ -106,10 +106,10 @@ class StagedGenerationRunnerTest {
                 if (script.contains("find") && script.contains("head -80")) {
                     return new SandboxExecResult(0, layout, "", false);
                 }
-                if (script.contains("/solution") && script.contains("mvn")) {
+                if (script.contains("verify.sh solution")) {
                     return solutionCompileResult;
                 }
-                if (script.contains("/template") && script.contains("mvn")) {
+                if (script.contains("verify.sh template")) {
                     return templateCompileResult;
                 }
             }
