@@ -2450,6 +2450,37 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
      * {@code isCorrect} and {@code correctMappings} — rather than the presence of a "solutions" key.
      */
     /**
+     * Pins the configured exam metadata on the live conduction wire.
+     * <p>
+     * {@code moduleNumber}, {@code courseName} and {@code examiner} come straight off the {@code Exam} entity and are
+     * rendered by {@code ExamStartInformationComponent} (one information box each, on the exam cover) and
+     * {@code ExamGeneralInformationComponent} (the summary table). Both guard every field with a presence check, so a
+     * projection that drops them degrades silently: HTTP 200, no error, and the metadata the instructor configured
+     * simply never appears. {@code ExamForConductionDTO} is shared by the conduction, summary and detail payloads
+     * (the latter two through {@code ExamForSummaryDTO}'s {@code @JsonUnwrapped}), so this one wire covers all three.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testConductionWireCarriesExamMetadata() throws Exception {
+        StudentExam studentExam = prepareStudentExamsForConduction(false, true, 1).getFirst();
+        exam2.setModuleNumber("IN2000");
+        exam2.setCourseName("Introduction to Software Engineering");
+        exam2.setExaminer("Prof. Dr. Stephan Krusche");
+        exam2 = examRepository.save(exam2);
+
+        userUtilService.changeUser(TEST_PREFIX + "student1");
+        JsonNode conductionWire = request.get("/api/exam/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/" + studentExam.getId() + "/conduction",
+                HttpStatus.OK, JsonNode.class);
+
+        JsonNode examNode = conductionWire.get("exam");
+        assertThat(examNode).as("conduction wire must carry the exam").isNotNull();
+        assertThat(examNode.path("moduleNumber").asText()).as("moduleNumber must reach the exam cover").isEqualTo("IN2000");
+        assertThat(examNode.path("courseName").asText()).as("courseName must reach the exam cover").isEqualTo("Introduction to Software Engineering");
+        assertThat(examNode.path("examiner").asText()).as("examiner must reach the exam cover").isEqualTo("Prof. Dr. Stephan Krusche");
+        deleteExamWithInstructor(exam1);
+    }
+
+    /**
      * Pins that the conduction submission-policy projection resolves the concrete policy subtype through a real
      * Hibernate proxy, not only through the query-loaded instance the conduction path happens to attach.
      * <p>

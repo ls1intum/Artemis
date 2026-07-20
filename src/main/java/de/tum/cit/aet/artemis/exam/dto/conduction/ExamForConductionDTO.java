@@ -13,11 +13,17 @@ import de.tum.cit.aet.artemis.exam.dto.CourseForStudentExamDTO;
  * Carries the exam-level fields the exam-taking client reads to render the cover page, the working-time / date window
  * and the confirmation texts. The nested {@code course} is reduced to {@link CourseForStudentExamDTO} (course-access
  * group names); the conduction client rebuilds the full course from the route, so the slim course is sufficient there.
+ * <p>
+ * {@code moduleNumber}, {@code courseName} and {@code examiner} are the configured exam metadata:
+ * {@code ExamStartInformationComponent} builds an information box per field on the exam cover and
+ * {@code ExamGeneralInformationComponent} lists them on the summary. Both render each one only when it is present, so
+ * dropping them here removes them from the student's view on a 200 with no error.
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record ExamForConductionDTO(long id, String title, boolean testExam, boolean examWithAttendanceCheck, ZonedDateTime visibleDate, ZonedDateTime startDate,
-        ZonedDateTime endDate, Integer gracePeriod, int workingTime, String startText, String endText, String confirmationStartText, String confirmationEndText, int examMaxPoints,
-        Boolean randomizeExerciseOrder, Integer numberOfExercisesInExam, Integer numberOfCorrectionRoundsInExam, CourseForStudentExamDTO course) {
+public record ExamForConductionDTO(long id, String title, String moduleNumber, String courseName, String examiner, boolean testExam, boolean examWithAttendanceCheck,
+        ZonedDateTime visibleDate, ZonedDateTime startDate, ZonedDateTime endDate, Integer gracePeriod, int workingTime, String startText, String endText,
+        String confirmationStartText, String confirmationEndText, int examMaxPoints, Boolean randomizeExerciseOrder, Integer numberOfExercisesInExam,
+        Integer numberOfCorrectionRoundsInExam, CourseForStudentExamDTO course) {
 
     /**
      * Converts an Exam into an ExamForConductionDTO.
@@ -29,9 +35,9 @@ public record ExamForConductionDTO(long id, String title, boolean testExam, bool
         if (exam == null) {
             return null;
         }
-        return new ExamForConductionDTO(exam.getId(), exam.getTitle(), exam.isTestExam(), exam.isExamWithAttendanceCheck(), exam.getVisibleDate(), exam.getStartDate(),
-                exam.getEndDate(), exam.getGracePeriod(), exam.getWorkingTime(), exam.getStartText(), exam.getEndText(), exam.getConfirmationStartText(),
-                exam.getConfirmationEndText(), exam.getExamMaxPoints(), exam.getRandomizeExerciseOrder(), exam.getNumberOfExercisesInExam(),
-                exam.getNumberOfCorrectionRoundsInExam(), CourseForStudentExamDTO.of(exam.getCourse()));
+        return new ExamForConductionDTO(exam.getId(), exam.getTitle(), exam.getModuleNumber(), exam.getCourseName(), exam.getExaminer(), exam.isTestExam(),
+                exam.isExamWithAttendanceCheck(), exam.getVisibleDate(), exam.getStartDate(), exam.getEndDate(), exam.getGracePeriod(), exam.getWorkingTime(), exam.getStartText(),
+                exam.getEndText(), exam.getConfirmationStartText(), exam.getConfirmationEndText(), exam.getExamMaxPoints(), exam.getRandomizeExerciseOrder(),
+                exam.getNumberOfExercisesInExam(), exam.getNumberOfCorrectionRoundsInExam(), CourseForStudentExamDTO.of(exam.getCourse()));
     }
 }
