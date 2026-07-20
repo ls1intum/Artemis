@@ -12,6 +12,7 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import org.assertj.core.data.Offset;
 import org.junit.jupiter.api.BeforeEach;
@@ -31,12 +32,16 @@ import de.tum.cit.aet.artemis.assessment.domain.ComplaintType;
 import de.tum.cit.aet.artemis.assessment.domain.ExampleSubmission;
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.FeedbackType;
+import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
+import de.tum.cit.aet.artemis.assessment.domain.GradingInstruction;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.dto.AssessmentUpdateDTO;
 import de.tum.cit.aet.artemis.assessment.dto.FeedbackDTO;
+import de.tum.cit.aet.artemis.assessment.dto.GradingInstructionDTO;
 import de.tum.cit.aet.artemis.assessment.dto.ResultDTO;
 import de.tum.cit.aet.artemis.assessment.repository.ComplaintRepository;
 import de.tum.cit.aet.artemis.assessment.repository.FeedbackRepository;
+import de.tum.cit.aet.artemis.assessment.repository.GradingCriterionRepository;
 import de.tum.cit.aet.artemis.assessment.service.AssessmentService;
 import de.tum.cit.aet.artemis.assessment.test_repository.ComplaintResponseTestRepository;
 import de.tum.cit.aet.artemis.assessment.test_repository.ExampleSubmissionTestRepository;
@@ -105,6 +110,9 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationIndepen
 
     @Autowired
     private FeedbackRepository feedbackRepository;
+
+    @Autowired
+    private GradingCriterionRepository gradingCriterionRepository;
 
     @Autowired
     private ModelingExerciseUtilService modelingExerciseUtilService;
@@ -1122,6 +1130,35 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationIndepen
         assertThatDb(
                 () -> request.putWithResponseBody(API_MODELING_SUBMISSIONS + submission.getId() + "/results/" + stored.id() + "/assessment", body, ResultDTO.class, HttpStatus.OK))
                 .hasBeenCalledAtMostTimes(50);
+    }
+
+    /**
+     * Performance guard: saving feedbacks that reference many distinct grading instructions must issue one batch lookup, not
+     * one query per feedback item.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void testSaveModelingAssessment_manyStructuredFeedbacks_hasBoundedQueryCount() throws Exception {
+        // Persist 5 grading instructions across 3 criteria on the exercise.
+        Set<GradingCriterion> criteria = exerciseUtilService.addGradingInstructionsToExercise(classExercise);
+        gradingCriterionRepository.saveAll(criteria);
+        List<GradingInstruction> instructions = criteria.stream().flatMap(c -> c.getStructuredGradingInstructions().stream()).toList();
+        assertThat(instructions).isNotEmpty();
+
+        ModelingSubmission submission = modelingExerciseUtilService.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.54727.json",
+                TEST_PREFIX + "student2");
+
+        // 12 feedbacks, each referencing a distinct instruction (cycling through the 5 available ones).
+        List<FeedbackDTO> structuredFeedbackDtos = new ArrayList<>();
+        for (int i = 0; i < 12; i++) {
+            GradingInstruction instruction = instructions.get(i % instructions.size());
+            GradingInstructionDTO gradingInstructionDto = GradingInstructionDTO.of(instruction);
+            structuredFeedbackDtos.add(new FeedbackDTO(null, null, "detail " + i, false, null, 1.0, null, FeedbackType.MANUAL_UNREFERENCED, null, gradingInstructionDto));
+        }
+
+        // One batch query for grading instructions; the count must not grow with the number of feedbacks.
+        assertThatDb(() -> request.putWithResponseBody(API_MODELING_SUBMISSIONS + submission.getId() + "/results/0/assessment",
+                new ModelingAssessmentDTO(structuredFeedbackDtos, "text"), ResultDTO.class, HttpStatus.OK)).hasBeenCalledAtMostTimes(50);
     }
 
     /**

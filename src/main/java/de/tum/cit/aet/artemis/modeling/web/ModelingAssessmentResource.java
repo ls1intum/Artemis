@@ -251,8 +251,8 @@ public class ModelingAssessmentResource extends AssessmentResource {
 
     /**
      * Maps a list of {@link FeedbackDTO} to transient {@link Feedback} entities, setting only the allowed scalar fields.
-     * For feedbacks that reference a grading instruction, the managed {@link GradingInstruction} is loaded by id and attached
-     * (never a detached graph).
+     * All distinct grading instruction IDs referenced by the incoming DTOs are loaded in a single batch query before
+     * the per-item mapping loop, so the conversion stays constant-query for large assessments.
      *
      * @param feedbackDTOs the DTOs received from the client (may be {@code null})
      * @return the mapped list, never {@code null}
@@ -278,10 +278,18 @@ public class ModelingAssessmentResource extends AssessmentResource {
                     .collect(Collectors.toMap(longFeedback -> longFeedback.getFeedback().getId(), LongFeedbackText::getText, (first, second) -> first));
         }
 
-        return feedbackDTOs.stream().map(dto -> feedbackFromDto(dto, storedFeedbacksById, storedLongTextsById)).collect(Collectors.toCollection(ArrayList::new));
+        List<Long> gradingInstructionIds = feedbackDTOs.stream().filter(dto -> dto.gradingInstruction() != null && dto.gradingInstruction().id() != null)
+                .map(dto -> dto.gradingInstruction().id()).distinct().toList();
+        Map<Long, GradingInstruction> gradingInstructionsById = gradingInstructionIds.isEmpty() ? Map.of()
+                : gradingInstructionRepository.findAllById(gradingInstructionIds).stream()
+                        .collect(Collectors.toMap(GradingInstruction::getId, instruction -> instruction, (first, second) -> first));
+
+        return feedbackDTOs.stream().map(dto -> feedbackFromDto(dto, storedFeedbacksById, storedLongTextsById, gradingInstructionsById))
+                .collect(Collectors.toCollection(ArrayList::new));
     }
 
-    private Feedback feedbackFromDto(final FeedbackDTO dto, Map<Long, Feedback> storedFeedbacksById, Map<Long, String> storedLongTextsById) {
+    private Feedback feedbackFromDto(final FeedbackDTO dto, Map<Long, Feedback> storedFeedbacksById, Map<Long, String> storedLongTextsById,
+            Map<Long, GradingInstruction> gradingInstructionsById) {
         final Feedback feedback = new Feedback();
         // Preserve the id so an existing feedback is matched (not recreated) on re-save; the long-feedback persistence
         // and cleanup paths (ResultService) key on feedback id.
@@ -294,7 +302,12 @@ public class ModelingAssessmentResource extends AssessmentResource {
         feedback.setPositive(dto.positive());
         feedback.setVisibility(dto.visibility());
         if (dto.gradingInstruction() != null && dto.gradingInstruction().id() != null) {
-            final GradingInstruction gradingInstruction = gradingInstructionRepository.findByIdElseThrow(dto.gradingInstruction().id());
+            final Long instructionId = dto.gradingInstruction().id();
+            // Preserves the not-found semantics of the previous findByIdElseThrow call; any ID not in the batch is absent.
+            final GradingInstruction gradingInstruction = gradingInstructionsById.get(instructionId);
+            if (gradingInstruction == null) {
+                throw new EntityNotFoundException("GradingInstruction", instructionId);
+            }
             feedback.setGradingInstruction(gradingInstruction);
         }
         return feedback;
