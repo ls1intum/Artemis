@@ -36,7 +36,7 @@
                     }
                 </h4>
                 @if (competency()?.description) {
-                    <p class="m-0 markdown-preview" [innerHTML]="competency()?.description | htmlForMarkdown"></p>
+                    <p class="m-0 markdown-preview" [jhiMarkdown]="competency()?.description"></p>
                 }
                 @if (isPrerequisite() && competency()?.linkedCourseCompetency?.course) {
                     <div>

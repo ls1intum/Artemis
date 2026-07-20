@@ -75,7 +75,7 @@ class SpringContextConfigurationArchitectureTest extends AbstractArchitectureTes
      */
     private static final String[] ALLOWED_EXCEPTION_CLASSES = {
             // Redis-specific configuration requires a separate context
-            "RedissonDistributedDataTest", "UserOIDCIntegrationTest" };
+            "RedissonDistributedDataTest" };
 
     /**
      * Ensures that no test classes outside the allowed base classes use {@code @MockitoSpyBean}.
