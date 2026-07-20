@@ -109,7 +109,27 @@ class HyperionProblemStatementGenerationServiceTest {
         assertThat(promptText).contains("Do not invent boundary or invalid-input behavior");
         assertThat(promptText).contains("A normal domain case must not become invalid merely because it exercises a boundary");
         assertThat(promptText).contains("Check every worked example against every stated rule before returning the draft");
+        assertThat(promptText).contains("deliberately avoid the domains that textbooks and tutorials most often use");
+        assertThat(promptText).contains("Do not end with a summary or recap section");
         assertThat(promptText).doesNotContain("instructor-decisions section", "Instructor Decisions Before Final Generation");
+    }
+
+    @Test
+    void generateProblemStatement_usesElevatedSamplingTemperatureForTheCreativeDraftStage() {
+        String draft = "# Rover\n\nA fine draft.";
+        when(chatModel.call(any(Prompt.class))).thenAnswer(_ -> new ChatResponse(List.of(new Generation(new AssistantMessage(draft)))));
+
+        var course = new Course();
+        course.setTitle("Test Course");
+        course.setDescription("Test Description");
+
+        hyperionProblemStatementGenerationService.generateProblemStatement(course, "Create a Java exercise about rover movement");
+
+        ArgumentCaptor<Prompt> promptCaptor = ArgumentCaptor.forClass(Prompt.class);
+        verify(chatModel).call(promptCaptor.capture());
+        // The draft is the creative stage: elevated temperature counters domain mode collapse; the agent loop and critic keep the deployment default.
+        // The ChatClient merges the request options into the model's options type, so assert the temperature on the ChatOptions contract rather than a concrete class.
+        assertThat(promptCaptor.getValue().getOptions().getTemperature()).isEqualTo(0.7);
     }
 
     @Test

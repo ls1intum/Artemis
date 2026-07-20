@@ -210,6 +210,9 @@ public class DifferentialVerificationService {
         List<String> solutionLeakReasons = ExerciseIntegrityGate.solutionLeakReasons(request.producedTemplateFiles(), request.producedSolutionFiles());
         boolean noSolutionLeak = solutionLeakReasons.isEmpty();
         reasons.addAll(solutionLeakReasons);
+        List<String> gradingContextSniffingReasons = ExerciseIntegrityGate.gradingContextSniffingReasons(request.producedTemplateFiles(), request.producedSolutionFiles());
+        boolean noGradingContextSniffing = gradingContextSniffingReasons.isEmpty();
+        reasons.addAll(gradingContextSniffingReasons);
         List<String> javaAresConventionReasons = exercise.getProgrammingLanguage() == ProgrammingLanguage.JAVA
                 ? ExerciseIntegrityGate.javaAresConventionReasons(request.seedTestsFiles(), request.producedTestsFiles(), request.adaptation())
                 : List.of();
@@ -230,8 +233,8 @@ public class DifferentialVerificationService {
         boolean noAdaptWipe = adaptWipeReasons.isEmpty();
         reasons.addAll(adaptWipeReasons);
 
-        boolean mechanicallyVerified = analysis.actionableGatesPass() && harnessIntact && noSolutionLeak && javaAresConventionsHold && javaSourceLayoutIntact && extractionSound
-                && noAdaptWipe;
+        boolean mechanicallyVerified = analysis.actionableGatesPass() && harnessIntact && noSolutionLeak && noGradingContextSniffing && javaAresConventionsHold
+                && javaSourceLayoutIntact && extractionSound && noAdaptWipe;
         if (!mechanicallyVerified) {
             log.info(
                     "Differential verification failed: solution[{}], template[{}], actionableGatesPass={}, harnessIntact={}, noSolutionLeak={}, "

@@ -106,6 +106,9 @@ public class AgentSystemPromptService {
                 satisfied by the template (an existing class/method/attribute/constructor shape) MAY still pass; that is intentional starter credit, never an excuse for a
                 behavioural test to pass. Preserve the solution's public API with readable stubs, preferably a TODO followed by
                 `throw new UnsupportedOperationException("Not implemented")`; a returned placeholder is valid only if every test rejects it. Never leak solution logic or grader-defeating hints.
+                A stub fails the same way for every caller: template and solution code must never inspect stack traces, test names, or any grading context to change behavior — the
+                verifier rejects that outright. If a member cannot be stubbed without cascading failures (constructors, shared plumbing), provide it implemented in the template and
+                do not bind a behavioural test to it; that is intentional starter credit (rule 5).
                 3. Run the same meaningful tests against solution and template. Cover central behaviour, representative boundaries, state transitions, and stated errors. Use
                 non-degenerate witnesses that distinguish plausible wrong implementations. Do not use @DisplayName because Artemis binds reported method names.
                 4. Every observable statement promise needs executable evidence, and every behavioural assertion a stated rule. Preserve pedagogical objectives that black-box tests cannot prove;

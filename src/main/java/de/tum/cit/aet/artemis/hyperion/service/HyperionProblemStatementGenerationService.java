@@ -15,6 +15,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.model.ChatResponse;
+import org.springframework.ai.openai.OpenAiChatOptions;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -39,6 +40,18 @@ public class HyperionProblemStatementGenerationService {
     private static final Logger log = LoggerFactory.getLogger(HyperionProblemStatementGenerationService.class);
 
     private static final String GENERATION_PIPELINE_ID = "HYPERION_PROBLEM_GENERATION";
+
+    /**
+     * Draft generation is the creative stage of the pipeline: the instructor reviews and edits the result, so determinism matters less than variety. A deliberately higher
+     * sampling temperature counters the mode collapse observed with the deployment default (repeated briefs converging on the same textbook domain). The agent loop and the
+     * critic keep the deployment's precise defaults.
+     */
+    private static final double DRAFT_TEMPERATURE = 0.7;
+
+    /** Fresh builder per call: the ChatClient consumes a mutable options builder. */
+    private static OpenAiChatOptions.Builder draftOptions() {
+        return OpenAiChatOptions.builder().temperature(DRAFT_TEMPERATURE);
+    }
 
     private static final String HYGIENE_REPAIR_INSTRUCTION = """
 
@@ -106,7 +119,7 @@ public class HyperionProblemStatementGenerationService {
         ChatResponse chatResponse;
         String generatedProblemStatement;
         try {
-            chatResponse = chatClient.prompt().system(systemPrompt).user(userMessage).call().chatResponse();
+            chatResponse = chatClient.prompt().system(systemPrompt).user(userMessage).options(draftOptions()).call().chatResponse();
             generatedProblemStatement = LLMTokenUsageService.extractResponseText(chatResponse);
         }
         catch (Exception e) {
@@ -132,7 +145,7 @@ public class HyperionProblemStatementGenerationService {
         catch (InternalServerErrorAlertException hygieneFailure) {
             log.info("Generated draft problem statement failed hygiene checks for course [{}]; retrying once with repair instructions", course.getId());
             try {
-                chatResponse = chatClient.prompt().system(systemPrompt + HYGIENE_REPAIR_INSTRUCTION).user(userMessage).call().chatResponse();
+                chatResponse = chatClient.prompt().system(systemPrompt + HYGIENE_REPAIR_INSTRUCTION).user(userMessage).options(draftOptions()).call().chatResponse();
                 generatedProblemStatement = cleanGeneratedProblemStatement(LLMTokenUsageService.extractResponseText(chatResponse));
             }
             catch (Exception e) {

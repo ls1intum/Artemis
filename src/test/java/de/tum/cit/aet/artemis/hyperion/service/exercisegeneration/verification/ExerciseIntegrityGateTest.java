@@ -719,6 +719,38 @@ class ExerciseIntegrityGateTest {
         assertThat(ExerciseIntegrityGate.solutionLeakReasons(map("a", SOLUTION_EXERCISE_HS), Map.of())).isEmpty();
     }
 
+    // --- Grading-context sniffing gate ---
+
+    @Test
+    void sniffing_rejectsATemplateStubThatSensesTheCallingTestViaTheStackTrace() {
+        // Observed live: a template constructor walked Thread.currentThread().getStackTrace() and threw only when the bound test's method name was on the stack — faking
+        // "fails on the template" for exactly one test while behaving implemented everywhere else.
+        String gamedStub = "public class Processor {\n    Processor() {\n        for (StackTraceElement e : Thread.currentThread().getStackTrace()) {\n"
+                + "            if (\"testConstruction\".equals(e.getMethodName())) { throw new UnsupportedOperationException(); }\n        }\n    }\n}\n";
+        var reasons = ExerciseIntegrityGate.gradingContextSniffingReasons(map("src/Processor.java", gamedStub), map("src/Processor.java", "public class Processor {}\n"));
+        assertThat(reasons).hasSize(1);
+        assertThat(reasons.getFirst()).contains("inspect the grading context").contains("src/Processor.java").contains("must fail the same way for every caller");
+    }
+
+    @Test
+    void sniffing_rejectsStackWalkerUseInTheSolution() {
+        String walker = "public class Sneaky {\n    void check() { StackWalker.getInstance().walk(frames -> null); }\n}\n";
+        var reasons = ExerciseIntegrityGate.gradingContextSniffingReasons(map("src/Ok.java", "public class Ok {}\n"), map("src/Sneaky.java", walker));
+        assertThat(reasons).hasSize(1);
+        assertThat(reasons.getFirst()).contains("src/Sneaky.java");
+    }
+
+    @Test
+    void sniffing_acceptsOrdinaryExceptionHandlingAndCleanStubs() {
+        // e.printStackTrace() and exception.getStackTrace() are ordinary exercise code, not grading-context introspection; only Thread.currentThread().getStackTrace and
+        // StackWalker are the gaming vectors.
+        String honest = "public class Calc {\n    int add(int a, int b) {\n        try { return a + b; } catch (RuntimeException e) { e.printStackTrace(); throw e; }\n    }\n"
+                + "    void log(Exception e) { StackTraceElement[] frames = e.getStackTrace(); }\n}\n";
+        assertThat(ExerciseIntegrityGate.gradingContextSniffingReasons(map("src/Calc.java", honest), map("src/Calc.java", honest))).isEmpty();
+        assertThat(ExerciseIntegrityGate.gradingContextSniffingReasons(Map.of(), Map.of())).isEmpty();
+        assertThat(ExerciseIntegrityGate.gradingContextSniffingReasons(null, null)).isEmpty();
+    }
+
     // --- Residue strip ---
 
     @Test

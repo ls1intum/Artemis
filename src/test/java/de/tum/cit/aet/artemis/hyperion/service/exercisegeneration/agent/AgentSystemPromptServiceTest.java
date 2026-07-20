@@ -20,8 +20,11 @@ import de.tum.cit.aet.artemis.programming.domain.ProjectType;
 /** Unit tests for generation prompting and the production Java capability contract. */
 class AgentSystemPromptServiceTest {
 
-    /** Leaves headroom over the largest representative Java prompt (incl. the template-scaffold/diff-discipline rules) while preventing another unbounded failure-diary prompt. */
-    private static final int MAX_SYSTEM_PROMPT_CHARS = 12_000;
+    /**
+     * Leaves headroom over the largest representative Java prompt (incl. the template-scaffold/diff-discipline, PlantUML/testsColor, student-created-type, and anti-grading-context
+     * rules) while preventing another unbounded failure-diary prompt.
+     */
+    private static final int MAX_SYSTEM_PROMPT_CHARS = 13_500;
 
     // No LocalCI services -> the generic build fallback, enough to assert the build-context section renders.
     private final AgentSystemPromptService systemPromptService = new AgentSystemPromptService(new SandboxBuildCommandService(Optional.empty(), Optional.empty()));

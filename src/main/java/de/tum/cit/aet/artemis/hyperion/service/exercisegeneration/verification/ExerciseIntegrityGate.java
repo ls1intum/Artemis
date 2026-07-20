@@ -704,6 +704,38 @@ public final class ExerciseIntegrityGate {
                 + ". The template ships to students, so it must contain only unimplemented placeholders, never a copy of the solution. Replace these with placeholder bodies.");
     }
 
+    /** Grading-context introspection a produced assignment source must never contain: a stub that senses its caller can fake "fails on the template" per test. */
+    private static final Pattern GRADING_CONTEXT_SNIFFING = Pattern.compile("Thread\\s*\\.\\s*currentThread\\s*\\(\\s*\\)\\s*\\.\\s*getStackTrace|StackWalker");
+
+    /**
+     * Rejects produced template/solution sources that inspect the grading context (stack traces, stack walking) to change behavior per caller. A template stub gamed this way can
+     * fail exactly the bound test while behaving implemented everywhere else, subverting the fails-on-template contract in code that ships to students. Fails open on empty input.
+     *
+     * @param templateFiles the produced TEMPLATE repository files (repository-relative)
+     * @param solutionFiles the produced SOLUTION repository files (repository-relative)
+     * @return one reason naming the offending files, or empty when clean
+     */
+    static List<String> gradingContextSniffingReasons(Map<String, String> templateFiles, Map<String, String> solutionFiles) {
+        List<String> offendingPaths = new ArrayList<>();
+        for (Map<String, String> files : List.of(templateFiles == null ? Map.<String, String>of() : templateFiles,
+                solutionFiles == null ? Map.<String, String>of() : solutionFiles)) {
+            for (Map.Entry<String, String> entry : files.entrySet()) {
+                if (isLeakIgnoredFile(entry.getKey()) || offendingPaths.contains(entry.getKey())) {
+                    continue;
+                }
+                if (entry.getValue() != null && GRADING_CONTEXT_SNIFFING.matcher(entry.getValue()).find()) {
+                    offendingPaths.add(entry.getKey());
+                }
+            }
+        }
+        if (offendingPaths.isEmpty()) {
+            return List.of();
+        }
+        return List.of("these template/solution files inspect the grading context (stack traces / StackWalker) to change behavior per caller: " + offendingPaths
+                + ". A starter stub must fail the same way for every caller. If a member cannot be stubbed without cascading failures (constructors, shared plumbing), implement it"
+                + " in the template and do not bind a behavioural test to it.");
+    }
+
     /**
      * Whether a file is excluded from the solution-leak comparison: orphan residue, a build/harness/manifest file (covered by the harness gate), or a dotfile that is legitimately
      * identical between template and solution and contains no answer.
