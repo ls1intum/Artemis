@@ -35,6 +35,7 @@ import java.util.stream.Collectors;
 import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.revwalk.RevCommit;
+import org.hibernate.Hibernate;
 import org.jspecify.annotations.NonNull;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -52,6 +53,8 @@ import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.test.context.TestSecurityContextHolder;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -85,6 +88,7 @@ import de.tum.cit.aet.artemis.exam.dto.ExamChecklistDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamUpdateDTO;
 import de.tum.cit.aet.artemis.exam.dto.StudentExamDTO;
 import de.tum.cit.aet.artemis.exam.dto.StudentExamWithGradeDTO;
+import de.tum.cit.aet.artemis.exam.dto.conduction.SubmissionPolicyForConductionDTO;
 import de.tum.cit.aet.artemis.exam.dto.examevent.ExamAttendanceCheckEventDTO;
 import de.tum.cit.aet.artemis.exam.dto.examevent.ExamLiveEventBaseDTO;
 import de.tum.cit.aet.artemis.exam.dto.examevent.ExamWideAnnouncementEventDTO;
@@ -219,6 +223,9 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
 
     @Autowired
     private GradingScaleUtilService gradingScaleUtilService;
+
+    @Autowired
+    private PlatformTransactionManager transactionManager;
 
     private User student1;
 
@@ -2442,6 +2449,43 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
      * its {@code dragItems}. The assertion therefore checks the fields that actually reveal the answer — multiple-choice
      * {@code isCorrect} and {@code correctMappings} — rather than the presence of a "solutions" key.
      */
+    /**
+     * Pins that the conduction submission-policy projection resolves the concrete policy subtype through a real
+     * Hibernate proxy, not only through the query-loaded instance the conduction path happens to attach.
+     * <p>
+     * {@code SubmissionPolicyForConductionDTO.of} derives the client's {@code type} discriminator with a {@code switch}
+     * pattern match over {@link LockRepositoryPolicy} / {@link SubmissionPenaltyPolicy}. With a plain Hibernate proxy
+     * that match would fail — the proxy would extend only the abstract base — and the student would silently lose the
+     * policy display on a 200. It holds here because {@link SubmissionPolicy} is annotated {@code @ConcreteProxy}, so
+     * Hibernate proxies the concrete subtype. This test is the guard on that annotation: delete {@code @ConcreteProxy}
+     * and this fails, which is the signal to unproxy in the factory instead.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testSubmissionPolicyProjectionResolvesConcreteTypeThroughHibernateProxy() {
+        Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
+        ProgrammingExercise programmingExercise = (ProgrammingExercise) course.getExercises().stream().findFirst().orElseThrow();
+        LockRepositoryPolicy policy = new LockRepositoryPolicy();
+        policy.setActive(true);
+        policy.setSubmissionLimit(3);
+        programmingExerciseUtilService.addSubmissionPolicyToExercise(policy, programmingExercise);
+
+        // open-in-view is off, so the lazy association is only proxyable inside an explicit transaction
+        new TransactionTemplate(transactionManager).executeWithoutResult(status -> {
+            ProgrammingExercise reloaded = (ProgrammingExercise) exerciseRepository.findById(programmingExercise.getId()).orElseThrow();
+            SubmissionPolicy lazyPolicy = reloaded.getSubmissionPolicy();
+            assertThat(lazyPolicy.getClass()).as("fixture must be a Hibernate proxy, otherwise this test does not cover the proxy path").isNotEqualTo(LockRepositoryPolicy.class);
+            Hibernate.initialize(lazyPolicy);
+            assertThat(Hibernate.isInitialized(lazyPolicy)).isTrue();
+
+            var dto = SubmissionPolicyForConductionDTO.of(lazyPolicy);
+            assertThat(dto).as("an initialized proxy must still project").isNotNull();
+            assertThat(dto.type()).as("the discriminator the client's SubmissionPolicyType switches on must survive the proxy").isEqualTo("lock_repository");
+            assertThat(dto.submissionLimit()).isEqualTo(3);
+            assertThat(dto.active()).isTrue();
+        });
+    }
+
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testTestRunConductionWireServesQuizSolutions() throws Exception {
