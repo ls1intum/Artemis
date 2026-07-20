@@ -39,8 +39,8 @@
                                 [icon]="faRobot"
                                 class="flex-shrink-0"
                                 role="img"
-                                [attr.aria-label]="'artemisApp.result.resultString.automaticAIFeedbackSuccessfulTooltip' | artemisTranslate"
-                                [pTooltip]="'artemisApp.result.resultString.automaticAIFeedbackSuccessfulTooltip' | artemisTranslate"
+                                [attr.aria-label]="getAthenaFeedbackTooltip(result) | artemisTranslate"
+                                [pTooltip]="getAthenaFeedbackTooltip(result) | artemisTranslate"
                             />
                         }
                         <span class="fw-bold text-truncate" style="font-size: 12px" [class]="getResultColorClass(result)">{{ getResultFeedbackMessage(result) }}</span>

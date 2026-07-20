@@ -48,7 +48,13 @@ describe('ResultHistoryDropdownComponent', () => {
                 const translateService = TestBed.inject(TranslateService);
                 translateService.setTranslation('en', {
                     artemisApp: {
-                        result: { resultString: { automaticAIFeedbackSuccessfulTooltip: 'AI-based feedback can include mistakes. Consider checking important information.' } },
+                        result: {
+                            resultString: {
+                                automaticAIFeedbackSuccessfulTooltip: 'AI-based feedback can include mistakes. Consider checking important information.',
+                                automaticAIFeedbackFailedTooltip: 'AI feedback generation failed.',
+                                automaticAIFeedbackInProgressTooltip: 'AI feedback is being generated.',
+                            },
+                        },
                     },
                 });
                 translateService.use('en');
@@ -204,6 +210,7 @@ describe('ResultHistoryDropdownComponent', () => {
         it('should render an accessible indicator for Athena results', () => {
             const result = createResult(1, 50);
             result.assessmentType = AssessmentType.AUTOMATIC_ATHENA;
+            result.successful = true;
             fixture.componentRef.setInput('sortedHistoryResults', [result]);
             fixture.detectChanges();
 
@@ -213,6 +220,34 @@ describe('ResultHistoryDropdownComponent', () => {
             const indicator = document.querySelector<HTMLElement>('[data-testid="ai-feedback-indicator"]');
             expect(indicator).toBeTruthy();
             expect(indicator?.getAttribute('aria-label')).toBe('AI-based feedback can include mistakes. Consider checking important information.');
+        });
+
+        it('should use the failed tooltip for failed Athena results', () => {
+            const result = createResult(1, 50);
+            result.assessmentType = AssessmentType.AUTOMATIC_ATHENA;
+            result.successful = false;
+            fixture.componentRef.setInput('sortedHistoryResults', [result]);
+            fixture.detectChanges();
+
+            component.resultsPopover()?.show(new Event('click'));
+            fixture.detectChanges();
+
+            const indicator = document.querySelector<HTMLElement>('[data-testid="ai-feedback-indicator"]');
+            expect(indicator?.getAttribute('aria-label')).toBe('AI feedback generation failed.');
+        });
+
+        it('should use the in-progress tooltip for Athena results still being generated', () => {
+            const result = createResult(1, 50);
+            result.assessmentType = AssessmentType.AUTOMATIC_ATHENA;
+            result.successful = undefined;
+            fixture.componentRef.setInput('sortedHistoryResults', [result]);
+            fixture.detectChanges();
+
+            component.resultsPopover()?.show(new Event('click'));
+            fixture.detectChanges();
+
+            const indicator = document.querySelector<HTMLElement>('[data-testid="ai-feedback-indicator"]');
+            expect(indicator?.getAttribute('aria-label')).toBe('AI feedback is being generated.');
         });
 
         it('should not render an indicator for normal automatic results', () => {

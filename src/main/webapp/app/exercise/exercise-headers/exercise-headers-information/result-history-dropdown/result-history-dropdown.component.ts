@@ -14,7 +14,15 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { TranslateService } from '@ngx-translate/core';
 import { Badge, ResultService } from 'app/exercise/result/result.service';
-import { MissingResultInformation, evaluateTemplateStatus, getResultIconClass, getTextColorClass, isAthenaAIResult } from 'app/exercise/result/result.utils';
+import {
+    MissingResultInformation,
+    evaluateTemplateStatus,
+    getResultIconClass,
+    getTextColorClass,
+    isAIResultAndFailed,
+    isAIResultAndTimedOut,
+    isAthenaAIResult,
+} from 'app/exercise/result/result.utils';
 import { DialogService } from 'primeng/dynamicdialog';
 import { NavigationEnd, Router } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -176,6 +184,19 @@ export class ResultHistoryDropdownComponent {
             return '';
         }
         return this.resultService.getResultString(result, this.exercise(), participation, false);
+    }
+
+    getAthenaFeedbackTooltip(result: Result): string {
+        if (isAIResultAndFailed(result)) {
+            return 'artemisApp.result.resultString.automaticAIFeedbackFailedTooltip';
+        }
+        if (isAIResultAndTimedOut(result)) {
+            return 'artemisApp.result.resultString.automaticAIFeedbackTimedOutTooltip';
+        }
+        if (result.successful === undefined) {
+            return 'artemisApp.result.resultString.automaticAIFeedbackInProgressTooltip';
+        }
+        return 'artemisApp.result.resultString.automaticAIFeedbackSuccessfulTooltip';
     }
 
     getResultFeedbackMessage(result: Result): string {
