@@ -314,6 +314,10 @@ export class ExerciseVariantAiModalWizardComponent implements OnDestroy {
                 if (monitorId) {
                     this.openInMonitorMode(monitorId);
                 } else {
+                    // A regular open always starts fresh: if a previous run was left in the background (the modal
+                    // was hidden mid-generation without resetting), reopening must show a new step-1 wizard, not
+                    // that job's progress — the running job stays tracked by the navbar tray.
+                    this.resetToFreshWizard();
                     this.loadSourceGroup();
                 }
             });
@@ -326,15 +330,12 @@ export class ExerciseVariantAiModalWizardComponent implements OnDestroy {
 
     /**
      * Closing the dialog while generation is running must not cancel it (close ≠ cancel): the job continues
-     * server-side, the tray keeps tracking it, and reopening the modal re-attaches via the job-detail endpoint.
-     * Explicit cancellation is a separate action behind a confirmation.
+     * server-side and the navbar tray keeps tracking it. The wizard resets to a fresh step-1 state on close, so
+     * reopening "Create Variant with AI" starts a new generation rather than showing the running one — running
+     * jobs are monitored from the tray. Explicit cancellation is a separate action behind a confirmation.
      */
     onClose(visible: boolean): void {
         if (visible) return;
-        if (this.wizardStep() === 4 && this.isRunning()) {
-            this.visibleChange.emit(false);
-            return;
-        }
         this.close();
     }
 
@@ -384,8 +385,18 @@ export class ExerciseVariantAiModalWizardComponent implements OnDestroy {
     }
 
     close(): void {
-        // Deliberately does NOT cancel a running job and does not detach the tray — only this modal's local
-        // event subscription is released; the service keeps its own subscription for the tray state.
+        this.resetToFreshWizard();
+        this.visibleChange.emit(false);
+    }
+
+    /**
+     * Resets the wizard back to a clean step-1 state (job state, form selections, placement).
+     * Deliberately does NOT cancel a running job and does not detach the tray — only this modal's local event
+     * subscription is released; the service keeps its own subscription for the tray state. Called both when the
+     * modal closes and when it (re)opens for a fresh generation, so clicking "Create Variant with AI" always
+     * starts a NEW generation even while another variant of the same exercise is still running in the background.
+     */
+    private resetToFreshWizard(): void {
         this.eventsSubscription?.unsubscribe();
         this.eventsSubscription = undefined;
         this.wizardStep.set(1);
@@ -405,7 +416,6 @@ export class ExerciseVariantAiModalWizardComponent implements OnDestroy {
         this.narrativeStyle.set('TECHNICAL');
         this.changeCustom.set(false);
         this.additionalInstructions.set('');
-        this.visibleChange.emit(false);
     }
 
     /** Starts the real backend job — intents by field presence, no title input. */

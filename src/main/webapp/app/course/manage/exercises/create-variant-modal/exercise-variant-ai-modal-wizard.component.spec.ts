@@ -1,7 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TranslateService } from '@ngx-translate/core';
-import { of } from 'rxjs';
+import { NEVER, of } from 'rxjs';
 import { MockPipe } from 'ng-mocks';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ExerciseVariantAiModalWizardComponent } from 'app/course/manage/exercises/create-variant-modal/exercise-variant-ai-modal-wizard.component';
@@ -20,8 +19,6 @@ import { QuizExercise, QuizMode } from 'app/quiz/shared/entities/quiz-exercise.m
  * too-easy exam exercise and delete the easy one afterwards.
  */
 describe('ExerciseVariantAiModalWizardComponent (exam path)', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<ExerciseVariantAiModalWizardComponent>;
     let component: ExerciseVariantAiModalWizardComponent;
     let generationServiceMock: {
@@ -125,8 +122,6 @@ describe('ExerciseVariantAiModalWizardComponent (exam path)', () => {
  * timeline), which would silently leave a group holding only the variant — so the option must not be offered.
  */
 describe('ExerciseVariantAiModalWizardComponent (new-group placement availability)', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<ExerciseVariantAiModalWizardComponent>;
     let component: ExerciseVariantAiModalWizardComponent;
     let groupServiceMock: { getGroupsForCourse: ReturnType<typeof vi.fn> };
@@ -231,8 +226,6 @@ describe('ExerciseVariantAiModalWizardComponent (new-group placement availabilit
  * narrative" (server-side default), so the request must carry the style only when the card is selected.
  */
 describe('ExerciseVariantAiModalWizardComponent (storytelling)', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<ExerciseVariantAiModalWizardComponent>;
     let component: ExerciseVariantAiModalWizardComponent;
     let generationServiceMock: { startGeneration: ReturnType<typeof vi.fn> };
@@ -326,8 +319,6 @@ describe('ExerciseVariantAiModalWizardComponent (storytelling)', () => {
  * instructor debugging a job that failed twice and then succeeded needs the earlier errors, not just the last.
  */
 describe('ExerciseVariantAiModalWizardComponent (step-output history)', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<ExerciseVariantAiModalWizardComponent>;
     let component: ExerciseVariantAiModalWizardComponent;
 
@@ -401,5 +392,80 @@ describe('ExerciseVariantAiModalWizardComponent (step-output history)', () => {
         component['recordStepOutput']('VERIFYING', { summary: 'second', detail: 'second detail' });
 
         expect(component.stepOutputs()['VERIFYING'].map((output) => output.summary)).toEqual(['first', 'second']);
+    });
+});
+
+/**
+ * Parallel generation: several variants of the same exercise may be generated at once. Reopening "Create Variant
+ * with AI" after starting a generation (and hiding the modal to let it run in the background) must present a fresh
+ * step-1 wizard for a NEW generation — not the running job's progress, which is monitored from the navbar tray.
+ */
+describe('ExerciseVariantAiModalWizardComponent (fresh reopen for parallel generation)', () => {
+    let fixture: ComponentFixture<ExerciseVariantAiModalWizardComponent>;
+    let component: ExerciseVariantAiModalWizardComponent;
+
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
+            imports: [ExerciseVariantAiModalWizardComponent],
+            providers: [
+                {
+                    provide: ExerciseVariantGenerationService,
+                    useValue: {
+                        startGeneration: vi.fn().mockReturnValue(of('job-1')),
+                        // Never emits, so the job stays "running" at step 4 after start.
+                        jobEvents: vi.fn().mockReturnValue(NEVER),
+                        getJobDetail: vi.fn().mockReturnValue(of({ job: undefined, stepOutputs: {}, request: undefined })),
+                        cancelJob: vi.fn().mockReturnValue(of(undefined)),
+                    },
+                },
+                { provide: ExerciseVariantGroupService, useValue: { getGroupsForCourse: vi.fn().mockReturnValue(of([])) } },
+                { provide: ExerciseService, useValue: { find: vi.fn().mockReturnValue(of({ body: undefined })) } },
+                {
+                    provide: TranslateService,
+                    useValue: { instant: (key: string) => key, get: (key: string) => of(key), onLangChange: of(), onTranslationChange: of(), onDefaultLangChange: of() },
+                },
+            ],
+        })
+            .overrideComponent(ExerciseVariantAiModalWizardComponent, {
+                remove: { imports: [ArtemisTranslatePipe] },
+                add: { imports: [MockPipe(ArtemisTranslatePipe, (key) => key)] },
+            })
+            .compileComponents();
+
+        fixture = TestBed.createComponent(ExerciseVariantAiModalWizardComponent);
+        component = fixture.componentInstance;
+        fixture.componentRef.setInput('sourceExercise', { id: 1, title: 'Sorting', type: ExerciseType.PROGRAMMING } as Exercise);
+        fixture.componentRef.setInput('courseId', 7);
+        fixture.componentRef.setInput('visible', true);
+        fixture.detectChanges();
+    });
+
+    afterEach(() => {
+        fixture.destroy();
+        TestBed.resetTestingModule();
+    });
+
+    it('opens a fresh step-1 wizard when reopened while a background generation of the same exercise runs', () => {
+        // Start a generation and let it run: the wizard sits on the running view (step 4) with a job attached.
+        component.changeDomain.set(true);
+        component.domainText.set('space');
+        component.startGeneration();
+        fixture.detectChanges();
+        expect(component.wizardStep()).toBe(4);
+        expect(component.jobId()).toBe('job-1');
+        expect(component.isRunning()).toBe(true);
+
+        // Hide the modal to run in the background (job keeps running), then reopen via the button.
+        component.onClose(false);
+        fixture.componentRef.setInput('visible', false);
+        fixture.detectChanges();
+        fixture.componentRef.setInput('visible', true);
+        fixture.detectChanges();
+
+        // Fresh wizard: step 1, no attached job, form cleared — ready to start a second parallel generation.
+        expect(component.wizardStep()).toBe(1);
+        expect(component.jobId()).toBeUndefined();
+        expect(component.changeDomain()).toBe(false);
+        expect(component.domainText()).toBe('');
     });
 });
