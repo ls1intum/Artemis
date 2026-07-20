@@ -1,7 +1,7 @@
 import { Page } from 'playwright';
 import { expect } from '@playwright/test';
 import { Post } from 'app/communication/shared/entities/post.model';
-import { setMonacoEditorContentByLocator } from '../../utils';
+import { readResponseJson, setMonacoEditorContentByLocator } from '../../utils';
 
 /**
  * A class which encapsulates UI selectors and actions for the course communication page.
@@ -174,7 +174,7 @@ export class CourseCommunicationPage {
         const responsePromise = this.page.waitForResponse(`api/communication/courses/*/answer-messages`);
         await this.getSinglePost(postID).locator('.new-reply-inline-input #save').click();
         const response = await responsePromise;
-        return response.json();
+        return readResponseJson(response);
     }
 
     /**

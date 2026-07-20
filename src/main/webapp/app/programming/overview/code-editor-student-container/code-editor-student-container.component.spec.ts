@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CodeEditorStudentContainerComponent } from 'app/programming/overview/code-editor-student-container/code-editor-student-container.component';
 import { ResultService } from 'app/exercise/result/result.service';
@@ -16,8 +15,6 @@ import { ActivatedRoute } from '@angular/router';
 import { SubmissionPolicy } from 'app/exercise/shared/entities/submission/submission-policy.model';
 
 describe('CodeEditorStudentContainerComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let comp: CodeEditorStudentContainerComponent;
     let fixture: ComponentFixture<CodeEditorStudentContainerComponent>;
 

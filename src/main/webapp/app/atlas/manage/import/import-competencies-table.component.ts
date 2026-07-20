@@ -8,12 +8,12 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { NgTemplateOutlet } from '@angular/common';
 import { PaginatorModule, PaginatorState } from 'primeng/paginator';
-import { HtmlForMarkdownPipe } from 'app/foundation/pipes/html-for-markdown.pipe';
+import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
 
 @Component({
     selector: 'jhi-import-competencies-table',
     templateUrl: './import-competencies-table.component.html',
-    imports: [SortDirective, SortByDirective, FaIconComponent, TranslateDirective, NgTemplateOutlet, PaginatorModule, HtmlForMarkdownPipe],
+    imports: [SortDirective, SortByDirective, FaIconComponent, TranslateDirective, NgTemplateOutlet, PaginatorModule, MarkdownDirective],
 })
 export class ImportCompetenciesTableComponent {
     content = input.required<SearchResult<Competency>>();

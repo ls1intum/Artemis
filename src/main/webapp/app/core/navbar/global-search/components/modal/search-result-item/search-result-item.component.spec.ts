@@ -1,17 +1,14 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { SearchResultItemComponent } from './search-result-item.component';
-import { GlobalSearchResult } from 'app/openapi/model/globalSearchResult';
+import { GlobalSearchResult } from 'app/openapi/model/global-search-result';
 import { faCube } from '@fortawesome/free-solid-svg-icons';
 import { MockPipe } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('SearchResultItemComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: SearchResultItemComponent;
     let fixture: ComponentFixture<SearchResultItemComponent>;
 
@@ -88,7 +85,7 @@ describe('SearchResultItemComponent', () => {
         expect(spy).toHaveBeenCalledWith(component.result());
     });
 
-    it('should not render an active anchor for markdown links in description', () => {
+    it('should not render an active anchor for markdown links in description', async () => {
         fixture.componentRef.setInput('result', {
             id: '1',
             title: 'Graph BFS Shortest Path',
@@ -105,8 +102,11 @@ describe('SearchResultItemComponent', () => {
         const descriptionEl: HTMLElement = fixture.nativeElement.querySelector('.result-description');
         expect(descriptionEl).toBeTruthy();
 
-        // The link text should be visible
-        expect(descriptionEl.textContent).toContain('docs');
+        // The link text should be visible (markdown is rendered asynchronously via the lazy [jhiMarkdown] directive).
+        await vi.waitFor(() => {
+            fixture.detectChanges();
+            expect(descriptionEl.textContent).toContain('docs');
+        });
 
         // But no <a> element should be present
         const anchor = descriptionEl.querySelector('a');

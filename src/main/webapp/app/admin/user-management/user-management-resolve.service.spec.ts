@@ -4,7 +4,6 @@
  */
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { of } from 'rxjs';
 import { ActivatedRouteSnapshot } from '@angular/router';
 
@@ -13,8 +12,6 @@ import { User } from 'app/account/user/user.model';
 import { AdminUserService } from 'app/account/user/shared/admin-user.service';
 
 describe('UserManagementResolve', () => {
-    setupTestBed({ zoneless: true });
-
     let adminUserService: AdminUserService;
     let resolve: UserManagementResolve;
 

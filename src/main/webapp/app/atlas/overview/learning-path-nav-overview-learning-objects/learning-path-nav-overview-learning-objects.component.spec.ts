@@ -8,10 +8,8 @@ import { LearningPathNavOverviewLearningObjectsComponent } from 'app/atlas/overv
 import { LearningObjectType, LearningPathNavigationObjectDTO } from 'app/atlas/shared/entities/learning-path.model';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { MockAlertService } from 'test/helpers/mocks/service/mock-alert.service';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('LearningPathNavOverviewLearningObjectsComponent', () => {
-    setupTestBed({ zoneless: true });
     let component: LearningPathNavOverviewLearningObjectsComponent;
     let fixture: ComponentFixture<LearningPathNavOverviewLearningObjectsComponent>;
     let learningPathApiService: LearningPathApiService;

@@ -1,13 +1,11 @@
 import { vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { TranslateModule } from '@ngx-translate/core';
+import { provideTranslateService } from '@ngx-translate/core';
 import { DebugElement } from '@angular/core';
 import { TableEditableCheckboxComponent } from 'app/shared-ui/table/editable-checkbox/table-editable-checkbox.component';
 
 describe('TableEditableFieldComponent', () => {
-    setupTestBed({ zoneless: true });
     let comp: TableEditableCheckboxComponent;
     let fixture: ComponentFixture<TableEditableCheckboxComponent>;
     let debugElement: DebugElement;
@@ -16,7 +14,8 @@ describe('TableEditableFieldComponent', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [TranslateModule.forRoot()],
+            imports: [],
+            providers: [provideTranslateService()],
         })
             .compileComponents()
             .then(() => {

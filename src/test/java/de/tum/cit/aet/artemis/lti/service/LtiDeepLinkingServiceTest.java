@@ -41,6 +41,7 @@ import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseTestRepository;
+import de.tum.cit.aet.artemis.iris.api.IrisSettingsApi;
 import de.tum.cit.aet.artemis.lecture.api.LectureRepositoryApi;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lti.config.Lti13TokenRetriever;
@@ -60,6 +61,9 @@ class LtiDeepLinkingServiceTest {
     LectureRepositoryApi lectureRepositoryApi;
 
     @Mock
+    private IrisSettingsApi irisSettingsApi;
+
+    @Mock
     private Lti13TokenRetriever tokenRetriever;
 
     private LtiDeepLinkingService ltiDeepLinkingService;
@@ -73,7 +77,7 @@ class LtiDeepLinkingServiceTest {
         closeable = MockitoAnnotations.openMocks(this);
         oidcIdToken = mock(OidcIdToken.class);
         SecurityContextHolder.clearContext();
-        ltiDeepLinkingService = new LtiDeepLinkingService(courseRepository, exerciseRepository, Optional.of(lectureRepositoryApi), tokenRetriever);
+        ltiDeepLinkingService = new LtiDeepLinkingService(courseRepository, exerciseRepository, Optional.of(lectureRepositoryApi), Optional.of(irisSettingsApi), tokenRetriever);
         ReflectionTestUtils.setField(ltiDeepLinkingService, "artemisServerUrl", "http://artemis.com");
     }
 
@@ -182,16 +186,27 @@ class LtiDeepLinkingServiceTest {
     }
 
     @Test
-    void testMissingIrisDashboardThrowsException() throws MalformedURLException, URISyntaxException {
+    void testIrisNotEnabledThrowsException() throws MalformedURLException, URISyntaxException {
         createMockOidcIdToken();
-        Course course = createMockCourse();
-        course.setStudentCourseAnalyticsDashboardEnabled(false);
-        when(courseRepository.findById(anyLong())).thenReturn(Optional.of(course));
+        when(irisSettingsApi.isIrisEnabledForCourse(anyLong())).thenReturn(false);
 
         assertThatExceptionOfType(BadRequestAlertException.class)
                 .isThrownBy(() -> ltiDeepLinkingService.performDeepLinking(oidcIdToken, "test_registration_id", 1L, null, DeepLinkingType.IRIS))
-                .withMessage("Course Analytics Dashboard not activated")
-                .matches(exception -> "LTI".equals(exception.getEntityName()) && "noCourseAnalyticsDashboard".equals(exception.getErrorKey()));
+                .withMessage("Iris is not enabled for this course")
+                .matches(exception -> "LTI".equals(exception.getEntityName()) && "irisNotEnabled".equals(exception.getErrorKey()));
+    }
+
+    @Test
+    void testIrisDeepLinkingThrowsWhenIrisModuleAbsent() throws MalformedURLException, URISyntaxException {
+        createMockOidcIdToken();
+        LtiDeepLinkingService serviceWithoutIris = new LtiDeepLinkingService(courseRepository, exerciseRepository, Optional.of(lectureRepositoryApi), Optional.empty(),
+                tokenRetriever);
+        ReflectionTestUtils.setField(serviceWithoutIris, "artemisServerUrl", "http://artemis.com");
+
+        assertThatExceptionOfType(BadRequestAlertException.class)
+                .isThrownBy(() -> serviceWithoutIris.performDeepLinking(oidcIdToken, "test_registration_id", 1L, null, DeepLinkingType.IRIS))
+                .withMessage("Iris is not enabled for this course")
+                .matches(exception -> "LTI".equals(exception.getEntityName()) && "irisNotEnabled".equals(exception.getErrorKey()));
     }
 
     @Test
@@ -251,12 +266,9 @@ class LtiDeepLinkingServiceTest {
         createMockOidcIdToken();
         when(tokenRetriever.createDeepLinkingJWT(anyString(), anyMap())).thenReturn("test_jwt");
 
-        Course course = createMockCourse();
+        when(irisSettingsApi.isIrisEnabledForCourse(anyLong())).thenReturn(true);
 
-        course.setStudentCourseAnalyticsDashboardEnabled(true);
-        when(courseRepository.findById(course.getId())).thenReturn(Optional.of(course));
-
-        String deepLinkResponse = ltiDeepLinkingService.performDeepLinking(oidcIdToken, "test_registration_id", course.getId(), null, DeepLinkingType.IRIS);
+        String deepLinkResponse = ltiDeepLinkingService.performDeepLinking(oidcIdToken, "test_registration_id", 1L, null, DeepLinkingType.IRIS);
 
         assertThat(deepLinkResponse).isNotNull();
         assertThat(deepLinkResponse).contains("test_jwt");
@@ -323,17 +335,6 @@ class LtiDeepLinkingServiceTest {
 
         assertThat(deepLinkResponse).isNotNull();
         assertThat(deepLinkResponse).contains("test_jwt");
-    }
-
-    @Test
-    void testPerformDeepLinkingWithInvalidCourseId() throws MalformedURLException, URISyntaxException {
-        createMockOidcIdToken();
-        when(courseRepository.findById(anyLong())).thenReturn(Optional.empty());
-
-        assertThatExceptionOfType(BadRequestAlertException.class)
-                .isThrownBy(() -> ltiDeepLinkingService.performDeepLinking(oidcIdToken, "test_registration_id", 1L, null, DeepLinkingType.IRIS))
-                .withMessage("Course Analytics Dashboard not activated")
-                .matches(exception -> "LTI".equals(exception.getEntityName()) && "noCourseAnalyticsDashboard".equals(exception.getErrorKey()));
     }
 
     private void createMockOidcIdToken() throws MalformedURLException, URISyntaxException {
