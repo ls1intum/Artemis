@@ -331,6 +331,15 @@ describe('ModelingExerciseUpdateComponent', () => {
                 expect(comp.isSaving()).toBe(false);
             });
 
+            it('should synchronize the current unsaved model for assessment criteria generation', () => {
+                const currentModel = { elements: { unsaved: true }, relationships: {}, version: '3.0.0' };
+                Object.defineProperty(comp, 'modelingEditor', { value: () => ({ getCurrentModel: () => currentModel }) });
+
+                comp.synchronizeForAssessmentCriteriaGeneration();
+
+                expect(comp.modelingExercise.exampleSolutionModel).toBe(JSON.stringify(currentModel));
+            });
+
             it('should show backend error alert and reset saving state on save error', async () => {
                 const error = new HttpErrorResponse({
                     error: {

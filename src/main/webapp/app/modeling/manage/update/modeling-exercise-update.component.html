@@ -195,7 +195,13 @@
         </div>
         <div class="form-group" (keydown)="onMarkdownEditorKeydown($event)">
             <label class="form-control-label" jhiTranslate="artemisApp.exercise.assessmentInstructions" for="gradingInstructions"></label>
-            <jhi-grading-instructions-details id="gradingInstructions" [exercise]="modelingExercise" />
+            <jhi-grading-instructions-details
+                id="gradingInstructions"
+                [exercise]="modelingExercise"
+                [editable]="!isSaving()"
+                [synchronizeExercise]="synchronizeForAssessmentCriteriaGeneration"
+                (criteriaGenerated)="editForm.form.markAsDirty()"
+            />
         </div>
     </div>
     <jhi-form-footer

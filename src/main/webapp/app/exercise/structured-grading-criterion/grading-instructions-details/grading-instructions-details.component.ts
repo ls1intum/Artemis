@@ -1,9 +1,9 @@
-import { AfterContentInit, Component, Injector, OnInit, afterNextRender, inject, input, signal, viewChild, viewChildren } from '@angular/core';
+import { AfterContentInit, Component, DestroyRef, Injector, OnInit, afterNextRender, inject, input, output, signal, viewChild, viewChildren } from '@angular/core';
 import { GradingCriterion } from 'app/exercise/structured-grading-criterion/grading-criterion.model';
 import { GradingInstruction } from 'app/exercise/structured-grading-criterion/grading-instruction.model';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { cloneDeep } from 'lodash-es';
-import { faPlus, faTrash, faUndo } from '@fortawesome/free-solid-svg-icons';
+import { faPlus, faSpinner, faTrash, faUndo } from '@fortawesome/free-solid-svg-icons';
 import { TextEditorDomainAction } from 'app/editor/monaco-editor/model/actions/text-editor-domain-action.model';
 import { GradingCreditsAction } from 'app/editor/monaco-editor/model/actions/grading-criteria/grading-credits.action';
 import { GradingScaleAction } from 'app/editor/monaco-editor/model/actions/grading-criteria/grading-scale.action';
@@ -20,25 +20,87 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { MODULE_FEATURE_HYPERION } from 'app/app.constants';
+import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { AssessmentCriteriaGenerationService } from 'app/exercise/structured-grading-criterion/assessment-criteria-generation.service';
+import { AlertService } from 'app/foundation/service/alert.service';
+import { onError } from 'app/foundation/util/global.utils';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { finalize } from 'rxjs';
+import { ButtonDirective } from 'primeng/button';
+import { ConfirmDialogModule } from 'primeng/confirmdialog';
+import { ConfirmationService } from 'primeng/api';
+import { TooltipModule } from 'primeng/tooltip';
+import { TranslateService } from '@ngx-translate/core';
+import { facArtemisIntelligence } from 'app/foundation/icons/icons';
 
 @Component({
     selector: 'jhi-grading-instructions-details',
     templateUrl: './grading-instructions-details.component.html',
     styleUrls: ['./grading-instructions-details.component.scss'],
-    imports: [NgClass, TranslateDirective, FormsModule, FaIconComponent, HelpIconComponent, NgbTooltip, MarkdownEditorMonacoComponent, ArtemisTranslatePipe],
+    imports: [
+        NgClass,
+        TranslateDirective,
+        FormsModule,
+        FaIconComponent,
+        HelpIconComponent,
+        NgbTooltip,
+        MarkdownEditorMonacoComponent,
+        ArtemisTranslatePipe,
+        ButtonDirective,
+        ConfirmDialogModule,
+        TooltipModule,
+    ],
+    providers: [ConfirmationService],
 })
 export class GradingInstructionsDetailsComponent implements OnInit, AfterContentInit {
     private injector = inject(Injector);
+    private readonly profileService = inject(ProfileService);
+    private readonly generationService = inject(AssessmentCriteriaGenerationService);
+    private readonly alertService = inject(AlertService);
+    private readonly confirmationService = inject(ConfirmationService);
+    private readonly translateService = inject(TranslateService);
+    private readonly destroyRef = inject(DestroyRef);
 
     private readonly markdownEditors = viewChildren<MarkdownEditorMonacoComponent>('markdownEditors');
     private readonly markdownEditor = viewChild.required<MarkdownEditorMonacoComponent>('markdownEditor');
     readonly exercise = input.required<Exercise>();
+    readonly editable = input(true);
+    readonly synchronizeExercise = input<() => void>(() => undefined);
+    readonly criteriaGenerated = output<void>();
     private instructions: GradingInstruction[] = [];
     private readonly criteria = signal<GradingCriterion[]>(undefined!);
 
     backupExercise!: Exercise; // set in ngOnInit() as a deep clone of the exercise() input before any edit-restore reads it
     readonly markdownEditorText = signal('');
     readonly showEditMode = signal<boolean>(undefined!);
+    readonly isGenerating = signal(false);
+    readonly hyperionEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_HYPERION);
+    canShowGenerationButton(): boolean {
+        const exercise = this.exercise();
+        const course = exercise.course ?? exercise.exerciseGroup?.exam?.course;
+        const supportedExercise = exercise.type === ExerciseType.TEXT || exercise.type === ExerciseType.MODELING;
+        return this.hyperionEnabled && supportedExercise && this.editable() && !!(exercise.isAtLeastEditor || course?.isAtLeastEditor);
+    }
+
+    generationDisabledReason(): string | undefined {
+        const exercise = this.exercise();
+        if (!exercise.problemStatement?.trim()) {
+            return 'artemisApp.exercise.assessmentCriteriaGeneration.disabledProblemStatement';
+        }
+        if (exercise.maxPoints === undefined || !Number.isFinite(exercise.maxPoints) || exercise.maxPoints <= 0) {
+            return 'artemisApp.exercise.assessmentCriteriaGeneration.disabledMaxPoints';
+        }
+        if (this.isGenerating()) {
+            return 'artemisApp.exercise.assessmentCriteriaGeneration.disabledGenerating';
+        }
+        return undefined;
+    }
+
+    isGenerationDisabled(): boolean {
+        return this.generationDisabledReason() !== undefined;
+    }
 
     creditsAction = new GradingCreditsAction();
     gradingScaleAction = new GradingScaleAction();
@@ -68,8 +130,10 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
 
     // Icons
     faPlus = faPlus;
+    faSpinner = faSpinner;
     faTrash = faTrash;
     faUndo = faUndo;
+    facArtemisIntelligence = facArtemisIntelligence;
 
     protected readonly MarkdownEditorHeight = MarkdownEditorHeight;
 
@@ -475,6 +539,84 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
     switchMode() {
         this.showEditMode.update((mode) => !mode);
         this.markdownEditorText.set(this.generateMarkdown());
+    }
+
+    generateAssessmentCriteria(): void {
+        if (this.isGenerationDisabled()) {
+            return;
+        }
+
+        if (!this.showEditMode() || this.exercise().gradingInstructionFeedbackUsed) {
+            this.prepareForSave();
+            if (!this.hasValidParsedCriteria()) {
+                this.alertService.error('artemisApp.exercise.assessmentCriteriaGeneration.invalidSyntax');
+                return;
+            }
+        }
+        this.synchronizeExercise()();
+
+        if (this.exercise().gradingCriteria?.length) {
+            const usedCriteriaWarning = this.exercise().gradingInstructionFeedbackUsed
+                ? `\n\n${this.translateService.instant('artemisApp.exercise.assessmentCriteriaGeneration.confirmationUsed')}`
+                : '';
+            this.confirmationService.confirm({
+                key: 'assessment-criteria-generation-confirmation',
+                header: this.translateService.instant('artemisApp.exercise.assessmentCriteriaGeneration.confirmationHeader'),
+                message: this.translateService.instant('artemisApp.exercise.assessmentCriteriaGeneration.confirmation') + usedCriteriaWarning,
+                rejectLabel: this.translateService.instant('entity.action.cancel'),
+                acceptLabel: this.translateService.instant('artemisApp.exercise.assessmentCriteriaGeneration.replaceAndGenerate'),
+                accept: () => this.requestAssessmentCriteria(),
+            });
+            return;
+        }
+        this.requestAssessmentCriteria();
+    }
+
+    private requestAssessmentCriteria(): void {
+        if (this.isGenerating()) {
+            return;
+        }
+        this.isGenerating.set(true);
+        const gradingInstructions = this.exercise().gradingInstructions;
+        this.generationService
+            .generate(this.exercise())
+            .pipe(
+                takeUntilDestroyed(this.destroyRef),
+                finalize(() => this.isGenerating.set(false)),
+            )
+            .subscribe({
+                next: (criteria) => {
+                    this.exercise().gradingCriteria = criteria;
+                    this.exercise().gradingInstructions = gradingInstructions;
+                    this.criteria.set(criteria);
+                    this.criteriaGenerated.emit();
+                    this.markdownEditorText.set(this.generateMarkdown());
+                    if (!this.showEditMode()) {
+                        this.markdownEditor().setMarkdown(this.markdownEditorText());
+                    } else if (this.exercise().gradingInstructionFeedbackUsed) {
+                        this.initializeMarkdown();
+                    }
+                    this.alertService.success('artemisApp.exercise.assessmentCriteriaGeneration.success');
+                },
+                error: (error) => onError(this.alertService, error),
+            });
+    }
+
+    private hasValidParsedCriteria(): boolean {
+        return (this.exercise().gradingCriteria ?? []).every(
+            (criterion) =>
+                !!criterion.title?.trim() &&
+                !!criterion.structuredGradingInstructions?.length &&
+                criterion.structuredGradingInstructions.every(
+                    (instruction) =>
+                        Number.isFinite(instruction.credits) &&
+                        !!instruction.gradingScale?.trim() &&
+                        !!instruction.instructionDescription?.trim() &&
+                        !!instruction.feedback?.trim() &&
+                        Number.isInteger(instruction.usageCount) &&
+                        instruction.usageCount! >= 0,
+                ),
+        );
     }
 
     updateGradingInstruction(instruction: GradingInstruction, criterion: GradingCriterion) {

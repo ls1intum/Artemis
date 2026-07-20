@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -16,6 +16,13 @@ import { GradingFeedbackAction } from 'app/editor/monaco-editor/model/actions/gr
 import { GradingUsageCountAction } from 'app/editor/monaco-editor/model/actions/grading-criteria/grading-usage-count.action';
 import { GradingCriterionAction } from 'app/editor/monaco-editor/model/actions/grading-criteria/grading-criterion.action';
 import { TextWithDomainAction } from 'app/editor/markdown-editor/monaco/markdown-editor-monaco.component';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { AssessmentCriteriaGenerationService } from 'app/exercise/structured-grading-criterion/assessment-criteria-generation.service';
+import { AlertService } from 'app/foundation/service/alert.service';
+import { MockAlertService } from 'test/helpers/mocks/service/mock-alert.service';
+import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { Subject, of, throwError } from 'rxjs';
+import { ConfirmationService } from 'primeng/api';
 
 describe('GradingInstructionsDetailsComponent', () => {
     let component: GradingInstructionsDetailsComponent;
@@ -26,6 +33,8 @@ describe('GradingInstructionsDetailsComponent', () => {
     let gradingCriterionWithoutId: GradingCriterion;
     let exercise: Exercise;
     let backupExercise: Exercise;
+    let generationService: { generate: ReturnType<typeof vi.fn> };
+    let alertService: MockAlertService;
 
     const criterionMarkdownText =
         '[criterion] testCriteria\n' +
@@ -37,15 +46,24 @@ describe('GradingInstructionsDetailsComponent', () => {
         '\t[maxCountInScore] 0\n\n';
 
     beforeEach(async () => {
+        generationService = { generate: vi.fn() };
         await TestBed.configureTestingModule({
             imports: [GradingInstructionsDetailsComponent],
-            providers: [LocalStorageService, SessionStorageService, { provide: TranslateService, useClass: MockTranslateService }],
+            providers: [
+                LocalStorageService,
+                SessionStorageService,
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: ProfileService, useValue: { isModuleFeatureActive: () => true } },
+                { provide: AssessmentCriteriaGenerationService, useValue: generationService },
+                { provide: AlertService, useClass: MockAlertService },
+            ],
         })
             .overrideTemplate(GradingInstructionsDetailsComponent, '')
             .compileComponents();
 
         fixture = TestBed.createComponent(GradingInstructionsDetailsComponent);
         component = fixture.componentInstance;
+        alertService = TestBed.inject(AlertService) as unknown as MockAlertService;
         exercise = { id: 1 } as Exercise;
         backupExercise = { id: 1 } as Exercise;
         fixture.componentRef.setInput('exercise', exercise);
@@ -54,6 +72,126 @@ describe('GradingInstructionsDetailsComponent', () => {
         gradingCriterion = { id: 1, title: 'testCriteria', structuredGradingInstructions: [gradingInstruction] };
         gradingInstructionWithoutId = { credits: 1, gradingScale: 'scale', instructionDescription: 'description', feedback: 'feedback', usageCount: 0 };
         gradingCriterionWithoutId = { title: 'testCriteria', structuredGradingInstructions: [gradingInstructionWithoutId] };
+    });
+
+    describe('assessment criteria generation', () => {
+        beforeEach(() => {
+            exercise.type = ExerciseType.TEXT;
+            exercise.problemStatement = 'Explain the concept';
+            exercise.maxPoints = 5;
+            exercise.course = { id: 7, isAtLeastEditor: true };
+            component.ngOnInit();
+        });
+
+        it('should gate generation by prerequisites', () => {
+            expect(component.canShowGenerationButton()).toBe(true);
+            expect(component.isGenerationDisabled()).toBe(false);
+
+            exercise.problemStatement = ' ';
+            expect(component.isGenerationDisabled()).toBe(true);
+            expect(component.generationDisabledReason()).toBe('artemisApp.exercise.assessmentCriteriaGeneration.disabledProblemStatement');
+
+            exercise.problemStatement = 'Problem';
+            exercise.maxPoints = 0;
+            expect(component.generationDisabledReason()).toBe('artemisApp.exercise.assessmentCriteriaGeneration.disabledMaxPoints');
+
+            Object.defineProperty(component, 'hyperionEnabled', { value: false });
+            expect(component.canShowGenerationButton()).toBe(false);
+        });
+
+        it('should generate once, replace criteria, preserve general text, and prevent duplicate clicks', () => {
+            const response = new Subject<GradingCriterion[]>();
+            const generatedCriterion = { title: 'Generated', structuredGradingInstructions: [gradingInstructionWithoutId] } as GradingCriterion;
+            exercise.gradingInstructions = 'Keep this text';
+            generationService.generate.mockReturnValue(response);
+            vi.spyOn(alertService, 'success');
+            const generatedSpy = vi.spyOn(component.criteriaGenerated, 'emit');
+
+            component.generateAssessmentCriteria();
+            component.generateAssessmentCriteria();
+
+            expect(generationService.generate).toHaveBeenCalledTimes(1);
+            expect(component.isGenerating()).toBe(true);
+            response.next([generatedCriterion]);
+            response.complete();
+
+            expect(exercise.gradingCriteria).toEqual([generatedCriterion]);
+            expect(exercise.gradingInstructions).toBe('Keep this text');
+            expect(component.isGenerating()).toBe(false);
+            expect(generatedSpy).toHaveBeenCalledOnce();
+            expect(alertService.success).toHaveBeenCalledWith('artemisApp.exercise.assessmentCriteriaGeneration.success');
+        });
+
+        it('should parse, generate, and remain in edit-as-text mode', () => {
+            const generatedCriterion = { title: 'Generated', structuredGradingInstructions: [gradingInstructionWithoutId] } as GradingCriterion;
+            const markdownEditor = {
+                parseMarkdown: vi.fn(() => {
+                    exercise.gradingInstructions = 'Current unsaved text';
+                    exercise.gradingCriteria = [];
+                }),
+                setMarkdown: vi.fn(),
+            };
+            Object.defineProperty(component, 'markdownEditor', { value: () => markdownEditor });
+            component.showEditMode.set(false);
+            generationService.generate.mockReturnValue(of([generatedCriterion]));
+
+            component.generateAssessmentCriteria();
+
+            expect(markdownEditor.parseMarkdown).toHaveBeenCalledOnce();
+            expect(markdownEditor.setMarkdown).toHaveBeenCalledOnce();
+            expect(component.showEditMode()).toBe(false);
+            expect(exercise.gradingInstructions).toBe('Current unsaved text');
+        });
+
+        it('should abort when edit-as-text syntax cannot be parsed', () => {
+            const markdownEditor = {
+                parseMarkdown: vi.fn(() => {
+                    exercise.gradingCriteria = [{ title: '', structuredGradingInstructions: [] } as GradingCriterion];
+                }),
+            };
+            Object.defineProperty(component, 'markdownEditor', { value: () => markdownEditor });
+            component.showEditMode.set(false);
+            vi.spyOn(alertService, 'error');
+
+            component.generateAssessmentCriteria();
+
+            expect(generationService.generate).not.toHaveBeenCalled();
+            expect(alertService.error).toHaveBeenCalledWith('artemisApp.exercise.assessmentCriteriaGeneration.invalidSyntax');
+        });
+
+        it('should confirm replacement and make no request when confirmation is cancelled', () => {
+            exercise.gradingCriteria = [gradingCriterion];
+            const confirmationService = fixture.debugElement.injector.get(ConfirmationService);
+            const confirmSpy = vi.spyOn(confirmationService, 'confirm');
+
+            component.generateAssessmentCriteria();
+
+            expect(confirmSpy).toHaveBeenCalledOnce();
+            expect(generationService.generate).not.toHaveBeenCalled();
+        });
+
+        it('should preserve criteria when generation fails', () => {
+            exercise.gradingCriteria = [];
+            const previousCriteria = [gradingCriterion];
+            exercise.gradingCriteria = previousCriteria;
+            const confirmationService = fixture.debugElement.injector.get(ConfirmationService);
+            vi.spyOn(confirmationService, 'confirm').mockImplementation((confirmation) => confirmation.accept?.());
+            generationService.generate.mockReturnValue(throwError(() => new Error('generation failed')));
+
+            component.generateAssessmentCriteria();
+
+            expect(exercise.gradingCriteria).toBe(previousCriteria);
+            expect(component.isGenerating()).toBe(false);
+        });
+
+        it('should generate immediately when no structured criteria exist', () => {
+            exercise.gradingCriteria = [];
+            generationService.generate.mockReturnValue(of([]));
+
+            component.generateAssessmentCriteria();
+
+            expect(generationService.generate).toHaveBeenCalledOnce();
+        });
     });
 
     describe('onInit', () => {

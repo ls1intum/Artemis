@@ -339,6 +339,10 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
             });
     }
 
+    readonly synchronizeForAssessmentCriteriaGeneration = () => {
+        this.modelingExercise.exampleSolutionModel = JSON.stringify(this.modelingEditor()?.getCurrentModel());
+    };
+
     /**
      * Return to the exercise overview page
      */
