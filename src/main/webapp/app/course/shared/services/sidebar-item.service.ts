@@ -5,7 +5,6 @@ import {
     faBullseye,
     faCalendarDays,
     faChalkboardTeacher,
-    faChartBar,
     faChartColumn,
     faCode,
     faCog,
@@ -67,13 +66,8 @@ export class CourseSidebarItemService {
         };
     }
 
-    getStudentDefaultItems(hasDashboard = false, questionsAvailable = false): SidebarItem[] {
-        const items = [];
+    getStudentDefaultItems(questionsAvailable = false): SidebarItem[] {
         const training = [];
-
-        if (hasDashboard) {
-            items.push(this.getDashboardItem());
-        }
 
         const exercisesItem: SidebarItem = {
             routerLink: 'exercises',
@@ -104,7 +98,7 @@ export class CourseSidebarItemService {
             hidden: false,
         };
 
-        return [...items, exercisesItem, ...training, statisticsItem, calendarItem];
+        return [exercisesItem, ...training, statisticsItem, calendarItem];
     }
 
     getTrainingItem(): SidebarItem {
@@ -200,17 +194,6 @@ export class CourseSidebarItemService {
             title: 'Learning Path',
             translation: 'artemisApp.courseOverview.menu.learningPath',
             featureToggle: FeatureToggle.LearningPaths,
-            hidden: false,
-        };
-    }
-
-    getDashboardItem(): SidebarItem {
-        return {
-            routerLink: 'dashboard',
-            icon: faChartBar,
-            title: 'Dashboard',
-            translation: 'artemisApp.courseOverview.menu.dashboard',
-            featureToggle: FeatureToggle.StudentCourseAnalyticsDashboard,
             hidden: false,
         };
     }
