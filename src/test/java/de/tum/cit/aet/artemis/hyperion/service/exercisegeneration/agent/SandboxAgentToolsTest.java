@@ -330,12 +330,24 @@ class SandboxAgentToolsTest {
     }
 
     @Test
-    void bash_buildsSpillWrapper_subshellUlimitRedirectTail() {
+    void bash_buildsSpillWrapper_subshellUlimitRedirectTailAndSoftTimeout() {
         ScriptedSandbox sandbox = new ScriptedSandbox(bashStdout(0, "__HYP_META__ rc=0 bytes=5 lines=1\nhello"));
         new SandboxAgentTools(sandbox, "s").bash("echo hello");
-        // Subshell, file-size ulimit, stdin from /dev/null, combined output to the log, bounded tail back.
-        assertThat(sandbox.lastScript).contains("( ulimit -f 65536 2>/dev/null; cd /workspace && echo hello )").contains("</dev/null > \"$LOG\" 2>&1").contains("rc=$?")
-                .contains("/tmp/hyperion/bash-0.log").contains("__HYP_META__").contains("tail -c 10000");
+        // The command travels base64-encoded into its own script file (quoting can never corrupt the wrapper), runs in a subshell under a file-size ulimit with stdin from
+        // /dev/null and combined output to the log, is stopped by coreutils `timeout` before the session-destroying exec timeout when the image has it, and a bounded tail
+        // comes back.
+        String encoded = java.util.Base64.getEncoder().encodeToString("echo hello".getBytes(java.nio.charset.StandardCharsets.UTF_8));
+        assertThat(sandbox.lastScript).contains("printf '%s' '" + encoded + "' | base64 -d > \"$CMD\"").contains("if command -v timeout >/dev/null 2>&1; then")
+                .contains("( ulimit -f 65536 2>/dev/null; cd /workspace && timeout 270 sh \"$CMD\" )").contains("( ulimit -f 65536 2>/dev/null; cd /workspace && sh \"$CMD\" )")
+                .contains("</dev/null > \"$LOG\" 2>&1").contains("rc=$?").contains("/tmp/hyperion/bash-0.log").contains("/tmp/hyperion/bash-0.sh").contains("__HYP_META__")
+                .contains("tail -c 10000");
+    }
+
+    @Test
+    void bash_softTimeoutExitCode_namesTheLikelyCauseAndKeepsThePartialOutput() {
+        ScriptedSandbox sandbox = new ScriptedSandbox(bashStdout(0, "__HYP_META__ rc=124 bytes=8 lines=1\npartial…"));
+        String out = new SandboxAgentTools(sandbox, "s").bash("mvn -q verify");
+        assertThat(out).startsWith("exit=124\n").contains("partial…").contains("stopped at the 270-second limit").contains("output above is partial");
     }
 
     @Test
@@ -361,7 +373,8 @@ class SandboxAgentToolsTest {
         ScriptedSandbox sandbox = new ScriptedSandbox(bashStdout(0, "__HYP_META__ rc=0 bytes=1 lines=1\nx"));
         String out = new SandboxAgentTools(sandbox, "s").bash("[ -f solution/pom.xml ] && echo yes");
         assertThat(out).startsWith("exit=0");
-        assertThat(sandbox.lastScript).contains("[ -f solution/pom.xml ] && echo yes");
+        assertThat(sandbox.lastScript)
+                .contains(java.util.Base64.getEncoder().encodeToString("[ -f solution/pom.xml ] && echo yes".getBytes(java.nio.charset.StandardCharsets.UTF_8)));
     }
 
     @Test
@@ -442,7 +455,7 @@ class SandboxAgentToolsTest {
         ScriptedSandbox sandbox = new ScriptedSandbox(bashStdout(0, "__HYP_META__ rc=0 bytes=1 lines=1\nx"));
         String out = new SandboxAgentTools(sandbox, "s").bash("grep -r apply_patch tests");
         assertThat(out).startsWith("exit=0");
-        assertThat(sandbox.lastScript).contains("grep -r apply_patch tests");
+        assertThat(sandbox.lastScript).contains(java.util.Base64.getEncoder().encodeToString("grep -r apply_patch tests".getBytes(java.nio.charset.StandardCharsets.UTF_8)));
     }
 
     @Test

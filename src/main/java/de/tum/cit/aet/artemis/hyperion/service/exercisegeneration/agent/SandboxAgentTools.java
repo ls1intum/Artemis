@@ -45,6 +45,14 @@ public class SandboxAgentTools implements SubmitVetoAware {
 
     private static final Duration BASH_TIMEOUT = Duration.ofMinutes(5);
 
+    /**
+     * Soft per-command time limit enforced INSIDE the wrapper (via coreutils {@code timeout}, when the image has it), deliberately below {@link #BASH_TIMEOUT}: the docker-exec
+     * timeout has no clean way to kill just the command, so hitting it destroys the whole sandbox session and the run dies. With the soft limit, a slow command is stopped in
+     * the container, its partial output survives in the spill log, the model is told what happened, and the session continues — the exec timeout remains only as a backstop for
+     * images without {@code timeout}.
+     */
+    private static final int BASH_SOFT_TIMEOUT_SECONDS = 270;
+
     /** Spill directory inside the sandbox, outside /workspace so it is never picked up by repository extraction. */
     private static final String SPILL_DIR = "/tmp/hyperion";
 
@@ -499,13 +507,20 @@ public class SandboxAgentTools implements SubmitVetoAware {
         markDirty();
         int sequence = bashSequence++;
         String logPath = SPILL_DIR + "/bash-" + sequence + ".log";
-        // Run in a subshell so an `exit` inside (e.g. from verify.sh) cannot abort this wrapper before it reports the code and tail. Combined output is redirected, not piped
-        // (POSIX
-        // sh has no PIPESTATUS), so the real exit code comes from `$?`; `ulimit -f` caps the spill size and `</dev/null` stops a stdin-reading command from hanging until the
-        // timeout. `wc` is run through `tr -d` because some implementations pad the count with spaces, which would corrupt the meta line and lose the authoritative exit code.
-        String script = "LOG=" + logPath + "\n" + "mkdir -p " + SPILL_DIR + "\n" + "( ulimit -f " + SPILL_ULIMIT_BLOCKS + " 2>/dev/null; cd " + WORKSPACE + " && " + command
-                + " ) </dev/null > \"$LOG\" 2>&1\n" + "rc=$?\n" + "bytes=$(wc -c < \"$LOG\" | tr -d ' \\t')\n" + "lines=$(wc -l < \"$LOG\" | tr -d ' \\t')\n"
-                + "printf '__HYP_META__ rc=%s bytes=%s lines=%s\\n' \"$rc\" \"$bytes\" \"$lines\"\n" + "tail -c " + BASH_TAIL_BYTES + " \"$LOG\"\n";
+        String commandPath = SPILL_DIR + "/bash-" + sequence + ".sh";
+        // The command travels base64-encoded into its own script file, so its quoting can never corrupt the wrapper: a command with unbalanced quotes now fails INSIDE
+        // `sh "$CMD"` with an ordinary error and exit code instead of taking the meta line down with it. The wrapper runs it in a subshell so an `exit` inside (e.g. from
+        // verify.sh) cannot abort the wrapper before it reports the code and tail; combined output is redirected, not piped (POSIX sh has no PIPESTATUS), so the real exit code
+        // comes from `$?`; `ulimit -f` caps the spill size, `</dev/null` stops a stdin-reading command from hanging until the timeout, and coreutils `timeout` (when the image
+        // has it) stops a slow command before the session-destroying docker-exec timeout can fire. `wc` is run through `tr -d` because some implementations pad the count with
+        // spaces, which would corrupt the meta line and lose the authoritative exit code.
+        String encodedCommand = Base64.getEncoder().encodeToString(command.getBytes(StandardCharsets.UTF_8));
+        String script = "LOG=" + logPath + "\n" + "CMD=" + commandPath + "\n" + "mkdir -p " + SPILL_DIR + "\n" + "printf '%s' '" + encodedCommand + "' | base64 -d > \"$CMD\"\n"
+                + "if command -v timeout >/dev/null 2>&1; then\n" + "  ( ulimit -f " + SPILL_ULIMIT_BLOCKS + " 2>/dev/null; cd " + WORKSPACE + " && timeout "
+                + BASH_SOFT_TIMEOUT_SECONDS + " sh \"$CMD\" ) </dev/null > \"$LOG\" 2>&1\n" + "else\n" + "  ( ulimit -f " + SPILL_ULIMIT_BLOCKS + " 2>/dev/null; cd " + WORKSPACE
+                + " && sh \"$CMD\" ) </dev/null > \"$LOG\" 2>&1\n" + "fi\n" + "rc=$?\n" + "bytes=$(wc -c < \"$LOG\" | tr -d ' \\t')\n"
+                + "lines=$(wc -l < \"$LOG\" | tr -d ' \\t')\n" + "printf '__HYP_META__ rc=%s bytes=%s lines=%s\\n' \"$rc\" \"$bytes\" \"$lines\"\n" + "tail -c " + BASH_TAIL_BYTES
+                + " \"$LOG\"\n";
         SandboxExecResult result = sandbox.exec(sessionId, BASH_TIMEOUT, "sh", "-c", script);
         if (result.timedOut()) {
             sandboxSessionTerminated = true;
@@ -594,12 +609,16 @@ public class SandboxAgentTools implements SubmitVetoAware {
         long bytes = Long.parseLong(meta.group(2));
         String lines = meta.group(3);
         String body = newline < 0 ? "" : output.substring(newline + 1);
+        // coreutils `timeout` reports a stopped command as 124 (137 when it had to escalate to KILL). Name the likely cause so the model shortens or splits the command
+        // instead of misreading the partial output as the command's real result.
+        String timeoutNote = "124".equals(rc) || "137".equals(rc) ? "\n\n[Exit code " + rc + " usually means the command was stopped at the " + BASH_SOFT_TIMEOUT_SECONDS
+                + "-second limit. The output above is partial. " + "Run something faster or split the work.]" : "";
         if (bytes <= BASH_TAIL_BYTES) {
             // An explicit marker instead of dead air: the model should not have to guess whether a silent command succeeded quietly or the output was lost.
-            return "exit=" + rc + "\n" + (body.isBlank() ? "(no output)" : body);
+            return "exit=" + rc + "\n" + (body.isBlank() ? "(no output)" : body) + timeoutNote;
         }
         return "exit=" + rc + "\n" + body + "\n\n[Showing the last " + BASH_TAIL_BYTES + " of " + bytes + " bytes (" + lines + " lines total). Full output saved in the sandbox at "
-                + logPath + " — read more with: tail -n 200 " + logPath + "  (or sed -n '1,200p' " + logPath + ", grep PATTERN " + logPath + ")]";
+                + logPath + " — read more with: tail -n 200 " + logPath + "  (or sed -n '1,200p' " + logPath + ", grep PATTERN " + logPath + ")]" + timeoutNote;
     }
 
     /** Last-resort character tail used only when the wrapper's meta line is unexpectedly absent. */
