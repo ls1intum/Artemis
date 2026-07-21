@@ -104,6 +104,14 @@ $stepper-accent: var(--primary);
     overflow-wrap: anywhere;
 }
 
+// Optional per-activity detail (e.g. the tool argument). Shown in full — it may wrap onto
+// as many lines as needed, never truncated (min-width: 0 + the label's overflow-wrap).
+.stepper-label-detail {
+    min-width: 0;
+    color: var(--iris-label-color);
+    opacity: 0.85;
+}
+
 .stepper-label-duration {
     flex: 0 0 auto;
     color: var(--iris-label-color);

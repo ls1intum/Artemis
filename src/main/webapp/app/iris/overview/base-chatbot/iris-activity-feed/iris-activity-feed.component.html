@@ -12,6 +12,9 @@
                 </div>
                 <span class="stepper-label">
                     <span class="stepper-label-name">{{ activity.label }}</span>
+                    @if (activity.detail) {
+                        <span class="stepper-label-detail">{{ activity.detail }}</span>
+                    }
                     @if (activity.durationLabel) {
                         <span class="stepper-label-duration">{{ activity.durationLabel }}</span>
                     }

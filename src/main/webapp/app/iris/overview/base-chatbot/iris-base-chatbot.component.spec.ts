@@ -315,6 +315,17 @@ describe('IrisBaseChatbotComponent', () => {
         expect(fixture.nativeElement.querySelector('.rate-message-buttons')).toBeFalsy();
     });
 
+    it('should not expose the toolbox for an intermediate assistant message left after a failed run', () => {
+        // The newest assistant message is intermediate (final: false) — e.g. a tool call whose run then failed.
+        chatService.messages.next([mockUserMessageWithContent('question'), { ...mockServerMessage, final: false } as IrisAssistantMessage]);
+        chatService.runInfo.next({ runId: 'run-1', state: IrisRunState.FAILED });
+        fixture.detectChanges();
+
+        // The failed run cleared awaitingAnswer, but no final answer was ever produced → no toolbox.
+        expect(component.awaitingAnswer()).toBe(false);
+        expect(fixture.nativeElement.querySelector('.rate-message-buttons')).toBeFalsy();
+    });
+
     it('should not rate intermediate assistant messages defensively', async () => {
         const message = { ...mockServerMessage, final: false } as IrisAssistantMessage;
         const stub = vi.spyOn(chatService, 'rateMessage');

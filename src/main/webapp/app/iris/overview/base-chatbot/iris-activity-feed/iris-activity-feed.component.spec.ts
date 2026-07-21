@@ -82,6 +82,21 @@ describe('IrisActivityFeedComponent', () => {
         expect(node.getAttribute('aria-label')).toContain('Lecture search');
     });
 
+    it('should render the activity detail in the visible label and accessible name', () => {
+        fixture.componentRef.setInput('activities', [activity(IrisActivityState.FINISHED, 'act-1')]);
+        fixture.detectChanges();
+
+        // Detail is shown in full as part of the visible stepper label.
+        const detail = fixture.debugElement.query(By.css('.stepper-label-detail')).nativeElement as HTMLElement;
+        expect(detail.textContent).toContain('Looking through lecture units');
+
+        // ...and folded into the node's accessible name alongside the activity name.
+        const node = fixture.debugElement.query(By.css('.stepper-node')).nativeElement as HTMLElement;
+        const ariaLabel = node.getAttribute('aria-label') ?? '';
+        expect(ariaLabel).toContain('Lecture search');
+        expect(ariaLabel).toContain('Looking through lecture units');
+    });
+
     it('should prettify missing activity translations instead of rendering raw keys', () => {
         translateService.instant.mockImplementation((key: string) => key);
         fixture.componentRef.setInput('activities', [activity(IrisActivityState.RUNNING, 'act-unknown', 'unknown_tool_name')]);

@@ -44,6 +44,8 @@ export class IrisActivityFeedComponent {
         return this.activities().map((activity) => {
             const label = this.translateActivityName(activity.name);
             const durationLabel = this.formatDuration(activity);
+            // Accessible name reads name (+ detail) (+ duration), matching the visible label order.
+            const namePart = activity.detail ? `${label} · ${activity.detail}` : label;
             return {
                 ...activity,
                 label,
@@ -51,7 +53,7 @@ export class IrisActivityFeedComponent {
                 stateClass: activity.state.toLowerCase(),
                 icon: this.iconFor(activity.state),
                 spin: activity.state === IrisActivityState.RUNNING,
-                tooltip: durationLabel ? `${label} · ${durationLabel}` : label,
+                tooltip: durationLabel ? `${namePart} · ${durationLabel}` : namePart,
             };
         });
     });
