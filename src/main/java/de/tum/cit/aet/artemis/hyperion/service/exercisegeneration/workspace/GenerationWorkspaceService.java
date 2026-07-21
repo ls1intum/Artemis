@@ -151,9 +151,24 @@ public class GenerationWorkspaceService {
      * @return the seeded repository heads plus TESTS-repo text files used later by the immutability and stale-head gates
      */
     public WorkspaceSeed seedWorkspace(InteractiveSandbox sandbox, String sessionId, ProgrammingExercise exercise, GenerationMode mode) {
+        return seedWorkspace(sandbox, sessionId, exercise, mode, true);
+    }
+
+    /**
+     * Like {@link #seedWorkspace(InteractiveSandbox, String, ProgrammingExercise, GenerationMode)}, with control over whether the exercise's problem statement is seeded.
+     *
+     * @param sandbox                the sandbox session
+     * @param sessionId              the session handle
+     * @param exercise               the exercise whose components are seeded
+     * @param mode                   whether to start from clean exercise artifacts or preserve the existing tree
+     * @param statementAuthoritative whether {@code exercise.getProblemStatement()} is a real instructor specification; {@code false} (a blank field or the client-seeded
+     *                                   default template readme) seeds an EMPTY problem-statement.md, so the agent never mistakes the default sorting readme for the spec
+     * @return the seeded repository heads plus TESTS-repo text files used later by the immutability and stale-head gates
+     */
+    public WorkspaceSeed seedWorkspace(InteractiveSandbox sandbox, String sessionId, ProgrammingExercise exercise, GenerationMode mode, boolean statementAuthoritative) {
         String defaultBranch = exercise.getBuildConfig() != null ? exercise.getBuildConfig().getBranch() : null;
         Map<String, String> textFiles = new LinkedHashMap<>();
-        textFiles.put(PROBLEM_STATEMENT_FILE, exercise.getProblemStatement() == null ? "" : exercise.getProblemStatement());
+        textFiles.put(PROBLEM_STATEMENT_FILE, !statementAuthoritative || exercise.getProblemStatement() == null ? "" : exercise.getProblemStatement());
         textFiles.put(SandboxBuildCommandService.VERIFY_SCRIPT_NAME, sandboxBuildCommandService.verifyScriptContent(exercise));
         Map<String, Path> repositoryTrees = new LinkedHashMap<>();
         Map<RepositoryType, String> repositoryHeads = new LinkedHashMap<>();

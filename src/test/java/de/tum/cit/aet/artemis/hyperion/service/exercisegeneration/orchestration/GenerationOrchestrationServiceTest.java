@@ -115,7 +115,12 @@ class GenerationOrchestrationServiceTest {
         when(systemPromptService.build(any(), any())).thenReturn("SYSTEM_PROMPT");
         when(workspace.extractRepository(any(), anyString(), any(), any())).thenReturn(new GenerationWorkspaceService.RepositoryExtraction(Map.of(), false));
         when(workspace.extractProblemStatement(any(), anyString())).thenReturn("PROBLEM STATEMENT");
-        when(workspace.seedWorkspace(any(), anyString(), any(), any())).thenReturn(new GenerationWorkspaceService.WorkspaceSeed(Map.of(), Map.of()));
+        when(workspace.seedWorkspace(any(), anyString(), any(), any(), anyBoolean())).thenReturn(new GenerationWorkspaceService.WorkspaceSeed(Map.of(), Map.of()));
+        // Mirror the real predicate's non-trivial threshold so fixtures with instructor statements keep steering the brief (the mock would otherwise return false for all).
+        when(systemPromptService.isAuthoritativeProblemStatement(any())).thenAnswer(invocation -> {
+            String statement = ((ProgrammingExercise) invocation.getArgument(0)).getProblemStatement();
+            return statement != null && statement.strip().length() >= 40;
+        });
         when(verifier.checkBuildEnvironment(any(), anyString(), any())).thenReturn(Optional.empty());
         when(specFidelityCritic.critique(any(), any(), any(), any(), any(), any(), any(), any(), any())).thenReturn(SpecFidelityReport.empty());
         when(specFidelityCritic.critiqueAdaptation(any(), any(), any(), any(), any(), any(), any(), any())).thenReturn(SpecFidelityReport.empty());
@@ -289,7 +294,7 @@ class GenerationOrchestrationServiceTest {
 
         ArgumentCaptor<VerificationRequest> requestCaptor = ArgumentCaptor.forClass(VerificationRequest.class);
         verify(verifier).verify(any(), anyString(), any(), requestCaptor.capture(), any(Runnable.class));
-        verify(workspace).seedWorkspace(sandbox, SESSION_ID, exercise, GenerationMode.ADAPT);
+        verify(workspace).seedWorkspace(eq(sandbox), eq(SESSION_ID), eq(exercise), eq(GenerationMode.ADAPT), anyBoolean());
         assertThat(requestCaptor.getValue().baselineGradedTestNames()).as("ADAPT hands the persisted graded test names to the total-wipe gate")
                 .containsExactlyInAnyOrder("evictsLeastRecentlyUsed", "capacityIsRespected");
     }
@@ -303,7 +308,7 @@ class GenerationOrchestrationServiceTest {
             assertThat(outcome.isMechanicallyVerified()).isTrue();
         }
 
-        verify(workspace).seedWorkspace(sandbox, SESSION_ID, exercise, GenerationMode.GENERATE);
+        verify(workspace).seedWorkspace(eq(sandbox), eq(SESSION_ID), eq(exercise), eq(GenerationMode.GENERATE), anyBoolean());
 
         ArgumentCaptor<VerificationRequest> requestCaptor = ArgumentCaptor.forClass(VerificationRequest.class);
         verify(verifier).verify(any(), anyString(), any(), requestCaptor.capture(), any(Runnable.class));
@@ -594,7 +599,7 @@ class GenerationOrchestrationServiceTest {
     void adaptationCriticExceptionOrTruncatedEvidenceRequiresInstructorReview() {
         when(agentLoopRunner.runSession(anyString(), any(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(loopSession(completed()));
         when(verifier.verify(any(), anyString(), any(), any(VerificationRequest.class), any(Runnable.class))).thenReturn(accepted());
-        when(workspace.seedWorkspace(any(), anyString(), any(), any())).thenReturn(
+        when(workspace.seedWorkspace(any(), anyString(), any(), any(), anyBoolean())).thenReturn(
                 new GenerationWorkspaceService.WorkspaceSeed(Map.of(), Map.of(), Map.of(), Map.of(RepositoryType.SOLUTION, Map.of("src/Huge.java", "x".repeat(30_000)))));
         when(specFidelityCritic.critiqueAdaptation(any(), any(), any(), any(), any(), any(), any(), any())).thenThrow(new RuntimeException("critic plumbing failed"));
 

@@ -189,7 +189,10 @@ public class GenerationOrchestrationService {
         // as an adapt). Empty for GENERATE, which leaves the total-wipe gate inert.
         Set<String> baselineGradedTestNames = mode == GenerationMode.ADAPT ? captureBaselineGradedTestNames(exercise) : Set.of();
         String baselineProblemStatement = exercise.getProblemStatement();
-        String sourceBrief = renderReviewBrief(mode, userPrompt, baselineProblemStatement);
+        // The client seeds every new exercise with the default template readme; only a REAL instructor statement may steer the brief, the workspace seed, or skip the SPEC
+        // stage — otherwise the classic sorting readme becomes "requirements to preserve" everywhere at once (observed live: bubble sort generated from a non-sorting brief).
+        boolean statementAuthoritative = mode == GenerationMode.ADAPT || systemPromptService.isAuthoritativeProblemStatement(exercise);
+        String sourceBrief = renderReviewBrief(mode, userPrompt, statementAuthoritative ? baselineProblemStatement : null);
         Long courseId = courseIdOf(exercise);
         Consumer<ChatResponse> effectiveUsageSink = usageSink != null ? usageSink : jobService.tokenUsageSink(courseId, exercise.getId(), user.getId());
         InteractiveSandbox sandbox = requireSandbox();
@@ -212,7 +215,7 @@ public class GenerationOrchestrationService {
 
             emit(progress, mode == GenerationMode.GENERATE ? "Preparing a clean exercise workspace" : "Loading the existing exercise");
             // Snapshot the seeded tests-repo harness so the verifier can reject later tampering against this exact baseline.
-            workspaceSeed = workspace.seedWorkspace(sandbox, sessionId, exercise, mode);
+            workspaceSeed = workspace.seedWorkspace(sandbox, sessionId, exercise, mode, statementAuthoritative);
             placeholderReplacements = ciPlaceholderReplacements(exercise);
             Map<String, String> testsSeedSnapshot = replacePlaceholders(workspaceSeed.testsSeedSnapshot(), placeholderReplacements);
             baselineRepositoryFiles = replacePlaceholdersByRepository(workspaceSeed.repositoryTextFiles(), placeholderReplacements);
@@ -256,7 +259,7 @@ public class GenerationOrchestrationService {
             boolean useStagedGeneration = stagedGenerationEnabled && mode == GenerationMode.GENERATE && exercise.getProgrammingLanguage() == ProgrammingLanguage.JAVA;
             // The SPEC stage runs only when the instructor gave no real statement: an existing non-trivial statement IS the specification, and writing a competing SPEC.md
             // would at best duplicate it and at worst drift from it (the product's draft flow is how instructors control specs).
-            boolean specStageApplies = !systemPromptService.isAuthoritativeProblemStatement(exercise);
+            boolean specStageApplies = !statementAuthoritative;
             // The gate-approved SPEC.md snapshot, frozen by the runner's spec gate: instructor-visible immediately, fed to the critic's grounding, and appended to every repair
             // prompt so scope-cutting under repair pressure faces the contract it is cutting.
             AtomicReference<String> specSnapshot = new AtomicReference<>();
