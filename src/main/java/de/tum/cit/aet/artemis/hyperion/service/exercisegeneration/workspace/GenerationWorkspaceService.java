@@ -63,6 +63,9 @@ public class GenerationWorkspaceService {
     /** The agent's workspace-root specification (see GenerationStage#SPEC); re-seeded across session resets like the problem statement so it survives verification builds. */
     private static final String SPEC_DOCUMENT_FILE = "SPEC.md";
 
+    /** The TESTS stage's grading plan; re-seeded across session resets like the specification, or a repair attempt would silently lose the weights and hidden tests. */
+    private static final String TEST_PLAN_FILE = "test-plan.json";
+
     private static final RepositoryType[] SEEDED_REPOSITORIES = { RepositoryType.TEMPLATE, RepositoryType.SOLUTION, RepositoryType.TESTS };
 
     /** Repository directories the layout probe lists and scans for build manifests; matches {@link #directoryFor(RepositoryType)}. */
@@ -558,13 +561,15 @@ public class GenerationWorkspaceService {
      *                                  restore that reproduces only a subset of the bootstrap leaves later attempts chasing files the prompts promise exist
      * @param mode                  the generation mode the workspace was originally seeded for
      * @param problemStatement      the canonical problem statement to re-seed at the workspace root, or {@code null} to leave it untouched
+     * @param testPlanJson          the TESTS stage's {@code test-plan.json} to re-seed at the workspace root, or {@code null} to leave it untouched
      * @param specDocument          the agent's {@code SPEC.md} specification to re-seed at the workspace root, or {@code null} to leave it untouched; without this, the
      *                                  session reset before each pristine verification build silently discards it — repair attempts lose the design rationale and the outcome's
      *                                  design-document capture reads nothing
      */
     public void materializeRepositoryFiles(InteractiveSandbox sandbox, String sessionId, ProgrammingExercise exercise, GenerationMode mode,
             Map<RepositoryType, Map<String, String>> filesByRepository, Map<RepositoryType, RepositorySeedMetadata> repositoryMetadata,
-            Map<RepositoryType, Map<String, BinarySeedFile>> repositoryBinaryFiles, @Nullable String problemStatement, @Nullable String specDocument) {
+            Map<RepositoryType, Map<String, BinarySeedFile>> repositoryBinaryFiles, @Nullable String problemStatement, @Nullable String specDocument,
+            @Nullable String testPlanJson) {
         Map<String, String> workspaceFiles = new LinkedHashMap<>();
         String verifyScript = sandboxBuildCommandService.verifyScriptContent(exercise);
         if (verifyScript != null) {
@@ -582,6 +587,9 @@ public class GenerationWorkspaceService {
         repositoryMetadata.forEach((repositoryType, metadata) -> metadata.executableFiles().forEach(path -> executableFiles.add(directoryFor(repositoryType) + "/" + path)));
         if (problemStatement != null) {
             workspaceFiles.put(PROBLEM_STATEMENT_FILE, problemStatement);
+        }
+        if (testPlanJson != null) {
+            workspaceFiles.put(TEST_PLAN_FILE, testPlanJson);
         }
         if (specDocument != null) {
             workspaceFiles.put(SPEC_DOCUMENT_FILE, specDocument);

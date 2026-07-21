@@ -408,12 +408,15 @@ public class GenerationOrchestrationService {
                 // Snapshot SPEC.md before verification: each restore below resets the tmpfs workspace, and without re-seeding it the specification (possibly updated by later
                 // stages) would be silently gone for every later repair attempt and for the outcome's spec capture.
                 String specDocumentSnapshot = readSpecDocument(sandbox, sessionId);
+                // Same reason as the spec: the reset wipes test-plan.json, and a repair attempt would then save the exercise with Artemis' default grading instead of the
+                // weights and hidden tests the TESTS stage decided (observed live: the plan was written and gate-approved, then lost before persistence).
+                String testPlanSnapshot = readWorkspaceRootFile(sandbox, sessionId, "test-plan.json");
                 Runnable restoreCandidate = () -> {
                     activeSandbox.resetSession(activeSessionId);
                     // /workspace is a tmpfs (see GenerationWorkspaceService#materializeRepositoryFiles), so the reset wipes problem-statement.md too; re-seed it alongside the
                     // repositories or the next attempt's extraction fails with "the generated problem statement is missing".
                     workspace.materializeRepositoryFiles(activeSandbox, activeSessionId, exercise, mode, candidateFiles, activeWorkspaceSeed.repositoryMetadata(),
-                            activeWorkspaceSeed.repositoryBinaryFiles(), candidateProblemStatement, specDocumentSnapshot);
+                            activeWorkspaceSeed.repositoryBinaryFiles(), candidateProblemStatement, specDocumentSnapshot, testPlanSnapshot);
                 };
                 verification = verifyWithInfrastructureRetry(sandbox, sessionId, exercise, verificationRequest, restoreCandidate, cancelled, progress);
                 emit(progress, verification.report());

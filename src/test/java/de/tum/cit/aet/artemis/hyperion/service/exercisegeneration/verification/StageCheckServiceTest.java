@@ -34,7 +34,8 @@ class StageCheckServiceTest {
     /** Serves canned {@code cat}/{@code diff} output; every other command succeeds with empty output. */
     private static final class FakeSandbox implements InteractiveSandbox {
 
-        private String spec;
+        /** Defaults to a gate-valid specification: every later stage re-checks SPEC.md, so a broken default would mask each stage's own logic. */
+        private String spec = specWithDesign("| Calculator | computes | stubbed |\n");
 
         private String testPlanJson;
 
@@ -88,6 +89,35 @@ class StageCheckServiceTest {
         @Override
         public void destroySession(String sessionId) {
         }
+    }
+
+    /** A complete, gate-valid SPEC.md whose '## Design' table carries the given data rows — every stage now re-checks the spec, so a partial fixture would fail that check. */
+    private static String specWithDesign(String designRows) {
+        return """
+                # Exercise
+
+                Archetype: calculator-with-rules
+
+                ## Rules
+                - R1: computes a result from the input.
+
+                ## Worked Examples
+                | Rules | Input | Expected |
+                |-------|-------|----------|
+                | R1 | 2 | 4 |
+                | R1 | 3 | 9 |
+
+                ## Design
+                | Type | Role | Template status |
+                |------|------|-----------------|
+                """ + designRows + """
+
+                ## Testing Strategy
+                - compute seam: typical and zero partitions; weight 3.
+
+                ## Diagram
+                no — single-class exercise
+                """;
     }
 
     private DifferentialVerificationService verifier;
@@ -183,7 +213,7 @@ class StageCheckServiceTest {
         @Test
         void fails_whenTheSpecDeclaresAStudentCreatedTypeTheSolutionNeverImplements() {
             when(verifier.singleBuild(any(), anyString(), eq(exercise), eq("solution"))).thenReturn(testsRan(0, 5, 0, List.of()));
-            sandbox.spec = "## Design\n| Type | Role | Template status |\n|--|--|--|\n| RewardStrategy | strategy | student-creates |\n";
+            sandbox.spec = specWithDesign("| RewardStrategy | strategy | student-creates |\n");
 
             StageCheckResult result = check(GenerationStage.SOLUTION);
 
@@ -194,7 +224,7 @@ class StageCheckServiceTest {
         @Test
         void passes_andConfirmsPresence_whenTheStudentCreatedTypeExistsInTheSolution() {
             when(verifier.singleBuild(any(), anyString(), eq(exercise), eq("solution"))).thenReturn(testsRan(0, 5, 0, List.of()));
-            sandbox.spec = "## Design\n| Type | Role | Template status |\n|--|--|--|\n| RewardStrategy | strategy | student-creates |\n";
+            sandbox.spec = specWithDesign("| RewardStrategy | strategy | student-creates |\n");
             sandbox.solutionFindOutput = "/workspace/solution/src/de/tum/RewardStrategy.java";
 
             StageCheckResult result = check(GenerationStage.SOLUTION);
@@ -207,13 +237,10 @@ class StageCheckServiceTest {
     @Nested
     class Template {
 
-        private static final String SPEC_WITH_STUDENT_CREATED_TYPE = """
-                ## Design
-                | Type | Role | Template status |
-                |------|------|-----------------|
+        private static final String SPEC_WITH_STUDENT_CREATED_TYPE = specWithDesign("""
                 | RewardStrategy | strategy interface | student-creates |
                 | LoyaltyAccount | context | stubbed |
-                """;
+                """);
 
         @BeforeEach
         void defaultsToADifferingTree() {
@@ -299,6 +326,15 @@ class StageCheckServiceTest {
     @Nested
     class Tests {
 
+        /** A gate-valid spec whose Testing Strategy declares NO hidden variant, so the plan checks below are not also judged on hidden-variant follow-through. */
+        private static final String SPEC_WITHOUT_HIDDEN_VARIANTS = specWithDesign("| Calculator | computes | stubbed |\n")
+                .replace("- compute seam: typical and zero partitions; weight 3.", "- compute seam: typical and zero partitions; weight 3; no hidden variant needed.");
+
+        @BeforeEach
+        void specDeclaresNoHiddenVariants() {
+            sandbox.spec = SPEC_WITHOUT_HIDDEN_VARIANTS;
+        }
+
         private AgentVerifyReport report(boolean solutionPassed, boolean templateFailed) {
             return new AgentVerifyReport(5, solutionPassed, solutionPassed ? List.of() : List.of("testFoo"), 5, true, templateFailed, List.of(), List.of("testFoo"), List.of(),
                     List.of(), solutionPassed && templateFailed, solutionPassed && templateFailed ? List.of() : List.of("some blocking reason"));
@@ -347,6 +383,20 @@ class StageCheckServiceTest {
 
             assertThat(result.passed()).isFalse();
             assertThat(result.observation()).contains("names tests that do not exist").contains("testGhost").contains("testFoo");
+        }
+
+        @Test
+        void fails_whenTheSpecDeclaresHiddenVariantsButThePlanHidesNothing() {
+            // The spec's own Testing Strategy is the plan's contract: silently shipping every test visible throws away the overfit resistance the spec promised.
+            sandbox.spec = specWithDesign("| Calculator | computes | stubbed |\n").replace("- compute seam: typical and zero partitions; weight 3.",
+                    "- compute seam: typical and zero partitions; weight 3; hidden variant after the due date with fresh witnesses.");
+            when(verifier.selfCheck(any(), anyString(), eq(exercise), any(), eq(false))).thenReturn(report(true, true));
+            sandbox.testPlanJson = "{\"tests\":[{\"name\":\"testFoo\",\"weight\":3,\"visibility\":\"ALWAYS\"}]}";
+
+            StageCheckResult result = check(GenerationStage.TESTS);
+
+            assertThat(result.passed()).isFalse();
+            assertThat(result.observation()).contains("declares hidden after-due-date variant").contains("FRESH witness values");
         }
 
         @Test
@@ -476,7 +526,8 @@ class StageCheckServiceTest {
 
         @Test
         void fails_whenTheSpecSaysDiagramYesButTheStatementHasNone() {
-            sandbox.spec = "## Diagram\nYes – strategies collaborate with the context";
+            sandbox.spec = specWithDesign("| Calculator | computes | stubbed |\n").replace("## Diagram\nno — single-class exercise",
+                    "## Diagram\nYes – strategies collaborate with the context");
             sandbox.problemStatement = "# T\nImplement the strategy.\n";
 
             StageCheckResult result = check(GenerationStage.STATEMENT, null);
@@ -519,6 +570,33 @@ class StageCheckServiceTest {
                                                                                                                                                                 // hint, so the
                                                                                                                                                                 // agent can copy
                                                                                                                                                                 // correctly
+        }
+    }
+
+    @Nested
+    class SpecDrift {
+
+        @Test
+        void laterStageFails_whenSpecMdWasEditedIntoAnInvalidSpecification() {
+            // Observed live: a later stage appended a '## Tasks' section with [task] bindings and emptied the '## Diagram' decision, silently disarming the statement's
+            // diagram-coherence check. The drift is caught where it happens instead of passing vacuously.
+            when(verifier.singleBuild(any(), anyString(), eq(exercise), eq("solution"))).thenReturn(compiled());
+            sandbox.spec = sandbox.spec + "\n## Tasks\n[task][Do it](testDoIt)\n";
+
+            StageCheckResult result = check(GenerationStage.SOLUTION);
+
+            assertThat(result.passed()).isFalse();
+            assertThat(result.observation()).contains("SPEC.md is no longer a valid specification").contains("must not contain [task] bindings")
+                    .contains("belong in problem-statement.md");
+        }
+
+        @Test
+        void laterStageRunsItsOwnCheck_whenThereIsNoSpecAtAll() {
+            // The SPEC stage does not run when the instructor's own problem statement IS the specification, so a missing SPEC.md must never block a later stage.
+            sandbox.spec = null;
+            when(verifier.singleBuild(any(), anyString(), eq(exercise), eq("solution"))).thenReturn(compiled());
+
+            assertThat(check(GenerationStage.SOLUTION).passed()).isTrue();
         }
     }
 

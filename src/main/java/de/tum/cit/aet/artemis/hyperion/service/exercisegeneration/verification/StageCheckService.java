@@ -74,6 +74,18 @@ public class StageCheckService {
      */
     public StageCheckResult check(GenerationStage stage, InteractiveSandbox sandbox, String sessionId, ProgrammingExercise exercise, Map<String, String> seedTestsFiles,
             @Nullable AgentVerifyReport lastTestsReport) {
+        // The specification is the contract every later stage is checked against, and the agent may legitimately update it — but an update that BREAKS it silently disarms the
+        // gates derived from it (observed live: a later stage appended [task] bindings and emptied the '## Diagram' decision, so the statement's diagram check passed
+        // vacuously). Re-running the spec's own mechanical gate costs no build and turns that silent drift into a loud, actionable failure. Skipped when there is no SPEC.md at
+        // all: the SPEC stage does not run when the instructor's own problem statement IS the specification.
+        if (stage != GenerationStage.SPEC && !readSpec(sandbox, sessionId).isBlank()) {
+            StageCheckResult specStillValid = checkSpec(sandbox, sessionId);
+            if (!specStillValid.passed()) {
+                return StageCheckResult.failed("SPEC.md is no longer a valid specification: " + specStillValid.observation()
+                        + " Every later stage is checked against it, so fix SPEC.md first. Task bindings and the PlantUML diagram belong in problem-statement.md, never in "
+                        + "the specification.");
+            }
+        }
         return switch (stage) {
             case SPEC -> checkSpec(sandbox, sessionId);
             case SOLUTION -> checkSolution(sandbox, sessionId, exercise);
@@ -273,6 +285,29 @@ public class StageCheckService {
         return StageCheckResult.passed(observation);
     }
 
+    /**
+     * Whether SPEC.md's {@code ## Testing Strategy} section declares at least one hidden after-due-date variant. Deliberately literal (a "yes" cell or the section's own
+     * after-due-date wording): the section is prose the agent writes, so an ambiguous section reads as "no declaration" and the gate stays silent rather than guessing.
+     */
+    static boolean specDeclaresHiddenVariants(String spec) {
+        int start = spec.indexOf("## Testing Strategy");
+        if (start < 0) {
+            return false;
+        }
+        String section = spec.substring(start);
+        int nextHeading = section.indexOf("\n## ", 1);
+        if (nextHeading > 0) {
+            section = section.substring(0, nextHeading);
+        }
+        String normalized = section.toLowerCase(java.util.Locale.ROOT);
+        if (!normalized.contains("hidden") && !normalized.contains("after_due_date") && !normalized.contains("after-due-date") && !normalized.contains("after the due date")) {
+            return false;
+        }
+        // A table row ending in an explicit "no" for its hidden column must not be read as a declaration; require at least one affirmative marker.
+        return normalized.contains("after_due_date") || normalized.contains("after-due-date") || normalized.contains("after the due date")
+                || normalized.matches("(?s).*\\|\\s*yes\\b.*");
+    }
+
     private String readSpec(InteractiveSandbox sandbox, String sessionId) {
         return execRead(sandbox, sessionId, "cat", GenerationWorkspaceService.WORKSPACE + "/SPEC.md");
     }
@@ -319,6 +354,12 @@ public class StageCheckService {
                     + ". Copy the exact names verify reported: " + report.exactTestNames() + ".", report);
         }
         List<String> unplannedNames = report.exactTestNames().stream().filter(name -> plan.tests().stream().noneMatch(entry -> entry.name().equals(name))).toList();
+        if (plan.hiddenEntries().isEmpty() && specDeclaresHiddenVariants(readSpec(sandbox, sessionId))) {
+            return new StageCheckResult(false, "SPEC.md's '## Testing Strategy' declares hidden after-due-date variant(s), but every test-plan.json entry is visible. Add the "
+                    + "hidden variant test(s) with FRESH witness values (never the visible test's inputs renamed — the point is catching a solution overfitted to the visible "
+                    + "tests), mark them \"visibility\":\"AFTER_DUE_DATE\", and leave them unbound by any [task] line. If the strategy was wrong, correct SPEC.md instead.",
+                    report);
+        }
         String planSummary = "Grading plan accepted: " + plan.tests().size() + " test(s), " + plan.hiddenEntries().size() + " hidden until the due date."
                 + (unplannedNames.isEmpty() ? "" : " Not in the plan (they keep Artemis defaults, weight 1 and visible): " + unplannedNames + ".");
         return new StageCheckResult(true, observation + "\n" + planSummary, report);
