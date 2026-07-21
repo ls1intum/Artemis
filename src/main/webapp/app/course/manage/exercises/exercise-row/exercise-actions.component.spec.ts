@@ -28,6 +28,8 @@ import { EntitySummary } from 'app/shared-ui/delete-dialog/delete-dialog.model';
 import { DeleteDialogService } from 'app/shared-ui/delete-dialog/service/delete-dialog.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
+import { FeatureToggle, FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
+import { MockFeatureToggleService } from 'test/helpers/mocks/service/mock-feature-toggle.service';
 import { PROFILE_LOCALCI } from 'app/app.constants';
 
 @Component({ selector: 'jhi-quiz-exercise-lifecycle-buttons', template: '' })
@@ -67,6 +69,7 @@ describe('ExerciseActionsComponent', () => {
                 MockProvider(ModelingExerciseService),
                 MockProvider(DeleteDialogService),
                 { provide: ProfileService, useClass: MockProfileService },
+                { provide: FeatureToggleService, useClass: MockFeatureToggleService },
             ],
         })
             .overrideComponent(ExerciseActionsComponent, {
@@ -194,6 +197,34 @@ describe('ExerciseActionsComponent', () => {
 
             fixture.componentRef.setInput('exercise', textExercise({ isAtLeastInstructor: false }));
             expect(component.mainActions().map((a) => a.id)).not.toContain('delete');
+        });
+
+        it('disables edit-in-editor and delete while the ProgrammingExercises toggle is off', () => {
+            const featureToggleService = TestBed.inject(FeatureToggleService) as unknown as MockFeatureToggleService;
+            fixture.componentRef.setInput('exercise', textExercise({ type: ExerciseType.PROGRAMMING, isAtLeastEditor: true, isAtLeastInstructor: true }));
+
+            const whileEnabled = component.mainActions();
+            expect(whileEnabled.find((a) => a.id === 'edit-in-editor')?.disabled).toBeUndefined();
+            expect(whileEnabled.find((a) => a.id === 'delete')?.disabled).toBeUndefined();
+
+            featureToggleService.setFeatureToggleState(FeatureToggle.ProgrammingExercises, false);
+
+            const whileDisabled = component.mainActions();
+            const editInEditor = whileDisabled.find((a) => a.id === 'edit-in-editor');
+            expect(editInEditor?.disabled).toBe(true);
+            expect(editInEditor?.disabledTooltip).toBe('artemisApp.exerciseManagement.programmingFeatureDisabled');
+            expect(whileDisabled.find((a) => a.id === 'delete')?.disabled).toBe(true);
+            // Both actions stay in the list rather than being filtered out, so the overflow measurement is unaffected.
+            expect(whileDisabled.map((a) => a.id)).toEqual(expect.arrayContaining(['edit-in-editor', 'delete']));
+        });
+
+        it('leaves non-programming exercises unaffected by the ProgrammingExercises toggle', () => {
+            const featureToggleService = TestBed.inject(FeatureToggleService) as unknown as MockFeatureToggleService;
+            featureToggleService.setFeatureToggleState(FeatureToggle.ProgrammingExercises, false);
+            fixture.componentRef.setInput('exercise', textExercise({ isAtLeastEditor: true, isAtLeastInstructor: true }));
+
+            expect(component.mainActions().find((a) => a.id === 'delete')?.disabled).toBeUndefined();
+            expect(component.mainActions().find((a) => a.id === 'edit')?.disabled).toBeUndefined();
         });
     });
 

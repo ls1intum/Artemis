@@ -87,7 +87,6 @@ export interface ExerciseVariantGroupReference {
     dueDate?: dayjs.Dayjs;
     assessmentDueDate?: dayjs.Dayjs;
     exampleSolutionPublicationDate?: dayjs.Dayjs;
-    buildAndTestStudentSubmissionsAfterDueDate?: dayjs.Dayjs;
 }
 
 export abstract class Exercise implements BaseEntity {

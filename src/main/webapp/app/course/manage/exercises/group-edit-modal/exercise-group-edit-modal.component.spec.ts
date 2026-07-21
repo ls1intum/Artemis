@@ -104,20 +104,14 @@ describe('ExerciseGroupEditModalComponent', () => {
         expect(component.isSaveDisabled()).toBe(false);
     });
 
-    it('includes the build-and-test date only when the group has a programming member', () => {
-        fixture.componentRef.setInput('group', buildGroup({ exercises: [{ id: 5, type: ExerciseType.TEXT } as Exercise] }));
-        fixture.detectChanges();
-        expect(component.timelineItems().map((item) => item.labelStringKey)).not.toContain('artemisApp.exercise.dateForRunningTestsAfterDueDate');
-
-        fixture.componentRef.setInput('group', buildGroup({ exercises: [{ id: 6, type: ExerciseType.PROGRAMMING } as Exercise] }));
-        fixture.detectChanges();
-        expect(component.timelineItems().map((item) => item.labelStringKey)).toContain('artemisApp.exercise.dateForRunningTestsAfterDueDate');
-    });
-
-    it('includes the build-and-test date when membership is unknown', () => {
-        fixture.componentRef.setInput('group', buildGroup({ exercises: undefined }));
-        fixture.detectChanges();
-        expect(component.timelineItems().map((item) => item.labelStringKey)).toContain('artemisApp.exercise.dateForRunningTestsAfterDueDate');
+    // The build-and-test date is derived per programming exercise from its own build plan, so no single group value can be
+    // correct for every member. It is therefore not part of the shared group timeline and must never be offered here.
+    it('never offers the build-and-test date, not even for a group with a programming member', () => {
+        for (const exercises of [[{ id: 5, type: ExerciseType.TEXT } as Exercise], [{ id: 6, type: ExerciseType.PROGRAMMING } as Exercise], undefined]) {
+            fixture.componentRef.setInput('group', buildGroup({ exercises }));
+            fixture.detectChanges();
+            expect(component.timelineItems().map((item) => item.labelStringKey)).not.toContain('artemisApp.exercise.dateForRunningTestsAfterDueDate');
+        }
     });
 
     it('closes the dialog with undefined when saving without any changes', () => {

@@ -3,6 +3,7 @@
         "exerciseManagement": {
             "title": "Aufgaben",
             "moreActions": "Weitere Aktionen",
+            "programmingFeatureDisabled": "Programmieraufgaben sind derzeit deaktiviert.",
             "action": {
                 "import": "Importieren",
                 "export": "Exportieren"

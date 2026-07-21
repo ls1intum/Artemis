@@ -1,11 +1,6 @@
 import dayjs from 'dayjs/esm';
-import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { convertDateFromServer } from 'app/foundation/util/date.utils';
-
-/** Structural subset of `ProgrammingExercise` needed here, avoided importing the full type to prevent a module layering cycle. */
-interface ExerciseWithBuildAndTestDate extends Exercise {
-    buildAndTestStudentSubmissionsAfterDueDate?: dayjs.Dayjs;
-}
 
 /**
  * Course-level grouping of exercises. Distinct from the exam-scoped `ExerciseGroup`.
@@ -24,14 +19,16 @@ export class CourseExerciseGroup {
     /**
      * Optional group-level timeline. When a date is set on the group, it applies to ALL exercises
      * in the group and the corresponding individual exercise date is ignored.
+     *
+     * A programming exercise's "build and test after due date" is deliberately absent: on LocalCI that date is
+     * derived per exercise from its own build plan, so members of one group legitimately differ. Each member
+     * keeps its own, re-derived from the shared due date.
      */
     releaseDate?: dayjs.Dayjs;
     startDate?: dayjs.Dayjs;
     dueDate?: dayjs.Dayjs;
     assessmentDueDate?: dayjs.Dayjs;
     exampleSolutionPublicationDate?: dayjs.Dayjs;
-    /** Only relevant while the group's members are programming exercises. */
-    buildAndTestStudentSubmissionsAfterDueDate?: dayjs.Dayjs;
 
     /**
      * Optional cap on the points the group can contribute to the course score. Applied at grade
@@ -67,7 +64,6 @@ export function buildGroupsFromExercises(exercises: Exercise[]): CourseExerciseG
                 dueDate: convertDateFromServer(reference.dueDate),
                 assessmentDueDate: convertDateFromServer(reference.assessmentDueDate),
                 exampleSolutionPublicationDate: convertDateFromServer(reference.exampleSolutionPublicationDate),
-                buildAndTestStudentSubmissionsAfterDueDate: convertDateFromServer(reference.buildAndTestStudentSubmissionsAfterDueDate),
                 exercises: [],
             };
             groupsById.set(reference.id, group);
@@ -77,7 +73,7 @@ export function buildGroupsFromExercises(exercises: Exercise[]): CourseExerciseG
     return Array.from(groupsById.values());
 }
 
-export type GroupTimelineField = 'releaseDate' | 'startDate' | 'dueDate' | 'assessmentDueDate' | 'exampleSolutionPublicationDate' | 'buildAndTestStudentSubmissionsAfterDueDate';
+export type GroupTimelineField = 'releaseDate' | 'startDate' | 'dueDate' | 'assessmentDueDate' | 'exampleSolutionPublicationDate';
 
 /**
  * Resolves the date that actually applies to an exercise for a given timeline field. Once an exercise
@@ -88,10 +84,6 @@ export type GroupTimelineField = 'releaseDate' | 'startDate' | 'dueDate' | 'asse
 export function effectiveDate(exercise: Exercise, group: CourseExerciseGroup | undefined, field: GroupTimelineField): dayjs.Dayjs | undefined {
     if (group) {
         return group[field];
-    }
-    if (field === 'buildAndTestStudentSubmissionsAfterDueDate') {
-        // Only ProgrammingExercise carries this field; other exercise types have no such date.
-        return exercise.type === ExerciseType.PROGRAMMING ? (exercise as ExerciseWithBuildAndTestDate).buildAndTestStudentSubmissionsAfterDueDate : undefined;
     }
     return exercise[field];
 }

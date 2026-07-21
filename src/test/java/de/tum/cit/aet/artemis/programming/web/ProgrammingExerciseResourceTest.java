@@ -565,14 +565,14 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
         group.setReleaseDate(groupRelease);
         group.setDueDate(groupDue);
         group.setAssessmentDueDate(groupAssessmentDue);
-        // Set explicitly so the update does not additionally exercise the build-and-test offset logic covered above.
-        group.setBuildAndTestStudentSubmissionsAfterDueDate(groupDue.plusHours(1));
 
         programmingExercise = programmingExerciseRepository.findWithPlagiarismDetectionConfigTeamConfigBuildConfigAndGradingCriteriaById(programmingExercise.getId()).orElseThrow();
         programmingExercise.setExerciseVariantGroup(exerciseVariantGroupRepository.save(group));
         programmingExercise.setReleaseDate(groupRelease);
         programmingExercise.setDueDate(groupDue);
         programmingExercise.setAssessmentDueDate(groupAssessmentDue);
+        // Set explicitly so the update does not additionally exercise the build-and-test offset logic covered above.
+        // The group does not own this date, so it stays with the exercise.
         programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(groupDue.plusHours(1));
         programmingExerciseRepository.save(programmingExercise);
 

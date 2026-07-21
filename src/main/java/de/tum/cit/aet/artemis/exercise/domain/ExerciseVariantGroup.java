@@ -31,6 +31,12 @@ import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
  * It is owned directly by a {@code Course} (unidirectional {@code Course → ExerciseVariantGroup}); the owning side keeps
  * the {@code course_id} foreign key on this table. Aggregating the exercises is non-owning: the {@link Exercise}s keep
  * their own {@code Course} link and outlive the removal of the group.
+ * <p>
+ * A {@link de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise}'s "build and test student submissions after
+ * due date" is deliberately <em>not</em> part of the shared timeline. On LocalCI that date is derived per exercise from
+ * its own build plan (see {@code AutomaticAfterDueDateService}), so members of one group legitimately end up with
+ * different values — a programming member without an {@code AFTER_DUE_DATE} build phase gets none at all. Since the
+ * date is derived from the due date, and the due date <em>is</em> shared, each member simply keeps its own.
  */
 @Entity
 @Table(name = "exercise_variant_group")
@@ -68,14 +74,6 @@ public class ExerciseVariantGroup extends DomainObject {
     @Nullable
     @Column(name = "example_solution_publication_date")
     private ZonedDateTime exampleSolutionPublicationDate;
-
-    /**
-     * Only {@link de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise}s have this date; it stays null on
-     * groups containing other exercise types.
-     */
-    @Nullable
-    @Column(name = "build_and_test_student_submissions_after_due_date")
-    private ZonedDateTime buildAndTestStudentSubmissionsAfterDueDate;
 
     // Ignore "course" as well to break the Course -> exerciseVariantGroups -> group -> exercises -> exercise.course cycle,
     // mirroring the guard on Course.exercises.
@@ -145,15 +143,6 @@ public class ExerciseVariantGroup extends DomainObject {
         this.exampleSolutionPublicationDate = exampleSolutionPublicationDate;
     }
 
-    @Nullable
-    public ZonedDateTime getBuildAndTestStudentSubmissionsAfterDueDate() {
-        return buildAndTestStudentSubmissionsAfterDueDate;
-    }
-
-    public void setBuildAndTestStudentSubmissionsAfterDueDate(@Nullable ZonedDateTime buildAndTestStudentSubmissionsAfterDueDate) {
-        this.buildAndTestStudentSubmissionsAfterDueDate = buildAndTestStudentSubmissionsAfterDueDate;
-    }
-
     public Set<Exercise> getExercises() {
         return exercises;
     }
@@ -175,8 +164,7 @@ public class ExerciseVariantGroup extends DomainObject {
     /**
      * Checks whether this group's own timeline fields are internally consistent, mirroring the ordering rules
      * {@link Exercise#validateDates()} applies to a single exercise (release &lt;= start &lt;= due, assessment due date
-     * not before release or due). {@link #buildAndTestStudentSubmissionsAfterDueDate} is exempt, matching
-     * {@link de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise}.
+     * not before release or due).
      * <p>
      * The example solution date only needs to not precede the release date: the group has no
      * {@link de.tum.cit.aet.artemis.assessment.domain.IncludedInOverallScore}, so the stricter "not before due date" rule

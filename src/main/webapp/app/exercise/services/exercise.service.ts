@@ -324,7 +324,6 @@ export class ExerciseService {
                 group.dueDate = convertDateFromServer(group.dueDate);
                 group.assessmentDueDate = convertDateFromServer(group.assessmentDueDate);
                 group.exampleSolutionPublicationDate = convertDateFromServer(group.exampleSolutionPublicationDate);
-                group.buildAndTestStudentSubmissionsAfterDueDate = convertDateFromServer(group.buildAndTestStudentSubmissionsAfterDueDate);
             }
         }
         return exercise;

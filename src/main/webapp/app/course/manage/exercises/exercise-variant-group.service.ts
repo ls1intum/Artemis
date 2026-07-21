@@ -17,7 +17,6 @@ export interface ExerciseVariantGroupDTO {
     dueDate?: dayjs.Dayjs;
     assessmentDueDate?: dayjs.Dayjs;
     exampleSolutionPublicationDate?: dayjs.Dayjs;
-    buildAndTestStudentSubmissionsAfterDueDate?: dayjs.Dayjs;
     exerciseIds?: number[];
 }
 
@@ -28,7 +27,6 @@ interface GroupDateFields {
     dueDate?: dayjs.Dayjs;
     assessmentDueDate?: dayjs.Dayjs;
     exampleSolutionPublicationDate?: dayjs.Dayjs;
-    buildAndTestStudentSubmissionsAfterDueDate?: dayjs.Dayjs;
 }
 
 /** The same payload with its dates serialised to the ISO strings the server expects on the wire. */
@@ -43,7 +41,6 @@ export interface CreateExerciseVariantGroupDTO {
     dueDate?: dayjs.Dayjs;
     assessmentDueDate?: dayjs.Dayjs;
     exampleSolutionPublicationDate?: dayjs.Dayjs;
-    buildAndTestStudentSubmissionsAfterDueDate?: dayjs.Dayjs;
 }
 
 /**
@@ -87,7 +84,6 @@ export class ExerciseVariantGroupService {
         group.dueDate = convertDateFromServer(group.dueDate);
         group.assessmentDueDate = convertDateFromServer(group.assessmentDueDate);
         group.exampleSolutionPublicationDate = convertDateFromServer(group.exampleSolutionPublicationDate);
-        group.buildAndTestStudentSubmissionsAfterDueDate = convertDateFromServer(group.buildAndTestStudentSubmissionsAfterDueDate);
         return group;
     }
 
@@ -106,7 +102,6 @@ export class ExerciseVariantGroupService {
         body.dueDate = convertDateFromClient(group.dueDate);
         body.assessmentDueDate = convertDateFromClient(group.assessmentDueDate);
         body.exampleSolutionPublicationDate = convertDateFromClient(group.exampleSolutionPublicationDate);
-        body.buildAndTestStudentSubmissionsAfterDueDate = convertDateFromClient(group.buildAndTestStudentSubmissionsAfterDueDate);
         return body as WithSerialisedDates<T>;
     }
 }
@@ -133,7 +128,6 @@ export function toCreateGroupPayload(group: PersistableGroup): CreateExerciseVar
         dueDate: group.dueDate,
         assessmentDueDate: group.assessmentDueDate,
         exampleSolutionPublicationDate: group.exampleSolutionPublicationDate,
-        buildAndTestStudentSubmissionsAfterDueDate: group.buildAndTestStudentSubmissionsAfterDueDate,
     };
 }
 
@@ -159,7 +153,6 @@ export function toCourseExerciseGroup(dto: ExerciseVariantGroupDTO, exercisesByI
         dueDate: dto.dueDate,
         assessmentDueDate: dto.assessmentDueDate,
         exampleSolutionPublicationDate: dto.exampleSolutionPublicationDate,
-        buildAndTestStudentSubmissionsAfterDueDate: dto.buildAndTestStudentSubmissionsAfterDueDate,
         exercises: (dto.exerciseIds ?? []).map((id) => exercisesById.get(id)).filter((exercise): exercise is Exercise => exercise !== undefined),
     };
 }

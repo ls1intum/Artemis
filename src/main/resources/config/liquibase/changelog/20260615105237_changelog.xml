@@ -19,7 +19,6 @@
             <column name="due_date" type="datetime(3)"/>
             <column name="assessment_due_date" type="datetime(3)"/>
             <column name="example_solution_publication_date" type="datetime(3)"/>
-            <column name="build_and_test_student_submissions_after_due_date" type="datetime(3)"/>
             <column name="course_id" type="bigint"/>
         </createTable>
     </changeSet>

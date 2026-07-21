@@ -10,7 +10,6 @@ import { TooltipModule } from 'primeng/tooltip';
 import { DynamicDialogRef } from 'primeng/dynamicdialog';
 import dayjs from 'dayjs/esm';
 import { CourseExerciseGroup } from 'app/exercise/shared/entities/exercise/course-exercise-group.model';
-import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ExerciseTimelineComponent, ExerciseTimelineStatus, TimelineItem } from 'app/exercise/exercise-timeline/exercise-timeline.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -54,20 +53,6 @@ export class ExerciseGroupEditModalComponent {
     readonly draftDueDate = signal<dayjs.Dayjs | undefined>(undefined);
     readonly draftAssessmentDueDate = signal<dayjs.Dayjs | undefined>(undefined);
     readonly draftExampleSolutionPublicationDate = signal<dayjs.Dayjs | undefined>(undefined);
-    readonly draftBuildAndTestStudentSubmissionsAfterDueDate = signal<dayjs.Dayjs | undefined>(undefined);
-
-    /**
-     * The build-and-test date only exists on programming exercises, so it is offered only when it can matter: the group
-     * has a programming member, the date is already set, or the membership is unknown (the timeline-lock path opens this
-     * dialog with a group built from the embedded reference, which carries no member list — keep the field rather than
-     * hide one the group may need).
-     */
-    private readonly showBuildAndTestDate = computed(() => {
-        const g = this.group();
-        return (
-            g.exercises === undefined || g.exercises.some((exercise) => exercise.type === ExerciseType.PROGRAMMING) || g.buildAndTestStudentSubmissionsAfterDueDate !== undefined
-        );
-    });
 
     readonly timelineItems = computed<TimelineItem[]>(() => {
         const releaseDateItem: TimelineItem = { kind: 'optional', labelStringKey: 'artemisApp.exercise.releaseDate', date: this.draftReleaseDate };
@@ -76,9 +61,6 @@ export class ExerciseGroupEditModalComponent {
             { kind: 'optional', labelStringKey: 'artemisApp.exercise.startDate', date: this.draftStartDate },
             { kind: 'optional', labelStringKey: 'artemisApp.exercise.dueDate', date: this.draftDueDate },
         ];
-        if (this.showBuildAndTestDate()) {
-            items.push({ kind: 'optional', labelStringKey: 'artemisApp.exercise.dateForRunningTestsAfterDueDate', date: this.draftBuildAndTestStudentSubmissionsAfterDueDate });
-        }
         items.push(
             { kind: 'optional', labelStringKey: 'artemisApp.exercise.assessmentDueDate', date: this.draftAssessmentDueDate },
             {
@@ -114,7 +96,6 @@ export class ExerciseGroupEditModalComponent {
             this.draftDueDate.set(toDayjs(g.dueDate));
             this.draftAssessmentDueDate.set(toDayjs(g.assessmentDueDate));
             this.draftExampleSolutionPublicationDate.set(toDayjs(g.exampleSolutionPublicationDate));
-            this.draftBuildAndTestStudentSubmissionsAfterDueDate.set(toDayjs(g.buildAndTestStudentSubmissionsAfterDueDate));
         });
     }
 
@@ -128,7 +109,6 @@ export class ExerciseGroupEditModalComponent {
             dueDate: this.draftDueDate(),
             assessmentDueDate: this.draftAssessmentDueDate(),
             exampleSolutionPublicationDate: this.draftExampleSolutionPublicationDate(),
-            buildAndTestStudentSubmissionsAfterDueDate: this.draftBuildAndTestStudentSubmissionsAfterDueDate(),
         };
         // Nothing edited: close with no result so the openers treat it as a cancel and skip the persistence call.
         this.dialogRef.close(this.isUnchanged(updated) ? undefined : updated);
@@ -148,8 +128,7 @@ export class ExerciseGroupEditModalComponent {
             datesEqual(updated.startDate, toDayjs(g.startDate)) &&
             datesEqual(updated.dueDate, toDayjs(g.dueDate)) &&
             datesEqual(updated.assessmentDueDate, toDayjs(g.assessmentDueDate)) &&
-            datesEqual(updated.exampleSolutionPublicationDate, toDayjs(g.exampleSolutionPublicationDate)) &&
-            datesEqual(updated.buildAndTestStudentSubmissionsAfterDueDate, toDayjs(g.buildAndTestStudentSubmissionsAfterDueDate))
+            datesEqual(updated.exampleSolutionPublicationDate, toDayjs(g.exampleSolutionPublicationDate))
         );
     }
 }

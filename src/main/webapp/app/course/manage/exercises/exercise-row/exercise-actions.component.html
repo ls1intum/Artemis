@@ -42,6 +42,8 @@
 <ng-template #actionTpl let-action let-inMenu="inMenu">
     @switch (action.kind) {
         @case ('delete') {
+            <!-- No tooltip on the disabled state here: a disabled native button swallows pointer events. The link
+                 branch below can show one because it keeps pointer-events enabled. -->
             <button
                 pButton
                 jhiDeleteButton
@@ -50,6 +52,7 @@
                 [renderButtonStyle]="false"
                 [severity]="action.severity"
                 size="small"
+                [disabled]="!!action.disabled"
                 [entityTitle]="exercise().title!"
                 entitySummaryTitle="artemisApp.exercise.delete.summary.title"
                 [fetchEntitySummary]="deletionSummary()"

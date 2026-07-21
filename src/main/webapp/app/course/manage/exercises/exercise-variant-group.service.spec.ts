@@ -112,14 +112,13 @@ describe('ExerciseVariantGroupService', () => {
             dueDate: iso,
             assessmentDueDate: iso,
             exampleSolutionPublicationDate: iso,
-            buildAndTestStudentSubmissionsAfterDueDate: iso,
         };
         let received: ExerciseVariantGroupDTO | undefined;
 
         service.getGroupsForCourse(courseId).subscribe((groups) => (received = groups[0]));
         httpMock.expectOne(baseUrl).flush([serverGroup]);
 
-        for (const field of ['releaseDate', 'startDate', 'dueDate', 'assessmentDueDate', 'exampleSolutionPublicationDate', 'buildAndTestStudentSubmissionsAfterDueDate'] as const) {
+        for (const field of ['releaseDate', 'startDate', 'dueDate', 'assessmentDueDate', 'exampleSolutionPublicationDate'] as const) {
             expect(dayjs.isDayjs(received![field])).toBe(true);
         }
     });
@@ -150,7 +149,6 @@ describe('ExerciseVariantGroupService', () => {
                 dueDate: group.dueDate,
                 assessmentDueDate: undefined,
                 exampleSolutionPublicationDate: undefined,
-                buildAndTestStudentSubmissionsAfterDueDate: undefined,
             });
         });
 

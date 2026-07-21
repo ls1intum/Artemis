@@ -15,7 +15,7 @@ import {
     viewChild,
     viewChildren,
 } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Observable, Subject } from 'rxjs';
 import { RouterLink } from '@angular/router';
@@ -58,6 +58,7 @@ import { QuizExerciseService } from 'app/quiz/manage/service/quiz-exercise.servi
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
 import { ModelingExerciseService } from 'app/modeling/manage/services/modeling-exercise.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { FeatureToggle, FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { PROFILE_LOCALCI } from 'app/app.constants';
 
 /** The PrimeNG button severities the action buttons use. */
@@ -73,9 +74,9 @@ interface ActionItem {
     kind: 'link' | 'button' | 'delete';
     link?: (string | number)[];
     onClick?: () => void;
-    /** When true the link is rendered greyed-out and non-navigable. */
+    /** When true the action is rendered greyed-out and non-interactive (links become non-navigable, buttons disabled). */
     disabled?: boolean;
-    /** i18n key for the tooltip shown on a disabled link. */
+    /** i18n key for the tooltip shown on a disabled action. */
     disabledTooltip?: string;
 }
 
@@ -154,8 +155,16 @@ export class ExerciseActionsComponent {
     private readonly eventManager = inject(EventManager);
     private readonly translateService = inject(TranslateService);
     private readonly profileService = inject(ProfileService);
+    private readonly featureToggleService = inject(FeatureToggleService);
 
     private readonly localCIEnabled = this.profileService.isProfileActive(PROFILE_LOCALCI);
+    /**
+     * Whether programming exercises are enabled server-side; defaults to active until the toggle resolves.
+     * The type-specific tables this component replaced guarded their programming-only actions with
+     * `jhiFeatureToggleLink` / `jhiFeatureToggle`; those directives cannot be reused here because the actions are
+     * modelled as data rather than markup, so the toggle is folded into `ActionItem.disabled` instead.
+     */
+    private readonly programmingEnabled = toSignal(this.featureToggleService.getFeatureToggleActive(FeatureToggle.ProgrammingExercises), { initialValue: true });
 
     private readonly menu = viewChild<Popover>('menu');
     /** The full-width action row; its width minus the quiz buttons is the budget for the collapsible main buttons. */
@@ -280,6 +289,9 @@ export class ExerciseActionsComponent {
                 link: ['/course-management', cid, seg, ex.id!, 'example-submissions'],
             });
         }
+        // Programming-only actions stay visible but go inert while the ProgrammingExercises feature toggle is off,
+        // matching how the type-specific programming table used to grey them out.
+        const programmingDisabled = ex.type === ExerciseType.PROGRAMMING && !this.programmingEnabled();
         // Editing (in-editor and the plain edit form) requires editor rights. Tutors can reach this page but must not
         // see edit controls for routes they cannot use.
         if (ex.type === ExerciseType.PROGRAMMING && ex.isAtLeastEditor) {
@@ -290,6 +302,8 @@ export class ExerciseActionsComponent {
                 severity: 'warn',
                 kind: 'link',
                 link: ['/course-management', cid, 'programming-exercises', ex.id!, 'code-editor', RepositoryType.TEMPLATE, -1],
+                disabled: programmingDisabled || undefined,
+                disabledTooltip: programmingDisabled ? 'artemisApp.exerciseManagement.programmingFeatureDisabled' : undefined,
             });
         }
         if (ex.isAtLeastEditor) {
@@ -328,7 +342,15 @@ export class ExerciseActionsComponent {
         }
         // Deleting an exercise is an instructor-only action.
         if (ex.isAtLeastInstructor) {
-            items.push({ id: 'delete', labelKey: 'entity.action.delete', icon: faTrash, severity: 'danger', kind: 'delete' });
+            items.push({
+                id: 'delete',
+                labelKey: 'entity.action.delete',
+                icon: faTrash,
+                severity: 'danger',
+                kind: 'delete',
+                disabled: programmingDisabled || undefined,
+                disabledTooltip: programmingDisabled ? 'artemisApp.exerciseManagement.programmingFeatureDisabled' : undefined,
+            });
         }
         return items;
     });

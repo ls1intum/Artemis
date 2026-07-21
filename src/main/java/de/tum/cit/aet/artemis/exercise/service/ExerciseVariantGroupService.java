@@ -4,7 +4,9 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
@@ -14,14 +16,18 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.core.service.messaging.InstanceMessageSendService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseVariantGroup;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseVariantGroupRepository;
+import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
+import de.tum.cit.aet.artemis.lecture.api.SlideApi;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseTimelineUpdateDTO;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseCreationUpdateService;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
+import de.tum.cit.aet.artemis.text.domain.TextExercise;
 
 /**
  * Keeps the timeline of an {@link ExerciseVariantGroup} and its member exercises in sync.
@@ -29,6 +35,9 @@ import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
  * All variants of a group share one timeline: joining a group means adopting the group's dates, and editing the group's
  * dates pushes them onto every member. Programming members take a dedicated route, because changing their timeline also
  * has to recompute the build-and-test date and reschedule the build/test operations.
+ * <p>
+ * Changing dates through a group must not be a weaker operation than editing each member directly, so every member also
+ * gets the post-save work its own update endpoint performs — see {@link #runPostTimelineUpdateSideEffects}.
  */
 @Profile(PROFILE_CORE)
 @Lazy
@@ -41,11 +50,27 @@ public class ExerciseVariantGroupService {
 
     private final ProgrammingExerciseCreationUpdateService programmingExerciseCreationUpdateService;
 
+    private final ParticipationRepository participationRepository;
+
+    private final ExerciseService exerciseService;
+
+    private final ExerciseVersionService exerciseVersionService;
+
+    private final InstanceMessageSendService instanceMessageSendService;
+
+    private final Optional<SlideApi> slideApi;
+
     public ExerciseVariantGroupService(ExerciseVariantGroupRepository exerciseVariantGroupRepository, ExerciseRepository exerciseRepository,
-            ProgrammingExerciseCreationUpdateService programmingExerciseCreationUpdateService) {
+            ProgrammingExerciseCreationUpdateService programmingExerciseCreationUpdateService, ParticipationRepository participationRepository, ExerciseService exerciseService,
+            ExerciseVersionService exerciseVersionService, InstanceMessageSendService instanceMessageSendService, Optional<SlideApi> slideApi) {
         this.exerciseVariantGroupRepository = exerciseVariantGroupRepository;
         this.exerciseRepository = exerciseRepository;
         this.programmingExerciseCreationUpdateService = programmingExerciseCreationUpdateService;
+        this.participationRepository = participationRepository;
+        this.exerciseService = exerciseService;
+        this.exerciseVersionService = exerciseVersionService;
+        this.instanceMessageSendService = instanceMessageSendService;
+        this.slideApi = slideApi;
     }
 
     /**
@@ -60,7 +85,11 @@ public class ExerciseVariantGroupService {
     public void saveWithTimelineAppliedToMembers(ExerciseVariantGroup group) {
         List<Exercise> nonProgrammingExercises = new ArrayList<>();
         List<ProgrammingExercise> programmingExercises = new ArrayList<>();
+        // Snapshot every member's dates before applyGroupTimeline overwrites them: the post-update side effects below
+        // (notifications, slide unlocking, stale individual due dates) all compare against the previous values.
+        Map<Long, TimelineSnapshot> snapshotsByExerciseId = new HashMap<>();
         group.getExercises().forEach(exercise -> {
+            snapshotsByExerciseId.put(exercise.getId(), TimelineSnapshot.of(exercise));
             applyGroupTimeline(group, exercise);
             validateDates(exercise);
             if (exercise instanceof ProgrammingExercise programmingExercise) {
@@ -73,9 +102,13 @@ public class ExerciseVariantGroupService {
         // All members validated: persist the group and the member updates, keeping every member's dates in sync.
         exerciseVariantGroupRepository.save(group);
         exerciseRepository.saveAll(nonProgrammingExercises);
+        nonProgrammingExercises.forEach(exercise -> runPostTimelineUpdateSideEffects(exercise, snapshotsByExerciseId.get(exercise.getId())));
         // Programming timeline changes recompute the build-and-test date and reschedule build/test operations, so they go
         // through the dedicated update flow (which reloads and saves the exercise itself) rather than a plain saveAll.
-        programmingExercises.forEach(programmingExercise -> updateProgrammingExerciseTimeline(programmingExercise, group));
+        programmingExercises.forEach(programmingExercise -> {
+            ProgrammingExercise saved = updateProgrammingExerciseTimeline(programmingExercise, group);
+            runProgrammingPostTimelineUpdateSideEffects(saved);
+        });
     }
 
     /**
@@ -95,6 +128,9 @@ public class ExerciseVariantGroupService {
             // date to null until someone edits the group directly.
             adoptMissingDatesFromExercise(group, exercise);
         }
+        // Joining a group changes the exercise's dates just as much as editing the group does, so the same snapshot is
+        // needed here. Unassignment keeps the exercise's dates, which simply makes the side effects below no-ops.
+        TimelineSnapshot snapshot = TimelineSnapshot.of(exercise);
         exercise.setExerciseVariantGroup(group);
         if (group != null && exercise instanceof ProgrammingExercise programmingExercise) {
             // Validate the prospective timeline BEFORE persisting the membership: the group's timeline can be legal at
@@ -106,14 +142,15 @@ public class ExerciseVariantGroupService {
             applyGroupTimeline(group, programmingExercise);
             validateDates(programmingExercise);
             exerciseRepository.save(programmingExercise);
-            updateProgrammingExerciseTimeline(programmingExercise, group);
+            runProgrammingPostTimelineUpdateSideEffects(updateProgrammingExerciseTimeline(programmingExercise, group));
             return;
         }
         if (group != null) {
             applyGroupTimeline(group, exercise);
         }
         validateDates(exercise);
-        exerciseRepository.save(exercise);
+        Exercise saved = exerciseRepository.save(exercise);
+        runPostTimelineUpdateSideEffects(saved, snapshot);
     }
 
     /**
@@ -154,15 +191,79 @@ public class ExerciseVariantGroupService {
      * {@link ProgrammingExerciseCreationUpdateService#updateTimeline}, which recomputes the build-and-test date,
      * validates the resulting dates, and reschedules the build/test operations. A plain repository save would persist
      * the new dates but leave the old build tasks scheduled. The exercise's current assessment type is preserved.
+     * <p>
+     * The build-and-test date passed in is the exercise's <em>own</em> current value, not a group value: the group does
+     * not own that date (see the class Javadoc of {@link ExerciseVariantGroup}). Handing the current value to the regular
+     * update flow makes it re-derive the date from the new shared due date using this exercise's existing offset —
+     * exactly what the per-exercise timeline endpoint does when only the due date changes.
      *
      * @param programmingExercise the programming member whose timeline should adopt the group's
      * @param group               the group providing the shared timeline
      */
-    private void updateProgrammingExerciseTimeline(ProgrammingExercise programmingExercise, ExerciseVariantGroup group) {
+    private ProgrammingExercise updateProgrammingExerciseTimeline(ProgrammingExercise programmingExercise, ExerciseVariantGroup group) {
         ProgrammingExerciseTimelineUpdateDTO timelineUpdate = new ProgrammingExerciseTimelineUpdateDTO(programmingExercise.getId(), group.getReleaseDate(), group.getStartDate(),
                 group.getDueDate(), programmingExercise.getAssessmentType(), group.getAssessmentDueDate(), group.getExampleSolutionPublicationDate(),
-                group.getBuildAndTestStudentSubmissionsAfterDueDate());
-        programmingExerciseCreationUpdateService.updateTimeline(timelineUpdate, null);
+                programmingExercise.getBuildAndTestStudentSubmissionsAfterDueDate());
+        return programmingExerciseCreationUpdateService.updateTimeline(timelineUpdate, null);
+    }
+
+    /**
+     * Runs the post-save work a non-programming member's own update endpoint performs after a date change, so a group
+     * timeline edit is not a silently weaker version of editing the exercise directly. Mirrors the tail of e.g.
+     * {@code TextExerciseCreationUpdateResource#updateTextExercise}: stale individual due dates are dropped, the
+     * type-specific scheduler is refreshed, release/assessment notifications are rescheduled, slides tied to the old due
+     * date are unlocked, and a version snapshot is recorded.
+     * <p>
+     * The exercise's own problem statement is passed as the "old" one because a timeline update never changes it, which
+     * makes {@link ExerciseService#notifyAboutExerciseChanges} correctly report it as unchanged.
+     *
+     * @param exercise the saved member exercise
+     * @param snapshot its dates from before the group timeline was applied
+     */
+    private void runPostTimelineUpdateSideEffects(Exercise exercise, TimelineSnapshot snapshot) {
+        participationRepository.removeIndividualDueDatesIfBeforeDueDate(exercise, snapshot.dueDate());
+        scheduleTypeSpecificOperations(exercise);
+        exerciseService.notifyAboutExerciseChanges(snapshot.releaseDate(), snapshot.assessmentDueDate(), exercise.getProblemStatement(), exercise, null);
+        slideApi.ifPresent(api -> api.handleDueDateChange(snapshot.dueDate(), exercise));
+        exerciseVersionService.createExerciseVersion(exercise);
+    }
+
+    /**
+     * The programming counterpart of {@link #runPostTimelineUpdateSideEffects}. {@code updateTimeline} already reschedules
+     * the build/test operations and sends the notifications itself, but version creation sits in the REST layer
+     * ({@code ProgrammingExercisePartialUpdateResource#updateProgrammingExerciseTimeline}) and would otherwise be skipped
+     * on this path. Individual-due-date cleanup and slide handling are deliberately not run here either, matching what
+     * that endpoint does.
+     *
+     * @param savedProgrammingExercise the exercise as returned by the programming timeline update flow
+     */
+    private void runProgrammingPostTimelineUpdateSideEffects(ProgrammingExercise savedProgrammingExercise) {
+        exerciseVersionService.createExerciseVersion(savedProgrammingExercise);
+    }
+
+    /**
+     * Refreshes the scheduler that owns the exercise type's date-driven jobs. Modeling and file-upload exercises have no
+     * dedicated scheduler, and only course quizzes are scheduled (exam quizzes are driven by the exam).
+     */
+    private void scheduleTypeSpecificOperations(Exercise exercise) {
+        switch (exercise) {
+            case TextExercise textExercise -> instanceMessageSendService.sendTextExerciseSchedule(textExercise.getId());
+            case QuizExercise quizExercise when quizExercise.isCourseExercise() -> instanceMessageSendService.sendQuizExerciseStartSchedule(quizExercise.getId());
+            default -> {
+                // Modeling, file upload and exam quizzes have no timeline-driven scheduling of their own.
+            }
+        }
+    }
+
+    /**
+     * An exercise's shared timeline dates as they were before a group update, captured so the post-save side effects can
+     * compare against them. Only the fields those side effects actually read are kept.
+     */
+    private record TimelineSnapshot(@Nullable ZonedDateTime releaseDate, @Nullable ZonedDateTime dueDate, @Nullable ZonedDateTime assessmentDueDate) {
+
+        static TimelineSnapshot of(Exercise exercise) {
+            return new TimelineSnapshot(exercise.getReleaseDate(), exercise.getDueDate(), exercise.getAssessmentDueDate());
+        }
     }
 
     /**
@@ -184,11 +285,6 @@ public class ExerciseVariantGroupService {
         changed |= adoptMissingDate(group, exercise, Exercise::getAssessmentDueDate, ExerciseVariantGroup::getAssessmentDueDate, ExerciseVariantGroup::setAssessmentDueDate);
         changed |= adoptMissingDate(group, exercise, Exercise::getExampleSolutionPublicationDate, ExerciseVariantGroup::getExampleSolutionPublicationDate,
                 ExerciseVariantGroup::setExampleSolutionPublicationDate);
-        if (exercise instanceof ProgrammingExercise programmingExercise) {
-            // Not a base Exercise field, so it needs the ProgrammingExercise-only getter/setter pair.
-            changed |= adoptMissingDate(group, programmingExercise, ProgrammingExercise::getBuildAndTestStudentSubmissionsAfterDueDate,
-                    ExerciseVariantGroup::getBuildAndTestStudentSubmissionsAfterDueDate, ExerciseVariantGroup::setBuildAndTestStudentSubmissionsAfterDueDate);
-        }
         if (changed) {
             exerciseVariantGroupRepository.save(group);
         }
@@ -227,6 +323,10 @@ public class ExerciseVariantGroupService {
     /**
      * Overwrites the exercise's timeline fields with the group's, including unset (null) dates, so that all variants in a
      * group share one timeline.
+     * <p>
+     * A programming member's {@code buildAndTestStudentSubmissionsAfterDueDate} is deliberately left alone: it is derived
+     * per exercise from its own build plan rather than shared (see the class Javadoc of {@link ExerciseVariantGroup}), and
+     * {@link #updateProgrammingExerciseTimeline} lets the regular update flow re-derive it from the new shared due date.
      *
      * @param group    the group providing the shared timeline
      * @param exercise the member exercise to update in place (not persisted here)
@@ -237,8 +337,5 @@ public class ExerciseVariantGroupService {
         exercise.setDueDate(group.getDueDate());
         exercise.setAssessmentDueDate(group.getAssessmentDueDate());
         exercise.setExampleSolutionPublicationDate(group.getExampleSolutionPublicationDate());
-        if (exercise instanceof ProgrammingExercise programmingExercise) {
-            programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(group.getBuildAndTestStudentSubmissionsAfterDueDate());
-        }
     }
 }

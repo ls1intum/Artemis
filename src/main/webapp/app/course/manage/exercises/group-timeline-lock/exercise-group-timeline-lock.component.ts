@@ -1,8 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, inject, input, output } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { DialogService } from 'primeng/dynamicdialog';
-import { Exercise, ExerciseType, ExerciseVariantGroupReference } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
+import { Exercise, ExerciseVariantGroupReference } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { CourseExerciseGroup } from 'app/exercise/shared/entities/exercise/course-exercise-group.model';
 import { ExerciseVariantGroupDTO, ExerciseVariantGroupService, isPersistableGroup, toUpdateGroupPayload } from 'app/course/manage/exercises/exercise-variant-group.service';
 import { ExerciseGroupEditModalComponent } from 'app/course/manage/exercises/group-edit-modal/exercise-group-edit-modal.component';
@@ -90,7 +89,6 @@ function referenceToGroup(reference: ExerciseVariantGroupReference | undefined):
         dueDate: reference?.dueDate,
         assessmentDueDate: reference?.assessmentDueDate,
         exampleSolutionPublicationDate: reference?.exampleSolutionPublicationDate,
-        buildAndTestStudentSubmissionsAfterDueDate: reference?.buildAndTestStudentSubmissionsAfterDueDate,
         exercises: [],
     };
 }
@@ -106,9 +104,8 @@ function withGroupTimeline(exercise: Exercise, dto: ExerciseVariantGroupDTO): Ex
     updated.dueDate = dto.dueDate;
     updated.assessmentDueDate = dto.assessmentDueDate;
     updated.exampleSolutionPublicationDate = dto.exampleSolutionPublicationDate;
-    if (updated.type === ExerciseType.PROGRAMMING) {
-        (updated as ProgrammingExercise).buildAndTestStudentSubmissionsAfterDueDate = dto.buildAndTestStudentSubmissionsAfterDueDate;
-    }
+    // The build-and-test date is not part of the shared timeline: the server re-derives it per programming exercise
+    // from the new due date, so it is left untouched here.
     updated.exerciseVariantGroup = {
         id: dto.id,
         title: dto.title,
@@ -118,7 +115,6 @@ function withGroupTimeline(exercise: Exercise, dto: ExerciseVariantGroupDTO): Ex
         dueDate: dto.dueDate,
         assessmentDueDate: dto.assessmentDueDate,
         exampleSolutionPublicationDate: dto.exampleSolutionPublicationDate,
-        buildAndTestStudentSubmissionsAfterDueDate: dto.buildAndTestStudentSubmissionsAfterDueDate,
     };
     return updated;
 }
