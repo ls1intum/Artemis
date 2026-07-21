@@ -24,6 +24,11 @@ No `[task]` bindings, no test names, no PlantUML/class diagrams, no repository/g
 Those belong to the final statement, written later once tests exist. Include a public API (types, signatures)
 only when the brief is design-oriented; otherwise describe behavior, not shapes.
 
+## What may vary
+
+Section count and names follow the brief. A design-oriented brief may sketch a public API; a behavior-only
+brief must not. The exemplar below is a shape, not a schema — never copy its topic or numbers.
+
 ## Exemplar
 
 Tiny neutral domain: a coffee shop's loyalty program, deliberately distinct from the seeded reference exercise's domain.

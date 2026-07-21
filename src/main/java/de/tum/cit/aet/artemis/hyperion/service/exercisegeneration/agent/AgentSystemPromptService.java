@@ -325,16 +325,12 @@ public class AgentSystemPromptService {
 
     /** This stage's style-guide pointer: the DESIGN stage's schema is its own style guide; every later stage points at its seeded {@code reference/style/} file. */
     private static String stylePointer(GenerationStage stage) {
-        if (stage == GenerationStage.DESIGN) {
-            return "STYLE GUIDE: the `## Classes` / `## Public API` / `## Tasks` / `## Diagram` schema above is this stage's style guide; there is no separate reference/style file "
-                    + "for the design.\n";
-        }
         String styleFile = switch (stage) {
+            case DESIGN -> "design.md";
             case SOLUTION -> "solution.md";
             case TEMPLATE -> "template.md";
             case TESTS -> "tests.md";
             case STATEMENT -> "final-statement.md";
-            case DESIGN -> throw new IllegalStateException("handled above");
         };
         return "STYLE GUIDE: before writing, skim `reference/style/" + styleFile + "` for this artifact's FORM conventions; imitate its FORM only, never reference/'s topic, API, "
                 + "or code.\n";

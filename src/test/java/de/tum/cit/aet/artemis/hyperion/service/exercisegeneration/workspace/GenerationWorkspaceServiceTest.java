@@ -195,7 +195,7 @@ class GenerationWorkspaceServiceTest {
     }
 
     @Test
-    void readStyleGuides_loadsAllFiveArtifactGuidesRegardlessOfExerciseLanguage() {
+    void readStyleGuides_loadsAllSixArtifactGuidesRegardlessOfExerciseLanguage() {
         // Unlike readReferenceSample, the style guides are language-agnostic prose (not source code), so the method takes no exercise/language parameter at all: it is seeded
         // identically for every GENERATE run.
         ResourceLoaderService resourceLoaderService = new ResourceLoaderService(new DefaultResourceLoader(), mock());
@@ -204,14 +204,15 @@ class GenerationWorkspaceServiceTest {
 
         Map<String, String> guides = service.readStyleGuides();
 
-        assertThat(guides).containsOnlyKeys("reference/style/draft-statement.md", "reference/style/final-statement.md", "reference/style/template.md",
+        assertThat(guides).containsOnlyKeys("reference/style/design.md", "reference/style/draft-statement.md", "reference/style/final-statement.md", "reference/style/template.md",
                 "reference/style/solution.md", "reference/style/tests.md");
         // Each guide states its role up front so the agent can tell them apart at a glance.
+        assertThat(guides.get("reference/style/design.md")).contains("## Diagram");
         assertThat(guides.get("reference/style/draft-statement.md")).contains("BEFORE any tests");
         assertThat(guides.get("reference/style/final-statement.md")).contains("CRITICAL POLICY");
         assertThat(guides.get("reference/style/template.md")).contains("// TODO");
         assertThat(guides.get("reference/style/solution.md")).contains("Diff discipline");
-        assertThat(guides.get("reference/style/tests.md")).contains("Ares conventions");
+        assertThat(guides.get("reference/style/tests.md")).contains("Harness conventions (Java/Ares)");
         // The exemplars must never reuse the seeded worked-example domain's concrete types (shipping fees) or the classic sorting domain; guide prose is allowed to name
         // "shipping" only as a negative instruction (e.g. "never shipping fees"), so assert on the domain's concrete identifiers instead of the bare word.
         assertThat(guides.values()).noneMatch(content -> content.contains("ShippingCalculator") || content.contains("FeeStrategy"))

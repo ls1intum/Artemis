@@ -17,7 +17,7 @@ or the instructor brief ("This exercise uses a whimsical theme" is authoring com
   context and `**You have the following tasks:**`.
 - Number the tasks. Every `[task][Title](exactTestNameA,exactTestNameB)` line is immediately followed by one
   or two imperative sentences naming the exact members the student implements ("Implement
-  `calculateFee(double)` in `StandardFeeStrategy`. Charge 2.0 EUR per kilogram."). A bare task line with no
+  `earn(double)` in `LoyaltyAccount`. Credit 1 point per whole dollar."). A bare task line with no
   prose under it is a defect.
 - A contract detail (bounds, ordering, tie-breaking, exceptions) belongs with the task that enforces it, or
   in a short contract section -- only where a test observes it.
@@ -45,50 +45,56 @@ them. End with `hide empty fields` / `hide empty methods`.
 Clarify non-obvious behavior only. Must never reuse a graded test's exact composite input -- pick a smaller or
 materially different input that teaches the rule without revealing the oracle.
 
+## What may vary
+
+The number of parts follows the number of seams -- a compact single-seam exercise may be one part with two
+tasks, and that is fine. The API-once form is a free choice (signature list, table, or diagram) as long as it
+appears exactly once. Examples may be code, a table, or precise prose -- whichever teaches the rule best.
+Section names beyond the `#` title are yours; the exemplar's wording is a shape, not a schema.
+
 ## Exemplar (FORM only -- never copy its topic, API, or design)
 
 ```markdown
-# Parcel Shipping Fees
+# Cafe Loyalty Rewards
 
-In this exercise, we want to calculate shipping fees with interchangeable pricing strategies, chosen at
+In this exercise, we want to credit and redeem loyalty points with interchangeable reward rules, chosen at
 runtime.
 
-### Part 1: Fee Strategies
+### Part 1: Earning Points
 
-Each shipping method charges differently.
-
-**You have the following tasks:**
-
-1. [task][Implement Standard Fees](testStandardFeeTypical,testStandardFeeZeroWeight)
-Implement `calculateFee(double)` in `StandardFeeStrategy`. Charge 2.0 EUR per kilogram.
-
-### Part 2: Strategy Selection
-
-Create the strategy interface and the calculator that picks a strategy, following the below class diagram.
+Every purchase credits points according to the active reward rule.
 
 **You have the following tasks:**
 
-2. [task][Create The Strategy Interface](testClass[FeeStrategy],testMethods[FeeStrategy])
-Create a `FeeStrategy` interface with `double calculateFee(double weightKg)` and make both strategies
-implement it.
+1. [task][Credit Points For A Purchase](testEarnWholeDollarsOnly,testEarnZeroBelowOneDollar)
+Implement `earn(double)` in `LoyaltyAccount`. Credit 1 point per whole dollar spent; never round up.
 
-3. [task][Select And Delegate](testSelectsExpressForHeavyPackages,testComputeFeeDelegatesToChosenStrategy)
-Implement `selectStrategy(double)` and `computeFee(double)` in `ShippingCalculator`: pick
-`ExpressFeeStrategy` above 10 kg, otherwise `StandardFeeStrategy`, and delegate the fee calculation.
+### Part 2: Interchangeable Reward Rules
+
+Create the reward-rule interface and wire it into the account, following the below class diagram.
+
+**You have the following tasks:**
+
+2. [task][Create The Reward Rule Interface](testClass[RewardRule],testMethods[RewardRule])
+Create a `RewardRule` interface with `int pointsFor(double amount)` and make the account delegate to it.
+
+3. [task][Apply The Double-Points Rule](testDoublePointsTypical,testSwitchRuleKeepsBalance)
+Implement `pointsFor(double)` in `DoublePointsRule`: twice the whole-dollar amount. Switching rules must
+keep the banked balance.
 
 @startuml
-interface FeeStrategy {
-  <color:testsColor(testMethods[FeeStrategy])>+calculateFee(double): double</color>
+interface RewardRule {
+  <color:testsColor(testMethods[RewardRule])>+pointsFor(double): int</color>
 }
-class StandardFeeStrategy {
-  <color:testsColor(testStandardFeeTypical)>+calculateFee(double): double</color>
+class DoublePointsRule {
+  <color:testsColor(testDoublePointsTypical)>+pointsFor(double): int</color>
 }
-class ShippingCalculator {
-  <color:testsColor(testSelectsExpressForHeavyPackages)>+selectStrategy(double): void</color>
-  <color:testsColor(testComputeFeeDelegatesToChosenStrategy)>+computeFee(double): double</color>
+class LoyaltyAccount {
+  <color:testsColor(testEarnWholeDollarsOnly)>+earn(double): void</color>
+  <color:testsColor(testSwitchRuleKeepsBalance)>+setRule(RewardRule): void</color>
 }
-StandardFeeStrategy .up.|> FeeStrategy #testsColor(testClass[StandardFeeStrategy])
-ShippingCalculator -right-> FeeStrategy
+DoublePointsRule .up.|> RewardRule #testsColor(testClass[DoublePointsRule])
+LoyaltyAccount -right-> RewardRule
 hide empty fields
 hide empty methods
 @enduml

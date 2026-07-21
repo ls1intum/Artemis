@@ -262,13 +262,13 @@ class AgentSystemPromptServiceTest {
     }
 
     @Test
-    void buildStage_design_carriesOnlyItsOwnStageAndPointsAtItsOwnSchemaAsTheStyleGuide() {
+    void buildStage_design_carriesOnlyItsOwnStageAndPointsAtTheDesignStyleGuide() {
         String prompt = systemPromptService.buildStage(exerciseWith(ProgrammingLanguage.JAVA, ""), GenerationStage.DESIGN);
 
         assertOnlyOwnStageHeaderPresent(prompt, GenerationStage.DESIGN);
-        assertThat(prompt).contains("write `/workspace/DESIGN.md`").contains("STYLE GUIDE: the `## Classes`").contains("there is no separate reference/style file for the design")
-                .doesNotContain("Earlier stages already produced").doesNotContain("reference/style/solution.md").doesNotContain("reference/style/template.md")
-                .doesNotContain("reference/style/tests.md").doesNotContain("reference/style/final-statement.md");
+        assertThat(prompt).contains("write `/workspace/DESIGN.md`").contains("reference/style/design.md").doesNotContain("Earlier stages already produced")
+                .doesNotContain("reference/style/solution.md").doesNotContain("reference/style/template.md").doesNotContain("reference/style/tests.md")
+                .doesNotContain("reference/style/final-statement.md");
     }
 
     @Test
