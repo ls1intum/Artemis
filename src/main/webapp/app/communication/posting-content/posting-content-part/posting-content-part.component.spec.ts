@@ -276,6 +276,7 @@ describe('PostingContentPartComponent', () => {
                     modal: true,
                     dismissableMask: true,
                     closeOnEscape: true,
+                    showHeader: false,
                 }),
             );
         });

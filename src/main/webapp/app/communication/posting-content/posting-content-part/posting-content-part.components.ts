@@ -148,6 +148,8 @@ export class PostingContentPartComponent implements OnInit {
             modal: true,
             dismissableMask: true,
             closeOnEscape: true,
+            // The dialog renders its own floating close button; the default header would be pushed off-screen by the full-height image.
+            showHeader: false,
             style: { 'max-width': '95vw' },
         });
     }
