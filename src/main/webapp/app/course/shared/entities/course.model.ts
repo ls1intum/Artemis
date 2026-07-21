@@ -113,6 +113,7 @@ export class Course implements BaseEntity {
     public competencies?: Competency[];
     public prerequisites?: Prerequisite[];
     public learningPathsEnabled?: boolean;
+    public presentationAssessmentsEnabled?: boolean;
     public learningPaths?: LearningPath[];
     public exams?: Exam[];
     public organizations?: Organization[];
@@ -151,6 +152,7 @@ export class Course implements BaseEntity {
         this.maxRequestMoreFeedbackTimeDays = 7; // default value
         this.accuracyOfScores = 1; // default value
         this.restrictedAthenaModulesAccess = false; // default value
+        this.presentationAssessmentsEnabled = false; // default value
         this.courseInformationSharingConfiguration = CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING; // default value
 
         this.courseIconPath = addPublicFilePrefix(this.courseIcon);

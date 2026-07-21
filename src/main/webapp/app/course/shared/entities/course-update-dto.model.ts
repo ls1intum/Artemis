@@ -49,6 +49,7 @@ export interface CourseCreateDTO {
 
     // Course features
     learningPathsEnabled: boolean;
+    presentationAssessmentsEnabled: boolean;
     presentationScore?: number;
     maxPoints?: number;
     accuracyOfScores?: number;
@@ -106,6 +107,7 @@ export function toCourseCreateDTO(course: Course): CourseCreateDTO {
 
         // Course features
         learningPathsEnabled: course.learningPathsEnabled ?? false,
+        presentationAssessmentsEnabled: course.presentationAssessmentsEnabled ?? false,
         presentationScore: course.presentationScore,
         maxPoints: course.maxPoints,
         accuracyOfScores: course.accuracyOfScores,
@@ -166,6 +168,7 @@ export interface CourseUpdateDTO {
 
     // Course features
     learningPathsEnabled: boolean;
+    presentationAssessmentsEnabled: boolean;
     presentationScore?: number;
     maxPoints?: number;
     accuracyOfScores?: number;
@@ -229,6 +232,7 @@ export function toCourseUpdateDTO(course: Course): CourseUpdateDTO {
 
         // Course features
         learningPathsEnabled: course.learningPathsEnabled ?? false,
+        presentationAssessmentsEnabled: course.presentationAssessmentsEnabled ?? false,
         presentationScore: course.presentationScore,
         maxPoints: course.maxPoints,
         accuracyOfScores: course.accuracyOfScores,

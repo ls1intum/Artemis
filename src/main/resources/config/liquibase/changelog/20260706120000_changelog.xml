@@ -87,4 +87,19 @@
             <column name="student_id"/>
         </createIndex>
     </changeSet>
+
+    <changeSet id="20260706120000-6" author="artemis">
+        <addColumn tableName="course">
+            <column name="presentation_assessments_enabled" type="boolean" defaultValueBoolean="true">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="20260706120000-7" author="artemis">
+        <addDefaultValue tableName="course"
+                         columnName="presentation_assessments_enabled"
+                         columnDataType="boolean"
+                         defaultValueBoolean="false"/>
+    </changeSet>
 </databaseChangeLog>

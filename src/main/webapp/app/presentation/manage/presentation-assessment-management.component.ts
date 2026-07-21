@@ -1,4 +1,4 @@
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { Component, OnInit, TemplateRef, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
@@ -26,6 +26,7 @@ import { Course, CourseGroup } from 'app/course/shared/entities/course.model';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { User } from 'app/account/user/user.model';
 import { CourseGroupComponent } from 'app/course/shared/course-group/course-group.component';
+import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 
 @Component({
     selector: 'jhi-presentation-assessment-management',
@@ -54,6 +55,7 @@ export class PresentationAssessmentManagementComponent implements OnInit {
     private readonly courseManagementService = inject(CourseManagementService);
     private readonly alertService = inject(AlertService);
     private readonly sortService = inject(SortService);
+    private readonly modalService = inject(NgbModal);
 
     protected readonly faBan = faBan;
     protected readonly faPencilAlt = faPencilAlt;
@@ -92,6 +94,7 @@ export class PresentationAssessmentManagementComponent implements OnInit {
 
     predicate = 'presentationDate';
     ascending = true;
+    private modalRef?: NgbModalRef;
 
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
@@ -120,7 +123,7 @@ export class PresentationAssessmentManagementComponent implements OnInit {
         });
     }
 
-    startCreate(): void {
+    startCreate(content: TemplateRef<unknown>): void {
         this.editedAssessment.set(undefined);
         this.assignedStudents.set([]);
         this.editForm.reset({
@@ -131,9 +134,10 @@ export class PresentationAssessmentManagementComponent implements OnInit {
             presentationDate: undefined,
         });
         this.showForm.set(true);
+        this.openPresentationModal(content);
     }
 
-    startEdit(presentationAssessment: PresentationAssessment): void {
+    startEdit(presentationAssessment: PresentationAssessment, content: TemplateRef<unknown>): void {
         this.editedAssessment.set(presentationAssessment);
         this.loadAssignedStudents(presentationAssessment);
         this.editForm.reset({
@@ -144,9 +148,11 @@ export class PresentationAssessmentManagementComponent implements OnInit {
             presentationDate: presentationAssessment.presentationDate,
         });
         this.showForm.set(true);
+        this.openPresentationModal(content);
     }
 
     cancelEdit(): void {
+        this.modalRef?.dismiss();
         this.showForm.set(false);
         this.editedAssessment.set(undefined);
         this.assignedStudents.set([]);
@@ -267,15 +273,14 @@ export class PresentationAssessmentManagementComponent implements OnInit {
 
         if (!requests.length) {
             this.editedAssessment.set(savedAssessment);
-            this.finishSave(false, false);
+            this.finishSave(false);
             return;
         }
 
         forkJoin(requests).subscribe({
             next: () => {
                 this.editedAssessment.set(savedAssessment);
-                this.finishSave(false, false);
-                this.loadAssignedStudents(savedAssessment);
+                this.finishSave(false);
             },
             error: (res: HttpErrorResponse) => {
                 this.editedAssessment.set(savedAssessment);
@@ -289,8 +294,14 @@ export class PresentationAssessmentManagementComponent implements OnInit {
         this.showForm.set(!closeForm);
         if (closeForm) {
             this.editedAssessment.set(undefined);
+            this.assignedStudents.set([]);
+            this.modalRef?.close();
         }
         this.alertService.success(isUpdate ? 'artemisApp.presentationAssessment.updated' : 'artemisApp.presentationAssessment.created');
         this.loadAll();
+    }
+
+    private openPresentationModal(content: TemplateRef<unknown>): void {
+        this.modalRef = this.modalService.open(content, { size: 'xl', backdrop: 'static', scrollable: true });
     }
 }

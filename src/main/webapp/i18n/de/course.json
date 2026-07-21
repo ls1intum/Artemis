@@ -234,6 +234,10 @@
                 "label": "Lernpfade aktiviert",
                 "tooltip": "Ermöglicht es aus Kompetenzen und deren Lerninhalten einen individuellen Lernpfad für Studierende zu generieren."
             },
+            "presentationAssessments": {
+                "label": "Präsentationen aktiviert",
+                "tooltip": "Zeigt den Menüpunkt Präsentationen in der Kursnavigation und erlaubt Lehrenden, Kurspräsentationen zu verwalten."
+            },
             "restrictedAthenaModulesAccess": {
                 "label": "Zugriff auf geschützte Athena-Module aktiviert",
                 "tooltip": "Wenn diese Option ausgewählt ist, können die Übungen des Kurses auch geschützte Athena-Module für die Feedbackerstellung verwenden."
