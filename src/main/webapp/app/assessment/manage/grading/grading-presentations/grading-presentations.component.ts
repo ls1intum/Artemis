@@ -5,6 +5,7 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 
 import { FormsModule } from '@angular/forms';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
+import { MAX_GRADING_POINTS } from 'app/foundation/constants/input.constants';
 
 /**
  * Enum representing the available presentation types in a course grading system.
@@ -70,6 +71,7 @@ export class GradingPresentationsComponent {
     readonly BASIC = PresentationType.BASIC;
     /** Constant for GRADED presentation type, used in template comparisons */
     readonly GRADED = PresentationType.GRADED;
+    readonly MAX_GRADING_POINTS = MAX_GRADING_POINTS;
 
     // =========================================================================
     // Mode Picker Configuration

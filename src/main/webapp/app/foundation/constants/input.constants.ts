@@ -17,6 +17,8 @@ export const EXAM_TEXT_MAX_LENGTH = 10 * 1000;
 export const MAX_QUIZ_SHORT_ANSWER_TEXT_LENGTH = 255; // Must be consistent with database column definition
 /** Maximum exam title character length: 255 **/
 export const EXAM_TITLE_MAX_LENGTH = 255; // Must be consistent with Constants.EXAM_TITLE_MAX_LENGTH and the exam.title database column
+/** Maximum configurable point value in a course or exam grading configuration (max points, presentation score). Keep in sync with MAX_GRADING_POINTS in Constants.java. **/
+export const MAX_GRADING_POINTS = 9999;
 /** Short names must start with a letter and cannot contain special characters **/
 export const SHORT_NAME_PATTERN = /^[a-zA-Z][a-zA-Z0-9]{2,}$/;
 /**

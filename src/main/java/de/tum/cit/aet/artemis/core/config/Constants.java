@@ -89,6 +89,7 @@ public final class Constants {
     public static final int EXAM_TITLE_MAX_LENGTH = 255;
 
     // Upper bound for configurable point values in a course or exam grading configuration (max points, presentation score).
+    // Keep in sync with MAX_GRADING_POINTS in input.constants.ts.
     public static final int MAX_GRADING_POINTS = 9999;
 
     public static final String FILE_ENDING_REGEX = "^[a-zA-Z0-9]{1,5}";

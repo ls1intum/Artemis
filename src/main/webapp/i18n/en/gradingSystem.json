@@ -92,7 +92,9 @@
                 "invalidFirstAndLastStep": "The Min % of the first grade step must be 0 and the Max % of the last grade step must be at least 100!",
                 "invalidBasicPresentationIsEnabled": "Presentations are already enabled for this course!",
                 "invalidPresentationsNumber": "The number of presentations must be a whole number above 0!",
-                "invalidPresentationsWeight": "The combined weight of all presentations must be between 0 and 99!"
+                "invalidPresentationsWeight": "The combined weight of all presentations must be between 0 and 99!",
+                "maxPointsTooHigh": "The maximum number of points must not exceed 9999.",
+                "valueTooHigh": "The value must not exceed 9999."
             },
             "overview": {
                 "info": "The grading key is based on the attainable points. It could change until the end of the course when more exercises have been assessed.",
