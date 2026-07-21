@@ -5,7 +5,7 @@ import { faChevronUp, faFile, faFilePdf, faFileVideo, faVideo } from '@fortaweso
 import { RouterLink } from '@angular/router';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { IrisLogoComponent, IrisLogoSize } from 'app/iris/overview/iris-logo/iris-logo.component';
-import { HtmlForMarkdownPipe } from 'app/foundation/pipes/html-for-markdown.pipe';
+import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
 import { IrisThinkingBubbleComponent } from 'app/iris/overview/base-chatbot/iris-thinking-bubble/iris-thinking-bubble.component';
 import { IrisSearchAnswerService } from 'app/core/navbar/global-search/services/iris-search-answer.service';
 import { IrisSearchResult } from 'app/core/navbar/global-search/models/iris-search-result.model';
@@ -13,9 +13,6 @@ import { IrisSearchStatusUpdate } from 'app/core/navbar/global-search/models/iri
 import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
 import { SEARCH_DEBOUNCE_MS } from 'app/core/navbar/global-search/components/views/search-result-view.directive';
 import { catchError, of, switchMap, timer } from 'rxjs';
-
-/** Delay in ms after a new result before measuring the rendered answer height. */
-const ANSWER_MEASURE_DELAY_MS = 60;
 
 /** Number of lines shown before the answer is clamped. Must match the CSS `max-height` on `.iris-answer-text.is-clamped`. */
 const CLAMP_LINE_COUNT = 4;
@@ -34,7 +31,7 @@ const IRIS_ANSWER_DEBOUNCE_MS = SEARCH_DEBOUNCE_MS + 300;
     selector: 'jhi-global-search-iris-answer',
     standalone: true,
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [FaIconComponent, RouterLink, ArtemisTranslatePipe, IrisLogoComponent, HtmlForMarkdownPipe, IrisThinkingBubbleComponent],
+    imports: [FaIconComponent, RouterLink, ArtemisTranslatePipe, IrisLogoComponent, MarkdownDirective, IrisThinkingBubbleComponent],
     templateUrl: './global-search-iris-answer.component.html',
     styleUrls: ['./global-search-iris-answer.component.scss'],
 })
@@ -69,6 +66,11 @@ export class GlobalSearchIrisAnswerComponent {
 
     constructor() {
         // Measure answer overflow after each new result; reset when the result clears.
+        // The answer is rendered by the lazily-loaded markdown directive, so its final
+        // height is only known once that chunk resolves and populates the element. A
+        // fixed timer can fire while the element is still empty on a cold load, leaving
+        // long answers unclamped; a ResizeObserver re-measures whenever the rendered
+        // content changes size, so the clamp/show-more control appears reliably.
         effect((onCleanup) => {
             const result = this.irisResult();
             untracked(() => {
@@ -77,15 +79,22 @@ export class GlobalSearchIrisAnswerComponent {
                 this.moreOpen.set(false);
             });
             if (!result?.answer) return;
-            const measureTimeout = setTimeout(() => {
-                const element = this.answerBody()?.nativeElement;
-                if (element) {
-                    const rawLineHeight = getComputedStyle(element).lineHeight;
-                    const lineHeight = rawLineHeight === 'normal' ? DEFAULT_LINE_HEIGHT_PX : parseFloat(rawLineHeight);
-                    untracked(() => this.isOverflowing.set(element.scrollHeight > lineHeight * CLAMP_LINE_COUNT));
-                }
-            }, ANSWER_MEASURE_DELAY_MS);
-            onCleanup(() => clearTimeout(measureTimeout));
+            // Reactive read: the effect re-runs once the `#answerBody` element is rendered.
+            const element = this.answerBody()?.nativeElement;
+            if (!element) return;
+
+            const measure = () => {
+                const rawLineHeight = getComputedStyle(element).lineHeight;
+                const lineHeight = rawLineHeight === 'normal' ? DEFAULT_LINE_HEIGHT_PX : parseFloat(rawLineHeight);
+                untracked(() => this.isOverflowing.set(element.scrollHeight > lineHeight * CLAMP_LINE_COUNT));
+            };
+
+            measure();
+            if (typeof ResizeObserver === 'undefined') return;
+            // eslint-disable-next-line localRules/enforce-cleanup-on-destroy -- disconnected via the effect's onCleanup, which runs on destroy
+            const observer = new ResizeObserver(() => measure());
+            observer.observe(element);
+            onCleanup(() => observer.disconnect());
         });
 
         // Iris answer pipeline — runs alongside the main search.

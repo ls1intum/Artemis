@@ -14,6 +14,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.service.user.UserService;
 import de.tum.cit.aet.artemis.notification.domain.GlobalNotificationType;
+import de.tum.cit.aet.artemis.notification.dto.GlobalNotificationSettingDTO;
 import de.tum.cit.aet.artemis.notification.repository.GlobalNotificationSettingRepository;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
@@ -65,6 +66,20 @@ class GlobalNotificationSettingsIntegrationTest extends AbstractSpringIntegratio
 
         request.put("/api/notification/global-notification-settings/" + GlobalNotificationType.SSH_KEY_EXPIRED, requestBody, HttpStatus.OK);
         assertThat(globalNotificationSettingRepository.isNotificationEnabled(testUser.getId(), GlobalNotificationType.SSH_KEY_EXPIRED)).isFalse();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldReturnGlobalNotificationSettingDTOWhenUpdatingSetting() throws Exception {
+        Map<String, Boolean> requestBody = Map.of("enabled", false);
+
+        GlobalNotificationSettingDTO response = request.putWithResponseBody("/api/notification/global-notification-settings/" + GlobalNotificationType.NEW_LOGIN, requestBody,
+                GlobalNotificationSettingDTO.class, HttpStatus.OK);
+
+        assertThat(response.id()).isNotNull();
+        assertThat(response.userId()).isEqualTo(testUser.getId());
+        assertThat(response.notificationType()).isEqualTo(GlobalNotificationType.NEW_LOGIN);
+        assertThat(response.enabled()).isFalse();
     }
 
     @Test
