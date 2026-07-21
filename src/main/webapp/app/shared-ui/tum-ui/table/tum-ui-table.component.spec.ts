@@ -81,6 +81,7 @@ describe('TumUiTableComponent', () => {
         expect(component['columnVisibilityClasses']({ hideBelow: 'md' } as ColumnDef<Row>)).toBe('hidden md:table-cell');
         expect(component['columnVisibilityClasses']({ hideBelow: 'lg' } as ColumnDef<Row>)).toBe('hidden lg:table-cell');
         expect(component['columnVisibilityClasses']({ hideBelow: 'xl' } as ColumnDef<Row>)).toBe('hidden xl:table-cell');
+        expect(component['columnVisibilityClasses']({ hideBelow: '2xl' } as ColumnDef<Row>)).toBe('hidden 2xl:table-cell');
         expect(component['columnVisibilityClasses']({ field: 'name' } as ColumnDef<Row>)).toBe('');
     });
 

@@ -34,6 +34,7 @@ const HIDE_BELOW_CLASSES: Record<NonNullable<ColumnDef<unknown>['hideBelow']>, s
     md: 'hidden md:table-cell',
     lg: 'hidden lg:table-cell',
     xl: 'hidden xl:table-cell',
+    '2xl': 'hidden 2xl:table-cell',
 };
 
 /**

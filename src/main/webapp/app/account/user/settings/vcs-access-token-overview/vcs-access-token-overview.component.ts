@@ -47,14 +47,14 @@ export class VcsAccessTokenOverviewComponent implements OnInit {
     protected readonly typeColumnTemplate = viewChild<CellTemplateRef<VcsAccessTokenOverview>>('typeColumn');
     protected readonly repositoryColumnTemplate = viewChild<CellTemplateRef<VcsAccessTokenOverview>>('repositoryColumn');
 
-    // On small screens the least essential columns drop out (course below md, the long repository URI below xl) so the table stays usable without horizontal scrolling; the exercise
-    // and type — enough to identify and revoke a token — are always shown. The repository column gets a width floor so the URI claims space (rendering in ~2 lines) instead of being
-    // starved by the other columns.
+    // Columns drop out as the screen narrows so the table always fits and the revoke action stays on-screen (no horizontal scrolling needed): the wide repository URI only shows on
+    // very wide screens (2xl) where there is room for all columns, the course hides below md, and the exercise and type — enough to identify and revoke a token — are always shown.
+    // The repository column gets a width floor so, when shown, the URI claims space and renders in ~2 lines instead of being starved by the other columns.
     protected readonly columns = computed<ColumnDef<VcsAccessTokenOverview>[]>(() => [
         { field: 'courseTitle', headerKey: 'artemisApp.userSettings.vcsAccessTokensOverview.table.course', sort: true, hideBelow: 'md', templateRef: this.courseColumnTemplate() },
         { field: 'exerciseTitle', headerKey: 'artemisApp.userSettings.vcsAccessTokensOverview.table.exercise', sort: true, templateRef: this.exerciseColumnTemplate() },
         { headerKey: 'artemisApp.userSettings.vcsAccessTokensOverview.table.type', templateRef: this.typeColumnTemplate() },
-        { headerKey: 'artemisApp.userSettings.vcsAccessTokensOverview.table.repository', hideBelow: 'xl', width: '24rem', templateRef: this.repositoryColumnTemplate() },
+        { headerKey: 'artemisApp.userSettings.vcsAccessTokensOverview.table.repository', hideBelow: '2xl', width: '20rem', templateRef: this.repositoryColumnTemplate() },
     ]);
 
     // Row identity (type + id, since ids are only unique within a token table) so the table reuses row DOM across reloads.
