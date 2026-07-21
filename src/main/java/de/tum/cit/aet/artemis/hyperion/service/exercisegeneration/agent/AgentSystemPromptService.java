@@ -213,8 +213,9 @@ public class AgentSystemPromptService {
             plausible wrong implementation would get wrong; `## Worked Examples` — a table (| Rules | Input | Expected |) with at least two rows per central rule whose
             expected results DIFFER; verify every row's arithmetic in the sandbox (a throwaway /tmp script) BEFORE writing it down; `## Design` — a table
             (| Type | Role | Template status |) with Template status EXACTLY one of `given`, `stubbed`, `student-creates` (a `student-creates` type is OMITTED from the
-            template and graded through seeded structural checks plus reflection-based tests — the template gate enforces its absence), plus who owns each piece of mutable
-            state and whether it survives object replacement; `## Testing Strategy` — one seam per independently actionable unit of student work, grouping every test
+            template and graded through seeded structural checks plus reflection-based tests — the template gate enforces its absence). When the brief asks students to DESIGN
+            or CREATE a type, that type is `student-creates`; shipping it `stubbed` hands them the answer and silently downgrades the exercise. Say who owns each piece of
+            mutable state and whether it survives object replacement; `## Testing Strategy` — one seam per independently actionable unit of student work, grouping every test
             partition it needs (never one seam per test, never one for the whole exercise unless it is genuinely one seam), with a weight tier (core rules outweigh edge
             cases) and which partitions get a hidden after-due-date variant with fresh witnesses (students overfit to visible tests); `## Diagram` — yes/no + one-line why
             grounded in the design (yes for multiple collaborating or student-created types). No [task] bindings, no test names, no PlantUML at spec time. Update SPEC.md
