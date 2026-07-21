@@ -44,7 +44,7 @@
 <ng-template #repositoryColumn let-params>
     @let token = params.data;
     @if (token.repositoryUri) {
-        <span class="block max-w-xs break-all font-mono text-xs text-muted-color" [title]="token.repositoryUri">{{ token.repositoryUri }}</span>
+        <span class="block break-all font-mono text-xs text-muted-color" [title]="token.repositoryUri">{{ token.repositoryUri }}</span>
     }
 </ng-template>
 

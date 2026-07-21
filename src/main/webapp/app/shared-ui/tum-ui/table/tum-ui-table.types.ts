@@ -19,7 +19,7 @@ export interface ColumnDef<T> {
      * Responsively hide this column below the given Tailwind breakpoint (its header and body cells get `display:none`, so the column collapses and takes no width). Used to keep the
      * table usable on small screens by dropping the least essential columns instead of forcing horizontal scrolling. Omit to always show the column.
      */
-    hideBelow?: 'sm' | 'md' | 'lg';
+    hideBelow?: 'sm' | 'md' | 'lg' | 'xl';
     /** Render the cell with a parent-defined template that receives {@link CellRendererParams} as `$implicit`. */
     templateRef?: CellTemplateRef<T>;
 }
