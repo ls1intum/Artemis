@@ -275,10 +275,10 @@ class GenerationTaskServiceTest {
     }
 
     @Test
-    void run_withoutACapturedDesignDocument_neverRecordsOne() {
+    void run_withoutACapturedSpecDocument_neverRecordsOne() {
         run(GenerationMode.GENERATE, outcomeWith(AgentLoopResult.Status.CANCELLED, null));
 
-        verify(jobService, never()).recordDesignDocument(anyLong(), anyString(), any());
+        verify(jobService, never()).recordSpecDocument(anyLong(), anyString(), any());
     }
 
     @Test

@@ -58,12 +58,13 @@ Pin the public API here too — signatures only; later stages copy them, they do
 
 ## Testing strategy
 
-Under `## Testing Strategy`, a table with one row per SEAM whose LAST column is the hidden-variant decision, written as `yes` or `no` (that cell is read mechanically; prose
-there reads as "no"). One row per seam (an independently actionable unit of student work),
-listing: the behaviour partitions its tests need; a weight tier — core rules weigh more than edge polish (weights 1–3; the test stage
-writes the machine-readable plan); and which partitions deserve a HIDDEN variant (visibility AFTER_DUE_DATE)
-with fresh witness values, because students overfit to visible tests. Never one seam per test; never one seam
-for the whole exercise unless it genuinely is one.
+A table under `## Testing Strategy` with one row per SEAM — an independently actionable unit of student work.
+Never one seam per test; never one seam for the whole exercise unless it genuinely is one. Each row lists the
+behaviour partitions its tests need, a weight tier (core rules weigh more than edge polish; weights 1–3, and
+the test stage writes the machine-readable plan), and LAST the hidden-variant decision, written as `yes` or
+`no` — that cell is read mechanically, so prose there reads as "no". A hidden variant (visibility
+AFTER_DUE_DATE) repeats a partition with fresh witness values, because students overfit to visible tests; it
+grades silently and is never bound to a task in the statement.
 
 ## Diagram
 

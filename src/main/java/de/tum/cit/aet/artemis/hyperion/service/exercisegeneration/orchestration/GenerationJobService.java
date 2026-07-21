@@ -350,23 +350,10 @@ public class GenerationJobService {
     }
 
     /**
-     * Records the workspace's {@code DESIGN.md} content captured once the generation outcome lands, so {@link #getStatus(User, ProgrammingExercise)} can surface it as an
-     * observable intermediate result (the stage-0 design is otherwise invisible to the status/replay API, even though the agent authored solution/template/tests from it).
-     * Defensively capped so a large document cannot grow the retained Hazelcast transcript without bound; dropped if it does not match the retained transcript (a stale/older
-     * run).
-     *
-     * @param exerciseId     the exercise id (the transcript key)
-     * @param jobId          the job id; the document is dropped if it does not match the retained transcript
-     * @param designDocument the {@code DESIGN.md} content to retain
-     * @return whether it was accepted into the authoritative transcript
-     */
-    public boolean recordDesignDocument(long exerciseId, String jobId, String designDocument) {
-        return replayStore.recordDesignDocument(exerciseId, jobId, designDocument);
-    }
-
-    /**
      * Records the gate-approved SPEC.md snapshot on the running job's transcript so the owner can review the behavioural specification while the run is still building —
-     * the earliest meaningful intermediate result. Same bounding and staleness rules as {@link #recordDesignDocument}.
+     * the earliest meaningful intermediate result. Defensively capped so a large document cannot grow the retained Hazelcast transcript without bound, and dropped when it does not
+     * match the retained transcript (a
+     * stale or older run).
      *
      * @param exerciseId   the exercise id (the transcript key)
      * @param jobId        the job id; dropped if it does not match the retained transcript
@@ -978,7 +965,7 @@ public class GenerationJobService {
     }
 
     public record JobTranscript(String jobId, String userLogin, long exerciseId, GenerationMode mode, List<ExerciseGenerationEventDTO> events, boolean done,
-            @Nullable String designDocument, @Nullable String specDocument) implements Serializable {
+            @Nullable String specDocument) implements Serializable {
 
         @Serial
         private static final long serialVersionUID = 1L;

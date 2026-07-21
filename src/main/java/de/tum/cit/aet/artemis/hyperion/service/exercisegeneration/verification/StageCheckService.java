@@ -479,9 +479,7 @@ public class StageCheckService {
         }
         List<String> hiddenBindings = ProblemStatementBindingChecker.hiddenTaskBindings(statement, hiddenTestNames(sandbox, sessionId));
         if (!hiddenBindings.isEmpty()) {
-            return StageCheckResult.failed("These [task] bindings reference tests the grading plan hides until the due date: " + hiddenBindings
-                    + ". A hidden test is the overfit probe: its task could never turn green before the deadline, and the checklist advertises the probe. Remove those names "
-                    + "from the [task] lines and leave hidden tests unbound.");
+            return StageCheckResult.failed(ProblemStatementBindingChecker.hiddenTaskBindingsRejection(hiddenBindings));
         }
         if (ProblemStatementBindingChecker.hasStrayPlantUmlDirectives(statement)) {
             return StageCheckResult.failed("PlantUML directives ('hide empty fields', 'hide empty methods', 'skinparam ...') sit OUTSIDE the @startuml...@enduml block, where "
@@ -497,8 +495,8 @@ public class StageCheckService {
             return StageCheckResult.failed("The statement writes ABOUT students in the third person ('Students must/will/should ...'). Address the reader directly instead: "
                     + "frame the goal as \"we\" and the work as \"you\" with imperative tasks ('Define ...', 'Implement ...').");
         }
-        boolean diagramPromised = ProblemStatementBindingChecker.designSaysDiagramYes(readSpec(sandbox, sessionId))
-                || approvedSpecs.approved(sessionId).filter(ProblemStatementBindingChecker::designSaysDiagramYes).isPresent();
+        boolean diagramPromised = ProblemStatementBindingChecker.specPromisesDiagram(readSpec(sandbox, sessionId))
+                || approvedSpecs.approved(sessionId).filter(ProblemStatementBindingChecker::specPromisesDiagram).isPresent();
         if (diagramPromised && !statement.contains("@startuml")) {
             return StageCheckResult.failed("SPEC.md's '## Diagram' section says yes, but the statement contains no @startuml diagram. Add the PlantUML class diagram after "
                     + "the tasks it illustrates (with testsColor links), or update SPEC.md's Diagram decision if the design genuinely changed.");

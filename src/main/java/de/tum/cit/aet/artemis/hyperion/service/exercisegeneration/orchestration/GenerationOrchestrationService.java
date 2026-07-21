@@ -450,8 +450,9 @@ public class GenerationOrchestrationService {
                     // specFidelityReport still holds the previous attempt's report at this point (SpecFidelityReport.empty() on attempt 1 or after a mechanical rejection);
                     // threading it through gives the critic continuity across repair attempts instead of re-rolling a fresh review each time.
                     specFidelityReport = runSpecFidelityCritic(reviewBrief, producedProblemStatement, exercise.getProgrammingLanguage(), producedFilesByType, adaptationChanges,
-                            effectiveUsageSink, cancelled, progress, specFidelityReport, null,
-                            specDocumentSnapshot != null && !specDocumentSnapshot.isBlank() ? specDocumentSnapshot : specSnapshot.get());
+                            effectiveUsageSink, cancelled, progress, specFidelityReport,
+                            // The APPROVED specification is the critic's contract; the live copy is only a fallback for runs that never had a spec gate.
+                            specSnapshot.get() != null ? specSnapshot.get() : specDocumentSnapshot);
                     lastMechanicallyVerifiedCandidate = new CandidateSnapshot(loopResult, verification, copyProducedFiles(producedFilesByType), producedProblemStatement,
                             specFidelityReport);
                     if (cancelled.getAsBoolean()) {
@@ -712,11 +713,11 @@ public class GenerationOrchestrationService {
      */
     private SpecFidelityReport runSpecFidelityCritic(String brief, String problemStatement, @Nullable ProgrammingLanguage language,
             Map<RepositoryType, Map<String, String>> producedArtifacts, @Nullable String adaptationChanges, Consumer<ChatResponse> usageSink, BooleanSupplier cancelled,
-            Consumer<String> progress, @Nullable SpecFidelityReport previousReport, @Nullable String designDocument, @Nullable String specSnapshot) {
+            Consumer<String> progress, @Nullable SpecFidelityReport previousReport, @Nullable String specSnapshot) {
         try {
             List<String> testNames = extractTaskBoundTestNames(problemStatement);
             SpecFidelityReport report = adaptationChanges == null
-                    ? specFidelityCritic.critique(brief, problemStatement, testNames, producedArtifacts, usageSink, cancelled, previousReport, designDocument, specSnapshot)
+                    ? specFidelityCritic.critique(brief, problemStatement, testNames, producedArtifacts, usageSink, cancelled, previousReport, specSnapshot)
                     : specFidelityCritic.critiqueAdaptation(brief, problemStatement, testNames, adaptationChanges, producedArtifacts, usageSink, cancelled, previousReport);
             if (adaptationChanges != null && adaptationChanges.contains(CHANGE_SUMMARY_TRUNCATED)) {
                 List<SpecFidelityReport.Finding> combined = new ArrayList<>(report.findings());

@@ -88,13 +88,13 @@ final class ProblemStatementBindingChecker {
         return false;
     }
 
-    /** Whether the specification's {@code ## Diagram} section starts with "yes" (the agent's own declared decision; kept current per the spec-update rule). */
-    static boolean designSaysDiagramYes(String designDocument) {
-        int index = designDocument.indexOf("## Diagram");
+    /** Whether the specification's {@code ## Diagram} section starts with "yes" — the agent's own declared decision, which the statement must then honour. */
+    static boolean specPromisesDiagram(String spec) {
+        int index = spec.indexOf("## Diagram");
         if (index < 0) {
             return false;
         }
-        String section = designDocument.substring(index + "## Diagram".length()).strip();
+        String section = spec.substring(index + "## Diagram".length()).strip();
         return section.regionMatches(true, 0, "yes", 0, 3);
     }
 
@@ -237,7 +237,14 @@ final class ProblemStatementBindingChecker {
      * @param problemStatement the student-facing statement
      * @param hiddenTestNames  the normalized names the grading plan marks {@code AFTER_DUE_DATE}
      * @return the offending bound names, in encounter order, without duplicates
+     * @see #hiddenTaskBindingsRejection(List) the shared rejection text, so the stage gate and the acceptance oracle can never word this rule differently
      */
+    static String hiddenTaskBindingsRejection(List<String> hiddenBindings) {
+        return "These [task] bindings reference tests the grading plan hides until the due date: " + hiddenBindings
+                + ". A hidden test is the overfit probe: its task could never turn green before the deadline, and the checklist advertises the probe. Remove those names from "
+                + "the [task] lines and leave hidden tests unbound.";
+    }
+
     static List<String> hiddenTaskBindings(String problemStatement, Set<String> hiddenTestNames) {
         if (hiddenTestNames.isEmpty()) {
             return List.of();

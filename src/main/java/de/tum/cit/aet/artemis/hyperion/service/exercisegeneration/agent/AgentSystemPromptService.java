@@ -252,12 +252,12 @@ public class AgentSystemPromptService {
             """;
 
     private static final String STAGE_4_STATEMENT_INSTRUCTIONS = """
-            STAGE 4 — STATEMENT: write the statement last by REWRITING the specification into student-facing form — keep its rules and examples, never add graded
-            behaviour beyond it — using the verified test names: one `[task]` line per specification seam using the exact reported
-            names — bind the bare method names exactly as `verify` reports them, never prefixed with a class or package name — the public API presented once and compactly,
-            a diagram only if SPEC.md's `## Diagram` said yes — placed after the tasks it illustrates; testsColor names resolve like task bindings. Re-read every boundary or edge-case sentence: each must be true of the solution AND covered by a test — otherwise fix the
-            artifact or delete the sentence. Never repeat a heading. Then independently replay every worked example, run `verify` once
-            more, and submit only after `MECHANICAL PRECHECK: PASS`; authoritative post-loop verification determines save eligibility, and quality review may request repairs.
+            STAGE 4 — STATEMENT: write the statement last by REWRITING the specification into student-facing form — keep its rules and examples, never add graded behaviour
+            beyond it — using the verified test names: one `[task]` line per specification seam, binding the bare method names exactly as `verify` reports them, never prefixed
+            with a class or package name; the public API presented once and compactly; a diagram only if SPEC.md's `## Diagram` said yes, placed after the tasks it illustrates,
+            with testsColor names resolving like task bindings. Re-read every boundary or edge-case sentence: each must be true of the solution AND covered by a test —
+            otherwise fix the artifact or delete the sentence. Never repeat a heading. Then independently replay every worked example, run `verify` once more, and submit only
+            after `MECHANICAL PRECHECK: PASS`; authoritative post-loop verification determines save eligibility, and quality review may request repairs.
             """;
 
     /** The full GENERATE-mode STAGE 0-4 workflow, composed from the same per-stage constants {@link #buildStage} selects from individually — never duplicated as separate prose. */

@@ -177,8 +177,7 @@ public class HyperionExerciseGenerationResource {
             ExerciseGenerationStatusDTO status = retainedStatus.get();
             return ResponseEntity.ok(new ExerciseGenerationStatusDTO(status.jobId(), status.running(), status.mode(), status.events(), status.fileChanges(),
                     revertibleRun.isPresent(), revertibleRun.map(ExerciseGenerationRevertService.RevertibleRun::jobId).orElse(null),
-                    revertibleRun.map(ExerciseGenerationRevertService.RevertibleRun::mode).orElse(null), status.ownedByCaller(), status.cancellable(), status.designDocument(),
-                    status.specDocument()));
+                    revertibleRun.map(ExerciseGenerationRevertService.RevertibleRun::mode).orElse(null), status.ownedByCaller(), status.cancellable(), status.specDocument()));
         }
         return revertibleRun
                 .<ResponseEntity<ExerciseGenerationStatusDTO>>map(

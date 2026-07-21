@@ -19,34 +19,32 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  * @param revertMode      the mode of {@code revertJobId}, used for truthful undo copy
  * @param ownedByCaller   whether the requesting instructor owns the active run and may inspect its retained details
  * @param cancellable     whether the active run is still in its disposable sandbox phase and can be cancelled safely
- * @param designDocument  the workspace's staged-generation {@code DESIGN.md} content, captured once the generation outcome landed, so the owner can review stage-0 design
- *                            quality; {@code null}/omitted for non-owner or sanitized views, or when the run never produced one
  * @param specDocument    the gate-approved {@code SPEC.md} behavioural specification, captured as soon as the spec gate passes (the earliest reviewable intermediate result);
  *                            {@code null}/omitted for non-owner or sanitized views, when the stage was skipped (an instructor statement served as the spec), or before the gate
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record ExerciseGenerationStatusDTO(String jobId, boolean running, @Nullable GenerationMode mode, @JsonInclude List<ExerciseGenerationEventDTO> events,
         @JsonInclude List<ExerciseGenerationFileChangeDTO> fileChanges, boolean revertAvailable, @Nullable String revertJobId, @Nullable GenerationMode revertMode,
-        boolean ownedByCaller, boolean cancellable, @Nullable String designDocument, @Nullable String specDocument) {
+        boolean ownedByCaller, boolean cancellable, @Nullable String specDocument) {
 
     public ExerciseGenerationStatusDTO(String jobId, boolean running, @Nullable GenerationMode mode, List<ExerciseGenerationEventDTO> events,
             List<ExerciseGenerationFileChangeDTO> fileChanges, boolean revertAvailable, @Nullable String revertJobId, @Nullable GenerationMode revertMode, boolean ownedByCaller,
             boolean cancellable) {
-        this(jobId, running, mode, events, fileChanges, revertAvailable, revertJobId, revertMode, ownedByCaller, cancellable, null, null);
+        this(jobId, running, mode, events, fileChanges, revertAvailable, revertJobId, revertMode, ownedByCaller, cancellable, null);
     }
 
     public ExerciseGenerationStatusDTO(String jobId, boolean running, @Nullable GenerationMode mode, List<ExerciseGenerationEventDTO> events,
             List<ExerciseGenerationFileChangeDTO> fileChanges, boolean revertAvailable, @Nullable String revertJobId, @Nullable GenerationMode revertMode, boolean ownedByCaller) {
-        this(jobId, running, mode, events, fileChanges, revertAvailable, revertJobId, revertMode, ownedByCaller, running && ownedByCaller, null, null);
+        this(jobId, running, mode, events, fileChanges, revertAvailable, revertJobId, revertMode, ownedByCaller, running && ownedByCaller, null);
     }
 
     public ExerciseGenerationStatusDTO(String jobId, boolean running, @Nullable GenerationMode mode, List<ExerciseGenerationEventDTO> events,
             List<ExerciseGenerationFileChangeDTO> fileChanges, boolean revertAvailable, @Nullable String revertJobId, @Nullable GenerationMode revertMode) {
-        this(jobId, running, mode, events, fileChanges, revertAvailable, revertJobId, revertMode, true, running, null, null);
+        this(jobId, running, mode, events, fileChanges, revertAvailable, revertJobId, revertMode, true, running, null);
     }
 
     public ExerciseGenerationStatusDTO(String jobId, boolean running, @Nullable GenerationMode mode, List<ExerciseGenerationEventDTO> events,
             List<ExerciseGenerationFileChangeDTO> fileChanges, boolean revertAvailable) {
-        this(jobId, running, mode, events, fileChanges, revertAvailable, null, null, true, running, null, null);
+        this(jobId, running, mode, events, fileChanges, revertAvailable, null, null, true, running, null);
     }
 }

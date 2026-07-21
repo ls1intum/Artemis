@@ -22,7 +22,7 @@ export interface ExerciseGenerationStatus {
     revertMode?: ExerciseGenerationStatusRevertModeEnum;
     ownedByCaller: boolean;
     cancellable: boolean;
-    designDocument?: string;
+    specDocument?: string;
 }
 
 export type ExerciseGenerationStatusModeEnum = 'GENERATE' | 'ADAPT';

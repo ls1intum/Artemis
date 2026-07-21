@@ -1093,65 +1093,65 @@ class GenerationJobServiceTest {
     }
 
     @Test
-    void recordDesignDocument_isReturnedInStatus() {
+    void recordSpecDocument_isReturnedInStatus() {
         long exerciseId = 230L;
         ProgrammingExercise exercise = exercise(exerciseId);
         User owner = user("owner");
         String jobId = jobService.startJob(owner, exercise, "go", GenerationMode.GENERATE);
 
-        assertThat(jobService.recordDesignDocument(exerciseId, jobId, "## Classes\n| Foo | role |")).isTrue();
+        assertThat(jobService.recordSpecDocument(exerciseId, jobId, "## Rules\n- R1: computes a result")).isTrue();
 
-        assertThat(jobService.getStatus(owner, exercise).orElseThrow().designDocument()).isEqualTo("## Classes\n| Foo | role |");
+        assertThat(jobService.getStatus(owner, exercise).orElseThrow().specDocument()).isEqualTo("## Rules\n- R1: computes a result");
     }
 
     @Test
-    void getStatus_omitsDesignDocumentWhenNeverRecorded() {
+    void getStatus_omitsSpecDocumentWhenNeverRecorded() {
         long exerciseId = 231L;
         ProgrammingExercise exercise = exercise(exerciseId);
         User owner = user("owner");
         jobService.startJob(owner, exercise, "go", GenerationMode.GENERATE);
 
-        assertThat(jobService.getStatus(owner, exercise).orElseThrow().designDocument()).isNull();
+        assertThat(jobService.getStatus(owner, exercise).orElseThrow().specDocument()).isNull();
     }
 
     @Test
-    void recordDesignDocument_beyondCap_truncatesWithMarker() {
+    void recordSpecDocument_beyondCap_truncatesWithMarker() {
         long exerciseId = 232L;
         ProgrammingExercise exercise = exercise(exerciseId);
         User owner = user("owner");
         String jobId = jobService.startJob(owner, exercise, "go", GenerationMode.GENERATE);
         String oversized = "x".repeat(30_000);
 
-        assertThat(jobService.recordDesignDocument(exerciseId, jobId, oversized)).isTrue();
+        assertThat(jobService.recordSpecDocument(exerciseId, jobId, oversized)).isTrue();
 
-        String retained = jobService.getStatus(owner, exercise).orElseThrow().designDocument();
+        String retained = jobService.getStatus(owner, exercise).orElseThrow().specDocument();
         assertThat(retained).hasSizeLessThan(oversized.length());
         assertThat(retained).startsWith("x".repeat(100)).contains("truncated");
     }
 
     @Test
-    void recordDesignDocument_forAStaleJobId_isIgnored() {
+    void recordSpecDocument_forAStaleJobId_isIgnored() {
         long exerciseId = 233L;
         ProgrammingExercise exercise = exercise(exerciseId);
         User owner = user("owner");
         jobService.startJob(owner, exercise, "go", GenerationMode.GENERATE);
 
-        assertThat(jobService.recordDesignDocument(exerciseId, "different-job", "## Classes")).isFalse();
-        assertThat(jobService.getStatus(owner, exercise).orElseThrow().designDocument()).isNull();
+        assertThat(jobService.recordSpecDocument(exerciseId, "different-job", "## Rules")).isFalse();
+        assertThat(jobService.getStatus(owner, exercise).orElseThrow().specDocument()).isNull();
     }
 
     @Test
-    void recordDesignDocument_retainedThroughToTheTerminalReplay() {
+    void recordSpecDocument_retainedThroughToTheTerminalReplay() {
         long exerciseId = 234L;
         ProgrammingExercise exercise = exercise(exerciseId);
         User owner = user("owner");
         String jobId = jobService.startJob(owner, exercise, "go", GenerationMode.GENERATE);
-        assertThat(jobService.recordDesignDocument(exerciseId, jobId, "## Classes\n| Foo | role |")).isTrue();
+        assertThat(jobService.recordSpecDocument(exerciseId, jobId, "## Rules\n- R1: computes a result")).isTrue();
 
         jobService.recordEvent(exerciseId, jobId, ExerciseGenerationEventDTO.done("done", ExerciseGenerationEventDTO.CompletionStatus.SUCCESS, null, false), true);
         jobService.clearJob(exerciseId, jobId);
 
-        assertThat(jobService.getStatus(owner, exercise).orElseThrow().designDocument()).isEqualTo("## Classes\n| Foo | role |");
+        assertThat(jobService.getStatus(owner, exercise).orElseThrow().specDocument()).isEqualTo("## Rules\n- R1: computes a result");
     }
 
     private void forceJobHeartbeat(long exerciseId, String jobId, Instant heartbeatAt) {

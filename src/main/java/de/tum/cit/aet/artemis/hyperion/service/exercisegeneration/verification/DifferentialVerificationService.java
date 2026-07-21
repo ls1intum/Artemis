@@ -461,9 +461,7 @@ public class DifferentialVerificationService {
         List<String> hiddenTaskBindings = ProblemStatementBindingChecker.hiddenTaskBindings(problemStatement, hiddenTestNames);
         boolean noHiddenTestsBound = hiddenTaskBindings.isEmpty();
         if (!noHiddenTestsBound) {
-            reasons.add("These [task] bindings reference tests the grading plan hides until the due date: " + hiddenTaskBindings
-                    + ". A hidden test is the overfit probe: its task could never turn green before the deadline, and the checklist advertises the probe. Remove those names "
-                    + "from the [task] lines and leave hidden tests unbound.");
+            reasons.add(ProblemStatementBindingChecker.hiddenTaskBindingsRejection(hiddenTaskBindings));
         }
         boolean solutionScaClean = checkSolutionScaClean(exercise, solution, reasons);
 
@@ -507,17 +505,17 @@ public class DifferentialVerificationService {
         }
         // The approved specification's diagram decision outranks the live file: a run under statement-gate pressure rewrote '## Diagram' from yes to no and the gate then
         // passed vacuously. A later edit may promise a diagram, never un-promise one.
-        boolean diagramPromised = ProblemStatementBindingChecker.designSaysDiagramYes(readSpecDocument(sandbox, sessionId))
-                || approvedSpecs.approved(sessionId).filter(ProblemStatementBindingChecker::designSaysDiagramYes).isPresent();
-        boolean diagramMatchesDesign = !(diagramPromised && !problemStatement.contains("@startuml"));
-        if (!diagramMatchesDesign) {
+        boolean diagramPromised = ProblemStatementBindingChecker.specPromisesDiagram(readSpecDocument(sandbox, sessionId))
+                || approvedSpecs.approved(sessionId).filter(ProblemStatementBindingChecker::specPromisesDiagram).isPresent();
+        boolean statementHonoursDiagramPromise = !(diagramPromised && !problemStatement.contains("@startuml"));
+        if (!statementHonoursDiagramPromise) {
             reasons.add("SPEC.md's '## Diagram' section says yes, but the statement contains no @startuml diagram. Add the PlantUML class diagram (with testsColor links) after "
                     + "the tasks it illustrates, or update SPEC.md's Diagram decision if the design genuinely changed.");
         }
 
         boolean actionableGatesPass = solutionPassed && noDuplicateTestNames && templateFailed && testCount > 0 && problemStatementHasTasks && taskKeywordsWellFormed
                 && taskBindingsResolve && noDuplicateTaskBindings && allGradableTestsBound && solutionScaClean && proseHygienic && taskTitlesUnique && statementVoiceOk
-                && diagramLinksResolve && noStrayUmlDirectives && headingsUnique && diagramMatchesDesign && noHiddenTestsBound;
+                && diagramLinksResolve && noStrayUmlDirectives && headingsUnique && statementHonoursDiagramPromise && noHiddenTestsBound;
 
         List<String> possiblyDeadFiles = possiblyDeadWorkspaceFiles(sandbox, sessionId);
         return new DifferentialAnalysis(solution, template, solutionPassed, templateFailed, actionableGatesPass, reasons, unresolvedTaskBindings, possiblyDeadFiles,

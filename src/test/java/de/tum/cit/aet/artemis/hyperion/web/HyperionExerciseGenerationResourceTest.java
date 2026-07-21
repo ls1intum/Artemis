@@ -411,9 +411,9 @@ class HyperionExerciseGenerationResourceTest {
     }
 
     @Test
-    void getExerciseGenerationStatus_preservesDesignDocumentThroughTheRevertInfoRemap() {
+    void getExerciseGenerationStatus_preservesSpecDocumentThroughTheRevertInfoRemap() {
         ExerciseGenerationStatusDTO status = new ExerciseGenerationStatusDTO("job-42", false, GenerationMode.GENERATE, List.of(), List.of(), false, null, null, true, false,
-                "## Classes\n| Foo | role |", "# Spec\n## Rules\n- R1");
+                "# Spec\n## Rules\n- R1");
         when(programmingExerciseRepository.findWithAllParticipationsAndBuildConfigById(1L)).thenReturn(Optional.of(testExercise));
         when(userRepository.getUserWithGroupsAndAuthorities()).thenReturn(testUser);
         when(jobService.getStatus(testUser, testExercise)).thenReturn(Optional.of(status));
@@ -422,7 +422,7 @@ class HyperionExerciseGenerationResourceTest {
         ResponseEntity<ExerciseGenerationStatusDTO> response = resource.getExerciseGenerationStatus(1L);
 
         assertThat(response.getBody()).isNotNull();
-        assertThat(response.getBody().designDocument()).isEqualTo("## Classes\n| Foo | role |");
+        assertThat(response.getBody().specDocument()).isEqualTo("# Spec\n## Rules\n- R1");
     }
 
     @Test
