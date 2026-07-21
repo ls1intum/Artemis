@@ -176,6 +176,10 @@ public class StageCheckService {
                         + ". Use the exact test names from the TESTS stage (behavioural or seeded structural), or remove the link: " + exactTestNames + ".");
             }
         }
+        if (hasStrayPlantUmlDirectives(statement)) {
+            return StageCheckResult.failed("PlantUML directives ('hide empty fields', 'hide empty methods', 'skinparam ...') sit OUTSIDE the @startuml...@enduml block, where "
+                    + "Artemis renders them as stray text. Move them inside the block, directly before @enduml.");
+        }
         // Exact duplicate headings are a mechanical statement defect (observed shipping live: the same '### 1. ...' section twice); catching it here costs nothing.
         List<String> duplicateHeadings = statement.lines().map(String::strip).filter(line -> line.startsWith("#")).collect(Collectors.groupingBy(line -> line)).entrySet().stream()
                 .filter(entry -> entry.getValue().size() > 1).map(Map.Entry::getKey).sorted().toList();
@@ -189,6 +193,26 @@ public class StageCheckService {
      * Matches every {@code testsColor(NAME)} occurrence in a statement's PlantUML diagram (both the {@code <color:...>} member form and the {@code #testsColor(...)} edge form).
      */
     private static final Pattern TESTS_COLOR_NAME = Pattern.compile("testsColor\\(([^)]+?)(?:\\(\\))?\\)");
+
+    /**
+     * Whether a PlantUML rendering directive appears outside every {@code @startuml}...{@code @enduml} block — Artemis renders such a line as stray statement text
+     * (observed live: {@code hide empty fields} printed after the diagram).
+     */
+    static boolean hasStrayPlantUmlDirectives(String statement) {
+        boolean insideDiagram = false;
+        for (String line : statement.lines().map(String::strip).toList()) {
+            if (line.startsWith("@startuml")) {
+                insideDiagram = true;
+            }
+            else if (line.startsWith("@enduml")) {
+                insideDiagram = false;
+            }
+            else if (!insideDiagram && (line.startsWith("hide empty") || line.startsWith("skinparam "))) {
+                return true;
+            }
+        }
+        return false;
+    }
 
     /**
      * Every distinct {@code testsColor} name in the statement that matches no known test name. A trailing {@code ()} (the classic Artemis statement style for behavioural

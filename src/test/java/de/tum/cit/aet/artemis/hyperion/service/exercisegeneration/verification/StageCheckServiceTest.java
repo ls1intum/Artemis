@@ -366,6 +366,26 @@ class StageCheckServiceTest {
         }
 
         @Test
+        void fails_whenPlantUmlDirectivesLeakOutsideTheDiagramBlock() {
+            // Observed live: 'hide empty fields' after @enduml renders as stray statement text.
+            sandbox.problemStatement = "# Title\n@startuml\nclass A\n@enduml\nhide empty fields\n";
+
+            StageCheckResult result = check(GenerationStage.STATEMENT, null);
+
+            assertThat(result.passed()).isFalse();
+            assertThat(result.observation()).contains("OUTSIDE the @startuml");
+        }
+
+        @Test
+        void passes_whenPlantUmlDirectivesSitInsideTheDiagramBlock() {
+            sandbox.problemStatement = "# Title\n@startuml\nclass A\nhide empty fields\nhide empty methods\n@enduml\n";
+
+            StageCheckResult result = check(GenerationStage.STATEMENT, null);
+
+            assertThat(result.passed()).isTrue();
+        }
+
+        @Test
         void passes_whenDiagramTestsColorNamesResolve_includingParenthesisedAndStructuralForms() {
             sandbox.problemStatement = "# Title\n[task][Sort](testSortsAscending)\n@startuml\nclass A {\n  <color:testsColor(testSortsAscending())>+sort()</color>\n}\n"
                     + "A -up-|> B #testsColor(testClass[A])\n@enduml\n";
