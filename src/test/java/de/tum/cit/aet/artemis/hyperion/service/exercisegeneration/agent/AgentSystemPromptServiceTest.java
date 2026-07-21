@@ -29,7 +29,14 @@ class AgentSystemPromptServiceTest {
     private static final int MAX_SYSTEM_PROMPT_CHARS = 16_000;
 
     // No LocalCI services -> the generic build fallback, enough to assert the build-context section renders.
-    private final AgentSystemPromptService systemPromptService = new AgentSystemPromptService(new SandboxBuildCommandService(Optional.empty(), Optional.empty()));
+    private final AgentSystemPromptService systemPromptService = newPromptService();
+
+    private static AgentSystemPromptService newPromptService() {
+        de.tum.cit.aet.artemis.core.service.ResourceLoaderService resourceLoaderService = new de.tum.cit.aet.artemis.core.service.ResourceLoaderService(
+                new org.springframework.core.io.DefaultResourceLoader(), org.mockito.Mockito.mock());
+        org.springframework.test.util.ReflectionTestUtils.setField(resourceLoaderService, "templateFileSystemPath", Optional.empty());
+        return new AgentSystemPromptService(new SandboxBuildCommandService(Optional.empty(), Optional.empty()), resourceLoaderService);
+    }
 
     /** Marker phrase only present in the spec-mode default instruction. */
     private static final String SPEC_MODE_MARKER = "authoritative specification";
@@ -527,4 +534,36 @@ class AgentSystemPromptServiceTest {
     void isGenerationSupported_rejectsUnsupportedLanguage() {
         assertThat(systemPromptService.isGenerationSupported(exerciseWith(ProgrammingLanguage.PYTHON, ""))).isFalse();
     }
+    // --- Instructor-authored vs default-template statement detection ---
+
+    @Test
+    void isAuthoritativeProblemStatement_rejectsTheDefaultTemplateReadmeTheClientSeedsIntoEveryNewExercise() throws Exception {
+        // The client fills problemStatement with templates/<language>/<projectType>/readme on create, so a "blank" create form reaches the server carrying the classic
+        // sorting-strategy statement. Treating that as an instructor spec skipped the SPEC stage and made the agent rebuild bubble sort from a one-line brief (observed live).
+        ProgrammingExercise exercise = exerciseWith(ProgrammingLanguage.JAVA, "");
+        exercise.setProjectType(ProjectType.MAVEN_MAVEN);
+        String defaultReadme = new String(
+                new org.springframework.core.io.DefaultResourceLoader().getResource("classpath:templates/java/maven_maven/readme").getInputStream().readAllBytes(),
+                java.nio.charset.StandardCharsets.UTF_8);
+        exercise.setProblemStatement(defaultReadme);
+
+        assertThat(systemPromptService.isAuthoritativeProblemStatement(exercise)).isFalse();
+
+        // Whitespace drift (CRLF, trailing newline) between the HTTP-delivered readme and the resource must not defeat the comparison.
+        exercise.setProblemStatement(defaultReadme.replace("\n", "\r\n") + "\n");
+        assertThat(systemPromptService.isAuthoritativeProblemStatement(exercise)).isFalse();
+    }
+
+    @Test
+    void isAuthoritativeProblemStatement_acceptsARealSpecAndRejectsATrivialOne() {
+        ProgrammingExercise exercise = exerciseWith(ProgrammingLanguage.JAVA, "");
+        exercise.setProjectType(ProjectType.MAVEN_MAVEN);
+
+        exercise.setProblemStatement("# Library Fines\n\nCompute overdue fines: 0.50 per day for the first week, 1.00 per day after; fines cap at 20.00 per item.");
+        assertThat(systemPromptService.isAuthoritativeProblemStatement(exercise)).isTrue();
+
+        exercise.setProblemStatement("todo");
+        assertThat(systemPromptService.isAuthoritativeProblemStatement(exercise)).isFalse();
+    }
+
 }

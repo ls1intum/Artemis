@@ -1,13 +1,23 @@
 package de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent;
 
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 import org.jspecify.annotations.Nullable;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.core.service.ResourceLoaderService;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionExerciseGenerationEnabled;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationRequestDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.GenerationMode;
@@ -16,6 +26,7 @@ import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.S
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.workspace.SandboxBuildCommandService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseService;
 
 /**
  * Builds the system prompt for the exercise-generation agent.
@@ -35,8 +46,65 @@ public class AgentSystemPromptService {
 
     private final SandboxBuildCommandService sandboxBuildCommandService;
 
-    public AgentSystemPromptService(SandboxBuildCommandService sandboxBuildCommandService) {
+    private final ResourceLoaderService resourceLoaderService;
+
+    /** Normalized default template readmes, cached by language/project-type key — loaded at most once per configuration. */
+    private final Map<String, Optional<String>> normalizedDefaultReadmes = new ConcurrentHashMap<>();
+
+    public AgentSystemPromptService(SandboxBuildCommandService sandboxBuildCommandService, ResourceLoaderService resourceLoaderService) {
         this.sandboxBuildCommandService = sandboxBuildCommandService;
+        this.resourceLoaderService = resourceLoaderService;
+    }
+
+    /**
+     * Whether the exercise's problem statement is a real, instructor-authored specification the generation must honour. A statement that is merely the DEFAULT template readme
+     * (the client seeds every new exercise with {@code templates/<language>[/<projectType>]/readme} so the field is never empty) is NOT a specification — treating it as one
+     * made the agent faithfully rebuild the classic sorting exercise from a blank create form and silently skipped the SPEC stage. Trivially short statements are also not
+     * authoritative.
+     *
+     * @param exercise the exercise whose statement is judged
+     * @return {@code true} only for a non-trivial statement that does not match the exercise's default template readme
+     */
+    public boolean isAuthoritativeProblemStatement(ProgrammingExercise exercise) {
+        String statement = exercise.getProblemStatement();
+        if (!isNonTrivialProblemStatement(statement)) {
+            return false;
+        }
+        return !normalizeStatement(statement).equals(defaultTemplateReadme(exercise).orElse(null));
+    }
+
+    /** The normalized default template readme for the exercise's language/project type, empty when no template readme resource exists. */
+    private Optional<String> defaultTemplateReadme(ProgrammingExercise exercise) {
+        if (exercise.getProgrammingLanguage() == null) {
+            return Optional.empty();
+        }
+        String key = exercise.getProgrammingLanguage().name() + "/" + (exercise.getProjectType() == null ? "" : exercise.getProjectType().name());
+        return normalizedDefaultReadmes.computeIfAbsent(key, ignored -> loadDefaultTemplateReadme(exercise));
+    }
+
+    private Optional<String> loadDefaultTemplateReadme(ProgrammingExercise exercise) {
+        List<Path> candidates = new ArrayList<>();
+        if (exercise.getProjectType() != null) {
+            candidates.add(ProgrammingExerciseService.getProgrammingLanguageProjectTypePath(exercise.getProgrammingLanguage(), exercise.getProjectType()).resolve("readme"));
+        }
+        candidates.add(ProgrammingExerciseService.getProgrammingLanguageTemplatePath(exercise.getProgrammingLanguage()).resolve("readme"));
+        for (Path candidate : candidates) {
+            try {
+                Resource resource = resourceLoaderService.getResource(candidate);
+                if (resource != null && resource.exists()) {
+                    return Optional.of(normalizeStatement(new String(resource.getInputStream().readAllBytes(), StandardCharsets.UTF_8)));
+                }
+            }
+            catch (IOException | RuntimeException e) {
+                // Fall through to the next candidate; an unreadable template readme must never break prompt building.
+            }
+        }
+        return Optional.empty();
+    }
+
+    /** Whitespace-insensitive normalization, so line-ending or trailing-newline differences between the client-loaded readme and the resource never defeat the comparison. */
+    private static String normalizeStatement(String statement) {
+        return statement.replaceAll("\\s+", " ").strip();
     }
 
     // ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -358,7 +426,7 @@ public class AgentSystemPromptService {
     private String workspaceSection(ProgrammingExercise exercise, GenerationMode mode) {
         ProgrammingLanguage language = exercise.getProgrammingLanguage();
         String languageName = language != null ? language.toString() : "the exercise language";
-        String problemStatementGuidance = isNonTrivialProblemStatement(exercise.getProblemStatement()) ? mode == GenerationMode.ADAPT
+        String problemStatementGuidance = isAuthoritativeProblemStatement(exercise) ? mode == GenerationMode.ADAPT
                 ? "- problem-statement.md: the CURRENT statement. Apply the feedback as a targeted revision and preserve its requirements and prose where the feedback is "
                         + "silent. Align only the impacted statement, solution, template, tests, and task bindings."
                 : "- problem-statement.md: the CURRENT statement and starting point. The user brief is authoritative and may refine or replace it; preserve requirements where "
@@ -507,7 +575,7 @@ public class AgentSystemPromptService {
         String brief = request.prompt() == null ? "" : request.prompt().strip();
         // A present brief is the authoritative instruction for this run and may change the task entirely, so it can override a statement on a different topic; the statement is the
         // starting point, preserved where the brief is silent. With no brief, the statement alone binds.
-        boolean hasSpec = isNonTrivialProblemStatement(exercise.getProblemStatement());
+        boolean hasSpec = isAuthoritativeProblemStatement(exercise);
         if (!brief.isBlank()) {
             if (request.mode() == GenerationMode.ADAPT) {
                 return "Apply this feedback as a targeted revision of the existing exercise. Preserve every statement requirement and artifact where the feedback is silent, and "

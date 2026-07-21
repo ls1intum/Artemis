@@ -256,7 +256,7 @@ public class GenerationOrchestrationService {
             boolean useStagedGeneration = stagedGenerationEnabled && mode == GenerationMode.GENERATE && exercise.getProgrammingLanguage() == ProgrammingLanguage.JAVA;
             // The SPEC stage runs only when the instructor gave no real statement: an existing non-trivial statement IS the specification, and writing a competing SPEC.md
             // would at best duplicate it and at worst drift from it (the product's draft flow is how instructors control specs).
-            boolean specStageApplies = !systemPromptService.isNonTrivialProblemStatement(exercise.getProblemStatement());
+            boolean specStageApplies = !systemPromptService.isAuthoritativeProblemStatement(exercise);
             // The gate-approved SPEC.md snapshot, frozen by the runner's spec gate: instructor-visible immediately, fed to the critic's grounding, and appended to every repair
             // prompt so scope-cutting under repair pressure faces the contract it is cutting.
             AtomicReference<String> specSnapshot = new AtomicReference<>();
