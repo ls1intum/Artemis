@@ -64,7 +64,7 @@ public class AgentSystemPromptService {
             `throw new UnsupportedOperationException("Not implemented")`; a returned placeholder is valid only if every test rejects it. Never leak solution logic or grader-defeating hints.
             A stub fails the same way for every caller: template and solution code must never inspect stack traces, test names, or any grading context to change behavior — the
             verifier rejects that outright. If a member cannot be stubbed without cascading failures (constructors, shared plumbing), provide it implemented in the template and
-            do not bind a behavioural test to it; that is intentional starter credit (rule 5).
+            do not bind a behavioural test to it (starter credit, rule 5).
             3. Run the same meaningful tests against solution and template. Cover central behaviour, representative boundaries, state transitions, and stated errors. Use
             non-degenerate witnesses that distinguish plausible wrong implementations. Do not use @DisplayName because Artemis binds reported method names.
             4. Every observable statement promise needs executable evidence, and every behavioural assertion a stated rule. Preserve pedagogical objectives that black-box tests cannot prove;
@@ -101,16 +101,13 @@ public class AgentSystemPromptService {
             Write one `#` title, a short motivating objective, a precise public API and input/output contract, and a `## Tasks` section. Pin relevant types, bounds, ordering, tie-breaking,
             tolerance, mutation, and exception semantics only where the implementation enforces them and a test observes them. Avoid unverifiable complexity or allocation claims. Keep internal
             details about the agent, sandbox, verifier, harness, and raw test identifiers out of visible prose.
-            Make every API compiled by tests mandatory and exact; remove "suggested", "for example", "or equivalent", and alternatives after choosing a contract. Organize tasks by
-            independently actionable student work, not by requirement sentences or test cases. Resolve or omit drafting notes and instructor decisions.
-            The produced statement documents the contract; it does not authorize new graded behavior. Ground observable rules in the primary source requirements rather than adding
-            constraints to make the tests more elaborate.
+            Make every API compiled by tests mandatory and exact; remove "suggested", "for example", "or equivalent", and alternatives after choosing a contract. Resolve or omit drafting notes and instructor decisions.
+            The produced statement documents the contract; it does not authorize new graded behavior — ground observable rules in the primary source requirements.
             Present the public API exactly once and compactly — a short signature list, a table, or the PlantUML diagram — never reproducing template code blocks, stub bodies, or
             javadoc that already live in the template; the template is the API reference at the point of use. The statement explains WHAT and WHY, not a restatement of code the
             student can already read.
-            Provide representative worked examples only where they clarify important, non-obvious behaviour. Use a code block, table, or precise prose, whichever communicates the contract
-            most clearly. Examples must agree with the implementation and tests but must not reproduce a graded test's exact composite input. Use a smaller or materially different input that
-            teaches the rule without revealing the oracle. Use a precise API block for a multi-type design; add a class diagram only when it materially clarifies that design
+            Provide representative worked examples only where they clarify important, non-obvious behaviour, as a code block, table, or precise prose. Examples must agree with the implementation and tests but must not reproduce a graded test's exact composite input. Use a smaller or materially different input that
+            teaches the rule without revealing the oracle. Add a class diagram only when it materially clarifies a multi-type design
             (typically when students create types or wire a pattern). Diagrams must be PlantUML (`@startuml` … `@enduml`) — Artemis renders PlantUML; never draw ASCII-art or
             Markdown box diagrams. In the diagram, link elements to their checks with Artemis' testsColor syntax — members as
             `<color:testsColor(exactTestName)>+member()</color>`, relations as `Sub -up-|> Super #testsColor(exactTestName)` — using verbatim behavioural test names from `verify` or
@@ -144,12 +141,16 @@ public class AgentSystemPromptService {
             with exactly these sections: `## Classes` (a table: name | role | given-complete-in-template | student-implements-stubbed | student-creates-absent-from-template),
             `## Public API` (signatures only), `## Tasks` (one row per seam — an independently actionable student-work unit, e.g. a method/class/behavior cluster —
             grouping every test partition it needs; never one row per test, never one for the whole exercise unless it is genuinely one seam), `## Diagram` (yes/no +
-            one-line why, per the diagram rule below). Choose the smallest design the source requirements support; do not create one test or task per sentence. Update
-            DESIGN.md whenever a later stage forces a design change — it must always describe the final exercise truthfully.
+            one-line why, per the diagram rule below). Record which class owns each piece of mutable state and whether it survives object replacement
+            (e.g. a strategy switch) — later stages may only demand what that ownership allows. Choose the smallest
+            design the source requirements support; do not create one test or task per sentence. Update DESIGN.md whenever a later stage forces a design change — it must
+            always describe the final exercise truthfully.
             """;
 
     private static final String STAGE_1_SOLUTION_INSTRUCTIONS = """
-            STAGE 1 — SOLUTION: implement the reference solution per DESIGN.md. Execute every worked example from the requirements against the real solution in the
+            STAGE 1 — SOLUTION: implement the reference solution per DESIGN.md. The solution must exemplify the design it teaches: never bypass an
+            abstraction it defines (e.g. instanceof on one concrete implementation instead of delegating through the interface) — that means the design is wrong; fix the
+            design. Execute every worked example from the requirements against the real solution in the
             sandbox (a throwaway run under /tmp, never committed) and fix the SOLUTION or the EXAMPLE when they disagree — never patch code to match a wrong number.
             Write complete Javadoc on every public member now; the template inherits it verbatim — never defer docs to that stage.
             """;
@@ -165,7 +166,9 @@ public class AgentSystemPromptService {
             STAGE 3 — TESTS: run `verify` first — it reports binding problems and the seeded structural check names once template and solution diverge. Author tests one
             partition at a time from DESIGN.md's task table, re-running `verify` after each test or small batch: it must pass on the solution and fail on the template
             for its intended reason (a structural check may already pass). For a student-created type, follow the reflection pattern the seeded reference/tests demonstrate
-            (its ShippingCalculator test reaches a solution-only class via ReflectionTestUtils so the same test still compiles against the template). If a differential
+            (its ShippingCalculator test reaches a solution-only class via ReflectionTestUtils so the same test still compiles against the template). Every test must be
+            passable by completing the template's TODOs within the scaffolded structure; one that forces restructuring means the design is wrong — fix template and
+            solution first. Assert exception types, never message strings, unless the statement fixes the exact message. If a differential
             run exposes a solution or template defect, fix it there, re-check that stage's guarantees (examples still replay, docs still byte-identical), and record the
             change in DESIGN.md; rewrite DESIGN.md before continuing if the design itself proves wrong twice.
             """;
@@ -385,10 +388,9 @@ public class AgentSystemPromptService {
     private static String safeToolUseSection(ProgrammingExercise exercise) {
         return """
                 SAFE TOOL USE
-                Your only tools are bash, read_file, write_file, edit_file, delete_file, verify, and submit. Use `delete_file` to remove a generated file that is misplaced or no longer needed. Use `verify` for builds; it handles the network-isolated CI scaffold. Use bash only for inspection,
-                safe source-file removal, and `sh verify.sh solution` or `sh verify.sh template` when detailed output helps. Never run repository Gradle/Maven directly or change build infrastructure
-                to work around offline dependency resolution. Do not edit file contents through bash; use write_file or edit_file. There is no apply_patch tool, so
-                never call it directly or through bash. Never fabricate build or test results.%s
+                Your only tools are bash, read_file, write_file, edit_file, delete_file, verify, and submit. Use `verify` for builds; it handles the network-isolated CI scaffold. Use bash only for inspection
+                and `sh verify.sh solution` or `sh verify.sh template` when detailed output helps. Never run repository Gradle/Maven directly or change build infrastructure
+                to work around offline dependency resolution. Do not edit file contents through bash; use write_file or edit_file (there is no apply_patch tool). Never fabricate build or test results.%s
                 """
                 .formatted(LanguageGenerationProfile.guidanceFor(exercise));
     }

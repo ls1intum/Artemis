@@ -60,6 +60,9 @@ public class GenerationWorkspaceService {
 
     private static final String PROBLEM_STATEMENT_FILE = "problem-statement.md";
 
+    /** The agent's workspace-root design note (see GenerationStage#DESIGN); re-seeded across session resets like the problem statement so it survives verification builds. */
+    private static final String DESIGN_DOCUMENT_FILE = "DESIGN.md";
+
     private static final RepositoryType[] SEEDED_REPOSITORIES = { RepositoryType.TEMPLATE, RepositoryType.SOLUTION, RepositoryType.TESTS };
 
     /** Repository directories the layout probe lists and scans for build manifests; matches {@link #directoryFor(RepositoryType)}. */
@@ -536,10 +539,13 @@ public class GenerationWorkspaceService {
      * @param repositoryMetadata    seeded file metadata used to preserve executable modes
      * @param repositoryBinaryFiles the canonical repository binary files, written back verbatim alongside the text files
      * @param problemStatement      the canonical problem statement to re-seed at the workspace root, or {@code null} to leave it untouched
+     * @param designDocument        the agent's {@code DESIGN.md} working memory to re-seed at the workspace root, or {@code null} to leave it untouched; without this, the
+     *                                  session reset before each pristine verification build silently discards it — repair attempts lose the design rationale and the outcome's
+     *                                  design-document capture reads nothing
      */
     public void materializeRepositoryFiles(InteractiveSandbox sandbox, String sessionId, Map<RepositoryType, Map<String, String>> filesByRepository,
             Map<RepositoryType, RepositorySeedMetadata> repositoryMetadata, Map<RepositoryType, Map<String, BinarySeedFile>> repositoryBinaryFiles,
-            @Nullable String problemStatement) {
+            @Nullable String problemStatement, @Nullable String designDocument) {
         Map<String, String> workspaceFiles = new LinkedHashMap<>();
         Map<String, byte[]> workspaceBinaryFiles = new LinkedHashMap<>();
         Set<String> executableFiles = new LinkedHashSet<>();
@@ -549,6 +555,9 @@ public class GenerationWorkspaceService {
         repositoryMetadata.forEach((repositoryType, metadata) -> metadata.executableFiles().forEach(path -> executableFiles.add(directoryFor(repositoryType) + "/" + path)));
         if (problemStatement != null) {
             workspaceFiles.put(PROBLEM_STATEMENT_FILE, problemStatement);
+        }
+        if (designDocument != null) {
+            workspaceFiles.put(DESIGN_DOCUMENT_FILE, designDocument);
         }
         sandbox.copyIn(sessionId, WORKSPACE, WorkspaceArchive.buildFilesTarStream(workspaceFiles, workspaceBinaryFiles, executableFiles));
     }

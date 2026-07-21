@@ -356,12 +356,15 @@ public class GenerationOrchestrationService {
                 InteractiveSandbox activeSandbox = sandbox;
                 GenerationWorkspaceService.WorkspaceSeed activeWorkspaceSeed = workspaceSeed;
                 String candidateProblemStatement = producedProblemStatement;
+                // Snapshot DESIGN.md before verification: each restore below resets the tmpfs workspace, and without re-seeding it the design rationale would be silently gone
+                // for every later repair attempt and for the outcome's design-document capture.
+                String designDocumentSnapshot = readDesignDocument(sandbox, sessionId);
                 Runnable restoreCandidate = () -> {
                     activeSandbox.resetSession(activeSessionId);
                     // /workspace is a tmpfs (see GenerationWorkspaceService#materializeRepositoryFiles), so the reset wipes problem-statement.md too; re-seed it alongside the
                     // repositories or the next attempt's extraction fails with "the generated problem statement is missing".
                     workspace.materializeRepositoryFiles(activeSandbox, activeSessionId, candidateFiles, activeWorkspaceSeed.repositoryMetadata(),
-                            activeWorkspaceSeed.repositoryBinaryFiles(), candidateProblemStatement);
+                            activeWorkspaceSeed.repositoryBinaryFiles(), candidateProblemStatement, designDocumentSnapshot);
                 };
                 verification = verifyWithInfrastructureRetry(sandbox, sessionId, exercise, verificationRequest, restoreCandidate, cancelled, progress);
                 emit(progress, verification.report());

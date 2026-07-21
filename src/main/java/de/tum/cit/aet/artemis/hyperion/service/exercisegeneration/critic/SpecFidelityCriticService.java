@@ -143,7 +143,9 @@ public class SpecFidelityCriticService {
 
             Distinguish observable guarantees from pedagogical objectives. An intended algorithm or concept may be a valid teaching objective even when black-box tests cannot prove the \
             implementation choice. Do not report a pedagogical objective as missing test coverage, weakly tested, or contradictory merely because robust implementation-independent evidence is \
-            impossible; report only a concrete mismatch in the statement, starter, solution, or executable behavior.
+            impossible; report only a concrete mismatch in the statement, starter, solution, or executable behavior. The reference solution must itself exemplify the design the exercise \
+            teaches: report it when the solution special-cases or bypasses an abstraction it defines (for example an instanceof check on one concrete implementation instead of delegating \
+            through the shared interface, leaving that implementation's own method dead on the tested path) — a student following the starter's structure could not reproduce that behavior.
 
             Trace each task through the starter. A task reaches its target when the first failure is the intended placeholder in the method or class that task asks the student to implement. \
             It does not reach its target only when an unrelated prerequisite fails before the target call. Missing implementation is not itself a template gap. Report only missing APIs, \
