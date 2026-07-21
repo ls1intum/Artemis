@@ -620,7 +620,7 @@ describe('GlobalSearchModalComponent', () => {
 
         it('should apply course filter when modal opens on a course page', () => {
             mockCourseStorageService.getCourse.mockReturnValue({ id: 42, title: 'Intro to CS' });
-            Object.defineProperty(router, 'url', { get: () => '/courses/42/dashboard', configurable: true });
+            Object.defineProperty(router, 'url', { get: () => '/courses/42/statistics', configurable: true });
 
             mockSearchOverlayService.isOpen.set(true);
             fixture.detectChanges();
@@ -692,9 +692,9 @@ describe('GlobalSearchModalComponent', () => {
             expect(component['activeFilters']()).toEqual([]);
         });
 
-        it('should not apply type filter for non-mapped tabs like dashboard', () => {
+        it('should not apply type filter for non-mapped tabs like statistics', () => {
             mockCourseStorageService.getCourse.mockReturnValue({ id: 7, title: 'Math' });
-            Object.defineProperty(router, 'url', { get: () => '/courses/7/dashboard', configurable: true });
+            Object.defineProperty(router, 'url', { get: () => '/courses/7/statistics', configurable: true });
 
             mockSearchOverlayService.isOpen.set(true);
             fixture.detectChanges();
@@ -750,7 +750,7 @@ describe('GlobalSearchModalComponent', () => {
 
         it('should remove course filter via removeCourseFilter and re-trigger search', () => {
             mockCourseStorageService.getCourse.mockReturnValue({ id: 42, title: 'Intro to CS' });
-            Object.defineProperty(router, 'url', { get: () => '/courses/42/dashboard', configurable: true });
+            Object.defineProperty(router, 'url', { get: () => '/courses/42/statistics', configurable: true });
             mockSearchService.globalSearch.mockReturnValue(of([]));
 
             mockSearchOverlayService.isOpen.set(true);
