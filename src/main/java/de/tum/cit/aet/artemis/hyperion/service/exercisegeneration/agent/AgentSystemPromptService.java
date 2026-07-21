@@ -70,8 +70,7 @@ public class AgentSystemPromptService {
             4. Every observable statement promise needs executable evidence, and every behavioural assertion a stated rule. Preserve pedagogical objectives that black-box tests cannot prove;
             do not add brittle implementation-detail tests. Narrow unsupported observable claims, not teaching objectives.
             5. Keep student work focused on the stated learning objective. Provide routine data-holder constructors and accessors in the template unless implementing them is an explicit,
-            tested objective. Keep the public design proportional to the learning objective: for an introductory exercise, prefer one student-owned implementation locus, essential supporting
-            types, and the smallest assessable public API.
+            tested objective. Keep the public design proportional to the learning objective: prefer the smallest assessable public API the objective needs.
 
             """;
 
@@ -79,7 +78,7 @@ public class AgentSystemPromptService {
             TEMPLATE AS TEACHING SCAFFOLD
             The template is the student's guided starting point: work from it alone, using the statement only as reference. Every stubbed member carries complete Javadoc (or the
             language's doc idiom) restating its student-visible contract — purpose, parameters, return, error behavior. Anchor each task with `// TODO: <mirror of the task wording>`
-            INSIDE the member body, directly above the placeholder throw — never between the doc comment and the signature, never between an annotation and the signature.
+            INSIDE the member body, directly above the placeholder throw — never between doc comment or annotation and the signature.
             A TODO marks unfinished student work only: never leave one on code that is already complete, and never leave authoring or design notes in any repository file.
             When the requirements say students define or create a type themselves, the template must NOT ship that type: omit its file, keep the template compiling without it
             (wire `implements`/references to it only in the solution), anchor its creation with TODO breadcrumbs in the template files that will collaborate with it, and grade it
@@ -98,7 +97,9 @@ public class AgentSystemPromptService {
 
     private static final String STUDENT_FACING_STATEMENT = """
             STUDENT-FACING STATEMENT
-            Write one `#` title, a short motivating objective, a precise public API and input/output contract, and a `## Tasks` section. Pin relevant types, bounds, ordering, tie-breaking,
+            Speak TO the student: frame the goal as "we" and the reader as "you" with imperative tasks — never write about "students" in third person or describe the
+            exercise's own theme choice, design rationale, or brief. Structure it as progressive parts; every numbered `[task]` line is followed by 1-2 imperative
+            sentences naming the exact members to implement — never a bare task list. Pin relevant types, bounds, ordering, tie-breaking,
             tolerance, mutation, and exception semantics only where the implementation enforces them and a test observes them. Avoid unverifiable complexity or allocation claims. Keep internal
             details about the agent, sandbox, verifier, harness, and raw test identifiers out of visible prose.
             Make every API compiled by tests mandatory and exact; remove "suggested", "for example", "or equivalent", and alternatives after choosing a contract. Resolve or omit drafting notes and instructor decisions.
@@ -107,11 +108,10 @@ public class AgentSystemPromptService {
             javadoc that already live in the template; the template is the API reference at the point of use. The statement explains WHAT and WHY, not a restatement of code the
             student can already read.
             Provide representative worked examples only where they clarify important, non-obvious behaviour, as a code block, table, or precise prose. Examples must agree with the implementation and tests but must not reproduce a graded test's exact composite input. Use a smaller or materially different input that
-            teaches the rule without revealing the oracle. Add a class diagram only when it materially clarifies a multi-type design
-            (typically when students create types or wire a pattern). Diagrams must be PlantUML (`@startuml` … `@enduml`) — Artemis renders PlantUML; never draw ASCII-art or
+            teaches the rule without revealing the oracle. Diagrams must be PlantUML (`@startuml` … `@enduml`); never draw ASCII-art or
             Markdown box diagrams. In the diagram, link elements to their checks with Artemis' testsColor syntax — members as
             `<color:testsColor(exactTestName)>+member()</color>`, relations as `Sub -up-|> Super #testsColor(exactTestName)` — using verbatim behavioural test names from `verify` or
-            seeded structural check names (`testClass[X]`, `testMethods[X]`, `testAttributes[X]`, `testConstructors[X]`) exactly as `verify` reports them; never invent names. End with
+            seeded structural check names (`testClass[X]`, `testMethods[X]`, `testAttributes[X]`, `testConstructors[X]`); never invent names. End with
             `hide empty fields` and `hide empty methods`.
 
             """;
@@ -140,8 +140,8 @@ public class AgentSystemPromptService {
             STAGE 0 — DESIGN FIRST: before touching any repository, write `/workspace/DESIGN.md` (workspace root only; never persisted into solution, template, or tests)
             with exactly these sections: `## Classes` (a table: name | role | given-complete-in-template | student-implements-stubbed | student-creates-absent-from-template),
             `## Public API` (signatures only), `## Tasks` (one row per seam — an independently actionable student-work unit, e.g. a method/class/behavior cluster —
-            grouping every test partition it needs; never one row per test, never one for the whole exercise unless it is genuinely one seam), `## Diagram` (yes/no +
-            one-line why, per the diagram rule below). Record which class owns each piece of mutable state and whether it survives object replacement
+            grouping every test partition it needs; never one row per test, never one for the whole exercise unless it is genuinely one seam), `## Diagram` (yes/no + one-line why —
+            yes for multiple collaborating or student-created types; no for a single class). Record which class owns each piece of mutable state and whether it survives object replacement
             (e.g. a strategy switch) — later stages may only demand what that ownership allows. Choose the smallest
             design the source requirements support; do not create one test or task per sentence. Update DESIGN.md whenever a later stage forces a design change — it must
             always describe the final exercise truthfully.
@@ -151,7 +151,7 @@ public class AgentSystemPromptService {
             STAGE 1 — SOLUTION: implement the reference solution per DESIGN.md. The solution must exemplify the design it teaches: never bypass an
             abstraction it defines (e.g. instanceof on one concrete implementation instead of delegating through the interface) — that means the design is wrong; fix the
             design. Execute every worked example from the requirements against the real solution in the
-            sandbox (a throwaway run under /tmp, never committed) and fix the SOLUTION or the EXAMPLE when they disagree — never patch code to match a wrong number.
+            sandbox (throwaway under /tmp) and fix the SOLUTION or the EXAMPLE when they disagree — never patch code to match a wrong number.
             Write complete Javadoc on every public member now; the template inherits it verbatim — never defer docs to that stage.
             """;
 
@@ -176,7 +176,7 @@ public class AgentSystemPromptService {
     private static final String STAGE_4_STATEMENT_INSTRUCTIONS = """
             STAGE 4 — STATEMENT: write the statement last, from DESIGN.md and the verified test names: one `[task]` line per DESIGN.md seam using the exact reported
             names — bind the bare method names exactly as `verify` reports them, never prefixed with a class or package name — the public API presented once and compactly,
-            a diagram only if DESIGN.md said yes. Re-read every boundary or edge-case sentence: each must be true of the solution AND covered by a test — otherwise fix the
+            a diagram only if DESIGN.md said yes — placed after the tasks it illustrates; testsColor names resolve like task bindings. Re-read every boundary or edge-case sentence: each must be true of the solution AND covered by a test — otherwise fix the
             artifact or delete the sentence. Never repeat a heading. Then independently replay every worked example, run `verify` once
             more, and submit only after `MECHANICAL PRECHECK: PASS`; authoritative post-loop verification determines save eligibility, and quality review may request repairs.
             """;
@@ -364,7 +364,7 @@ public class AgentSystemPromptService {
                 - template/: student starting point — Java sources go in template/src/<package-path>/
                 - tests/: instructor tests and immutable build harness — test sources go in tests/test/<package-path>/
                 - verify.sh: grader-equivalent build recipe
-                NEVER create an assignment/ directory inside these repos: "assignment/" below describes only the grader's ephemeral CI checkout, not your authoring layout.
+                NEVER create an assignment/ directory in these repos — "assignment/" is only the grader's ephemeral CI checkout.
                 %s
 
                 Programming language: %s%s

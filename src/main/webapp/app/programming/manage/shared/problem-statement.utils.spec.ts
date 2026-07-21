@@ -209,19 +209,19 @@ describe('ProblemStatementUtils', () => {
 
     describe('deriveProposedPackageName', () => {
         it('should join title words into a lowercase single segment for Java', () => {
-            expect(deriveProposedPackageName('Summarizing Bicycle-Share Trips', ProgrammingLanguage.JAVA)).toBe('summarizingbicyclesharetrips');
+            expect(deriveProposedPackageName('Summarizing Bicycle-Share Trips', ProgrammingLanguage.JAVA)).toBe('de.tum.cit.aet.summarizing');
         });
 
         it('should fold accents and drop non-ASCII characters', () => {
-            expect(deriveProposedPackageName('Café Menü Planner', ProgrammingLanguage.JAVA)).toBe('cafemenuplanner');
+            expect(deriveProposedPackageName('Café Menü Planner', ProgrammingLanguage.JAVA)).toBe('de.tum.cit.aet.cafemenuplanner');
         });
 
         it('should not start with a digit', () => {
-            expect(deriveProposedPackageName('2048 Game', ProgrammingLanguage.JAVA)).toBe('game');
+            expect(deriveProposedPackageName('2048 Game', ProgrammingLanguage.JAVA)).toBe('de.tum.cit.aet.game');
         });
 
         it('should escape reserved words by appending exercise', () => {
-            expect(deriveProposedPackageName('Switch', ProgrammingLanguage.JAVA)).toBe('switchexercise');
+            expect(deriveProposedPackageName('Switch', ProgrammingLanguage.JAVA)).toBe('de.tum.cit.aet.switchexercise');
         });
 
         it('should cap the length', () => {
@@ -230,12 +230,12 @@ describe('ProblemStatementUtils', () => {
         });
 
         it('should truncate at a word boundary instead of cutting mid-word', () => {
-            expect(deriveProposedPackageName('Strategy Based Music Playlist Playback', ProgrammingLanguage.JAVA)).toBe('strategybasedmusicplaylist');
+            expect(deriveProposedPackageName('Strategy Based Music Playlist Playback', ProgrammingLanguage.JAVA)).toBe('de.tum.cit.aet.strategybased');
         });
 
         it('should hard-cap a single overlong word', () => {
             const derived = deriveProposedPackageName('Supercalifragilisticexpialidocious Adventures', ProgrammingLanguage.JAVA);
-            expect(derived).toBe('supercalifragilisticexpialidocio');
+            expect(derived).toBe('de.tum.cit.aet.supercalifragilis');
         });
 
         it('should produce a PascalCase app name for Swift', () => {
@@ -259,19 +259,19 @@ describe('ProblemStatementUtils', () => {
         it('should propose title and package name for blank fields on a new exercise without mutating it', () => {
             const exercise = { programmingLanguage: ProgrammingLanguage.JAVA } as ProgrammingExercise;
             const prefill = deriveDraftMetadataPrefill(exercise, draft);
-            expect(prefill).toEqual({ title: 'Warehouse Batch Allocation', packageName: 'warehousebatchallocation' });
+            expect(prefill).toEqual({ title: 'Warehouse Batch Allocation', packageName: 'de.tum.cit.aet.warehousebatch' });
             expect(exercise.title).toBeUndefined();
             expect(exercise.packageName).toBeUndefined();
         });
 
         it('should sanitize punctuation and accents that are invalid in exercise titles', () => {
             const exercise = { programmingLanguage: ProgrammingLanguage.JAVA } as ProgrammingExercise;
-            expect(deriveDraftMetadataPrefill(exercise, '# Café Sorting: Dates!')).toEqual({ title: 'Cafe Sorting Dates', packageName: 'cafesortingdates' });
+            expect(deriveDraftMetadataPrefill(exercise, '# Café Sorting: Dates!')).toEqual({ title: 'Cafe Sorting Dates', packageName: 'de.tum.cit.aet.cafesortingdates' });
         });
 
         it('should not propose a title that is shorter than the exercise form minimum', () => {
             const exercise = { programmingLanguage: ProgrammingLanguage.JAVA } as ProgrammingExercise;
-            expect(deriveDraftMetadataPrefill(exercise, '# AI')).toEqual({ packageName: 'ai' });
+            expect(deriveDraftMetadataPrefill(exercise, '# AI')).toEqual({ packageName: 'de.tum.cit.aet.ai' });
         });
 
         it('should never propose over instructor-typed values', () => {
@@ -281,7 +281,7 @@ describe('ProblemStatementUtils', () => {
 
         it('should propose only the missing field', () => {
             const exercise = { title: 'My Title', programmingLanguage: ProgrammingLanguage.JAVA } as ProgrammingExercise;
-            expect(deriveDraftMetadataPrefill(exercise, draft)).toEqual({ packageName: 'warehousebatchallocation' });
+            expect(deriveDraftMetadataPrefill(exercise, draft)).toEqual({ packageName: 'de.tum.cit.aet.warehousebatch' });
         });
 
         it('should not propose anything for an already created exercise', () => {

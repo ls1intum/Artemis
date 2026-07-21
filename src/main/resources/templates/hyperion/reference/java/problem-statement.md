@@ -35,21 +35,21 @@ interface FeeStrategy {
 }
 
 class StandardFeeStrategy {
-  +calculateFee(double): double
+  <color:testsColor(testStandardFeeTypical)>+calculateFee(double): double</color>
 }
 
 class ExpressFeeStrategy {
-  +calculateFee(double): double
+  <color:testsColor(testExpressFeeTypical)>+calculateFee(double): double</color>
 }
 
 class ShippingCalculator {
   -strategy: FeeStrategy
-  +selectStrategy(double): void
-  +computeFee(double): double
+  <color:testsColor(testSelectsExpressForHeavyPackages)>+selectStrategy(double): void</color>
+  <color:testsColor(testComputeFeeDelegatesToChosenStrategy)>+computeFee(double): double</color>
 }
 
-StandardFeeStrategy .up.|> FeeStrategy
-ExpressFeeStrategy .up.|> FeeStrategy
+StandardFeeStrategy .up.|> FeeStrategy #testsColor(testSelectsStandardForLightPackages)
+ExpressFeeStrategy .up.|> FeeStrategy #testsColor(testSelectsExpressForHeavyPackages)
 ShippingCalculator -right-> FeeStrategy: strategy
 
 hide empty fields

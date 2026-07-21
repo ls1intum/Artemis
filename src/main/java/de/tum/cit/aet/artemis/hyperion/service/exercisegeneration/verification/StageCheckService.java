@@ -4,6 +4,7 @@ import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import org.jspecify.annotations.Nullable;
@@ -167,6 +168,13 @@ public class StageCheckService {
                 return StageCheckResult.failed("These [task] bindings reference names that match no actual test: " + unresolved
                         + ". A [task]'s parenthesised names must be the exact test name(s) from the TESTS stage, copied verbatim: " + exactTestNames + ".");
             }
+            // Diagram testsColor links are interactive in Artemis (they render pass/fail per element); a name that matches no test is a silently dead link the student can
+            // never satisfy, so it is held to the same resolution standard as a [task] binding.
+            List<String> deadDiagramLinks = unresolvedTestsColorNames(statement, exactTestNames);
+            if (!deadDiagramLinks.isEmpty()) {
+                return StageCheckResult.failed("These diagram testsColor(...) names match no actual test: " + deadDiagramLinks
+                        + ". Use the exact test names from the TESTS stage (behavioural or seeded structural), or remove the link: " + exactTestNames + ".");
+            }
         }
         // Exact duplicate headings are a mechanical statement defect (observed shipping live: the same '### 1. ...' section twice); catching it here costs nothing.
         List<String> duplicateHeadings = statement.lines().map(String::strip).filter(line -> line.startsWith("#")).collect(Collectors.groupingBy(line -> line)).entrySet().stream()
@@ -175,6 +183,20 @@ public class StageCheckService {
             return StageCheckResult.failed("The statement repeats these headings verbatim: " + duplicateHeadings + ". Merge or remove the duplicate sections.");
         }
         return StageCheckResult.passed("");
+    }
+
+    /**
+     * Matches every {@code testsColor(NAME)} occurrence in a statement's PlantUML diagram (both the {@code <color:...>} member form and the {@code #testsColor(...)} edge form).
+     */
+    private static final Pattern TESTS_COLOR_NAME = Pattern.compile("testsColor\\(([^)]+?)(?:\\(\\))?\\)");
+
+    /**
+     * Every distinct {@code testsColor} name in the statement that matches no known test name. A trailing {@code ()} (the classic Artemis statement style for behavioural
+     * names) is tolerated on the statement side; the comparison itself is exact.
+     */
+    static List<String> unresolvedTestsColorNames(String statement, List<String> exactTestNames) {
+        Set<String> known = Set.copyOf(exactTestNames);
+        return TESTS_COLOR_NAME.matcher(statement).results().map(match -> match.group(1).strip()).distinct().filter(name -> !known.contains(name)).sorted().toList();
     }
 
     /**

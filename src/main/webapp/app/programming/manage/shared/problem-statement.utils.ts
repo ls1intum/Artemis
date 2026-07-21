@@ -152,6 +152,12 @@ export function buildGenerationRequest(userPrompt: string): ProblemStatementGene
 
 const MAX_PROPOSED_PACKAGE_NAME_LENGTH = 32;
 
+/**
+ * Institutional package prefix for dotted-package languages (Java/Kotlin), so AI-derived packages read like real course exercises (de.tum.cit.aet.bubblesort) instead of a bare
+ * slug. Deliberately a constant for now; if deployments need their own prefix this belongs in a server-provided configuration value, not per-user input.
+ */
+const PROPOSED_PACKAGE_PREFIX_FOR_DOTTED_LANGUAGES = 'de.tum.cit.aet';
+
 /** Extracts a title from the first level-one Markdown heading. */
 export function extractProblemStatementTitle(problemStatement: string | undefined): string | undefined {
     const match = problemStatement?.match(/^#\s+(.+)$/m);
@@ -181,20 +187,24 @@ export function deriveProposedPackageName(title: string, language: ProgrammingLa
         return undefined;
     }
     const pascalCase = language === ProgrammingLanguage.SWIFT;
+    // Blackbox exercises use a single-identifier package pattern (no dots), so they keep the bare slug.
+    const dotted = (language === ProgrammingLanguage.JAVA || language === ProgrammingLanguage.KOTLIN) && projectType !== ProjectType.MAVEN_BLACKBOX;
+    const dottedPrefix = dotted ? `${PROPOSED_PACKAGE_PREFIX_FOR_DOTTED_LANGUAGES}.` : '';
+    const slugBudget = MAX_PROPOSED_PACKAGE_NAME_LENGTH - dottedPrefix.length;
     const normalizedWords = words.map((word) => (pascalCase ? word.charAt(0).toUpperCase() + word.slice(1).toLowerCase() : word.toLowerCase()));
     // Truncate at a word boundary: a mid-word cut produces gibberish identifiers like "…playlistplayba".
     let joined = '';
     for (const word of normalizedWords) {
-        if (joined && (joined + word).length > MAX_PROPOSED_PACKAGE_NAME_LENGTH) {
+        if (joined && (joined + word).length > slugBudget) {
             break;
         }
         joined += word;
     }
-    const candidate = joined.replace(/^[0-9]+/, '').substring(0, MAX_PROPOSED_PACKAGE_NAME_LENGTH);
+    const candidate = joined.replace(/^[0-9]+/, '').substring(0, slugBudget);
     if (!candidate) {
         return undefined;
     }
-    for (const proposal of [candidate, pascalCase ? `${candidate}Exercise` : `${candidate}exercise`]) {
+    for (const proposal of [`${dottedPrefix}${candidate}`, pascalCase ? `${candidate}Exercise` : `${dottedPrefix}${candidate}exercise`]) {
         if (new RegExp(pattern).test(proposal)) {
             return proposal;
         }

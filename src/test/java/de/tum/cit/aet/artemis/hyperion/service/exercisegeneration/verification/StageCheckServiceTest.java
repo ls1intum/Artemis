@@ -353,6 +353,31 @@ class StageCheckServiceTest {
         }
 
         @Test
+        void fails_whenADiagramTestsColorNameMatchesNoRealTest() {
+            // A dead testsColor link renders an element that can never turn green — same resolution standard as a [task] binding.
+            sandbox.problemStatement = "# Title\n[task][Sort](testSortsAscending)\n@startuml\nclass A {\n  <color:testsColor(testGhost)>+sort()</color>\n}\n@enduml\n";
+            AgentVerifyReport lastTestsReport = new AgentVerifyReport(1, true, List.of(), 1, true, true, List.of(), List.of("testSortsAscending"), List.of(), List.of(), true,
+                    List.of());
+
+            StageCheckResult result = check(GenerationStage.STATEMENT, lastTestsReport);
+
+            assertThat(result.passed()).isFalse();
+            assertThat(result.observation()).contains("testsColor").contains("testGhost");
+        }
+
+        @Test
+        void passes_whenDiagramTestsColorNamesResolve_includingParenthesisedAndStructuralForms() {
+            sandbox.problemStatement = "# Title\n[task][Sort](testSortsAscending)\n@startuml\nclass A {\n  <color:testsColor(testSortsAscending())>+sort()</color>\n}\n"
+                    + "A -up-|> B #testsColor(testClass[A])\n@enduml\n";
+            AgentVerifyReport lastTestsReport = new AgentVerifyReport(1, true, List.of(), 1, true, true, List.of(), List.of("testSortsAscending", "testClass[A]"), List.of(),
+                    List.of(), true, List.of());
+
+            StageCheckResult result = check(GenerationStage.STATEMENT, lastTestsReport);
+
+            assertThat(result.passed()).isTrue();
+        }
+
+        @Test
         void fails_whenATaskBindingReferencesANameThatMatchesNoRealTest() {
             sandbox.problemStatement = "# Title\n[task][Sort](testSortsAscending,testDoesNotExist)\n";
             AgentVerifyReport lastTestsReport = new AgentVerifyReport(1, true, List.of(), 1, true, true, List.of(), List.of("testSortsAscending"), List.of(), List.of(), true,
