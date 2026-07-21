@@ -11,22 +11,13 @@ import de.tum.cit.aet.artemis.modeling.domain.ApollonDiagram;
 import de.tum.cit.aet.artemis.modeling.domain.DiagramType;
 
 /**
- * DTO for creating and updating ApollonDiagrams.
+ * Request DTO for creating and updating ApollonDiagrams.
  * Uses DTOs instead of entity classes to avoid Hibernate detached entity issues.
+ * Responses use {@link ApollonDiagramDTO}.
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record ApollonDiagramUpdateDTO(@Nullable Long id, @Nullable String title, @Nullable String jsonRepresentation, @Nullable DiagramType diagramType, @NotNull Long courseId) {
-
-    /**
-     * Creates an ApollonDiagramUpdateDTO from the given ApollonDiagram domain object.
-     *
-     * @param diagram the ApollonDiagram to convert
-     * @return the corresponding DTO
-     */
-    public static ApollonDiagramUpdateDTO of(ApollonDiagram diagram) {
-        return new ApollonDiagramUpdateDTO(diagram.getId(), diagram.getTitle(), diagram.getJsonRepresentation(), diagram.getDiagramType(), diagram.getCourseId());
-    }
 
     /**
      * Creates a new ApollonDiagram entity from this DTO.
