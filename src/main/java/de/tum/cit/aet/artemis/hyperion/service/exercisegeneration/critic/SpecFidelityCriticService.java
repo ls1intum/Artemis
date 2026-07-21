@@ -358,13 +358,32 @@ public class SpecFidelityCriticService {
      */
     public SpecFidelityReport critique(@Nullable String brief, @Nullable String problemStatement, List<String> testNames, Map<RepositoryType, Map<String, String>> artifacts,
             @Nullable Consumer<ChatResponse> usageSink, BooleanSupplier cancelled, @Nullable SpecFidelityReport previousReport) {
+        return critique(brief, problemStatement, testNames, artifacts, usageSink, cancelled, previousReport, null);
+    }
+
+    /**
+     * Full-artifact review that additionally sees the agent's own {@code DESIGN.md}, so the reviewer can report contradictions between the stated design (state ownership,
+     * type structure) and the implemented artifacts — the axis on which past runs shipped a design document the code silently ignored.
+     *
+     * @param brief            the instructor's source requirements
+     * @param problemStatement the produced problem statement
+     * @param testNames        the produced test identifiers
+     * @param artifacts        the generated repository files grouped by repository type
+     * @param usageSink        receives reviewer token usage; {@code null} skips accounting
+     * @param cancelled        polled between provider calls
+     * @param previousReport   the immediately preceding attempt's report, for review continuity
+     * @param designDocument   the agent's DESIGN.md contents, or {@code null} when unavailable
+     * @return the review report
+     */
+    public SpecFidelityReport critique(@Nullable String brief, @Nullable String problemStatement, List<String> testNames, Map<RepositoryType, Map<String, String>> artifacts,
+            @Nullable Consumer<ChatResponse> usageSink, BooleanSupplier cancelled, @Nullable SpecFidelityReport previousReport, @Nullable String designDocument) {
         requireReviewInputsSafe(brief, problemStatement, testNames, artifacts, null);
         List<SpecFidelityReport.Finding> findings = new ArrayList<>(detectMechanicsLeaks(problemStatement));
         if (!hasCompleteArtifactSet(artifacts)) {
             findings.addAll(reviewUnavailable(null, "The generated solution, template, or tests snapshot was missing."));
             return new SpecFidelityReport(List.copyOf(findings));
         }
-        findings.addAll(reviewArtifacts(brief, problemStatement, testNames, artifacts, null, usageSink, cancelled, previousReport));
+        findings.addAll(reviewArtifacts(brief, problemStatement, testNames, artifacts, null, usageSink, cancelled, previousReport, designDocument));
         return new SpecFidelityReport(List.copyOf(findings));
     }
 
@@ -424,7 +443,7 @@ public class SpecFidelityCriticService {
             findings.addAll(reviewUnavailable(adaptationChanges, "The generated solution, template, or tests snapshot was missing."));
             return new SpecFidelityReport(List.copyOf(findings));
         }
-        findings.addAll(reviewArtifacts(brief, problemStatement, testNames, artifacts, adaptationChanges, usageSink, cancelled, previousReport));
+        findings.addAll(reviewArtifacts(brief, problemStatement, testNames, artifacts, adaptationChanges, usageSink, cancelled, previousReport, null));
         return new SpecFidelityReport(List.copyOf(findings));
     }
 
@@ -491,7 +510,7 @@ public class SpecFidelityCriticService {
     /** Runs two bounded, specialized full-artifact review passes and fails closed when either verdict is incomplete. */
     private List<SpecFidelityReport.Finding> reviewArtifacts(@Nullable String brief, @Nullable String problemStatement, List<String> testNames,
             Map<RepositoryType, Map<String, String>> artifacts, @Nullable String adaptationChanges, @Nullable Consumer<ChatResponse> usageSink, BooleanSupplier cancelled,
-            @Nullable SpecFidelityReport previousReport) {
+            @Nullable SpecFidelityReport previousReport, @Nullable String designDocument) {
         String effectiveBrief = brief == null ? "" : brief.strip();
         if (adaptationChanges != null && adaptationChanges.isBlank()) {
             String requestedChange = effectiveBrief.isBlank() ? "the requested adaptation" : truncate(effectiveBrief);
@@ -505,7 +524,7 @@ public class SpecFidelityCriticService {
         if (evidence.truncated()) {
             return reviewUnavailable(adaptationChanges, "The generated artifact set exceeded the bounded review input.");
         }
-        String userPrompt = renderUserPrompt(effectiveBrief, problemStatement, testNames, evidence.text(), adaptationChanges, previousReport);
+        String userPrompt = renderUserPrompt(effectiveBrief, problemStatement, testNames, evidence.text(), adaptationChanges, previousReport, designDocument);
         String authoritativeSource = effectiveBrief;
         // The contract pass's free-form contradiction/hidden-requirement/invented-requirement findings may legitimately quote the instructor's brief, the produced problem
         // statement, OR the artifact sources themselves: a requirement invented purely inside a test (e.g. an exact exception-message assertion no statement sentence supports)
@@ -513,7 +532,7 @@ public class SpecFidelityCriticService {
         // check (the quote must literally exist somewhere real), not a statement of authority. The oracle pass's requirement-coverage claims (uncovered/weakOracle/mutantChecks)
         // keep the narrower brief-only source: the produced statement and tests must never be able to authorize their own additions there.
         String contractGroundingSource = (problemStatement == null || problemStatement.isBlank() ? authoritativeSource : authoritativeSource + "\n\n" + problemStatement.strip())
-                + "\n\n" + evidence.text();
+                + "\n\n" + evidence.text() + (designDocument == null ? "" : "\n\n" + designDocument);
         if (userPrompt.length() > MAX_REVIEW_INPUT_CHARS) {
             return reviewUnavailable(adaptationChanges, "The complete review input exceeded its bounded size.");
         }
@@ -643,12 +662,16 @@ public class SpecFidelityCriticService {
     }
 
     private static String renderUserPrompt(String brief, @Nullable String problemStatement, List<String> testNames, String artifactEvidence, @Nullable String adaptationChanges,
-            @Nullable SpecFidelityReport previousReport) {
+            @Nullable SpecFidelityReport previousReport, @Nullable String designDocument) {
         String tests = testNames.isEmpty() ? "(no tests were produced)" : String.join("\n", testNames);
         String changes = adaptationChanges == null ? "" : "\n\nADAPTATION CHANGES (baseline to candidate):\n" + (adaptationChanges.isBlank() ? "(no changes)" : adaptationChanges);
+        String design = designDocument == null || designDocument.isBlank() ? ""
+                : "\n\nAGENT DESIGN DOCUMENT (the author's own stated design; report it as a contradiction when the implemented artifacts silently deviate from its stated "
+                        + "state ownership or type structure — either the code or the design is wrong, and the author must reconcile them):\n" + designDocument.strip();
         return "PRIMARY SOURCE REQUIREMENTS:\n" + brief + "\n\nPRODUCED PROBLEM STATEMENT:\n"
                 + (problemStatement == null || problemStatement.isBlank() ? "(empty)" : problemStatement.strip()) + "\n\nTEST NAMES (navigation aid only; not coverage evidence) ("
-                + testNames.size() + "):\n" + tests + "\n\nMECHANICALLY VERIFIED CANDIDATE ARTIFACTS:\n" + artifactEvidence + changes + renderPreviousReviewSection(previousReport)
+                + testNames.size() + "):\n" + tests + "\n\nMECHANICALLY VERIFIED CANDIDATE ARTIFACTS:\n" + artifactEvidence + design + changes
+                + renderPreviousReviewSection(previousReport)
                 + "\n\nDo not treat test names or comments as proof. Return the complete JSON verdict specified by the system prompt.";
     }
 

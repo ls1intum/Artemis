@@ -158,7 +158,7 @@ public class AgentSystemPromptService {
     private static final String STAGE_2_TEMPLATE_INSTRUCTIONS = """
             STAGE 2 — TEMPLATE: derive the template FROM the finished solution: copy it, then remove exactly the student work DESIGN.md marks stubbed or absent (stub
             bodies keep their Javadoc plus an in-body TODO and a placeholder throw; a student-created type is omitted entirely, with TODO breadcrumbs in the template
-            files that collaborate with it) so the template still compiles. On every shared file, Javadoc and non-TODO comments stay byte-identical to the solution.
+            files that collaborate with it) so the template still compiles. Failing behavioural tests are EXPECTED; only compilation matters — do not "fix" stubs. On every shared file, Javadoc and non-TODO comments stay byte-identical to the solution.
             If a doc is missing from the solution, add it there first and re-derive; never author docs only in the template.
             """;
 
