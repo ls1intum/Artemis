@@ -76,6 +76,28 @@ describe('TumUiTableComponent', () => {
         expect(cellText).toContain('Beta');
     });
 
+    it('maps hideBelow to responsive display classes and nothing for always-visible columns', () => {
+        expect(component['columnVisibilityClasses']({ hideBelow: 'sm' } as ColumnDef<Row>)).toBe('hidden sm:table-cell');
+        expect(component['columnVisibilityClasses']({ hideBelow: 'md' } as ColumnDef<Row>)).toBe('hidden md:table-cell');
+        expect(component['columnVisibilityClasses']({ hideBelow: 'lg' } as ColumnDef<Row>)).toBe('hidden lg:table-cell');
+        expect(component['columnVisibilityClasses']({ field: 'name' } as ColumnDef<Row>)).toBe('');
+    });
+
+    it('applies the responsive-hide classes to a hideBelow column header and cells', async () => {
+        fixture.componentRef.setInput('columns', [
+            { field: 'name', header: 'Name' },
+            { field: 'count', header: 'Count', hideBelow: 'md' },
+        ] as ColumnDef<Row>[]);
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        // The always-visible first column has no responsive-hide class; the hideBelow:'md' second column does.
+        expect(headerCells()[0].classList).not.toContain('hidden');
+        expect(headerCells()[1].classList).toContain('hidden');
+        expect(headerCells()[1].classList).toContain('md:table-cell');
+        expect(dataCells().every((cell, index) => (index % 2 === 1 ? cell.classList.contains('md:table-cell') : !cell.classList.contains('hidden')))).toBe(true);
+    });
+
     it('emits one initial dataRequest after first render with defaults', async () => {
         const spy = vi.spyOn(component.dataRequest, 'emit');
         fixture.detectChanges();
