@@ -15,12 +15,12 @@ import { SortDirective } from 'app/foundation/sort/directive/sort.directive';
 import { SortByDirective } from 'app/foundation/sort/directive/sort-by.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ItemCountComponent } from 'app/foundation/pagination/item-count.component';
-import { PaginatorModule, PaginatorState } from 'primeng/paginator';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-title.directive';
-import { MessageModule } from 'primeng/message';
-import { InputGroupModule } from 'primeng/inputgroup';
-import { InputGroupAddonModule } from 'primeng/inputgroupaddon';
+import { TumUiPaginatorComponent } from 'app/shared-ui/tum-ui/paginator/tum-ui-paginator.component';
+import { TumUiMessageComponent } from 'app/shared-ui/tum-ui/message/tum-ui-message.component';
+import { TumUiInputGroupComponent } from 'app/shared-ui/tum-ui/input-group/tum-ui-input-group.component';
+import { TumUiInputGroupAddonComponent } from 'app/shared-ui/tum-ui/input-group/tum-ui-input-group-addon.component';
 import { DateTimePickerType, FormDateTimePickerComponent } from 'app/shared-ui/date-time-picker/date-time-picker.component';
 
 /**
@@ -38,12 +38,12 @@ import { DateTimePickerType, FormDateTimePickerComponent } from 'app/shared-ui/d
         SortByDirective,
         FaIconComponent,
         ItemCountComponent,
-        PaginatorModule,
+        TumUiPaginatorComponent,
         ArtemisDatePipe,
         AdminTitleBarTitleDirective,
-        MessageModule,
-        InputGroupModule,
-        InputGroupAddonModule,
+        TumUiMessageComponent,
+        TumUiInputGroupComponent,
+        TumUiInputGroupAddonComponent,
         FormDateTimePickerComponent,
     ],
 })
@@ -152,14 +152,14 @@ export class AuditsComponent implements OnInit {
     }
 
     /**
-     * Handles a PrimeNG paginator page change. The event page is 0-indexed, so it is converted to the
+     * Handles a paginator page change. The emitted page is 0-indexed, so it is converted to the
      * component's 1-indexed page. No-op while the date range is incomplete (mirrors the former disabled paginator).
      */
-    onPageChange(event: PaginatorState): void {
+    onPageChange(page: number): void {
         if (!this.canLoad()) {
             return;
         }
-        this.updatePage((event.page ?? 0) + 1);
+        this.updatePage(page + 1);
         this.transition();
     }
 

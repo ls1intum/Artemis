@@ -1,0 +1,33 @@
+<div
+    role="table"
+    class="tum-ui-vs-table flex min-h-0 flex-col"
+    [class.flex-1]="isFlexHeight()"
+    [style.min-width]="minWidth()"
+    [attr.aria-describedby]="ariaDescribedBy()"
+    data-testid="tum-ui-vs-table"
+>
+    <!-- Sticky header: consumer-projected header cells, styled to match [tumUiTable]'s header chrome. -->
+    <div role="row" [class]="headerClasses()">
+        <ng-content />
+    </div>
+
+    <cdk-virtual-scroll-viewport
+        [itemSize]="itemSize()"
+        class="tum-ui-vs-viewport"
+        [class.flex-1]="isFlexHeight()"
+        [class.min-h-0]="isFlexHeight()"
+        [style.max-height]="maxHeight()"
+        role="rowgroup"
+        data-testid="tum-ui-vs-viewport"
+    >
+        <div
+            *cdkVirtualFor="let item of items(); let i = index; trackBy: effectiveTrackBy()"
+            role="row"
+            [class]="rowClasses()"
+            [style.height.px]="itemSize()"
+            data-testid="tum-ui-vs-row"
+        >
+            <ng-container [ngTemplateOutlet]="rowTemplate()" [ngTemplateOutletContext]="{ $implicit: item, index: i }" />
+        </div>
+    </cdk-virtual-scroll-viewport>
+</div>

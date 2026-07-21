@@ -1,0 +1,68 @@
+// Structure matched to PrimeNG's p-panel (Aura). Header padding 1.125rem (0.375rem vertical when toggleable,
+// to keep the row height with the toggle button), content padding 0 1.125rem 1.125rem, title weight 600.
+// The border/radius/background ride the token utilities on the host.
+:host {
+    display: block;
+}
+
+.tum-ui-panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.125rem;
+}
+
+.tum-ui-panel-header-toggleable {
+    padding: 0.375rem 1.125rem;
+}
+
+.tum-ui-panel-title {
+    line-height: 1;
+    font-weight: 600;
+}
+
+.tum-ui-panel-toggler {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2rem;
+    height: 2rem;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: transparent;
+    color: inherit;
+    cursor: pointer;
+
+    // Framework-neutral hover/focus affordances (no --p-* primitive): a faint tint of the current text color.
+    transition: background-color 0.15s ease-in-out;
+
+    &:hover {
+        background-color: color-mix(in srgb, currentcolor 8%, transparent);
+    }
+
+    &:focus-visible {
+        outline: 2px solid var(--primary);
+        outline-offset: 1px;
+    }
+}
+
+// Collapse via animated grid rows (the Aura panel technique): 1fr expanded, 0fr collapsed, wrapper clips.
+.tum-ui-panel-content-container {
+    display: grid;
+    grid-template-rows: 1fr;
+    transition: grid-template-rows 0.2s ease-in-out;
+}
+
+:host([data-collapsed='true']) .tum-ui-panel-content-container {
+    grid-template-rows: 0fr;
+}
+
+.tum-ui-panel-content-wrapper {
+    min-height: 0;
+    overflow: hidden;
+}
+
+.tum-ui-panel-content {
+    padding: 0 1.125rem 1.125rem;
+}

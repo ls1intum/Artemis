@@ -1,0 +1,17 @@
+<ng-content select="[tumUiCardHeader]" />
+<div class="tum-ui-card-body">
+    @if (header() || subheader()) {
+        <div class="tum-ui-card-caption">
+            @if (header()) {
+                <div class="tum-ui-card-title">{{ header() }}</div>
+            }
+            @if (subheader()) {
+                <div class="tum-ui-card-subtitle text-muted-color">{{ subheader() }}</div>
+            }
+        </div>
+    }
+    <div class="tum-ui-card-content">
+        <ng-content />
+    </div>
+    <ng-content select="[tumUiCardFooter]" />
+</div>

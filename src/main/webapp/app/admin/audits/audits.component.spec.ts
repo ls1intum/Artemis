@@ -5,7 +5,6 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { HttpHeaders, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ActivatedRoute, Router } from '@angular/router';
-import { PaginatorState } from 'primeng/paginator';
 import { of } from 'rxjs';
 import { DatePipe } from '@angular/common';
 
@@ -167,13 +166,13 @@ describe('AuditsComponent', () => {
         });
     });
 
-    describe('pagination (PrimeNG paginator)', () => {
+    describe('pagination (tum-ui paginator)', () => {
         it('converts the 0-indexed paginator event to the 1-indexed page and navigates', () => {
             comp.ngOnInit(); // sets a valid date range so canLoad() is true
             const router = TestBed.inject(Router);
             (router.navigate as unknown as ReturnType<typeof vi.fn>).mockClear();
 
-            comp.onPageChange({ page: 2 } as PaginatorState);
+            comp.onPageChange(2);
 
             expect(comp.page()).toBe(3);
             expect(router.navigate).toHaveBeenCalledWith(['/admin/audits'], expect.objectContaining({ queryParams: expect.objectContaining({ page: 3 }) }));
@@ -184,7 +183,7 @@ describe('AuditsComponent', () => {
             comp.fromDate.set('');
             const before = comp.page();
 
-            comp.onPageChange({ page: 4 } as PaginatorState);
+            comp.onPageChange(4);
 
             expect(comp.page()).toBe(before);
         });

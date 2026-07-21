@@ -13,9 +13,9 @@ import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-title.directive';
 import { AdminTitleBarActionsDirective } from 'app/admin/shared/admin-title-bar-actions.directive';
-import { TagModule } from 'primeng/tag';
-import { ButtonModule } from 'primeng/button';
-import { TooltipModule } from 'primeng/tooltip';
+import { TumUiTagComponent } from 'app/shared-ui/tum-ui/tag/tum-ui-tag.component';
+import { TumUiButtonComponent } from 'app/shared-ui/tum-ui/button/tum-ui-button.component';
+import { TumUiTooltipDirective } from 'app/shared-ui/tum-ui/tooltip/tum-ui-tooltip.directive';
 
 /**
  * Component for displaying system health status.
@@ -33,9 +33,9 @@ import { TooltipModule } from 'primeng/tooltip';
         AdminTitleBarTitleDirective,
         AdminTitleBarActionsDirective,
         HealthModalComponent,
-        TagModule,
-        ButtonModule,
-        TooltipModule,
+        TumUiTagComponent,
+        TumUiButtonComponent,
+        TumUiTooltipDirective,
     ],
 })
 export class HealthComponent implements OnInit, OnDestroy {

@@ -1,0 +1,46 @@
+<ng-template #panel>
+    <div
+        class="tum-ui-dialog flex max-h-[90vh] max-w-[90vw] flex-col overflow-hidden rounded-xl border border-surface-200 bg-surface-0 text-surface-700 shadow-xl dark:border-surface-700 dark:bg-surface-900 dark:text-surface-0"
+        role="dialog"
+        aria-modal="true"
+        [attr.aria-labelledby]="labelledBy()"
+        [attr.aria-label]="ariaLabel()"
+        [style]="style()"
+        tabindex="-1"
+        cdkTrapFocus
+        [cdkTrapFocusAutoCapture]="true"
+    >
+        @if (showHeader()) {
+            <div class="tum-ui-dialog-header flex shrink-0 items-center justify-between gap-2 p-5">
+                <span [id]="titleId" class="tum-ui-dialog-title text-xl font-semibold">
+                    @if (headerTemplate(); as headerTpl) {
+                        <ng-container [ngTemplateOutlet]="headerTpl" />
+                    } @else {
+                        {{ header() }}
+                    }
+                </span>
+                @if (closable()) {
+                    <button
+                        type="button"
+                        class="tum-ui-dialog-close inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-muted-color transition-colors hover:bg-surface-100 dark:hover:bg-surface-800"
+                        [attr.aria-label]="closeButtonAriaLabel()"
+                        (click)="close()"
+                        data-testid="tum-ui-dialog-close"
+                    >
+                        <fa-icon [icon]="faXmark" />
+                    </button>
+                }
+            </div>
+        }
+
+        <div class="tum-ui-dialog-content grow overflow-y-auto px-5 pb-5" [style]="contentStyle()">
+            <ng-content />
+        </div>
+
+        @if (footerTemplate(); as footerTpl) {
+            <div class="tum-ui-dialog-footer flex shrink-0 justify-end gap-2 px-5 pb-5">
+                <ng-container [ngTemplateOutlet]="footerTpl" />
+            </div>
+        }
+    </div>
+</ng-template>

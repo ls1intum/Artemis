@@ -5,14 +5,13 @@
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { Subject, of, throwError } from 'rxjs';
+import { of, throwError } from 'rxjs';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ActivatedRoute, Router, RouterState } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
-import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { Title } from '@angular/platform-browser';
-import { AutoCompleteCompleteEvent, AutoCompleteSelectEvent, AutoCompleteUnselectEvent } from 'primeng/autocomplete';
+import { TumUiAutoCompleteCompleteEvent, TumUiAutoCompleteSelectEvent, TumUiAutoCompleteUnselectEvent } from 'app/shared-ui/tum-ui/autocomplete/tum-ui-autocomplete.component';
 import * as Sentry from '@sentry/angular';
 
 import { UserManagementUpdateComponent } from 'app/admin/user-management/update/user-management-update.component';
@@ -21,9 +20,7 @@ import { JhiLanguageHelper } from 'app/core/language/shared/language.helper';
 import { Authority } from 'app/foundation/constants/authority.constants';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
-import { MockProvider } from 'ng-mocks';
 import { Organization } from 'app/admin/organization-management/organization.model';
-import { OrganizationSelectorComponent } from 'app/admin/organization-selector/organization-selector.component';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { LANGUAGES } from 'app/core/language/shared/language.constants';
 import { AdminUserService } from 'app/account/user/shared/admin-user.service';
@@ -49,7 +46,6 @@ vi.mock('@sentry/angular', async () => {
 const testBedProviders = [
     LocalStorageService,
     SessionStorageService,
-    MockProvider(DialogService),
     { provide: TranslateService, useClass: MockTranslateService },
     { provide: Router, useClass: MockRouter },
     { provide: ProfileService, useClass: MockProfileService },
@@ -62,7 +58,6 @@ describe('UserManagementUpdateComponent', () => {
     let fixture: ComponentFixture<UserManagementUpdateComponent>;
     let adminUserService: AdminUserService;
     let titleService: Title;
-    let dialogService: DialogService;
     let translateService: TranslateService;
     let profileService: ProfileService;
 
@@ -89,7 +84,6 @@ describe('UserManagementUpdateComponent', () => {
         fixture = TestBed.createComponent(UserManagementUpdateComponent);
         component = fixture.componentInstance;
         adminUserService = TestBed.inject(AdminUserService);
-        dialogService = TestBed.inject(DialogService);
         titleService = TestBed.inject(Title);
         translateService = TestBed.inject(TranslateService);
         profileService = TestBed.inject(ProfileService);
@@ -298,20 +292,13 @@ describe('UserManagementUpdateComponent', () => {
         const existingOrganization = {} as Organization;
         component.user.set({ organizations: [existingOrganization] } as User);
 
-        const organizationSubject = new Subject<Organization>();
-        const mockDialogRef = {
-            onClose: organizationSubject.asObservable(),
-        } as unknown as DynamicDialogRef;
-        const openSpy = vi.spyOn(dialogService, 'open').mockReturnValue(mockDialogRef);
-
         component.openOrganizationsModal();
 
-        expect(openSpy).toHaveBeenCalledOnce();
-        expect(openSpy).toHaveBeenCalledWith(OrganizationSelectorComponent, expect.any(Object));
+        expect(component.orgSelectorVisible()).toBe(true);
 
-        // Simulate selecting a new organization
+        // Simulate selecting a new organization via the declarative selector dialog's output
         const newOrganization = {} as Organization;
-        organizationSubject.next(newOrganization);
+        component.onOrgSelected(newOrganization);
         // Check component.user().organizations directly since immutable operations create a new array
         expect(component.user().organizations).toContain(existingOrganization);
         expect(component.user().organizations).toContain(newOrganization);
@@ -319,7 +306,7 @@ describe('UserManagementUpdateComponent', () => {
 
         // Test when user has no organizations yet
         component.user().organizations = undefined;
-        organizationSubject.next(newOrganization);
+        component.onOrgSelected(newOrganization);
         expect(component.user().organizations).toEqual([newOrganization]);
     });
 
@@ -338,7 +325,7 @@ describe('UserManagementUpdateComponent', () => {
         component.user.set({ groups: [] } as unknown as User);
         component.allGroups = [newGroup];
 
-        const event = { value: newGroup } as unknown as AutoCompleteSelectEvent;
+        const event = { value: newGroup } as unknown as TumUiAutoCompleteSelectEvent;
 
         component.onGroupSelect(event);
 
@@ -351,7 +338,7 @@ describe('UserManagementUpdateComponent', () => {
         component.allGroups = [allowedGroup];
         component.user.set({ groups: [] } as unknown as User);
 
-        const event = { value: notAllowedGroup } as unknown as AutoCompleteSelectEvent;
+        const event = { value: notAllowedGroup } as unknown as TumUiAutoCompleteSelectEvent;
 
         component.onGroupSelect(event);
 
@@ -388,7 +375,7 @@ describe('UserManagementUpdateComponent', () => {
         const group2 = 'badgroup';
         component.user.set({ groups: [group1, group2] } as unknown as User);
 
-        component.onGroupUnselect({ value: group1 } as unknown as AutoCompleteUnselectEvent);
+        component.onGroupUnselect({ value: group1 } as unknown as TumUiAutoCompleteUnselectEvent);
 
         expect(component.user().groups).toEqual([group2]);
     });
@@ -427,7 +414,7 @@ describe('UserManagementUpdateComponent', () => {
         component.allGroups = [newGroup];
         component.user.set({} as User); // No groups property
 
-        component.onGroupSelect({ value: newGroup } as unknown as AutoCompleteSelectEvent);
+        component.onGroupSelect({ value: newGroup } as unknown as TumUiAutoCompleteSelectEvent);
 
         expect(component.user().groups).toEqual([newGroup]);
     });
@@ -437,7 +424,7 @@ describe('UserManagementUpdateComponent', () => {
         component.allGroups = [existingGroup];
         component.user.set({ groups: [existingGroup] } as unknown as User);
 
-        component.onGroupSelect({ value: existingGroup } as unknown as AutoCompleteSelectEvent);
+        component.onGroupSelect({ value: existingGroup } as unknown as TumUiAutoCompleteSelectEvent);
 
         expect(component.user().groups).toEqual([existingGroup]);
     });
@@ -446,24 +433,20 @@ describe('UserManagementUpdateComponent', () => {
         component.allGroups = ['nicegroup'];
         component.user.set({ groups: [] } as unknown as User);
 
-        component.onGroupSelect({ value: '' } as unknown as AutoCompleteSelectEvent);
+        component.onGroupSelect({ value: '' } as unknown as TumUiAutoCompleteSelectEvent);
 
         expect(component.user().groups).toEqual([]);
     });
 
-    it('should handle undefined modal selection', () => {
+    it('should not modify organizations when the selector is cancelled', () => {
         component.user.set({ organizations: [{ id: 1 }] as Organization[] } as User);
 
-        const organizationSubject = new Subject<Organization | undefined>();
-        const mockDialogRef = {
-            onClose: organizationSubject.asObservable(),
-        } as unknown as DynamicDialogRef;
-        vi.spyOn(dialogService, 'open').mockReturnValue(mockDialogRef);
-
         component.openOrganizationsModal();
-        organizationSubject.next(undefined);
+        expect(component.orgSelectorVisible()).toBe(true);
 
-        // Should not add undefined to organizations
+        // Cancelling closes the dialog (orgSelectorVisible -> false) without adding an organization
+        component.orgSelectorVisible.set(false);
+
         expect(component.user().organizations).toHaveLength(1);
     });
 
@@ -751,7 +734,7 @@ describe('UserManagementUpdateComponent', () => {
             component.allGroups = ['AdminGroup', 'StudentGroup', 'TutorGroup'];
             component.user.set({ groups: [] } as unknown as User);
 
-            component.filterGroups({ query: 'admin' } as unknown as AutoCompleteCompleteEvent);
+            component.filterGroups({ query: 'admin' } as unknown as TumUiAutoCompleteCompleteEvent);
 
             expect(component.groupSuggestions()).toEqual(['AdminGroup']);
         });
@@ -760,7 +743,7 @@ describe('UserManagementUpdateComponent', () => {
             component.allGroups = ['Group1', 'Group2'];
             component.user.set({ groups: ['Group1'] } as unknown as User);
 
-            component.filterGroups({ query: '' } as unknown as AutoCompleteCompleteEvent);
+            component.filterGroups({ query: '' } as unknown as TumUiAutoCompleteCompleteEvent);
 
             expect(component.groupSuggestions()).toEqual(['Group2']);
         });
@@ -771,7 +754,7 @@ describe('UserManagementUpdateComponent', () => {
             // make filterGroups() -> filter() deref undefined and fail this test.
             expect(component.allGroups).toBeDefined();
 
-            expect(() => component.filterGroups({ query: 'x' } as unknown as AutoCompleteCompleteEvent)).not.toThrow();
+            expect(() => component.filterGroups({ query: 'x' } as unknown as TumUiAutoCompleteCompleteEvent)).not.toThrow();
             expect(component.groupSuggestions()).toEqual([]);
         });
     });
@@ -780,7 +763,7 @@ describe('UserManagementUpdateComponent', () => {
 /**
  * Renders the real template (no overrideTemplate) to guard against the global-role checkbox firing
  * toggleAuthority twice per click: the role wrapper's bubbled click must not re-fire the inner
- * p-checkbox's onChange and cancel the toggle. A single rendered control must toggle exactly once.
+ * tum-ui-checkbox's onChange and cancel the toggle. A single rendered control must toggle exactly once.
  */
 describe('UserManagementUpdateComponent global-role checkbox rendering', () => {
     let component: UserManagementUpdateComponent;

@@ -1,16 +1,19 @@
 <div class="p-1">
-    <jhi-table-view
-        [cols]="columns()"
-        [vals]="organizations()"
-        [totalRows]="totalCount()"
-        (onLazyLoad)="loadOrganizations($event)"
+    <tum-ui-table
+        [columns]="columns()"
+        [rows]="organizations()"
+        [totalRecords]="totalCount()"
+        (dataRequest)="loadOrganizations($event)"
         [rowActions]="selectorActions"
         [loading]="isLoading()"
-        [options]="selectorTableOptions"
+        [striped]="true"
+        [pageSize]="10"
+        [pageSizeOptions]="[10]"
+        [emptyMessage]="'artemisApp.organizationManagement.modalSelector.noOrganizations'"
     />
 
     <div class="flex justify-end mt-3">
-        <button type="button" pButton size="small" severity="secondary" (click)="closeModal(undefined)" jhiTranslate="entity.action.cancel" data-testid="cancel-btn"></button>
+        <button type="button" tumUiButton size="small" severity="secondary" (click)="cancel()" jhiTranslate="entity.action.cancel" data-testid="cancel-btn"></button>
     </div>
 </div>
 
@@ -23,7 +26,7 @@
 <ng-template #selectorActions let-org>
     <button
         type="button"
-        pButton
+        tumUiButton
         size="small"
         [disabled]="isAlreadyAssigned()(org)"
         (click)="selectOrganization(org); $event.stopPropagation()"
