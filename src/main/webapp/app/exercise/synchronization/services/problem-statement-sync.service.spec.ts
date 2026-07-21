@@ -1,6 +1,5 @@
 import { Mocked, afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { Subject } from 'rxjs';
 import * as Y from 'yjs';
 import { Awareness, encodeAwarenessUpdate } from 'y-protocols/awareness';
@@ -15,7 +14,6 @@ import {
 import * as yjsUtils from 'app/exercise/synchronization/services/yjs-utils';
 
 describe('ProblemStatementSyncService', () => {
-    setupTestBed({ zoneless: true });
     let service: ProblemStatementSyncService;
     let syncService: Mocked<ExerciseEditorSyncService>;
     let syncServiceMock: {

@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { HttpHeaders, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ActivatedRoute } from '@angular/router';
@@ -27,8 +26,6 @@ import { CompetencyExerciseLink, CourseCompetency } from 'app/atlas/shared/entit
 import { DetailType } from 'app/shared-ui/detail-overview-list/detail-overview-list.component';
 
 describe('ModelingExercise Management Detail Component', () => {
-    setupTestBed({ zoneless: true });
-
     let comp: ModelingExerciseDetailComponent;
     let fixture: ComponentFixture<ModelingExerciseDetailComponent>;
     let modelingExerciseService: ModelingExerciseService;

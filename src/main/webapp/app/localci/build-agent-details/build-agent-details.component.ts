@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
 import { BuildAgentInformation } from 'app/localci/shared/entities/build-agent-information.model';
 import { Subject, Subscription, debounceTime, switchMap, tap } from 'rxjs';
 import { faCircleCheck, faFilter, faPause, faPauseCircle, faPlay, faSync } from '@fortawesome/free-solid-svg-icons';
@@ -158,6 +158,9 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
 
     /** Filter configuration for finished build jobs */
     readonly finishedBuildJobFilter = signal<FinishedBuildJobFilter>(undefined!);
+
+    /** Number of applied finished-build-job filters, defaulting to 0 while the filter is not yet initialized */
+    readonly appliedFilterCount = computed(() => this.finishedBuildJobFilter()?.numberOfAppliedFilters ?? 0);
 
     /** Number of items to display per page */
     itemsPerPage = ITEMS_PER_PAGE;
