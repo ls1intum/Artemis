@@ -86,7 +86,16 @@ export class HomeComponent implements OnInit, AfterViewChecked, OnDestroy {
     readonly isSubmittingLogin = signal(false);
     readonly profileInfo = signal<ProfileInfo>(undefined!);
 
+    private onPageShow = (event: PageTransitionEvent) => {
+        if (event.persisted) {
+            // on page update user should experience no loading
+            this.isSubmittingLogin.set(false);
+            this.isCheckingIdentifier.set(false);
+        }
+    };
+
     ngOnInit() {
+        window.addEventListener('pageshow', this.onPageShow);
         this.initializeWithProfileInfo();
         void this.accountService.identity().then((user) => {
             this.currentUserCallback(user!);
@@ -347,9 +356,6 @@ export class HomeComponent implements OnInit, AfterViewChecked, OnDestroy {
         this.isSubmittingLogin.set(true);
         this.loginService
             .loginOIDC(this.rememberMe)
-            .then(() => {
-                this.handleLoginSuccess();
-            })
             .catch(() => {
                 this.authenticationError.set(true);
             })

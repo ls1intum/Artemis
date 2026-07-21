@@ -292,7 +292,7 @@ describe('HomeComponent', () => {
     });
 
     describe('loginWithOidc', () => {
-        it('should handle successful OIDC login with rememberMe true', async () => {
+        it('should handle initiation of OIDC login with rememberMe true without triggering handleLoginSuccess', async () => {
             const loginOidcSpy = vi.spyOn(loginService, 'loginOIDC').mockResolvedValue(undefined);
             const handleLoginSuccessSpy = vi.spyOn(component as any, 'handleLoginSuccess').mockImplementation(() => {});
 
@@ -302,12 +302,12 @@ describe('HomeComponent', () => {
             await fixture.whenStable();
 
             expect(loginOidcSpy).toHaveBeenCalledWith(true);
-            expect(handleLoginSuccessSpy).toHaveBeenCalledOnce();
+            // OIDC redirect happens external, so handleLoginSuccess is NOT called immediately
+            expect(handleLoginSuccessSpy).not.toHaveBeenCalled();
             expect(component.authenticationError()).toBe(false);
-            expect(component.isSubmittingLogin()).toBe(false);
         });
 
-        it('should handle successful OIDC login with rememberMe false', async () => {
+        it('should handle initiation of OIDC login with rememberMe false', async () => {
             const loginOidcSpy = vi.spyOn(loginService, 'loginOIDC').mockResolvedValue(undefined);
             const handleLoginSuccessSpy = vi.spyOn(component as any, 'handleLoginSuccess').mockImplementation(() => {});
 
@@ -317,9 +317,8 @@ describe('HomeComponent', () => {
             await fixture.whenStable();
 
             expect(loginOidcSpy).toHaveBeenCalledWith(false);
-            expect(handleLoginSuccessSpy).toHaveBeenCalledOnce();
+            expect(handleLoginSuccessSpy).not.toHaveBeenCalled();
             expect(component.authenticationError()).toBe(false);
-            expect(component.isSubmittingLogin()).toBe(false);
         });
 
         it('should handle failed OIDC login', async () => {
@@ -356,6 +355,20 @@ describe('HomeComponent', () => {
             // Clean
             resolveLogin();
             fixture.detectChanges();
+        });
+    });
+
+    describe('bfcache pageshow navigation', () => {
+        it('should reset loading state when page is restored from browser cache', () => {
+            component.isSubmittingLogin.set(true);
+            component.isCheckingIdentifier.set(true);
+
+            // Dispatch persisted pageshow event simulating Back button navigation
+            const event = new PageTransitionEvent('pageshow', { persisted: true });
+            window.dispatchEvent(event);
+
+            expect(component.isSubmittingLogin()).toBe(false);
+            expect(component.isCheckingIdentifier()).toBe(false);
         });
     });
 
