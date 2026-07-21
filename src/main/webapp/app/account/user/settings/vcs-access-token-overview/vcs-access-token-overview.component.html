@@ -10,6 +10,7 @@
         [rowActions]="tokenActions"
         [loading]="isLoading()"
         [striped]="true"
+        [scrollable]="true"
         emptyMessage="artemisApp.userSettings.vcsAccessTokensOverview.table.empty"
     />
 </div>
@@ -43,7 +44,7 @@
 <ng-template #repositoryColumn let-params>
     @let token = params.data;
     @if (token.repositoryUri) {
-        <span class="block max-w-xs truncate font-mono text-xs text-muted-color" [title]="token.repositoryUri">{{ token.repositoryUri }}</span>
+        <span class="block max-w-xs break-all font-mono text-xs text-muted-color" [title]="token.repositoryUri">{{ token.repositoryUri }}</span>
     }
 </ng-template>
 
