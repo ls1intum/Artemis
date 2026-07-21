@@ -134,6 +134,14 @@ export class ExamResultOverviewComponent implements OnInit {
     }
 
     /**
+     * Points the student achieved in the given exercise, or 0 if none were recorded.
+     * `achievedPointsPerExercise` is keyed by exercise id and may not contain every exercise.
+     */
+    achievedPointsForExercise(exerciseId: number): number {
+        return this.studentExamWithGrade()?.achievedPointsPerExercise?.[exerciseId] ?? 0;
+    }
+
+    /**
      * used as fallback if not pre-calculated by the server
      */
     private sumExerciseScores() {
