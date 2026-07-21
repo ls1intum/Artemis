@@ -50,6 +50,7 @@ import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.FileChan
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.SandboxAgentTools;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.critic.SpecFidelityCriticService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.critic.SpecFidelityReport;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.ApprovedSpecRegistry;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.DifferentialVerificationService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.StageCheckService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.StructuralOracleSeedingService;
@@ -128,6 +129,9 @@ public class GenerationOrchestrationService {
     // so it applies only where its Java-only, single-language contract holds (see the applicability check at the call site).
     private final StagedGenerationRunner stagedGenerationRunner;
 
+    /** The per-session specification the spec gate approved; dropped when the session is destroyed so the registry never outlives its runs. */
+    private final ApprovedSpecRegistry approvedSpecs;
+
     private final AgentTranscriptWriter transcriptWriter;
 
     private final boolean stagedGenerationEnabled;
@@ -140,8 +144,8 @@ public class GenerationOrchestrationService {
             DifferentialVerificationService verifier, AgentSystemPromptService systemPromptService, StructuralOracleSeedingService structuralOracleSeeder,
             SpecFidelityCriticService specFidelityCritic, GenerationJobService jobService, Optional<ProgrammingExerciseTestCaseRepository> testCaseRepository,
             @Value("${artemis.hyperion.agent.max-turns:60}") int maxTurns, StagedGenerationRunner stagedGenerationRunner,
-            @Value("${artemis.hyperion.agent.staged-generation:true}") boolean stagedGenerationEnabled, StageCheckService stageCheckService,
-            AgentTranscriptWriter transcriptWriter) {
+            @Value("${artemis.hyperion.agent.staged-generation:true}") boolean stagedGenerationEnabled, StageCheckService stageCheckService, AgentTranscriptWriter transcriptWriter,
+            ApprovedSpecRegistry approvedSpecs) {
         if (maxTurns <= 0) {
             throw new IllegalArgumentException("artemis.hyperion.agent.max-turns must be positive");
         }
@@ -159,6 +163,7 @@ public class GenerationOrchestrationService {
         this.stagedGenerationEnabled = stagedGenerationEnabled;
         this.stageCheckService = stageCheckService;
         this.transcriptWriter = transcriptWriter;
+        this.approvedSpecs = approvedSpecs;
     }
 
     private InteractiveSandbox requireSandbox() {
@@ -985,6 +990,7 @@ public class GenerationOrchestrationService {
     }
 
     void destroyQuietly(@Nullable InteractiveSandbox sandbox, @Nullable String sessionId) {
+        approvedSpecs.forget(sessionId);
         if (sandbox != null && sessionId != null) {
             try {
                 sandbox.destroySession(sessionId);

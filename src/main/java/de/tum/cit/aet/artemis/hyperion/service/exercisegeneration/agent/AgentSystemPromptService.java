@@ -189,7 +189,8 @@ public class AgentSystemPromptService {
             Use one line per independently actionable student implementation seam:
               [task][Short human title](exactTestNameA,exactTestNameB)
             Copy test names verbatim from `verify`; never guess, rename, add parentheses, or remove prefixes. Group ALL of a seam's test partitions under its one line; never
-            bind one task per test, and never one task for the whole exercise unless it is genuinely one seam. Every behavioural test appears exactly once. Do not bind build gates,
+            bind one task per test, and never one task for the whole exercise unless it is genuinely one seam. Bind every VISIBLE test exactly once; never bind a test the
+            grading plan marks AFTER_DUE_DATE — its task could never turn green before the deadline. Do not bind build gates,
             aggregates, harness checks, or structural checks already satisfied by the template. Titles describe behaviour without exposing raw test names. The exact lowercase `[task]`
             keyword is required.
 
@@ -217,7 +218,8 @@ public class AgentSystemPromptService {
             or CREATE a type, that type is `student-creates`; shipping it `stubbed` hands them the answer and silently downgrades the exercise. Say who owns each piece of
             mutable state and whether it survives object replacement; `## Testing Strategy` — one seam per independently actionable unit of student work, grouping every test
             partition it needs (never one seam per test, never one for the whole exercise unless it is genuinely one seam), with a weight tier (core rules outweigh edge
-            cases) and which partitions get a hidden after-due-date variant with fresh witnesses (students overfit to visible tests); `## Diagram` — yes/no + one-line why
+            cases) and a LAST column reading exactly `yes` or `no` for a hidden after-due-date variant with fresh witnesses (students overfit to visible tests; that cell is
+            read mechanically); `## Diagram` — yes/no + one-line why
             grounded in the design (yes for multiple collaborating or student-created types). No [task] bindings, no test names, no PlantUML at spec time. Update SPEC.md
             whenever a later stage proves it wrong — it must always describe the final exercise truthfully.
             """;
@@ -253,8 +255,7 @@ public class AgentSystemPromptService {
             STAGE 4 — STATEMENT: write the statement last by REWRITING the specification into student-facing form — keep its rules and examples, never add graded
             behaviour beyond it — using the verified test names: one `[task]` line per specification seam using the exact reported
             names — bind the bare method names exactly as `verify` reports them, never prefixed with a class or package name — the public API presented once and compactly,
-            a diagram only if SPEC.md's `## Diagram` said yes — placed after the tasks it illustrates; testsColor names resolve like task bindings. Never bind an
-            AFTER_DUE_DATE test to a [task] line — hidden tests grade silently until the deadline. Re-read every boundary or edge-case sentence: each must be true of the solution AND covered by a test — otherwise fix the
+            a diagram only if SPEC.md's `## Diagram` said yes — placed after the tasks it illustrates; testsColor names resolve like task bindings. Re-read every boundary or edge-case sentence: each must be true of the solution AND covered by a test — otherwise fix the
             artifact or delete the sentence. Never repeat a heading. Then independently replay every worked example, run `verify` once
             more, and submit only after `MECHANICAL PRECHECK: PASS`; authoritative post-loop verification determines save eligibility, and quality review may request repairs.
             """;

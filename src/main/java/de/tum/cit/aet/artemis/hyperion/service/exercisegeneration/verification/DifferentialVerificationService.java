@@ -89,12 +89,19 @@ public class DifferentialVerificationService {
      */
     private final Optional<StaticCodeAnalysisCategoryRepository> staticCodeAnalysisCategoryRepository;
 
+    private final ApprovedSpecRegistry approvedSpecs;
+
     // @Autowired disambiguates from the package-private test constructor; with two constructors and no annotation Spring cannot instantiate the bean.
     @Autowired
     public DifferentialVerificationService(SandboxBuildCommandService sandboxBuildCommandService,
-            Optional<StaticCodeAnalysisCategoryRepository> staticCodeAnalysisCategoryRepository) {
+            Optional<StaticCodeAnalysisCategoryRepository> staticCodeAnalysisCategoryRepository, ApprovedSpecRegistry approvedSpecs) {
         this.sandboxBuildCommandService = sandboxBuildCommandService;
         this.staticCodeAnalysisCategoryRepository = staticCodeAnalysisCategoryRepository;
+        this.approvedSpecs = approvedSpecs;
+    }
+
+    DifferentialVerificationService(SandboxBuildCommandService sandboxBuildCommandService, Optional<StaticCodeAnalysisCategoryRepository> staticCodeAnalysisCategoryRepository) {
+        this(sandboxBuildCommandService, staticCodeAnalysisCategoryRepository, new ApprovedSpecRegistry());
     }
 
     DifferentialVerificationService(SandboxBuildCommandService sandboxBuildCommandService) {
@@ -104,6 +111,24 @@ public class DifferentialVerificationService {
     private String readProblemStatement(InteractiveSandbox sandbox, String sessionId) {
         SandboxExecResult result = sandbox.exec(sessionId, READ_TIMEOUT, "cat", GenerationWorkspaceService.WORKSPACE + "/problem-statement.md");
         return result.isSuccess() ? result.stdout() : "";
+    }
+
+    /**
+     * The normalized test names the workspace's grading plan hides until the due date. Fail-open by construction: a missing, unreadable, or malformed {@code test-plan.json}
+     * yields an empty set, which restores the pre-plan behaviour (every gradable test must be bound) rather than silently relaxing the binding gate.
+     */
+    private Set<String> readHiddenTestNames(InteractiveSandbox sandbox, String sessionId) {
+        try {
+            SandboxExecResult result = sandbox.exec(sessionId, READ_TIMEOUT, "cat", GenerationWorkspaceService.WORKSPACE + "/test-plan.json");
+            if (!result.isSuccess() || result.stdout() == null || result.stdout().isBlank()) {
+                return Set.of();
+            }
+            return GeneratedTestPlan.parse(result.stdout()).hiddenEntries().stream().map(GeneratedTestPlan.Entry::name).map(ProblemStatementBindingChecker::normalizeTestName)
+                    .collect(java.util.stream.Collectors.toUnmodifiableSet());
+        }
+        catch (RuntimeException e) {
+            return Set.of();
+        }
     }
 
     private String readSpecDocument(InteractiveSandbox sandbox, String sessionId) {
@@ -303,7 +328,7 @@ public class DifferentialVerificationService {
 
         return new AgentVerifyReport(solution.tests(), solutionPassed, List.copyOf(solution.testFailedNames()), solution.failureEvidence(), template.tests(), templateCompiled,
                 analysis.templateFailed(), template.failureEvidence(), templateWronglyPassing, List.copyOf(solution.testNames()), analysis.unresolvedTaskBindings(),
-                analysis.possiblyDeadFiles(), analysis.actionableGatesPass() && javaAresConventionsHold, reasons);
+                analysis.possiblyDeadFiles(), analysis.actionableGatesPass() && javaAresConventionsHold, reasons, List.copyOf(readHiddenTestNames(sandbox, sessionId)));
     }
 
     /**
@@ -428,8 +453,18 @@ public class DifferentialVerificationService {
         boolean taskBindingsResolve = checkTaskBindingsResolve(unresolvedTaskBindings, solution, problemStatementHasTasks, reasons);
         List<String> duplicateTaskBindings = ProblemStatementBindingChecker.duplicateTaskBindings(problemStatement);
         boolean noDuplicateTaskBindings = checkNoDuplicateTaskBindings(duplicateTaskBindings, problemStatementHasTasks, reasons);
-        List<String> unboundGradableTests = ProblemStatementBindingChecker.unboundGradableTestNames(problemStatement, solution.testNames(), testCount);
+        // Visibility is part of the binding contract: hidden tests are DELIBERATELY unbound, so they are exempt here and forbidden below. Both halves must move together —
+        // exempting alone would let a bound hidden test through, forbidding alone would make the two gates unsatisfiable at once.
+        Set<String> hiddenTestNames = readHiddenTestNames(sandbox, sessionId);
+        List<String> unboundGradableTests = ProblemStatementBindingChecker.unboundGradableTestNames(problemStatement, solution.testNames(), testCount, hiddenTestNames);
         boolean allGradableTestsBound = checkAllGradableTestsBound(unboundGradableTests, problemStatementHasTasks, taskBindingsResolve, reasons);
+        List<String> hiddenTaskBindings = ProblemStatementBindingChecker.hiddenTaskBindings(problemStatement, hiddenTestNames);
+        boolean noHiddenTestsBound = hiddenTaskBindings.isEmpty();
+        if (!noHiddenTestsBound) {
+            reasons.add("These [task] bindings reference tests the grading plan hides until the due date: " + hiddenTaskBindings
+                    + ". A hidden test is the overfit probe: its task could never turn green before the deadline, and the checklist advertises the probe. Remove those names "
+                    + "from the [task] lines and leave hidden tests unbound.");
+        }
         boolean solutionScaClean = checkSolutionScaClean(exercise, solution, reasons);
 
         // Prose hygiene: the oracle is blind to what the student-facing statement exposes, so this gate blocks leaks of grader internals or bare task markers (with exact phrases).
@@ -470,8 +505,11 @@ public class DifferentialVerificationService {
         if (!headingsUnique) {
             reasons.add("The statement repeats these headings verbatim: " + duplicateHeadings + ". Merge or remove the duplicate sections.");
         }
-        String specDocument = readSpecDocument(sandbox, sessionId);
-        boolean diagramMatchesDesign = !(ProblemStatementBindingChecker.designSaysDiagramYes(specDocument) && !problemStatement.contains("@startuml"));
+        // The approved specification's diagram decision outranks the live file: a run under statement-gate pressure rewrote '## Diagram' from yes to no and the gate then
+        // passed vacuously. A later edit may promise a diagram, never un-promise one.
+        boolean diagramPromised = ProblemStatementBindingChecker.designSaysDiagramYes(readSpecDocument(sandbox, sessionId))
+                || approvedSpecs.approved(sessionId).filter(ProblemStatementBindingChecker::designSaysDiagramYes).isPresent();
+        boolean diagramMatchesDesign = !(diagramPromised && !problemStatement.contains("@startuml"));
         if (!diagramMatchesDesign) {
             reasons.add("SPEC.md's '## Diagram' section says yes, but the statement contains no @startuml diagram. Add the PlantUML class diagram (with testsColor links) after "
                     + "the tasks it illustrates, or update SPEC.md's Diagram decision if the design genuinely changed.");
@@ -479,7 +517,7 @@ public class DifferentialVerificationService {
 
         boolean actionableGatesPass = solutionPassed && noDuplicateTestNames && templateFailed && testCount > 0 && problemStatementHasTasks && taskKeywordsWellFormed
                 && taskBindingsResolve && noDuplicateTaskBindings && allGradableTestsBound && solutionScaClean && proseHygienic && taskTitlesUnique && statementVoiceOk
-                && diagramLinksResolve && noStrayUmlDirectives && headingsUnique && diagramMatchesDesign;
+                && diagramLinksResolve && noStrayUmlDirectives && headingsUnique && diagramMatchesDesign && noHiddenTestsBound;
 
         List<String> possiblyDeadFiles = possiblyDeadWorkspaceFiles(sandbox, sessionId);
         return new DifferentialAnalysis(solution, template, solutionPassed, templateFailed, actionableGatesPass, reasons, unresolvedTaskBindings, possiblyDeadFiles,
@@ -684,7 +722,8 @@ public class DifferentialVerificationService {
         boolean allGradableTestsBound = unboundGradableTests.isEmpty();
         if (problemStatementHasTasks && taskBindingsResolve && !allGradableTestsBound) {
             reasons.add("These real gradable tests are not bound by any [task] entry even though production will grade them: " + unboundGradableTests
-                    + ". Add each non-build-gate test to exactly one [task][Title](testName) binding, or remove/rename tests that should not be graded.");
+                    + ". Add each to the [task] line of the seam it belongs to — one line takes a comma-separated list, [task][Title](testA,testB,testC) — never a new [task] "
+                    + "line per test. Tests the grading plan marks AFTER_DUE_DATE are exempt and must stay unbound.");
         }
         return allGradableTestsBound;
     }

@@ -44,6 +44,7 @@ import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.AgentTra
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.GenerationStage;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.SandboxAgentTools;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.AgentVerifyReport;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.ApprovedSpecRegistry;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.DifferentialVerificationService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.SingleBuildResult;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.StageCheckResult;
@@ -162,6 +163,8 @@ class StagedGenerationRunnerTest {
 
     private StageCheckService stageCheckService;
 
+    private ApprovedSpecRegistry approvedSpecs;
+
     private SandboxAgentTools baseTools;
 
     private ProgrammingExercise exercise;
@@ -195,15 +198,17 @@ class StagedGenerationRunnerTest {
         when(systemPromptService.buildStage(any(), any())).thenReturn("STAGE SYSTEM PROMPT");
         when(verifier.singleBuild(any(), anyString(), eq(exercise), eq("solution"))).thenReturn(compiled());
         when(verifier.singleBuild(any(), anyString(), eq(exercise), eq("template"))).thenReturn(compiled());
-        stageCheckService = new StageCheckService(verifier);
+        // ONE registry shared by the runner and the gate, exactly as Spring wires them: the specification the spec gate approves is what every later gate enforces.
+        approvedSpecs = new ApprovedSpecRegistry();
+        stageCheckService = new StageCheckService(verifier, approvedSpecs);
         sandbox = new FakeSandbox();
         // Most of these tests pin the pre-existing single-call-per-stage behaviour (mocking agentLoopRunner.run(...)); FRESH reproduces that exactly. The CONTINUOUS-specific
         // tests below construct their own runner with "CONTINUOUS" and mock runSession(...) instead.
-        runner = new StagedGenerationRunner(agentLoopRunner, systemPromptService, stageCheckService, new AgentTranscriptWriter(""), "FRESH");
+        runner = new StagedGenerationRunner(agentLoopRunner, systemPromptService, stageCheckService, new AgentTranscriptWriter(""), approvedSpecs, "FRESH");
     }
 
-    private static StagedGenerationRunner newContinuousRunner(AgentLoopRunner agentLoopRunner, AgentSystemPromptService systemPromptService, StageCheckService stageCheckService) {
-        return new StagedGenerationRunner(agentLoopRunner, systemPromptService, stageCheckService, new AgentTranscriptWriter(""), "CONTINUOUS");
+    private StagedGenerationRunner newContinuousRunner(AgentLoopRunner agentLoopRunner, AgentSystemPromptService systemPromptService, StageCheckService stageCheckService) {
+        return new StagedGenerationRunner(agentLoopRunner, systemPromptService, stageCheckService, new AgentTranscriptWriter(""), approvedSpecs, "CONTINUOUS");
     }
 
     private static AgentLoopRunner.AgentLoopSession session(AgentLoopResult result, List<Message> conversation) {
@@ -612,7 +617,7 @@ class StagedGenerationRunnerTest {
     @Test
     void constructor_rejectsAnUnknownStagedContextValue() {
         org.assertj.core.api.Assertions.assertThatIllegalArgumentException()
-                .isThrownBy(() -> new StagedGenerationRunner(agentLoopRunner, systemPromptService, stageCheckService, new AgentTranscriptWriter(""), "sometimes"))
+                .isThrownBy(() -> new StagedGenerationRunner(agentLoopRunner, systemPromptService, stageCheckService, new AgentTranscriptWriter(""), approvedSpecs, "sometimes"))
                 .withMessageContaining("staged-context");
     }
 
@@ -624,7 +629,7 @@ class StagedGenerationRunnerTest {
         when(verifier.singleBuild(any(), anyString(), eq(exercise), eq("solution"))).thenReturn(compileFailure("compile error"));
         when(baseTools.reuseCachedPassingCheck(GenerationStage.SOLUTION)).thenReturn(Optional.of(StageCheckResult.passed("cached SOLUTION observation")));
         StageCheckService spiedService = spy(stageCheckService);
-        StagedGenerationRunner testRunner = new StagedGenerationRunner(agentLoopRunner, systemPromptService, spiedService, new AgentTranscriptWriter(""), "FRESH");
+        StagedGenerationRunner testRunner = new StagedGenerationRunner(agentLoopRunner, systemPromptService, spiedService, new AgentTranscriptWriter(""), approvedSpecs, "FRESH");
         when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(completed(0, "spec done"), completed(10, "solution done"),
                 completed(4, "template done"), completed(12, "tests done"), completed(5, "statement done"));
         when(verifier.selfCheck(any(), anyString(), eq(exercise), any(), eq(false))).thenReturn(passingReport());
@@ -641,7 +646,7 @@ class StagedGenerationRunnerTest {
     void exitGate_whenTheToolsReportDirty_reCallsTheCheckServiceAndDoesNotAddTheReusedSuffix() {
         // baseTools.reuseCachedPassingCheck(...) is unstubbed on the mock -> Optional.empty() (the default "dirty" state), so every stage's exit gate must call the live service.
         StageCheckService spiedService = spy(stageCheckService);
-        StagedGenerationRunner testRunner = new StagedGenerationRunner(agentLoopRunner, systemPromptService, spiedService, new AgentTranscriptWriter(""), "FRESH");
+        StagedGenerationRunner testRunner = new StagedGenerationRunner(agentLoopRunner, systemPromptService, spiedService, new AgentTranscriptWriter(""), approvedSpecs, "FRESH");
         when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(completed(0, "spec done"), completed(10, "solution done"),
                 completed(4, "template done"), completed(12, "tests done"), completed(5, "statement done"));
         when(verifier.selfCheck(any(), anyString(), eq(exercise), any(), eq(false))).thenReturn(passingReport());

@@ -58,9 +58,9 @@ Pin the public API here too — signatures only; later stages copy them, they do
 
 ## Testing strategy
 
-Under `## Testing Strategy`, one row or bullet per SEAM (an independently actionable unit of student work),
-listing: the behaviour partitions its tests need; whether structural checks apply (they do for every
-`student-creates` type); a weight tier — core rules weigh more than edge polish (weights 1–3; the test stage
+Under `## Testing Strategy`, a table with one row per SEAM whose LAST column is the hidden-variant decision, written as `yes` or `no` (that cell is read mechanically; prose
+there reads as "no"). One row per seam (an independently actionable unit of student work),
+listing: the behaviour partitions its tests need; a weight tier — core rules weigh more than edge polish (weights 1–3; the test stage
 writes the machine-readable plan); and which partitions deserve a HIDDEN variant (visibility AFTER_DUE_DATE)
 with fresh witness values, because students overfit to visible tests. Never one seam per test; never one seam
 for the whole exercise unless it genuinely is one.
@@ -126,11 +126,11 @@ Public API:
 
 ## Testing Strategy
 
-| Seam | Partitions | Structural | Weight | Hidden variant |
-|------|-----------|------------|--------|----------------|
-| Implement flat-rate rewards | typical amount; sub-dollar rounds to 0; threshold bonus at exactly $50 | yes (student-creates) | 3 | yes — fresh amounts after the due date |
-| Wire strategy into the account | recording delegates; swapping keeps the balance | no | 2 | no |
-| Redeem safely | happy path; over-redeem throws, balance unchanged | no | 2 | yes — different starting balance |
+| Seam | Partitions | Weight | Hidden variant |
+|------|-----------|--------|----------------|
+| Implement flat-rate rewards | typical amount; sub-dollar rounds to 0; threshold bonus at exactly $50 | 3 | yes — fresh amounts after the due date |
+| Wire strategy into the account | recording delegates; swapping keeps the balance | 2 | no |
+| Redeem safely | happy path; over-redeem throws, balance unchanged | 2 | yes — different starting balance |
 
 ## Diagram
 

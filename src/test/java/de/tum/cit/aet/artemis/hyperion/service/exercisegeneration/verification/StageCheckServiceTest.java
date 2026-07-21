@@ -46,6 +46,9 @@ class StageCheckServiceTest {
 
         private String templateFindOutput = "";
 
+        /** Output of the "which template file mentions this type" probe (grep -rlw), i.e. the compile-forced-downgrade evidence. */
+        private String templateGrepOutput = "";
+
         /** {@code diff -rq} exit code; 1 means the trees differ (the expected, healthy case). */
         private int diffExitCode = 1;
 
@@ -73,6 +76,13 @@ class StageCheckServiceTest {
             }
             if (command.length >= 2 && "find".equals(command[0])) {
                 return new SandboxExecResult(0, command[1].contains("solution") ? solutionFindOutput : templateFindOutput, "", false);
+            }
+            if (command.length >= 2 && "grep".equals(command[0])) {
+                boolean solutionRepo = java.util.Arrays.stream(command).anyMatch(argument -> argument.contains("/solution"));
+                if ("-rlw".equals(command[1])) {
+                    return new SandboxExecResult(0, templateGrepOutput, "", false);
+                }
+                return new SandboxExecResult(0, solutionRepo ? solutionFindOutput : templateFindOutput, "", false);
             }
             return new SandboxExecResult(0, "", "", false);
         }
@@ -113,7 +123,9 @@ class StageCheckServiceTest {
                 """ + designRows + """
 
                 ## Testing Strategy
-                - compute seam: typical and zero partitions; weight 3.
+                | Seam | Partitions | Weight | Hidden variant |
+                |------|-----------|--------|----------------|
+                | compute | typical; zero | 3 | no |
 
                 ## Diagram
                 no — single-class exercise
@@ -140,10 +152,13 @@ class StageCheckServiceTest {
         return new SingleBuildResult(exitCode, testsRun, failures, failedTestNames, "");
     }
 
+    private ApprovedSpecRegistry approvedSpecs;
+
     @BeforeEach
     void setUp() {
         verifier = mock(DifferentialVerificationService.class);
-        service = new StageCheckService(verifier);
+        approvedSpecs = new ApprovedSpecRegistry();
+        service = new StageCheckService(verifier, approvedSpecs);
         sandbox = new FakeSandbox();
         exercise = new ProgrammingExercise();
     }
@@ -388,8 +403,8 @@ class StageCheckServiceTest {
         @Test
         void fails_whenTheSpecDeclaresHiddenVariantsButThePlanHidesNothing() {
             // The spec's own Testing Strategy is the plan's contract: silently shipping every test visible throws away the overfit resistance the spec promised.
-            sandbox.spec = specWithDesign("| Calculator | computes | stubbed |\n").replace("- compute seam: typical and zero partitions; weight 3.",
-                    "- compute seam: typical and zero partitions; weight 3; hidden variant after the due date with fresh witnesses.");
+            sandbox.spec = specWithDesign("| Calculator | computes | stubbed |\n").replace("| compute | typical; zero | 3 | no |",
+                    "| compute | typical; zero | 3 | yes — fresh witnesses after the due date |");
             when(verifier.selfCheck(any(), anyString(), eq(exercise), any(), eq(false))).thenReturn(report(true, true));
             sandbox.testPlanJson = "{\"tests\":[{\"name\":\"testFoo\",\"weight\":3,\"visibility\":\"ALWAYS\"}]}";
 
@@ -491,6 +506,32 @@ class StageCheckServiceTest {
         }
 
         @Test
+        void fails_whenATaskBindsATestTheGradingPlanHidesUntilTheDueDate() {
+            // Binding a hidden test renders a checkbox that can never turn green before the deadline AND names the overfit probe in the student's checklist.
+            sandbox.problemStatement = "# Title\n[task][Sort](testSortsAscending,testSortsAscending_hidden)\n";
+            sandbox.testPlanJson = "{\"tests\":[{\"name\":\"testSortsAscending\",\"weight\":2,\"visibility\":\"ALWAYS\"},"
+                    + "{\"name\":\"testSortsAscending_hidden\",\"weight\":2,\"visibility\":\"AFTER_DUE_DATE\"}]}";
+            AgentVerifyReport lastTestsReport = new AgentVerifyReport(2, true, List.of(), 2, true, true, List.of(), List.of("testSortsAscending", "testSortsAscending_hidden"),
+                    List.of(), List.of(), true, List.of());
+
+            StageCheckResult result = check(GenerationStage.STATEMENT, lastTestsReport);
+
+            assertThat(result.passed()).isFalse();
+            assertThat(result.observation()).contains("hides until the due date").contains("testSortsAscending_hidden").contains("leave hidden tests unbound");
+        }
+
+        @Test
+        void passes_whenOnlyVisibleTestsAreBound_andTheHiddenOneIsLeftUnbound() {
+            sandbox.problemStatement = "# Title\n[task][Sort](testSortsAscending)\n";
+            sandbox.testPlanJson = "{\"tests\":[{\"name\":\"testSortsAscending\",\"weight\":2,\"visibility\":\"ALWAYS\"},"
+                    + "{\"name\":\"testSortsAscending_hidden\",\"weight\":2,\"visibility\":\"AFTER_DUE_DATE\"}]}";
+            AgentVerifyReport lastTestsReport = new AgentVerifyReport(2, true, List.of(), 2, true, true, List.of(), List.of("testSortsAscending", "testSortsAscending_hidden"),
+                    List.of(), List.of(), true, List.of());
+
+            assertThat(check(GenerationStage.STATEMENT, lastTestsReport).passed()).isTrue();
+        }
+
+        @Test
         void fails_whenPlantUmlDirectivesLeakOutsideTheDiagramBlock() {
             // Observed live: 'hide empty fields' after @enduml renders as stray statement text.
             sandbox.problemStatement = "# Title\n@startuml\nclass A\n@enduml\nhide empty fields\n";
@@ -570,6 +611,101 @@ class StageCheckServiceTest {
                                                                                                                                                                 // hint, so the
                                                                                                                                                                 // agent can copy
                                                                                                                                                                 // correctly
+        }
+    }
+
+    @Nested
+    class ApprovedSpecification {
+
+        private static final String APPROVED = specWithDesign("| RewardStrategy | strategy interface | student-creates |\n| LoyaltyAccount | context | stubbed |\n");
+
+        private static final String DOWNGRADED = specWithDesign("| RewardStrategy | strategy interface | stubbed |\n| LoyaltyAccount | context | stubbed |\n");
+
+        @BeforeEach
+        void templateCompilesAndDiffers() {
+            when(verifier.singleBuild(any(), anyString(), eq(exercise), eq("template"))).thenReturn(testsRan(1, 5, 5, List.of("t1")));
+            sandbox.diffExitCode = 1;
+        }
+
+        @Test
+        void rejectsADowngradeNothingInTheTemplateForces() {
+            // The observed escape: the template stage hit a compile failure caused by its own early-written tests and edited the contract instead of satisfying it.
+            approvedSpecs.approve("s", APPROVED);
+            sandbox.spec = DOWNGRADED;
+
+            StageCheckResult result = check(GenerationStage.TEMPLATE);
+
+            assertThat(result.passed()).isFalse();
+            assertThat(result.observation()).contains("approved specification marked these types 'student-creates'").contains("RewardStrategy")
+                    .contains("reach the type reflectively");
+        }
+
+        @Test
+        void allowsADowngradeAnotherTemplateFileForces() {
+            // A context class that must ship and references the type is real evidence; the exemption keeps a legitimate design change possible.
+            approvedSpecs.approve("s", APPROVED);
+            sandbox.spec = DOWNGRADED;
+            sandbox.templateGrepOutput = "/workspace/template/src/de/tum/LoyaltyAccount.java";
+
+            assertThat(check(GenerationStage.TEMPLATE).passed()).isTrue();
+        }
+
+        @Test
+        void stillEnforcesOmissionAfterTheLiveSpecDropsTheType() {
+            // Union semantics: an edit may add an obligation, never delete one.
+            approvedSpecs.approve("s", APPROVED);
+            sandbox.spec = DOWNGRADED;
+            sandbox.templateGrepOutput = "/workspace/template/src/de/tum/LoyaltyAccount.java";
+            sandbox.templateFindOutput = "/workspace/template/src/de/tum/RewardStrategy.java";
+
+            StageCheckResult result = check(GenerationStage.TEMPLATE);
+
+            assertThat(result.passed()).isFalse();
+            assertThat(result.observation()).contains("must NOT contain").contains("RewardStrategy.java");
+        }
+
+        @Test
+        void keepsTheApprovedDiagramPromise_afterTheLiveSpecRevokesIt() {
+            approvedSpecs.approve("s",
+                    specWithDesign("| Calculator | computes | stubbed |\n").replace("## Diagram\nno — single-class exercise", "## Diagram\nYes – several collaborating types"));
+            sandbox.spec = specWithDesign("| Calculator | computes | stubbed |\n");
+            sandbox.problemStatement = "# T\nImplement it.\n";
+
+            StageCheckResult result = check(GenerationStage.STATEMENT, null);
+
+            assertThat(result.passed()).isFalse();
+            assertThat(result.observation()).contains("no @startuml diagram");
+        }
+    }
+
+    @Nested
+    class HiddenVariantDeclaration {
+
+        @Test
+        void readsTheDecisionFromTheTablesLastCell() {
+            assertThat(StageCheckService.specDeclaresHiddenVariants(specWithDesign("| Calculator | computes | stubbed |\n"))).isFalse();
+            assertThat(StageCheckService.specDeclaresHiddenVariants(specWithDesign("| Calculator | computes | stubbed |\n").replace("| compute | typical; zero | 3 | no |",
+                    "| compute | typical; zero | 3 | yes — fresh values |"))).isTrue();
+        }
+
+        @Test
+        void aSectionThatDeclinesHiddenVariantsInProseIsNotReadAsDeclaringThem() {
+            // The prose heuristic this replaced fired on exactly this text: the words "hidden" and "after the due date" appear while the decision is NO. A false trigger here
+            // forced the agent to invent hidden tests it had deliberately decided against.
+            String spec = specWithDesign("| Calculator | computes | stubbed |\n").replace("| compute | typical; zero | 3 | no |",
+                    "| compute | typical; zero | 3 | no |\n\n                Every test stays visible; no partition gets a hidden after-due-date variant.");
+
+            assertThat(StageCheckService.specDeclaresHiddenVariants(spec)).isFalse();
+        }
+
+        @Test
+        void aStructuralYesInAnotherColumnDoesNotCountAsAHiddenDeclaration() {
+            // The old regex matched any "| yes" anywhere in the section, so an unrelated column could satisfy the hidden-variant declaration.
+            String spec = specWithDesign("| Calculator | computes | stubbed |\n")
+                    .replace("| Seam | Partitions | Weight | Hidden variant |", "| Seam | Structural | Weight | Hidden variant |")
+                    .replace("| compute | typical; zero | 3 | no |", "| compute | yes | 3 | no |");
+
+            assertThat(StageCheckService.specDeclaresHiddenVariants(spec)).isFalse();
         }
     }
 

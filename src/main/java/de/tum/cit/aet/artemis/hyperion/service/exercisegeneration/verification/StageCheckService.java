@@ -8,6 +8,7 @@ import java.util.Set;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -56,8 +57,18 @@ public class StageCheckService {
 
     private final DifferentialVerificationService verifier;
 
-    public StageCheckService(DifferentialVerificationService verifier) {
+    private final ApprovedSpecRegistry approvedSpecs;
+
+    // @Autowired disambiguates from the package-private test constructor; with two constructors and no annotation Spring cannot instantiate the bean.
+    @Autowired
+    public StageCheckService(DifferentialVerificationService verifier, ApprovedSpecRegistry approvedSpecs) {
         this.verifier = verifier;
+        this.approvedSpecs = approvedSpecs;
+    }
+
+    /** Test constructor: no approved-spec registry, so every check reads the live specification exactly as it did before the registry existed. */
+    StageCheckService(DifferentialVerificationService verifier) {
+        this(verifier, new ApprovedSpecRegistry());
     }
 
     /**
@@ -134,6 +145,13 @@ public class StageCheckService {
             return StageCheckResult.failed("These '## Design' rows carry no template-status token: " + rowsWithoutStatus + ". Each row must contain exactly one of "
                     + TEMPLATE_STATUS_TOKENS + " — the token is what the later template gate enforces, so an ambiguous row cannot be checked.");
         }
+        List<String> unenforceableCreatedTypes = designRows.stream().filter(row -> "student-creates".equals(row.status())).map(DesignRow::type)
+                .filter(type -> !isEnforceableTypeName(type)).toList();
+        if (!unenforceableCreatedTypes.isEmpty()) {
+            return StageCheckResult.failed("These '## Design' rows are marked 'student-creates' but their Type cell is not a bare type name the later gates can look for: "
+                    + unenforceableCreatedTypes + ". Write one bare type name per row (no generics, package prefix, emphasis, parenthetical, or second type in the same cell) — "
+                    + "otherwise nothing can enforce that the template omits it.");
+        }
         // Echo the parsed plan back so the agent SEES what the later gates will hold it to (feedback quality: confirm understanding, not just absence of errors).
         String echo = designRows.stream().map(row -> row.type() + "=" + row.status()).collect(java.util.stream.Collectors.joining(", "));
         return StageCheckResult.passed("Specification accepted. Parsed template plan the later gates will enforce: " + echo + ". A 'student-creates' type must exist in the "
@@ -182,8 +200,15 @@ public class StageCheckService {
 
     /** The type names SPEC.md's '## Design' table marks {@code student-creates} — the ones the template omit-gate and the solution presence-gate enforce. */
     static List<String> specStudentCreatedTypes(String spec) {
-        return designTableRows(spec).stream().filter(row -> "student-creates".equals(row.status())).map(DesignRow::type).filter(type -> type.matches("[A-Za-z_][A-Za-z0-9_]*"))
-                .toList();
+        return designTableRows(spec).stream().filter(row -> "student-creates".equals(row.status())).map(DesignRow::type).filter(StageCheckService::isEnforceableTypeName).toList();
+    }
+
+    /**
+     * Whether a '## Design' row's type name is a bare identifier the later gates can actually look for. Anything else ({@code Stack<T>}, a qualified name, {@code **bold**}, two
+     * types in one cell) is UNENFORCEABLE — and silently dropping it would make the spec gate's own pass observation ("the later gates will enforce...") a lie.
+     */
+    private static boolean isEnforceableTypeName(String type) {
+        return type.matches("[A-Za-z_][A-Za-z0-9_]*");
     }
 
     /**
@@ -235,8 +260,8 @@ public class StageCheckService {
             return StageCheckResult
                     .failed("The solution must pass every test; failing: " + result.failedTestNames() + ". This is not a compile error — fix the solution's behaviour.");
         }
-        List<String> createdTypes = specStudentCreatedTypes(readSpec(sandbox, sessionId));
-        List<String> missingCreatedTypes = createdTypes.stream().filter(type -> findTypeFiles(sandbox, sessionId, "solution", type).isBlank()).toList();
+        List<String> createdTypes = enforcedStudentCreatedTypes(sandbox, sessionId);
+        List<String> missingCreatedTypes = createdTypes.stream().filter(type -> findTypeDeclarations(sandbox, sessionId, "solution", type).isBlank()).toList();
         if (!missingCreatedTypes.isEmpty()) {
             return StageCheckResult.failed("SPEC.md's '## Design' table marks these types 'student-creates', but the solution contains no file for them: " + missingCreatedTypes
                     + ". The reference solution must fully implement every student-created type (it is what the tests grade); add the missing file(s), or correct SPEC.md if "
@@ -270,13 +295,22 @@ public class StageCheckService {
             // Advisory only: a tooling failure here must not block an otherwise sound template.
             log.debug("Degenerate-copy check could not run (fail-open): {}", e.getMessage());
         }
-        List<String> createdTypes = specStudentCreatedTypes(readSpec(sandbox, sessionId));
-        List<String> leakedFiles = createdTypes.stream().map(type -> findTypeFiles(sandbox, sessionId, "template", type)).filter(found -> !found.isBlank())
+        List<String> createdTypes = enforcedStudentCreatedTypes(sandbox, sessionId);
+        List<String> leakedFiles = createdTypes.stream().map(type -> findTypeDeclarations(sandbox, sessionId, "template", type)).filter(found -> !found.isBlank())
                 .flatMap(found -> found.lines().map(String::strip)).toList();
         if (!leakedFiles.isEmpty()) {
             return StageCheckResult.failed("SPEC.md's '## Design' table marks type(s) 'student-creates', so the template must NOT contain their files — students create them "
                     + "from scratch (they are graded through the seeded structural checks and reflection-based tests). Delete these template files (leave TODO breadcrumbs in "
                     + "the collaborating classes instead): " + leakedFiles + ". If the type should ship as a stub after all, change its status in SPEC.md to 'stubbed'.");
+        }
+        List<String> liveCreatedTypes = specStudentCreatedTypes(readSpec(sandbox, sessionId));
+        List<String> unjustifiedDowngrades = createdTypes.stream().filter(type -> !liveCreatedTypes.contains(type))
+                .filter(type -> !templateItselfNeedsType(sandbox, sessionId, type)).toList();
+        if (!unjustifiedDowngrades.isEmpty()) {
+            return StageCheckResult.failed("The approved specification marked these types 'student-creates' and SPEC.md no longer does: " + unjustifiedDowngrades
+                    + ". No template file other than the type's own mentions them, so nothing about the template forces the change — only the tests reference them directly. "
+                    + "Restore 'student-creates', delete the template file, and reach the type reflectively the way the seeded reference tests do. A 'student-creates' type may "
+                    + "become 'given' or 'stubbed' only when a template file that must ship references it.");
         }
         if (!createdTypes.isEmpty()) {
             observation = (observation.isBlank() ? "" : observation + " ") + "Confirmed absent from the template, as the specification requires students to create them: "
@@ -286,36 +320,94 @@ public class StageCheckService {
     }
 
     /**
-     * Whether SPEC.md's {@code ## Testing Strategy} section declares at least one hidden after-due-date variant. Deliberately literal (a "yes" cell or the section's own
-     * after-due-date wording): the section is prose the agent writes, so an ambiguous section reads as "no declaration" and the gate stays silent rather than guessing.
+     * Whether SPEC.md's {@code ## Testing Strategy} declares at least one hidden after-due-date variant, read from a STRUCTURED cell — never from prose. An earlier prose
+     * heuristic here both false-triggered (a table that says "no hidden after-due-date variant" contains every keyword) and false-negatived (a paraphrase like "released at the
+     * deadline" contains none), which is exactly the opinion-shaped gate this class forbids. The declaration is now a table cell in the section's LAST column whose text starts
+     * with {@code yes} or {@code no}, parsed like the Design table's status tokens; anything else reads as "no declaration" and the gate stays silent.
      */
     static boolean specDeclaresHiddenVariants(String spec) {
+        return hiddenVariantCells(spec).stream().anyMatch(cell -> cell.startsWith("yes"));
+    }
+
+    /** The last-column cells of the {@code ## Testing Strategy} table's data rows, lower-cased and stripped; empty when the section is not a table. */
+    private static List<String> hiddenVariantCells(String spec) {
         int start = spec.indexOf("## Testing Strategy");
         if (start < 0) {
-            return false;
+            return List.of();
         }
-        String section = spec.substring(start);
-        int nextHeading = section.indexOf("\n## ", 1);
-        if (nextHeading > 0) {
-            section = section.substring(0, nextHeading);
+        List<String> cells = new java.util.ArrayList<>();
+        boolean pastHeader = false;
+        for (String line : spec.substring(start).lines().map(String::strip).toList()) {
+            if (line.startsWith("## ") && !line.startsWith("## Testing Strategy")) {
+                break;
+            }
+            if (!line.startsWith("|")) {
+                continue;
+            }
+            if (!pastHeader) {
+                if (line.chars().allMatch(c -> c == '|' || c == '-' || c == ':' || c == ' ')) {
+                    pastHeader = true;
+                }
+                continue;
+            }
+            String[] columns = line.split("\\|");
+            String last = columns.length == 0 ? "" : columns[columns.length - 1].replace("`", "").replace("*", "").strip().toLowerCase(java.util.Locale.ROOT);
+            if (!last.isBlank()) {
+                cells.add(last);
+            }
         }
-        String normalized = section.toLowerCase(java.util.Locale.ROOT);
-        if (!normalized.contains("hidden") && !normalized.contains("after_due_date") && !normalized.contains("after-due-date") && !normalized.contains("after the due date")) {
-            return false;
+        return cells;
+    }
+
+    /** The normalized names the workspace's grading plan hides until the due date; empty (fail-open) when no readable, parseable plan exists — same contract as the oracle's. */
+    private Set<String> hiddenTestNames(InteractiveSandbox sandbox, String sessionId) {
+        String planJson = execRead(sandbox, sessionId, "cat", GenerationWorkspaceService.WORKSPACE + "/test-plan.json");
+        if (planJson.isBlank()) {
+            return Set.of();
         }
-        // A table row ending in an explicit "no" for its hidden column must not be read as a declaration; require at least one affirmative marker.
-        return normalized.contains("after_due_date") || normalized.contains("after-due-date") || normalized.contains("after the due date")
-                || normalized.matches("(?s).*\\|\\s*yes\\b.*");
+        try {
+            return GeneratedTestPlan.parse(planJson).hiddenEntries().stream().map(GeneratedTestPlan.Entry::name).map(ProblemStatementBindingChecker::normalizeTestName)
+                    .collect(java.util.stream.Collectors.toUnmodifiableSet());
+        }
+        catch (RuntimeException e) {
+            return Set.of();
+        }
+    }
+
+    /**
+     * The {@code student-creates} types the later gates enforce: the union of the APPROVED specification's and the live one's. Union, not "live wins": a spec edit may add an
+     * obligation but must never delete one, because deleting one is exactly how the agent escaped the template gate instead of satisfying it. A genuinely forced change is
+     * still possible — the template gate exempts a type some other template file must reference — but it has to be justified by the repositories, not by rewriting the contract.
+     */
+    private List<String> enforcedStudentCreatedTypes(InteractiveSandbox sandbox, String sessionId) {
+        List<String> live = specStudentCreatedTypes(readSpec(sandbox, sessionId));
+        List<String> approved = approvedSpecs.approved(sessionId).map(StageCheckService::specStudentCreatedTypes).orElse(List.of());
+        return java.util.stream.Stream.concat(approved.stream(), live.stream()).distinct().toList();
+    }
+
+    /** Whether some template file OTHER than the type's own mentions the type — the only evidence that makes downgrading a {@code student-creates} decision legitimate. */
+    private boolean templateItselfNeedsType(InteractiveSandbox sandbox, String sessionId, String type) {
+        String mentions = execRead(sandbox, sessionId, "grep", "-rlw", type, GenerationWorkspaceService.WORKSPACE + "/template", "--exclude-dir=target", "--exclude-dir=build");
+        return mentions.lines().map(String::strip).filter(line -> !line.isBlank()).anyMatch(file -> !file.matches(".*/" + type + "\\.[^/]+$"));
     }
 
     private String readSpec(InteractiveSandbox sandbox, String sessionId) {
         return execRead(sandbox, sessionId, "cat", GenerationWorkspaceService.WORKSPACE + "/SPEC.md");
     }
 
-    /** The files under the given repo whose basename is {@code <type>.<ext>}, excluding build output. Type names were validated as identifiers, and exec spawns without a shell. */
-    private String findTypeFiles(InteractiveSandbox sandbox, String sessionId, String repo, String type) {
-        return execRead(sandbox, sessionId, "find", GenerationWorkspaceService.WORKSPACE + "/" + repo, "-type", "f", "-name", type + ".*", "-not", "-path", "*/target/*", "-not",
-                "-path", "*/build/*");
+    /**
+     * Where the given type is DECLARED under the given repo: a file named after it, or any source file declaring it. A filename probe alone both missed a nested or secondary
+     * declaration (the template ships the answer inside another file and the gate says "confirmed absent") and counted a stray {@code Type.md} or {@code Type.java.orig} as a
+     * leak. Type names were validated as bare identifiers, and {@code exec} spawns without a shell, so neither argument can inject. Fails open (empty) on a tooling error.
+     */
+    private String findTypeDeclarations(InteractiveSandbox sandbox, String sessionId, String repo, String type) {
+        String root = GenerationWorkspaceService.WORKSPACE + "/" + repo;
+        String byName = execRead(sandbox, sessionId, "find", root, "-type", "f", "-name", type + ".*", "-not", "-path", "*/target/*", "-not", "-path", "*/build/*", "-not", "-name",
+                "*.md", "-not", "-name", "*.txt", "-not", "-name", "*.orig", "-not", "-name", "*.class");
+        String byDeclaration = execRead(sandbox, sessionId, "grep", "-rlE", "(class|interface|enum|record|trait|struct|protocol)[[:space:]]+" + type + "\\b", root,
+                "--exclude-dir=target", "--exclude-dir=build", "--exclude=*.md", "--exclude=*.txt");
+        return java.util.stream.Stream.of(byName, byDeclaration).flatMap(String::lines).map(String::strip).filter(line -> !line.isBlank()).distinct()
+                .collect(java.util.stream.Collectors.joining("\n"));
     }
 
     private StageCheckResult checkTests(InteractiveSandbox sandbox, String sessionId, ProgrammingExercise exercise, Map<String, String> seedTestsFiles) {
@@ -385,6 +477,12 @@ public class StageCheckService {
                         + ". Use the exact test names from the TESTS stage (behavioural or seeded structural), or remove the link: " + exactTestNames + ".");
             }
         }
+        List<String> hiddenBindings = ProblemStatementBindingChecker.hiddenTaskBindings(statement, hiddenTestNames(sandbox, sessionId));
+        if (!hiddenBindings.isEmpty()) {
+            return StageCheckResult.failed("These [task] bindings reference tests the grading plan hides until the due date: " + hiddenBindings
+                    + ". A hidden test is the overfit probe: its task could never turn green before the deadline, and the checklist advertises the probe. Remove those names "
+                    + "from the [task] lines and leave hidden tests unbound.");
+        }
         if (ProblemStatementBindingChecker.hasStrayPlantUmlDirectives(statement)) {
             return StageCheckResult.failed("PlantUML directives ('hide empty fields', 'hide empty methods', 'skinparam ...') sit OUTSIDE the @startuml...@enduml block, where "
                     + "Artemis renders them as stray text. Move them inside the block, directly before @enduml.");
@@ -399,8 +497,9 @@ public class StageCheckService {
             return StageCheckResult.failed("The statement writes ABOUT students in the third person ('Students must/will/should ...'). Address the reader directly instead: "
                     + "frame the goal as \"we\" and the work as \"you\" with imperative tasks ('Define ...', 'Implement ...').");
         }
-        String specDocument = readSpec(sandbox, sessionId);
-        if (ProblemStatementBindingChecker.designSaysDiagramYes(specDocument) && !statement.contains("@startuml")) {
+        boolean diagramPromised = ProblemStatementBindingChecker.designSaysDiagramYes(readSpec(sandbox, sessionId))
+                || approvedSpecs.approved(sessionId).filter(ProblemStatementBindingChecker::designSaysDiagramYes).isPresent();
+        if (diagramPromised && !statement.contains("@startuml")) {
             return StageCheckResult.failed("SPEC.md's '## Diagram' section says yes, but the statement contains no @startuml diagram. Add the PlantUML class diagram after "
                     + "the tasks it illustrates (with testsColor links), or update SPEC.md's Diagram decision if the design genuinely changed.");
         }

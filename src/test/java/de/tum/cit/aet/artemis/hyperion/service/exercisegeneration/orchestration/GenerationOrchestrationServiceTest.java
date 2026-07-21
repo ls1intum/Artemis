@@ -147,7 +147,8 @@ class GenerationOrchestrationServiceTest {
 
     private GenerationOrchestrationService newService(boolean stagedGenerationEnabled) {
         return new GenerationOrchestrationService(Optional.of(sandbox), workspace, agentLoopRunner, verifier, systemPromptService, structuralOracleSeeder, specFidelityCritic,
-                jobService, Optional.of(testCaseRepository), 100, stagedGenerationRunner, stagedGenerationEnabled, stageCheckService, new AgentTranscriptWriter(""));
+                jobService, Optional.of(testCaseRepository), 100, stagedGenerationRunner, stagedGenerationEnabled, stageCheckService, new AgentTranscriptWriter(""),
+                new de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.ApprovedSpecRegistry());
     }
 
     private static AgentLoopRunner.AgentLoopSession loopSession(AgentLoopResult result) {

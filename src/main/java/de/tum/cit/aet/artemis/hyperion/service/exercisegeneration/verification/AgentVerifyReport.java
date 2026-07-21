@@ -17,6 +17,7 @@ import java.util.regex.Pattern;
  * @param templateFailureEvidence bounded, sanitized failure-message excerpts for template tests
  * @param templateWronglyPassing  the parser-form names that pass on the template but should fail (the Go/no-exception zero-value-stub trap); each must be made to fail
  * @param exactTestNames          every parser-form test name (suite-prefixed, verbatim) the agent must copy into {@code [task]} bindings — never guessed
+ * @param hiddenTestNames         the subset the grading plan hides until the due date: they grade silently and must NEVER be bound to a {@code [task]} line
  * @param unresolvedTaskBindings  {@code [task]} bindings that reference a name matching no real test (the C++/Catch2 bare-name trap)
  * @param possiblyDeadFiles       best-effort, language-agnostic: workspace files no build phase appears to read (advisory only; empty when the probe is unavailable)
  * @param wouldBeAccepted         whether the in-loop differential + actionable mechanical gates currently hold; this does not establish semantic quality or instructor approval
@@ -24,7 +25,7 @@ import java.util.regex.Pattern;
  */
 public record AgentVerifyReport(int solutionTests, boolean solutionPassed, List<String> solutionFailedNames, List<TestFailureEvidence> solutionFailureEvidence, int templateTests,
         boolean templateCompiled, boolean templateFailed, List<TestFailureEvidence> templateFailureEvidence, List<String> templateWronglyPassing, List<String> exactTestNames,
-        List<String> unresolvedTaskBindings, List<String> possiblyDeadFiles, boolean wouldBeAccepted, List<String> blockingReasons) {
+        List<String> unresolvedTaskBindings, List<String> possiblyDeadFiles, boolean wouldBeAccepted, List<String> blockingReasons, List<String> hiddenTestNames) {
 
     /** The longest list rendered inline before it is truncated with a remaining-count, so a huge suite never floods the agent's context. */
     private static final int MAX_RENDERED_NAMES = 40;
@@ -46,7 +47,15 @@ public record AgentVerifyReport(int solutionTests, boolean solutionPassed, List<
             List<String> templateWronglyPassing, List<String> exactTestNames, List<String> unresolvedTaskBindings, List<String> possiblyDeadFiles, boolean wouldBeAccepted,
             List<String> blockingReasons) {
         this(solutionTests, solutionPassed, solutionFailedNames, List.of(), templateTests, templateCompiled, templateFailed, List.of(), templateWronglyPassing, exactTestNames,
-                unresolvedTaskBindings, possiblyDeadFiles, wouldBeAccepted, blockingReasons);
+                unresolvedTaskBindings, possiblyDeadFiles, wouldBeAccepted, blockingReasons, List.of());
+    }
+
+    /** Keeps existing callers source-compatible while the hidden-name split is optional (no grading plan yet, or none readable). */
+    public AgentVerifyReport(int solutionTests, boolean solutionPassed, List<String> solutionFailedNames, List<TestFailureEvidence> solutionFailureEvidence, int templateTests,
+            boolean templateCompiled, boolean templateFailed, List<TestFailureEvidence> templateFailureEvidence, List<String> templateWronglyPassing, List<String> exactTestNames,
+            List<String> unresolvedTaskBindings, List<String> possiblyDeadFiles, boolean wouldBeAccepted, List<String> blockingReasons) {
+        this(solutionTests, solutionPassed, solutionFailedNames, solutionFailureEvidence, templateTests, templateCompiled, templateFailed, templateFailureEvidence,
+                templateWronglyPassing, exactTestNames, unresolvedTaskBindings, possiblyDeadFiles, wouldBeAccepted, blockingReasons, List.of());
     }
 
     /** One parser-produced test failure and its first useful message, normalized for compact, single-line agent context. */
@@ -107,7 +116,12 @@ public record AgentVerifyReport(int solutionTests, boolean solutionPassed, List<
         }
         appendFailureEvidence(builder, "Template", templateFailureEvidence);
 
-        builder.append("Exact test names — bind each [task] to one of these VERBATIM: ").append(renderNames(exactTestNames)).append('\n');
+        List<String> bindableNames = exactTestNames.stream().filter(name -> !hiddenTestNames.contains(name)).toList();
+        builder.append("Exact test names — bind each [task] to one of these VERBATIM: ").append(renderNames(bindableNames)).append('\n');
+        if (!hiddenTestNames.isEmpty()) {
+            builder.append("Hidden until the due date (they grade silently; copy these into test-plan.json, NEVER into a [task] line): ").append(renderNames(hiddenTestNames))
+                    .append('\n');
+        }
 
         if (!unresolvedTaskBindings.isEmpty()) {
             builder.append("[task] binding problems (these reference no real test — copy a name from the list above): ").append(renderNames(unresolvedTaskBindings)).append('\n');

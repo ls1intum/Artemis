@@ -16,6 +16,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.messages.Message;
 import org.springframework.ai.chat.model.ChatResponse;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
@@ -31,6 +32,7 @@ import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.AgentTra
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.GenerationStage;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.SandboxAgentTools;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.AgentVerifyReport;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.ApprovedSpecRegistry;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.StageCheckResult;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.StageCheckService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.workspace.GenerationWorkspaceService;
@@ -98,6 +100,8 @@ public class StagedGenerationRunner {
 
     private final StageCheckService stageCheckService;
 
+    private final ApprovedSpecRegistry approvedSpecs;
+
     private final AgentTranscriptWriter transcriptWriter;
 
     private final StagedContext stagedContext;
@@ -129,13 +133,22 @@ public class StagedGenerationRunner {
         }
     }
 
+    // @Autowired disambiguates from the package-private test constructor; with two constructors and no annotation Spring cannot instantiate the bean.
+    @Autowired
     public StagedGenerationRunner(AgentLoopRunner agentLoopRunner, AgentSystemPromptService systemPromptService, StageCheckService stageCheckService,
-            AgentTranscriptWriter transcriptWriter, @Value("${artemis.hyperion.agent.staged-context:CONTINUOUS}") String stagedContext) {
+            AgentTranscriptWriter transcriptWriter, ApprovedSpecRegistry approvedSpecs, @Value("${artemis.hyperion.agent.staged-context:CONTINUOUS}") String stagedContext) {
         this.agentLoopRunner = agentLoopRunner;
         this.systemPromptService = systemPromptService;
         this.stageCheckService = stageCheckService;
         this.transcriptWriter = transcriptWriter;
+        this.approvedSpecs = approvedSpecs;
         this.stagedContext = StagedContext.parse(stagedContext);
+    }
+
+    /** Test constructor: an isolated registry, so a staged run under test publishes its approved specification without a Spring context. */
+    StagedGenerationRunner(AgentLoopRunner agentLoopRunner, AgentSystemPromptService systemPromptService, StageCheckService stageCheckService,
+            AgentTranscriptWriter transcriptWriter, String stagedContext) {
+        this(agentLoopRunner, systemPromptService, stageCheckService, transcriptWriter, new ApprovedSpecRegistry(), stagedContext);
     }
 
     /**
@@ -278,10 +291,15 @@ public class StagedGenerationRunner {
                 }
 
                 if (gate.passed()) {
-                    if (stage == GenerationStage.SPEC && specSink != null) {
+                    if (stage == GenerationStage.SPEC) {
                         String specSnapshot = execRead(sandbox, sessionId, "cat", GenerationWorkspaceService.WORKSPACE + "/SPEC.md");
                         if (!specSnapshot.isBlank()) {
-                            specSink.accept(specSnapshot);
+                            // Publish the APPROVED specification before anything downstream runs: from here on the gates enforce this content, so a later edit can add
+                            // obligations but never delete one.
+                            approvedSpecs.approve(sessionId, specSnapshot);
+                            if (specSink != null) {
+                                specSink.accept(specSnapshot);
+                            }
                         }
                     }
                     stagePassed = true;

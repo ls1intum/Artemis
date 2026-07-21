@@ -198,6 +198,21 @@ final class ProblemStatementBindingChecker {
 
     /** Real gradable tests that production will grade but the problem statement does not expose via any {@code [task]} binding. */
     static List<String> unboundGradableTestNames(String problemStatement, List<String> actualTestNames, int testCount) {
+        return unboundGradableTestNames(problemStatement, actualTestNames, testCount, Set.of());
+    }
+
+    /**
+     * Real gradable tests that production will grade but the problem statement does not expose via any {@code [task]} binding, EXCLUDING the ones the grading plan hides until
+     * the due date. A hidden test is deliberately unbound: it grades silently, and binding it would render a task checkbox that can never turn green before the deadline while
+     * advertising the overfit probe. Without this exemption the pipeline is unsatisfiable — the prompt forbids binding hidden tests and this gate demanded it.
+     *
+     * @param problemStatement the student-facing statement whose {@code [task]} lines are read
+     * @param actualTestNames  every test name the differential build reported
+     * @param testCount        the expected test count, used to ignore a truncated name list
+     * @param hiddenTestNames  the normalized names the grading plan marks {@code AFTER_DUE_DATE}; empty when no plan is available (fail-open to the previous behaviour)
+     * @return the unbound gradable names, in encounter order, without duplicates
+     */
+    static List<String> unboundGradableTestNames(String problemStatement, List<String> actualTestNames, int testCount, Set<String> hiddenTestNames) {
         if (actualTestNames.isEmpty() || actualTestNames.size() < testCount) {
             return List.of();
         }
@@ -205,7 +220,7 @@ final class ProblemStatementBindingChecker {
         List<String> unbound = new ArrayList<>();
         for (String rawName : actualTestNames) {
             String normalized = normalizeTestName(rawName);
-            if (BuildGateTestNames.isBuildGate(normalized) || bound.contains(normalized)) {
+            if (BuildGateTestNames.isBuildGate(normalized) || bound.contains(normalized) || hiddenTestNames.contains(normalized)) {
                 continue;
             }
             if (!unbound.contains(normalized)) {
@@ -213,6 +228,28 @@ final class ProblemStatementBindingChecker {
             }
         }
         return unbound;
+    }
+
+    /**
+     * The {@code [task]}-bound names the grading plan hides until the due date. Binding a hidden test is a student-visible defect: Artemis renders the task as NOT_EXECUTED
+     * until the deadline because a hidden test emits no feedback, and the checklist names the very probe that is supposed to catch an overfitted solution.
+     *
+     * @param problemStatement the student-facing statement
+     * @param hiddenTestNames  the normalized names the grading plan marks {@code AFTER_DUE_DATE}
+     * @return the offending bound names, in encounter order, without duplicates
+     */
+    static List<String> hiddenTaskBindings(String problemStatement, Set<String> hiddenTestNames) {
+        if (hiddenTestNames.isEmpty()) {
+            return List.of();
+        }
+        List<String> offenders = new ArrayList<>();
+        for (String bound : boundTestNames(problemStatement)) {
+            String normalized = normalizeTestName(bound);
+            if (hiddenTestNames.contains(normalized) && !offenders.contains(normalized)) {
+                offenders.add(normalized);
+            }
+        }
+        return offenders;
     }
 
     /**

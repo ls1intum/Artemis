@@ -313,14 +313,13 @@ public class GenerationPersistenceService {
         Long savedExerciseVersionId;
         try {
             savedExerciseVersionId = syncTestCasesAndRecordVersion(exercise, user, testsCommitHash != null ? testsBuildSignal : null, true, finalizationGuard,
-                    persistedRepositoryHeads);
+                    persistedRepositoryHeads, outcome.testPlanJson());
         }
         catch (RuntimeException e) {
             throw new GenerationIncompleteException("Saving the generated exercise failed while recording the exercise version after committing " + committed
                     + "; the mechanically verified repository and metadata changes remain saved for instructor review, but finalization is INCOMPLETE. Cause: " + e.getMessage(), e,
                     true, postPersistHashes);
         }
-        applyGeneratedTestPlan(exercise, testsCommitHash != null ? testsBuildSignal : null, outcome.testPlanJson());
         log.info("Persisted generated exercise {} after test-case synchronisation completed", exercise.getId());
         prePersistHashes.keySet().retainAll(postPersistHashes.keySet());
         MetadataSnapshot metadata = persistedMetadata.get();
@@ -464,10 +463,18 @@ public class GenerationPersistenceService {
      */
     private Long syncTestCasesAndRecordVersion(ProgrammingExercise exercise, User user, TestsBuildSignal testsBuildSignal, boolean failOnFinalizationFailure,
             Runnable finalizationGuard, Map<RepositoryType, String> repositoryCommitIds) {
+        return syncTestCasesAndRecordVersion(exercise, user, testsBuildSignal, failOnFinalizationFailure, finalizationGuard, repositoryCommitIds, null);
+    }
+
+    private Long syncTestCasesAndRecordVersion(ProgrammingExercise exercise, User user, TestsBuildSignal testsBuildSignal, boolean failOnFinalizationFailure,
+            Runnable finalizationGuard, Map<RepositoryType, String> repositoryCommitIds, @Nullable String testPlanJson) {
         finalizationGuard.run();
         if (testsBuildSignal != null) {
             triggerTestsBuild(exercise, testsBuildSignal);
             zeroWeightBuildGateTestCases(exercise.getId(), testsBuildSignal, failOnFinalizationFailure);
+            // Inside the guard, after the sync: the weight/visibility write is a durable mutation and must not happen once this job no longer owns the exercise.
+            finalizationGuard.run();
+            applyGeneratedTestPlan(exercise, testPlanJson);
         }
         finalizationGuard.run();
         try {
@@ -929,25 +936,31 @@ public class GenerationPersistenceService {
     /**
      * Applies the TESTS stage's grading plan ({@code test-plan.json}) to the freshly synchronized test cases: per-test weights (the specification's core-vs-edge tiers) and
      * {@code AFTER_DUE_DATE} visibility for hidden variants. Runs only on the main save path, AFTER {@link #syncTestCasesAndRecordVersion} has awaited the test-case sync, so the
-     * cases exist. Strictly advisory: the plan was already gate-validated in the sandbox, and a failure here (stale plan after a repair attempt, an unknown name, malformed JSON)
-     * must degrade to Artemis' grading defaults, never fail a save that is otherwise complete.
+     * cases exist. Strictly advisory: the plan was already gate-validated in the sandbox, and a failure here (a stale plan after a repair attempt, malformed JSON) degrades to
+     * Artemis' grading defaults for EVERY case rather than failing a save that is otherwise complete — see the all-or-nothing rule below for why partial application is worse.
      */
-    private void applyGeneratedTestPlan(ProgrammingExercise exercise, @Nullable TestsBuildSignal signal, @Nullable String testPlanJson) {
-        if (signal == null || testPlanJson == null || testPlanJson.isBlank()) {
+    private void applyGeneratedTestPlan(ProgrammingExercise exercise, @Nullable String testPlanJson) {
+        if (testPlanJson == null || testPlanJson.isBlank()) {
             return;
         }
         try {
             GeneratedTestPlan plan = GeneratedTestPlan.parse(testPlanJson);
             Map<String, ProgrammingExerciseTestCase> byName = testCaseRepository.findByExerciseId(exercise.getId()).stream()
                     .collect(java.util.stream.Collectors.toMap(ProgrammingExerciseTestCase::getTestName, testCase -> testCase, (first, second) -> first));
+            // ALL-OR-NOTHING. The plan is written once and survives repair attempts, so a later attempt that renames or drops a test leaves a plan that only PARTLY describes
+            // the saved tests. Applying such a plan is worse than applying none: the weights land, but a renamed hidden variant keeps Artemis' default ALWAYS visibility and the
+            // overfit probe ships published, contradicting the specification the instructor reads. Skip wholesale and let every case keep the documented defaults.
+            List<String> unresolvedNames = plan.tests().stream().map(GeneratedTestPlan.Entry::name).filter(name -> !byName.containsKey(name)).toList();
+            if (!unresolvedNames.isEmpty()) {
+                log.warn(
+                        "Not applying the generated test plan for exercise {}: it names {} test case(s) that the saved tests do not contain ({}), so it describes a different "
+                                + "version of the tests. Grading keeps Artemis' defaults (weight 1, visible) for every case.",
+                        exercise.getId(), unresolvedNames.size(), unresolvedNames);
+                return;
+            }
             List<ProgrammingExerciseTestCase> changed = new ArrayList<>();
-            List<String> unknownNames = new ArrayList<>();
             for (GeneratedTestPlan.Entry entry : plan.tests()) {
                 ProgrammingExerciseTestCase testCase = byName.get(entry.name());
-                if (testCase == null) {
-                    unknownNames.add(entry.name());
-                    continue;
-                }
                 if (BuildGateTestNames.isBuildGate(testCase.getTestName())) {
                     // Build gates are zero-weighted for oracle parity and must stay that way regardless of what the plan says.
                     continue;
@@ -958,9 +971,6 @@ public class GenerationPersistenceService {
             }
             if (!changed.isEmpty()) {
                 testCaseRepository.saveAll(changed);
-            }
-            if (!unknownNames.isEmpty()) {
-                log.warn("Generated test plan for exercise {} referenced {} unknown test name(s), skipped: {}", exercise.getId(), unknownNames.size(), unknownNames);
             }
             log.info("Applied generated test plan to exercise {}: {} test case(s) weighted, {} hidden until the due date", exercise.getId(), changed.size(),
                     changed.stream().filter(testCase -> testCase.getVisibility() == Visibility.AFTER_DUE_DATE).count());
