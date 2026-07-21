@@ -111,7 +111,7 @@ describe('CourseCompetencies', () => {
                 }),
             ),
         );
-        vi.spyOn(mockCourseStorageService, 'getCourse').mockReturnValue({ studentCourseAnalyticsDashboardEnabled: true } as any);
+        vi.spyOn(mockCourseStorageService, 'getCourse').mockReturnValue({} as any);
 
         courseCompetenciesComponent.isCollapsed = false;
         courseCompetenciesComponentFixture.detectChanges();
