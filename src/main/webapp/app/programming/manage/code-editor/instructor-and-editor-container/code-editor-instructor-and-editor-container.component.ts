@@ -88,6 +88,7 @@ const SEVERITY_ORDER: Record<ConsistencyIssueSeverityEnum, number> = {
 };
 
 const AUTO_START_EXERCISE_GENERATION_STATE = 'autoStartExerciseGeneration';
+const EXERCISE_GENERATION_PROMPT_STATE = 'exerciseGenerationUserPrompt';
 const APPLIED_GENERATION_REFRESH_STATE = 'appliedHyperionGenerationRefresh';
 const MIN_MEANINGFUL_SPEC_LENGTH = 40;
 interface AppliedGenerationRefresh {
@@ -204,6 +205,10 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     private activeAdaptDialogRef?: DynamicDialogRef<ReviewAdaptExerciseDialogComponent>;
     private readonly exerciseChanged = new Subject<void>();
     private shouldAutoStartExerciseGeneration = window.history.state?.[AUTO_START_EXERCISE_GENERATION_STATE] === true;
+
+    /** The instructor's brief carried over from the create form; sent as the generate request's prompt so the run is steered by what the instructor actually asked for. */
+    private autoStartGenerationPrompt: string | undefined =
+        typeof window.history.state?.[EXERCISE_GENERATION_PROMPT_STATE] === 'string' ? window.history.state[EXERCISE_GENERATION_PROMPT_STATE] : undefined;
 
     // Icons
     protected readonly faPlus = faPlus;
@@ -558,7 +563,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
             this.alertService.warning('artemisApp.hyperion.generationActivity.saveChangesFirst');
             return;
         }
-        if ((this.exercise.problemStatement?.trim().length ?? 0) < MIN_MEANINGFUL_SPEC_LENGTH) {
+        if ((this.exercise.problemStatement?.trim().length ?? 0) < MIN_MEANINGFUL_SPEC_LENGTH && (this.autoStartGenerationPrompt?.length ?? 0) < MIN_MEANINGFUL_SPEC_LENGTH) {
             this.alertService.warning('artemisApp.hyperion.generationActivity.meaningfulSpecRequired');
             return;
         }
@@ -593,7 +598,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         const requestSequence = ++this.generationStartSequence;
         this.generationStartPending.set(true);
         this.generationService
-            .generate(exerciseId, { mode: 'GENERATE' })
+            .generate(exerciseId, { mode: 'GENERATE', prompt: this.autoStartGenerationPrompt })
             .pipe(
                 take(1),
                 takeUntil(this.exerciseChanged),

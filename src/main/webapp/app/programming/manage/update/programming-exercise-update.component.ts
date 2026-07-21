@@ -68,6 +68,7 @@ import dayjs from 'dayjs/esm';
 
 export const LOCAL_STORAGE_KEY_IS_SIMPLE_MODE = 'isSimpleMode';
 const AUTO_START_EXERCISE_GENERATION_STATE = 'autoStartExerciseGeneration';
+const EXERCISE_GENERATION_PROMPT_STATE = 'exerciseGenerationUserPrompt';
 const MIN_MEANINGFUL_SPEC_LENGTH = 40;
 
 @Component({
@@ -129,6 +130,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     exerciseDifficultyComponent = viewChild(ProgrammingExerciseModeComponent);
     exerciseLanguageComponent = viewChild(ProgrammingExerciseLanguageComponent);
     exerciseGradingComponent = viewChild(ProgrammingExerciseGradingComponent);
+    exerciseProblemComponent = viewChild(ProgrammingExerciseProblemComponent);
     exercisePlagiarismComponent = viewChild(ExerciseUpdatePlagiarismComponent);
 
     packageNamePattern = '';
@@ -1070,7 +1072,10 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
             this.onSaveSuccess(exercise);
             return;
         }
-        const navigationExtras = { state: { [AUTO_START_EXERCISE_GENERATION_STATE]: true } };
+        // Carry the instructor's brief to the code editor: the generate-exercise request is fired there after the redirect, and without this the brief typed into the AI
+        // prompt field is silently dropped — the server then falls back to a generic instruction and the model free-styles the topic (observed live).
+        const generationBrief = this.exerciseProblemComponent()?.userPrompt()?.trim();
+        const navigationExtras = { state: { [AUTO_START_EXERCISE_GENERATION_STATE]: true, [EXERCISE_GENERATION_PROMPT_STATE]: generationBrief || undefined } };
         if (exercise.exerciseGroup?.exam?.id && exercise.exerciseGroup?.id) {
             void this.router.navigate(
                 [
