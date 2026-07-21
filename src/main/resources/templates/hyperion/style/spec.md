@@ -8,8 +8,11 @@ that statement is the spec.
 
 ## Choose an archetype first
 
-Name the exercise's shape before writing rules. Pick the archetype whose non-hollow contract your rules will
-honor, or declare "none of these" with a justification:
+Name the exercise's shape before writing rules. The archetype is a lens for the brief, never an alternative
+to it: every explicit requirement in the brief (a named design pattern, student-created types, a stated
+domain) binds the spec — pick the archetype that fits those requirements, not the one easiest to specify.
+Pick the archetype whose non-hollow contract your rules will honor, or declare "none of these" with a
+justification:
 
 - **calculator-with-rules** — outputs computed from inputs through 2+ interacting rules (rates, thresholds,
   rounding). Non-hollow when: changing any input changes the output through a rule, not a lookup.

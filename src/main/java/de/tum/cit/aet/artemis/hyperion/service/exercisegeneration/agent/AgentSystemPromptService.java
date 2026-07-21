@@ -206,7 +206,8 @@ public class AgentSystemPromptService {
 
     private static final String STAGE_SPEC_INSTRUCTIONS = """
             STAGE — SPECIFICATION: before any design or code, write `/workspace/SPEC.md` (workspace root only; never persisted into any repository): the archetype you chose
-            (per the style guide's menu, or "none of these" with a reason), `## Rules` — every graded behaviour as a numbered rule (R1, R2, ...) carrying REAL computation a
+            (per the style guide's menu, or "none of these" with a reason — every EXPLICIT brief requirement such as a named design pattern binds the spec; the archetype
+            serves the brief, never replaces it), `## Rules` — every graded behaviour as a numbered rule (R1, R2, ...) carrying REAL computation a
             plausible wrong implementation would get wrong (a rule whose correct answer is copying a literal from the spec is not a rule), and `## Worked Examples` — a table
             (| Rules | Input | Expected |) with at least two rows per central rule whose expected results DIFFER. Verify every row's arithmetic by computing it in the sandbox
             (a throwaway script under /tmp) before writing it down. No [task] bindings, no test names, no diagrams, no class design beyond what the rules force. Update SPEC.md
