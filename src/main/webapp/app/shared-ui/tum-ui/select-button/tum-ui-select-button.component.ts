@@ -150,8 +150,12 @@ export class TumUiSelectButtonComponent implements ControlValueAccessor {
                 return;
         }
         event.preventDefault();
-        // Radio-group semantics: moving the roving focus also moves the selection.
-        this.select(options[target]);
+        // Radio-group semantics: moving the roving focus also moves the selection — but only when it actually
+        // moves. Re-selecting the already-active option (a single-option control, or Home/End on the current one)
+        // would toggle it off when `allowEmpty` is true, which arrow navigation must never do.
+        if (target !== index) {
+            this.select(options[target]);
+        }
         this.optionButtons()[target]?.nativeElement.focus();
     }
 

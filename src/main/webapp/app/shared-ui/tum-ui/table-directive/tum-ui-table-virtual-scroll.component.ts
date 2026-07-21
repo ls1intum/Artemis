@@ -76,8 +76,17 @@ export class TumUiTableVirtualScrollComponent<T> {
 
     protected readonly rowClasses = computed(() => {
         const base = 'tum-ui-vs-row flex items-center text-sm text-surface-900 dark:text-surface-0 border-b border-solid border-surface-200 dark:border-surface-800';
-        const striped = this.striped() ? ' odd:bg-surface-50 dark:odd:bg-surface-950' : '';
         const hover = this.rowHover() ? ' hover:bg-surface-100 dark:hover:bg-surface-800' : '';
-        return `${base}${striped}${hover} ${HEADER_PADDING[this.size()]}`;
+        return `${base}${hover} ${HEADER_PADDING[this.size()]}`;
     });
+
+    /**
+     * Stripe class for a row, keyed on the DATA index — not a CSS `:nth-child(odd)` variant. Under `cdkVirtualFor`
+     * only the visible window is in the DOM, so `:nth-child` parity shifts as you scroll and a row's stripe would
+     * flicker; the data index is stable. Stripes 0-based-even rows to match the non-virtual `[tumUiTable]` (whose
+     * `tbody tr:nth-child(odd)` = 1-based-odd = 0-based-even).
+     */
+    protected stripeClass(index: number): string {
+        return this.striped() && index % 2 === 0 ? ' bg-surface-50 dark:bg-surface-950' : '';
+    }
 }

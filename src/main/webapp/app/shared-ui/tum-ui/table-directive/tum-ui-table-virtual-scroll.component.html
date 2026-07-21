@@ -23,7 +23,7 @@
         <div
             *cdkVirtualFor="let item of items(); let i = index; trackBy: effectiveTrackBy()"
             role="row"
-            [class]="rowClasses()"
+            [class]="rowClasses() + stripeClass(i)"
             [style.height.px]="itemSize()"
             data-testid="tum-ui-vs-row"
         >

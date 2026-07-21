@@ -77,12 +77,16 @@ describe('TumUiTableVirtualScrollComponent', () => {
         expect(rowClasses).not.toContain('odd:bg-surface-50');
     });
 
-    it('adds striping tokens to rows only when striped', () => {
+    it('stripes even-index rows only when striped (index-based, not :nth-child, so it survives CDK recycling)', () => {
+        const component = fixture.debugElement.query(By.directive(TumUiTableVirtualScrollComponent)).componentInstance as TumUiTableVirtualScrollComponent<Row>;
+        const stripeClass = (i: number) => (component as unknown as { stripeClass: (i: number) => string }).stripeClass(i);
+        // Not striped by default → no stripe on any row.
+        expect(stripeClass(0)).toBe('');
         fixture.componentInstance.striped.set(true);
         fixture.detectChanges();
-        const component = fixture.debugElement.query(By.directive(TumUiTableVirtualScrollComponent)).componentInstance as TumUiTableVirtualScrollComponent<Row>;
-        const rowClasses = (component as unknown as { rowClasses: () => string }).rowClasses();
-        expect(rowClasses).toContain('odd:bg-surface-50');
-        expect(rowClasses).toContain('dark:odd:bg-surface-950');
+        expect(stripeClass(0)).toContain('bg-surface-50');
+        expect(stripeClass(0)).toContain('dark:bg-surface-950');
+        // Odd data index gets no stripe — keyed on the stable data index, never a DOM `:nth-child` variant.
+        expect(stripeClass(1)).toBe('');
     });
 });

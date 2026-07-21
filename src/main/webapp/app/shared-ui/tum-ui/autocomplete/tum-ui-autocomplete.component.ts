@@ -113,7 +113,11 @@ export class TumUiAutoCompleteComponent implements ControlValueAccessor {
     protected readonly listboxId = `tum-ui-autocomplete-listbox-${nextAutoCompleteId++}`;
 
     private readonly container = viewChild.required<ElementRef<HTMLElement>>('container');
-    private readonly textInput = viewChild.required<ElementRef<HTMLInputElement>>('textInput');
+    // NOT `viewChild.required`: a standalone `[(ngModel)]` (no <form>/name) writes its value synchronously inside
+    // ngOnChanges during the creation pass — before this view exists — so writeValue() → syncSingleInputText()
+    // reads this query pre-view-init. A required query throws NG0951 on that read; an optional one lets the `?.`
+    // guards no-op (the real value re-syncs in the later microtask, post view-init).
+    private readonly textInput = viewChild<ElementRef<HTMLInputElement>>('textInput');
     private readonly panel = viewChild.required('panel', { read: TemplateRef });
     private overlayRef?: OverlayRef;
 
@@ -155,6 +159,11 @@ export class TumUiAutoCompleteComponent implements ControlValueAccessor {
                 this.closePanel();
             }
         });
+        // Single-mode input text mirrors the selected value's label. Driven by an effect (not just the imperative
+        // writeValue call) because a standalone `[(ngModel)]` writes the initial value before this view exists; the
+        // effect re-runs once the `textInput` view-query resolves, so an initial value displays post-view-init.
+        // syncSingleInputText no-ops in multiple mode and while typing (neither singleValue nor textInput changes).
+        effect(() => this.syncSingleInputText());
     }
 
     // ---- ControlValueAccessor ---------------------------------------------------------------------
@@ -163,8 +172,9 @@ export class TumUiAutoCompleteComponent implements ControlValueAccessor {
         if (this.multiple()) {
             this.selectedValues.set(Array.isArray(value) ? [...value] : value == undefined ? [] : [value]);
         } else {
+            // The effect in the constructor mirrors this into the input text (also post-view-init for an initial
+            // value written before the view existed), so no imperative sync is needed here.
             this.singleValue.set(value ?? undefined);
-            this.syncSingleInputText();
         }
     }
 
@@ -221,7 +231,7 @@ export class TumUiAutoCompleteComponent implements ControlValueAccessor {
 
     protected focusInput(): void {
         if (!this.isDisabled()) {
-            this.textInput().nativeElement.focus();
+            this.textInput()?.nativeElement.focus();
         }
     }
 
@@ -331,9 +341,9 @@ export class TumUiAutoCompleteComponent implements ControlValueAccessor {
     }
 
     private clearInput(): void {
-        const el = this.textInput().nativeElement;
+        const el = this.textInput()?.nativeElement;
         // In single mode the input text is the selected label; only wipe it in multiple mode.
-        if (this.multiple()) {
+        if (el && this.multiple()) {
             el.value = '';
         }
         this.query.set('');

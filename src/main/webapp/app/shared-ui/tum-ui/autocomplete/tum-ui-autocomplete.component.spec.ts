@@ -1,6 +1,6 @@
 import { Component } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { FormControl, ReactiveFormsModule } from '@angular/forms';
+import { FormControl, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { By } from '@angular/platform-browser';
 import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
 import { vi } from 'vitest';
@@ -224,6 +224,34 @@ describe('TumUiAutoCompleteComponent with reactive formControl', () => {
         fixture.detectChanges();
         const inputEl = fixture.debugElement.query(By.css('[data-testid="tum-ui-autocomplete-input"]')).nativeElement as HTMLInputElement;
         expect(inputEl.disabled).toBe(true);
+        fixture.destroy();
+    });
+});
+
+describe('TumUiAutoCompleteComponent single mode with standalone ngModel', () => {
+    @Component({
+        imports: [TumUiAutoCompleteComponent, FormsModule],
+        // No <form> and no name → Angular treats this as a standalone NgModel, which calls writeValue()
+        // synchronously during the creation-pass ngOnChanges (before the child view exists). Regression guard
+        // for the NG0951 crash when writeValue → syncSingleInputText read a `viewChild.required('textInput')`.
+        template: `<tum-ui-autocomplete [(ngModel)]="value" [suggestions]="suggestions" />`,
+    })
+    class SingleStandaloneHostComponent {
+        value: string | undefined = 'initial';
+        readonly suggestions = ['a', 'b'];
+    }
+
+    it('renders without throwing when a standalone ngModel writes before view init, then shows the value', async () => {
+        await TestBed.configureTestingModule({ imports: [SingleStandaloneHostComponent, FontAwesomeTestingModule] }).compileComponents();
+        const fixture = TestBed.createComponent(SingleStandaloneHostComponent);
+        // The standalone ngModel's synchronous pre-view-init writeValue must not throw (the NG0951 regression).
+        expect(() => fixture.detectChanges()).not.toThrow();
+        // Once CD settles, the sync effect re-runs (the textInput view-query has resolved), so the initial value
+        // displays — proving the fix restores value display, not just suppresses the crash.
+        await fixture.whenStable();
+        fixture.detectChanges();
+        const inputEl = fixture.debugElement.query(By.css('[data-testid="tum-ui-autocomplete-input"]')).nativeElement as HTMLInputElement;
+        expect(inputEl.value).toBe('initial');
         fixture.destroy();
     });
 });
