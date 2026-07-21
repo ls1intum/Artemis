@@ -195,7 +195,7 @@ class GenerationWorkspaceServiceTest {
     }
 
     @Test
-    void readStyleGuides_loadsAllSixArtifactGuidesRegardlessOfExerciseLanguage() {
+    void readStyleGuides_loadsAllSevenArtifactGuidesRegardlessOfExerciseLanguage() {
         // Unlike readReferenceSample, the style guides are language-agnostic prose (not source code), so the method takes no exercise/language parameter at all: it is seeded
         // identically for every GENERATE run.
         ResourceLoaderService resourceLoaderService = new ResourceLoaderService(new DefaultResourceLoader(), mock());
@@ -205,9 +205,10 @@ class GenerationWorkspaceServiceTest {
         Map<String, String> guides = service.readStyleGuides();
 
         assertThat(guides).containsOnlyKeys("reference/style/design.md", "reference/style/draft-statement.md", "reference/style/final-statement.md", "reference/style/template.md",
-                "reference/style/solution.md", "reference/style/tests.md");
+                "reference/style/solution.md", "reference/style/tests.md", "reference/style/spec.md");
         // Each guide states its role up front so the agent can tell them apart at a glance.
         assertThat(guides.get("reference/style/design.md")).contains("## Diagram");
+        assertThat(guides.get("reference/style/spec.md")).contains("## Worked Examples");
         assertThat(guides.get("reference/style/draft-statement.md")).contains("BEFORE any tests");
         assertThat(guides.get("reference/style/final-statement.md")).contains("CRITICAL POLICY");
         assertThat(guides.get("reference/style/template.md")).contains("// TODO");

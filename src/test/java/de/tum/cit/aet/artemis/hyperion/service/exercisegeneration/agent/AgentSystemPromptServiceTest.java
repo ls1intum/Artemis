@@ -228,15 +228,16 @@ class AgentSystemPromptServiceTest {
     void build_generateModeWritesTheStatementLastFromDesignAndVerifiedTestNames() {
         String prompt = systemPromptService.build(exerciseWith(ProgrammingLanguage.JAVA, "")).replaceAll("\\s+", " ");
 
-        assertThat(prompt).contains("write the statement last, from DESIGN.md and the verified test names").contains("MECHANICAL PRECHECK: PASS")
+        assertThat(prompt).contains("write the statement last by REWRITING the specification").contains("MECHANICAL PRECHECK: PASS")
                 .contains("post-loop verification determines save eligibility");
     }
 
     // buildStage(): the orchestrator-enforced staged workflow's per-stage system prompt. Each stage sees only its own STAGE N instructions plus the shared header (security
     // boundary, workspace/reference layout, THE CONTRACT) and the shared stage-close line that keeps `submit` scoped to that stage alone, never the whole exercise.
 
-    private static final Map<GenerationStage, String> STAGE_HEADERS = Map.of(GenerationStage.DESIGN, "STAGE 0 — DESIGN FIRST", GenerationStage.SOLUTION, "STAGE 1 — SOLUTION",
-            GenerationStage.TEMPLATE, "STAGE 2 — TEMPLATE", GenerationStage.TESTS, "STAGE 3 — TESTS", GenerationStage.STATEMENT, "STAGE 4 — STATEMENT");
+    private static final Map<GenerationStage, String> STAGE_HEADERS = Map.of(GenerationStage.SPEC, "STAGE — SPECIFICATION", GenerationStage.DESIGN, "STAGE 0 — DESIGN FIRST",
+            GenerationStage.SOLUTION, "STAGE 1 — SOLUTION", GenerationStage.TEMPLATE, "STAGE 2 — TEMPLATE", GenerationStage.TESTS, "STAGE 3 — TESTS", GenerationStage.STATEMENT,
+            "STAGE 4 — STATEMENT");
 
     private static final String STAGE_CLOSE_LINE_MARKER = "calling `submit` means THIS STAGE's goal is met";
 
@@ -266,7 +267,8 @@ class AgentSystemPromptServiceTest {
         String prompt = systemPromptService.buildStage(exerciseWith(ProgrammingLanguage.JAVA, ""), GenerationStage.DESIGN);
 
         assertOnlyOwnStageHeaderPresent(prompt, GenerationStage.DESIGN);
-        assertThat(prompt).contains("write `/workspace/DESIGN.md`").contains("reference/style/design.md").doesNotContain("Earlier stages already produced")
+        assertThat(prompt).contains("write `/workspace/DESIGN.md`").contains("reference/style/design.md")
+                .contains("Earlier stages already produced: SPEC.md (when present — otherwise the instructor's problem statement is the specification).")
                 .doesNotContain("reference/style/solution.md").doesNotContain("reference/style/template.md").doesNotContain("reference/style/tests.md")
                 .doesNotContain("reference/style/final-statement.md");
     }
@@ -276,8 +278,8 @@ class AgentSystemPromptServiceTest {
         String prompt = systemPromptService.buildStage(exerciseWith(ProgrammingLanguage.JAVA, ""), GenerationStage.SOLUTION);
 
         assertOnlyOwnStageHeaderPresent(prompt, GenerationStage.SOLUTION);
-        assertThat(prompt).contains("Earlier stages already produced: DESIGN.md.").contains("Execute every worked example from the requirements against the real solution")
-                .contains("reference/style/solution.md");
+        assertThat(prompt).contains("Earlier stages already produced: the specification and DESIGN.md.")
+                .contains("Execute every worked example from the requirements against the real solution").contains("reference/style/solution.md");
     }
 
     @Test
@@ -285,9 +287,9 @@ class AgentSystemPromptServiceTest {
         String prompt = systemPromptService.buildStage(exerciseWith(ProgrammingLanguage.JAVA, ""), GenerationStage.TEMPLATE);
 
         assertOnlyOwnStageHeaderPresent(prompt, GenerationStage.TEMPLATE);
-        assertThat(prompt).contains("Earlier stages already produced: DESIGN.md and the reference solution.").contains("derive the template FROM the finished solution")
-                .contains("TEMPLATE AS TEACHING SCAFFOLD").contains("DIFF DISCIPLINE").contains("byte-identical between template and solution")
-                .contains("reference/style/template.md");
+        assertThat(prompt).contains("Earlier stages already produced: the specification, DESIGN.md, and the reference solution.")
+                .contains("derive the template FROM the finished solution").contains("TEMPLATE AS TEACHING SCAFFOLD").contains("DIFF DISCIPLINE")
+                .contains("byte-identical between template and solution").contains("reference/style/template.md");
     }
 
     @Test
@@ -295,7 +297,7 @@ class AgentSystemPromptServiceTest {
         String prompt = systemPromptService.buildStage(exerciseWith(ProgrammingLanguage.JAVA, ""), GenerationStage.TESTS);
 
         assertOnlyOwnStageHeaderPresent(prompt, GenerationStage.TESTS);
-        assertThat(prompt).contains("Earlier stages already produced: DESIGN.md, the reference solution, and the template.")
+        assertThat(prompt).contains("Earlier stages already produced: the specification, DESIGN.md, the reference solution, and the template.")
                 .contains("partition at a time from DESIGN.md's task table").contains("reference/style/tests.md")
                 // Statement-only sections must not leak into the TESTS stage prompt.
                 .doesNotContain("STUDENT-FACING STATEMENT").doesNotContain("ARTEMIS TASK BINDINGS");
@@ -306,8 +308,8 @@ class AgentSystemPromptServiceTest {
         String prompt = systemPromptService.buildStage(exerciseWith(ProgrammingLanguage.JAVA, ""), GenerationStage.STATEMENT);
 
         assertOnlyOwnStageHeaderPresent(prompt, GenerationStage.STATEMENT);
-        assertThat(prompt).contains("Earlier stages already produced: DESIGN.md, the reference solution, the template, and the differential tests.")
-                .contains("write the statement last, from DESIGN.md and the verified test names").contains("STUDENT-FACING STATEMENT").contains("ARTEMIS TASK BINDINGS")
+        assertThat(prompt).contains("Earlier stages already produced: the specification, DESIGN.md, the reference solution, the template, and the differential tests.")
+                .contains("write the statement last by REWRITING the specification").contains("STUDENT-FACING STATEMENT").contains("ARTEMIS TASK BINDINGS")
                 .contains("[task][Short human title](exactTestNameA,exactTestNameB)").contains("reference/style/final-statement.md");
     }
 

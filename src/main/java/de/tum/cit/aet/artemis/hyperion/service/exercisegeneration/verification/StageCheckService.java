@@ -47,6 +47,8 @@ public class StageCheckService {
 
     private static final List<String> REQUIRED_DESIGN_HEADINGS = List.of("## Classes", "## Public API", "## Tasks", "## Diagram");
 
+    private static final List<String> REQUIRED_SPEC_HEADINGS = List.of("## Rules", "## Worked Examples");
+
     /** Bound on how many extracted build-error lines a compile-failure observation carries, so a noisy build log cannot flood the agent's context. */
     private static final int MAX_ERROR_LINES = 15;
 
@@ -71,12 +73,79 @@ public class StageCheckService {
     public StageCheckResult check(GenerationStage stage, InteractiveSandbox sandbox, String sessionId, ProgrammingExercise exercise, Map<String, String> seedTestsFiles,
             @Nullable AgentVerifyReport lastTestsReport) {
         return switch (stage) {
+            case SPEC -> checkSpec(sandbox, sessionId);
             case DESIGN -> checkDesign(sandbox, sessionId);
             case SOLUTION -> checkSolution(sandbox, sessionId, exercise);
             case TEMPLATE -> checkTemplate(sandbox, sessionId, exercise);
             case TESTS -> checkTests(sandbox, sessionId, exercise, seedTestsFiles);
             case STATEMENT -> checkStatement(sandbox, sessionId, lastTestsReport);
         };
+    }
+
+    /**
+     * The SPEC stage's mechanical floor. Depth is enforced by EVIDENCE, not judgment: the worked-examples table must contain at least two rows whose expected results differ,
+     * so the spec proves branching instead of asserting constants — the one mechanically checkable core of the "no seam whose answer is copying a literal" principle. Everything
+     * semantic (archetype fit, rule quality) stays advisory with the critic; a deterministic gate must never hold an opinion.
+     */
+    private StageCheckResult checkSpec(InteractiveSandbox sandbox, String sessionId) {
+        String spec = execRead(sandbox, sessionId, "cat", GenerationWorkspaceService.WORKSPACE + "/SPEC.md");
+        if (spec.isBlank()) {
+            return StageCheckResult.failed("SPEC.md is missing or empty. Write /workspace/SPEC.md with the archetype, '## Rules' (numbered R1..Rn), and a '## Worked Examples' "
+                    + "table before continuing.");
+        }
+        List<String> missingSpecSections = REQUIRED_SPEC_HEADINGS.stream().filter(heading -> !spec.contains(heading)).toList();
+        if (!missingSpecSections.isEmpty()) {
+            return StageCheckResult.failed("SPEC.md is missing required section(s): " + missingSpecSections + ". Add them before continuing.");
+        }
+        if (ProblemStatementBindingChecker.hasTaskBindings(spec) || spec.contains("@startuml")) {
+            return StageCheckResult.failed("SPEC.md must not contain [task] bindings or PlantUML diagrams — those belong to the final statement, written once tests exist. "
+                    + "Remove them; keep the spec to rules and worked examples.");
+        }
+        List<String> expectedResults = workedExampleExpectedValues(spec);
+        if (expectedResults.size() < 2) {
+            return StageCheckResult.failed("The '## Worked Examples' table needs at least two data rows (| Rules | Input | Expected |). The table is the spec's evidence of "
+                    + "real computation; the solution stage replays it.");
+        }
+        if (Set.copyOf(expectedResults).size() < 2) {
+            return StageCheckResult.failed("Every row of the '## Worked Examples' table has the SAME expected result ('" + expectedResults.getFirst() + "'). The table must "
+                    + "prove branching: different inputs must lead to different computed results. If the exercise cannot produce two different results, its rules grade a "
+                    + "constant — deepen the rules.");
+        }
+        return StageCheckResult.passed("");
+    }
+
+    /**
+     * The expected-result cells (last column) of every data row in the {@code ## Worked Examples} table: rows starting with '|' after that heading, skipping the header and the
+     * separator row.
+     */
+    static List<String> workedExampleExpectedValues(String spec) {
+        int start = spec.indexOf("## Worked Examples");
+        if (start < 0) {
+            return List.of();
+        }
+        List<String> values = new java.util.ArrayList<>();
+        boolean pastHeader = false;
+        for (String line : spec.substring(start).lines().map(String::strip).toList()) {
+            if (line.startsWith("## ") && !line.startsWith("## Worked Examples")) {
+                break;
+            }
+            if (!line.startsWith("|")) {
+                continue;
+            }
+            String[] cells = line.split("\\|");
+            String last = cells.length == 0 ? "" : cells[cells.length - 1].strip();
+            if (!pastHeader) {
+                // The first two pipe rows are the header and the |---| separator.
+                if (last.chars().allMatch(c -> c == '-' || c == ':' || c == ' ')) {
+                    pastHeader = true;
+                }
+                continue;
+            }
+            if (!last.isBlank()) {
+                values.add(last);
+            }
+        }
+        return values;
     }
 
     private StageCheckResult checkDesign(InteractiveSandbox sandbox, String sessionId) {

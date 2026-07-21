@@ -12,6 +12,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 import java.util.regex.Matcher;
@@ -253,6 +254,12 @@ public class GenerationOrchestrationService {
             // Java/GENERATE is the only contract StagedGenerationRunner supports today (see its javadoc); ADAPT and every other language keep the original single, open-ended
             // agent-loop call unchanged. Decided once per run — the mode and language do not change across repair attempts.
             boolean useStagedGeneration = stagedGenerationEnabled && mode == GenerationMode.GENERATE && exercise.getProgrammingLanguage() == ProgrammingLanguage.JAVA;
+            // The SPEC stage runs only when the instructor gave no real statement: an existing non-trivial statement IS the specification, and writing a competing SPEC.md
+            // would at best duplicate it and at worst drift from it (the product's draft flow is how instructors control specs).
+            boolean specStageApplies = !systemPromptService.isNonTrivialProblemStatement(exercise.getProblemStatement());
+            // The gate-approved SPEC.md snapshot, frozen by the runner's spec gate: instructor-visible immediately, fed to the critic's grounding, and appended to every repair
+            // prompt so scope-cutting under repair pressure faces the contract it is cutting.
+            AtomicReference<String> specSnapshot = new AtomicReference<>();
 
             String currentPrompt = firstPrompt;
             AgentLoopResult loopResult = null;
@@ -281,7 +288,11 @@ public class GenerationOrchestrationService {
                 boolean stagedAttempt = useStagedGeneration && attempt == 1;
                 if (stagedAttempt) {
                     StagedGenerationRunner.StagedRunOutcome stagedOutcome = stagedGenerationRunner.run(exercise, baseTools, tools, currentPrompt, testsSeedSnapshot, sandbox,
-                            activeSessionId, cancelled, effectiveUsageSink, progress, () -> structuralOracleSeeder.seedIfStructuralDiff(sandbox, activeSessionId, exercise));
+                            activeSessionId, cancelled, effectiveUsageSink, progress, () -> structuralOracleSeeder.seedIfStructuralDiff(sandbox, activeSessionId, exercise),
+                            specStageApplies, spec -> {
+                                specSnapshot.set(spec);
+                                jobService.recordSpecDocument(exercise.getId(), jobId, spec);
+                            });
                     loopResult = stagedOutcome.result();
                     carriedConversation = stagedOutcome.conversation();
                 }
@@ -428,7 +439,7 @@ public class GenerationOrchestrationService {
                     // specFidelityReport still holds the previous attempt's report at this point (SpecFidelityReport.empty() on attempt 1 or after a mechanical rejection);
                     // threading it through gives the critic continuity across repair attempts instead of re-rolling a fresh review each time.
                     specFidelityReport = runSpecFidelityCritic(reviewBrief, producedProblemStatement, exercise.getProgrammingLanguage(), producedFilesByType, adaptationChanges,
-                            effectiveUsageSink, cancelled, progress, specFidelityReport, designDocumentSnapshot);
+                            effectiveUsageSink, cancelled, progress, specFidelityReport, designDocumentSnapshot, specSnapshot.get());
                     lastMechanicallyVerifiedCandidate = new CandidateSnapshot(loopResult, verification, copyProducedFiles(producedFilesByType), producedProblemStatement,
                             specFidelityReport);
                     if (cancelled.getAsBoolean()) {
@@ -462,7 +473,7 @@ public class GenerationOrchestrationService {
                             + " Preserve the mechanically correct work: do not restart or rewrite unrelated files. Re-read the cited artifacts and repair them to match the source requirements and "
                             + "remove unsupported candidate choices identified by the review. Make the smallest coherent repair across the statement, solution, template, and tests. Keep every unaffected "
                             + "requirement, API, test, and example. Re-run `sh verify.sh solution` and `sh verify.sh template`, then call submit again.\n\nThe instructor "
-                            + "source requirements are:\n" + authoringBrief + specFidelityCritic.renderForRetryPrompt(specFidelityReport);
+                            + "source requirements are:\n" + authoringBrief + specContractSection(specSnapshot.get()) + specFidelityCritic.renderForRetryPrompt(specFidelityReport);
                     continue;
                 }
                 emit(progress, "Verification rejected the exercise; asking the agent to fix the issues and try again.");
@@ -471,7 +482,7 @@ public class GenerationOrchestrationService {
                         + "\n\nThe workspace still contains all your files. Read the relevant files, fix exactly these issues, re-run `sh verify.sh solution` and "
                         + "`sh verify.sh template` to confirm, then call submit again. If a reason names a forbidden, duplicate, or abandoned path, delete it; replacing it with a "
                         + "placeholder does not remove the violation. Make the smallest coherent repair, leave unrelated files unchanged, and preserve the source requirements below.\n\n"
-                        + authoringBrief + specFidelityCritic.renderForRetryPrompt(specFidelityReport);
+                        + authoringBrief + specContractSection(specSnapshot.get()) + specFidelityCritic.renderForRetryPrompt(specFidelityReport);
             }
 
             // A semantic repair can accidentally break a candidate that already built and graded correctly. Never discard that more useful checkpoint in favour of a later
@@ -540,6 +551,18 @@ public class GenerationOrchestrationService {
      * Frames a repair prompt with where the run stands, so the model can triage: on the final attempt it must prioritise blocking findings instead of treating every attempt
      * identically (previously it had no signal that this was its last chance).
      */
+    /**
+     * The frozen, gate-approved specification appended to every repair prompt, so a repair under verification pressure faces the behavioural contract it might otherwise
+     * silently cut. Empty when no spec was captured (skipped stage or legacy path).
+     */
+    private static String specContractSection(@Nullable String specSnapshot) {
+        if (specSnapshot == null || specSnapshot.isBlank()) {
+            return "";
+        }
+        return "\n\nTHE SPECIFICATION (frozen at the spec gate — the behavioural contract; do not change rules or worked examples unless a verification reason requires it):\n"
+                + specSnapshot.strip();
+    }
+
     private static String attemptFraming(int attempt) {
         int repairAttempt = attempt;   // the prompt built after attempt N drives attempt N+1
         boolean finalAttempt = repairAttempt + 1 >= MAX_GENERATION_ATTEMPTS;
@@ -677,11 +700,11 @@ public class GenerationOrchestrationService {
      */
     private SpecFidelityReport runSpecFidelityCritic(String brief, String problemStatement, @Nullable ProgrammingLanguage language,
             Map<RepositoryType, Map<String, String>> producedArtifacts, @Nullable String adaptationChanges, Consumer<ChatResponse> usageSink, BooleanSupplier cancelled,
-            Consumer<String> progress, @Nullable SpecFidelityReport previousReport, @Nullable String designDocument) {
+            Consumer<String> progress, @Nullable SpecFidelityReport previousReport, @Nullable String designDocument, @Nullable String specSnapshot) {
         try {
             List<String> testNames = extractTaskBoundTestNames(problemStatement);
             SpecFidelityReport report = adaptationChanges == null
-                    ? specFidelityCritic.critique(brief, problemStatement, testNames, producedArtifacts, usageSink, cancelled, previousReport, designDocument)
+                    ? specFidelityCritic.critique(brief, problemStatement, testNames, producedArtifacts, usageSink, cancelled, previousReport, designDocument, specSnapshot)
                     : specFidelityCritic.critiqueAdaptation(brief, problemStatement, testNames, adaptationChanges, producedArtifacts, usageSink, cancelled, previousReport);
             if (adaptationChanges != null && adaptationChanges.contains(CHANGE_SUMMARY_TRUNCATED)) {
                 List<SpecFidelityReport.Finding> combined = new ArrayList<>(report.findings());

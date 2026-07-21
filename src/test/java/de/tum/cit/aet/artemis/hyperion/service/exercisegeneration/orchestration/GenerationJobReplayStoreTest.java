@@ -175,7 +175,7 @@ class GenerationJobReplayStoreTest {
     }
 
     private static GenerationJobService.JobTranscript transcript(String jobId, long exerciseId, GenerationMode mode, boolean done) {
-        return new GenerationJobService.JobTranscript(jobId, "owner", exerciseId, mode, List.of(), done, null);
+        return new GenerationJobService.JobTranscript(jobId, "owner", exerciseId, mode, List.of(), done, null, null);
     }
 
     private static GenerationJobService.JobFileChangeIndex fileChangeIndex(String jobId, String path) {

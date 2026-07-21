@@ -52,6 +52,8 @@ class StageCheckServiceTest {
     /** Serves canned {@code cat}/{@code diff} output; every other command succeeds with empty output. */
     private static final class FakeSandbox implements InteractiveSandbox {
 
+        private String spec;
+
         private String designMarkdown = VALID_DESIGN_DOCUMENT;
 
         private String problemStatement = "# Title\n\nDo the thing.";
@@ -68,6 +70,9 @@ class StageCheckServiceTest {
         public SandboxExecResult exec(String sessionId, Duration timeout, String... command) {
             if (command.length >= 2 && "cat".equals(command[0])) {
                 String path = command[1];
+                if (path.endsWith("SPEC.md")) {
+                    return spec == null ? new SandboxExecResult(1, "", "no such file", false) : new SandboxExecResult(0, spec, "", false);
+                }
                 if (path.endsWith("DESIGN.md")) {
                     return designMarkdown == null ? new SandboxExecResult(1, "", "no such file", false) : new SandboxExecResult(0, designMarkdown, "", false);
                 }
@@ -446,4 +451,81 @@ class StageCheckServiceTest {
                                                                                                                                                                 // correctly
         }
     }
+
+    @Nested
+    class Spec {
+
+        private static final String VALID_SPEC = """
+                # Exercise
+
+                Archetype: calculator-with-rules
+
+                ## Rules
+                - R1: computes a result from the input.
+
+                ## Worked Examples
+                | Rules | Input | Expected |
+                |-------|-------|----------|
+                | R1 | 2 | 4 |
+                | R1 | 3 | 9 |
+                """;
+
+        @Test
+        void passes_withRulesAndABranchingWorkedExamplesTable() {
+            sandbox.spec = VALID_SPEC;
+
+            assertThat(check(GenerationStage.SPEC).passed()).isTrue();
+        }
+
+        @Test
+        void fails_whenTheSpecIsMissing() {
+            sandbox.spec = null;
+
+            StageCheckResult result = check(GenerationStage.SPEC);
+
+            assertThat(result.passed()).isFalse();
+            assertThat(result.observation()).contains("SPEC.md is missing or empty");
+        }
+
+        @Test
+        void fails_whenRequiredSectionsAreMissing() {
+            sandbox.spec = "# Exercise\n\nSome prose without the required sections.";
+
+            StageCheckResult result = check(GenerationStage.SPEC);
+
+            assertThat(result.passed()).isFalse();
+            assertThat(result.observation()).contains("missing required section(s)").contains("## Rules").contains("## Worked Examples");
+        }
+
+        @Test
+        void fails_whenTaskBindingsOrDiagramsAppearAtSpecTime() {
+            sandbox.spec = VALID_SPEC + "\n[task][Do it](testDoIt)\n";
+
+            StageCheckResult result = check(GenerationStage.SPEC);
+
+            assertThat(result.passed()).isFalse();
+            assertThat(result.observation()).contains("must not contain [task] bindings or PlantUML diagrams");
+        }
+
+        @Test
+        void fails_whenTheWorkedExamplesTableHasFewerThanTwoDataRows() {
+            sandbox.spec = VALID_SPEC.replace("| R1 | 3 | 9 |\n", "");
+
+            StageCheckResult result = check(GenerationStage.SPEC);
+
+            assertThat(result.passed()).isFalse();
+            assertThat(result.observation()).contains("at least two data rows");
+        }
+
+        @Test
+        void fails_whenEveryExpectedResultIsIdentical_theLiteralGradingSignature() {
+            sandbox.spec = VALID_SPEC.replace("| R1 | 3 | 9 |", "| R1 | 3 | 4 |");
+
+            StageCheckResult result = check(GenerationStage.SPEC);
+
+            assertThat(result.passed()).isFalse();
+            assertThat(result.observation()).contains("SAME expected result").contains("deepen the rules");
+        }
+    }
+
 }

@@ -37,7 +37,7 @@ import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.workspace.Gene
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 
 /**
- * Runs one Java/{@code GENERATE} agent attempt as five enforced stages — design, solution, template, tests, statement — each with its own system prompt
+ * Runs one Java/{@code GENERATE} agent attempt as six enforced stages — specification, design, solution, template, tests, statement — each with its own system prompt
  * ({@link AgentSystemPromptService#buildStage}), its own bounded turn budget, and a mechanical gate that must pass before the next stage starts. This replaces one
  * {@code agentLoopRunner.run(...)} call in {@link GenerationOrchestrationService#generate}; everything before and after that call site (workspace seeding, mechanical
  * verification, spec-fidelity review, the outer repair-attempt loop) is unchanged and treats the aggregated {@link AgentLoopResult} this class returns exactly like a
@@ -61,11 +61,11 @@ public class StagedGenerationRunner {
 
     private static final Logger log = LoggerFactory.getLogger(StagedGenerationRunner.class);
 
-    private static final List<GenerationStage> STAGE_ORDER = List.of(GenerationStage.DESIGN, GenerationStage.SOLUTION, GenerationStage.TEMPLATE, GenerationStage.TESTS,
-            GenerationStage.STATEMENT);
+    private static final List<GenerationStage> STAGE_ORDER = List.of(GenerationStage.SPEC, GenerationStage.DESIGN, GenerationStage.SOLUTION, GenerationStage.TEMPLATE,
+            GenerationStage.TESTS, GenerationStage.STATEMENT);
 
-    /** Base per-stage turn budget, in {@link #STAGE_ORDER} order; sums to 66, leaving headroom under {@link #POOL_HARD_CAP} for rollover. */
-    private static final int[] STAGE_BASE_BUDGETS = { 5, 22, 8, 24, 7 };
+    /** Base per-stage turn budget, in {@link #STAGE_ORDER} order; sums to 70, leaving headroom under {@link #POOL_HARD_CAP} for rollover. SPEC runs no builds, so it is cheap. */
+    private static final int[] STAGE_BASE_BUDGETS = { 4, 5, 22, 8, 24, 7 };
 
     /**
      * Hard ceiling on turns spent across all five stages combined. A stage (or re-entry) is only started while at least {@link #MIN_STAGE_BUDGET} turns remain, so the cap holds.
@@ -78,8 +78,9 @@ public class StagedGenerationRunner {
     /** At most this many stage re-entries (see {@link #run}) are granted across the whole run, regardless of how many stages fail their gate on the first attempt. */
     private static final int MAX_TOTAL_REENTRIES = 2;
 
-    private static final List<String> STAGE_PROGRESS_LABELS = List.of("Stage 1/5: designing the exercise", "Stage 2/5: implementing the reference solution",
-            "Stage 3/5: building the student template", "Stage 4/5: authoring the tests", "Stage 5/5: writing the problem statement");
+    private static final List<String> STAGE_PROGRESS_LABELS = List.of("Stage 1/6: specifying the exercise behaviour", "Stage 2/6: designing the exercise",
+            "Stage 3/6: implementing the reference solution", "Stage 4/6: building the student template", "Stage 5/6: authoring the tests",
+            "Stage 6/6: writing the problem statement");
 
     /** Once the run has spent this long, no further stage is started; final (post-loop) verification decides the outcome of whatever was produced. */
     private static final Duration WALL_CLOCK_BUDGET = Duration.ofMinutes(22);
@@ -143,7 +144,7 @@ public class StagedGenerationRunner {
     }
 
     /**
-     * Runs the five enforced stages in order, honouring a shared turn-budget pool, a wall-clock ceiling, and cooperative cancellation between stages.
+     * Runs the enforced stages in order, honouring a shared turn-budget pool, a wall-clock ceiling, and cooperative cancellation between stages.
      *
      * @param exercise           the exercise being generated (Java/{@code GENERATE} only; the caller decides applicability)
      * @param baseTools          the shared, stateful {@link SandboxAgentTools} instance whose {@code enterStage} is called before every stage; never re-created per stage
@@ -163,6 +164,33 @@ public class StagedGenerationRunner {
     public StagedRunOutcome run(ProgrammingExercise exercise, SandboxAgentTools baseTools, Object tools, String briefPrompt, Map<String, String> seedTestsFiles,
             InteractiveSandbox sandbox, String sessionId, BooleanSupplier cancelled, @Nullable Consumer<ChatResponse> usageSink, @Nullable Consumer<String> progress,
             Supplier<Set<String>> structuralSeedHook) {
+        return run(exercise, baseTools, tools, briefPrompt, seedTestsFiles, sandbox, sessionId, cancelled, usageSink, progress, structuralSeedHook, true, null);
+    }
+
+    /**
+     * Like {@link #run(ProgrammingExercise, SandboxAgentTools, Object, String, Map, InteractiveSandbox, String, BooleanSupplier, Consumer, Consumer, Supplier)}, with control
+     * over the SPEC stage.
+     *
+     * @param exercise           the exercise being generated (Java/{@code GENERATE} only; the caller decides applicability)
+     * @param baseTools          the shared, stateful {@link SandboxAgentTools} instance whose {@code enterStage} is called before every stage
+     * @param tools              the tools object exposed to the model this turn (may be a decorator wrapping {@code baseTools})
+     * @param briefPrompt        the instructor brief / outer-attempt repair prompt, injected fresh into every stage's user prompt
+     * @param seedTestsFiles     the tests-repository snapshot taken before generation, forwarded to the TESTS stage's differential self-check
+     * @param sandbox            the open sandbox session
+     * @param sessionId          the sandbox session id
+     * @param cancelled          polled between stages (and inside each stage's own agent loop)
+     * @param usageSink          receives token usage for every model call; may be {@code null}
+     * @param progress           receives one short progress line per stage; may be {@code null}
+     * @param structuralSeedHook invoked once, best-effort, after the TEMPLATE gate passes, to seed Java structural tests before the TESTS stage starts
+     * @param specStageApplies   whether to run the SPEC stage; {@code false} when the instructor already provided a non-trivial problem statement — that statement IS the
+     *                               specification, and the model must not overwrite it with a restatement
+     * @param specSink           receives the gate-approved SPEC.md snapshot right after the spec gate passes (early instructor observability and the orchestrator's frozen copy
+     *                               for the critic and repair prompts); may be {@code null}
+     * @return one aggregated {@link AgentLoopResult} plus the carried conversation, exactly as the shorter overload
+     */
+    public StagedRunOutcome run(ProgrammingExercise exercise, SandboxAgentTools baseTools, Object tools, String briefPrompt, Map<String, String> seedTestsFiles,
+            InteractiveSandbox sandbox, String sessionId, BooleanSupplier cancelled, @Nullable Consumer<ChatResponse> usageSink, @Nullable Consumer<String> progress,
+            Supplier<Set<String>> structuralSeedHook, boolean specStageApplies, @Nullable Consumer<String> specSink) {
         Instant startedAt = clock.get();
         boolean continuous = stagedContext == StagedContext.CONTINUOUS;
         int remainingPool = POOL_HARD_CAP;
@@ -179,6 +207,10 @@ public class StagedGenerationRunner {
 
         for (int index = 0; index < STAGE_ORDER.size(); index++) {
             GenerationStage stage = STAGE_ORDER.get(index);
+            if (stage == GenerationStage.SPEC && !specStageApplies) {
+                // The instructor's existing statement is the specification; writing a competing SPEC.md would at best duplicate it and at worst drift from it.
+                continue;
+            }
             if (cancelled.getAsBoolean()) {
                 return finish(exercise, AgentLoopResult.Status.CANCELLED, totalTurns, lastFinalMessage, conversation);
             }
@@ -244,12 +276,21 @@ public class StagedGenerationRunner {
                 }
 
                 if (gate.passed()) {
+                    if (stage == GenerationStage.SPEC && specSink != null) {
+                        String specSnapshot = execRead(sandbox, sessionId, "cat", GenerationWorkspaceService.WORKSPACE + "/SPEC.md");
+                        if (!specSnapshot.isBlank()) {
+                            specSink.accept(specSnapshot);
+                        }
+                    }
                     stagePassed = true;
                     break;
                 }
 
                 log.info("Staged generation gate failed at stage {} for exercise {}: {}", stage, exercise.getId(), gate.observation());
-                if (stageReentryUsed || reentriesRemaining <= 0 || remainingPool < MIN_STAGE_BUDGET) {
+                // SPEC gets one private retry that does NOT draw from the shared re-entry budget: its gate is cheap (no builds), and burning a shared re-entry on the first,
+                // most subjective stage would convert spec-gate feedback directly into downstream SOLUTION/TESTS failures.
+                boolean privateSpecRetry = stage == GenerationStage.SPEC && !stageReentryUsed;
+                if (stageReentryUsed || (!privateSpecRetry && reentriesRemaining <= 0) || remainingPool < MIN_STAGE_BUDGET) {
                     return finish(exercise, lastStatus, totalTurns, appendGateReport(lastFinalMessage, gate.observation()), conversation);
                 }
                 // Cooperative cancellation between the failed attempt and its re-entry (the outer for-loop already checked before this stage's first attempt).
@@ -257,7 +298,9 @@ public class StagedGenerationRunner {
                     return finish(exercise, AgentLoopResult.Status.CANCELLED, totalTurns, lastFinalMessage, conversation);
                 }
                 stageReentryUsed = true;
-                reentriesRemaining--;
+                if (stage != GenerationStage.SPEC) {
+                    reentriesRemaining--;
+                }
                 gateFeedback = gate.observation();
                 emit(progress, "Stage " + (index + 1) + "/" + STAGE_ORDER.size() + ": retrying after gate feedback");
                 allocation = allocateStageBudget(STAGE_BASE_BUDGETS[index], 0, remainingPool);
@@ -362,6 +405,10 @@ public class StagedGenerationRunner {
                             + "conversation; re-read a file only if you need to confirm its exact current contents.");
         }
         else {
+            String specDocument = execRead(sandbox, sessionId, "cat", GenerationWorkspaceService.WORKSPACE + "/SPEC.md");
+            if (!specDocument.isBlank()) {
+                prompt.append("\n\n=== CURRENT SPEC.md ===\n").append(specDocument.strip()).append("\n=== END SPEC.md ===");
+            }
             String designDocument = execRead(sandbox, sessionId, "cat", GenerationWorkspaceService.WORKSPACE + "/DESIGN.md");
             if (!designDocument.isBlank()) {
                 prompt.append("\n\n=== CURRENT DESIGN.md ===\n").append(designDocument.strip()).append("\n=== END DESIGN.md ===");

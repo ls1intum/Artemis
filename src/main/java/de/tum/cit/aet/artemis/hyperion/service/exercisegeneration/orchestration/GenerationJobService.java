@@ -365,6 +365,19 @@ public class GenerationJobService {
     }
 
     /**
+     * Records the gate-approved SPEC.md snapshot on the running job's transcript so the owner can review the behavioural specification while the run is still building —
+     * the earliest meaningful intermediate result. Same bounding and staleness rules as {@link #recordDesignDocument}.
+     *
+     * @param exerciseId   the exercise id (the transcript key)
+     * @param jobId        the job id; dropped if it does not match the retained transcript
+     * @param specDocument the SPEC.md content captured right after the spec gate passed
+     * @return whether the snapshot was accepted into the authoritative transcript
+     */
+    public boolean recordSpecDocument(long exerciseId, String jobId, String specDocument) {
+        return replayStore.recordSpecDocument(exerciseId, jobId, specDocument);
+    }
+
+    /**
      * Returns the current or most-recent run's transcript for the exercise, for reconnection/replay, if it belongs to the requesting user.
      *
      * @param user     the requesting user
@@ -965,7 +978,7 @@ public class GenerationJobService {
     }
 
     public record JobTranscript(String jobId, String userLogin, long exerciseId, GenerationMode mode, List<ExerciseGenerationEventDTO> events, boolean done,
-            @Nullable String designDocument) implements Serializable {
+            @Nullable String designDocument, @Nullable String specDocument) implements Serializable {
 
         @Serial
         private static final long serialVersionUID = 1L;

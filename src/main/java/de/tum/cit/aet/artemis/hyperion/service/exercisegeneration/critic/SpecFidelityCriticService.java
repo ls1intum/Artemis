@@ -377,13 +377,36 @@ public class SpecFidelityCriticService {
      */
     public SpecFidelityReport critique(@Nullable String brief, @Nullable String problemStatement, List<String> testNames, Map<RepositoryType, Map<String, String>> artifacts,
             @Nullable Consumer<ChatResponse> usageSink, BooleanSupplier cancelled, @Nullable SpecFidelityReport previousReport, @Nullable String designDocument) {
+        return critique(brief, problemStatement, testNames, artifacts, usageSink, cancelled, previousReport, designDocument, null);
+    }
+
+    /**
+     * Full-artifact review that additionally receives the gate-frozen SPEC.md snapshot. The snapshot extends the AUTHORITATIVE source for requirement-coverage findings: the
+     * spec was written before any code, approved by a mechanical gate, and is instructor-visible — so "no test covers this spec rule" becomes a reportable finding even when
+     * the instructor brief was one line (previously such findings had to abstain, which is why hollow exercises could ship). The produced STATEMENT stays excluded from
+     * authority: the final artifact must never authorize its own additions.
+     *
+     * @param brief            the instructor's source requirements
+     * @param problemStatement the produced problem statement
+     * @param testNames        the produced test identifiers
+     * @param artifacts        the generated repository files grouped by repository type
+     * @param usageSink        receives reviewer token usage; {@code null} skips accounting
+     * @param cancelled        polled between provider calls
+     * @param previousReport   the immediately preceding attempt's report, for review continuity
+     * @param designDocument   the agent's DESIGN.md contents, or {@code null} when unavailable
+     * @param specDocument     the gate-frozen SPEC.md snapshot, or {@code null} when the stage was skipped or never passed its gate
+     * @return the review report
+     */
+    public SpecFidelityReport critique(@Nullable String brief, @Nullable String problemStatement, List<String> testNames, Map<RepositoryType, Map<String, String>> artifacts,
+            @Nullable Consumer<ChatResponse> usageSink, BooleanSupplier cancelled, @Nullable SpecFidelityReport previousReport, @Nullable String designDocument,
+            @Nullable String specDocument) {
         requireReviewInputsSafe(brief, problemStatement, testNames, artifacts, null);
         List<SpecFidelityReport.Finding> findings = new ArrayList<>(detectMechanicsLeaks(problemStatement));
         if (!hasCompleteArtifactSet(artifacts)) {
             findings.addAll(reviewUnavailable(null, "The generated solution, template, or tests snapshot was missing."));
             return new SpecFidelityReport(List.copyOf(findings));
         }
-        findings.addAll(reviewArtifacts(brief, problemStatement, testNames, artifacts, null, usageSink, cancelled, previousReport, designDocument));
+        findings.addAll(reviewArtifacts(brief, problemStatement, testNames, artifacts, null, usageSink, cancelled, previousReport, designDocument, specDocument));
         return new SpecFidelityReport(List.copyOf(findings));
     }
 
@@ -443,7 +466,7 @@ public class SpecFidelityCriticService {
             findings.addAll(reviewUnavailable(adaptationChanges, "The generated solution, template, or tests snapshot was missing."));
             return new SpecFidelityReport(List.copyOf(findings));
         }
-        findings.addAll(reviewArtifacts(brief, problemStatement, testNames, artifacts, adaptationChanges, usageSink, cancelled, previousReport, null));
+        findings.addAll(reviewArtifacts(brief, problemStatement, testNames, artifacts, adaptationChanges, usageSink, cancelled, previousReport, null, null));
         return new SpecFidelityReport(List.copyOf(findings));
     }
 
@@ -510,7 +533,7 @@ public class SpecFidelityCriticService {
     /** Runs two bounded, specialized full-artifact review passes and fails closed when either verdict is incomplete. */
     private List<SpecFidelityReport.Finding> reviewArtifacts(@Nullable String brief, @Nullable String problemStatement, List<String> testNames,
             Map<RepositoryType, Map<String, String>> artifacts, @Nullable String adaptationChanges, @Nullable Consumer<ChatResponse> usageSink, BooleanSupplier cancelled,
-            @Nullable SpecFidelityReport previousReport, @Nullable String designDocument) {
+            @Nullable SpecFidelityReport previousReport, @Nullable String designDocument, @Nullable String specDocument) {
         String effectiveBrief = brief == null ? "" : brief.strip();
         if (adaptationChanges != null && adaptationChanges.isBlank()) {
             String requestedChange = effectiveBrief.isBlank() ? "the requested adaptation" : truncate(effectiveBrief);
@@ -524,8 +547,11 @@ public class SpecFidelityCriticService {
         if (evidence.truncated()) {
             return reviewUnavailable(adaptationChanges, "The generated artifact set exceeded the bounded review input.");
         }
-        String userPrompt = renderUserPrompt(effectiveBrief, problemStatement, testNames, evidence.text(), adaptationChanges, previousReport, designDocument);
-        String authoritativeSource = effectiveBrief;
+        // The gate-frozen spec joins the brief as AUTHORITY for requirement coverage: written before code, mechanically gated, instructor-visible. The final statement stays
+        // out of the authority pool (it must never authorize its own additions).
+        String authoritativeSource = specDocument == null || specDocument.isBlank() ? effectiveBrief
+                : effectiveBrief + "\n\nAPPROVED SPECIFICATION (written before any code; frozen at the spec gate):\n" + specDocument.strip();
+        String userPrompt = renderUserPrompt(authoritativeSource, problemStatement, testNames, evidence.text(), adaptationChanges, previousReport, designDocument);
         // The contract pass's free-form contradiction/hidden-requirement/invented-requirement findings may legitimately quote the instructor's brief, the produced problem
         // statement, OR the artifact sources themselves: a requirement invented purely inside a test (e.g. an exact exception-message assertion no statement sentence supports)
         // is only ever visible in test code, and requiring its quote to appear in brief+statement silently abstained every such finding. Grounding remains an anti-fabrication

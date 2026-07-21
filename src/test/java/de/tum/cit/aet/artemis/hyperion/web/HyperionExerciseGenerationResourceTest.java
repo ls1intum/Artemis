@@ -409,7 +409,7 @@ class HyperionExerciseGenerationResourceTest {
     @Test
     void getExerciseGenerationStatus_preservesDesignDocumentThroughTheRevertInfoRemap() {
         ExerciseGenerationStatusDTO status = new ExerciseGenerationStatusDTO("job-42", false, GenerationMode.GENERATE, List.of(), List.of(), false, null, null, true, false,
-                "## Classes\n| Foo | role |");
+                "## Classes\n| Foo | role |", "# Spec\n## Rules\n- R1");
         when(programmingExerciseRepository.findWithAllParticipationsAndBuildConfigById(1L)).thenReturn(Optional.of(testExercise));
         when(userRepository.getUserWithGroupsAndAuthorities()).thenReturn(testUser);
         when(jobService.getStatus(testUser, testExercise)).thenReturn(Optional.of(status));

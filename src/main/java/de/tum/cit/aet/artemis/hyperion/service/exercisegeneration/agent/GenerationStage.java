@@ -12,6 +12,12 @@ package de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent;
  */
 public enum GenerationStage {
 
+    /**
+     * Write {@code /workspace/SPEC.md}: the behavioural specification — archetype, numbered rules with real computation, and a worked-examples table whose arithmetic is
+     * machine-checked in the sandbox. Run only when no non-trivial instructor statement exists; an instructor draft IS the spec.
+     */
+    SPEC("spec", "Specification"),
+
     /** Write {@code /workspace/DESIGN.md}: the class table, public API, task/test-partition table, and diagram decision the later stages build from. */
     DESIGN("design", "Design"),
 

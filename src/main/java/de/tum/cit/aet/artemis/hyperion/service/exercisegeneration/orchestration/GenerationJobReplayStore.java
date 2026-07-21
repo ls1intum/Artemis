@@ -60,7 +60,7 @@ final class GenerationJobReplayStore {
         try {
             GenerationJobService.JobTranscript previousTranscript = transcriptMap.get(key);
             GenerationJobService.JobFileChangeIndex previousFileChanges = fileChangeMap.get(key);
-            GenerationJobService.JobTranscript currentTranscript = new GenerationJobService.JobTranscript(jobId, userLogin, exerciseId, mode, new ArrayList<>(), false, null);
+            GenerationJobService.JobTranscript currentTranscript = new GenerationJobService.JobTranscript(jobId, userLogin, exerciseId, mode, new ArrayList<>(), false, null, null);
             GenerationJobService.JobFileChangeIndex currentFileChanges = new GenerationJobService.JobFileChangeIndex(jobId, userLogin, new ArrayList<>());
             StartedReplay replay = new StartedReplay(currentTranscript, currentFileChanges, previousTranscript, previousFileChanges);
             try {
@@ -135,7 +135,7 @@ final class GenerationJobReplayStore {
                 events.remove(1);
             }
             transcriptMap.set(key, new GenerationJobService.JobTranscript(transcript.jobId(), transcript.userLogin(), transcript.exerciseId(), transcript.mode(), events,
-                    terminal || transcript.done(), transcript.designDocument()));
+                    terminal || transcript.done(), transcript.designDocument(), transcript.specDocument()));
             return true;
         }
         finally {
@@ -159,7 +159,7 @@ final class GenerationJobReplayStore {
                 return false;
             }
             transcriptMap.set(key, new GenerationJobService.JobTranscript(transcript.jobId(), transcript.userLogin(), transcript.exerciseId(), transcript.mode(),
-                    transcript.events(), transcript.done(), truncateDesignDocument(designDocument)));
+                    transcript.events(), transcript.done(), truncateDesignDocument(designDocument), transcript.specDocument()));
             return true;
         }
         finally {
@@ -169,6 +169,26 @@ final class GenerationJobReplayStore {
 
     private static String truncateDesignDocument(String designDocument) {
         return designDocument.length() <= MAX_DESIGN_DOCUMENT_LENGTH ? designDocument : designDocument.substring(0, MAX_DESIGN_DOCUMENT_LENGTH) + DESIGN_DOCUMENT_TRUNCATION_MARKER;
+    }
+
+    boolean recordSpecDocument(long exerciseId, String jobId, String specDocument) {
+        String key = key(exerciseId);
+        jobMap.lock(key);
+        try {
+            if (!isActiveJob(key, jobId)) {
+                return false;
+            }
+            GenerationJobService.JobTranscript transcript = transcriptMap.get(key);
+            if (transcript == null || !transcript.jobId().equals(jobId) || transcript.done()) {
+                return false;
+            }
+            transcriptMap.set(key, new GenerationJobService.JobTranscript(transcript.jobId(), transcript.userLogin(), transcript.exerciseId(), transcript.mode(),
+                    transcript.events(), transcript.done(), transcript.designDocument(), truncateDesignDocument(specDocument)));
+            return true;
+        }
+        finally {
+            jobMap.unlock(key);
+        }
     }
 
     boolean recordFileChange(long exerciseId, String jobId, ExerciseGenerationFileChangeDTO fileChange) {
@@ -227,7 +247,8 @@ final class GenerationJobReplayStore {
                             ownedByCaller && active.cancellable()));
                 }
                 return Optional.of(new ExerciseGenerationStatusDTO(transcript.jobId(), !transcript.done(), transcript.mode(), transcript.events(),
-                        latestFileChangesFor(key, transcript.jobId()), false, null, null, true, !transcript.done() && active.cancellable(), transcript.designDocument()));
+                        latestFileChangesFor(key, transcript.jobId()), false, null, null, true, !transcript.done() && active.cancellable(), transcript.designDocument(),
+                        transcript.specDocument()));
             }
             if (transcript == null) {
                 return Optional.empty();
@@ -240,7 +261,7 @@ final class GenerationJobReplayStore {
                 return Optional.of(new ExerciseGenerationStatusDTO(transcript.jobId(), false, transcript.mode(), List.of(terminal), List.of(), false, null, null, false, false));
             }
             return Optional.of(new ExerciseGenerationStatusDTO(transcript.jobId(), false, transcript.mode(), transcript.events(), latestFileChangesFor(key, transcript.jobId()),
-                    false, null, null, true, false, transcript.designDocument()));
+                    false, null, null, true, false, transcript.designDocument(), transcript.specDocument()));
         }
         finally {
             jobMap.unlock(key);
@@ -289,7 +310,7 @@ final class GenerationJobReplayStore {
             events.remove(1);
         }
         transcriptMap.set(key, new GenerationJobService.JobTranscript(transcript.jobId(), transcript.userLogin(), transcript.exerciseId(), transcript.mode(), events, true,
-                transcript.designDocument()));
+                transcript.designDocument(), transcript.specDocument()));
         return cancellationEvent;
     }
 
@@ -299,7 +320,7 @@ final class GenerationJobReplayStore {
         if (transcript != null && transcript.jobId().equals(jobId)) {
             GenerationJobService.JobTranscript retainedTranscript = transcript.done() ? transcript
                     : new GenerationJobService.JobTranscript(transcript.jobId(), transcript.userLogin(), transcript.exerciseId(), transcript.mode(), transcript.events(), true,
-                            transcript.designDocument());
+                            transcript.designDocument(), transcript.specDocument());
             transcriptMap.set(key, retainedTranscript, TERMINAL_REPLAY_TTL_SECONDS, TimeUnit.SECONDS);
         }
         retainFileChangesForTerminalReplay(key, jobId);
@@ -317,7 +338,7 @@ final class GenerationJobReplayStore {
                 events.remove(1);
             }
             transcriptMap.set(key, new GenerationJobService.JobTranscript(transcript.jobId(), transcript.userLogin(), transcript.exerciseId(), transcript.mode(), events, true,
-                    transcript.designDocument()));
+                    transcript.designDocument(), transcript.specDocument()));
         }
     }
 

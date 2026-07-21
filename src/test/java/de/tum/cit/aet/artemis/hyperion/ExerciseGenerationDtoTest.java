@@ -108,11 +108,11 @@ class ExerciseGenerationDtoTest {
     @Test
     void status_omitsDesignDocumentWhenAbsent_butIncludesItWhenCaptured() throws Exception {
         JsonNode withoutDesignDocument = mapper
-                .readTree(mapper.writeValueAsString(new ExerciseGenerationStatusDTO("job", false, null, List.of(), List.of(), true, null, null, true, false, null)));
+                .readTree(mapper.writeValueAsString(new ExerciseGenerationStatusDTO("job", false, null, List.of(), List.of(), true, null, null, true, false, null, null)));
         assertThat(withoutDesignDocument.has("designDocument")).isFalse();
 
-        JsonNode withDesignDocument = mapper.readTree(
-                mapper.writeValueAsString(new ExerciseGenerationStatusDTO("job", false, null, List.of(), List.of(), true, null, null, true, false, "## Classes\n| Foo | role |")));
+        JsonNode withDesignDocument = mapper.readTree(mapper
+                .writeValueAsString(new ExerciseGenerationStatusDTO("job", false, null, List.of(), List.of(), true, null, null, true, false, "## Classes\n| Foo | role |", null)));
         assertThat(withDesignDocument.get("designDocument").asText()).isEqualTo("## Classes\n| Foo | role |");
     }
 }

@@ -300,7 +300,7 @@ public class SandboxAgentTools implements SubmitVetoAware {
             return invalidPathError(path);
         }
         if (!isWritableGenerationPath(safe)) {
-            return "ERROR: write only DESIGN.md, problem-statement.md, or files inside solution/, template/, or tests/. Workspace build infrastructure is managed by Artemis.";
+            return "ERROR: write only SPEC.md, DESIGN.md, problem-statement.md, or files inside solution/, template/, or tests/. Workspace build infrastructure is managed by Artemis.";
         }
         if (isManagedBuildInfrastructurePath(safe)) {
             return immutableHarnessError(safe);
@@ -463,7 +463,7 @@ public class SandboxAgentTools implements SubmitVetoAware {
             return invalidPathError(path);
         }
         if (!isWritableGenerationPath(safe)) {
-            return "ERROR: delete only DESIGN.md, problem-statement.md, or files inside solution/, template/, or tests/. Workspace build infrastructure is managed by Artemis.";
+            return "ERROR: delete only SPEC.md, DESIGN.md, problem-statement.md, or files inside solution/, template/, or tests/. Workspace build infrastructure is managed by Artemis.";
         }
         if (isManagedBuildInfrastructurePath(safe)) {
             return immutableHarnessError(safe);
@@ -781,7 +781,8 @@ public class SandboxAgentTools implements SubmitVetoAware {
      * (unstaged) sessions and every staged one — whenever a later stage forces a design change.
      */
     private static boolean isWritableGenerationPath(String safe) {
-        return safe.equals("DESIGN.md") || safe.equals("problem-statement.md") || safe.startsWith("solution/") || safe.startsWith("template/") || safe.startsWith("tests/");
+        return safe.equals("DESIGN.md") || safe.equals("SPEC.md") || safe.equals("problem-statement.md") || safe.startsWith("solution/") || safe.startsWith("template/")
+                || safe.startsWith("tests/");
     }
 
     private static String immutableHarnessError(String safe) {

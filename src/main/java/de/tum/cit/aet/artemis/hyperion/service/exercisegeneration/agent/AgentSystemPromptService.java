@@ -66,7 +66,7 @@ public class AgentSystemPromptService {
             verifier rejects that outright. If a member cannot be stubbed without cascading failures (constructors, shared plumbing), provide it implemented in the template and
             do not bind a behavioural test to it (starter credit, rule 5).
             3. Run the same meaningful tests against solution and template. Cover central behaviour, representative boundaries, state transitions, and stated errors. Use
-            non-degenerate witnesses that distinguish plausible wrong implementations. Do not use @DisplayName because Artemis binds reported method names.
+            non-degenerate witnesses that distinguish plausible wrong implementations.
             4. Every observable statement promise needs executable evidence, and every behavioural assertion a stated rule. Preserve pedagogical objectives that black-box tests cannot prove;
             do not add brittle implementation-detail tests. Narrow unsupported observable claims, not teaching objectives.
             5. Keep student work focused on the stated learning objective. Provide routine data-holder constructors and accessors in the template unless implementing them is an explicit,
@@ -132,25 +132,35 @@ public class AgentSystemPromptService {
 
     private static final String STAGED_WORKFLOW_INTRO = """
             Author the exercise in this dependency order — design, then solution, then the template derived from it, then differential tests, then the statement last —
-            because each stage needs the previous stage's real output, not a guess: the exercise source and test roots are clean; preserve the supplied harness and build files.
+            each stage needs the previous stage's real output: the exercise source and test roots are clean; preserve the supplied harness and build files.
 
             """;
 
+    private static final String STAGE_SPEC_INSTRUCTIONS = """
+            STAGE — SPECIFICATION: before any design or code, write `/workspace/SPEC.md` (workspace root only; never persisted into any repository): the archetype you chose
+            (per the style guide's menu, or "none of these" with a reason), `## Rules` — every graded behaviour as a numbered rule (R1, R2, ...) carrying REAL computation a
+            plausible wrong implementation would get wrong (a rule whose correct answer is copying a literal from the spec is not a rule), and `## Worked Examples` — a table
+            (| Rules | Input | Expected |) with at least two rows per central rule whose expected results DIFFER. Verify every row's arithmetic by computing it in the sandbox
+            (a throwaway script under /tmp) before writing it down. No [task] bindings, no test names, no diagrams, no class design beyond what the rules force. Update SPEC.md
+            whenever a later stage proves a rule wrong — it must always describe the final exercise truthfully.
+            """;
+
     private static final String STAGE_0_DESIGN_INSTRUCTIONS = """
-            STAGE 0 — DESIGN FIRST: before touching any repository, write `/workspace/DESIGN.md` (workspace root only; never persisted into solution, template, or tests)
+            STAGE 0 — DESIGN FIRST: before touching any repository, write `/workspace/DESIGN.md` (workspace root only; never persisted into solution, template, or tests) from the
+            specification (SPEC.md if present, else the instructor statement)
             with exactly these sections: `## Classes` (a table: name | role | given-complete-in-template | student-implements-stubbed | student-creates-absent-from-template),
             `## Public API` (signatures only), `## Tasks` (one row per seam — an independently actionable student-work unit, e.g. a method/class/behavior cluster —
             grouping every test partition it needs; never one row per test, never one for the whole exercise unless it is genuinely one seam), `## Diagram` (yes/no + one-line why —
-            yes for multiple collaborating or student-created types; no for a single class). Record which class owns each piece of mutable state and whether it survives object replacement
-            (e.g. a strategy switch) — later stages may only demand what that ownership allows. Choose the smallest
-            design the source requirements support; do not create one test or task per sentence. Update DESIGN.md whenever a later stage forces a design change — it must
+            yes for multiple collaborating or student-created types; no for a single class). Record which class owns each piece of mutable state and whether it
+            survives object replacement — later stages may only demand what that ownership allows. Choose the smallest
+            design the source requirements support. Update DESIGN.md whenever a later stage forces a design change — it must
             always describe the final exercise truthfully.
             """;
 
     private static final String STAGE_1_SOLUTION_INSTRUCTIONS = """
             STAGE 1 — SOLUTION: implement the reference solution per DESIGN.md. The solution must exemplify the design it teaches: never bypass an
-            abstraction it defines (e.g. instanceof on one concrete implementation instead of delegating through the interface) — that means the design is wrong; fix the
-            design. Execute every worked example from the requirements against the real solution in the
+            abstraction it defines (e.g. instanceof on one concrete implementation instead of delegating through the interface) — fix the design instead.
+            Execute every worked example from the requirements against the real solution in the
             sandbox (throwaway under /tmp) and fix the SOLUTION or the EXAMPLE when they disagree — never patch code to match a wrong number.
             Write complete Javadoc on every public member now; the template inherits it verbatim — never defer docs to that stage.
             """;
@@ -170,11 +180,12 @@ public class AgentSystemPromptService {
             passable by completing the template's TODOs within the scaffolded structure; one that forces restructuring means the design is wrong — fix template and
             solution first. Assert exception types, never message strings, unless the statement fixes the exact message. If a differential
             run exposes a solution or template defect, fix it there, re-check that stage's guarantees (examples still replay, docs still byte-identical), and record the
-            change in DESIGN.md; rewrite DESIGN.md before continuing if the design itself proves wrong twice.
+            change in DESIGN.md; rewrite DESIGN.md if the design proves wrong twice.
             """;
 
     private static final String STAGE_4_STATEMENT_INSTRUCTIONS = """
-            STAGE 4 — STATEMENT: write the statement last, from DESIGN.md and the verified test names: one `[task]` line per DESIGN.md seam using the exact reported
+            STAGE 4 — STATEMENT: write the statement last by REWRITING the specification into student-facing form — keep its rules and examples, never add graded
+            behaviour beyond it — using DESIGN.md and the verified test names: one `[task]` line per DESIGN.md seam using the exact reported
             names — bind the bare method names exactly as `verify` reports them, never prefixed with a class or package name — the public API presented once and compactly,
             a diagram only if DESIGN.md said yes — placed after the tasks it illustrates; testsColor names resolve like task bindings. Re-read every boundary or edge-case sentence: each must be true of the solution AND covered by a test — otherwise fix the
             artifact or delete the sentence. Never repeat a heading. Then independently replay every worked example, run `verify` once
@@ -301,7 +312,8 @@ public class AgentSystemPromptService {
      */
     private static String stageSection(GenerationStage stage) {
         return switch (stage) {
-            case DESIGN -> STAGE_0_DESIGN_INSTRUCTIONS + "\n" + stylePointer(stage) + STAGE_CLOSE_LINE;
+            case SPEC -> STAGE_SPEC_INSTRUCTIONS + "\n" + stylePointer(stage) + STAGE_CLOSE_LINE;
+            case DESIGN -> earlierStagesLine(stage) + STAGE_0_DESIGN_INSTRUCTIONS + "\n" + stylePointer(stage) + STAGE_CLOSE_LINE;
             case SOLUTION -> earlierStagesLine(stage) + STAGE_1_SOLUTION_INSTRUCTIONS + "\n" + stylePointer(stage) + STAGE_CLOSE_LINE;
             case TEMPLATE ->
                 earlierStagesLine(stage) + STAGE_2_TEMPLATE_INSTRUCTIONS + "\n\n" + TEMPLATE_AS_TEACHING_SCAFFOLD + DIFF_DISCIPLINE + stylePointer(stage) + STAGE_CLOSE_LINE;
@@ -314,11 +326,13 @@ public class AgentSystemPromptService {
     /** One line naming what earlier stages already produced, so the agent orients itself without re-reading the full STAGE 0-4 workflow. Empty for the first stage. */
     private static String earlierStagesLine(GenerationStage stage) {
         String produced = switch (stage) {
-            case DESIGN -> null;
-            case SOLUTION -> "DESIGN.md";
-            case TEMPLATE -> "DESIGN.md and the reference solution";
-            case TESTS -> "DESIGN.md, the reference solution, and the template";
-            case STATEMENT -> "DESIGN.md, the reference solution, the template, and the differential tests";
+            case SPEC -> null;
+            // SPEC.md may be absent (the stage is skipped when the instructor provided a real statement), so DESIGN names it conditionally.
+            case DESIGN -> "SPEC.md (when present — otherwise the instructor's problem statement is the specification)";
+            case SOLUTION -> "the specification and DESIGN.md";
+            case TEMPLATE -> "the specification, DESIGN.md, and the reference solution";
+            case TESTS -> "the specification, DESIGN.md, the reference solution, and the template";
+            case STATEMENT -> "the specification, DESIGN.md, the reference solution, the template, and the differential tests";
         };
         return produced == null ? "" : "Earlier stages already produced: " + produced + ".\n";
     }
@@ -326,6 +340,7 @@ public class AgentSystemPromptService {
     /** This stage's style-guide pointer: the DESIGN stage's schema is its own style guide; every later stage points at its seeded {@code reference/style/} file. */
     private static String stylePointer(GenerationStage stage) {
         String styleFile = switch (stage) {
+            case SPEC -> "spec.md";
             case DESIGN -> "design.md";
             case SOLUTION -> "solution.md";
             case TEMPLATE -> "template.md";
