@@ -44,6 +44,9 @@ class StageCheckServiceTest {
             | task | partitions |
             |------|------------|
             | bar  | typical    |
+
+            ## Diagram
+            no — single-class exercise
             """;
 
     /** Serves canned {@code cat}/{@code diff} output; every other command succeeds with empty output. */

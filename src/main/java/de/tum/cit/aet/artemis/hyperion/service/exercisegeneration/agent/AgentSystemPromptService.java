@@ -214,13 +214,17 @@ public class AgentSystemPromptService {
 
             """;
 
+    /** The one canonical statement of the seeded-harness immutability rule, shared by both prompt families so the wording can never drift between them again. */
+    private static final String HARNESS_IMMUTABILITY_RULE = "Build manifests, wrappers, plugins, reporter configuration, commands, placeholders, and report paths in solution/, "
+            + "template/, and tests/ are seeded and managed by Artemis; never edit or replace them.";
+
     private static final String STAGE_TOOLS_NOTE = """
             TOOLS
             Your tools are bash, read_file, write_file, edit_file, delete_file, verify, and submit. Use write_file/edit_file to change files — there is no apply_patch tool; never call
-            it directly or through bash. Build manifests, wrappers, plugins, reporter configuration, and report paths in solution/, template/, and tests/ are seeded and managed by
-            Artemis; never edit or replace them. Never fabricate build or test results.
+            it directly or through bash. %s Never fabricate build or test results.
 
-            """;
+            """
+            .formatted(HARNESS_IMMUTABILITY_RULE);
 
     /**
      * How often and how cheaply to call {@code verify}/{@code submit} in the staged workflow: every stage's check is delegated to {@link StageCheckService} at that stage's own
@@ -284,8 +288,11 @@ public class AgentSystemPromptService {
      * @return the stage-scoped system prompt
      */
     public String buildStage(ProgrammingExercise exercise, GenerationStage stage) {
+        // The SCA constraint binds the SOLUTION (must be lint-clean) and is re-checked by the TESTS-stage differential; without it here, a staged run only learned about SCA
+        // when the differential rejected an already-finished solution — guaranteed late rework.
+        String scaGuidance = stage == GenerationStage.SOLUTION || stage == GenerationStage.TESTS ? staticCodeAnalysisGuidance(exercise) : "";
         return STAGE_INTRO + SECURITY_BOUNDARY + workspaceSection(exercise, GenerationMode.GENERATE) + THE_CONTRACT + STAGE_TOOLS_NOTE + STAGE_VERIFICATION_CADENCE
-                + stageSection(stage) + LanguageGenerationProfile.guidanceFor(exercise);
+                + stageSection(stage) + scaGuidance + LanguageGenerationProfile.guidanceFor(exercise);
     }
 
     /**
@@ -370,11 +377,10 @@ public class AgentSystemPromptService {
         return """
                 LAYOUT AND HARNESS
                 The verifier checks the assignment out under `assignment/` beside the tests. Read the existing Maven/Gradle harness to learn its source layout, package, and expected test filenames,
-                then place solution, template, and test sources accordingly. Preserve package names across repositories. Build manifests, wrappers, plugins, reporter configuration, commands,
-                placeholders, and report paths in all three repositories are seeded and managed by Artemis; do not edit or replace them. %s%s
+                then place solution, template, and test sources accordingly. Preserve package names across repositories. %s %s%s
 
                 """
-                .formatted(testSourceGuidance, staticCodeAnalysisGuidance(exercise));
+                .formatted(HARNESS_IMMUTABILITY_RULE, testSourceGuidance, staticCodeAnalysisGuidance(exercise));
     }
 
     private static String groundedWorkflowSection(String groundedWorkflow) {

@@ -46,7 +46,7 @@ public class StageCheckService {
 
     private static final Duration DIFF_TIMEOUT = Duration.ofMinutes(5);
 
-    private static final List<String> REQUIRED_DESIGN_HEADINGS = List.of("## Classes", "## Public API", "## Tasks");
+    private static final List<String> REQUIRED_DESIGN_HEADINGS = List.of("## Classes", "## Public API", "## Tasks", "## Diagram");
 
     /** Bound on how many extracted build-error lines a compile-failure observation carries, so a noisy build log cannot flood the agent's context. */
     private static final int MAX_ERROR_LINES = 15;

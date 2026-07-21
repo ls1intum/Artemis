@@ -383,8 +383,9 @@ class GenerationWorkspaceServiceTest {
             return null;
         }).when(sandbox).copyIn(eq("session"), eq("/workspace"), any());
         GenerationWorkspaceService service = new GenerationWorkspaceService(mock(), mock(), mock(), mock(), tempFileUtilService());
+        ProgrammingExercise exercise = new ProgrammingExercise();
 
-        service.materializeRepositoryFiles(sandbox, "session",
+        service.materializeRepositoryFiles(sandbox, "session", exercise, GenerationMode.ADAPT,
                 Map.of(RepositoryType.SOLUTION, Map.of("gradlew", "#!/bin/sh\n", "src/Main.java", "class Main {}"), RepositoryType.TESTS,
                         Map.of("test/MainTest.java", "class MainTest {}")),
                 Map.of(RepositoryType.SOLUTION, new GenerationWorkspaceService.RepositorySeedMetadata(Map.of("tool.bin", WorkspaceArchive.sha256(binary)), Set.of("gradlew"))),
@@ -404,8 +405,9 @@ class GenerationWorkspaceServiceTest {
             return null;
         }).when(sandbox).copyIn(eq("session"), eq("/workspace"), any());
         GenerationWorkspaceService service = new GenerationWorkspaceService(mock(), mock(), mock(), mock(), tempFileUtilService());
+        ProgrammingExercise exercise = new ProgrammingExercise();
 
-        service.materializeRepositoryFiles(sandbox, "session", Map.of(), Map.of(), Map.of(), "# Restored\n", "# Design\n");
+        service.materializeRepositoryFiles(sandbox, "session", exercise, GenerationMode.ADAPT, Map.of(), Map.of(), Map.of(), "# Restored\n", "# Design\n");
     }
 
     @Test

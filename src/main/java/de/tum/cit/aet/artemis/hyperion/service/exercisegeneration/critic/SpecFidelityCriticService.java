@@ -507,10 +507,13 @@ public class SpecFidelityCriticService {
         }
         String userPrompt = renderUserPrompt(effectiveBrief, problemStatement, testNames, evidence.text(), adaptationChanges, previousReport);
         String authoritativeSource = effectiveBrief;
-        // The contract pass's free-form contradiction/hidden-requirement/invented-requirement findings may legitimately quote either the instructor's brief or the produced
-        // problem statement (e.g. an invented requirement is, by construction, only ever stated in the produced statement). The oracle pass's requirement-coverage claims
-        // (uncovered/weakOracle/mutantChecks) keep the narrower brief-only source: the produced statement must never be able to authorize its own additions there.
-        String contractGroundingSource = problemStatement == null || problemStatement.isBlank() ? authoritativeSource : authoritativeSource + "\n\n" + problemStatement.strip();
+        // The contract pass's free-form contradiction/hidden-requirement/invented-requirement findings may legitimately quote the instructor's brief, the produced problem
+        // statement, OR the artifact sources themselves: a requirement invented purely inside a test (e.g. an exact exception-message assertion no statement sentence supports)
+        // is only ever visible in test code, and requiring its quote to appear in brief+statement silently abstained every such finding. Grounding remains an anti-fabrication
+        // check (the quote must literally exist somewhere real), not a statement of authority. The oracle pass's requirement-coverage claims (uncovered/weakOracle/mutantChecks)
+        // keep the narrower brief-only source: the produced statement and tests must never be able to authorize their own additions there.
+        String contractGroundingSource = (problemStatement == null || problemStatement.isBlank() ? authoritativeSource : authoritativeSource + "\n\n" + problemStatement.strip())
+                + "\n\n" + evidence.text();
         if (userPrompt.length() > MAX_REVIEW_INPUT_CHARS) {
             return reviewUnavailable(adaptationChanges, "The complete review input exceeded its bounded size.");
         }
@@ -1015,8 +1018,12 @@ public class SpecFidelityCriticService {
         }
         StringBuilder builder = new StringBuilder();
         if (report.hasBlockingFindings()) {
-            builder.append("\n\nExercise-quality issues that you must fix before saving:");
-            report.findings().stream().filter(SpecFidelityReport.Finding::isBlocking).forEach(finding -> appendRetryFinding(builder, finding));
+            builder.append("\n\nExercise-quality issues that you must fix before saving, in priority order — requirements-level findings first; only then scaffold polish:");
+            // Requirements-level findings (contradictions, invented/hidden requirements, weak oracles) decide whether the exercise is RIGHT; TEMPLATE_QUALITY_GAP findings only
+            // polish the scaffold. Rendering them in that order stops a repair attempt from spending its turns on placement nits while a design defect survives.
+            report.findings().stream().filter(SpecFidelityReport.Finding::isBlocking)
+                    .sorted(java.util.Comparator.comparing(finding -> finding.kind() == SpecFidelityReport.Kind.TEMPLATE_QUALITY_GAP ? 1 : 0))
+                    .forEach(finding -> appendRetryFinding(builder, finding));
         }
         if (report.findings().stream().anyMatch(finding -> !finding.isBlocking())) {
             builder.append(report.hasBlockingFindings() ? "\n\nOptional quality improvements (do not expand the requested adaptation to address these):"

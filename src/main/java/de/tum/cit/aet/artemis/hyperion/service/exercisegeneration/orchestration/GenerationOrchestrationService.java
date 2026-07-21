@@ -2,10 +2,12 @@ package de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration
 
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -22,6 +24,7 @@ import org.eclipse.jgit.diff.RawTextComparator;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.ai.chat.messages.Message;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Conditional;
@@ -41,6 +44,7 @@ import de.tum.cit.aet.artemis.hyperion.dto.GenerationMode;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.AgentLoopResult;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.AgentLoopRunner;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.AgentSystemPromptService;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.AgentTranscriptWriter;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.FileChangeEmittingAgentTools;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.SandboxAgentTools;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.critic.SpecFidelityCriticService;
@@ -85,6 +89,13 @@ public class GenerationOrchestrationService {
     /** First attempt plus three bounded repair iterations, leaving room for a semantic repair after mechanical setup problems. */
     private static final int MAX_GENERATION_ATTEMPTS = 4;
 
+    /**
+     * Total wall-clock ceiling for one generation run across ALL attempts. The staged first attempt has its own 22-minute guard (see StagedGenerationRunner), but repair
+     * attempts previously had none — a run's time was unbounded exactly where, empirically, most of it is spent. Checked before starting each repair attempt; the current
+     * candidate and verification state proceed to the normal outcome path.
+     */
+    private static final Duration TOTAL_WALL_CLOCK_BUDGET = Duration.ofMinutes(35);
+
     /** Best-effort read timeout for capturing {@code DESIGN.md} once after the agent loop finishes, for {@link GenerationOutcome#designDocument()}. */
     private static final Duration DESIGN_DOCUMENT_READ_TIMEOUT = Duration.ofSeconds(30);
 
@@ -116,6 +127,8 @@ public class GenerationOrchestrationService {
     // so it applies only where its Java-only, single-language contract holds (see the applicability check at the call site).
     private final StagedGenerationRunner stagedGenerationRunner;
 
+    private final AgentTranscriptWriter transcriptWriter;
+
     private final boolean stagedGenerationEnabled;
 
     // Wired into SandboxAgentTools so a staged session's verify/submit tools can dispatch to the current stage's mechanical check; unused by an unstaged (legacy) session, which
@@ -126,7 +139,8 @@ public class GenerationOrchestrationService {
             DifferentialVerificationService verifier, AgentSystemPromptService systemPromptService, StructuralOracleSeedingService structuralOracleSeeder,
             SpecFidelityCriticService specFidelityCritic, GenerationJobService jobService, Optional<ProgrammingExerciseTestCaseRepository> testCaseRepository,
             @Value("${artemis.hyperion.agent.max-turns:60}") int maxTurns, StagedGenerationRunner stagedGenerationRunner,
-            @Value("${artemis.hyperion.agent.staged-generation:true}") boolean stagedGenerationEnabled, StageCheckService stageCheckService) {
+            @Value("${artemis.hyperion.agent.staged-generation:true}") boolean stagedGenerationEnabled, StageCheckService stageCheckService,
+            AgentTranscriptWriter transcriptWriter) {
         if (maxTurns <= 0) {
             throw new IllegalArgumentException("artemis.hyperion.agent.max-turns must be positive");
         }
@@ -143,6 +157,7 @@ public class GenerationOrchestrationService {
         this.stagedGenerationRunner = stagedGenerationRunner;
         this.stagedGenerationEnabled = stagedGenerationEnabled;
         this.stageCheckService = stageCheckService;
+        this.transcriptWriter = transcriptWriter;
     }
 
     private InteractiveSandbox requireSandbox() {
@@ -241,6 +256,11 @@ public class GenerationOrchestrationService {
 
             String currentPrompt = firstPrompt;
             AgentLoopResult loopResult = null;
+            // One logical conversation spans the whole run: the staged first attempt hands its conversation out, and every repair attempt continues it (with compaction) instead
+            // of starting blind and re-reading the workspace it just produced. Stays null when the first attempt ran FRESH staged context or the legacy path produced none.
+            List<Message> carriedConversation = null;
+            int totalAgentTurns = 0;
+            Instant runStartedAt = Instant.now();
             VerificationResult verification = null;
             // The final attempt's produced files and problem statement ride the outcome so persist reuses them instead of re-reading the sandbox (verification already extracted
             // them for the integrity gates). Overwritten each attempt so the outcome carries the last (accepted or exhausted) attempt's tree.
@@ -251,20 +271,35 @@ public class GenerationOrchestrationService {
             @Nullable
             VerificationRequest lastRejectedVerificationRequest = null;
             for (int attempt = 1; attempt <= MAX_GENERATION_ATTEMPTS; attempt++) {
+                if (attempt > 1 && Duration.between(runStartedAt, Instant.now()).compareTo(TOTAL_WALL_CLOCK_BUDGET) > 0) {
+                    emit(progress, "The generation time budget is used up; keeping the current candidate instead of starting repair attempt " + attempt + ".");
+                    break;
+                }
                 // Staged authoring applies to the FIRST attempt only: retry attempts carry a targeted repair prompt (verification reasons / critic findings), and the
                 // between-attempt workspace reset discards DESIGN.md — re-running the design stage against a repair brief fails its gate by construction. Repairs run the
                 // legacy single loop, which is built for surgical fixes on an existing workspace.
                 boolean stagedAttempt = useStagedGeneration && attempt == 1;
-                loopResult = stagedAttempt
-                        ? stagedGenerationRunner.run(exercise, baseTools, tools, currentPrompt, testsSeedSnapshot, sandbox, activeSessionId, cancelled, effectiveUsageSink,
-                                progress, () -> structuralOracleSeeder.seedIfStructuralDiff(sandbox, activeSessionId, exercise))
-                        : agentLoopRunner.run(systemPrompt, currentPrompt, tools, maxTurns, cancelled, effectiveUsageSink, progress);
+                if (stagedAttempt) {
+                    StagedGenerationRunner.StagedRunOutcome stagedOutcome = stagedGenerationRunner.run(exercise, baseTools, tools, currentPrompt, testsSeedSnapshot, sandbox,
+                            activeSessionId, cancelled, effectiveUsageSink, progress, () -> structuralOracleSeeder.seedIfStructuralDiff(sandbox, activeSessionId, exercise));
+                    loopResult = stagedOutcome.result();
+                    carriedConversation = stagedOutcome.conversation();
+                }
+                else {
+                    AgentLoopRunner.AgentLoopSession session = agentLoopRunner.runSession(systemPrompt, carriedConversation, currentPrompt, tools, maxTurns, cancelled,
+                            effectiveUsageSink, progress);
+                    loopResult = session.result();
+                    carriedConversation = session.conversation();
+                    transcriptWriter.write(exercise.getId(),
+                            "attempt-" + attempt + (attempt == 1 ? "-single-loop-" : "-repair-") + loopResult.status().name().toLowerCase(Locale.ROOT), carriedConversation);
+                }
+                totalAgentTurns += loopResult.turns();
                 if (stagedAttempt) {
                     // Unstage the shared tools instance again: a later repair attempt (below) reuses it through the legacy single-loop path, which must see currentStage back at
                     // null rather than left at whichever stage the staged run last entered (STAGE_CHECK dispatch would otherwise leak into the repair loop's verify/submit).
                     baseTools.exitStagedGeneration();
                 }
-                log.info("Exercise generation attempt {} took {} turn(s)", attempt, loopResult.turns());
+                log.info("Exercise generation attempt {} took {} turn(s); {} turn(s) total so far", attempt, loopResult.turns(), totalAgentTurns);
 
                 if (loopResult.status() == AgentLoopResult.Status.CANCELLED) {
                     if (lastMechanicallyVerifiedCandidate != null) {
@@ -363,7 +398,7 @@ public class GenerationOrchestrationService {
                     activeSandbox.resetSession(activeSessionId);
                     // /workspace is a tmpfs (see GenerationWorkspaceService#materializeRepositoryFiles), so the reset wipes problem-statement.md too; re-seed it alongside the
                     // repositories or the next attempt's extraction fails with "the generated problem statement is missing".
-                    workspace.materializeRepositoryFiles(activeSandbox, activeSessionId, candidateFiles, activeWorkspaceSeed.repositoryMetadata(),
+                    workspace.materializeRepositoryFiles(activeSandbox, activeSessionId, exercise, mode, candidateFiles, activeWorkspaceSeed.repositoryMetadata(),
                             activeWorkspaceSeed.repositoryBinaryFiles(), candidateProblemStatement, designDocumentSnapshot);
                 };
                 verification = verifyWithInfrastructureRetry(sandbox, sessionId, exercise, verificationRequest, restoreCandidate, cancelled, progress);
@@ -422,7 +457,8 @@ public class GenerationOrchestrationService {
                     }
                     emit(progress, "Mechanical verification passed, but the exercise review found requirements or quality issues; asking the AI to correct them.");
                     String scopeGuidance = mode == GenerationMode.ADAPT ? " Preserve all content outside the requested adaptation." : "";
-                    currentPrompt = "Your previous attempt passed mechanical verification, but the automated full-artifact review found review blockers." + scopeGuidance
+                    currentPrompt = attemptFraming(attempt) + "Your previous attempt passed mechanical verification, but the automated full-artifact review found review blockers."
+                            + scopeGuidance
                             + " Preserve the mechanically correct work: do not restart or rewrite unrelated files. Re-read the cited artifacts and repair them to match the source requirements and "
                             + "remove unsupported candidate choices identified by the review. Make the smallest coherent repair across the statement, solution, template, and tests. Keep every unaffected "
                             + "requirement, API, test, and example. Re-run `sh verify.sh solution` and `sh verify.sh template`, then call submit again.\n\nThe instructor "
@@ -431,7 +467,7 @@ public class GenerationOrchestrationService {
                 }
                 emit(progress, "Verification rejected the exercise; asking the agent to fix the issues and try again.");
                 // The hard rejection (must fix) plus the advisory findings, the latter framed so the rejection is prioritised.
-                currentPrompt = "Your previous attempt was rejected by the differential verifier:\n" + verification.report()
+                currentPrompt = attemptFraming(attempt) + "Your previous attempt was rejected by the differential verifier:\n" + verification.report()
                         + "\n\nThe workspace still contains all your files. Read the relevant files, fix exactly these issues, re-run `sh verify.sh solution` and "
                         + "`sh verify.sh template` to confirm, then call submit again. If a reason names a forbidden, duplicate, or abandoned path, delete it; replacing it with a "
                         + "placeholder does not remove the violation. Make the smallest coherent repair, leave unrelated files unchanged, and preserve the source requirements below.\n\n"
@@ -448,6 +484,7 @@ public class GenerationOrchestrationService {
                 specFidelityReport = lastMechanicallyVerifiedCandidate.reviewReport();
             }
 
+            emit(progress, "The run used " + totalAgentTurns + " agent turn(s) in total.");
             return new GenerationOutcome(loopResult, verification, sessionId, this, sandbox, producedFilesByType, producedProblemStatement, specFidelityReport,
                     workspaceSeed.repositoryHeads(), readDesignDocument(sandbox, sessionId));
         }
@@ -497,6 +534,17 @@ public class GenerationOrchestrationService {
     }
 
     private record ExtractedCandidate(AgentLoopResult loopResult, Map<RepositoryType, Map<String, String>> producedFiles, String problemStatement) {
+    }
+
+    /**
+     * Frames a repair prompt with where the run stands, so the model can triage: on the final attempt it must prioritise blocking findings instead of treating every attempt
+     * identically (previously it had no signal that this was its last chance).
+     */
+    private static String attemptFraming(int attempt) {
+        int repairAttempt = attempt;   // the prompt built after attempt N drives attempt N+1
+        boolean finalAttempt = repairAttempt + 1 >= MAX_GENERATION_ATTEMPTS;
+        return "Repair attempt " + (repairAttempt + 1) + " of " + MAX_GENERATION_ATTEMPTS
+                + (finalAttempt ? " — this is the FINAL attempt; prioritise the blocking findings (especially any repeated from earlier reviews) over cosmetic ones. " : ". ");
     }
 
     private GenerationOutcome preserveCandidate(CandidateSnapshot candidate, InteractiveSandbox sandbox, String sessionId, GenerationWorkspaceService.WorkspaceSeed workspaceSeed) {

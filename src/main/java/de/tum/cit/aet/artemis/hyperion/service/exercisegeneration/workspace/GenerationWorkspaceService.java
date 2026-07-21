@@ -538,15 +538,27 @@ public class GenerationWorkspaceService {
      * @param filesByRepository     the canonical repository text files
      * @param repositoryMetadata    seeded file metadata used to preserve executable modes
      * @param repositoryBinaryFiles the canonical repository binary files, written back verbatim alongside the text files
+     * @param exercise              the exercise whose workspace-root bootstrap files ({@code verify.sh}, and for GENERATE the {@code reference/} sample and
+     *                                  {@code reference/style/} guides) are re-seeded alongside the repositories — the session reset wipes the whole tmpfs workspace, and a
+     *                                  restore that reproduces only a subset of the bootstrap leaves later attempts chasing files the prompts promise exist
+     * @param mode                  the generation mode the workspace was originally seeded for
      * @param problemStatement      the canonical problem statement to re-seed at the workspace root, or {@code null} to leave it untouched
      * @param designDocument        the agent's {@code DESIGN.md} working memory to re-seed at the workspace root, or {@code null} to leave it untouched; without this, the
      *                                  session reset before each pristine verification build silently discards it — repair attempts lose the design rationale and the outcome's
      *                                  design-document capture reads nothing
      */
-    public void materializeRepositoryFiles(InteractiveSandbox sandbox, String sessionId, Map<RepositoryType, Map<String, String>> filesByRepository,
-            Map<RepositoryType, RepositorySeedMetadata> repositoryMetadata, Map<RepositoryType, Map<String, BinarySeedFile>> repositoryBinaryFiles,
-            @Nullable String problemStatement, @Nullable String designDocument) {
+    public void materializeRepositoryFiles(InteractiveSandbox sandbox, String sessionId, ProgrammingExercise exercise, GenerationMode mode,
+            Map<RepositoryType, Map<String, String>> filesByRepository, Map<RepositoryType, RepositorySeedMetadata> repositoryMetadata,
+            Map<RepositoryType, Map<String, BinarySeedFile>> repositoryBinaryFiles, @Nullable String problemStatement, @Nullable String designDocument) {
         Map<String, String> workspaceFiles = new LinkedHashMap<>();
+        String verifyScript = sandboxBuildCommandService.verifyScriptContent(exercise);
+        if (verifyScript != null) {
+            workspaceFiles.put(SandboxBuildCommandService.VERIFY_SCRIPT_NAME, verifyScript);
+        }
+        if (mode == GenerationMode.GENERATE) {
+            workspaceFiles.putAll(readReferenceSample(exercise));
+            workspaceFiles.putAll(readStyleGuides());
+        }
         Map<String, byte[]> workspaceBinaryFiles = new LinkedHashMap<>();
         Set<String> executableFiles = new LinkedHashSet<>();
         filesByRepository.forEach((repositoryType, files) -> files.forEach((path, content) -> workspaceFiles.put(directoryFor(repositoryType) + "/" + path, content)));

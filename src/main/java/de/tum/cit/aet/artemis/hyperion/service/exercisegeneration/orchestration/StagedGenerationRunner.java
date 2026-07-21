@@ -27,6 +27,7 @@ import de.tum.cit.aet.artemis.hyperion.config.HyperionExerciseGenerationEnabled;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.AgentLoopResult;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.AgentLoopRunner;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.AgentSystemPromptService;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.AgentTranscriptWriter;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.GenerationStage;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.SandboxAgentTools;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.AgentVerifyReport;
@@ -66,10 +67,12 @@ public class StagedGenerationRunner {
     /** Base per-stage turn budget, in {@link #STAGE_ORDER} order; sums to 66, leaving headroom under {@link #POOL_HARD_CAP} for rollover. */
     private static final int[] STAGE_BASE_BUDGETS = { 5, 22, 8, 24, 7 };
 
-    /** Hard ceiling on turns spent across all five stages combined, regardless of rollover. */
+    /**
+     * Hard ceiling on turns spent across all five stages combined. A stage (or re-entry) is only started while at least {@link #MIN_STAGE_BUDGET} turns remain, so the cap holds.
+     */
     private static final int POOL_HARD_CAP = 78;
 
-    /** Every stage gets at least this many turns, even when the pool is nearly exhausted (the floor wins over the remaining-pool cap). */
+    /** The smallest turn budget a stage can usefully run with; below this remaining pool, no further stage or re-entry is started. */
     private static final int MIN_STAGE_BUDGET = 3;
 
     /** At most this many stage re-entries (see {@link #run}) are granted across the whole run, regardless of how many stages fail their gate on the first attempt. */
@@ -91,6 +94,8 @@ public class StagedGenerationRunner {
     private final AgentSystemPromptService systemPromptService;
 
     private final StageCheckService stageCheckService;
+
+    private final AgentTranscriptWriter transcriptWriter;
 
     private final StagedContext stagedContext;
 
@@ -122,11 +127,19 @@ public class StagedGenerationRunner {
     }
 
     public StagedGenerationRunner(AgentLoopRunner agentLoopRunner, AgentSystemPromptService systemPromptService, StageCheckService stageCheckService,
-            @Value("${artemis.hyperion.agent.staged-context:CONTINUOUS}") String stagedContext) {
+            AgentTranscriptWriter transcriptWriter, @Value("${artemis.hyperion.agent.staged-context:CONTINUOUS}") String stagedContext) {
         this.agentLoopRunner = agentLoopRunner;
         this.systemPromptService = systemPromptService;
         this.stageCheckService = stageCheckService;
+        this.transcriptWriter = transcriptWriter;
         this.stagedContext = StagedContext.parse(stagedContext);
+    }
+
+    /**
+     * The staged run's aggregated loop result together with the conversation it produced ({@code null} under {@link StagedContext#FRESH}), so the outer repair-attempt loop can
+     * continue the same logical conversation instead of starting each repair blind.
+     */
+    public record StagedRunOutcome(AgentLoopResult result, @Nullable List<Message> conversation) {
     }
 
     /**
@@ -147,7 +160,7 @@ public class StagedGenerationRunner {
      * @return one aggregated {@link AgentLoopResult}: summed turns, the first {@code ERROR}/{@code CANCELLED} status encountered or else the last stage's status, and the
      *         last stage's final message (with the failing gate's report appended, if a gate failed)
      */
-    public AgentLoopResult run(ProgrammingExercise exercise, SandboxAgentTools baseTools, Object tools, String briefPrompt, Map<String, String> seedTestsFiles,
+    public StagedRunOutcome run(ProgrammingExercise exercise, SandboxAgentTools baseTools, Object tools, String briefPrompt, Map<String, String> seedTestsFiles,
             InteractiveSandbox sandbox, String sessionId, BooleanSupplier cancelled, @Nullable Consumer<ChatResponse> usageSink, @Nullable Consumer<String> progress,
             Supplier<Set<String>> structuralSeedHook) {
         Instant startedAt = clock.get();
@@ -167,10 +180,15 @@ public class StagedGenerationRunner {
         for (int index = 0; index < STAGE_ORDER.size(); index++) {
             GenerationStage stage = STAGE_ORDER.get(index);
             if (cancelled.getAsBoolean()) {
-                return new AgentLoopResult(AgentLoopResult.Status.CANCELLED, totalTurns, lastFinalMessage);
+                return finish(exercise, AgentLoopResult.Status.CANCELLED, totalTurns, lastFinalMessage, conversation);
             }
             if (Duration.between(startedAt, clock.get()).compareTo(WALL_CLOCK_BUDGET) > 0) {
                 log.info("Staged generation wall-clock budget exceeded before stage {} for exercise {}; stopping with {} stage(s) completed", stage, exercise.getId(), index);
+                break;
+            }
+            if (remainingPool < MIN_STAGE_BUDGET) {
+                // The pool is the hard turn ceiling: starting another stage with the floor budget would silently exceed it, so stop here and let post-loop verification decide.
+                log.info("Staged generation turn pool exhausted before stage {} for exercise {}; stopping with {} stage(s) completed", stage, exercise.getId(), index);
                 break;
             }
 
@@ -210,7 +228,7 @@ public class StagedGenerationRunner {
                 rollover = Math.max(0, allocation - result.turns());
 
                 if (result.status() == AgentLoopResult.Status.ERROR || result.status() == AgentLoopResult.Status.CANCELLED) {
-                    return new AgentLoopResult(result.status(), totalTurns, lastFinalMessage);
+                    return finish(exercise, result.status(), totalTurns, lastFinalMessage, conversation);
                 }
                 lastStatus = result.status();
 
@@ -232,11 +250,11 @@ public class StagedGenerationRunner {
 
                 log.info("Staged generation gate failed at stage {} for exercise {}: {}", stage, exercise.getId(), gate.observation());
                 if (stageReentryUsed || reentriesRemaining <= 0 || remainingPool < MIN_STAGE_BUDGET) {
-                    return new AgentLoopResult(lastStatus, totalTurns, appendGateReport(lastFinalMessage, gate.observation()));
+                    return finish(exercise, lastStatus, totalTurns, appendGateReport(lastFinalMessage, gate.observation()), conversation);
                 }
                 // Cooperative cancellation between the failed attempt and its re-entry (the outer for-loop already checked before this stage's first attempt).
                 if (cancelled.getAsBoolean()) {
-                    return new AgentLoopResult(AgentLoopResult.Status.CANCELLED, totalTurns, lastFinalMessage);
+                    return finish(exercise, AgentLoopResult.Status.CANCELLED, totalTurns, lastFinalMessage, conversation);
                 }
                 stageReentryUsed = true;
                 reentriesRemaining--;
@@ -254,7 +272,13 @@ public class StagedGenerationRunner {
                 }
             }
         }
-        return new AgentLoopResult(lastStatus, totalTurns, lastFinalMessage);
+        return finish(exercise, lastStatus, totalTurns, lastFinalMessage, conversation);
+    }
+
+    /** Builds the outcome on every exit path and writes the session transcript (best-effort, no-op unless a transcript directory is configured). */
+    private StagedRunOutcome finish(ProgrammingExercise exercise, AgentLoopResult.Status status, int totalTurns, String finalMessage, @Nullable List<Message> conversation) {
+        transcriptWriter.write(exercise.getId(), "attempt-1-staged-" + status.name().toLowerCase(Locale.ROOT), conversation);
+        return new StagedRunOutcome(new AgentLoopResult(status, totalTurns, finalMessage), conversation);
     }
 
     /**
@@ -295,8 +319,8 @@ public class StagedGenerationRunner {
     }
 
     /**
-     * Allocates one stage's turn budget from the shared pool: its base plus whatever unspent rollover carried forward, capped by the remaining pool, but never below the
-     * minimum floor even if that means slightly exceeding the remaining pool.
+     * Allocates one stage's turn budget from the shared pool: its base plus whatever unspent rollover carried forward, capped by the remaining pool. The floor only applies
+     * while the caller guarantees {@code remainingPool >= MIN_STAGE_BUDGET} (both the stage loop and the re-entry path check that before allocating), so the pool cap is hard.
      */
     static int allocateStageBudget(int base, int rollover, int remainingPool) {
         return Math.max(MIN_STAGE_BUDGET, Math.min(base + rollover, remainingPool));
