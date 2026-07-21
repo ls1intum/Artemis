@@ -17,9 +17,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.account.util.UserUtilService;
+import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
 import de.tum.cit.aet.artemis.core.util.RequestUtilService;
 import de.tum.cit.aet.artemis.course.domain.Course;
-import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
@@ -83,7 +83,7 @@ class ExerciseVariantGroupIntegrationTest extends AbstractSpringIntegrationIndep
     private ExerciseTestRepository exerciseRepository;
 
     @Autowired
-    private CourseRepository courseRepository;
+    private CourseTestRepository courseRepository;
 
     @Autowired
     private ExerciseVersionTestRepository exerciseVersionRepository;

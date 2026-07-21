@@ -9,6 +9,6 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  * members of an {@link de.tum.cit.aet.artemis.exercise.domain.ExerciseVariantGroup} so the student group-detail page can
  * render member previews with a single request instead of one heavyweight {@code /exercises/{id}/details} call each.
  */
-@JsonInclude(JsonInclude.Include.NON_ABSENT)
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record ExerciseProblemStatementDTO(long exerciseId, @Nullable String problemStatement) {
 }

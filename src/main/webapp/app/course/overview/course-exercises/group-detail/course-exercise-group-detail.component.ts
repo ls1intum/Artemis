@@ -232,7 +232,7 @@ export class CourseExerciseGroupDetailComponent {
         effect(() => {
             const group = this.group();
             const groupId = group?.id;
-            if (groupId === undefined || this.requestedGroupIds.has(groupId)) {
+            if (group === undefined || groupId === undefined || this.requestedGroupIds.has(groupId)) {
                 return;
             }
             // The dashboard strips problem statements to stay small, so any member missing one needs the batch preview
