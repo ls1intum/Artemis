@@ -7,10 +7,9 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  * whether a user may open a course tab without loading the full (expensive) course dashboard data.
  * <p>
  * Each flag is computed from a cheap indexed {@code exists}/{@code count} query or a course column. The EXERCISES tab is
- * always accessible, so it has no flag. The DASHBOARD AI-opt-out fallback is decided on the client from the user's LLM
- * selection, so only {@code dashboardEnabled} and {@code irisEnabled} are needed here.
+ * always accessible, so it has no flag.
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record CourseTabAccessDTO(boolean lecturesEnabled, boolean examsVisible, boolean competenciesOrPrerequisites, boolean tutorialGroups, boolean dashboardEnabled,
-        boolean irisEnabled, boolean faqAccepted, boolean learningPathsEnabled, boolean communicationEnabled, boolean trainingEnabled) {
+public record CourseTabAccessDTO(boolean lecturesEnabled, boolean examsVisible, boolean competenciesOrPrerequisites, boolean tutorialGroups, boolean irisEnabled,
+        boolean faqAccepted, boolean learningPathsEnabled, boolean communicationEnabled, boolean trainingEnabled) {
 }

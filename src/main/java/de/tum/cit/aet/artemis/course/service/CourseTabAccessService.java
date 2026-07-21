@@ -63,7 +63,7 @@ public class CourseTabAccessService {
      * without loading the full (expensive) course dashboard data. Each flag comes from a cheap indexed {@code exists}/{@code count} query or a
      * course column; no exercises, lectures, exams, scores or participations are loaded.
      *
-     * @param course the course (already loaded; its columns provide the dashboard, learning-path and communication flags)
+     * @param course the course (already loaded; its columns provide the learning-path and communication flags)
      * @param user   the user requesting access (needed for the user-scoped exam visibility check)
      * @return the per-tab access flags
      */
@@ -80,7 +80,7 @@ public class CourseTabAccessService {
         CourseInformationSharingConfiguration config = course.getCourseInformationSharingConfiguration();
         boolean communicationEnabled = config == CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING
                 || config == CourseInformationSharingConfiguration.COMMUNICATION_ONLY;
-        return new CourseTabAccessDTO(lecturesEnabled, examsVisible, competenciesOrPrerequisites, tutorialGroups, course.getStudentCourseAnalyticsDashboardEnabled(), irisEnabled,
-                faqAccepted, course.getLearningPathsEnabled(), communicationEnabled, trainingEnabled);
+        return new CourseTabAccessDTO(lecturesEnabled, examsVisible, competenciesOrPrerequisites, tutorialGroups, irisEnabled, faqAccepted, course.getLearningPathsEnabled(),
+                communicationEnabled, trainingEnabled);
     }
 }

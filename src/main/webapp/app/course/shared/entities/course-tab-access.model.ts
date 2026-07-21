@@ -10,7 +10,6 @@ export interface CourseTabAccess {
     examsVisible?: boolean;
     competenciesOrPrerequisites?: boolean;
     tutorialGroups?: boolean;
-    dashboardEnabled?: boolean;
     irisEnabled?: boolean;
     faqAccepted?: boolean;
     learningPathsEnabled?: boolean;

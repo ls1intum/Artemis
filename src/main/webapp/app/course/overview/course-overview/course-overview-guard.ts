@@ -1,19 +1,15 @@
 import { Injectable, inject } from '@angular/core';
 import { ActivatedRouteSnapshot, CanActivate, Router } from '@angular/router';
-import { Observable, catchError, forkJoin, from, map, of } from 'rxjs';
+import { Observable, catchError, map, of } from 'rxjs';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { CourseTabAccess } from 'app/course/shared/entities/course-tab-access.model';
 import { CourseOverviewRoutePath } from 'app/course/overview/courses.route';
-import { AccountService } from 'app/core/auth/account.service';
-import { User } from 'app/account/user/user.model';
-import { LLMSelectionDecision } from 'app/account/user/shared/dto/updateLLMSelectionDecision.dto';
 
 @Injectable({
     providedIn: 'root',
 })
 export class CourseOverviewGuard implements CanActivate {
     private courseManagementService = inject(CourseManagementService);
-    private accountService = inject(AccountService);
     private router = inject(Router);
 
     /**
@@ -37,24 +33,17 @@ export class CourseOverviewGuard implements CanActivate {
         if (!path) {
             return of(false);
         }
-        // Resolving the current user is only needed for the dashboard fallback; other paths don't depend on it.
-        // If identity() rejects (e.g. transient network error), treat it as unknown — this falls back to the Iris-or-exercises behavior.
-        const user$: Observable<User | undefined> =
-            path === CourseOverviewRoutePath.DASHBOARD ? from(this.accountService.identity()).pipe(catchError(() => of(undefined))) : of(undefined);
-        return forkJoin({
-            access: this.courseManagementService.getCourseTabAccess(courseId),
-            user: user$,
-        }).pipe(
-            map(({ access, user }) => this.decideAccess(courseId, access, path, user)),
+        return this.courseManagementService.getCourseTabAccess(courseId).pipe(
+            map((access) => this.decideAccess(courseId, access, path)),
             catchError(() => of(true)),
         );
     }
 
     /**
-     * Decides whether the given tab is accessible from the per-tab access flags and redirects to a fallback tab otherwise.
+     * Decides whether the given tab is accessible from the per-tab access flags and redirects to the exercises tab otherwise.
      * Kept as a single place so the access rules are not duplicated.
      */
-    decideAccess(courseId: number, access: CourseTabAccess, type?: string, user?: User): boolean {
+    decideAccess(courseId: number, access: CourseTabAccess, type?: string): boolean {
         let hasAccess: boolean;
         switch (type) {
             // Should always be accessible
@@ -72,9 +61,6 @@ export class CourseOverviewGuard implements CanActivate {
                 break;
             case CourseOverviewRoutePath.TUTORIAL_GROUPS:
                 hasAccess = access.tutorialGroups ?? false;
-                break;
-            case CourseOverviewRoutePath.DASHBOARD:
-                hasAccess = access.dashboardEnabled ?? false;
                 break;
             case CourseOverviewRoutePath.IRIS:
                 hasAccess = access.irisEnabled ?? false;
@@ -96,12 +82,7 @@ export class CourseOverviewGuard implements CanActivate {
                 hasAccess = false;
         }
         if (!hasAccess) {
-            const hasOptedOutOfAI = user?.selectedLLMUsage === LLMSelectionDecision.NO_AI;
-            if (type === CourseOverviewRoutePath.DASHBOARD && access.irisEnabled && !hasOptedOutOfAI) {
-                void this.router.navigate([`/courses/${courseId}/iris`]);
-            } else {
-                void this.router.navigate([`/courses/${courseId}/exercises`]);
-            }
+            void this.router.navigate([`/courses/${courseId}/exercises`]);
         }
         return hasAccess;
     }

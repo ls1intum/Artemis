@@ -273,16 +273,6 @@ describe('CourseOverviewComponent', () => {
         );
     });
 
-    it('should create sidebar item for student course analytics dashboard if the feature is active', () => {
-        component.lectureEnabled = true;
-        component.course.set({ id: 123, lectures: [], exams: [], studentCourseAnalyticsDashboardEnabled: true });
-        const sidebarItems = component.getSidebarItems();
-        expect(sidebarItems.length).toBeGreaterThan(0);
-        expect(sidebarItems[0].title).toContain('Dashboard');
-        expect(sidebarItems[1].title).toContain('Exercises');
-        expect(sidebarItems[2].title).toContain('Lectures');
-    });
-
     it('should create sidebar items with default items', () => {
         component.lectureEnabled = true;
         component.course.set({ id: 123, lectures: [], exams: [] });

@@ -11,13 +11,10 @@ import { MockProvider } from 'ng-mocks';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { AlertService } from 'app/foundation/service/alert.service';
-import { LLMSelectionDecision } from 'app/account/user/shared/dto/updateLLMSelectionDecision.dto';
-import { User } from 'app/account/user/user.model';
 
 describe('CourseOverviewGuard', () => {
     let guard: CourseOverviewGuard;
     let courseManagementService: CourseManagementService;
-    let accountService: AccountService;
     let router: Router;
 
     /** Access flags for a course where every guarded tab is accessible. */
@@ -26,7 +23,6 @@ describe('CourseOverviewGuard', () => {
         examsVisible: true,
         competenciesOrPrerequisites: true,
         tutorialGroups: true,
-        dashboardEnabled: true,
         irisEnabled: true,
         faqAccepted: true,
         learningPathsEnabled: true,
@@ -43,7 +39,6 @@ describe('CourseOverviewGuard', () => {
         });
         guard = TestBed.inject(CourseOverviewGuard);
         courseManagementService = TestBed.inject(CourseManagementService);
-        accountService = TestBed.inject(AccountService);
         router = TestBed.inject(Router);
         vi.spyOn(router, 'navigate').mockReturnValue(Promise.resolve(true));
     });
@@ -85,48 +80,6 @@ describe('CourseOverviewGuard', () => {
             guard.canActivate(route(CourseOverviewRoutePath.LECTURES)).subscribe((result) => (resultValue = result));
             expect(resultValue).toBe(true);
         });
-
-        it('should resolve user identity and redirect an opted-out user away from a denied dashboard to exercises', async () => {
-            vi.spyOn(courseManagementService, 'getCourseTabAccess').mockReturnValue(of({ dashboardEnabled: false, irisEnabled: true }));
-            vi.spyOn(accountService, 'identity').mockResolvedValue({ selectedLLMUsage: LLMSelectionDecision.NO_AI } as User);
-            const navigateSpy = vi.spyOn(router, 'navigate');
-
-            let resultValue: boolean | undefined;
-            await new Promise<void>((resolve) => guard.canActivate(route(CourseOverviewRoutePath.DASHBOARD)).subscribe((value) => ((resultValue = value), resolve())));
-
-            expect(resultValue).toBe(false);
-            expect(navigateSpy).toHaveBeenCalledWith(['/courses/1/exercises']);
-        });
-
-        it('should redirect a non-opted-out user from a denied dashboard to iris (identity resolved asynchronously)', async () => {
-            vi.spyOn(courseManagementService, 'getCourseTabAccess').mockReturnValue(of({ dashboardEnabled: false, irisEnabled: true }));
-            vi.spyOn(accountService, 'identity').mockResolvedValue({ selectedLLMUsage: LLMSelectionDecision.CLOUD_AI } as User);
-            const navigateSpy = vi.spyOn(router, 'navigate');
-
-            await new Promise<void>((resolve) => guard.canActivate(route(CourseOverviewRoutePath.DASHBOARD)).subscribe(() => resolve()));
-
-            expect(navigateSpy).toHaveBeenCalledWith(['/courses/1/iris']);
-        });
-
-        it('should not abort the guard stream when identity() rejects; treat unknown user as not opted out', async () => {
-            vi.spyOn(courseManagementService, 'getCourseTabAccess').mockReturnValue(of({ dashboardEnabled: false, irisEnabled: true }));
-            vi.spyOn(accountService, 'identity').mockRejectedValue(new Error('network error'));
-            const navigateSpy = vi.spyOn(router, 'navigate');
-
-            let resultValue: boolean | undefined;
-            let errored = false;
-            await new Promise<void>((resolve) => {
-                guard.canActivate(route(CourseOverviewRoutePath.DASHBOARD)).subscribe({
-                    next: (value) => (resultValue = value),
-                    error: () => ((errored = true), resolve()),
-                    complete: () => resolve(),
-                });
-            });
-
-            expect(errored).toBe(false);
-            expect(resultValue).toBe(false);
-            expect(navigateSpy).toHaveBeenCalledWith(['/courses/1/iris']);
-        });
     });
 
     describe('decideAccess', () => {
@@ -136,7 +89,6 @@ describe('CourseOverviewGuard', () => {
             { path: CourseOverviewRoutePath.EXAMS, access: { examsVisible: true } },
             { path: CourseOverviewRoutePath.COMPETENCIES, access: { competenciesOrPrerequisites: true } },
             { path: CourseOverviewRoutePath.TUTORIAL_GROUPS, access: { tutorialGroups: true } },
-            { path: CourseOverviewRoutePath.DASHBOARD, access: { dashboardEnabled: true } },
             { path: CourseOverviewRoutePath.IRIS, access: { irisEnabled: true } },
             { path: CourseOverviewRoutePath.FAQ, access: { faqAccepted: true } },
             { path: CourseOverviewRoutePath.LEARNING_PATH, access: { learningPathsEnabled: true } },
@@ -158,38 +110,6 @@ describe('CourseOverviewGuard', () => {
         it('should deny and redirect to exercises for an unknown path', () => {
             const navigateSpy = vi.spyOn(router, 'navigate');
             expect(guard.decideAccess(1, fullAccess, 'unknown')).toBe(false);
-            expect(navigateSpy).toHaveBeenCalledWith(['/courses/1/exercises']);
-        });
-
-        it('should redirect to iris when dashboard is denied but iris is enabled (no user)', () => {
-            const navigateSpy = vi.spyOn(router, 'navigate');
-            guard.decideAccess(1, { dashboardEnabled: false, irisEnabled: true }, CourseOverviewRoutePath.DASHBOARD);
-            expect(navigateSpy).toHaveBeenCalledWith(['/courses/1/iris']);
-        });
-
-        it('should redirect to iris when dashboard is denied, iris is enabled, and the user accepted cloud AI', () => {
-            const navigateSpy = vi.spyOn(router, 'navigate');
-            guard.decideAccess(1, { dashboardEnabled: false, irisEnabled: true }, CourseOverviewRoutePath.DASHBOARD, { selectedLLMUsage: LLMSelectionDecision.CLOUD_AI } as User);
-            expect(navigateSpy).toHaveBeenCalledWith(['/courses/1/iris']);
-        });
-
-        it('should redirect to exercises when dashboard is denied, iris is enabled, but the user opted out of AI', () => {
-            const navigateSpy = vi.spyOn(router, 'navigate');
-            guard.decideAccess(1, { dashboardEnabled: false, irisEnabled: true }, CourseOverviewRoutePath.DASHBOARD, { selectedLLMUsage: LLMSelectionDecision.NO_AI } as User);
-            expect(navigateSpy).toHaveBeenCalledWith(['/courses/1/exercises']);
-        });
-
-        it('should grant dashboard access to a user who opted out of AI when the dashboard is enabled', () => {
-            const navigateSpy = vi.spyOn(router, 'navigate');
-            expect(
-                guard.decideAccess(1, { dashboardEnabled: true, irisEnabled: true }, CourseOverviewRoutePath.DASHBOARD, { selectedLLMUsage: LLMSelectionDecision.NO_AI } as User),
-            ).toBe(true);
-            expect(navigateSpy).not.toHaveBeenCalled();
-        });
-
-        it('should redirect to exercises when dashboard is denied and iris is not enabled', () => {
-            const navigateSpy = vi.spyOn(router, 'navigate');
-            guard.decideAccess(1, { dashboardEnabled: false, irisEnabled: false }, CourseOverviewRoutePath.DASHBOARD);
             expect(navigateSpy).toHaveBeenCalledWith(['/courses/1/exercises']);
         });
     });
