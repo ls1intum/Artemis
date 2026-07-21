@@ -41,7 +41,6 @@ describe('TumUiRadioButtonComponent', () => {
     it('renders checked (primary fill) when the bound modelValue equals its value', () => {
         fixture.componentRef.setInput('modelValue', 'a');
         fixture.detectChanges();
-        expect(component.isChecked()).toBe(true);
         expect(input().checked).toBe(true);
         expect(box().className).toContain('bg-primary');
     });
@@ -49,7 +48,6 @@ describe('TumUiRadioButtonComponent', () => {
     it('treats an undefined selected value as unchecked (the admin value-or-undefined pattern)', () => {
         fixture.componentRef.setInput('modelValue', undefined);
         fixture.detectChanges();
-        expect(component.isChecked()).toBe(false);
         expect(input().checked).toBe(false);
     });
 

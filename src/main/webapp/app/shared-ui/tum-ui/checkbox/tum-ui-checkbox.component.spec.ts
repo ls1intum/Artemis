@@ -31,7 +31,7 @@ describe('TumUiCheckboxComponent', () => {
         return fixture.debugElement.query(By.css('.tum-ui-checkbox-box')).nativeElement;
     }
 
-    function tick(): HTMLElement | null {
+    function tick(): HTMLElement | undefined {
         const icon = fixture.debugElement.query(By.css('.tum-ui-checkbox-icon'));
         return icon ? icon.nativeElement : undefined;
     }
