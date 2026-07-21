@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { By } from '@angular/platform-browser';
@@ -35,8 +34,6 @@ class MockThemeService {
 }
 
 describe('AppComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<AppComponent>;
     let comp: AppComponent;
 

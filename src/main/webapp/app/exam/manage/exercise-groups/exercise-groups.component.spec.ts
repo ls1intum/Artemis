@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
@@ -39,8 +38,6 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { ExamExerciseRowButtonsComponent } from 'app/exercise/exam-exercise-row-buttons/exam-exercise-row-buttons.component';
 
 describe('Exercise Groups Component', () => {
-    setupTestBed({ zoneless: true });
-
     const course = new Course();
     course.id = 456;
 
@@ -312,5 +309,26 @@ describe('Exercise Groups Component', () => {
         expect(dialogService.open).toHaveBeenCalledOnce();
         expect(comp.exerciseGroups()).toEqual([exerciseGroup]);
         expect(alertSpy).toHaveBeenCalledOnce();
+    });
+
+    it('shows the exercise group import button only to instructors, not to editors', () => {
+        // Importing exercise groups requires selecting a source exam, which is instructor-only on the server;
+        // editors must not see the (non-functional-for-them) import button, while still keeping "create".
+        const editorCourse = new Course();
+        editorCourse.id = course.id;
+        editorCourse.isAtLeastEditor = true;
+        editorCourse.isAtLeastInstructor = false;
+        comp.course.set(editorCourse);
+        fixture.detectChanges();
+        expect(fixture.nativeElement.querySelector('#import-group')).toBeNull();
+        expect(fixture.nativeElement.querySelector('#create-new-group')).not.toBeNull();
+
+        const instructorCourse = new Course();
+        instructorCourse.id = course.id;
+        instructorCourse.isAtLeastEditor = true;
+        instructorCourse.isAtLeastInstructor = true;
+        comp.course.set(instructorCourse);
+        fixture.detectChanges();
+        expect(fixture.nativeElement.querySelector('#import-group')).not.toBeNull();
     });
 });

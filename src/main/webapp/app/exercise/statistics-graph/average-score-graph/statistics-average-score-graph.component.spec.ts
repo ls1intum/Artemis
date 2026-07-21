@@ -1,5 +1,4 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { MockProvider } from 'ng-mocks';
 import { PerformanceInterval, StatisticsAverageScoreGraphComponent } from 'app/exercise/statistics-graph/average-score-graph/statistics-average-score-graph.component';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -16,7 +15,6 @@ import { ChartModule, UIChart } from 'primeng/chart';
 import { vi } from 'vitest';
 
 describe('StatisticsAverageScoreGraphComponent', () => {
-    setupTestBed({ zoneless: true });
     let fixture: ComponentFixture<StatisticsAverageScoreGraphComponent>;
     let component: StatisticsAverageScoreGraphComponent;
     let routingStub: ReturnType<typeof vi.spyOn>;

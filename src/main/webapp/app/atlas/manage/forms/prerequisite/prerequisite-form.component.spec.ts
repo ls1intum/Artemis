@@ -25,10 +25,8 @@ import { CourseCompetencyService } from 'app/atlas/shared/services/course-compet
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ThemeService } from 'app/core/theme/shared/theme.service';
 import { MockThemeService } from 'test/helpers/mocks/service/mock-theme.service';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('PrerequisiteFormComponent', () => {
-    setupTestBed({ zoneless: true });
     let prerequisiteFormComponentFixture: ComponentFixture<PrerequisiteFormComponent>;
     let prerequisiteFormComponent: PrerequisiteFormComponent;
 

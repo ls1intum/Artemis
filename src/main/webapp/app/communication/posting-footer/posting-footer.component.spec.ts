@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockComponent } from 'ng-mocks';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -35,8 +34,6 @@ interface PostGroup {
 }
 
 describe('PostingFooterComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: PostingFooterComponent;
     let fixture: ComponentFixture<PostingFooterComponent>;
     let metisService: MetisService;

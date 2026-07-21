@@ -1,5 +1,5 @@
 import { Page } from 'playwright';
-import { drag } from '../../../utils';
+import { drag, readResponseJson } from '../../../utils';
 import { Locator } from '@playwright/test';
 
 export class DragAndDropQuiz {
@@ -92,7 +92,7 @@ export class DragAndDropQuiz {
         const responsePromise = this.page.waitForResponse(/api\/quiz\/(courses|exercise-groups)\/\d+\/quiz-exercises$/);
         await this.page.locator('#quiz-save').click();
         const response = await responsePromise;
-        const exercise = await response.json();
+        const exercise = await readResponseJson(response);
         return exercise.id;
     }
 

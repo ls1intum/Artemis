@@ -2,16 +2,16 @@
  * Vitest tests for FileUploadSubmissionComponent.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ActivatedRoute, Params, provideRouter } from '@angular/router';
 import { BehaviorSubject, of, throwError } from 'rxjs';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { TranslateModule } from '@ngx-translate/core';
-import { MockComponent, MockPipe } from 'ng-mocks';
+import { provideTranslateService } from '@ngx-translate/core';
+import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import dayjs from 'dayjs/esm';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 import 'app/foundation/util/array.extension';
 
@@ -39,11 +39,8 @@ import { ComplaintsStudentViewComponent } from 'app/assessment/overview/complain
 import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ArtemisTimeAgoPipe } from 'app/foundation/pipes/artemis-time-ago.pipe';
-import { HtmlForMarkdownPipe } from 'app/foundation/pipes/html-for-markdown.pipe';
 
 describe('FileUploadSubmissionComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: FileUploadSubmissionComponent;
     let fixture: ComponentFixture<FileUploadSubmissionComponent>;
     let fileUploadSubmissionService: FileUploadSubmissionService;
@@ -121,7 +118,7 @@ describe('FileUploadSubmissionComponent', () => {
         routeParams$ = new BehaviorSubject<Params>({ participationId: 111 });
 
         await TestBed.configureTestingModule({
-            imports: [FileUploadSubmissionComponent, TranslateModule.forRoot()],
+            imports: [FileUploadSubmissionComponent],
             providers: [
                 provideHttpClient(),
                 provideHttpClientTesting(),
@@ -150,6 +147,7 @@ describe('FileUploadSubmissionComponent', () => {
                         downloadFile: vi.fn(),
                     },
                 },
+                provideTranslateService(),
             ],
         })
             .overrideComponent(FileUploadSubmissionComponent, {
@@ -162,7 +160,7 @@ describe('FileUploadSubmissionComponent', () => {
                         ButtonComponent,
                         ArtemisTranslatePipe,
                         ArtemisTimeAgoPipe,
-                        HtmlForMarkdownPipe,
+                        MarkdownDirective,
                     ],
                 },
                 add: {
@@ -174,7 +172,7 @@ describe('FileUploadSubmissionComponent', () => {
                         MockComponent(ButtonComponent),
                         MockPipe(ArtemisTranslatePipe),
                         MockPipe(ArtemisTimeAgoPipe),
-                        MockPipe(HtmlForMarkdownPipe),
+                        MockDirective(MarkdownDirective),
                     ],
                 },
             })

@@ -161,9 +161,15 @@ export class PostingMarkdownEditorComponent implements OnInit, ControlValueAcces
         const lineContent = model.getLineContent(lineNumber).trimStart();
 
         if (lineContent.startsWith('- ')) {
-            this.markdownEditor().handleActionClick(new MouseEvent('click'), this.defaultActions().find((action) => action instanceof BulletedListAction)!);
+            this.markdownEditor().handleActionClick(
+                new MouseEvent('click'),
+                this.defaultActions().find((action) => action instanceof BulletedListAction)!,
+            );
         } else if (/^\d+\. /.test(lineContent)) {
-            this.markdownEditor().handleActionClick(new MouseEvent('click'), this.defaultActions().find((action) => action instanceof OrderedListAction)!);
+            this.markdownEditor().handleActionClick(
+                new MouseEvent('click'),
+                this.defaultActions().find((action) => action instanceof OrderedListAction)!,
+            );
         }
     }
 

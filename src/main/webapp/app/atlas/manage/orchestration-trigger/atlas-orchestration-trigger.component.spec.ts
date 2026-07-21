@@ -1,9 +1,8 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { HttpErrorResponse } from '@angular/common/http';
-import { TranslateModule } from '@ngx-translate/core';
+import { provideTranslateService } from '@ngx-translate/core';
 import { By } from '@angular/platform-browser';
 import { MockProvider } from 'ng-mocks';
 import { describe, expect, it } from 'vitest';
@@ -18,8 +17,6 @@ import { OrchestrationResultDialogComponent } from 'app/atlas/shared/orchestrati
 import { AtlasOrchestrationTriggerComponent } from 'app/atlas/manage/orchestration-trigger/atlas-orchestration-trigger.component';
 
 describe('AtlasOrchestrationTriggerComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let comp: AtlasOrchestrationTriggerComponent;
     let fixture: ComponentFixture<AtlasOrchestrationTriggerComponent>;
     let alertService: AlertService;
@@ -29,8 +26,14 @@ describe('AtlasOrchestrationTriggerComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [TranslateModule.forRoot()],
-            providers: [MockProvider(AlertService), { provide: FeatureToggleService, useClass: MockFeatureToggleService }, provideHttpClient(), provideHttpClientTesting()],
+            imports: [],
+            providers: [
+                MockProvider(AlertService),
+                { provide: FeatureToggleService, useClass: MockFeatureToggleService },
+                provideHttpClient(),
+                provideHttpClientTesting(),
+                provideTranslateService(),
+            ],
         }).compileComponents();
 
         fixture = TestBed.createComponent(AtlasOrchestrationTriggerComponent);
