@@ -30,8 +30,8 @@ test.describe('Exam submission overview publication date', { tag: '@slow' }, () 
 
         exam = await examAPIRequests.createExam({
             course,
-            // single-token title: titleLowercase() only replaces the first space, so a multi-word title would yield an invalid channel name
-            title: 'ExamSummaryPublicationDate' + generateUUID(),
+            // short single-word title: the exam channel name is derived as titleLowercase(title) and must match ^[a-z0-9$][a-z0-9:-]{0,30}$ (max 31 chars, no spaces)
+            title: 'exam' + generateUUID(),
             visibleDate: dayjs().subtract(3, 'minutes'),
             startDate: dayjs().subtract(2, 'minutes'),
             endDate: dayjs().add(1, 'hour'),
