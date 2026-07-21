@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { SimpleChange } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
@@ -21,8 +20,6 @@ import { PlagiarismComparison } from '../../shared/entities/PlagiarismComparison
 import { FromToElement, PlagiarismSubmissionElement } from '../../shared/entities/PlagiarismSubmissionElement';
 
 describe('Plagiarism Split View Component', () => {
-    setupTestBed({ zoneless: true });
-
     let comp: PlagiarismSplitViewComponent;
     let fixture: ComponentFixture<PlagiarismSplitViewComponent>;
     let plagiarismCasesService: PlagiarismCasesService;

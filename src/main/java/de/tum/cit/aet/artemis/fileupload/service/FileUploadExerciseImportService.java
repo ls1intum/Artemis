@@ -60,7 +60,7 @@ public class FileUploadExerciseImportService extends ExerciseImportService {
     @NonNull
     public FileUploadExercise importFileUploadExercise(final FileUploadExercise templateExercise, FileUploadExercise importedExercise) {
         log.debug("Creating a new Exercise based on exercise {}", templateExercise);
-        FileUploadExercise newExercise = copyFileUploadExerciseBasis(importedExercise);
+        FileUploadExercise newExercise = copyFileUploadExerciseBasis(importedExercise, templateExercise);
 
         var competencyLinks = competencyExerciseLinkService.extractCompetencyLinksForCreation(newExercise);
         FileUploadExercise savedExercise = fileUploadExerciseRepository.save(newExercise);
@@ -85,13 +85,14 @@ public class FileUploadExerciseImportService extends ExerciseImportService {
      * @return the cloned TextExercise basis
      */
     @NonNull
-    private FileUploadExercise copyFileUploadExerciseBasis(FileUploadExercise importedExercise) {
+    private FileUploadExercise copyFileUploadExerciseBasis(FileUploadExercise importedExercise, FileUploadExercise templateExercise) {
         log.debug("Copying the exercise basis from {}", importedExercise);
         FileUploadExercise newExercise = new FileUploadExercise();
-        super.copyExerciseBasis(newExercise, importedExercise, new HashMap<>());
+        super.copyExerciseBasis(newExercise, importedExercise, templateExercise, new HashMap<>());
         newExercise.setAssessmentType(AssessmentType.MANUAL);
-        newExercise.setFilePattern(importedExercise.getFilePattern());
-        newExercise.setExampleSolution(importedExercise.getExampleSolution());
+        // Prefer the intended exercise (honours edits from the standalone import form), fall back to the source content.
+        newExercise.setFilePattern(firstNonNull(importedExercise.getFilePattern(), templateExercise.getFilePattern()));
+        newExercise.setExampleSolution(firstNonNull(importedExercise.getExampleSolution(), templateExercise.getExampleSolution()));
         return newExercise;
     }
 

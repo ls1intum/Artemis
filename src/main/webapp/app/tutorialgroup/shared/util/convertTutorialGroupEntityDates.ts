@@ -1,4 +1,3 @@
-import { HttpResponse } from '@angular/common/http';
 import { convertDateFromServer } from 'app/foundation/util/date.utils';
 import { TutorialGroupFreePeriod } from 'app/tutorialgroup/shared/entities/tutorial-group-free-day.model';
 import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
@@ -56,13 +55,4 @@ export function convertTutorialGroupArrayDatesFromServer(tutorialGroups: Tutoria
         });
     }
     return tutorialGroups;
-}
-
-export function convertTutorialGroupResponseArrayDatesFromServer(res: HttpResponse<TutorialGroup[]>): HttpResponse<TutorialGroup[]> {
-    if (res.body) {
-        res.body.forEach((tutorialGroup: TutorialGroup) => {
-            convertTutorialGroupDatesFromServer(tutorialGroup);
-        });
-    }
-    return res;
 }

@@ -8,6 +8,7 @@ import { StudentExamWithGradeDTO } from 'app/exam/manage/exam-scores/exam-score-
 import { BonusStrategy } from 'app/assessment/shared/entities/bonus.model';
 import { faChevronRight } from '@fortawesome/free-solid-svg-icons';
 import { roundScorePercentSpecifiedByCourseSettings } from 'app/foundation/util/utils';
+import { MIN_SCORE_GREEN, MIN_SCORE_ORANGE } from 'app/app.constants';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { captureException } from '@sentry/angular';
 import { isExamResultPublished } from 'app/exam/overview/exam.utils';
@@ -55,6 +56,25 @@ export class ExamResultOverviewComponent implements OnInit {
     // Gated on gradingScaleExists to preserve the previous behavior: without a grading scale
     // (overallGrade undefined) the achieved-percentage badge must not switch to the passed color.
     readonly hasPassed = computed(() => this.gradingScaleExists() && !!this.studentExamWithGrade()?.studentResult?.hasPassed);
+
+    /**
+     * Color for the overall achieved percentage. With a grading scale the pass/fail outcome is authoritative,
+     * so passed stays green and not-passed stays red. Without a grading scale there is no pass/fail concept,
+     * so fall back to the same score thresholds as the per-exercise rows (avoids e.g. a red 100%).
+     */
+    readonly overallScoreTextColorClass = computed(() => {
+        if (this.gradingScaleExists()) {
+            return this.hasPassed() ? 'text-state-success' : 'text-state-danger';
+        }
+        const percentage = this.overallAchievedPercentageRoundedByCourseSettings();
+        if (percentage >= MIN_SCORE_GREEN) {
+            return 'text-state-success';
+        }
+        if (percentage >= MIN_SCORE_ORANGE) {
+            return 'result-orange';
+        }
+        return 'text-state-danger';
+    });
 
     // Icons
     faClipboard = faClipboard;
@@ -111,6 +131,14 @@ export class ExamResultOverviewComponent implements OnInit {
 
         this.overallAchievedPoints.set(this.getOverallAchievedPoints());
         this.overallAchievedPercentageRoundedByCourseSettings.set(this.getOverallAchievedPercentageRoundedByCourseSettings());
+    }
+
+    /**
+     * Points the student achieved in the given exercise, or 0 if none were recorded.
+     * `achievedPointsPerExercise` is keyed by exercise id and may not contain every exercise.
+     */
+    achievedPointsForExercise(exerciseId: number): number {
+        return this.studentExamWithGrade()?.achievedPointsPerExercise?.[exerciseId] ?? 0;
     }
 
     /**

@@ -4,7 +4,7 @@ import { ExamAPIRequests } from '../../requests/ExamAPIRequests';
 import { ExerciseAPIRequests } from '../../requests/ExerciseAPIRequests';
 import multipleChoiceTemplate from '../../../fixtures/exercise/quiz/multiple_choice/template.json';
 import { AdditionalData, ExerciseType, Exercise as PlaywrightExercise } from '../../constants';
-import { generateUUID, getExamBuildAndTestAfterDueDate } from '../../utils';
+import { generateUUID, getExamBuildAndTestAfterDueDate, readResponseJson } from '../../utils';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -47,7 +47,7 @@ export class ExamExerciseGroupCreationPage {
         const responsePromise = this.page.waitForResponse(`api/exam/courses/*/exams/*/exercise-groups`);
         await this.page.locator('#save-group').click();
         const response = await responsePromise;
-        return response.json();
+        return readResponseJson(response);
     }
 
     async update() {
