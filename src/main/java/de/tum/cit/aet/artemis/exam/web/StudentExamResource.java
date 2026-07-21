@@ -366,7 +366,7 @@ public class StudentExamResource {
         // the conduction endpoint either, otherwise the summary gate could be bypassed to leak the exam content (relevant for staggered/multi-shift exams). Instructors and
         // test runs always have access. Students who have not submitted yet are unaffected, so an ongoing conduction (incl. reload) keeps working.
         boolean conductionAccessAlwaysAllowed = studentExam.isTestRun() || authorizationCheckService.isAtLeastInstructorInCourse(studentExam.getExam().getCourse(), currentUser);
-        if (!conductionAccessAlwaysAllowed && studentExam.isSubmitted() && !studentExam.getExam().isExamSummaryPublished()) {
+        if (!conductionAccessAlwaysAllowed && Boolean.TRUE.equals(studentExam.isSubmitted()) && !studentExam.getExam().isExamSummaryPublished()) {
             throw new AccessForbiddenException("The exam content is not available after submission until the summary is published");
         }
 
