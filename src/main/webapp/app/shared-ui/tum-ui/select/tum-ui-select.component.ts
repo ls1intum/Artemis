@@ -25,12 +25,14 @@ import { TumUiOverlayService } from 'app/shared-ui/tum-ui/overlay/tum-ui-overlay
 /** Trigger padding + font per size, matching the Aura `select` sm / (default) / lg form-field tokens. */
 export type TumUiSelectSize = 'small' | 'large';
 const TRIGGER_SIZE: Record<'small' | 'default' | 'large', string> = {
-    // Aura form.field.sm: 0.375rem / 0.625rem, font 0.875rem. `pr-10` reserves the 2.5rem dropdown zone.
-    small: 'py-1.5 pl-2.5 pr-10 text-sm',
+    // Aura form.field.sm: 0.375rem / 0.625rem, font 0.875rem. `pr-10` reserves the 2.5rem dropdown zone. The
+    // `min-h-*` keeps the trigger at its normal height when empty (no value + no placeholder), so it doesn't
+    // collapse vertically — matching a filled trigger's height (padding + line-height).
+    small: 'min-h-8 py-1.5 pl-2.5 pr-10 text-sm',
     // Aura form.field: 0.5rem / 0.75rem, font 1rem.
-    default: 'py-2 pl-3 pr-10 text-base',
+    default: 'min-h-10 py-2 pl-3 pr-10 text-base',
     // Aura form.field.lg: 0.625rem / 0.875rem, font 1.125rem.
-    large: 'py-2.5 pl-3.5 pr-10 text-lg',
+    large: 'min-h-12 py-2.5 pl-3.5 pr-10 text-lg',
 };
 
 // Per-instance counter for unique listbox / option ids, so several selects on one page (the admin

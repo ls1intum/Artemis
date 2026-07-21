@@ -1,8 +1,7 @@
 <div>
     <h5 *adminTitleBarTitle id="health-page-heading" class="mb-0" jhiTranslate="health.title"></h5>
     <div *adminTitleBarActions>
-        <tum-ui-button size="small" severity="secondary" variant="outlined" (clicked)="refresh()" data-testid="refresh-button">
-            <fa-icon [icon]="faSync" />
+        <tum-ui-button size="small" severity="secondary" variant="outlined" [icon]="faSync" [loading]="isRefreshing()" (clicked)="refresh()" data-testid="refresh-button">
             <span jhiTranslate="health.refresh.button"></span>
         </tum-ui-button>
     </div>

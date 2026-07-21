@@ -17,12 +17,12 @@
                 severity="secondary"
                 variant="outlined"
                 size="small"
+                [icon]="faSync"
+                [loading]="loading()"
                 (clicked)="refresh()"
                 [ariaLabel]="'artemisApp.irisDashboard.refresh' | artemisTranslate"
                 [title]="'artemisApp.irisDashboard.refresh' | artemisTranslate"
-            >
-                <fa-icon [icon]="faSync" />
-            </tum-ui-button>
+            />
         </div>
     </div>
 

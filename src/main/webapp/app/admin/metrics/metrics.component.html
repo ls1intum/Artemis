@@ -21,8 +21,7 @@
                 styleClass="w-auto"
             />
         }
-        <tum-ui-button severity="secondary" size="small" variant="outlined" (clicked)="refresh()" data-testid="refresh-button">
-            <fa-icon [icon]="faSync" />
+        <tum-ui-button severity="secondary" size="small" variant="outlined" [icon]="faSync" [loading]="isRefreshing()" (clicked)="refresh()" data-testid="refresh-button">
             <span jhiTranslate="metrics.refresh.button"></span>
         </tum-ui-button>
     </div>

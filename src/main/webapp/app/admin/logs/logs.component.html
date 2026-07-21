@@ -31,17 +31,19 @@
                 (ascendingChange)="ascending.set($event)"
                 class="flex flex-1 items-center"
             >
-                <div jhiSortBy="name" role="columnheader" class="w-full max-w-0 cursor-pointer"><span jhiTranslate="logs.table.name"></span> <fa-icon [icon]="faSort" /></div>
-                <div jhiSortBy="level" role="columnheader" class="text-end whitespace-nowrap cursor-pointer">
+                <div jhiSortBy="name" role="columnheader" class="min-w-0 flex-1 cursor-pointer truncate">
+                    <span jhiTranslate="logs.table.name"></span> <fa-icon [icon]="faSort" />
+                </div>
+                <div jhiSortBy="level" role="columnheader" class="shrink-0 text-end whitespace-nowrap cursor-pointer">
                     <span jhiTranslate="logs.table.level"></span> <fa-icon [icon]="faSort" />
                 </div>
             </div>
         </tum-ui-table-virtual-scroll>
         <ng-template #logRow let-logger>
-            <div class="w-full max-w-0 truncate">
+            <div class="min-w-0 flex-1 truncate">
                 <small>{{ logger.name | slice: 0 : 140 }}</small>
             </div>
-            <div class="text-end whitespace-nowrap">
+            <div class="shrink-0 text-end whitespace-nowrap">
                 <tum-ui-button-group>
                     <tum-ui-button
                         size="small"

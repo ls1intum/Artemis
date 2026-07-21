@@ -50,6 +50,8 @@ export class HealthComponent implements OnInit, OnDestroy {
 
     /** Health modal visibility and data */
     showHealthModal = signal(false);
+    /** Drives the refresh button's loading spinner while a health check is in flight. */
+    readonly isRefreshing = signal(false);
     selectedHealth = signal<{ key: HealthKey; value: HealthDetails } | undefined>(undefined);
 
     /** Icons */
@@ -82,14 +84,17 @@ export class HealthComponent implements OnInit, OnDestroy {
      * Refreshes the health status by fetching from the server.
      */
     refresh(): void {
+        this.isRefreshing.set(true);
         this.healthService.checkHealth().subscribe({
             next: (health) => {
                 this.health.set(health);
+                this.isRefreshing.set(false);
             },
             error: (error: HttpErrorResponse) => {
                 if (error.status === 503) {
                     this.health.set(error.error);
                 }
+                this.isRefreshing.set(false);
             },
         });
     }
