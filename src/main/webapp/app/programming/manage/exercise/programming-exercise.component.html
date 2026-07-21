@@ -47,8 +47,8 @@
                             }
                             @if (programmingExercise.shortName) {
                                 <br />
-                                <span class="badge bg-light text-dark border small"
-                                    >{{ programmingExercise.shortName | slice: 0 : 15 }}{{ (programmingExercise.shortName?.length ?? 0) > 15 ? '...' : '' }}</span
+                                <span class="badge bg-secondary border small"
+                                    >{{ programmingExercise.shortName | slice: 0 : 15 }}{{ programmingExercise.shortName.length > 15 ? '...' : '' }}</span
                                 >
                             }
 

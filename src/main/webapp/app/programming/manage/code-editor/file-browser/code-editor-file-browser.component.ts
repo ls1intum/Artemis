@@ -742,6 +742,14 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnDestroy, IFileD
         return Array.from(folderBadgesMap.entries()).map(([type, count]) => new FileBadge(type, count));
     }
 
+    /**
+     * Returns the badges for a single file, or an empty array when the file has none.
+     * `fileBadges` is keyed by file path and may not contain an entry for every tree item.
+     */
+    getFileBadges(item: TreeViewItem<string>): FileBadge[] {
+        return this.fileBadges()[item.value] ?? [];
+    }
+
     private toSyncFileType(type: FileType): 'FILE' | 'FOLDER' {
         return type === FileType.FILE ? 'FILE' : 'FOLDER';
     }

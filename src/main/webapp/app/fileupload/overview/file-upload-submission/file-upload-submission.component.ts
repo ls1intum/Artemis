@@ -35,7 +35,7 @@ import { ComplaintsStudentViewComponent } from 'app/assessment/overview/complain
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ArtemisTimeAgoPipe } from 'app/foundation/pipes/artemis-time-ago.pipe';
-import { HtmlForMarkdownPipe } from 'app/foundation/pipes/html-for-markdown.pipe';
+import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
 import { FileService } from 'app/foundation/service/file.service';
 import { firstValueFrom, map } from 'rxjs';
 
@@ -53,7 +53,7 @@ import { firstValueFrom, map } from 'rxjs';
         UpperCasePipe,
         ArtemisTranslatePipe,
         ArtemisTimeAgoPipe,
-        HtmlForMarkdownPipe,
+        MarkdownDirective,
     ],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
