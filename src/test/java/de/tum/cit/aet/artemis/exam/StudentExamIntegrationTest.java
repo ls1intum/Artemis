@@ -1364,6 +1364,40 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testGetStudentExamForSummary_examSummaryPublicationDate() throws Exception {
+        StudentExam studentExam = prepareStudentExamsForConduction(false, true, 1).getFirst();
+
+        userUtilService.changeUser(studentExam.getUser().getLogin());
+        var studentExamResponse = request.get("/api/exam/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/" + studentExam.getId() + "/conduction",
+                HttpStatus.OK, StudentExam.class);
+        // submit early so the summary would generally be accessible (it only requires the student exam to be submitted)
+        request.postWithoutResponseBody("/api/exam/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/submit", studentExamResponse, HttpStatus.OK);
+
+        final String summaryUrl = "/api/exam/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/" + studentExamResponse.getId() + "/summary";
+        final String conductionUrl = "/api/exam/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/" + studentExamResponse.getId() + "/conduction";
+
+        // 1) summary publication date in the future: the student may NOT access the summary yet, and must not be able to re-fetch the exam content via conduction either
+        exam2.setPublishResultsDate(null);
+        exam2.setExamSummaryPublicationDate(ZonedDateTime.now().plusDays(1));
+        exam2 = examRepository.save(exam2);
+        request.get(summaryUrl, HttpStatus.FORBIDDEN, StudentExam.class);
+        request.get(conductionUrl, HttpStatus.FORBIDDEN, StudentExam.class);
+
+        // 2) summary publication date in the past: the student may access the summary
+        exam2.setExamSummaryPublicationDate(ZonedDateTime.now().minusMinutes(1));
+        exam2 = examRepository.save(exam2);
+        var summary = request.get(summaryUrl, HttpStatus.OK, StudentExam.class);
+        assertThat(summary.isSubmitted()).isTrue();
+
+        // 3) summary publication date still in the future, but results are already published: the summary is available as a safeguard
+        exam2.setExamSummaryPublicationDate(ZonedDateTime.now().plusDays(1));
+        exam2.setPublishResultsDate(ZonedDateTime.now().minusMinutes(1));
+        exam2 = examRepository.save(exam2);
+        request.get(summaryUrl, HttpStatus.OK, StudentExam.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testSubmitStudentExam_realistic() throws Exception {
         List<StudentExam> studentExams = prepareStudentExamsForConduction(false, true, NUMBER_OF_STUDENTS);
 

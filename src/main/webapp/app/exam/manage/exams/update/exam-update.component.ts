@@ -402,6 +402,7 @@ export class ExamUpdateComponent implements OnInit, OnDestroy {
         const examMaxPointsValid = this.isValidMaxPoints;
         const examValidWorkingTime = this.validateWorkingTime;
         const examValidExampleSolutionPublicationDate = this.isValidExampleSolutionPublicationDate;
+        const examValidSummaryPublicationDate = this.isValidExamSummaryPublicationDate;
         const examValidNumberOfExercises = this.isValidNumberOfExercises;
         const examValidGracePeriod = this.isValidGracePeriod;
         return (
@@ -411,6 +412,7 @@ export class ExamUpdateComponent implements OnInit, OnDestroy {
             examMaxPointsValid &&
             examValidWorkingTime &&
             examValidExampleSolutionPublicationDate &&
+            examValidSummaryPublicationDate &&
             examValidNumberOfExercises &&
             examValidGracePeriod &&
             this.areExamTextsValid
@@ -636,6 +638,18 @@ export class ExamUpdateComponent implements OnInit, OnDestroy {
         );
     }
 
+    get isValidExamSummaryPublicationDate(): boolean {
+        // allow instructors to leave examSummaryPublicationDate unset (summary shown immediately after submission)
+        if (!this.exam.examSummaryPublicationDate) {
+            return true;
+        }
+        const summaryDate = dayjs(this.exam.examSummaryPublicationDate);
+        // must be after the end date and, if a publish results date is set, no later than it (the overview must not lag behind the grades)
+        const afterEndDate = !!this.exam.endDate && summaryDate.isAfter(this.exam.endDate);
+        const notAfterPublishResults = !this.exam.publishResultsDate || !summaryDate.isAfter(this.exam.publishResultsDate);
+        return afterEndDate && notAfterPublishResults;
+    }
+
     /**
      * Default exam start text, which can be edited by instructors in the text editor
      */
@@ -680,6 +694,17 @@ export class ExamUpdateComponent implements OnInit, OnDestroy {
  * Prepares the exam for import by omitting all properties that should not be imported.
  */
 export const prepareExamForImport = (exam: Exam): Exam => ({
-    ...omit(exam, ['id', 'visibleDate', 'startDate', 'endDate', 'publishResultsDate', 'examStudentReviewStart', 'examStudentReviewEnd', 'examUsers', 'studentExams']),
+    ...omit(exam, [
+        'id',
+        'visibleDate',
+        'startDate',
+        'endDate',
+        'publishResultsDate',
+        'examStudentReviewStart',
+        'examStudentReviewEnd',
+        'examSummaryPublicationDate',
+        'examUsers',
+        'studentExams',
+    ]),
     workingTime: 0,
 });

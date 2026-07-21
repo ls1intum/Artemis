@@ -589,6 +589,16 @@ public class ExamResource {
         if (exam.getExampleSolutionPublicationDate() != null && exam.getExampleSolutionPublicationDate().isBefore(exam.getEndDate())) {
             throw new BadRequestAlertException("Example solutions cannot be published before the end date of an exam.", ENTITY_NAME, "examTimes");
         }
+
+        if (exam.getExamSummaryPublicationDate() != null) {
+            if (!exam.getExamSummaryPublicationDate().isAfter(exam.getEndDate())) {
+                throw new BadRequestAlertException("The exam summary must be published after the end date of an exam.", ENTITY_NAME, "examTimes");
+            }
+            // the overview must never lag behind the grades: if a publish results date is set, the summary has to be visible no later than the results
+            if (exam.getPublishResultsDate() != null && exam.getExamSummaryPublicationDate().isAfter(exam.getPublishResultsDate())) {
+                throw new BadRequestAlertException("The exam summary cannot be published after the results are published.", ENTITY_NAME, "examTimes");
+            }
+        }
     }
 
     /**

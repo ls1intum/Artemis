@@ -518,7 +518,14 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
         // Test for bad request, when exampleSolutionPublicationDate is before the visibleDate
         Exam examG = ExamFactory.generateExam(course1);
         examG.setExampleSolutionPublicationDate(examG.getVisibleDate().minusHours(1));
-        return List.of(examA, examB, examC, examD, examE, examF, examG);
+        // Test for bad request, when examSummaryPublicationDate is before the endDate
+        Exam examH = ExamFactory.generateExam(course1);
+        examH.setExamSummaryPublicationDate(examH.getEndDate().minusMinutes(5));
+        // Test for bad request, when examSummaryPublicationDate is after the publishResultsDate
+        Exam examI = ExamFactory.generateExam(course1);
+        examI.setPublishResultsDate(examI.getEndDate().plusMinutes(30));
+        examI.setExamSummaryPublicationDate(examI.getEndDate().plusMinutes(60));
+        return List.of(examA, examB, examC, examD, examE, examF, examG, examH, examI);
     }
 
     @ParameterizedTest
@@ -526,6 +533,20 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testCreateExam_failsWithInvalidDates(Exam exam) throws Exception {
         request.post("/api/exam/courses/" + course1.getId() + "/exams", ExamUpdateDTO.of(exam), HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testCreateExam_withValidExamSummaryPublicationDate() throws Exception {
+        Exam exam = ExamFactory.generateExam(course1, "examSummaryDate");
+        exam.setPublishResultsDate(exam.getEndDate().plusHours(2));
+        // summary publication date after the end date and no later than the publish results date is valid
+        exam.setExamSummaryPublicationDate(exam.getEndDate().plusHours(1));
+
+        Exam savedExam = request.postWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams", ExamUpdateDTO.of(exam), Exam.class, HttpStatus.CREATED);
+
+        assertThat(savedExam.getExamSummaryPublicationDate()).isNotNull();
+        assertThat(savedExam.getExamSummaryPublicationDate()).isCloseTo(exam.getExamSummaryPublicationDate(), within(1, ChronoUnit.SECONDS));
     }
 
     @Test

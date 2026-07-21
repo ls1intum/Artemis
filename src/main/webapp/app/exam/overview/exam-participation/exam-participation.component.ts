@@ -38,6 +38,8 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { CourseSidebarToggleButtonComponent } from 'app/course/shared/course-sidebar-toggle-button/course-sidebar-toggle-button.component';
 import { ExamResultSummaryComponent } from '../summary/exam-result-summary.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
+import { isExamSummaryPublished } from 'app/exam/overview/exam.utils';
 import { ExamExerciseOverviewPageComponent } from '../exercises/exercise-overview-page/exam-exercise-overview-page.component';
 import { CourseExerciseService } from 'app/exercise/course-exercises/course-exercise.service';
 import {
@@ -85,6 +87,7 @@ type GenerateParticipationStatus = 'generating' | 'failed' | 'success';
         RouterLink,
         AsyncPipe,
         ArtemisTranslatePipe,
+        ArtemisDatePipe,
         ExamExerciseOverviewPageComponent,
         CourseSidebarToggleButtonComponent,
     ],
@@ -625,6 +628,15 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     }
 
     /**
+     * Whether the student may currently see the summary (submission overview incl. exam questions, own answers and PDF export) of their submitted exam.
+     * Controlled by the optional exam.examSummaryPublicationDate; unset means the summary is available immediately after submission (default behavior).
+     */
+    isExamSummaryVisible(): boolean {
+        this.wallClockVersion();
+        return isExamSummaryPublished(!!this.testRunId(), this.exam(), this.serverDateService);
+    }
+
+    /**
      * check if the grace period has already passed
      */
     isGracePeriodOver() {
@@ -693,9 +705,14 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
             this.initIndividualEndDates(this.exam().startDate!);
         }
 
-        // only show the summary if the student was able to submit on time.
+        // only show the summary if the student was able to submit on time and the summary is already visible (see examSummaryPublicationDate).
         if (this.isOver() && this.studentExam().submitted) {
-            this.loadAndDisplaySummary();
+            if (this.isExamSummaryVisible()) {
+                this.loadAndDisplaySummary();
+            } else {
+                // the instructor delayed the submission overview; withhold it and only show the submission confirmation with the release date
+                this.loadingExam.set(false);
+            }
         } else {
             // Directly start the exam when we continue from a failed save
             if (this.examParticipationService.lastSaveFailed(this.courseId(), this.examId())) {
