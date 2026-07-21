@@ -377,6 +377,40 @@ class StageCheckServiceTest {
         }
 
         @Test
+        void fails_whenMultipleTaskLinesShareATitle() {
+            // Observed live: 18 [task] lines split 1:1 per test with titles like "Telepathic Retrieval" repeated four times.
+            sandbox.problemStatement = "# T\n[task][Telepathic](testA)\n[task][Telepathic](testB)\n[task][Crane](testC)\n";
+            AgentVerifyReport lastTestsReport = new AgentVerifyReport(3, true, List.of(), 3, true, true, List.of(), List.of("testA", "testB", "testC"), List.of(), List.of(), true,
+                    List.of());
+
+            StageCheckResult result = check(GenerationStage.STATEMENT, lastTestsReport);
+
+            assertThat(result.passed()).isFalse();
+            assertThat(result.observation()).contains("share the same title").contains("Telepathic");
+        }
+
+        @Test
+        void fails_whenTheStatementWritesAboutStudentsInTheThirdPerson() {
+            sandbox.problemStatement = "# T\nStudents must define a strategy interface.\n";
+
+            StageCheckResult result = check(GenerationStage.STATEMENT, null);
+
+            assertThat(result.passed()).isFalse();
+            assertThat(result.observation()).contains("third person");
+        }
+
+        @Test
+        void fails_whenDesignSaysDiagramYesButTheStatementHasNone() {
+            sandbox.designMarkdown = sandbox.designMarkdown.replace("## Diagram\nno — single-class exercise", "## Diagram\nYes – strategies collaborate with the context");
+            sandbox.problemStatement = "# T\nImplement the strategy.\n";
+
+            StageCheckResult result = check(GenerationStage.STATEMENT, null);
+
+            assertThat(result.passed()).isFalse();
+            assertThat(result.observation()).contains("no @startuml diagram");
+        }
+
+        @Test
         void passes_whenPlantUmlDirectivesSitInsideTheDiagramBlock() {
             sandbox.problemStatement = "# Title\n@startuml\nclass A\nhide empty fields\nhide empty methods\n@enduml\n";
 

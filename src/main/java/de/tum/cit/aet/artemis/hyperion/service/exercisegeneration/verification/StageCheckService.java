@@ -180,6 +180,21 @@ public class StageCheckService {
             return StageCheckResult.failed("PlantUML directives ('hide empty fields', 'hide empty methods', 'skinparam ...') sit OUTSIDE the @startuml...@enduml block, where "
                     + "Artemis renders them as stray text. Move them inside the block, directly before @enduml.");
         }
+        List<String> duplicateTaskTitles = duplicateTaskTitles(statement);
+        if (!duplicateTaskTitles.isEmpty()) {
+            return StageCheckResult.failed("Multiple [task] lines share the same title: " + duplicateTaskTitles
+                    + ". A title identifies ONE student work seam — merge each duplicated group into a single [task] line binding all of its tests, "
+                    + "followed by one or two imperative sentences describing the work.");
+        }
+        if (THIRD_PERSON_STUDENTS.matcher(statement).find()) {
+            return StageCheckResult.failed("The statement writes ABOUT students in the third person ('Students must/will/should ...'). Address the reader directly instead: "
+                    + "frame the goal as \"we\" and the work as \"you\" with imperative tasks ('Define ...', 'Implement ...').");
+        }
+        String designDocument = execRead(sandbox, sessionId, "cat", GenerationWorkspaceService.WORKSPACE + "/DESIGN.md");
+        if (designSaysDiagramYes(designDocument) && !statement.contains("@startuml")) {
+            return StageCheckResult.failed("DESIGN.md's '## Diagram' section says yes, but the statement contains no @startuml diagram. Add the PlantUML class diagram after "
+                    + "the tasks it illustrates (with testsColor links), or update DESIGN.md's Diagram decision if the design genuinely changed.");
+        }
         // Exact duplicate headings are a mechanical statement defect (observed shipping live: the same '### 1. ...' section twice); catching it here costs nothing.
         List<String> duplicateHeadings = statement.lines().map(String::strip).filter(line -> line.startsWith("#")).collect(Collectors.groupingBy(line -> line)).entrySet().stream()
                 .filter(entry -> entry.getValue().size() > 1).map(Map.Entry::getKey).sorted().toList();
@@ -187,6 +202,28 @@ public class StageCheckService {
             return StageCheckResult.failed("The statement repeats these headings verbatim: " + duplicateHeadings + ". Merge or remove the duplicate sections.");
         }
         return StageCheckResult.passed("");
+    }
+
+    /** Third-person authoring voice about "students"; the statement must address the reader directly (observed live twice: "Students will implement", "Students must define"). */
+    private static final Pattern THIRD_PERSON_STUDENTS = Pattern.compile("(?i)\\bstudents?\\s+(will|must|should|shall|need to|are required)\\b");
+
+    /** Matches a {@code [task][Title](...)} line's title. */
+    private static final Pattern TASK_TITLE = Pattern.compile("\\[task\\]\\[([^\\]]+)\\]");
+
+    /** Every [task] title that appears more than once — a title names one seam, so a repeat means tests were split 1:1 instead of grouped. */
+    static List<String> duplicateTaskTitles(String statement) {
+        return TASK_TITLE.matcher(statement).results().map(match -> match.group(1).strip()).collect(Collectors.groupingBy(title -> title)).entrySet().stream()
+                .filter(entry -> entry.getValue().size() > 1).map(Map.Entry::getKey).sorted().toList();
+    }
+
+    /** Whether DESIGN.md's {@code ## Diagram} section starts with "yes" (the agent's own declared decision; kept current per the design-update rule). */
+    static boolean designSaysDiagramYes(String designDocument) {
+        int index = designDocument.indexOf("## Diagram");
+        if (index < 0) {
+            return false;
+        }
+        String section = designDocument.substring(index + "## Diagram".length()).strip();
+        return section.regionMatches(true, 0, "yes", 0, 3);
     }
 
     /**
