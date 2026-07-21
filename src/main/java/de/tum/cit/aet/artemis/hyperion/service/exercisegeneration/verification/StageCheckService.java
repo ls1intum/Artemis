@@ -4,6 +4,7 @@ import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
@@ -166,6 +167,12 @@ public class StageCheckService {
                 return StageCheckResult.failed("These [task] bindings reference names that match no actual test: " + unresolved
                         + ". A [task]'s parenthesised names must be the exact test name(s) from the TESTS stage, copied verbatim: " + exactTestNames + ".");
             }
+        }
+        // Exact duplicate headings are a mechanical statement defect (observed shipping live: the same '### 1. ...' section twice); catching it here costs nothing.
+        List<String> duplicateHeadings = statement.lines().map(String::strip).filter(line -> line.startsWith("#")).collect(Collectors.groupingBy(line -> line)).entrySet().stream()
+                .filter(entry -> entry.getValue().size() > 1).map(Map.Entry::getKey).sorted().toList();
+        if (!duplicateHeadings.isEmpty()) {
+            return StageCheckResult.failed("The statement repeats these headings verbatim: " + duplicateHeadings + ". Merge or remove the duplicate sections.");
         }
         return StageCheckResult.passed("");
     }

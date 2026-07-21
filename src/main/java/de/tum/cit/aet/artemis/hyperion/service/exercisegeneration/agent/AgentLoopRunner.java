@@ -10,6 +10,7 @@ import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
@@ -354,7 +355,8 @@ public class AgentLoopRunner {
                 // Unknown tool / malformed arguments surface here: feed the error back so the model can self-correct, only giving up after MAX_CONSECUTIVE_TOOL_FAILURES.
                 consecutiveToolFailures++;
                 log.warn("Agent loop tool execution failed on turn {} (consecutive failures: {}, type: {})", turn, consecutiveToolFailures, e.getClass().getSimpleName());
-                emit(stepListener, "The agent tried an unavailable action and is correcting it.");
+                // Tool NAMES are not sensitive (only arguments/paths are, see sanitizeProgressPath) — naming the action turns an opaque recurring line into a diagnosable one.
+                emit(stepListener, "The agent tried an unavailable action (" + attemptedToolNames(response) + ") and is correcting it.");
                 if (consecutiveToolFailures >= MAX_CONSECUTIVE_TOOL_FAILURES) {
                     return session(AgentLoopResult.Status.ERROR, turn, lastAssistantText, conversation);
                 }
@@ -497,11 +499,26 @@ public class AgentLoopRunner {
             case "write_file", "edit_file" -> path == null ? "Working on an exercise file." : "Working on " + path + ".";
             case "bash" -> "Running a workspace command.";
             case "verify" -> "Checking the exercise.";
+            case "delete_file" -> path == null ? "Removing an exercise file." : "Removing " + path + ".";
+            case "submit" -> "Submitting the current work for checking.";
             default -> "Continuing the exercise update.";
         };
     }
 
     @Nullable
+    /** Joins the turn's attempted tool NAMES for the correction progress line — names are model-chosen identifiers, not user content; unsafe characters are stripped. */
+    private static String attemptedToolNames(ChatResponse response) {
+        try {
+            String names = response.getResult().getOutput().getToolCalls().stream().map(AssistantMessage.ToolCall::name)
+                    .map(name -> UNSAFE_PROGRESS_CHARACTERS.matcher(name == null ? "" : name).replaceAll("")).filter(name -> !name.isBlank()).distinct()
+                    .collect(Collectors.joining(", "));
+            return names.isBlank() ? "unknown" : names.length() > 80 ? names.substring(0, 80) : names;
+        }
+        catch (RuntimeException e) {
+            return "unknown";
+        }
+    }
+
     private static String sanitizeProgressPath(@Nullable String path) {
         if (path == null) {
             return null;

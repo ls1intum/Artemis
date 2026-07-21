@@ -23,10 +23,10 @@ class AgentSystemPromptServiceTest {
     /**
      * Leaves headroom over the largest representative Java prompt (incl. the template-scaffold/diff-discipline, PlantUML/testsColor, student-created-type, and anti-grading-context
      * rules, plus the GENERATE-mode staged workflow: DESIGN.md schema, solution-example-replay, template-derived-from-solution, per-test differential verify, and
-     * statement-written-last) while preventing another unbounded failure-diary prompt. Bumped from 13_500 when the staged workflow rewrite pushed the largest configuration
-     * (Gradle with SCA) to ~14.5k chars.
+     * statement-written-last) while preventing another unbounded failure-diary prompt. Bumped from 13_500 for the staged workflow, then to 16_000 for the qualitative-review fixes
+     * (canonical source roots, TODO honesty, boundary-claim coverage, duplicate-heading rule).
      */
-    private static final int MAX_SYSTEM_PROMPT_CHARS = 15_000;
+    private static final int MAX_SYSTEM_PROMPT_CHARS = 16_000;
 
     // No LocalCI services -> the generic build fallback, enough to assert the build-context section renders.
     private final AgentSystemPromptService systemPromptService = new AgentSystemPromptService(new SandboxBuildCommandService(Optional.empty(), Optional.empty()));

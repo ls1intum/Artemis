@@ -660,7 +660,9 @@ public class SpecFidelityCriticService {
             section.append("\n- [").append(finding.kind()).append("] ").append(finding.requirement()).append(": ").append(finding.detail());
         }
         section.append("\nFirst re-verify each item above against the current artifacts: omit it if resolved, or repeat it with fresh evidence if still open. Do not "
-                + "re-litigate aspects you previously accepted unless those artifacts changed. Then report only genuinely new findings.");
+                + "re-litigate aspects you previously accepted unless those artifacts changed. Then report only genuinely new findings, and for each new finding state in its "
+                + "reason why it was not visible in the previous review (e.g. introduced by the repair, or unmasked by a change) — a finding you simply overlooked last time is "
+                + "a sign to re-check it, not to report it as new.");
         return section.toString();
     }
 

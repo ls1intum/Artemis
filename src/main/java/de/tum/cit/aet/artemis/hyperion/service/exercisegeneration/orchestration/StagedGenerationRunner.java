@@ -274,10 +274,18 @@ public class StagedGenerationRunner {
         if (text == null) {
             return "";
         }
-        String firstLine = text.strip();
-        int newline = firstLine.indexOf('\n');
-        if (newline >= 0) {
-            firstLine = firstLine.substring(0, newline).strip();
+        // A header line ending in ':' carries no information on its own (observed live: "solution gate failed: The reference solution does not compile:" with
+        // nothing after the colon) — fold the first content line in so the instructor-visible event actually says what went wrong.
+        String[] lines = text.strip().split("\n");
+        String firstLine = lines[0].strip();
+        if (firstLine.endsWith(":")) {
+            for (int i = 1; i < lines.length; i++) {
+                String candidate = lines[i].strip();
+                if (!candidate.isEmpty()) {
+                    firstLine = firstLine + " " + candidate;
+                    break;
+                }
+            }
         }
         if (firstLine.codePointCount(0, firstLine.length()) <= maxChars) {
             return firstLine;

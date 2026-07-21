@@ -80,6 +80,7 @@ public class AgentSystemPromptService {
             The template is the student's guided starting point: work from it alone, using the statement only as reference. Every stubbed member carries complete Javadoc (or the
             language's doc idiom) restating its student-visible contract — purpose, parameters, return, error behavior. Anchor each task with `// TODO: <mirror of the task wording>`
             INSIDE the member body, directly above the placeholder throw — never between the doc comment and the signature, never between an annotation and the signature.
+            A TODO marks unfinished student work only: never leave one on code that is already complete, and never leave authoring or design notes in any repository file.
             When the requirements say students define or create a type themselves, the template must NOT ship that type: omit its file, keep the template compiling without it
             (wire `implements`/references to it only in the solution), anchor its creation with TODO breadcrumbs in the template files that will collaborate with it, and grade it
             only through the seeded structural checks and reflection-based behaviour tests — a direct source reference to a missing type in the test sources breaks the template
@@ -172,7 +173,8 @@ public class AgentSystemPromptService {
     private static final String STAGE_4_STATEMENT_INSTRUCTIONS = """
             STAGE 4 — STATEMENT: write the statement last, from DESIGN.md and the verified test names: one `[task]` line per DESIGN.md seam using the exact reported
             names — bind the bare method names exactly as `verify` reports them, never prefixed with a class or package name — the public API presented once and compactly,
-            a diagram only if DESIGN.md said yes. Then independently replay every worked example, run `verify` once
+            a diagram only if DESIGN.md said yes. Re-read every boundary or edge-case sentence: each must be true of the solution AND covered by a test — otherwise fix the
+            artifact or delete the sentence. Never repeat a heading. Then independently replay every worked example, run `verify` once
             more, and submit only after `MECHANICAL PRECHECK: PASS`; authoritative post-loop verification determines save eligibility, and quality review may request repairs.
             """;
 
@@ -348,10 +350,11 @@ public class AgentSystemPromptService {
         return """
                 WORKSPACE
                 %s
-                - solution/: reference implementation
-                - template/: student starting point
-                - tests/: instructor tests and immutable build harness
+                - solution/: reference implementation — Java sources go in solution/src/<package-path>/
+                - template/: student starting point — Java sources go in template/src/<package-path>/
+                - tests/: instructor tests and immutable build harness — test sources go in tests/test/<package-path>/
                 - verify.sh: grader-equivalent build recipe
+                NEVER create an assignment/ directory inside these repos: "assignment/" below describes only the grader's ephemeral CI checkout, not your authoring layout.
                 %s
 
                 Programming language: %s%s
