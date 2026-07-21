@@ -795,7 +795,9 @@ class GenerationTaskServiceTest {
     }
 
     @Test
-    void tokenBudgetExceeded_cancelsDistributedJobAndNeverPersistsVerifiedCandidate() {
+    void tokenBudgetExceeded_mechanicallyVerifiedCandidate_isSavedInsteadOfDiscarded() {
+        // The budget is a cost control on provider spend: it stops further model calls, but a candidate that already passed verification is paid for — saving it consumes no
+        // provider tokens, and the save-obligation doctrine applies. Discarding it (the old behavior) burned the whole budget for nothing.
         taskService = new GenerationTaskService(orchestrator, persistenceService, reviewService, websocket, jobService, programmingExerciseRepository, generationBudgetService,
                 generationRevertService, taskScheduler, java.time.Duration.ofMinutes(30), 10, java.time.Duration.ofSeconds(15));
         when(orchestrator.generate(any(), any(), any(), any(), any(), any(), any(), any(), any())).thenAnswer((Answer<GenerationOutcome>) invocation -> {
@@ -807,10 +809,28 @@ class GenerationTaskServiceTest {
 
         taskService.runAsync(new GenerationStartedEvent(JOB_ID, user, exercise, "make it", GenerationMode.GENERATE));
 
+        verify(jobService, never()).requestSystemCancellation(eq(EXERCISE_ID), eq(JOB_ID), argThat(message -> message.contains("token budget")));
+        verify(persistenceService).persist(any(), any(), any(), any(), any(), anyString(), any(), any(), any());
+        assertThat(sentEvents()).anyMatch(event -> event.message() != null && event.message().contains("token budget was reached; keeping and saving"));
+        assertThat(sentEvents().getLast().type()).isNotEqualTo(ExerciseGenerationEventDTO.Type.CANCELLED);
+    }
+
+    @Test
+    void tokenBudgetExceeded_withoutAVerifiedCandidate_endsCancelledWithoutPersisting() {
+        taskService = new GenerationTaskService(orchestrator, persistenceService, reviewService, websocket, jobService, programmingExerciseRepository, generationBudgetService,
+                generationRevertService, taskScheduler, java.time.Duration.ofMinutes(30), 10, java.time.Duration.ofSeconds(15));
+        when(orchestrator.generate(any(), any(), any(), any(), any(), any(), any(), any(), any())).thenAnswer((Answer<GenerationOutcome>) invocation -> {
+            @SuppressWarnings("unchecked")
+            Consumer<ChatResponse> usageSink = invocation.getArgument(8);
+            usageSink.accept(responseWithTokens(7, 3));
+            return outcomeWith(AgentLoopResult.Status.CANCELLED, null);
+        });
+
+        taskService.runAsync(new GenerationStartedEvent(JOB_ID, user, exercise, "make it", GenerationMode.GENERATE));
+
         ExerciseGenerationEventDTO terminal = sentEvents().getLast();
         assertThat(terminal.type()).isEqualTo(ExerciseGenerationEventDTO.Type.CANCELLED);
         assertThat(terminal.message()).contains("token budget");
-        verify(jobService).requestSystemCancellation(eq(EXERCISE_ID), eq(JOB_ID), argThat(message -> message.contains("token budget")));
         verify(jobService, never()).enterNonCancellablePhase(EXERCISE_ID, JOB_ID);
         verify(persistenceService, never()).persist(any(), any(), any(), any(), any(), anyString(), any(), any(), any());
     }

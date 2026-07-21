@@ -186,8 +186,14 @@ public class GenerationTaskService {
                     return;
                 }
                 if (tokenBudgetExceeded.get()) {
-                    emitter.milestone(ExerciseGenerationEventDTO.of(ExerciseGenerationEventDTO.Type.CANCELLED, cancellationMessage(false, true, false)));
-                    return;
+                    // The budget is a cost control on PROVIDER SPEND: it must stop further model calls (the cancelled supplier above already did), never discard work that is
+                    // already paid for and mechanically verified — saving consumes no provider tokens, and this method's own save-obligation doctrine applies. Only a run with
+                    // no verified candidate ends here.
+                    if (!outcome.isMechanicallyVerified()) {
+                        emitter.milestone(ExerciseGenerationEventDTO.of(ExerciseGenerationEventDTO.Type.CANCELLED, cancellationMessage(false, true, false)));
+                        return;
+                    }
+                    emitter.progress("The token budget was reached; keeping and saving the already-verified exercise instead of discarding it.");
                 }
                 switch (outcome.loopResult().status()) {
                     case CANCELLED -> emitter.milestone(ExerciseGenerationEventDTO.of(ExerciseGenerationEventDTO.Type.CANCELLED,
@@ -439,8 +445,10 @@ public class GenerationTaskService {
                 }
                 long total = tokensUsed.addAndGet(LLMTokenUsageService.totalTokens(response));
                 if (total >= maxTokensPerJob && tokenBudgetExceeded.compareAndSet(false, true)) {
+                    // Flip only the local flag: the orchestrator's cancelled-supplier reads it and stops all further model calls, which is the entire point of the budget.
+                    // Deliberately NOT requestSystemCancellation — that would mark the job cancelled and make enterNonCancellablePhase refuse the save, discarding a
+                    // mechanically verified candidate that is already paid for. The terminal handling below decides between saving a verified candidate and ending cancelled.
                     log.info("Exercise generation job {} reached its token budget; stopping after the current model response", jobId);
-                    jobService.requestSystemCancellation(exerciseId, jobId, cancellationMessage(false, true, false));
                 }
             }
 
