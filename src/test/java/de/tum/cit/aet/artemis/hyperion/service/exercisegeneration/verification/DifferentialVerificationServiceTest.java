@@ -160,8 +160,16 @@ class DifferentialVerificationServiceTest {
 
         private final String buildOutput;
 
+        /** Served for {@code cat .../test-plan.json}; {@code null} means "no plan", which is the pre-plan behaviour every other test in this file relies on. */
+        private String testPlanJson;
+
         private ScriptedSandbox(BuildReportSpec solution, BuildReportSpec template, String problemStatement) {
             this(solution, template, problemStatement, "build ran");
+        }
+
+        private ScriptedSandbox withTestPlan(String plan) {
+            this.testPlanJson = plan;
+            return this;
         }
 
         private ScriptedSandbox(BuildReportSpec solution, BuildReportSpec template, String problemStatement, String buildOutput) {
@@ -175,6 +183,9 @@ class DifferentialVerificationServiceTest {
         public SandboxExecResult exec(String sessionId, Duration timeout, String... command) {
             String joined = String.join(" ", command);
             if ("cat".equals(command[0])) {
+                if (command.length > 1 && command[1].endsWith("test-plan.json")) {
+                    return testPlanJson == null ? new SandboxExecResult(1, "", "no such file", false) : new SandboxExecResult(0, testPlanJson, "", false);
+                }
                 return new SandboxExecResult(0, problemStatement, "", false);
             }
             if (!joined.contains("verify.sh")) {
@@ -353,6 +364,10 @@ class DifferentialVerificationServiceTest {
             String joined = String.join(" ", command);
             execCommands.add(joined);
             if ("cat".equals(command[0])) {
+                if (command.length > 1 && command[1].endsWith("test-plan.json")) {
+                    // No grading plan in these path-dispatch tests: the oracle must then behave exactly as it did before visibility existed.
+                    return new SandboxExecResult(1, "", "no such file", false);
+                }
                 return new SandboxExecResult(0, problemStatement, "", false);
             }
             if (!joined.contains("verify.sh")) {
@@ -855,6 +870,50 @@ class DifferentialVerificationServiceTest {
         VerificationResult result = verify(resultWithFails(0, all, List.of()), resultWithFails(1, all, failedOnTemplate), ps);
         assertThat(result.mechanicallyVerified()).as("an unbound test passing on the template would give a bare-template student >0% in production").isFalse();
         assertThat(result.reasons()).anyMatch(r -> r.contains("not bound by any [task]") && r.contains("reverse_empty_string"));
+    }
+
+    // Visibility is part of the binding contract. Before this pair, the oracle demanded that EVERY gradable test be bound while the prompt forbade binding a hidden one, so an
+    // exercise with a hidden variant could not be accepted at all — and the agent resolved the contradiction by binding the hidden tests, shipping task checkboxes that can
+    // never turn green before the deadline.
+
+    @Test
+    void shouldAcceptWhenTheOnlyUnboundTestIsOneTheGradingPlanHidesUntilTheDueDate() {
+        List<String> all = List.of("sorts_ascending", "sorts_ascending_freshWitness");
+        String ps = "# Sort\n[task][Ascending](sorts_ascending)\n";
+        String plan = "{\"tests\":[{\"name\":\"sorts_ascending\",\"weight\":3,\"visibility\":\"ALWAYS\"},"
+                + "{\"name\":\"sorts_ascending_freshWitness\",\"weight\":2,\"visibility\":\"AFTER_DUE_DATE\"}]}";
+        ScriptedSandbox sandbox = new ScriptedSandbox(resultWithFails(0, all, List.of()), resultWithFails(1, all, all), ps).withTestPlan(plan);
+
+        VerificationResult result = verifyGenerate(newVerifier(), sandbox, new ProgrammingExercise());
+
+        assertThat(result.mechanicallyVerified()).as("a hidden test is deliberately unbound; demanding a binding made the hidden-variant feature unusable").isTrue();
+        assertThat(result.reasons()).noneMatch(reason -> reason.contains("not bound by any [task]"));
+    }
+
+    @Test
+    void shouldRejectWhenATaskBindsATestTheGradingPlanHidesUntilTheDueDate() {
+        List<String> all = List.of("sorts_ascending", "sorts_ascending_freshWitness");
+        String ps = "# Sort\n[task][Ascending](sorts_ascending,sorts_ascending_freshWitness)\n";
+        String plan = "{\"tests\":[{\"name\":\"sorts_ascending\",\"weight\":3,\"visibility\":\"ALWAYS\"},"
+                + "{\"name\":\"sorts_ascending_freshWitness\",\"weight\":2,\"visibility\":\"AFTER_DUE_DATE\"}]}";
+        ScriptedSandbox sandbox = new ScriptedSandbox(resultWithFails(0, all, List.of()), resultWithFails(1, all, all), ps).withTestPlan(plan);
+
+        VerificationResult result = verifyGenerate(newVerifier(), sandbox, new ProgrammingExercise());
+
+        assertThat(result.mechanicallyVerified()).isFalse();
+        assertThat(result.reasons()).anyMatch(reason -> reason.contains("hides until the due date") && reason.contains("sorts_ascending_freshWitness"));
+    }
+
+    @Test
+    void shouldStillDemandEveryBindingWhenNoGradingPlanExists() {
+        // Fail-open contract: without a readable plan the oracle behaves exactly as it did before visibility existed.
+        List<String> all = List.of("sorts_ascending", "sorts_descending");
+        String ps = "# Sort\n[task][Ascending](sorts_ascending)\n";
+
+        VerificationResult result = verify(resultWithFails(0, all, List.of()), resultWithFails(1, all, all), ps);
+
+        assertThat(result.mechanicallyVerified()).isFalse();
+        assertThat(result.reasons()).anyMatch(reason -> reason.contains("not bound by any [task]") && reason.contains("sorts_descending"));
     }
 
     @Test
