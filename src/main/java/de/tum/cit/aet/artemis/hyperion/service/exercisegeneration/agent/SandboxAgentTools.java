@@ -1,13 +1,16 @@
 package de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent;
 
 import java.nio.charset.StandardCharsets;
+import java.text.Normalizer;
 import java.time.Duration;
+import java.util.Arrays;
 import java.util.Base64;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import org.jspecify.annotations.Nullable;
 import org.springframework.ai.tool.annotation.Tool;
@@ -50,6 +53,12 @@ public class SandboxAgentTools implements SubmitVetoAware {
      * there and the truncation marker the agent sees stays truthful; the full output lives in the spill file.
      */
     private static final int BASH_TAIL_BYTES = 10_000;
+
+    /**
+     * Characters of file content {@code read_file} returns inline per call. Same rationale as {@link #BASH_TAIL_BYTES}: staying under the downstream per-tool-result cap keeps the
+     * continuation footer truthful — the loop-level middle-elision never fires on top of it, and the footer's {@code offset} is always the real next line to request.
+     */
+    static final int READ_INLINE_MAX_CHARS = 10_000;
 
     /** Per-command spill-file ceiling via {@code ulimit -f} (512-byte blocks): 65536 * 512 = 32 MB, so a runaway command cannot fill the container disk before the timeout. */
     private static final int SPILL_ULIMIT_BLOCKS = 65_536;
@@ -180,14 +189,25 @@ public class SandboxAgentTools implements SubmitVetoAware {
         this(sandbox, sessionId, null, null, Map.of(), false, null);
     }
 
+    /** Convenience for callers and tests that want the default whole-file read (subject to the same inline budget as the tool call). */
+    String readFile(String path) {
+        return readFile(path, null, null);
+    }
+
     /**
-     * Reads a workspace file.
+     * Reads a workspace file, optionally starting at a 1-indexed line and bounded to a line count. Output never exceeds {@link #READ_INLINE_MAX_CHARS}; when the file is longer,
+     * the result ends with a footer naming the exact {@code offset} to continue from, so a large file is paged through this same tool instead of silently losing its middle to
+     * the loop-level cap.
      *
-     * @param path the workspace-relative path to read
-     * @return the file content, or an actionable error message if the path is invalid or unreadable
+     * @param path   the workspace-relative path to read
+     * @param offset the 1-indexed line to start reading from; {@code null} starts at the top
+     * @param limit  the maximum number of lines to return; {@code null} reads to the inline budget
+     * @return the (possibly paged) file content, or an actionable error message if the path is invalid or unreadable
      */
     @Tool(name = "read_file", description = AgentToolDescriptions.READ_FILE)
-    public String readFile(@ToolParam(description = AgentToolDescriptions.READ_FILE_PATH) String path) {
+    public String readFile(@ToolParam(description = AgentToolDescriptions.READ_FILE_PATH) String path,
+            @ToolParam(required = false, description = AgentToolDescriptions.READ_FILE_OFFSET) Integer offset,
+            @ToolParam(required = false, description = AgentToolDescriptions.READ_FILE_LIMIT) Integer limit) {
         String safe = workspaceRelativePath(path);
         if (safe == null) {
             return invalidPathError(path);
@@ -197,8 +217,64 @@ public class SandboxAgentTools implements SubmitVetoAware {
             return SECRET_MATERIAL_POLICY.blockedObservation(pathAssessment);
         }
         SandboxExecResult result = sandbox.exec(sessionId, FILE_OP_TIMEOUT, "cat", WORKSPACE + "/" + safe);
-        String observation = result.isSuccess() ? result.stdout() : "ERROR: could not read '" + safe + "': " + result.combinedOutput();
-        return screenObservation(safe, observation);
+        if (!result.isSuccess()) {
+            return screenObservation(safe, "ERROR: could not read '" + safe + "': " + result.combinedOutput());
+        }
+        // Screen the FULL content, not the returned page, so a secret can never escape by straddling a page boundary.
+        String screened = screenObservation(safe, result.stdout());
+        if (!screened.equals(result.stdout())) {
+            return screened;
+        }
+        return pageFileContent(safe, result.stdout(), offset, limit);
+    }
+
+    /**
+     * Applies offset/limit and the inline character budget to file content, cutting only on line boundaries and appending a continuation footer that names the exact next
+     * {@code offset} whenever anything was left out.
+     */
+    private static String pageFileContent(String safe, String content, @Nullable Integer offset, @Nullable Integer limit) {
+        String[] allLines = content.split("\n", -1);
+        // A trailing newline produces one final empty element that is an artifact of the split, not a real line.
+        int totalLines = allLines.length > 1 && allLines[allLines.length - 1].isEmpty() ? allLines.length - 1 : allLines.length;
+        int startLine = offset == null ? 1 : offset;
+        if (startLine < 1) {
+            return "ERROR: offset must be a 1-indexed line number (got " + startLine + ").";
+        }
+        if (startLine > totalLines) {
+            return "ERROR: offset " + startLine + " is beyond the end of '" + safe + "' (" + totalLines + " lines total).";
+        }
+        if (limit != null && limit < 1) {
+            return "ERROR: limit must be a positive line count (got " + limit + ").";
+        }
+        int requestedEnd = limit == null ? totalLines : Math.min(totalLines, startLine + limit - 1);
+        StringBuilder selected = new StringBuilder();
+        int lastIncludedLine = startLine - 1;
+        for (int line = startLine; line <= requestedEnd; line++) {
+            String text = allLines[line - 1];
+            int addition = (selected.isEmpty() ? 0 : 1) + text.length();
+            if (selected.length() + addition > READ_INLINE_MAX_CHARS) {
+                if (selected.isEmpty()) {
+                    // The first requested line alone exceeds the budget; hand the model a shell recipe instead of returning nothing.
+                    return "[Line " + line + " of '" + safe + "' is " + text.length() + " characters, more than the " + READ_INLINE_MAX_CHARS
+                            + " this tool returns. Read it in slices with bash: sed -n '" + line + "p' " + safe + " | cut -c1-" + READ_INLINE_MAX_CHARS + "]";
+                }
+                break;
+            }
+            if (!selected.isEmpty()) {
+                selected.append('\n');
+            }
+            selected.append(text);
+            lastIncludedLine = line;
+        }
+        if (startLine == 1 && lastIncludedLine >= totalLines) {
+            return content;
+        }
+        if (lastIncludedLine >= totalLines) {
+            // An offset read that reached the end of the file: return the slice as-is, nothing was left out.
+            return selected.toString();
+        }
+        return selected + "\n\n[Showing lines " + startLine + "-" + lastIncludedLine + " of " + totalLines + ". Call read_file with offset=" + (lastIncludedLine + 1)
+                + " to continue.]";
     }
 
     /**
@@ -256,15 +332,114 @@ public class SandboxAgentTools implements SubmitVetoAware {
             return "ERROR: could not read '" + safe + "' for editing: " + read.combinedOutput();
         }
         String current = read.stdout();
-        int first = current.indexOf(oldText);
-        if (first < 0) {
-            return "ERROR: the provided oldText was not found in '" + safe + "'. Read the file again to get the exact current text.";
+        EditOutcome outcome = applyUniqueReplacement(safe, current, oldText, newText);
+        if (outcome.error() != null) {
+            return outcome.error();
         }
-        if (current.indexOf(oldText, first + 1) >= 0) {
-            return "ERROR: the provided oldText occurs more than once in '" + safe + "'. Provide more surrounding context to make it unique.";
+        String writeResult = writeFile(safe, outcome.content());
+        if (!writeResult.startsWith("Wrote ")) {
+            return writeResult;
         }
-        String updated = current.substring(0, first) + newText + current.substring(first + oldText.length());
-        return writeFile(safe, updated);
+        return "Replaced 1 occurrence in " + safe + ".";
+    }
+
+    /** Either the updated file content or an agent-actionable {@code ERROR:} message; exactly one side is set. */
+    private record EditOutcome(@Nullable String content, @Nullable String error) {
+
+        static EditOutcome updated(String content) {
+            return new EditOutcome(content, null);
+        }
+
+        static EditOutcome failed(String error) {
+            return new EditOutcome(null, error);
+        }
+    }
+
+    /**
+     * Finds {@code oldText} in {@code current} and returns the updated content, or an {@code ERROR:} message the model can act on. Tries the exact text first; when that finds
+     * nothing, retries in a normalized space that forgives the mismatches models actually produce when re-typing code they read earlier — trailing whitespace, smart quotes,
+     * Unicode dashes and non-breaking spaces (see {@link #normalizeForTolerantMatch}). A normalized match is only accepted when it is unique, and only the lines it touches are
+     * rewritten from the normalized text; every other line keeps its original bytes.
+     */
+    private static EditOutcome applyUniqueReplacement(String safe, String current, String oldText, String newText) {
+        int occurrences = countOccurrences(current, oldText);
+        if (occurrences > 1) {
+            return EditOutcome.failed("ERROR: the provided oldText occurs " + occurrences + " times in '" + safe + "'. Provide more surrounding context to make it unique.");
+        }
+        if (occurrences == 1) {
+            int first = current.indexOf(oldText);
+            return EditOutcome.updated(current.substring(0, first) + newText + current.substring(first + oldText.length()));
+        }
+        String normalizedCurrent = normalizeForTolerantMatch(current);
+        String normalizedOld = normalizeForTolerantMatch(oldText);
+        int normalizedOccurrences = normalizedOld.isEmpty() ? 0 : countOccurrences(normalizedCurrent, normalizedOld);
+        if (normalizedOccurrences > 1) {
+            return EditOutcome.failed("ERROR: the provided oldText occurs " + normalizedOccurrences + " times in '" + safe + "' (ignoring whitespace-only differences). "
+                    + "Provide more surrounding context to make it unique.");
+        }
+        if (normalizedOccurrences == 0) {
+            return EditOutcome.failed("ERROR: the provided oldText was not found in '" + safe + "'. It must match the file exactly, including whitespace and newlines. "
+                    + "Read the file again to get the exact current text.");
+        }
+        return spliceNormalizedMatch(current, normalizedCurrent, normalizedCurrent.indexOf(normalizedOld), normalizedOld.length(), newText);
+    }
+
+    /**
+     * Rebuilds the file after a tolerant (normalized-space) match: original lines outside the matched line range are kept byte-for-byte; the matched range is emitted from the
+     * normalized text with {@code newText} substituted. Fails loud (never expected — {@link #normalizeForTolerantMatch} preserves newlines) rather than corrupt the file if the
+     * normalization changed the line structure.
+     */
+    private static EditOutcome spliceNormalizedMatch(String current, String normalizedCurrent, int matchIndex, int matchLength, String newText) {
+        String[] originalLines = current.split("\n", -1);
+        String[] normalizedLines = normalizedCurrent.split("\n", -1);
+        if (originalLines.length != normalizedLines.length) {
+            return EditOutcome.failed("ERROR: the provided oldText was not found in the file. Read the file again to get the exact current text.");
+        }
+        int matchEnd = matchIndex + matchLength;
+        int lineStartOffset = 0;
+        int startLine = 0;
+        while (lineStartOffset + normalizedLines[startLine].length() < matchIndex) {
+            lineStartOffset += normalizedLines[startLine].length() + 1;
+            startLine++;
+        }
+        int endLine = startLine;
+        int endLineStartOffset = lineStartOffset;
+        while (endLineStartOffset + normalizedLines[endLine].length() < matchEnd) {
+            endLineStartOffset += normalizedLines[endLine].length() + 1;
+            endLine++;
+        }
+        int lineEndOffset = endLineStartOffset + normalizedLines[endLine].length();
+        String replacedBlock = normalizedCurrent.substring(lineStartOffset, matchIndex) + newText + normalizedCurrent.substring(matchEnd, lineEndOffset);
+        StringBuilder result = new StringBuilder();
+        for (int i = 0; i < startLine; i++) {
+            result.append(originalLines[i]).append('\n');
+        }
+        result.append(replacedBlock);
+        for (int i = endLine + 1; i < originalLines.length; i++) {
+            result.append('\n').append(originalLines[i]);
+        }
+        return EditOutcome.updated(result.toString());
+    }
+
+    private static int countOccurrences(String content, String needle) {
+        int count = 0;
+        for (int index = content.indexOf(needle); index >= 0; index = content.indexOf(needle, index + 1)) {
+            count++;
+        }
+        return count;
+    }
+
+    /**
+     * Normalizes text for the tolerant second-chance match in {@link #applyUniqueReplacement}: NFKC, trailing whitespace stripped per line, smart quotes and Unicode
+     * dashes/spaces folded to their ASCII forms. Never adds or removes newlines, so line indices stay aligned with the original text. These are exactly the mismatches models
+     * introduce when re-typing code they read earlier, so absorbing them fixes the edit at the root instead of bouncing a "not found" error back for a byte-identical retry.
+     */
+    static String normalizeForTolerantMatch(String text) {
+        String folded = Normalizer.normalize(text, Normalizer.Form.NFKC)
+                // Smart single quotes, smart double quotes, Unicode hyphens/dashes/minus, non-breaking and typographic spaces: each folded to its ASCII form.
+                .replaceAll("[\u2018\u2019\u201A\u201B]", "'").replaceAll("[\u201C\u201D\u201E\u201F]", "\"").replaceAll("[\u2010\u2011\u2012\u2013\u2014\u2015\u2212]", "-")
+                .replaceAll("[\u00A0\u2002-\u200A\u202F\u205F\u3000]", " ");
+        return Arrays.stream(folded.split("\n", -1)).map(line -> line.replaceAll("[ \t]+$", "")).collect(Collectors.joining("\n"));
     }
 
     /**
@@ -420,7 +595,8 @@ public class SandboxAgentTools implements SubmitVetoAware {
         String lines = meta.group(3);
         String body = newline < 0 ? "" : output.substring(newline + 1);
         if (bytes <= BASH_TAIL_BYTES) {
-            return "exit=" + rc + "\n" + body;
+            // An explicit marker instead of dead air: the model should not have to guess whether a silent command succeeded quietly or the output was lost.
+            return "exit=" + rc + "\n" + (body.isBlank() ? "(no output)" : body);
         }
         return "exit=" + rc + "\n" + body + "\n\n[Showing the last " + BASH_TAIL_BYTES + " of " + bytes + " bytes (" + lines + " lines total). Full output saved in the sandbox at "
                 + logPath + " — read more with: tail -n 200 " + logPath + "  (or sed -n '1,200p' " + logPath + ", grep PATTERN " + logPath + ")]";

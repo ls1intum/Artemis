@@ -330,6 +330,24 @@ public class AgentLoopRunner {
 
             List<AssistantMessage.ToolCall> toolCalls = response.getResult() != null && response.getResult().getOutput() != null ? response.getResult().getOutput().getToolCalls()
                     : List.of();
+
+            // A "length" stop means the completion was cut off by the token limit, so every tool call in it may carry silently truncated arguments (e.g. half a file in
+            // write_file's content). Executing them would corrupt the workspace while the model believes the calls landed; answer each call id with a re-issue instruction
+            // instead, exactly like an unavailable-tool turn.
+            if (isTruncatedByTokenLimit(response) && !toolCalls.isEmpty()) {
+                emit(stepListener, "The response was cut off at the length limit; asking the agent to re-issue its last actions.");
+                conversation.add(response.getResult().getOutput());
+                List<ToolResponseMessage.ToolResponse> truncatedResponses = toolCalls.stream()
+                        .map(toolCall -> new ToolResponseMessage.ToolResponse(toolCall.id(), toolCall.name(),
+                                "ERROR: this tool call was not executed - the response hit the output token limit, so its arguments may be truncated. "
+                                        + "Re-issue the call with complete arguments, splitting large content across smaller calls if needed."))
+                        .toList();
+                conversation.add(ToolResponseMessage.builder().responses(truncatedResponses).build());
+                conversation = compactIfNeeded(conversation, lastPromptTokens, messagesAtLastCall, usageSink, cancelled, stepListener);
+                prompt = new Prompt(conversation, agentOptions(toolCallbacks, conversation));
+                continue;
+            }
+
             for (AssistantMessage.ToolCall toolCall : toolCalls) {
                 if (!SUBMIT_TOOL_NAME.equals(toolCall.name())) {
                     emit(stepListener, describeToolProgress(toolCall));
@@ -403,6 +421,14 @@ public class AgentLoopRunner {
 
         emit(stepListener, "The generation step limit was reached.");
         return session(AgentLoopResult.Status.BUDGET_EXHAUSTED, maxTurns, lastAssistantText, conversation);
+    }
+
+    /** Whether the provider reports this completion was cut off by the output token limit (OpenAI-style finish reason "length"). */
+    private static boolean isTruncatedByTokenLimit(ChatResponse response) {
+        if (response.getResult() == null || response.getResult().getMetadata() == null) {
+            return false;
+        }
+        return "length".equalsIgnoreCase(response.getResult().getMetadata().getFinishReason());
     }
 
     /** Builds a session result, stripping the leading system message so the returned conversation is ready to pass as {@code priorConversation} to the next call. */
@@ -742,7 +768,8 @@ public class AgentLoopRunner {
         // head + marker + tail stays within MAX_TOOL_RESPONSE_CHARS.
         int head = MAX_TOOL_RESPONSE_CHARS / 4;
         int elidedEstimate = data.length() - MAX_TOOL_RESPONSE_CHARS;
-        String marker = "\n[… " + elidedEstimate + " characters elided to fit the context window …]\n";
+        String marker = "\n[… " + elidedEstimate
+                + " characters elided to fit the context window. Re-fetch just the part you need: read_file with offset/limit, or grep via bash. …]\n";
         int tail = Math.max(0, MAX_TOOL_RESPONSE_CHARS - head - marker.length());
         return data.substring(0, head) + marker + data.substring(data.length() - tail);
     }

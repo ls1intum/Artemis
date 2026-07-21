@@ -8,9 +8,13 @@ final class AgentToolDescriptions {
     private AgentToolDescriptions() {
     }
 
-    static final String READ_FILE = "Read a UTF-8 text file in the workspace and return its full contents. The path is workspace-relative (e.g. 'solution/src/Calculator.java'). Prefer this over 'cat'. For a large file, or to find one thing, use bash with grep/sed instead of reading the whole file.";
+    static final String READ_FILE = "Read a UTF-8 text file in the workspace. The path is workspace-relative (e.g. 'solution/src/Calculator.java'). Prefer this over 'cat'. Output is limited to about 10000 characters; a longer file returns its first part plus a footer naming the exact offset to continue from — repeat with that offset until you have what you need. Use offset (1-indexed line) and limit (line count) to read a specific slice. To find one thing in a large file, use bash with grep instead.";
 
     static final String READ_FILE_PATH = "workspace-relative path to read, e.g. 'tests/test/sorting/SortTest.java'";
+
+    static final String READ_FILE_OFFSET = "1-indexed line number to start reading from (omit to start at the top)";
+
+    static final String READ_FILE_LIMIT = "maximum number of lines to return (omit to read to the output limit)";
 
     static final String WRITE_FILE = "Write the full content of a workspace file, creating it (and any parent directories) or overwriting it if it exists. Use only for new files or complete rewrites; for small changes to an existing file use edit_file. The path is workspace-relative.";
 

@@ -45,6 +45,9 @@ class SandboxAgentToolsTest {
 
         private int execCount;
 
+        /** The base64 payload of the most recent write script, so tests can assert exactly what editFile/writeFile persisted. */
+        private String lastWrittenBase64;
+
         @Override
         public String createSession(SandboxSessionSpec spec) {
             return "s";
@@ -56,6 +59,10 @@ class SandboxAgentToolsTest {
             if (command.length >= 2 && "cat".equals(command[0])) {
                 String content = files.get(command[1]);
                 return content == null ? new SandboxExecResult(1, "", "no such file", false) : new SandboxExecResult(0, content, "", false);
+            }
+            if (command.length == 3 && "sh".equals(command[0]) && command[2].contains("| base64 -d >")) {
+                int start = command[2].indexOf("echo '") + "echo '".length();
+                lastWrittenBase64 = command[2].substring(start, command[2].indexOf("'", start));
             }
             return new SandboxExecResult(0, "", "", false);
         }
@@ -122,7 +129,7 @@ class SandboxAgentToolsTest {
         sandbox.files.put("/workspace/solution/A.java", "x x x");
         SandboxAgentTools tools = new SandboxAgentTools(sandbox, "s");
         String result = tools.editFile("solution/A.java", "x", "y");
-        assertThat(result).contains("more than once");
+        assertThat(result).contains("occurs 3 times").contains("more surrounding context");
     }
 
     @Test
@@ -140,7 +147,75 @@ class SandboxAgentToolsTest {
         sandbox.files.put("/workspace/solution/A.java", "return 0; // TODO");
         SandboxAgentTools tools = new SandboxAgentTools(sandbox, "s");
         String result = tools.editFile("solution/A.java", "return 0;", "return a + b;");
-        assertThat(result).startsWith("Wrote ");
+        assertThat(result).isEqualTo("Replaced 1 occurrence in solution/A.java.");
+    }
+
+    @Test
+    void editFile_toleratesTrailingWhitespaceAndSmartQuoteDrift() {
+        RecordingSandbox sandbox = new RecordingSandbox();
+        // The file has a trailing space after "b;" and a smart quote in the comment; the model re-types both in plain ASCII without the trailing space.
+        sandbox.files.put("/workspace/solution/A.java", "int a;\nint b; \n// it\u2019s fine\nint c;");
+        SandboxAgentTools tools = new SandboxAgentTools(sandbox, "s");
+
+        String result = tools.editFile("solution/A.java", "int b;\n// it's fine", "int b2;\n// still fine");
+
+        assertThat(result).isEqualTo("Replaced 1 occurrence in solution/A.java.");
+        // Untouched lines keep their original bytes; only the matched lines are rewritten.
+        String written = new String(java.util.Base64.getDecoder().decode(sandbox.lastWrittenBase64), java.nio.charset.StandardCharsets.UTF_8);
+        assertThat(written).isEqualTo("int a;\nint b2;\n// still fine\nint c;");
+    }
+
+    @Test
+    void editFile_tolerantMatchStillRejectsAmbiguityWithACount() {
+        RecordingSandbox sandbox = new RecordingSandbox();
+        sandbox.files.put("/workspace/solution/A.java", "x \nx \ny");
+        SandboxAgentTools tools = new SandboxAgentTools(sandbox, "s");
+
+        String result = tools.editFile("solution/A.java", "x\n", "z\n");
+
+        assertThat(result).contains("occurs 2 times").contains("whitespace-only differences");
+    }
+
+    @Test
+    void readFile_longFile_isPagedWithAnActionableContinuationFooter() {
+        RecordingSandbox sandbox = new RecordingSandbox();
+        String line = "x".repeat(99);
+        sandbox.files.put("/workspace/solution/Big.java", (line + "\n").repeat(300));
+        SandboxAgentTools tools = new SandboxAgentTools(sandbox, "s");
+
+        String result = tools.readFile("solution/Big.java");
+
+        assertThat(result.length()).isLessThanOrEqualTo(SandboxAgentTools.READ_INLINE_MAX_CHARS + 200);
+        assertThat(result).contains("[Showing lines 1-100 of 300. Call read_file with offset=101 to continue.]");
+    }
+
+    @Test
+    void readFile_offsetAndLimit_returnTheRequestedSliceWithAFooterWhenMoreRemains() {
+        RecordingSandbox sandbox = new RecordingSandbox();
+        sandbox.files.put("/workspace/solution/A.java", "l1\nl2\nl3\nl4\nl5");
+        SandboxAgentTools tools = new SandboxAgentTools(sandbox, "s");
+
+        assertThat(tools.readFile("solution/A.java", 2, 2)).isEqualTo("l2\nl3\n\n[Showing lines 2-3 of 5. Call read_file with offset=4 to continue.]");
+        assertThat(tools.readFile("solution/A.java", 4, null)).isEqualTo("l4\nl5");
+        assertThat(tools.readFile("solution/A.java", null, null)).isEqualTo("l1\nl2\nl3\nl4\nl5");
+    }
+
+    @Test
+    void readFile_offsetBeyondEndOfFile_returnsAnActionableError() {
+        RecordingSandbox sandbox = new RecordingSandbox();
+        sandbox.files.put("/workspace/solution/A.java", "l1\nl2");
+        SandboxAgentTools tools = new SandboxAgentTools(sandbox, "s");
+
+        assertThat(tools.readFile("solution/A.java", 7, null)).isEqualTo("ERROR: offset 7 is beyond the end of \'solution/A.java\' (2 lines total).");
+    }
+
+    @Test
+    void readFile_giantSingleLine_pointsAtABashSliceRecipeInsteadOfReturningNothing() {
+        RecordingSandbox sandbox = new RecordingSandbox();
+        sandbox.files.put("/workspace/solution/one-liner.json", "y".repeat(SandboxAgentTools.READ_INLINE_MAX_CHARS + 5));
+        SandboxAgentTools tools = new SandboxAgentTools(sandbox, "s");
+
+        assertThat(tools.readFile("solution/one-liner.json")).contains("Line 1").contains("sed -n \'1p\' solution/one-liner.json");
     }
 
     @Test

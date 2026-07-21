@@ -114,6 +114,32 @@ class AgentLoopRunnerTest {
         return new ChatResponse(List.of(new Generation(new AssistantMessage(text))));
     }
 
+    private static ChatResponse lengthTruncatedToolCallResponse(String name, String arguments) {
+        var toolCall = new AssistantMessage.ToolCall("call-1", "function", name, arguments);
+        var message = AssistantMessage.builder().content("").toolCalls(List.of(toolCall)).build();
+        return new ChatResponse(List.of(new Generation(message, org.springframework.ai.chat.metadata.ChatGenerationMetadata.builder().finishReason("length").build())));
+    }
+
+    @Test
+    void agentLoop_lengthTruncatedToolCalls_areNotExecutedAndTheModelIsAskedToReissue() {
+        ChatModel chatModel = mock(ChatModel.class);
+        // The truncated turn carries a write_file whose content may have been cut off mid-file; it must never reach the sandbox.
+        when(chatModel.call(any(Prompt.class))).thenReturn(lengthTruncatedToolCallResponse("write_file", "{\"path\":\"solution/A.java\",\"content\":\"class A {\"}"),
+                textResponse("DONE"));
+        FakeSandbox sandbox = new FakeSandbox();
+
+        AgentLoopRunner runner = newTestRunner(List.of(chatModel), 128_000);
+        AgentLoopResult result = runner.run("system", "do it", new SandboxAgentTools(sandbox, "fake-session"), 10, () -> false, null, null);
+
+        assertThat(result.status()).isEqualTo(AgentLoopResult.Status.COMPLETED);
+        assertThat(sandbox.execCommands).isEmpty();
+        ArgumentCaptor<Prompt> prompts = ArgumentCaptor.forClass(Prompt.class);
+        verify(chatModel, times(2)).call(prompts.capture());
+        Message toolFeedback = prompts.getAllValues().get(1).getInstructions().stream().filter(ToolResponseMessage.class::isInstance).reduce((first, second) -> second)
+                .orElseThrow();
+        assertThat(((ToolResponseMessage) toolFeedback).getResponses().getFirst().responseData()).contains("output token limit").contains("Re-issue the call");
+    }
+
     @Test
     void agentLoop_recoversFromUnknownToolCall_andContinues() {
         ChatModel chatModel = mock(ChatModel.class);

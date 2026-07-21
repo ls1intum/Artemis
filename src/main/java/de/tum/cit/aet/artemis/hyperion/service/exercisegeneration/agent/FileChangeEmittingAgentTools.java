@@ -17,6 +17,8 @@ public class FileChangeEmittingAgentTools implements TurnAware, SubmitVetoAware 
 
     private static final String WRITE_SUCCESS_PREFIX = "Wrote ";
 
+    private static final String EDIT_SUCCESS_PREFIX = "Replaced ";
+
     private static final String DELETE_SUCCESS_PREFIX = "Deleted ";
 
     private final SandboxAgentTools delegate;
@@ -36,8 +38,10 @@ public class FileChangeEmittingAgentTools implements TurnAware, SubmitVetoAware 
     }
 
     @Tool(name = "read_file", description = AgentToolDescriptions.READ_FILE)
-    public String readFile(@ToolParam(description = AgentToolDescriptions.READ_FILE_PATH) String path) {
-        return delegate.readFile(path);
+    public String readFile(@ToolParam(description = AgentToolDescriptions.READ_FILE_PATH) String path,
+            @ToolParam(required = false, description = AgentToolDescriptions.READ_FILE_OFFSET) Integer offset,
+            @ToolParam(required = false, description = AgentToolDescriptions.READ_FILE_LIMIT) Integer limit) {
+        return delegate.readFile(path, offset, limit);
     }
 
     /**
@@ -72,7 +76,7 @@ public class FileChangeEmittingAgentTools implements TurnAware, SubmitVetoAware 
     public String editFile(@ToolParam(description = AgentToolDescriptions.EDIT_FILE_PATH) String path,
             @ToolParam(description = AgentToolDescriptions.EDIT_FILE_OLD_TEXT) String oldText, @ToolParam(description = AgentToolDescriptions.EDIT_FILE_NEW_TEXT) String newText) {
         String result = delegate.editFile(path, oldText, newText);
-        if (isSuccess(result)) {
+        if (result != null && result.startsWith(EDIT_SUCCESS_PREFIX)) {
             String safePath = SandboxAgentTools.workspaceRelativePath(path);
             if (safePath != null) {
                 emit(safePath, ExerciseGenerationFileChangeDTO.ACTION_EDIT);

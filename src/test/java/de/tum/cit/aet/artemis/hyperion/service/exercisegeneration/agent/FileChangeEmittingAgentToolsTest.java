@@ -18,6 +18,8 @@ class FileChangeEmittingAgentToolsTest {
 
     private static final String WRITE_OK = "Wrote 3 characters to path";
 
+    private static final String EDIT_OK = "Replaced 1 occurrence in tests/T.java.";
+
     private SandboxAgentTools delegate;
 
     private List<ExerciseGenerationFileChangeDTO> emitted;
@@ -52,9 +54,9 @@ class FileChangeEmittingAgentToolsTest {
 
     @Test
     void successfulEditEmitsWithoutReadingFileContentBack() {
-        when(delegate.editFile("tests/T.java", "old", "new")).thenReturn(WRITE_OK);
+        when(delegate.editFile("tests/T.java", "old", "new")).thenReturn(EDIT_OK);
 
-        assertThat(tools.editFile("tests/T.java", "old", "new")).isEqualTo(WRITE_OK);
+        assertThat(tools.editFile("tests/T.java", "old", "new")).isEqualTo(EDIT_OK);
 
         assertThat(emitted).singleElement().satisfies(change -> {
             assertThat(change.repo()).isEqualTo(ExerciseGenerationFileChangeDTO.REPOSITORY_TESTS);
@@ -96,12 +98,12 @@ class FileChangeEmittingAgentToolsTest {
 
     @Test
     void readBashVerifyAndSubmitRemainPureDelegations() {
-        when(delegate.readFile("solution/A.java")).thenReturn("content");
+        when(delegate.readFile("solution/A.java", null, null)).thenReturn("content");
         when(delegate.bash("ls")).thenReturn("out");
         when(delegate.verify()).thenReturn("verified");
         when(delegate.submit("done")).thenReturn("submitted");
 
-        assertThat(tools.readFile("solution/A.java")).isEqualTo("content");
+        assertThat(tools.readFile("solution/A.java", null, null)).isEqualTo("content");
         assertThat(tools.bash("ls")).isEqualTo("out");
         assertThat(tools.verify()).isEqualTo("verified");
         assertThat(tools.submit("done")).isEqualTo("submitted");
