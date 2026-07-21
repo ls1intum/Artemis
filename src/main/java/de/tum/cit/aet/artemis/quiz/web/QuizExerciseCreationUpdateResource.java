@@ -211,9 +211,8 @@ public class QuizExerciseCreationUpdateResource {
         quizExerciseService.mergeDTOIntoDomainObject(quizBase, updateQuizExerciseDTO);
 
         // A variant group owns its members' timeline, so pin the dates back to the group before performUpdate() validates.
-        // The guard lives here rather than in QuizExerciseService: that service sits deep in the eager bean graph
-        // (examService -> exerciseDeletionService -> quizExerciseService), and injecting ExerciseVariantGroupService there
-        // closes a circular dependency through ProgrammingExerciseCreationUpdateService -> ... -> examApi -> examService.
+        // The guard lives here, not in QuizExerciseService: injecting ExerciseVariantGroupService there would close a bean
+        // cycle (examService -> exerciseDeletionService -> quizExerciseService -> ... -> examService).
         exerciseVariantGroupService.applyOwningGroupTimeline(quizBase);
 
         QuizExercise result = quizExerciseService.performUpdate(originalQuiz, quizBase, files != null ? files : List.of(), notificationText, originalCompetencyIds);

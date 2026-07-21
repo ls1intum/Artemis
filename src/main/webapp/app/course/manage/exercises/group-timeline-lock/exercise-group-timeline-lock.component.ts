@@ -9,11 +9,9 @@ import { DialogTranslateHeaderComponent } from 'app/shared-ui/dynamic-dialog/dia
 import { AlertService } from 'app/foundation/service/alert.service';
 
 /**
- * Opens the {@link ExerciseGroupEditModalComponent} for an exercise that belongs to a variant group. The exercise edit
- * forms render their timeline date pickers as read-only "locked-to-group" fields (see {@code FormDateTimePickerComponent}):
- * clicking one calls {@link openModal}, which opens the group-edit dialog through PrimeNG's {@link DialogService}.
- * Saving persists the group's timeline via {@link ExerciseVariantGroupService} and re-emits the exercise with the
- * group's (now shared) dates applied so the form reflects them without a reload.
+ * Opens the {@link ExerciseGroupEditModalComponent} for a grouped exercise: the edit form renders its timeline pickers as
+ * read-only "locked-to-group" fields, and clicking one calls {@link openModal}. Saving persists the group's timeline via
+ * {@link ExerciseVariantGroupService} and re-emits the exercise with the shared dates applied, so the form refreshes without a reload.
  */
 @Component({
     selector: 'jhi-exercise-group-timeline-lock',
@@ -94,8 +92,8 @@ function referenceToGroup(reference: ExerciseVariantGroupReference | undefined):
 }
 
 /**
- * Returns a new exercise (preserving the prototype, so a fresh reference triggers the host's signal) with the saved
- * group's timeline applied — including unset dates, since a grouped exercise is fully governed by its group's timeline.
+ * Returns a new exercise (preserving the prototype, so a fresh reference triggers the host's signal) with the saved group's
+ * timeline applied, including unset dates, since a grouped exercise is fully governed by its group.
  */
 function withGroupTimeline(exercise: Exercise, dto: ExerciseVariantGroupDTO): Exercise {
     const updated = Object.assign(Object.create(Object.getPrototypeOf(exercise)), exercise) as Exercise;

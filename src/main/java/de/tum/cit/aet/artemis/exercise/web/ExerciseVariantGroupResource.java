@@ -94,10 +94,9 @@ public class ExerciseVariantGroupResource {
         log.debug("REST request to create ExerciseVariantGroup in course {} : {}", courseId, createDTO);
         ExerciseVariantGroup group = createDTO.toEntity();
         group.validateDates();
-        // The course owns the unidirectional collection: save the group first to get an id, then attach it so the
-        // course_id FK is written. Not wrapped in a transaction (this codebase avoids service-level @Transactional);
-        // validation runs before the first save, so a failure between the two can only leave an orphan, course-less
-        // group that no course-scoped query ever sees.
+        // The course owns the unidirectional collection, so save the group first to get an id, then attach it to write the
+        // course_id FK. Not transactional (this codebase avoids service-level @Transactional); a failure between the two
+        // saves can only leave an orphan, course-less group that no course-scoped query ever sees.
         group = exerciseVariantGroupRepository.save(group);
         Course course = courseRepository.findWithEagerExerciseVariantGroupsByIdElseThrow(courseId);
         course.addExerciseVariantGroup(group);
@@ -126,8 +125,8 @@ public class ExerciseVariantGroupResource {
         updateDTO.applyTo(group);
         group.validateDates();
         exerciseVariantGroupService.saveWithTimelineAppliedToMembers(group);
-        // Build the response from the loaded entity (its exercises were fetched); save()'s re-merged return value has a
-        // lazy exercises collection that cannot initialize once the session closes (open-in-view is off).
+        // Respond from the loaded entity (its exercises were fetched); the re-merged save() result has a lazy exercises
+        // collection that cannot initialize once the session closes (open-in-view is off).
         return ResponseEntity.ok(new ExerciseVariantGroupDTO(group));
     }
 
@@ -172,9 +171,8 @@ public class ExerciseVariantGroupResource {
     @EnforceAtLeastInstructorInCourse
     public ResponseEntity<Void> deleteExerciseVariantGroup(@PathVariable Long groupId, @PathVariable Long courseId) {
         log.debug("REST request to delete ExerciseVariantGroup {} in course {}", groupId, courseId);
-        // Load the group without its members so the ON DELETE SET NULL foreign key (see the Liquibase changelog) can
-        // ungroup them; loading them would make Hibernate's flush fail because managed exercises still reference the
-        // removed group. The members survive, simply ungrouped.
+        // Load the group without its members so the ON DELETE SET NULL FK (see the Liquibase changelog) ungroups them;
+        // loading them would fail Hibernate's flush because managed exercises still reference the removed group. Members survive.
         ExerciseVariantGroup group = exerciseVariantGroupRepository.findByIdAndCourseIdWithoutExercisesElseThrow(groupId, courseId);
         exerciseVariantGroupRepository.delete(group);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, group.getTitle())).build();
@@ -182,12 +180,10 @@ public class ExerciseVariantGroupResource {
 
     /**
      * PUT /courses/:courseId/exercises/:exerciseId/variant-group : Assign an exercise to a variant group, or remove it
-     * from its current group. Membership is edited from the exercise side, so moving an exercise between groups is a
-     * single request.
+     * from its current group. Membership is edited from the exercise side, so moving between groups is a single request.
      * <p>
-     * A group may deliberately mix exercise types (the variants of one task can come in different formats, e.g. a text
-     * and a modeling version). Scoring caps such a group once across all types in the overall course score; only the
-     * per-exercise-type breakdown on the instructor scores page applies the cap per type bucket.
+     * A group may mix exercise types (the same task in different formats). Scoring caps such a group once across all types
+     * in the overall course score; only the per-type breakdown on the instructor scores page caps per type bucket.
      *
      * @param assignmentDTO the target group ({@code groupId == null} removes the exercise from its group)
      * @param exerciseId    the id of the exercise to (re-)assign
@@ -200,8 +196,8 @@ public class ExerciseVariantGroupResource {
         log.debug("REST request to assign exercise {} in course {} to variant group {}", exerciseId, courseId, assignmentDTO.groupId());
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         if (exercise.isExamExercise()) {
-            // An exam exercise reports its exam's course, so it would pass the ownership check below and be assigned to
-            // a course-owned group, later breaking group timeline updates. Reject it up front.
+            // An exam exercise reports its exam's course, so it would pass the ownership check below and later break group
+            // timeline updates. Reject it up front.
             throw new BadRequestAlertException("Exam exercises cannot be assigned to a variant group", ENTITY_NAME, "examExerciseNotAllowed");
         }
         Course exerciseCourse = exercise.getCourseViaExerciseGroupOrCourseMember();
@@ -210,8 +206,8 @@ public class ExerciseVariantGroupResource {
         }
         ExerciseVariantGroup group = assignmentDTO.groupId() == null ? null : exerciseVariantGroupRepository.findByIdAndCourseIdElseThrow(assignmentDTO.groupId(), courseId);
         if (group != null && exercise instanceof QuizExercise quizExercise && quizExercise.getQuizMode() != QuizMode.INDIVIDUAL) {
-            // Synchronized/batched quizzes have a single shared run and cannot reasonably share a group timeline with
-            // other variants, so only individual-mode quizzes (which already support per-student dates) may join a group.
+            // Synchronized/batched quizzes have a single shared run, so only individual-mode quizzes (which support
+            // per-student dates) can share a group timeline.
             throw new BadRequestAlertException("Only individual-mode quizzes can be added to an exercise group", ENTITY_NAME, "quizNotIndividual");
         }
         exerciseVariantGroupService.assignToGroup(exercise, group);

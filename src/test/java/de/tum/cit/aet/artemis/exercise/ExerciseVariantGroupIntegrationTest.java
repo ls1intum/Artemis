@@ -42,10 +42,12 @@ import de.tum.cit.aet.artemis.modeling.util.ModelingExerciseUtilService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseTimelineUpdateDTO;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
+import de.tum.cit.aet.artemis.quiz.domain.QuizBatch;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.domain.QuizMode;
 import de.tum.cit.aet.artemis.quiz.dto.exercise.QuizExerciseWithQuestionsDTO;
 import de.tum.cit.aet.artemis.quiz.util.QuizExerciseFactory;
+import de.tum.cit.aet.artemis.quiz.util.QuizExerciseUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentBatchTest;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.dto.TextExerciseResponseDTO;
@@ -89,6 +91,9 @@ class ExerciseVariantGroupIntegrationTest extends AbstractSpringIntegrationIndep
 
     @Autowired
     private FileUploadExerciseUtilService fileUploadExerciseUtilService;
+
+    @Autowired
+    private QuizExerciseUtilService quizExerciseUtilService;
 
     private Course course;
 
@@ -305,15 +310,13 @@ class ExerciseVariantGroupIntegrationTest extends AbstractSpringIntegrationIndep
         CreateExerciseVariantGroupDTO createDTO = new CreateExerciseVariantGroupDTO("Dated variants", null, release, null, due, null, null);
         ExerciseVariantGroupDTO created = request.postWithResponseBody(groupsUrl(), createDTO, ExerciseVariantGroupDTO.class, HttpStatus.CREATED);
         String assignUrl = "/api/exercise/courses/" + course.getId() + "/exercises/" + exercise.getId() + "/variant-group";
-        // Re-fetch instead of using the in-memory field: the DB column's millisecond precision can round the original
-        // (unrounded) value differently than the in-memory object holds it.
+        // Re-fetch instead of using the in-memory field: the DB column's millisecond precision can round it differently.
         ZonedDateTime originalAssessmentDueDate = exerciseRepository.findByIdElseThrow(exercise.getId()).getAssessmentDueDate();
 
         request.put(assignUrl, new ExerciseVariantGroupAssignmentDTO(created.id()), HttpStatus.OK);
 
-        // Dates the group already defines (release, due) are copied onto the exercise. The group didn't yet define an
-        // assessment due date and had no other members, so it adopts the joining exercise's own value instead of
-        // clearing it. The exercise has no start date, and the group didn't have one either, so it stays unset.
+        // release/due are copied from the group; the group defined no assessment due date (and had no other members) so it
+        // adopts the exercise's own; neither has a start date, so it stays unset.
         Exercise reloaded = exerciseRepository.findByIdElseThrow(exercise.getId());
         assertThat(reloaded.getReleaseDate().toInstant()).isEqualTo(release.toInstant());
         assertThat(reloaded.getDueDate().toInstant()).isEqualTo(due.toInstant());
@@ -357,11 +360,7 @@ class ExerciseVariantGroupIntegrationTest extends AbstractSpringIntegrationIndep
         assertThat(reloaded.getReleaseDate()).isNull();
     }
 
-    /**
-     * Changing dates through a group must not be a weaker operation than editing a member directly: the group path used
-     * to save the members straight through the repository, so the scheduling, notification, individual-due-date and
-     * versioning work the member's own update endpoint performs was silently skipped.
-     */
+    /** A group timeline edit must run the same post-update work a member's own endpoint does (scheduling, versioning, ...). */
     @Test
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void testUpdatingGroupTimelineRunsMemberPostUpdateSideEffects() throws Exception {
@@ -377,17 +376,11 @@ class ExerciseVariantGroupIntegrationTest extends AbstractSpringIntegrationIndep
 
         // The text member's type-specific scheduler is refreshed, exactly as TextExerciseCreationUpdateResource does.
         verify(instanceMessageSendService).sendTextExerciseSchedule(exercise.getId());
-        // A version snapshot is recorded so the change shows up in the exercise history (versioning is synchronous under
-        // the test profile, see AsyncConfiguration#exerciseVersionTaskExecutor).
+        // A version snapshot is recorded (versioning is synchronous under the test profile).
         assertThat(exerciseVersionRepository.findTopByExerciseIdOrderByCreatedDateDesc(exercise.getId())).isPresent();
     }
 
-    /**
-     * A programming member's build-and-test date is not part of the shared group timeline: it is derived per exercise
-     * from its own build plan, so the group cannot own a single value that is correct for every member. Editing the
-     * group's due date must therefore leave that date to the regular programming update flow rather than overwriting it
-     * with a group value.
-     */
+    /** A programming member's build-and-test date is per-exercise, not shared, so a group due-date edit must not overwrite it. */
     @Test
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void testUpdatingGroupTimelineKeepsProgrammingMemberBuildAndTestDate() throws Exception {
@@ -421,8 +414,8 @@ class ExerciseVariantGroupIntegrationTest extends AbstractSpringIntegrationIndep
         // Snapshot the group's stored timeline after the member joined, to prove the rejected update leaves it untouched.
         ExerciseVariantGroupDTO before = request.get(groupsUrl() + "/" + created.id(), HttpStatus.OK, ExerciseVariantGroupDTO.class);
 
-        // Valid at group level (exampleSolution >= release), but the member text exercise (INCLUDED_COMPLETELY) requires
-        // exampleSolution >= dueDate, so applying this timeline to the member must fail with 400 before anything is saved.
+        // Valid at group level, but the member text exercise (INCLUDED_COMPLETELY) requires exampleSolution >= dueDate, so
+        // applying it must fail with 400 before anything is saved.
         ZonedDateTime exampleSolutionBeforeDue = ZonedDateTime.now().plusDays(3).truncatedTo(ChronoUnit.MILLIS);
         UpdateExerciseVariantGroupDTO invalidUpdate = new UpdateExerciseVariantGroupDTO(created.id(), "Loop variants", 100.0, release, null, due, null, exampleSolutionBeforeDue);
         request.put(groupsUrl() + "/" + created.id(), invalidUpdate, HttpStatus.BAD_REQUEST);
@@ -443,9 +436,8 @@ class ExerciseVariantGroupIntegrationTest extends AbstractSpringIntegrationIndep
         ZonedDateTime release = ZonedDateTime.now().plusDays(1).truncatedTo(ChronoUnit.MILLIS);
         ZonedDateTime exampleSolutionBeforeDue = ZonedDateTime.now().plusDays(3).truncatedTo(ChronoUnit.MILLIS);
         ZonedDateTime due = ZonedDateTime.now().plusDays(7).truncatedTo(ChronoUnit.MILLIS);
-        // Valid at group level (exampleSolution >= release), but the programming exercise (INCLUDED_COMPLETELY) requires
-        // exampleSolution >= dueDate. The rejected assignment must not persist the membership: the programming path used
-        // to save the exercise before validating the adopted timeline, leaving it grouped with its old dates.
+        // Valid at group level, but the programming exercise (INCLUDED_COMPLETELY) requires exampleSolution >= dueDate. The
+        // rejected assignment must not persist the membership (the programming path used to save before validating).
         CreateExerciseVariantGroupDTO createDTO = new CreateExerciseVariantGroupDTO("Programming variants", null, release, null, due, null, exampleSolutionBeforeDue);
         ExerciseVariantGroupDTO created = request.postWithResponseBody(groupsUrl(), createDTO, ExerciseVariantGroupDTO.class, HttpStatus.CREATED);
         ProgrammingExercise programmingExercise = programmingExerciseUtilService.addProgrammingExerciseToCourse(course);
@@ -489,11 +481,9 @@ class ExerciseVariantGroupIntegrationTest extends AbstractSpringIntegrationIndep
     }
 
     /**
-     * {@code exerciseVariantGroup} is a LAZY {@code @ManyToOne}, and Jackson (Hibernate7Module with
-     * WRITE_MISSING_ENTITIES_AS_NULL) serializes an unloaded proxy as {@code null} rather than throwing. A read path that
-     * forgets to fetch the association therefore fails *silently* — the group simply disappears from the response. These
-     * tests assert on the serialized HTTP response for that reason: a repository call would hand back a proxy and pass
-     * even when the JSON the client receives is null.
+     * The LAZY {@code exerciseVariantGroup} serializes an unfetched proxy as {@code null} (Hibernate7Module), so a read path
+     * that forgets to fetch it fails silently. These tests assert on the serialized HTTP response — a repository call would
+     * hand back a proxy and pass even when the JSON is null.
      */
     @Test
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
@@ -518,11 +508,7 @@ class ExerciseVariantGroupIntegrationTest extends AbstractSpringIntegrationIndep
         assertThat(details.exercise().getExerciseVariantGroup().getMaxPoints()).isEqualTo(100.0);
     }
 
-    /**
-     * The quiz edit page is served as a DTO that *reads* the association ({@code QuizExerciseWithoutQuestionsDTO} maps
-     * title/maxPoints/dates off it), so an unfetched proxy would not merely serialize as null here — it would trigger a
-     * proxy initialization outside the session.
-     */
+    /** The quiz edit DTO reads the association (maps title/maxPoints/dates off it), so an unfetched proxy would throw here. */
     @Test
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void testQuizExerciseEndpointSerializesVariantGroup() throws Exception {
@@ -536,11 +522,7 @@ class ExerciseVariantGroupIntegrationTest extends AbstractSpringIntegrationIndep
         assertThat(loaded.quizExerciseWithoutQuestionsDTO().exerciseVariantGroup().maxPoints()).isEqualTo(100.0);
     }
 
-    /**
-     * The programming/modeling/file-upload edit pages serialize the exercise entity, so they carry the association only if
-     * their query fetches it. Each of these pages renders the timeline as read-only "locked to group" pickers, which is
-     * driven entirely by the group travelling with the exercise.
-     */
+    /** The programming/modeling/file-upload edit pages serialize the entity, so they carry the association only if fetched. */
     @Test
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void testProgrammingExerciseEndpointSerializesVariantGroup() throws Exception {
@@ -576,25 +558,20 @@ class ExerciseVariantGroupIntegrationTest extends AbstractSpringIntegrationIndep
     }
 
     /**
-     * A student starting a grouped quiz must not blow up. The quiz DTO maps the variant group, and this endpoint loads the
-     * quiz without fetching it — so reading the group off the resulting proxy after the session closed threw
-     * {@code LazyInitializationException} and returned a 500. The group is instructor-facing and irrelevant to a student
-     * taking the quiz, so the DTO maps it to null here rather than the endpoint paying for a join it does not need.
+     * A student starting a grouped quiz must not blow up: this endpoint loads the quiz without fetching the group, so
+     * reading it off the proxy after the session closed used to throw {@code LazyInitializationException} (500). The DTO now
+     * maps the instructor-facing group to null for students.
      */
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testStartParticipationOnGroupedQuizDoesNotFail() throws Exception {
         QuizExercise quiz = quizInGroup();
 
-        // Status only: the response DTO is polymorphic and has no Jackson creator. The point is that this used to be a 500.
+        // Status only (polymorphic DTO, no Jackson creator): the point is that this used to be a 500.
         request.postWithoutResponseBody("/api/quiz/quiz-exercises/" + quiz.getId() + "/start-participation", null, HttpStatus.OK);
     }
 
-    /**
-     * The scores management view caps a group's variants at the group's maxPoints, which it can only do if every member
-     * carries its group — quizzes included. The other course-with-exercises test uses a text exercise; a quiz is a
-     * different entity subclass and is worth asserting separately.
-     */
+    /** The scores view caps a group at its maxPoints, so every member must carry its group — asserted here for a quiz too. */
     @Test
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void testCourseWithExercisesSerializesVariantGroupForQuiz() throws Exception {
@@ -606,10 +583,7 @@ class ExerciseVariantGroupIntegrationTest extends AbstractSpringIntegrationIndep
         assertVariantGroupPresent(loadedQuiz);
     }
 
-    /**
-     * Adds an individual-mode quiz to the course and puts it in a group. Built through the repositories rather than the
-     * REST endpoints, because the student-facing test below runs as a student, who may not create groups.
-     */
+    /** Adds an individual-mode quiz in a group, via the repositories (the student-facing test may not create groups). */
     private QuizExercise quizInGroup() {
         // Released in the past, so a student is actually allowed to start it.
         ZonedDateTime release = ZonedDateTime.now().minusDays(1).truncatedTo(ChronoUnit.MILLIS);
@@ -637,11 +611,7 @@ class ExerciseVariantGroupIntegrationTest extends AbstractSpringIntegrationIndep
         assertThat(loaded.getExerciseVariantGroup().getTitle()).isEqualTo("Loop variants");
     }
 
-    /**
-     * The text exercise edit page is served as a DTO. Unlike the programming/modeling/file-upload pages (which serialize
-     * the entity and therefore carry the association for free), a DTO only exposes the fields it declares — so the group
-     * has to be mapped explicitly, or the edit form's locked-timeline pickers never see it.
-     */
+    /** The text exercise edit page is a DTO, so unlike the entity-serializing pages it must map the group explicitly. */
     @Test
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void testTextExerciseEndpointSerializesVariantGroup() throws Exception {
@@ -676,13 +646,9 @@ class ExerciseVariantGroupIntegrationTest extends AbstractSpringIntegrationIndep
     }
 
     /**
-     * The shared timeline is only an invariant if the server enforces it. The type-specific update endpoints apply the
-     * request's dates straight onto the managed entity, so a stale client — or a direct request — could otherwise leave a
-     * member with dates that differ from its group, changing student availability and build scheduling.
-     * <p>
-     * Endpoints where the dates are incidental among many other fields overwrite them from the group (so an unrelated
-     * edit still succeeds and the member's dates self-heal); endpoints that exist <em>only</em> to move dates reject the
-     * request instead, because silently ignoring it would return 200 while doing nothing.
+     * A member update endpoint must not let a stale client move a member off its group timeline. Endpoints where dates are
+     * incidental overwrite them from the group (so an unrelated edit self-heals and still succeeds); timeline-only endpoints
+     * reject the request instead.
      */
     @Test
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
@@ -729,11 +695,7 @@ class ExerciseVariantGroupIntegrationTest extends AbstractSpringIntegrationIndep
     // provide (see ProgrammingExerciseResourceTest), and the multipart quiz update needs the richer quiz fixture built by
     // AbstractQuizExerciseIntegrationTest (see QuizExerciseIntegrationTest).
 
-    /**
-     * Unlike the endpoints above, this one exists solely to move dates, so it rejects group members rather than silently
-     * discarding the request. The guard lives in the resource: {@code ExerciseVariantGroupService} calls the underlying
-     * service directly when propagating group dates onto programming members and must not be blocked by its own invariant.
-     */
+    /** The timeline-only programming endpoint rejects group members. The guard lives in the resource so the service can still propagate group dates onto members. */
     @Test
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void testUpdateProgrammingExerciseTimelineForGroupMember_badRequest() throws Exception {
@@ -748,11 +710,7 @@ class ExerciseVariantGroupIntegrationTest extends AbstractSpringIntegrationIndep
         assertMemberTimelinePinnedToGroup(programmingExercise.getId(), timeline);
     }
 
-    /**
-     * {@code set-visible} writes the release date through a targeted {@code @Modifying} query that deliberately bypasses
-     * the usual validation, so it needs its own guard. Only individual-mode quizzes can be group members, and this action
-     * has no mode restriction — so without the guard it would silently desynchronize a member from its group.
-     */
+    /** {@code set-visible} writes the release date through a targeted {@code @Modifying} query that bypasses validation, so it needs its own group guard. */
     @Test
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void testSetVisibleOnGroupedQuiz_badRequest() throws Exception {
@@ -768,11 +726,7 @@ class ExerciseVariantGroupIntegrationTest extends AbstractSpringIntegrationIndep
     private record GroupTimeline(Long groupId, ZonedDateTime release, ZonedDateTime due, ZonedDateTime assessmentDue) {
     }
 
-    /**
-     * Creates a group that defines every shared date itself and puts the given exercise in it. Defining all of them
-     * matters: an empty group otherwise adopts the joining exercise's values for the fields it leaves unset, which would
-     * make the expected timeline depend on whichever exercise the test happens to use.
-     */
+    /** Creates a group that defines every shared date itself (so the timeline doesn't depend on the joining exercise) and assigns the exercise to it. */
     private GroupTimeline createGroupWithTimelineFor(long exerciseId) throws Exception {
         ZonedDateTime release = ZonedDateTime.now().plusDays(1).truncatedTo(ChronoUnit.MILLIS);
         ZonedDateTime due = ZonedDateTime.now().plusDays(7).truncatedTo(ChronoUnit.MILLIS);
@@ -862,5 +816,133 @@ class ExerciseVariantGroupIntegrationTest extends AbstractSpringIntegrationIndep
 
         Exercise reloaded = exerciseRepository.findByIdElseThrow(quiz.getId());
         assertThat(reloaded.getExerciseVariantGroup()).isNull();
+    }
+
+    /**
+     * Assigning stamps the group timeline onto the quiz, so a quiz with a started batch must be rejected — the group would
+     * otherwise overwrite the dates of a live attempt.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void testAssignIndividualQuizWithStartedBatchToGroup_badRequest() throws Exception {
+        ExerciseVariantGroupDTO created = createGroupAsEditor();
+        QuizExercise quiz = addQuizToCourse(QuizMode.INDIVIDUAL);
+        startBatchFor(quiz);
+        String assignUrl = "/api/exercise/courses/" + course.getId() + "/exercises/" + quiz.getId() + "/variant-group";
+
+        request.put(assignUrl, new ExerciseVariantGroupAssignmentDTO(created.id()), HttpStatus.BAD_REQUEST);
+
+        assertThat(exerciseRepository.findByIdElseThrow(quiz.getId()).getExerciseVariantGroup()).isNull();
+    }
+
+    /** The same guard for a quiz that has already ended: assigning it would move a finished quiz's due date. */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void testAssignEndedIndividualQuizToGroup_badRequest() throws Exception {
+        ExerciseVariantGroupDTO created = createGroupAsEditor();
+        QuizExercise quiz = addEndedQuizToCourse();
+        String assignUrl = "/api/exercise/courses/" + course.getId() + "/exercises/" + quiz.getId() + "/variant-group";
+
+        request.put(assignUrl, new ExerciseVariantGroupAssignmentDTO(created.id()), HttpStatus.BAD_REQUEST);
+
+        assertThat(exerciseRepository.findByIdElseThrow(quiz.getId()).getExerciseVariantGroup()).isNull();
+    }
+
+    /** A date-changing group update must be rejected once a member quiz's batch has started, leaving the member's dates untouched. */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void testUpdateGroupTimelineWithStartedBatchQuizMember_badRequest() throws Exception {
+        QuizExercise quiz = addQuizToCourse(QuizMode.INDIVIDUAL);
+        // Assign while still editable so the quiz adopts the group timeline, then start a batch to lock it.
+        GroupTimeline timeline = createGroupWithTimelineFor(quiz.getId());
+        startBatchFor((QuizExercise) exerciseRepository.findByIdElseThrow(quiz.getId()));
+
+        UpdateExerciseVariantGroupDTO update = new UpdateExerciseVariantGroupDTO(timeline.groupId(), "Loop variants", 100.0, timeline.release(), null, timeline.due().plusDays(2),
+                timeline.assessmentDue(), null);
+        request.put(groupsUrl() + "/" + timeline.groupId(), update, HttpStatus.BAD_REQUEST);
+
+        assertMemberTimelinePinnedToGroup(quiz.getId(), timeline);
+    }
+
+    /** The same group-update guard for an ended member quiz (membership built via repositories, since REST assignment would already reject it). */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void testUpdateGroupTimelineWithEndedQuizMember_badRequest() throws Exception {
+        QuizExercise quiz = addEndedQuizToCourse();
+        GroupTimeline timeline = persistEndedQuizInGroup(quiz);
+
+        // A different due date that keeps the group timeline itself valid (release < due <= assessmentDue), so the request
+        // only fails on our member-editability guard rather than group-level date validation.
+        ZonedDateTime newDue = ZonedDateTime.now().minusHours(12).truncatedTo(ChronoUnit.MILLIS);
+        UpdateExerciseVariantGroupDTO update = new UpdateExerciseVariantGroupDTO(timeline.groupId(), "Loop variants", 100.0, timeline.release(), null, newDue,
+                timeline.assessmentDue(), null);
+        request.put(groupsUrl() + "/" + timeline.groupId(), update, HttpStatus.BAD_REQUEST);
+
+        assertMemberTimelinePinnedToGroup(quiz.getId(), timeline);
+    }
+
+    /** A group edit that doesn't touch the timeline (only title/max points) stays a no-op for members, so it's allowed even while a member quiz is live. */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void testUpdateGroupMetadataOnlyWithLiveQuizMemberAllowed() throws Exception {
+        QuizExercise quiz = addQuizToCourse(QuizMode.INDIVIDUAL);
+        GroupTimeline timeline = createGroupWithTimelineFor(quiz.getId());
+        startBatchFor((QuizExercise) exerciseRepository.findByIdElseThrow(quiz.getId()));
+
+        // Same dates as the group already has, only the title and max points change.
+        UpdateExerciseVariantGroupDTO update = new UpdateExerciseVariantGroupDTO(timeline.groupId(), "Renamed while live", 42.0, timeline.release(), null, timeline.due(),
+                timeline.assessmentDue(), null);
+        ExerciseVariantGroupDTO updated = request.putWithResponseBody(groupsUrl() + "/" + timeline.groupId(), update, ExerciseVariantGroupDTO.class, HttpStatus.OK);
+
+        assertThat(updated.title()).isEqualTo("Renamed while live");
+        assertThat(updated.maxPoints()).isEqualTo(42.0);
+        // The live quiz member kept its dates untouched.
+        assertMemberTimelinePinnedToGroup(quiz.getId(), timeline);
+    }
+
+    /** Regression: an editable quiz member (no started batch) still receives a group date change — the guard doesn't over-reject. */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void testUpdateGroupTimelinePropagatesToEditableQuizMember() throws Exception {
+        QuizExercise quiz = addQuizToCourse(QuizMode.INDIVIDUAL);
+        GroupTimeline timeline = createGroupWithTimelineFor(quiz.getId());
+
+        ZonedDateTime newDue = timeline.due().plusDays(3);
+        UpdateExerciseVariantGroupDTO update = new UpdateExerciseVariantGroupDTO(timeline.groupId(), "Loop variants", 100.0, timeline.release(), null, newDue,
+                timeline.assessmentDue(), null);
+        request.put(groupsUrl() + "/" + timeline.groupId(), update, HttpStatus.OK);
+
+        assertThat(exerciseRepository.findByIdElseThrow(quiz.getId()).getDueDate().toInstant()).isEqualTo(newDue.toInstant());
+    }
+
+    /** Adds an individual-mode quiz whose release and due dates are already in the past, so the quiz has ended. */
+    private QuizExercise addEndedQuizToCourse() {
+        ZonedDateTime release = ZonedDateTime.now().minusDays(7).truncatedTo(ChronoUnit.MILLIS);
+        ZonedDateTime due = ZonedDateTime.now().minusDays(1).truncatedTo(ChronoUnit.MILLIS);
+        ZonedDateTime assessmentDue = ZonedDateTime.now().minusHours(1).truncatedTo(ChronoUnit.MILLIS);
+        QuizExercise quizExercise = QuizExerciseFactory.generateQuizExercise(release, due, assessmentDue, QuizMode.INDIVIDUAL, course);
+        QuizExerciseFactory.addQuestionsToQuizExercise(quizExercise);
+        course.addExercises(quizExercise);
+        return exerciseRepository.save(quizExercise);
+    }
+
+    /** Attaches a batch that started in the past to the given quiz, making it no longer editable. */
+    private void startBatchFor(QuizExercise quiz) {
+        QuizBatch batch = QuizExerciseFactory.generateQuizBatch(quiz, ZonedDateTime.now().minusSeconds(10).truncatedTo(ChronoUnit.MILLIS));
+        quizExerciseUtilService.setQuizBatchExerciseAndSave(batch, quiz);
+    }
+
+    /**
+     * Puts an ended quiz in a group whose timeline matches the quiz's dates. The group is created via REST (so it's attached
+     * to the course), but membership is set via the repository to bypass the REST assignment guard.
+     */
+    private GroupTimeline persistEndedQuizInGroup(QuizExercise quiz) throws Exception {
+        CreateExerciseVariantGroupDTO createDTO = new CreateExerciseVariantGroupDTO("Loop variants", 100.0, quiz.getReleaseDate(), null, quiz.getDueDate(),
+                quiz.getAssessmentDueDate(), null);
+        ExerciseVariantGroupDTO created = request.postWithResponseBody(groupsUrl(), createDTO, ExerciseVariantGroupDTO.class, HttpStatus.CREATED);
+        ExerciseVariantGroup group = exerciseVariantGroupRepository.findByIdAndCourseIdElseThrow(created.id(), course.getId());
+        quiz.setExerciseVariantGroup(group);
+        QuizExercise saved = exerciseRepository.save(quiz);
+        return new GroupTimeline(created.id(), saved.getReleaseDate(), saved.getDueDate(), saved.getAssessmentDueDate());
     }
 }

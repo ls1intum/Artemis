@@ -88,12 +88,8 @@ export class ExerciseVariantGroupService {
     }
 
     /**
-     * Serialises the group's dates into the ISO strings the server expects.
-     *
-     * The result is a request body, not a `T`: `convertDateFromClient` returns a string, so the date fields are no
-     * longer `dayjs.Dayjs`. The previous implementation spread the group into an object literal and still declared `T`
-     * as the return type — TypeScript cannot check that through a generic spread, so the mismatch went unnoticed. The
-     * return type now says what the value actually is.
+     * Serialises the group's dates into the ISO strings the server expects. The result is a request body, not a `T`:
+     * `convertDateFromClient` returns strings, so the date fields are no longer `dayjs.Dayjs` — the return type says so.
      */
     private convertDatesToClient<T extends GroupDateFields>(group: T): WithSerialisedDates<T> {
         const body = Object.assign({}, group) as Record<string, unknown>;

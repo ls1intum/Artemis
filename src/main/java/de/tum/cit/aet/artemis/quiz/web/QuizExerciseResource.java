@@ -141,9 +141,8 @@ public class QuizExerciseResource {
             throw new BadRequestAlertException("These actions are not allowed for exam exercises", ENTITY_NAME, "notAllowedInExam");
         }
 
-        // These actions exist only to move the quiz's dates, and a variant group owns its members' timeline. SET_VISIBLE
-        // (releaseDate) and END_NOW (dueDate) would otherwise desynchronize a member from its group; START_NOW and
-        // START_BATCH are already rejected further down, so guarding every action just gives them a clearer message.
+        // These actions only move the quiz's dates, which a variant group owns. SET_VISIBLE/END_NOW would desync a member
+        // from its group; START_NOW/START_BATCH are already rejected below, so guarding all of them just gives a clearer message.
         if (exerciseVariantGroupService.findOwningGroup(quizExerciseId).isPresent()) {
             throw new BadRequestAlertException("The timeline of an exercise in a variant group is managed by its group and must be changed there", ENTITY_NAME,
                     "timelineManagedByVariantGroup");
