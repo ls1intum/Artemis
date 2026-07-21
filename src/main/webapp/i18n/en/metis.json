@@ -3,6 +3,7 @@
         "metis": {
             "loadingPosts": "Loading messages...",
             "noPosts": "No messages found.",
+            "imagePreviewTitle": "Image preview",
             "postNumberInformation": "{{ number }} match(es)",
             "newMessage": "New message",
             "newAnnouncement": "New announcement",

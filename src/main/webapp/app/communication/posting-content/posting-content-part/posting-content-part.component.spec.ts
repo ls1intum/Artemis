@@ -18,6 +18,8 @@ import { FileService } from 'app/foundation/service/file.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { DialogService } from 'primeng/dynamicdialog';
 import { EnlargeSlideImageComponent } from 'app/communication/posting-content/enlarge-slide-image/enlarge-slide-image.component';
+import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 /**
  * Synchronous stand-in for the real (lazy, async) MarkdownDirective so these tests can assert the rendered
@@ -85,6 +87,7 @@ describe('PostingContentPartComponent', () => {
                     useValue: new MockActivatedRoute(),
                 },
                 { provide: AccountService, useClass: MockAccountService },
+                { provide: TranslateService, useClass: MockTranslateService },
             ],
         })
             // DialogService is provided at the component level, so override it on the component for the mock to take effect.
@@ -274,9 +277,10 @@ describe('PostingContentPartComponent', () => {
                 expect.objectContaining({
                     data: { slideToReference },
                     modal: true,
+                    closable: true,
                     dismissableMask: true,
                     closeOnEscape: true,
-                    showHeader: false,
+                    header: expect.any(String),
                 }),
             );
         });

@@ -23,6 +23,7 @@ import { RouterLink } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { TranslateService } from '@ngx-translate/core';
 import { FileService } from 'app/foundation/service/file.service';
 
 @Component({
@@ -36,6 +37,7 @@ export class PostingContentPartComponent implements OnInit {
     private fileService = inject(FileService);
     private dialogService = inject(DialogService);
     private accountService = inject(AccountService);
+    private translateService = inject(TranslateService);
 
     postingContentPart = input<PostingContentPart>();
     userReferenceClicked = output<string>();
@@ -144,12 +146,14 @@ export class PostingContentPartComponent implements OnInit {
      */
     enlargeImage(slideToReference: string) {
         this.dialogService.open(EnlargeSlideImageComponent, {
+            // A translated header gives the dialog an accessible name and renders PrimeNG's themed close button, so the preview can always be dismissed.
+            header: this.translateService.instant('artemisApp.metis.imagePreviewTitle'),
             data: { slideToReference },
             modal: true,
+            // Without closable the DynamicDialog header renders no close button (PrimeNG defaults it to undefined), which left the preview stuck open.
+            closable: true,
             dismissableMask: true,
             closeOnEscape: true,
-            // The dialog renders its own floating close button; the default header would be pushed off-screen by the full-height image.
-            showHeader: false,
             style: { 'max-width': '95vw' },
         });
     }
