@@ -4,7 +4,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ElementRef } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { FormBuilder } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
@@ -20,8 +19,6 @@ import { provideHttpClient } from '@angular/common/http';
 
 describe('Component Tests', () => {
     describe('PasswordResetFinishComponent', () => {
-        setupTestBed({ zoneless: true });
-
         let fixture: ComponentFixture<PasswordResetFinishComponent>;
         let comp: PasswordResetFinishComponent;
         let passwordResetFinishService: PasswordResetFinishService;

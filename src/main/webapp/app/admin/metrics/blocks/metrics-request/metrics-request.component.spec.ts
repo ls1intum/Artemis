@@ -4,7 +4,6 @@
  */
 import { beforeEach, describe, expect, it } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentRef } from '@angular/core';
 
 import { MetricsRequestComponent } from 'app/admin/metrics/blocks/metrics-request/metrics-request.component';
@@ -12,8 +11,6 @@ import { HttpServerRequests } from 'app/admin/metrics/metrics.model';
 import { filterNaN } from 'app/admin/metrics/filterNaN-util';
 
 describe('MetricsRequestComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: MetricsRequestComponent;
     let componentRef: ComponentRef<MetricsRequestComponent>;
     let fixture: ComponentFixture<MetricsRequestComponent>;

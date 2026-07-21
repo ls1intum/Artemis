@@ -42,7 +42,7 @@
                             </div>
                         </div>
                         <div class="row mb-2 markdown-preview">
-                            <div class="col-12 col-md-12 markdown-preview" [innerHTML]="lecture.description | htmlForMarkdown"></div>
+                            <div class="col-12 col-md-12 markdown-preview" [jhiMarkdown]="lecture.description"></div>
                         </div>
                     }
                     <!-- LECTURE UNITS START-->
@@ -115,7 +115,7 @@
                                     <li class="mb-3">
                                         <h5 class="mb-1">
                                             @if (!isDownloadingLink()) {
-                                                <a class="text-primary" (click)="downloadAttachment(attachment.linkUrl, attachment.name)">
+                                                <a class="text-primary" (click)="downloadAttachment(attachment.linkUrl, attachment.name, attachment.version)">
                                                     {{ attachment.name }}
                                                 </a>
                                             }

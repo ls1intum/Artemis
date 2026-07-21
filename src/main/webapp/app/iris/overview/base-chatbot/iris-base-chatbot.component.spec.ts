@@ -1,5 +1,5 @@
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
@@ -33,7 +33,6 @@ import {
     mockWebsocketServerMessage,
 } from 'test/helpers/sample/iris-sample-data';
 import { By } from '@angular/platform-browser';
-import { HtmlForMarkdownPipe } from 'app/foundation/pipes/html-for-markdown.pipe';
 import { IrisAssistantMessage, IrisSender, IrisUserMessage } from 'app/iris/shared/entities/iris-message.model';
 import { IrisMessageResponseDTO } from 'app/iris/shared/entities/iris-message-response-dto.model';
 import { IrisJsonMessageContent, IrisMessageContentType, IrisTextMessageContent, getMcqData, isMcqContent } from 'app/iris/shared/entities/iris-content-type.model';
@@ -61,8 +60,6 @@ const PLACEHOLDER_CYCLE_INTERVAL_MS = 5000;
 const PLACEHOLDER_FADE_DURATION_MS = 300;
 
 describe('IrisBaseChatbotComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: IrisBaseChatbotComponent;
     let fixture: ComponentFixture<IrisBaseChatbotComponent>;
 
@@ -101,7 +98,7 @@ describe('IrisBaseChatbotComponent', () => {
                 FontAwesomeModule,
                 RouterModule,
                 MockPipe(ArtemisTranslatePipe),
-                MockPipe(HtmlForMarkdownPipe),
+                MockDirective(MarkdownDirective),
                 MockDirective(TranslateDirective),
                 MockComponent(ChatStatusBarComponent),
                 MockComponent(IrisLogoComponent),

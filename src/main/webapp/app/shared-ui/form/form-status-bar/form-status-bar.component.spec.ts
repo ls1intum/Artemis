@@ -1,10 +1,8 @@
 import { vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormStatusBarComponent } from 'app/shared-ui/form/form-status-bar/form-status-bar.component';
 
 describe('FormStatusBarComponent', () => {
-    setupTestBed({ zoneless: true });
     let fixture: ComponentFixture<FormStatusBarComponent>;
     let comp: FormStatusBarComponent;
 

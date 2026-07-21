@@ -7,6 +7,7 @@ import { expect } from '@playwright/test';
 import dayjs from 'dayjs';
 import { QuizMode } from '../../../support/constants';
 import { SEED_COURSES } from '../../../support/seedData';
+import { readResponseJson } from '../../../support/utils';
 
 const course = { id: SEED_COURSES.quizParticipation.id } as any;
 
@@ -45,7 +46,7 @@ test.describe('Quiz Exercise Participation', { tag: '@fast' }, () => {
             // as submitted, and return exactly the answer the student ticked (one MC entry with the right selected ids).
             expect(submitResponse.status()).toBe(200);
             const submittedExpectedIds = tickedOptionIndices.map((index) => quizExercise.quizQuestions![0].answerOptions![index].id);
-            const responseBody = await submitResponse.json();
+            const responseBody = await readResponseJson(submitResponse);
             expect(responseBody.submitted, 'server must flip the submitted flag after final submit').toBe(true);
             expect(responseBody.submittedAnswers, 'server must persist exactly one submitted answer for the MC question').toHaveLength(1);
             const mcAnswer = responseBody.submittedAnswers[0];
@@ -115,7 +116,7 @@ test.describe('Quiz Exercise Participation', { tag: '@fast' }, () => {
                     await page.goto(`/courses/${course.id}/exercises/${shortQuiz.id!}`);
                     let body: any;
                     try {
-                        body = await (await responsePromise).json();
+                        body = await readResponseJson(await responsePromise);
                     } catch {
                         if (attempt === 2) {
                             throw new Error(`reloadAndReadSelectedOptionIds: start-participation never returned after 3 attempts`);
@@ -413,7 +414,7 @@ test.describe('Quiz Exercise Participation', { tag: '@fast' }, () => {
             // End-to-end submit contract for short-answer: the new DTO-bound endpoint must accept the rich entity-shaped JSON the
             // client sends, persist one submitted-text per filled spot (lifting the text verbatim), and not silently drop any of them.
             expect(submitResponse.status()).toBe(200);
-            const responseBody = await submitResponse.json();
+            const responseBody = await readResponseJson(submitResponse);
             expect(responseBody.submitted).toBe(true);
             expect(responseBody.submittedAnswers, 'server must persist exactly one submitted answer for the SA question').toHaveLength(1);
             const saAnswer = responseBody.submittedAnswers[0];
@@ -435,7 +436,7 @@ test.describe('Quiz Exercise Participation', { tag: '@fast' }, () => {
             await quizExerciseCreation.setTitle('Cypress Quiz');
             await quizExerciseCreation.addDragAndDropQuestion('DnD Quiz');
             const response = await quizExerciseCreation.saveQuiz();
-            quizExercise = await response.json();
+            quizExercise = await readResponseJson(response);
             await exerciseAPIRequests.setQuizVisible(quizExercise.id!);
             await exerciseAPIRequests.startQuizNow(quizExercise.id!);
         });
@@ -451,7 +452,7 @@ test.describe('Quiz Exercise Participation', { tag: '@fast' }, () => {
             // (with full nested DragItem / DropLocation objects) the client sends and persist one mapping per drop the
             // student performed — server-resolved by id, not the client-supplied object.
             expect(submitResponse.status()).toBe(200);
-            const responseBody = await submitResponse.json();
+            const responseBody = await readResponseJson(submitResponse);
             expect(responseBody.submitted).toBe(true);
             expect(responseBody.submittedAnswers, 'server must persist exactly one submitted answer for the DnD question').toHaveLength(1);
             const dndAnswer = responseBody.submittedAnswers[0];

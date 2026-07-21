@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { PdfPreviewEnlargedCanvasComponent } from 'app/lecture/manage/pdf-preview/pdf-preview-enlarged-canvas/pdf-preview-enlarged-canvas.component';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
@@ -57,8 +56,6 @@ function createMockEvent(target: Element, eventType = 'click'): MouseEvent {
 }
 
 describe('PdfPreviewEnlargedCanvasComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: PdfPreviewEnlargedCanvasComponent;
     let fixture: ComponentFixture<PdfPreviewEnlargedCanvasComponent>;
     let mockCanvasElement: HTMLCanvasElement;

@@ -18,11 +18,8 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { facSaveSuccess, facSaveWarning } from 'app/foundation/icons/icons';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('ExamNavigationSidebarComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<ExamNavigationSidebarComponent>;
     let comp: ExamNavigationSidebarComponent;
     let repositoryService: CodeEditorRepositoryService;

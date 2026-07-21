@@ -3,7 +3,6 @@
  * Tests tutor effort loading, distribution calculations, and UI rendering for text exercise assessments.
  */
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TutorEffortStatisticsComponent } from 'app/text/manage/tutor-effort/tutor-effort-statistics.component';
 import { TutorEffort } from 'app/assessment/shared/entities/tutor-effort.model';
@@ -21,7 +20,6 @@ import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 
 describe('TutorEffortStatisticsComponent', () => {
-    setupTestBed({ zoneless: true });
     let fixture: ComponentFixture<TutorEffortStatisticsComponent>;
     let component: TutorEffortStatisticsComponent;
     let compiled: any;

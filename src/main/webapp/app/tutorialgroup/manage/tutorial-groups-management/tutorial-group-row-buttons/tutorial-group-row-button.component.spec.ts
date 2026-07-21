@@ -1,6 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { TutorialGroupRowButtonsComponent } from 'app/tutorialgroup/manage/tutorial-groups-management/tutorial-group-row-buttons/tutorial-group-row-buttons.component';
 import { of } from 'rxjs';
@@ -15,15 +14,13 @@ import { TranslateService } from '@ngx-translate/core';
 import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
 import { DialogService } from 'primeng/dynamicdialog';
 import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
-import { TutorialGroupApiService } from 'app/openapi/api/tutorialGroupApi.service';
+import { TutorialGroupApi } from 'app/openapi/api/tutorial-group-api';
 
 interface TutorialGroupApiServiceMock {
     deleteTutorialGroup: ReturnType<typeof vi.fn>;
 }
 
 describe('TutorialGroupRowButtonsComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<TutorialGroupRowButtonsComponent>;
     let component: TutorialGroupRowButtonsComponent;
     const course = {
@@ -42,7 +39,7 @@ describe('TutorialGroupRowButtonsComponent', () => {
         await TestBed.configureTestingModule({
             imports: [TutorialGroupRowButtonsComponent],
             providers: [
-                { provide: TutorialGroupApiService, useValue: tutorialGroupApiServiceMock },
+                { provide: TutorialGroupApi, useValue: tutorialGroupApiServiceMock },
                 { provide: Router, useValue: router },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: ActivatedRoute, useValue: new MockActivatedRoute() },

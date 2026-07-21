@@ -60,7 +60,7 @@
             <div class="flex items-center gap-3 mb-3">
                 <h5 id="build-queue-running-heading" class="mb-0 flex items-center gap-2">
                     <span jhiTranslate="artemisApp.buildAgents.runningBuildJobs"></span>
-                    <p-tag severity="info" [value]="(runningBuildJobs()?.length ?? 0).toString()" />
+                    <p-tag severity="info" [value]="runningBuildJobs().length.toString()" />
                 </h5>
                 @if (runningBuildJobs()?.length) {
                     <p-button severity="danger" size="small" (onClick)="cancelAllRunningBuildJobs()">
@@ -82,7 +82,7 @@
             <div class="flex items-center gap-3 mb-3">
                 <h5 id="build-queue-queued-heading" class="mb-0 flex items-center gap-2">
                     <span jhiTranslate="artemisApp.buildQueue.queuedBuildJobs"></span>
-                    <p-tag severity="secondary" [value]="(queuedBuildJobs()?.length ?? 0).toString()" />
+                    <p-tag severity="secondary" [value]="queuedBuildJobs().length.toString()" />
                 </h5>
                 @if (queuedBuildJobs()?.length) {
                     <p-button severity="danger" size="small" (onClick)="cancelAllQueuedBuildJobs()">
@@ -104,7 +104,7 @@
                 <div class="flex items-center gap-2">
                     <h5 id="build-queue-finished-heading" class="mb-0 flex items-center gap-2">
                         <span jhiTranslate="artemisApp.buildQueue.finishedBuildJobs"></span>
-                        <p-tag severity="info" [value]="(finishedBuildJobs()?.length ?? 0).toString()" />
+                        <p-tag severity="info" [value]="finishedBuildJobs().length.toString()" />
                     </h5>
                     <div class="flex items-center gap-2">
                         <input pInputText type="text" name="searchTerm" id="field_searchTerm" [(ngModel)]="searchTerm" (focusout)="triggerLoadFinishedJobs()" />
@@ -125,7 +125,7 @@
                     <p-button size="small" [severity]="finishedBuildJobFilter()?.numberOfAppliedFilters ? 'success' : 'secondary'" (onClick)="this.openFilterModal()">
                         <fa-icon [icon]="faFilter" />
                         <span class="hidden md:inline">
-                            <span jhiTranslate="artemisApp.buildQueue.filter.open" [translateValues]="{ num: finishedBuildJobFilter()?.numberOfAppliedFilters ?? 0 }"></span>
+                            <span jhiTranslate="artemisApp.buildQueue.filter.open" [translateValues]="{ num: appliedFilterCount() }"></span>
                         </span>
                     </p-button>
                 </div>
@@ -162,7 +162,7 @@
         [draggable]="false"
         [dismissableMask]="true"
     >
-        <ng-template pTemplate="header">
+        <ng-template #header>
             <span jhiTranslate="artemisApp.buildQueue.logs.title"></span>
             <span>&nbsp;{{ displayedBuildJobId() }}</span>
         </ng-template>
@@ -173,7 +173,7 @@
                 <span jhiTranslate="artemisApp.buildQueue.logs.noLogs"></span>
             }
         </div>
-        <ng-template pTemplate="footer">
+        <ng-template #footer>
             <p-button type="button" severity="secondary" size="small" (onClick)="buildLogsModalVisible.set(false)">
                 <span jhiTranslate="artemisApp.buildQueue.filter.close"></span>
             </p-button>
