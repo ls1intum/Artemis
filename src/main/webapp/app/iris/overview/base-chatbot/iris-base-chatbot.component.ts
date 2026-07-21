@@ -953,7 +953,8 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
         // The newest assistant message may be an intermediate (final: false) one — e.g. a tool call whose
         // run then failed, or a persisted intermediate message reloaded without run info. Never expose the
         // toolbox for such a message, regardless of the current run state.
-        return this.messages()[index]?.final !== false;
+        const message = this.messages()[index];
+        return message?.sender === IrisSender.LLM && message.final !== false;
     }
 
     onMcqAnswerChanged(message: IrisMessage, event: { selectedIndex: number | undefined; submitted: boolean }): void {
