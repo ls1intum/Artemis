@@ -123,9 +123,11 @@ export class SidebarAccordionComponent implements OnInit, OnDestroy {
         if (routeParams) {
             const routeParamKey = Object.keys(routeParams)[0];
             if (routeParams[routeParamKey] && groupedData) {
-                const groupWithSelectedItem = Object.entries(groupedData).find((groupedItem) =>
-                    groupedItem[1].entityData.some((entityItem: SidebarCardElement) => entityItem.id === Number(routeParams[routeParamKey])),
-                );
+                const selectedId = Number(routeParams[routeParamKey]);
+                // A variant group is a single top-level card whose members live in groupedItems, so the selected id
+                // may match either the card itself or one of its nested variants (direct URL / refresh case).
+                const matchesSelectedId = (item: SidebarCardElement): boolean => item.id === selectedId || !!item.groupedItems?.some((variant) => variant.id === selectedId);
+                const groupWithSelectedItem = Object.entries(groupedData).find((groupedItem) => groupedItem[1].entityData.some(matchesSelectedId));
                 if (groupWithSelectedItem) {
                     const groupName = groupWithSelectedItem[0];
                     this.collapseStateInternal.set({ ...this.collapseStateInternal(), [groupName]: false });

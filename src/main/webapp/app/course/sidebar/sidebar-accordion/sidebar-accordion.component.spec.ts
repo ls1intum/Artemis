@@ -229,6 +229,53 @@ describe('SidebarAccordionComponent', () => {
         expect(component.collapseStateInternal()['future']).toBe(false);
     });
 
+    it('should expand the group when the selected item is a nested variant of a group', () => {
+        // A variant group is one top-level card whose members live in groupedItems. Selecting a variant via a
+        // direct URL / refresh must still expand its (collapsed) time category so the selected card is visible.
+        fixture.componentRef.setInput('groupedData', {
+            future: {
+                entityData: [
+                    {
+                        title: 'Variant group',
+                        id: 10,
+                        size: 'M',
+                        groupedItems: [
+                            { title: 'Sorting algorithms', id: 11, size: 'M', type: 'programming' },
+                            { title: 'Binary trees', id: 12, size: 'M', type: 'modeling' },
+                        ],
+                    },
+                ],
+            },
+        });
+        fixture.componentRef.setInput('routeParams', { exerciseId: 12 });
+        fixture.componentRef.setInput('collapseState', { future: true });
+        fixture.detectChanges();
+
+        component.expandGroupWithSelectedItem();
+        expect(component.collapseStateInternal()['future']).toBe(false);
+    });
+
+    it('should leave the group collapsed when no card or nested variant matches the selected item', () => {
+        fixture.componentRef.setInput('groupedData', {
+            future: {
+                entityData: [
+                    {
+                        title: 'Variant group',
+                        id: 10,
+                        size: 'M',
+                        groupedItems: [{ title: 'Sorting algorithms', id: 11, size: 'M', type: 'programming' }],
+                    },
+                ],
+            },
+        });
+        fixture.componentRef.setInput('routeParams', { exerciseId: 999 });
+        fixture.componentRef.setInput('collapseState', { future: true });
+        fixture.detectChanges();
+
+        component.expandGroupWithSelectedItem();
+        expect(component.collapseStateInternal()['future']).toBe(true);
+    });
+
     it('should calculate unread messages of each group correctly', () => {
         expect(component.totalUnreadMessagesPerGroup()['current']).toBe(2);
         expect(component.totalUnreadMessagesPerGroup()['past']).toBe(5);
