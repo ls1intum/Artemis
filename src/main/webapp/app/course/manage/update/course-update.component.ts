@@ -245,7 +245,6 @@ export class CourseUpdateComponent implements OnInit {
                 testCourse: new FormControl(this.course.testCourse),
                 gradeRelevant: new FormControl(this.course.courseConfiguration?.gradeRelevant ?? true),
                 learningPathsEnabled: new FormControl(this.course.learningPathsEnabled),
-                studentCourseAnalyticsDashboardEnabled: new FormControl(this.course.studentCourseAnalyticsDashboardEnabled),
                 onlineCourse: new FormControl(this.course.onlineCourse),
                 complaintsEnabled: new FormControl(this.complaintsEnabled()),
                 requestMoreFeedbackEnabled: new FormControl(this.requestMoreFeedbackEnabled()),

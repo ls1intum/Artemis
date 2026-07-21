@@ -54,8 +54,8 @@ public record CourseCreateDTO(
         String color, Boolean enrollmentEnabled, @Size(max = 2000) String enrollmentConfirmationMessage, boolean unenrollmentEnabled,
 
         // Course features
-        boolean learningPathsEnabled, boolean studentCourseAnalyticsDashboardEnabled, Integer presentationScore, Integer maxPoints, @Min(0) @Max(5) Integer accuracyOfScores,
-        boolean restrictedAthenaModulesAccess, String timeZone, CourseInformationSharingConfiguration courseInformationSharingConfiguration,
+        boolean learningPathsEnabled, Integer presentationScore, Integer maxPoints, @Min(0) @Max(5) Integer accuracyOfScores, boolean restrictedAthenaModulesAccess,
+        String timeZone, CourseInformationSharingConfiguration courseInformationSharingConfiguration,
 
         // Data-privacy / retention: whether the course is grade-relevant (drives how long student data is retained).
         // Boxed so an omitted value fails safe to grade-relevant (the longer retention), not to earlier deletion.
@@ -117,7 +117,6 @@ public record CourseCreateDTO(
 
         // Course features
         course.setLearningPathsEnabled(learningPathsEnabled);
-        course.setStudentCourseAnalyticsDashboardEnabled(studentCourseAnalyticsDashboardEnabled);
         course.setPresentationScore(presentationScore);
         course.setMaxPoints(maxPoints);
         course.setAccuracyOfScores(accuracyOfScores);
