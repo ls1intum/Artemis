@@ -106,6 +106,11 @@ public class DifferentialVerificationService {
         return result.isSuccess() ? result.stdout() : "";
     }
 
+    private String readDesignDocument(InteractiveSandbox sandbox, String sessionId) {
+        SandboxExecResult result = sandbox.exec(sessionId, READ_TIMEOUT, "cat", GenerationWorkspaceService.WORKSPACE + "/DESIGN.md");
+        return result.isSuccess() ? result.stdout() : "";
+    }
+
     /** Cap on the dead-file probe output, so a runaway workspace listing cannot blow the agent's context. */
     private static final int MAX_POSSIBLY_DEAD_FILES = 20;
 
@@ -436,8 +441,45 @@ public class DifferentialVerificationService {
                     + "only via [task][Title](testName) lines.");
         }
 
+        // Statement-shape defects the staged gate also enforces. Repair attempts run only this verifier — without the same checks here, a repair attempt can ship exactly the
+        // statement the staged gate rejected (observed live: DESIGN.md said diagram yes, the gate failed the statement, and the repair attempt saved it diagram-less anyway).
+        List<String> duplicateTaskTitles = ProblemStatementBindingChecker.duplicateTaskTitles(problemStatement);
+        boolean taskTitlesUnique = duplicateTaskTitles.isEmpty();
+        if (!taskTitlesUnique) {
+            reasons.add("Multiple [task] lines share the same title: " + duplicateTaskTitles + ". A title identifies ONE student work seam — merge each duplicated group into a "
+                    + "single [task] line binding all of its tests.");
+        }
+        boolean statementVoiceOk = !ProblemStatementBindingChecker.writesAboutStudentsInThirdPerson(problemStatement);
+        if (!statementVoiceOk) {
+            reasons.add("The problem statement writes ABOUT students in the third person ('Students must/will/should ...'). Address the reader directly: frame the goal as "
+                    + "\"we\" and the work as \"you\" with imperative tasks.");
+        }
+        List<String> deadDiagramLinks = ProblemStatementBindingChecker.unresolvedTestsColorNames(problemStatement, solution.testNames(), seededStructuralTestNames);
+        boolean diagramLinksResolve = deadDiagramLinks.isEmpty();
+        if (!diagramLinksResolve) {
+            reasons.add("These diagram testsColor(...) names match no actual test: " + deadDiagramLinks + ". Use exact behavioural or seeded structural check names, or remove "
+                    + "the link.");
+        }
+        boolean noStrayUmlDirectives = !ProblemStatementBindingChecker.hasStrayPlantUmlDirectives(problemStatement);
+        if (!noStrayUmlDirectives) {
+            reasons.add("PlantUML directives ('hide empty fields', 'hide empty methods', 'skinparam ...') sit OUTSIDE the @startuml...@enduml block and render as stray text. "
+                    + "Move them inside the block, directly before @enduml.");
+        }
+        List<String> duplicateHeadings = ProblemStatementBindingChecker.duplicateHeadings(problemStatement);
+        boolean headingsUnique = duplicateHeadings.isEmpty();
+        if (!headingsUnique) {
+            reasons.add("The statement repeats these headings verbatim: " + duplicateHeadings + ". Merge or remove the duplicate sections.");
+        }
+        String designDocument = readDesignDocument(sandbox, sessionId);
+        boolean diagramMatchesDesign = !(ProblemStatementBindingChecker.designSaysDiagramYes(designDocument) && !problemStatement.contains("@startuml"));
+        if (!diagramMatchesDesign) {
+            reasons.add("DESIGN.md's '## Diagram' section says yes, but the statement contains no @startuml diagram. Add the PlantUML class diagram (with testsColor links) after "
+                    + "the tasks it illustrates, or update DESIGN.md's Diagram decision if the design genuinely changed.");
+        }
+
         boolean actionableGatesPass = solutionPassed && noDuplicateTestNames && templateFailed && testCount > 0 && problemStatementHasTasks && taskKeywordsWellFormed
-                && taskBindingsResolve && noDuplicateTaskBindings && allGradableTestsBound && solutionScaClean && proseHygienic;
+                && taskBindingsResolve && noDuplicateTaskBindings && allGradableTestsBound && solutionScaClean && proseHygienic && taskTitlesUnique && statementVoiceOk
+                && diagramLinksResolve && noStrayUmlDirectives && headingsUnique && diagramMatchesDesign;
 
         List<String> possiblyDeadFiles = possiblyDeadWorkspaceFiles(sandbox, sessionId);
         return new DifferentialAnalysis(solution, template, solutionPassed, templateFailed, actionableGatesPass, reasons, unresolvedTaskBindings, possiblyDeadFiles,

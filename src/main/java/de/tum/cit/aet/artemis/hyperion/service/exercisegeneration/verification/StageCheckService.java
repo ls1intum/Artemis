@@ -4,8 +4,6 @@ import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
@@ -170,94 +168,37 @@ public class StageCheckService {
             }
             // Diagram testsColor links are interactive in Artemis (they render pass/fail per element); a name that matches no test is a silently dead link the student can
             // never satisfy, so it is held to the same resolution standard as a [task] binding.
-            List<String> deadDiagramLinks = unresolvedTestsColorNames(statement, exactTestNames);
+            List<String> deadDiagramLinks = ProblemStatementBindingChecker.unresolvedTestsColorNames(statement, exactTestNames, Set.of());
             if (!deadDiagramLinks.isEmpty()) {
                 return StageCheckResult.failed("These diagram testsColor(...) names match no actual test: " + deadDiagramLinks
                         + ". Use the exact test names from the TESTS stage (behavioural or seeded structural), or remove the link: " + exactTestNames + ".");
             }
         }
-        if (hasStrayPlantUmlDirectives(statement)) {
+        if (ProblemStatementBindingChecker.hasStrayPlantUmlDirectives(statement)) {
             return StageCheckResult.failed("PlantUML directives ('hide empty fields', 'hide empty methods', 'skinparam ...') sit OUTSIDE the @startuml...@enduml block, where "
                     + "Artemis renders them as stray text. Move them inside the block, directly before @enduml.");
         }
-        List<String> duplicateTaskTitles = duplicateTaskTitles(statement);
+        List<String> duplicateTaskTitles = ProblemStatementBindingChecker.duplicateTaskTitles(statement);
         if (!duplicateTaskTitles.isEmpty()) {
             return StageCheckResult.failed("Multiple [task] lines share the same title: " + duplicateTaskTitles
                     + ". A title identifies ONE student work seam — merge each duplicated group into a single [task] line binding all of its tests, "
                     + "followed by one or two imperative sentences describing the work.");
         }
-        if (THIRD_PERSON_STUDENTS.matcher(statement).find()) {
+        if (ProblemStatementBindingChecker.writesAboutStudentsInThirdPerson(statement)) {
             return StageCheckResult.failed("The statement writes ABOUT students in the third person ('Students must/will/should ...'). Address the reader directly instead: "
                     + "frame the goal as \"we\" and the work as \"you\" with imperative tasks ('Define ...', 'Implement ...').");
         }
         String designDocument = execRead(sandbox, sessionId, "cat", GenerationWorkspaceService.WORKSPACE + "/DESIGN.md");
-        if (designSaysDiagramYes(designDocument) && !statement.contains("@startuml")) {
+        if (ProblemStatementBindingChecker.designSaysDiagramYes(designDocument) && !statement.contains("@startuml")) {
             return StageCheckResult.failed("DESIGN.md's '## Diagram' section says yes, but the statement contains no @startuml diagram. Add the PlantUML class diagram after "
                     + "the tasks it illustrates (with testsColor links), or update DESIGN.md's Diagram decision if the design genuinely changed.");
         }
         // Exact duplicate headings are a mechanical statement defect (observed shipping live: the same '### 1. ...' section twice); catching it here costs nothing.
-        List<String> duplicateHeadings = statement.lines().map(String::strip).filter(line -> line.startsWith("#")).collect(Collectors.groupingBy(line -> line)).entrySet().stream()
-                .filter(entry -> entry.getValue().size() > 1).map(Map.Entry::getKey).sorted().toList();
+        List<String> duplicateHeadings = ProblemStatementBindingChecker.duplicateHeadings(statement);
         if (!duplicateHeadings.isEmpty()) {
             return StageCheckResult.failed("The statement repeats these headings verbatim: " + duplicateHeadings + ". Merge or remove the duplicate sections.");
         }
         return StageCheckResult.passed("");
-    }
-
-    /** Third-person authoring voice about "students"; the statement must address the reader directly (observed live twice: "Students will implement", "Students must define"). */
-    private static final Pattern THIRD_PERSON_STUDENTS = Pattern.compile("(?i)\\bstudents?\\s+(will|must|should|shall|need to|are required)\\b");
-
-    /** Matches a {@code [task][Title](...)} line's title. */
-    private static final Pattern TASK_TITLE = Pattern.compile("\\[task\\]\\[([^\\]]+)\\]");
-
-    /** Every [task] title that appears more than once — a title names one seam, so a repeat means tests were split 1:1 instead of grouped. */
-    static List<String> duplicateTaskTitles(String statement) {
-        return TASK_TITLE.matcher(statement).results().map(match -> match.group(1).strip()).collect(Collectors.groupingBy(title -> title)).entrySet().stream()
-                .filter(entry -> entry.getValue().size() > 1).map(Map.Entry::getKey).sorted().toList();
-    }
-
-    /** Whether DESIGN.md's {@code ## Diagram} section starts with "yes" (the agent's own declared decision; kept current per the design-update rule). */
-    static boolean designSaysDiagramYes(String designDocument) {
-        int index = designDocument.indexOf("## Diagram");
-        if (index < 0) {
-            return false;
-        }
-        String section = designDocument.substring(index + "## Diagram".length()).strip();
-        return section.regionMatches(true, 0, "yes", 0, 3);
-    }
-
-    /**
-     * Matches every {@code testsColor(NAME)} occurrence in a statement's PlantUML diagram (both the {@code <color:...>} member form and the {@code #testsColor(...)} edge form).
-     */
-    private static final Pattern TESTS_COLOR_NAME = Pattern.compile("testsColor\\(([^)]+?)(?:\\(\\))?\\)");
-
-    /**
-     * Whether a PlantUML rendering directive appears outside every {@code @startuml}...{@code @enduml} block — Artemis renders such a line as stray statement text
-     * (observed live: {@code hide empty fields} printed after the diagram).
-     */
-    static boolean hasStrayPlantUmlDirectives(String statement) {
-        boolean insideDiagram = false;
-        for (String line : statement.lines().map(String::strip).toList()) {
-            if (line.startsWith("@startuml")) {
-                insideDiagram = true;
-            }
-            else if (line.startsWith("@enduml")) {
-                insideDiagram = false;
-            }
-            else if (!insideDiagram && (line.startsWith("hide empty") || line.startsWith("skinparam "))) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    /**
-     * Every distinct {@code testsColor} name in the statement that matches no known test name. A trailing {@code ()} (the classic Artemis statement style for behavioural
-     * names) is tolerated on the statement side; the comparison itself is exact.
-     */
-    static List<String> unresolvedTestsColorNames(String statement, List<String> exactTestNames) {
-        Set<String> known = Set.copyOf(exactTestNames);
-        return TESTS_COLOR_NAME.matcher(statement).results().map(match -> match.group(1).strip()).distinct().filter(name -> !known.contains(name)).sorted().toList();
     }
 
     /**

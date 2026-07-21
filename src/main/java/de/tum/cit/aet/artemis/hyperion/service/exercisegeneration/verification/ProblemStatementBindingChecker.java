@@ -44,6 +44,66 @@ final class ProblemStatementBindingChecker {
     }
 
     /** Whether the problem statement carries at least one {@code [task][Title](testName)} binding (the presence gate: a statement with none shows students no task checklist). */
+    /** Third-person authoring voice about "students"; the statement must address the reader directly (observed live twice: "Students will implement", "Students must define"). */
+    private static final Pattern THIRD_PERSON_STUDENTS = Pattern.compile("(?i)\\bstudents?\\s+(will|must|should|shall|need to|are required)\\b");
+
+    /** Matches a {@code [task][Title](...)} line's title. */
+    private static final Pattern TASK_TITLE = Pattern.compile("\\[task\\]\\[([^\\]]+)\\]");
+
+    /** Matches every {@code testsColor(NAME)} occurrence (member and edge form); a trailing {@code ()} on the name is tolerated. */
+    private static final Pattern TESTS_COLOR_NAME = Pattern.compile("testsColor\\(([^)]+?)(?:\\(\\))?\\)");
+
+    /** Whether the statement writes ABOUT students in the third person instead of addressing the reader. */
+    static boolean writesAboutStudentsInThirdPerson(String problemStatement) {
+        return THIRD_PERSON_STUDENTS.matcher(problemStatement).find();
+    }
+
+    /** Every [task] title that appears more than once — a title names one seam, so a repeat means tests were split 1:1 instead of grouped. */
+    static List<String> duplicateTaskTitles(String problemStatement) {
+        return TASK_TITLE.matcher(problemStatement).results().map(match -> match.group(1).strip()).collect(java.util.stream.Collectors.groupingBy(title -> title)).entrySet()
+                .stream().filter(entry -> entry.getValue().size() > 1).map(java.util.Map.Entry::getKey).sorted().toList();
+    }
+
+    /** Every distinct {@code testsColor} name that matches none of the known test names — a silently dead interactive diagram link. */
+    static List<String> unresolvedTestsColorNames(String problemStatement, List<String> actualTestNames, Set<String> seededStructuralTestNames) {
+        Set<String> known = new java.util.HashSet<>(actualTestNames);
+        known.addAll(seededStructuralTestNames);
+        return TESTS_COLOR_NAME.matcher(problemStatement).results().map(match -> match.group(1).strip()).distinct().filter(name -> !known.contains(name)).sorted().toList();
+    }
+
+    /** Whether a PlantUML rendering directive appears outside every {@code @startuml}...{@code @enduml} block — Artemis renders such a line as stray statement text. */
+    static boolean hasStrayPlantUmlDirectives(String problemStatement) {
+        boolean insideDiagram = false;
+        for (String line : problemStatement.lines().map(String::strip).toList()) {
+            if (line.startsWith("@startuml")) {
+                insideDiagram = true;
+            }
+            else if (line.startsWith("@enduml")) {
+                insideDiagram = false;
+            }
+            else if (!insideDiagram && (line.startsWith("hide empty") || line.startsWith("skinparam "))) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /** Whether DESIGN.md's {@code ## Diagram} section starts with "yes" (the agent's own declared decision; kept current per the design-update rule). */
+    static boolean designSaysDiagramYes(String designDocument) {
+        int index = designDocument.indexOf("## Diagram");
+        if (index < 0) {
+            return false;
+        }
+        String section = designDocument.substring(index + "## Diagram".length()).strip();
+        return section.regionMatches(true, 0, "yes", 0, 3);
+    }
+
+    /** Every markdown heading line that appears more than once verbatim. */
+    static List<String> duplicateHeadings(String problemStatement) {
+        return problemStatement.lines().map(String::strip).filter(line -> line.startsWith("#")).collect(java.util.stream.Collectors.groupingBy(line -> line)).entrySet().stream()
+                .filter(entry -> entry.getValue().size() > 1).map(java.util.Map.Entry::getKey).sorted().toList();
+    }
+
     static boolean hasTaskBindings(String problemStatement) {
         return TASK_BINDING.matcher(problemStatement).find();
     }
