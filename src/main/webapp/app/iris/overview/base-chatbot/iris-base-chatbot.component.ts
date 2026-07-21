@@ -950,13 +950,10 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
         if (index !== this.lastAssistantMessageIndex() || this.awaitingAnswer()) {
             return false;
         }
-        // After a failed run, the newest assistant message may be an intermediate (final: false) one —
-        // e.g. a tool call whose run then failed and never produced a final answer. Do not expose the
-        // toolbox for it. (A lone intermediate message with no failed run still gets the copy button.)
-        if (this.runInfo()?.state === IrisRunState.FAILED && this.messages()[index]?.final === false) {
-            return false;
-        }
-        return true;
+        // The newest assistant message may be an intermediate (final: false) one — e.g. a tool call whose
+        // run then failed, or a persisted intermediate message reloaded without run info. Never expose the
+        // toolbox for such a message, regardless of the current run state.
+        return this.messages()[index]?.final !== false;
     }
 
     onMcqAnswerChanged(message: IrisMessage, event: { selectedIndex: number | undefined; submitted: boolean }): void {

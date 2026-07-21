@@ -277,13 +277,13 @@ describe('IrisBaseChatbotComponent', () => {
         expect(getChatSessionsSpy).toHaveBeenCalledOnce();
     });
 
-    it('should hide rating buttons for intermediate assistant messages but keep copy available', () => {
+    it('should not expose the toolbox for an intermediate assistant message', () => {
         chatService.messages.next([{ ...mockServerMessage, final: false } as IrisAssistantMessage]);
         fixture.detectChanges();
 
-        const actionButtons = fixture.nativeElement.querySelectorAll('.rate-message-buttons button');
-        expect(actionButtons).toHaveLength(1);
-        expect(fixture.nativeElement.querySelector('.fa-copy')).toBeTruthy();
+        // An intermediate message is not an answer — neither copy nor rating is offered, regardless of run state.
+        expect(fixture.nativeElement.querySelector('.rate-message-buttons')).toBeFalsy();
+        expect(fixture.nativeElement.querySelector('.fa-copy')).toBeFalsy();
         expect(fixture.nativeElement.querySelector('.fa-thumbs-up')).toBeFalsy();
         expect(fixture.nativeElement.querySelector('.fa-thumbs-down')).toBeFalsy();
     });
@@ -324,6 +324,37 @@ describe('IrisBaseChatbotComponent', () => {
         // The failed run cleared awaitingAnswer, but no final answer was ever produced → no toolbox.
         expect(component.awaitingAnswer()).toBe(false);
         expect(fixture.nativeElement.querySelector('.rate-message-buttons')).toBeFalsy();
+    });
+
+    it('should not expose the toolbox for a persisted intermediate assistant message without run info', () => {
+        // Reloaded history: the newest assistant message is intermediate and there is no run info at all.
+        chatService.messages.next([mockUserMessageWithContent('question'), { ...mockServerMessage, final: false } as IrisAssistantMessage]);
+        fixture.detectChanges();
+
+        expect(component.runInfo()).toBeUndefined();
+        expect(fixture.nativeElement.querySelector('.rate-message-buttons')).toBeFalsy();
+    });
+
+    it('should not expose the toolbox for an intermediate assistant message after a finished run', () => {
+        // Terminal but non-failed run state must not re-enable the toolbox for a non-final message.
+        chatService.messages.next([mockUserMessageWithContent('question'), { ...mockServerMessage, final: false } as IrisAssistantMessage]);
+        chatService.runInfo.next({ runId: 'run-1', state: IrisRunState.FINISHED });
+        fixture.detectChanges();
+
+        expect(component.awaitingAnswer()).toBe(false);
+        expect(fixture.nativeElement.querySelector('.rate-message-buttons')).toBeFalsy();
+    });
+
+    it('should expose the toolbox for a final assistant message following an intermediate one', () => {
+        // The intermediate message is superseded by a final answer → only the final answer gets the toolbox.
+        chatService.messages.next([mockUserMessageWithContent('question'), { ...mockServerMessage, final: false } as IrisAssistantMessage, mockServerMessage2]);
+        chatService.runInfo.next({ runId: 'run-1', state: IrisRunState.FINISHED });
+        fixture.detectChanges();
+
+        const toolboxes = fixture.nativeElement.querySelectorAll('.rate-message-buttons');
+        expect(toolboxes).toHaveLength(1);
+        const lastAssistant = fixture.nativeElement.querySelector(`[data-message-id="${mockServerMessage2.id}"]`);
+        expect(lastAssistant.querySelector('.rate-message-buttons')).toBeTruthy();
     });
 
     it('should not rate intermediate assistant messages defensively', async () => {
