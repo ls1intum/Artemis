@@ -3,7 +3,6 @@
  */
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { of, throwError } from 'rxjs';
 import { signal } from '@angular/core';
@@ -17,8 +16,6 @@ import { AlertService } from 'app/foundation/service/alert.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('CleanupServiceComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let comp: CleanupServiceComponent;
     let fixture: ComponentFixture<CleanupServiceComponent>;
     let cleanupService: DataCleanupService;
@@ -97,6 +94,8 @@ describe('CleanupServiceComponent', () => {
             deleteTo: dayjs(),
             lastExecuted: undefined,
             datesValid: signal(true),
+            deleteFromValid: signal(true),
+            deleteToValid: signal(true),
         };
 
         const invalidOperation: CleanupOperation = {
@@ -105,6 +104,8 @@ describe('CleanupServiceComponent', () => {
             deleteTo: dayjs().subtract(6, 'months'),
             lastExecuted: undefined,
             datesValid: signal(true),
+            deleteFromValid: signal(true),
+            deleteToValid: signal(true),
         };
 
         comp.validateDates(validOperation);
@@ -121,6 +122,8 @@ describe('CleanupServiceComponent', () => {
             deleteTo: dayjs(),
             lastExecuted: undefined,
             datesValid: signal(true),
+            deleteFromValid: signal(true),
+            deleteToValid: signal(true),
         };
 
         // Clearing a field must drop the stale date so a deletion cannot run against a range no longer shown.
@@ -137,6 +140,8 @@ describe('CleanupServiceComponent', () => {
             deleteTo: dayjs(),
             lastExecuted: undefined,
             datesValid: signal(false),
+            deleteFromValid: signal(true),
+            deleteToValid: signal(true),
         };
 
         const newFrom = dayjs().subtract(6, 'months');
@@ -153,6 +158,8 @@ describe('CleanupServiceComponent', () => {
             deleteTo: dayjs(),
             lastExecuted: undefined,
             datesValid: signal(true),
+            deleteFromValid: signal(true),
+            deleteToValid: signal(true),
         };
 
         comp.onDeleteToChange(operation, undefined);
@@ -168,6 +175,8 @@ describe('CleanupServiceComponent', () => {
             deleteTo: undefined,
             lastExecuted: undefined,
             datesValid: signal(false),
+            deleteFromValid: signal(true),
+            deleteToValid: signal(true),
         };
 
         const newTo = dayjs();

@@ -1,5 +1,4 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { signal } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
@@ -11,8 +10,6 @@ import { LectureSeriesCreateLectureDTO } from 'app/lecture/shared/entities/lectu
 import dayjs from 'dayjs/esm';
 
 describe('LectureSeriesEditModal', () => {
-    setupTestBed({ zoneless: true });
-
     let component: LectureSeriesDraftEditModalComponent;
     let fixture: ComponentFixture<LectureSeriesDraftEditModalComponent>;
 

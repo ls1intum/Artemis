@@ -1,6 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { GradingKeyTableComponent } from 'app/assessment/manage/grading/grading-key/grading-key-table.component';
 import { ActivatedRoute, Params } from '@angular/router';
 import { MockDirective, MockPipe, MockProvider } from 'ng-mocks';
@@ -24,7 +23,6 @@ import { Exam } from 'app/exam/shared/entities/exam.model';
 import { CourseScores } from 'app/course/manage/course-scores/course-scores';
 
 describe('GradingKeyTableComponent', () => {
-    setupTestBed({ zoneless: true });
     let fixture: ComponentFixture<GradingKeyTableComponent>;
     let component: GradingKeyTableComponent;
     let gradingService: GradingService;

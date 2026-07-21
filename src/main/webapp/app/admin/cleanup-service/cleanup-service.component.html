@@ -18,13 +18,13 @@
             </td>
             <td>
                 @if (operation.name !== 'deleteOrphans') {
-                    <jhi-date-time-picker
-                        #deleteFromPicker
+                    <tum-ui-date-picker
                         [inputId]="'deleteFromDate-' + operation.name"
-                        [pickerType]="DateTimePickerType.DEFAULT"
                         [value]="operation.deleteFrom"
-                        (valueChange)="onDeleteFromChange(operation, deleteFromPicker.dateInput.valid ? deleteFromPicker.value() : undefined)"
-                        [error]="!operation.datesValid()"
+                        (valueChange)="onDeleteFromChange(operation, $event)"
+                        (parseValidChange)="operation.deleteFromValid.set($event)"
+                        [error]="!operation.datesValid() || !operation.deleteFromValid()"
+                        [ariaLabel]="'cleanupService.table.deleteFrom' | artemisTranslate"
                         [hideLabelName]="true"
                         [hideValidationMessage]="true"
                         [shouldDisplayTimeZoneWarning]="false"
@@ -35,13 +35,13 @@
             </td>
             <td>
                 @if (operation.name !== 'deleteOrphans') {
-                    <jhi-date-time-picker
-                        #deleteToPicker
+                    <tum-ui-date-picker
                         [inputId]="'deleteToDate-' + operation.name"
-                        [pickerType]="DateTimePickerType.DEFAULT"
                         [value]="operation.deleteTo"
-                        (valueChange)="onDeleteToChange(operation, deleteToPicker.dateInput.valid ? deleteToPicker.value() : undefined)"
-                        [error]="!operation.datesValid()"
+                        (valueChange)="onDeleteToChange(operation, $event)"
+                        (parseValidChange)="operation.deleteToValid.set($event)"
+                        [error]="!operation.datesValid() || !operation.deleteToValid()"
+                        [ariaLabel]="'cleanupService.table.deleteTo' | artemisTranslate"
                         [hideLabelName]="true"
                         [hideValidationMessage]="true"
                         [shouldDisplayTimeZoneWarning]="false"
@@ -66,7 +66,7 @@
                     id="execute-operation"
                     severity="danger"
                     size="small"
-                    [disabled]="!operation.datesValid()"
+                    [disabled]="!operation.datesValid() || !operation.deleteFromValid() || !operation.deleteToValid()"
                     (click)="openCleanupOperationModal(operation)"
                     data-testid="execute-operation"
                 >

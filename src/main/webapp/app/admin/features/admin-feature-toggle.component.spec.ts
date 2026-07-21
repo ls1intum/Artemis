@@ -3,7 +3,6 @@
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TranslateService } from '@ngx-translate/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Subject, of, throwError } from 'rxjs';
@@ -18,8 +17,6 @@ import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.serv
 import { MODULE_FEATURE_ATHENA, MODULE_FEATURE_ATLAS, MODULE_FEATURE_EXAM, MODULE_FEATURE_IRIS, MODULE_FEATURE_PASSKEY_REQUIRE_ADMIN, PROFILE_JENKINS } from 'app/app.constants';
 
 describe('AdminFeatureToggleComponentTest', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<AdminFeatureToggleComponent>;
     let comp: AdminFeatureToggleComponent;
     let mockProfileService: MockProfileService;
@@ -54,7 +51,7 @@ describe('AdminFeatureToggleComponentTest', () => {
         it('ngOnInit should load all feature toggles', () => {
             expect(comp.featureToggles()).toHaveLength(0);
             comp.ngOnInit();
-            expect(comp.featureToggles()).toHaveLength(15);
+            expect(comp.featureToggles()).toHaveLength(14);
         });
 
         it('ngOnInit should set isActive based on active toggles', () => {

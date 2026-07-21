@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockProvider } from 'ng-mocks';
 import { TutorialGroupFreePeriodRowButtonsComponent } from 'app/tutorialgroup/manage/tutorial-free-periods/tutorial-free-periods-management/tutorial-group-free-period-row-buttons/tutorial-group-free-period-row-buttons.component';
@@ -18,8 +17,6 @@ import { DialogService } from 'primeng/dynamicdialog';
 import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
 
 describe('TutorialGroupFreePeriodRowButtonsComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<TutorialGroupFreePeriodRowButtonsComponent>;
     let component: TutorialGroupFreePeriodRowButtonsComponent;
     let periodService: TutorialGroupFreePeriodService;
