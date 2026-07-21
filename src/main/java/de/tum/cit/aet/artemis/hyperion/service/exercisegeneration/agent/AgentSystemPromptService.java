@@ -195,39 +195,34 @@ public class AgentSystemPromptService {
 
             """;
 
-    // The GENERATE-mode staged workflow, STAGE 0-4. Each stage's instructions are their own constant so buildStage() can select exactly one, while the legacy single-loop build()
-    // still sees the full STAGE 0-4 block by concatenating all of them (GENERATE_GROUNDED_WORKFLOW below) — the wording is never duplicated between the two call sites.
+    // The GENERATE-mode staged workflow. Each stage's instructions are their own constant so buildStage() can select exactly one, while the legacy single-loop build() still sees
+    // the STAGE 1-4 block by concatenating them (GENERATE_GROUNDED_WORKFLOW below) — the wording is never duplicated between the two call sites. STAGE_SPEC_INSTRUCTIONS is
+    // deliberately NOT part of the legacy composition: the SPEC stage only exists under the orchestrator's gate (the legacy loop runs when a specification already exists —
+    // an instructor statement or a repair prompt carrying the frozen spec contract), and including it would push the full prompt past its size budget for nothing.
 
     private static final String STAGED_WORKFLOW_INTRO = """
-            Author the exercise in this dependency order — design, then solution, then the template derived from it, then differential tests, then the statement last —
-            each stage needs the previous stage's real output: the exercise source and test roots are clean; preserve the supplied harness and build files.
+            Author the exercise in this dependency order — solution from the specification, then the template derived from it, then differential tests, then the statement
+            last — each stage needs the previous stage's real output: the exercise source and test roots are clean; preserve the supplied harness and build files.
 
             """;
 
     private static final String STAGE_SPEC_INSTRUCTIONS = """
-            STAGE — SPECIFICATION: before any design or code, write `/workspace/SPEC.md` (workspace root only; never persisted into any repository): the archetype you chose
-            (per the style guide's menu, or "none of these" with a reason — every EXPLICIT brief requirement such as a named design pattern binds the spec; the archetype
-            serves the brief, never replaces it), `## Rules` — every graded behaviour as a numbered rule (R1, R2, ...) carrying REAL computation a
-            plausible wrong implementation would get wrong (a rule whose correct answer is copying a literal from the spec is not a rule), and `## Worked Examples` — a table
-            (| Rules | Input | Expected |) with at least two rows per central rule whose expected results DIFFER. Verify every row's arithmetic by computing it in the sandbox
-            (a throwaway script under /tmp) before writing it down. No [task] bindings, no test names, no diagrams, no class design beyond what the rules force. Update SPEC.md
-            whenever a later stage proves a rule wrong — it must always describe the final exercise truthfully.
-            """;
-
-    private static final String STAGE_0_DESIGN_INSTRUCTIONS = """
-            STAGE 0 — DESIGN FIRST: before touching any repository, write `/workspace/DESIGN.md` (workspace root only; never persisted into solution, template, or tests) from the
-            specification (SPEC.md if present, else the instructor statement)
-            with exactly these sections: `## Classes` (a table: name | role | given-complete-in-template | student-implements-stubbed | student-creates-absent-from-template),
-            `## Public API` (signatures only), `## Tasks` (one row per seam — an independently actionable student-work unit, e.g. a method/class/behavior cluster —
-            grouping every test partition it needs; never one row per test, never one for the whole exercise unless it is genuinely one seam), `## Diagram` (yes/no + one-line why —
-            yes for multiple collaborating or student-created types; no for a single class). Record which class owns each piece of mutable state and whether it
-            survives object replacement — later stages may only demand what that ownership allows. Choose the smallest
-            design the source requirements support. Update DESIGN.md whenever a later stage forces a design change — it must
-            always describe the final exercise truthfully.
+            STAGE — SPECIFICATION: before any code, write `/workspace/SPEC.md` — the ONE planning artifact every later stage implements and is checked against. Sections: the
+            archetype you chose (per the style guide's menu, or "none of these" with a reason — every EXPLICIT brief requirement such as a named design pattern binds the
+            spec; the archetype serves the brief, never replaces it); `## Rules` — every graded behaviour as a numbered rule (R1, R2, ...) carrying REAL computation a
+            plausible wrong implementation would get wrong; `## Worked Examples` — a table (| Rules | Input | Expected |) with at least two rows per central rule whose
+            expected results DIFFER; verify every row's arithmetic in the sandbox (a throwaway /tmp script) BEFORE writing it down; `## Design` — a table
+            (| Type | Role | Template status |) with Template status EXACTLY one of `given`, `stubbed`, `student-creates` (a `student-creates` type is OMITTED from the
+            template and graded through seeded structural checks plus reflection-based tests — the template gate enforces its absence), plus who owns each piece of mutable
+            state and whether it survives object replacement; `## Testing Strategy` — one seam per independently actionable unit of student work, grouping every test
+            partition it needs (never one seam per test, never one for the whole exercise unless it is genuinely one seam), with a weight tier (core rules outweigh edge
+            cases) and which partitions get a hidden after-due-date variant with fresh witnesses (students overfit to visible tests); `## Diagram` — yes/no + one-line why
+            grounded in the design (yes for multiple collaborating or student-created types). No [task] bindings, no test names, no PlantUML at spec time. Update SPEC.md
+            whenever a later stage proves it wrong — it must always describe the final exercise truthfully.
             """;
 
     private static final String STAGE_1_SOLUTION_INSTRUCTIONS = """
-            STAGE 1 — SOLUTION: implement the reference solution per DESIGN.md. The solution must exemplify the design it teaches: never bypass an
+            STAGE 1 — SOLUTION: implement the reference solution per the specification. The solution must exemplify the design it teaches: never bypass an
             abstraction it defines (e.g. instanceof on one concrete implementation instead of delegating through the interface) — fix the design instead.
             Execute every worked example from the requirements against the real solution in the
             sandbox (throwaway under /tmp) and fix the SOLUTION or the EXAMPLE when they disagree — never patch code to match a wrong number.
@@ -235,35 +230,37 @@ public class AgentSystemPromptService {
             """;
 
     private static final String STAGE_2_TEMPLATE_INSTRUCTIONS = """
-            STAGE 2 — TEMPLATE: derive the template FROM the finished solution: copy it, then remove exactly the student work DESIGN.md marks stubbed or absent (stub
-            bodies keep their Javadoc plus an in-body TODO and a placeholder throw; a student-created type is omitted entirely, with TODO breadcrumbs in the template
-            files that collaborate with it) so the template still compiles. Failing behavioural tests are EXPECTED; only compilation matters — do not "fix" stubs. On every shared file, Javadoc and non-TODO comments stay byte-identical to the solution.
+            STAGE 2 — TEMPLATE: derive the template FROM the finished solution: copy it, then remove exactly the student work the specification marks `stubbed` or
+            `student-creates` (stub bodies keep their Javadoc plus an in-body TODO and a placeholder throw; a `student-creates` type is omitted ENTIRELY — the gate rejects a
+            template still containing its file — with TODO breadcrumbs in the template files that collaborate with it) so the template still compiles. Failing behavioural tests are EXPECTED; only compilation matters — do not "fix" stubs. On every shared file, Javadoc and non-TODO comments stay byte-identical to the solution.
             If a doc is missing from the solution, add it there first and re-derive; never author docs only in the template.
             """;
 
     private static final String STAGE_3_TESTS_INSTRUCTIONS = """
             STAGE 3 — TESTS: run `verify` first — it reports binding problems and the seeded structural check names once template and solution diverge. Author tests one
-            partition at a time from DESIGN.md's task table, re-running `verify` after each test or small batch: it must pass on the solution and fail on the template
-            for its intended reason (a structural check may already pass). For a student-created type, follow the reflection pattern the seeded reference/tests demonstrate
-            (its ShippingCalculator test reaches a solution-only class via ReflectionTestUtils so the same test still compiles against the template). Every test must be
-            passable by completing the template's TODOs within the scaffolded structure; one that forces restructuring means the design is wrong — fix template and
-            solution first. Assert exception types, never message strings, unless the statement fixes the exact message. If a differential
-            run exposes a solution or template defect, fix it there, re-check that stage's guarantees (examples still replay, docs still byte-identical), and record the
-            change in DESIGN.md; rewrite DESIGN.md if the design proves wrong twice.
+            partition at a time from the specification's Testing Strategy, re-running `verify` after each test or small batch: it must pass on the solution and fail on the
+            template for its intended reason (a structural check may already pass). For a `student-creates` type, follow the reflection pattern the seeded reference/tests
+            demonstrate (its ShippingCalculator test reaches a solution-only class via ReflectionTestUtils so the same test still compiles against the template). Every test
+            must be passable by completing the template's TODOs within the scaffolded structure; one that forces restructuring means the design is wrong — fix template and
+            solution first. Assert exception types, never message strings, unless the statement fixes the exact message. Then write `/workspace/test-plan.json` implementing
+            the Testing Strategy: {"tests":[{"name":"<exact test name>","weight":<1..3>,"visibility":"ALWAYS"|"AFTER_DUE_DATE"}]} — weights grade core rules above edge cases,
+            AFTER_DUE_DATE hides an overfit-resistant variant until the deadline; names must be the exact names `verify` reports. If a differential run exposes a solution or
+            template defect, fix it there, re-check that stage's guarantees, and update SPEC.md if the specification proves wrong.
             """;
 
     private static final String STAGE_4_STATEMENT_INSTRUCTIONS = """
             STAGE 4 — STATEMENT: write the statement last by REWRITING the specification into student-facing form — keep its rules and examples, never add graded
-            behaviour beyond it — using DESIGN.md and the verified test names: one `[task]` line per DESIGN.md seam using the exact reported
+            behaviour beyond it — using the verified test names: one `[task]` line per specification seam using the exact reported
             names — bind the bare method names exactly as `verify` reports them, never prefixed with a class or package name — the public API presented once and compactly,
-            a diagram only if DESIGN.md said yes — placed after the tasks it illustrates; testsColor names resolve like task bindings. Re-read every boundary or edge-case sentence: each must be true of the solution AND covered by a test — otherwise fix the
+            a diagram only if SPEC.md's `## Diagram` said yes — placed after the tasks it illustrates; testsColor names resolve like task bindings. Never bind an
+            AFTER_DUE_DATE test to a [task] line — hidden tests grade silently until the deadline. Re-read every boundary or edge-case sentence: each must be true of the solution AND covered by a test — otherwise fix the
             artifact or delete the sentence. Never repeat a heading. Then independently replay every worked example, run `verify` once
             more, and submit only after `MECHANICAL PRECHECK: PASS`; authoritative post-loop verification determines save eligibility, and quality review may request repairs.
             """;
 
     /** The full GENERATE-mode STAGE 0-4 workflow, composed from the same per-stage constants {@link #buildStage} selects from individually — never duplicated as separate prose. */
-    private static final String GENERATE_GROUNDED_WORKFLOW = STAGED_WORKFLOW_INTRO + STAGE_0_DESIGN_INSTRUCTIONS + STAGE_1_SOLUTION_INSTRUCTIONS + STAGE_2_TEMPLATE_INSTRUCTIONS
-            + STAGE_3_TESTS_INSTRUCTIONS + STAGE_4_STATEMENT_INSTRUCTIONS;
+    private static final String GENERATE_GROUNDED_WORKFLOW = STAGED_WORKFLOW_INTRO + STAGE_1_SOLUTION_INSTRUCTIONS + STAGE_2_TEMPLATE_INSTRUCTIONS + STAGE_3_TESTS_INSTRUCTIONS
+            + STAGE_4_STATEMENT_INSTRUCTIONS;
 
     private static final String ADAPT_GROUNDED_WORKFLOW = """
             1. Read the primary source requirements, then inspect the existing statement, solution, template, tests, and task bindings before editing. Identify the smallest set
@@ -314,7 +311,7 @@ public class AgentSystemPromptService {
     private static final String STAGE_VERIFICATION_CADENCE = """
             VERIFICATION CADENCE
             Finish this stage's artifact, call `verify`, fix what it reports, and call `verify` again — repeat until it passes. SOLUTION and TEMPLATE checks cost about one
-            build each, so call `verify` once you believe the artifact is done, not after every small edit. In TESTS, batch tests per DESIGN.md task partition and call
+            build each, so call `verify` once you believe the artifact is done, not after every small edit. In TESTS, batch tests per specification partition and call
             `verify` only a few times per stage (at most a handful, never once per test). A passing `verify` with no edits afterwards makes the stage gate instant. `submit`
             re-runs this stage's check itself and rejects with the same report if it still fails, so call it once you expect a pass.
 
@@ -382,7 +379,6 @@ public class AgentSystemPromptService {
     private static String stageSection(GenerationStage stage) {
         return switch (stage) {
             case SPEC -> STAGE_SPEC_INSTRUCTIONS + "\n" + stylePointer(stage) + STAGE_CLOSE_LINE;
-            case DESIGN -> earlierStagesLine(stage) + STAGE_0_DESIGN_INSTRUCTIONS + "\n" + stylePointer(stage) + STAGE_CLOSE_LINE;
             case SOLUTION -> earlierStagesLine(stage) + STAGE_1_SOLUTION_INSTRUCTIONS + "\n" + stylePointer(stage) + STAGE_CLOSE_LINE;
             case TEMPLATE ->
                 earlierStagesLine(stage) + STAGE_2_TEMPLATE_INSTRUCTIONS + "\n\n" + TEMPLATE_AS_TEACHING_SCAFFOLD + DIFF_DISCIPLINE + stylePointer(stage) + STAGE_CLOSE_LINE;
@@ -396,21 +392,19 @@ public class AgentSystemPromptService {
     private static String earlierStagesLine(GenerationStage stage) {
         String produced = switch (stage) {
             case SPEC -> null;
-            // SPEC.md may be absent (the stage is skipped when the instructor provided a real statement), so DESIGN names it conditionally.
-            case DESIGN -> "SPEC.md (when present — otherwise the instructor's problem statement is the specification)";
-            case SOLUTION -> "the specification and DESIGN.md";
-            case TEMPLATE -> "the specification, DESIGN.md, and the reference solution";
-            case TESTS -> "the specification, DESIGN.md, the reference solution, and the template";
-            case STATEMENT -> "the specification, DESIGN.md, the reference solution, the template, and the differential tests";
+            // SPEC.md may be absent (the stage is skipped when the instructor provided a real statement, which then IS the specification).
+            case SOLUTION -> "the specification (SPEC.md when present, else the instructor statement)";
+            case TEMPLATE -> "the specification and the reference solution";
+            case TESTS -> "the specification, the reference solution, and the template";
+            case STATEMENT -> "the specification, the reference solution, the template, and the differential tests";
         };
         return produced == null ? "" : "Earlier stages already produced: " + produced + ".\n";
     }
 
-    /** This stage's style-guide pointer: the DESIGN stage's schema is its own style guide; every later stage points at its seeded {@code reference/style/} file. */
+    /** This stage's style-guide pointer: every stage points at its seeded {@code reference/style/} file. */
     private static String stylePointer(GenerationStage stage) {
         String styleFile = switch (stage) {
             case SPEC -> "spec.md";
-            case DESIGN -> "design.md";
             case SOLUTION -> "solution.md";
             case TEMPLATE -> "template.md";
             case TESTS -> "tests.md";

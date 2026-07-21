@@ -106,8 +106,8 @@ public class DifferentialVerificationService {
         return result.isSuccess() ? result.stdout() : "";
     }
 
-    private String readDesignDocument(InteractiveSandbox sandbox, String sessionId) {
-        SandboxExecResult result = sandbox.exec(sessionId, READ_TIMEOUT, "cat", GenerationWorkspaceService.WORKSPACE + "/DESIGN.md");
+    private String readSpecDocument(InteractiveSandbox sandbox, String sessionId) {
+        SandboxExecResult result = sandbox.exec(sessionId, READ_TIMEOUT, "cat", GenerationWorkspaceService.WORKSPACE + "/SPEC.md");
         return result.isSuccess() ? result.stdout() : "";
     }
 
@@ -442,7 +442,7 @@ public class DifferentialVerificationService {
         }
 
         // Statement-shape defects the staged gate also enforces. Repair attempts run only this verifier — without the same checks here, a repair attempt can ship exactly the
-        // statement the staged gate rejected (observed live: DESIGN.md said diagram yes, the gate failed the statement, and the repair attempt saved it diagram-less anyway).
+        // statement the staged gate rejected (observed live: the spec said diagram yes, the gate failed the statement, and the repair attempt saved it diagram-less anyway).
         List<String> duplicateTaskTitles = ProblemStatementBindingChecker.duplicateTaskTitles(problemStatement);
         boolean taskTitlesUnique = duplicateTaskTitles.isEmpty();
         if (!taskTitlesUnique) {
@@ -470,11 +470,11 @@ public class DifferentialVerificationService {
         if (!headingsUnique) {
             reasons.add("The statement repeats these headings verbatim: " + duplicateHeadings + ". Merge or remove the duplicate sections.");
         }
-        String designDocument = readDesignDocument(sandbox, sessionId);
-        boolean diagramMatchesDesign = !(ProblemStatementBindingChecker.designSaysDiagramYes(designDocument) && !problemStatement.contains("@startuml"));
+        String specDocument = readSpecDocument(sandbox, sessionId);
+        boolean diagramMatchesDesign = !(ProblemStatementBindingChecker.designSaysDiagramYes(specDocument) && !problemStatement.contains("@startuml"));
         if (!diagramMatchesDesign) {
-            reasons.add("DESIGN.md's '## Diagram' section says yes, but the statement contains no @startuml diagram. Add the PlantUML class diagram (with testsColor links) after "
-                    + "the tasks it illustrates, or update DESIGN.md's Diagram decision if the design genuinely changed.");
+            reasons.add("SPEC.md's '## Diagram' section says yes, but the statement contains no @startuml diagram. Add the PlantUML class diagram (with testsColor links) after "
+                    + "the tasks it illustrates, or update SPEC.md's Diagram decision if the design genuinely changed.");
         }
 
         boolean actionableGatesPass = solutionPassed && noDuplicateTestNames && templateFailed && testCount > 0 && problemStatementHasTasks && taskKeywordsWellFormed

@@ -19,6 +19,7 @@ import java.util.function.BooleanSupplier;
 import java.util.stream.Stream;
 
 import org.apache.commons.io.FileUtils;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,6 +30,7 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
+import de.tum.cit.aet.artemis.assessment.domain.Visibility;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.core.service.TempFileUtilService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseVersionService;
@@ -37,6 +39,7 @@ import de.tum.cit.aet.artemis.hyperion.dto.GenerationMode;
 import de.tum.cit.aet.artemis.hyperion.service.HyperionSecretMaterialPolicy;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationOutcome;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.BuildGateTestNames;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.GeneratedTestPlan;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.workspace.BinaryContent;
 import de.tum.cit.aet.artemis.localci.service.ci.ContinuousIntegrationTriggerService;
 import de.tum.cit.aet.artemis.localvc.service.GitService;
@@ -317,6 +320,7 @@ public class GenerationPersistenceService {
                     + "; the mechanically verified repository and metadata changes remain saved for instructor review, but finalization is INCOMPLETE. Cause: " + e.getMessage(), e,
                     true, postPersistHashes);
         }
+        applyGeneratedTestPlan(exercise, testsCommitHash != null ? testsBuildSignal : null, outcome.testPlanJson());
         log.info("Persisted generated exercise {} after test-case synchronisation completed", exercise.getId());
         prePersistHashes.keySet().retainAll(postPersistHashes.keySet());
         MetadataSnapshot metadata = persistedMetadata.get();
@@ -919,6 +923,50 @@ public class GenerationPersistenceService {
         }
         catch (RuntimeException e) {
             throw new IllegalStateException("Unexpected error triggering the test-case-syncing build for exercise " + exercise.getId() + ": " + e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Applies the TESTS stage's grading plan ({@code test-plan.json}) to the freshly synchronized test cases: per-test weights (the specification's core-vs-edge tiers) and
+     * {@code AFTER_DUE_DATE} visibility for hidden variants. Runs only on the main save path, AFTER {@link #syncTestCasesAndRecordVersion} has awaited the test-case sync, so the
+     * cases exist. Strictly advisory: the plan was already gate-validated in the sandbox, and a failure here (stale plan after a repair attempt, an unknown name, malformed JSON)
+     * must degrade to Artemis' grading defaults, never fail a save that is otherwise complete.
+     */
+    private void applyGeneratedTestPlan(ProgrammingExercise exercise, @Nullable TestsBuildSignal signal, @Nullable String testPlanJson) {
+        if (signal == null || testPlanJson == null || testPlanJson.isBlank()) {
+            return;
+        }
+        try {
+            GeneratedTestPlan plan = GeneratedTestPlan.parse(testPlanJson);
+            Map<String, ProgrammingExerciseTestCase> byName = testCaseRepository.findByExerciseId(exercise.getId()).stream()
+                    .collect(java.util.stream.Collectors.toMap(ProgrammingExerciseTestCase::getTestName, testCase -> testCase, (first, second) -> first));
+            List<ProgrammingExerciseTestCase> changed = new ArrayList<>();
+            List<String> unknownNames = new ArrayList<>();
+            for (GeneratedTestPlan.Entry entry : plan.tests()) {
+                ProgrammingExerciseTestCase testCase = byName.get(entry.name());
+                if (testCase == null) {
+                    unknownNames.add(entry.name());
+                    continue;
+                }
+                if (BuildGateTestNames.isBuildGate(testCase.getTestName())) {
+                    // Build gates are zero-weighted for oracle parity and must stay that way regardless of what the plan says.
+                    continue;
+                }
+                testCase.setWeight(entry.weight());
+                testCase.setVisibility("AFTER_DUE_DATE".equals(entry.visibility()) ? Visibility.AFTER_DUE_DATE : Visibility.ALWAYS);
+                changed.add(testCase);
+            }
+            if (!changed.isEmpty()) {
+                testCaseRepository.saveAll(changed);
+            }
+            if (!unknownNames.isEmpty()) {
+                log.warn("Generated test plan for exercise {} referenced {} unknown test name(s), skipped: {}", exercise.getId(), unknownNames.size(), unknownNames);
+            }
+            log.info("Applied generated test plan to exercise {}: {} test case(s) weighted, {} hidden until the due date", exercise.getId(), changed.size(),
+                    changed.stream().filter(testCase -> testCase.getVisibility() == Visibility.AFTER_DUE_DATE).count());
+        }
+        catch (RuntimeException e) {
+            log.warn("Could not apply the generated test plan for exercise {} (grading falls back to defaults, weight 1 and visible): {}", exercise.getId(), e.getMessage());
         }
     }
 

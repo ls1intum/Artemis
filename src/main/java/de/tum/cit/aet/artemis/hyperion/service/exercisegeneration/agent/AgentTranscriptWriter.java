@@ -20,7 +20,7 @@ import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
 
 import de.tum.cit.aet.artemis.hyperion.config.HyperionExerciseGenerationEnabled;
 
@@ -30,7 +30,7 @@ import de.tum.cit.aet.artemis.hyperion.config.HyperionExerciseGenerationEnabled;
  * names a directory, which deployments leave unset and test/debug environments point at a scratch folder. Strictly best-effort — a transcript write failure never affects the run.
  */
 @Lazy
-@Service
+@Component
 @Conditional(HyperionExerciseGenerationEnabled.class)
 public class AgentTranscriptWriter {
 

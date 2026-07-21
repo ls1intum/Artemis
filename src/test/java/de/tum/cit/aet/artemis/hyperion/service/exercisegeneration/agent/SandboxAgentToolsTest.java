@@ -251,31 +251,33 @@ class SandboxAgentToolsTest {
     }
 
     @Test
-    void writeFile_acceptsDesignMdAtTheWorkspaceRootInEveryStageAndInLegacyMode() {
-        // DESIGN.md is the one workspace-root file allowed: working memory for the staged workflow, never persisted by extraction, updatable from any stage (or legacy/unstaged
-        // sessions, where currentStage stays null).
+    void writeFile_acceptsSpecMdAndTestPlanAtTheWorkspaceRootInEveryStageAndInLegacyMode() {
+        // SPEC.md (the planning artifact) and test-plan.json (the grading plan) are the workspace-root files allowed: never persisted by extraction, updatable from any stage
+        // (or legacy/unstaged sessions, where currentStage stays null).
         RecordingSandbox sandbox = new RecordingSandbox();
         SandboxAgentTools legacy = new SandboxAgentTools(sandbox, "s");
-        assertThat(legacy.writeFile("DESIGN.md", "## Classes")).startsWith("Wrote ");
+        assertThat(legacy.writeFile("SPEC.md", "## Rules")).startsWith("Wrote ");
+        assertThat(legacy.writeFile("test-plan.json", "{\"tests\":[]}")).startsWith("Wrote ");
 
         for (GenerationStage stage : GenerationStage.values()) {
             SandboxAgentTools staged = new SandboxAgentTools(new RecordingSandbox(), "s");
             staged.enterStage(stage);
-            assertThat(staged.writeFile("DESIGN.md", "## Classes")).as("stage %s", stage).startsWith("Wrote ");
+            assertThat(staged.writeFile("SPEC.md", "## Rules")).as("stage %s", stage).startsWith("Wrote ");
+            assertThat(staged.writeFile("test-plan.json", "{\"tests\":[]}")).as("stage %s", stage).startsWith("Wrote ");
         }
     }
 
     @Test
-    void writeFile_designMdContentRoundTripsThroughReadFile() {
+    void writeFile_specMdContentRoundTripsThroughReadFile() {
         RecordingSandbox sandbox = new RecordingSandbox();
         SandboxAgentTools tools = new SandboxAgentTools(sandbox, "s");
 
-        String written = tools.writeFile("DESIGN.md", "## Classes\n| Foo | role |\n");
-        assertThat(written).isEqualTo("Wrote " + "## Classes\n| Foo | role |\n".length() + " characters to DESIGN.md");
+        String written = tools.writeFile("SPEC.md", "## Rules\n- R1: computes\n");
+        assertThat(written).isEqualTo("Wrote " + "## Rules\n- R1: computes\n".length() + " characters to SPEC.md");
 
         // The recording sandbox only serves 'cat' against content it was told to hold; simulate the write landing so the round trip is observable through readFile.
-        sandbox.files.put("/workspace/DESIGN.md", "## Classes\n| Foo | role |\n");
-        assertThat(tools.readFile("DESIGN.md")).isEqualTo("## Classes\n| Foo | role |\n");
+        sandbox.files.put("/workspace/SPEC.md", "## Rules\n- R1: computes\n");
+        assertThat(tools.readFile("SPEC.md")).isEqualTo("## Rules\n- R1: computes\n");
     }
 
     @Test
@@ -565,14 +567,14 @@ class SandboxAgentToolsTest {
         RecordingSandbox sandbox = new RecordingSandbox();
         ProgrammingExercise exercise = new ProgrammingExercise();
         StageCheckService stageCheckService = mock(StageCheckService.class);
-        when(stageCheckService.check(eq(GenerationStage.DESIGN), eq(sandbox), eq("s"), eq(exercise), eq(Map.of()), any()))
-                .thenReturn(StageCheckResult.failed("DESIGN.md is missing required section(s)"));
+        when(stageCheckService.check(eq(GenerationStage.SPEC), eq(sandbox), eq("s"), eq(exercise), eq(Map.of()), any()))
+                .thenReturn(StageCheckResult.failed("SPEC.md is missing required section(s)"));
         SandboxAgentTools tools = stagedTools(sandbox, exercise, stageCheckService);
-        tools.enterStage(GenerationStage.DESIGN);
+        tools.enterStage(GenerationStage.SPEC);
 
         String out = tools.verify();
 
-        assertThat(out).contains("MECHANICAL PRECHECK: FAIL").contains("DESIGN.md is missing required section(s)");
+        assertThat(out).contains("MECHANICAL PRECHECK: FAIL").contains("SPEC.md is missing required section(s)");
     }
 
     @Test

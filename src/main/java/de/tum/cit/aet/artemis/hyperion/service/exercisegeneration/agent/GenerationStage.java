@@ -13,24 +13,22 @@ package de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent;
 public enum GenerationStage {
 
     /**
-     * Write {@code /workspace/SPEC.md}: the behavioural specification — archetype, numbered rules with real computation, and a worked-examples table whose arithmetic is
-     * machine-checked in the sandbox. Run only when no non-trivial instructor statement exists; an instructor draft IS the spec.
+     * Write {@code /workspace/SPEC.md}: the unified specification — archetype, numbered rules with real computation, a worked-examples table whose arithmetic is
+     * machine-checked in the sandbox, the design (classes with template status and state ownership), and the testing strategy (weights, hidden variants, diagram decision).
+     * One planning artifact instead of a spec/design pair, so the two can never drift apart. Skipped when the instructor provided a real statement — that statement is the spec.
      */
     SPEC("spec", "Specification"),
 
-    /** Write {@code /workspace/DESIGN.md}: the class table, public API, task/test-partition table, and diagram decision the later stages build from. */
-    DESIGN("design", "Design"),
-
-    /** Implement the reference solution per {@code DESIGN.md} and replay every worked example from the requirements against it in the sandbox. */
+    /** Implement the reference solution per the specification and replay every worked example against it in the sandbox. */
     SOLUTION("solution", "Solution"),
 
-    /** Derive the student-facing template from the finished solution by removing exactly the student work {@code DESIGN.md} marks stubbed or absent. */
+    /** Derive the student-facing template from the finished solution by removing exactly the student work the specification marks stubbed or student-created. */
     TEMPLATE("template", "Template"),
 
-    /** Author the differential tests one task partition at a time from {@code DESIGN.md}'s task table, verifying each against both solution and template. */
+    /** Author the differential tests per the specification's testing strategy, verifying each against both solution and template. */
     TESTS("tests", "Tests"),
 
-    /** Write the student-facing problem statement last, from {@code DESIGN.md} and the verified test names. */
+    /** Write the student-facing problem statement last, by rewriting the specification with the verified test names. */
     STATEMENT("statement", "Statement");
 
     private final String id;

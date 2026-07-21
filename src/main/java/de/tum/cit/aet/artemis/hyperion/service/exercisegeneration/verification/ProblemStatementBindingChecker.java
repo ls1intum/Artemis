@@ -88,7 +88,7 @@ final class ProblemStatementBindingChecker {
         return false;
     }
 
-    /** Whether DESIGN.md's {@code ## Diagram} section starts with "yes" (the agent's own declared decision; kept current per the design-update rule). */
+    /** Whether the specification's {@code ## Diagram} section starts with "yes" (the agent's own declared decision; kept current per the spec-update rule). */
     static boolean designSaysDiagramYes(String designDocument) {
         int index = designDocument.indexOf("## Diagram");
         if (index < 0) {

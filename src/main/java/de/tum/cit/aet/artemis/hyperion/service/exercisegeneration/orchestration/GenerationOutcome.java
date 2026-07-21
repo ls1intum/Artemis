@@ -58,23 +58,27 @@ public final class GenerationOutcome implements AutoCloseable {
     private final SpecFidelityReport specFidelityReport;
 
     /**
-     * The workspace's {@code DESIGN.md} content, read once (best effort) after the agent loop finishes; {@code null} when it could not be read (e.g. not produced, or a
-     * read failure). Never persisted into any repository — it is workspace-only scratch space for the agent's own design discipline, surfaced here purely for diagnostics.
+     * The workspace's {@code SPEC.md} content, read once (best effort) after the agent loop finishes; {@code null} when it could not be read (e.g. not produced, or a
+     * read failure). Never persisted into any repository — it is the agent's planning artifact, surfaced here so its final (possibly stage-updated) state is observable.
      */
     @Nullable
-    private final String designDocument;
+    private final String specDocument;
+
+    /** The workspace's {@code test-plan.json} content (the TESTS stage's grading plan), read once (best effort) after the agent loop finishes; {@code null} when absent. */
+    @Nullable
+    private final String testPlanJson;
 
     private final AtomicBoolean closed = new AtomicBoolean();
 
     GenerationOutcome(AgentLoopResult loopResult, @Nullable VerificationResult verification, @Nullable String sessionId, @Nullable GenerationOrchestrationService orchestrator,
             @Nullable InteractiveSandbox sandbox, Map<RepositoryType, Map<String, String>> capturedProducedFiles, @Nullable String capturedProblemStatement,
             SpecFidelityReport specFidelityReport, Map<RepositoryType, String> seedRepositoryHeads) {
-        this(loopResult, verification, sessionId, orchestrator, sandbox, capturedProducedFiles, capturedProblemStatement, specFidelityReport, seedRepositoryHeads, null);
+        this(loopResult, verification, sessionId, orchestrator, sandbox, capturedProducedFiles, capturedProblemStatement, specFidelityReport, seedRepositoryHeads, null, null);
     }
 
     GenerationOutcome(AgentLoopResult loopResult, @Nullable VerificationResult verification, @Nullable String sessionId, @Nullable GenerationOrchestrationService orchestrator,
             @Nullable InteractiveSandbox sandbox, Map<RepositoryType, Map<String, String>> capturedProducedFiles, @Nullable String capturedProblemStatement,
-            SpecFidelityReport specFidelityReport, Map<RepositoryType, String> seedRepositoryHeads, @Nullable String designDocument) {
+            SpecFidelityReport specFidelityReport, Map<RepositoryType, String> seedRepositoryHeads, @Nullable String specDocument, @Nullable String testPlanJson) {
         this.loopResult = loopResult;
         this.verification = verification;
         this.sessionId = sessionId;
@@ -85,7 +89,8 @@ public final class GenerationOutcome implements AutoCloseable {
         this.capturedProblemStatement = capturedProblemStatement;
         this.specFidelityReport = specFidelityReport;
         this.seedRepositoryHeads = Map.copyOf(seedRepositoryHeads);
-        this.designDocument = designDocument;
+        this.specDocument = specDocument;
+        this.testPlanJson = testPlanJson;
     }
 
     private GenerationOutcome(AgentLoopResult loopResult, @Nullable String errorMessage) {
@@ -99,7 +104,8 @@ public final class GenerationOutcome implements AutoCloseable {
         this.capturedProblemStatement = null;
         this.specFidelityReport = SpecFidelityReport.empty();
         this.seedRepositoryHeads = Map.of();
-        this.designDocument = null;
+        this.specDocument = null;
+        this.testPlanJson = null;
     }
 
     static GenerationOutcome cancelled(AgentLoopResult loopResult) {
@@ -161,12 +167,21 @@ public final class GenerationOutcome implements AutoCloseable {
     }
 
     /**
-     * @return the workspace's {@code DESIGN.md} content captured after the agent loop finished, or {@code null} when none was captured (not staged generation, the file was
+     * @return the workspace's {@code SPEC.md} content captured after the agent loop finished, or {@code null} when none was captured (not staged generation, the file was
      *         never written, or it could not be read)
      */
     @Nullable
-    public String designDocument() {
-        return designDocument;
+    public String specDocument() {
+        return specDocument;
+    }
+
+    /**
+     * @return the workspace's {@code test-plan.json} content captured after the agent loop finished, or {@code null} when none was written; persistence applies it to the
+     *         synchronized test cases (weights and AFTER_DUE_DATE visibility) after the save's test-case sync
+     */
+    @Nullable
+    public String testPlanJson() {
+        return testPlanJson;
     }
 
     /**

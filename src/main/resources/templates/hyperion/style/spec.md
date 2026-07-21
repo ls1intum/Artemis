@@ -1,10 +1,12 @@
-# SPEC.md (the behavioural specification)
+# SPEC.md (the specification)
 
-Role: the content decision. Written before any design or code, from the instructor's brief; every later stage
-implements THIS. It exists to answer one question the brief usually leaves open: what will the student
-actually compute? A spec whose graded work is copying literals produces a hollow exercise no matter how well
-the later stages execute. Skipped entirely when the instructor already provided a real problem statement —
-that statement is the spec.
+Role: the ONE planning artifact. Written before any code, from the instructor's brief; every later stage
+implements THIS and is checked against it. It answers the questions the brief usually leaves open: what will
+the student actually compute, which types exist and which of them the student writes, and how the work is
+graded. A spec whose graded work is copying literals produces a hollow exercise no matter how well the later
+stages execute. Skipped entirely when the instructor already provided a real problem statement — that
+statement is the spec. Updated whenever a later stage proves it wrong, so it always describes the final
+exercise truthfully.
 
 ## Choose an archetype first
 
@@ -42,24 +44,53 @@ branching instead of asserting a constant. Verify every row's arithmetic by actu
 sandbox (a throwaway script under /tmp) before writing it down — a wrong number here poisons every later
 stage. The solution stage will replay these rows against the real implementation.
 
+## Design table
+
+A markdown table under `## Design` with one row per type: its name, its role, and a `Template status` that is
+EXACTLY one of `given`, `stubbed`, `student-creates` — the gates enforce these tokens literally. `given`
+ships complete; `stubbed` ships with signatures, Javadoc, and TODO bodies; `student-creates` is ABSENT from
+the template (students design the file themselves; it is graded through seeded structural checks and
+reflection-based tests, and the template gate rejects a template that still contains it). A brief that asks
+students to design or create a type demands `student-creates` — stubbing it silently downgrades the exercise.
+For every piece of MUTABLE STATE, say below the table which type owns it and whether it survives object
+replacement (a swap, reset, or re-registration): tests may only demand what this ownership makes possible.
+Pin the public API here too — signatures only; later stages copy them, they do not renegotiate silently.
+
+## Testing strategy
+
+Under `## Testing Strategy`, one row or bullet per SEAM (an independently actionable unit of student work),
+listing: the behaviour partitions its tests need; whether structural checks apply (they do for every
+`student-creates` type); a weight tier — core rules weigh more than edge polish (weights 1–3; the test stage
+writes the machine-readable plan); and which partitions deserve a HIDDEN variant (visibility AFTER_DUE_DATE)
+with fresh witness values, because students overfit to visible tests. Never one seam per test; never one seam
+for the whole exercise unless it genuinely is one.
+
+## Diagram
+
+Under `## Diagram`, an honest yes/no with a reason grounded in the design: yes when several collaborating
+types or student-created types make an architecture overview genuinely helpful; no when a single class
+carries the work. The reason must follow from the design itself — "no, because the statement has no diagram"
+is circular and invalid; the statement follows this decision, not the other way around.
+
 ## Off-limits at spec time
 
-No `[task]` bindings, no test names, no PlantUML/diagrams, no class design beyond what the rules force —
-structure is the DESIGN stage's job. No grading/verifier internals.
+No `[task]` bindings, no test names, no PlantUML — those belong to later stages. No grading/verifier
+internals.
 
 ## What may vary
 
-Section names and rule granularity follow the exercise; a compact exercise may have three rules, a rich one
-ten. The archetype menu is a lens, not a cage — "none of these" with a reason is a legitimate choice. The
-table's extra columns (state before/after, notes) are free.
+Section granularity follows the exercise; a compact exercise may have three rules, a rich one ten. The
+archetype menu is a lens, not a cage — "none of these" with a reason is a legitimate choice. Extra table
+columns (state before/after, notes) are free. Do not inflate a one-class exercise into a pattern, and do not
+collapse a pattern exercise into one class.
 
 ## Exemplar (FORM only — never copy its topic, API, or design)
 
 ```markdown
 # Cafe Loyalty Rewards
 
-Archetype: calculator-with-rules — points are computed from purchase amounts through rate and threshold
-rules; redeeming interacts with the banked balance.
+Archetype: pattern-with-computed-variants — reward strategies compute points differently on the same
+purchase; the account delegates and owns the balance.
 
 ## Rules
 
@@ -77,4 +108,35 @@ rules; redeeming interacts with the banked balance.
 | R1+R2 | purchase $50.00 | 60 points earned |
 | R3 | balance 90, redeem 1 | balance 40, discount $5.00 |
 | R3 | balance 90, redeem 2 | IllegalStateException, balance stays 90 |
+
+## Design
+
+| Type | Role | Template status |
+|------|------|-----------------|
+| LoyaltyAccount | Owns the mutable points balance; delegates earning to the current strategy | stubbed |
+| RewardStrategy | Strategy interface: computes points for one purchase | student-creates |
+| FlatRateStrategy | R1+R2: rate plus threshold bonus | student-creates |
+| Purchase | Immutable amount holder | given |
+
+State: the balance lives in LoyaltyAccount and survives strategy swaps — the strategy is stateless.
+
+Public API:
+- `interface RewardStrategy { int pointsFor(Purchase purchase); }`
+- `class LoyaltyAccount { void setStrategy(RewardStrategy s); void record(Purchase p); int getPoints(); }`
+
+## Testing Strategy
+
+| Seam | Partitions | Structural | Weight | Hidden variant |
+|------|-----------|------------|--------|----------------|
+| Implement flat-rate rewards | typical amount; sub-dollar rounds to 0; threshold bonus at exactly $50 | yes (student-creates) | 3 | yes — fresh amounts after the due date |
+| Wire strategy into the account | recording delegates; swapping keeps the balance | no | 2 | no |
+| Redeem safely | happy path; over-redeem throws, balance unchanged | no | 2 | yes — different starting balance |
+
+## Diagram
+
+Yes — students create the strategy interface and one implementation and must see how they plug into the
+provided account class.
 ```
+
+An equally honest "no": `No — the whole exercise is one class with two methods; a diagram would restate two
+signatures.`

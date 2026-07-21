@@ -60,8 +60,8 @@ public class GenerationWorkspaceService {
 
     private static final String PROBLEM_STATEMENT_FILE = "problem-statement.md";
 
-    /** The agent's workspace-root design note (see GenerationStage#DESIGN); re-seeded across session resets like the problem statement so it survives verification builds. */
-    private static final String DESIGN_DOCUMENT_FILE = "DESIGN.md";
+    /** The agent's workspace-root specification (see GenerationStage#SPEC); re-seeded across session resets like the problem statement so it survives verification builds. */
+    private static final String SPEC_DOCUMENT_FILE = "SPEC.md";
 
     private static final RepositoryType[] SEEDED_REPOSITORIES = { RepositoryType.TEMPLATE, RepositoryType.SOLUTION, RepositoryType.TESTS };
 
@@ -558,13 +558,13 @@ public class GenerationWorkspaceService {
      *                                  restore that reproduces only a subset of the bootstrap leaves later attempts chasing files the prompts promise exist
      * @param mode                  the generation mode the workspace was originally seeded for
      * @param problemStatement      the canonical problem statement to re-seed at the workspace root, or {@code null} to leave it untouched
-     * @param designDocument        the agent's {@code DESIGN.md} working memory to re-seed at the workspace root, or {@code null} to leave it untouched; without this, the
+     * @param specDocument          the agent's {@code SPEC.md} specification to re-seed at the workspace root, or {@code null} to leave it untouched; without this, the
      *                                  session reset before each pristine verification build silently discards it — repair attempts lose the design rationale and the outcome's
      *                                  design-document capture reads nothing
      */
     public void materializeRepositoryFiles(InteractiveSandbox sandbox, String sessionId, ProgrammingExercise exercise, GenerationMode mode,
             Map<RepositoryType, Map<String, String>> filesByRepository, Map<RepositoryType, RepositorySeedMetadata> repositoryMetadata,
-            Map<RepositoryType, Map<String, BinarySeedFile>> repositoryBinaryFiles, @Nullable String problemStatement, @Nullable String designDocument) {
+            Map<RepositoryType, Map<String, BinarySeedFile>> repositoryBinaryFiles, @Nullable String problemStatement, @Nullable String specDocument) {
         Map<String, String> workspaceFiles = new LinkedHashMap<>();
         String verifyScript = sandboxBuildCommandService.verifyScriptContent(exercise);
         if (verifyScript != null) {
@@ -583,8 +583,8 @@ public class GenerationWorkspaceService {
         if (problemStatement != null) {
             workspaceFiles.put(PROBLEM_STATEMENT_FILE, problemStatement);
         }
-        if (designDocument != null) {
-            workspaceFiles.put(DESIGN_DOCUMENT_FILE, designDocument);
+        if (specDocument != null) {
+            workspaceFiles.put(SPEC_DOCUMENT_FILE, specDocument);
         }
         sandbox.copyIn(sessionId, WORKSPACE, WorkspaceArchive.buildFilesTarStream(workspaceFiles, workspaceBinaryFiles, executableFiles));
     }

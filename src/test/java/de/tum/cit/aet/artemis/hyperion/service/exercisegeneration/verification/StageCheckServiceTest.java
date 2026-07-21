@@ -31,32 +31,19 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
  */
 class StageCheckServiceTest {
 
-    private static final String VALID_DESIGN_DOCUMENT = """
-            ## Classes
-            | name | role |
-            |------|------|
-            | Foo  | given |
-
-            ## Public API
-            - Foo#bar()
-
-            ## Tasks
-            | task | partitions |
-            |------|------------|
-            | bar  | typical    |
-
-            ## Diagram
-            no — single-class exercise
-            """;
-
     /** Serves canned {@code cat}/{@code diff} output; every other command succeeds with empty output. */
     private static final class FakeSandbox implements InteractiveSandbox {
 
         private String spec;
 
-        private String designMarkdown = VALID_DESIGN_DOCUMENT;
+        private String testPlanJson;
 
         private String problemStatement = "# Title\n\nDo the thing.";
+
+        /** Output of the created-type file probe (find), keyed by whether the probed repo path contains "solution" or "template". */
+        private String solutionFindOutput = "";
+
+        private String templateFindOutput = "";
 
         /** {@code diff -rq} exit code; 1 means the trees differ (the expected, healthy case). */
         private int diffExitCode = 1;
@@ -73,8 +60,8 @@ class StageCheckServiceTest {
                 if (path.endsWith("SPEC.md")) {
                     return spec == null ? new SandboxExecResult(1, "", "no such file", false) : new SandboxExecResult(0, spec, "", false);
                 }
-                if (path.endsWith("DESIGN.md")) {
-                    return designMarkdown == null ? new SandboxExecResult(1, "", "no such file", false) : new SandboxExecResult(0, designMarkdown, "", false);
+                if (path.endsWith("test-plan.json")) {
+                    return testPlanJson == null ? new SandboxExecResult(1, "", "no such file", false) : new SandboxExecResult(0, testPlanJson, "", false);
                 }
                 if (path.endsWith("problem-statement.md")) {
                     return problemStatement == null ? new SandboxExecResult(1, "", "no such file", false) : new SandboxExecResult(0, problemStatement, "", false);
@@ -82,6 +69,9 @@ class StageCheckServiceTest {
             }
             if (command.length >= 1 && "diff".equals(command[0])) {
                 return new SandboxExecResult(diffExitCode, "", "", false);
+            }
+            if (command.length >= 2 && "find".equals(command[0])) {
+                return new SandboxExecResult(0, command[1].contains("solution") ? solutionFindOutput : templateFindOutput, "", false);
             }
             return new SandboxExecResult(0, "", "", false);
         }
@@ -137,38 +127,6 @@ class StageCheckServiceTest {
     }
 
     @Nested
-    class Design {
-
-        @Test
-        void passes_whenAllRequiredSectionsArePresent() {
-            StageCheckResult result = check(GenerationStage.DESIGN);
-
-            assertThat(result.passed()).isTrue();
-            assertThat(result.report()).isNull();
-        }
-
-        @Test
-        void fails_whenRequiredSectionsAreMissing() {
-            sandbox.designMarkdown = "no headings here";
-
-            StageCheckResult result = check(GenerationStage.DESIGN);
-
-            assertThat(result.passed()).isFalse();
-            assertThat(result.observation()).contains("DESIGN.md is missing required section(s)").contains("## Classes", "## Public API", "## Tasks");
-        }
-
-        @Test
-        void fails_whenFileIsMissingOrEmpty() {
-            sandbox.designMarkdown = null;
-
-            StageCheckResult result = check(GenerationStage.DESIGN);
-
-            assertThat(result.passed()).isFalse();
-            assertThat(result.observation()).contains("DESIGN.md is missing or empty");
-        }
-    }
-
-    @Nested
     class Solution {
 
         @Test
@@ -221,10 +179,41 @@ class StageCheckServiceTest {
             assertThat(result.passed()).isFalse();
             assertThat(result.observation()).contains("Could not run the reference solution compile check").contains("sandbox unreachable");
         }
+
+        @Test
+        void fails_whenTheSpecDeclaresAStudentCreatedTypeTheSolutionNeverImplements() {
+            when(verifier.singleBuild(any(), anyString(), eq(exercise), eq("solution"))).thenReturn(testsRan(0, 5, 0, List.of()));
+            sandbox.spec = "## Design\n| Type | Role | Template status |\n|--|--|--|\n| RewardStrategy | strategy | student-creates |\n";
+
+            StageCheckResult result = check(GenerationStage.SOLUTION);
+
+            assertThat(result.passed()).isFalse();
+            assertThat(result.observation()).contains("solution contains no file for them").contains("RewardStrategy");
+        }
+
+        @Test
+        void passes_andConfirmsPresence_whenTheStudentCreatedTypeExistsInTheSolution() {
+            when(verifier.singleBuild(any(), anyString(), eq(exercise), eq("solution"))).thenReturn(testsRan(0, 5, 0, List.of()));
+            sandbox.spec = "## Design\n| Type | Role | Template status |\n|--|--|--|\n| RewardStrategy | strategy | student-creates |\n";
+            sandbox.solutionFindOutput = "/workspace/solution/src/de/tum/RewardStrategy.java";
+
+            StageCheckResult result = check(GenerationStage.SOLUTION);
+
+            assertThat(result.passed()).isTrue();
+            assertThat(result.observation()).contains("contains every student-created type").contains("RewardStrategy");
+        }
     }
 
     @Nested
     class Template {
+
+        private static final String SPEC_WITH_STUDENT_CREATED_TYPE = """
+                ## Design
+                | Type | Role | Template status |
+                |------|------|-----------------|
+                | RewardStrategy | strategy interface | student-creates |
+                | LoyaltyAccount | context | stubbed |
+                """;
 
         @BeforeEach
         void defaultsToADifferingTree() {
@@ -281,6 +270,30 @@ class StageCheckServiceTest {
             assertThat(result.passed()).isFalse();
             assertThat(result.observation()).contains("Could not run the template compile check").contains("sandbox unreachable");
         }
+
+        @Test
+        void fails_whenAStudentCreatedTypeStillShipsInTheTemplate() {
+            // The evidence gate for the weakest live finding: three runs in a row shipped stubs where the brief demanded student-created types.
+            when(verifier.singleBuild(any(), anyString(), eq(exercise), eq("template"))).thenReturn(testsRan(1, 5, 5, List.of("t1")));
+            sandbox.spec = SPEC_WITH_STUDENT_CREATED_TYPE;
+            sandbox.templateFindOutput = "/workspace/template/src/de/tum/RewardStrategy.java";
+
+            StageCheckResult result = check(GenerationStage.TEMPLATE);
+
+            assertThat(result.passed()).isFalse();
+            assertThat(result.observation()).contains("must NOT contain").contains("RewardStrategy.java").contains("change its status in SPEC.md to 'stubbed'");
+        }
+
+        @Test
+        void passes_andPositivelyConfirmsTheAbsence_whenStudentCreatedTypesAreOmitted() {
+            when(verifier.singleBuild(any(), anyString(), eq(exercise), eq("template"))).thenReturn(testsRan(1, 5, 5, List.of("t1")));
+            sandbox.spec = SPEC_WITH_STUDENT_CREATED_TYPE;
+
+            StageCheckResult result = check(GenerationStage.TEMPLATE);
+
+            assertThat(result.passed()).isTrue();
+            assertThat(result.observation()).contains("Confirmed absent from the template").contains("RewardStrategy");
+        }
     }
 
     @Nested
@@ -292,14 +305,71 @@ class StageCheckServiceTest {
         }
 
         @Test
-        void passes_andCarriesTheReport_whenSolutionPassesAndTemplateFails() {
+        void passes_andCarriesTheReport_whenSolutionPassesAndTemplateFails_andTheGradingPlanIsValid() {
             AgentVerifyReport report = report(true, true);
             when(verifier.selfCheck(any(), anyString(), eq(exercise), any(), eq(false))).thenReturn(report);
+            sandbox.testPlanJson = "{\"tests\":[{\"name\":\"testFoo\",\"weight\":3,\"visibility\":\"AFTER_DUE_DATE\"}]}";
 
             StageCheckResult result = check(GenerationStage.TESTS);
 
             assertThat(result.passed()).isTrue();
             assertThat(result.report()).isSameAs(report);
+            assertThat(result.observation()).contains("Grading plan accepted").contains("1 hidden until the due date");
+        }
+
+        @Test
+        void fails_whenTheDifferentialPassesButTheGradingPlanIsMissing() {
+            when(verifier.selfCheck(any(), anyString(), eq(exercise), any(), eq(false))).thenReturn(report(true, true));
+
+            StageCheckResult result = check(GenerationStage.TESTS);
+
+            assertThat(result.passed()).isFalse();
+            assertThat(result.observation()).contains("test-plan.json is missing").contains("testFoo");
+        }
+
+        @Test
+        void fails_withTheParsersActionableMessage_whenTheGradingPlanIsInvalid() {
+            when(verifier.selfCheck(any(), anyString(), eq(exercise), any(), eq(false))).thenReturn(report(true, true));
+            sandbox.testPlanJson = "{\"tests\":[{\"name\":\"testFoo\",\"weight\":7,\"visibility\":\"ALWAYS\"}]}";
+
+            StageCheckResult result = check(GenerationStage.TESTS);
+
+            assertThat(result.passed()).isFalse();
+            assertThat(result.observation()).contains("test-plan.json is invalid").contains("weights must be between 1 and 3");
+        }
+
+        @Test
+        void fails_whenTheGradingPlanNamesATestThatDoesNotExist() {
+            when(verifier.selfCheck(any(), anyString(), eq(exercise), any(), eq(false))).thenReturn(report(true, true));
+            sandbox.testPlanJson = "{\"tests\":[{\"name\":\"testGhost\",\"weight\":2,\"visibility\":\"ALWAYS\"}]}";
+
+            StageCheckResult result = check(GenerationStage.TESTS);
+
+            assertThat(result.passed()).isFalse();
+            assertThat(result.observation()).contains("names tests that do not exist").contains("testGhost").contains("testFoo");
+        }
+
+        @Test
+        void passes_butNamesUnplannedTests_soTheDefaultGradingIsAConsciousChoice() {
+            AgentVerifyReport report = new AgentVerifyReport(5, true, List.of(), 5, true, true, List.of(), List.of("testFoo", "testBar"), List.of(), List.of(), true, List.of());
+            when(verifier.selfCheck(any(), anyString(), eq(exercise), any(), eq(false))).thenReturn(report);
+            sandbox.testPlanJson = "{\"tests\":[{\"name\":\"testFoo\",\"weight\":2,\"visibility\":\"ALWAYS\"}]}";
+
+            StageCheckResult result = check(GenerationStage.TESTS);
+
+            assertThat(result.passed()).isTrue();
+            assertThat(result.observation()).contains("Not in the plan").contains("testBar");
+        }
+
+        @Test
+        void reportsTheDifferentialFailureFirst_neverTheMissingPlan_whenBothAreWrong() {
+            // Feedback-priority contract: a failing differential is the real problem; plan noise on top of it would bury the actionable signal.
+            when(verifier.selfCheck(any(), anyString(), eq(exercise), any(), eq(false))).thenReturn(report(false, true));
+
+            StageCheckResult result = check(GenerationStage.TESTS);
+
+            assertThat(result.passed()).isFalse();
+            assertThat(result.observation()).contains("differential requirement").doesNotContain("test-plan.json");
         }
 
         @Test
@@ -405,8 +475,8 @@ class StageCheckServiceTest {
         }
 
         @Test
-        void fails_whenDesignSaysDiagramYesButTheStatementHasNone() {
-            sandbox.designMarkdown = sandbox.designMarkdown.replace("## Diagram\nno — single-class exercise", "## Diagram\nYes – strategies collaborate with the context");
+        void fails_whenTheSpecSaysDiagramYesButTheStatementHasNone() {
+            sandbox.spec = "## Diagram\nYes – strategies collaborate with the context";
             sandbox.problemStatement = "# T\nImplement the strategy.\n";
 
             StageCheckResult result = check(GenerationStage.STATEMENT, null);
@@ -468,13 +538,49 @@ class StageCheckServiceTest {
                 |-------|-------|----------|
                 | R1 | 2 | 4 |
                 | R1 | 3 | 9 |
+
+                ## Design
+                | Type | Role | Template status |
+                |------|------|-----------------|
+                | Calculator | computes the result | stubbed |
+
+                ## Testing Strategy
+                - compute seam: typical and zero partitions; weight 3; hidden variant after the due date.
+
+                ## Diagram
+                no — single-class exercise
                 """;
 
         @Test
-        void passes_withRulesAndABranchingWorkedExamplesTable() {
+        void passes_withRulesAndABranchingWorkedExamplesTable_andEchoesTheParsedTemplatePlan() {
             sandbox.spec = VALID_SPEC;
 
-            assertThat(check(GenerationStage.SPEC).passed()).isTrue();
+            StageCheckResult result = check(GenerationStage.SPEC);
+
+            assertThat(result.passed()).isTrue();
+            // The pass observation echoes the parsed Design plan so the agent sees exactly what the later gates will enforce.
+            assertThat(result.observation()).contains("Calculator=stubbed");
+        }
+
+        @Test
+        void fails_whenTheDesignSectionHasNoDataRows() {
+            sandbox.spec = VALID_SPEC.replace("| Calculator | computes the result | stubbed |\n", "");
+
+            StageCheckResult result = check(GenerationStage.SPEC);
+
+            assertThat(result.passed()).isFalse();
+            assertThat(result.observation()).contains("'## Design' section has no data rows");
+        }
+
+        @Test
+        void fails_whenADesignRowCarriesNoValidTemplateStatusToken() {
+            // The old exemplar's verbose tokens ("student-creates-absent-from-template") are exactly what this catches: only the literal tokens are enforceable.
+            sandbox.spec = VALID_SPEC.replace("| Calculator | computes the result | stubbed |", "| Calculator | computes the result | student-implements-stubbed |");
+
+            StageCheckResult result = check(GenerationStage.SPEC);
+
+            assertThat(result.passed()).isFalse();
+            assertThat(result.observation()).contains("no template-status token").contains("Calculator");
         }
 
         @Test
@@ -494,7 +600,8 @@ class StageCheckServiceTest {
             StageCheckResult result = check(GenerationStage.SPEC);
 
             assertThat(result.passed()).isFalse();
-            assertThat(result.observation()).contains("missing required section(s)").contains("## Rules").contains("## Worked Examples");
+            assertThat(result.observation()).contains("missing required section(s)").contains("## Rules").contains("## Worked Examples").contains("## Design")
+                    .contains("## Testing Strategy").contains("## Diagram");
         }
 
         @Test

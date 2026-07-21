@@ -26,20 +26,31 @@ public final class LanguageGenerationProfile {
     }
 
     /**
-     * Checks the complete exercise configuration because test execution depends on both language and project type.
+     * Checks the exercise configuration because test execution depends on both language and project type. Deliberately touches only simple entity fields — NEVER the lazy
+     * {@code auxiliaryRepositories} collection (accessing it on a detached exercise threw {@code LazyInitializationException} and turned a clean 400 into a 500); callers that
+     * must also reject auxiliary repositories query them explicitly and pass the result to {@link #isSupported(ProgrammingExercise, boolean)}.
      *
      * @param exercise the exercise to check, or {@code null}
-     * @return whether the differential verifier supports this configuration
+     * @return whether the differential verifier supports this language/project-type configuration
      */
     public static boolean isSupported(@Nullable ProgrammingExercise exercise) {
         if (exercise == null || exercise.getProgrammingLanguage() != ProgrammingLanguage.JAVA) {
             return false;
         }
-        if (exercise.getAuxiliaryRepositories() != null && !exercise.getAuxiliaryRepositories().isEmpty()) {
-            return false;
-        }
         ProjectType projectType = exercise.getProjectType();
         return projectType == null || SUPPORTED_JAVA_PROJECT_TYPES.contains(projectType);
+    }
+
+    /**
+     * The full support check: the language/project-type configuration must be supported AND the exercise must have no auxiliary repositories (the sandbox workspace and the
+     * differential verifier only model solution/template/tests).
+     *
+     * @param exercise                 the exercise to check, or {@code null}
+     * @param hasAuxiliaryRepositories whether the exercise has any auxiliary repositories, queried explicitly by the caller
+     * @return whether generation supports this exercise
+     */
+    public static boolean isSupported(@Nullable ProgrammingExercise exercise, boolean hasAuxiliaryRepositories) {
+        return isSupported(exercise) && !hasAuxiliaryRepositories;
     }
 
     /**

@@ -300,7 +300,7 @@ public class SandboxAgentTools implements SubmitVetoAware {
             return invalidPathError(path);
         }
         if (!isWritableGenerationPath(safe)) {
-            return "ERROR: write only SPEC.md, DESIGN.md, problem-statement.md, or files inside solution/, template/, or tests/. Workspace build infrastructure is managed by Artemis.";
+            return "ERROR: write only SPEC.md, test-plan.json, problem-statement.md, or files inside solution/, template/, or tests/. Workspace build infrastructure is managed by Artemis.";
         }
         if (isManagedBuildInfrastructurePath(safe)) {
             return immutableHarnessError(safe);
@@ -463,7 +463,7 @@ public class SandboxAgentTools implements SubmitVetoAware {
             return invalidPathError(path);
         }
         if (!isWritableGenerationPath(safe)) {
-            return "ERROR: delete only SPEC.md, DESIGN.md, problem-statement.md, or files inside solution/, template/, or tests/. Workspace build infrastructure is managed by Artemis.";
+            return "ERROR: delete only SPEC.md, test-plan.json, problem-statement.md, or files inside solution/, template/, or tests/. Workspace build infrastructure is managed by Artemis.";
         }
         if (isManagedBuildInfrastructurePath(safe)) {
             return immutableHarnessError(safe);
@@ -633,7 +633,7 @@ public class SandboxAgentTools implements SubmitVetoAware {
      * Runs the mechanical precheck for the current session.
      * <p>
      * In a staged session ({@link #currentStage} set), {@code verify} delegates to {@link StageCheckService} for the CURRENT stage at that stage's right depth — a free structure
-     * scan for {@link GenerationStage#DESIGN}, one pristine build for {@link GenerationStage#SOLUTION} and {@link GenerationStage#TEMPLATE}, the full solution/template
+     * scan for {@link GenerationStage#SPEC}, one pristine build for {@link GenerationStage#SOLUTION} and {@link GenerationStage#TEMPLATE}, the full solution/template
      * differential for {@link GenerationStage#TESTS} (identical to the unstaged path below), and a no-build binding check for {@link GenerationStage#STATEMENT} against the TESTS
      * stage's exact test names. Every call re-runs the check (no cache); a passing call clears {@link #dirtySinceLastPassingCheck} for the orchestrator's exit gate to reuse (see
      * {@link #reuseCachedPassingCheck}), but never skips itself. An unstaged session ({@code currentStage} {@code null}) keeps the legacy behavior: always the full differential.
@@ -776,12 +776,12 @@ public class SandboxAgentTools implements SubmitVetoAware {
     }
 
     /**
-     * Whether a file may be written or deleted through {@link #writeFile}/{@link #deleteFile}. {@code DESIGN.md} is the one workspace-root file allowed: it is the agent's
-     * working-memory design note (see {@link GenerationStage#DESIGN}), never read by repository extraction, and legitimately updated from any stage — including legacy
+     * Whether a file may be written or deleted through {@link #writeFile}/{@link #deleteFile}. {@code SPEC.md} is the workspace-root planning artifact (see
+     * {@link GenerationStage#SPEC}), never read by repository extraction, and legitimately updated from any stage — including legacy
      * (unstaged) sessions and every staged one — whenever a later stage forces a design change.
      */
     private static boolean isWritableGenerationPath(String safe) {
-        return safe.equals("DESIGN.md") || safe.equals("SPEC.md") || safe.equals("problem-statement.md") || safe.startsWith("solution/") || safe.startsWith("template/")
+        return safe.equals("SPEC.md") || safe.equals("test-plan.json") || safe.equals("problem-statement.md") || safe.startsWith("solution/") || safe.startsWith("template/")
                 || safe.startsWith("tests/");
     }
 

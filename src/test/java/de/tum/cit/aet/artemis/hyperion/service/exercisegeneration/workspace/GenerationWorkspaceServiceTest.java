@@ -204,11 +204,11 @@ class GenerationWorkspaceServiceTest {
 
         Map<String, String> guides = service.readStyleGuides();
 
-        assertThat(guides).containsOnlyKeys("reference/style/design.md", "reference/style/draft-statement.md", "reference/style/final-statement.md", "reference/style/template.md",
+        assertThat(guides).containsOnlyKeys("reference/style/draft-statement.md", "reference/style/final-statement.md", "reference/style/template.md",
                 "reference/style/solution.md", "reference/style/tests.md", "reference/style/spec.md");
         // Each guide states its role up front so the agent can tell them apart at a glance.
-        assertThat(guides.get("reference/style/design.md")).contains("## Diagram");
-        assertThat(guides.get("reference/style/spec.md")).contains("## Worked Examples");
+        assertThat(guides.get("reference/style/spec.md")).contains("## Worked Examples").contains("## Design").contains("## Testing Strategy").contains("## Diagram")
+                .contains("student-creates");
         assertThat(guides.get("reference/style/draft-statement.md")).contains("BEFORE any tests");
         assertThat(guides.get("reference/style/final-statement.md")).contains("CRITICAL POLICY");
         assertThat(guides.get("reference/style/template.md")).contains("// TODO");
@@ -395,21 +395,21 @@ class GenerationWorkspaceServiceTest {
     }
 
     @Test
-    void materializeRepositoryFiles_reseedsTheProblemStatementAndDesignDocumentWhenGiven() {
+    void materializeRepositoryFiles_reseedsTheProblemStatementAndSpecDocumentWhenGiven() {
         // /workspace is a tmpfs; a resetSession() (container restart) between the two differential builds wipes it entirely, and problem-statement.md lives at the workspace root
         // outside any of the three repositories, so the restore must re-seed it explicitly or the next read fails with "the generated problem statement is missing".
         InteractiveSandbox sandbox = mock(InteractiveSandbox.class);
         doAnswer(invocation -> {
             try (TarArchiveInputStream tar = new TarArchiveInputStream(invocation.getArgument(2))) {
                 WorkspaceArchive.ArchiveContents contents = WorkspaceArchive.readTarContents(tar, "");
-                assertThat(contents.textFiles()).containsEntry("problem-statement.md", "# Restored\n").containsEntry("DESIGN.md", "# Design\n");
+                assertThat(contents.textFiles()).containsEntry("problem-statement.md", "# Restored\n").containsEntry("SPEC.md", "# Spec\n");
             }
             return null;
         }).when(sandbox).copyIn(eq("session"), eq("/workspace"), any());
         GenerationWorkspaceService service = new GenerationWorkspaceService(mock(), mock(), mock(), mock(), tempFileUtilService());
         ProgrammingExercise exercise = new ProgrammingExercise();
 
-        service.materializeRepositoryFiles(sandbox, "session", exercise, GenerationMode.ADAPT, Map.of(), Map.of(), Map.of(), "# Restored\n", "# Design\n");
+        service.materializeRepositoryFiles(sandbox, "session", exercise, GenerationMode.ADAPT, Map.of(), Map.of(), Map.of(), "# Restored\n", "# Spec\n");
     }
 
     @Test

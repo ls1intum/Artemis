@@ -67,6 +67,9 @@ class HyperionExerciseGenerationResourceTest {
     private ProgrammingExerciseTestRepository programmingExerciseRepository;
 
     @Mock
+    private de.tum.cit.aet.artemis.programming.repository.AuxiliaryRepositoryRepository auxiliaryRepositoryRepository;
+
+    @Mock
     private GenerationJobService jobService;
 
     @Mock
@@ -93,8 +96,9 @@ class HyperionExerciseGenerationResourceTest {
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
-        resource = new HyperionExerciseGenerationResource(userRepository, programmingExerciseRepository, jobService, agentSystemPromptService, reviewCommentContextRenderer,
-                generationRevertService, sandboxClient, generationBudgetService);
+        resource = new HyperionExerciseGenerationResource(userRepository, programmingExerciseRepository, auxiliaryRepositoryRepository, jobService, agentSystemPromptService,
+                reviewCommentContextRenderer, generationRevertService, sandboxClient, generationBudgetService);
+        when(auxiliaryRepositoryRepository.findByExerciseId(org.mockito.ArgumentMatchers.any())).thenReturn(java.util.List.of());
         when(sandboxClient.hasAvailableGenerationSandboxSlot()).thenReturn(true);
         when(generationBudgetService.reserveGenerationBudget(any(), any())).thenReturn(HyperionGenerationBudgetService.BudgetReservation.none());
 

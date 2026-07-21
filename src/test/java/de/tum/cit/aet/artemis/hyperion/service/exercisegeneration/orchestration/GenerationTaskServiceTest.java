@@ -80,6 +80,8 @@ class GenerationTaskServiceTest {
 
     private ProgrammingExerciseTestRepository programmingExerciseRepository;
 
+    private de.tum.cit.aet.artemis.programming.repository.AuxiliaryRepositoryRepository auxiliaryRepositoryRepository;
+
     private HyperionGenerationBudgetService generationBudgetService;
 
     private ExerciseGenerationRevertService generationRevertService;
@@ -102,6 +104,8 @@ class GenerationTaskServiceTest {
         websocket = mock(HyperionWebsocketService.class);
         jobService = mock(GenerationJobService.class);
         programmingExerciseRepository = mock(ProgrammingExerciseTestRepository.class);
+        auxiliaryRepositoryRepository = mock(de.tum.cit.aet.artemis.programming.repository.AuxiliaryRepositoryRepository.class);
+        when(auxiliaryRepositoryRepository.findByExerciseId(any())).thenReturn(List.of());
         generationBudgetService = mock(HyperionGenerationBudgetService.class);
         generationRevertService = mock(ExerciseGenerationRevertService.class);
         taskScheduler = mock(TaskScheduler.class);
@@ -111,8 +115,9 @@ class GenerationTaskServiceTest {
         org.mockito.Mockito.doReturn(scheduledFuture).when(taskScheduler).schedule(any(Runnable.class), any(java.time.Instant.class));
         org.mockito.Mockito.doReturn(scheduledFuture).when(taskScheduler).scheduleWithFixedDelay(any(Runnable.class), any(java.time.Duration.class));
 
-        taskService = new GenerationTaskService(orchestrator, persistenceService, reviewService, websocket, jobService, programmingExerciseRepository, generationBudgetService,
-                generationRevertService, taskScheduler, java.time.Duration.ofMinutes(30), 250_000, java.time.Duration.ofSeconds(15));
+        taskService = new GenerationTaskService(orchestrator, persistenceService, reviewService, websocket, jobService, programmingExerciseRepository,
+                auxiliaryRepositoryRepository, generationBudgetService, generationRevertService, taskScheduler, java.time.Duration.ofMinutes(30), 250_000,
+                java.time.Duration.ofSeconds(15));
 
         user = new User();
         user.setLogin("instructor1");
@@ -135,14 +140,14 @@ class GenerationTaskServiceTest {
 
     @Test
     void reloadedExerciseWithAuxiliaryRepositoryStopsBeforeOrchestration() {
-        // The event carries the original (detached) exercise, which must NOT have the auxiliary repository itself: only the freshly reloaded copy returned by the repository
-        // does. This proves the guard reads the reloaded entity rather than trivially re-checking the same object reference passed in the event.
+        // The aux-repos fact is queried explicitly (never through the reloaded entity's lazy collection, which is uninitializable on a detached instance); the guard must
+        // consult that query, not the event's exercise.
         ProgrammingExercise reloadedExercise = new ProgrammingExercise();
         reloadedExercise.setId(EXERCISE_ID);
         reloadedExercise.setProgrammingLanguage(ProgrammingLanguage.JAVA);
         reloadedExercise.setReleaseDate(ZonedDateTime.now().plusDays(1));
-        reloadedExercise.setAuxiliaryRepositories(List.of(new AuxiliaryRepository()));
         when(programmingExerciseRepository.findWithAllParticipationsAndBuildConfigById(EXERCISE_ID)).thenReturn(Optional.of(reloadedExercise));
+        when(auxiliaryRepositoryRepository.findByExerciseId(EXERCISE_ID)).thenReturn(List.of(new AuxiliaryRepository()));
 
         taskService.runAsync(new GenerationStartedEvent(JOB_ID, user, exercise, "make it", GenerationMode.GENERATE));
 
@@ -260,13 +265,13 @@ class GenerationTaskServiceTest {
     }
 
     @Test
-    void mechanicallyVerifiedRun_recordsTheCapturedDesignDocumentAsSoonAsTheOutcomeLands() {
+    void mechanicallyVerifiedRun_recordsTheCapturedSpecDocumentAsSoonAsTheOutcomeLands() {
         GenerationOutcome outcome = new GenerationOutcome(new AgentLoopResult(AgentLoopResult.Status.COMPLETED, 5, "done"), new VerificationResult(true, true, true, 3, List.of()),
-                SESSION_ID, orchestrator, sandbox, Map.of(), "", SpecFidelityReport.empty(), Map.of(), "## Classes\n| Foo | role |");
+                SESSION_ID, orchestrator, sandbox, Map.of(), "", SpecFidelityReport.empty(), Map.of(), "## Rules\n- R1: computes", null);
 
         run(GenerationMode.GENERATE, outcome);
 
-        verify(jobService).recordDesignDocument(EXERCISE_ID, JOB_ID, "## Classes\n| Foo | role |");
+        verify(jobService).recordSpecDocument(EXERCISE_ID, JOB_ID, "## Rules\n- R1: computes");
     }
 
     @Test
@@ -798,8 +803,9 @@ class GenerationTaskServiceTest {
     void tokenBudgetExceeded_mechanicallyVerifiedCandidate_isSavedInsteadOfDiscarded() {
         // The budget is a cost control on provider spend: it stops further model calls, but a candidate that already passed verification is paid for — saving it consumes no
         // provider tokens, and the save-obligation doctrine applies. Discarding it (the old behavior) burned the whole budget for nothing.
-        taskService = new GenerationTaskService(orchestrator, persistenceService, reviewService, websocket, jobService, programmingExerciseRepository, generationBudgetService,
-                generationRevertService, taskScheduler, java.time.Duration.ofMinutes(30), 10, java.time.Duration.ofSeconds(15));
+        taskService = new GenerationTaskService(orchestrator, persistenceService, reviewService, websocket, jobService, programmingExerciseRepository,
+                auxiliaryRepositoryRepository, generationBudgetService, generationRevertService, taskScheduler, java.time.Duration.ofMinutes(30), 10,
+                java.time.Duration.ofSeconds(15));
         when(orchestrator.generate(any(), any(), any(), any(), any(), any(), any(), any(), any())).thenAnswer((Answer<GenerationOutcome>) invocation -> {
             @SuppressWarnings("unchecked")
             Consumer<ChatResponse> usageSink = invocation.getArgument(8);
@@ -817,8 +823,9 @@ class GenerationTaskServiceTest {
 
     @Test
     void tokenBudgetExceeded_withoutAVerifiedCandidate_endsCancelledWithoutPersisting() {
-        taskService = new GenerationTaskService(orchestrator, persistenceService, reviewService, websocket, jobService, programmingExerciseRepository, generationBudgetService,
-                generationRevertService, taskScheduler, java.time.Duration.ofMinutes(30), 10, java.time.Duration.ofSeconds(15));
+        taskService = new GenerationTaskService(orchestrator, persistenceService, reviewService, websocket, jobService, programmingExerciseRepository,
+                auxiliaryRepositoryRepository, generationBudgetService, generationRevertService, taskScheduler, java.time.Duration.ofMinutes(30), 10,
+                java.time.Duration.ofSeconds(15));
         when(orchestrator.generate(any(), any(), any(), any(), any(), any(), any(), any(), any())).thenAnswer((Answer<GenerationOutcome>) invocation -> {
             @SuppressWarnings("unchecked")
             Consumer<ChatResponse> usageSink = invocation.getArgument(8);

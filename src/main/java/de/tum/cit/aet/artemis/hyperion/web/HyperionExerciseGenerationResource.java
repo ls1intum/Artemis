@@ -44,6 +44,7 @@ import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.persistence.Ex
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
+import de.tum.cit.aet.artemis.programming.repository.AuxiliaryRepositoryRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 
 /**
@@ -68,6 +69,8 @@ public class HyperionExerciseGenerationResource {
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
+    private final AuxiliaryRepositoryRepository auxiliaryRepositoryRepository;
+
     private final GenerationJobService jobService;
 
     private final AgentSystemPromptService agentSystemPromptService;
@@ -80,11 +83,13 @@ public class HyperionExerciseGenerationResource {
 
     private final HyperionGenerationBudgetService generationBudgetService;
 
-    public HyperionExerciseGenerationResource(UserRepository userRepository, ProgrammingExerciseRepository programmingExerciseRepository, GenerationJobService jobService,
-            AgentSystemPromptService agentSystemPromptService, HyperionReviewCommentContextRendererService reviewCommentContextRenderer,
-            ExerciseGenerationRevertService generationRevertService, RemoteInteractiveSandboxClient sandboxClient, HyperionGenerationBudgetService generationBudgetService) {
+    public HyperionExerciseGenerationResource(UserRepository userRepository, ProgrammingExerciseRepository programmingExerciseRepository,
+            AuxiliaryRepositoryRepository auxiliaryRepositoryRepository, GenerationJobService jobService, AgentSystemPromptService agentSystemPromptService,
+            HyperionReviewCommentContextRendererService reviewCommentContextRenderer, ExerciseGenerationRevertService generationRevertService,
+            RemoteInteractiveSandboxClient sandboxClient, HyperionGenerationBudgetService generationBudgetService) {
         this.userRepository = userRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
+        this.auxiliaryRepositoryRepository = auxiliaryRepositoryRepository;
         this.jobService = jobService;
         this.agentSystemPromptService = agentSystemPromptService;
         this.reviewCommentContextRenderer = reviewCommentContextRenderer;
@@ -111,6 +116,11 @@ public class HyperionExerciseGenerationResource {
         if (!agentSystemPromptService.isGenerationSupported(exercise)) {
             throw new BadRequestAlertException("Whole-exercise generation is not available for programming language '" + language + "' and project type '"
                     + exercise.getProjectType() + "': the verifier does not support this configuration.", ENTITY_NAME, "unsupportedGenerationLanguage");
+        }
+        // Queried explicitly (never through the entity's lazy collection, which is uninitializable on this detached instance and would 500 instead of 400).
+        if (!auxiliaryRepositoryRepository.findByExerciseId(exerciseId).isEmpty()) {
+            throw new BadRequestAlertException("Whole-exercise generation is not available for exercises with auxiliary repositories: the verifier only models the solution, "
+                    + "template, and tests repositories.", ENTITY_NAME, "unsupportedGenerationLanguage");
         }
         jobService.rejectIfActiveJobCannotBeReclaimed(exerciseId);
         if (!sandboxClient.hasAvailableGenerationSandboxSlot()) {

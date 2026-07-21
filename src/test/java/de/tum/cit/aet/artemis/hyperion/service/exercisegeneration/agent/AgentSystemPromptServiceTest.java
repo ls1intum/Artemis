@@ -2,7 +2,6 @@ package de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -12,7 +11,6 @@ import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationRequestDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.GenerationMode;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.profile.LanguageGenerationProfile;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.workspace.SandboxBuildCommandService;
-import de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.ProjectType;
@@ -22,7 +20,7 @@ class AgentSystemPromptServiceTest {
 
     /**
      * Leaves headroom over the largest representative Java prompt (incl. the template-scaffold/diff-discipline, PlantUML/testsColor, student-created-type, and anti-grading-context
-     * rules, plus the GENERATE-mode staged workflow: DESIGN.md schema, solution-example-replay, template-derived-from-solution, per-test differential verify, and
+     * rules, plus the GENERATE-mode staged workflow: SPEC.md schema, solution-example-replay, template-derived-from-solution, per-test differential verify, and
      * statement-written-last) while preventing another unbounded failure-diary prompt. Bumped from 13_500 for the staged workflow, then to 16_000 for the qualitative-review fixes
      * (canonical source roots, TODO honesty, boundary-claim coverage, duplicate-heading rule).
      */
@@ -186,9 +184,11 @@ class AgentSystemPromptServiceTest {
     void build_taskGranularity_groupsSeamPartitionsAndRejectsPerTestOrWholeExerciseTasks() {
         String prompt = systemPromptService.build(exerciseWith(ProgrammingLanguage.JAVA, "")).replaceAll("\\s+", " ");
 
-        assertThat(prompt).contains("grouping every test partition it needs", "never one row per test", "never one for the whole exercise unless it is genuinely one seam")
-                .contains("Group ALL of a seam's test partitions under its one line", "never bind one task per test",
-                        "never one task for the whole exercise unless it is genuinely one seam");
+        assertThat(prompt).contains("Group ALL of a seam's test partitions under its one line", "never bind one task per test",
+                "never one task for the whole exercise unless it is genuinely one seam");
+        // The seam-granularity source of truth for planning lives in the SPEC stage's prompt (orchestrator-only).
+        assertThat(systemPromptService.buildStage(exerciseWith(ProgrammingLanguage.JAVA, ""), GenerationStage.SPEC).replaceAll("\\s+", " "))
+                .contains("grouping every test partition it needs", "never one seam per test", "never one for the whole exercise unless it is genuinely one seam");
     }
 
     // Documentation must originate in the solution (STAGE 1), never be authored later in the template (STAGE 2) — the live defect was javadoc replaced by terse
@@ -202,17 +202,15 @@ class AgentSystemPromptServiceTest {
                 "If a doc is missing from the solution, add it there first and re-derive", "never author docs only in the template");
     }
 
-    // GENERATE mode's grounded workflow is staged (design -> solution -> template -> differential tests -> statement) so each artifact is authored from the previous
+    // GENERATE mode's grounded workflow is staged (specification -> solution -> template -> differential tests -> statement) so each artifact is authored from the previous
     // stage's real output rather than emerging in an arbitrary order.
 
     @Test
-    void build_generateModeStagesDesignBeforeSolutionTemplateTestsAndStatement() {
+    void build_generateModeStagesSolutionTemplateTestsAndStatement_withoutTheOrchestratorOnlySpecStage() {
         String prompt = systemPromptService.build(exerciseWith(ProgrammingLanguage.JAVA, "")).replaceAll("\\s+", " ");
 
-        assertThat(prompt).contains("STAGE 0", "STAGE 1", "STAGE 2", "STAGE 3", "STAGE 4")
-                .contains("write `/workspace/DESIGN.md`", "never persisted into solution, template, or tests")
-                .contains("## Classes", "given-complete-in-template", "student-implements-stubbed", "student-creates-absent-from-template")
-                .contains("## Public API", "## Tasks", "## Diagram");
+        // The SPEC stage exists only under the orchestrator's gate; the legacy single loop runs when a specification already exists, so its prompt must not ask for SPEC.md.
+        assertThat(prompt).contains("STAGE 1", "STAGE 2", "STAGE 3", "STAGE 4").contains("solution from the specification").doesNotContain("STAGE — SPECIFICATION");
     }
 
     @Test
@@ -227,8 +225,9 @@ class AgentSystemPromptServiceTest {
     void build_generateModeAuthorsTestsOnePartitionAtATimeWithPerTestDifferentialVerify() {
         String prompt = systemPromptService.build(exerciseWith(ProgrammingLanguage.JAVA, "")).replaceAll("\\s+", " ");
 
-        assertThat(prompt).contains("run `verify` first").contains("partition at a time from DESIGN.md's task table").contains("re-running `verify` after each test or small batch")
-                .contains("fail on the template for its intended reason").contains("ShippingCalculator test reaches a solution-only class via ReflectionTestUtils");
+        assertThat(prompt).contains("run `verify` first").contains("partition at a time from the specification's Testing Strategy")
+                .contains("re-running `verify` after each test or small batch").contains("fail on the template for its intended reason")
+                .contains("ShippingCalculator test reaches a solution-only class via ReflectionTestUtils").contains("write `/workspace/test-plan.json`");
     }
 
     @Test
@@ -242,9 +241,8 @@ class AgentSystemPromptServiceTest {
     // buildStage(): the orchestrator-enforced staged workflow's per-stage system prompt. Each stage sees only its own STAGE N instructions plus the shared header (security
     // boundary, workspace/reference layout, THE CONTRACT) and the shared stage-close line that keeps `submit` scoped to that stage alone, never the whole exercise.
 
-    private static final Map<GenerationStage, String> STAGE_HEADERS = Map.of(GenerationStage.SPEC, "STAGE — SPECIFICATION", GenerationStage.DESIGN, "STAGE 0 — DESIGN FIRST",
-            GenerationStage.SOLUTION, "STAGE 1 — SOLUTION", GenerationStage.TEMPLATE, "STAGE 2 — TEMPLATE", GenerationStage.TESTS, "STAGE 3 — TESTS", GenerationStage.STATEMENT,
-            "STAGE 4 — STATEMENT");
+    private static final Map<GenerationStage, String> STAGE_HEADERS = Map.of(GenerationStage.SPEC, "STAGE — SPECIFICATION", GenerationStage.SOLUTION, "STAGE 1 — SOLUTION",
+            GenerationStage.TEMPLATE, "STAGE 2 — TEMPLATE", GenerationStage.TESTS, "STAGE 3 — TESTS", GenerationStage.STATEMENT, "STAGE 4 — STATEMENT");
 
     private static final String STAGE_CLOSE_LINE_MARKER = "calling `submit` means THIS STAGE's goal is met";
 
@@ -270,22 +268,21 @@ class AgentSystemPromptServiceTest {
     }
 
     @Test
-    void buildStage_design_carriesOnlyItsOwnStageAndPointsAtTheDesignStyleGuide() {
-        String prompt = systemPromptService.buildStage(exerciseWith(ProgrammingLanguage.JAVA, ""), GenerationStage.DESIGN);
+    void buildStage_spec_carriesOnlyItsOwnStageAndPointsAtTheSpecStyleGuide() {
+        String prompt = systemPromptService.buildStage(exerciseWith(ProgrammingLanguage.JAVA, ""), GenerationStage.SPEC);
 
-        assertOnlyOwnStageHeaderPresent(prompt, GenerationStage.DESIGN);
-        assertThat(prompt).contains("write `/workspace/DESIGN.md`").contains("reference/style/design.md")
-                .contains("Earlier stages already produced: SPEC.md (when present — otherwise the instructor's problem statement is the specification).")
-                .doesNotContain("reference/style/solution.md").doesNotContain("reference/style/template.md").doesNotContain("reference/style/tests.md")
-                .doesNotContain("reference/style/final-statement.md");
+        assertOnlyOwnStageHeaderPresent(prompt, GenerationStage.SPEC);
+        assertThat(prompt).contains("write `/workspace/SPEC.md`").contains("reference/style/spec.md").contains("`given`, `stubbed`, `student-creates`")
+                .contains("## Testing Strategy").doesNotContain("reference/style/solution.md").doesNotContain("reference/style/template.md")
+                .doesNotContain("reference/style/tests.md").doesNotContain("reference/style/final-statement.md");
     }
 
     @Test
-    void buildStage_solution_carriesOnlyItsOwnStageAndNamesDesignAsAlreadyProduced() {
+    void buildStage_solution_carriesOnlyItsOwnStageAndNamesTheSpecificationAsAlreadyProduced() {
         String prompt = systemPromptService.buildStage(exerciseWith(ProgrammingLanguage.JAVA, ""), GenerationStage.SOLUTION);
 
         assertOnlyOwnStageHeaderPresent(prompt, GenerationStage.SOLUTION);
-        assertThat(prompt).contains("Earlier stages already produced: the specification and DESIGN.md.")
+        assertThat(prompt).contains("Earlier stages already produced: the specification (SPEC.md when present, else the instructor statement).")
                 .contains("Execute every worked example from the requirements against the real solution").contains("reference/style/solution.md");
     }
 
@@ -294,18 +291,18 @@ class AgentSystemPromptServiceTest {
         String prompt = systemPromptService.buildStage(exerciseWith(ProgrammingLanguage.JAVA, ""), GenerationStage.TEMPLATE);
 
         assertOnlyOwnStageHeaderPresent(prompt, GenerationStage.TEMPLATE);
-        assertThat(prompt).contains("Earlier stages already produced: the specification, DESIGN.md, and the reference solution.")
-                .contains("derive the template FROM the finished solution").contains("TEMPLATE AS TEACHING SCAFFOLD").contains("DIFF DISCIPLINE")
-                .contains("byte-identical between template and solution").contains("reference/style/template.md");
+        assertThat(prompt).contains("Earlier stages already produced: the specification and the reference solution.").contains("derive the template FROM the finished solution")
+                .contains("TEMPLATE AS TEACHING SCAFFOLD").contains("DIFF DISCIPLINE").contains("byte-identical between template and solution")
+                .contains("reference/style/template.md");
     }
 
     @Test
-    void buildStage_tests_carriesOnlyItsOwnStageAndNamesDesignSolutionAndTemplateAsAlreadyProduced() {
+    void buildStage_tests_carriesOnlyItsOwnStageAndNamesSpecSolutionAndTemplateAsAlreadyProduced() {
         String prompt = systemPromptService.buildStage(exerciseWith(ProgrammingLanguage.JAVA, ""), GenerationStage.TESTS);
 
         assertOnlyOwnStageHeaderPresent(prompt, GenerationStage.TESTS);
-        assertThat(prompt).contains("Earlier stages already produced: the specification, DESIGN.md, the reference solution, and the template.")
-                .contains("partition at a time from DESIGN.md's task table").contains("reference/style/tests.md")
+        assertThat(prompt).contains("Earlier stages already produced: the specification, the reference solution, and the template.")
+                .contains("partition at a time from the specification's Testing Strategy").contains("reference/style/tests.md").contains("write `/workspace/test-plan.json`")
                 // Statement-only sections must not leak into the TESTS stage prompt.
                 .doesNotContain("STUDENT-FACING STATEMENT").doesNotContain("ARTEMIS TASK BINDINGS");
     }
@@ -315,7 +312,7 @@ class AgentSystemPromptServiceTest {
         String prompt = systemPromptService.buildStage(exerciseWith(ProgrammingLanguage.JAVA, ""), GenerationStage.STATEMENT);
 
         assertOnlyOwnStageHeaderPresent(prompt, GenerationStage.STATEMENT);
-        assertThat(prompt).contains("Earlier stages already produced: the specification, DESIGN.md, the reference solution, the template, and the differential tests.")
+        assertThat(prompt).contains("Earlier stages already produced: the specification, the reference solution, the template, and the differential tests.")
                 .contains("write the statement last by REWRITING the specification").contains("STUDENT-FACING STATEMENT").contains("ARTEMIS TASK BINDINGS")
                 .contains("[task][Short human title](exactTestNameA,exactTestNameB)").contains("reference/style/final-statement.md");
     }
@@ -489,10 +486,12 @@ class AgentSystemPromptServiceTest {
 
     @Test
     void exerciseWithAuxiliaryRepositoryIsUnsupportedUntilGenerationCanPreserveIt() {
+        // The aux-repos fact is passed EXPLICITLY (queried by the caller): reading the entity's lazy collection here threw LazyInitializationException on detached exercises
+        // and turned the clean 400 rejection into a 500.
         ProgrammingExercise exercise = exerciseWith(ProgrammingLanguage.JAVA, "");
-        exercise.setAuxiliaryRepositories(List.of(new AuxiliaryRepository()));
 
-        assertThat(LanguageGenerationProfile.isSupported(exercise)).isFalse();
+        assertThat(LanguageGenerationProfile.isSupported(exercise, true)).isFalse();
+        assertThat(LanguageGenerationProfile.isSupported(exercise, false)).isTrue();
     }
 
     @Test

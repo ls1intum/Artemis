@@ -42,6 +42,16 @@ compiles against the template.
 No tautological assertions, no asserting a constant against itself, no test that passes on every
 implementation including a broken one. If a test cannot fail for the wrong reason, it is not pulling weight.
 
+## The grading plan (test-plan.json)
+
+Once the differential is green, write `/workspace/test-plan.json` implementing the spec's Testing Strategy:
+`{"tests":[{"name":"<exact test name>","weight":1..3,"visibility":"ALWAYS"|"AFTER_DUE_DATE"}]}`. Weights say
+what the exercise is really about — the core rule outweighs edge polish; equal weights everywhere is a
+decision too, and usually a lazy one. Mark a partition's HIDDEN variant `AFTER_DUE_DATE` and give it fresh
+witness values (never the visible test's inputs renamed): its whole point is catching a solution overfitted
+to the visible tests. Hidden tests are never bound to `[task]` lines in the statement. Names must be the
+exact names `verify` reports, copied verbatim.
+
 ## What may vary
 
 Test count follows the design's partitions, not a quota. Non-Java languages keep the same rules with their

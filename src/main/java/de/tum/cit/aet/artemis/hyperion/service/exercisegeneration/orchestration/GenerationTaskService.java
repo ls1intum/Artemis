@@ -41,6 +41,7 @@ import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.V
 import de.tum.cit.aet.artemis.hyperion.service.websocket.HyperionWebsocketService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
+import de.tum.cit.aet.artemis.programming.repository.AuxiliaryRepositoryRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 
 /**
@@ -68,6 +69,8 @@ public class GenerationTaskService {
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
+    private final AuxiliaryRepositoryRepository auxiliaryRepositoryRepository;
+
     private final HyperionGenerationBudgetService generationBudgetService;
 
     private final ExerciseGenerationRevertService generationRevertService;
@@ -82,9 +85,9 @@ public class GenerationTaskService {
 
     public GenerationTaskService(GenerationOrchestrationService orchestrator, GenerationPersistenceService persistenceService, GenerationReviewService reviewService,
             HyperionWebsocketService websocket, GenerationJobService jobService, ProgrammingExerciseRepository programmingExerciseRepository,
-            HyperionGenerationBudgetService generationBudgetService, ExerciseGenerationRevertService generationRevertService,
-            @Qualifier("taskScheduler") TaskScheduler taskScheduler, @Value("${artemis.hyperion.agent.max-job-duration:PT30M}") Duration maxJobDuration,
-            @Value("${artemis.hyperion.agent.max-tokens-per-job:3000000}") long maxTokensPerJob,
+            AuxiliaryRepositoryRepository auxiliaryRepositoryRepository, HyperionGenerationBudgetService generationBudgetService,
+            ExerciseGenerationRevertService generationRevertService, @Qualifier("taskScheduler") TaskScheduler taskScheduler,
+            @Value("${artemis.hyperion.agent.max-job-duration:PT30M}") Duration maxJobDuration, @Value("${artemis.hyperion.agent.max-tokens-per-job:3000000}") long maxTokensPerJob,
             @Value("${artemis.hyperion.agent.owner-heartbeat-interval:PT15S}") Duration ownerHeartbeatInterval) {
         if (maxJobDuration == null || maxJobDuration.isZero() || maxJobDuration.isNegative()) {
             throw new IllegalArgumentException("artemis.hyperion.agent.max-job-duration must be positive");
@@ -101,6 +104,7 @@ public class GenerationTaskService {
         this.websocket = websocket;
         this.jobService = jobService;
         this.programmingExerciseRepository = programmingExerciseRepository;
+        this.auxiliaryRepositoryRepository = auxiliaryRepositoryRepository;
         this.generationBudgetService = generationBudgetService;
         this.generationRevertService = generationRevertService;
         this.taskScheduler = taskScheduler;
@@ -162,7 +166,7 @@ public class GenerationTaskService {
                 emitter.milestone(ExerciseGenerationEventDTO.of(ExerciseGenerationEventDTO.Type.ERROR, "Generation failed: the exercise no longer exists."));
                 return;
             }
-            if (!LanguageGenerationProfile.isSupported(exercise)) {
+            if (!LanguageGenerationProfile.isSupported(exercise, !auxiliaryRepositoryRepository.findByExerciseId(exerciseId).isEmpty())) {
                 emitter.milestone(
                         ExerciseGenerationEventDTO.of(ExerciseGenerationEventDTO.Type.ERROR, "Generation stopped because the exercise configuration is no longer supported."));
                 return;
@@ -175,10 +179,10 @@ public class GenerationTaskService {
             try (GenerationOutcome outcome = orchestrator.generate(exercise, user, userPrompt, jobId, event.mode(),
                     () -> jobService.isCancelled(jobId) || deadlineExceeded.get() || tokenBudgetExceeded.get() || tokenAccountingFailed.get() || heartbeatLost.get(),
                     emitter::progress, fileChangeSink, usageSink)) {
-                // Surface the staged workspace's DESIGN.md as an observable intermediate result as soon as the outcome lands, regardless of the terminal branch below, so
-                // stage-0 quality is inspectable through the status/replay API even when the run does not end up saved.
-                if (outcome.designDocument() != null) {
-                    jobService.recordDesignDocument(exerciseId, jobId, outcome.designDocument());
+                // Surface the staged workspace's final SPEC.md (later stages may legitimately update it) as an observable intermediate result as soon as the outcome lands,
+                // regardless of the terminal branch below, so specification quality is inspectable through the status/replay API even when the run does not end up saved.
+                if (outcome.specDocument() != null) {
+                    jobService.recordSpecDocument(exerciseId, jobId, outcome.specDocument());
                 }
                 if (tokenAccountingFailed.get()) {
                     emitter.milestone(ExerciseGenerationEventDTO.of(ExerciseGenerationEventDTO.Type.CANCELLED,

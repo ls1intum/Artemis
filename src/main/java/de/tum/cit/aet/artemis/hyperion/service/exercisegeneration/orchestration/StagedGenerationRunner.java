@@ -19,7 +19,7 @@ import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
 
 import de.tum.cit.aet.artemis.buildagent.dto.SandboxExecResult;
 import de.tum.cit.aet.artemis.buildagent.service.InteractiveSandbox;
@@ -37,7 +37,7 @@ import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.workspace.Gene
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 
 /**
- * Runs one Java/{@code GENERATE} agent attempt as six enforced stages — specification, design, solution, template, tests, statement — each with its own system prompt
+ * Runs one Java/{@code GENERATE} agent attempt as five enforced stages — specification, solution, template, tests, statement — each with its own system prompt
  * ({@link AgentSystemPromptService#buildStage}), its own bounded turn budget, and a mechanical gate that must pass before the next stage starts. This replaces one
  * {@code agentLoopRunner.run(...)} call in {@link GenerationOrchestrationService#generate}; everything before and after that call site (workspace seeding, mechanical
  * verification, spec-fidelity review, the outer repair-attempt loop) is unchanged and treats the aggregated {@link AgentLoopResult} this class returns exactly like a
@@ -55,17 +55,20 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
  * described above.
  */
 @Lazy
-@Service
+@Component
 @Conditional(HyperionExerciseGenerationEnabled.class)
 public class StagedGenerationRunner {
 
     private static final Logger log = LoggerFactory.getLogger(StagedGenerationRunner.class);
 
-    private static final List<GenerationStage> STAGE_ORDER = List.of(GenerationStage.SPEC, GenerationStage.DESIGN, GenerationStage.SOLUTION, GenerationStage.TEMPLATE,
-            GenerationStage.TESTS, GenerationStage.STATEMENT);
+    private static final List<GenerationStage> STAGE_ORDER = List.of(GenerationStage.SPEC, GenerationStage.SOLUTION, GenerationStage.TEMPLATE, GenerationStage.TESTS,
+            GenerationStage.STATEMENT);
 
-    /** Base per-stage turn budget, in {@link #STAGE_ORDER} order; sums to 70, leaving headroom under {@link #POOL_HARD_CAP} for rollover. SPEC runs no builds, so it is cheap. */
-    private static final int[] STAGE_BASE_BUDGETS = { 4, 5, 22, 8, 24, 7 };
+    /**
+     * Base per-stage turn budget, in {@link #STAGE_ORDER} order; sums to 68, leaving headroom under {@link #POOL_HARD_CAP} for rollover. SPEC runs no builds but now carries the
+     * whole plan (rules, worked examples, design, testing strategy), so it gets more room than the old thin spec+design pair combined minus their hand-off overhead.
+     */
+    private static final int[] STAGE_BASE_BUDGETS = { 7, 22, 8, 24, 7 };
 
     /**
      * Hard ceiling on turns spent across all five stages combined. A stage (or re-entry) is only started while at least {@link #MIN_STAGE_BUDGET} turns remain, so the cap holds.
@@ -78,9 +81,8 @@ public class StagedGenerationRunner {
     /** At most this many stage re-entries (see {@link #run}) are granted across the whole run, regardless of how many stages fail their gate on the first attempt. */
     private static final int MAX_TOTAL_REENTRIES = 2;
 
-    private static final List<String> STAGE_PROGRESS_LABELS = List.of("Stage 1/6: specifying the exercise behaviour", "Stage 2/6: designing the exercise",
-            "Stage 3/6: implementing the reference solution", "Stage 4/6: building the student template", "Stage 5/6: authoring the tests",
-            "Stage 6/6: writing the problem statement");
+    private static final List<String> STAGE_PROGRESS_LABELS = List.of("Stage 1/5: specifying the exercise", "Stage 2/5: implementing the reference solution",
+            "Stage 3/5: building the student template", "Stage 4/5: authoring the tests", "Stage 5/5: writing the problem statement");
 
     /** Once the run has spent this long, no further stage is started; final (post-loop) verification decides the outcome of whatever was produced. */
     private static final Duration WALL_CLOCK_BUDGET = Duration.ofMinutes(22);
@@ -110,11 +112,11 @@ public class StagedGenerationRunner {
 
         /**
          * Every stage (and re-entry) continues one logical conversation via {@link AgentLoopRunner#runSession}: the model keeps everything it learned in earlier stages, and
-         * each stage's user prompt is slimmed down accordingly (no re-injected DESIGN.md/workspace layout).
+         * each stage's user prompt is slimmed down accordingly (no re-injected SPEC.md/workspace layout).
          */
         CONTINUOUS,
 
-        /** Every stage (and re-entry) starts a fresh conversation via {@link AgentLoopRunner#run}, rebuilding the full stage prompt (DESIGN.md, workspace layout) each time. */
+        /** Every stage (and re-entry) starts a fresh conversation via {@link AgentLoopRunner#run}, rebuilding the full stage prompt (SPEC.md, workspace layout) each time. */
         FRESH;
 
         static StagedContext parse(String value) {
@@ -388,7 +390,7 @@ public class StagedGenerationRunner {
     }
 
     /**
-     * Builds a stage's user prompt. In {@code FRESH} mode this re-injects the current DESIGN.md and workspace layout, because that stage's conversation starts empty; in
+     * Builds a stage's user prompt. In {@code FRESH} mode this re-injects the current SPEC.md and workspace layout, because that stage's conversation starts empty; in
      * {@code continuous} mode that re-injection is dropped (the carried conversation already has it, or — for the very first stage — there is nothing to inject yet),
      * keeping only the brief, a short stage-instructions reference, and any gate feedback.
      *
@@ -401,17 +403,13 @@ public class StagedGenerationRunner {
         StringBuilder prompt = new StringBuilder(briefPrompt);
         if (continuous) {
             prompt.append("\n\nContinue this session for the ").append(stage.displayName())
-                    .append(" stage: follow that stage's instructions in the system prompt above. The design and workspace state from earlier stages are already in this "
+                    .append(" stage: follow that stage's instructions in the system prompt above. The specification and workspace state from earlier stages are already in this "
                             + "conversation; re-read a file only if you need to confirm its exact current contents.");
         }
         else {
             String specDocument = execRead(sandbox, sessionId, "cat", GenerationWorkspaceService.WORKSPACE + "/SPEC.md");
             if (!specDocument.isBlank()) {
                 prompt.append("\n\n=== CURRENT SPEC.md ===\n").append(specDocument.strip()).append("\n=== END SPEC.md ===");
-            }
-            String designDocument = execRead(sandbox, sessionId, "cat", GenerationWorkspaceService.WORKSPACE + "/DESIGN.md");
-            if (!designDocument.isBlank()) {
-                prompt.append("\n\n=== CURRENT DESIGN.md ===\n").append(designDocument.strip()).append("\n=== END DESIGN.md ===");
             }
             String layout = execRead(sandbox, sessionId, "sh", "-c", "find " + GenerationWorkspaceService.WORKSPACE + " -maxdepth 3 -type f -not -path '*/target/*' | head -80");
             if (!layout.isBlank()) {

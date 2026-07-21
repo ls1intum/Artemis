@@ -97,8 +97,8 @@ public class GenerationOrchestrationService {
      */
     private static final Duration TOTAL_WALL_CLOCK_BUDGET = Duration.ofMinutes(35);
 
-    /** Best-effort read timeout for capturing {@code DESIGN.md} once after the agent loop finishes, for {@link GenerationOutcome#designDocument()}. */
-    private static final Duration DESIGN_DOCUMENT_READ_TIMEOUT = Duration.ofSeconds(30);
+    /** Best-effort read timeout for capturing {@code SPEC.md} once after the agent loop finishes, for {@link GenerationOutcome#specDocument()}. */
+    private static final Duration SPEC_DOCUMENT_READ_TIMEOUT = Duration.ofSeconds(30);
 
     // Optional so a core-only node (where no build agent is co-located to host the sandbox) still starts; absence is reported only when a run is attempted.
     private final Optional<InteractiveSandbox> interactiveSandbox;
@@ -285,9 +285,9 @@ public class GenerationOrchestrationService {
                     emit(progress, "The generation time budget is used up; keeping the current candidate instead of starting repair attempt " + attempt + ".");
                     break;
                 }
-                // Staged authoring applies to the FIRST attempt only: retry attempts carry a targeted repair prompt (verification reasons / critic findings), and the
-                // between-attempt workspace reset discards DESIGN.md — re-running the design stage against a repair brief fails its gate by construction. Repairs run the
-                // legacy single loop, which is built for surgical fixes on an existing workspace.
+                // Staged authoring applies to the FIRST attempt only: retry attempts carry a targeted repair prompt (verification reasons / critic findings) plus the frozen
+                // spec contract — re-running the spec stage against a repair brief fails its gate by construction. Repairs run the legacy single loop, which is built for
+                // surgical fixes on an existing workspace.
                 boolean stagedAttempt = useStagedGeneration && attempt == 1;
                 if (stagedAttempt) {
                     StagedGenerationRunner.StagedRunOutcome stagedOutcome = stagedGenerationRunner.run(exercise, baseTools, tools, currentPrompt, testsSeedSnapshot, sandbox,
@@ -332,7 +332,7 @@ public class GenerationOrchestrationService {
                     if (statementChanged || !erroredFiles.isEmpty()) {
                         return new GenerationOutcome(loopResult, null, sessionId, this, sandbox, erroredFiles, erroredStatement,
                                 SpecFidelityReport.qualityReviewUnavailable("The agent stopped before verification; the partial candidate requires manual review."),
-                                workspaceSeed.repositoryHeads(), readDesignDocument(sandbox, sessionId));
+                                workspaceSeed.repositoryHeads(), readSpecDocument(sandbox, sessionId), readWorkspaceRootFile(sandbox, sessionId, "test-plan.json"));
                     }
                     destroyQuietly(sandbox, sessionId);
                     return GenerationOutcome.error(loopResult);
@@ -405,15 +405,15 @@ public class GenerationOrchestrationService {
                 InteractiveSandbox activeSandbox = sandbox;
                 GenerationWorkspaceService.WorkspaceSeed activeWorkspaceSeed = workspaceSeed;
                 String candidateProblemStatement = producedProblemStatement;
-                // Snapshot DESIGN.md before verification: each restore below resets the tmpfs workspace, and without re-seeding it the design rationale would be silently gone
-                // for every later repair attempt and for the outcome's design-document capture.
-                String designDocumentSnapshot = readDesignDocument(sandbox, sessionId);
+                // Snapshot SPEC.md before verification: each restore below resets the tmpfs workspace, and without re-seeding it the specification (possibly updated by later
+                // stages) would be silently gone for every later repair attempt and for the outcome's spec capture.
+                String specDocumentSnapshot = readSpecDocument(sandbox, sessionId);
                 Runnable restoreCandidate = () -> {
                     activeSandbox.resetSession(activeSessionId);
                     // /workspace is a tmpfs (see GenerationWorkspaceService#materializeRepositoryFiles), so the reset wipes problem-statement.md too; re-seed it alongside the
                     // repositories or the next attempt's extraction fails with "the generated problem statement is missing".
                     workspace.materializeRepositoryFiles(activeSandbox, activeSessionId, exercise, mode, candidateFiles, activeWorkspaceSeed.repositoryMetadata(),
-                            activeWorkspaceSeed.repositoryBinaryFiles(), candidateProblemStatement, designDocumentSnapshot);
+                            activeWorkspaceSeed.repositoryBinaryFiles(), candidateProblemStatement, specDocumentSnapshot);
                 };
                 verification = verifyWithInfrastructureRetry(sandbox, sessionId, exercise, verificationRequest, restoreCandidate, cancelled, progress);
                 emit(progress, verification.report());
@@ -442,7 +442,8 @@ public class GenerationOrchestrationService {
                     // specFidelityReport still holds the previous attempt's report at this point (SpecFidelityReport.empty() on attempt 1 or after a mechanical rejection);
                     // threading it through gives the critic continuity across repair attempts instead of re-rolling a fresh review each time.
                     specFidelityReport = runSpecFidelityCritic(reviewBrief, producedProblemStatement, exercise.getProgrammingLanguage(), producedFilesByType, adaptationChanges,
-                            effectiveUsageSink, cancelled, progress, specFidelityReport, designDocumentSnapshot, specSnapshot.get());
+                            effectiveUsageSink, cancelled, progress, specFidelityReport, null,
+                            specDocumentSnapshot != null && !specDocumentSnapshot.isBlank() ? specDocumentSnapshot : specSnapshot.get());
                     lastMechanicallyVerifiedCandidate = new CandidateSnapshot(loopResult, verification, copyProducedFiles(producedFilesByType), producedProblemStatement,
                             specFidelityReport);
                     if (cancelled.getAsBoolean()) {
@@ -500,7 +501,7 @@ public class GenerationOrchestrationService {
 
             emit(progress, "The run used " + totalAgentTurns + " agent turn(s) in total.");
             return new GenerationOutcome(loopResult, verification, sessionId, this, sandbox, producedFilesByType, producedProblemStatement, specFidelityReport,
-                    workspaceSeed.repositoryHeads(), readDesignDocument(sandbox, sessionId));
+                    workspaceSeed.repositoryHeads(), readSpecDocument(sandbox, sessionId), readWorkspaceRootFile(sandbox, sessionId, "test-plan.json"));
         }
         catch (RuntimeException e) {
             // A build interrupted by the cancel hook surfaces as a throw; report it as a clean cancellation.
@@ -516,7 +517,7 @@ public class GenerationOrchestrationService {
                         e.getClass().getSimpleName());
                 return new GenerationOutcome(lastMechanicallyVerifiedCandidate.loopResult(), lastMechanicallyVerifiedCandidate.verification(), sessionId, this, sandbox,
                         lastMechanicallyVerifiedCandidate.producedFiles(), lastMechanicallyVerifiedCandidate.problemStatement(), lastMechanicallyVerifiedCandidate.reviewReport(),
-                        workspaceSeed.repositoryHeads(), readDesignDocument(sandbox, sessionId));
+                        workspaceSeed.repositoryHeads(), readSpecDocument(sandbox, sessionId), readWorkspaceRootFile(sandbox, sessionId, "test-plan.json"));
             }
             if (lastExtractedCandidate != null && workspaceSeed != null) {
                 log.warn("Exercise generation failed while verifying an extracted candidate for exercise {}; preserving the captured work ({})", exercise.getId(),
@@ -525,7 +526,7 @@ public class GenerationOrchestrationService {
                         "Generation stopped before verification completed.");
                 return new GenerationOutcome(stopped, null, sessionId, this, sandbox, lastExtractedCandidate.producedFiles(), lastExtractedCandidate.problemStatement(),
                         SpecFidelityReport.qualityReviewUnavailable("Generation stopped before the captured candidate could be fully verified."), workspaceSeed.repositoryHeads(),
-                        readDesignDocument(sandbox, sessionId));
+                        readSpecDocument(sandbox, sessionId), readWorkspaceRootFile(sandbox, sessionId, "test-plan.json"));
             }
             GenerationOutcome diagnosticError = captureUnexpectedFailure(sandbox, sessionId, workspaceSeed, placeholderReplacements, baselineRepositoryFiles,
                     baselineProblemStatement);
@@ -575,7 +576,7 @@ public class GenerationOrchestrationService {
 
     private GenerationOutcome preserveCandidate(CandidateSnapshot candidate, InteractiveSandbox sandbox, String sessionId, GenerationWorkspaceService.WorkspaceSeed workspaceSeed) {
         return new GenerationOutcome(candidate.loopResult(), candidate.verification(), sessionId, this, sandbox, candidate.producedFiles(), candidate.problemStatement(),
-                candidate.reviewReport(), workspaceSeed.repositoryHeads(), readDesignDocument(sandbox, sessionId));
+                candidate.reviewReport(), workspaceSeed.repositoryHeads(), readSpecDocument(sandbox, sessionId), readWorkspaceRootFile(sandbox, sessionId, "test-plan.json"));
     }
 
     private static Map<RepositoryType, Map<String, String>> copyProducedFiles(Map<RepositoryType, Map<String, String>> producedFiles) {
@@ -629,7 +630,7 @@ public class GenerationOrchestrationService {
         AgentLoopResult loopResult = new AgentLoopResult(AgentLoopResult.Status.ERROR, 0, "Generation stopped unexpectedly before verification completed.");
         return new GenerationOutcome(loopResult, null, sessionId, this, sandbox, files, statement,
                 SpecFidelityReport.qualityReviewUnavailable("Generation stopped before the candidate could be fully verified."), workspaceSeed.repositoryHeads(),
-                readDesignDocument(sandbox, sessionId));
+                readSpecDocument(sandbox, sessionId), readWorkspaceRootFile(sandbox, sessionId, "test-plan.json"));
     }
 
     private Map<RepositoryType, Map<String, String>> captureRepositoryFiles(InteractiveSandbox sandbox, String sessionId, GenerationWorkspaceService.WorkspaceSeed workspaceSeed,
@@ -957,20 +958,25 @@ public class GenerationOrchestrationService {
     }
 
     /**
-     * Best-effort, read-once capture of the workspace's {@code DESIGN.md} for {@link GenerationOutcome#designDocument()}; {@code null} when the file was never written or
+     * Best-effort, read-once capture of the workspace's {@code SPEC.md} for {@link GenerationOutcome#specDocument()}; {@code null} when the file was never written or
      * could not be read (e.g. the sandbox session no longer exists). Never persisted into any repository.
      */
     @Nullable
-    private static String readDesignDocument(@Nullable InteractiveSandbox sandbox, @Nullable String sessionId) {
+    private static String readSpecDocument(@Nullable InteractiveSandbox sandbox, @Nullable String sessionId) {
+        return readWorkspaceRootFile(sandbox, sessionId, "SPEC.md");
+    }
+
+    @Nullable
+    private static String readWorkspaceRootFile(@Nullable InteractiveSandbox sandbox, @Nullable String sessionId, String fileName) {
         if (sandbox == null || sessionId == null) {
             return null;
         }
         try {
-            SandboxExecResult result = sandbox.exec(sessionId, DESIGN_DOCUMENT_READ_TIMEOUT, "cat", GenerationWorkspaceService.WORKSPACE + "/DESIGN.md");
+            SandboxExecResult result = sandbox.exec(sessionId, SPEC_DOCUMENT_READ_TIMEOUT, "cat", GenerationWorkspaceService.WORKSPACE + "/" + fileName);
             return result != null && result.isSuccess() ? result.stdout() : null;
         }
         catch (RuntimeException e) {
-            log.debug("Could not read DESIGN.md after generation for diagnostics: {}", e.getMessage());
+            log.debug("Could not read {} after generation for diagnostics: {}", fileName, e.getMessage());
             return null;
         }
     }

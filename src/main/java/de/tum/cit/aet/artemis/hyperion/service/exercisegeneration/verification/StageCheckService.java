@@ -22,7 +22,8 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 /**
  * The mechanical per-stage gates enforced by the staged generation workflow
  * ({@code de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.StagedGenerationRunner}),
- * one method per {@link GenerationStage}: DESIGN.md's required sections, one pristine build each for SOLUTION and TEMPLATE, the differential self-check for TESTS, and the
+ * one method per {@link GenerationStage}: SPEC.md's required sections and evidence gates, one pristine build each for SOLUTION and TEMPLATE, the differential self-check for TESTS,
+ * and the
  * problem-statement task-binding resolution for STATEMENT. The runner owns stage sequencing, turn budgets, and re-entry; this service owns only "does this stage's artifact pass".
  * <p>
  * The SOLUTION/TEMPLATE compile gates run a single build via {@link DifferentialVerificationService#singleBuild}, which shares its build-and-parse machinery with the full
@@ -45,9 +46,10 @@ public class StageCheckService {
 
     private static final Duration DIFF_TIMEOUT = Duration.ofMinutes(5);
 
-    private static final List<String> REQUIRED_DESIGN_HEADINGS = List.of("## Classes", "## Public API", "## Tasks", "## Diagram");
+    private static final List<String> REQUIRED_SPEC_HEADINGS = List.of("## Rules", "## Worked Examples", "## Design", "## Testing Strategy", "## Diagram");
 
-    private static final List<String> REQUIRED_SPEC_HEADINGS = List.of("## Rules", "## Worked Examples");
+    /** The only template-status tokens a SPEC.md '## Design' data row may carry; 'student-creates' additionally arms the template omit-gate. */
+    private static final Set<String> TEMPLATE_STATUS_TOKENS = Set.of("given", "stubbed", "student-creates");
 
     /** Bound on how many extracted build-error lines a compile-failure observation carries, so a noisy build log cannot flood the agent's context. */
     private static final int MAX_ERROR_LINES = 15;
@@ -74,7 +76,6 @@ public class StageCheckService {
             @Nullable AgentVerifyReport lastTestsReport) {
         return switch (stage) {
             case SPEC -> checkSpec(sandbox, sessionId);
-            case DESIGN -> checkDesign(sandbox, sessionId);
             case SOLUTION -> checkSolution(sandbox, sessionId, exercise);
             case TEMPLATE -> checkTemplate(sandbox, sessionId, exercise);
             case TESTS -> checkTests(sandbox, sessionId, exercise, seedTestsFiles);
@@ -90,8 +91,8 @@ public class StageCheckService {
     private StageCheckResult checkSpec(InteractiveSandbox sandbox, String sessionId) {
         String spec = execRead(sandbox, sessionId, "cat", GenerationWorkspaceService.WORKSPACE + "/SPEC.md");
         if (spec.isBlank()) {
-            return StageCheckResult.failed("SPEC.md is missing or empty. Write /workspace/SPEC.md with the archetype, '## Rules' (numbered R1..Rn), and a '## Worked Examples' "
-                    + "table before continuing.");
+            return StageCheckResult.failed("SPEC.md is missing or empty. Write /workspace/SPEC.md with the archetype, '## Rules' (numbered R1..Rn), a '## Worked Examples' "
+                    + "table, a '## Design' table, a '## Testing Strategy', and a '## Diagram' decision before continuing.");
         }
         List<String> missingSpecSections = REQUIRED_SPEC_HEADINGS.stream().filter(heading -> !spec.contains(heading)).toList();
         if (!missingSpecSections.isEmpty()) {
@@ -111,7 +112,66 @@ public class StageCheckService {
                     + "prove branching: different inputs must lead to different computed results. If the exercise cannot produce two different results, its rules grade a "
                     + "constant — deepen the rules.");
         }
-        return StageCheckResult.passed("");
+        List<DesignRow> designRows = designTableRows(spec);
+        if (designRows.isEmpty()) {
+            return StageCheckResult.failed("The '## Design' section has no data rows. It must be a table (| Type | Role | Template status |) listing every type with its "
+                    + "Template status: exactly one of 'given', 'stubbed', 'student-creates'.");
+        }
+        List<String> rowsWithoutStatus = designRows.stream().filter(row -> row.status() == null).map(DesignRow::type).toList();
+        if (!rowsWithoutStatus.isEmpty()) {
+            return StageCheckResult.failed("These '## Design' rows carry no template-status token: " + rowsWithoutStatus + ". Each row must contain exactly one of "
+                    + TEMPLATE_STATUS_TOKENS + " — the token is what the later template gate enforces, so an ambiguous row cannot be checked.");
+        }
+        // Echo the parsed plan back so the agent SEES what the later gates will hold it to (feedback quality: confirm understanding, not just absence of errors).
+        String echo = designRows.stream().map(row -> row.type() + "=" + row.status()).collect(java.util.stream.Collectors.joining(", "));
+        return StageCheckResult.passed("Specification accepted. Parsed template plan the later gates will enforce: " + echo + ". A 'student-creates' type must exist in the "
+                + "solution and must be ABSENT from the template.");
+    }
+
+    /** One parsed data row of SPEC.md's '## Design' table: the type name (first cell, backticks stripped) and its template-status token ({@code null} when the row has none). */
+    record DesignRow(String type, @Nullable String status) {
+    }
+
+    /** Parses the '## Design' table's data rows (skipping the header and separator), tolerant of column order — the status is found by token, not position. */
+    static List<DesignRow> designTableRows(String spec) {
+        int start = spec.indexOf("## Design");
+        if (start < 0) {
+            return List.of();
+        }
+        List<DesignRow> rows = new java.util.ArrayList<>();
+        boolean pastHeader = false;
+        for (String line : spec.substring(start).lines().map(String::strip).toList()) {
+            if (line.startsWith("## ") && !line.startsWith("## Design")) {
+                break;
+            }
+            if (!line.startsWith("|")) {
+                continue;
+            }
+            if (!pastHeader) {
+                // The first two pipe rows are the header and the |---| separator.
+                if (line.chars().allMatch(c -> c == '|' || c == '-' || c == ':' || c == ' ')) {
+                    pastHeader = true;
+                }
+                continue;
+            }
+            List<String> cells = java.util.Arrays.stream(line.split("\\|")).map(String::strip).filter(cell -> !cell.isBlank()).toList();
+            if (cells.isEmpty()) {
+                continue;
+            }
+            String type = cells.getFirst().replace("`", "").strip();
+            String status = cells.stream().map(cell -> cell.replace("`", "").strip().toLowerCase(java.util.Locale.ROOT)).filter(TEMPLATE_STATUS_TOKENS::contains).findFirst()
+                    .orElse(null);
+            if (!type.isBlank()) {
+                rows.add(new DesignRow(type, status));
+            }
+        }
+        return rows;
+    }
+
+    /** The type names SPEC.md's '## Design' table marks {@code student-creates} — the ones the template omit-gate and the solution presence-gate enforce. */
+    static List<String> specStudentCreatedTypes(String spec) {
+        return designTableRows(spec).stream().filter(row -> "student-creates".equals(row.status())).map(DesignRow::type).filter(type -> type.matches("[A-Za-z_][A-Za-z0-9_]*"))
+                .toList();
     }
 
     /**
@@ -148,19 +208,6 @@ public class StageCheckService {
         return values;
     }
 
-    private StageCheckResult checkDesign(InteractiveSandbox sandbox, String sessionId) {
-        String designDocument = execRead(sandbox, sessionId, "cat", GenerationWorkspaceService.WORKSPACE + "/DESIGN.md");
-        if (designDocument.isBlank()) {
-            return StageCheckResult.failed(
-                    "DESIGN.md is missing or empty. Write /workspace/DESIGN.md with the required '## Classes', '## Public API', and '## Tasks' sections before continuing.");
-        }
-        List<String> missing = REQUIRED_DESIGN_HEADINGS.stream().filter(heading -> !designDocument.contains(heading)).toList();
-        if (!missing.isEmpty()) {
-            return StageCheckResult.failed("DESIGN.md is missing required section(s): " + missing + ". Add them before continuing.");
-        }
-        return StageCheckResult.passed("");
-    }
-
     private StageCheckResult checkSolution(InteractiveSandbox sandbox, String sessionId, ProgrammingExercise exercise) {
         SingleBuildResult result;
         try {
@@ -176,7 +223,14 @@ public class StageCheckService {
             return StageCheckResult
                     .failed("The solution must pass every test; failing: " + result.failedTestNames() + ". This is not a compile error — fix the solution's behaviour.");
         }
-        return StageCheckResult.passed("");
+        List<String> createdTypes = specStudentCreatedTypes(readSpec(sandbox, sessionId));
+        List<String> missingCreatedTypes = createdTypes.stream().filter(type -> findTypeFiles(sandbox, sessionId, "solution", type).isBlank()).toList();
+        if (!missingCreatedTypes.isEmpty()) {
+            return StageCheckResult.failed("SPEC.md's '## Design' table marks these types 'student-creates', but the solution contains no file for them: " + missingCreatedTypes
+                    + ". The reference solution must fully implement every student-created type (it is what the tests grade); add the missing file(s), or correct SPEC.md if "
+                    + "the design genuinely changed.");
+        }
+        return StageCheckResult.passed(createdTypes.isEmpty() ? "" : "Solution compiles and contains every student-created type from the specification: " + createdTypes + ".");
     }
 
     private StageCheckResult checkTemplate(InteractiveSandbox sandbox, String sessionId, ProgrammingExercise exercise) {
@@ -196,15 +250,37 @@ public class StageCheckService {
             SandboxExecResult diff = sandbox.exec(sessionId, DIFF_TIMEOUT, "diff", "-rq", GenerationWorkspaceService.WORKSPACE + "/solution",
                     GenerationWorkspaceService.WORKSPACE + "/template");
             if (!diff.timedOut() && diff.exitCode() == 0) {
-                return StageCheckResult.failed("The template is byte-identical to the solution (a degenerate copy). Remove the student work DESIGN.md marks stubbed or absent from "
-                        + "the template so it still compiles but no longer matches the solution.");
+                return StageCheckResult.failed("The template is byte-identical to the solution (a degenerate copy). Remove the student work the specification marks 'stubbed' or "
+                        + "'student-creates' from the template so it still compiles but no longer matches the solution.");
             }
         }
         catch (RuntimeException e) {
             // Advisory only: a tooling failure here must not block an otherwise sound template.
             log.debug("Degenerate-copy check could not run (fail-open): {}", e.getMessage());
         }
+        List<String> createdTypes = specStudentCreatedTypes(readSpec(sandbox, sessionId));
+        List<String> leakedFiles = createdTypes.stream().map(type -> findTypeFiles(sandbox, sessionId, "template", type)).filter(found -> !found.isBlank())
+                .flatMap(found -> found.lines().map(String::strip)).toList();
+        if (!leakedFiles.isEmpty()) {
+            return StageCheckResult.failed("SPEC.md's '## Design' table marks type(s) 'student-creates', so the template must NOT contain their files — students create them "
+                    + "from scratch (they are graded through the seeded structural checks and reflection-based tests). Delete these template files (leave TODO breadcrumbs in "
+                    + "the collaborating classes instead): " + leakedFiles + ". If the type should ship as a stub after all, change its status in SPEC.md to 'stubbed'.");
+        }
+        if (!createdTypes.isEmpty()) {
+            observation = (observation.isBlank() ? "" : observation + " ") + "Confirmed absent from the template, as the specification requires students to create them: "
+                    + createdTypes + ".";
+        }
         return StageCheckResult.passed(observation);
+    }
+
+    private String readSpec(InteractiveSandbox sandbox, String sessionId) {
+        return execRead(sandbox, sessionId, "cat", GenerationWorkspaceService.WORKSPACE + "/SPEC.md");
+    }
+
+    /** The files under the given repo whose basename is {@code <type>.<ext>}, excluding build output. Type names were validated as identifiers, and exec spawns without a shell. */
+    private String findTypeFiles(InteractiveSandbox sandbox, String sessionId, String repo, String type) {
+        return execRead(sandbox, sessionId, "find", GenerationWorkspaceService.WORKSPACE + "/" + repo, "-type", "f", "-name", type + ".*", "-not", "-path", "*/target/*", "-not",
+                "-path", "*/build/*");
     }
 
     private StageCheckResult checkTests(InteractiveSandbox sandbox, String sessionId, ProgrammingExercise exercise, Map<String, String> seedTestsFiles) {
@@ -216,11 +292,36 @@ public class StageCheckService {
             return new StageCheckResult(false, "Could not run the differential self-check: " + e.getMessage(), null);
         }
         String observation = report.toObservation();
-        if (report.solutionPassed() && report.templateFailed()) {
-            return new StageCheckResult(true, observation, report);
+        if (!report.solutionPassed() || !report.templateFailed()) {
+            return new StageCheckResult(false, "The tests do not yet satisfy the differential requirement (the solution must pass every test, the template must fail every "
+                    + "task-bound behavioural test):\n" + observation, report);
         }
-        return new StageCheckResult(false, "The tests do not yet satisfy the differential requirement (the solution must pass every test, the template must fail every "
-                + "task-bound behavioural test):\n" + observation, report);
+        // Only once the differential is green does the grading plan matter — a missing plan must never drown out failing tests in the feedback.
+        String planJson = execRead(sandbox, sessionId, "cat", GenerationWorkspaceService.WORKSPACE + "/test-plan.json");
+        if (planJson.isBlank()) {
+            return new StageCheckResult(false,
+                    "The differential passed, but /workspace/test-plan.json is missing. Write it now, implementing the specification's Testing "
+                            + "Strategy: {\"tests\":[{\"name\":\"<exact test name>\",\"weight\":1..3,\"visibility\":\"ALWAYS\"|\"AFTER_DUE_DATE\"}]} — use the exact names verify "
+                            + "reported: " + report.exactTestNames() + ".",
+                    report);
+        }
+        GeneratedTestPlan plan;
+        try {
+            plan = GeneratedTestPlan.parse(planJson);
+        }
+        catch (IllegalArgumentException e) {
+            return new StageCheckResult(false, "The differential passed, but test-plan.json is invalid: " + e.getMessage(), report);
+        }
+        Set<String> knownNames = Set.copyOf(report.exactTestNames());
+        List<String> unknownPlanNames = plan.tests().stream().map(GeneratedTestPlan.Entry::name).filter(name -> !knownNames.contains(name)).toList();
+        if (!unknownPlanNames.isEmpty()) {
+            return new StageCheckResult(false, "The differential passed, but test-plan.json names tests that do not exist: " + unknownPlanNames
+                    + ". Copy the exact names verify reported: " + report.exactTestNames() + ".", report);
+        }
+        List<String> unplannedNames = report.exactTestNames().stream().filter(name -> plan.tests().stream().noneMatch(entry -> entry.name().equals(name))).toList();
+        String planSummary = "Grading plan accepted: " + plan.tests().size() + " test(s), " + plan.hiddenEntries().size() + " hidden until the due date."
+                + (unplannedNames.isEmpty() ? "" : " Not in the plan (they keep Artemis defaults, weight 1 and visible): " + unplannedNames + ".");
+        return new StageCheckResult(true, observation + "\n" + planSummary, report);
     }
 
     private StageCheckResult checkStatement(InteractiveSandbox sandbox, String sessionId, @Nullable AgentVerifyReport lastTestsReport) {
@@ -257,10 +358,10 @@ public class StageCheckService {
             return StageCheckResult.failed("The statement writes ABOUT students in the third person ('Students must/will/should ...'). Address the reader directly instead: "
                     + "frame the goal as \"we\" and the work as \"you\" with imperative tasks ('Define ...', 'Implement ...').");
         }
-        String designDocument = execRead(sandbox, sessionId, "cat", GenerationWorkspaceService.WORKSPACE + "/DESIGN.md");
-        if (ProblemStatementBindingChecker.designSaysDiagramYes(designDocument) && !statement.contains("@startuml")) {
-            return StageCheckResult.failed("DESIGN.md's '## Diagram' section says yes, but the statement contains no @startuml diagram. Add the PlantUML class diagram after "
-                    + "the tasks it illustrates (with testsColor links), or update DESIGN.md's Diagram decision if the design genuinely changed.");
+        String specDocument = readSpec(sandbox, sessionId);
+        if (ProblemStatementBindingChecker.designSaysDiagramYes(specDocument) && !statement.contains("@startuml")) {
+            return StageCheckResult.failed("SPEC.md's '## Diagram' section says yes, but the statement contains no @startuml diagram. Add the PlantUML class diagram after "
+                    + "the tasks it illustrates (with testsColor links), or update SPEC.md's Diagram decision if the design genuinely changed.");
         }
         // Exact duplicate headings are a mechanical statement defect (observed shipping live: the same '### 1. ...' section twice); catching it here costs nothing.
         List<String> duplicateHeadings = ProblemStatementBindingChecker.duplicateHeadings(statement);
