@@ -22,6 +22,8 @@ import de.tum.cit.aet.artemis.hyperion.config.HyperionExerciseGenerationEnabled;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.GenerationStage;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.workspace.GenerationWorkspaceService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
+import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 
 /**
  * The mechanical per-stage gates enforced by the staged generation workflow
@@ -97,8 +99,8 @@ public class StageCheckService {
             return Optional.empty();
         }
         return Optional.of("ERROR: the approved specification assigns these types to students to create: " + restoredTypes
-                + ". Do not restore or pre-create their declarations in the template. Keep TODO seam breadcrumbs in the collaborating scaffold and test the student-created "
-                + "types through Class.forName/reflection (and a dynamic proxy where the context needs an interface instance), as shown by the seeded test utilities.");
+                + ". Do not restore or pre-create their declarations in the template, and do not put their seam IDs on unrelated collaborators. Test the student-created types "
+                + "through Class.forName/reflection (and a dynamic proxy where the context needs an interface instance), as shown by the seeded test utilities.");
     }
 
     /**
@@ -218,6 +220,12 @@ public class StageCheckService {
             return StageCheckResult.failed("These '## Design' rows carry no template-status token: " + rowsWithoutStatus + ". Each row must contain exactly one of "
                     + TEMPLATE_STATUS_TOKENS + " — the token is what the later template gate enforces, so an ambiguous row cannot be checked.");
         }
+        List<String> designTypes = designRows.stream().map(DesignRow::type).toList();
+        List<String> duplicateDesignTypes = designTypes.stream().filter(type -> java.util.Collections.frequency(designTypes, type) > 1).distinct().toList();
+        if (!duplicateDesignTypes.isEmpty()) {
+            return StageCheckResult.failed("The Design table declares the same type more than once: " + duplicateDesignTypes
+                    + ". Keep one authoritative row per type so template ownership cannot contradict itself.");
+        }
         List<String> unenforceableCreatedTypes = designRows.stream().filter(row -> "student-creates".equals(row.status())).map(DesignRow::type)
                 .filter(type -> !isEnforceableTypeName(type)).toList();
         if (!unenforceableCreatedTypes.isEmpty()) {
@@ -225,10 +233,16 @@ public class StageCheckService {
                     + unenforceableCreatedTypes + ". Write one bare type name per row (no generics, package prefix, emphasis, parenthetical, or second type in the same cell) — "
                     + "otherwise nothing can enforce that the template omits it.");
         }
-        List<String> seamIds = testingStrategySeamIds(spec);
+        List<TestingStrategyRow> testingRows = testingStrategyRows(spec);
+        List<String> seamIds = testingRows.stream().map(TestingStrategyRow::seamId).toList();
         if (seamIds.isEmpty()) {
             return StageCheckResult.failed("The '## Testing Strategy' section needs a table with one data row per independently actionable unit of student work. Give each row a "
                     + "stable seam ID in its first cell (S1, S2, ...); tests and statement tasks use these IDs to preserve the plan without creating one task per test.");
+        }
+        String ownerHeader = testingStrategyOwnerHeader(spec);
+        if (!"Owner type".equalsIgnoreCase(ownerHeader)) {
+            return StageCheckResult.failed("The second Testing Strategy column must be named 'Owner type'; found '" + ownerHeader
+                    + "'. Put one exact bare Design type in that column so ownership is explicit rather than inferred from prose.");
         }
         List<String> malformedSeamIds = seamIds.stream().filter(id -> !id.matches("S[1-9][0-9]*")).toList();
         if (!malformedSeamIds.isEmpty()) {
@@ -240,6 +254,26 @@ public class StageCheckService {
             return StageCheckResult.failed("The Testing Strategy contains duplicate seam IDs: " + duplicateSeamIds
                     + ". One seam is one independently actionable unit of student work; merge its partitions into one row or assign genuinely different work a new ID.");
         }
+        List<String> malformedOwners = testingRows.stream().filter(row -> !isEnforceableTypeName(row.ownerType())).map(TestingStrategyRow::seamId).toList();
+        if (!malformedOwners.isEmpty()) {
+            return StageCheckResult.failed("These Testing Strategy rows have no enforceable Owner type: " + malformedOwners
+                    + ". Add an Owner type column and put one bare type name from the Design table in every row. This exact link determines whether and where the template "
+                    + "may carry that seam's TODO breadcrumb.");
+        }
+        Map<String, String> designStatusByType = designRows.stream()
+                .collect(java.util.stream.Collectors.toMap(DesignRow::type, DesignRow::status, (first, ignored) -> first, java.util.LinkedHashMap::new));
+        List<String> unknownOwners = testingRows.stream().filter(row -> !designStatusByType.containsKey(row.ownerType())).map(row -> row.seamId() + "->" + row.ownerType())
+                .toList();
+        if (!unknownOwners.isEmpty()) {
+            return StageCheckResult.failed("These Testing Strategy owner links do not name a type in the Design table: " + unknownOwners
+                    + ". Use the exact bare Design type that owns the student work; do not encode ownership in prose.");
+        }
+        List<String> givenOwners = testingRows.stream().filter(row -> "given".equals(designStatusByType.get(row.ownerType()))).map(row -> row.seamId() + "->" + row.ownerType())
+                .toList();
+        if (!givenOwners.isEmpty()) {
+            return StageCheckResult.failed("These Testing Strategy seams assign student work to a Design type marked given: " + givenOwners
+                    + ". A graded seam must be owned by a stubbed or student-creates type; either correct the ownership or remove work that students do not perform.");
+        }
         List<String> hiddenCells = hiddenVariantCells(spec);
         if (hiddenCells.size() != seamIds.size() || hiddenCells.stream().anyMatch(cell -> !cell.equals("yes") && !cell.equals("no"))) {
             return StageCheckResult.failed("Every Testing Strategy row must end with exactly 'yes' or 'no' in the Hidden variant column. This structured decision controls "
@@ -247,12 +281,18 @@ public class StageCheckService {
         }
         // Echo the parsed plan back so the agent SEES what the later gates will hold it to (feedback quality: confirm understanding, not just absence of errors).
         String echo = designRows.stream().map(row -> row.type() + "=" + row.status()).collect(java.util.stream.Collectors.joining(", "));
-        return StageCheckResult.passed("Specification accepted. Parsed template plan the later gates will enforce: " + echo + ". A 'student-creates' type must exist in the "
-                + "solution and must be ABSENT from the template.");
+        String seamEcho = testingRows.stream().map(row -> row.seamId() + "->" + row.ownerType() + "(" + designStatusByType.get(row.ownerType()) + ")")
+                .collect(java.util.stream.Collectors.joining(", "));
+        return StageCheckResult.passed("Specification accepted. Parsed template plan the later gates will enforce: " + echo + ". Parsed work ownership: " + seamEcho
+                + ". A student-creates type is absent from the template and therefore has no template TODO; a stubbed owner carries its own seam TODO.");
     }
 
     /** One parsed data row of SPEC.md's '## Design' table: the type name (first cell, backticks stripped) and its template-status token ({@code null} when the row has none). */
     record DesignRow(String type, @Nullable String status) {
+    }
+
+    /** One Testing Strategy row. Owner type is an exact link into the Design table rather than an owner guessed from prose. */
+    record TestingStrategyRow(String seamId, String ownerType, String hiddenDecision) {
     }
 
     /** Parses the '## Design' table's data rows (skipping the header and separator), tolerant of column order — the status is found by token, not position. */
@@ -406,19 +446,22 @@ public class StageCheckService {
                 .flatMap(found -> found.lines().map(String::strip)).toList();
         if (!leakedFiles.isEmpty()) {
             return StageCheckResult.failed("SPEC.md's '## Design' table marks type(s) 'student-creates', so the template must NOT contain their files — students create them "
-                    + "from scratch (they are graded through the seeded structural checks and reflection-based tests). Delete these template files (leave TODO breadcrumbs in "
-                    + "the collaborating classes instead): " + leakedFiles
+                    + "from scratch (they are graded through the seeded structural checks and reflection-based tests). Delete these template files: " + leakedFiles
                     + ". This ownership decision passed the specification gate; changing SPEC.md now cannot turn the required design work into a stub.");
         }
         if (!createdTypes.isEmpty()) {
             observation = (observation.isBlank() ? "" : observation + " ") + "Confirmed absent from the template, as the specification requires students to create them: "
                     + createdTypes + ".";
         }
-        String todoMatches = execRead(sandbox, sessionId, "grep", "-rhoE", "--include=*.java", "--exclude-dir=target", "--exclude-dir=build", "TODO[[:space:]]+S[1-9][0-9]*:",
-                GenerationWorkspaceService.WORKSPACE + "/template");
-        List<String> todoReasons = ExerciseIntegrityGate.templateTodoSeamReasons(enforcedTestingSeamIds(sandbox, sessionId), Map.of("template-todos.java", todoMatches));
-        if (!todoReasons.isEmpty()) {
-            return StageCheckResult.failed(String.join(" ", todoReasons));
+        String specification = approvedSpecs.approved(sessionId).orElseGet(() -> readSpec(sandbox, sessionId));
+        Map<String, String> templateFiles = exercise.getProgrammingLanguage() == ProgrammingLanguage.JAVA
+                ? DifferentialVerificationService.readRepositoryFiles(sandbox, sessionId, RepositoryType.TEMPLATE)
+                : Map.of();
+        if (!templateFiles.isEmpty()) {
+            List<String> todoReasons = ExerciseIntegrityGate.templateTodoSeamReasons(specification, templateFiles);
+            if (!todoReasons.isEmpty()) {
+                return StageCheckResult.failed(String.join(" ", todoReasons));
+            }
         }
         return StageCheckResult.passed(observation);
     }
@@ -435,47 +478,24 @@ public class StageCheckService {
 
     /** Stable seam IDs whose Testing Strategy row explicitly requires a hidden after-due-date variant. */
     static Set<String> hiddenVariantSeamIds(String spec) {
-        int start = spec.indexOf("## Testing Strategy");
-        if (start < 0) {
-            return Set.of();
-        }
-        Set<String> seams = new java.util.LinkedHashSet<>();
-        boolean pastHeader = false;
-        for (String line : spec.substring(start).lines().map(String::strip).toList()) {
-            if (line.startsWith("## ") && !line.startsWith("## Testing Strategy")) {
-                break;
-            }
-            if (!line.startsWith("|")) {
-                continue;
-            }
-            if (!pastHeader) {
-                if (line.chars().allMatch(c -> c == '|' || c == '-' || c == ':' || c == ' ')) {
-                    pastHeader = true;
-                }
-                continue;
-            }
-            String[] columns = line.split("\\|");
-            if (columns.length < 3) {
-                continue;
-            }
-            String seam = columns[1].replace("`", "").replace("*", "").strip();
-            String decision = columns[columns.length - 1].replace("`", "").replace("*", "").strip().toLowerCase(java.util.Locale.ROOT);
-            if (decision.equals("yes")) {
-                seams.add(seam);
-            }
-        }
-        return Set.copyOf(seams);
+        return testingStrategyRows(spec).stream().filter(row -> row.hiddenDecision().equals("yes")).map(TestingStrategyRow::seamId)
+                .collect(java.util.stream.Collectors.toUnmodifiableSet());
     }
 
     /**
      * Stable IDs from the first cell of each {@code ## Testing Strategy} data row. Invalid IDs are retained so the SPEC gate can report them rather than silently dropping them.
      */
     static List<String> testingStrategySeamIds(String spec) {
+        return testingStrategyRows(spec).stream().map(TestingStrategyRow::seamId).toList();
+    }
+
+    /** Parses the stable seam ID, exact Design owner, and final hidden decision from the Testing Strategy table. */
+    static List<TestingStrategyRow> testingStrategyRows(String spec) {
         int start = spec.indexOf("## Testing Strategy");
         if (start < 0) {
             return List.of();
         }
-        List<String> ids = new java.util.ArrayList<>();
+        List<TestingStrategyRow> rows = new java.util.ArrayList<>();
         boolean pastHeader = false;
         for (String line : spec.substring(start).lines().map(String::strip).toList()) {
             if (line.startsWith("## ") && !line.startsWith("## Testing Strategy")) {
@@ -490,43 +510,41 @@ public class StageCheckService {
                 }
                 continue;
             }
-            String[] columns = line.split("\\|");
-            String first = columns.length > 1 ? columns[1].replace("`", "").replace("*", "").strip() : "";
-            if (!first.isBlank()) {
-                ids.add(first);
+            String[] columns = line.split("\\|", -1);
+            String seam = columns.length > 1 ? normalizeTestingCell(columns[1]) : "";
+            String owner = columns.length > 2 ? normalizeTestingCell(columns[2]) : "";
+            int lastContentColumn = line.endsWith("|") ? columns.length - 2 : columns.length - 1;
+            String hidden = columns.length > 2 ? normalizeTestingCell(columns[lastContentColumn]).toLowerCase(java.util.Locale.ROOT) : "";
+            if (!seam.isBlank()) {
+                rows.add(new TestingStrategyRow(seam, owner, hidden));
             }
         }
-        return List.copyOf(ids);
+        return List.copyOf(rows);
+    }
+
+    private static String normalizeTestingCell(String cell) {
+        String normalized = cell.strip();
+        if (normalized.length() >= 2 && normalized.startsWith("`") && normalized.endsWith("`")) {
+            normalized = normalized.substring(1, normalized.length() - 1).strip();
+        }
+        while (normalized.length() >= 2 && normalized.startsWith("*") && normalized.endsWith("*")) {
+            normalized = normalized.substring(1, normalized.length() - 1).strip();
+        }
+        return normalized;
+    }
+
+    private static String testingStrategyOwnerHeader(String spec) {
+        int start = spec.indexOf("## Testing Strategy");
+        if (start < 0) {
+            return "";
+        }
+        return spec.substring(start).lines().map(String::strip).filter(line -> line.startsWith("|")).findFirst().map(line -> line.split("\\|", -1))
+                .filter(columns -> columns.length > 2).map(columns -> normalizeTestingCell(columns[2])).orElse("");
     }
 
     /** The last-column cells of the {@code ## Testing Strategy} table's data rows, lower-cased and stripped; empty when the section is not a table. */
     private static List<String> hiddenVariantCells(String spec) {
-        int start = spec.indexOf("## Testing Strategy");
-        if (start < 0) {
-            return List.of();
-        }
-        List<String> cells = new java.util.ArrayList<>();
-        boolean pastHeader = false;
-        for (String line : spec.substring(start).lines().map(String::strip).toList()) {
-            if (line.startsWith("## ") && !line.startsWith("## Testing Strategy")) {
-                break;
-            }
-            if (!line.startsWith("|")) {
-                continue;
-            }
-            if (!pastHeader) {
-                if (line.chars().allMatch(c -> c == '|' || c == '-' || c == ':' || c == ' ')) {
-                    pastHeader = true;
-                }
-                continue;
-            }
-            String[] columns = line.split("\\|");
-            String last = columns.length == 0 ? "" : columns[columns.length - 1].replace("`", "").replace("*", "").strip().toLowerCase(java.util.Locale.ROOT);
-            if (!last.isBlank()) {
-                cells.add(last);
-            }
-        }
-        return cells;
+        return testingStrategyRows(spec).stream().map(TestingStrategyRow::hiddenDecision).filter(cell -> !cell.isBlank()).toList();
     }
 
     /** The normalized names the workspace's grading plan hides until the due date; empty (fail-open) when no readable, parseable plan exists — same contract as the oracle's. */

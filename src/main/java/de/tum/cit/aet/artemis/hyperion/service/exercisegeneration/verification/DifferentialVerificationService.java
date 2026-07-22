@@ -275,10 +275,8 @@ public class DifferentialVerificationService {
         List<String> statementTaskInstructionReasons = ExerciseIntegrityGate.statementTaskInstructionReasons(request.producedProblemStatement());
         boolean statementTasksHaveInstructions = statementTaskInstructionReasons.isEmpty();
         reasons.addAll(statementTaskInstructionReasons);
-        List<String> approvedSeams = contractSpecifications.stream().flatMap(spec -> StageCheckService.testingStrategySeamIds(spec).stream())
-                .filter(id -> id.matches("S[1-9][0-9]*")).distinct().toList();
         List<String> templateTodoSeamReasons = exercise.getProgrammingLanguage() == ProgrammingLanguage.JAVA
-                ? ExerciseIntegrityGate.templateTodoSeamReasons(approvedSeams, request.producedTemplateFiles())
+                ? contractSpecifications.stream().flatMap(spec -> ExerciseIntegrityGate.templateTodoSeamReasons(spec, request.producedTemplateFiles()).stream()).distinct().toList()
                 : List.of();
         boolean templateTodoSeamsHold = templateTodoSeamReasons.isEmpty();
         reasons.addAll(templateTodoSeamReasons);
@@ -370,12 +368,17 @@ public class DifferentialVerificationService {
         List<String> statementTraceabilityReasons = ExerciseIntegrityGate.statementTraceabilityReasons(testPlanJson, problemStatement);
         boolean statementTraceabilityHolds = statementTraceabilityReasons.isEmpty();
         reasons.addAll(statementTraceabilityReasons);
+        List<String> templateTodoSeamReasons = exercise.getProgrammingLanguage() == ProgrammingLanguage.JAVA
+                ? contractSpecifications.stream().flatMap(spec -> ExerciseIntegrityGate.templateTodoSeamReasons(spec, templateFiles).stream()).distinct().toList()
+                : List.of();
+        boolean templateTodoSeamsHold = templateTodoSeamReasons.isEmpty();
+        reasons.addAll(templateTodoSeamReasons);
 
         return new AgentVerifyReport(solution.tests(), solutionPassed, List.copyOf(solution.testFailedNames()), solution.failureEvidence(), template.tests(), templateCompiled,
                 analysis.templateFailed(), template.failureEvidence(), templateWronglyPassing, List.copyOf(solution.testNames()), analysis.unresolvedTaskBindings(),
-                analysis.possiblyDeadFiles(),
-                analysis.actionableGatesPass() && javaAresConventionsHold && approvedSpecificationHolds && approvedTestPlanHolds && statementTraceabilityHolds, reasons,
-                List.copyOf(readHiddenTestNames(sandbox, sessionId)));
+                analysis.possiblyDeadFiles(), analysis.actionableGatesPass() && javaAresConventionsHold && approvedSpecificationHolds && approvedTestPlanHolds
+                        && statementTraceabilityHolds && templateTodoSeamsHold,
+                reasons, List.copyOf(readHiddenTestNames(sandbox, sessionId)));
     }
 
     /**
@@ -454,7 +457,7 @@ public class DifferentialVerificationService {
         return liveSpec.contains("## Design") && liveSpec.contains("## Testing Strategy") ? List.of(liveSpec) : List.of();
     }
 
-    private static Map<String, String> readRepositoryFiles(InteractiveSandbox sandbox, String sessionId, RepositoryType repositoryType) {
+    static Map<String, String> readRepositoryFiles(InteractiveSandbox sandbox, String sessionId, RepositoryType repositoryType) {
         String directory = GenerationWorkspaceService.directoryFor(repositoryType);
         try (TarArchiveInputStream tar = sandbox.copyOut(sessionId, GenerationWorkspaceService.WORKSPACE + "/" + directory)) {
             return tar == null ? Map.of() : WorkspaceArchive.readTar(tar, directory);

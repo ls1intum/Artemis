@@ -114,6 +114,13 @@ public class SpecFidelityCriticService {
               that the template supplies a type marked `student-creates`). Compare the whole specification; a correct table does not cancel contradictory prose;
             - the specification adds an observable validation, exception, state, purity, immutability, thread-safety, or architecture constraint unrelated to the requested
               learning objective.
+            - an explicitly requested difficulty is clearly contradicted by the reasoning left to students. Judge the actual student-owned decisions and collaboration, not file,
+              method, rule, or test counts. An intermediate design-pattern exercise made only of one-operation formula transcription plus routine assignment/delegation is a
+              mismatch; repair one central domain interaction or rule tied to the objective instead of adding boilerplate, types, validations, or arbitrary edge cases.
+            - the declared archetype plainly contradicts the rules/design or its justification confuses a theme with the exercise's structural shape, and that mistake materially
+              leaves the proposed student work hollow or mis-scoped. A harmless metadata label alone is not a blocker. Do not keyword-map or forbid a genuinely justified "none of these" choice.
+            - the Testing Strategy gives supporting calculations greater grading emphasis than the abstraction, interaction, state transition, or algorithm named as the learning
+              objective. Judge emphasis semantically; do not apply a numeric quota or require one universal ordering.
 
             A brief can deliberately leave theme, names, API, and strategy computations open. Coherent choices needed to instantiate that open exercise are not unsupported
             additions. Internal implementation choices for given plumbing are not graded constraints.
@@ -202,8 +209,8 @@ public class SpecFidelityCriticService {
             a template gap. Report only concrete scaffold defects evidenced directly in the artifacts: missing required APIs, uncompilable provided code, accidental runtime failures outside \
             student-owned seams, or the teaching-scaffold defects below.
 
-            Also fail a templateCheck when the house teaching scaffold is missing: a stubbed member whose doc comment does not restate its student-visible contract, a statement task with \
-            no imperative TODO at the place the work happens (inside the member body, not above the signature; including a breadcrumb for a type the student must still create), a solution/template diff that changes documentation \
+            Also fail a templateCheck when the house teaching scaffold is missing: a stubbed member whose doc comment does not restate its student-visible contract, a statement task for a stubbed owner with \
+            no imperative TODO at the place the work happens (inside the member body, not above the signature), a solution/template diff that changes documentation \
             or comments beyond the implementation itself, or the statement reproduces a template stub's signature and javadoc verbatim as a fenced code block instead of a compact API surface (a \
             signature list, table, or diagram; the template is the API reference at the point of use). Quote the exact stub signature, doc text, TODO line, diff line, or duplicated block's first \
             line verbatim from the artifacts above as reason evidence; omit the check instead of guessing when no such artifact text exists.
@@ -212,6 +219,10 @@ public class SpecFidelityCriticService {
             separate tasks for its input partitions, or when a student-owned solution/template diff or TODO has no task that tells the student to perform that work. Give one
             grouped finding per seam and name the smallest statement/scaffold repair. When a public stub lacks its contract documentation, require the identical documentation
             in BOTH solution and template; never recommend a template-only edit that violates diff discipline.
+
+            Treat a PlantUML diagram as student-facing API evidence. Compare classifier kinds (class/interface/abstract class/enum), public members, and relationships with the
+            approved contract and solution. Report a contradiction when the diagram teaches a different API or type kind, and a templateCheck only when a testsColor link is
+            definitively unrelated to the element the named test diagnoses. Recommend a problem-statement-only repair unless another downstream artifact is independently wrong.
 
             Return every failed check. When a check category has no failures, return only one representative passing check for that category. Any false check is itself a blocker and need not \
             be repeated in a finding array. Do not assess mutation coverage in this pass. Do not treat test names or comments as proof. Missing examples and conservative scope additions are \
@@ -236,6 +247,9 @@ public class SpecFidelityCriticService {
             When the learning objective is collaboration through an abstraction (for example delegation, a strategy, callback, or policy), prioritize a mutant that returns the
             known concrete outcomes while bypassing the supplied collaborator. A fake or recording collaborator that proves forwarding and return propagation is behavioral
             evidence, not a brittle implementation-detail assertion.
+
+            For an unbounded persistence promise such as "all subsequent calls", one representative repeated call after the transition is sufficient to kill a plausible
+            revert-after-first-call mutant. Do not move the goalpost to a later call count merely because no finite suite can prove a universal statement.
 
             Every failed mutant, uncovered finding, or weak-oracle finding must identify the exact student-facing promise it assesses. If the primary source requirements do not require every \
             behavior needed to distinguish the proposed wrong implementation, omit it instead of reporting missing coverage. Never report a finding whose own reason says the specification \
@@ -579,13 +593,33 @@ public class SpecFidelityCriticService {
      */
     public SpecFidelityReport critique(@Nullable String brief, @Nullable String problemStatement, List<String> testNames, Map<RepositoryType, Map<String, String>> artifacts,
             @Nullable Consumer<ChatResponse> usageSink, BooleanSupplier cancelled, @Nullable SpecFidelityReport previousReport, @Nullable String specDocument) {
+        return critique(brief, problemStatement, testNames, artifacts, usageSink, cancelled, previousReport, specDocument, null);
+    }
+
+    /**
+     * Full-artifact review with a bounded delta from the immediately preceding mechanically verified candidate, used to adjudicate whether prior blockers were repaired.
+     *
+     * @param brief            the instructor's source requirements
+     * @param problemStatement the produced problem statement
+     * @param testNames        the produced test identifiers
+     * @param artifacts        the generated repository files grouped by repository type
+     * @param usageSink        receives reviewer token usage; {@code null} skips accounting
+     * @param cancelled        polled between provider calls
+     * @param previousReport   the immediately preceding attempt's report, for review continuity
+     * @param specDocument     the gate-frozen SPEC.md snapshot, or {@code null} when unavailable
+     * @param repairDelta      the bounded artifact changes since the previous reviewed candidate, or {@code null} on the first review
+     * @return the review report
+     */
+    public SpecFidelityReport critique(@Nullable String brief, @Nullable String problemStatement, List<String> testNames, Map<RepositoryType, Map<String, String>> artifacts,
+            @Nullable Consumer<ChatResponse> usageSink, BooleanSupplier cancelled, @Nullable SpecFidelityReport previousReport, @Nullable String specDocument,
+            @Nullable String repairDelta) {
         requireReviewInputsSafe(brief, problemStatement, testNames, artifacts, null);
         List<SpecFidelityReport.Finding> findings = new ArrayList<>(detectMechanicsLeaks(problemStatement));
         if (!hasCompleteArtifactSet(artifacts)) {
             findings.addAll(reviewUnavailable(null, "The generated solution, template, or tests snapshot was missing."));
             return new SpecFidelityReport(List.copyOf(findings));
         }
-        findings.addAll(reviewArtifacts(brief, problemStatement, testNames, artifacts, null, usageSink, cancelled, previousReport, specDocument));
+        findings.addAll(reviewArtifacts(brief, problemStatement, testNames, artifacts, null, usageSink, cancelled, previousReport, specDocument, repairDelta));
         return new SpecFidelityReport(List.copyOf(findings));
     }
 
@@ -645,7 +679,7 @@ public class SpecFidelityCriticService {
             findings.addAll(reviewUnavailable(adaptationChanges, "The generated solution, template, or tests snapshot was missing."));
             return new SpecFidelityReport(List.copyOf(findings));
         }
-        findings.addAll(reviewArtifacts(brief, problemStatement, testNames, artifacts, adaptationChanges, usageSink, cancelled, previousReport, null));
+        findings.addAll(reviewArtifacts(brief, problemStatement, testNames, artifacts, adaptationChanges, usageSink, cancelled, previousReport, null, null));
         return new SpecFidelityReport(List.copyOf(findings));
     }
 
@@ -712,7 +746,7 @@ public class SpecFidelityCriticService {
     /** Runs two bounded, specialized full-artifact review passes and fails closed when either verdict is incomplete. */
     private List<SpecFidelityReport.Finding> reviewArtifacts(@Nullable String brief, @Nullable String problemStatement, List<String> testNames,
             Map<RepositoryType, Map<String, String>> artifacts, @Nullable String adaptationChanges, @Nullable Consumer<ChatResponse> usageSink, BooleanSupplier cancelled,
-            @Nullable SpecFidelityReport previousReport, @Nullable String specDocument) {
+            @Nullable SpecFidelityReport previousReport, @Nullable String specDocument, @Nullable String repairDelta) {
         String effectiveBrief = brief == null ? "" : brief.strip();
         if (adaptationChanges != null && adaptationChanges.isBlank()) {
             String requestedChange = effectiveBrief.isBlank() ? "the requested adaptation" : truncate(effectiveBrief);
@@ -730,7 +764,7 @@ public class SpecFidelityCriticService {
         // prevents a model-authored SPEC from laundering its own invented requirement into "primary source" authority.
         String specificationContract = specDocument == null || specDocument.isBlank() ? "" : specDocument.strip();
         String authoritativeSource = specificationContract.isBlank() ? effectiveBrief : effectiveBrief + "\n\n" + specificationContract;
-        String userPrompt = renderUserPrompt(effectiveBrief, specificationContract, problemStatement, testNames, evidence.text(), adaptationChanges, previousReport);
+        String userPrompt = renderUserPrompt(effectiveBrief, specificationContract, problemStatement, testNames, evidence.text(), adaptationChanges, previousReport, repairDelta);
         // Contradiction and hidden-requirement findings may quote the frozen contract, while invented-requirement findings must quote an artifact the repair loop can still edit.
         // Keeping these grounding sources separate prevents a frozen specification defect from becoming an impossible downstream repair while still catching unsupported promises
         // introduced by the statement, solution, template, or tests.
@@ -875,14 +909,17 @@ public class SpecFidelityCriticService {
     }
 
     private static String renderUserPrompt(String brief, String specificationContract, @Nullable String problemStatement, List<String> testNames, String artifactEvidence,
-            @Nullable String adaptationChanges, @Nullable SpecFidelityReport previousReport) {
+            @Nullable String adaptationChanges, @Nullable SpecFidelityReport previousReport, @Nullable String repairDelta) {
         String tests = testNames.isEmpty() ? "(no tests were produced)" : String.join("\n", testNames);
         String changes = adaptationChanges == null ? "" : "\n\nADAPTATION CHANGES (baseline to candidate):\n" + (adaptationChanges.isBlank() ? "(no changes)" : adaptationChanges);
+        String repairChanges = repairDelta == null ? ""
+                : "\n\nREPAIR DELTA (previous mechanically verified candidate to current candidate):\n" + (repairDelta.isBlank() ? "(no artifact changes)" : repairDelta);
         return "INSTRUCTOR BRIEF (sole authority for requested scope):\n" + brief
                 + "\n\nAPPROVED SPECIFICATION CONTRACT (candidate-authored; binding downstream, but cannot authorize additions to the brief):\n"
                 + (specificationContract.isBlank() ? "(none)" : specificationContract) + "\n\nPRODUCED PROBLEM STATEMENT:\n"
                 + (problemStatement == null || problemStatement.isBlank() ? "(empty)" : problemStatement.strip()) + "\n\nTEST NAMES (navigation aid only; not coverage evidence) ("
-                + testNames.size() + "):\n" + tests + "\n\nMECHANICALLY VERIFIED CANDIDATE ARTIFACTS:\n" + artifactEvidence + changes + renderPreviousReviewSection(previousReport)
+                + testNames.size() + "):\n" + tests + "\n\nMECHANICALLY VERIFIED CANDIDATE ARTIFACTS:\n" + artifactEvidence + changes + repairChanges
+                + renderPreviousReviewSection(previousReport)
                 + "\n\nDo not treat test names or comments as proof. Return the complete JSON verdict specified by the system prompt.";
     }
 
@@ -894,14 +931,15 @@ public class SpecFidelityCriticService {
         if (previousReport == null || previousReport.findings().isEmpty()) {
             return "";
         }
-        StringBuilder section = new StringBuilder("\n\nPREVIOUS REVIEW (your own prior verdict on this candidate):");
+        StringBuilder section = new StringBuilder("\n\nPREVIOUS REVIEW HYPOTHESES (verdict on the previous candidate; not facts about the current artifacts):");
         for (SpecFidelityReport.Finding finding : previousReport.findings()) {
             section.append("\n- [").append(finding.kind()).append("] ").append(finding.requirement()).append(": ").append(finding.detail());
         }
-        section.append("\nFirst re-verify each item above against the current artifacts: omit it if resolved, or repeat it with fresh evidence if still open. Do not "
-                + "re-litigate aspects you previously accepted unless those artifacts changed. Then report only genuinely new findings, and for each new finding state in its "
-                + "reason why it was not visible in the previous review (e.g. introduced by the repair, or unmasked by a change) — a finding you simply overlooked last time is "
-                + "a sign to re-check it, not to report it as new.");
+        section.append(
+                "\nFirst adjudicate each item against the current artifacts and, when present, the REPAIR DELTA: omit it if resolved, or repeat it with fresh current evidence if still open. For a "
+                        + "previously named mutant, explicitly decide whether the added/changed assertion now kills that same mutant before searching for another. Do not "
+                        + "invent alternate versions of resolved findings. Then perform the complete review of the current candidate. Report any fresh high-confidence blocker with current evidence, "
+                        + "including a defect overlooked previously; do not suppress a real defect merely because its artifact was unchanged.");
         return section.toString();
     }
 

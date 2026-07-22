@@ -43,6 +43,7 @@ import de.tum.cit.aet.artemis.buildagent.dto.SandboxExecResult;
 import de.tum.cit.aet.artemis.buildagent.dto.SandboxSessionSpec;
 import de.tum.cit.aet.artemis.buildagent.service.InteractiveSandbox;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.profile.LanguageGenerationProfile;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.workspace.GenerationWorkspaceService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.workspace.SandboxBuildCommandService;
 import de.tum.cit.aet.artemis.localci.service.BuildPhasesTemplateService;
 import de.tum.cit.aet.artemis.localci.service.BuildScriptProviderService;
@@ -165,6 +166,12 @@ class DifferentialVerificationServiceTest {
 
         private String specDocument;
 
+        private Map<String, String> solutionRepositoryFiles;
+
+        private Map<String, String> templateRepositoryFiles;
+
+        private Map<String, String> testsRepositoryFiles;
+
         private ScriptedSandbox(BuildReportSpec solution, BuildReportSpec template, String problemStatement) {
             this(solution, template, problemStatement, "build ran");
         }
@@ -176,6 +183,13 @@ class DifferentialVerificationServiceTest {
 
         private ScriptedSandbox withSpec(String spec) {
             this.specDocument = spec;
+            return this;
+        }
+
+        private ScriptedSandbox withRepositories(Map<String, String> solutionFiles, Map<String, String> templateFiles, Map<String, String> testsFiles) {
+            this.solutionRepositoryFiles = solutionFiles;
+            this.templateRepositoryFiles = templateFiles;
+            this.testsRepositoryFiles = testsFiles;
             return this;
         }
 
@@ -216,6 +230,18 @@ class DifferentialVerificationServiceTest {
 
         @Override
         public TarArchiveInputStream copyOut(String sessionId, String path) {
+            if (path.equals(GenerationWorkspaceService.WORKSPACE + "/solution") && solutionRepositoryFiles != null) {
+                return ReportTarFixtures.tar("solution", solutionRepositoryFiles.entrySet().stream()
+                        .collect(java.util.stream.Collectors.toMap(Map.Entry::getKey, entry -> entry.getValue().getBytes(StandardCharsets.UTF_8))));
+            }
+            if (path.equals(GenerationWorkspaceService.WORKSPACE + "/template") && templateRepositoryFiles != null) {
+                return ReportTarFixtures.tar("template", templateRepositoryFiles.entrySet().stream()
+                        .collect(java.util.stream.Collectors.toMap(Map.Entry::getKey, entry -> entry.getValue().getBytes(StandardCharsets.UTF_8))));
+            }
+            if (path.equals(GenerationWorkspaceService.WORKSPACE + "/tests") && testsRepositoryFiles != null) {
+                return ReportTarFixtures.tar("tests", testsRepositoryFiles.entrySet().stream()
+                        .collect(java.util.stream.Collectors.toMap(Map.Entry::getKey, entry -> entry.getValue().getBytes(StandardCharsets.UTF_8))));
+            }
             if (path.endsWith("/solution")) {
                 return solution.reportsTar("solution");
             }
@@ -1459,6 +1485,59 @@ class DifferentialVerificationServiceTest {
             assertThat(report.templateCompiled()).isTrue();
             assertThat(report.templateWronglyPassing()).isEmpty();
             assertThat(report.toObservation()).contains("Solution: 2/2 tests pass.").contains("Template: all required gradable tests fail").contains("MECHANICAL PRECHECK: PASS");
+        }
+
+        @Test
+        void ownerAwareTodoVerdictMatchesTheFinalGateBeforeSubmission() {
+            String spec = """
+                    ## Design
+                    | Type | Role | Template status |
+                    |---|---|---|
+                    | FireSpell | strategy | student-creates |
+                    | Mage | provided context | given |
+                    ## Testing Strategy
+                    | Seam | Owner type | Partitions | Weight | Hidden variant |
+                    |---|---|---|---|---|
+                    | S1 | FireSpell | representative values | 3 | no |
+                    """;
+            String plan = """
+                    {"tests":[
+                      {"name":"sortsUnsortedArray","seam":"S1","weight":3,"visibility":"ALWAYS"},
+                      {"name":"sortsArrayWithDuplicates","seam":"S1","weight":3,"visibility":"ALWAYS"}
+                    ]}
+                    """;
+            String mage = "package de.test; public class Mage {}";
+            String test = """
+                    package de.test;
+                    import org.junit.jupiter.api.Test;
+                    import de.tum.in.test.api.BlacklistPath;
+                    import de.tum.in.test.api.StrictTimeout;
+                    import de.tum.in.test.api.WhitelistPath;
+                    import de.tum.in.test.api.jupiter.Public;
+                    @Public @WhitelistPath("target") @BlacklistPath("target/test-classes")
+                    class SpellTest {
+                        @Test @StrictTimeout(1) void sortsUnsortedArray() {}
+                        @Test @StrictTimeout(1) void sortsArrayWithDuplicates() {}
+                    }
+                    """;
+            Map<String, String> solutionFiles = Map.of("src/de/test/Mage.java", mage, "src/de/test/FireSpell.java", "package de.test; public class FireSpell {}");
+            Map<String, String> testsFiles = Map.of("pom.xml", aresPom(), "test/de/test/SpellTest.java", test);
+            List<String> names = List.of(DEFAULT_BOUND_NAMES);
+            ProgrammingExercise javaExercise = new ProgrammingExercise();
+            javaExercise.setProgrammingLanguage(ProgrammingLanguage.JAVA);
+            javaExercise.setPackageName("de.test");
+            DifferentialVerificationService verifier = newVerifier();
+
+            ScriptedSandbox misleading = new ScriptedSandbox(resultWithFails(0, names, List.of()), resultWithFails(1, names, names), PROBLEM_STATEMENT_WITH_TASK).withSpec(spec)
+                    .withTestPlan(plan)
+                    .withRepositories(solutionFiles, Map.of("src/de/test/Mage.java", "package de.test; public class Mage { // TODO S1: create FireSpell\n}"), testsFiles);
+            AgentVerifyReport rejected = verifier.selfCheck(misleading, "s", javaExercise);
+            assertThat(rejected.wouldBeAccepted()).isFalse();
+            assertThat(rejected.blockingReasons()).anyMatch(reason -> reason.contains("student-created") && reason.contains("Mage.java"));
+
+            ScriptedSandbox honest = new ScriptedSandbox(resultWithFails(0, names, List.of()), resultWithFails(1, names, names), PROBLEM_STATEMENT_WITH_TASK).withSpec(spec)
+                    .withTestPlan(plan).withRepositories(solutionFiles, Map.of("src/de/test/Mage.java", mage), testsFiles);
+            assertThat(verifier.selfCheck(honest, "s", javaExercise).wouldBeAccepted()).isTrue();
         }
 
         @Test

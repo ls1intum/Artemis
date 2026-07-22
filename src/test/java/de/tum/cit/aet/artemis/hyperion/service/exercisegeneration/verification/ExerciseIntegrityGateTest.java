@@ -727,18 +727,42 @@ class ExerciseIntegrityGateTest {
 
     @Test
     void templateTodoSeams_rejectMissingAndUnknownWorkMarkers() {
+        String spec = """
+                ## Design
+                | Type | Role | Template status |
+                |---|---|---|
+                | Player | player | stubbed |
+                | Context | context | stubbed |
+                ## Testing Strategy
+                | Seam | Owner type | Partitions | Weight | Hidden variant |
+                |---|---|---|---|---|
+                | S1 | Player | create strategy | 3 | no |
+                | S2 | Context | wire strategy | 2 | no |
+                """;
         Map<String, String> template = Map.of("src/Player.java", "class Player { // TODO S1: create strategy\n// TODO S9: stale work\n}");
 
-        assertThat(ExerciseIntegrityGate.templateTodoSeamReasons(List.of("S1", "S2"), template)).hasSize(2)
-                .anySatisfy(reason -> assertThat(reason).contains("no TODO breadcrumb", "S2")).anySatisfy(reason -> assertThat(reason).contains("does not declare", "S9"));
+        assertThat(ExerciseIntegrityGate.templateTodoSeamReasons(spec, template)).hasSize(2).anySatisfy(reason -> assertThat(reason).contains("declaring source", "S2"))
+                .anySatisfy(reason -> assertThat(reason).contains("does not declare", "S9"));
     }
 
     @Test
     void templateTodoSeams_acceptExactCoverageAcrossFiles() {
+        String spec = """
+                ## Design
+                | Type | Role | Template status |
+                |---|---|---|
+                | Player | player | stubbed |
+                | Context | context | stubbed |
+                ## Testing Strategy
+                | Seam | Owner type | Partitions | Weight | Hidden variant |
+                |---|---|---|---|---|
+                | S1 | Player | create strategy | 3 | no |
+                | S2 | Context | wire strategy | 2 | no |
+                """;
         Map<String, String> template = Map.of("src/Player.java", "class Player { // TODO S1: create strategy\n}", "src/Context.java",
                 "class Context { // TODO S2: wire strategy\n}");
 
-        assertThat(ExerciseIntegrityGate.templateTodoSeamReasons(List.of("S1", "S2"), template)).isEmpty();
+        assertThat(ExerciseIntegrityGate.templateTodoSeamReasons(spec, template)).isEmpty();
     }
 
     @Test
@@ -794,10 +818,49 @@ class ExerciseIntegrityGateTest {
 
     @Test
     void templateTodoSeams_ignoreMarkersOutsideJavaSources() {
+        String spec = """
+                ## Design
+                | Type | Role | Template status |
+                |---|---|---|
+                | Player | player | stubbed |
+                ## Testing Strategy
+                | Seam | Owner type | Partitions | Weight | Hidden variant |
+                |---|---|---|---|---|
+                | S1 | Player | create strategy | 3 | no |
+                """;
         Map<String, String> template = Map.of("src/Player.java", "class Player { // TODO S1: create strategy\n}", "README.md", "TODO S9: author note", "target/Stale.java",
                 "// TODO S8: generated output");
 
-        assertThat(ExerciseIntegrityGate.templateTodoSeamReasons(List.of("S1"), template)).isEmpty();
+        assertThat(ExerciseIntegrityGate.templateTodoSeamReasons(spec, template)).isEmpty();
+    }
+
+    @Test
+    void templateTodoSeams_rejectBreadcrumbsForAbsentStudentCreatedOwnersAndWrongStubbedFiles() {
+        String spec = """
+                ## Design
+                | Type | Role | Template status |
+                |---|---|---|
+                | FireSpell | strategy | student-creates |
+                | IceSpell | strategy | student-creates |
+                | Mage | context | stubbed |
+                ## Testing Strategy
+                | Seam | Owner type | Partitions | Weight | Hidden variant |
+                |---|---|---|---|---|
+                | S1 | FireSpell | formula | 2 | yes |
+                | S2 | IceSpell | formula | 2 | yes |
+                | S3 | Mage | delegation and switching | 3 | yes |
+                """;
+        Map<String, String> misleading = Map.of("src/Mage.java", "class Mage { // TODO S1: store\n// TODO S2: switch\n// TODO S3: cast\n}");
+        assertThat(ExerciseIntegrityGate.templateTodoSeamReasons(spec, misleading)).hasSize(2).allSatisfy(reason -> assertThat(reason).contains("student-created", "Mage.java"));
+
+        Map<String, String> honest = Map.of("src/Mage.java", "class Mage { // TODO S3: delegate and switch\n}");
+        assertThat(ExerciseIntegrityGate.templateTodoSeamReasons(spec, honest)).isEmpty();
+
+        Map<String, String> wrongFile = Map.of("src/Mage.java", "class Mage {}", "src/Helper.java", "class Helper { // TODO S3: delegate\n}");
+        assertThat(ExerciseIntegrityGate.templateTodoSeamReasons(spec, wrongFile)).anySatisfy(reason -> assertThat(reason).contains("outside its approved owner", "Helper.java"));
+
+        Map<String, String> ownerMentionedOnlyInAComment = Map.of("src/Helper.java", "// class Mage would own this\nclass Helper { // TODO S3: delegate\n}");
+        assertThat(ExerciseIntegrityGate.templateTodoSeamReasons(spec, ownerMentionedOnlyInAComment)).anySatisfy(reason -> assertThat(reason).contains("declaring source", "Mage"));
     }
 
     @Test

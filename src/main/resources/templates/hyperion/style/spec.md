@@ -14,6 +14,7 @@ to fit a downstream mistake.
 Name the exercise's shape before writing rules. The archetype is a lens for the brief, never an alternative
 to it: every explicit requirement in the brief (a named design pattern, student-created types, a stated
 domain) binds the spec — pick the archetype that fits those requirements, not the one easiest to specify.
+Theme and domain names do not change the exercise's structural archetype.
 Pick the archetype whose non-hollow contract your rules will honor, or declare "none of these" with a
 justification:
 
@@ -43,7 +44,8 @@ A markdown table under `## Worked Examples` with at least these columns: the rul
 the expected result. At least two rows per central rule with DIFFERENT expected results, so the table proves
 branching instead of asserting a constant. Verify every row's arithmetic by actually computing it in the
 sandbox (a throwaway script under /tmp) before writing it down — a wrong number here poisons every later
-stage. The solution stage will replay these rows against the real implementation.
+stage. An example meant to demonstrate a branch, strategy change, or state transition must use a witness for
+which the competing behaviours produce observably different outcomes. The solution stage will replay these rows against the real implementation.
 
 ## Design table
 
@@ -57,8 +59,8 @@ declarations for a provided scaffold to compile. When a brief combines a provide
 student-designed interface and concrete strategies, the compile-safe allocation is mandatory: the interface is
 `student-creates`; concrete strategies are `student-creates`; the context is `stubbed`. Keep the context class as
 the provided scaffold, but omit the minimum members whose declarations require the absent interface. Put one
-class-body TODO breadcrumb in that context describing the student-owned collaboration after they create the
-interface. Tests reach the student-defined interface and the context wiring reflectively. An empty
+separate seam on the context only when students also implement independently actionable context work; do not
+reuse an absent type's seam ID as a class-body breadcrumb. Tests reach the student-defined interface and the context wiring reflectively. An empty
 interface declaration still pre-creates the type, so it is not faithful when the brief explicitly assigns creating
 that interface to students.
 For every piece of MUTABLE STATE, say below the table which type owns it and whether it survives object
@@ -75,8 +77,7 @@ those are explicitly part of the objective.
 Reconcile that ownership with compilation before approving the design. Every testing-strategy seam described
 as student work must map to a `stubbed` or `student-creates` row. A given or stubbed type cannot expose an
 omitted `student-creates` type in a template signature: the template would not compile. Make the dependent type
-student-created too, or omit only the student-owned dependent members and replace them with stable class-body
-TODO breadcrumbs. Given types and all non-student-owned members of stubbed types stay identical in both
+student-created too, or omit only the student-owned dependent members. Given types and all non-student-owned members of stubbed types stay identical in both
 repositories. Only types marked `student-creates` and the minimum dependent members assigned to the same seam
 are absent from the template. Never make a shared API accept the real interface in the solution and `Object` in
 the template.
@@ -94,7 +95,10 @@ necessary when the brief leaves them open; adding unrelated defensive policy is 
 
 A table under `## Testing Strategy` with one row per SEAM — an independently actionable unit of student work.
 Give the first column stable IDs `S1`, `S2`, ...; the template TODOs, grading plan, and statement tasks carry
-these IDs through the rest of generation. Never one seam per test; never one seam for the whole exercise unless it genuinely is one. Each row lists the
+these IDs through the rest of generation. The second column, `Owner type`, is one exact bare type from the Design table: the type where students implement that seam.
+A `stubbed` owner carries the seam's TODO inside its own source; a `student-creates` owner is absent and has no template TODO—the statement and tests anchor that work. Never put
+its ID on an unrelated collaborator merely to complete the ID set. If a collaborator has separately actionable student work, give it a separate seam owned by that collaborator.
+Never one seam per test; never one seam for the whole exercise unless it genuinely is one. Each row lists the
 behaviour partitions its tests need, a numeric weight tier (`3` for core learning objectives, `2` for supporting
 behaviour, `1` for edge polish; the test stage writes the machine-readable plan), and LAST the hidden-variant decision, written as `yes` or
 `no` — that cell is read mechanically, so prose there reads as "no". A hidden variant (visibility
@@ -163,11 +167,11 @@ Public API:
 
 ## Testing Strategy
 
-| Seam | Partitions | Weight | Hidden variant |
-|------|-----------|--------|----------------|
-| S1 | implement flat-rate rewards: typical amount; sub-dollar rounds to 0; threshold bonus at exactly $50 | 3 | yes |
-| S2 | wire strategy into the account: recording delegates; swapping keeps the balance | 2 | no |
-| S3 | redeem safely: happy path; over-redeem throws, balance unchanged | 2 | yes |
+| Seam | Owner type | Partitions | Weight | Hidden variant |
+|------|------------|------------|--------|----------------|
+| S1 | FlatRateStrategy | implement flat-rate rewards: typical amount; sub-dollar rounds to 0; threshold bonus at exactly $50 | 2 | yes |
+| S2 | LoyaltyAccount | wire strategy into the account: recording delegates; swapping keeps the balance | 3 | no |
+| S3 | LoyaltyAccount | redeem safely: happy path; over-redeem throws, balance unchanged | 2 | yes |
 
 ## Diagram
 

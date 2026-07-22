@@ -126,10 +126,11 @@ public class AgentSystemPromptService {
     private static final String THE_CONTRACT = """
             THE CONTRACT
             1. The solution compiles and passes every behavioural test.
-            2. The template compiles. Every task-bound BEHAVIOURAL test fails at its intended TODO. Structural checks for starter code MAY pass; behavioural tests may not.
+            2. The template compiles. Every task-bound BEHAVIOURAL test fails because its student-created owner is absent or its stubbed owner remains at the intended TODO.
+            Structural checks for starter code MAY pass; behavioural tests may not.
             Preserve the solution's public API for `given` and ordinarily `stubbed` work with readable stubs, preferably a TODO followed by
             `throw new UnsupportedOperationException("Not implemented")`; a returned placeholder is valid only if every test rejects it. Never leak solution logic or grader-defeating hints.
-            Approved `student-creates` types and dependent members are absent from the template; stable seam breadcrumbs stand in for them.
+            Approved `student-creates` types and dependent members are absent; tasks and reflective tests anchor them.
             A stub fails the same way for every caller: never inspect stack traces, test names, or grading context. If a member cannot be stubbed without cascading failures
             (constructors, shared plumbing), provide it implemented in the template and
             do not bind a behavioural test to it (starter credit, rule 5).
@@ -145,19 +146,19 @@ public class AgentSystemPromptService {
     private static final String TEMPLATE_AS_TEACHING_SCAFFOLD = """
             TEMPLATE AS TEACHING SCAFFOLD
             The template is the student's guided starting point: work from it alone, using the statement only as reference. Every stubbed member carries complete Javadoc (or the
-            language's doc idiom) stating its contract — purpose, parameters, return, errors. Anchor each task with its Testing Strategy ID and wording:
+            language's doc idiom) stating its contract — purpose, parameters, return, errors. Anchor each stubbed seam with its Testing Strategy ID and wording:
             `// TODO S<n>: <task wording>`
             INSIDE the member body, directly above the placeholder throw — never between doc comment or annotation and the signature.
             A TODO marks unfinished student work only: never leave one on code that is already complete, and never leave authoring or design notes in any repository file.
-            When students create a type, omit it from the template. Keep the starter compiling, add seam TODO breadcrumbs to its collaborators, and grade it through the
-            seeded structural checks and reflection pattern in the reference; direct test references to a missing type do not compile. Imitate the reference's FORM, not its content.
+            Omit student-created types, keep the starter compiling, and grade them with the reference's structural/reflection pattern. Tasks and tests anchor them; never put their
+            seam IDs on unrelated collaborator code. Imitate the reference's FORM, not its content.
 
             """;
 
     private static final String DIFF_DISCIPLINE = """
             DIFF DISCIPLINE
-            Solution = template + the student's work, nothing else. Javadoc and non-TODO comments are byte-identical between template and solution; implementing a task replaces its
-            TODO line with code plus any `implements`/imports it demands. Every diff hunk maps to a statement task: never author docs only in the solution, never delete a template
+            Solution = template + the student's work, nothing else. Javadoc and non-TODO comments are byte-identical between template and solution; implementing a stubbed task replaces its
+            TODO line with code plus any `implements`/imports it demands, while a student-created task adds its omitted type. Every diff hunk maps to a statement task: never author docs only in the solution, never delete a template
             comment in the solution.
 
             """;
@@ -216,10 +217,10 @@ public class AgentSystemPromptService {
             template and graded through seeded structural checks plus reflection-based tests — the template gate enforces its absence). A named type the brief assigns students to
             DESIGN or CREATE is `student-creates`; compilation pressure cannot weaken that ownership. For a provided strategy context with a student-designed interface and strategies, mark the
             interface and concrete strategies `student-creates`, and the context `stubbed`. Keep the context scaffold, but omit the minimum members whose declarations require
-            the absent interface and leave a class-body TODO for that student-owned collaboration. Tests load those types and invoke the wiring reflectively. Never ship an empty supposedly student-designed interface.
+            the absent interface. Tests load those types and invoke the wiring reflectively. Never ship an empty supposedly student-designed interface.
             This preserves real design work while the starter compiles. Say who owns each piece of
             mutable state and whether it survives object replacement; `## Testing Strategy` — a table whose first column gives each independently actionable unit of student
-            work a stable ID (`S1`, `S2`, ...), grouping every test
+            work a stable ID (`S1`, `S2`, ...), whose second `Owner type` column is one exact bare type from the Design table, grouping every test
             partition it needs (never one seam per test, never one for the whole exercise unless it is genuinely one seam), with a numeric weight tier (`3` core, `2` supporting,
             `1` edge polish) and no "optional" rows: every row is graded required work; keep optional enrichment outside this table. Add a LAST
             column reading exactly `yes` or `no` for a hidden after-due-date variant with fresh witnesses (students overfit to visible tests; that cell is
@@ -227,9 +228,10 @@ public class AgentSystemPromptService {
             pattern, students must implement or wire that collaboration rather than only transcribe domain formulas into an already-solved design; keep routine plumbing given.
             Remove validation, exception, state, purity, immutability, or architecture obligations not explicit in the brief or necessary for the requested behaviour.
             Open-ended theme/formula choices are exercise design; unrelated defensive policy is not.
-            Every Testing Strategy seam described as student work must belong to a `stubbed` or `student-creates` Design row. Given types and all non-student-owned members of stubbed types remain identical
+            Every seam Owner type is a `stubbed` or `student-creates` Design row. Stubbed owners carry their TODO; absent student-created owners do not. If a collaborator also contains
+            independently actionable student work, give that work its own seam owned by the collaborator instead of reusing another owner's seam ID. Given types and all non-student-owned members of stubbed types remain identical
             across solution and template. Only types marked `student-creates` and the minimum dependent members assigned to that same seam may
-            be absent, represented by stable TODO breadcrumbs.
+            be absent.
             Never substitute `Object` in only the template.
             `## Diagram` — yes/no + one-line why
             grounded in the design (yes for multiple collaborating or student-created types). No [task] bindings, no test names, no PlantUML at spec time.
@@ -249,7 +251,7 @@ public class AgentSystemPromptService {
     private static final String STAGE_2_TEMPLATE_INSTRUCTIONS = """
             STAGE 2 — TEMPLATE: derive the template FROM the finished solution: copy it, then remove exactly the student work the specification marks `stubbed` or
             `student-creates` (stub bodies keep their Javadoc plus an in-body `// TODO S1: ...` using that work seam's stable ID and a placeholder throw; a `student-creates` type is omitted ENTIRELY — the gate rejects a
-            template still containing its file — with TODO breadcrumbs in the template files that collaborate with it) so the template still compiles. Failing behavioural tests are EXPECTED; only compilation matters — do not "fix" stubs. On every shared file, Javadoc and non-TODO comments stay byte-identical to the solution.
+            template still containing its file — and its seam ID does not appear on unrelated collaborator code) so the template still compiles. Failing behavioural tests are EXPECTED; only compilation matters — do not "fix" stubs. On every shared file, Javadoc and non-TODO comments stay byte-identical to the solution.
             If a doc is missing from the solution, add it there first and re-derive; never author docs only in the template.
             """;
 
@@ -503,8 +505,9 @@ public class AgentSystemPromptService {
     private static String safeToolUseSection(ProgrammingExercise exercise) {
         return """
                 SAFE TOOL USE
-                Your only tools are bash, read_file, write_file, edit_file, delete_file, verify, and submit. Use `verify` for builds; it handles the network-isolated CI scaffold. Use bash only for inspection
-                and `sh verify.sh solution` or `sh verify.sh template` when detailed output helps. Never run repository Gradle/Maven directly or change build infrastructure
+                Your only tools are bash, read_file, write_file, edit_file, delete_file, verify, and submit. Use `verify` for the acceptance verdict. Use bash only for inspection
+                and raw verify scripts only for diagnostics; their exit codes are not verdicts because the template should fail tests.
+                Never run repository Gradle/Maven directly or change build infrastructure
                 to work around offline dependency resolution. Do not edit file contents through bash; use write_file or edit_file (there is no apply_patch tool). Never fabricate build or test results.%s
                 """
                 .formatted(LanguageGenerationProfile.guidanceFor(exercise));

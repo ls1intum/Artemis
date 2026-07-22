@@ -147,8 +147,8 @@ class AgentSystemPromptServiceTest {
 
         assertThat(prompt).contains("TEMPLATE AS TEACHING SCAFFOLD", "work from it alone, using the statement only as reference")
                 .contains("complete Javadoc (or the language's doc idiom) stating its contract").contains("// TODO S<n>: <task wording>")
-                .contains("INSIDE the member body, directly above the placeholder throw").contains("When students create a type, omit it from the template")
-                .contains("direct test references to a missing type do not compile");
+                .contains("INSIDE the member body, directly above the placeholder throw").contains("Omit student-created types", "Tasks and tests anchor them")
+                .doesNotContain("seam TODO breadcrumbs to its collaborators");
     }
 
     @Test
@@ -460,7 +460,8 @@ class AgentSystemPromptServiceTest {
 
         assertThat(prompt).contains("THE CONTRACT", "ARTEMIS TASK BINDINGS", "GROUNDED WORKFLOW", "SAFE TOOL USE")
                 .contains("[task][Short human title](exactTestNameA,exactTestNameB)", "throw new UnsupportedOperationException", "tests/pom.xml", "run `verify` first")
-                .contains("Use `verify` for builds", "Never run repository Gradle/Maven directly", "Build manifests, wrappers").doesNotContain("raw build and debugging commands");
+                .contains("Use `verify` for the acceptance verdict", "Never run repository Gradle/Maven directly", "Build manifests, wrappers")
+                .doesNotContain("raw build and debugging commands");
     }
 
     @Test

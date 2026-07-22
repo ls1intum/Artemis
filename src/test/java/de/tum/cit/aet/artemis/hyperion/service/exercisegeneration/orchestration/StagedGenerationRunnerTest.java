@@ -81,9 +81,9 @@ class StagedGenerationRunnerTest {
             | Calculator | computes the result | stubbed |
 
             ## Testing Strategy
-            | Seam | Partitions | Weight | Hidden variant |
-            |------|------------|--------|----------------|
-            | S1 | typical and zero | 3 | no |
+            | Seam | Owner type | Partitions | Weight | Hidden variant |
+            |------|------------|------------|--------|----------------|
+            | S1 | Calculator | typical and zero | 3 | no |
 
             ## Diagram
             no — single-class exercise

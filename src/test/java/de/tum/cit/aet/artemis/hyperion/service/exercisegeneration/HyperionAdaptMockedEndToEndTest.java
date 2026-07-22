@@ -59,7 +59,9 @@ class HyperionAdaptMockedEndToEndTest extends AbstractHyperionMockedLlmEndToEndT
             ```
 
             [task][Add positive numbers](addsTwoNumbers)
+            Implement `add` so it returns the sum of positive operands.
             [task][Add negative numbers](addsNegativeNumbers)
+            Preserve operand signs when `add` receives negative values.
             """;
 
     private static final String SEED_SOLUTION_CALCULATOR = """
@@ -128,9 +130,13 @@ class HyperionAdaptMockedEndToEndTest extends AbstractHyperionMockedLlmEndToEndT
             ```
 
             [task][Add positive numbers](addsTwoNumbers)
+            Implement `add` so it returns the sum of positive operands.
             [task][Add negative numbers](addsNegativeNumbers)
+            Preserve operand signs when `add` receives negative values.
             [task][Subtract positive numbers](subtractsTwoNumbers)
+            Implement `subtract` so it returns the difference of two integers.
             [task][Subtract to a negative result](subtractsToNegativeResult)
+            Allow `subtract` to return a negative difference.
             """;
 
     private static final String ADAPTED_SOLUTION_CALCULATOR = """

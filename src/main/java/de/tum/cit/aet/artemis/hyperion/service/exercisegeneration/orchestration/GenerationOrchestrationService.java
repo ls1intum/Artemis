@@ -470,10 +470,16 @@ public class GenerationOrchestrationService {
                     String adaptationChanges = mode == GenerationMode.ADAPT
                             ? renderAdaptationChanges(baselineProblemStatement, producedProblemStatement, baselineRepositoryFiles, producedFilesByType)
                             : null;
+                    String repairDelta = mode == GenerationMode.GENERATE && preSemanticRepairCandidate != null
+                            ? renderAdaptationChanges(preSemanticRepairCandidate.problemStatement(), producedProblemStatement, preSemanticRepairCandidate.producedFiles(),
+                                    producedFilesByType)
+                            : null;
+                    SpecFidelityReport previousReview = preSemanticRepairCandidate == null ? specFidelityReport : preSemanticRepairCandidate.reviewReport();
                     // specFidelityReport still holds the previous attempt's report at this point (SpecFidelityReport.empty() on attempt 1 or after a mechanical rejection);
-                    // threading it through gives the critic continuity across repair attempts instead of re-rolling a fresh review each time.
+                    // The preserved candidate remains the review authority after a mechanically broken semantic repair, while the mutable report is deliberately cleared so
+                    // the narrow mechanical-correction prompt does not reopen semantic scope.
                     specFidelityReport = runSpecFidelityCritic(reviewBrief, producedProblemStatement, exercise.getProgrammingLanguage(), producedFilesByType, adaptationChanges,
-                            effectiveUsageSink, cancelled, progress, specFidelityReport, effectiveSpecReviewContext(specSnapshot.get(), specDocumentSnapshot));
+                            repairDelta, effectiveUsageSink, cancelled, progress, previousReview, effectiveSpecReviewContext(specSnapshot.get(), specDocumentSnapshot));
                     lastMechanicallyVerifiedCandidate = new CandidateSnapshot(loopResult, verification, copyProducedFiles(producedFilesByType), producedProblemStatement,
                             specFidelityReport, specDocumentSnapshot, testPlanSnapshot);
                     if (cancelled.getAsBoolean()) {
@@ -515,10 +521,12 @@ public class GenerationOrchestrationService {
                     String scopeGuidance = mode == GenerationMode.ADAPT ? " Preserve all content outside the requested adaptation." : "";
                     currentPrompt = attemptFraming(attempt) + "Your previous attempt passed mechanical verification, but the automated full-artifact review found review blockers."
                             + scopeGuidance
-                            + " Preserve the mechanically correct work: do not restart or rewrite unrelated files. Re-read the cited artifacts and repair them to match the source requirements and "
-                            + "remove unsupported candidate choices identified by the review. Make the smallest coherent repair across the statement, solution, template, and tests. Keep every unaffected "
-                            + "requirement, API, test, and example. Re-run `sh verify.sh solution` and `sh verify.sh template`, then call submit again.\n\nThe instructor "
-                            + "source requirements are:\n" + authoringBrief + specContractSection(specSnapshot.get()) + specFidelityCritic.renderForRetryPrompt(specFidelityReport);
+                            + " Preserve the mechanically correct work: do not restart or rewrite unrelated files. Begin with only the artifact(s) explicitly implicated by each finding's evidence. "
+                            + "After that smallest edit, call the structured `verify` tool; expand the repair surface only if its report identifies a concrete cross-artifact inconsistency caused by the edit. "
+                            + "Keep every unaffected requirement, API, test, and example. The template is expected to fail behavioural and structural tests at approved TODOs and absent "
+                            + "student-creates types—never make those tests pass merely because a raw template build exits non-zero. `verify`, not a raw build exit code, is the acceptance verdict. "
+                            + "Call submit when it reports MECHANICAL PRECHECK: PASS.\n\nThe instructor " + "source requirements are:\n" + authoringBrief
+                            + specContractSection(specSnapshot.get()) + specFidelityCritic.renderForRetryPrompt(specFidelityReport);
                     continue;
                 }
                 if (semanticRepairAttempted && semanticMechanicalCorrectionsRemaining == 0) {
@@ -533,8 +541,8 @@ public class GenerationOrchestrationService {
                 emit(progress, "Verification rejected the exercise; asking the agent to fix the issues and try again.");
                 // The hard rejection (must fix) plus the advisory findings, the latter framed so the rejection is prioritised.
                 currentPrompt = attemptFraming(attempt) + "Your previous attempt was rejected by the differential verifier:\n" + verification.report()
-                        + "\n\nThe workspace still contains all your files. Read the relevant files, fix exactly these issues, re-run `sh verify.sh solution` and "
-                        + "`sh verify.sh template` to confirm, then call submit again. If a reason names a forbidden, duplicate, or abandoned path, delete it; replacing it with a "
+                        + "\n\nThe workspace still contains all your files. Read the relevant files, fix exactly these issues, call the structured `verify` tool, then submit when it reports "
+                        + "MECHANICAL PRECHECK: PASS. If a reason names a forbidden, duplicate, or abandoned path, delete it; replacing it with a "
                         + "placeholder does not remove the violation. Make the smallest coherent repair, leave unrelated files unchanged, and preserve the source requirements below.\n\n"
                         + authoringBrief + specContractSection(specSnapshot.get()) + specFidelityCritic.renderForRetryPrompt(specFidelityReport);
             }
@@ -761,12 +769,12 @@ public class GenerationOrchestrationService {
      * @return the report (possibly empty); never {@code null}
      */
     private SpecFidelityReport runSpecFidelityCritic(String brief, String problemStatement, @Nullable ProgrammingLanguage language,
-            Map<RepositoryType, Map<String, String>> producedArtifacts, @Nullable String adaptationChanges, Consumer<ChatResponse> usageSink, BooleanSupplier cancelled,
-            Consumer<String> progress, @Nullable SpecFidelityReport previousReport, @Nullable String specSnapshot) {
+            Map<RepositoryType, Map<String, String>> producedArtifacts, @Nullable String adaptationChanges, @Nullable String repairDelta, Consumer<ChatResponse> usageSink,
+            BooleanSupplier cancelled, Consumer<String> progress, @Nullable SpecFidelityReport previousReport, @Nullable String specSnapshot) {
         try {
             List<String> testNames = extractTaskBoundTestNames(problemStatement);
             SpecFidelityReport report = adaptationChanges == null
-                    ? specFidelityCritic.critique(brief, problemStatement, testNames, producedArtifacts, usageSink, cancelled, previousReport, specSnapshot)
+                    ? specFidelityCritic.critique(brief, problemStatement, testNames, producedArtifacts, usageSink, cancelled, previousReport, specSnapshot, repairDelta)
                     : specFidelityCritic.critiqueAdaptation(brief, problemStatement, testNames, adaptationChanges, producedArtifacts, usageSink, cancelled, previousReport);
             if (adaptationChanges != null && adaptationChanges.contains(CHANGE_SUMMARY_TRUNCATED)) {
                 List<SpecFidelityReport.Finding> combined = new ArrayList<>(report.findings());

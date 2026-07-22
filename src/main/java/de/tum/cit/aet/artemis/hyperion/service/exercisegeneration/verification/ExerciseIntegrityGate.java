@@ -335,32 +335,53 @@ public final class ExerciseIntegrityGate {
     }
 
     /**
-     * Ensures every approved student-work seam has an in-code template pointer and that stale or invented TODO IDs cannot silently point students at the wrong work. The stable
-     * IDs already connect the specification, grading plan, and statement; this closes the remaining template side of that same traceability contract.
+     * Verifies the specification's exact seam-to-owner links against the template. Stubbed owners carry their seam TODO in the source declaring that owner; an omitted
+     * student-created owner has no truthful template location and therefore must not have a fabricated breadcrumb in an unrelated collaborator.
      */
-    static List<String> templateTodoSeamReasons(List<String> declaredSeams, Map<String, String> templateFiles) {
-        if (declaredSeams == null || declaredSeams.isEmpty()) {
+    static List<String> templateTodoSeamReasons(String specification, Map<String, String> templateFiles) {
+        List<StageCheckService.TestingStrategyRow> rows = StageCheckService.testingStrategyRows(specification == null ? "" : specification);
+        if (rows.isEmpty()) {
             return List.of();
         }
-        Set<String> declared = declaredSeams.stream().filter(id -> id != null && id.matches("S[1-9][0-9]*")).collect(Collectors.toCollection(LinkedHashSet::new));
-        Set<String> actual = new LinkedHashSet<>();
-        if (templateFiles != null) {
-            templateFiles.entrySet().stream().filter(entry -> isJavaSource(entry.getKey())).map(Map.Entry::getValue).filter(java.util.Objects::nonNull)
-                    .forEach(content -> TODO_SEAM.matcher(content).results().map(match -> match.group(1)).forEach(actual::add));
-        }
-        List<String> missing = declared.stream().filter(id -> !actual.contains(id)).toList();
-        List<String> unknown = actual.stream().filter(id -> !declared.contains(id)).toList();
-        if (missing.isEmpty() && unknown.isEmpty()) {
-            return List.of();
-        }
+        Map<String, String> statusByType = StageCheckService.designTableRows(specification).stream().filter(row -> row.status() != null)
+                .collect(Collectors.toMap(StageCheckService.DesignRow::type, StageCheckService.DesignRow::status, (first, ignored) -> first, LinkedHashMap::new));
+        Map<String, Set<String>> seamFiles = new LinkedHashMap<>();
+        Map<String, String> javaFiles = templateFiles == null ? Map.of()
+                : templateFiles.entrySet().stream().filter(entry -> isJavaSource(entry.getKey()) && entry.getValue() != null)
+                        .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (first, ignored) -> first, LinkedHashMap::new));
+        javaFiles.forEach((path, content) -> TODO_SEAM.matcher(content).results().map(match -> match.group(1))
+                .forEach(seam -> seamFiles.computeIfAbsent(seam, ignored -> new LinkedHashSet<>()).add(path)));
+
+        Set<String> declared = rows.stream().map(StageCheckService.TestingStrategyRow::seamId).collect(Collectors.toCollection(LinkedHashSet::new));
         List<String> reasons = new ArrayList<>();
-        if (!missing.isEmpty()) {
-            reasons.add("the template has no TODO breadcrumb for approved student-work seam(s) " + missing
-                    + ". Add at least one imperative '// TODO S<n>: ...' for each seam; for an omitted student-created type, put the breadcrumb in its collaborating scaffold.");
-        }
+        List<String> unknown = seamFiles.keySet().stream().filter(id -> !declared.contains(id)).toList();
         if (!unknown.isEmpty()) {
             reasons.add("the template uses TODO seam IDs the approved Testing Strategy does not declare: " + unknown + ". Replace these stale or invented IDs with one of "
                     + declared + ".");
+        }
+        for (StageCheckService.TestingStrategyRow row : rows) {
+            Set<String> actualFiles = seamFiles.getOrDefault(row.seamId(), Set.of());
+            String status = statusByType.get(row.ownerType());
+            if ("student-creates".equals(status) && !actualFiles.isEmpty()) {
+                reasons.add("the template uses " + row.seamId() + " TODO breadcrumb(s) in " + actualFiles + " even though its owner " + row.ownerType()
+                        + " is student-created and absent. Remove the misleading breadcrumb; the statement task and reflective tests guide this seam.");
+                continue;
+            }
+            if (!"stubbed".equals(status)) {
+                continue; // malformed owner/status is rejected by the specification gate
+            }
+            Set<String> ownerFiles = javaFiles.entrySet().stream().filter(entry -> sourceDeclaresType(entry.getValue(), row.ownerType())).map(Map.Entry::getKey)
+                    .collect(Collectors.toCollection(LinkedHashSet::new));
+            Set<String> correctlyPlaced = actualFiles.stream().filter(ownerFiles::contains).collect(Collectors.toCollection(LinkedHashSet::new));
+            if (correctlyPlaced.isEmpty()) {
+                reasons.add("the stubbed owner " + row.ownerType() + " has no '// TODO " + row.seamId() + ": ...' breadcrumb in its declaring source. Put the marker at the "
+                        + "unfinished student work inside that source.");
+            }
+            Set<String> misplaced = actualFiles.stream().filter(path -> !ownerFiles.contains(path)).collect(Collectors.toCollection(LinkedHashSet::new));
+            if (!misplaced.isEmpty()) {
+                reasons.add("the template places TODO " + row.seamId() + " outside its approved owner " + row.ownerType() + ": " + misplaced
+                        + ". Move or relabel those breadcrumbs so the seam ID points at the work it actually grades.");
+            }
         }
         return List.copyOf(reasons);
     }

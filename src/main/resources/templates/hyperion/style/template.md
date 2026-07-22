@@ -12,22 +12,20 @@ it" — the template is where students actually read while coding.
 
 ## TODO placement
 
-Anchor each task with an imperative `// TODO S1: <mirror of the task wording>` INSIDE the member body, using
+Anchor each stubbed seam with an imperative `// TODO S1: <mirror of the task wording>` INSIDE its owner member body, using
 the stable ID from the specification's Testing Strategy and placing it directly
 above the placeholder throw — never between the javadoc and the signature, never between an annotation and
-the signature. One TODO per independently implementable seam. A TODO marks unfinished student work only:
+the signature. Every unfinished member of a stubbed owner carries its seam ID; the same ID may repeat within that owner when one task spans several members. A TODO marks unfinished student work only:
 never leave one on code that is already complete, and never leave authoring or design notes in any file.
 
-## Breadcrumbs for types students must create
+## Types students must create
 
-When the design says students define a type themselves, the template must NOT ship that type: omit its file,
-keep the template compiling without it, and leave a TODO breadcrumb in the collaborating template file that
-names the type, its essential shape, and where it plugs in. The breadcrumb is the student's only in-code
-pointer to work that has no file yet — write it like you would want to find it.
+When the design says students define a type themselves, the template must NOT ship that type: omit its file and
+keep the template compiling without it. Its statement task and reflective/structural tests are the truthful
+anchors; do not attach that seam ID to unrelated collaborator code merely because the type has no template file.
 
 When a provided context will eventually refer to an omitted student-created interface, keep the context class
-but omit the student-owned field and methods whose signatures need that interface. Place their stable TODO
-breadcrumb in the class body. Do not ship an empty interface merely to make those signatures compile, and do not
+but omit the student-owned field and methods whose signatures need that interface. Do not ship an empty interface merely to make those signatures compile, and do not
 weaken only the template API to `Object`; tests can inspect the completed API reflectively.
 
 ## Data-holder plumbing
@@ -67,14 +65,10 @@ public void redeem(int times) {
 }
 ```
 
-A breadcrumb in a collaborating file for a type the student creates (no RewardStrategy file exists in the
-template; the solution alone ships it):
+A stubbed collaboration seam in a provided owner (no RewardStrategy file exists in the template; the solution alone ships it):
 
 ```java
 public class LoyaltyAccount {
-
-    // TODO S1: create a RewardStrategy interface with `int pointsFor(Purchase purchase)` and store the
-    // active strategy here so record(...) can delegate to it.
 
     /**
      * Records a purchase, crediting points according to the active reward strategy.
@@ -82,7 +76,7 @@ public class LoyaltyAccount {
      * @param purchase the completed purchase
      */
     public void record(Purchase purchase) {
-        // TODO S2: delegate to the active strategy and add its points to the balance.
+        // TODO S2: connect the student-created strategy and add its points to the balance.
         throw new UnsupportedOperationException("Not implemented");
     }
 }

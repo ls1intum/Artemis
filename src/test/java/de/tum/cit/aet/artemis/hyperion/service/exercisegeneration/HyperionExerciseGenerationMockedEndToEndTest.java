@@ -228,12 +228,12 @@ class HyperionExerciseGenerationMockedEndToEndTest extends AbstractHyperionMocke
             `BoundedCounter` owns its mutable value for its whole lifetime.
 
             ## Testing Strategy
-            | Seam | Partitions | Weight | Hidden variant |
-            |------|------------|--------|----------------|
-            | S1 | initial value | 1 | no |
-            | S2 | below, at, and beyond maximum | 3 | no |
-            | S3 | above, at, and below zero | 3 | no |
-            | S4 | zero and negative maximum | 2 | no |
+            | Seam | Owner type | Partitions | Weight | Hidden variant |
+            |------|------------|------------|--------|----------------|
+            | S1 | BoundedCounter | initial value | 1 | no |
+            | S2 | BoundedCounter | below, at, and beyond maximum | 3 | no |
+            | S3 | BoundedCounter | above, at, and below zero | 3 | no |
+            | S4 | BoundedCounter | zero and negative maximum | 2 | no |
 
             ## Diagram
             no — one class with no structural relationship to explain.

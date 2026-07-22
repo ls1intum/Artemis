@@ -106,7 +106,8 @@ class SpecFidelityCriticServiceTest {
         assertThat(prompt.getValue().getInstructions().getFirst().getText()).contains("Design ownership table").contains("template supplies a type marked `student-creates`")
                 .contains("correct table does not cancel contradictory prose").contains("does not assign ownership of the strategy interface")
                 .contains("Non-student-visible harness notes are not observable constraints")
-                .contains("Package, source-root, and class-visibility choices required by the seeded build");
+                .contains("Package, source-root, and class-visibility choices required by the seeded build")
+                .contains("explicitly requested difficulty", "one-operation formula transcription", "declared archetype", "Testing Strategy gives supporting calculations");
     }
 
     @Test
@@ -297,8 +298,8 @@ class SpecFidelityCriticServiceTest {
         ArgumentCaptor<Prompt> prompts = ArgumentCaptor.forClass(Prompt.class);
         verify(chatModel, times(2)).call(prompts.capture());
         assertThat(prompts.getAllValues().get(0).getInstructions().getFirst().getText()).contains("house teaching scaffold", "restate its student-visible contract",
-                "imperative TODO", "breadcrumb for a type the student must still create", "solution/template diff", "compact API surface",
-                "the template is the API reference at the point of use");
+                "imperative TODO", "stubbed owner", "solution/template diff", "compact API surface", "PlantUML diagram", "the template is the API reference at the point of use")
+                .doesNotContain("breadcrumb for a type the student must still create");
     }
 
     @Test
@@ -1240,9 +1241,32 @@ class SpecFidelityCriticServiceTest {
 
         ArgumentCaptor<Prompt> prompts = ArgumentCaptor.forClass(Prompt.class);
         verify(chatModel, times(2)).call(prompts.capture());
-        assertThat(prompts.getAllValues())
-                .allSatisfy(prompt -> assertThat(prompt.getContents()).contains("PREVIOUS REVIEW", "return the UTF-16 length", "no assertion uses a surrogate pair",
-                        "re-verify each item above", "omit it if resolved", "repeat it with fresh evidence if still open", "Do not re-litigate", "genuinely new findings"));
+        assertThat(prompts.getAllValues()).allSatisfy(prompt -> assertThat(prompt.getContents()).contains("PREVIOUS REVIEW", "return the UTF-16 length",
+                "no assertion uses a surrogate pair", "adjudicate each item", "omit it if resolved", "repeat it with fresh current evidence if still open",
+                "complete review of the current candidate", "including a defect overlooked previously"));
+    }
+
+    @Test
+    void continuityReview_showsTheRepairDeltaBeforeAdjudicatingPriorFindings() {
+        ChatModel chatModel = mock(ChatModel.class);
+        when(chatModel.call(any(Prompt.class))).thenReturn(rawResponse("""
+                {"exampleChecks":[],"apiChecks":[],"templateChecks":[{"test":"cjk","targetReached":true,"reason":"current assertion reaches count"}],
+                 "contradictions":[],"hiddenRequirements":[],"templateGaps":[],"missingExamples":[],"invented":[],"unrequestedChanges":[],"missingRequestedChanges":[]}
+                """), rawResponse("""
+                {"mutantChecks":[{"mutant":"revert after first call","killed":true,"reason":"the added second assertion kills it"}],"uncovered":[],"weakOracle":[]}
+                """));
+        when(chatModel.getOptions()).thenReturn(ChatOptions.builder().build());
+        SpecFidelityCriticService critic = new SpecFidelityCriticService(ChatClient.create(chatModel), objectMapper);
+        SpecFidelityReport previous = new SpecFidelityReport(
+                List.of(new SpecFidelityReport.Finding(SpecFidelityReport.Kind.WEAK_TEST_ORACLE, "revert after first call", "only one call was asserted")));
+
+        critic.critique(UNICODE_BRIEF, "Count graphemes.", List.of("cjk"), COMPLETE_ARTIFACTS, null, () -> false, previous, "contract",
+                "--- tests/ExampleTest.java\n+ assertEquals(expected, callAgain());");
+
+        ArgumentCaptor<Prompt> prompts = ArgumentCaptor.forClass(Prompt.class);
+        verify(chatModel, times(2)).call(prompts.capture());
+        assertThat(prompts.getAllValues()).allSatisfy(prompt -> assertThat(prompt.getContents()).contains("REPAIR DELTA", "+ assertEquals(expected, callAgain())",
+                "PREVIOUS REVIEW HYPOTHESES", "explicitly decide whether the added/changed assertion now kills that same mutant"));
     }
 
     /** A prior finding the current pass no longer reports (the model considers it resolved) does not linger in the new report. */

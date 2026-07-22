@@ -8,6 +8,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.List;
 import java.util.Map;
@@ -22,6 +23,7 @@ import de.tum.cit.aet.artemis.buildagent.dto.SandboxSessionSpec;
 import de.tum.cit.aet.artemis.buildagent.service.InteractiveSandbox;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.GenerationStage;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 
 /**
  * Unit tests for the mechanical per-stage gates, in particular the "compiled" definition fix ({@link SingleBuildResult#compiled()}): {@code verify.sh} exits non-zero both for a
@@ -48,6 +50,8 @@ class StageCheckServiceTest {
 
         /** Stable work markers found in the template; the default matches the default specification's sole S1 seam. */
         private String templateTodoOutput = "TODO S1:";
+
+        private Map<String, String> templateRepositoryFiles = Map.of();
 
         /** {@code diff -rq} exit code; 1 means the trees differ (the expected, healthy case). */
         private int diffExitCode = 1;
@@ -93,7 +97,9 @@ class StageCheckServiceTest {
 
         @Override
         public TarArchiveInputStream copyOut(String sessionId, String path) {
-            return null;
+            return templateRepositoryFiles.isEmpty() ? null
+                    : ReportTarFixtures.tar("template", templateRepositoryFiles.entrySet().stream()
+                            .collect(java.util.stream.Collectors.toMap(Map.Entry::getKey, entry -> entry.getValue().getBytes(StandardCharsets.UTF_8))));
         }
 
         @Override
@@ -103,6 +109,7 @@ class StageCheckServiceTest {
 
     /** A complete, gate-valid SPEC.md whose '## Design' table carries the given data rows — every stage now re-checks the spec, so a partial fixture would fail that check. */
     private static String specWithDesign(String designRows) {
+        String ownerType = designRows.split("\\|")[1].strip();
         return """
                 # Exercise
 
@@ -123,13 +130,13 @@ class StageCheckServiceTest {
                 """ + designRows + """
 
                 ## Testing Strategy
-                | Seam | Partitions | Weight | Hidden variant |
-                |------|-----------|--------|----------------|
-                | S1 | typical; zero | 3 | no |
+                | Seam | Owner type | Partitions | Weight | Hidden variant |
+                |------|------------|------------|--------|----------------|
+                | S1 | %s | typical; zero | 3 | no |
 
                 ## Diagram
                 no — single-class exercise
-                """;
+                """.formatted(ownerType);
     }
 
     private DifferentialVerificationService verifier;
@@ -284,7 +291,9 @@ class StageCheckServiceTest {
         private static final String SPEC_WITH_STUDENT_CREATED_TYPE = specWithDesign("""
                 | RewardStrategy | strategy interface | student-creates |
                 | LoyaltyAccount | context | stubbed |
-                """);
+                """).replace("| S1 | RewardStrategy | typical; zero | 3 | no |", """
+                | S1 | RewardStrategy | typical; zero | 3 | no |
+                | S2 | LoyaltyAccount | delegation and replacement | 3 | no |""");
 
         @BeforeEach
         void defaultsToADifferingTree() {
@@ -312,14 +321,22 @@ class StageCheckServiceTest {
         }
 
         @Test
-        void fails_whenTemplateTodoMarkersDoNotMatchTheSpecificationSeams() {
+        void doesNotGuessTodoAssociationWhenTheRepositorySnapshotIsUnavailable() {
             when(verifier.singleBuild(any(), anyString(), eq(exercise), eq("template"))).thenReturn(compiled());
             sandbox.templateTodoOutput = "TODO S9:";
 
             StageCheckResult result = check(GenerationStage.TEMPLATE);
 
-            assertThat(result.passed()).isFalse();
-            assertThat(result.observation()).contains("no TODO breadcrumb", "S1").contains("does not declare", "S9");
+            assertThat(result.passed()).isTrue();
+        }
+
+        @Test
+        void doesNotApplyJavaTodoOwnershipRulesToAnotherLanguage() {
+            exercise.setProgrammingLanguage(ProgrammingLanguage.C);
+            when(verifier.singleBuild(any(), anyString(), eq(exercise), eq("template"))).thenReturn(compiled());
+            sandbox.templateRepositoryFiles = Map.of("src/main.c", "int main(void) { return 0; }");
+
+            assertThat(check(GenerationStage.TEMPLATE).passed()).isTrue();
         }
 
         @Test
@@ -375,6 +392,19 @@ class StageCheckServiceTest {
 
             assertThat(result.passed()).isTrue();
             assertThat(result.observation()).contains("Confirmed absent from the template").contains("RewardStrategy");
+        }
+
+        @Test
+        void rejectsAMisleadingStudentCreatedBreadcrumbBeforeTheTestsAndStatementStages() {
+            exercise.setProgrammingLanguage(ProgrammingLanguage.JAVA);
+            when(verifier.singleBuild(any(), anyString(), eq(exercise), eq("template"))).thenReturn(testsRan(1, 5, 5, List.of("t1")));
+            sandbox.spec = SPEC_WITH_STUDENT_CREATED_TYPE;
+            sandbox.templateRepositoryFiles = Map.of("src/LoyaltyAccount.java", "class LoyaltyAccount { // TODO S1: create RewardStrategy\n// TODO S2: delegate to it\n}");
+
+            StageCheckResult result = check(GenerationStage.TEMPLATE);
+
+            assertThat(result.passed()).isFalse();
+            assertThat(result.observation()).contains("student-created", "S1", "LoyaltyAccount.java");
         }
     }
 
@@ -443,7 +473,8 @@ class StageCheckServiceTest {
         @Test
         void fails_whenTheSpecDeclaresHiddenVariantsButThePlanHidesNothing() {
             // The spec's own Testing Strategy is the plan's contract: silently shipping every test visible throws away the overfit resistance the spec promised.
-            sandbox.spec = specWithDesign("| Calculator | computes | stubbed |\n").replace("| S1 | typical; zero | 3 | no |", "| S1 | typical; zero | 3 | yes |");
+            sandbox.spec = specWithDesign("| Calculator | computes | stubbed |\n").replace("| S1 | Calculator | typical; zero | 3 | no |",
+                    "| S1 | Calculator | typical; zero | 3 | yes |");
             when(verifier.selfCheck(any(), anyString(), eq(exercise), any(), eq(false))).thenReturn(report(true, true));
             sandbox.testPlanJson = "{\"tests\":[{\"name\":\"testFoo\",\"seam\":\"S1\",\"weight\":3,\"visibility\":\"ALWAYS\"}]}";
 
@@ -455,9 +486,9 @@ class StageCheckServiceTest {
 
         @Test
         void fails_whenOnlySomeSeamsWithHiddenVariantsHaveHiddenPlanEntries() {
-            sandbox.spec = specWithDesign("| Calculator | computes | stubbed |\n").replace("| S1 | typical; zero | 3 | no |", """
-                    | S1 | ordinary values | 3 | yes |
-                    | S2 | boundary values | 2 | yes |
+            sandbox.spec = specWithDesign("| Calculator | computes | stubbed |\n").replace("| S1 | Calculator | typical; zero | 3 | no |", """
+                    | S1 | Calculator | ordinary values | 3 | yes |
+                    | S2 | Calculator | boundary values | 2 | yes |
                     """);
             AgentVerifyReport report = new AgentVerifyReport(2, true, List.of(), 2, true, true, List.of(), List.of("ordinary", "boundary"), List.of(), List.of(), true, List.of());
             when(verifier.selfCheck(any(), anyString(), eq(exercise), any(), eq(false))).thenReturn(report);
@@ -829,16 +860,16 @@ class StageCheckServiceTest {
         @Test
         void readsTheDecisionFromTheTablesLastCell() {
             assertThat(StageCheckService.specDeclaresHiddenVariants(specWithDesign("| Calculator | computes | stubbed |\n"))).isFalse();
-            assertThat(StageCheckService.specDeclaresHiddenVariants(
-                    specWithDesign("| Calculator | computes | stubbed |\n").replace("| S1 | typical; zero | 3 | no |", "| S1 | typical; zero | 3 | yes |"))).isTrue();
+            assertThat(StageCheckService.specDeclaresHiddenVariants(specWithDesign("| Calculator | computes | stubbed |\n").replace("| S1 | Calculator | typical; zero | 3 | no |",
+                    "| S1 | Calculator | typical; zero | 3 | yes |"))).isTrue();
         }
 
         @Test
         void aSectionThatDeclinesHiddenVariantsInProseIsNotReadAsDeclaringThem() {
             // The prose heuristic this replaced fired on exactly this text: the words "hidden" and "after the due date" appear while the decision is NO. A false trigger here
             // forced the agent to invent hidden tests it had deliberately decided against.
-            String spec = specWithDesign("| Calculator | computes | stubbed |\n").replace("| S1 | typical; zero | 3 | no |",
-                    "| S1 | typical; zero | 3 | no |\n\n                Every test stays visible; no partition gets a hidden after-due-date variant.");
+            String spec = specWithDesign("| Calculator | computes | stubbed |\n").replace("| S1 | Calculator | typical; zero | 3 | no |",
+                    "| S1 | Calculator | typical; zero | 3 | no |\n\n                Every test stays visible; no partition gets a hidden after-due-date variant.");
 
             assertThat(StageCheckService.specDeclaresHiddenVariants(spec)).isFalse();
         }
@@ -847,8 +878,8 @@ class StageCheckServiceTest {
         void aStructuralYesInAnotherColumnDoesNotCountAsAHiddenDeclaration() {
             // The old regex matched any "| yes" anywhere in the section, so an unrelated column could satisfy the hidden-variant declaration.
             String spec = specWithDesign("| Calculator | computes | stubbed |\n")
-                    .replace("| Seam | Partitions | Weight | Hidden variant |", "| Seam | Structural | Weight | Hidden variant |")
-                    .replace("| S1 | typical; zero | 3 | no |", "| S1 | yes | 3 | no |");
+                    .replace("| Seam | Owner type | Partitions | Weight | Hidden variant |", "| Seam | Owner type | Structural | Weight | Hidden variant |")
+                    .replace("| S1 | Calculator | typical; zero | 3 | no |", "| S1 | Calculator | yes | 3 | no |");
 
             assertThat(StageCheckService.specDeclaresHiddenVariants(spec)).isFalse();
         }
@@ -904,9 +935,9 @@ class StageCheckServiceTest {
                 | Calculator | computes the result | stubbed |
 
                 ## Testing Strategy
-                | Seam | Partitions | Weight | Hidden variant |
-                |------|------------|--------|----------------|
-                | S1 | typical and zero | 3 | yes |
+                | Seam | Owner type | Partitions | Weight | Hidden variant |
+                |------|------------|------------|--------|----------------|
+                | S1 | Calculator | typical and zero | 3 | yes |
 
                 ## Diagram
                 no — single-class exercise
@@ -968,13 +999,47 @@ class StageCheckServiceTest {
 
         @Test
         void fails_whenTestingStrategySeamsAreMissingMalformedOrDuplicated() {
-            sandbox.spec = VALID_SPEC.replace("| S1 | typical and zero | 3 | yes |", "| compute | typical and zero | 3 | no |");
+            sandbox.spec = VALID_SPEC.replace("| S1 | Calculator | typical and zero | 3 | yes |", "| compute | Calculator | typical and zero | 3 | no |");
 
             assertThat(check(GenerationStage.SPEC).observation()).contains("stable seam ID").contains("S1, S2");
 
-            sandbox.spec = VALID_SPEC.replace("| S1 | typical and zero | 3 | yes |", "| S1 | typical | 3 | no |\n| S1 | zero | 2 | no |");
+            sandbox.spec = VALID_SPEC.replace("| S1 | Calculator | typical and zero | 3 | yes |", "| S1 | Calculator | typical | 3 | no |\n| S1 | Calculator | zero | 2 | no |");
 
             assertThat(check(GenerationStage.SPEC).observation()).contains("duplicate").contains("S1");
+        }
+
+        @Test
+        void fails_whenASeamOwnerIsMissingUnknownOrGiven() {
+            sandbox.spec = VALID_SPEC.replace("| S1 | Calculator | typical and zero | 3 | yes |", "| S1 | typical and zero | 3 | yes |");
+            assertThat(check(GenerationStage.SPEC).observation()).contains("Owner type", "S1");
+
+            sandbox.spec = VALID_SPEC.replace("| S1 | Calculator | typical and zero | 3 | yes |", "| S1 | MissingType | typical and zero | 3 | yes |");
+            assertThat(check(GenerationStage.SPEC).observation()).contains("do not name a type", "S1->MissingType");
+
+            sandbox.spec = VALID_SPEC.replace("| Calculator | computes the result | stubbed |", "| Calculator | computes the result | given |");
+            assertThat(check(GenerationStage.SPEC).observation()).contains("marked given", "S1->Calculator");
+        }
+
+        @Test
+        void preservesJavaIdentifierUnderscoresAndAcceptsAnOptionalTrailingTablePipe() {
+            sandbox.spec = VALID_SPEC.replace("Calculator", "Damage_Strategy").replace("| S1 | Damage_Strategy | typical and zero | 3 | yes |",
+                    "| S1 | Damage_Strategy | typical and zero | 3 | yes");
+
+            StageCheckResult result = check(GenerationStage.SPEC);
+
+            assertThat(result.passed()).isTrue();
+            assertThat(result.observation()).contains("S1->Damage_Strategy(stubbed)");
+            assertThat(StageCheckService.hiddenVariantSeamIds(sandbox.spec)).containsExactly("S1");
+        }
+
+        @Test
+        void rejectsAMisnamedOwnerHeaderAndDuplicateDesignType() {
+            sandbox.spec = VALID_SPEC.replace("| Seam | Owner type |", "| Seam | Partitions | ");
+            assertThat(check(GenerationStage.SPEC).observation()).contains("second Testing Strategy column", "Owner type");
+
+            sandbox.spec = VALID_SPEC.replace("| Calculator | computes the result | stubbed |",
+                    "| Calculator | computes the result | stubbed |\n| Calculator | contradicts ownership | student-creates |");
+            assertThat(check(GenerationStage.SPEC).observation()).contains("same type more than once", "Calculator");
         }
 
         @Test
