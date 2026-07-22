@@ -105,7 +105,8 @@ class SpecFidelityCriticServiceTest {
         verify(chatModel).call(prompt.capture());
         assertThat(prompt.getValue().getInstructions().getFirst().getText()).contains("Design ownership table").contains("template supplies a type marked `student-creates`")
                 .contains("correct table does not cancel contradictory prose").contains("does not assign ownership of the strategy interface")
-                .contains("Non-student-visible harness notes are not observable constraints");
+                .contains("Non-student-visible harness notes are not observable constraints")
+                .contains("Package, source-root, and class-visibility choices required by the seeded build");
     }
 
     @Test
@@ -159,13 +160,13 @@ class SpecFidelityCriticServiceTest {
     void specificationReviewTreatsMarkdownEmphasisAsPresentationWhenGroundingAQuote() {
         SpecFidelityCriticService critic = criticReturning(rawResponse("""
                 {"omissions":[],"conflicts":[],"incorrectExamples":[],"unsupportedConstraints":[],
-                 "internalConflicts":[{"firstSpecQuote":"Healing potency is two per herb.",
+                 "internalConflicts":[{"firstSpecQuote":"`Healing potency is two per herb.`",
                  "secondSpecQuote":"Healing potency is four for six herbs.","reason":"the arithmetic conflicts",
                  "repair":"correct the worked example"}]}
                 """));
 
         SpecFidelityCriticService.SpecificationReview review = critic.reviewSpecification("Teach the strategy pattern.",
-                "**Healing potency** is two per herb. **Healing potency** is four for six herbs.", null, () -> false);
+                "**Healing potency** is `two` per herb. **Healing potency** is four for six herbs.", null, () -> false);
 
         assertThat(review.complete()).isTrue();
         assertThat(review.accepted()).isFalse();
