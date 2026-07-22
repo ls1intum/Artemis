@@ -582,18 +582,33 @@ describe('GradingComponent', () => {
 
         it('should reject presentation values above the limit and accept the boundary', () => {
             comp.course.set(course);
-            comp.presentationsConfig.set({ presentationType: PresentationType.GRADED, presentationsNumber: 10000, presentationsWeight: 50 });
+            comp.presentationsConfig.set({ presentationType: PresentationType.GRADED, presentationsNumber: 101, presentationsWeight: 50 });
             expect(comp.validPresentationsConfig()).toBe(false);
             expect(comp.presentationsConfigErrorMessage()).toBeDefined();
 
-            comp.presentationsConfig.set({ presentationType: PresentationType.GRADED, presentationsNumber: 9999, presentationsWeight: 50 });
+            comp.presentationsConfig.set({ presentationType: PresentationType.GRADED, presentationsNumber: 100, presentationsWeight: 50 });
             expect(comp.validPresentationsConfig()).toBe(true);
 
             const basicCourse = new Course();
-            basicCourse.presentationScore = 10000;
+            basicCourse.presentationScore = 101;
             comp.course.set(basicCourse);
             comp.presentationsConfig.set({ presentationType: PresentationType.BASIC });
             expect(comp.validPresentationsConfig()).toBe(false);
+        });
+
+        it('should reject a decimal max points value', () => {
+            comp.course.set(course);
+            comp.maxPoints.set(10.5);
+            expect(comp.maxPointsErrorMessage()).toBeDefined();
+        });
+
+        it('should reject a decimal basic presentation score', () => {
+            const basicCourse = new Course();
+            basicCourse.presentationScore = 2.5;
+            comp.course.set(basicCourse);
+            comp.presentationsConfig.set({ presentationType: PresentationType.BASIC });
+            expect(comp.validPresentationsConfig()).toBe(false);
+            expect(comp.presentationsConfigErrorMessage()).toBeDefined();
         });
 
         it('should create grading scale correctly for exam', () => {

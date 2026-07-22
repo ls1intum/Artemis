@@ -7,6 +7,7 @@ import { AlertService, AlertType } from 'app/foundation/service/alert.service';
 import { HasAnyAuthorityDirective } from 'app/foundation/auth/has-any-authority.directive';
 import { Observable, OperatorFunction, Subject, debounceTime, distinctUntilChanged, filter, firstValueFrom, forkJoin, map, merge, of, tap } from 'rxjs';
 import { regexValidator } from 'app/shared-ui/form/shortname-validator.directive';
+import { integerValidator } from 'app/shared-ui/form/integer-validator.directive';
 import { Course, CourseInformationSharingConfiguration, isCommunicationEnabled, isMessagingEnabled, unsetCourseIcon } from 'app/course/shared/entities/course.model';
 import { CourseManagementService } from '../services/course-management.service';
 import { ColorSelectorComponent } from 'app/shared-ui/color-selector/color-selector.component';
@@ -250,7 +251,7 @@ export class CourseUpdateComponent implements OnInit {
                 complaintsEnabled: new FormControl(this.complaintsEnabled()),
                 requestMoreFeedbackEnabled: new FormControl(this.requestMoreFeedbackEnabled()),
                 maxPoints: new FormControl(this.course.maxPoints, {
-                    validators: [Validators.min(1), Validators.max(MAX_GRADING_POINTS)],
+                    validators: [Validators.min(1), Validators.max(MAX_GRADING_POINTS), integerValidator()],
                 }),
                 accuracyOfScores: new FormControl(this.course.accuracyOfScores, {
                     validators: [Validators.min(1)],

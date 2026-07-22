@@ -427,6 +427,18 @@ describe('CourseOnboardingComponent', () => {
             expect(errorSpy).toHaveBeenCalledWith('artemisApp.course.onboarding.validation.maxPointsPositive');
         });
 
+        it('should reject a non-integer maxPoints on step 3', () => {
+            const errorSpy = vi.spyOn(alertService, 'error');
+            advanceToStep(3);
+
+            const c = comp.course();
+            c.maxPoints = 10.5;
+            comp.course.set(c);
+
+            expect(comp.validateCurrentStep()).toBe(false);
+            expect(errorSpy).toHaveBeenCalledWith('artemisApp.course.onboarding.validation.maxPointsWholeNumber');
+        });
+
         it('should not advance on nextStep if validation fails', () => {
             const c = comp.course();
             c.startDate = dayjs().add(1, 'day');

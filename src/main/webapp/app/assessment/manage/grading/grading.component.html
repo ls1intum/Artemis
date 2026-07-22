@@ -36,6 +36,8 @@
                 [ngModel]="maxPoints()"
                 (ngModelChange)="maxPoints.set($event)"
                 min="1"
+                step="1"
+                pattern="\d*"
                 [max]="MAX_GRADING_POINTS"
                 (change)="onChangeMaxPoints(maxPoints())"
             />
@@ -227,6 +229,20 @@
                 </button>
             </div>
             <div>
+                @if (shouldShowGradingStepsAboveMaxPointsWarning()) {
+                    <div class="alert alert-info mb-3">
+                        <fa-icon [icon]="faInfo" />
+                        <span jhiTranslate="artemisApp.gradingSystem.gradingStepsAboveMaxPointsWarning"></span>
+                    </div>
+                }
+                @if (maxPointsErrorMessage() || invalidGradeStepsMessage() || presentationsConfigErrorMessage()) {
+                    <div class="alert alert-warning mb-3">
+                        <fa-icon [icon]="faExclamationTriangle" />
+                        <span>
+                            {{ maxPointsErrorMessage() || invalidGradeStepsMessage() || presentationsConfigErrorMessage() }}
+                        </span>
+                    </div>
+                }
                 <button
                     (click)="save()"
                     [disabled]="isLoading() || gradingForm().invalid() || !validPresentationsConfig() || maxPointsErrorMessage() !== undefined"
@@ -248,20 +264,6 @@
                     >
                         <fa-icon [icon]="faTimes" />
                     </button>
-                }
-                @if (shouldShowGradingStepsAboveMaxPointsWarning()) {
-                    <div class="alert alert-info mt-3">
-                        <fa-icon [icon]="faInfo" />
-                        <span jhiTranslate="artemisApp.gradingSystem.gradingStepsAboveMaxPointsWarning"></span>
-                    </div>
-                }
-                @if (maxPointsErrorMessage() || invalidGradeStepsMessage() || presentationsConfigErrorMessage()) {
-                    <div class="alert alert-warning mt-3">
-                        <fa-icon [icon]="faExclamationTriangle" />
-                        <span>
-                            {{ maxPointsErrorMessage() || invalidGradeStepsMessage() || presentationsConfigErrorMessage() }}
-                        </span>
-                    </div>
                 }
             </div>
         </div>
@@ -388,6 +390,20 @@
                 </button>
             </div>
             <div>
+                @if (shouldShowGradingStepsAboveMaxPointsWarning()) {
+                    <div class="alert alert-info mb-3">
+                        <fa-icon [icon]="faInfo" />
+                        <span jhiTranslate="artemisApp.gradingSystem.gradingStepsAboveMaxPointsWarning"></span>
+                    </div>
+                }
+                @if (maxPointsErrorMessage() || invalidGradeStepsMessage() || presentationsConfigErrorMessage()) {
+                    <div class="alert alert-warning mb-3">
+                        <fa-icon [icon]="faExclamationTriangle" />
+                        <span>
+                            {{ maxPointsErrorMessage() || invalidGradeStepsMessage() || presentationsConfigErrorMessage() }}
+                        </span>
+                    </div>
+                }
                 <button
                     (click)="save()"
                     [disabled]="isLoading() || gradingForm().invalid() || !validPresentationsConfig() || maxPointsErrorMessage() !== undefined"
@@ -409,20 +425,6 @@
                     >
                         <fa-icon [icon]="faTimes" />
                     </button>
-                }
-                @if (shouldShowGradingStepsAboveMaxPointsWarning()) {
-                    <div class="alert alert-info mt-3">
-                        <fa-icon [icon]="faInfo" />
-                        <span jhiTranslate="artemisApp.gradingSystem.gradingStepsAboveMaxPointsWarning"></span>
-                    </div>
-                }
-                @if (maxPointsErrorMessage() || invalidGradeStepsMessage() || presentationsConfigErrorMessage()) {
-                    <div class="alert alert-warning mt-3">
-                        <fa-icon [icon]="faExclamationTriangle" />
-                        <span>
-                            {{ maxPointsErrorMessage() || invalidGradeStepsMessage() || presentationsConfigErrorMessage() }}
-                        </span>
-                    </div>
                 }
             </div>
         </div>

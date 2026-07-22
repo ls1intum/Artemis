@@ -203,8 +203,12 @@ export class CourseOnboardingComponent implements OnInit {
                     this.alertService.error('artemisApp.course.onboarding.validation.maxPointsPositive');
                     return false;
                 }
+                if (current.maxPoints !== undefined && !Number.isInteger(current.maxPoints)) {
+                    this.alertService.error('artemisApp.course.onboarding.validation.maxPointsWholeNumber');
+                    return false;
+                }
                 if (current.maxPoints !== undefined && current.maxPoints > MAX_GRADING_POINTS) {
-                    this.alertService.error('artemisApp.course.onboarding.validation.maxPointsTooHigh');
+                    this.alertService.error('artemisApp.course.onboarding.validation.maxPointsTooHigh', { max: MAX_GRADING_POINTS });
                     return false;
                 }
                 break;

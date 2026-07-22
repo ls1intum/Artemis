@@ -144,6 +144,27 @@ describe('Course Management Update Component', () => {
             maxPointsControl.setValue(9999);
             expect(maxPointsControl.hasError('max')).toBe(false);
         });
+
+        it('should reject max points below the lower bound and non-integer values', () => {
+            const profileInfo = { activeProfiles: [], activeModuleFeatures: [] } as unknown as ProfileInfo;
+            vi.spyOn(profileService, 'getProfileInfo').mockReturnValue(profileInfo);
+            vi.spyOn(organizationService, 'getOrganizationsByCourse').mockReturnValue(of([]));
+
+            comp.ngOnInit();
+            fixture.detectChanges();
+
+            const maxPointsControl = comp.courseForm.get('maxPoints')!;
+
+            maxPointsControl.setValue(0);
+            expect(maxPointsControl.hasError('min')).toBe(true);
+
+            maxPointsControl.setValue(10.5);
+            expect(maxPointsControl.hasError('notInteger')).toBe(true);
+
+            maxPointsControl.setValue(10);
+            expect(maxPointsControl.hasError('notInteger')).toBe(false);
+            expect(maxPointsControl.hasError('min')).toBe(false);
+        });
     });
 
     describe('ngOnInit', () => {

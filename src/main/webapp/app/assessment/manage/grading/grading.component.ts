@@ -30,7 +30,7 @@ import { SafeHtmlPipe } from 'app/foundation/pipes/safe-html.pipe';
 import { GradeStepBoundsPipe } from 'app/foundation/pipes/grade-step-bounds.pipe';
 import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
 import { GradingScaleDTO, toEntity } from 'app/assessment/shared/entities/grading-scale-dto.model';
-import { MAX_GRADING_POINTS } from 'app/foundation/constants/input.constants';
+import { MAX_GRADING_POINTS, MAX_PRESENTATION_COUNT, MAX_PRESENTATION_SCORE } from 'app/foundation/constants/input.constants';
 
 const csvColumnsGrade = Object.freeze({
     gradeName: 'gradeName',
@@ -158,13 +158,16 @@ export class GradingComponent implements OnInit {
     maxPoints = signal<number | undefined>(undefined);
 
     /**
-     * Error message shown when the configured max points exceed {@link MAX_GRADING_POINTS}. Also used to block saving,
-     * both by disabling the save buttons and by guarding the {@link save} handler.
+     * Error message shown when the configured max points are not a whole number or exceed {@link MAX_GRADING_POINTS}.
+     * Also used to block saving, both by disabling the save buttons and by guarding the {@link save} handler.
      */
     readonly maxPointsErrorMessage = computed<string | undefined>(() => {
         const maxPoints = this.maxPoints();
+        if (maxPoints != undefined && !Number.isInteger(maxPoints)) {
+            return this.translateService.instant('artemisApp.gradingSystem.error.maxPointsWholeNumber');
+        }
         if (maxPoints != undefined && maxPoints > MAX_GRADING_POINTS) {
-            return this.translateService.instant('artemisApp.gradingSystem.error.maxPointsTooHigh');
+            return this.translateService.instant('artemisApp.gradingSystem.error.maxPointsTooHigh', { max: MAX_GRADING_POINTS });
         }
         return undefined;
     });
@@ -542,14 +545,17 @@ export class GradingComponent implements OnInit {
     presentationsConfigErrorMessage(): string | undefined {
         const presentationsConfig = this.presentationsConfig();
         const coursePresentationScore = this.course()?.presentationScore;
-        if (coursePresentationScore != undefined && coursePresentationScore > MAX_GRADING_POINTS) {
-            return this.translateService.instant('artemisApp.gradingSystem.error.valueTooHigh');
+        if (coursePresentationScore != undefined && coursePresentationScore > MAX_PRESENTATION_SCORE) {
+            return this.translateService.instant('artemisApp.gradingSystem.error.valueTooHigh', { max: MAX_PRESENTATION_SCORE });
         }
-        if (presentationsConfig.presentationsNumber != undefined && presentationsConfig.presentationsNumber > MAX_GRADING_POINTS) {
-            return this.translateService.instant('artemisApp.gradingSystem.error.valueTooHigh');
+        if (presentationsConfig.presentationsNumber != undefined && presentationsConfig.presentationsNumber > MAX_PRESENTATION_COUNT) {
+            return this.translateService.instant('artemisApp.gradingSystem.error.valueTooHigh', { max: MAX_PRESENTATION_COUNT });
         }
-        if (presentationsConfig.presentationType === PresentationType.BASIC && (this.course()?.presentationScore ?? 0) <= 0) {
-            return this.translateService.instant('artemisApp.gradingSystem.error.invalidPresentationsNumber');
+        if (presentationsConfig.presentationType === PresentationType.BASIC) {
+            const basicPresentationScore = this.course()?.presentationScore;
+            if (basicPresentationScore === undefined || !Number.isInteger(basicPresentationScore) || basicPresentationScore <= 0) {
+                return this.translateService.instant('artemisApp.gradingSystem.error.invalidPresentationsNumber');
+            }
         }
         if (presentationsConfig.presentationType === PresentationType.GRADED) {
             const presentationsNumber = presentationsConfig.presentationsNumber;
@@ -573,10 +579,10 @@ export class GradingComponent implements OnInit {
     validPresentationsConfig(): boolean {
         const presentationsConfig = this.presentationsConfig();
         const coursePresentationScore = this.course()?.presentationScore;
-        if (coursePresentationScore != undefined && coursePresentationScore > MAX_GRADING_POINTS) {
+        if (coursePresentationScore != undefined && coursePresentationScore > MAX_PRESENTATION_SCORE) {
             return false;
         }
-        if (presentationsConfig.presentationsNumber != undefined && presentationsConfig.presentationsNumber > MAX_GRADING_POINTS) {
+        if (presentationsConfig.presentationsNumber != undefined && presentationsConfig.presentationsNumber > MAX_PRESENTATION_COUNT) {
             return false;
         }
         if (presentationsConfig.presentationType === PresentationType.NONE) {
@@ -591,7 +597,8 @@ export class GradingComponent implements OnInit {
             if (presentationsConfig.presentationsNumber !== undefined || presentationsConfig.presentationsWeight !== undefined) {
                 return false;
             }
-            if ((this.course()?.presentationScore ?? 0) <= 0) {
+            const basicPresentationScore = this.course()?.presentationScore;
+            if (basicPresentationScore === undefined || !Number.isInteger(basicPresentationScore) || basicPresentationScore <= 0) {
                 return false;
             }
         }

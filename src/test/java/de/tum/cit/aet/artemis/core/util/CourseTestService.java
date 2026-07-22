@@ -540,8 +540,28 @@ public class CourseTestService {
         course = courseRepo.save(course);
         course.setStartDate(ZonedDateTime.now().minusDays(5));
         course.setEndDate(ZonedDateTime.now().plusDays(5));
-        course.setPresentationScore(9999);
+        course.setPresentationScore(100);
         request.performMvcRequest(buildUpdateCourse(course.getId(), course)).andExpect(status().isOk());
+    }
+
+    // Test
+    public void testUpdateCourseWithPresentationScoreAboveLimit() throws Exception {
+        Course course = CourseFactory.generateCourse(null, null, null, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
+        course = courseRepo.save(course);
+        course.setStartDate(ZonedDateTime.now().minusDays(5));
+        course.setEndDate(ZonedDateTime.now().plusDays(5));
+        course.setPresentationScore(101);
+        request.performMvcRequest(buildUpdateCourse(course.getId(), course)).andExpect(status().isBadRequest());
+    }
+
+    // Test
+    public void testUpdateCourseWithMaxPointsZero() throws Exception {
+        Course course = CourseFactory.generateCourse(null, null, null, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
+        course = courseRepo.save(course);
+        course.setStartDate(ZonedDateTime.now().minusDays(5));
+        course.setEndDate(ZonedDateTime.now().plusDays(5));
+        course.setMaxPoints(0);
+        request.performMvcRequest(buildUpdateCourse(course.getId(), course)).andExpect(status().isBadRequest());
     }
 
     // Test

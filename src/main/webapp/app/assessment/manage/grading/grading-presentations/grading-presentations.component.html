@@ -27,9 +27,10 @@
                                 id="field_numberBasicPresentations"
                                 type="number"
                                 min="1"
+                                step="1"
                                 pattern="\d*"
                                 required
-                                [max]="MAX_GRADING_POINTS"
+                                [max]="MAX_PRESENTATION_SCORE"
                                 class="form-control input-number-short"
                                 [ngModel]="gradingScale().course!.presentationScore"
                                 (ngModelChange)="updatePresentationScore($event)"
@@ -53,9 +54,10 @@
                                 id="field_numberPresentations"
                                 type="number"
                                 min="1"
+                                step="1"
                                 pattern="\d*"
                                 required
-                                [max]="MAX_GRADING_POINTS"
+                                [max]="MAX_PRESENTATION_COUNT"
                                 class="form-control input-number-short"
                                 [ngModel]="presentationsConfig().presentationsNumber"
                                 (ngModelChange)="updatePresentationsNumber($event)"
