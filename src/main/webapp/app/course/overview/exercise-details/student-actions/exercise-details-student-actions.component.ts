@@ -120,6 +120,7 @@ export class ExerciseDetailsStudentActionsComponent {
     readonly numberOfGradedParticipationResults = this._numberOfGradedParticipationResults.asReadonly();
     readonly isLoading = this._isLoading.asReadonly();
     readonly studentParticipations = this._studentParticipations.asReadonly();
+    readonly hasGradedSubmission = computed(() => !!this._gradedParticipation()?.submissions?.some((submission) => submission.submitted));
 
     readonly athenaEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_ATHENA);
 

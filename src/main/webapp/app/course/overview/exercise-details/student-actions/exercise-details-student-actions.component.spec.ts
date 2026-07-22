@@ -323,6 +323,33 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
         expect(comp.studentParticipations()).toEqual([activeParticipation, practiceParticipation]);
     });
 
+    it('should pass the graded participation and any submitted submission to the programming feedback button', async () => {
+        const gradedParticipation = {
+            id: 7,
+            testRun: false,
+            initializationState: InitializationState.INITIALIZED,
+            repositoryUri: 'https://clone-me.git',
+            submissions: [{ submitted: true }, { submitted: false }],
+        } as ProgrammingExerciseStudentParticipation;
+        const exerciseData = {
+            id: 3,
+            type: ExerciseType.PROGRAMMING,
+            allowFeedbackRequests: true,
+            allowOfflineIde: true,
+            studentParticipations: [gradedParticipation],
+        } as ProgrammingExercise;
+        fixture.componentRef.setInput('courseId', 1);
+        fixture.componentRef.setInput('exercise', exerciseData);
+        TestBed.tick();
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        const feedbackButton = debugElement.query(By.css('jhi-request-feedback-button'));
+        expect(feedbackButton).not.toBeNull();
+        expect(feedbackButton.componentInstance.isSubmitted).toBe(true);
+        expect(feedbackButton.componentInstance.participationId).toBe(gradedParticipation.id);
+    });
+
     it('should show correct buttons in exam mode', async () => {
         const exerciseData = { type: ExerciseType.PROGRAMMING, allowOfflineIde: false, allowOnlineEditor: true } as ProgrammingExercise;
         exerciseData.studentParticipations = [{ initializationState: InitializationState.INITIALIZED } as StudentParticipation];

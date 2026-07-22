@@ -202,9 +202,7 @@ export class ExerciseHeaderActionsComponent {
         return selection === LLMSelectionDecision.CLOUD_AI || selection === LLMSelectionDecision.LOCAL_AI;
     });
     readonly showFeedbackPopover = computed(() => !this.examMode() && (this.exercise().allowFeedbackRequests ?? false) && this.hasUserAcceptedLLM());
-    readonly hasProgrammingSubmission = computed(
-        () => !!this.activeParticipationForCode()?.submissions?.some((submission) => submission.submitted || !!submission.results?.length),
-    );
+    readonly hasProgrammingSubmission = computed(() => !!this.activeParticipationForCode()?.submissions?.some((submission) => submission.submitted));
 
     readonly beforeDueDate = computed(() => {
         const exercise = this.exercise();

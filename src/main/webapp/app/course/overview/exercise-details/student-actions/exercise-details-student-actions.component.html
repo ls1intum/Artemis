@@ -134,7 +134,8 @@
                         <jhi-request-feedback-button
                             [exercise]="exercise()"
                             [smallButtons]="smallButtons()"
-                            [isSubmitted]="gradedParticipation()?.submissions?.last()?.submitted || false"
+                            [isSubmitted]="hasGradedSubmission()"
+                            [participationId]="gradedParticipation()?.id"
                         />
                     }
                     <!--                    </ng-container>-->
@@ -232,7 +233,8 @@
                         <jhi-request-feedback-button
                             [exercise]="exercise()"
                             [smallButtons]="smallButtons()"
-                            [isSubmitted]="gradedParticipation()?.submissions?.last()?.submitted || false"
+                            [isSubmitted]="hasGradedSubmission()"
+                            [participationId]="gradedParticipation()?.id"
                         />
                     }
                 }

@@ -679,6 +679,53 @@ describe('RequestFeedbackButtonComponent', () => {
         expect(participationWebsocketService.subscribeForLatestResultOfParticipation).toHaveBeenCalled();
     });
 
+    it('should use the explicitly selected participation for state and feedback requests', async () => {
+        vi.useFakeTimers();
+        setAthenaEnabled(true);
+        accountService.userIdentity.set({ selectedLLMUsage: LLMSelectionDecision.CLOUD_AI } as any);
+        const practiceParticipation = { id: 1, testRun: true, submissions: [{ id: 1, submitted: true }] } as StudentParticipation;
+        const gradedParticipation = { id: 2, testRun: false, submissions: [{ id: 2, submitted: true }] } as StudentParticipation;
+        const exercise = createBaseExercise(ExerciseType.PROGRAMMING, false);
+        exercise.studentParticipations = [practiceParticipation, gradedParticipation];
+        setupComponentInputs(exercise, true);
+        fixture.componentRef.setInput('participationId', gradedParticipation.id);
+        const resultSubject = new BehaviorSubject<Result | undefined>(undefined);
+        vi.spyOn(participationWebsocketService, 'subscribeForLatestResultOfParticipation').mockReturnValue(resultSubject);
+        const requestFeedbackSpy = vi.spyOn(courseExerciseService, 'requestFeedback').mockReturnValue(of(gradedParticipation));
+
+        await initAndTick();
+
+        expect(component.participation).toBe(gradedParticipation);
+        expect(participationWebsocketService.subscribeForLatestResultOfParticipation).toHaveBeenCalledWith(gradedParticipation.id, true);
+
+        component.requestAIFeedback();
+        await vi.advanceTimersByTimeAsync(0);
+
+        expect(requestFeedbackSpy).toHaveBeenCalledWith(exercise.id, gradedParticipation.id);
+    });
+
+    it('should reload participation state when the selected participation changes', async () => {
+        vi.useFakeTimers();
+        setAthenaEnabled(true);
+        const practiceParticipation = { id: 1, testRun: true, submissions: [{ id: 1, submitted: true }] } as StudentParticipation;
+        const gradedParticipation = { id: 2, testRun: false, submissions: [{ id: 2, submitted: true }] } as StudentParticipation;
+        const exercise = createBaseExercise(ExerciseType.PROGRAMMING, false);
+        exercise.studentParticipations = [practiceParticipation, gradedParticipation];
+        setupComponentInputs(exercise, true);
+        fixture.componentRef.setInput('participationId', gradedParticipation.id);
+        const resultSubject = new BehaviorSubject<Result | undefined>(undefined);
+        vi.spyOn(participationWebsocketService, 'subscribeForLatestResultOfParticipation').mockReturnValue(resultSubject);
+
+        await initAndTick();
+
+        fixture.componentRef.setInput('participationId', practiceParticipation.id);
+        fixture.detectChanges();
+        await vi.advanceTimersByTimeAsync(0);
+
+        expect(component.participation).toBe(practiceParticipation);
+        expect(participationWebsocketService.subscribeForLatestResultOfParticipation).toHaveBeenLastCalledWith(practiceParticipation.id, true);
+    });
+
     it('should return true for programming exercises in assureConditionsSatisfied', () => {
         const participation = createParticipation();
         const exercise = createBaseExercise(ExerciseType.PROGRAMMING, false, participation);

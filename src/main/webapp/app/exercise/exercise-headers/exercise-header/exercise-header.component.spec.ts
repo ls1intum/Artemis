@@ -139,20 +139,49 @@ describe('ExerciseHeaderComponent', () => {
             fixture.detectChanges();
         }
 
-        it.each([
-            { submitted: true, hasResult: false },
-            { submitted: false, hasResult: true },
-        ])('should show the feedback button for a real submission: %s', ({ submitted, hasResult }) => {
-            configureProgrammingExercise(false, submitted, hasResult);
-
-            expect(fixture.debugElement.query(By.css('jhi-request-feedback-button'))).not.toBeNull();
-        });
-
-        it('should show a disabled feedback button without a submitted submission or result', () => {
-            configureProgrammingExercise(false, false, false);
+        it('should enable the feedback button for a submitted submission', () => {
+            configureProgrammingExercise(false, true, false);
 
             const feedbackButton = fixture.debugElement.query(By.css('jhi-request-feedback-button'));
             expect(feedbackButton).not.toBeNull();
+            expect(feedbackButton.componentInstance.isSubmitted).toBe(true);
+        });
+
+        it.each([false, true])('should disable the feedback button for an unsubmitted submission with hasResult=%s', (hasResult) => {
+            configureProgrammingExercise(false, false, hasResult);
+
+            const feedbackButton = fixture.debugElement.query(By.css('jhi-request-feedback-button'));
+            expect(feedbackButton).not.toBeNull();
+            expect(feedbackButton.componentInstance.isSubmitted).toBe(false);
+        });
+
+        it('should pass the active participation to the feedback button', () => {
+            const exercise = new ProgrammingExercise(undefined, undefined);
+            exercise.id = 1;
+            exercise.type = ExerciseType.PROGRAMMING;
+            exercise.allowFeedbackRequests = true;
+            exercise.allowOnlineEditor = false;
+
+            const gradedParticipation = { id: 10, testRun: false, submissions: [{ submitted: true }] } as StudentParticipation;
+            const practiceParticipation = { id: 20, testRun: true, submissions: [{ submitted: false }] } as StudentParticipation;
+            exercise.studentParticipations = [gradedParticipation, practiceParticipation];
+
+            fixture.componentRef.setInput('exercise', exercise);
+            fixture.componentRef.setInput('courseId', 5);
+            fixture.componentRef.setInput('studentParticipation', gradedParticipation);
+            fixture.componentRef.setInput('practiceParticipation', practiceParticipation);
+            fixture.componentRef.setInput('participationMode', 'graded');
+            fixture.detectChanges();
+
+            let feedbackButton = fixture.debugElement.query(By.css('jhi-request-feedback-button'));
+            expect(feedbackButton.componentInstance.participationId).toBe(gradedParticipation.id);
+            expect(feedbackButton.componentInstance.isSubmitted).toBe(true);
+
+            fixture.componentRef.setInput('participationMode', 'practice');
+            fixture.detectChanges();
+
+            feedbackButton = fixture.debugElement.query(By.css('jhi-request-feedback-button'));
+            expect(feedbackButton.componentInstance.participationId).toBe(practiceParticipation.id);
             expect(feedbackButton.componentInstance.isSubmitted).toBe(false);
         });
 
