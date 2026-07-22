@@ -935,6 +935,17 @@ class StageCheckServiceTest {
         }
 
         @Test
+        void acceptsMarkdownEmphasisAroundAnOtherwiseExactTemplateStatusToken() {
+            sandbox.spec = VALID_SPEC.replace("| Calculator | computes the result | stubbed |", "| Calculator | computes the result | **student‑creates** |");
+
+            StageCheckResult result = check(GenerationStage.SPEC);
+
+            assertThat(result.passed()).isTrue();
+            assertThat(result.observation()).contains("Calculator=student-creates");
+            assertThat(StageCheckService.specStudentCreatedTypes(sandbox.spec)).containsExactly("Calculator");
+        }
+
+        @Test
         void fails_whenTheDesignSectionHasNoDataRows() {
             sandbox.spec = VALID_SPEC.replace("| Calculator | computes the result | stubbed |\n", "");
 

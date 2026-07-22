@@ -284,7 +284,7 @@ public class StagedGenerationRunner {
             String systemPrompt = systemPromptService.buildStage(exercise, stage);
 
             String gateFeedback = null;
-            boolean stageReentryUsed = false;
+            int stageReentriesUsed = 0;
             boolean stagePassed = false;
             while (!stagePassed) {
                 AgentLoopResult result;
@@ -375,10 +375,11 @@ public class StagedGenerationRunner {
                 }
 
                 log.info("Staged generation gate failed at stage {} for exercise {}: {}", stage, exercise.getId(), gate.observation());
-                // SPEC gets one private retry that does NOT draw from the shared re-entry budget: its gate is cheap (no builds), and burning a shared re-entry on the first,
-                // most subjective stage would convert spec-gate feedback directly into downstream SOLUTION/TESTS failures.
-                boolean privateSpecRetry = stage == GenerationStage.SPEC && !stageReentryUsed;
-                if (stageReentryUsed || (!privateSpecRetry && reentriesRemaining <= 0) || remainingPool < MIN_STAGE_BUDGET) {
+                // SPEC gets two private retries that do NOT draw from the shared re-entry budget: one can be consumed merely materializing SPEC.md when the model returned its
+                // contents as prose, leaving one real gate-guided refinement before the contract is frozen. Both remain bounded by the global turn and wall-clock budgets.
+                boolean privateSpecRetry = stage == GenerationStage.SPEC && stageReentriesUsed < 2;
+                boolean stageCanReenter = privateSpecRetry || stageReentriesUsed == 0 && reentriesRemaining > 0;
+                if (!stageCanReenter || remainingPool < MIN_STAGE_BUDGET) {
                     // The SPEC gate is the contract checkpoint. A generic repair can safely continue after later gates because the authoritative verifier repeats their checks,
                     // but it cannot reconstruct a specification that was never approved. Fail only that case closed; otherwise preserve the existing bounded repair path.
                     AgentLoopResult.Status exitStatus = stage == GenerationStage.SPEC ? AgentLoopResult.Status.ERROR : lastStatus;
@@ -388,7 +389,7 @@ public class StagedGenerationRunner {
                 if (cancelled.getAsBoolean()) {
                     return finish(exercise, AgentLoopResult.Status.CANCELLED, totalTurns, lastFinalMessage, conversation);
                 }
-                stageReentryUsed = true;
+                stageReentriesUsed++;
                 if (stage != GenerationStage.SPEC) {
                     reentriesRemaining--;
                 }

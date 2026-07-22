@@ -472,15 +472,16 @@ class StagedGenerationRunnerTest {
     }
 
     @Test
-    void specGateFailureTwice_returnsErrorSoGenericVerificationCannotBypassTheUnapprovedContract() {
+    void specGateFailureThreeTimes_returnsErrorSoGenericVerificationCannotBypassTheUnapprovedContract() {
         sandbox.specMarkdown = null;
-        when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(completed(1, "spec attempt 1"), completed(1, "spec attempt 2"));
+        when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(completed(1, "spec attempt 1"), completed(1, "spec attempt 2"),
+                completed(1, "spec attempt 3"));
 
         AgentLoopResult result = run(NEVER_CANCELLED, Set::of);
 
         assertThat(result.status()).isEqualTo(AgentLoopResult.Status.ERROR);
         assertThat(result.finalMessage()).contains("SPEC.md is missing or empty");
-        verify(agentLoopRunner, times(2)).run(anyString(), anyString(), any(), anyInt(), any(), any(), any());
+        verify(agentLoopRunner, times(3)).run(anyString(), anyString(), any(), anyInt(), any(), any(), any());
         verify(verifier, never()).singleBuild(any(), anyString(), any(), anyString());
     }
 
@@ -745,6 +746,34 @@ class StagedGenerationRunnerTest {
         assertThat(result.status()).as("both shared re-entries were still available for SOLUTION and TEMPLATE because SPEC's retry was private")
                 .isEqualTo(AgentLoopResult.Status.COMPLETED);
         verify(agentLoopRunner, times(8)).run(anyString(), anyString(), any(), anyInt(), any(), any(), any());
+    }
+
+    @Test
+    void specStageCanMaterializeTheArtifactThenRefineItFromMechanicalFeedback() {
+        sandbox.specMarkdown = null;
+        AtomicInteger callCount = new AtomicInteger();
+        when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenAnswer(invocation -> switch (callCount.incrementAndGet()) {
+            case 1 -> completed(1, "spec returned as prose instead of written");
+            case 2 -> {
+                sandbox.specMarkdown = VALID_SPEC_DOCUMENT.replace("| Calculator | computes the result | stubbed |", "| Calculator | computes the result | supplied |");
+                yield completed(1, "spec materialized with a malformed status");
+            }
+            case 3 -> {
+                sandbox.specMarkdown = VALID_SPEC_DOCUMENT;
+                yield completed(1, "spec mechanically refined");
+            }
+            case 4 -> completed(2, "solution");
+            case 5 -> completed(2, "template");
+            case 6 -> completed(2, "tests");
+            case 7 -> completed(2, "statement");
+            default -> throw new IllegalStateException("unexpected call " + callCount.get());
+        });
+        when(verifier.selfCheck(any(), anyString(), eq(exercise), any(), eq(false))).thenReturn(passingReport());
+
+        AgentLoopResult result = runner.run(exercise, baseTools, baseTools, "brief", Map.of(), sandbox, "s", NEVER_CANCELLED, null, null, Set::of).result();
+
+        assertThat(result.status()).isEqualTo(AgentLoopResult.Status.COMPLETED);
+        verify(agentLoopRunner, times(7)).run(anyString(), anyString(), any(), anyInt(), any(), any(), any());
     }
 
     @Test

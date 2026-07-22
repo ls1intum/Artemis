@@ -296,7 +296,13 @@ public class StageCheckService {
      * tokens still fail the specification gate.
      */
     private static String normalizeTemplateStatus(String cell) {
-        return cell.replace("`", "").strip().toLowerCase(java.util.Locale.ROOT).replaceAll("[\u2010-\u2015\u2212]", "-");
+        String normalized = cell.replace("`", "").strip().toLowerCase(java.util.Locale.ROOT).replaceAll("[\u2010-\u2015\u2212]", "-");
+        for (String emphasis : List.of("**", "__", "*", "_")) {
+            if (normalized.startsWith(emphasis) && normalized.endsWith(emphasis) && normalized.length() > emphasis.length() * 2) {
+                return normalized.substring(emphasis.length(), normalized.length() - emphasis.length()).strip();
+            }
+        }
+        return normalized;
     }
 
     /** The type names SPEC.md's '## Design' table marks {@code student-creates} — the ones the template omit-gate and the solution presence-gate enforce. */
