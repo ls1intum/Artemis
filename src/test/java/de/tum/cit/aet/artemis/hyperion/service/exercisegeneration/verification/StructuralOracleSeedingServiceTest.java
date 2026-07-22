@@ -80,13 +80,14 @@ class StructuralOracleSeedingServiceTest {
         ArgumentCaptor<InputStream> tarCaptor = ArgumentCaptor.forClass(InputStream.class);
         verify(sandbox).copyIn(eq("s"), eq("/workspace"), tarCaptor.capture());
         Map<String, String> seeded = readTar(tarCaptor.getValue());
-        assertThat(seeded).containsKeys("tests/test/sorting/ClassTest.java", "tests/test/sorting/test.json");
+        assertThat(seeded).containsKeys("tests/test/sorting/ClassTest.java", "tests/test/sorting/MethodTest.java", "tests/test/sorting/test.json")
+                .doesNotContainKeys("tests/test/sorting/AttributeTest.java", "tests/test/sorting/ConstructorTest.java");
         assertThat(seeded.get("tests/test/sorting/ClassTest.java")).startsWith(GENERATED_MARKER).contains("package sorting;").doesNotContain("${packageName}");
         // The oracle enforces the created class, not the already-present interface.
         assertThat(seeded.get("tests/test/sorting/test.json")).contains("MergeSort");
-        // The four Ares dynamic-test names for the ONE created class (MergeSort) and nothing for the already-present Sorter interface — the names the verifier exempts from
-        // binding.
-        assertThat(seededNames).containsExactlyInAnyOrder("testClass[MergeSort]", "testMethods[MergeSort]", "testAttributes[MergeSort]", "testConstructors[MergeSort]");
+        // Only providers with something to check are seeded. Empty AttributeTest/ConstructorTest factories are reported by JUnit under their shared factory-method name,
+        // generateTestsForAllClasses, which creates duplicate production test cases and fails an otherwise correct solution.
+        assertThat(seededNames).containsExactlyInAnyOrder("testClass[MergeSort]", "testMethods[MergeSort]");
     }
 
     /** A minimal Ares-compliant Maven pom, matching what the harness-convention gate demands, so the composed test isolates the timeout/annotation check under test. */
@@ -135,7 +136,7 @@ class StructuralOracleSeedingServiceTest {
                 producedTestsFiles.put(path.substring(workspaceTestsPrefix.length()), content);
             }
         });
-        assertThat(producedTestsFiles).containsKeys("test/sorting/ClassTest.java", "test/sorting/MethodTest.java", "test/sorting/AttributeTest.java",
+        assertThat(producedTestsFiles).containsKeys("test/sorting/ClassTest.java", "test/sorting/MethodTest.java").doesNotContainKeys("test/sorting/AttributeTest.java",
                 "test/sorting/ConstructorTest.java");
 
         assertThat(ExerciseIntegrityGate.javaAresConventionReasons(producedTestsFiles))
@@ -172,6 +173,21 @@ class StructuralOracleSeedingServiceTest {
         verify(sandbox, never()).copyIn(any(), any(), any());
         verify(sandbox, never()).exec(any(), any(), any(), any(), any());
         assertThat(seededNames).isEmpty();
+    }
+
+    @Test
+    void refreshesACompleteManagedBundleWithOnlyApplicableProviders() {
+        InteractiveSandbox sandbox = mock(InteractiveSandbox.class);
+        Map<String, String> solution = Map.of("src/sorting/MergeSort.java", "package sorting;\npublic class MergeSort { public void sort() {} }");
+        Map<String, String> template = Map.of("src/sorting/Sorter.java", "package sorting;\npublic interface Sorter {}");
+        String oracle = "[{\"class\":{\"name\":\"MergeSort\"},\"methods\":[{\"name\":\"sort\"}]}]";
+        Map<String, String> tests = Map.of("test/sorting/SortTest.java", "package sorting; class SortTest {}", "test/sorting/test.json", oracle, "test/sorting/ClassTest.java",
+                GENERATED_MARKER + "\nclass ClassTest {}", "test/sorting/MethodTest.java", GENERATED_MARKER + "\nclass MethodTest {}");
+
+        java.util.Set<String> seededNames = seederWith(sandbox, solution, template, tests).seedIfStructuralDiff(sandbox, "s", javaExercise());
+
+        verify(sandbox).copyIn(eq("s"), eq("/workspace"), any());
+        assertThat(seededNames).containsExactlyInAnyOrder("testClass[MergeSort]", "testMethods[MergeSort]");
     }
 
     @Test

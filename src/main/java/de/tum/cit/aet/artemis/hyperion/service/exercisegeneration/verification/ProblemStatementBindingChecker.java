@@ -269,6 +269,19 @@ final class ProblemStatementBindingChecker {
         return unbound;
     }
 
+    /** Exact legal task-binding candidates: real tests except build gates and tests deliberately hidden until the due date, de-duplicated in report order. */
+    static List<String> bindableTestNames(List<String> actualTestNames, Set<String> hiddenTestNames) {
+        Set<String> hidden = hiddenTestNames.stream().map(ProblemStatementBindingChecker::normalizeTestName).collect(Collectors.toSet());
+        Set<String> bindable = new java.util.LinkedHashSet<>();
+        for (String rawName : actualTestNames) {
+            String normalized = normalizeTestName(rawName);
+            if (!normalized.isEmpty() && !BuildGateTestNames.isBuildGate(normalized) && !hidden.contains(normalized)) {
+                bindable.add(normalized);
+            }
+        }
+        return List.copyOf(bindable);
+    }
+
     /**
      * Hidden test names that occur anywhere in the student-facing statement. A hidden test is only overfit-resistant when its implementation-shaped name is not advertised in
      * a task, diagram, prose, or appendix. This also covers the task-binding defect: Artemis would render that task as NOT_EXECUTED until the deadline.

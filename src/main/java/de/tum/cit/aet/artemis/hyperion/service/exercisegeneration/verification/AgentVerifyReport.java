@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification;
 
 import java.util.List;
+import java.util.Set;
 import java.util.regex.Pattern;
 
 /**
@@ -16,7 +17,7 @@ import java.util.regex.Pattern;
  * @param templateFailed          whether the template compiled and (correctly) failed enough tests; {@code false} when it compiled but passes too many (a near-complete template)
  * @param templateFailureEvidence bounded, sanitized failure-message excerpts for template tests
  * @param templateWronglyPassing  the parser-form names that pass on the template but should fail (the Go/no-exception zero-value-stub trap); each must be made to fail
- * @param exactTestNames          every parser-form test name (suite-prefixed, verbatim) the agent must copy into {@code [task]} bindings — never guessed
+ * @param exactTestNames          every parser-form test name (suite-prefixed, verbatim); only its visible, non-build-gate subset is offered for {@code [task]} bindings
  * @param hiddenTestNames         the subset the grading plan hides until the due date: they grade silently and must NEVER be bound to a {@code [task]} line
  * @param unresolvedTaskBindings  {@code [task]} bindings that reference a name matching no real test (the C++/Catch2 bare-name trap)
  * @param possiblyDeadFiles       best-effort, language-agnostic: workspace files no build phase appears to read (advisory only; empty when the probe is unavailable)
@@ -116,7 +117,7 @@ public record AgentVerifyReport(int solutionTests, boolean solutionPassed, List<
         }
         appendFailureEvidence(builder, "Template", templateFailureEvidence);
 
-        List<String> bindableNames = exactTestNames.stream().filter(name -> !hiddenTestNames.contains(name)).toList();
+        List<String> bindableNames = ProblemStatementBindingChecker.bindableTestNames(exactTestNames, Set.copyOf(hiddenTestNames));
         builder.append("Exact test names — bind each [task] to one of these VERBATIM: ").append(renderNames(bindableNames)).append('\n');
         if (!hiddenTestNames.isEmpty()) {
             builder.append("Hidden until the due date (they grade silently; copy these into test-plan.json, NEVER into a [task] line): ").append(renderNames(hiddenTestNames))

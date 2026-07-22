@@ -979,6 +979,20 @@ class DifferentialVerificationServiceTest {
     }
 
     @Test
+    void shouldNotOfferHiddenTestsAsReplacementsForAnUnresolvedBinding() {
+        List<String> all = List.of("sorts_ascending", "sorts_ascending_freshWitness");
+        String ps = "# Sort\n[task][Ascending](notARealTest)\n";
+        String plan = "{\"tests\":[{\"name\":\"sorts_ascending\",\"weight\":3,\"visibility\":\"ALWAYS\"},"
+                + "{\"name\":\"sorts_ascending_freshWitness\",\"weight\":2,\"visibility\":\"AFTER_DUE_DATE\"}]}";
+        ScriptedSandbox sandbox = new ScriptedSandbox(resultWithFails(0, all, List.of()), resultWithFails(1, all, all), ps).withTestPlan(plan);
+
+        VerificationResult result = verifyGenerate(newVerifier(), sandbox, new ProgrammingExercise());
+
+        assertThat(result.reasons()).filteredOn(reason -> reason.contains("match no actual test")).singleElement().asString().contains("sorts_ascending")
+                .doesNotContain("sorts_ascending_freshWitness");
+    }
+
+    @Test
     void shouldStillDemandEveryBindingWhenNoGradingPlanExists() {
         // Fail-open contract: without a readable plan the oracle behaves exactly as it did before visibility existed.
         List<String> all = List.of("sorts_ascending", "sorts_descending");

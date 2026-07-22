@@ -646,6 +646,20 @@ class StageCheckServiceTest {
                                                                                                                                                                 // agent can copy
                                                                                                                                                                 // correctly
         }
+
+        @Test
+        void unresolvedBindingFeedback_doesNotOfferAHiddenTestAsAReplacement() {
+            sandbox.problemStatement = "# Title\n[task][Sort](testDoesNotExist)\n";
+            sandbox.testPlanJson = "{\"tests\":[{\"name\":\"testSortsAscending\",\"seam\":\"S1\",\"weight\":3,\"visibility\":\"ALWAYS\"},"
+                    + "{\"name\":\"testSortsAscending_hidden\",\"seam\":\"S1\",\"weight\":2,\"visibility\":\"AFTER_DUE_DATE\"}]}";
+            AgentVerifyReport lastTestsReport = new AgentVerifyReport(2, true, List.of(), 2, true, true, List.of(), List.of("testSortsAscending", "testSortsAscending_hidden"),
+                    List.of(), List.of(), true, List.of());
+
+            StageCheckResult result = check(GenerationStage.STATEMENT, lastTestsReport);
+
+            assertThat(result.passed()).isFalse();
+            assertThat(result.observation()).contains("testDoesNotExist", "testSortsAscending").doesNotContain("testSortsAscending_hidden");
+        }
     }
 
     @Nested

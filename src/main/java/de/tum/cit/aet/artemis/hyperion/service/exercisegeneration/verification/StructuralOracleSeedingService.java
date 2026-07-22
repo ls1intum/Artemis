@@ -7,6 +7,7 @@ import java.nio.file.Path;
 import java.time.Duration;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -39,8 +40,9 @@ import de.tum.cit.aet.artemis.programming.service.structureoraclegenerator.Oracl
 /**
  * Adds Ares structural tests to a generated Java exercise, like a manually authored one: runs the deterministic {@link OracleGenerator} over the produced solution and template
  * and,
- * only when their structures differ, seeds the {@code test.json} oracle plus the four boilerplate test classes ({@code ClassTest}/{@code MethodTest}/{@code AttributeTest}/
- * {@code ConstructorTest}) into the test repository.
+ * only when their structures differ, seeds the {@code test.json} oracle plus each applicable Ares test provider ({@code ClassTest}/{@code MethodTest}/{@code AttributeTest}/
+ * {@code ConstructorTest}) into the test repository. Providers whose oracle section is empty are omitted: their empty dynamic factory is reported under the common method name
+ * {@code generateTestsForAllClasses}, creating duplicate production test cases instead of a useful structural check.
  * <p>
  * Conservative: seeds only for a {@code public} class the student must create (present in the solution, absent from the template), and even then only its public/protected surface,
  * so a correct behaviour-only exercise is never burdened with spurious structural requirements. Any failure is logged and skipped — it must never abort an otherwise valid
@@ -85,10 +87,9 @@ public class StructuralOracleSeedingService {
     /**
      * Generates the structure oracle and seeds the structural tests when the structures differ. Java only; a no-op for other languages and on any error.
      * <p>
-     * Returns the authoritative set of structural test-case names seeded this call ({@code testClass[X]}, {@code testMethods[X]}, {@code testAttributes[X]},
-     * {@code testConstructors[X]} per kept class), derived from the oracle this service generated — not from anything the agent wrote, so the agent cannot grow it to smuggle a
-     * behaviour test into structural-test handling. The verifier uses these names for starter-credit handling and task-binding resolution, while still requiring them to appear in
-     * the student checklist. Empty when nothing was seeded.
+     * Returns the authoritative set of structural test-case names seeded this call ({@code testClass[X]} plus names for non-empty member sections), derived from the oracle this
+     * service generated — not from anything the agent wrote, so the agent cannot grow it to smuggle a behaviour test into structural-test handling. The verifier uses these names
+     * for starter-credit handling and task-binding resolution, while still requiring them to appear in the student checklist. Empty when nothing was seeded.
      *
      * @param sandbox   the live sandbox session holding the produced files
      * @param sessionId the session id
@@ -136,12 +137,13 @@ public class StructuralOracleSeedingService {
             Map<String, String> seededFiles = new LinkedHashMap<>();
             String dirPrefix = GenerationWorkspaceService.directoryFor(RepositoryType.TESTS) + "/" + testDirectory;
             seededFiles.put(dirPrefix + "/" + ORACLE_FILE, oracle);
-            for (String className : STRUCTURAL_CLASSES) {
+            List<String> requiredStructuralClasses = requiredStructuralClasses(oracle);
+            for (String className : requiredStructuralClasses) {
                 seededFiles.put(dirPrefix + "/" + className, structuralClassContent(className, packageName));
             }
             sandbox.copyIn(sessionId, GenerationWorkspaceService.WORKSPACE, WorkspaceArchive.buildWorkspaceTarStream(seededFiles, Map.of()));
             Set<String> seededTestNames = structuralTestNames(oracle);
-            log.info("Seeded {} structural test classes and a structure oracle for exercise {} (package '{}'), structural test names {}", STRUCTURAL_CLASSES.size(),
+            log.info("Seeded {} structural test classes and a structure oracle for exercise {} (package '{}'), structural test names {}", requiredStructuralClasses.size(),
                     exercise.getId(), packageName, seededTestNames);
             return seededTestNames;
         }
@@ -156,23 +158,59 @@ public class StructuralOracleSeedingService {
     }
 
     /**
-     * The exact Ares dynamic-test names the four structural test classes report at runtime for the classes in the filtered oracle: {@code testClass[<ClassName>]} /
-     * {@code testMethods[<ClassName>]} / {@code testAttributes[<ClassName>]} / {@code testConstructors[<ClassName>]} per class entry. Reconstructed from the oracle this service
-     * produced so the verifier's exemption is keyed to a forgery-resistant authority, not a name pattern the agent could imitate.
+     * The exact Ares dynamic-test names the applicable structural providers report at runtime. Every retained class has {@code testClass[<ClassName>]}; method, attribute, and
+     * constructor names exist only when that oracle section is non-empty. Reconstructed from the oracle this service produced so the verifier's exemption is keyed to a
+     * forgery-resistant authority, not a name pattern the agent could imitate.
      */
     private static Set<String> structuralTestNames(String oracle) throws IOException {
-        Set<String> names = new HashSet<>();
+        Set<String> names = new LinkedHashSet<>();
         for (JsonNode entry : (ArrayNode) MAPPER.readTree(oracle)) {
             String className = entry.path("class").path("name").asText("");
             if (className.isEmpty()) {
                 continue;
             }
             names.add("testClass[" + className + "]");
-            names.add("testMethods[" + className + "]");
-            names.add("testAttributes[" + className + "]");
-            names.add("testConstructors[" + className + "]");
+            if (hasEntries(entry, "methods")) {
+                names.add("testMethods[" + className + "]");
+            }
+            if (hasEntries(entry, "attributes")) {
+                names.add("testAttributes[" + className + "]");
+            }
+            if (hasEntries(entry, "constructors")) {
+                names.add("testConstructors[" + className + "]");
+            }
         }
         return names;
+    }
+
+    /** Seeds only Ares providers that have at least one dynamic test to create; an empty provider is reported under its shared factory name and creates duplicate test cases. */
+    private static List<String> requiredStructuralClasses(String oracle) throws IOException {
+        ArrayNode entries = (ArrayNode) MAPPER.readTree(oracle);
+        List<String> classes = new java.util.ArrayList<>();
+        classes.add("ClassTest.java");
+        if (hasEntries(entries, "methods")) {
+            classes.add("MethodTest.java");
+        }
+        if (hasEntries(entries, "attributes")) {
+            classes.add("AttributeTest.java");
+        }
+        if (hasEntries(entries, "constructors")) {
+            classes.add("ConstructorTest.java");
+        }
+        return List.copyOf(classes);
+    }
+
+    private static boolean hasEntries(JsonNode entries, String field) {
+        if (entries.isArray()) {
+            for (JsonNode entry : entries) {
+                if (hasEntries(entry, field)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+        JsonNode values = entries.path(field);
+        return values.isArray() && !values.isEmpty();
     }
 
     /**
@@ -239,9 +277,21 @@ public class StructuralOracleSeedingService {
             return StructuralAssetOwnership.UNMANAGED;
         }
         String prefix = testDirectory.isEmpty() ? "" : testDirectory + "/";
-        boolean hasOracle = testFiles.containsKey(prefix + ORACLE_FILE);
-        boolean completeManagedBundle = hasOracle && STRUCTURAL_CLASSES.stream().allMatch(className -> testFiles.getOrDefault(prefix + className, "").contains(GENERATED_MARKER));
-        return completeManagedBundle ? StructuralAssetOwnership.HYPERION_MANAGED : StructuralAssetOwnership.UNMANAGED;
+        String oracle = testFiles.get(prefix + ORACLE_FILE);
+        if (oracle == null) {
+            return StructuralAssetOwnership.UNMANAGED;
+        }
+        try {
+            List<String> requiredClasses = requiredStructuralClasses(oracle);
+            boolean hasManagedClass = STRUCTURAL_CLASSES.stream().anyMatch(className -> testFiles.getOrDefault(prefix + className, "").contains(GENERATED_MARKER));
+            boolean everyPresentClassIsManaged = STRUCTURAL_CLASSES.stream().filter(className -> testFiles.containsKey(prefix + className))
+                    .allMatch(className -> testFiles.get(prefix + className).contains(GENERATED_MARKER));
+            boolean everyRequiredClassExists = requiredClasses.stream().allMatch(className -> testFiles.containsKey(prefix + className));
+            return hasManagedClass && everyPresentClassIsManaged && everyRequiredClassExists ? StructuralAssetOwnership.HYPERION_MANAGED : StructuralAssetOwnership.UNMANAGED;
+        }
+        catch (IOException | RuntimeException e) {
+            return StructuralAssetOwnership.UNMANAGED;
+        }
     }
 
     private enum StructuralAssetOwnership {

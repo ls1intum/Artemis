@@ -501,13 +501,14 @@ public class DifferentialVerificationService {
         }
 
         // Compute once and let the gate decide; surfaced to the agent verbatim (guards the C++/Catch2 bare-name trap).
+        Set<String> hiddenTestNames = readHiddenTestNames(sandbox, sessionId);
         List<String> unresolvedTaskBindings = ProblemStatementBindingChecker.unresolvedTaskBindings(problemStatement, solution.testNames(), testCount, seededStructuralTestNames);
-        boolean taskBindingsResolve = checkTaskBindingsResolve(unresolvedTaskBindings, solution, problemStatementHasTasks, reasons);
+        List<String> bindableTestNames = ProblemStatementBindingChecker.bindableTestNames(solution.testNames(), hiddenTestNames);
+        boolean taskBindingsResolve = checkTaskBindingsResolve(unresolvedTaskBindings, bindableTestNames, problemStatementHasTasks, reasons);
         List<String> duplicateTaskBindings = ProblemStatementBindingChecker.duplicateTaskBindings(problemStatement);
         boolean noDuplicateTaskBindings = checkNoDuplicateTaskBindings(duplicateTaskBindings, problemStatementHasTasks, reasons);
         // Visibility is part of the binding contract: hidden tests are DELIBERATELY unbound, so they are exempt here and forbidden below. Both halves must move together —
         // exempting alone would let a bound hidden test through, forbidding alone would make the two gates unsatisfiable at once.
-        Set<String> hiddenTestNames = readHiddenTestNames(sandbox, sessionId);
         List<String> unboundGradableTests = ProblemStatementBindingChecker.unboundGradableTestNames(problemStatement, solution.testNames(), testCount, hiddenTestNames);
         boolean allGradableTestsBound = checkAllGradableTestsBound(unboundGradableTests, problemStatementHasTasks, taskBindingsResolve, reasons);
         List<String> hiddenTestMentions = ProblemStatementBindingChecker.hiddenTestMentions(problemStatement, hiddenTestNames);
@@ -749,12 +750,12 @@ public class DifferentialVerificationService {
      *
      * @param unresolvedTaskBindings the precomputed {@code [task]} bindings that resolve to no real test (the C++/Catch2 bare-name trap)
      */
-    private static boolean checkTaskBindingsResolve(List<String> unresolvedTaskBindings, BuildSummary solution, boolean problemStatementHasTasks, List<String> reasons) {
+    private static boolean checkTaskBindingsResolve(List<String> unresolvedTaskBindings, List<String> bindableTestNames, boolean problemStatementHasTasks, List<String> reasons) {
         boolean taskBindingsResolve = unresolvedTaskBindings.isEmpty();
         if (problemStatementHasTasks && !taskBindingsResolve) {
             reasons.add("These [task] bindings reference names that match no actual test: " + unresolvedTaskBindings + ". A [task]'s parenthesised names must be the exact test "
                     + "method/function names (e.g. testSortsAscending), not a @DisplayName or a prose title — otherwise the task shows no result in Artemis. The actual test names are: "
-                    + solution.testNames() + ". Fix the [task] lines (or rename the tests) so every binding references a real test name.");
+                    + bindableTestNames + ". Fix the [task] lines (or rename the tests) so every binding references a real, visible test name.");
         }
         return taskBindingsResolve;
     }

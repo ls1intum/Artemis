@@ -522,12 +522,14 @@ public class StageCheckService {
         if (statement.isBlank()) {
             return StageCheckResult.failed("problem-statement.md is missing or empty. Write the student-facing problem statement before submitting.");
         }
+        Set<String> hiddenNames = hiddenTestNames(sandbox, sessionId);
         if (lastTestsReport != null) {
             List<String> exactTestNames = lastTestsReport.exactTestNames();
             List<String> unresolved = ProblemStatementBindingChecker.unresolvedTaskBindings(statement, exactTestNames, exactTestNames.size(), Set.of());
             if (!unresolved.isEmpty()) {
+                List<String> bindableNames = ProblemStatementBindingChecker.bindableTestNames(exactTestNames, hiddenNames);
                 return StageCheckResult.failed("These [task] bindings reference names that match no actual test: " + unresolved
-                        + ". A [task]'s parenthesised names must be the exact test name(s) from the TESTS stage, copied verbatim: " + exactTestNames + ".");
+                        + ". A [task]'s parenthesised names must be exact, visible test names from the TESTS stage, copied verbatim: " + bindableNames + ".");
             }
             // Diagram testsColor links are interactive in Artemis (they render pass/fail per element); a name that matches no test is a silently dead link the student can
             // never satisfy, so it is held to the same resolution standard as a [task] binding.
@@ -550,7 +552,7 @@ public class StageCheckService {
                 return StageCheckResult.failed("The statement cannot be checked against test-plan.json because the plan is invalid: " + e.getMessage());
             }
         }
-        List<String> hiddenMentions = ProblemStatementBindingChecker.hiddenTestMentions(statement, hiddenTestNames(sandbox, sessionId));
+        List<String> hiddenMentions = ProblemStatementBindingChecker.hiddenTestMentions(statement, hiddenNames);
         if (!hiddenMentions.isEmpty()) {
             return StageCheckResult.failed(ProblemStatementBindingChecker.hiddenTestMentionsRejection(hiddenMentions));
         }
