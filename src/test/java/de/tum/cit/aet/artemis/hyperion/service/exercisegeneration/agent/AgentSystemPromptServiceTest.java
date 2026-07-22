@@ -273,7 +273,7 @@ class AgentSystemPromptServiceTest {
 
         assertOnlyOwnStageHeaderPresent(prompt, GenerationStage.SPEC);
         assertThat(prompt).contains("write `/workspace/SPEC.md`").contains("reference/style/spec.md").contains("`given`, `stubbed`, `student-creates`")
-                .contains("## Testing Strategy").doesNotContain("reference/style/solution.md").doesNotContain("reference/style/template.md")
+                .contains("## Testing Strategy").contains("stable ID (`S1`, `S2`, ...)").doesNotContain("reference/style/solution.md").doesNotContain("reference/style/template.md")
                 .doesNotContain("reference/style/tests.md").doesNotContain("reference/style/final-statement.md");
     }
 
@@ -292,7 +292,7 @@ class AgentSystemPromptServiceTest {
 
         assertOnlyOwnStageHeaderPresent(prompt, GenerationStage.TEMPLATE);
         assertThat(prompt).contains("Earlier stages already produced: the specification and the reference solution.").contains("derive the template FROM the finished solution")
-                .contains("TEMPLATE AS TEACHING SCAFFOLD").contains("DIFF DISCIPLINE").contains("byte-identical between template and solution")
+                .contains("TEMPLATE AS TEACHING SCAFFOLD").contains("DIFF DISCIPLINE").contains("// TODO S1:").contains("byte-identical between template and solution")
                 .contains("reference/style/template.md");
     }
 
@@ -302,7 +302,8 @@ class AgentSystemPromptServiceTest {
 
         assertOnlyOwnStageHeaderPresent(prompt, GenerationStage.TESTS);
         assertThat(prompt).contains("Earlier stages already produced: the specification, the reference solution, and the template.")
-                .contains("partition at a time from the specification's Testing Strategy").contains("reference/style/tests.md").contains("write `/workspace/test-plan.json`")
+                .contains("partition at a time from the specification's Testing Strategy").contains("highest-risk learning-objective seam").contains("\"seam\":\"S1\"")
+                .contains("reference/style/tests.md").contains("write `/workspace/test-plan.json`")
                 // Statement-only sections must not leak into the TESTS stage prompt.
                 .doesNotContain("STUDENT-FACING STATEMENT").doesNotContain("ARTEMIS TASK BINDINGS");
     }
@@ -314,7 +315,8 @@ class AgentSystemPromptServiceTest {
         assertOnlyOwnStageHeaderPresent(prompt, GenerationStage.STATEMENT);
         assertThat(prompt).contains("Earlier stages already produced: the specification, the reference solution, the template, and the differential tests.")
                 .contains("write the statement last by REWRITING the specification").contains("STUDENT-FACING STATEMENT").contains("ARTEMIS TASK BINDINGS")
-                .contains("[task][Short human title](exactTestNameA,exactTestNameB)").contains("reference/style/final-statement.md");
+                .contains("[task][Short human title](exactTestNameA,exactTestNameB)").contains("write only problem-statement.md").contains("do not rewrite them in this stage")
+                .contains("reference/style/final-statement.md");
     }
 
     @Test

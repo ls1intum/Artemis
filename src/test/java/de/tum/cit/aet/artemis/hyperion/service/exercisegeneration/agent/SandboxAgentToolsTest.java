@@ -264,8 +264,13 @@ class SandboxAgentToolsTest {
         for (GenerationStage stage : GenerationStage.values()) {
             SandboxAgentTools staged = new SandboxAgentTools(new RecordingSandbox(), "s");
             staged.enterStage(stage);
-            assertThat(staged.writeFile("SPEC.md", "## Rules")).as("stage %s", stage).startsWith("Wrote ");
-            if (stage == GenerationStage.TESTS || stage == GenerationStage.STATEMENT) {
+            if (stage == GenerationStage.STATEMENT) {
+                assertThat(staged.writeFile("SPEC.md", "## Rules")).as("stage %s", stage).contains("cannot write");
+            }
+            else {
+                assertThat(staged.writeFile("SPEC.md", "## Rules")).as("stage %s", stage).startsWith("Wrote ");
+            }
+            if (stage == GenerationStage.TESTS) {
                 assertThat(staged.writeFile("test-plan.json", "{\"tests\":[]}")).as("stage %s", stage).startsWith("Wrote ");
             }
             else {

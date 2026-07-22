@@ -15,14 +15,29 @@ class GeneratedTestPlanTest {
     void parsesWeightsAndVisibility() {
         GeneratedTestPlan plan = GeneratedTestPlan.parse("""
                 {"tests":[
-                  {"name":"earn_subDollarPurchaseEarnsZeroPoints","weight":3,"visibility":"ALWAYS"},
-                  {"name":"redeem_throwsWhenPointsInsufficient","weight":1.5,"visibility":"AFTER_DUE_DATE"}
+                  {"name":"earn_subDollarPurchaseEarnsZeroPoints","seam":"S1","weight":3,"visibility":"ALWAYS"},
+                  {"name":"redeem_throwsWhenPointsInsufficient","seam":"S2","weight":1.5,"visibility":"AFTER_DUE_DATE"}
                 ]}
                 """);
 
         assertThat(plan.tests()).hasSize(2);
-        assertThat(plan.tests().getFirst()).isEqualTo(new GeneratedTestPlan.Entry("earn_subDollarPurchaseEarnsZeroPoints", 3.0, "ALWAYS"));
+        assertThat(plan.tests().getFirst()).isEqualTo(new GeneratedTestPlan.Entry("earn_subDollarPurchaseEarnsZeroPoints", "S1", 3.0, "ALWAYS"));
         assertThat(plan.hiddenEntries()).singleElement().extracting(GeneratedTestPlan.Entry::name).isEqualTo("redeem_throwsWhenPointsInsufficient");
+        assertThat(plan.visibleEntries()).singleElement().extracting(GeneratedTestPlan.Entry::seam).isEqualTo("S1");
+    }
+
+    @Test
+    void retainsAPlanWithoutSeamsForBackwardCompatiblePersistence() {
+        GeneratedTestPlan plan = GeneratedTestPlan.parse("{\"tests\":[{\"name\":\"testFoo\",\"weight\":1,\"visibility\":\"ALWAYS\"}]}");
+
+        assertThat(plan.tests().getFirst().seam()).isEmpty();
+    }
+
+    @Test
+    void rejectsMalformedSeamIdsInsteadOfCreatingUntraceableTaskGroups() {
+        assertThatIllegalArgumentException()
+                .isThrownBy(() -> GeneratedTestPlan.parse("{\"tests\":[{\"name\":\"testFoo\",\"seam\":\"delegation\",\"weight\":1,\"visibility\":\"ALWAYS\"}]}"))
+                .withMessageContaining("seam 'delegation'").withMessageContaining("S1");
     }
 
     @Test

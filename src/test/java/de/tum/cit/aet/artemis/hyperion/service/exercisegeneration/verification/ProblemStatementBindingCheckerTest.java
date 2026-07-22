@@ -57,6 +57,43 @@ class ProblemStatementBindingCheckerTest {
     }
 
     @Test
+    void seamTaskGrouping_acceptsOneTaskPerStudentWorkSeam() {
+        GeneratedTestPlan plan = GeneratedTestPlan.parse("""
+                {"tests":[
+                  {"name":"testTypical","seam":"S1","weight":3,"visibility":"ALWAYS"},
+                  {"name":"testBoundary","seam":"S1","weight":2,"visibility":"ALWAYS"},
+                  {"name":"testDelegates","seam":"S2","weight":3,"visibility":"ALWAYS"},
+                  {"name":"testHidden","seam":"S2","weight":1,"visibility":"AFTER_DUE_DATE"}
+                ]}
+                """);
+        String statement = "[task][Compute values](testTypical,testBoundary)\n[task][Delegate](testDelegates)\n";
+
+        assertThat(ProblemStatementBindingChecker.seamTaskGroupingReasons(statement, plan)).isEmpty();
+    }
+
+    @Test
+    void seamTaskGrouping_rejectsTestShapedTasksAndMixedSeams() {
+        GeneratedTestPlan plan = GeneratedTestPlan.parse("""
+                {"tests":[
+                  {"name":"testTypical","seam":"S1","weight":3,"visibility":"ALWAYS"},
+                  {"name":"testBoundary","seam":"S1","weight":2,"visibility":"ALWAYS"},
+                  {"name":"testDelegates","seam":"S2","weight":3,"visibility":"ALWAYS"}
+                ]}
+                """);
+
+        assertThat(ProblemStatementBindingChecker.seamTaskGroupingReasons("[task][Typical](testTypical)\n[task][Boundary and delegation](testBoundary,testDelegates)\n", plan))
+                .anySatisfy(reason -> assertThat(reason).contains("S1", "split")).anySatisfy(reason -> assertThat(reason).contains("mixes", "S1", "S2"));
+    }
+
+    @Test
+    void seamTaskGrouping_rejectsMissingSeamMetadataWithoutGuessing() {
+        GeneratedTestPlan plan = GeneratedTestPlan.parse("{\"tests\":[{\"name\":\"testFoo\",\"weight\":1,\"visibility\":\"ALWAYS\"}]}");
+
+        assertThat(ProblemStatementBindingChecker.seamTaskGroupingReasons("[task][Foo](testFoo)\n", plan)).singleElement()
+                .satisfies(reason -> assertThat(reason).contains("testFoo", "no seam"));
+    }
+
+    @Test
     void malformedTaskKeywords_flagsTheWrongKeywordDistinctly() {
         assertThat(ProblemStatementBindingChecker.malformedTaskKeywords("[tasks][A](testA)\n[Task][B](testB)\n[tasks][C](testC)\n")).containsExactly("tasks", "Task");
     }

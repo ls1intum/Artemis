@@ -42,6 +42,7 @@ import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.read.ListAppender;
 import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.buildagent.dto.SandboxExecResult;
 import de.tum.cit.aet.artemis.buildagent.service.InteractiveSandbox;
 import de.tum.cit.aet.artemis.hyperion.dto.GenerationMode;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.AgentLoopResult;
@@ -577,7 +578,7 @@ class GenerationOrchestrationServiceTest {
             assertThat(outcome.isMechanicallyVerified()).as("mechanically valid work is saved canonically so the instructor can review the scope finding").isTrue();
             assertThat(outcome.specFidelityReport().hasBlockingFindings()).isTrue();
         }
-        verify(agentLoopRunner, times(MAX_GENERATION_ATTEMPTS)).runSession(anyString(), any(), anyString(), any(), anyInt(), any(), any(), any());
+        verify(agentLoopRunner, times(2)).runSession(anyString(), any(), anyString(), any(), anyInt(), any(), any(), any());
     }
 
     @Test
@@ -613,9 +614,9 @@ class GenerationOrchestrationServiceTest {
                     .satisfies(finding -> assertThat(finding.kind()).isEqualTo(SpecFidelityReport.Kind.REQUESTED_ADAPTATION_CHANGE_MISSING));
         }
 
-        verify(specFidelityCritic, times(MAX_GENERATION_ATTEMPTS)).critiqueAdaptation(contains("RUN INSTRUCTION (authoritative adaptation request):\nChange one method only"),
-                eq("PROBLEM STATEMENT"), any(), eq(""), any(), any(), any(), any());
-        verify(agentLoopRunner, times(MAX_GENERATION_ATTEMPTS)).runSession(anyString(), any(), anyString(), any(), anyInt(), any(), any(), any());
+        verify(specFidelityCritic, times(2)).critiqueAdaptation(contains("RUN INSTRUCTION (authoritative adaptation request):\nChange one method only"), eq("PROBLEM STATEMENT"),
+                any(), eq(""), any(), any(), any(), any());
+        verify(agentLoopRunner, times(2)).runSession(anyString(), any(), anyString(), any(), anyInt(), any(), any(), any());
         verify(specFidelityCritic, never()).critique(any(), any(), any(), any(), any(), any(), any(), any());
     }
 
@@ -669,6 +670,24 @@ class GenerationOrchestrationServiceTest {
     }
 
     @Test
+    void semanticRepairIsTransactional_whenFinalReviewStillBlocksIt() {
+        SpecFidelityReport originalReview = reportWith("original contract blocker");
+        SpecFidelityReport repairedReview = reportWith("repair introduced a different blocker");
+        when(agentLoopRunner.runSession(anyString(), any(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(loopSession(completed()));
+        when(verifier.verify(any(), anyString(), any(), any(VerificationRequest.class), any(Runnable.class))).thenReturn(accepted());
+        when(specFidelityCritic.critique(any(), any(), any(), any(), any(), any(), any(), any())).thenReturn(originalReview, repairedReview);
+        when(workspace.extractProblemStatement(any(), anyString())).thenReturn("# Original verified candidate", "# Repaired but still blocked candidate");
+
+        try (GenerationOutcome outcome = generate(() -> false)) {
+            assertThat(outcome.producedProblemStatement()).isEqualTo("# Original verified candidate");
+            assertThat(outcome.specFidelityReport()).isEqualTo(originalReview);
+        }
+
+        verify(agentLoopRunner, times(2)).runSession(anyString(), any(), anyString(), any(), anyInt(), any(), any(), any());
+        verify(specFidelityCritic, times(2)).critique(any(), any(), any(), any(), any(), any(), any(), any());
+    }
+
+    @Test
     void reviewAndRepairKeepTheStartingProblemStatementAsInstructorEvidence() {
         String startingStatement = "# Checkout summaries\n\nKeep due dates, return dates, invalid-duration handling, and per-member fee summaries.";
         when(exercise.getProblemStatement()).thenReturn(startingStatement);
@@ -682,8 +701,8 @@ class GenerationOrchestrationServiceTest {
             assertThat(outcome.isMechanicallyVerified()).isTrue();
         }
 
-        verify(specFidelityCritic, times(MAX_GENERATION_ATTEMPTS)).critique(reviewBrief.capture(), any(), any(), any(), any(), any(), any(), any());
-        verify(agentLoopRunner, times(MAX_GENERATION_ATTEMPTS)).runSession(anyString(), any(), agentPrompt.capture(), any(), anyInt(), any(), any(), any());
+        verify(specFidelityCritic, times(2)).critique(reviewBrief.capture(), any(), any(), any(), any(), any(), any(), any());
+        verify(agentLoopRunner, times(2)).runSession(anyString(), any(), agentPrompt.capture(), any(), anyInt(), any(), any(), any());
         assertThat(reviewBrief.getAllValues()).allSatisfy(brief -> assertThat(brief).contains("RUN INSTRUCTION", "STARTING PROBLEM STATEMENT", startingStatement));
         assertThat(agentPrompt.getAllValues().get(1)).contains("Preserve the mechanically correct work", "STARTING PROBLEM STATEMENT", startingStatement);
     }
@@ -697,12 +716,27 @@ class GenerationOrchestrationServiceTest {
                 rejected("repair still does not compile"));
         when(specFidelityCritic.critique(any(), any(), any(), any(), any(), any(), any(), any())).thenReturn(contractBlocker);
         when(workspace.extractProblemStatement(any(), anyString())).thenReturn("# Mechanically verified candidate", "# Broken repair", "# Still broken repair");
+        AtomicInteger specReads = new AtomicInteger();
+        AtomicInteger planReads = new AtomicInteger();
+        when(sandbox.exec(eq(SESSION_ID), any(), eq("cat"), anyString())).thenAnswer(invocation -> {
+            String path = invocation.getArgument(3);
+            if (path.endsWith("/SPEC.md")) {
+                return new SandboxExecResult(0, specReads.getAndIncrement() == 0 ? "# Verified spec" : "# Broken repair spec", "", false);
+            }
+            if (path.endsWith("/test-plan.json")) {
+                return new SandboxExecResult(0, planReads.getAndIncrement() == 0 ? "{\"tests\":[{\"name\":\"testGood\",\"weight\":3,\"visibility\":\"ALWAYS\"}]}"
+                        : "{\"tests\":[{\"name\":\"testBroken\",\"weight\":1,\"visibility\":\"ALWAYS\"}]}", "", false);
+            }
+            return new SandboxExecResult(1, "", "not found", false);
+        });
 
         try (GenerationOutcome outcome = generate(() -> false)) {
             assertThat(outcome.isMechanicallyVerified()).isTrue();
             assertThat(outcome.verification()).isEqualTo(accepted());
             assertThat(outcome.producedProblemStatement()).isEqualTo("# Mechanically verified candidate");
             assertThat(outcome.specFidelityReport()).isEqualTo(contractBlocker);
+            assertThat(outcome.specDocument()).isEqualTo("# Verified spec");
+            assertThat(outcome.testPlanJson()).contains("testGood").doesNotContain("testBroken");
         }
     }
 

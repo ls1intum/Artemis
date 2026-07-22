@@ -570,12 +570,12 @@ public class SandboxAgentTools implements SubmitVetoAware {
         if (stage == null) {
             return null;
         }
-        boolean allowed = path.equals("SPEC.md") || switch (stage) {
-            case SPEC -> false;
-            case SOLUTION -> path.startsWith("solution/");
-            case TEMPLATE -> path.startsWith("solution/") || path.startsWith("template/");
-            case TESTS -> path.startsWith("solution/") || path.startsWith("template/") || path.startsWith("tests/") || path.equals("test-plan.json");
-            case STATEMENT -> true;
+        boolean allowed = switch (stage) {
+            case SPEC -> path.equals("SPEC.md");
+            case SOLUTION -> path.equals("SPEC.md") || path.startsWith("solution/");
+            case TEMPLATE -> path.equals("SPEC.md") || path.startsWith("solution/") || path.startsWith("template/");
+            case TESTS -> path.equals("SPEC.md") || path.startsWith("solution/") || path.startsWith("template/") || path.startsWith("tests/") || path.equals("test-plan.json");
+            case STATEMENT -> path.equals("problem-statement.md");
         };
         if (allowed) {
             return null;

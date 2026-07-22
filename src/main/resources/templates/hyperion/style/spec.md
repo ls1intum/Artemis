@@ -72,7 +72,8 @@ in the solution and `Object` in the template; solution and template public signa
 ## Testing strategy
 
 A table under `## Testing Strategy` with one row per SEAM — an independently actionable unit of student work.
-Never one seam per test; never one seam for the whole exercise unless it genuinely is one. Each row lists the
+Give the first column stable IDs `S1`, `S2`, ...; the template TODOs, grading plan, and statement tasks carry
+these IDs through the rest of generation. Never one seam per test; never one seam for the whole exercise unless it genuinely is one. Each row lists the
 behaviour partitions its tests need, a weight tier (core rules weigh more than edge polish; weights 1–3, and
 the test stage writes the machine-readable plan), and LAST the hidden-variant decision, written as `yes` or
 `no` — that cell is read mechanically, so prose there reads as "no". A hidden variant (visibility
@@ -142,9 +143,9 @@ Public API:
 
 | Seam | Partitions | Weight | Hidden variant |
 |------|-----------|--------|----------------|
-| Implement flat-rate rewards | typical amount; sub-dollar rounds to 0; threshold bonus at exactly $50 | 3 | yes |
-| Wire strategy into the account | recording delegates; swapping keeps the balance | 2 | no |
-| Redeem safely | happy path; over-redeem throws, balance unchanged | 2 | yes |
+| S1 | implement flat-rate rewards: typical amount; sub-dollar rounds to 0; threshold bonus at exactly $50 | 3 | yes |
+| S2 | wire strategy into the account: recording delegates; swapping keeps the balance | 2 | no |
+| S3 | redeem safely: happy path; over-redeem throws, balance unchanged | 2 | yes |
 
 ## Diagram
 

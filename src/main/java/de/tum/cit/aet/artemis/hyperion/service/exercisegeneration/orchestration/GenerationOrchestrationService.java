@@ -295,6 +295,10 @@ public class GenerationOrchestrationService {
             SpecFidelityReport specFidelityReport = SpecFidelityReport.empty();
             @Nullable
             VerificationRequest lastRejectedVerificationRequest = null;
+            boolean semanticRepairAttempted = false;
+            int semanticMechanicalCorrectionsRemaining = 1;
+            @Nullable
+            CandidateSnapshot preSemanticRepairCandidate = null;
             for (int attempt = 1; attempt <= MAX_GENERATION_ATTEMPTS; attempt++) {
                 if (attempt > 1 && Duration.between(runStartedAt, Instant.now()).compareTo(TOTAL_WALL_CLOCK_BUDGET) > 0) {
                     emit(progress, "The generation time budget is used up; keeping the current candidate instead of starting repair attempt " + attempt + ".");
@@ -482,6 +486,11 @@ public class GenerationOrchestrationService {
                     break;
                 }
                 if (verification.mechanicallyVerified()) {
+                    if (semanticRepairAttempted) {
+                        emit(progress,
+                                "The bounded semantic repair still has review blockers; rolling back the whole repair transaction instead of keeping a partially successful or regressed edit.");
+                        return preserveCandidate(java.util.Objects.requireNonNull(preSemanticRepairCandidate), sandbox, sessionId, workspaceSeed);
+                    }
                     boolean reviewUnavailable = specFidelityReport.findings().stream()
                             .anyMatch(finding -> finding.kind() == SpecFidelityReport.Kind.ADAPTATION_SCOPE_REVIEW_UNAVAILABLE
                                     || finding.kind() == SpecFidelityReport.Kind.QUALITY_REVIEW_UNAVAILABLE);
@@ -491,6 +500,8 @@ public class GenerationOrchestrationService {
                     if (reviewUnavailable && !hasActionableReviewFinding) {
                         break;
                     }
+                    preSemanticRepairCandidate = lastMechanicallyVerifiedCandidate;
+                    semanticRepairAttempted = true;
                     emit(progress, "Mechanical verification passed, but the exercise review found requirements or quality issues; asking the AI to correct them.");
                     String scopeGuidance = mode == GenerationMode.ADAPT ? " Preserve all content outside the requested adaptation." : "";
                     currentPrompt = attemptFraming(attempt) + "Your previous attempt passed mechanical verification, but the automated full-artifact review found review blockers."
@@ -500,6 +511,15 @@ public class GenerationOrchestrationService {
                             + "requirement, API, test, and example. Re-run `sh verify.sh solution` and `sh verify.sh template`, then call submit again.\n\nThe instructor "
                             + "source requirements are:\n" + authoringBrief + specContractSection(specSnapshot.get()) + specFidelityCritic.renderForRetryPrompt(specFidelityReport);
                     continue;
+                }
+                if (semanticRepairAttempted && semanticMechanicalCorrectionsRemaining == 0) {
+                    emit(progress, "The one mechanical correction after semantic repair was not enough; preserving the last mechanically verified candidate instead of starting "
+                            + "another open-ended repair cycle.");
+                    break;
+                }
+                if (semanticRepairAttempted) {
+                    semanticMechanicalCorrectionsRemaining--;
+                    emit(progress, "The semantic repair broke mechanical verification; allowing one narrow mechanical correction without reopening semantic scope.");
                 }
                 emit(progress, "Verification rejected the exercise; asking the agent to fix the issues and try again.");
                 // The hard rejection (must fix) plus the advisory findings, the latter framed so the rejection is prioritised.
@@ -513,11 +533,8 @@ public class GenerationOrchestrationService {
             // A semantic repair can accidentally break a candidate that already built and graded correctly. Never discard that more useful checkpoint in favour of a later
             // mechanically broken tree; return the last buildable candidate and its unresolved review findings.
             if ((verification == null || !verification.mechanicallyVerified()) && lastMechanicallyVerifiedCandidate != null) {
-                loopResult = lastMechanicallyVerifiedCandidate.loopResult();
-                verification = lastMechanicallyVerifiedCandidate.verification();
-                producedFilesByType = lastMechanicallyVerifiedCandidate.producedFiles();
-                producedProblemStatement = lastMechanicallyVerifiedCandidate.problemStatement();
-                specFidelityReport = lastMechanicallyVerifiedCandidate.reviewReport();
+                emit(progress, "The run used " + totalAgentTurns + " agent turn(s) in total.");
+                return preserveCandidate(lastMechanicallyVerifiedCandidate, sandbox, sessionId, workspaceSeed);
             }
 
             emit(progress, "The run used " + totalAgentTurns + " agent turn(s) in total.");

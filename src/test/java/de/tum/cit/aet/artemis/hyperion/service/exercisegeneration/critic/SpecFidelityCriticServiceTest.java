@@ -639,7 +639,7 @@ class SpecFidelityCriticServiceTest {
         String reviewInstructions = prompt.getAllValues().stream().map(value -> value.getInstructions().getFirst().getText()).collect(java.util.stream.Collectors.joining("\n"));
         assertThat(reviewInstructions).contains("replay every worked-example outcome", "unrequested and missing requested changes", "executable setup", "contract-breaking mutants")
                 .contains("Do not invent requirements from solution-only behavior", "Distinguish observable guarantees from pedagogical objectives",
-                        "PRIMARY SOURCE REQUIREMENTS are authoritative", "input permitted by the declared contract", "mathematically redundant transformations",
+                        "INSTRUCTOR BRIEF is the sole scope authority", "input permitted by the declared contract", "mathematically redundant transformations",
                         "states that the declared types make impossible", "The produced statement is evidence to compare against the primary source, not authority",
                         "If the primary source requirements do not require every behavior needed to distinguish the proposed wrong implementation")
                 .doesNotContain("derived contract", "source requirements and produced statement do not require");

@@ -283,11 +283,39 @@ public final class ExerciseIntegrityGate {
         if (!unknownNames.isEmpty()) {
             return List.of("the final test-plan.json names tests the verifier did not run: " + unknownNames + ". Use only exact verified test names: " + knownNames + ".");
         }
+        List<String> declaredSeams = StageCheckService.testingStrategySeamIds(approvedSpec).stream().filter(id -> id.matches("S[1-9][0-9]*")).distinct().toList();
+        // Old saved plans/specifications predate seam metadata. New staged SPECs always declare S1..., so enforce traceability exactly where the new contract exists without
+        // making legacy/adaptation candidates invent metadata that cannot be persisted.
+        if (!declaredSeams.isEmpty()) {
+            List<String> entriesWithoutSeams = plan.tests().stream().filter(entry -> entry.seam().isBlank()).map(GeneratedTestPlan.Entry::name).toList();
+            if (!entriesWithoutSeams.isEmpty()) {
+                return List.of("the final test-plan.json has no seam for test(s) " + entriesWithoutSeams + ". Map every generated test to one approved Testing Strategy ID: "
+                        + declaredSeams + ".");
+            }
+            List<String> undeclaredSeams = plan.tests().stream().map(GeneratedTestPlan.Entry::seam).filter(seam -> !declaredSeams.contains(seam)).distinct().toList();
+            if (!undeclaredSeams.isEmpty()) {
+                return List.of("the final test-plan.json uses seam(s) the approved Testing Strategy never declared: " + undeclaredSeams + ". Use only " + declaredSeams + ".");
+            }
+        }
         if (StageCheckService.specDeclaresHiddenVariants(approvedSpec) && plan.hiddenEntries().isEmpty()) {
             return List.of("the approved Testing Strategy requires hidden after-due-date variants, but every final test-plan.json entry is visible. Add genuinely fresh witness "
                     + "tests and mark them AFTER_DUE_DATE; changing SPEC.md after approval cannot discard the overfit-resistance decision.");
         }
         return List.of();
+    }
+
+    /** Ensures post-loop repairs did not split one student-work seam into test-shaped statement tasks or mix unrelated seams into one checkbox. */
+    static List<String> statementTraceabilityReasons(String testPlanJson, String problemStatement) {
+        if (testPlanJson == null || testPlanJson.isBlank() || problemStatement == null || problemStatement.isBlank()) {
+            return List.of();
+        }
+        try {
+            GeneratedTestPlan plan = GeneratedTestPlan.parse(testPlanJson);
+            return plan.tests().stream().noneMatch(entry -> !entry.seam().isBlank()) ? List.of() : ProblemStatementBindingChecker.seamTaskGroupingReasons(problemStatement, plan);
+        }
+        catch (IllegalArgumentException exception) {
+            return List.of("the final statement cannot be traced to the grading plan because test-plan.json is invalid: " + exception.getMessage());
+        }
     }
 
     /** Finds a top-level, nested, or secondary type declaration without trusting filenames alone. */

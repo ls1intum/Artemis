@@ -21,7 +21,8 @@ or the instructor brief ("This exercise uses a whimsical theme" is authoring com
   prose under it is a defect.
 - One task represents one independently actionable implementation seam from the specification. Bind all of
   that seam's visible partitions to the same task; do not turn three validation cases in one method into
-  three student tasks. Conversely, every student-owned TODO or solution/template implementation diff must
+  three student tasks. Use the same stable seam ID that links the specification, template TODO, and grading
+  plan as your authoring trace (do not expose the ID to students). Conversely, every student-owned TODO or solution/template implementation diff must
   be covered by a task, or be provided as routine starter plumbing.
 - A test marked `AFTER_DUE_DATE` is an undisclosed overfit probe. Do not bind it and do not print its name in
   prose, diagrams, hints, or appendices. Describe the public contract, never the hidden witness.

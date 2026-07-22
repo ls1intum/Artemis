@@ -143,6 +143,45 @@ final class ProblemStatementBindingChecker {
         return groups;
     }
 
+    /**
+     * Checks that Artemis task lines preserve the grading plan's student-work seams: all visible tests for one seam belong to one task, and one task never mixes seams. Hidden
+     * tests are deliberately ignored because they must not occur in the statement at all. This checks traceability only; it does not claim that the model chose pedagogically
+     * meaningful seams.
+     */
+    static List<String> seamTaskGroupingReasons(String problemStatement, GeneratedTestPlan plan) {
+        List<GeneratedTestPlan.Entry> visible = plan.visibleEntries();
+        List<String> missingSeams = visible.stream().filter(entry -> entry.seam().isBlank()).map(GeneratedTestPlan.Entry::name).toList();
+        if (!missingSeams.isEmpty()) {
+            return List.of("these visible tests have no seam in test-plan.json: " + missingSeams + ". Assign each one the stable S1/S2/... ID from SPEC.md.");
+        }
+
+        java.util.Map<String, String> seamByTest = visible.stream()
+                .collect(java.util.stream.Collectors.toMap(GeneratedTestPlan.Entry::name, GeneratedTestPlan.Entry::seam, (first, ignored) -> first, java.util.LinkedHashMap::new));
+        java.util.Map<String, Set<Integer>> taskGroupsBySeam = new java.util.LinkedHashMap<>();
+        List<String> reasons = new ArrayList<>();
+        List<List<String>> groups = boundTestGroups(problemStatement);
+        for (int index = 0; index < groups.size(); index++) {
+            Set<String> seams = groups.get(index).stream().map(seamByTest::get).filter(java.util.Objects::nonNull)
+                    .collect(java.util.stream.Collectors.toCollection(java.util.LinkedHashSet::new));
+            if (seams.size() > 1) {
+                reasons.add("task " + (index + 1) + " mixes tests from unrelated seams " + seams + "; use one task per seam.");
+            }
+            for (String seam : seams) {
+                taskGroupsBySeam.computeIfAbsent(seam, ignored -> new java.util.LinkedHashSet<>()).add(index);
+            }
+        }
+        for (String seam : visible.stream().map(GeneratedTestPlan.Entry::seam).distinct().toList()) {
+            Set<Integer> taskGroups = taskGroupsBySeam.getOrDefault(seam, Set.of());
+            if (taskGroups.isEmpty()) {
+                reasons.add("seam " + seam + " has visible tests but no [task] group; add one task binding all of that seam's visible tests.");
+            }
+            else if (taskGroups.size() > 1) {
+                reasons.add("seam " + seam + " is split across " + taskGroups.size() + " [task] lines; merge its test partitions into one student task.");
+            }
+        }
+        return List.copyOf(reasons);
+    }
+
     /** The distinct non-{@code [task]} keywords used on task-binding-shaped lines; empty when every such line uses {@code [task]}. See {@link #TASK_LIKE_BINDING}. */
     static List<String> malformedTaskKeywords(String problemStatement) {
         Matcher matcher = TASK_LIKE_BINDING.matcher(problemStatement);

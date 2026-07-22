@@ -720,9 +720,9 @@ class ExerciseIntegrityGateTest {
                 ## Testing Strategy
                 | Seam | Partitions | Weight | Hidden-variant (yes/no) |
                 |---|---|---|---|
-                | delegation | swap collaborator | 3 | yes |
+                | S1 | swap collaborator | 3 | yes |
                 """;
-        String visibleOnly = "{\"tests\":[{\"name\":\"delegates\",\"weight\":3,\"visibility\":\"ALWAYS\"}]}";
+        String visibleOnly = "{\"tests\":[{\"name\":\"delegates\",\"seam\":\"S1\",\"weight\":3,\"visibility\":\"ALWAYS\"}]}";
 
         assertThat(ExerciseIntegrityGate.approvedTestPlanReasons(spec, visibleOnly, List.of("delegates"))).singleElement()
                 .satisfies(reason -> assertThat(reason).contains("requires hidden", "every final test-plan.json entry is visible"));
@@ -734,16 +734,34 @@ class ExerciseIntegrityGateTest {
                 ## Testing Strategy
                 | Seam | Partitions | Weight | Hidden-variant (yes/no) |
                 |---|---|---|---|
-                | delegation | swap collaborator | 3 | yes |
+                | S1 | swap collaborator | 3 | yes |
                 """;
         String plan = """
                 {"tests":[
-                  {"name":"delegates","weight":3,"visibility":"ALWAYS"},
-                  {"name":"delegatesWithFreshValues","weight":2,"visibility":"AFTER_DUE_DATE"}
+                  {"name":"delegates","seam":"S1","weight":3,"visibility":"ALWAYS"},
+                  {"name":"delegatesWithFreshValues","seam":"S1","weight":2,"visibility":"AFTER_DUE_DATE"}
                 ]}
                 """;
 
         assertThat(ExerciseIntegrityGate.approvedTestPlanReasons(spec, plan, List.of("delegates", "delegatesWithFreshValues"))).isEmpty();
+    }
+
+    @Test
+    void approvedTraceability_rejectsMissingPlanSeamsAndStatementTaskSplitting() {
+        String spec = """
+                ## Testing Strategy
+                | Seam | Partitions | Weight | Hidden-variant (yes/no) |
+                |---|---|---|---|
+                | S1 | ordinary and boundary values | 3 | no |
+                """;
+        String noSeam = "{\"tests\":[{\"name\":\"ordinary\",\"weight\":3,\"visibility\":\"ALWAYS\"}]}";
+        assertThat(ExerciseIntegrityGate.approvedTestPlanReasons(spec, noSeam, List.of("ordinary"))).singleElement().asString().contains("has no seam", "S1");
+
+        String plan = "{\"tests\":[{\"name\":\"ordinary\",\"seam\":\"S1\",\"weight\":3,\"visibility\":\"ALWAYS\"},"
+                + "{\"name\":\"boundary\",\"seam\":\"S1\",\"weight\":2,\"visibility\":\"ALWAYS\"}]}";
+        String splitStatement = "[task][Ordinary](ordinary)\n[task][Boundary](boundary)";
+
+        assertThat(ExerciseIntegrityGate.statementTraceabilityReasons(plan, splitStatement)).singleElement().asString().contains("S1", "split");
     }
 
     // --- Solution-leak gate ---

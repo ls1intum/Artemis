@@ -269,6 +269,9 @@ public class DifferentialVerificationService {
                 .flatMap(spec -> ExerciseIntegrityGate.approvedTestPlanReasons(spec, request.producedTestPlan(), solution.testNames()).stream()).distinct().toList();
         boolean approvedTestPlanHolds = approvedTestPlanReasons.isEmpty();
         reasons.addAll(approvedTestPlanReasons);
+        List<String> statementTraceabilityReasons = ExerciseIntegrityGate.statementTraceabilityReasons(request.producedTestPlan(), request.producedProblemStatement());
+        boolean statementTraceabilityHolds = statementTraceabilityReasons.isEmpty();
+        reasons.addAll(statementTraceabilityReasons);
 
         boolean extractionSound = checkExtractionSound(request.extractionFailedRepositories(), reasons);
 
@@ -279,13 +282,14 @@ public class DifferentialVerificationService {
         reasons.addAll(adaptWipeReasons);
 
         boolean mechanicallyVerified = analysis.actionableGatesPass() && harnessIntact && noSolutionLeak && noGradingContextSniffing && javaAresConventionsHold
-                && javaSourceLayoutIntact && approvedSpecificationHolds && approvedTestPlanHolds && extractionSound && noAdaptWipe;
+                && javaSourceLayoutIntact && approvedSpecificationHolds && approvedTestPlanHolds && statementTraceabilityHolds && extractionSound && noAdaptWipe;
         if (!mechanicallyVerified) {
             log.info(
                     "Differential verification failed: solution[{}], template[{}], actionableGatesPass={}, harnessIntact={}, noSolutionLeak={}, "
-                            + "javaAresConventionsHold={}, javaSourceLayoutIntact={}, approvedSpecificationHolds={}, approvedTestPlanHolds={}, extractionSound={}, noAdaptWipe={}",
+                            + "javaAresConventionsHold={}, javaSourceLayoutIntact={}, approvedSpecificationHolds={}, approvedTestPlanHolds={}, statementTraceabilityHolds={}, "
+                            + "extractionSound={}, noAdaptWipe={}",
                     solution, template, analysis.actionableGatesPass(), harnessIntact, noSolutionLeak, javaAresConventionsHold, javaSourceLayoutIntact, approvedSpecificationHolds,
-                    approvedTestPlanHolds, extractionSound, noAdaptWipe);
+                    approvedTestPlanHolds, statementTraceabilityHolds, extractionSound, noAdaptWipe);
         }
         return new VerificationResult(mechanicallyVerified, analysis.solutionPassed(), analysis.templateFailed(), solution.tests(), reasons);
     }
@@ -352,10 +356,14 @@ public class DifferentialVerificationService {
                 .flatMap(spec -> ExerciseIntegrityGate.approvedTestPlanReasons(spec, testPlanJson, solution.testNames()).stream()).distinct().toList();
         boolean approvedTestPlanHolds = approvedTestPlanReasons.isEmpty();
         reasons.addAll(approvedTestPlanReasons);
+        List<String> statementTraceabilityReasons = ExerciseIntegrityGate.statementTraceabilityReasons(testPlanJson, problemStatement);
+        boolean statementTraceabilityHolds = statementTraceabilityReasons.isEmpty();
+        reasons.addAll(statementTraceabilityReasons);
 
         return new AgentVerifyReport(solution.tests(), solutionPassed, List.copyOf(solution.testFailedNames()), solution.failureEvidence(), template.tests(), templateCompiled,
                 analysis.templateFailed(), template.failureEvidence(), templateWronglyPassing, List.copyOf(solution.testNames()), analysis.unresolvedTaskBindings(),
-                analysis.possiblyDeadFiles(), analysis.actionableGatesPass() && javaAresConventionsHold && approvedSpecificationHolds && approvedTestPlanHolds, reasons,
+                analysis.possiblyDeadFiles(),
+                analysis.actionableGatesPass() && javaAresConventionsHold && approvedSpecificationHolds && approvedTestPlanHolds && statementTraceabilityHolds, reasons,
                 List.copyOf(readHiddenTestNames(sandbox, sessionId)));
     }
 

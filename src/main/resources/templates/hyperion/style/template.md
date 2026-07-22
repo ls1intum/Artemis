@@ -12,7 +12,8 @@ it" — the template is where students actually read while coding.
 
 ## TODO placement
 
-Anchor each task with an imperative `// TODO: <mirror of the task wording>` INSIDE the member body, directly
+Anchor each task with an imperative `// TODO S1: <mirror of the task wording>` INSIDE the member body, using
+the stable ID from the specification's Testing Strategy and placing it directly
 above the placeholder throw — never between the javadoc and the signature, never between an annotation and
 the signature. One TODO per independently implementable seam. A TODO marks unfinished student work only:
 never leave one on code that is already complete, and never leave authoring or design notes in any file.
@@ -55,7 +56,7 @@ A stubbed member — javadoc complete, TODO in the body, placeholder throw:
  * @throws IllegalStateException if the account cannot afford {@code times} redemptions
  */
 public void redeem(int times) {
-    // TODO: apply times redemptions of REDEMPTION_COST points each, or throw IllegalStateException
+    // TODO S3: apply times redemptions of REDEMPTION_COST points each, or throw IllegalStateException
     // if the account cannot afford all of them.
     throw new UnsupportedOperationException("Not implemented");
 }
@@ -67,7 +68,7 @@ template; the solution alone ships it):
 ```java
 public class LoyaltyAccount {
 
-    // TODO: create a RewardStrategy interface with `int pointsFor(Purchase purchase)` and store the
+    // TODO S1: create a RewardStrategy interface with `int pointsFor(Purchase purchase)` and store the
     // active strategy here so record(...) can delegate to it.
 
     /**
@@ -76,7 +77,7 @@ public class LoyaltyAccount {
      * @param purchase the completed purchase
      */
     public void record(Purchase purchase) {
-        // TODO: delegate to the active strategy and add its points to the balance.
+        // TODO S2: delegate to the active strategy and add its points to the balance.
         throw new UnsupportedOperationException("Not implemented");
     }
 }

@@ -10,14 +10,15 @@ import com.fasterxml.jackson.databind.ObjectMapper;
  * The machine-readable grading plan the TESTS stage writes to {@code /workspace/test-plan.json}, implementing the specification's Testing Strategy with Artemis' native grading
  * features: per-test-case weights (core rules weigh more than edge cases) and {@code AFTER_DUE_DATE} visibility for overfit-resistant hidden variants.
  * <p>
- * Expected shape: <code>{"tests":[{"name":"&lt;exact test name&gt;","weight":1..3,"visibility":"ALWAYS"|"AFTER_DUE_DATE"}]}</code>. The TESTS stage gate validates every name
- * against the differential report's exact test names, so persistence can apply the plan without guessing; a plan that fails to parse at persist time is skipped, never fatal —
- * grading falls back to Artemis' defaults (weight 1, visible).
+ * Expected shape:
+ * <code>{"tests":[{"name":"&lt;exact test name&gt;","seam":"S1","weight":1..3,"visibility":"ALWAYS"|"AFTER_DUE_DATE"}]}</code>. The seam is transient generation metadata
+ * connecting tests to one student task; persistence ignores it. Older plans without seams still parse so an already-verified candidate can be persisted safely. The TESTS stage
+ * gate enforces seams for new staged generation and validates every name against the differential report's exact test names.
  */
 public record GeneratedTestPlan(List<Entry> tests) {
 
     /** One test case's grading decision. */
-    public record Entry(String name, double weight, String visibility) {
+    public record Entry(String name, String seam, double weight, String visibility) {
     }
 
     static final double MIN_WEIGHT = 1.0;
@@ -52,6 +53,10 @@ public record GeneratedTestPlan(List<Entry> tests) {
             if (name.isBlank()) {
                 throw new IllegalArgumentException("Every test-plan.json entry needs a non-empty \"name\" (the exact test name verify reports).");
             }
+            String seam = testNode.path("seam").asText("").strip();
+            if (!seam.isEmpty() && !seam.matches("S[1-9][0-9]*")) {
+                throw new IllegalArgumentException("test-plan.json entry '" + name + "' has seam '" + seam + "'; use a stable SPEC seam ID such as \"S1\".");
+            }
             if (!testNode.path("weight").isNumber()) {
                 throw new IllegalArgumentException("test-plan.json entry '" + name + "' needs a numeric \"weight\" between " + (int) MIN_WEIGHT + " and " + (int) MAX_WEIGHT
                         + " (core rules weigh more than edge cases).");
@@ -65,7 +70,7 @@ public record GeneratedTestPlan(List<Entry> tests) {
             if (!"ALWAYS".equals(visibility) && !"AFTER_DUE_DATE".equals(visibility)) {
                 throw new IllegalArgumentException("test-plan.json entry '" + name + "' has visibility '" + visibility + "'; use \"ALWAYS\" or \"AFTER_DUE_DATE\".");
             }
-            entries.add(new Entry(name, weight, visibility));
+            entries.add(new Entry(name, seam, weight, visibility));
         }
         List<String> duplicateNames = entries.stream().map(Entry::name).collect(java.util.stream.Collectors.groupingBy(name -> name)).entrySet().stream()
                 .filter(group -> group.getValue().size() > 1).map(java.util.Map.Entry::getKey).sorted().toList();
@@ -78,5 +83,10 @@ public record GeneratedTestPlan(List<Entry> tests) {
     /** The entries marked {@code AFTER_DUE_DATE}. */
     public List<Entry> hiddenEntries() {
         return tests.stream().filter(entry -> "AFTER_DUE_DATE".equals(entry.visibility())).toList();
+    }
+
+    /** The entries students can satisfy before the due date and therefore may appear in a statement task binding. */
+    public List<Entry> visibleEntries() {
+        return tests.stream().filter(entry -> "ALWAYS".equals(entry.visibility())).toList();
     }
 }

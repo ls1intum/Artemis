@@ -152,6 +152,21 @@ public class StageCheckService {
                     + unenforceableCreatedTypes + ". Write one bare type name per row (no generics, package prefix, emphasis, parenthetical, or second type in the same cell) — "
                     + "otherwise nothing can enforce that the template omits it.");
         }
+        List<String> seamIds = testingStrategySeamIds(spec);
+        if (seamIds.isEmpty()) {
+            return StageCheckResult.failed("The '## Testing Strategy' section needs a table with one data row per independently actionable unit of student work. Give each row a "
+                    + "stable seam ID in its first cell (S1, S2, ...); tests and statement tasks use these IDs to preserve the plan without creating one task per test.");
+        }
+        List<String> malformedSeamIds = seamIds.stream().filter(id -> !id.matches("S[1-9][0-9]*")).toList();
+        if (!malformedSeamIds.isEmpty()) {
+            return StageCheckResult.failed("These Testing Strategy rows have no stable seam ID: " + malformedSeamIds
+                    + ". Use S1, S2, ... in the first column. Describe the work in the remaining cells; do not use a prose label as the identifier.");
+        }
+        List<String> duplicateSeamIds = seamIds.stream().filter(id -> java.util.Collections.frequency(seamIds, id) > 1).distinct().toList();
+        if (!duplicateSeamIds.isEmpty()) {
+            return StageCheckResult.failed("The Testing Strategy contains duplicate seam IDs: " + duplicateSeamIds
+                    + ". One seam is one independently actionable unit of student work; merge its partitions into one row or assign genuinely different work a new ID.");
+        }
         // Echo the parsed plan back so the agent SEES what the later gates will hold it to (feedback quality: confirm understanding, not just absence of errors).
         String echo = designRows.stream().map(row -> row.type() + "=" + row.status()).collect(java.util.stream.Collectors.joining(", "));
         return StageCheckResult.passed("Specification accepted. Parsed template plan the later gates will enforce: " + echo + ". A 'student-creates' type must exist in the "
@@ -327,6 +342,38 @@ public class StageCheckService {
         return hiddenVariantCells(spec).stream().anyMatch(cell -> cell.startsWith("yes"));
     }
 
+    /**
+     * Stable IDs from the first cell of each {@code ## Testing Strategy} data row. Invalid IDs are retained so the SPEC gate can report them rather than silently dropping them.
+     */
+    static List<String> testingStrategySeamIds(String spec) {
+        int start = spec.indexOf("## Testing Strategy");
+        if (start < 0) {
+            return List.of();
+        }
+        List<String> ids = new java.util.ArrayList<>();
+        boolean pastHeader = false;
+        for (String line : spec.substring(start).lines().map(String::strip).toList()) {
+            if (line.startsWith("## ") && !line.startsWith("## Testing Strategy")) {
+                break;
+            }
+            if (!line.startsWith("|")) {
+                continue;
+            }
+            if (!pastHeader) {
+                if (line.chars().allMatch(c -> c == '|' || c == '-' || c == ':' || c == ' ')) {
+                    pastHeader = true;
+                }
+                continue;
+            }
+            String[] columns = line.split("\\|");
+            String first = columns.length > 1 ? columns[1].replace("`", "").replace("*", "").strip() : "";
+            if (!first.isBlank()) {
+                ids.add(first);
+            }
+        }
+        return List.copyOf(ids);
+    }
+
     /** The last-column cells of the {@code ## Testing Strategy} table's data rows, lower-cased and stripped; empty when the section is not a table. */
     private static List<String> hiddenVariantCells(String spec) {
         int start = spec.indexOf("## Testing Strategy");
@@ -433,6 +480,17 @@ public class StageCheckService {
         catch (IllegalArgumentException e) {
             return new StageCheckResult(false, "The differential passed, but test-plan.json is invalid: " + e.getMessage(), report);
         }
+        List<String> declaredSeams = enforcedTestingSeamIds(sandbox, sessionId);
+        List<String> entriesWithoutSeams = plan.tests().stream().filter(entry -> entry.seam().isBlank()).map(GeneratedTestPlan.Entry::name).toList();
+        if (!entriesWithoutSeams.isEmpty()) {
+            return new StageCheckResult(false, "The differential passed, but these test-plan.json entries have no seam: " + entriesWithoutSeams + ". Set each entry's \"seam\" "
+                    + "to one of the specification's stable Testing Strategy IDs: " + declaredSeams + ".", report);
+        }
+        List<String> undeclaredSeams = plan.tests().stream().map(GeneratedTestPlan.Entry::seam).filter(seam -> !declaredSeams.contains(seam)).distinct().toList();
+        if (!undeclaredSeams.isEmpty()) {
+            return new StageCheckResult(false, "The differential passed, but test-plan.json uses undeclared seam(s): " + undeclaredSeams
+                    + ". Use the approved Testing Strategy IDs " + declaredSeams + "; do not invent a test-only partition.", report);
+        }
         Set<String> knownNames = Set.copyOf(report.exactTestNames());
         List<String> unknownPlanNames = plan.tests().stream().map(GeneratedTestPlan.Entry::name).filter(name -> !knownNames.contains(name)).toList();
         if (!unknownPlanNames.isEmpty()) {
@@ -471,6 +529,19 @@ public class StageCheckService {
                         + ". Use the exact test names from the TESTS stage (behavioural or seeded structural), or remove the link: " + exactTestNames + ".");
             }
         }
+        String planJson = execRead(sandbox, sessionId, "cat", GenerationWorkspaceService.WORKSPACE + "/test-plan.json");
+        if (!planJson.isBlank()) {
+            try {
+                List<String> groupingReasons = ProblemStatementBindingChecker.seamTaskGroupingReasons(statement, GeneratedTestPlan.parse(planJson));
+                if (!groupingReasons.isEmpty()) {
+                    return StageCheckResult.failed("The statement must have one task per student-work seam, with all visible tests for that seam bound to that task: "
+                            + String.join(" ", groupingReasons));
+                }
+            }
+            catch (IllegalArgumentException e) {
+                return StageCheckResult.failed("The statement cannot be checked against test-plan.json because the plan is invalid: " + e.getMessage());
+            }
+        }
         List<String> hiddenMentions = ProblemStatementBindingChecker.hiddenTestMentions(statement, hiddenTestNames(sandbox, sessionId));
         if (!hiddenMentions.isEmpty()) {
             return StageCheckResult.failed(ProblemStatementBindingChecker.hiddenTestMentionsRejection(hiddenMentions));
@@ -501,6 +572,13 @@ public class StageCheckService {
             return StageCheckResult.failed("The statement repeats these headings verbatim: " + duplicateHeadings + ". Merge or remove the duplicate sections.");
         }
         return StageCheckResult.passed("");
+    }
+
+    /** Approved seam IDs plus any valid later additions. An edit may add traceability work, but it cannot make an accepted seam disappear. */
+    private List<String> enforcedTestingSeamIds(InteractiveSandbox sandbox, String sessionId) {
+        List<String> live = testingStrategySeamIds(readSpec(sandbox, sessionId));
+        List<String> approved = approvedSpecs.approved(sessionId).map(StageCheckService::testingStrategySeamIds).orElse(List.of());
+        return java.util.stream.Stream.concat(approved.stream(), live.stream()).filter(id -> id.matches("S[1-9][0-9]*")).distinct().toList();
     }
 
     /**

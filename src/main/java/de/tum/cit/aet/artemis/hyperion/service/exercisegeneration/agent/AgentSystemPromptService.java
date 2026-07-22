@@ -215,7 +215,8 @@ public class AgentSystemPromptService {
             (| Type | Role | Template status |) with Template status EXACTLY one of `given`, `stubbed`, `student-creates` (a `student-creates` type is OMITTED from the
             template and graded through seeded structural checks plus reflection-based tests — the template gate enforces its absence). When the brief asks students to DESIGN
             or CREATE a type, that type is `student-creates`; shipping it `stubbed` hands them the answer and silently downgrades the exercise. Say who owns each piece of
-            mutable state and whether it survives object replacement; `## Testing Strategy` — one seam per independently actionable unit of student work, grouping every test
+            mutable state and whether it survives object replacement; `## Testing Strategy` — a table whose first column gives each independently actionable unit of student
+            work a stable ID (`S1`, `S2`, ...), grouping every test
             partition it needs (never one seam per test, never one for the whole exercise unless it is genuinely one seam), with a weight tier (core rules outweigh edge
             cases) and a LAST column reading exactly `yes` or `no` for a hidden after-due-date variant with fresh witnesses (students overfit to visible tests; that cell is
             read mechanically). Match the requested learning objective and difficulty in the work students actually perform: if the brief teaches an abstraction or design
@@ -239,14 +240,15 @@ public class AgentSystemPromptService {
 
     private static final String STAGE_2_TEMPLATE_INSTRUCTIONS = """
             STAGE 2 — TEMPLATE: derive the template FROM the finished solution: copy it, then remove exactly the student work the specification marks `stubbed` or
-            `student-creates` (stub bodies keep their Javadoc plus an in-body TODO and a placeholder throw; a `student-creates` type is omitted ENTIRELY — the gate rejects a
+            `student-creates` (stub bodies keep their Javadoc plus an in-body `// TODO S1: ...` using that work seam's stable ID and a placeholder throw; a `student-creates` type is omitted ENTIRELY — the gate rejects a
             template still containing its file — with TODO breadcrumbs in the template files that collaborate with it) so the template still compiles. Failing behavioural tests are EXPECTED; only compilation matters — do not "fix" stubs. On every shared file, Javadoc and non-TODO comments stay byte-identical to the solution.
             If a doc is missing from the solution, add it there first and re-derive; never author docs only in the template.
             """;
 
     private static final String STAGE_3_TESTS_INSTRUCTIONS = """
-            STAGE 3 — TESTS: run `verify` first — it reports binding problems and the seeded structural check names once template and solution diverge. Author tests one
-            partition at a time from the specification's Testing Strategy, re-running `verify` after each test or small batch: it must pass on the solution and fail on the
+            STAGE 3 — TESTS: run `verify` first — it reports binding problems and the seeded structural check names once template and solution diverge. Start with the
+            highest-risk learning-objective seam (for a design pattern, prove delegation through a recording fake before testing concrete formulas), then author its tests one
+            partition at a time from the specification's Testing Strategy, re-running `verify` after each test or small batch: each must pass on the solution and fail on the
             template for its intended reason (a structural check may already pass). For a `student-creates` type, follow the reflection pattern the seeded reference/tests
             demonstrate (its ShippingCalculator test reaches a solution-only class via ReflectionTestUtils so the same test still compiles against the template). Every test
             must be passable by completing the template's TODOs within the scaffolded structure; one that forces restructuring means the design is wrong — fix template and
@@ -255,7 +257,8 @@ public class AgentSystemPromptService {
             abstraction. When the collaborator type is absent from the template, create the recording fake with a Java dynamic proxy after loading the interface by name, and
             invoke every constructor or method whose signature mentions that missing type reflectively. Holding the instance as `Object` does not make a normal typed method call
             compile. Assert exception types, never message strings, unless the statement fixes the exact message. Then write `/workspace/test-plan.json` implementing
-            the Testing Strategy: {"tests":[{"name":"<exact test name>","weight":<1..3>,"visibility":"ALWAYS"|"AFTER_DUE_DATE"}]} — weights grade core rules above edge cases,
+            the Testing Strategy: {"tests":[{"name":"<exact test name>","seam":"S1","weight":<1..3>,"visibility":"ALWAYS"|"AFTER_DUE_DATE"}]} — every test carries its
+            specification seam ID; weights grade core rules above edge cases,
             AFTER_DUE_DATE hides an overfit-resistant variant until the deadline; names must be the exact names `verify` reports. If a differential run exposes a solution or
             template defect, fix it there and re-check that stage's guarantees; never weaken an accepted student-ownership or diagram decision to make a later gate pass.
             """;
@@ -406,7 +409,7 @@ public class AgentSystemPromptService {
             case SOLUTION -> "SPEC.md and solution/";
             case TEMPLATE -> "SPEC.md, solution/, and template/";
             case TESTS -> "SPEC.md, solution/, template/, tests/, and test-plan.json";
-            case STATEMENT -> "the completed artifacts, including problem-statement.md";
+            case STATEMENT -> "problem-statement.md (read the completed artifacts, but do not rewrite them in this stage)";
         };
         return "STAGE WRITE BOUNDARY: write only " + writable
                 + ". Do not author future-stage artifacts early, including through bash; each later artifact needs its own instructions and gate.\n";
