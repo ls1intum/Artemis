@@ -29,7 +29,7 @@
                                 min="1"
                                 pattern="\d*"
                                 required
-                                [attr.max]="MAX_GRADING_POINTS"
+                                [max]="MAX_GRADING_POINTS"
                                 class="form-control input-number-short"
                                 [ngModel]="gradingScale().course!.presentationScore"
                                 (ngModelChange)="updatePresentationScore($event)"
@@ -55,7 +55,7 @@
                                 min="1"
                                 pattern="\d*"
                                 required
-                                [attr.max]="MAX_GRADING_POINTS"
+                                [max]="MAX_GRADING_POINTS"
                                 class="form-control input-number-short"
                                 [ngModel]="presentationsConfig().presentationsNumber"
                                 (ngModelChange)="updatePresentationsNumber($event)"

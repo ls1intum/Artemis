@@ -36,7 +36,7 @@
                 [ngModel]="maxPoints()"
                 (ngModelChange)="maxPoints.set($event)"
                 min="1"
-                [attr.max]="MAX_GRADING_POINTS"
+                [max]="MAX_GRADING_POINTS"
                 (change)="onChangeMaxPoints(maxPoints())"
             />
         </div>
