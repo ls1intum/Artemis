@@ -342,8 +342,11 @@ public class StagedGenerationRunner {
                                     return finish(exercise, AgentLoopResult.Status.CANCELLED, totalTurns, lastFinalMessage, conversation);
                                 }
                                 if (!review.complete()) {
-                                    log.warn("Specification review was unavailable for exercise {}; continuing with the mechanically valid contract", exercise.getId());
-                                    emit(progress, "Specification fidelity review was unavailable; the final quality review will keep this exercise in review if needed");
+                                    String reviewFailure = "Specification fidelity review was unavailable, so generation stopped before freezing an unchecked contract. Retry "
+                                            + "generation; no downstream artifacts were produced from this specification.";
+                                    log.warn("Specification review was unavailable for exercise {}; stopping before contract approval", exercise.getId());
+                                    emit(progress, reviewFailure);
+                                    return finish(exercise, AgentLoopResult.Status.ERROR, totalTurns, appendGateReport(lastFinalMessage, reviewFailure), conversation);
                                 }
                                 else if (!review.accepted()) {
                                     String reviewFeedback = review.feedback();
@@ -358,8 +361,8 @@ public class StagedGenerationRunner {
                                     continue;
                                 }
                             }
-                            // Publish the APPROVED specification before anything downstream runs: from here on the gates enforce this content, so a later edit can add
-                            // obligations but never delete one.
+                            // Publish the APPROVED specification before anything downstream runs. From here on it is read-only; later stages repair executable artifacts
+                            // against this exact contract rather than weakening or expanding it under compile pressure.
                             approvedSpecs.approve(sessionId, specSnapshot);
                             if (specSink != null) {
                                 specSink.accept(specSnapshot);

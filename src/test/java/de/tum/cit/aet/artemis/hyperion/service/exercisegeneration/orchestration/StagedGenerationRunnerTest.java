@@ -802,21 +802,20 @@ class StagedGenerationRunnerTest {
     }
 
     @Test
-    void unavailableSemanticSpecReview_continuesWithoutSpendingAnAuthoringRetry() {
+    void unavailableSemanticSpecReview_stopsBeforeFreezingAnUncheckedContract() {
         SpecFidelityCriticService reviewer = mock(SpecFidelityCriticService.class);
         when(reviewer.reviewSpecification(anyString(), anyString(), eq(null), any())).thenReturn(new SpecFidelityCriticService.SpecificationReview(false, List.of()));
         StagedGenerationRunner semanticRunner = new StagedGenerationRunner(agentLoopRunner, systemPromptService, stageCheckService, new AgentTranscriptWriter(""), approvedSpecs,
                 reviewer, "FRESH");
-        when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(completed(1, "spec"), completed(2, "solution"),
-                completed(2, "template"), completed(2, "tests"), completed(2, "statement"));
-        when(verifier.selfCheck(any(), anyString(), eq(exercise), any(), eq(false))).thenReturn(passingReport());
+        when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(completed(1, "spec"));
 
         AgentLoopResult result = semanticRunner.run(exercise, baseTools, baseTools, "context", "brief", Map.of(), sandbox, "s", NEVER_CANCELLED, null, null, Set::of, true, null)
                 .result();
 
-        assertThat(result.status()).isEqualTo(AgentLoopResult.Status.COMPLETED);
-        assertThat(approvedSpecs.approved("s")).contains(VALID_SPEC_DOCUMENT);
-        verify(agentLoopRunner, times(5)).run(anyString(), anyString(), any(), anyInt(), any(), any(), any());
+        assertThat(result.status()).isEqualTo(AgentLoopResult.Status.ERROR);
+        assertThat(result.finalMessage()).contains("Specification fidelity review was unavailable");
+        assertThat(approvedSpecs.approved("s")).isEmpty();
+        verify(agentLoopRunner).run(anyString(), anyString(), any(), anyInt(), any(), any(), any());
     }
 
     @Test

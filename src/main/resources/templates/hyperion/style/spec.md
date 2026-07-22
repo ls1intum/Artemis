@@ -5,8 +5,9 @@ implements THIS and is checked against it. It answers the questions the brief us
 the student actually compute, which types exist and which of them the student writes, and how the work is
 graded. A spec whose graded work is copying literals produces a hollow exercise no matter how well the later
 stages execute. Skipped entirely when the instructor already provided a real problem statement — that
-statement is the spec. Updated whenever a later stage proves it wrong, so it always describes the final
-exercise truthfully.
+statement is the spec. Before approval it receives one focused semantic review against the brief. After approval
+it is read-only: later stages repair executable artifacts against the contract instead of weakening the contract
+to fit a downstream mistake.
 
 ## Choose an archetype first
 
@@ -55,9 +56,9 @@ students to design or create a type normally demands `student-creates`, but Java
 declarations for a provided scaffold to compile. When a brief combines a provided Strategy context with a
 student-designed interface and concrete strategies, the compile-safe allocation is mandatory: the interface is
 `student-creates`; concrete strategies are `student-creates`; the context is `stubbed`. Keep the context class as
-the provided scaffold, but omit fields and methods whose signatures require the absent interface. Put one
-class-body TODO breadcrumb in that context telling students to add the field, setter, and delegation API after
-they create the interface. Tests reach the student-defined interface and the context wiring reflectively. An empty
+the provided scaffold, but omit the minimum members whose declarations require the absent interface. Put one
+class-body TODO breadcrumb in that context describing the student-owned collaboration after they create the
+interface. Tests reach the student-defined interface and the context wiring reflectively. An empty
 interface declaration still pre-creates the type, so it is not faithful when the brief explicitly assigns creating
 that interface to students.
 For every piece of MUTABLE STATE, say below the table which type owns it and whether it survives object
@@ -75,8 +76,14 @@ Reconcile that ownership with compilation before approving the design. Every tes
 as student work must map to a `stubbed` or `student-creates` row. A given or stubbed type cannot expose an
 omitted `student-creates` type in a template signature: the template would not compile. Make the dependent type
 student-created too, or omit only the student-owned dependent members and replace them with stable class-body
-TODO breadcrumbs. Never make the same API accept the real interface in the solution and `Object` in the template;
-shared solution/template signatures stay identical.
+TODO breadcrumbs. Given types and all non-student-owned members of stubbed types stay identical in both
+repositories. Only types marked `student-creates` and the minimum dependent members assigned to the same seam
+are absent from the template. Never make a shared API accept the real interface in the solution and `Object` in
+the template.
+
+Before approval, compare every Design ownership row against every later Public API and template sentence. A
+`student-creates` row is contradicted by prose saying that the template supplies that declaration, signature, or
+method body even when the table itself is correct.
 
 Before accepting the rules, perform a scope subtraction pass: remove validation, exception, state, purity,
 immutability, thread-safety, and architecture obligations that the brief did not request and that are not strictly
@@ -88,11 +95,12 @@ necessary when the brief leaves them open; adding unrelated defensive policy is 
 A table under `## Testing Strategy` with one row per SEAM — an independently actionable unit of student work.
 Give the first column stable IDs `S1`, `S2`, ...; the template TODOs, grading plan, and statement tasks carry
 these IDs through the rest of generation. Never one seam per test; never one seam for the whole exercise unless it genuinely is one. Each row lists the
-behaviour partitions its tests need, a weight tier (core rules weigh more than edge polish; weights 1–3, and
-the test stage writes the machine-readable plan), and LAST the hidden-variant decision, written as `yes` or
+behaviour partitions its tests need, a numeric weight tier (`3` for core learning objectives, `2` for supporting
+behaviour, `1` for edge polish; the test stage writes the machine-readable plan), and LAST the hidden-variant decision, written as `yes` or
 `no` — that cell is read mechanically, so prose there reads as "no". A hidden variant (visibility
 AFTER_DUE_DATE) repeats a partition with fresh witness values, because students overfit to visible tests; it
-grades silently and is never bound to a task in the statement.
+grades silently and is never bound to a task in the statement. Every row is required graded student work; keep
+optional enrichment outside this table, the test plan, and the Artemis tasks.
 
 ## Diagram
 

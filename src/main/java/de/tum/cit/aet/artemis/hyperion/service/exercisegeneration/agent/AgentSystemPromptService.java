@@ -215,24 +215,27 @@ public class AgentSystemPromptService {
             (| Type | Role | Template status |) with Template status EXACTLY one of `given`, `stubbed`, `student-creates` (a `student-creates` type is OMITTED from the
             template and graded through seeded structural checks plus reflection-based tests — the template gate enforces its absence). A named type the brief assigns students to
             DESIGN or CREATE is `student-creates`; compilation pressure cannot weaken that ownership. For a provided strategy context with a student-designed interface and strategies, mark the
-            interface and concrete strategies `student-creates`, and the context `stubbed`. Keep the context scaffold, but omit members requiring the absent interface and leave a
-            class-body TODO for the field/setter/delegation API. Tests load those types and invoke the wiring reflectively. Never ship an empty supposedly student-designed interface.
+            interface and concrete strategies `student-creates`, and the context `stubbed`. Keep the context scaffold, but omit the minimum members whose declarations require
+            the absent interface and leave a class-body TODO for that student-owned collaboration. Tests load those types and invoke the wiring reflectively. Never ship an empty supposedly student-designed interface.
             This preserves real design work while the starter compiles. Say who owns each piece of
             mutable state and whether it survives object replacement; `## Testing Strategy` — a table whose first column gives each independently actionable unit of student
             work a stable ID (`S1`, `S2`, ...), grouping every test
-            partition it needs (never one seam per test, never one for the whole exercise unless it is genuinely one seam), with a weight tier (core rules outweigh edge
-            cases) and a LAST column reading exactly `yes` or `no` for a hidden after-due-date variant with fresh witnesses (students overfit to visible tests; that cell is
+            partition it needs (never one seam per test, never one for the whole exercise unless it is genuinely one seam), with a numeric weight tier (`3` core, `2` supporting,
+            `1` edge polish) and no "optional" rows: every row is graded required work; keep optional enrichment outside this table. Add a LAST
+            column reading exactly `yes` or `no` for a hidden after-due-date variant with fresh witnesses (students overfit to visible tests; that cell is
             read mechanically). Match the requested learning objective and difficulty in the work students actually perform: if the brief teaches an abstraction or design
             pattern, students must implement or wire that collaboration rather than only transcribe domain formulas into an already-solved design; keep routine plumbing given.
             Remove validation, exception, state, purity, immutability, or architecture obligations not explicit in the brief or necessary for the requested behaviour.
             Open-ended theme/formula choices are exercise design; unrelated defensive policy is not.
-            Every Testing Strategy seam described as student work must belong to a `stubbed` or `student-creates` Design row. Keep solution and template public APIs identical:
-            shared members stay identical, while a student-owned member that depends on an omitted type is omitted from the template and represented by its stable TODO breadcrumb.
+            Every Testing Strategy seam described as student work must belong to a `stubbed` or `student-creates` Design row. Given types and all non-student-owned members of stubbed types remain identical
+            across solution and template. Only types marked `student-creates` and the minimum dependent members assigned to that same seam may
+            be absent, represented by stable TODO breadcrumbs.
             Never substitute `Object` in only the template.
             `## Diagram` — yes/no + one-line why
-            grounded in the design (yes for multiple collaborating or student-created types). No [task] bindings, no test names, no PlantUML at spec time. The accepted ownership
-            and diagram decisions are the generation contract: later stages may clarify or add obligations, but must never downgrade student work or revoke the diagram to escape
-            a gate. If implementation exposes a conflict, restructure the scaffold/tests to honour the accepted design.
+            grounded in the design (yes for multiple collaborating or student-created types). No [task] bindings, no test names, no PlantUML at spec time.
+            Before submitting, compare every Design ownership row against every Public API and template sentence: never say the template supplies a declaration, signature, or method
+            for a `student-creates` type. Also confirm that every Testing Strategy row is required work and uses the stated 3/2/1 scale. The accepted specification is then read-only:
+            later stages repair executable artifacts against it, never rewrite it to escape a gate. If implementation exposes a conflict, restructure the scaffold/tests to honour the accepted design.
             """;
 
     private static final String STAGE_1_SOLUTION_INSTRUCTIONS = """
@@ -253,8 +256,9 @@ public class AgentSystemPromptService {
     private static final String STAGE_3_TESTS_INSTRUCTIONS = """
             STAGE 3 — TESTS: run `verify` first — it reports binding problems and seeded structural names. Start with the highest-risk learning seam; for a pattern, prove
             delegation with a recording fake before concrete formulas. Author one partition at a time, re-running `verify` after each test or small batch: each must pass on the solution and fail on the
-            template for its intended reason (a structural check may already pass). For a `student-creates` type, follow the reflection pattern the seeded reference/tests
-            demonstrate (its ShippingCalculator test reaches a solution-only class via ReflectionTestUtils so the same test still compiles against the template). Every test
+            template for its intended reason (a structural check may already pass). Before referencing a `student-creates` type, copy the seeded reference test's
+            `Class.forName`/`ReflectionTestUtils` technique and use a dynamic proxy for an omitted interface. Never restore the declaration to make a test compile; the write
+            boundary rejects it. Every test
             must be passable by completing the template's TODOs within the scaffolded structure; one that forces restructuring means the design is wrong — fix template and
             solution first. When a rule says a context delegates to a collaborator, use a small fake or recording implementation where the language permits it and assert the
             forwarded inputs and returned value; testing only the known concrete implementations lets a context that duplicates their formulas pass without using the taught
@@ -410,9 +414,9 @@ public class AgentSystemPromptService {
     private static String stageWriteBoundary(GenerationStage stage) {
         String writable = switch (stage) {
             case SPEC -> "SPEC.md";
-            case SOLUTION -> "SPEC.md and solution/";
-            case TEMPLATE -> "SPEC.md, solution/, and template/";
-            case TESTS -> "SPEC.md, solution/, template/, tests/, and test-plan.json";
+            case SOLUTION -> "solution/ (SPEC.md is now read-only)";
+            case TEMPLATE -> "solution/ and template/ (SPEC.md is read-only)";
+            case TESTS -> "solution/, template/, tests/, and test-plan.json (SPEC.md is read-only)";
             case STATEMENT -> "problem-statement.md (read the completed artifacts, but do not rewrite them in this stage)";
         };
         return "STAGE WRITE BOUNDARY: write only " + writable

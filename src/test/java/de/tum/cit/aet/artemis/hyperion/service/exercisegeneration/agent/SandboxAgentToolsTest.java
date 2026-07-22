@@ -16,6 +16,7 @@ import java.time.Duration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.junit.jupiter.api.Test;
@@ -264,7 +265,7 @@ class SandboxAgentToolsTest {
         for (GenerationStage stage : GenerationStage.values()) {
             SandboxAgentTools staged = new SandboxAgentTools(new RecordingSandbox(), "s");
             staged.enterStage(stage);
-            if (stage == GenerationStage.STATEMENT) {
+            if (stage != GenerationStage.SPEC) {
                 assertThat(staged.writeFile("SPEC.md", "## Rules")).as("stage %s", stage).contains("cannot write");
             }
             else {
@@ -289,6 +290,62 @@ class SandboxAgentToolsTest {
         assertThat(solutionStage.writeFile("solution/src/Answer.java", "class Answer {}")).startsWith("Wrote ");
         assertThat(solutionStage.writeFile("template/src/Answer.java", "class Answer {}")).contains("cannot write");
         assertThat(solutionStage.writeFile("tests/test/AnswerTest.java", "class AnswerTest {}")).contains("cannot write");
+    }
+
+    @Test
+    void writeFile_rejectsATemplateDeclarationThatViolatesTheApprovedStudentOwnership() {
+        RecordingSandbox sandbox = new RecordingSandbox();
+        StageCheckService stageChecks = mock(StageCheckService.class);
+        when(stageChecks.validateArtifactWrite("s", "template/src/FuelStrategy.java", "public interface FuelStrategy {}"))
+                .thenReturn(Optional.of("The approved specification assigns FuelStrategy to the student."));
+        SandboxAgentTools tools = new SandboxAgentTools(sandbox, "s", null, null, Map.of(), false, stageChecks);
+        tools.enterStage(GenerationStage.TEMPLATE);
+
+        String result = tools.writeFile("template/src/FuelStrategy.java", "public interface FuelStrategy {}");
+
+        assertThat(result).contains("approved specification assigns FuelStrategy to the student");
+        assertThat(sandbox.execCount).isZero();
+    }
+
+    @Test
+    void writeFile_rejectsACommentOnlyArtifactNamedAfterAStudentCreatedType() {
+        RecordingSandbox sandbox = new RecordingSandbox();
+        StageCheckService stageChecks = mock(StageCheckService.class);
+        when(stageChecks.validateArtifactWrite("s", "template/src/FuelStrategy.java", "// TODO: create this type"))
+                .thenReturn(Optional.of("The approved specification assigns FuelStrategy to the student."));
+        SandboxAgentTools tools = new SandboxAgentTools(sandbox, "s", null, null, Map.of(), false, stageChecks);
+        tools.enterStage(GenerationStage.TEMPLATE);
+
+        assertThat(tools.writeFile("template/src/FuelStrategy.java", "// TODO: create this type")).contains("assigns FuelStrategy to the student");
+        assertThat(sandbox.execCount).isZero();
+    }
+
+    @Test
+    void bash_surfacesAndRepairsAnOutOfBandApprovedSpecMutation() {
+        RecordingSandbox sandbox = new RecordingSandbox();
+        StageCheckService stageChecks = mock(StageCheckService.class);
+        when(stageChecks.restoreApprovedSpecAfterCommand(sandbox, "s"))
+                .thenReturn(Optional.of("ERROR: the shell command changed read-only SPEC.md. Artemis restored the approved specification."));
+        SandboxAgentTools tools = new SandboxAgentTools(sandbox, "s", null, null, Map.of(), false, stageChecks);
+
+        String result = tools.bash("printf tampered > SPEC.md");
+
+        assertThat(result).contains("changed read-only SPEC.md").contains("restored the approved specification");
+        verify(stageChecks).restoreApprovedSpecAfterCommand(sandbox, "s");
+    }
+
+    @Test
+    void bash_immediatelySurfacesAnOutOfBandStudentCreatedTemplateArtifact() {
+        RecordingSandbox sandbox = new RecordingSandbox();
+        StageCheckService stageChecks = mock(StageCheckService.class);
+        when(stageChecks.approvedOwnershipViolationAfterCommand(sandbox, "s"))
+                .thenReturn(Optional.of("ERROR: the shell command introduced template artifacts for student-created types."));
+        SandboxAgentTools tools = new SandboxAgentTools(sandbox, "s", null, null, Map.of(), false, stageChecks);
+
+        String result = tools.bash("cp solution/src/FuelStrategy.java template/src/FuelStrategy.java");
+
+        assertThat(result).contains("introduced template artifacts for student-created types");
+        verify(stageChecks).approvedOwnershipViolationAfterCommand(sandbox, "s");
     }
 
     @Test

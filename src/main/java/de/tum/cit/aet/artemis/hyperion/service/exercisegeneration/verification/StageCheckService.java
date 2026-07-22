@@ -1,8 +1,11 @@
 package de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification;
 
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
+import java.util.Base64;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 import org.jspecify.annotations.Nullable;
@@ -66,6 +69,78 @@ public class StageCheckService {
         this.approvedSpecs = approvedSpecs;
     }
 
+    /**
+     * Rejects a workspace mutation that would undo an already approved ownership decision. This runs at the write boundary rather than waiting for the next build: once SPEC.md
+     * passes its semantic and mechanical reviews it is the downstream contract, and a type assigned to the student cannot be restored to the template to make direct-reference
+     * tests compile. Executable artifacts remain writable so later stages can still repair real implementation defects.
+     *
+     * @param sessionId sandbox session whose approved specification is authoritative
+     * @param path      workspace-relative target path
+     * @param content   complete prospective file content (empty for deletion)
+     * @return an actionable rejection, or empty when the mutation preserves the approved contract
+     */
+    public Optional<String> validateArtifactWrite(String sessionId, String path, String content) {
+        Optional<String> approved = approvedSpecs.approved(sessionId);
+        if (approved.isEmpty()) {
+            return Optional.empty();
+        }
+        if ("SPEC.md".equals(path)) {
+            return Optional.of("ERROR: SPEC.md is read-only after its specification gate. Repair the solution, template, tests, or statement against the approved contract; "
+                    + "do not rewrite the contract to fit a downstream artifact.");
+        }
+        if (!path.startsWith("template/")) {
+            return Optional.empty();
+        }
+        List<String> restoredTypes = specStudentCreatedTypes(approved.get()).stream().filter(type -> ExerciseIntegrityGate.pathOrContentRepresentsType(path, content, type))
+                .toList();
+        if (restoredTypes.isEmpty()) {
+            return Optional.empty();
+        }
+        return Optional.of("ERROR: the approved specification assigns these types to students to create: " + restoredTypes
+                + ". Do not restore or pre-create their declarations in the template. Keep TODO seam breadcrumbs in the collaborating scaffold and test the student-created "
+                + "types through Class.forName/reflection (and a dynamic proxy where the context needs an interface instance), as shown by the seeded test utilities.");
+    }
+
+    /**
+     * Restores the frozen specification after a shell command if the command changed it outside the guarded file tools.
+     *
+     * @param sandbox   active generation sandbox
+     * @param sessionId sandbox session whose approved specification is authoritative
+     * @return an actionable restoration message, or empty when the specification stayed unchanged
+     */
+    public Optional<String> restoreApprovedSpecAfterCommand(InteractiveSandbox sandbox, String sessionId) {
+        Optional<String> approved = approvedSpecs.approved(sessionId);
+        if (approved.isEmpty() || approved.get().equals(readSpec(sandbox, sessionId))) {
+            return Optional.empty();
+        }
+        String encoded = Base64.getEncoder().encodeToString(approved.get().getBytes(StandardCharsets.UTF_8));
+        SandboxExecResult restore = sandbox.exec(sessionId, READ_TIMEOUT, "sh", "-c",
+                "echo '" + encoded + "' | base64 -d > '" + GenerationWorkspaceService.WORKSPACE + "/SPEC.md'");
+        if (!restore.isSuccess()) {
+            throw new IllegalStateException("A shell command changed the approved specification and it could not be restored");
+        }
+        return Optional.of("ERROR: the shell command changed read-only SPEC.md. Artemis restored the approved specification. Use bash only for inspection and temporary "
+                + "calculations outside /workspace; edit executable artifacts through write_file/edit_file.");
+    }
+
+    /**
+     * Detects an out-of-band shell mutation that introduced a type the frozen contract assigns students to create.
+     *
+     * @param sandbox   active generation sandbox
+     * @param sessionId sandbox session whose approved specification is authoritative
+     * @return an actionable ownership message, or empty when the template still honours the approved ownership
+     */
+    public Optional<String> approvedOwnershipViolationAfterCommand(InteractiveSandbox sandbox, String sessionId) {
+        List<String> violations = approvedSpecs.approved(sessionId).map(StageCheckService::specStudentCreatedTypes).orElse(List.of()).stream()
+                .map(type -> findTypeDeclarations(sandbox, sessionId, "template", type)).filter(found -> !found.isBlank()).flatMap(String::lines).map(String::strip).distinct()
+                .toList();
+        if (violations.isEmpty()) {
+            return Optional.empty();
+        }
+        return Optional.of("ERROR: the shell command introduced template artifacts for types the approved specification assigns students to create: " + violations
+                + ". Remove those artifacts with delete_file/edit_file. Test the omitted types through reflection and a dynamic proxy where needed; do not rewrite SPEC.md.");
+    }
+
     /** Test constructor: no approved-spec registry, so every check reads the live specification exactly as it did before the registry existed. */
     StageCheckService(DifferentialVerificationService verifier) {
         this(verifier, new ApprovedSpecRegistry());
@@ -85,16 +160,14 @@ public class StageCheckService {
      */
     public StageCheckResult check(GenerationStage stage, InteractiveSandbox sandbox, String sessionId, ProgrammingExercise exercise, Map<String, String> seedTestsFiles,
             @Nullable AgentVerifyReport lastTestsReport) {
-        // The specification is the contract every later stage is checked against, and the agent may legitimately update it — but an update that BREAKS it silently disarms the
-        // gates derived from it (observed live: a later stage appended [task] bindings and emptied the '## Diagram' decision, so the statement's diagram check passed
-        // vacuously). Re-running the spec's own mechanical gate costs no build and turns that silent drift into a loud, actionable failure. Skipped when there is no SPEC.md at
-        // all: the SPEC stage does not run when the instructor's own problem statement IS the specification.
-        if (stage != GenerationStage.SPEC && !readSpec(sandbox, sessionId).isBlank()) {
+        // SPEC.md is read-only after approval through supported tools. Re-running its cheap mechanical gate is defense in depth against an out-of-band shell mutation; without
+        // it, a later stage could append [task] bindings or empty the Diagram decision and silently disarm checks derived from the workspace copy. Skipped when there is no
+        // SPEC.md at all: the SPEC stage does not run when the instructor's own problem statement IS the specification.
+        if (stage != GenerationStage.SPEC && approvedSpecs.approved(sessionId).isEmpty() && !readSpec(sandbox, sessionId).isBlank()) {
             StageCheckResult specStillValid = checkSpec(sandbox, sessionId);
             if (!specStillValid.passed()) {
                 return StageCheckResult.failed("SPEC.md is no longer a valid specification: " + specStillValid.observation()
-                        + " Every later stage is checked against it, so fix SPEC.md first. Task bindings and the PlantUML diagram belong in problem-statement.md, never in "
-                        + "the specification.");
+                        + " The approved specification is read-only; do not mutate files through bash. Task bindings and PlantUML belong in problem-statement.md, never in SPEC.md.");
             }
         }
         return switch (stage) {
@@ -331,13 +404,6 @@ public class StageCheckService {
                     + "the collaborating classes instead): " + leakedFiles
                     + ". This ownership decision passed the specification gate; changing SPEC.md now cannot turn the required design work into a stub.");
         }
-        List<String> liveCreatedTypes = specStudentCreatedTypes(readSpec(sandbox, sessionId));
-        List<String> unjustifiedDowngrades = createdTypes.stream().filter(type -> !liveCreatedTypes.contains(type)).toList();
-        if (!unjustifiedDowngrades.isEmpty()) {
-            return StageCheckResult.failed("The approved specification marked these types 'student-creates' and SPEC.md no longer does: " + unjustifiedDowngrades
-                    + ". Restore 'student-creates', delete the template declaration, and reach the type reflectively the way the seeded reference tests do. If another template "
-                    + "type currently references it, restructure that scaffold instead of weakening the accepted student work.");
-        }
         if (!createdTypes.isEmpty()) {
             observation = (observation.isBlank() ? "" : observation + " ") + "Confirmed absent from the template, as the specification requires students to create them: "
                     + createdTypes + ".";
@@ -472,15 +538,10 @@ public class StageCheckService {
         }
     }
 
-    /**
-     * The {@code student-creates} types the later gates enforce: the union of the APPROVED specification's and the live one's. Union, not "live wins": a spec edit may add an
-     * obligation but must never delete one, because deleting one is exactly how the agent escaped the template gate instead of satisfying it. A genuinely forced change is
-     * still possible — the template gate exempts a type some other template file must reference — but it has to be justified by the repositories, not by rewriting the contract.
-     */
+    /** The {@code student-creates} types from the frozen specification, falling back to the live workspace only for legacy/unapproved flows. */
     private List<String> enforcedStudentCreatedTypes(InteractiveSandbox sandbox, String sessionId) {
-        List<String> live = specStudentCreatedTypes(readSpec(sandbox, sessionId));
-        List<String> approved = approvedSpecs.approved(sessionId).map(StageCheckService::specStudentCreatedTypes).orElse(List.of());
-        return java.util.stream.Stream.concat(approved.stream(), live.stream()).distinct().toList();
+        String specification = approvedSpecs.approved(sessionId).orElseGet(() -> readSpec(sandbox, sessionId));
+        return specStudentCreatedTypes(specification);
     }
 
     private String readSpec(InteractiveSandbox sandbox, String sessionId) {
@@ -496,7 +557,7 @@ public class StageCheckService {
         String root = GenerationWorkspaceService.WORKSPACE + "/" + repo;
         String byName = execRead(sandbox, sessionId, "find", root, "-type", "f", "-name", type + ".*", "-not", "-path", "*/target/*", "-not", "-path", "*/build/*", "-not", "-name",
                 "*.md", "-not", "-name", "*.txt", "-not", "-name", "*.orig", "-not", "-name", "*.class");
-        String declarationPattern = "^[[:space:]]*((public|protected|private|static|abstract|final|sealed|non-sealed)[[:space:]]+)*"
+        String declarationPattern = "(^|[;{}])[[:space:]]*((public|protected|private|static|abstract|final|sealed|non-sealed)[[:space:]]+)*"
                 + "(class|interface|enum|record|trait|struct|protocol)[[:space:]]+" + type + "\\b";
         String byDeclaration = execRead(sandbox, sessionId, "grep", "-rlE", declarationPattern, root, "--exclude-dir=target", "--exclude-dir=build", "--exclude=*.md",
                 "--exclude=*.txt");
@@ -514,8 +575,13 @@ public class StageCheckService {
         }
         String observation = report.toObservation();
         if (!report.solutionPassed() || !report.templateFailed()) {
+            List<String> studentCreatedTypes = enforcedStudentCreatedTypes(sandbox, sessionId);
+            String ownershipRepair = studentCreatedTypes.isEmpty() ? ""
+                    : "\nThe approved student-created types are " + studentCreatedTypes
+                            + ". Do not add their declarations to the template or edit SPEC.md. If direct references make the template test compilation fail, rewrite those tests "
+                            + "using the seeded reflection utilities/Class.forName; use a dynamic proxy when the context must receive the omitted interface.";
             return new StageCheckResult(false, "The tests do not yet satisfy the differential requirement (the solution must pass every test, the template must fail every "
-                    + "task-bound behavioural test):\n" + observation, report);
+                    + "task-bound behavioural test):\n" + observation + ownershipRepair, report);
         }
         // Only once the differential is green does the grading plan matter — a missing plan must never drown out failing tests in the feedback.
         String planJson = execRead(sandbox, sessionId, "cat", GenerationWorkspaceService.WORKSPACE + "/test-plan.json");
@@ -616,8 +682,8 @@ public class StageCheckService {
             return StageCheckResult.failed("The statement writes ABOUT students in the third person ('Students must/will/should ...'). Address the reader directly instead: "
                     + "frame the goal as \"we\" and the work as \"you\" with imperative tasks ('Define ...', 'Implement ...').");
         }
-        boolean diagramPromised = ProblemStatementBindingChecker.specPromisesDiagram(readSpec(sandbox, sessionId))
-                || approvedSpecs.approved(sessionId).filter(ProblemStatementBindingChecker::specPromisesDiagram).isPresent();
+        String authoritativeSpec = approvedSpecs.approved(sessionId).orElseGet(() -> readSpec(sandbox, sessionId));
+        boolean diagramPromised = ProblemStatementBindingChecker.specPromisesDiagram(authoritativeSpec);
         if (diagramPromised && !statement.contains("@startuml")) {
             return StageCheckResult.failed("SPEC.md's '## Diagram' section says yes, but the statement contains no @startuml diagram. Add the PlantUML class diagram after "
                     + "the tasks it illustrates (with testsColor links). The accepted diagram decision cannot be revoked after the specification gate.");
@@ -635,17 +701,15 @@ public class StageCheckService {
         return StageCheckResult.passed("");
     }
 
-    /** Approved seam IDs plus any valid later additions. An edit may add traceability work, but it cannot make an accepted seam disappear. */
+    /** Seam IDs from the frozen specification, with the live workspace used only for legacy/unapproved flows. */
     private List<String> enforcedTestingSeamIds(InteractiveSandbox sandbox, String sessionId) {
-        List<String> live = testingStrategySeamIds(readSpec(sandbox, sessionId));
-        List<String> approved = approvedSpecs.approved(sessionId).map(StageCheckService::testingStrategySeamIds).orElse(List.of());
-        return java.util.stream.Stream.concat(approved.stream(), live.stream()).filter(id -> id.matches("S[1-9][0-9]*")).distinct().toList();
+        String specification = approvedSpecs.approved(sessionId).orElseGet(() -> readSpec(sandbox, sessionId));
+        return testingStrategySeamIds(specification).stream().filter(id -> id.matches("S[1-9][0-9]*")).distinct().toList();
     }
 
     private Set<String> enforcedHiddenVariantSeamIds(InteractiveSandbox sandbox, String sessionId) {
-        Set<String> seams = new java.util.LinkedHashSet<>(hiddenVariantSeamIds(readSpec(sandbox, sessionId)));
-        approvedSpecs.approved(sessionId).map(StageCheckService::hiddenVariantSeamIds).ifPresent(seams::addAll);
-        return Set.copyOf(seams);
+        String specification = approvedSpecs.approved(sessionId).orElseGet(() -> readSpec(sandbox, sessionId));
+        return hiddenVariantSeamIds(specification);
     }
 
     /**

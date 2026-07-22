@@ -81,7 +81,8 @@ class SpecFidelityCriticServiceTest {
 
     @Test
     void specificationReview_acceptsACompleteEmptyVerdict() {
-        SpecFidelityCriticService critic = criticReturning(rawResponse("{\"omissions\":[],\"conflicts\":[],\"unsupportedConstraints\":[]}"));
+        SpecFidelityCriticService critic = criticReturning(
+                rawResponse("{\"omissions\":[],\"conflicts\":[],\"internalConflicts\":[],\"incorrectExamples\":[],\"unsupportedConstraints\":[]}"));
 
         SpecFidelityCriticService.SpecificationReview review = critic.reviewSpecification("Create an exercise about strategies.", "# Exercise\n## Rules\n- R1", null, () -> false);
 
@@ -91,10 +92,26 @@ class SpecFidelityCriticServiceTest {
     }
 
     @Test
+    void specificationReview_explicitlyChecksOwnershipTableAgainstLaterTemplateProse() {
+        ChatModel chatModel = mock(ChatModel.class);
+        when(chatModel.call(any(Prompt.class)))
+                .thenReturn(rawResponse("{\"omissions\":[],\"conflicts\":[],\"internalConflicts\":[],\"incorrectExamples\":[],\"unsupportedConstraints\":[]}"));
+        when(chatModel.getOptions()).thenReturn(ChatOptions.builder().build());
+        SpecFidelityCriticService critic = new SpecFidelityCriticService(ChatClient.create(chatModel), objectMapper);
+
+        critic.reviewSpecification("Students create the strategy interface.", "The design table marks it student-creates.", null, () -> false);
+
+        ArgumentCaptor<Prompt> prompt = ArgumentCaptor.forClass(Prompt.class);
+        verify(chatModel).call(prompt.capture());
+        assertThat(prompt.getValue().getInstructions().getFirst().getText()).contains("Design ownership table").contains("template supplies a type marked `student-creates`")
+                .contains("correct table does not cancel contradictory prose");
+    }
+
+    @Test
     void specificationReview_returnsGroundedFindingsAsActionableFeedback() {
         SpecFidelityCriticService critic = criticReturning(rawResponse("""
                 {"omissions":[{"briefQuote":"students create the strategy interface","reason":"the interface is supplied","repair":"mark it student-owned"}],
-                 "conflicts":[],
+                 "conflicts":[],"internalConflicts":[],"incorrectExamples":[],
                  "unsupportedConstraints":[{"specQuote":"throw an exact message","reason":"the brief does not request a message","repair":"remove the exact message"}]}
                 """));
 
@@ -107,21 +124,54 @@ class SpecFidelityCriticServiceTest {
     }
 
     @Test
-    void specificationReview_marksMalformedOrUngroundedVerdictsIncomplete() {
+    void specificationReview_rejectsAnIncorrectWorkedExampleBeforeTheContractFreezes() {
+        SpecFidelityCriticService critic = criticReturning(rawResponse("""
+                {"omissions":[],"conflicts":[],"internalConflicts":[],"unsupportedConstraints":[],
+                 "incorrectExamples":[{"specQuote":"2 + 2 = 5","reason":"the arithmetic evaluates to four","repair":"replace 5 with 4"}]}
+                """));
+
+        SpecFidelityCriticService.SpecificationReview review = critic.reviewSpecification("Create an arithmetic exercise.", "# Examples\n2 + 2 = 5", null, () -> false);
+
+        assertThat(review.complete()).isTrue();
+        assertThat(review.accepted()).isFalse();
+        assertThat(review.feedback()).contains("2 + 2 = 5", "evaluates to four", "replace 5 with 4");
+    }
+
+    @Test
+    void specificationReview_rejectsMutuallyIncompatibleRulesBeforeTheContractFreezes() {
+        SpecFidelityCriticService critic = criticReturning(rawResponse("""
+                {"omissions":[],"conflicts":[],"incorrectExamples":[],"unsupportedConstraints":[],
+                 "internalConflicts":[{"firstSpecQuote":"Switching strategy preserves accumulated energy.",
+                 "secondSpecQuote":"Switching strategy resets accumulated energy.","reason":"both cannot hold for the same switch",
+                 "repair":"choose and state one switch policy"}]}
+                """));
+
+        SpecFidelityCriticService.SpecificationReview review = critic.reviewSpecification("Teach the strategy pattern.",
+                "Switching strategy preserves accumulated energy. Switching strategy resets accumulated energy.", null, () -> false);
+
+        assertThat(review.complete()).isTrue();
+        assertThat(review.accepted()).isFalse();
+        assertThat(review.feedback()).contains("preserves accumulated energy", "resets accumulated energy", "choose and state one switch policy");
+    }
+
+    @Test
+    void specificationReview_distinguishesMalformedUngroundedAndShortGroundedVerdicts() {
         ChatModel chatModel = mock(ChatModel.class);
         when(chatModel.call(any(Prompt.class))).thenReturn(rawResponse("not json"), rawResponse("""
                 {"omissions":[{"briefQuote":"a requirement that is not in the brief","reason":"missing","repair":"add it"}],
-                 "conflicts":[],"unsupportedConstraints":[]}
+                 "conflicts":[],"internalConflicts":[],"incorrectExamples":[],"unsupportedConstraints":[]}
                 """), rawResponse("""
                 {"omissions":[{"briefQuote":"Java","reason":"the learning objective is missing","repair":"change it"}],
-                 "conflicts":[],"unsupportedConstraints":[]}
+                 "conflicts":[],"internalConflicts":[],"incorrectExamples":[],"unsupportedConstraints":[]}
                 """));
         when(chatModel.getOptions()).thenReturn(ChatOptions.builder().build());
         SpecFidelityCriticService critic = new SpecFidelityCriticService(ChatClient.create(chatModel), objectMapper);
 
         assertThat(critic.reviewSpecification("Create a counter.", "# Counter", null, () -> false).complete()).isFalse();
         assertThat(critic.reviewSpecification("Create a counter.", "# Counter", null, () -> false).complete()).isFalse();
-        assertThat(critic.reviewSpecification("Create a Java counter.", "# Counter", null, () -> false).complete()).isFalse();
+        SpecFidelityCriticService.SpecificationReview shortGrounded = critic.reviewSpecification("Create a Java counter.", "# Counter", null, () -> false);
+        assertThat(shortGrounded.complete()).isTrue();
+        assertThat(shortGrounded.accepted()).isFalse();
     }
 
     private static final String UNICODE_BRIEF = "Implement count_graphemes(s) counting user-perceived characters. It MUST be tested on accented Latin (café), a combining-mark "
@@ -165,7 +215,7 @@ class SpecFidelityCriticServiceTest {
         when(chatModel.getOptions()).thenReturn(ChatOptions.builder().build());
         SpecFidelityCriticService critic = new SpecFidelityCriticService(ChatClient.create(chatModel), objectMapper);
 
-        SpecFidelityReport report = critic.critique(UNICODE_BRIEF, "# Rover", List.of("turnsLeft"), COMPLETE_ARTIFACTS, null);
+        SpecFidelityReport report = critic.critique(UNICODE_BRIEF, "# Rover\nWorked example: the rover ends at (2,3) E", List.of("turnsLeft"), COMPLETE_ARTIFACTS, null);
 
         assertThat(report.findings()).extracting(SpecFidelityReport.Finding::kind).containsExactly(SpecFidelityReport.Kind.CONTRACT_CONTRADICTION,
                 SpecFidelityReport.Kind.HIDDEN_GRADED_REQUIREMENT, SpecFidelityReport.Kind.TEMPLATE_QUALITY_GAP);
@@ -338,7 +388,7 @@ class SpecFidelityCriticServiceTest {
         when(chatModel.getOptions()).thenReturn(ChatOptions.builder().build());
         SpecFidelityCriticService critic = new SpecFidelityCriticService(ChatClient.create(chatModel), objectMapper);
 
-        SpecFidelityReport report = critic.critique(UNICODE_BRIEF, "Worked example", List.of("example"), COMPLETE_ARTIFACTS, null);
+        SpecFidelityReport report = critic.critique(UNICODE_BRIEF, "Worked example: member 101 has two checkouts", List.of("example"), COMPLETE_ARTIFACTS, null);
 
         assertThat(report.findings()).extracting(SpecFidelityReport.Finding::kind).containsExactlyInAnyOrder(SpecFidelityReport.Kind.CONTRACT_CONTRADICTION,
                 SpecFidelityReport.Kind.WEAK_TEST_ORACLE);
@@ -696,11 +746,45 @@ class SpecFidelityCriticServiceTest {
         SpecFidelityCriticService critic = criticReturning(jsonResponse(
                 "{\"uncovered\":[],\"missingExamples\":[],\"invented\":[{\"requirement\":\"O(1) extra space\",\"sourceQuote\":\"O(1) extra space\",\"reason\":\"the brief never constrains space complexity\"}]}"));
 
-        SpecFidelityReport report = critic.critique(UNICODE_BRIEF, "Rotate the matrix; your solution must use O(1) extra space.", List.of("test_rotate"));
+        SpecFidelityReport report = critic.critique(UNICODE_BRIEF, "Rotate the matrix; your solution must use O(1) extra space.", List.of("test_rotate"), COMPLETE_ARTIFACTS, null,
+                () -> false, null, "# Approved specification\nUse O(1) extra space.");
 
         assertThat(report.findings()).hasSize(1).allMatch(finding -> finding.kind() == SpecFidelityReport.Kind.INVENTED_REQUIREMENT);
         assertThat(report.findings()).extracting(SpecFidelityReport.Finding::requirement).containsExactly("O(1) extra space");
         assertThat(report.hasBlockingFindings()).isTrue();
+    }
+
+    @Test
+    void inventedRequirementFoundOnlyInFrozenSpecification_isNotAnUnrepairableBlocker() {
+        SpecFidelityCriticService critic = criticReturning(jsonResponse(
+                "{\"uncovered\":[],\"missingExamples\":[],\"invented\":[{\"requirement\":\"O(1) extra space\",\"sourceQuote\":\"O(1) extra space\",\"reason\":\"the brief never constrains space complexity\"}]}"));
+
+        SpecFidelityReport report = critic.critique(UNICODE_BRIEF, "Rotate the matrix.", List.of("test_rotate"), COMPLETE_ARTIFACTS, null, () -> false, null,
+                "# Approved specification\nUse O(1) extra space.");
+
+        assertThat(report.findings()).isEmpty();
+    }
+
+    @Test
+    void incorrectExampleFoundOnlyInFrozenSpecification_isNotAnUnrepairableBlocker() {
+        SpecFidelityCriticService critic = criticReturning(
+                jsonResponse("{\"exampleChecks\":[{\"claim\":\"2 + 2 = 5\",\"computedOutcome\":\"2 + 2 = 4\",\"consistent\":false,\"reason\":\"the arithmetic is wrong\"}]}"));
+
+        SpecFidelityReport report = critic.critique("Create an arithmetic exercise.", "Calculate each result.", List.of("calculates"), COMPLETE_ARTIFACTS, null, () -> false, null,
+                "# Approved specification\nExample: 2 + 2 = 5");
+
+        assertThat(report.findings()).isEmpty();
+    }
+
+    @Test
+    void incorrectExampleRepeatedInStudentFacingStatement_remainsBlocking() {
+        SpecFidelityCriticService critic = criticReturning(
+                jsonResponse("{\"exampleChecks\":[{\"claim\":\"2 + 2 = 5\",\"computedOutcome\":\"2 + 2 = 4\",\"consistent\":false,\"reason\":\"the arithmetic is wrong\"}]}"));
+
+        SpecFidelityReport report = critic.critique("Create an arithmetic exercise.", "Example: 2 + 2 = 5", List.of("calculates"), COMPLETE_ARTIFACTS, null, () -> false, null,
+                "# Approved specification\nExample: 2 + 2 = 5");
+
+        assertThat(report.findings()).singleElement().satisfies(finding -> assertThat(finding.kind()).isEqualTo(SpecFidelityReport.Kind.CONTRACT_CONTRADICTION));
     }
 
     @Test

@@ -340,7 +340,7 @@ class DifferentialVerificationServiceTest {
     }
 
     @Test
-    void authoritativeVerificationAlsoEnforcesStudentWorkAddedByALaterSpecClarification() {
+    void authoritativeVerificationIgnoresUnreviewedWorkAddedToTheLiveSpecAfterApproval() {
         ApprovedSpecRegistry approvedSpecs = new ApprovedSpecRegistry();
         approvedSpecs.approve("s", "## Design\n| Type | Role | Template status |\n|---|---|---|\n| `Track` | data | given |\n");
         String clarifiedSpec = """
@@ -363,8 +363,7 @@ class DifferentialVerificationServiceTest {
         VerificationResult result = verifier.verify(new ScriptedSandbox(result(2, 0, 0, 0), result(2, 2, 0, 1), PROBLEM_STATEMENT_WITH_TASK).withSpec(clarifiedSpec), "s",
                 new ProgrammingExercise(), request);
 
-        assertThat(result.mechanicallyVerified()).isFalse();
-        assertThat(result.reasons()).anyMatch(reason -> reason.contains("template already declares") && reason.contains("PlaybackStrategy"));
+        assertThat(result.reasons()).noneMatch(reason -> reason.contains("PlaybackStrategy"));
     }
 
     @Test

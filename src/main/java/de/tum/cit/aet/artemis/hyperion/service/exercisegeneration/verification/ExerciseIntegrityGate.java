@@ -255,7 +255,7 @@ public final class ExerciseIntegrityGate {
             reasons.add("the approved specification requires students to create these types, but the reference solution does not declare them: " + missingFromSolution
                     + ". Implement every approved student-created type in the solution; changing SPEC.md after approval cannot remove the requirement.");
         }
-        List<String> leakedIntoTemplate = studentCreatedTypes.stream().filter(type -> repositoryDeclaresType(producedTemplateFiles, type)).toList();
+        List<String> leakedIntoTemplate = studentCreatedTypes.stream().filter(type -> repositoryContainsTypeArtifact(producedTemplateFiles, type)).toList();
         if (!leakedIntoTemplate.isEmpty()) {
             reasons.add("the approved specification requires students to create these types, but the template already declares them: " + leakedIntoTemplate
                     + ". Delete their template declarations and leave any necessary guidance in the problem statement or collaborating given types; changing SPEC.md after "
@@ -374,23 +374,51 @@ public final class ExerciseIntegrityGate {
                 && !normalized.contains("/build/");
     }
 
-    /** Finds a top-level, nested, or secondary type declaration without trusting filenames alone. */
+    /** Finds a top-level, nested, or secondary type declaration. */
     private static boolean repositoryDeclaresType(Map<String, String> files, String type) {
         if (files == null || files.isEmpty()) {
             return false;
         }
-        Pattern declaration = Pattern.compile("(?m)^\\s*(?:(?:public|protected|private|static|abstract|final|sealed|non-sealed)\\s+)*"
-                + "(?:class|interface|enum|record|trait|struct|protocol)\\s+" + Pattern.quote(type) + "\\b");
         for (Map.Entry<String, String> file : files.entrySet()) {
             String lowerPath = file.getKey().toLowerCase(Locale.ROOT);
             if (lowerPath.startsWith("target/") || lowerPath.startsWith("build/") || NON_SOURCE_TYPE_FILE_SUFFIXES.stream().anyMatch(lowerPath::endsWith)) {
                 continue;
             }
-            if (declaration.matcher(file.getValue()).find()) {
+            if (sourceDeclaresType(file.getValue(), type)) {
                 return true;
             }
         }
         return false;
+    }
+
+    /** The template must not contain either the declaration or a source artifact named after a type assigned to the student. */
+    private static boolean repositoryContainsTypeArtifact(Map<String, String> files, String type) {
+        if (files == null || files.isEmpty()) {
+            return false;
+        }
+        return files.entrySet().stream().anyMatch(file -> {
+            String normalizedPath = file.getKey().replace('\\', '/');
+            String lowerPath = normalizedPath.toLowerCase(Locale.ROOT);
+            if (lowerPath.startsWith("target/") || lowerPath.startsWith("build/") || NON_SOURCE_TYPE_FILE_SUFFIXES.stream().anyMatch(lowerPath::endsWith)) {
+                return false;
+            }
+            return pathOrContentRepresentsType(normalizedPath, file.getValue(), type);
+        });
+    }
+
+    /** Shared filename-or-declaration predicate used by prospective writes and final repository verification. */
+    static boolean pathOrContentRepresentsType(String path, String content, String type) {
+        String normalizedPath = path.replace('\\', '/');
+        String fileName = normalizedPath.substring(normalizedPath.lastIndexOf('/') + 1);
+        return fileName.startsWith(type + ".") || sourceDeclaresType(content, type);
+    }
+
+    /** Shared declaration matcher for the prospective write guard and the authoritative final repository check. */
+    static boolean sourceDeclaresType(String content, String type) {
+        String declarationStart = "(?:^|[;{}])\\s*";
+        String modifiers = "(?:(?:public|protected|private|static|abstract|final|sealed|non-sealed)\\s+)*";
+        return Pattern.compile(declarationStart + modifiers + "(?:class|interface|enum|record|trait|struct|protocol)\\s+" + Pattern.quote(type) + "\\b", Pattern.MULTILINE)
+                .matcher(content).find();
     }
 
     /** A short, deterministic sample of names for a rejection message, sorted and capped so a large baseline suite never floods the reason text. */

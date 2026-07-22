@@ -183,8 +183,8 @@ public class GenerationTaskService {
                     ? orchestrator.generate(exercise, user, userPrompt, jobId, event.mode(), cancelled, emitter::progress, fileChangeSink, usageSink)
                     : orchestrator.generate(exercise, user, userPrompt, jobId, event.mode(), cancelled, emitter::progress, fileChangeSink, usageSink, event.sourceBrief());
             try (GenerationOutcome outcome = generated) {
-                // Surface the staged workspace's final SPEC.md (later stages may legitimately update it) as an observable intermediate result as soon as the outcome lands,
-                // regardless of the terminal branch below, so specification quality is inspectable through the status/replay API even when the run does not end up saved.
+                // Surface the approved SPEC.md as an observable intermediate result as soon as the outcome lands, regardless of the terminal branch below, so specification
+                // quality is inspectable through the status/replay API even when the run does not end up saved.
                 if (outcome.specDocument() != null) {
                     jobService.recordSpecDocument(exerciseId, jobId, outcome.specDocument());
                 }

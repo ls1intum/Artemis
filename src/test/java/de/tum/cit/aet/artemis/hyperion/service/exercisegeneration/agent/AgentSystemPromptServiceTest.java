@@ -226,7 +226,7 @@ class AgentSystemPromptServiceTest {
         String prompt = systemPromptService.build(exerciseWith(ProgrammingLanguage.JAVA, "")).replaceAll("\\s+", " ");
 
         assertThat(prompt).contains("run `verify` first").contains("Author one partition at a time").contains("re-running `verify` after each test or small batch")
-                .contains("fail on the template for its intended reason").contains("ShippingCalculator test reaches a solution-only class via ReflectionTestUtils")
+                .contains("fail on the template for its intended reason").contains("copy the seeded reference test's `Class.forName`/`ReflectionTestUtils` technique")
                 .contains("write `/workspace/test-plan.json`");
     }
 
@@ -274,9 +274,9 @@ class AgentSystemPromptServiceTest {
         assertOnlyOwnStageHeaderPresent(prompt, GenerationStage.SPEC);
         assertThat(prompt).contains("write `/workspace/SPEC.md`").contains("reference/style/spec.md").contains("`given`, `stubbed`, `student-creates`")
                 .contains("## Testing Strategy").contains("stable ID (`S1`, `S2`, ...)").contains("student-designed interface and strategies")
-                .contains("interface and concrete strategies `student-creates`").contains("context `stubbed`").contains("omit members requiring the absent interface")
-                .doesNotContain("reference/style/solution.md").doesNotContain("reference/style/template.md").doesNotContain("reference/style/tests.md")
-                .doesNotContain("reference/style/final-statement.md");
+                .contains("interface and concrete strategies `student-creates`").contains("context `stubbed`").contains("omit the minimum members whose declarations require")
+                .contains("Given types and all non-student-owned members of stubbed types remain identical").doesNotContain("reference/style/solution.md")
+                .doesNotContain("reference/style/template.md").doesNotContain("reference/style/tests.md").doesNotContain("reference/style/final-statement.md");
     }
 
     @Test
@@ -285,7 +285,8 @@ class AgentSystemPromptServiceTest {
 
         assertOnlyOwnStageHeaderPresent(prompt, GenerationStage.SOLUTION);
         assertThat(prompt).contains("Earlier stages already produced: the specification (SPEC.md when present, else the instructor statement).")
-                .contains("Execute every worked example from the requirements against the real solution").contains("reference/style/solution.md");
+                .contains("Execute every worked example from the requirements against the real solution").contains("SPEC.md is now read-only")
+                .contains("reference/style/solution.md");
     }
 
     @Test
@@ -295,7 +296,7 @@ class AgentSystemPromptServiceTest {
         assertOnlyOwnStageHeaderPresent(prompt, GenerationStage.TEMPLATE);
         assertThat(prompt).contains("Earlier stages already produced: the specification and the reference solution.").contains("derive the template FROM the finished solution")
                 .contains("TEMPLATE AS TEACHING SCAFFOLD").contains("DIFF DISCIPLINE").contains("// TODO S1:").contains("byte-identical between template and solution")
-                .contains("reference/style/template.md");
+                .contains("SPEC.md is read-only").contains("reference/style/template.md");
     }
 
     @Test
@@ -304,7 +305,8 @@ class AgentSystemPromptServiceTest {
 
         assertOnlyOwnStageHeaderPresent(prompt, GenerationStage.TESTS);
         assertThat(prompt).contains("Earlier stages already produced: the specification, the reference solution, and the template.").contains("Author one partition at a time")
-                .contains("highest-risk learning seam").contains("\"seam\":\"S1\"").contains("reference/style/tests.md").contains("write `/workspace/test-plan.json`")
+                .contains("highest-risk learning seam").contains("\"seam\":\"S1\"").contains("SPEC.md is read-only").contains("reference/style/tests.md")
+                .contains("write `/workspace/test-plan.json`")
                 // Statement-only sections must not leak into the TESTS stage prompt.
                 .doesNotContain("STUDENT-FACING STATEMENT").doesNotContain("ARTEMIS TASK BINDINGS");
     }

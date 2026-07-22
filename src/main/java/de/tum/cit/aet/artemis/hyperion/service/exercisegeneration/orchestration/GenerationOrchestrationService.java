@@ -433,8 +433,8 @@ public class GenerationOrchestrationService {
                 InteractiveSandbox activeSandbox = sandbox;
                 GenerationWorkspaceService.WorkspaceSeed activeWorkspaceSeed = workspaceSeed;
                 String candidateProblemStatement = producedProblemStatement;
-                // Snapshot SPEC.md before verification: each restore below resets the tmpfs workspace, and without re-seeding it the specification (possibly updated by later
-                // stages) would be silently gone for every later repair attempt and for the outcome's spec capture.
+                // Snapshot the approved SPEC.md before verification: each restore below resets the tmpfs workspace, and without re-seeding it the contract would be silently
+                // gone for every later repair attempt and for the outcome's spec capture.
                 String specDocumentSnapshot = readSpecDocument(sandbox, sessionId);
                 // Same reason as the spec: the reset wipes test-plan.json, and a repair attempt would then save the exercise with Artemis' default grading instead of the
                 // weights and hidden tests the TESTS stage decided (observed live: the plan was written and gate-approved, then lost before persistence).
@@ -610,13 +610,11 @@ public class GenerationOrchestrationService {
         if (specSnapshot == null || specSnapshot.isBlank()) {
             return "";
         }
-        return "\n\nTHE SPECIFICATION (frozen at the spec gate — the behavioural contract; do not change rules or worked examples unless a verification reason requires it):\n"
-                + specSnapshot.strip();
+        return "\n\nTHE SPECIFICATION (frozen at the spec gate — the read-only behavioural contract; repair downstream artifacts against it):\n" + specSnapshot.strip();
     }
 
     /**
-     * Gives the semantic critic the same monotonic contract the mechanical gates enforce: approved decisions remain binding, while a later clarification may add work. Showing
-     * only the live copy let downgrades erase evidence; showing only the approved copy hid legitimate additions discovered during implementation.
+     * Gives the semantic critic the frozen contract. The live workspace is a fallback only when no specification gate ran.
      */
     private static String effectiveSpecReviewContext(@Nullable String approvedSpec, @Nullable String liveSpec) {
         String approved = approvedSpec == null ? "" : approvedSpec.strip();
@@ -624,11 +622,7 @@ public class GenerationOrchestrationService {
         if (approved.isEmpty()) {
             return live;
         }
-        if (live.isEmpty() || live.equals(approved)) {
-            return approved;
-        }
-        return "APPROVED SNAPSHOT (all decisions remain binding):\n" + approved
-                + "\n\nCURRENT SPECIFICATION (later clarifications may add obligations; any weaker conflicting text does not remove the approved obligation):\n" + live;
+        return approved;
     }
 
     private static String attemptFraming(int attempt) {

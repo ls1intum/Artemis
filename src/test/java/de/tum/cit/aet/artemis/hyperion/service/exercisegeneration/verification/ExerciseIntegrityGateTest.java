@@ -702,6 +702,17 @@ class ExerciseIntegrityGateTest {
     }
 
     @Test
+    void approvedSpecification_rejectsANamedTypeArtifactAndASameLineNestedDeclaration() {
+        String spec = "## Design\n| Type | Role | Template status |\n|---|---|---|\n| `PlaybackStrategy` | students create it | student-creates |\n";
+        Map<String, String> solution = map("src/PlaybackStrategy.java", "public interface PlaybackStrategy {}");
+
+        assertThat(ExerciseIntegrityGate.approvedSpecificationReasons(spec, map("src/PlaybackStrategy.java", ""), solution)).singleElement()
+                .satisfies(reason -> assertThat(reason).contains("template already declares", "PlaybackStrategy"));
+        assertThat(ExerciseIntegrityGate.approvedSpecificationReasons(spec, map("src/Player.java", "class Player { interface PlaybackStrategy {} }"), solution)).singleElement()
+                .satisfies(reason -> assertThat(reason).contains("template already declares", "PlaybackStrategy"));
+    }
+
+    @Test
     void approvedSpecification_rejectsAnIncompleteReferenceSolution() {
         String spec = """
                 ## Design

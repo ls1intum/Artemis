@@ -18,9 +18,9 @@ import de.tum.cit.aet.artemis.hyperion.config.HyperionExerciseGenerationEnabled;
  * failure caused by its own early-written tests, edited SPEC.md to downgrade three {@code student-creates} types to {@code stubbed}, and the gate then dutifully enforced the
  * weaker contract. A second run rewrote the {@code ## Diagram} decision from yes to no under statement-gate pressure.
  * <p>
- * Keeping the approved copy here makes the approved decisions unreachable from the sandbox: gates evaluate against the union of approved and live, so a later spec update can
- * only ADD obligations, never remove one. If implementation exposes a conflict, the later artifacts must be restructured to honour the accepted learning contract rather than
- * editing that contract until weaker artifacts pass.
+ * Keeping the approved copy here makes the complete contract unreachable from the sandbox: every downstream gate uses this snapshot as its sole authority, while guarded file
+ * tools reject edits and restore it after an out-of-band shell mutation. If implementation exposes a conflict, executable artifacts must be restructured to honour the accepted
+ * learning contract rather than editing that contract until weaker artifacts pass.
  */
 @Lazy
 @Component

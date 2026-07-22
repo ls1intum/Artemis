@@ -309,6 +309,10 @@ public class SandboxAgentTools implements SubmitVetoAware {
         if (isManagedBuildInfrastructurePath(safe)) {
             return immutableHarnessError(safe);
         }
+        String contractRejection = approvedContractWriteRejection(safe, content);
+        if (contractRejection != null) {
+            return contractRejection;
+        }
         // base64-encode the content so arbitrary source (quotes, newlines) is written verbatim; the path is allowlisted above so it cannot break the shell.
         String encoded = Base64.getEncoder().encodeToString(content.getBytes(StandardCharsets.UTF_8));
         String target = WORKSPACE + "/" + safe;
@@ -480,6 +484,12 @@ public class SandboxAgentTools implements SubmitVetoAware {
         if (isManagedBuildInfrastructurePath(safe)) {
             return immutableHarnessError(safe);
         }
+        if ("SPEC.md".equals(safe)) {
+            String contractRejection = approvedContractWriteRejection(safe, "");
+            if (contractRejection != null) {
+                return contractRejection;
+            }
+        }
         SandboxExecResult result = sandbox.exec(sessionId, FILE_OP_TIMEOUT, "rm", "-f", "--", WORKSPACE + "/" + safe);
         if (!result.isSuccess()) {
             return "ERROR: could not delete '" + safe + "': " + result.combinedOutput();
@@ -538,7 +548,16 @@ public class SandboxAgentTools implements SubmitVetoAware {
             sandboxSessionTerminated = true;
             throw new LocalCIException("Sandbox command timed out and the sandbox session was terminated");
         }
-        return screenObservation("tool/bash", composeBashOutput(result, logPath));
+        String output = composeBashOutput(result, logPath);
+        if (stageCheckService != null) {
+            List<String> contractRejections = java.util.stream.Stream
+                    .of(stageCheckService.restoreApprovedSpecAfterCommand(sandbox, sessionId), stageCheckService.approvedOwnershipViolationAfterCommand(sandbox, sessionId))
+                    .flatMap(Optional::stream).toList();
+            if (!contractRejections.isEmpty()) {
+                output = String.join("\n", contractRejections) + "\n" + output;
+            }
+        }
+        return screenObservation("tool/bash", output);
     }
 
     boolean isSandboxSessionTerminated() {
@@ -561,9 +580,10 @@ public class SandboxAgentTools implements SubmitVetoAware {
     }
 
     /**
-     * Stages are monotonic: a stage may correct its own artifact or an earlier dependency, but it must not pre-author a later artifact. Writing ahead lets a solution turn
+     * Stages are monotonic: a stage may correct its own executable artifact or an earlier executable dependency, but it must not pre-author a later artifact. The approved
+     * specification is a read-only contract. Writing ahead lets a solution turn
      * populate the template and tests before their dedicated instructions/gates exist, which then wastes later turns undoing an artifact that should never have crossed the
-     * stage boundary. Legacy/repair loops remain unrestricted.
+     * stage boundary. Legacy/repair loops may rewrite executable artifacts, while the approved contract remains protected by {@link #approvedContractWriteRejection}.
      */
     private @Nullable String stageWriteRejection(String path) {
         GenerationStage stage = currentStage;
@@ -572,9 +592,9 @@ public class SandboxAgentTools implements SubmitVetoAware {
         }
         boolean allowed = switch (stage) {
             case SPEC -> path.equals("SPEC.md");
-            case SOLUTION -> path.equals("SPEC.md") || path.startsWith("solution/");
-            case TEMPLATE -> path.equals("SPEC.md") || path.startsWith("solution/") || path.startsWith("template/");
-            case TESTS -> path.equals("SPEC.md") || path.startsWith("solution/") || path.startsWith("template/") || path.startsWith("tests/") || path.equals("test-plan.json");
+            case SOLUTION -> path.startsWith("solution/");
+            case TEMPLATE -> path.startsWith("solution/") || path.startsWith("template/");
+            case TESTS -> path.startsWith("solution/") || path.startsWith("template/") || path.startsWith("tests/") || path.equals("test-plan.json");
             case STATEMENT -> path.equals("problem-statement.md");
         };
         if (allowed) {
@@ -582,6 +602,10 @@ public class SandboxAgentTools implements SubmitVetoAware {
         }
         return "ERROR: the current " + stage + " stage cannot write '" + path
                 + "'. Finish only this stage's artifact (or correct an earlier dependency); the dedicated later stage will author this file with its own instructions and gate.";
+    }
+
+    private @Nullable String approvedContractWriteRejection(String path, String content) {
+        return stageCheckService == null ? null : stageCheckService.validateArtifactWrite(sessionId, path, content).orElse(null);
     }
 
     /**

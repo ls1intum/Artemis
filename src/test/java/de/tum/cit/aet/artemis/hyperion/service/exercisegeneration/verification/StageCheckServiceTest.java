@@ -171,6 +171,35 @@ class StageCheckServiceTest {
         return service.check(stage, sandbox, "s", exercise, Map.of(), lastTestsReport);
     }
 
+    @Test
+    void validateArtifactWrite_rejectsAStudentCreatedTypeDeclarationInTheTemplate() {
+        approvedSpecs.approve("s", specWithDesign("| FuelStrategy | designed by students | student-creates |\n"));
+
+        assertThat(service.validateArtifactWrite("s", "template/src/FuelStrategy.java", "public interface FuelStrategy { double compute(double input); }"))
+                .hasValueSatisfying(message -> assertThat(message).contains("FuelStrategy").contains("Do not restore or pre-create"));
+        assertThat(service.validateArtifactWrite("s", "solution/src/FuelStrategy.java", "public interface FuelStrategy {}")).isEmpty();
+        assertThat(service.validateArtifactWrite("s", "template/src/Spacecraft.java", "public class Spacecraft { // TODO S1: create strategy\n}")).isEmpty();
+        assertThat(service.validateArtifactWrite("s", "SPEC.md", sandbox.spec)).hasValueSatisfying(message -> assertThat(message).contains("read-only"));
+    }
+
+    @Test
+    void restoreApprovedSpecAfterCommand_restoresAnOutOfBandShellMutation() {
+        approvedSpecs.approve("s", specWithDesign("| FuelStrategy | designed by students | student-creates |\n"));
+        sandbox.spec = "tampered";
+
+        assertThat(service.restoreApprovedSpecAfterCommand(sandbox, "s"))
+                .hasValueSatisfying(message -> assertThat(message).contains("changed read-only SPEC.md").contains("restored the approved specification"));
+    }
+
+    @Test
+    void approvedOwnershipViolationAfterCommand_detectsAnOutOfBandTemplateArtifact() {
+        approvedSpecs.approve("s", specWithDesign("| FuelStrategy | designed by students | student-creates |\n"));
+        sandbox.templateFindOutput = "/workspace/template/src/FuelStrategy.java";
+
+        assertThat(service.approvedOwnershipViolationAfterCommand(sandbox, "s"))
+                .hasValueSatisfying(message -> assertThat(message).contains("FuelStrategy.java").contains("reflection").contains("delete_file/edit_file"));
+    }
+
     @Nested
     class Solution {
 
@@ -489,6 +518,19 @@ class StageCheckServiceTest {
         }
 
         @Test
+        void differentialFailure_explainsHowToTestApprovedStudentCreatedTypesWithoutRestoringThem() {
+            sandbox.spec = specWithDesign("| FuelStrategy | designed by students | student-creates |\n");
+            approvedSpecs.approve("s", sandbox.spec);
+            AgentVerifyReport report = report(true, false);
+            when(verifier.selfCheck(any(), anyString(), eq(exercise), any(), eq(false))).thenReturn(report);
+
+            StageCheckResult result = check(GenerationStage.TESTS);
+
+            assertThat(result.observation()).contains("approved student-created types are [FuelStrategy]").contains("Do not add their declarations").contains("Class.forName")
+                    .contains("dynamic proxy");
+        }
+
+        @Test
         void fails_gracefully_whenTheSelfCheckThrows() {
             when(verifier.selfCheck(any(), anyString(), eq(exercise), any(), eq(false))).thenThrow(new RuntimeException("build agent lost"));
 
@@ -744,21 +786,19 @@ class StageCheckServiceTest {
         }
 
         @Test
-        void rejectsADowngradeNothingInTheTemplateForces() {
-            // The observed escape: the template stage hit a compile failure caused by its own early-written tests and edited the contract instead of satisfying it.
+        void ignoresTheLiveDowngradeAndChecksTheTemplateAgainstTheApprovedSnapshot() {
             approvedSpecs.approve("s", APPROVED);
             sandbox.spec = DOWNGRADED;
 
             StageCheckResult result = check(GenerationStage.TEMPLATE);
 
-            assertThat(result.passed()).isFalse();
-            assertThat(result.observation()).contains("approved specification marked these types 'student-creates'").contains("RewardStrategy")
-                    .contains("reach the type reflectively");
+            assertThat(result.passed()).isTrue();
+            assertThat(result.observation()).contains("Confirmed absent from the template").contains("RewardStrategy");
         }
 
         @Test
         void stillEnforcesOmissionAfterTheLiveSpecDropsTheType() {
-            // Union semantics: an edit may add an obligation, never delete one.
+            // The live copy is irrelevant after approval; the frozen copy still enforces omission.
             approvedSpecs.approve("s", APPROVED);
             sandbox.spec = DOWNGRADED;
             sandbox.templateFindOutput = "/workspace/template/src/de/tum/RewardStrategy.java";

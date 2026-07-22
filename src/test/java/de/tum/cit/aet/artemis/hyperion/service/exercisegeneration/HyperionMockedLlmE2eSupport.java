@@ -165,7 +165,7 @@ final class HyperionMockedLlmE2eSupport {
     }
 
     static ChatResponse cleanSpecificationReview() {
-        return text("{\"omissions\":[],\"conflicts\":[],\"unsupportedConstraints\":[]}");
+        return text("{\"omissions\":[],\"conflicts\":[],\"internalConflicts\":[],\"incorrectExamples\":[],\"unsupportedConstraints\":[]}");
     }
 
     static ChatResponse writeFile(String path, String content) {

@@ -444,15 +444,14 @@ public class DifferentialVerificationService {
         return readRepositoryFiles(sandbox, sessionId, RepositoryType.TESTS);
     }
 
-    /** The immutable approved spec plus any later live additions; a later edit can add an obligation but never erase the accepted one. */
+    /** The frozen approved specification, falling back to the live workspace only for a legacy/unapproved flow. */
     private List<String> contractSpecifications(InteractiveSandbox sandbox, String sessionId) {
-        Set<String> specifications = new LinkedHashSet<>();
-        approvedSpecs.approved(sessionId).filter(spec -> !spec.isBlank()).ifPresent(specifications::add);
-        String liveSpec = readSpecDocument(sandbox, sessionId);
-        if (liveSpec.contains("## Design") && liveSpec.contains("## Testing Strategy")) {
-            specifications.add(liveSpec);
+        Optional<String> approved = approvedSpecs.approved(sessionId).filter(spec -> !spec.isBlank());
+        if (approved.isPresent()) {
+            return List.of(approved.get());
         }
-        return List.copyOf(specifications);
+        String liveSpec = readSpecDocument(sandbox, sessionId);
+        return liveSpec.contains("## Design") && liveSpec.contains("## Testing Strategy") ? List.of(liveSpec) : List.of();
     }
 
     private static Map<String, String> readRepositoryFiles(InteractiveSandbox sandbox, String sessionId, RepositoryType repositoryType) {
