@@ -1367,19 +1367,21 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
     void testGetStudentExamForSummary_examSummaryPublicationDate() throws Exception {
         StudentExam studentExam = prepareStudentExamsForConduction(false, true, 1).getFirst();
 
-        userUtilService.changeUser(studentExam.getUser().getLogin());
-        var studentExamResponse = request.get("/api/exam/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/" + studentExam.getId() + "/conduction",
-                HttpStatus.OK, StudentExam.class);
-        // submit early so the summary would generally be accessible (it only requires the student exam to be submitted)
-        request.postWithoutResponseBody("/api/exam/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/submit", studentExamResponse, HttpStatus.OK);
-
-        final String summaryUrl = "/api/exam/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/" + studentExamResponse.getId() + "/summary";
-        final String conductionUrl = "/api/exam/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/" + studentExamResponse.getId() + "/conduction";
-
-        // 1) summary publication date in the future: the student may NOT access the summary yet, and must not be able to re-fetch the exam content via conduction either
+        // configure a submission-overview publication date far in the future before the student conducts the exam
         exam2.setPublishResultsDate(null);
         exam2.setExamSummaryPublicationDate(ZonedDateTime.now().plusDays(1));
         exam2 = examRepository.save(exam2);
+
+        final String conductionUrl = "/api/exam/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/" + studentExam.getId() + "/conduction";
+        final String summaryUrl = "/api/exam/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/" + studentExam.getId() + "/summary";
+
+        userUtilService.changeUser(studentExam.getUser().getLogin());
+        // a student who has NOT submitted yet must still be able to fetch the conduction even though the summary is not published yet (the gate must not break ongoing exams)
+        var studentExamResponse = request.get(conductionUrl, HttpStatus.OK, StudentExam.class);
+        // submit early so the summary would generally be accessible (it only requires the student exam to be submitted)
+        request.postWithoutResponseBody("/api/exam/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/submit", studentExamResponse, HttpStatus.OK);
+
+        // 1) summary publication date in the future: the submitted student may NOT access the summary yet, and must not be able to re-fetch the exam content via conduction either
         request.get(summaryUrl, HttpStatus.FORBIDDEN, StudentExam.class);
         request.get(conductionUrl, HttpStatus.FORBIDDEN, StudentExam.class);
 

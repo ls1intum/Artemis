@@ -547,6 +547,11 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
 
         assertThat(savedExam.getExamSummaryPublicationDate()).isNotNull();
         assertThat(savedExam.getExamSummaryPublicationDate()).isCloseTo(exam.getExamSummaryPublicationDate(), within(1, ChronoUnit.SECONDS));
+
+        // update path (applyTo): changing the date persists
+        savedExam.setExamSummaryPublicationDate(savedExam.getEndDate().plusMinutes(90));
+        Exam updatedExam = request.putWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams", ExamUpdateDTO.of(savedExam), Exam.class, HttpStatus.OK);
+        assertThat(updatedExam.getExamSummaryPublicationDate()).isCloseTo(savedExam.getExamSummaryPublicationDate(), within(1, ChronoUnit.SECONDS));
     }
 
     @Test

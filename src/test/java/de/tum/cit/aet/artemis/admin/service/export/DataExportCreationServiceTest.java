@@ -375,6 +375,14 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationJenkinsLoca
         return examRepository.save(exam);
     }
 
+    private Exam prepareExamDataWithSummaryPublicationDateInTheFuture() throws Exception {
+        var exam = prepareExamDataForDataExportCreation("examNoSummary");
+        // both dates in the future so neither the summary-publication gate nor the results-published safeguard releases the exercise content
+        exam.setPublishResultsDate(ZonedDateTime.now().plusDays(1));
+        exam.setExamSummaryPublicationDate(ZonedDateTime.now().plusDays(1));
+        return examRepository.save(exam);
+    }
+
     private void addOnlyReactionToPostInCourse(Course course) {
         // add a reaction in a course to a post where no other communication data exists
         var loginUser2 = TEST_PREFIX + "student2";
@@ -599,6 +607,25 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationJenkinsLoca
         assertThat(courseDirPath).isDirectoryContaining(path -> path.getFileName().toString().startsWith("exam"));
         var examDirPath = getCourseOrExamDirectoryPath(courseDirPath, "exam");
         getExerciseDirectoryPaths(examDirPath).forEach(this::assertNoResultsFile);
+
+        RepositoryExportTestUtil.safeDeleteDirectory(extractedZipDirPath);
+        org.apache.commons.io.FileUtils.delete(Path.of(dataExportFromDb.getFilePath()).toFile());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void summaryPublicationDateInTheFuture_noExamContentLeaked() throws Exception {
+        var exam = prepareExamDataWithSummaryPublicationDateInTheFuture();
+        addOnlyReactionToPostInCourse(exam.getCourse());
+        var dataExport = initDataExport();
+        dataExportCreationService.createDataExport(dataExport);
+        var dataExportFromDb = dataExportRepository.findByIdElseThrow(dataExport.getId());
+        Path extractedZipDirPath = zipFileTestUtilService.extractZipFileRecursively(dataExportFromDb.getFilePath());
+        var courseDirPath = getCourseOrExamDirectoryPath(extractedZipDirPath, "examNoSummary");
+        var examsDirPath = courseDirPath.resolve("exams");
+        var examDirPath = getCourseOrExamDirectoryPath(examsDirPath, "exam");
+        // the exam exercise content (problem statements, questions, submissions) must be withheld from the data export until the submission overview is published
+        assertThat(getExerciseDirectoryPaths(examDirPath)).isEmpty();
 
         RepositoryExportTestUtil.safeDeleteDirectory(extractedZipDirPath);
         org.apache.commons.io.FileUtils.delete(Path.of(dataExportFromDb.getFilePath()).toFile());

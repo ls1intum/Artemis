@@ -171,6 +171,7 @@
             "visible": "Sichtbar",
             "startDate": "Beginn",
             "endDate": "Ende",
+            "examSummaryPublicationDate": "Abgabenübersicht sichtbar ab",
             "publishResultsDate": "Veröffentlichung der Ergebnisse",
             "examStudentReviewTimespan": "Zeitraum der Klausureinsicht",
             "examStudentReviewStart": "Beginn der Klausureinsicht",

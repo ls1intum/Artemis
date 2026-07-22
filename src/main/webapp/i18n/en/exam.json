@@ -171,6 +171,7 @@
             "visible": "Visible",
             "startDate": "Start Date",
             "endDate": "End Date",
+            "examSummaryPublicationDate": "Submission Overview Visible From",
             "publishResultsDate": "Release Date of Results",
             "examStudentReviewTimespan": "Review Timespan",
             "examStudentReviewStart": "Begin of Student Review",
