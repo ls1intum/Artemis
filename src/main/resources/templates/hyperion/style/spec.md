@@ -55,8 +55,10 @@ students to design or create a type normally demands `student-creates`, but Java
 declarations for a provided scaffold to compile. When a brief combines a provided Strategy context with a
 student-designed interface and concrete strategies, the compile-safe allocation is mandatory: the interface is
 an empty `stubbed` declaration whose TODO asks students to define its members; concrete strategies are
-`student-creates`; the context is `given` or `stubbed`. The context needs the interface name but not the concrete names. This is compile scaffolding,
-not permission to predeclare the student-designed API or implementations.
+`student-creates`; the context is `stubbed`. Its fields, constructor, and setter may be provided, but its delegation
+method stays a TODO body and must not call a member that the empty interface does not yet declare. Tests reach the
+student-defined interface API and omitted concrete types reflectively. This is compile scaffolding, not permission
+to predeclare the student-designed API or implementations.
 For every piece of MUTABLE STATE, say below the table which type owns it and whether it survives object
 replacement (a swap, reset, or re-registration): tests may only demand what this ownership makes possible.
 Pin the public API here too — signatures only; later stages copy them, they do not renegotiate silently.

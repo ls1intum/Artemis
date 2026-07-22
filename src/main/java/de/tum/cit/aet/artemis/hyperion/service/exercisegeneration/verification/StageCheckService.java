@@ -204,13 +204,21 @@ public class StageCheckService {
                 continue;
             }
             String type = cells.getFirst().replace("`", "").strip();
-            String status = cells.stream().map(cell -> cell.replace("`", "").strip().toLowerCase(java.util.Locale.ROOT)).filter(TEMPLATE_STATUS_TOKENS::contains).findFirst()
-                    .orElse(null);
+            String status = cells.stream().map(StageCheckService::normalizeTemplateStatus).filter(TEMPLATE_STATUS_TOKENS::contains).findFirst().orElse(null);
             if (!type.isBlank()) {
                 rows.add(new DesignRow(type, status));
             }
         }
         return rows;
+    }
+
+    /**
+     * Canonicalizes punctuation only for a Design table's closed-set status cell. Language models commonly typeset an ASCII hyphen as a Unicode dash; treating
+     * {@code student‑creates} as an unrelated value silently disarms the ownership gate even though its meaning is unambiguous. The vocabulary remains closed: prose or extended
+     * tokens still fail the specification gate.
+     */
+    private static String normalizeTemplateStatus(String cell) {
+        return cell.replace("`", "").strip().toLowerCase(java.util.Locale.ROOT).replaceAll("[\u2010-\u2015\u2212]", "-");
     }
 
     /** The type names SPEC.md's '## Design' table marks {@code student-creates} — the ones the template omit-gate and the solution presence-gate enforce. */

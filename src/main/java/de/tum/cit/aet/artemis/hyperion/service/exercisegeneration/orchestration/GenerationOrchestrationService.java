@@ -88,8 +88,12 @@ public class GenerationOrchestrationService {
      */
     private final int maxTurns;
 
-    /** First attempt plus three bounded repair iterations, leaving room for a semantic repair after mechanical setup problems. */
-    private static final int MAX_GENERATION_ATTEMPTS = 4;
+    /** Initial candidate plus at most three mechanical repairs. */
+    private static final int MAX_MECHANICAL_ATTEMPTS = 4;
+
+    // Once a candidate passes mechanical verification, the full-artifact review must still have room to improve it. The two extra slots are one transactional semantic repair
+    // and, only if that repair breaks the build, one narrow mechanical correction. They are not additional open-ended attempts at the initial mechanical phase.
+    private static final int MAX_GENERATION_ATTEMPTS = MAX_MECHANICAL_ATTEMPTS + 2;
 
     /**
      * Total wall-clock ceiling for one generation run across ALL attempts. The staged first attempt has its own 22-minute guard (see StagedGenerationRunner), but repair
@@ -297,6 +301,7 @@ public class GenerationOrchestrationService {
             VerificationRequest lastRejectedVerificationRequest = null;
             boolean semanticRepairAttempted = false;
             int semanticMechanicalCorrectionsRemaining = 1;
+            int initialMechanicalAttempts = 0;
             @Nullable
             CandidateSnapshot preSemanticRepairCandidate = null;
             for (int attempt = 1; attempt <= MAX_GENERATION_ATTEMPTS; attempt++) {
@@ -483,6 +488,10 @@ public class GenerationOrchestrationService {
                     break;
                 }
                 if (attempt == MAX_GENERATION_ATTEMPTS) {
+                    break;
+                }
+                if (!verification.mechanicallyVerified() && !semanticRepairAttempted && ++initialMechanicalAttempts >= MAX_MECHANICAL_ATTEMPTS) {
+                    emit(progress, "The bounded mechanical repair phase is exhausted; keeping the current candidate for instructor review.");
                     break;
                 }
                 if (verification.mechanicallyVerified()) {

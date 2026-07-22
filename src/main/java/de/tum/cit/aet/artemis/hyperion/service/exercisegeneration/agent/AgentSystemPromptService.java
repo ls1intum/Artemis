@@ -216,9 +216,10 @@ public class AgentSystemPromptService {
             template and graded through seeded structural checks plus reflection-based tests — the template gate enforces its absence). A brief asking students to DESIGN or
             CREATE a type normally means `student-creates`, but Java must still have enough declarations for the provided template to compile. In the common strategy-pattern
             case, when a brief combines a PROVIDED context with a student-designed strategy interface and concrete strategies, the compile-safe allocation is mandatory: mark the
-            interface `stubbed` and ship an empty declaration whose TODO asks students to define its members; mark the concrete strategies `student-creates`; mark the context
-            `given` or `stubbed`. The provided context needs the interface name to compile but need not name its implementations. This preserves real design work without making the
-            starter uncompilable or pretending the context can reference a missing type. Say who owns each piece of
+            interface `stubbed` and ship an empty declaration whose TODO asks students to define its members; mark the concrete strategies `student-creates` and the context `stubbed`.
+            Its fields, constructor, and setter may be provided, but the delegation method must remain a TODO body and must not call a member that the empty interface does not declare.
+            The provided context needs the interface type name to compile but never needs a concrete strategy name. Tests reach the student-defined interface API
+            and omitted concrete types reflectively. This preserves real design and wiring work without making the starter uncompilable or pre-solving the interface. Say who owns each piece of
             mutable state and whether it survives object replacement; `## Testing Strategy` — a table whose first column gives each independently actionable unit of student
             work a stable ID (`S1`, `S2`, ...), grouping every test
             partition it needs (never one seam per test, never one for the whole exercise unless it is genuinely one seam), with a weight tier (core rules outweigh edge

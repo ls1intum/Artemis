@@ -65,7 +65,7 @@ import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTes
 
 class GenerationOrchestrationServiceTest {
 
-    private static final int MAX_GENERATION_ATTEMPTS = 4;
+    private static final int MAX_MECHANICAL_ATTEMPTS = 4;
 
     private InteractiveSandbox sandbox;
 
@@ -357,8 +357,8 @@ class GenerationOrchestrationServiceTest {
             assertThat(outcome.isMechanicallyVerified()).as("an exercise rejected on every attempt is not accepted").isFalse();
         }
 
-        verify(agentLoopRunner, times(MAX_GENERATION_ATTEMPTS)).runSession(anyString(), any(), anyString(), any(), anyInt(), any(), any(), any());
-        verify(verifier, times(MAX_GENERATION_ATTEMPTS)).verify(any(), anyString(), any(), any(VerificationRequest.class), any(Runnable.class));
+        verify(agentLoopRunner, times(MAX_MECHANICAL_ATTEMPTS)).runSession(anyString(), any(), anyString(), any(), anyInt(), any(), any(), any());
+        verify(verifier, times(MAX_MECHANICAL_ATTEMPTS)).verify(any(), anyString(), any(), any(VerificationRequest.class), any(Runnable.class));
     }
 
     @Test
@@ -651,6 +651,24 @@ class GenerationOrchestrationServiceTest {
         assertThat(retryPrompt).as("the retry prompt still carries the hard rejection").contains("rejected by the differential verifier").contains("template passed a test");
         assertThat(retryPrompt).doesNotContain("Exercise-quality issues");
         verify(specFidelityCritic).critique(any(), any(), any(), any(), any(), any(), any(), any());
+    }
+
+    @Test
+    void lastMechanicalAttemptStillLeavesRoomForOneSemanticRepair() {
+        makeSolutionChangeOnEachExtraction();
+        when(agentLoopRunner.runSession(anyString(), any(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(loopSession(completed()));
+        when(verifier.verify(any(), anyString(), any(), any(VerificationRequest.class), any(Runnable.class))).thenReturn(rejected("first mechanical defect"),
+                rejected("second mechanical defect"), rejected("third mechanical defect"), accepted(), accepted());
+        when(specFidelityCritic.critique(any(), any(), any(), any(), any(), any(), any(), any())).thenReturn(reportWith("generic theme"), SpecFidelityReport.empty());
+
+        try (GenerationOutcome outcome = generate(() -> false)) {
+            assertThat(outcome.isMechanicallyVerified()).isTrue();
+            assertThat(outcome.specFidelityReport().hasBlockingFindings()).isFalse();
+        }
+
+        verify(agentLoopRunner, times(5)).runSession(anyString(), any(), anyString(), any(), anyInt(), any(), any(), any());
+        verify(verifier, times(5)).verify(any(), anyString(), any(), any(VerificationRequest.class), any(Runnable.class));
+        verify(specFidelityCritic, times(2)).critique(any(), any(), any(), any(), any(), any(), any(), any());
     }
 
     @Test

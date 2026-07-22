@@ -80,14 +80,16 @@ class StagedGenerationRunnerTest {
             | Calculator | computes the result | stubbed |
 
             ## Testing Strategy
-            - compute seam: typical and zero partitions; weight 3.
+            | Seam | Partitions | Weight | Hidden variant |
+            |------|------------|--------|----------------|
+            | S1 | typical and zero | 3 | no |
 
             ## Diagram
             no — single-class exercise
             """;
 
     /** A grading plan whose one name matches {@code passingReport()}'s exact test name, so the TESTS gate's plan check passes. */
-    private static final String VALID_TEST_PLAN = "{\"tests\":[{\"name\":\"testFoo\",\"weight\":2,\"visibility\":\"ALWAYS\"}]}";
+    private static final String VALID_TEST_PLAN = "{\"tests\":[{\"name\":\"testFoo\",\"seam\":\"S1\",\"weight\":2,\"visibility\":\"ALWAYS\"}]}";
 
     /** Records every command issued and serves canned results keyed by the exact commands {@link StagedGenerationRunner} runs. */
     private static final class FakeSandbox implements InteractiveSandbox {
@@ -96,7 +98,7 @@ class StagedGenerationRunnerTest {
 
         private String testPlanJson = VALID_TEST_PLAN;
 
-        private String problemStatement = "# Title\n\nDo the thing.";
+        private String problemStatement = "# Title\n\n[task][Do the thing](testFoo)";
 
         private String layout = "solution/pom.xml\ntemplate/pom.xml\ntests/pom.xml";
 
@@ -457,11 +459,25 @@ class StagedGenerationRunnerTest {
 
         AgentLoopResult result = runner.run(exercise, baseTools, baseTools, "brief", Map.of(), sandbox, "s", NEVER_CANCELLED, null, progressEvents::add, Set::of).result();
 
+        assertThat(result.status()).isEqualTo(AgentLoopResult.Status.COMPLETED);
         assertThat(result.finalMessage()).contains("reference solution does not compile").contains("compile error");
         // budget accounting: the aggregated turn count includes both the failed first attempt and the re-entry.
         assertThat(result.turns()).isEqualTo(10 + 8);
         assertThat(progressEvents).contains("Stage 2/5: retrying after gate feedback");
         verify(agentLoopRunner, times(3)).run(anyString(), anyString(), any(), anyInt(), any(), any(), any());
+    }
+
+    @Test
+    void specGateFailureTwice_returnsErrorSoGenericVerificationCannotBypassTheUnapprovedContract() {
+        sandbox.specMarkdown = null;
+        when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(completed(1, "spec attempt 1"), completed(1, "spec attempt 2"));
+
+        AgentLoopResult result = run(NEVER_CANCELLED, Set::of);
+
+        assertThat(result.status()).isEqualTo(AgentLoopResult.Status.ERROR);
+        assertThat(result.finalMessage()).contains("SPEC.md is missing or empty");
+        verify(agentLoopRunner, times(2)).run(anyString(), anyString(), any(), anyInt(), any(), any(), any());
+        verify(verifier, never()).singleBuild(any(), anyString(), any(), anyString());
     }
 
     @Test

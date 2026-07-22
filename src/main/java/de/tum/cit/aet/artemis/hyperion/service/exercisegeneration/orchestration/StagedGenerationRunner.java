@@ -312,7 +312,10 @@ public class StagedGenerationRunner {
                 // most subjective stage would convert spec-gate feedback directly into downstream SOLUTION/TESTS failures.
                 boolean privateSpecRetry = stage == GenerationStage.SPEC && !stageReentryUsed;
                 if (stageReentryUsed || (!privateSpecRetry && reentriesRemaining <= 0) || remainingPool < MIN_STAGE_BUDGET) {
-                    return finish(exercise, lastStatus, totalTurns, appendGateReport(lastFinalMessage, gate.observation()), conversation);
+                    // The SPEC gate is the contract checkpoint. A generic repair can safely continue after later gates because the authoritative verifier repeats their checks,
+                    // but it cannot reconstruct a specification that was never approved. Fail only that case closed; otherwise preserve the existing bounded repair path.
+                    AgentLoopResult.Status exitStatus = stage == GenerationStage.SPEC ? AgentLoopResult.Status.ERROR : lastStatus;
+                    return finish(exercise, exitStatus, totalTurns, appendGateReport(lastFinalMessage, gate.observation()), conversation);
                 }
                 // Cooperative cancellation between the failed attempt and its re-entry (the outer for-loop already checked before this stage's first attempt).
                 if (cancelled.getAsBoolean()) {

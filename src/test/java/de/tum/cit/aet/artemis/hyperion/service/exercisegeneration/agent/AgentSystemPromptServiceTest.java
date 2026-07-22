@@ -274,8 +274,9 @@ class AgentSystemPromptServiceTest {
         assertOnlyOwnStageHeaderPresent(prompt, GenerationStage.SPEC);
         assertThat(prompt).contains("write `/workspace/SPEC.md`").contains("reference/style/spec.md").contains("`given`, `stubbed`, `student-creates`")
                 .contains("## Testing Strategy").contains("stable ID (`S1`, `S2`, ...)").contains("compile-safe allocation is mandatory")
-                .contains("concrete strategies `student-creates`").doesNotContain("reference/style/solution.md").doesNotContain("reference/style/template.md")
-                .doesNotContain("reference/style/tests.md").doesNotContain("reference/style/final-statement.md");
+                .contains("concrete strategies `student-creates`").contains("context `stubbed`").contains("must not call a member that the empty interface does not declare")
+                .doesNotContain("reference/style/solution.md").doesNotContain("reference/style/template.md").doesNotContain("reference/style/tests.md")
+                .doesNotContain("reference/style/final-statement.md");
     }
 
     @Test

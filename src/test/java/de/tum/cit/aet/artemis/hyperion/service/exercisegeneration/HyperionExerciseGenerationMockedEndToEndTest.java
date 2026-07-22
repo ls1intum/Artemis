@@ -5,6 +5,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
 import java.time.ZonedDateTime;
+import java.util.Arrays;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
@@ -16,6 +17,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.security.test.context.support.WithMockUser;
 
@@ -189,6 +191,55 @@ class HyperionExerciseGenerationMockedEndToEndTest extends AbstractHyperionMocke
 
     private static final String PROBLEM_STATEMENT_PATH = "problem-statement.md";
 
+    private static final String SPEC_PATH = "SPEC.md";
+
+    private static final String TEST_PLAN_PATH = "test-plan.json";
+
+    private static final String SPEC = """
+            # Bounded Counter
+
+            Archetype: bounded-state-machine
+
+            ## Rules
+            - R1: a new counter starts at zero.
+            - R2: increment advances by one and clamps at the positive maximum.
+            - R3: decrement retreats by one and clamps at zero.
+            - R4: a maximum below one is rejected with `IllegalArgumentException`.
+
+            ## Worked Examples
+            | Rules | Input | Expected |
+            |-------|-------|----------|
+            | R1, R2 | maximum 2; increment three times | value 2 |
+            | R3, R4 | maximum 3; decrement at zero / maximum 0 | value 0 / exception |
+
+            ## Design
+            | Type | Role | Template status |
+            |------|------|-----------------|
+            | BoundedCounter | owns the maximum and current value | stubbed |
+
+            `BoundedCounter` owns its mutable value for its whole lifetime.
+
+            ## Testing Strategy
+            | Seam | Partitions | Weight | Hidden variant |
+            |------|------------|--------|----------------|
+            | S1 | initial value | 1 | no |
+            | S2 | below, at, and beyond maximum | 3 | no |
+            | S3 | above, at, and below zero | 3 | no |
+            | S4 | zero and negative maximum | 2 | no |
+
+            ## Diagram
+            no — one class with no structural relationship to explain.
+            """;
+
+    private static final String TEST_PLAN = """
+            {"tests":[
+              {"name":"startsAtZeroAndExposesValue","seam":"S1","weight":1,"visibility":"ALWAYS"},
+              {"name":"incrementsUntilMaximum","seam":"S2","weight":3,"visibility":"ALWAYS"},
+              {"name":"decrementNeverDropsBelowZero","seam":"S3","weight":3,"visibility":"ALWAYS"},
+              {"name":"rejectsNonPositiveMaximum","seam":"S4","weight":2,"visibility":"ALWAYS"}
+            ]}
+            """;
+
     @Override
     protected String getTestPrefix() {
         return TEST_PREFIX;
@@ -200,10 +251,7 @@ class HyperionExerciseGenerationMockedEndToEndTest extends AbstractHyperionMocke
     void generatesValidExercise_deterministic_endToEnd(boolean sequentialTestRuns) throws Exception {
         ProgrammingExercise exercise = scaffoldEmptyJavaExercise(sequentialTestRuns ? "HGMOKS" : "HGMOK", sequentialTestRuns);
         String testPath = sequentialTestRuns ? "tests/behavior/test/de/test/BoundedCounterTest.java" : TEST_PATH;
-        when(azureOpenAiChatModel.call(any(Prompt.class))).thenReturn(HyperionMockedLlmE2eSupport.writeFile(PROBLEM_STATEMENT_PATH, PROBLEM_STATEMENT),
-                HyperionMockedLlmE2eSupport.writeFile(SOLUTION_PATH, SOLUTION_BOUNDED_COUNTER), HyperionMockedLlmE2eSupport.writeFile(TEMPLATE_PATH, TEMPLATE_BOUNDED_COUNTER),
-                HyperionMockedLlmE2eSupport.writeFile(testPath, BOUNDED_COUNTER_TEST), HyperionMockedLlmE2eSupport.verify(), HyperionMockedLlmE2eSupport.submit("Bounded counter"),
-                HyperionMockedLlmE2eSupport.cleanQualityReview(), HyperionMockedLlmE2eSupport.cleanQualityReview());
+        scriptValidGeneration(testPath);
 
         try (GenerationOutcome outcome = orchestrator.generate(exercise, instructor(), "Create a bounded counter exercise.",
                 sequentialTestRuns ? "mock-generate-valid-sequential" : "mock-generate-valid", GenerationMode.GENERATE, () -> false, line -> log.info("[mock-generate] {}", line),
@@ -226,9 +274,13 @@ class HyperionExerciseGenerationMockedEndToEndTest extends AbstractHyperionMocke
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void rejectsExerciseWithUnresolvedTaskBinding_deterministic_endToEnd() throws Exception {
         ProgrammingExercise exercise = scaffoldEmptyJavaExercise("HGMBAD");
-        when(azureOpenAiChatModel.call(any(Prompt.class))).thenReturn(HyperionMockedLlmE2eSupport.writeFile(PROBLEM_STATEMENT_PATH, PROBLEM_STATEMENT_WITH_BAD_BINDING),
-                HyperionMockedLlmE2eSupport.writeFile(SOLUTION_PATH, SOLUTION_BOUNDED_COUNTER), HyperionMockedLlmE2eSupport.writeFile(TEMPLATE_PATH, TEMPLATE_BOUNDED_COUNTER),
-                HyperionMockedLlmE2eSupport.writeFile(TEST_PATH, BOUNDED_COUNTER_TEST), HyperionMockedLlmE2eSupport.submit("Bounded counter with one wrong binding"));
+        script(HyperionMockedLlmE2eSupport.writeFile(SPEC_PATH, SPEC), HyperionMockedLlmE2eSupport.submit("Specification"),
+                HyperionMockedLlmE2eSupport.writeFile(SOLUTION_PATH, SOLUTION_BOUNDED_COUNTER), HyperionMockedLlmE2eSupport.submit("Solution"),
+                HyperionMockedLlmE2eSupport.writeFile(TEMPLATE_PATH, TEMPLATE_BOUNDED_COUNTER), HyperionMockedLlmE2eSupport.submit("Template"),
+                HyperionMockedLlmE2eSupport.writeFile(TEST_PATH, BOUNDED_COUNTER_TEST), HyperionMockedLlmE2eSupport.writeFile(TEST_PLAN_PATH, TEST_PLAN),
+                HyperionMockedLlmE2eSupport.submit("Tests"), HyperionMockedLlmE2eSupport.writeFile(PROBLEM_STATEMENT_PATH, PROBLEM_STATEMENT_WITH_BAD_BINDING),
+                HyperionMockedLlmE2eSupport.submit("Statement with one wrong binding"), HyperionMockedLlmE2eSupport.text("The statement stage is complete."),
+                HyperionMockedLlmE2eSupport.text("No further changes."));
 
         try (GenerationOutcome outcome = orchestrator.generate(exercise, instructor(), "Create a bounded counter exercise.", "mock-generate-bad", GenerationMode.GENERATE,
                 () -> false, line -> log.info("[mock-generate-bad] {}", line), null, null)) {
@@ -245,10 +297,12 @@ class HyperionExerciseGenerationMockedEndToEndTest extends AbstractHyperionMocke
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void rejectsExerciseWhoseSolutionFailsItsOwnTests_deterministic_endToEnd() throws Exception {
         ProgrammingExercise exercise = scaffoldEmptyJavaExercise("HGMFAIL");
-        when(azureOpenAiChatModel.call(any(Prompt.class))).thenReturn(HyperionMockedLlmE2eSupport.writeFile(PROBLEM_STATEMENT_PATH, PROBLEM_STATEMENT),
-                HyperionMockedLlmE2eSupport.writeFile(SOLUTION_PATH, BROKEN_SOLUTION_BOUNDED_COUNTER),
-                HyperionMockedLlmE2eSupport.writeFile(TEMPLATE_PATH, TEMPLATE_BOUNDED_COUNTER), HyperionMockedLlmE2eSupport.writeFile(TEST_PATH, BOUNDED_COUNTER_TEST),
-                HyperionMockedLlmE2eSupport.verify(), HyperionMockedLlmE2eSupport.submit("Broken bounded counter"));
+        script(HyperionMockedLlmE2eSupport.writeFile(SPEC_PATH, SPEC), HyperionMockedLlmE2eSupport.submit("Specification"),
+                HyperionMockedLlmE2eSupport.writeFile(SOLUTION_PATH, BROKEN_SOLUTION_BOUNDED_COUNTER), HyperionMockedLlmE2eSupport.submit("Broken solution"),
+                HyperionMockedLlmE2eSupport.writeFile(TEMPLATE_PATH, TEMPLATE_BOUNDED_COUNTER), HyperionMockedLlmE2eSupport.submit("Template"),
+                HyperionMockedLlmE2eSupport.writeFile(TEST_PATH, BOUNDED_COUNTER_TEST), HyperionMockedLlmE2eSupport.writeFile(TEST_PLAN_PATH, TEST_PLAN),
+                HyperionMockedLlmE2eSupport.submit("Tests expose the broken solution"), HyperionMockedLlmE2eSupport.text("The tests stage is complete."),
+                HyperionMockedLlmE2eSupport.text("No further changes."));
 
         try (GenerationOutcome outcome = orchestrator.generate(exercise, instructor(), "Create a bounded counter exercise.", "mock-generate-failing-solution",
                 GenerationMode.GENERATE, () -> false, line -> log.info("[mock-generate-failing] {}", line), null, null)) {
@@ -262,6 +316,19 @@ class HyperionExerciseGenerationMockedEndToEndTest extends AbstractHyperionMocke
 
     private ProgrammingExercise scaffoldEmptyJavaExercise(String shortName) throws Exception {
         return scaffoldEmptyJavaExercise(shortName, false);
+    }
+
+    private void scriptValidGeneration(String testPath) {
+        script(HyperionMockedLlmE2eSupport.writeFile(SPEC_PATH, SPEC), HyperionMockedLlmE2eSupport.submit("Specification"),
+                HyperionMockedLlmE2eSupport.writeFile(SOLUTION_PATH, SOLUTION_BOUNDED_COUNTER), HyperionMockedLlmE2eSupport.submit("Solution"),
+                HyperionMockedLlmE2eSupport.writeFile(TEMPLATE_PATH, TEMPLATE_BOUNDED_COUNTER), HyperionMockedLlmE2eSupport.submit("Template"),
+                HyperionMockedLlmE2eSupport.writeFile(testPath, BOUNDED_COUNTER_TEST), HyperionMockedLlmE2eSupport.writeFile(TEST_PLAN_PATH, TEST_PLAN),
+                HyperionMockedLlmE2eSupport.submit("Tests"), HyperionMockedLlmE2eSupport.writeFile(PROBLEM_STATEMENT_PATH, PROBLEM_STATEMENT),
+                HyperionMockedLlmE2eSupport.submit("Statement"), HyperionMockedLlmE2eSupport.cleanQualityReview(), HyperionMockedLlmE2eSupport.cleanQualityReview());
+    }
+
+    private void script(ChatResponse... responses) {
+        when(azureOpenAiChatModel.call(any(Prompt.class))).thenReturn(responses[0], Arrays.copyOfRange(responses, 1, responses.length));
     }
 
     private ProgrammingExercise scaffoldEmptyJavaExercise(String shortName, boolean sequentialTestRuns) throws Exception {
