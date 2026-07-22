@@ -638,6 +638,13 @@ export class ExamUpdateComponent implements OnInit, OnDestroy {
         );
     }
 
+    /**
+     * Validates the optional submission-overview publication date.
+     * It is valid when unset (summary shown immediately after submission) or, when set, strictly after the end date and no later than the publish results date
+     * (so the overview never becomes visible after the grades). Mirrors the server-side check in ExamResource#checkExamForDatesConflictsElseThrow.
+     *
+     * @returns true if the configured examSummaryPublicationDate is valid
+     */
     get isValidExamSummaryPublicationDate(): boolean {
         // allow instructors to leave examSummaryPublicationDate unset (summary shown immediately after submission)
         if (!this.exam.examSummaryPublicationDate) {
