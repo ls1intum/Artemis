@@ -256,7 +256,7 @@ export class CourseSidebarItemService {
         return {
             routerLink: `${courseId}/presentations`,
             icon: faPersonChalkboard,
-            iconColor: '#14b8a6',
+            iconColor: 'var(--teal-500)',
             title: 'Presentations',
             translation: 'artemisApp.presentationAssessment.home.title',
             hidden: false,

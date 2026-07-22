@@ -376,12 +376,17 @@
                         <input
                             type="checkbox"
                             class="form-check-input"
-                            name="presentationAssessmentsEnabled"
                             id="field_presentationAssessmentsEnabled"
+                            name="presentationAssessmentsEnabled"
                             formControlName="presentationAssessmentsEnabled"
                         />
                         <label class="form-control-label" jhiTranslate="artemisApp.course.presentationAssessments.label" for="field_presentationAssessmentsEnabled"></label>
-                        <fa-icon [icon]="faQuestionCircle" class="text-secondary" ngbTooltip="{{ 'artemisApp.course.presentationAssessments.tooltip' | artemisTranslate }}" />
+                        <fa-icon
+                            [icon]="faQuestionCircle"
+                            class="text-secondary"
+                            [pTooltip]="'artemisApp.course.presentationAssessments.tooltip' | artemisTranslate"
+                            tooltipPosition="right"
+                        />
                     </div>
                 </div>
                 @if (isAdmin() && isAthenaEnabled()) {

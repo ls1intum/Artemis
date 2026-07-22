@@ -89,17 +89,18 @@
     </changeSet>
 
     <changeSet id="20260706120000-6" author="artemis">
+        <validCheckSum>9:7d9f9ae29ee04dcbf5738e5060312bb5</validCheckSum>
         <addColumn tableName="course">
-            <column name="presentation_assessments_enabled" type="boolean" defaultValueBoolean="true">
+            <column name="presentation_assessments_enabled" type="boolean" defaultValueBoolean="false">
                 <constraints nullable="false"/>
             </column>
         </addColumn>
     </changeSet>
 
     <changeSet id="20260706120000-7" author="artemis">
-        <addDefaultValue tableName="course"
-                         columnName="presentation_assessments_enabled"
-                         columnDataType="boolean"
-                         defaultValueBoolean="false"/>
+        <validCheckSum>9:7a83df6aa76caa2f1d90acc039c76d3c</validCheckSum>
+        <update tableName="course">
+            <column name="presentation_assessments_enabled" valueBoolean="false"/>
+        </update>
     </changeSet>
 </databaseChangeLog>

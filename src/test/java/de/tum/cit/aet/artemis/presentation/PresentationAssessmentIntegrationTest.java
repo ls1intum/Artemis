@@ -17,6 +17,7 @@ import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.presentation.domain.PresentationAssessment;
 import de.tum.cit.aet.artemis.presentation.dto.PresentationAssessmentDTO;
+import de.tum.cit.aet.artemis.presentation.dto.PresentationAssessmentStudentDTO;
 import de.tum.cit.aet.artemis.presentation.repository.PresentationAssessmentRepository;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
@@ -43,6 +44,9 @@ class PresentationAssessmentIntegrationTest extends AbstractSpringIntegrationInd
         userUtilService.addUsers(TEST_PREFIX, 1, 1, 1, 1);
         course = courseUtilService.addEmptyCourse(TEST_PREFIX + "tumuser", TEST_PREFIX + "tutor", TEST_PREFIX + "editor", TEST_PREFIX + "instructor");
         otherCourse = courseUtilService.addEmptyCourse(TEST_PREFIX + "tumuser", TEST_PREFIX + "tutor", TEST_PREFIX + "editor", TEST_PREFIX + "instructor");
+        course.setPresentationAssessmentsEnabled(true);
+        otherCourse.setPresentationAssessmentsEnabled(true);
+        courseRepository.saveAll(List.of(course, otherCourse));
 
         presentationAssessment = new PresentationAssessment();
         presentationAssessment.setCourse(course);
@@ -200,10 +204,8 @@ class PresentationAssessmentIntegrationTest extends AbstractSpringIntegrationInd
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void addStudentToPresentationAssessment_withUserNotInCourse_shouldReturnBadRequest() throws Exception {
-        userUtilService.addUsers("otherpresentationstudent", 1, 0, 0, 0);
-
-        request.postWithoutLocation(getStudentsUrl(course, presentationAssessment) + "/otherpresentationstudentstudent1", null, HttpStatus.BAD_REQUEST, null);
+    void addStudentToPresentationAssessment_withUserNotInStudentGroup_shouldReturnBadRequest() throws Exception {
+        request.postWithoutLocation(getStudentsUrl(course, presentationAssessment) + "/" + TEST_PREFIX + "tutor1", null, HttpStatus.BAD_REQUEST, null);
     }
 
     @Test
@@ -212,9 +214,18 @@ class PresentationAssessmentIntegrationTest extends AbstractSpringIntegrationInd
         presentationAssessment.getStudents().add(userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
         presentationAssessmentRepository.save(presentationAssessment);
 
-        List<User> result = request.getList(getStudentsUrl(course, presentationAssessment), HttpStatus.OK, User.class);
+        List<PresentationAssessmentStudentDTO> result = request.getList(getStudentsUrl(course, presentationAssessment), HttpStatus.OK, PresentationAssessmentStudentDTO.class);
 
-        assertThat(result).extracting(User::getLogin).containsExactly(TEST_PREFIX + "student1");
+        assertThat(result).extracting(PresentationAssessmentStudentDTO::login).containsExactly(TEST_PREFIX + "student1");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void getPresentationAssessments_withFeatureDisabled_shouldReturnForbidden() throws Exception {
+        course.setPresentationAssessmentsEnabled(false);
+        courseRepository.save(course);
+
+        request.getList(getBaseUrl(course), HttpStatus.FORBIDDEN, PresentationAssessmentDTO.class);
     }
 
     @Test

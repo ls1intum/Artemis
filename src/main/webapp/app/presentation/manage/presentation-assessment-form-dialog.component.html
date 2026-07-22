@@ -1,0 +1,87 @@
+<form [formGroup]="editForm" (ngSubmit)="save()" novalidate class="flex flex-col gap-4">
+    <div class="grid grid-cols-1 gap-4 md:grid-cols-12">
+        <div class="flex flex-col gap-2 md:col-span-4">
+            <label for="presentation-assessment-title" jhiTranslate="artemisApp.presentationAssessment.title"></label>
+            <input id="presentation-assessment-title" pInputText class="w-full" type="text" formControlName="title" />
+            @if (editForm.controls.title.invalid && editForm.controls.title.touched) {
+                <p-message severity="error" data-testid="presentation-title-error">
+                    <span jhiTranslate="entity.validation.required"></span>
+                </p-message>
+            }
+        </div>
+
+        <div class="flex flex-col gap-2 md:col-span-3">
+            <label for="presentation-assessment-max-points" jhiTranslate="artemisApp.presentationAssessment.maxPoints"></label>
+            <p-inputnumber inputId="presentation-assessment-max-points" class="w-full" [min]="0.01" [step]="0.5" formControlName="maxPoints" />
+            @if (editForm.controls.maxPoints.invalid && editForm.controls.maxPoints.touched) {
+                <p-message severity="error" data-testid="presentation-max-points-error">
+                    <span jhiTranslate="entity.validation.min"></span>
+                </p-message>
+            }
+        </div>
+
+        <div class="flex flex-col gap-2 md:col-span-2">
+            <label for="presentation-assessment-result-points" jhiTranslate="artemisApp.presentationAssessment.resultPoints"></label>
+            <p-inputnumber inputId="presentation-assessment-result-points" class="w-full" [min]="0" [step]="0.5" formControlName="resultPoints" />
+            @if (editForm.controls.resultPoints.invalid && editForm.controls.resultPoints.touched) {
+                <p-message severity="error" data-testid="presentation-result-points-error">
+                    <span jhiTranslate="entity.validation.min"></span>
+                </p-message>
+            }
+            @if (editForm.hasError('resultPointsExceedMaxPoints') && (editForm.controls.resultPoints.touched || editForm.controls.maxPoints.touched)) {
+                <p-message severity="error" data-testid="presentation-result-points-max-error">
+                    <span jhiTranslate="artemisApp.presentationAssessment.resultPointsExceedMaxPoints"></span>
+                </p-message>
+            }
+        </div>
+
+        <div class="flex flex-col gap-2 md:col-span-3">
+            <jhi-date-time-picker
+                id="presentation-assessment-date"
+                labelName="{{ 'artemisApp.presentationAssessment.presentationDate' | artemisTranslate }}"
+                formControlName="presentationDate"
+                name="presentationDate"
+            />
+        </div>
+
+        <div class="flex flex-col gap-2 md:col-span-12">
+            <label for="presentation-assessment-description" jhiTranslate="artemisApp.presentationAssessment.description"></label>
+            <textarea id="presentation-assessment-description" pTextarea class="w-full" rows="3" formControlName="description"></textarea>
+        </div>
+    </div>
+
+    @if (presentationStudentCourse()) {
+        <jhi-course-group
+            [(allGroupUsers)]="assignedStudents"
+            [courseGroup]="studentsCourseGroup"
+            [isLoadingAllGroupUsers]="false"
+            [isAdmin]="false"
+            [course]="presentationStudentCourse()!"
+            [addUserToGroup]="addStudentToPresentation"
+            [removeUserFromGroup]="removeStudentFromPresentation"
+            [handleUsersSizeChange]="handleAssignedStudentsSizeChange"
+            [exportFileName]="studentExportFilename()"
+            [userSearch]="studentSearch"
+        >
+            <span>
+                <span>{{ studentSectionTitle() }} - </span>
+                @if (filteredAssignedStudentsSize() < assignedStudents().length) {
+                    <span>{{ filteredAssignedStudentsSize() }} <span jhiTranslate="artemisApp.course.courseGroup.outOf"></span> </span>
+                }
+                {{ assignedStudents().length }}
+                <span jhiTranslate="artemisApp.course.students"></span>
+            </span>
+        </jhi-course-group>
+    }
+
+    <div class="flex justify-end gap-2">
+        <p-button severity="secondary" type="button" (onClick)="cancel()">
+            <fa-icon [icon]="faBan" />
+            <span jhiTranslate="entity.action.cancel"></span>
+        </p-button>
+        <p-button type="submit">
+            <fa-icon [icon]="faSave" />
+            <span jhiTranslate="entity.action.save"></span>
+        </p-button>
+    </div>
+</form>

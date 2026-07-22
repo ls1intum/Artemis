@@ -5,7 +5,6 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
-import java.util.Set;
 
 import jakarta.validation.Valid;
 
@@ -23,7 +22,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
@@ -31,6 +30,7 @@ import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.presentation.domain.PresentationAssessment;
 import de.tum.cit.aet.artemis.presentation.dto.PresentationAssessmentDTO;
+import de.tum.cit.aet.artemis.presentation.dto.PresentationAssessmentStudentDTO;
 import de.tum.cit.aet.artemis.presentation.service.PresentationAssessmentService;
 
 /**
@@ -67,7 +67,7 @@ public class PresentationAssessmentResource {
     @EnforceAtLeastInstructor
     public ResponseEntity<List<PresentationAssessmentDTO>> getPresentationAssessments(@PathVariable long courseId) {
         log.debug("REST request to get presentation assessments for course {}", courseId);
-        Course course = courseRepository.findByIdElseThrow(courseId);
+        Course course = findCourseAndCheckPresentationAssessmentsEnabled(courseId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
         List<PresentationAssessmentDTO> presentationAssessments = presentationAssessmentService.findAllByCourseId(courseId).stream().map(PresentationAssessmentDTO::of).toList();
         return ResponseEntity.ok(presentationAssessments);
@@ -84,7 +84,7 @@ public class PresentationAssessmentResource {
     @EnforceAtLeastInstructor
     public ResponseEntity<PresentationAssessmentDTO> getPresentationAssessment(@PathVariable long courseId, @PathVariable long assessmentId) {
         log.debug("REST request to get presentation assessment {} for course {}", assessmentId, courseId);
-        Course course = courseRepository.findByIdElseThrow(courseId);
+        Course course = findCourseAndCheckPresentationAssessmentsEnabled(courseId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
         return ResponseEntity.ok(PresentationAssessmentDTO.of(presentationAssessmentService.findByIdAndCourseIdElseThrow(courseId, assessmentId)));
     }
@@ -102,7 +102,7 @@ public class PresentationAssessmentResource {
     public ResponseEntity<PresentationAssessmentDTO> createPresentationAssessment(@PathVariable long courseId, @Valid @RequestBody PresentationAssessmentDTO dto)
             throws URISyntaxException {
         log.debug("REST request to create presentation assessment for course {}: {}", courseId, dto);
-        Course course = courseRepository.findByIdElseThrow(courseId);
+        Course course = findCourseAndCheckPresentationAssessmentsEnabled(courseId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
         PresentationAssessment presentationAssessment = presentationAssessmentService.create(course, dto);
         PresentationAssessmentDTO result = PresentationAssessmentDTO.of(presentationAssessment);
@@ -122,7 +122,7 @@ public class PresentationAssessmentResource {
     public ResponseEntity<PresentationAssessmentDTO> updatePresentationAssessment(@PathVariable long courseId, @PathVariable long assessmentId,
             @Valid @RequestBody PresentationAssessmentDTO dto) {
         log.debug("REST request to update presentation assessment {} for course {}: {}", assessmentId, courseId, dto);
-        Course course = courseRepository.findByIdElseThrow(courseId);
+        Course course = findCourseAndCheckPresentationAssessmentsEnabled(courseId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
         return ResponseEntity.ok(PresentationAssessmentDTO.of(presentationAssessmentService.update(courseId, assessmentId, dto)));
     }
@@ -138,7 +138,7 @@ public class PresentationAssessmentResource {
     @EnforceAtLeastInstructor
     public ResponseEntity<Void> deletePresentationAssessment(@PathVariable long courseId, @PathVariable long assessmentId) {
         log.debug("REST request to delete presentation assessment {} for course {}", assessmentId, courseId);
-        Course course = courseRepository.findByIdElseThrow(courseId);
+        Course course = findCourseAndCheckPresentationAssessmentsEnabled(courseId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
         presentationAssessmentService.delete(courseId, assessmentId);
         return ResponseEntity.noContent().build();
@@ -153,11 +153,11 @@ public class PresentationAssessmentResource {
      */
     @GetMapping("courses/{courseId}/presentation-assessments/{assessmentId}/students")
     @EnforceAtLeastInstructor
-    public ResponseEntity<Set<User>> getPresentationAssessmentStudents(@PathVariable long courseId, @PathVariable long assessmentId) {
+    public ResponseEntity<List<PresentationAssessmentStudentDTO>> getPresentationAssessmentStudents(@PathVariable long courseId, @PathVariable long assessmentId) {
         log.debug("REST request to get students for presentation assessment {} in course {}", assessmentId, courseId);
-        Course course = courseRepository.findByIdElseThrow(courseId);
+        Course course = findCourseAndCheckPresentationAssessmentsEnabled(courseId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
-        return ResponseEntity.ok(presentationAssessmentService.findStudents(courseId, assessmentId));
+        return ResponseEntity.ok(presentationAssessmentService.findStudents(courseId, assessmentId).stream().map(PresentationAssessmentStudentDTO::of).toList());
     }
 
     /**
@@ -172,7 +172,7 @@ public class PresentationAssessmentResource {
     @EnforceAtLeastInstructor
     public ResponseEntity<Void> addStudentToPresentationAssessment(@PathVariable long courseId, @PathVariable long assessmentId, @PathVariable String studentLogin) {
         log.debug("REST request to add student {} to presentation assessment {} in course {}", studentLogin, assessmentId, courseId);
-        Course course = courseRepository.findByIdElseThrow(courseId);
+        Course course = findCourseAndCheckPresentationAssessmentsEnabled(courseId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
         presentationAssessmentService.addStudent(course, assessmentId, studentLogin);
         return ResponseEntity.ok().build();
@@ -190,9 +190,17 @@ public class PresentationAssessmentResource {
     @EnforceAtLeastInstructor
     public ResponseEntity<Void> removeStudentFromPresentationAssessment(@PathVariable long courseId, @PathVariable long assessmentId, @PathVariable String studentLogin) {
         log.debug("REST request to remove student {} from presentation assessment {} in course {}", studentLogin, assessmentId, courseId);
-        Course course = courseRepository.findByIdElseThrow(courseId);
+        Course course = findCourseAndCheckPresentationAssessmentsEnabled(courseId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
         presentationAssessmentService.removeStudent(courseId, assessmentId, studentLogin);
         return ResponseEntity.noContent().build();
+    }
+
+    private Course findCourseAndCheckPresentationAssessmentsEnabled(long courseId) {
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        if (!course.getPresentationAssessmentsEnabled()) {
+            throw new AccessForbiddenException("Presentation assessments are disabled for this course.");
+        }
+        return course;
     }
 }
