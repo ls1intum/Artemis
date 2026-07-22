@@ -1,7 +1,7 @@
 import { IrisVerdict, IrisVerdictReview } from 'app/iris/shared/entities/iris-verdict.model';
 import { User } from 'app/core/user/user.model';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { IrisPipeEvent } from 'app/iris/shared/entities/iris-pipe-event-dto.model';
+import { IrisPipeEvent } from 'app/iris/shared/entities/iris-pipe-event.model';
 
 export class IrisAssessment {
     public id?: number;

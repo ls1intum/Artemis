@@ -21,6 +21,7 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
+import de.tum.cit.aet.artemis.iris.dto.IrisAssessmentProgrammingStudentParticipationProjection;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 
 /**
@@ -79,11 +80,20 @@ public interface ProgrammingExerciseStudentParticipationRepository extends Artem
             """)
     List<ProgrammingExerciseStudentParticipation> findAllWithBuildPlanIdWithResults();
 
-    @EntityGraph(type = LOAD, attributePaths = { "submissions" })
     Optional<ProgrammingExerciseStudentParticipation> findByExerciseIdAndStudentLogin(long exerciseId, String username);
 
-    @EntityGraph(type = LOAD, attributePaths = { "submissions.results" })
-    Optional<ProgrammingExerciseStudentParticipation> findWithSubmissionsAndResultsByExerciseIdAndStudentLogin(long exerciseId, String username);
+    @EntityGraph(type = LOAD, attributePaths = { "student", "exercise", "irisAssessment" })
+    Optional<ProgrammingExerciseStudentParticipation> findWithIrisAssessmentById(long participationId);
+
+    @EntityGraph(type = LOAD, attributePaths = "irisAssessment")
+    Optional<ProgrammingExerciseStudentParticipation> findWithIrisAssessmentByExerciseIdAndStudentLogin(long exerciseId, String username);
+
+    @EntityGraph(type = LOAD, attributePaths = "irisAssessmentInClass")
+    Optional<ProgrammingExerciseStudentParticipation> findWithIrisAssessmentInClassByExerciseIdAndStudentLogin(long exerciseId, String username);
+
+    default Optional<ProgrammingExerciseStudentParticipation> findWithIrisAssessmentByExerciseIdAndStudentLogin(long exerciseId, String username, boolean inClass) {
+        return inClass ? findWithIrisAssessmentInClassByExerciseIdAndStudentLogin(exerciseId, username) : findWithIrisAssessmentByExerciseIdAndStudentLogin(exerciseId, username);
+    }
 
     List<ProgrammingExerciseStudentParticipation> findAllByExerciseIdAndStudentLogin(long exerciseId, String username);
 
@@ -204,12 +214,124 @@ public interface ProgrammingExerciseStudentParticipationRepository extends Artem
     @EntityGraph(type = LOAD, attributePaths = "team.students")
     Optional<ProgrammingExerciseStudentParticipation> findWithTeamStudentsById(long participationId);
 
-    @EntityGraph(attributePaths = { "submissions", "submissions.results", "student", "irisAssessment" })
-    Set<ProgrammingExerciseStudentParticipation> findAllWithEagerSubmissionsAndEagerResultsAndEagerStudentAndEagerAssessmentByExerciseId(@Param("exerciseId") long exerciseId);
+    @Query("""
+            SELECT assessment.id
+            FROM ProgrammingExerciseStudentParticipation participation
+                JOIN participation.irisAssessmentInClass assessment
+            WHERE participation.exercise.id = :exerciseId
+            """)
+    Set<Long> findIrisAssessmentInClassIdsByExerciseId(@Param("exerciseId") long exerciseId);
 
-    @EntityGraph(attributePaths = { "submissions", "submissions.results", "student", "irisAssessmentInClass" })
-    Set<ProgrammingExerciseStudentParticipation> findAllWithEagerSubmissionsAndEagerResultsAndEagerStudentAndEagerAssessmentInClassByExerciseId(
-            @Param("exerciseId") long exerciseId);
+    @Transactional // ok because of modifying query
+    @Modifying
+    @Query("""
+            UPDATE ProgrammingExerciseStudentParticipation participation
+            SET participation.irisAssessmentInClass = NULL
+            WHERE participation.exercise.id = :exerciseId
+                AND participation.irisAssessmentInClass IS NOT NULL
+            """)
+    void unsetIrisAssessmentInClassByExerciseId(@Param("exerciseId") long exerciseId);
+
+    default Set<IrisAssessmentProgrammingStudentParticipationProjection> findAllIrisAssessmentParticipationProjectionsByExerciseIdAndLatestResultScoreGreaterThanZero(
+            long exerciseId) {
+        var participationIds = findParticipationIdsWithLatestResultScoreGreaterThanZero(exerciseId);
+        if (participationIds.isEmpty()) {
+            return Set.of();
+        }
+        return findAllIrisAssessmentParticipationProjectionsByIdIn(participationIds);
+    }
+
+    default Set<IrisAssessmentProgrammingStudentParticipationProjection> findAllIrisAssessmentInClassParticipationProjectionsByExerciseIdAndLatestResultScoreGreaterThanZero(
+            long exerciseId) {
+        var participationIds = findParticipationIdsWithLatestResultScoreGreaterThanZero(exerciseId);
+        if (participationIds.isEmpty()) {
+            return Set.of();
+        }
+        return findAllIrisAssessmentInClassParticipationProjectionsByIdIn(participationIds);
+    }
+
+    private Set<Long> findParticipationIdsWithLatestResultScoreGreaterThanZero(long exerciseId) {
+        var latestSubmissionIds = findLatestSubmissionIdsByExerciseId(exerciseId);
+        if (latestSubmissionIds.isEmpty()) {
+            return Set.of();
+        }
+
+        var latestResultIds = findLatestResultIdsBySubmissionIds(latestSubmissionIds);
+        if (latestResultIds.isEmpty()) {
+            return Set.of();
+        }
+
+        return findParticipationIdsByResultIdsAndScoreGreaterThanZero(latestResultIds);
+    }
+
+    @Query("""
+            SELECT submission.id
+            FROM ProgrammingExerciseStudentParticipation participation
+                JOIN participation.submissions submission
+                LEFT JOIN participation.submissions newerSubmission ON (
+                    (submission.submissionDate IS NOT NULL AND newerSubmission.submissionDate IS NOT NULL AND newerSubmission.submissionDate > submission.submissionDate)
+                    OR ((submission.submissionDate IS NULL OR newerSubmission.submissionDate IS NULL OR newerSubmission.submissionDate = submission.submissionDate)
+                        AND newerSubmission.id > submission.id)
+                )
+            WHERE participation.exercise.id = :exerciseId
+                AND participation.student IS NOT NULL
+                AND newerSubmission.id IS NULL
+            """)
+    Set<Long> findLatestSubmissionIdsByExerciseId(@Param("exerciseId") long exerciseId);
+
+    @Query("""
+            SELECT MAX(result.id)
+            FROM Result result
+            WHERE result.submission.id IN :submissionIds
+            GROUP BY result.submission.id
+            """)
+    Set<Long> findLatestResultIdsBySubmissionIds(@Param("submissionIds") Set<Long> submissionIds);
+
+    @Query("""
+            SELECT result.submission.participation.id
+            FROM Result result
+            WHERE result.id IN :resultIds
+                AND result.score > 0
+            """)
+    Set<Long> findParticipationIdsByResultIdsAndScoreGreaterThanZero(@Param("resultIds") Set<Long> resultIds);
+
+    @Query("""
+            SELECT new de.tum.cit.aet.artemis.iris.dto.IrisAssessmentProgrammingStudentParticipationProjection(
+                participation.id,
+                participation.repositoryUri,
+                participation.buildPlanId,
+                student.login,
+                student.firstName,
+                student.lastName,
+                assessment.id,
+                assessment.verdict,
+                assessment.verdictReview
+            )
+            FROM ProgrammingExerciseStudentParticipation participation
+                JOIN participation.student student
+                LEFT JOIN participation.irisAssessment assessment
+            WHERE participation.id IN :participationIds
+            """)
+    Set<IrisAssessmentProgrammingStudentParticipationProjection> findAllIrisAssessmentParticipationProjectionsByIdIn(@Param("participationIds") Set<Long> participationIds);
+
+    @Query("""
+            SELECT new de.tum.cit.aet.artemis.iris.dto.IrisAssessmentProgrammingStudentParticipationProjection(
+                participation.id,
+                participation.repositoryUri,
+                participation.buildPlanId,
+                student.login,
+                student.firstName,
+                student.lastName,
+                assessment.id,
+                assessment.verdict,
+                assessment.verdictReview
+            )
+            FROM ProgrammingExerciseStudentParticipation participation
+                JOIN participation.student student
+                LEFT JOIN participation.irisAssessmentInClass assessment
+            WHERE participation.id IN :participationIds
+            """)
+    Set<IrisAssessmentProgrammingStudentParticipationProjection> findAllIrisAssessmentInClassParticipationProjectionsByIdIn(@Param("participationIds") Set<Long> participationIds);
 
     default Optional<ProgrammingExerciseStudentParticipation> findByIdWithAllResultsAndRelatedSubmissions(long participationId) {
         return findByIdWithAllResultsAndRelatedSubmissions(participationId, ZonedDateTime.now());

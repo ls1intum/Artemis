@@ -9,8 +9,10 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastInstructorInExercise;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastStudentInExercise;
@@ -21,6 +23,7 @@ import de.tum.cit.aet.artemis.iris.service.IrisSessionService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisHealthIndicator;
 import de.tum.cit.aet.artemis.iris.service.session.IrisExerciseChatSessionService;
 import de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 
 /**
@@ -56,6 +59,45 @@ public class IrisAssessmentQuizResource {
         this.pyrisHealthIndicator = pyrisHealthIndicator;
         this.irisRateLimitService = irisRateLimitService;
         this.exerciseRepository = exerciseRepository;
+    }
+
+    /**
+     * PATCH programming-exercises/{exerciseId}/assessment-quiz/start: Activates prompting mode in the current Iris session for the programming exercise.
+     *
+     * @param exerciseId of the exercise
+     * @return the {@link ResponseEntity} with status {@code 200 (Ok)} or {@code 404 (Not Found)} if no session exists
+     */
+    @PatchMapping("{exerciseId}/assessment-quiz/start")
+    @EnforceAtLeastStudentInExercise
+    public ResponseEntity<Void> startPromptingModeForCurrentSession(@PathVariable Long exerciseId) {
+        var exercise = exerciseRepository.findByIdElseThrow(exerciseId);
+        ProgrammingExercise programmingExercise = validateExercise(exercise);
+
+        irisSettingsService.isEnabledForElseThrow(IrisSubSettingsType.PROMPT_USER, exercise);
+        var user = userRepository.getUserWithGroupsAndAuthorities();
+
+        irisExerciseChatSessionService.startPromptingModeForCurrentSession(programmingExercise, user);
+        return ResponseEntity.ok().build();
+    }
+
+    /**
+     * PATCH programming-exercises/{exerciseId}/assessment-quiz/in-class/start-current-session: Activates in-class prompting mode in the current Iris session for the programming
+     * exercise.
+     *
+     * @param exerciseId of the exercise
+     * @return the {@link ResponseEntity} with status {@code 200 (Ok)} or {@code 409 (Conflict)} if the in-class quiz timer is not active anymore
+     */
+    @PatchMapping("{exerciseId}/assessment-quiz/in-class/start-current-session")
+    @EnforceAtLeastStudentInExercise
+    public ResponseEntity<Void> startInClassPromptingModeForCurrentSession(@PathVariable Long exerciseId) {
+        var exercise = exerciseRepository.findByIdElseThrow(exerciseId);
+        ProgrammingExercise programmingExercise = validateExercise(exercise);
+
+        irisSettingsService.isEnabledForElseThrow(IrisSubSettingsType.PROMPT_USER, exercise);
+        var user = userRepository.getUserWithGroupsAndAuthorities();
+
+        irisExerciseChatSessionService.startInClassPromptingModeForCurrentSession(programmingExercise, user);
+        return ResponseEntity.ok().build();
     }
 
     /**
@@ -145,20 +187,21 @@ public class IrisAssessmentQuizResource {
     }
 
     /**
-     * GET programming-exercises/{exerciseId}/assessment-quiz/in-class/completed: Checks whether the current user already completed the in-class quiz.
+     * GET programming-exercises/{exerciseId}/assessment-quiz/completed: Checks whether the current user already completed the quiz.
      *
      * @param exerciseId of the exercise
+     * @param inClass    whether to check the in-class assessment verdict instead of the regular assessment verdict
      * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and a boolean body
      */
-    @GetMapping("{exerciseId}/assessment-quiz/in-class/completed")
+    @GetMapping("{exerciseId}/assessment-quiz/completed")
     @EnforceAtLeastStudentInExercise
-    public ResponseEntity<Boolean> isInClassQuizAlreadyDone(@PathVariable Long exerciseId) {
+    public ResponseEntity<Boolean> isQuizAlreadyDone(@PathVariable Long exerciseId, @RequestParam(defaultValue = "false") boolean inClass) {
         var exercise = exerciseRepository.findByIdElseThrow(exerciseId);
 
         irisSettingsService.isEnabledForElseThrow(IrisSubSettingsType.PROMPT_USER, exercise);
         var user = userRepository.getUserWithGroupsAndAuthorities();
 
-        return ResponseEntity.ok(irisExerciseChatSessionService.isInClassQuizAlreadyDone(exercise, user));
+        return ResponseEntity.ok(irisExerciseChatSessionService.isQuizAlreadyDone(exercise, user, inClass));
     }
 
     /**
@@ -177,5 +220,12 @@ public class IrisAssessmentQuizResource {
 
         irisExerciseChatSessionService.stopTimerForCurrentSession(exercise, user);
         return ResponseEntity.ok().build();
+    }
+
+    private static ProgrammingExercise validateExercise(ProgrammingExercise exercise) {
+        if (exercise.isExamExercise()) {
+            throw new ConflictException("Iris is not supported for exam exercises", "Iris", "irisExamExercise");
+        }
+        return exercise;
     }
 }

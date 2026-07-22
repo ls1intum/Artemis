@@ -8,6 +8,7 @@ import { IrisGuard } from 'app/iris/shared/iris-guard.service';
 import { FaqResolve } from 'app/communication/faq/faq-resolve.service';
 import { CourseManagementResolve } from 'app/course/manage/services/course-management-resolve.service';
 import { PasskeyAuthenticationGuard } from 'app/core/auth/passkey-authentication-guard/passkey-authentication.guard';
+import { IrisAssessmentReviewResolver } from 'app/iris/overview/services/iris-assessment-review-resolver.service';
 
 export const courseManagementRoutes: Routes = [
     {
@@ -297,7 +298,7 @@ export const courseManagementRoutes: Routes = [
                         canActivate: [UserRouteAccessService],
                     },
                     {
-                        path: 'iris-assessment',
+                        path: 'iris-assessments',
                         loadComponent: () =>
                             import('app/iris/overview/understanding-assessment/assessment-review-overview/iris-assessment-review-overview.component').then(
                                 (m) => m.IrisAssessmentReviewOverviewComponent,
@@ -313,20 +314,46 @@ export const courseManagementRoutes: Routes = [
                         },
                     },
                     {
-                        path: 'iris-assessment-in-class',
+                        path: 'iris-assessments/:assessmentId/details',
+                        loadComponent: () =>
+                            import('app/iris/overview/understanding-assessment/assessment-review/iris-assessment-review.component').then((m) => m.IrisAssessmentReviewComponent),
+                        data: {
+                            authorities: IS_AT_LEAST_INSTRUCTOR,
+                            pageTitle: 'artemisApp.iris.assessmentReview.title',
+                        },
+                        canActivate: [UserRouteAccessService, IrisGuard],
+                        resolve: {
+                            reviewData: IrisAssessmentReviewResolver,
+                        },
+                    },
+                    {
+                        path: 'iris-in-class-assessments',
                         loadComponent: () =>
                             import('app/iris/overview/understanding-assessment/assessment-review-overview/iris-assessment-review-overview.component').then(
                                 (m) => m.IrisAssessmentReviewOverviewComponent,
                             ),
                         data: {
                             authorities: IS_AT_LEAST_INSTRUCTOR,
-                            pageTitle: 'artemisApp.iris.assessmentReviewOverview.title',
+                            pageTitle: 'artemisApp.iris.assessmentReviewOverview.inClassTitle',
                             loadWithExercises: true,
                             showStartInClassQuizButton: true,
                         },
                         canActivate: [UserRouteAccessService, IrisGuard],
                         resolve: {
                             course: CourseManagementResolve,
+                        },
+                    },
+                    {
+                        path: 'iris-in-class-assessments/:assessmentId/details',
+                        loadComponent: () =>
+                            import('app/iris/overview/understanding-assessment/assessment-review/iris-assessment-review.component').then((m) => m.IrisAssessmentReviewComponent),
+                        data: {
+                            authorities: IS_AT_LEAST_INSTRUCTOR,
+                            pageTitle: 'artemisApp.iris.assessmentReview.title',
+                        },
+                        canActivate: [UserRouteAccessService, IrisGuard],
+                        resolve: {
+                            reviewData: IrisAssessmentReviewResolver,
                         },
                     },
                     {

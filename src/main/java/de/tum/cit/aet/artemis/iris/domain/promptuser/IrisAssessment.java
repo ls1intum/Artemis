@@ -10,14 +10,13 @@ import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OrderColumn;
 import jakarta.persistence.Table;
 
-import org.hibernate.annotations.Cache;
-import org.hibernate.annotations.CacheConcurrencyStrategy;
-
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
@@ -29,14 +28,17 @@ import de.tum.cit.aet.artemis.exercise.domain.Exercise;
  */
 @Entity
 @Table(name = "iris_assessment")
-@Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class IrisAssessment extends DomainObject {
 
-    @ManyToOne
+    @ManyToOne(optional = false, fetch = FetchType.LAZY)
+    @JoinColumn(name = "student_id", nullable = false)
+    @JsonIgnoreProperties({ "groups", "authorities" })
     private User student;
 
-    @ManyToOne
+    @ManyToOne(optional = false, fetch = FetchType.LAZY)
+    @JoinColumn(name = "exercise_id", nullable = false)
+    @JsonIgnoreProperties("studentParticipations")
     private Exercise exercise;
 
     @Nullable
@@ -52,13 +54,8 @@ public class IrisAssessment extends DomainObject {
     @ElementCollection
     @CollectionTable(name = "iris_reasoning", joinColumns = @JoinColumn(name = "iris_assessment_id"))
     @OrderColumn(name = "position")
-    @Column(name = "reason")
+    @Column(name = "reason", columnDefinition = "TEXT", nullable = false)
     private List<String> reasoning = new ArrayList<>();
-
-    @Nullable
-    @Enumerated(EnumType.STRING)
-    @Column(name = "last_event")
-    private IrisPipeEvent lastEvent;
 
     protected IrisAssessment() {
     }
@@ -94,15 +91,6 @@ public class IrisAssessment extends DomainObject {
         this.reasoning = reasoning;
     }
 
-    @Nullable
-    public IrisPipeEvent getLastEvent() {
-        return lastEvent;
-    }
-
-    public void setLastEvent(@Nullable IrisPipeEvent lastEvent) {
-        this.lastEvent = lastEvent;
-    }
-
     public Exercise getExercise() {
         return exercise;
     }
@@ -124,7 +112,6 @@ public class IrisAssessment extends DomainObject {
         Long userId = getStudent() != null ? getStudent().getId() : null;
         Long exerciseId = getExercise() != null ? getExercise().getId() : null;
 
-        return "IrisAssessment{" + "id=" + getId() + ", userId=" + userId + ", exerciseId=" + exerciseId + ", verdict=" + verdict + ", verdictReview=" + verdictReview
-                + ", lastEvent=" + lastEvent + '}';
+        return "IrisAssessment{" + "id=" + getId() + ", userId=" + userId + ", exerciseId=" + exerciseId + ", verdict=" + verdict + ", verdictReview=" + verdictReview + '}';
     }
 }

@@ -32,7 +32,6 @@ import de.tum.cit.aet.artemis.iris.dto.IrisQAExchangeDTO;
 import de.tum.cit.aet.artemis.iris.repository.IrisAssessmentRepository;
 import de.tum.cit.aet.artemis.iris.service.IrisAssessmentService;
 import de.tum.cit.aet.artemis.iris.service.session.IrisExerciseChatSessionService;
-import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseStudentParticipationRepository;
 
 /**
@@ -54,20 +53,17 @@ public class IrisAssessmentReviewResource {
 
     private final IrisAssessmentRepository irisAssessmentRepository;
 
-    private final ProgrammingExerciseRepository programmingExerciseRepository;
-
     private final ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository;
 
     private final StudentParticipationRepository studentParticipationRepository;
 
     protected IrisAssessmentReviewResource(IrisExerciseChatSessionService irisExerciseChatSessionService, AuthorizationCheckService authorizationCheckService,
-            IrisAssessmentService irisAssessmentService, IrisAssessmentRepository irisAssessmentRepository, ProgrammingExerciseRepository programmingExerciseRepository,
+            IrisAssessmentService irisAssessmentService, IrisAssessmentRepository irisAssessmentRepository,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, StudentParticipationRepository studentParticipationRepository) {
         this.irisExerciseChatSessionService = irisExerciseChatSessionService;
         this.authorizationCheckService = authorizationCheckService;
         this.irisAssessmentService = irisAssessmentService;
         this.irisAssessmentRepository = irisAssessmentRepository;
-        this.programmingExerciseRepository = programmingExerciseRepository;
         this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
         this.studentParticipationRepository = studentParticipationRepository;
     }
@@ -98,7 +94,7 @@ public class IrisAssessmentReviewResource {
     @PatchMapping("assessments/{assessmentId}/accept")
     @EnforceAtLeastInstructor
     public ResponseEntity<Void> acceptAnswers(@PathVariable Long assessmentId) {
-        var assessment = irisAssessmentRepository.findByIdElseThrow(assessmentId);
+        var assessment = irisAssessmentRepository.findWithExerciseAndCourseByIdElseThrow(assessmentId);
         validate(assessment.getExercise());
         irisAssessmentService.acceptAnswers(assessment);
 
@@ -115,7 +111,7 @@ public class IrisAssessmentReviewResource {
     @PatchMapping("assessments/{assessmentId}/reject")
     @EnforceAtLeastInstructor
     public ResponseEntity<Void> rejectAnswers(@PathVariable Long assessmentId) {
-        var assessment = irisAssessmentRepository.findByIdElseThrow(assessmentId);
+        var assessment = irisAssessmentRepository.findWithExerciseAndCourseByIdElseThrow(assessmentId);
         validate(assessment.getExercise());
         irisAssessmentService.rejectAnswers(assessment);
 
@@ -155,17 +151,13 @@ public class IrisAssessmentReviewResource {
     }
 
     private Set<IrisAssessmentProgrammingStudentParticipationDTO> getAllParticipationsNonZeroLatestScoreForExerciseId(long exerciseId, boolean inClass) {
-        Exercise exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
-        var participations = inClass
-                ? programmingExerciseStudentParticipationRepository.findAllWithEagerSubmissionsAndEagerResultsAndEagerStudentAndEagerAssessmentInClassByExerciseId(exercise.getId())
-                : programmingExerciseStudentParticipationRepository.findAllWithEagerSubmissionsAndEagerResultsAndEagerStudentAndEagerAssessmentByExerciseId(exercise.getId());
-
-        var filteredParticipations = participations.stream().filter(p -> p.findLatestResult() != null && p.findLatestResult().getScore() > 0).collect(Collectors.toSet());
+        var participationProjections = inClass
+                ? programmingExerciseStudentParticipationRepository.findAllIrisAssessmentInClassParticipationProjectionsByExerciseIdAndLatestResultScoreGreaterThanZero(exerciseId)
+                : programmingExerciseStudentParticipationRepository.findAllIrisAssessmentParticipationProjectionsByExerciseIdAndLatestResultScoreGreaterThanZero(exerciseId);
 
         Map<Long, Integer> submissionCountMap = studentParticipationRepository.countSubmissionsPerParticipationByExerciseIdAsMap(exerciseId);
-        filteredParticipations.forEach(participation -> participation.setSubmissionCount(submissionCountMap.get(participation.getId())));
-        Set<IrisAssessmentProgrammingStudentParticipationDTO> participationDTOs = filteredParticipations.stream().filter(participation -> participation.getParticipant() != null)
-                .map(p -> IrisAssessmentProgrammingStudentParticipationDTO.of(p, inClass)).collect(Collectors.toSet());
+        Set<IrisAssessmentProgrammingStudentParticipationDTO> participationDTOs = participationProjections.stream()
+                .map(projection -> projection.toDto(submissionCountMap.get(projection.id()))).collect(Collectors.toSet());
 
         return participationDTOs;
     }

@@ -8,7 +8,7 @@
     [buttonLabel]="label() | artemisTranslate"
     [smallButton]="smallButton()"
     [hideLabelMobile]="hideLabelMobile()"
-    [routerLink]="['/course-management', course().id, 'programming-exercises', exercise().id, 'iris-assessment', irisAssessment()?.id]"
+    [routerLink]="['/course-management', course().id, assessmentReviewPath(), irisAssessment()?.id, 'details']"
     placement="right auto"
     container="body"
 ></button>

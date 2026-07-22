@@ -357,13 +357,18 @@ public class IrisExerciseChatSessionService extends AbstractIrisChatSessionServi
      */
     private void explainPromptingMode(ProgrammingExerciseStudentParticipation studentParticipation, ProgrammingSubmission latestSubmission,
             IrisCombinedPromptUserSubSettingsDTO settings) {
-        var exercise = studentParticipation.getProgrammingExercise();
+        var participationWithAssessment = programmingExerciseStudentParticipationRepository.findWithIrisAssessmentById(studentParticipation.getId()).orElseThrow();
+        var exercise = participationWithAssessment.getProgrammingExercise();
 
-        var student = studentParticipation.getStudent().orElseThrow();
+        var student = participationWithAssessment.getStudent().orElseThrow();
 
-        // An Assessment object is needed because from now on Iris pipeline events are saved (even when no assessment session is started).
-        if (studentParticipation.getIrisAssessment() == null) {
-            irisAssessmentService.createNewAssessment(studentParticipation);
+        // An Assessment object is needed because from now on Iris pipeline events are saved and to reset existing verdict (even when no assessment session is started).
+        var assessment = participationWithAssessment.getIrisAssessment();
+        if (assessment == null) {
+            assessment = irisAssessmentService.createNewAssessment(participationWithAssessment);
+        }
+        else {
+            irisAssessmentService.resetVerdictAndReasoning(assessment);
         }
 
         var session = getCurrentSessionOrCreateIfNotExistsInternal(exercise, student, false);
@@ -502,9 +507,10 @@ public class IrisExerciseChatSessionService extends AbstractIrisChatSessionServi
                 .map(Submission::getLatestResult).map(result -> result.getScore() != null && result.getScore() > 0).orElse(false);
     }
 
-    public boolean isInClassQuizAlreadyDone(ProgrammingExercise exercise, User user) {
-        return programmingExerciseStudentParticipationRepository.findByExerciseIdAndStudentLogin(exercise.getId(), user.getLogin())
-                .map(ProgrammingExerciseStudentParticipation::getIrisAssessmentInClass).map(assessment -> assessment.getVerdict() != null).orElse(false);
+    public boolean isQuizAlreadyDone(ProgrammingExercise exercise, User user, boolean inClass) {
+        return programmingExerciseStudentParticipationRepository.findWithIrisAssessmentByExerciseIdAndStudentLogin(exercise.getId(), user.getLogin(), inClass)
+                .map(participation -> inClass ? participation.getIrisAssessmentInClass() : participation.getIrisAssessment()).map(assessment -> assessment.getVerdict() != null)
+                .orElse(false);
     }
 
     private IrisProgrammingExerciseChatSession startPromptingModeForCurrentSession(ProgrammingExercise exercise, User user, boolean inClassQuiz) {
@@ -658,8 +664,6 @@ public class IrisExerciseChatSessionService extends AbstractIrisChatSessionServi
                 () -> requestAndHandleResponsePromptUser(session, Optional.of(IrisPipeEvent.TIMER_RAN_OUT.name()), Optional.empty(), Optional.empty()), expiresAt.toInstant());
 
         quizTimers.put(session.getId(), future);
-
-        log.info("timeLimitQuestion: " + settings.timeLimitQuestion());
 
         return new IrisQuizTimerDTO(expiresAt, settings.timeLimitQuestion());
     }

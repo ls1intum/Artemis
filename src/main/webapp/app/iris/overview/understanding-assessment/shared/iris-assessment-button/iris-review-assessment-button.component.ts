@@ -10,7 +10,7 @@ import { IrisVerdict, IrisVerdictReview } from 'app/iris/shared/entities/iris-ve
 import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { RouterLink } from '@angular/router';
-import { IrisPipeEvent } from 'app/iris/shared/entities/iris-pipe-event-dto.model';
+import { IrisPipeEvent } from 'app/iris/shared/entities/iris-pipe-event.model';
 
 @Component({
     selector: 'jhi-iris-review-assessment-button',
@@ -24,11 +24,13 @@ export class IrisReviewAssessmentButtonComponent {
     readonly participation = input.required<ProgrammingExerciseStudentParticipation>();
     readonly smallButton = input.required<boolean>();
     readonly hideLabelMobile = input(false);
+    readonly inClass = input(false);
 
     protected readonly faBrain = faBrain;
     protected readonly FeatureToggle = FeatureToggle;
 
     protected readonly irisAssessment = computed(() => this.participation().irisAssessment);
+    protected readonly assessmentReviewPath = computed(() => (this.inClass() ? 'iris-in-class-assessments' : 'iris-assessments'));
 
     protected readonly verdictReview = computed(() => this.irisAssessment()?.verdictReview);
     protected readonly verdict = computed(() => this.irisAssessment()?.verdict);

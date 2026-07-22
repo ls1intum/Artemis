@@ -362,6 +362,9 @@ export class NavbarComponent implements OnInit, OnDestroy {
         exam_timeline: 'artemisApp.examTimeline.breadcrumb',
         iris_settings: 'artemisApp.iris.settings.title',
         iris_assessment: 'artemisApp.iris.assessmentReviewOverview.title',
+        iris_assessments: 'artemisApp.iris.assessmentReviewOverview.title',
+        iris_in_class_assessments: 'artemisApp.iris.assessmentReviewOverview.inClassTitle',
+        iris_assessment_details: 'artemisApp.iris.assessmentReview.details',
         generate: 'entity.action.generate',
         build_queue: 'global.menu.admin.sidebar.buildQueue',
         build_overview: 'artemisApp.buildQueue.title',
@@ -592,6 +595,9 @@ export class NavbarComponent implements OnInit, OnDestroy {
                     break;
                 } else if (this.lastRouteUrlSegment === 'repository') {
                     this.addRepositoryViewBreadcrumb(currentPath, segment);
+                    break;
+                } else if ((this.lastRouteUrlSegment === 'iris-assessments' || this.lastRouteUrlSegment === 'iris-in-class-assessments') && segment === 'details') {
+                    this.addTranslationAsCrumb(currentPath, 'iris-assessment-details');
                     break;
                 }
 

@@ -29,8 +29,8 @@ export class IrisAssessmentAttentionCenterComponent {
 
     private courseManagementService = inject(CourseManagementService);
 
-    protected readonly reviewLink = computed(() => ['/course-management', this.course().id, 'iris-assessment']);
-    protected readonly inClassQuizLink = computed(() => ['/course-management', this.course().id, 'iris-assessment-in-class']);
+    protected readonly reviewLink = computed(() => ['/course-management', this.course().id, 'iris-assessments']);
+    protected readonly inClassQuizLink = computed(() => ['/course-management', this.course().id, 'iris-in-class-assessments']);
 
     protected readonly needsAttention = toSignal(
         combineLatest([toObservable(this.course), toObservable(this.assessmentEnabled)]).pipe(

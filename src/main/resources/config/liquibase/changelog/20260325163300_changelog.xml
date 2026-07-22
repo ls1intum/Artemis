@@ -2,13 +2,10 @@
 <databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
                    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
                    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
-    <changeSet id="20260325-1-add-default" author="PeterNiedermoser">
-        <addDefaultValue
-                tableName="iris_session"
-                columnName="in_prompting_mode_pipeline"
-                defaultValueBoolean="false"/>
+    <changeSet id="20260325163300" author="PeterNiedermoser">
         <update tableName="iris_session">
             <column name="in_prompting_mode_pipeline" valueBoolean="false"/>
         </update>
+        <addNotNullConstraint tableName="iris_session" columnName="in_prompting_mode_pipeline" columnDataType="BOOLEAN"/>
     </changeSet>
 </databaseChangeLog>

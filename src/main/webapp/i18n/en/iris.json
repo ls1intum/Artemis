@@ -426,6 +426,7 @@
             },
             "assessmentReviewOverview": {
                 "title": "Iris Assessments",
+                "inClassTitle": "Iris In-class Assessments",
                 "showMissingAssessment": "Missing assessment",
                 "showSuspicious": "Suspicious",
                 "showUnsuspicious": "Unsuspicious",
@@ -437,6 +438,7 @@
             },
             "assessmentReview": {
                 "title": "Iris Assessment Results",
+                "details": "Details",
                 "qaExchange": {
                     "question": "Question",
                     "answer": "Answer",

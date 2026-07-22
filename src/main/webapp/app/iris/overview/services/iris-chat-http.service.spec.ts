@@ -104,7 +104,19 @@ describe('IrisChatHttpService', () => {
                 .pipe(take(1))
                 .subscribe((resp) => expect(resp.body).toBeNull());
 
-            const req = httpMock.expectOne(`api/iris/programming-exercises/${irisExercise.id}/sessions/current/prompting/in-class`);
+            const req = httpMock.expectOne(`api/iris/programming-exercises/${irisExercise.id}/assessment-quiz/in-class/start-current-session`);
+            expect(req.request.method).toBe('PATCH');
+            req.flush(null);
+            tick();
+        }));
+
+        it('should start prompting mode', fakeAsync(() => {
+            service
+                .startPromptingMode(ChatServiceMode.PROGRAMMING_EXERCISE + '/' + irisExercise.id!)
+                .pipe(take(1))
+                .subscribe((resp) => expect(resp.body).toBeNull());
+
+            const req = httpMock.expectOne(`api/iris/programming-exercises/${irisExercise.id}/assessment-quiz/start`);
             expect(req.request.method).toBe('PATCH');
             req.flush(null);
             tick();

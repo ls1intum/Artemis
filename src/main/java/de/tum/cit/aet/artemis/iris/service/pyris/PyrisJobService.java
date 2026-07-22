@@ -243,10 +243,10 @@ public class PyrisJobService {
      */
     public <Job extends PyrisJob> Job getAndAuthenticateJobFromHeaderElseThrow(HttpServletRequest request, Class<Job> jobClass) {
         var authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
-        if (!authHeader.startsWith(Constants.BEARER_PREFIX)) {
+        if (authHeader == null || !authHeader.startsWith(Constants.BEARER_PREFIX)) {
             throw new AccessForbiddenException("No valid token provided");
         }
-        var token = authHeader.substring(7);
+        var token = authHeader.substring(Constants.BEARER_PREFIX.length());
         var job = getJob(token);
         if (job == null) {
             throw new AccessForbiddenException("No valid token provided");

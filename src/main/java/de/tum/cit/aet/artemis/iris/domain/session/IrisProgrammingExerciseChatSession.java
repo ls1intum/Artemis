@@ -23,15 +23,15 @@ public class IrisProgrammingExerciseChatSession extends IrisChatSession {
     private long exerciseId;
 
     @JsonIgnore
-    @Column(name = "in_prompting_mode_pipeline")
+    @Column(name = "in_prompting_mode_pipeline", nullable = false)
     private boolean inPromptingModePipeline = false;
 
     @JsonIgnore
-    @Column(name = "in_class_quiz")
+    @Column(name = "in_class_quiz", nullable = false)
     private boolean inClassQuiz = false;
 
     @JsonIgnore
-    @Column(name = "questions_asked")
+    @Column(name = "questions_asked", nullable = false)
     private int questionsAsked = 0;
 
     public IrisProgrammingExerciseChatSession() {

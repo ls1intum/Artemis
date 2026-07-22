@@ -74,8 +74,8 @@ export class IrisAssessmentQuizService {
         return this.http.get<boolean>(`${this.resourceUrl}/${exerciseId}/assessment-quiz/latest-submission-has-points`);
     }
 
-    isInClassQuizAlreadyDone(exerciseId: number): Observable<boolean> {
-        return this.http.get<boolean>(`${this.resourceUrl}/${exerciseId}/assessment-quiz/in-class/completed`);
+    isQuizAlreadyDone(exerciseId: number, inClass: boolean): Observable<boolean> {
+        return this.http.get<boolean>(`${this.resourceUrl}/${exerciseId}/assessment-quiz/completed`, { params: { inClass } });
     }
 
     clearActiveInClassQuiz(exerciseId: number): void {

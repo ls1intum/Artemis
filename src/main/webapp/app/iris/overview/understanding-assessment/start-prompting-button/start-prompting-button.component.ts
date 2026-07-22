@@ -1,15 +1,16 @@
 import { ChangeDetectionStrategy, Component, computed, inject, input, signal } from '@angular/core';
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { faBrain } from '@fortawesome/free-solid-svg-icons';
-import { merge, of, switchMap, take } from 'rxjs';
+import { catchError, of, switchMap, take } from 'rxjs';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ExerciseActionButtonComponent } from 'app/shared-ui/components/buttons/exercise-action-button/exercise-action-button.component';
 import { FeatureToggleDirective } from 'app/foundation/feature-toggle/feature-toggle.directive';
+import { IrisAssessmentQuizService } from 'app/iris/overview/services/iris-assessment-quiz.service';
 import { IrisChatService } from 'app/iris/overview/services/iris-chat.service';
 import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
-import { IrisPipeEvent } from 'app/iris/shared/entities/iris-pipe-event-dto.model';
+import { IrisPipeEvent } from 'app/iris/shared/entities/iris-pipe-event.model';
 
 @Component({
     selector: 'jhi-start-prompting-button',
@@ -19,6 +20,7 @@ import { IrisPipeEvent } from 'app/iris/shared/entities/iris-pipe-event-dto.mode
 })
 export class IrisStartPromptingButtonComponent {
     private readonly irisChatService = inject(IrisChatService);
+    private readonly assessmentQuizService = inject(IrisAssessmentQuizService);
 
     readonly exercise = input.required<Exercise>();
     readonly participation = input<StudentParticipation>();
@@ -29,27 +31,63 @@ export class IrisStartPromptingButtonComponent {
     protected readonly faBrain = faBrain;
 
     protected readonly isPromptingMode = signal(false);
+    private readonly exerciseId = computed(() => this.exercise().id);
 
-    private readonly initialEvent$ = toObservable(this.participation).pipe(
-        switchMap((participation) => {
-            if (participation?.id === undefined) {
-                return of(undefined);
-            }
+    private readonly latestSubmissionHasPoints = toSignal(
+        toObservable(this.exerciseId).pipe(
+            switchMap((exerciseId) => {
+                if (exerciseId === undefined) {
+                    return of(false);
+                }
 
-            return this.irisChatService.loadLatestEvent(participation.id);
-        }),
+                return this.assessmentQuizService.latestSubmissionHasPoints(exerciseId).pipe(catchError(() => of(false)));
+            }),
+        ),
+        { initialValue: false },
     );
 
-    protected readonly latestEvent = toSignal(merge(this.initialEvent$, this.irisChatService.currentLatestEvent()), { initialValue: undefined });
+    protected readonly latestEvent = toSignal(this.irisChatService.currentLatestEvent(), { initialValue: undefined });
+    private readonly hasBuildWithPoints = computed(() => this.latestEvent() === IrisPipeEvent.BUILD_WITH_POINTS);
+    private readonly promptingFinished = computed(() => this.latestEvent() === IrisPipeEvent.PROMPTING_FINISHED);
 
-    protected readonly canBeStarted = computed(() => !this.isPromptingMode() && this.latestEvent() === IrisPipeEvent.BUILD_WITH_POINTS);
+    private readonly quizAlreadyDoneFromServer = toSignal(
+        toObservable(this.exerciseId).pipe(
+            switchMap((exerciseId) => {
+                if (exerciseId === undefined) {
+                    return of(false);
+                }
+
+                return this.assessmentQuizService.isQuizAlreadyDone(exerciseId, false).pipe(catchError(() => of(false)));
+            }),
+        ),
+        { initialValue: false },
+    );
+
+    private readonly inClassPromptingModeStarted = toSignal(
+        toObservable(this.exerciseId).pipe(
+            switchMap((exerciseId) => {
+                if (exerciseId === undefined) {
+                    return of(false);
+                }
+
+                return this.assessmentQuizService.currentStartedInClassQuizForExercise(exerciseId);
+            }),
+        ),
+        { initialValue: false },
+    );
+
+    protected readonly quizAlreadyDone = computed(() => (!this.hasBuildWithPoints() && this.quizAlreadyDoneFromServer()) || (this.isPromptingMode() && this.promptingFinished()));
+
+    protected readonly canBeStarted = computed(
+        () => (this.hasBuildWithPoints() || this.latestSubmissionHasPoints()) && !this.quizAlreadyDone() && !this.isPromptingMode() && !this.inClassPromptingModeStarted(),
+    );
 
     protected readonly buttonLabel = computed(() => {
-        if (this.canBeStarted()) {
-            return 'artemisApp.exerciseActions.prompting.start';
-        } else if (this.latestEvent() === IrisPipeEvent.PROMPTING_FINISHED) {
+        if (this.quizAlreadyDone()) {
             return 'artemisApp.exerciseActions.prompting.finished';
-        } else if (this.isPromptingMode()) {
+        } else if (this.canBeStarted()) {
+            return 'artemisApp.exerciseActions.prompting.start';
+        } else if (this.isPromptingMode() || this.inClassPromptingModeStarted()) {
             return 'artemisApp.exerciseActions.prompting.currently';
         } else {
             return 'artemisApp.exerciseActions.prompting.noSubmission';
@@ -62,9 +100,6 @@ export class IrisStartPromptingButtonComponent {
         }
 
         this.isPromptingMode.set(true);
-
         this.irisChatService.startPromptingMode().pipe(take(1)).subscribe();
     }
-
-    protected readonly IrisPipeEvent = IrisPipeEvent;
 }

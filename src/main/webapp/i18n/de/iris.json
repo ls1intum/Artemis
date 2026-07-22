@@ -426,6 +426,7 @@
             },
             "assessmentReviewOverview": {
                 "title": "Iris Bewertungen",
+                "inClassTitle": "Iris Präsenzbewertungen",
                 "showMissingAssessment": "Fehlende Bewertung",
                 "showSuspicious": "Auffällig",
                 "showUnsuspicious": "Unauffällig",
@@ -437,6 +438,7 @@
             },
             "assessmentReview": {
                 "title": "Iris Bewertungsergebnisse",
+                "details": "Details",
                 "qaExchange": {
                     "question": "Frage",
                     "answer": "Antwort",

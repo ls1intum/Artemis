@@ -98,9 +98,7 @@ public class PyrisInternalStatusUpdateResource {
     public ResponseEntity<Void> setCompetencyExtractionJobStatus(@PathVariable String runId, @RequestBody PyrisCompetencyStatusUpdateDTO statusUpdateDTO,
             HttpServletRequest request) {
         var job = pyrisJobService.getAndAuthenticateJobFromHeaderElseThrow(request, CompetencyExtractionJob.class);
-        if (!Objects.equals(job.jobId(), runId)) {
-            throw new ConflictException("Run ID in URL does not match run ID in request body", "Job", "runIdMismatch");
-        }
+        throwIfRunIdMismatch(runId, job);
 
         pyrisStatusUpdateService.handleStatusUpdate(job, statusUpdateDTO);
 
@@ -203,9 +201,7 @@ public class PyrisInternalStatusUpdateResource {
     @Internal
     public ResponseEntity<Void> setStatusOfIngestionJob(@PathVariable String runId, @RequestBody PyrisLectureIngestionStatusUpdateDTO statusUpdateDTO, HttpServletRequest request) {
         PyrisJob job = pyrisJobService.getAndAuthenticateJobFromHeaderElseThrow(request, PyrisJob.class);
-        if (!job.jobId().equals(runId)) {
-            throw new ConflictException("Run ID in URL does not match run ID in request body", "Job", "runIdMismatch");
-        }
+        throwIfRunIdMismatch(runId, job);
         if (!(job instanceof LectureIngestionWebhookJob lectureIngestionWebhookJob)) {
             throw new ConflictException("Run ID is not an ingestion job", "Job", "invalidRunId");
         }
@@ -228,9 +224,7 @@ public class PyrisInternalStatusUpdateResource {
     @Internal
     public ResponseEntity<Void> setStatusOfFaqIngestionJob(@PathVariable String runId, @RequestBody PyrisFaqIngestionStatusUpdateDTO statusUpdateDTO, HttpServletRequest request) {
         PyrisJob job = pyrisJobService.getAndAuthenticateJobFromHeaderElseThrow(request, PyrisJob.class);
-        if (!job.jobId().equals(runId)) {
-            throw new ConflictException("Run ID in URL does not match run ID in request body", "Job", "runIdMismatch");
-        }
+        throwIfRunIdMismatch(runId, job);
         if (!(job instanceof FaqIngestionWebhookJob faqIngestionWebhookJob)) {
             throw new ConflictException("Run ID is not an ingestion job", "Job", "invalidRunId");
         }

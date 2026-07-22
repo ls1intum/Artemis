@@ -137,7 +137,14 @@
                                     <fa-icon class="me-1" [icon]="faFolderOpen" [fixedWidth]="true" />
                                     Online editor
                                 </a>
-                                <jhi-iris-review-assessment-button class="me-1" [smallButton]="true" [course]="course()" [exercise]="exercise()" [participation]="value" />
+                                <jhi-iris-review-assessment-button
+                                    class="me-1"
+                                    [smallButton]="true"
+                                    [course]="course()"
+                                    [exercise]="exercise()"
+                                    [participation]="value"
+                                    [inClass]="showStartInClassQuizButton()"
+                                />
                             </div>
                         </div>
                     </ng-template>

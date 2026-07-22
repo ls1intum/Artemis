@@ -125,6 +125,7 @@ public class IrisSessionService {
      *
      * @param message The message to send
      * @param session The session to send the message for
+     * @param event   The optional event to forward with the websocket payload
      * @param <S>     The type of the session
      * @throws BadRequestException If the session type is invalid
      */

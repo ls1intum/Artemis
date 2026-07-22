@@ -58,7 +58,7 @@ import { ScienceService } from 'app/shared/science/science.service';
 import { hasResults } from 'app/exercise/participation/participation.utils';
 import { CompetencyContributionComponent } from 'app/atlas/shared/competency-contribution/competency-contribution.component';
 import { IrisStartPromptingButtonComponent } from 'app/iris/overview/understanding-assessment/start-prompting-button/start-prompting-button.component';
-import { IrisPipeEvent } from 'app/iris/shared/entities/iris-pipe-event-dto.model';
+import { IrisPipeEvent } from 'app/iris/shared/entities/iris-pipe-event.model';
 import { IrisStartInClassQuizButtonComponent } from 'app/iris/overview/understanding-assessment/start-in-class-quiz-button/start-in-class-quiz-button.component';
 
 interface InstructorActionItem {

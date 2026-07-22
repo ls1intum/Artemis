@@ -3,9 +3,8 @@ import { Injectable, inject } from '@angular/core';
 import { ActivatedRouteSnapshot, Resolve } from '@angular/router';
 import { Observable, forkJoin, map } from 'rxjs';
 
-import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
-import { Course } from 'app/core/course/shared/entities/course.model';
-import { ExerciseService } from 'app/exercise/services/exercise.service';
+import { CourseManagementService } from 'app/course/manage/services/course-management.service';
+import { Course } from 'app/course/shared/entities/course.model';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { IrisAssessmentReviewService } from 'app/iris/overview/services/iris-assessment-review.service';
 import { IrisAssessment } from 'app/iris/shared/entities/iris-assessment.model';
@@ -22,28 +21,25 @@ export interface IrisAssessmentReviewResolvedData {
 @Injectable({ providedIn: 'root' })
 export class IrisAssessmentReviewResolver implements Resolve<IrisAssessmentReviewResolvedData> {
     private readonly courseService = inject(CourseManagementService);
-    private readonly exerciseService = inject(ExerciseService);
     private readonly irisAssessmentReviewService = inject(IrisAssessmentReviewService);
 
     resolve(route: ActivatedRouteSnapshot): Observable<IrisAssessmentReviewResolvedData> {
         const courseId = this.getRequiredId(route, 'courseId');
-        const exerciseId = this.getRequiredId(route, 'exerciseId');
         const assessmentId = this.getRequiredId(route, 'assessmentId');
 
         return forkJoin({
             courseResponse: this.courseService.find(courseId),
-            exerciseResponse: this.exerciseService.find(exerciseId),
             assessmentResponse: this.irisAssessmentReviewService.findWithPoints(assessmentId),
             rowsResponse: this.irisAssessmentReviewService.getAssessmentChat(assessmentId),
         }).pipe(
-            map(({ courseResponse, exerciseResponse, assessmentResponse, rowsResponse }) => {
+            map(({ courseResponse, assessmentResponse, rowsResponse }) => {
                 const course = this.requireBody(courseResponse, 'Course');
-                const exercise = this.requireBody(exerciseResponse, 'Exercise');
                 const assessment = this.requireBody(assessmentResponse, 'Iris assessment');
+                const exercise = assessment.exercise;
                 const rows = this.requireBody(rowsResponse, 'Assessment chat');
 
-                if (exercise.type !== ExerciseType.PROGRAMMING) {
-                    throw new Error(`Exercise ${exerciseId} is not a programming exercise`);
+                if (!exercise || exercise.type !== ExerciseType.PROGRAMMING) {
+                    throw new Error(`Iris assessment ${assessmentId} is not linked to a programming exercise`);
                 }
 
                 return {

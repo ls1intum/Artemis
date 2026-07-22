@@ -1,7 +1,3 @@
-export class IrisPipeEventDTO {
-    event: IrisPipeEvent;
-}
-
 export enum IrisPipeEvent {
     BUILD_WITH_POINTS = 'BUILD_WITH_POINTS',
     USER_INITIATES_PROMPTING = 'USER_INITIATES_PROMPTING',

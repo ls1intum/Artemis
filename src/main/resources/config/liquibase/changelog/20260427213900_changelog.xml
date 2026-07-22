@@ -2,13 +2,21 @@
 <databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
                    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
                    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
-    <changeSet id="20260427-2-add-default" author="PeterNiedermoser">
+    <changeSet id="20260427213900" author="PeterNiedermoser">
 
         <addColumn tableName="iris_sub_settings">
-            <column name="min_questions" type="tinyint unsigned" defaultValueNumeric="3"/>
-            <column name="max_questions" type="tinyint unsigned" defaultValueNumeric="5"/>
-            <column name="time_limit_question" type="int unsigned" defaultValueNumeric="20"/>
-            <column name="time_limit_in_class" type="int unsigned" defaultValueNumeric="15"/>
+            <column name="min_questions" type="tinyint unsigned" defaultValueNumeric="3">
+                <constraints nullable="false"/>
+            </column>
+            <column name="max_questions" type="tinyint unsigned" defaultValueNumeric="5">
+                <constraints nullable="false"/>
+            </column>
+            <column name="time_limit_question" type="int unsigned" defaultValueNumeric="20">
+                <constraints nullable="false"/>
+            </column>
+            <column name="time_limit_in_class" type="int unsigned" defaultValueNumeric="15">
+                <constraints nullable="false"/>
+            </column>
         </addColumn>
 
         <addColumn tableName="iris_settings">
@@ -23,7 +31,9 @@
                 onDelete="CASCADE"/>
 
         <addColumn tableName="iris_session">
-            <column name="questions_asked" type="tinyint unsigned" defaultValueNumeric="0"/>
+            <column name="questions_asked" type="tinyint unsigned" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
         </addColumn>
 
         <update tableName="iris_session">

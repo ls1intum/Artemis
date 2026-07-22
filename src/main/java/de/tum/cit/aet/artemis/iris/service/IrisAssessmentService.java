@@ -3,17 +3,13 @@ package de.tum.cit.aet.artemis.iris.service;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_IRIS;
 
 import java.util.ArrayList;
-import java.util.Objects;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
-import de.tum.cit.aet.artemis.assessment.repository.StudentScoreRepository;
-import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
@@ -60,12 +56,9 @@ public class IrisAssessmentService {
 
     private final UserRepository userRepository;
 
-    private final StudentScoreRepository studentScoreRepository;
-
     public IrisAssessmentService(IrisAssessmentRepository irisAssessmentRepository, ProgrammingExerciseRepository programmingExerciseRepository,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, IrisSettingsService irisSettingsService,
-            AuthorizationCheckService authCheckService, IrisExerciseChatSessionRepository irisExerciseChatSessionRepository, UserRepository userRepository,
-            StudentScoreRepository studentScoreRepository) {
+            AuthorizationCheckService authCheckService, IrisExerciseChatSessionRepository irisExerciseChatSessionRepository, UserRepository userRepository) {
         this.irisAssessmentRepository = irisAssessmentRepository;
         this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
         this.irisSettingsService = irisSettingsService;
@@ -73,7 +66,6 @@ public class IrisAssessmentService {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.irisExerciseChatSessionRepository = irisExerciseChatSessionRepository;
         this.userRepository = userRepository;
-        this.studentScoreRepository = studentScoreRepository;
     }
 
     public void saveAndHandleVerdict(User user, Exercise exercise, IrisVerdictDTO verdictDTO) {
@@ -108,10 +100,8 @@ public class IrisAssessmentService {
         assessment.setReasoning(reasonings);
     }
 
-    public boolean assessmentAttentionNeededInCourse(Course course) {
-        return programmingExerciseRepository.findAllWithStudentParticipationsByCourseId(course.getId()).stream().flatMap(exercise -> exercise.getStudentParticipations().stream())
-                .map(p -> ((ProgrammingExerciseStudentParticipation) p).getIrisAssessment())
-                .anyMatch(a -> a != null && a.getVerdictReview() == null && a.getVerdict() == IrisVerdict.SUSPICIOUS);
+    public boolean assessmentAttentionNeededInCourse(long courseId) {
+        return irisAssessmentRepository.existsByCourseIdAndVerdictAndVerdictReviewIsNull(courseId, IrisVerdict.SUSPICIOUS);
     }
 
     public void resetVerdictAndReasoning(User user, Exercise exercise) {
@@ -121,6 +111,12 @@ public class IrisAssessmentService {
     public void resetVerdictAndReasoning(User user, Exercise exercise, boolean inClass) {
         IrisAssessment assessment = findOrCreateAssessment(user, exercise, inClass, false);
 
+        assessment.setVerdict(null);
+        assessment.setReasoning(new ArrayList<>());
+        irisAssessmentRepository.save(assessment);
+    }
+
+    public void resetVerdictAndReasoning(IrisAssessment assessment) {
         assessment.setVerdict(null);
         assessment.setReasoning(new ArrayList<>());
         irisAssessmentRepository.save(assessment);
@@ -166,17 +162,6 @@ public class IrisAssessmentService {
         irisAssessmentRepository.save(assessment);
     }
 
-    public void saveNewLastEvent(String event, User user, Exercise exercise) {
-        saveNewLastEvent(event, user, exercise, false);
-    }
-
-    public void saveNewLastEvent(String event, User user, Exercise exercise, boolean inClass) {
-        IrisAssessment assessment = findOrCreateAssessment(user, exercise, inClass, false);
-        assessment.setLastEvent(IrisPipeEvent.valueOf(event));
-        irisAssessmentRepository.save(assessment);
-
-    }
-
     public void handleEventFromIris(TrackedSessionBasedPyrisJob job, PyrisChatStatusUpdateDTO statusUpdate) {
         if (statusUpdate.event() == null) {
             return;
@@ -192,7 +177,6 @@ public class IrisAssessmentService {
         }
 
         var inClassQuiz = session.isInClassQuiz();
-        saveNewLastEvent(statusUpdate.event(), user, exercise, inClassQuiz);
 
         switch (IrisPipeEvent.valueOf(statusUpdate.event())) {
             case IrisPipeEvent.PROMPTING_FINISHED:
@@ -264,23 +248,19 @@ public class IrisAssessmentService {
 
     }
 
-    @Transactional
     public void deleteInClassAssessmentsForExercise(ProgrammingExercise exercise) {
-        var participations = programmingExerciseStudentParticipationRepository
-                .findAllWithEagerSubmissionsAndEagerResultsAndEagerStudentAndEagerAssessmentInClassByExerciseId(exercise.getId());
-        var assessments = participations.stream().map(ProgrammingExerciseStudentParticipation::getIrisAssessmentInClass).filter(Objects::nonNull).toList();
-
-        if (assessments.isEmpty()) {
+        var assessmentIds = programmingExerciseStudentParticipationRepository.findIrisAssessmentInClassIdsByExerciseId(exercise.getId());
+        if (assessmentIds.isEmpty()) {
             return;
         }
 
-        participations.forEach(participation -> participation.setIrisAssessmentInClass(null));
-        programmingExerciseStudentParticipationRepository.saveAll(participations);
-        irisAssessmentRepository.deleteAll(assessments);
+        programmingExerciseStudentParticipationRepository.unsetIrisAssessmentInClassByExerciseId(exercise.getId());
+        irisAssessmentRepository.deleteAllByIdInBulk(assessmentIds);
     }
 
     private IrisAssessment findOrCreateAssessment(User user, Exercise exercise, boolean inClass, boolean withReasoning) {
-        var participation = programmingExerciseStudentParticipationRepository.findByExerciseIdAndStudentLogin(exercise.getId(), user.getLogin()).orElseThrow();
+        var participation = programmingExerciseStudentParticipationRepository.findWithIrisAssessmentByExerciseIdAndStudentLogin(exercise.getId(), user.getLogin(), inClass)
+                .orElseThrow();
         var assessment = inClass ? participation.getIrisAssessmentInClass() : participation.getIrisAssessment();
 
         if (assessment == null) {

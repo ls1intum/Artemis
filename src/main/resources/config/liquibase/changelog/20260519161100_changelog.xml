@@ -2,10 +2,12 @@
 <databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
                    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
                    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
-    <changeSet id="20260519-1-add-column" author="PeterNiedermoser">
+    <changeSet id="20260519161100" author="PeterNiedermoser">
 
         <addColumn tableName="iris_message">
-            <column name="in_prompting_mode" type="boolean" defaultValueBoolean="false"/>
+            <column name="in_prompting_mode" type="boolean" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
         </addColumn>
     </changeSet>
 </databaseChangeLog>

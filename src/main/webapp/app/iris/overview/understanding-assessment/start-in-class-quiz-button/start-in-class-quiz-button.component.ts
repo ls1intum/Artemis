@@ -9,7 +9,7 @@ import { StudentParticipation } from 'app/exercise/shared/entities/participation
 import { IrisAssessmentQuizService } from 'app/iris/overview/services/iris-assessment-quiz.service';
 import { IrisChatService } from 'app/iris/overview/services/iris-chat.service';
 import { QuizTimerBarComponent } from 'app/iris/overview/understanding-assessment/quiz-timer-bar/quiz-timer-bar.component';
-import { IrisPipeEvent } from 'app/iris/shared/entities/iris-pipe-event-dto.model';
+import { IrisPipeEvent } from 'app/iris/shared/entities/iris-pipe-event.model';
 import { ExerciseActionButtonComponent } from 'app/shared-ui/components/buttons/exercise-action-button/exercise-action-button.component';
 import { FeatureToggleDirective } from 'app/foundation/feature-toggle/feature-toggle.directive';
 import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';
@@ -35,7 +35,7 @@ export class IrisStartInClassQuizButtonComponent {
     protected readonly FeatureToggle = FeatureToggle;
     protected readonly faBrain = faBrain;
 
-    protected readonly isPromptingMode = signal(false);
+    protected readonly isInClassPromptingMode = signal(false);
 
     private readonly exerciseId = computed(() => this.exercise().id);
     private readonly latestEvent = toSignal(this.irisChatService.currentLatestEvent(), { initialValue: undefined });
@@ -60,13 +60,15 @@ export class IrisStartInClassQuizButtonComponent {
                     return of(false);
                 }
 
-                return this.assessmentQuizService.isInClassQuizAlreadyDone(exerciseId).pipe(catchError(() => of(false)));
+                return this.assessmentQuizService.isQuizAlreadyDone(exerciseId, true).pipe(catchError(() => of(false)));
             }),
         ),
         { initialValue: false },
     );
 
-    protected readonly quizAlreadyDone = computed(() => this.quizAlreadyDoneFromServer() || (this.isPromptingMode() && this.latestEvent() === IrisPipeEvent.PROMPTING_FINISHED));
+    protected readonly quizAlreadyDone = computed(
+        () => this.quizAlreadyDoneFromServer() || (this.isInClassPromptingMode() && this.latestEvent() === IrisPipeEvent.PROMPTING_FINISHED),
+    );
 
     protected readonly activeInClassQuiz = toSignal(
         toObservable(this.exerciseId).pipe(
@@ -89,7 +91,7 @@ export class IrisStartInClassQuizButtonComponent {
 
     protected readonly resetStartedInClassQuizEffect = effect(() => {
         const exerciseId = this.exerciseId();
-        if (exerciseId !== undefined && this.isPromptingMode() && this.latestEvent() === IrisPipeEvent.PROMPTING_FINISHED) {
+        if (exerciseId !== undefined && this.isInClassPromptingMode() && this.latestEvent() === IrisPipeEvent.PROMPTING_FINISHED) {
             this.assessmentQuizService.setInClassPromptingModeStarted(exerciseId, false);
         }
     });
@@ -123,12 +125,12 @@ export class IrisStartInClassQuizButtonComponent {
         });
     });
 
-    protected readonly canBeStarted = computed(() => this.latestSubmissionHasPoints() && !this.quizAlreadyDone() && !this.isPromptingMode());
+    protected readonly canBeStarted = computed(() => this.latestSubmissionHasPoints() && !this.quizAlreadyDone() && !this.isInClassPromptingMode());
 
     protected readonly buttonLabel = computed(() => {
         if (this.quizAlreadyDone()) {
             return 'artemisApp.exerciseActions.prompting.finished';
-        } else if (this.isPromptingMode()) {
+        } else if (this.isInClassPromptingMode()) {
             return 'artemisApp.exerciseActions.prompting.currently';
         } else if (!this.latestSubmissionHasPoints()) {
             return 'artemisApp.exerciseActions.prompting.noSubmission';
@@ -147,7 +149,7 @@ export class IrisStartInClassQuizButtonComponent {
             return;
         }
 
-        this.isPromptingMode.set(true);
+        this.isInClassPromptingMode.set(true);
         this.assessmentQuizService.setInClassPromptingModeStarted(exerciseId, true);
 
         this.irisChatService
@@ -155,7 +157,7 @@ export class IrisStartInClassQuizButtonComponent {
             .pipe(take(1))
             .subscribe({
                 error: () => {
-                    this.isPromptingMode.set(false);
+                    this.isInClassPromptingMode.set(false);
                     this.assessmentQuizService.setInClassPromptingModeStarted(exerciseId, false);
                 },
             });

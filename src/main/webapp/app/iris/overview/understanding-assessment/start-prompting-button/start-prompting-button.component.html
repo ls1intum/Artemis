@@ -4,7 +4,7 @@
         jhi-exercise-action-button
         [id]="'start-prompting-' + exercise().id!"
         [buttonIcon]="faBrain"
-        [class.btn-success]="latestEvent() === IrisPipeEvent.PROMPTING_FINISHED"
+        [class.btn-success]="quizAlreadyDone()"
         [jhiFeatureToggle]="FeatureToggle.PromptingMode"
         [buttonLabel]="buttonLabel() | artemisTranslate"
         [smallButton]="smallButtons()"

@@ -1,180 +1,107 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
                    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
-                                       https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
 
-    <changeSet id="20260427-add-iris-assessment-table"
-               author="PeterNiedermoser">
-
-        <!-- ===================== -->
-        <!-- TABLE: iris_assessment -->
-        <!-- ===================== -->
+    <changeSet id="20260427141900" author="PeterNiedermoser">
         <createTable tableName="iris_assessment">
             <column name="id" type="BIGINT" autoIncrement="true">
                 <constraints primaryKey="true" nullable="false"/>
             </column>
-
-            <column name="student_id" type="BIGINT"/>
-            <column name="exercise_id" type="BIGINT"/>
+            <column name="student_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="exercise_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
         </createTable>
 
-        <createIndex
-                indexName="idx_iris_assessment_student_id"
-                tableName="iris_assessment">
+        <sql dbms="mysql,h2">
+            ALTER TABLE iris_assessment
+                ADD verdict ENUM('SUSPICIOUS', 'UNSUSPICIOUS'),
+                ADD verdict_review ENUM('ACCEPTED', 'REJECTED');
+        </sql>
+
+        <sql dbms="postgresql">
+            ALTER TABLE iris_assessment
+                ADD verdict TEXT,
+                ADD verdict_review TEXT;
+        </sql>
+
+        <createIndex indexName="idx_iris_assessment_student_id" tableName="iris_assessment">
             <column name="student_id"/>
         </createIndex>
 
-        <createIndex
-                indexName="idx_iris_assessment_exercise_id"
-                tableName="iris_assessment">
+        <createIndex indexName="idx_iris_assessment_exercise_verdict_review" tableName="iris_assessment">
             <column name="exercise_id"/>
+            <column name="verdict"/>
+            <column name="verdict_review"/>
         </createIndex>
 
-        <addForeignKeyConstraint
-                baseTableName="iris_assessment"
-                baseColumnNames="student_id"
-                referencedTableName="jhi_user"
-                referencedColumnNames="id"
-                constraintName="fk_iris_assessment_student_id"
-                deferrable="false"
-                initiallyDeferred="false"
-                onDelete="RESTRICT"
-                onUpdate="RESTRICT"
-                validate="true"/>
+        <addForeignKeyConstraint baseTableName="iris_assessment"
+                                 baseColumnNames="student_id"
+                                 referencedTableName="jhi_user"
+                                 referencedColumnNames="id"
+                                 constraintName="fk_iris_assessment_student_id"
+                                 onDelete="RESTRICT"
+                                 onUpdate="RESTRICT"/>
 
-        <addForeignKeyConstraint
-                baseTableName="iris_assessment"
-                baseColumnNames="exercise_id"
-                referencedTableName="exercise"
-                referencedColumnNames="id"
-                constraintName="fk_iris_assessment_exercise_id"
-                deferrable="false"
-                initiallyDeferred="false"
-                onDelete="RESTRICT"
-                onUpdate="RESTRICT"
-                validate="true"/>
+        <addForeignKeyConstraint baseTableName="iris_assessment"
+                                 baseColumnNames="exercise_id"
+                                 referencedTableName="exercise"
+                                 referencedColumnNames="id"
+                                 constraintName="fk_iris_assessment_exercise_id"
+                                 onDelete="CASCADE"
+                                 onUpdate="RESTRICT"/>
+    </changeSet>
 
-
-        <!-- ===================== -->
-        <!-- TABLE: iris_reasoning -->
-        <!-- ===================== -->
+    <changeSet id="20260427141901" author="PeterNiedermoser">
         <createTable tableName="iris_reasoning">
             <column name="iris_assessment_id" type="BIGINT">
                 <constraints nullable="false"/>
             </column>
-
-            <column name="reason" type="VARCHAR(255)">
+            <column name="position" type="INT">
                 <constraints nullable="false"/>
             </column>
-
-            <column name="position" type="INT">
+            <column name="reason" type="TEXT">
                 <constraints nullable="false"/>
             </column>
         </createTable>
 
+        <addPrimaryKey tableName="iris_reasoning"
+                       columnNames="iris_assessment_id, position"
+                       constraintName="pk_iris_reasoning"/>
 
-        <!-- ===================== -->
-        <!-- PRIMARY KEY -->
-        <!-- ===================== -->
-        <addPrimaryKey
-                tableName="iris_reasoning"
-                columnNames="iris_assessment_id, reason"
-                constraintName="pk_iris_reasoning"/>
+        <addForeignKeyConstraint baseTableName="iris_reasoning"
+                                 baseColumnNames="iris_assessment_id"
+                                 referencedTableName="iris_assessment"
+                                 referencedColumnNames="id"
+                                 constraintName="fk_iris_reasoning_assessment"
+                                 onDelete="CASCADE"/>
+    </changeSet>
 
-
-        <!-- ===================== -->
-        <!-- FOREIGN KEY -->
-        <!-- ===================== -->
-        <addForeignKeyConstraint
-                baseTableName="iris_reasoning"
-                baseColumnNames="iris_assessment_id"
-                referencedTableName="iris_assessment"
-                referencedColumnNames="id"
-                constraintName="fk_iris_reasoning_assessment"/>
-
-
-        <!-- ===================== -->
-        <!-- UNIQUE CONSTRAINT -->
-        <!-- ===================== -->
-        <addUniqueConstraint
-                tableName="iris_reasoning"
-                columnNames="iris_assessment_id, position"
-                constraintName="uk_iris_reasoning_position"/>
-
-
-        <!-- ===================== -->
-        <!-- INDEX -->
-        <!-- ===================== -->
-        <createIndex
-                tableName="iris_reasoning"
-                indexName="idx_iris_reasoning_assessment">
-            <column name="iris_assessment_id"/>
-        </createIndex>
-
-
-        <!-- ===================== -->
-        <!-- DB-SPECIFIC ENUM COLUMNS -->
-        <!-- ===================== -->
-
-        <!-- MySQL / H2 -->
-        <sql dbms="mysql,h2">
-            ALTER TABLE iris_assessment
-                ADD verdict_review ENUM(
-                    'ACCEPTED',
-                    'REJECTED'
-                ),
-                ADD verdict ENUM(
-                    'SUSPICIOUS',
-                    'UNSUSPICIOUS'
-                ),
-                ADD last_event ENUM(
-                    'BUILD_WITH_POINTS',
-                    'USER_INITIATES_PROMPTING',
-                    'FIRST_QUESTION',
-                    'NEXT_QUESTION',
-                    'PROMPTING_FINISHED'
-                );
-        </sql>
-
-        <!-- PostgreSQL -->
-        <sql dbms="postgresql">
-            ALTER TABLE iris_assessment
-                ADD verdict_review VARCHAR(20),
-                ADD verdict VARCHAR(20),
-                ADD last_event VARCHAR(30);
-        </sql>
-
-
-        <!-- ===================== -->
-        <!-- ADD FKs FOR EXISTING TABLES -->
-        <!-- ===================== -->
-
-        <!-- PARTICIPATION -->
+    <changeSet id="20260427141902" author="PeterNiedermoser">
         <addColumn tableName="participation">
             <column name="iris_assessment_id" type="BIGINT">
-                <constraints nullable="true" unique="true"/>
+                <constraints unique="true"/>
             </column>
-
             <column name="iris_assessment_in_class_id" type="BIGINT">
-                <constraints nullable="true" unique="true"/>
+                <constraints unique="true"/>
             </column>
         </addColumn>
 
-        <addForeignKeyConstraint
-                baseTableName="participation"
-                baseColumnNames="iris_assessment_id"
-                referencedTableName="iris_assessment"
-                referencedColumnNames="id"
-                constraintName="fk_participation_iris_assessment"/>
+        <addForeignKeyConstraint baseTableName="participation"
+                                 baseColumnNames="iris_assessment_id"
+                                 referencedTableName="iris_assessment"
+                                 referencedColumnNames="id"
+                                 constraintName="fk_participation_iris_assessment"
+                                 onDelete="SET NULL"/>
 
-        <addForeignKeyConstraint
-                baseTableName="participation"
-                baseColumnNames="iris_assessment_in_class_id"
-                referencedTableName="iris_assessment"
-                referencedColumnNames="id"
-                constraintName="fk_participation_iris_assessment_in_class"/>
-
+        <addForeignKeyConstraint baseTableName="participation"
+                                 baseColumnNames="iris_assessment_in_class_id"
+                                 referencedTableName="iris_assessment"
+                                 referencedColumnNames="id"
+                                 constraintName="fk_participation_iris_assessment_in_class"
+                                 onDelete="SET NULL"/>
     </changeSet>
-
 </databaseChangeLog>

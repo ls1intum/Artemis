@@ -11,6 +11,7 @@ describe('IrisAssessmentQuizService', () => {
     let httpMock: HttpTestingController;
 
     const exerciseId = 42;
+    const completedUrl = `api/iris/programming-exercises/${exerciseId}/assessment-quiz/completed`;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -70,6 +71,18 @@ describe('IrisAssessmentQuizService', () => {
         subscription.unsubscribe();
     });
 
+    it('should expose whether in-class prompting mode has started for an exercise', () => {
+        const startedInClassQuizzes: boolean[] = [];
+        const subscription = service.currentStartedInClassQuizForExercise(exerciseId).subscribe((started) => startedInClassQuizzes.push(started));
+
+        service.setInClassPromptingModeStarted(exerciseId, true);
+        service.setInClassPromptingModeStarted(exerciseId, false);
+
+        expect(startedInClassQuizzes).toEqual([false, true, false]);
+
+        subscription.unsubscribe();
+    });
+
     it('should check whether the latest submission has points', () => {
         service.latestSubmissionHasPoints(exerciseId).subscribe((hasPoints) => expect(hasPoints).toBeTrue());
 
@@ -79,10 +92,18 @@ describe('IrisAssessmentQuizService', () => {
     });
 
     it('should check whether the in-class quiz is already done', () => {
-        service.isInClassQuizAlreadyDone(exerciseId).subscribe((quizAlreadyDone) => expect(quizAlreadyDone).toBeTrue());
+        service.isQuizAlreadyDone(exerciseId, true).subscribe((quizAlreadyDone) => expect(quizAlreadyDone).toBeTrue());
 
-        const request = httpMock.expectOne(`api/iris/programming-exercises/${exerciseId}/assessment-quiz/in-class/completed`);
+        const request = httpMock.expectOne((req) => req.url === completedUrl && req.params.get('inClass') === 'true');
         expect(request.request.method).toBe('GET');
         request.flush(true);
+    });
+
+    it('should check whether the regular quiz is already done', () => {
+        service.isQuizAlreadyDone(exerciseId, false).subscribe((quizAlreadyDone) => expect(quizAlreadyDone).toBeFalse());
+
+        const request = httpMock.expectOne((req) => req.url === completedUrl && req.params.get('inClass') === 'false');
+        expect(request.request.method).toBe('GET');
+        request.flush(false);
     });
 });

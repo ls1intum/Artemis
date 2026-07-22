@@ -29,7 +29,8 @@ import { parseJson } from 'app/foundation/util/json.util';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { IrisActivityItem, IrisRunState, IrisStatusError } from 'app/iris/shared/entities/iris-activity.model';
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
-import { IrisPipeEvent, IrisPipeEventDTO } from 'app/iris/shared/entities/iris-pipe-event-dto.model';
+import { IrisPipeEvent } from 'app/iris/shared/entities/iris-pipe-event.model';
+import { IrisPipeEvent } from 'app/iris/shared/entities/iris-pipe-event.model';
 
 export { ChatServiceMode } from 'app/iris/shared/entities/iris-session-context.model';
 export type { SessionContext } from 'app/iris/shared/entities/iris-session-context.model';
@@ -1092,14 +1093,7 @@ export class IrisChatService implements OnDestroy {
         return this.latestEvent.asObservable();
     }
 
-    public loadLatestEvent(participationId: number | undefined): Observable<IrisPipeEvent> {
-        if (participationId === undefined) {
-            throw new Error('participation id is undefined');
-        }
-        return this.http.getLatestEvent(participationId).pipe(map((dto: IrisPipeEventDTO) => dto.event));
-    }
-
-    public startPromptingMode(): Observable<IrisSessionDTO> {
+    public startPromptingMode(): Observable<void> {
         return from(this.clearChat()).pipe(
             switchMap(() => {
                 if (!this.sessionHttpIdentifier) {
@@ -1108,13 +1102,7 @@ export class IrisChatService implements OnDestroy {
 
                 return this.http.startPromptingMode(this.sessionHttpIdentifier);
             }),
-            map((response: HttpResponse<IrisSessionDTO>) => {
-                if (response.body) {
-                    return response.body;
-                } else {
-                    throw new Error(IrisErrorMessageKey.START_PROMPTING_FAILED);
-                }
-            }),
+            map(() => undefined),
             catchError(() => throwError(() => new Error(IrisErrorMessageKey.START_PROMPTING_FAILED))),
         );
     }

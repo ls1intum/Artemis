@@ -347,9 +347,8 @@ public class CourseManagementResource {
     @EnforceAtLeastInstructorInCourse
     public ResponseEntity<IrisAssessmentAttentionDTO> getAssessmentAttentionState(@PathVariable Long courseId) {
         log.debug("REST request to get assessment state of Course : {}", courseId);
-        Course course = courseRepository.findByIdElseThrow(courseId);
 
-        return ResponseEntity.ok((new IrisAssessmentAttentionDTO(irisAssessmentService.assessmentAttentionNeededInCourse(course))));
+        return ResponseEntity.ok((new IrisAssessmentAttentionDTO(irisAssessmentService.assessmentAttentionNeededInCourse(courseId))));
     }
 
 }

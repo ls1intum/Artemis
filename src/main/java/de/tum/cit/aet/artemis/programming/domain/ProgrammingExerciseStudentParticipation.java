@@ -1,9 +1,11 @@
 package de.tum.cit.aet.artemis.programming.domain;
 
 import jakarta.annotation.Nullable;
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToOne;
 import jakarta.validation.constraints.NotNull;
@@ -37,13 +39,15 @@ public class ProgrammingExerciseStudentParticipation extends StudentParticipatio
     private String branch;
 
     @Nullable
-    @OneToOne
+    @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.REMOVE, orphanRemoval = true)
     @JoinColumn(name = "iris_assessment_id", referencedColumnName = "id", unique = true)
+    @JsonIgnore
     private IrisAssessment irisAssessment;
 
     @Nullable
-    @OneToOne
+    @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.REMOVE, orphanRemoval = true)
     @JoinColumn(name = "iris_assessment_in_class_id", referencedColumnName = "id", unique = true)
+    @JsonIgnore
     private IrisAssessment irisAssessmentInClass;
 
     public ProgrammingExerciseStudentParticipation() {
