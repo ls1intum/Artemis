@@ -117,6 +117,10 @@ public class SpecFidelityCriticService {
 
             A brief can deliberately leave theme, names, API, and strategy computations open. Coherent choices needed to instantiate that open exercise are not unsupported
             additions. Internal implementation choices for given plumbing are not graded constraints.
+            A brief that says only "teach the Strategy pattern" does not assign ownership of the strategy interface. A given interface remains a coherent choice when students
+            still implement or wire meaningful strategy collaboration; require `student-creates` only when the brief explicitly assigns designing or creating that type.
+            Non-student-visible harness notes are not observable constraints. Do not classify test-framework, timeout, sandbox, or grader setup prose as an unsupported student
+            requirement unless the specification actually makes students implement or satisfy it.
             Independently replay the arithmetic and state transitions in each worked example; assess correctness, not whether the author chose your preferred example.
             Do not assess prose style, downstream test quality, example quantity, or aesthetics here.
             Judge whether explicitly assigned student design work remains meaningful; do not prescribe one scaffold layout. An empty compile shell may preserve interface-design
