@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { HttpResponse } from '@angular/common/http';
-import { Subject, of } from 'rxjs';
+import { Subject, of, throwError } from 'rxjs';
 import dayjs from 'dayjs/esm';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -27,7 +27,7 @@ describe('PresentationAssessmentManagementComponent', () => {
         addStudent: ReturnType<typeof vi.fn>;
         removeStudent: ReturnType<typeof vi.fn>;
     };
-    let alertService: { success: ReturnType<typeof vi.fn> };
+    let alertService: { success: ReturnType<typeof vi.fn>; addAlert: ReturnType<typeof vi.fn> };
     let dialogCloseSubject: Subject<PresentationAssessmentFormDialogResult | undefined>;
     let dialogService: { open: ReturnType<typeof vi.fn> };
 
@@ -57,7 +57,7 @@ describe('PresentationAssessmentManagementComponent', () => {
             addStudent: vi.fn().mockReturnValue(of(new HttpResponse<void>())),
             removeStudent: vi.fn().mockReturnValue(of(new HttpResponse<void>())),
         };
-        alertService = { success: vi.fn() };
+        alertService = { success: vi.fn(), addAlert: vi.fn() };
         dialogService = { open: vi.fn().mockReturnValue({ onClose: dialogCloseSubject.asObservable() }) };
 
         await TestBed.configureTestingModule({
@@ -170,6 +170,24 @@ describe('PresentationAssessmentManagementComponent', () => {
         expect(presentationAssessmentService.addStudent).toHaveBeenCalledWith(courseId, presentationAssessment.id, 'student2');
         expect(presentationAssessmentService.removeStudent).toHaveBeenCalledWith(courseId, presentationAssessment.id, 'student1');
         expect(alertService.success).toHaveBeenCalledWith('artemisApp.presentationAssessment.updated');
+    });
+
+    it('should reload presentations when student assignment sync fails after successful create', () => {
+        const savedAssessment: PresentationAssessment = { ...presentationAssessment, id: 43, title: 'New presentation' };
+        presentationAssessmentService.create.mockReturnValue(of(new HttpResponse({ body: savedAssessment })));
+        presentationAssessmentService.addStudent.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
+        component.startCreate();
+
+        dialogCloseSubject.next({
+            presentationAssessment: { title: 'New presentation', maxPoints: 25, courseId },
+            assignedStudents: [student],
+            originalAssignedStudents: [],
+        });
+
+        expect(presentationAssessmentService.create).toHaveBeenCalledOnce();
+        expect(presentationAssessmentService.addStudent).toHaveBeenCalledWith(courseId, savedAssessment.id, 'student1');
+        expect(presentationAssessmentService.findAllByCourseId).toHaveBeenCalledTimes(2);
+        expect(alertService.success).not.toHaveBeenCalledWith('artemisApp.presentationAssessment.created');
     });
 
     it('should delete a presentation assessment from the table', () => {

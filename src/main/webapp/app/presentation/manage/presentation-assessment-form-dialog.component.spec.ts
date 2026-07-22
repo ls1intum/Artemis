@@ -76,6 +76,12 @@ describe('PresentationAssessmentFormDialogComponent', () => {
         expect(dialogRef.close).not.toHaveBeenCalled();
     });
 
+    it('should update the student section title when the title changes', () => {
+        component.editForm.controls.title.setValue('Live title');
+
+        expect(component.studentSectionTitle()).toBe('Live title');
+    });
+
     it('should close with form value and staged assigned students on save', () => {
         const stagedStudent = { id: 2, login: 'student2' } as User;
         component.assignedStudents.set([stagedStudent]);

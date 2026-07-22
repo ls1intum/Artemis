@@ -1,8 +1,9 @@
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { Component, DestroyRef, OnInit, computed, inject, signal } from '@angular/core';
 import { AbstractControl, FormBuilder, FormsModule, ReactiveFormsModule, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
 import { HttpResponse } from '@angular/common/http';
 import dayjs from 'dayjs/esm';
 import { Observable, of } from 'rxjs';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { ButtonModule } from 'primeng/button';
@@ -49,6 +50,7 @@ export interface PresentationAssessmentFormDialogResult {
 @Component({
     selector: 'jhi-presentation-assessment-form-dialog',
     templateUrl: './presentation-assessment-form-dialog.component.html',
+    styleUrl: './presentation-assessment-form-dialog.component.scss',
     imports: [
         FormsModule,
         ReactiveFormsModule,
@@ -69,6 +71,7 @@ export class PresentationAssessmentFormDialogComponent implements OnInit {
     private readonly dialogRef = inject(DynamicDialogRef);
     private readonly dialogConfig = inject(DynamicDialogConfig);
     private readonly courseManagementService = inject(CourseManagementService);
+    private readonly destroyRef = inject(DestroyRef);
 
     protected readonly faBan = faBan;
     protected readonly faSave = faSave;
@@ -96,8 +99,6 @@ export class PresentationAssessmentFormDialogComponent implements OnInit {
         return title ? `${title} Students` : 'Presentation Students';
     });
 
-    readonly studentSectionTitle = computed(() => this.presentationAssessment?.title?.trim() || this.editForm.controls.title.value?.trim() || 'New presentation');
-
     editForm = this.formBuilder.group(
         {
             title: ['', [Validators.required, Validators.maxLength(255)]],
@@ -108,6 +109,9 @@ export class PresentationAssessmentFormDialogComponent implements OnInit {
         },
         { validators: resultPointsDoNotExceedMaxPoints },
     );
+
+    readonly currentTitle = signal('');
+    readonly studentSectionTitle = computed(() => this.currentTitle().trim() || this.presentationAssessment?.title?.trim() || 'New presentation');
 
     ngOnInit(): void {
         const data = this.dialogConfig.data as PresentationAssessmentFormDialogData;
@@ -124,6 +128,8 @@ export class PresentationAssessmentFormDialogComponent implements OnInit {
             resultPoints: this.presentationAssessment?.resultPoints,
             presentationDate: this.presentationAssessment?.presentationDate,
         });
+        this.currentTitle.set(this.editForm.controls.title.value ?? '');
+        this.editForm.controls.title.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((title) => this.currentTitle.set(title ?? ''));
     }
 
     save(): void {

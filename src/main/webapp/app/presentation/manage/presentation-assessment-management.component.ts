@@ -2,7 +2,7 @@ import { Component, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Subject, forkJoin, of } from 'rxjs';
-import { finalize, switchMap } from 'rxjs/operators';
+import { finalize, switchMap, tap } from 'rxjs/operators';
 
 import { faPencilAlt, faPlus, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -112,7 +112,11 @@ export class PresentationAssessmentManagementComponent implements OnInit {
             header: this.translateService.instant(
                 presentationAssessment ? 'artemisApp.presentationAssessment.home.editLabel' : 'artemisApp.presentationAssessment.home.createLabel',
             ),
-            width: '80rem',
+            width: 'min(80rem, calc(100vw - 2rem))',
+            breakpoints: {
+                '960px': 'calc(100vw - 2rem)',
+                '640px': '100vw',
+            },
             modal: true,
             closable: true,
             closeOnEscape: true,
@@ -140,9 +144,11 @@ export class PresentationAssessmentManagementComponent implements OnInit {
         const request = isUpdate
             ? this.presentationAssessmentService.update(this.courseId(), presentationAssessment)
             : this.presentationAssessmentService.create(this.courseId(), presentationAssessment);
+        let savedAssessment: PresentationAssessment | null = null;
 
         request
             .pipe(
+                tap((response: HttpResponse<PresentationAssessment>) => (savedAssessment = response.body)),
                 switchMap((response: HttpResponse<PresentationAssessment>) =>
                     this.persistAssignedStudents(response.body, result.assignedStudents, result.originalAssignedStudents),
                 ),
@@ -153,7 +159,12 @@ export class PresentationAssessmentManagementComponent implements OnInit {
                     this.alertService.success(isUpdate ? 'artemisApp.presentationAssessment.updated' : 'artemisApp.presentationAssessment.created');
                     this.loadAll();
                 },
-                error: (res: HttpErrorResponse) => onError(this.alertService, res),
+                error: (res: HttpErrorResponse) => {
+                    if (savedAssessment) {
+                        this.loadAll();
+                    }
+                    onError(this.alertService, res);
+                },
             });
     }
 
