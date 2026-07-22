@@ -13,6 +13,7 @@
             "description": "Description",
             "maxPoints": "Max. points",
             "resultPoints": "Result",
+            "resultPointsExceedMaxPoints": "Result points must not exceed max. points.",
             "presentationDate": "Presentation date",
             "noExisting": "There are no presentation assessments for this course yet.",
             "delete": {

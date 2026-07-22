@@ -43,6 +43,9 @@
                         @if (editForm.controls.resultPoints.invalid && editForm.controls.resultPoints.touched) {
                             <div class="invalid-feedback d-block" jhiTranslate="entity.validation.min"></div>
                         }
+                        @if (editForm.hasError('resultPointsExceedMaxPoints') && (editForm.controls.resultPoints.touched || editForm.controls.maxPoints.touched)) {
+                            <div class="invalid-feedback d-block" jhiTranslate="artemisApp.presentationAssessment.resultPointsExceedMaxPoints"></div>
+                        }
                     </div>
 
                     <div class="col-md-3">

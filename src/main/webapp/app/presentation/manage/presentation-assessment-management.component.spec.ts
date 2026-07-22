@@ -194,6 +194,23 @@ describe('PresentationAssessmentManagementComponent', () => {
         expect(presentationAssessmentService.update).not.toHaveBeenCalled();
     });
 
+    it('should not save result points above max points', () => {
+        component.startCreate({} as TemplateRef<unknown>);
+        component.editForm.setValue({
+            title: 'Final presentation',
+            description: 'Description',
+            maxPoints: 20,
+            resultPoints: 21,
+            presentationDate,
+        });
+
+        component.save();
+
+        expect(component.editForm.hasError('resultPointsExceedMaxPoints')).toBe(true);
+        expect(presentationAssessmentService.create).not.toHaveBeenCalled();
+        expect(presentationAssessmentService.update).not.toHaveBeenCalled();
+    });
+
     it('should delete a presentation assessment from the table', () => {
         presentationAssessmentService.delete.mockReturnValue(of(new HttpResponse<void>()));
 

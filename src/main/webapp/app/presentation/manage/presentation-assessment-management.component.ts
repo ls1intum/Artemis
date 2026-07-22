@@ -1,6 +1,6 @@
 import { Component, OnInit, TemplateRef, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
+import { AbstractControl, FormBuilder, FormsModule, ReactiveFormsModule, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { CommonModule } from '@angular/common';
 import dayjs from 'dayjs/esm';
@@ -27,6 +27,17 @@ import { CourseManagementService } from 'app/course/manage/services/course-manag
 import { User } from 'app/account/user/user.model';
 import { CourseGroupComponent } from 'app/course/shared/course-group/course-group.component';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
+
+const resultPointsDoNotExceedMaxPoints: ValidatorFn = (control: AbstractControl): ValidationErrors | null => {
+    const maxPoints = control.get('maxPoints')?.value;
+    const resultPoints = control.get('resultPoints')?.value;
+
+    if (maxPoints === undefined || maxPoints === null || resultPoints === undefined || resultPoints === null) {
+        return null;
+    }
+
+    return Number(resultPoints) > Number(maxPoints) ? { resultPointsExceedMaxPoints: true } : null;
+};
 
 @Component({
     selector: 'jhi-presentation-assessment-management',
@@ -99,13 +110,16 @@ export class PresentationAssessmentManagementComponent implements OnInit {
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
 
-    editForm = this.formBuilder.group({
-        title: ['', [Validators.required, Validators.maxLength(255)]],
-        description: ['', [Validators.maxLength(1000)]],
-        maxPoints: [0, [Validators.required, Validators.min(0.01)]],
-        resultPoints: [undefined as number | undefined, [Validators.min(0)]],
-        presentationDate: [undefined as dayjs.Dayjs | undefined],
-    });
+    editForm = this.formBuilder.group(
+        {
+            title: ['', [Validators.required, Validators.maxLength(255)]],
+            description: ['', [Validators.maxLength(1000)]],
+            maxPoints: [0, [Validators.required, Validators.min(0.01)]],
+            resultPoints: [undefined as number | undefined, [Validators.min(0)]],
+            presentationDate: [undefined as dayjs.Dayjs | undefined],
+        },
+        { validators: resultPointsDoNotExceedMaxPoints },
+    );
 
     ngOnInit(): void {
         this.courseId.set(Number(this.route.snapshot.paramMap.get('courseId') ?? this.route.parent?.snapshot.paramMap.get('courseId')));

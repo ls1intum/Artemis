@@ -13,6 +13,7 @@
             "description": "Beschreibung",
             "maxPoints": "Max. Punkte",
             "resultPoints": "Ergebnis",
+            "resultPointsExceedMaxPoints": "Die erreichten Punkte dürfen die maximalen Punkte nicht überschreiten.",
             "presentationDate": "Präsentationstermin",
             "noExisting": "Für diesen Kurs gibt es noch keine Präsentationsbewertungen.",
             "delete": {
