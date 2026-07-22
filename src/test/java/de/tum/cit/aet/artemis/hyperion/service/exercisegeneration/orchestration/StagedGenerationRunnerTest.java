@@ -43,6 +43,7 @@ import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.AgentSys
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.AgentTranscriptWriter;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.GenerationStage;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.SandboxAgentTools;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.critic.SpecFidelityCriticService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.AgentVerifyReport;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.ApprovedSpecRegistry;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.DifferentialVerificationService;
@@ -98,7 +99,7 @@ class StagedGenerationRunnerTest {
 
         private String testPlanJson = VALID_TEST_PLAN;
 
-        private String problemStatement = "# Title\n\n[task][Do the thing](testFoo)";
+        private String problemStatement = "# Title\n\n[task][Do the thing](testFoo)\nImplement the calculator operation.";
 
         private String layout = "solution/pom.xml\ntemplate/pom.xml\ntests/pom.xml";
 
@@ -135,6 +136,9 @@ class StagedGenerationRunnerTest {
             }
             if (command.length >= 1 && "diff".equals(command[0])) {
                 return new SandboxExecResult(diffExitCode, "", "", false);
+            }
+            if (command.length >= 1 && "grep".equals(command[0])) {
+                return new SandboxExecResult(0, "TODO S1:", "", false);
             }
             return success();
         }
@@ -753,6 +757,85 @@ class StagedGenerationRunnerTest {
         runner.run(exercise, baseTools, baseTools, "brief", Map.of(), sandbox, "s", NEVER_CANCELLED, null, null, Set::of, true, snapshot::set).result();
 
         assertThat(snapshot.get()).as("the sink receives the gate-approved SPEC.md verbatim").isEqualTo(VALID_SPEC_DOCUMENT);
+    }
+
+    @Test
+    void semanticSpecFinding_getsOneRefinementThenFreezesTheAcceptedRevisionUsingTheRawBrief() {
+        SpecFidelityCriticService reviewer = mock(SpecFidelityCriticService.class);
+        when(reviewer.reviewSpecification(eq("RAW BRIEF"), anyString(), eq(null), any())).thenReturn(
+                new SpecFidelityCriticService.SpecificationReview(true, List.of("The explicit ownership is missing.")),
+                new SpecFidelityCriticService.SpecificationReview(true, List.of()));
+        StagedGenerationRunner semanticRunner = new StagedGenerationRunner(agentLoopRunner, systemPromptService, stageCheckService, new AgentTranscriptWriter(""), approvedSpecs,
+                reviewer, "FRESH");
+        when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(completed(1, "spec"), completed(1, "refined spec"),
+                completed(2, "solution"), completed(2, "template"), completed(2, "tests"), completed(2, "statement"));
+        when(verifier.selfCheck(any(), anyString(), eq(exercise), any(), eq(false))).thenReturn(passingReport());
+        AtomicReference<String> snapshot = new AtomicReference<>();
+
+        AgentLoopResult result = semanticRunner.run(exercise, baseTools, baseTools, "authoring context with generated material", "RAW BRIEF", Map.of(), sandbox, "s",
+                NEVER_CANCELLED, null, null, Set::of, true, snapshot::set).result();
+
+        assertThat(result.status()).isEqualTo(AgentLoopResult.Status.COMPLETED);
+        assertThat(snapshot.get()).isEqualTo(VALID_SPEC_DOCUMENT);
+        assertThat(approvedSpecs.approved("s")).contains(VALID_SPEC_DOCUMENT);
+        verify(reviewer, times(2)).reviewSpecification(eq("RAW BRIEF"), eq(VALID_SPEC_DOCUMENT), eq(null), any());
+        verify(agentLoopRunner, times(6)).run(anyString(), anyString(), any(), anyInt(), any(), any(), any());
+    }
+
+    @Test
+    void secondGroundedSemanticSpecRejection_stopsWithoutFreezingTheContract() {
+        SpecFidelityCriticService reviewer = mock(SpecFidelityCriticService.class);
+        when(reviewer.reviewSpecification(anyString(), anyString(), eq(null), any())).thenReturn(
+                new SpecFidelityCriticService.SpecificationReview(true, List.of("missing ownership")),
+                new SpecFidelityCriticService.SpecificationReview(true, List.of("still missing ownership")));
+        StagedGenerationRunner semanticRunner = new StagedGenerationRunner(agentLoopRunner, systemPromptService, stageCheckService, new AgentTranscriptWriter(""), approvedSpecs,
+                reviewer, "FRESH");
+        when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(completed(1, "spec"), completed(1, "refined spec"));
+
+        AgentLoopResult result = semanticRunner.run(exercise, baseTools, baseTools, "context", "brief", Map.of(), sandbox, "s", NEVER_CANCELLED, null, null, Set::of, true, null)
+                .result();
+
+        assertThat(result.status()).isEqualTo(AgentLoopResult.Status.ERROR);
+        assertThat(result.finalMessage()).contains("still missing ownership");
+        assertThat(approvedSpecs.approved("s")).isEmpty();
+        verify(agentLoopRunner, times(2)).run(anyString(), anyString(), any(), anyInt(), any(), any(), any());
+    }
+
+    @Test
+    void unavailableSemanticSpecReview_continuesWithoutSpendingAnAuthoringRetry() {
+        SpecFidelityCriticService reviewer = mock(SpecFidelityCriticService.class);
+        when(reviewer.reviewSpecification(anyString(), anyString(), eq(null), any())).thenReturn(new SpecFidelityCriticService.SpecificationReview(false, List.of()));
+        StagedGenerationRunner semanticRunner = new StagedGenerationRunner(agentLoopRunner, systemPromptService, stageCheckService, new AgentTranscriptWriter(""), approvedSpecs,
+                reviewer, "FRESH");
+        when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(completed(1, "spec"), completed(2, "solution"),
+                completed(2, "template"), completed(2, "tests"), completed(2, "statement"));
+        when(verifier.selfCheck(any(), anyString(), eq(exercise), any(), eq(false))).thenReturn(passingReport());
+
+        AgentLoopResult result = semanticRunner.run(exercise, baseTools, baseTools, "context", "brief", Map.of(), sandbox, "s", NEVER_CANCELLED, null, null, Set::of, true, null)
+                .result();
+
+        assertThat(result.status()).isEqualTo(AgentLoopResult.Status.COMPLETED);
+        assertThat(approvedSpecs.approved("s")).contains(VALID_SPEC_DOCUMENT);
+        verify(agentLoopRunner, times(5)).run(anyString(), anyString(), any(), anyInt(), any(), any(), any());
+    }
+
+    @Test
+    void cancellationDuringSemanticSpecReview_remainsCancelledAndDoesNotFreezeTheContract() {
+        AtomicReference<Boolean> cancelled = new AtomicReference<>(false);
+        SpecFidelityCriticService reviewer = mock(SpecFidelityCriticService.class);
+        when(reviewer.reviewSpecification(anyString(), anyString(), eq(null), any())).thenAnswer(invocation -> {
+            cancelled.set(true);
+            return new SpecFidelityCriticService.SpecificationReview(false, List.of());
+        });
+        StagedGenerationRunner semanticRunner = new StagedGenerationRunner(agentLoopRunner, systemPromptService, stageCheckService, new AgentTranscriptWriter(""), approvedSpecs,
+                reviewer, "FRESH");
+        when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(completed(1, "spec"));
+
+        AgentLoopResult result = semanticRunner
+                .run(exercise, baseTools, baseTools, "context", "brief", Map.of(), sandbox, "s", () -> cancelled.get(), null, null, Set::of, true, null).result();
+
+        assertThat(result.status()).isEqualTo(AgentLoopResult.Status.CANCELLED);
+        assertThat(approvedSpecs.approved("s")).isEmpty();
     }
 
 }

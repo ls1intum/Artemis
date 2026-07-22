@@ -126,7 +126,7 @@ class DifferentialVerificationServiceTest {
         return BuildReportSpec.of(allNames, failedNames, exit);
     }
 
-    private static final String PROBLEM_STATEMENT_WITH_TASK = "# Sort\n[task][Sort an array](sortsUnsortedArray,sortsArrayWithDuplicates)\n";
+    private static final String PROBLEM_STATEMENT_WITH_TASK = "# Sort\n[task][Sort an array](sortsUnsortedArray,sortsArrayWithDuplicates)\nImplement sorting for unsorted arrays and duplicates.\n";
 
     private static String aresPom() {
         return """

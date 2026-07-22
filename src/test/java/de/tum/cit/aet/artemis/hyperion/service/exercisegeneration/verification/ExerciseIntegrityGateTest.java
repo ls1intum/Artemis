@@ -715,6 +715,22 @@ class ExerciseIntegrityGateTest {
     }
 
     @Test
+    void templateTodoSeams_rejectMissingAndUnknownWorkMarkers() {
+        Map<String, String> template = Map.of("src/Player.java", "class Player { // TODO S1: create strategy\n// TODO S9: stale work\n}");
+
+        assertThat(ExerciseIntegrityGate.templateTodoSeamReasons(List.of("S1", "S2"), template)).hasSize(2)
+                .anySatisfy(reason -> assertThat(reason).contains("no TODO breadcrumb", "S2")).anySatisfy(reason -> assertThat(reason).contains("does not declare", "S9"));
+    }
+
+    @Test
+    void templateTodoSeams_acceptExactCoverageAcrossFiles() {
+        Map<String, String> template = Map.of("src/Player.java", "class Player { // TODO S1: create strategy\n}", "src/Context.java",
+                "class Context { // TODO S2: wire strategy\n}");
+
+        assertThat(ExerciseIntegrityGate.templateTodoSeamReasons(List.of("S1", "S2"), template)).isEmpty();
+    }
+
+    @Test
     void approvedTestPlan_rejectsMissingHiddenVariantsInsteadOfSilentlyPublishingEverything() {
         String spec = """
                 ## Testing Strategy
@@ -725,7 +741,7 @@ class ExerciseIntegrityGateTest {
         String visibleOnly = "{\"tests\":[{\"name\":\"delegates\",\"seam\":\"S1\",\"weight\":3,\"visibility\":\"ALWAYS\"}]}";
 
         assertThat(ExerciseIntegrityGate.approvedTestPlanReasons(spec, visibleOnly, List.of("delegates"))).singleElement()
-                .satisfies(reason -> assertThat(reason).contains("requires hidden", "every final test-plan.json entry is visible"));
+                .satisfies(reason -> assertThat(reason).contains("requires AFTER_DUE_DATE", "S1"));
     }
 
     @Test
@@ -744,6 +760,42 @@ class ExerciseIntegrityGateTest {
                 """;
 
         assertThat(ExerciseIntegrityGate.approvedTestPlanReasons(spec, plan, List.of("delegates", "delegatesWithFreshValues"))).isEmpty();
+    }
+
+    @Test
+    void approvedTestPlan_requiresHiddenCoverageForEveryDeclaredSeam() {
+        String spec = """
+                ## Testing Strategy
+                | Seam | Partitions | Weight | Hidden-variant (yes/no) |
+                |---|---|---|---|
+                | S1 | ordinary | 3 | yes |
+                | S2 | boundary | 2 | yes |
+                """;
+        String plan = """
+                {"tests":[
+                  {"name":"ordinary","seam":"S1","weight":3,"visibility":"AFTER_DUE_DATE"},
+                  {"name":"boundary","seam":"S2","weight":2,"visibility":"ALWAYS"}
+                ]}
+                """;
+
+        assertThat(ExerciseIntegrityGate.approvedTestPlanReasons(spec, plan, List.of("ordinary", "boundary"))).singleElement().asString().contains("S2").doesNotContain("S1, S2");
+    }
+
+    @Test
+    void templateTodoSeams_ignoreMarkersOutsideJavaSources() {
+        Map<String, String> template = Map.of("src/Player.java", "class Player { // TODO S1: create strategy\n}", "README.md", "TODO S9: author note", "target/Stale.java",
+                "// TODO S8: generated output");
+
+        assertThat(ExerciseIntegrityGate.templateTodoSeamReasons(List.of("S1"), template)).isEmpty();
+    }
+
+    @Test
+    void statementTasks_requireInstructionTextBeforeTheNextTask() {
+        assertThat(ExerciseIntegrityGate.statementTaskInstructionReasons("[task][First](one)\n[task][Second](two)\n")).singleElement().asString().contains("First", "Second",
+                "no student-facing instruction");
+        assertThat(
+                ExerciseIntegrityGate.statementTaskInstructionReasons("[task][First](one)\nImplement the first behavior.\n[task][Second](two)\nImplement the second behavior.\n"))
+                .isEmpty();
     }
 
     @Test

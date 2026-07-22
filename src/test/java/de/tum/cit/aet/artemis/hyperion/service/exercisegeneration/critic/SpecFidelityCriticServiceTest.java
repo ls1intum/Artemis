@@ -79,6 +79,51 @@ class SpecFidelityCriticServiceTest {
         return new SpecFidelityCriticService(ChatClient.create(chatModel), objectMapper);
     }
 
+    @Test
+    void specificationReview_acceptsACompleteEmptyVerdict() {
+        SpecFidelityCriticService critic = criticReturning(rawResponse("{\"omissions\":[],\"conflicts\":[],\"unsupportedConstraints\":[]}"));
+
+        SpecFidelityCriticService.SpecificationReview review = critic.reviewSpecification("Create an exercise about strategies.", "# Exercise\n## Rules\n- R1", null, () -> false);
+
+        assertThat(review.complete()).isTrue();
+        assertThat(review.accepted()).isTrue();
+        assertThat(review.findings()).isEmpty();
+    }
+
+    @Test
+    void specificationReview_returnsGroundedFindingsAsActionableFeedback() {
+        SpecFidelityCriticService critic = criticReturning(rawResponse("""
+                {"omissions":[{"briefQuote":"students create the strategy interface","reason":"the interface is supplied","repair":"mark it student-owned"}],
+                 "conflicts":[],
+                 "unsupportedConstraints":[{"specQuote":"throw an exact message","reason":"the brief does not request a message","repair":"remove the exact message"}]}
+                """));
+
+        SpecFidelityCriticService.SpecificationReview review = critic.reviewSpecification("Have students create the strategy interface.",
+                "# Exercise\nThe context must throw an exact message.", null, () -> false);
+
+        assertThat(review.complete()).isTrue();
+        assertThat(review.accepted()).isFalse();
+        assertThat(review.feedback()).contains("students create the strategy interface", "throw an exact message", "mark it student-owned", "remove the exact message");
+    }
+
+    @Test
+    void specificationReview_marksMalformedOrUngroundedVerdictsIncomplete() {
+        ChatModel chatModel = mock(ChatModel.class);
+        when(chatModel.call(any(Prompt.class))).thenReturn(rawResponse("not json"), rawResponse("""
+                {"omissions":[{"briefQuote":"a requirement that is not in the brief","reason":"missing","repair":"add it"}],
+                 "conflicts":[],"unsupportedConstraints":[]}
+                """), rawResponse("""
+                {"omissions":[{"briefQuote":"Java","reason":"the learning objective is missing","repair":"change it"}],
+                 "conflicts":[],"unsupportedConstraints":[]}
+                """));
+        when(chatModel.getOptions()).thenReturn(ChatOptions.builder().build());
+        SpecFidelityCriticService critic = new SpecFidelityCriticService(ChatClient.create(chatModel), objectMapper);
+
+        assertThat(critic.reviewSpecification("Create a counter.", "# Counter", null, () -> false).complete()).isFalse();
+        assertThat(critic.reviewSpecification("Create a counter.", "# Counter", null, () -> false).complete()).isFalse();
+        assertThat(critic.reviewSpecification("Create a Java counter.", "# Counter", null, () -> false).complete()).isFalse();
+    }
+
     private static final String UNICODE_BRIEF = "Implement count_graphemes(s) counting user-perceived characters. It MUST be tested on accented Latin (café), a combining-mark "
             + "sequence, CJK characters, and at least one emoji.";
 

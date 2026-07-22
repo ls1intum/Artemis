@@ -167,6 +167,11 @@ public class StageCheckService {
             return StageCheckResult.failed("The Testing Strategy contains duplicate seam IDs: " + duplicateSeamIds
                     + ". One seam is one independently actionable unit of student work; merge its partitions into one row or assign genuinely different work a new ID.");
         }
+        List<String> hiddenCells = hiddenVariantCells(spec);
+        if (hiddenCells.size() != seamIds.size() || hiddenCells.stream().anyMatch(cell -> !cell.equals("yes") && !cell.equals("no"))) {
+            return StageCheckResult.failed("Every Testing Strategy row must end with exactly 'yes' or 'no' in the Hidden variant column. This structured decision controls "
+                    + "which seams need an AFTER_DUE_DATE overfit-resistance test; prose or a missing cell cannot be enforced.");
+        }
         // Echo the parsed plan back so the agent SEES what the later gates will hold it to (feedback quality: confirm understanding, not just absence of errors).
         String echo = designRows.stream().map(row -> row.type() + "=" + row.status()).collect(java.util.stream.Collectors.joining(", "));
         return StageCheckResult.passed("Specification accepted. Parsed template plan the later gates will enforce: " + echo + ". A 'student-creates' type must exist in the "
@@ -337,6 +342,12 @@ public class StageCheckService {
             observation = (observation.isBlank() ? "" : observation + " ") + "Confirmed absent from the template, as the specification requires students to create them: "
                     + createdTypes + ".";
         }
+        String todoMatches = execRead(sandbox, sessionId, "grep", "-rhoE", "--include=*.java", "--exclude-dir=target", "--exclude-dir=build", "TODO[[:space:]]+S[1-9][0-9]*:",
+                GenerationWorkspaceService.WORKSPACE + "/template");
+        List<String> todoReasons = ExerciseIntegrityGate.templateTodoSeamReasons(enforcedTestingSeamIds(sandbox, sessionId), Map.of("template-todos.java", todoMatches));
+        if (!todoReasons.isEmpty()) {
+            return StageCheckResult.failed(String.join(" ", todoReasons));
+        }
         return StageCheckResult.passed(observation);
     }
 
@@ -347,7 +358,41 @@ public class StageCheckService {
      * with {@code yes} or {@code no}, parsed like the Design table's status tokens; anything else reads as "no declaration" and the gate stays silent.
      */
     static boolean specDeclaresHiddenVariants(String spec) {
-        return hiddenVariantCells(spec).stream().anyMatch(cell -> cell.startsWith("yes"));
+        return !hiddenVariantSeamIds(spec).isEmpty();
+    }
+
+    /** Stable seam IDs whose Testing Strategy row explicitly requires a hidden after-due-date variant. */
+    static Set<String> hiddenVariantSeamIds(String spec) {
+        int start = spec.indexOf("## Testing Strategy");
+        if (start < 0) {
+            return Set.of();
+        }
+        Set<String> seams = new java.util.LinkedHashSet<>();
+        boolean pastHeader = false;
+        for (String line : spec.substring(start).lines().map(String::strip).toList()) {
+            if (line.startsWith("## ") && !line.startsWith("## Testing Strategy")) {
+                break;
+            }
+            if (!line.startsWith("|")) {
+                continue;
+            }
+            if (!pastHeader) {
+                if (line.chars().allMatch(c -> c == '|' || c == '-' || c == ':' || c == ' ')) {
+                    pastHeader = true;
+                }
+                continue;
+            }
+            String[] columns = line.split("\\|");
+            if (columns.length < 3) {
+                continue;
+            }
+            String seam = columns[1].replace("`", "").replace("*", "").strip();
+            String decision = columns[columns.length - 1].replace("`", "").replace("*", "").strip().toLowerCase(java.util.Locale.ROOT);
+            if (decision.equals("yes")) {
+                seams.add(seam);
+            }
+        }
+        return Set.copyOf(seams);
     }
 
     /**
@@ -506,11 +551,12 @@ public class StageCheckService {
                     + ". Copy the exact names verify reported: " + report.exactTestNames() + ".", report);
         }
         List<String> unplannedNames = report.exactTestNames().stream().filter(name -> plan.tests().stream().noneMatch(entry -> entry.name().equals(name))).toList();
-        if (plan.hiddenEntries().isEmpty() && specDeclaresHiddenVariants(readSpec(sandbox, sessionId))) {
-            return new StageCheckResult(false, "SPEC.md's '## Testing Strategy' declares hidden after-due-date variant(s), but every test-plan.json entry is visible. Add the "
-                    + "hidden variant test(s) with FRESH witness values (never the visible test's inputs renamed — the point is catching a solution overfitted to the visible "
-                    + "tests), mark them \"visibility\":\"AFTER_DUE_DATE\", and leave them unbound by any [task] line. The accepted visibility decision cannot be discarded now.",
-                    report);
+        Set<String> hiddenPlanSeams = plan.hiddenEntries().stream().map(GeneratedTestPlan.Entry::seam).collect(java.util.stream.Collectors.toSet());
+        List<String> missingHiddenSeams = enforcedHiddenVariantSeamIds(sandbox, sessionId).stream().filter(seam -> !hiddenPlanSeams.contains(seam)).sorted().toList();
+        if (!missingHiddenSeams.isEmpty()) {
+            return new StageCheckResult(false, "The approved Testing Strategy requires an AFTER_DUE_DATE variant for seam(s) " + missingHiddenSeams
+                    + ", but test-plan.json has no hidden test mapped to them. Add fresh witness tests for each listed seam, keep them unbound by [task] lines, and preserve their "
+                    + "seam IDs; hiding an unrelated test does not satisfy this contract.", report);
         }
         String planSummary = "Grading plan accepted: " + plan.tests().size() + " test(s), " + plan.hiddenEntries().size() + " hidden until the due date."
                 + (unplannedNames.isEmpty() ? "" : " Not in the plan (they keep Artemis defaults, weight 1 and visible): " + unplannedNames + ".");
@@ -581,6 +627,11 @@ public class StageCheckService {
         if (!duplicateHeadings.isEmpty()) {
             return StageCheckResult.failed("The statement repeats these headings verbatim: " + duplicateHeadings + ". Merge or remove the duplicate sections.");
         }
+        List<String> bareTasks = ProblemStatementBindingChecker.tasksWithoutInstruction(statement);
+        if (!bareTasks.isEmpty()) {
+            return StageCheckResult.failed("These [task] bindings have no student-facing instruction before the next task or heading: " + bareTasks
+                    + ". Follow each task with concise imperative prose naming the types or members the student must implement; a checkbox alone is not an exercise instruction.");
+        }
         return StageCheckResult.passed("");
     }
 
@@ -589,6 +640,12 @@ public class StageCheckService {
         List<String> live = testingStrategySeamIds(readSpec(sandbox, sessionId));
         List<String> approved = approvedSpecs.approved(sessionId).map(StageCheckService::testingStrategySeamIds).orElse(List.of());
         return java.util.stream.Stream.concat(approved.stream(), live.stream()).filter(id -> id.matches("S[1-9][0-9]*")).distinct().toList();
+    }
+
+    private Set<String> enforcedHiddenVariantSeamIds(InteractiveSandbox sandbox, String sessionId) {
+        Set<String> seams = new java.util.LinkedHashSet<>(hiddenVariantSeamIds(readSpec(sandbox, sessionId)));
+        approvedSpecs.approved(sessionId).map(StageCheckService::hiddenVariantSeamIds).ifPresent(seams::addAll);
+        return Set.copyOf(seams);
     }
 
     /**

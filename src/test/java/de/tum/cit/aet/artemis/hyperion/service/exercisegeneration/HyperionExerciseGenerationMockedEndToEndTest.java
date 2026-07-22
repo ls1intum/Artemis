@@ -62,9 +62,13 @@ class HyperionExerciseGenerationMockedEndToEndTest extends AbstractHyperionMocke
             ```
 
             [task][Start at zero](startsAtZeroAndExposesValue)
+            Create the constructor and expose the initial value through `getValue()`.
             [task][Increment up to maximum](incrementsUntilMaximum)
+            Implement `increment()` so that it stops at the configured maximum.
             [task][Decrement down to zero](decrementNeverDropsBelowZero)
+            Implement `decrement()` so that it never crosses zero.
             [task][Reject invalid maximum](rejectsNonPositiveMaximum)
+            Reject constructor arguments below one with `IllegalArgumentException`.
             """;
 
     private static final String PROBLEM_STATEMENT_WITH_BAD_BINDING = PROBLEM_STATEMENT.replace("(incrementsUntilMaximum)", "(incrementAtUpperBound)");
@@ -110,16 +114,20 @@ class HyperionExerciseGenerationMockedEndToEndTest extends AbstractHyperionMocke
             public class BoundedCounter {
 
                 public BoundedCounter(int max) {
+                    // TODO S4: reject a maximum below one
                 }
 
                 public int getValue() {
+                    // TODO S1: expose the initial value
                     return -1;
                 }
 
                 public void increment() {
+                    // TODO S2: increment up to the maximum
                 }
 
                 public void decrement() {
+                    // TODO S3: decrement down to zero
                 }
             }
             """;
@@ -274,7 +282,7 @@ class HyperionExerciseGenerationMockedEndToEndTest extends AbstractHyperionMocke
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void rejectsExerciseWithUnresolvedTaskBinding_deterministic_endToEnd() throws Exception {
         ProgrammingExercise exercise = scaffoldEmptyJavaExercise("HGMBAD");
-        script(HyperionMockedLlmE2eSupport.writeFile(SPEC_PATH, SPEC), HyperionMockedLlmE2eSupport.submit("Specification"),
+        script(HyperionMockedLlmE2eSupport.writeFile(SPEC_PATH, SPEC), HyperionMockedLlmE2eSupport.submit("Specification"), HyperionMockedLlmE2eSupport.cleanSpecificationReview(),
                 HyperionMockedLlmE2eSupport.writeFile(SOLUTION_PATH, SOLUTION_BOUNDED_COUNTER), HyperionMockedLlmE2eSupport.submit("Solution"),
                 HyperionMockedLlmE2eSupport.writeFile(TEMPLATE_PATH, TEMPLATE_BOUNDED_COUNTER), HyperionMockedLlmE2eSupport.submit("Template"),
                 HyperionMockedLlmE2eSupport.writeFile(TEST_PATH, BOUNDED_COUNTER_TEST), HyperionMockedLlmE2eSupport.writeFile(TEST_PLAN_PATH, TEST_PLAN),
@@ -297,7 +305,7 @@ class HyperionExerciseGenerationMockedEndToEndTest extends AbstractHyperionMocke
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void rejectsExerciseWhoseSolutionFailsItsOwnTests_deterministic_endToEnd() throws Exception {
         ProgrammingExercise exercise = scaffoldEmptyJavaExercise("HGMFAIL");
-        script(HyperionMockedLlmE2eSupport.writeFile(SPEC_PATH, SPEC), HyperionMockedLlmE2eSupport.submit("Specification"),
+        script(HyperionMockedLlmE2eSupport.writeFile(SPEC_PATH, SPEC), HyperionMockedLlmE2eSupport.submit("Specification"), HyperionMockedLlmE2eSupport.cleanSpecificationReview(),
                 HyperionMockedLlmE2eSupport.writeFile(SOLUTION_PATH, BROKEN_SOLUTION_BOUNDED_COUNTER), HyperionMockedLlmE2eSupport.submit("Broken solution"),
                 HyperionMockedLlmE2eSupport.writeFile(TEMPLATE_PATH, TEMPLATE_BOUNDED_COUNTER), HyperionMockedLlmE2eSupport.submit("Template"),
                 HyperionMockedLlmE2eSupport.writeFile(TEST_PATH, BOUNDED_COUNTER_TEST), HyperionMockedLlmE2eSupport.writeFile(TEST_PLAN_PATH, TEST_PLAN),
@@ -319,7 +327,7 @@ class HyperionExerciseGenerationMockedEndToEndTest extends AbstractHyperionMocke
     }
 
     private void scriptValidGeneration(String testPath) {
-        script(HyperionMockedLlmE2eSupport.writeFile(SPEC_PATH, SPEC), HyperionMockedLlmE2eSupport.submit("Specification"),
+        script(HyperionMockedLlmE2eSupport.writeFile(SPEC_PATH, SPEC), HyperionMockedLlmE2eSupport.submit("Specification"), HyperionMockedLlmE2eSupport.cleanSpecificationReview(),
                 HyperionMockedLlmE2eSupport.writeFile(SOLUTION_PATH, SOLUTION_BOUNDED_COUNTER), HyperionMockedLlmE2eSupport.submit("Solution"),
                 HyperionMockedLlmE2eSupport.writeFile(TEMPLATE_PATH, TEMPLATE_BOUNDED_COUNTER), HyperionMockedLlmE2eSupport.submit("Template"),
                 HyperionMockedLlmE2eSupport.writeFile(testPath, BOUNDED_COUNTER_TEST), HyperionMockedLlmE2eSupport.writeFile(TEST_PLAN_PATH, TEST_PLAN),

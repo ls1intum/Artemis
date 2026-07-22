@@ -88,14 +88,47 @@ final class ProblemStatementBindingChecker {
         return false;
     }
 
-    /** Whether the specification's {@code ## Diagram} section starts with "yes" — the agent's own declared decision, which the statement must then honour. */
+    /** Whether the first non-blank line of the specification's bounded {@code ## Diagram} section declares "yes". */
     static boolean specPromisesDiagram(String spec) {
         int index = spec.indexOf("## Diagram");
         if (index < 0) {
             return false;
         }
-        String section = spec.substring(index + "## Diagram".length()).strip();
-        return section.regionMatches(true, 0, "yes", 0, 3);
+        String section = spec.substring(index + "## Diagram".length());
+        int nextHeading = section.indexOf("## ");
+        if (nextHeading >= 0) {
+            section = section.substring(0, nextHeading);
+        }
+        String decision = section.lines().map(String::strip).filter(line -> !line.isBlank()).findFirst().orElse("").replaceFirst("^[-*+]\\s+", "").replace("*", "").replace("_", "")
+                .strip();
+        return decision.matches("(?i)^yes(?:$|\\s|[—–:-]).*");
+    }
+
+    /** Task bindings that are followed only by another task/heading/end, with no student-facing instruction in between. */
+    static List<String> tasksWithoutInstruction(String problemStatement) {
+        List<String> lines = problemStatement.lines().toList();
+        List<String> bareTasks = new ArrayList<>();
+        for (int index = 0; index < lines.size(); index++) {
+            String task = lines.get(index).strip();
+            if (!TASK_BINDING.matcher(task).find()) {
+                continue;
+            }
+            boolean hasInstruction = false;
+            for (int following = index + 1; following < lines.size(); following++) {
+                String candidate = lines.get(following).strip();
+                if (TASK_BINDING.matcher(candidate).find() || candidate.startsWith("#")) {
+                    break;
+                }
+                if (!candidate.isBlank() && !candidate.startsWith("```") && !candidate.startsWith("@startuml") && !candidate.startsWith("@enduml")) {
+                    hasInstruction = true;
+                    break;
+                }
+            }
+            if (!hasInstruction) {
+                bareTasks.add(task);
+            }
+        }
+        return List.copyOf(bareTasks);
     }
 
     /** Every markdown heading line that appears more than once verbatim. */

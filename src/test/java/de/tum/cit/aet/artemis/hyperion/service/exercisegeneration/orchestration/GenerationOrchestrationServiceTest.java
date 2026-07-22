@@ -257,7 +257,7 @@ class GenerationOrchestrationServiceTest {
     @Test
     void stagedGenerationEnabled_generateJava_delegatesToStagedGenerationRunnerInsteadOfTheSingleAgentLoopCall() {
         GenerationOrchestrationService stagedService = newService(true);
-        when(stagedGenerationRunner.run(any(), any(), any(), anyString(), any(), any(), anyString(), any(), any(), any(), any(), anyBoolean(), any()))
+        when(stagedGenerationRunner.run(any(), any(), any(), anyString(), anyString(), any(), any(), anyString(), any(), any(), any(), any(), anyBoolean(), any()))
                 .thenReturn(new StagedGenerationRunner.StagedRunOutcome(completed(), null));
         when(verifier.verify(any(), anyString(), any(), any(VerificationRequest.class), any(Runnable.class))).thenReturn(accepted());
 
@@ -265,7 +265,7 @@ class GenerationOrchestrationServiceTest {
             assertThat(outcome.isMechanicallyVerified()).isTrue();
         }
 
-        verify(stagedGenerationRunner, times(1)).run(any(), any(), any(), anyString(), any(), any(), anyString(), any(), any(), any(), any(), anyBoolean(), any());
+        verify(stagedGenerationRunner, times(1)).run(any(), any(), any(), anyString(), anyString(), any(), any(), anyString(), any(), any(), any(), any(), anyBoolean(), any());
         verify(agentLoopRunner, never()).runSession(anyString(), any(), anyString(), any(), anyInt(), any(), any(), any());
     }
 
@@ -275,10 +275,11 @@ class GenerationOrchestrationServiceTest {
         String draft = "# Draft playlist exercise\n\nThis generated draft is long enough to look authoritative but may have omitted explicit requirements.";
         String sourceBrief = "Teach Strategy with three playlist strategies. Students must create the interface. Include a UML diagram.";
         when(exercise.getProblemStatement()).thenReturn(draft);
-        when(stagedGenerationRunner.run(any(), any(), any(), anyString(), any(), any(), anyString(), any(), any(), any(), any(), anyBoolean(), any()))
+        when(stagedGenerationRunner.run(any(), any(), any(), anyString(), anyString(), any(), any(), anyString(), any(), any(), any(), any(), anyBoolean(), any()))
                 .thenReturn(new StagedGenerationRunner.StagedRunOutcome(completed(), null));
         when(verifier.verify(any(), anyString(), any(), any(VerificationRequest.class), any(Runnable.class))).thenReturn(accepted());
         ArgumentCaptor<String> prompt = ArgumentCaptor.forClass(String.class);
+        ArgumentCaptor<String> rawBrief = ArgumentCaptor.forClass(String.class);
         ArgumentCaptor<Boolean> specStageApplies = ArgumentCaptor.forClass(Boolean.class);
 
         try (GenerationOutcome outcome = stagedService.generate(exercise, user, "resolved instruction", JOB_ID, GenerationMode.GENERATE, () -> false, null, null, null,
@@ -286,9 +287,11 @@ class GenerationOrchestrationServiceTest {
             assertThat(outcome.isMechanicallyVerified()).isTrue();
         }
 
-        verify(stagedGenerationRunner).run(any(), any(), any(), prompt.capture(), any(), any(), anyString(), any(), any(), any(), any(), specStageApplies.capture(), any());
+        verify(stagedGenerationRunner).run(any(), any(), any(), prompt.capture(), rawBrief.capture(), any(), any(), anyString(), any(), any(), any(), any(),
+                specStageApplies.capture(), any());
         assertThat(specStageApplies.getValue()).isTrue();
         assertThat(prompt.getValue()).contains("PRIMARY SOURCE REQUIREMENTS", sourceBrief, "CURRENT AI-GENERATED DRAFT", draft, "cannot override");
+        assertThat(rawBrief.getValue()).isEqualTo(sourceBrief);
         verify(workspace).seedWorkspace(any(), anyString(), eq(exercise), eq(GenerationMode.GENERATE), eq(false));
     }
 

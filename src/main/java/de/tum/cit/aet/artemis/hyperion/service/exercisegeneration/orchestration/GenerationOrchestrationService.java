@@ -314,9 +314,9 @@ public class GenerationOrchestrationService {
                 // surgical fixes on an existing workspace.
                 boolean stagedAttempt = useStagedGeneration && attempt == 1;
                 if (stagedAttempt) {
-                    StagedGenerationRunner.StagedRunOutcome stagedOutcome = stagedGenerationRunner.run(exercise, baseTools, tools, currentPrompt, testsSeedSnapshot, sandbox,
-                            activeSessionId, cancelled, effectiveUsageSink, progress, () -> structuralOracleSeeder.seedIfStructuralDiff(sandbox, activeSessionId, exercise),
-                            specStageApplies, spec -> {
+                    StagedGenerationRunner.StagedRunOutcome stagedOutcome = stagedGenerationRunner.run(exercise, baseTools, tools, currentPrompt, reviewBrief, testsSeedSnapshot,
+                            sandbox, activeSessionId, cancelled, effectiveUsageSink, progress,
+                            () -> structuralOracleSeeder.seedIfStructuralDiff(sandbox, activeSessionId, exercise), specStageApplies, spec -> {
                                 specSnapshot.set(spec);
                                 jobService.recordSpecDocument(exercise.getId(), jobId, spec);
                             });

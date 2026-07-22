@@ -272,6 +272,16 @@ public class DifferentialVerificationService {
         List<String> statementTraceabilityReasons = ExerciseIntegrityGate.statementTraceabilityReasons(request.producedTestPlan(), request.producedProblemStatement());
         boolean statementTraceabilityHolds = statementTraceabilityReasons.isEmpty();
         reasons.addAll(statementTraceabilityReasons);
+        List<String> statementTaskInstructionReasons = ExerciseIntegrityGate.statementTaskInstructionReasons(request.producedProblemStatement());
+        boolean statementTasksHaveInstructions = statementTaskInstructionReasons.isEmpty();
+        reasons.addAll(statementTaskInstructionReasons);
+        List<String> approvedSeams = contractSpecifications.stream().flatMap(spec -> StageCheckService.testingStrategySeamIds(spec).stream())
+                .filter(id -> id.matches("S[1-9][0-9]*")).distinct().toList();
+        List<String> templateTodoSeamReasons = exercise.getProgrammingLanguage() == ProgrammingLanguage.JAVA
+                ? ExerciseIntegrityGate.templateTodoSeamReasons(approvedSeams, request.producedTemplateFiles())
+                : List.of();
+        boolean templateTodoSeamsHold = templateTodoSeamReasons.isEmpty();
+        reasons.addAll(templateTodoSeamReasons);
 
         boolean extractionSound = checkExtractionSound(request.extractionFailedRepositories(), reasons);
 
@@ -282,14 +292,15 @@ public class DifferentialVerificationService {
         reasons.addAll(adaptWipeReasons);
 
         boolean mechanicallyVerified = analysis.actionableGatesPass() && harnessIntact && noSolutionLeak && noGradingContextSniffing && javaAresConventionsHold
-                && javaSourceLayoutIntact && approvedSpecificationHolds && approvedTestPlanHolds && statementTraceabilityHolds && extractionSound && noAdaptWipe;
+                && javaSourceLayoutIntact && approvedSpecificationHolds && approvedTestPlanHolds && statementTraceabilityHolds && templateTodoSeamsHold && extractionSound
+                && statementTasksHaveInstructions && noAdaptWipe;
         if (!mechanicallyVerified) {
             log.info(
                     "Differential verification failed: solution[{}], template[{}], actionableGatesPass={}, harnessIntact={}, noSolutionLeak={}, "
                             + "javaAresConventionsHold={}, javaSourceLayoutIntact={}, approvedSpecificationHolds={}, approvedTestPlanHolds={}, statementTraceabilityHolds={}, "
-                            + "extractionSound={}, noAdaptWipe={}",
+                            + "statementTasksHaveInstructions={}, templateTodoSeamsHold={}, extractionSound={}, noAdaptWipe={}",
                     solution, template, analysis.actionableGatesPass(), harnessIntact, noSolutionLeak, javaAresConventionsHold, javaSourceLayoutIntact, approvedSpecificationHolds,
-                    approvedTestPlanHolds, statementTraceabilityHolds, extractionSound, noAdaptWipe);
+                    approvedTestPlanHolds, statementTraceabilityHolds, statementTasksHaveInstructions, templateTodoSeamsHold, extractionSound, noAdaptWipe);
         }
         return new VerificationResult(mechanicallyVerified, analysis.solutionPassed(), analysis.templateFailed(), solution.tests(), reasons);
     }

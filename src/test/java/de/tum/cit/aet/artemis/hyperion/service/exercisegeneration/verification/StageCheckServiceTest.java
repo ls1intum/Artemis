@@ -46,6 +46,9 @@ class StageCheckServiceTest {
 
         private String templateFindOutput = "";
 
+        /** Stable work markers found in the template; the default matches the default specification's sole S1 seam. */
+        private String templateTodoOutput = "TODO S1:";
+
         /** {@code diff -rq} exit code; 1 means the trees differ (the expected, healthy case). */
         private int diffExitCode = 1;
 
@@ -75,6 +78,9 @@ class StageCheckServiceTest {
                 return new SandboxExecResult(0, command[1].contains("solution") ? solutionFindOutput : templateFindOutput, "", false);
             }
             if (command.length >= 2 && "grep".equals(command[0])) {
+                if (java.util.Arrays.stream(command).anyMatch(argument -> argument.contains("TODO"))) {
+                    return new SandboxExecResult(0, templateTodoOutput, "", false);
+                }
                 boolean solutionRepo = java.util.Arrays.stream(command).anyMatch(argument -> argument.contains("/solution"));
                 return new SandboxExecResult(0, solutionRepo ? solutionFindOutput : templateFindOutput, "", false);
             }
@@ -277,6 +283,17 @@ class StageCheckServiceTest {
         }
 
         @Test
+        void fails_whenTemplateTodoMarkersDoNotMatchTheSpecificationSeams() {
+            when(verifier.singleBuild(any(), anyString(), eq(exercise), eq("template"))).thenReturn(compiled());
+            sandbox.templateTodoOutput = "TODO S9:";
+
+            StageCheckResult result = check(GenerationStage.TEMPLATE);
+
+            assertThat(result.passed()).isFalse();
+            assertThat(result.observation()).contains("no TODO breadcrumb", "S1").contains("does not declare", "S9");
+        }
+
+        @Test
         void fails_asACompileError_whenNoTestsRanAndTheExitCodeIsNonZero() {
             when(verifier.singleBuild(any(), anyString(), eq(exercise), eq("template"))).thenReturn(compileFailure("[ERROR] Bar.java:[3,1] class, interface, or enum expected"));
 
@@ -397,15 +414,31 @@ class StageCheckServiceTest {
         @Test
         void fails_whenTheSpecDeclaresHiddenVariantsButThePlanHidesNothing() {
             // The spec's own Testing Strategy is the plan's contract: silently shipping every test visible throws away the overfit resistance the spec promised.
-            sandbox.spec = specWithDesign("| Calculator | computes | stubbed |\n").replace("| S1 | typical; zero | 3 | no |",
-                    "| S1 | typical; zero | 3 | yes — fresh witnesses after the due date |");
+            sandbox.spec = specWithDesign("| Calculator | computes | stubbed |\n").replace("| S1 | typical; zero | 3 | no |", "| S1 | typical; zero | 3 | yes |");
             when(verifier.selfCheck(any(), anyString(), eq(exercise), any(), eq(false))).thenReturn(report(true, true));
             sandbox.testPlanJson = "{\"tests\":[{\"name\":\"testFoo\",\"seam\":\"S1\",\"weight\":3,\"visibility\":\"ALWAYS\"}]}";
 
             StageCheckResult result = check(GenerationStage.TESTS);
 
             assertThat(result.passed()).isFalse();
-            assertThat(result.observation()).contains("declares hidden after-due-date variant").contains("FRESH witness values");
+            assertThat(result.observation()).contains("requires an AFTER_DUE_DATE variant").contains("S1");
+        }
+
+        @Test
+        void fails_whenOnlySomeSeamsWithHiddenVariantsHaveHiddenPlanEntries() {
+            sandbox.spec = specWithDesign("| Calculator | computes | stubbed |\n").replace("| S1 | typical; zero | 3 | no |", """
+                    | S1 | ordinary values | 3 | yes |
+                    | S2 | boundary values | 2 | yes |
+                    """);
+            AgentVerifyReport report = new AgentVerifyReport(2, true, List.of(), 2, true, true, List.of(), List.of("ordinary", "boundary"), List.of(), List.of(), true, List.of());
+            when(verifier.selfCheck(any(), anyString(), eq(exercise), any(), eq(false))).thenReturn(report);
+            sandbox.testPlanJson = "{\"tests\":[{\"name\":\"ordinary\",\"seam\":\"S1\",\"weight\":3,\"visibility\":\"AFTER_DUE_DATE\"},"
+                    + "{\"name\":\"boundary\",\"seam\":\"S2\",\"weight\":2,\"visibility\":\"ALWAYS\"}]}";
+
+            StageCheckResult result = check(GenerationStage.TESTS);
+
+            assertThat(result.passed()).isFalse();
+            assertThat(result.observation()).contains("S2").doesNotContain("S1, S2");
         }
 
         @Test
@@ -489,7 +522,7 @@ class StageCheckServiceTest {
 
         @Test
         void passes_whenEveryTaskBindingResolvesAgainstTheTestsReportsExactNames() {
-            sandbox.problemStatement = "# Title\n[task][Sort](testSortsAscending,testSortsDescending)\n";
+            sandbox.problemStatement = "# Title\n[task][Sort](testSortsAscending,testSortsDescending)\nImplement ascending and descending sorting.\n";
             AgentVerifyReport lastTestsReport = new AgentVerifyReport(2, true, List.of(), 2, true, true, List.of(), List.of("testSortsAscending", "testSortsDescending"), List.of(),
                     List.of(), true, List.of());
 
@@ -542,7 +575,7 @@ class StageCheckServiceTest {
 
         @Test
         void passes_whenOnlyVisibleTestsAreBound_andTheHiddenOneIsLeftUnbound() {
-            sandbox.problemStatement = "# Title\n[task][Sort](testSortsAscending)\n";
+            sandbox.problemStatement = "# Title\n[task][Sort](testSortsAscending)\nImplement the sorting strategy.\n";
             sandbox.testPlanJson = "{\"tests\":[{\"name\":\"testSortsAscending\",\"seam\":\"S1\",\"weight\":2,\"visibility\":\"ALWAYS\"},"
                     + "{\"name\":\"testSortsAscending_hidden\",\"seam\":\"S1\",\"weight\":2,\"visibility\":\"AFTER_DUE_DATE\"}]}";
             AgentVerifyReport lastTestsReport = new AgentVerifyReport(2, true, List.of(), 2, true, true, List.of(), List.of("testSortsAscending", "testSortsAscending_hidden"),
@@ -612,6 +645,41 @@ class StageCheckServiceTest {
         }
 
         @Test
+        void fails_whenTheBoldDiagramDecisionSaysYesButTheStatementHasNone() {
+            sandbox.spec = specWithDesign("| Calculator | computes | stubbed |\n").replace("## Diagram\nno — single-class exercise",
+                    "## Diagram\n**Yes** – strategies collaborate with the context");
+            sandbox.problemStatement = "# T\nImplement the strategy.\n";
+
+            StageCheckResult result = check(GenerationStage.STATEMENT, null);
+
+            assertThat(result.passed()).isFalse();
+            assertThat(result.observation()).contains("no @startuml diagram");
+        }
+
+        @Test
+        void doesNotTreatYesterdayOrYesSlashNoAsADiagramPromise() {
+            sandbox.spec = specWithDesign("| Calculator | computes | stubbed |\n").replace("## Diagram\nno — single-class exercise",
+                    "## Diagram\nYesterday we considered one\n\n## Later\nyes");
+            sandbox.problemStatement = "# T\nExplain the result.\n";
+            assertThat(check(GenerationStage.STATEMENT, null).passed()).isTrue();
+
+            sandbox.spec = sandbox.spec.replace("Yesterday we considered one", "yes/no undecided");
+            assertThat(check(GenerationStage.STATEMENT, null).passed()).isTrue();
+        }
+
+        @Test
+        void fails_whenTaskBindingsHaveNoInstructionsBetweenThem() {
+            sandbox.problemStatement = "# Title\n[task][First](testA)\n[task][Second](testB)\n";
+            AgentVerifyReport lastTestsReport = new AgentVerifyReport(2, true, List.of(), 2, true, true, List.of(), List.of("testA", "testB"), List.of(), List.of(), true,
+                    List.of());
+
+            StageCheckResult result = check(GenerationStage.STATEMENT, lastTestsReport);
+
+            assertThat(result.passed()).isFalse();
+            assertThat(result.observation()).contains("no student-facing instruction", "[task][First]", "[task][Second]");
+        }
+
+        @Test
         void passes_whenPlantUmlDirectivesSitInsideTheDiagramBlock() {
             sandbox.problemStatement = "# Title\n@startuml\nclass A\nhide empty fields\nhide empty methods\n@enduml\n";
 
@@ -622,7 +690,7 @@ class StageCheckServiceTest {
 
         @Test
         void passes_whenDiagramTestsColorNamesResolve_includingParenthesisedAndStructuralForms() {
-            sandbox.problemStatement = "# Title\n[task][Sort](testSortsAscending)\n@startuml\nclass A {\n  <color:testsColor(testSortsAscending())>+sort()</color>\n}\n"
+            sandbox.problemStatement = "# Title\n[task][Sort](testSortsAscending)\nImplement the sort operation.\n@startuml\nclass A {\n  <color:testsColor(testSortsAscending())>+sort()</color>\n}\n"
                     + "A -up-|> B #testsColor(testClass[A])\n@enduml\n";
             AgentVerifyReport lastTestsReport = new AgentVerifyReport(1, true, List.of(), 1, true, true, List.of(), List.of("testSortsAscending", "testClass[A]"), List.of(),
                     List.of(), true, List.of());
@@ -722,8 +790,7 @@ class StageCheckServiceTest {
         void readsTheDecisionFromTheTablesLastCell() {
             assertThat(StageCheckService.specDeclaresHiddenVariants(specWithDesign("| Calculator | computes | stubbed |\n"))).isFalse();
             assertThat(StageCheckService.specDeclaresHiddenVariants(
-                    specWithDesign("| Calculator | computes | stubbed |\n").replace("| S1 | typical; zero | 3 | no |", "| S1 | typical; zero | 3 | yes — fresh values |")))
-                    .isTrue();
+                    specWithDesign("| Calculator | computes | stubbed |\n").replace("| S1 | typical; zero | 3 | no |", "| S1 | typical; zero | 3 | yes |"))).isTrue();
         }
 
         @Test
@@ -799,7 +866,7 @@ class StageCheckServiceTest {
                 ## Testing Strategy
                 | Seam | Partitions | Weight | Hidden variant |
                 |------|------------|--------|----------------|
-                | S1 | typical and zero | 3 | yes — fresh witness after the due date |
+                | S1 | typical and zero | 3 | yes |
 
                 ## Diagram
                 no — single-class exercise
@@ -850,11 +917,11 @@ class StageCheckServiceTest {
 
         @Test
         void fails_whenTestingStrategySeamsAreMissingMalformedOrDuplicated() {
-            sandbox.spec = VALID_SPEC.replace("| S1 | typical and zero | 3 | yes — fresh witness after the due date |", "| compute | typical and zero | 3 | no |");
+            sandbox.spec = VALID_SPEC.replace("| S1 | typical and zero | 3 | yes |", "| compute | typical and zero | 3 | no |");
 
             assertThat(check(GenerationStage.SPEC).observation()).contains("stable seam ID").contains("S1, S2");
 
-            sandbox.spec = VALID_SPEC.replace("| S1 | typical and zero | 3 | yes — fresh witness after the due date |", "| S1 | typical | 3 | no |\n| S1 | zero | 2 | no |");
+            sandbox.spec = VALID_SPEC.replace("| S1 | typical and zero | 3 | yes |", "| S1 | typical | 3 | no |\n| S1 | zero | 2 | no |");
 
             assertThat(check(GenerationStage.SPEC).observation()).contains("duplicate").contains("S1");
         }

@@ -33,6 +33,8 @@ import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.workspace.Gene
  */
 public final class ExerciseIntegrityGate {
 
+    private static final Pattern TODO_SEAM = Pattern.compile("\\bTODO\\s+(S[1-9][0-9]*)\\s*:");
+
     /**
      * The CI checkout directory names — the sibling repositories CI lays out next to each other, not legitimate top-level source folders. A file whose first path component is one
      * of these is orphan residue (e.g. a nested {@code solution/src/…} left inside another repo): stripped on read-back, never counted as a harness or source file.
@@ -297,9 +299,12 @@ public final class ExerciseIntegrityGate {
                 return List.of("the final test-plan.json uses seam(s) the approved Testing Strategy never declared: " + undeclaredSeams + ". Use only " + declaredSeams + ".");
             }
         }
-        if (StageCheckService.specDeclaresHiddenVariants(approvedSpec) && plan.hiddenEntries().isEmpty()) {
-            return List.of("the approved Testing Strategy requires hidden after-due-date variants, but every final test-plan.json entry is visible. Add genuinely fresh witness "
-                    + "tests and mark them AFTER_DUE_DATE; changing SPEC.md after approval cannot discard the overfit-resistance decision.");
+        Set<String> hiddenPlanSeams = plan.hiddenEntries().stream().map(GeneratedTestPlan.Entry::seam).collect(Collectors.toSet());
+        List<String> missingHiddenSeams = StageCheckService.hiddenVariantSeamIds(approvedSpec).stream().filter(seam -> !hiddenPlanSeams.contains(seam)).sorted().toList();
+        if (!missingHiddenSeams.isEmpty()) {
+            return List.of("the approved Testing Strategy requires AFTER_DUE_DATE variants for seam(s) " + missingHiddenSeams
+                    + ", but the final test-plan.json has no hidden test mapped to them. Add a fresh witness for every listed seam; one unrelated hidden test cannot satisfy "
+                    + "several seam-specific decisions.");
         }
         return List.of();
     }
@@ -316,6 +321,57 @@ public final class ExerciseIntegrityGate {
         catch (IllegalArgumentException exception) {
             return List.of("the final statement cannot be traced to the grading plan because test-plan.json is invalid: " + exception.getMessage());
         }
+    }
+
+    /** Every Artemis task needs an actual instruction before the next task or section; a checkbox-only statement is not usable teaching material. */
+    static List<String> statementTaskInstructionReasons(String problemStatement) {
+        if (problemStatement == null || problemStatement.isBlank()) {
+            return List.of();
+        }
+        List<String> bareTasks = ProblemStatementBindingChecker.tasksWithoutInstruction(problemStatement);
+        return bareTasks.isEmpty() ? List.of()
+                : List.of("the final statement has task binding(s) with no student-facing instruction before the next task or heading: " + bareTasks
+                        + ". Follow each task with concise prose naming the work to perform; the binding alone is grading metadata, not an exercise instruction.");
+    }
+
+    /**
+     * Ensures every approved student-work seam has an in-code template pointer and that stale or invented TODO IDs cannot silently point students at the wrong work. The stable
+     * IDs already connect the specification, grading plan, and statement; this closes the remaining template side of that same traceability contract.
+     */
+    static List<String> templateTodoSeamReasons(List<String> declaredSeams, Map<String, String> templateFiles) {
+        if (declaredSeams == null || declaredSeams.isEmpty()) {
+            return List.of();
+        }
+        Set<String> declared = declaredSeams.stream().filter(id -> id != null && id.matches("S[1-9][0-9]*")).collect(Collectors.toCollection(LinkedHashSet::new));
+        Set<String> actual = new LinkedHashSet<>();
+        if (templateFiles != null) {
+            templateFiles.entrySet().stream().filter(entry -> isJavaSource(entry.getKey())).map(Map.Entry::getValue).filter(java.util.Objects::nonNull)
+                    .forEach(content -> TODO_SEAM.matcher(content).results().map(match -> match.group(1)).forEach(actual::add));
+        }
+        List<String> missing = declared.stream().filter(id -> !actual.contains(id)).toList();
+        List<String> unknown = actual.stream().filter(id -> !declared.contains(id)).toList();
+        if (missing.isEmpty() && unknown.isEmpty()) {
+            return List.of();
+        }
+        List<String> reasons = new ArrayList<>();
+        if (!missing.isEmpty()) {
+            reasons.add("the template has no TODO breadcrumb for approved student-work seam(s) " + missing
+                    + ". Add at least one imperative '// TODO S<n>: ...' for each seam; for an omitted student-created type, put the breadcrumb in its collaborating scaffold.");
+        }
+        if (!unknown.isEmpty()) {
+            reasons.add("the template uses TODO seam IDs the approved Testing Strategy does not declare: " + unknown + ". Replace these stale or invented IDs with one of "
+                    + declared + ".");
+        }
+        return List.copyOf(reasons);
+    }
+
+    private static boolean isJavaSource(String path) {
+        if (path == null) {
+            return false;
+        }
+        String normalized = path.replace('\\', '/');
+        return normalized.endsWith(".java") && !normalized.startsWith("target/") && !normalized.contains("/target/") && !normalized.startsWith("build/")
+                && !normalized.contains("/build/");
     }
 
     /** Finds a top-level, nested, or secondary type declaration without trusting filenames alone. */

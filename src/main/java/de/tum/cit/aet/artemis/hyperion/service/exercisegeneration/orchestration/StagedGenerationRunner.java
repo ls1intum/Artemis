@@ -31,6 +31,7 @@ import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.AgentSys
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.AgentTranscriptWriter;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.GenerationStage;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.SandboxAgentTools;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.critic.SpecFidelityCriticService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.AgentVerifyReport;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.ApprovedSpecRegistry;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.StageCheckResult;
@@ -103,6 +104,9 @@ public class StagedGenerationRunner {
 
     private final ApprovedSpecRegistry approvedSpecs;
 
+    @Nullable
+    private final SpecFidelityCriticService specificationReviewer;
+
     private final AgentTranscriptWriter transcriptWriter;
 
     private final StagedContext stagedContext;
@@ -137,19 +141,26 @@ public class StagedGenerationRunner {
     // @Autowired disambiguates from the package-private test constructor; with two constructors and no annotation Spring cannot instantiate the bean.
     @Autowired
     public StagedGenerationRunner(AgentLoopRunner agentLoopRunner, AgentSystemPromptService systemPromptService, StageCheckService stageCheckService,
-            AgentTranscriptWriter transcriptWriter, ApprovedSpecRegistry approvedSpecs, @Value("${artemis.hyperion.agent.staged-context:CONTINUOUS}") String stagedContext) {
+            AgentTranscriptWriter transcriptWriter, ApprovedSpecRegistry approvedSpecs, SpecFidelityCriticService specificationReviewer,
+            @Value("${artemis.hyperion.agent.staged-context:CONTINUOUS}") String stagedContext) {
         this.agentLoopRunner = agentLoopRunner;
         this.systemPromptService = systemPromptService;
         this.stageCheckService = stageCheckService;
         this.transcriptWriter = transcriptWriter;
         this.approvedSpecs = approvedSpecs;
+        this.specificationReviewer = specificationReviewer;
         this.stagedContext = StagedContext.parse(stagedContext);
     }
 
     /** Test constructor: an isolated registry, so a staged run under test publishes its approved specification without a Spring context. */
     StagedGenerationRunner(AgentLoopRunner agentLoopRunner, AgentSystemPromptService systemPromptService, StageCheckService stageCheckService,
             AgentTranscriptWriter transcriptWriter, String stagedContext) {
-        this(agentLoopRunner, systemPromptService, stageCheckService, transcriptWriter, new ApprovedSpecRegistry(), stagedContext);
+        this(agentLoopRunner, systemPromptService, stageCheckService, transcriptWriter, new ApprovedSpecRegistry(), null, stagedContext);
+    }
+
+    StagedGenerationRunner(AgentLoopRunner agentLoopRunner, AgentSystemPromptService systemPromptService, StageCheckService stageCheckService,
+            AgentTranscriptWriter transcriptWriter, ApprovedSpecRegistry approvedSpecs, String stagedContext) {
+        this(agentLoopRunner, systemPromptService, stageCheckService, transcriptWriter, approvedSpecs, null, stagedContext);
     }
 
     /**
@@ -177,7 +188,7 @@ public class StagedGenerationRunner {
      * @return one aggregated {@link AgentLoopResult}: summed turns, the first {@code ERROR}/{@code CANCELLED} status encountered or else the last stage's status, and the
      *         last stage's final message (with the failing gate's report appended, if a gate failed)
      */
-    public StagedRunOutcome run(ProgrammingExercise exercise, SandboxAgentTools baseTools, Object tools, String briefPrompt, Map<String, String> seedTestsFiles,
+    StagedRunOutcome run(ProgrammingExercise exercise, SandboxAgentTools baseTools, Object tools, String briefPrompt, Map<String, String> seedTestsFiles,
             InteractiveSandbox sandbox, String sessionId, BooleanSupplier cancelled, @Nullable Consumer<ChatResponse> usageSink, @Nullable Consumer<String> progress,
             Supplier<Set<String>> structuralSeedHook) {
         return run(exercise, baseTools, tools, briefPrompt, seedTestsFiles, sandbox, sessionId, cancelled, usageSink, progress, structuralSeedHook, true, null);
@@ -204,7 +215,33 @@ public class StagedGenerationRunner {
      *                               for the critic and repair prompts); may be {@code null}
      * @return one aggregated {@link AgentLoopResult} plus the carried conversation, exactly as the shorter overload
      */
-    public StagedRunOutcome run(ProgrammingExercise exercise, SandboxAgentTools baseTools, Object tools, String briefPrompt, Map<String, String> seedTestsFiles,
+    StagedRunOutcome run(ProgrammingExercise exercise, SandboxAgentTools baseTools, Object tools, String briefPrompt, Map<String, String> seedTestsFiles,
+            InteractiveSandbox sandbox, String sessionId, BooleanSupplier cancelled, @Nullable Consumer<ChatResponse> usageSink, @Nullable Consumer<String> progress,
+            Supplier<Set<String>> structuralSeedHook, boolean specStageApplies, @Nullable Consumer<String> specSink) {
+        return run(exercise, baseTools, tools, briefPrompt, briefPrompt, seedTestsFiles, sandbox, sessionId, cancelled, usageSink, progress, structuralSeedHook, specStageApplies,
+                specSink);
+    }
+
+    /**
+     * Runs the staged workflow with the raw source brief kept separate from authoring context for the pre-freeze semantic review.
+     *
+     * @param exercise           exercise being generated
+     * @param baseTools          shared stateful agent tools
+     * @param tools              tools exposed to the model
+     * @param briefPrompt        current authoring context, which may include repair feedback
+     * @param sourceBrief        raw instructor brief used only as review authority
+     * @param seedTestsFiles     tests repository before generation
+     * @param sandbox            open sandbox
+     * @param sessionId          sandbox session identifier
+     * @param cancelled          cooperative cancellation signal
+     * @param usageSink          optional token-usage sink
+     * @param progress           optional progress sink
+     * @param structuralSeedHook best-effort structural-test seeding hook
+     * @param specStageApplies   whether this run creates a specification
+     * @param specSink           optional approved-specification sink
+     * @return aggregated staged result and carried conversation
+     */
+    public StagedRunOutcome run(ProgrammingExercise exercise, SandboxAgentTools baseTools, Object tools, String briefPrompt, String sourceBrief, Map<String, String> seedTestsFiles,
             InteractiveSandbox sandbox, String sessionId, BooleanSupplier cancelled, @Nullable Consumer<ChatResponse> usageSink, @Nullable Consumer<String> progress,
             Supplier<Set<String>> structuralSeedHook, boolean specStageApplies, @Nullable Consumer<String> specSink) {
         Instant startedAt = clock.get();
@@ -220,6 +257,7 @@ public class StagedGenerationRunner {
         // every stage starts a brand-new conversation via the plain run() call, exactly as before this feature existed.
         List<Message> conversation = null;
         int reentriesRemaining = MAX_TOTAL_REENTRIES;
+        boolean semanticSpecRefinementUsed = false;
 
         for (int index = 0; index < STAGE_ORDER.size(); index++) {
             GenerationStage stage = STAGE_ORDER.get(index);
@@ -282,7 +320,9 @@ public class StagedGenerationRunner {
 
                 GateEvaluation gateEvaluation = evaluateGate(stage, baseTools, sandbox, sessionId, exercise, seedTestsFiles, lastTestsReport);
                 StageCheckResult gate = gateEvaluation.result();
-                emit(progress, gateProgressLabel(index, stage, gate, gateEvaluation.reused()));
+                if (stage != GenerationStage.SPEC || !gate.passed()) {
+                    emit(progress, gateProgressLabel(index, stage, gate, gateEvaluation.reused()));
+                }
                 if (stage == GenerationStage.TESTS) {
                     lastVerifyReport = gate.observation();
                     lastTestsReport = gate.report();
@@ -295,12 +335,36 @@ public class StagedGenerationRunner {
                     if (stage == GenerationStage.SPEC) {
                         String specSnapshot = execRead(sandbox, sessionId, "cat", GenerationWorkspaceService.WORKSPACE + "/SPEC.md");
                         if (!specSnapshot.isBlank()) {
+                            if (specificationReviewer != null) {
+                                emit(progress, "Reviewing the specification against the instructor brief");
+                                SpecFidelityCriticService.SpecificationReview review = specificationReviewer.reviewSpecification(sourceBrief, specSnapshot, usageSink, cancelled);
+                                if (cancelled.getAsBoolean()) {
+                                    return finish(exercise, AgentLoopResult.Status.CANCELLED, totalTurns, lastFinalMessage, conversation);
+                                }
+                                if (!review.complete()) {
+                                    log.warn("Specification review was unavailable for exercise {}; continuing with the mechanically valid contract", exercise.getId());
+                                    emit(progress, "Specification fidelity review was unavailable; the final quality review will keep this exercise in review if needed");
+                                }
+                                else if (!review.accepted()) {
+                                    String reviewFeedback = review.feedback();
+                                    log.info("Specification review rejected the candidate for exercise {}: {}", exercise.getId(), reviewFeedback);
+                                    if (semanticSpecRefinementUsed || remainingPool < MIN_STAGE_BUDGET) {
+                                        return finish(exercise, AgentLoopResult.Status.ERROR, totalTurns, appendGateReport(lastFinalMessage, reviewFeedback), conversation);
+                                    }
+                                    semanticSpecRefinementUsed = true;
+                                    gateFeedback = reviewFeedback;
+                                    emit(progress, "Stage " + (index + 1) + "/" + STAGE_ORDER.size() + ": refining the specification after brief-fidelity review");
+                                    allocation = allocateStageBudget(STAGE_BASE_BUDGETS[index], 0, remainingPool);
+                                    continue;
+                                }
+                            }
                             // Publish the APPROVED specification before anything downstream runs: from here on the gates enforce this content, so a later edit can add
                             // obligations but never delete one.
                             approvedSpecs.approve(sessionId, specSnapshot);
                             if (specSink != null) {
                                 specSink.accept(specSnapshot);
                             }
+                            emit(progress, gateProgressLabel(index, stage, gate, gateEvaluation.reused()));
                         }
                     }
                     stagePassed = true;

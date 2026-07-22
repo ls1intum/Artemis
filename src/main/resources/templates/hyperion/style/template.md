@@ -25,6 +25,11 @@ keep the template compiling without it, and leave a TODO breadcrumb in the colla
 names the type, its essential shape, and where it plugs in. The breadcrumb is the student's only in-code
 pointer to work that has no file yet — write it like you would want to find it.
 
+When a provided context will eventually refer to an omitted student-created interface, keep the context class
+but omit the student-owned field and methods whose signatures need that interface. Place their stable TODO
+breadcrumb in the class body. Do not ship an empty interface merely to make those signatures compile, and do not
+weaken only the template API to `Object`; tests can inspect the completed API reflectively.
+
 ## Data-holder plumbing
 
 Provide routine constructors, fields, and accessors already implemented unless implementing them is itself an

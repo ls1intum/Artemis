@@ -146,9 +146,9 @@ class AgentSystemPromptServiceTest {
         String prompt = systemPromptService.build(exerciseWith(ProgrammingLanguage.JAVA, "")).replaceAll("\\s+", " ");
 
         assertThat(prompt).contains("TEMPLATE AS TEACHING SCAFFOLD", "work from it alone, using the statement only as reference")
-                .contains("complete Javadoc (or the language's doc idiom) restating its student-visible contract").contains("// TODO: <mirror of the task wording>")
-                .contains("INSIDE the member body, directly above the placeholder throw").contains("the template must NOT ship that type")
-                .contains("a direct source reference to a missing type in the test sources breaks the template build");
+                .contains("complete Javadoc (or the language's doc idiom) stating its contract").contains("// TODO S<n>: <task wording>")
+                .contains("INSIDE the member body, directly above the placeholder throw").contains("When students create a type, omit it from the template")
+                .contains("direct test references to a missing type do not compile");
     }
 
     @Test
@@ -273,8 +273,8 @@ class AgentSystemPromptServiceTest {
 
         assertOnlyOwnStageHeaderPresent(prompt, GenerationStage.SPEC);
         assertThat(prompt).contains("write `/workspace/SPEC.md`").contains("reference/style/spec.md").contains("`given`, `stubbed`, `student-creates`")
-                .contains("## Testing Strategy").contains("stable ID (`S1`, `S2`, ...)").contains("compile-safe allocation is mandatory")
-                .contains("concrete strategies `student-creates`").contains("context `stubbed`").contains("must not call a member that the empty interface does not declare")
+                .contains("## Testing Strategy").contains("stable ID (`S1`, `S2`, ...)").contains("student-designed interface and strategies")
+                .contains("interface and concrete strategies `student-creates`").contains("context `stubbed`").contains("omit members requiring the absent interface")
                 .doesNotContain("reference/style/solution.md").doesNotContain("reference/style/template.md").doesNotContain("reference/style/tests.md")
                 .doesNotContain("reference/style/final-statement.md");
     }

@@ -127,8 +127,9 @@ public class AgentSystemPromptService {
             THE CONTRACT
             1. The solution compiles and passes every behavioural test.
             2. The template compiles. Every task-bound BEHAVIOURAL test fails at its intended TODO. Structural checks for starter code MAY pass; behavioural tests may not.
-            Preserve the solution's public API with readable stubs, preferably a TODO followed by
+            Preserve the solution's public API for `given` and ordinarily `stubbed` work with readable stubs, preferably a TODO followed by
             `throw new UnsupportedOperationException("Not implemented")`; a returned placeholder is valid only if every test rejects it. Never leak solution logic or grader-defeating hints.
+            Approved `student-creates` types and dependent members are absent from the template; stable seam breadcrumbs stand in for them.
             A stub fails the same way for every caller: never inspect stack traces, test names, or grading context. If a member cannot be stubbed without cascading failures
             (constructors, shared plumbing), provide it implemented in the template and
             do not bind a behavioural test to it (starter credit, rule 5).
@@ -144,13 +145,12 @@ public class AgentSystemPromptService {
     private static final String TEMPLATE_AS_TEACHING_SCAFFOLD = """
             TEMPLATE AS TEACHING SCAFFOLD
             The template is the student's guided starting point: work from it alone, using the statement only as reference. Every stubbed member carries complete Javadoc (or the
-            language's doc idiom) restating its student-visible contract — purpose, parameters, return, error behavior. Anchor each task with `// TODO: <mirror of the task wording>`
+            language's doc idiom) stating its contract — purpose, parameters, return, errors. Anchor each task with its Testing Strategy ID and wording:
+            `// TODO S<n>: <task wording>`
             INSIDE the member body, directly above the placeholder throw — never between doc comment or annotation and the signature.
             A TODO marks unfinished student work only: never leave one on code that is already complete, and never leave authoring or design notes in any repository file.
-            When the requirements say students define or create a type themselves, the template must NOT ship that type: omit its file, keep the template compiling without it
-            (wire `implements`/references to it only in the solution), anchor its creation with TODO breadcrumbs in the template files that will collaborate with it, and grade it
-            only through the seeded structural checks and reflection-based behaviour tests — a direct source reference to a missing type in the test sources breaks the template
-            build. Imitate the seeded reference/'s FORM for this scaffold, never its topic, API, design, or code.
+            When students create a type, omit it from the template. Keep the starter compiling, add seam TODO breadcrumbs to its collaborators, and grade it through the
+            seeded structural checks and reflection pattern in the reference; direct test references to a missing type do not compile. Imitate the reference's FORM, not its content.
 
             """;
 
@@ -213,22 +213,22 @@ public class AgentSystemPromptService {
             plausible wrong implementation would get wrong; `## Worked Examples` — a table (| Rules | Input | Expected |) with at least two rows per central rule whose
             expected results DIFFER; verify every row's arithmetic in the sandbox (a throwaway /tmp script) BEFORE writing it down; `## Design` — a table
             (| Type | Role | Template status |) with Template status EXACTLY one of `given`, `stubbed`, `student-creates` (a `student-creates` type is OMITTED from the
-            template and graded through seeded structural checks plus reflection-based tests — the template gate enforces its absence). A brief asking students to DESIGN or
-            CREATE a type normally means `student-creates`, but Java must still have enough declarations for the provided template to compile. In the common strategy-pattern
-            case, when a brief combines a PROVIDED context with a student-designed strategy interface and concrete strategies, the compile-safe allocation is mandatory: mark the
-            interface `stubbed` and ship an empty declaration whose TODO asks students to define its members; mark the concrete strategies `student-creates` and the context `stubbed`.
-            Its fields, constructor, and setter may be provided, but the delegation method must remain a TODO body and must not call a member that the empty interface does not declare.
-            The provided context needs the interface type name to compile but never needs a concrete strategy name. Tests reach the student-defined interface API
-            and omitted concrete types reflectively. This preserves real design and wiring work without making the starter uncompilable or pre-solving the interface. Say who owns each piece of
+            template and graded through seeded structural checks plus reflection-based tests — the template gate enforces its absence). A named type the brief assigns students to
+            DESIGN or CREATE is `student-creates`; compilation pressure cannot weaken that ownership. For a provided strategy context with a student-designed interface and strategies, mark the
+            interface and concrete strategies `student-creates`, and the context `stubbed`. Keep the context scaffold, but omit members requiring the absent interface and leave a
+            class-body TODO for the field/setter/delegation API. Tests load those types and invoke the wiring reflectively. Never ship an empty supposedly student-designed interface.
+            This preserves real design work while the starter compiles. Say who owns each piece of
             mutable state and whether it survives object replacement; `## Testing Strategy` — a table whose first column gives each independently actionable unit of student
             work a stable ID (`S1`, `S2`, ...), grouping every test
             partition it needs (never one seam per test, never one for the whole exercise unless it is genuinely one seam), with a weight tier (core rules outweigh edge
             cases) and a LAST column reading exactly `yes` or `no` for a hidden after-due-date variant with fresh witnesses (students overfit to visible tests; that cell is
             read mechanically). Match the requested learning objective and difficulty in the work students actually perform: if the brief teaches an abstraction or design
             pattern, students must implement or wire that collaboration rather than only transcribe domain formulas into an already-solved design; keep routine plumbing given.
+            Remove validation, exception, state, purity, immutability, or architecture obligations not explicit in the brief or necessary for the requested behaviour.
+            Open-ended theme/formula choices are exercise design; unrelated defensive policy is not.
             Every Testing Strategy seam described as student work must belong to a `stubbed` or `student-creates` Design row. Keep solution and template public APIs identical:
-            a given/stubbed type cannot mention an omitted `student-creates` type in its signature, so either make the dependent type student-created too or choose a compile-safe
-            design — never substitute `Object` in only the template.
+            shared members stay identical, while a student-owned member that depends on an omitted type is omitted from the template and represented by its stable TODO breadcrumb.
+            Never substitute `Object` in only the template.
             `## Diagram` — yes/no + one-line why
             grounded in the design (yes for multiple collaborating or student-created types). No [task] bindings, no test names, no PlantUML at spec time. The accepted ownership
             and diagram decisions are the generation contract: later stages may clarify or add obligations, but must never downgrade student work or revoke the diagram to escape

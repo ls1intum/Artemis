@@ -54,11 +54,12 @@ reflection-based tests, and the template gate rejects a template that still cont
 students to design or create a type normally demands `student-creates`, but Java must still have enough
 declarations for a provided scaffold to compile. When a brief combines a provided Strategy context with a
 student-designed interface and concrete strategies, the compile-safe allocation is mandatory: the interface is
-an empty `stubbed` declaration whose TODO asks students to define its members; concrete strategies are
-`student-creates`; the context is `stubbed`. Its fields, constructor, and setter may be provided, but its delegation
-method stays a TODO body and must not call a member that the empty interface does not yet declare. Tests reach the
-student-defined interface API and omitted concrete types reflectively. This is compile scaffolding, not permission
-to predeclare the student-designed API or implementations.
+`student-creates`; concrete strategies are `student-creates`; the context is `stubbed`. Keep the context class as
+the provided scaffold, but omit fields and methods whose signatures require the absent interface. Put one
+class-body TODO breadcrumb in that context telling students to add the field, setter, and delegation API after
+they create the interface. Tests reach the student-defined interface and the context wiring reflectively. An empty
+interface declaration still pre-creates the type, so it is not faithful when the brief explicitly assigns creating
+that interface to students.
 For every piece of MUTABLE STATE, say below the table which type owns it and whether it survives object
 replacement (a swap, reset, or re-registration): tests may only demand what this ownership makes possible.
 Pin the public API here too — signatures only; later stages copy them, they do not renegotiate silently.
@@ -72,9 +73,15 @@ those are explicitly part of the objective.
 
 Reconcile that ownership with compilation before approving the design. Every testing-strategy seam described
 as student work must map to a `stubbed` or `student-creates` row. A given or stubbed type cannot expose an
-omitted `student-creates` type in its Java signature: the template would not compile. Make the dependent type
-student-created as well, retain only the minimal empty abstraction declaration described above, or choose another compile-safe boundary. Never make the same API accept the real interface
-in the solution and `Object` in the template; solution and template public signatures must stay identical.
+omitted `student-creates` type in a template signature: the template would not compile. Make the dependent type
+student-created too, or omit only the student-owned dependent members and replace them with stable class-body
+TODO breadcrumbs. Never make the same API accept the real interface in the solution and `Object` in the template;
+shared solution/template signatures stay identical.
+
+Before accepting the rules, perform a scope subtraction pass: remove validation, exception, state, purity,
+immutability, thread-safety, and architecture obligations that the brief did not request and that are not strictly
+necessary to define the chosen strategies. Choosing the theme and the strategies' contrasting computations is
+necessary when the brief leaves them open; adding unrelated defensive policy is not.
 
 ## Testing strategy
 
