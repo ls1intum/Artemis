@@ -213,8 +213,12 @@ public class AgentSystemPromptService {
             plausible wrong implementation would get wrong; `## Worked Examples` — a table (| Rules | Input | Expected |) with at least two rows per central rule whose
             expected results DIFFER; verify every row's arithmetic in the sandbox (a throwaway /tmp script) BEFORE writing it down; `## Design` — a table
             (| Type | Role | Template status |) with Template status EXACTLY one of `given`, `stubbed`, `student-creates` (a `student-creates` type is OMITTED from the
-            template and graded through seeded structural checks plus reflection-based tests — the template gate enforces its absence). When the brief asks students to DESIGN
-            or CREATE a type, that type is `student-creates`; shipping it `stubbed` hands them the answer and silently downgrades the exercise. Say who owns each piece of
+            template and graded through seeded structural checks plus reflection-based tests — the template gate enforces its absence). A brief asking students to DESIGN or
+            CREATE a type normally means `student-creates`, but Java must still have enough declarations for the provided template to compile. In the common strategy-pattern
+            case, when a brief combines a PROVIDED context with a student-designed strategy interface and concrete strategies, the compile-safe allocation is mandatory: mark the
+            interface `stubbed` and ship an empty declaration whose TODO asks students to define its members; mark the concrete strategies `student-creates`; mark the context
+            `given` or `stubbed`. The provided context needs the interface name to compile but need not name its implementations. This preserves real design work without making the
+            starter uncompilable or pretending the context can reference a missing type. Say who owns each piece of
             mutable state and whether it survives object replacement; `## Testing Strategy` — a table whose first column gives each independently actionable unit of student
             work a stable ID (`S1`, `S2`, ...), grouping every test
             partition it needs (never one seam per test, never one for the whole exercise unless it is genuinely one seam), with a weight tier (core rules outweigh edge
@@ -246,9 +250,8 @@ public class AgentSystemPromptService {
             """;
 
     private static final String STAGE_3_TESTS_INSTRUCTIONS = """
-            STAGE 3 — TESTS: run `verify` first — it reports binding problems and the seeded structural check names once template and solution diverge. Start with the
-            highest-risk learning-objective seam (for a design pattern, prove delegation through a recording fake before testing concrete formulas), then author its tests one
-            partition at a time from the specification's Testing Strategy, re-running `verify` after each test or small batch: each must pass on the solution and fail on the
+            STAGE 3 — TESTS: run `verify` first — it reports binding problems and seeded structural names. Start with the highest-risk learning seam; for a pattern, prove
+            delegation with a recording fake before concrete formulas. Author one partition at a time, re-running `verify` after each test or small batch: each must pass on the solution and fail on the
             template for its intended reason (a structural check may already pass). For a `student-creates` type, follow the reflection pattern the seeded reference/tests
             demonstrate (its ShippingCalculator test reaches a solution-only class via ReflectionTestUtils so the same test still compiles against the template). Every test
             must be passable by completing the template's TODOs within the scaffolded structure; one that forces restructuring means the design is wrong — fix template and
@@ -257,8 +260,8 @@ public class AgentSystemPromptService {
             abstraction. When the collaborator type is absent from the template, create the recording fake with a Java dynamic proxy after loading the interface by name, and
             invoke every constructor or method whose signature mentions that missing type reflectively. Holding the instance as `Object` does not make a normal typed method call
             compile. Assert exception types, never message strings, unless the statement fixes the exact message. Then write `/workspace/test-plan.json` implementing
-            the Testing Strategy: {"tests":[{"name":"<exact test name>","seam":"S1","weight":<1..3>,"visibility":"ALWAYS"|"AFTER_DUE_DATE"}]} — every test carries its
-            specification seam ID; weights grade core rules above edge cases,
+            the Testing Strategy: {"tests":[{"name":"<exact test name>","seam":"S1","weight":<1..3>,"visibility":"ALWAYS"|"AFTER_DUE_DATE"}]} — carry the spec seam ID;
+            weights grade core rules above edge cases,
             AFTER_DUE_DATE hides an overfit-resistant variant until the deadline; names must be the exact names `verify` reports. If a differential run exposes a solution or
             template defect, fix it there and re-check that stage's guarantees; never weaken an accepted student-ownership or diagram decision to make a later gate pass.
             """;

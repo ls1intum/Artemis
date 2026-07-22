@@ -51,7 +51,12 @@ EXACTLY one of `given`, `stubbed`, `student-creates` — the gates enforce these
 ships complete; `stubbed` ships with signatures, Javadoc, and TODO bodies; `student-creates` is ABSENT from
 the template (students design the file themselves; it is graded through seeded structural checks and
 reflection-based tests, and the template gate rejects a template that still contains it). A brief that asks
-students to design or create a type demands `student-creates` — stubbing it silently downgrades the exercise.
+students to design or create a type normally demands `student-creates`, but Java must still have enough
+declarations for a provided scaffold to compile. When a brief combines a provided Strategy context with a
+student-designed interface and concrete strategies, the compile-safe allocation is mandatory: the interface is
+an empty `stubbed` declaration whose TODO asks students to define its members; concrete strategies are
+`student-creates`; the context is `given` or `stubbed`. The context needs the interface name but not the concrete names. This is compile scaffolding,
+not permission to predeclare the student-designed API or implementations.
 For every piece of MUTABLE STATE, say below the table which type owns it and whether it survives object
 replacement (a swap, reset, or re-registration): tests may only demand what this ownership makes possible.
 Pin the public API here too — signatures only; later stages copy them, they do not renegotiate silently.
@@ -66,7 +71,7 @@ those are explicitly part of the objective.
 Reconcile that ownership with compilation before approving the design. Every testing-strategy seam described
 as student work must map to a `stubbed` or `student-creates` row. A given or stubbed type cannot expose an
 omitted `student-creates` type in its Java signature: the template would not compile. Make the dependent type
-student-created as well, or choose a compile-safe boundary. Never make the same API accept the real interface
+student-created as well, retain only the minimal empty abstraction declaration described above, or choose another compile-safe boundary. Never make the same API accept the real interface
 in the solution and `Object` in the template; solution and template public signatures must stay identical.
 
 ## Testing strategy
