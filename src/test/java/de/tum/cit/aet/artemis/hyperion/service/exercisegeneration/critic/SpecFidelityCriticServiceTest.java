@@ -155,6 +155,23 @@ class SpecFidelityCriticServiceTest {
     }
 
     @Test
+    void specificationReviewTreatsMarkdownEmphasisAsPresentationWhenGroundingAQuote() {
+        SpecFidelityCriticService critic = criticReturning(rawResponse("""
+                {"omissions":[],"conflicts":[],"incorrectExamples":[],"unsupportedConstraints":[],
+                 "internalConflicts":[{"firstSpecQuote":"Healing potency is two per herb.",
+                 "secondSpecQuote":"Healing potency is four for six herbs.","reason":"the arithmetic conflicts",
+                 "repair":"correct the worked example"}]}
+                """));
+
+        SpecFidelityCriticService.SpecificationReview review = critic.reviewSpecification("Teach the strategy pattern.",
+                "**Healing potency** is two per herb. **Healing potency** is four for six herbs.", null, () -> false);
+
+        assertThat(review.complete()).isTrue();
+        assertThat(review.accepted()).isFalse();
+        assertThat(review.feedback()).contains("the arithmetic conflicts", "correct the worked example");
+    }
+
+    @Test
     void specificationReview_distinguishesMalformedUngroundedAndShortGroundedVerdicts() {
         ChatModel chatModel = mock(ChatModel.class);
         when(chatModel.call(any(Prompt.class))).thenReturn(rawResponse("not json"), rawResponse("""

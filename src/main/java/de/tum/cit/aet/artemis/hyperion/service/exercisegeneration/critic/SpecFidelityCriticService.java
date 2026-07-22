@@ -475,7 +475,16 @@ public class SpecFidelityCriticService {
     }
 
     private static boolean specificationQuoteIsGrounded(@Nullable String quote, String source) {
-        return sourceQuoteIsGrounded(quote, source);
+        if (sourceQuoteIsGrounded(quote, source)) {
+            return true;
+        }
+        // Markdown emphasis is presentation, not part of the claim. Local models commonly copy the exact words while omitting surrounding **/__ markers; accepting that
+        // narrow normalization preserves grounding without introducing fuzzy matching for changed words, numbers, or punctuation.
+        return quote != null && sourceQuoteIsGrounded(stripMarkdownEmphasis(quote), stripMarkdownEmphasis(source));
+    }
+
+    private static String stripMarkdownEmphasis(String value) {
+        return value.replace("**", "").replace("__", "");
     }
 
     /**
