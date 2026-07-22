@@ -90,6 +90,9 @@ export class TumUiAutoCompleteComponent implements ControlValueAccessor {
     readonly minLength = input(1);
     /** Debounce in milliseconds before {@link completeMethod} fires (parity with `p-autocomplete [delay]`). */
     readonly delay = input(300);
+    /** Fire {@link completeMethod} on focus (even with an empty query) and open the panel, so all options show
+     *  when the field is focused (parity with `p-autocomplete [completeOnFocus]`). */
+    readonly completeOnFocus = input(false);
     /** `id` of the text input (the target of an external `<label for>`). Defaults to a unique per-instance id. */
     readonly inputId = input(`tum-ui-autocomplete-${nextAutoCompleteId++}`);
     /** Forwarded onto the input for template-driven-form parity; the CVA itself does not need it. */
@@ -137,8 +140,11 @@ export class TumUiAutoCompleteComponent implements ControlValueAccessor {
     protected readonly isDisabled = computed(() => this.disabled() || this.disabledByForm());
     private readonly labelKey = computed(() => this.optionLabel() ?? this.field());
 
-    /** The panel is shown only while focused, once a search has fired for a query that still meets `minLength`. */
-    protected readonly panelVisible = computed(() => this.isFocused() && this.hasSearched() && this.query().length >= this.minLength() && !this.isDisabled());
+    /** The panel is shown while focused, once a search has fired for a query that meets `minLength` — or for any
+     *  query length when `completeOnFocus` is on (so focusing an empty field can show all options). */
+    protected readonly panelVisible = computed(
+        () => this.isFocused() && this.hasSearched() && !this.isDisabled() && (this.query().length >= this.minLength() || this.completeOnFocus()),
+    );
     protected readonly activeOptionId = computed(() => (this.activeIndex() >= 0 ? this.optionId(this.activeIndex()) : undefined));
     /** Placeholder is suppressed once a chip is selected in multiple mode, matching `p-autocomplete`. */
     protected readonly inputPlaceholder = computed(() => (this.multiple() && this.selectedValues().length > 0 ? undefined : this.placeholder()));
@@ -237,6 +243,10 @@ export class TumUiAutoCompleteComponent implements ControlValueAccessor {
 
     protected onFocus(): void {
         this.isFocused.set(true);
+        // completeOnFocus: fetch + show options immediately (parity with p-autocomplete), even for an empty field.
+        if (this.completeOnFocus() && !this.isDisabled()) {
+            this.fireComplete(this.query());
+        }
     }
 
     protected onBlur(): void {
@@ -248,17 +258,31 @@ export class TumUiAutoCompleteComponent implements ControlValueAccessor {
         const value = (event.target as HTMLInputElement).value;
         this.query.set(value);
         this.activeIndex.set(-1);
+        // Single mode: the typed text IS the value — mirror it (and clearing → undefined) into the CVA on every
+        // keystroke, so Apply never submits a stale value when the user types/clears without picking a suggestion.
+        // Multiple mode keeps its chip-based value untouched (selection drives it).
+        if (!this.multiple()) {
+            const singleVal = value === '' ? undefined : value;
+            this.singleValue.set(singleVal);
+            this.onChangeCallback(singleVal);
+        }
         if (this.debounceTimer) {
             clearTimeout(this.debounceTimer);
         }
         if (value.length >= this.minLength()) {
-            this.debounceTimer = setTimeout(() => {
-                this.completeMethod.emit({ originalEvent: event, query: value });
-                this.hasSearched.set(true);
-            }, this.delay());
+            this.debounceTimer = setTimeout(() => this.fireComplete(value, event), this.delay());
+        } else if (this.completeOnFocus()) {
+            // Below minLength but completeOnFocus is on: keep options visible (e.g. cleared field shows all).
+            this.fireComplete(value, event);
         } else {
             this.hasSearched.set(false);
         }
+    }
+
+    /** Emit the complete request for `query` and mark that a search has run (so the panel may open). */
+    private fireComplete(query: string, originalEvent?: Event): void {
+        this.completeMethod.emit({ originalEvent, query });
+        this.hasSearched.set(true);
     }
 
     protected onInputKeydown(event: KeyboardEvent): void {
@@ -359,7 +383,12 @@ export class TumUiAutoCompleteComponent implements ControlValueAccessor {
         const el = this.textInput()?.nativeElement;
         if (el) {
             const value = this.singleValue();
-            el.value = value == undefined ? '' : this.valueLabel(value);
+            const next = value == undefined ? '' : this.valueLabel(value);
+            // Only write when different: single-mode typing updates singleValue every keystroke, and reassigning
+            // the identical value would reset the caret to the end mid-typing.
+            if (el.value !== next) {
+                el.value = next;
+            }
         }
     }
 

@@ -255,3 +255,43 @@ describe('TumUiAutoCompleteComponent single mode with standalone ngModel', () =>
         fixture.destroy();
     });
 });
+
+describe('TumUiAutoCompleteComponent single-mode value + completeOnFocus', () => {
+    let fixture: ComponentFixture<TumUiAutoCompleteComponent>;
+    let component: TumUiAutoCompleteComponent;
+    let input: HTMLInputElement;
+
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({ imports: [TumUiAutoCompleteComponent, FontAwesomeTestingModule] }).compileComponents();
+        fixture = TestBed.createComponent(TumUiAutoCompleteComponent);
+        component = fixture.componentInstance;
+        fixture.componentRef.setInput('delay', 0); // single mode is the default (multiple defaults to false)
+        fixture.detectChanges();
+        input = fixture.debugElement.query(By.css('[data-testid="tum-ui-autocomplete-input"]')).nativeElement as HTMLInputElement;
+    });
+
+    afterEach(() => {
+        fixture.destroy();
+        vi.restoreAllMocks();
+    });
+
+    it('single mode: typing mirrors the text through the CVA, and clearing writes undefined', () => {
+        const onChange = vi.fn();
+        component.registerOnChange(onChange);
+        input.value = 'artemis-build-agent-1';
+        input.dispatchEvent(new Event('input'));
+        expect(onChange).toHaveBeenLastCalledWith('artemis-build-agent-1');
+        input.value = '';
+        input.dispatchEvent(new Event('input'));
+        expect(onChange).toHaveBeenLastCalledWith(undefined);
+    });
+
+    it('completeOnFocus: focusing fires completeMethod even with an empty query', () => {
+        fixture.componentRef.setInput('completeOnFocus', true);
+        fixture.detectChanges();
+        const complete = vi.fn();
+        component.completeMethod.subscribe(complete);
+        input.dispatchEvent(new Event('focus'));
+        expect(complete).toHaveBeenCalledWith(expect.objectContaining({ query: '' }));
+    });
+});

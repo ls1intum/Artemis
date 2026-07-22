@@ -347,14 +347,18 @@ describe('UserManagementUpdateComponent', () => {
 
     it('should add the typed group on Enter and cancel the key so it does not submit the form', () => {
         const newGroup = 'nicegroup';
-        component.user.set({ groups: [] } as unknown as User);
+        const originalGroups: string[] = [];
+        component.user.set({ groups: originalGroups } as unknown as User);
         component.allGroups = [newGroup];
-        const input = { value: newGroup } as HTMLInputElement;
+        const input = document.createElement('input');
+        input.value = newGroup;
         const event = { target: input, preventDefault: vi.fn(), stopPropagation: vi.fn() } as unknown as Event;
 
         component.onGroupAdd(component.user(), event);
 
         expect(component.user().groups).toEqual([newGroup]);
+        // Immutable update (new array reference) so the one-way [ngModel] fires writeValue and the chip renders.
+        expect(component.user().groups).not.toBe(originalGroups);
         expect(event.preventDefault).toHaveBeenCalledOnce();
         expect(event.stopPropagation).toHaveBeenCalledOnce();
         expect(input.value).toBe('');
@@ -363,7 +367,9 @@ describe('UserManagementUpdateComponent', () => {
     it('should not add a typed group on Enter when it is not in the allowed groups list', () => {
         component.allGroups = ['nicegroup'];
         component.user.set({ groups: [] } as unknown as User);
-        const event = { target: { value: 'badgroup' }, preventDefault: vi.fn(), stopPropagation: vi.fn() } as unknown as Event;
+        const input = document.createElement('input');
+        input.value = 'badgroup';
+        const event = { target: input, preventDefault: vi.fn(), stopPropagation: vi.fn() } as unknown as Event;
 
         component.onGroupAdd(component.user(), event);
 

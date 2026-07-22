@@ -295,7 +295,10 @@ export class UserManagementUpdateComponent implements OnInit {
         event.stopPropagation();
         const input = event.target as HTMLInputElement;
         this.addGroup(user, (input.value || '').trim());
+        // Reset the autocomplete through its own input handler (state-aware), not just the raw value, so its query
+        // signal and suggestion panel clear too — otherwise the typed text and stale panel linger after Enter.
         input.value = '';
+        input.dispatchEvent(new Event('input', { bubbles: true }));
     }
 
     onGroupUnselect(event: TumUiAutoCompleteUnselectEvent): void {
@@ -371,10 +374,10 @@ export class UserManagementUpdateComponent implements OnInit {
      */
     private addGroup(user: User, groupString: string) {
         if (groupString && this.allGroups.includes(groupString) && !user.groups?.includes(groupString)) {
-            if (!user.groups) {
-                user.groups = [];
-            }
-            user.groups.push(groupString);
+            // Replace the array (not push) so the shallow `commitUser` spread yields a NEW `groups` reference: the
+            // one-way `[ngModel]` on the autocomplete only calls writeValue (→ renders the chip) when the reference
+            // changes. An in-place push kept the same reference, so an Enter-added group never showed a chip.
+            user.groups = [...(user.groups ?? []), groupString];
             this.commitUser(user);
         }
     }
