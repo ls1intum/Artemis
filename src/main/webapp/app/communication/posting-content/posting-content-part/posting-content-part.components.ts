@@ -143,12 +143,14 @@ export class PostingContentPartComponent implements OnInit {
      * Opens a dialog to display the image in full size
      *
      * @param slideToReference {string} the reference to the slide
+     * @param imageAlt {string} optional description of the image used as its alt text (falls back to a localized label)
      */
-    enlargeImage(slideToReference: string) {
+    enlargeImage(slideToReference: string, imageAlt?: string) {
         this.dialogService.open(EnlargeSlideImageComponent, {
             // A translated header gives the dialog an accessible name and renders PrimeNG's themed close button, so the preview can always be dismissed.
             header: this.translateService.instant('artemisApp.metis.imagePreviewTitle'),
-            data: { slideToReference },
+            // Prefer the image's own description (markdown alt text) so assistive technologies can announce the preview; fall back to a generic localized label.
+            data: { slideToReference, imageAlt: imageAlt || this.translateService.instant('artemisApp.metis.imagePreviewAlt') },
             modal: true,
             // Without closable the DynamicDialog header renders no close button (PrimeNG defaults it to undefined), which left the preview stuck open.
             closable: true,

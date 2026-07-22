@@ -4,6 +4,7 @@
             "loadingPosts": "Nachrichten laden...",
             "noPosts": "Keine Nachrichten gefunden.",
             "imagePreviewTitle": "Bildvorschau",
+            "imagePreviewAlt": "Vergrößertes Bild",
             "postNumberInformation": "{{ number }} Treffer",
             "newMessage": "Neue Nachricht",
             "newAnnouncement": "Neue Ankündigung",

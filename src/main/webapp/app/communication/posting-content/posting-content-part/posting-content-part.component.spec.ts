@@ -263,7 +263,7 @@ describe('PostingContentPartComponent', () => {
 
             referenceLink.click();
             expect(enlargeImageSpy).toHaveBeenCalledOnce();
-            expect(enlargeImageSpy).toHaveBeenCalledWith(imageURL);
+            expect(enlargeImageSpy).toHaveBeenCalledWith(imageURL, referenceStr);
         });
 
         it('should open the enlarge slide image dialog with the correct config when enlargeImage is called', () => {
@@ -275,12 +275,23 @@ describe('PostingContentPartComponent', () => {
             expect(dialogService.open).toHaveBeenCalledWith(
                 EnlargeSlideImageComponent,
                 expect.objectContaining({
-                    data: { slideToReference },
+                    data: { slideToReference, imageAlt: 'artemisApp.metis.imagePreviewAlt' },
                     modal: true,
                     closable: true,
                     dismissableMask: true,
                     closeOnEscape: true,
-                    header: expect.any(String),
+                    header: 'artemisApp.metis.imagePreviewTitle',
+                }),
+            );
+        });
+
+        it('should pass the provided image description as alt text to the enlarge dialog', () => {
+            component.enlargeImage('/path/x.png', 'A meaningful image description');
+
+            expect(dialogService.open).toHaveBeenCalledWith(
+                EnlargeSlideImageComponent,
+                expect.objectContaining({
+                    data: { slideToReference: '/path/x.png', imageAlt: 'A meaningful image description' },
                 }),
             );
         });

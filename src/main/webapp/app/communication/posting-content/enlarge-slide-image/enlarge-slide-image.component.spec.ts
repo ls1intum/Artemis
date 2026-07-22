@@ -8,11 +8,12 @@ describe('EnlargeSlideImageComponent', () => {
     let fixture: ComponentFixture<EnlargeSlideImageComponent>;
 
     const slideToReference = '/path/to/image.png';
+    const imageAlt = 'A meaningful image description';
 
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [EnlargeSlideImageComponent],
-            providers: [{ provide: DynamicDialogConfig, useValue: { data: { slideToReference } } }],
+            providers: [{ provide: DynamicDialogConfig, useValue: { data: { slideToReference, imageAlt } } }],
         });
         fixture = TestBed.createComponent(EnlargeSlideImageComponent);
         component = fixture.componentInstance;
@@ -23,9 +24,10 @@ describe('EnlargeSlideImageComponent', () => {
         expect(component.data.slideToReference).toBe(slideToReference);
     });
 
-    it('should render the image with the provided source', () => {
+    it('should render the image with the provided source and alt text', () => {
         const image: HTMLImageElement | null = fixture.nativeElement.querySelector('img');
         expect(image).toBeTruthy();
         expect(image!.getAttribute('src')).toBe(slideToReference);
+        expect(image!.getAttribute('alt')).toBe(imageAlt);
     });
 });
