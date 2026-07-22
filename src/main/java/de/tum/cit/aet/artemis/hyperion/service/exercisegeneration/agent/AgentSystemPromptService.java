@@ -131,9 +131,8 @@ public class AgentSystemPromptService {
             Preserve the solution's public API for `given` and ordinarily `stubbed` work with readable stubs, preferably a TODO followed by
             `throw new UnsupportedOperationException("Not implemented")`; a returned placeholder is valid only if every test rejects it. Never leak solution logic or grader-defeating hints.
             Approved `student-creates` types and dependent members are absent; tasks and reflective tests anchor them.
-            A stub fails the same way for every caller: never inspect stack traces, test names, or grading context. If a member cannot be stubbed without cascading failures
-            (constructors, shared plumbing), provide it implemented in the template and
-            do not bind a behavioural test to it (starter credit, rule 5).
+            A stub fails identically for every caller: never inspect stack traces, test names, or grading context. Shared plumbing may stay implemented only when no behavioural
+            test binds it.
             3. Run the same meaningful tests against solution and template. Cover central behaviour, representative boundaries, state transitions, and stated errors. Use
             non-degenerate witnesses that distinguish plausible wrong implementations.
             4. Every observable statement promise needs executable evidence, and every behavioural assertion a stated rule. Preserve pedagogical objectives that black-box tests cannot prove;
@@ -148,7 +147,8 @@ public class AgentSystemPromptService {
             The template is the student's guided starting point: work from it alone, using the statement only as reference. Every stubbed member carries complete Javadoc (or the
             language's doc idiom) stating its contract — purpose, parameters, return, errors. Anchor each stubbed seam with its Testing Strategy ID and wording:
             `// TODO S<n>: <task wording>`
-            INSIDE the member body, directly above the placeholder throw — never between doc comment or annotation and the signature.
+            Normally put it INSIDE the member above its throw. If an absent type makes the seam undeclarable, keep an empty owner class with its own seam TODO. Do not restore the
+            type, use `Object`, edit SPEC.md, or reuse its seam.
             A TODO marks unfinished student work only: never leave one on code that is already complete, and never leave authoring or design notes in any repository file.
             Omit student-created types, keep the starter compiling, and grade them with the reference's structural/reflection pattern. Tasks and tests anchor them; never put their
             seam IDs on unrelated collaborator code. Imitate the reference's FORM, not its content.
@@ -226,6 +226,8 @@ public class AgentSystemPromptService {
             column reading exactly `yes` or `no` for a hidden after-due-date variant with fresh witnesses (students overfit to visible tests; that cell is
             read mechanically). Match the requested learning objective and difficulty in the work students actually perform: if the brief teaches an abstraction or design
             pattern, students must implement or wire that collaboration rather than only transcribe domain formulas into an already-solved design; keep routine plumbing given.
+            Exclude prescribed transcription and baseline pattern mechanics (named types, strategy storage/swap, delegation) from difficulty. Leave a domain-grounded decision or
+            interaction. Interesting themes shape behaviour; unchanged rules after noun erasure expose a reskin. Deepen central work, not counts.
             Remove validation, exception, state, purity, immutability, or architecture obligations not explicit in the brief or necessary for the requested behaviour.
             Open-ended theme/formula choices are exercise design; unrelated defensive policy is not.
             Every seam Owner type is a `stubbed` or `student-creates` Design row. Stubbed owners carry their TODO; absent student-created owners do not. If a collaborator also contains
@@ -249,9 +251,10 @@ public class AgentSystemPromptService {
             """;
 
     private static final String STAGE_2_TEMPLATE_INSTRUCTIONS = """
-            STAGE 2 — TEMPLATE: derive the template FROM the finished solution: copy it, then remove exactly the student work the specification marks `stubbed` or
-            `student-creates` (stub bodies keep their Javadoc plus an in-body `// TODO S1: ...` using that work seam's stable ID and a placeholder throw; a `student-creates` type is omitted ENTIRELY — the gate rejects a
-            template still containing its file — and its seam ID does not appear on unrelated collaborator code) so the template still compiles. Failing behavioural tests are EXPECTED; only compilation matters — do not "fix" stubs. On every shared file, Javadoc and non-TODO comments stay byte-identical to the solution.
+            STAGE 2 — TEMPLATE: derive it FROM the solution, removing exactly `stubbed` and `student-creates` work. Omit each student-created type entirely and never move its seam.
+            Stubbed bodies normally retain Javadoc plus their in-body seam TODO and throw. If an absent type makes a stubbed owner's whole seam undeclarable, keep an empty owner
+            class with its own class-body seam TODO and omit the dependent members. The template must compile; failing behavioural tests are expected. Shared Javadoc and non-TODO
+            comments stay byte-identical to the solution.
             If a doc is missing from the solution, add it there first and re-derive; never author docs only in the template.
             """;
 

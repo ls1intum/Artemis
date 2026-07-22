@@ -51,7 +51,7 @@ which the competing behaviours produce observably different outcomes. The soluti
 
 A markdown table under `## Design` with one row per type: its name, its role, and a `Template status` that is
 EXACTLY one of `given`, `stubbed`, `student-creates` — the gates enforce these tokens literally. `given`
-ships complete; `stubbed` ships with signatures, Javadoc, and TODO bodies; `student-creates` is ABSENT from
+ships complete; `stubbed` normally ships with signatures, Javadoc, and TODO bodies; `student-creates` is ABSENT from
 the template (students design the file themselves; it is graded through seeded structural checks and
 reflection-based tests, and the template gate rejects a template that still contains it). A brief that asks
 students to design or create a type normally demands `student-creates`, but Java must still have enough
@@ -60,7 +60,8 @@ student-designed interface and concrete strategies, the compile-safe allocation 
 `student-creates`; concrete strategies are `student-creates`; the context is `stubbed`. Keep the context class as
 the provided scaffold, but omit the minimum members whose declarations require the absent interface. Put one
 separate seam on the context only when students also implement independently actionable context work; do not
-reuse an absent type's seam ID as a class-body breadcrumb. Tests reach the student-defined interface and the context wiring reflectively. An empty
+reuse an absent type's seam ID as a class-body breadcrumb. When that context seam's members must all be omitted for compilation, its own TODO sits once in the empty context class
+body at the insertion point; students add the field, constructor, and methods after creating the interface. Tests reach the student-defined interface and the context wiring reflectively. An empty
 interface declaration still pre-creates the type, so it is not faithful when the brief explicitly assigns creating
 that interface to students.
 For every piece of MUTABLE STATE, say below the table which type owns it and whether it survives object

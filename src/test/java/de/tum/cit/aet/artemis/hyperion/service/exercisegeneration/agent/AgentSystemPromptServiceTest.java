@@ -147,8 +147,8 @@ class AgentSystemPromptServiceTest {
 
         assertThat(prompt).contains("TEMPLATE AS TEACHING SCAFFOLD", "work from it alone, using the statement only as reference")
                 .contains("complete Javadoc (or the language's doc idiom) stating its contract").contains("// TODO S<n>: <task wording>")
-                .contains("INSIDE the member body, directly above the placeholder throw").contains("Omit student-created types", "Tasks and tests anchor them")
-                .doesNotContain("seam TODO breadcrumbs to its collaborators");
+                .contains("Normally put it INSIDE the member", "keep an empty owner class", "Do not restore the type")
+                .contains("Omit student-created types", "Tasks and tests anchor them").doesNotContain("seam TODO breadcrumbs to its collaborators");
     }
 
     @Test
@@ -218,7 +218,7 @@ class AgentSystemPromptServiceTest {
         String prompt = systemPromptService.build(exerciseWith(ProgrammingLanguage.JAVA, "")).replaceAll("\\s+", " ");
 
         assertThat(prompt).contains("Execute every worked example from the requirements against the real solution in the").contains("never patch code to match a wrong number")
-                .contains("derive the template FROM the finished solution");
+                .contains("derive it FROM the solution");
     }
 
     @Test
@@ -294,8 +294,8 @@ class AgentSystemPromptServiceTest {
         String prompt = systemPromptService.buildStage(exerciseWith(ProgrammingLanguage.JAVA, ""), GenerationStage.TEMPLATE);
 
         assertOnlyOwnStageHeaderPresent(prompt, GenerationStage.TEMPLATE);
-        assertThat(prompt).contains("Earlier stages already produced: the specification and the reference solution.").contains("derive the template FROM the finished solution")
-                .contains("TEMPLATE AS TEACHING SCAFFOLD").contains("DIFF DISCIPLINE").contains("// TODO S1:").contains("byte-identical between template and solution")
+        assertThat(prompt).contains("Earlier stages already produced: the specification and the reference solution.").contains("derive it FROM the solution")
+                .contains("TEMPLATE AS TEACHING SCAFFOLD").contains("DIFF DISCIPLINE").contains("// TODO S<n>:").contains("byte-identical between template and solution")
                 .contains("SPEC.md is read-only").contains("reference/style/template.md");
     }
 

@@ -65,6 +65,9 @@ public class StagedGenerationRunner {
 
     private static final Logger log = LoggerFactory.getLogger(StagedGenerationRunner.class);
 
+    /** Qualitative repair can expose one more concrete inconsistency; three evaluator/optimizer passes remain bounded while giving the contract a fair chance to converge. */
+    private static final int MAX_SEMANTIC_SPEC_REFINEMENTS = 3;
+
     private static final List<GenerationStage> STAGE_ORDER = List.of(GenerationStage.SPEC, GenerationStage.SOLUTION, GenerationStage.TEMPLATE, GenerationStage.TESTS,
             GenerationStage.STATEMENT);
 
@@ -257,7 +260,9 @@ public class StagedGenerationRunner {
         // every stage starts a brand-new conversation via the plain run() call, exactly as before this feature existed.
         List<Message> conversation = null;
         int reentriesRemaining = MAX_TOTAL_REENTRIES;
-        boolean semanticSpecRefinementUsed = false;
+        int semanticSpecRefinementsUsed = 0;
+        boolean semanticSpecCorrectionUsed = false;
+        String semanticSpecFeedback = null;
 
         for (int index = 0; index < STAGE_ORDER.size(); index++) {
             GenerationStage stage = STAGE_ORDER.get(index);
@@ -351,11 +356,13 @@ public class StagedGenerationRunner {
                                 else if (!review.accepted()) {
                                     String reviewFeedback = review.feedback();
                                     log.info("Specification review rejected the candidate for exercise {}: {}", exercise.getId(), reviewFeedback);
-                                    if (semanticSpecRefinementUsed || remainingPool < MIN_STAGE_BUDGET) {
+                                    if (semanticSpecRefinementsUsed >= MAX_SEMANTIC_SPEC_REFINEMENTS || remainingPool < MIN_STAGE_BUDGET) {
                                         return finish(exercise, AgentLoopResult.Status.ERROR, totalTurns, appendGateReport(lastFinalMessage, reviewFeedback), conversation);
                                     }
-                                    semanticSpecRefinementUsed = true;
-                                    gateFeedback = reviewFeedback;
+                                    semanticSpecRefinementsUsed++;
+                                    semanticSpecCorrectionUsed = false;
+                                    semanticSpecFeedback = reviewFeedback;
+                                    gateFeedback = semanticSpecRefinementPrompt(reviewFeedback);
                                     emit(progress, "Stage " + (index + 1) + "/" + STAGE_ORDER.size() + ": refining the specification after brief-fidelity review");
                                     allocation = allocateStageBudget(STAGE_BASE_BUDGETS[index], 0, remainingPool);
                                     continue;
@@ -375,10 +382,23 @@ public class StagedGenerationRunner {
                 }
 
                 log.info("Staged generation gate failed at stage {} for exercise {}: {}", stage, exercise.getId(), gate.observation());
+                // A semantic refinement starts after a known mechanical pass, so it owns one bounded completion/correction independent of the ordinary SPEC retries, which may
+                // already have been spent materialising and normalising the document. Continue the same revision with both reports; raising the generic retry count would make
+                // every failure path longer without fixing this distinct lifecycle.
+                boolean canCorrectSemanticSpec = stage == GenerationStage.SPEC && semanticSpecRefinementsUsed > 0 && !semanticSpecCorrectionUsed && semanticSpecFeedback != null
+                        && remainingPool >= MIN_STAGE_BUDGET;
+                if (canCorrectSemanticSpec) {
+                    semanticSpecCorrectionUsed = true;
+                    gateFeedback = semanticSpecCorrectionPrompt(semanticSpecFeedback, gate.observation());
+                    emit(progress, "Stage " + (index + 1) + "/" + STAGE_ORDER.size() + ": completing the specification refinement after its consistency check");
+                    allocation = allocateStageBudget(STAGE_BASE_BUDGETS[index], 0, remainingPool);
+                    continue;
+                }
                 // SPEC gets two private retries that do NOT draw from the shared re-entry budget: one can be consumed merely materializing SPEC.md when the model returned its
                 // contents as prose, leaving one real gate-guided refinement before the contract is frozen. Both remain bounded by the global turn and wall-clock budgets.
-                boolean privateSpecRetry = stage == GenerationStage.SPEC && stageReentriesUsed < 2;
-                boolean stageCanReenter = privateSpecRetry || stageReentriesUsed == 0 && reentriesRemaining > 0;
+                boolean ordinaryRetryPhase = stage != GenerationStage.SPEC || semanticSpecRefinementsUsed == 0;
+                boolean privateSpecRetry = ordinaryRetryPhase && stage == GenerationStage.SPEC && stageReentriesUsed < 2;
+                boolean stageCanReenter = ordinaryRetryPhase && (privateSpecRetry || stageReentriesUsed == 0 && reentriesRemaining > 0);
                 if (!stageCanReenter || remainingPool < MIN_STAGE_BUDGET) {
                     // The SPEC gate is the contract checkpoint. A generic repair can safely continue after later gates because the authoritative verifier repeats their checks,
                     // but it cannot reconstruct a specification that was never approved. Fail only that case closed; otherwise preserve the existing bounded repair path.
@@ -408,6 +428,31 @@ public class StagedGenerationRunner {
             }
         }
         return finish(exercise, lastStatus, totalTurns, lastFinalMessage, conversation);
+    }
+
+    private static String semanticSpecRefinementPrompt(String reviewFeedback) {
+        return reviewFeedback
+                + """
+
+
+                        Resolve only the cited defects in SPEC.md as one coherent contract, not as a sequence of independent word substitutions. Preserve every domain term, public identifier, and accepted design
+                        choice that the findings do not require changing. A reviewer's example is diagnostic guidance, never text or a theme to copy. If a grounded finding truly requires
+                        changing the domain or public names, rewrite the whole file consistently in one write_file call. Otherwise make the smallest targeted edits. Keep every required
+                        section, exact Design status token, bare Testing Strategy Owner type, seam ID, and hidden yes/no decision valid. Resolve every cited defect, then call the structured
+                        verify tool before finishing.
+                        """;
+    }
+
+    private static String semanticSpecCorrectionPrompt(String reviewFeedback, String mechanicalFeedback) {
+        return """
+                The semantic revision is incomplete and does not yet pass SPEC.md's mechanical consistency check. Continue the SAME bounded revision; do not merely patch the
+                parser-visible symptom or open unrelated design choices. Re-read the whole current file, finish every original semantic repair coherently, and use one full
+                write_file rewrite if incremental edits have left mixed vocabulary or identifiers. Preserve unaffected domain, API, ownership, examples, and grading intent.
+                Keep every required section, exact Design status token, bare Testing Strategy Owner type, seam ID, and hidden yes/no decision valid. Call the structured verify
+                tool and finish only after it passes.
+
+                ORIGINAL SEMANTIC REVIEW:
+                """ + reviewFeedback + "\n\nMECHANICAL DEFECT IN THE CURRENT REVISION:\n" + mechanicalFeedback;
     }
 
     /** Builds the outcome on every exit path and writes the session transcript (best-effort, no-op unless a transcript directory is configured). */

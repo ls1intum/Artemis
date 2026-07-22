@@ -80,11 +80,17 @@ class SpecFidelityCriticServiceTest {
     }
 
     @Test
-    void specificationReview_acceptsACompleteEmptyVerdict() {
-        SpecFidelityCriticService critic = criticReturning(
-                rawResponse("{\"omissions\":[],\"conflicts\":[],\"internalConflicts\":[],\"incorrectExamples\":[],\"unsupportedConstraints\":[]}"));
+    void specificationReview_acceptsGroundedLearningFitAndEmptyDefectVerdict() {
+        SpecFidelityCriticService critic = criticReturning(rawResponse(
+                """
+                        {"learningFit":{"briefQuote":"Create an intermediate exercise about strategies in an unusual logistics theme.",
+                         "specQuotes":["R1: rerouting transfers the undelivered cargo without losing already delivered parcels."],
+                         "remainingStudentReasoning":"The state-preserving reroute remains after routine strategy delegation and makes the logistics domain affect the behavior.","domainGrounding":"The cited behavior is plausibly motivated by the requested domain, or no qualitative theme is requested.","sufficient":true,"repair":null},
+                         "omissions":[],"conflicts":[],"internalConflicts":[],"incorrectExamples":[],"unsupportedConstraints":[]}
+                        """));
 
-        SpecFidelityCriticService.SpecificationReview review = critic.reviewSpecification("Create an exercise about strategies.", "# Exercise\n## Rules\n- R1", null, () -> false);
+        SpecFidelityCriticService.SpecificationReview review = critic.reviewSpecification("Create an intermediate exercise about strategies in an unusual logistics theme.",
+                "# Exercise\n## Rules\n- R1: rerouting transfers the undelivered cargo without losing already delivered parcels.", null, () -> false);
 
         assertThat(review.complete()).isTrue();
         assertThat(review.accepted()).isTrue();
@@ -92,10 +98,32 @@ class SpecFidelityCriticServiceTest {
     }
 
     @Test
+    void specificationReviewRejectsMoreThanFourCombinedFindings() {
+        SpecFidelityCriticService critic = criticReturning(rawResponse(
+                """
+                        {"learningFit":{"briefQuote":"counter","specQuotes":["Counter"],"remainingStudentReasoning":"The counter work is meaningful.","domainGrounding":"The cited behavior is plausibly motivated by the requested domain, or no qualitative theme is requested.","sufficient":true,"repair":null},
+                         "omissions":[
+                           {"briefQuote":"counter","reason":"one","repair":"repair one"},
+                           {"briefQuote":"counter","reason":"two","repair":"repair two"}],
+                         "conflicts":[],"internalConflicts":[],"incorrectExamples":[],
+                         "unsupportedConstraints":[
+                           {"specQuote":"Counter","reason":"three","repair":"repair three"},
+                           {"specQuote":"Counter","reason":"four","repair":"repair four"},
+                           {"specQuote":"Counter","reason":"five","repair":"repair five"}]}
+                        """));
+
+        assertThat(critic.reviewSpecification("Create a counter.", "# Counter", null, () -> false).complete()).isFalse();
+    }
+
+    @Test
     void specificationReview_explicitlyChecksOwnershipTableAgainstLaterTemplateProse() {
         ChatModel chatModel = mock(ChatModel.class);
-        when(chatModel.call(any(Prompt.class)))
-                .thenReturn(rawResponse("{\"omissions\":[],\"conflicts\":[],\"internalConflicts\":[],\"incorrectExamples\":[],\"unsupportedConstraints\":[]}"));
+        when(chatModel.call(any(Prompt.class))).thenReturn(rawResponse(
+                """
+                        {"learningFit":{"briefQuote":"strategy interface","specQuotes":["student-creates"],
+                         "remainingStudentReasoning":"the cited ownership preserves the requested design work","domainGrounding":"The cited behavior is plausibly motivated by the requested domain, or no qualitative theme is requested.","sufficient":true,"repair":null},
+                         "omissions":[],"conflicts":[],"internalConflicts":[],"incorrectExamples":[],"unsupportedConstraints":[]}
+                        """));
         when(chatModel.getOptions()).thenReturn(ChatOptions.builder().build());
         SpecFidelityCriticService critic = new SpecFidelityCriticService(ChatClient.create(chatModel), objectMapper);
 
@@ -107,83 +135,111 @@ class SpecFidelityCriticServiceTest {
                 .contains("correct table does not cancel contradictory prose").contains("does not assign ownership of the strategy interface")
                 .contains("Non-student-visible harness notes are not observable constraints")
                 .contains("Package, source-root, and class-visibility choices required by the seeded build")
-                .contains("explicitly requested difficulty", "one-operation formula transcription", "declared archetype", "Testing Strategy gives supporting calculations");
+                .contains("explicitly requested difficulty", "one-operation formula transcription", "declared archetype", "Testing Strategy gives supporting calculations")
+                .contains("defect detection, not design optimization", "try to", "whole specification", "common teaching examples for the requested programming concept")
+                .contains("domain is familiar in popular culture", "theme identity from theme integration", "arbitrary formula", "constants under themed names",
+                        "itself wiring the collaboration")
+                .contains("Empty defect arrays are not sufficient evidence", "learningFit", "subtractive", "erasing the domain nouns")
+                .contains("remainingStudentReasoning", "domainGrounding", "Do not invent a plausible post-hoc domain rationale", "do not invent validation")
+                .contains("at most four blocking findings TOTAL", "Diagnose properties only", "never supply replacement names, domains, formulas, or APIs")
+                .doesNotContain("compression, payment, sorting, and navigation");
     }
 
     @Test
     void specificationReview_returnsGroundedFindingsAsActionableFeedback() {
-        SpecFidelityCriticService critic = criticReturning(rawResponse("""
-                {"omissions":[{"briefQuote":"students create the strategy interface","reason":"the interface is supplied","repair":"mark it student-owned"}],
-                 "conflicts":[],"internalConflicts":[],"incorrectExamples":[],
-                 "unsupportedConstraints":[{"specQuote":"throw an exact message","reason":"the brief does not request a message","repair":"remove the exact message"}]}
-                """));
+        SpecFidelityCriticService critic = criticReturning(rawResponse(
+                """
+                        {"learningFit":{"briefQuote":"strategy interface","specQuotes":["Exercise"],
+                         "remainingStudentReasoning":"the candidate does not preserve the requested interface work","domainGrounding":"The cited behavior is plausibly motivated by the requested domain, or no qualitative theme is requested.","sufficient":false,"repair":"preserve meaningful interface design"},
+                         "omissions":[{"briefQuote":"students create the strategy interface","reason":"the interface is supplied","repair":"mark it student-owned"}],
+                         "conflicts":[],"internalConflicts":[],"incorrectExamples":[],
+                         "unsupportedConstraints":[{"specQuote":"throw an exact message","reason":"the brief does not request a message","repair":"remove the exact message"}]}
+                        """));
 
         SpecFidelityCriticService.SpecificationReview review = critic.reviewSpecification("Have students create the strategy interface.",
                 "# Exercise\nThe context must throw an exact message.", null, () -> false);
 
         assertThat(review.complete()).isTrue();
         assertThat(review.accepted()).isFalse();
-        assertThat(review.feedback()).contains("students create the strategy interface", "throw an exact message", "mark it student-owned", "remove the exact message");
+        assertThat(review.feedback()).contains("students create the strategy interface", "throw an exact message", "choose the content yourself",
+                "remove or relax only the cited unsupported obligation").doesNotContain("mark it student-owned", "remove the exact message");
     }
 
     @Test
     void specificationReview_rejectsAnIncorrectWorkedExampleBeforeTheContractFreezes() {
-        SpecFidelityCriticService critic = criticReturning(rawResponse("""
-                {"omissions":[],"conflicts":[],"internalConflicts":[],"unsupportedConstraints":[],
-                 "incorrectExamples":[{"specQuote":"2 + 2 = 5","reason":"the arithmetic evaluates to four","repair":"replace 5 with 4"}]}
-                """));
+        SpecFidelityCriticService critic = criticReturning(rawResponse(
+                """
+                        {"learningFit":{"briefQuote":"arithmetic exercise","specQuotes":["2 + 2 = 5"],
+                         "remainingStudentReasoning":"the arithmetic rule is the requested learning work","domainGrounding":"The cited behavior is plausibly motivated by the requested domain, or no qualitative theme is requested.","sufficient":true,"repair":null},
+                         "omissions":[],"conflicts":[],"internalConflicts":[],"unsupportedConstraints":[],
+                         "incorrectExamples":[{"specQuote":"2 + 2 = 5","reason":"the arithmetic evaluates to four","repair":"replace 5 with 4"}]}
+                        """));
 
         SpecFidelityCriticService.SpecificationReview review = critic.reviewSpecification("Create an arithmetic exercise.", "# Examples\n2 + 2 = 5", null, () -> false);
 
         assertThat(review.complete()).isTrue();
         assertThat(review.accepted()).isFalse();
-        assertThat(review.feedback()).contains("2 + 2 = 5", "evaluates to four", "replace 5 with 4");
+        assertThat(review.feedback()).contains("2 + 2 = 5", "evaluates to four", "independently recompute the example").doesNotContain("replace 5 with 4");
     }
 
     @Test
     void specificationReview_rejectsMutuallyIncompatibleRulesBeforeTheContractFreezes() {
-        SpecFidelityCriticService critic = criticReturning(rawResponse("""
-                {"omissions":[],"conflicts":[],"incorrectExamples":[],"unsupportedConstraints":[],
-                 "internalConflicts":[{"firstSpecQuote":"Switching strategy preserves accumulated energy.",
-                 "secondSpecQuote":"Switching strategy resets accumulated energy.","reason":"both cannot hold for the same switch",
-                 "repair":"choose and state one switch policy"}]}
-                """));
+        SpecFidelityCriticService critic = criticReturning(rawResponse(
+                """
+                        {"learningFit":{"briefQuote":"strategy pattern","specQuotes":["Switching strategy preserves accumulated energy."],
+                         "remainingStudentReasoning":"the switch policy is the relevant collaboration","domainGrounding":"The cited behavior is plausibly motivated by the requested domain, or no qualitative theme is requested.","sufficient":true,"repair":null},
+                         "omissions":[],"conflicts":[],"incorrectExamples":[],"unsupportedConstraints":[],
+                         "internalConflicts":[{"firstSpecQuote":"Switching strategy preserves accumulated energy.",
+                         "secondSpecQuote":"Switching strategy resets accumulated energy.","reason":"both cannot hold for the same switch",
+                         "repair":"choose and state one switch policy"}]}
+                        """));
 
         SpecFidelityCriticService.SpecificationReview review = critic.reviewSpecification("Teach the strategy pattern.",
                 "Switching strategy preserves accumulated energy. Switching strategy resets accumulated energy.", null, () -> false);
 
         assertThat(review.complete()).isTrue();
         assertThat(review.accepted()).isFalse();
-        assertThat(review.feedback()).contains("preserves accumulated energy", "resets accumulated energy", "choose and state one switch policy");
+        assertThat(review.feedback()).contains("preserves accumulated energy", "resets accumulated energy", "choose one coherent interpretation grounded in the brief")
+                .doesNotContain("choose and state one switch policy");
     }
 
     @Test
     void specificationReviewTreatsMarkdownEmphasisAsPresentationWhenGroundingAQuote() {
-        SpecFidelityCriticService critic = criticReturning(rawResponse("""
-                {"omissions":[],"conflicts":[],"incorrectExamples":[],"unsupportedConstraints":[],
-                 "internalConflicts":[{"firstSpecQuote":"`Healing potency is two per herb.`",
-                 "secondSpecQuote":"Healing potency is four for six herbs.","reason":"the arithmetic conflicts",
-                 "repair":"correct the worked example"}]}
-                """));
+        SpecFidelityCriticService critic = criticReturning(rawResponse(
+                """
+                        {"learningFit":{"briefQuote":"strategy pattern","specQuotes":["`Healing potency is two per herb.`"],
+                         "remainingStudentReasoning":"the quoted rule is the strategy behaviour","domainGrounding":"The cited behavior is plausibly motivated by the requested domain, or no qualitative theme is requested.","sufficient":true,"repair":null},
+                         "omissions":[],"conflicts":[],"incorrectExamples":[],"unsupportedConstraints":[],
+                         "internalConflicts":[{"firstSpecQuote":"`Healing potency is two per herb.`",
+                         "secondSpecQuote":"Healing potency is four for six herbs.","reason":"the arithmetic conflicts",
+                         "repair":"correct the worked example"}]}
+                        """));
 
         SpecFidelityCriticService.SpecificationReview review = critic.reviewSpecification("Teach the strategy pattern.",
                 "**Healing potency** is `two` per herb. **Healing potency** is four for six herbs.", null, () -> false);
 
         assertThat(review.complete()).isTrue();
         assertThat(review.accepted()).isFalse();
-        assertThat(review.feedback()).contains("the arithmetic conflicts", "correct the worked example");
+        assertThat(review.feedback()).contains("the arithmetic conflicts", "choose one coherent interpretation grounded in the brief").doesNotContain("correct the worked example");
     }
 
     @Test
     void specificationReview_distinguishesMalformedUngroundedAndShortGroundedVerdicts() {
         ChatModel chatModel = mock(ChatModel.class);
-        when(chatModel.call(any(Prompt.class))).thenReturn(rawResponse("not json"), rawResponse("""
-                {"omissions":[{"briefQuote":"a requirement that is not in the brief","reason":"missing","repair":"add it"}],
-                 "conflicts":[],"internalConflicts":[],"incorrectExamples":[],"unsupportedConstraints":[]}
-                """), rawResponse("""
-                {"omissions":[{"briefQuote":"Java","reason":"the learning objective is missing","repair":"change it"}],
-                 "conflicts":[],"internalConflicts":[],"incorrectExamples":[],"unsupportedConstraints":[]}
-                """));
+        ChatResponse malformed = rawResponse("not json");
+        ChatResponse ungrounded = rawResponse(
+                """
+                        {"learningFit":{"briefQuote":"counter","specQuotes":["Counter"],"remainingStudentReasoning":"the counter work is meaningful","domainGrounding":"The cited behavior is plausibly motivated by the requested domain, or no qualitative theme is requested.","sufficient":true,"repair":null},
+                         "omissions":[{"briefQuote":"a requirement that is not in the brief","reason":"missing","repair":"add it"}],
+                         "conflicts":[],"internalConflicts":[],"incorrectExamples":[],"unsupportedConstraints":[]}
+                        """);
+        ChatResponse grounded = rawResponse(
+                """
+                        {"learningFit":{"briefQuote":"Java counter","specQuotes":["Counter"],"remainingStudentReasoning":"the counter work is meaningful","domainGrounding":"The cited behavior is plausibly motivated by the requested domain, or no qualitative theme is requested.","sufficient":true,"repair":null},
+                         "omissions":[{"briefQuote":"Java","reason":"the learning objective is missing","repair":"change it"}],
+                         "conflicts":[],"internalConflicts":[],"incorrectExamples":[],"unsupportedConstraints":[]}
+                        """);
+        when(chatModel.call(any(Prompt.class))).thenReturn(malformed, malformed, ungrounded, ungrounded, grounded);
         when(chatModel.getOptions()).thenReturn(ChatOptions.builder().build());
         SpecFidelityCriticService critic = new SpecFidelityCriticService(ChatClient.create(chatModel), objectMapper);
 
@@ -192,6 +248,113 @@ class SpecFidelityCriticServiceTest {
         SpecFidelityCriticService.SpecificationReview shortGrounded = critic.reviewSpecification("Create a Java counter.", "# Counter", null, () -> false);
         assertThat(shortGrounded.complete()).isTrue();
         assertThat(shortGrounded.accepted()).isFalse();
+    }
+
+    @Test
+    void specificationReviewDoesNotAcceptAGenericReasonWithoutBothRequiredAnalyses() {
+        SpecFidelityCriticService critic = criticReturning(rawResponse("""
+                {"learningFit":{"briefQuote":"intermediate strategy exercise","specQuotes":["R1: compute a themed value."],
+                 "reason":"The theme and strategy types satisfy the brief.","sufficient":true,"repair":null},
+                 "omissions":[],"conflicts":[],"internalConflicts":[],"incorrectExamples":[],"unsupportedConstraints":[]}
+                """));
+
+        assertThat(critic.reviewSpecification("Create an intermediate strategy exercise.", "R1: compute a themed value.", null, () -> false).complete()).isFalse();
+    }
+
+    @Test
+    void specificationReview_requiresGroundedPositiveLearningEvidence() {
+        ChatModel chatModel = mock(ChatModel.class);
+        when(chatModel.call(any(Prompt.class))).thenReturn(rawResponse("""
+                {"omissions":[],"conflicts":[],"internalConflicts":[],"incorrectExamples":[],"unsupportedConstraints":[]}
+                """), rawResponse(
+                """
+                        {"learningFit":{"briefQuote":"intermediate","specQuotes":["an invented rule"],
+                         "remainingStudentReasoning":"the invented rule supplies depth","domainGrounding":"The cited behavior is plausibly motivated by the requested domain, or no qualitative theme is requested.","sufficient":true,"repair":null},
+                         "omissions":[],"conflicts":[],"internalConflicts":[],"incorrectExamples":[],"unsupportedConstraints":[]}
+                        """));
+        when(chatModel.getOptions()).thenReturn(ChatOptions.builder().build());
+        SpecFidelityCriticService critic = new SpecFidelityCriticService(ChatClient.create(chatModel), objectMapper);
+
+        assertThat(critic.reviewSpecification("Create an intermediate exercise.", "R1: meaningful domain interaction", null, () -> false).complete()).isFalse();
+        assertThat(critic.reviewSpecification("Create an intermediate exercise.", "R1: meaningful domain interaction", null, () -> false).complete()).isFalse();
+    }
+
+    @Test
+    void specificationReviewRetriesOneMalformedGroundingVerdictWithoutRelaxingQuoteValidation() {
+        ChatModel chatModel = mock(ChatModel.class);
+        when(chatModel.call(any(Prompt.class))).thenReturn(rawResponse("""
+                {"learningFit":{"briefQuote":"Create an intermediate strategy exercise with a potion theme.","specQuotes":["R1: weak ingredients limit potency."],
+                 "remainingStudentReasoning":"Students must reason about a limiting ingredient after routine delegation is removed.",
+                 "domainGrounding":"A potion is constrained by its weakest ingredient, which motivates the rule.","sufficient":true,"repair":null},
+                 "omissions":[],"conflicts":[],"incorrectExamples":[],"unsupportedConstraints":[],
+                 "internalConflicts":[{"firstSpecQuote":"R1 | weak ingredients limit potency","secondSpecQuote":"R2: every ingredient contributes equally.",
+                 "reason":"The claims conflict.","repair":"Choose one potency rule."}]}
+                """), rawResponse("""
+                {"learningFit":{"briefQuote":"Create an intermediate strategy exercise with a potion theme.","specQuotes":["R1: weak ingredients limit potency."],
+                 "remainingStudentReasoning":"Students must reason about a limiting ingredient after routine delegation is removed.",
+                 "domainGrounding":"A potion is constrained by its weakest ingredient, which motivates the rule.","sufficient":true,"repair":null},
+                 "omissions":[],"conflicts":[],"incorrectExamples":[],"unsupportedConstraints":[],
+                 "internalConflicts":[{"firstSpecQuote":"R1: weak ingredients limit potency.","secondSpecQuote":"R2: every ingredient contributes equally.",
+                 "reason":"The claims can coexist after all.","repair":"Ignore the conflict."}]}
+                """));
+        when(chatModel.getOptions()).thenReturn(ChatOptions.builder().build());
+        SpecFidelityCriticService critic = new SpecFidelityCriticService(ChatClient.create(chatModel), objectMapper);
+
+        SpecFidelityCriticService.SpecificationReview review = critic.reviewSpecification("Create an intermediate strategy exercise with a potion theme.",
+                "R1: weak ingredients limit potency. R2: every ingredient contributes equally.", null, () -> false);
+
+        assertThat(review.complete()).isTrue();
+        assertThat(review.accepted()).isFalse();
+        assertThat(review.feedback()).contains("R1: weak ingredients limit potency.", "R2: every ingredient contributes equally.", "The claims conflict.")
+                .doesNotContain("The claims can coexist", "Ignore the conflict");
+        ArgumentCaptor<Prompt> correction = ArgumentCaptor.forClass(Prompt.class);
+        verify(chatModel, times(2)).call(correction.capture());
+        assertThat(correction.getAllValues().get(1).getInstructions().get(1).getText()).contains("PREVIOUS VERDICT", "untrusted data", "R1 | weak ingredients limit potency");
+    }
+
+    @Test
+    void specificationReviewCorrectionCannotDropABlockingFinding() {
+        ChatModel chatModel = mock(ChatModel.class);
+        when(chatModel.call(any(Prompt.class))).thenReturn(rawResponse("""
+                {"learningFit":{"briefQuote":"Create an intermediate strategy exercise.","specQuotes":["R1: meaningful strategy decision."],
+                 "remainingStudentReasoning":"Students choose a meaningful strategy interaction.","domainGrounding":"No qualitative theme was requested.","sufficient":true},
+                 "omissions":[],"conflicts":[],"incorrectExamples":[],"unsupportedConstraints":[],
+                 "internalConflicts":[{"firstSpecQuote":"R1 | meaningful strategy decision","secondSpecQuote":"R2: contradicting strategy decision.",
+                 "reason":"The decisions conflict.","repair":"Choose one decision."}]}
+                """), rawResponse("""
+                {"learningFit":{"briefQuote":"Create an intermediate strategy exercise.","specQuotes":["R1: meaningful strategy decision."],
+                 "remainingStudentReasoning":"Students choose a meaningful strategy interaction.","domainGrounding":"No qualitative theme was requested.","sufficient":true},
+                 "omissions":[],"conflicts":[],"internalConflicts":[],"incorrectExamples":[],"unsupportedConstraints":[]}
+                """));
+        when(chatModel.getOptions()).thenReturn(ChatOptions.builder().build());
+        SpecFidelityCriticService critic = new SpecFidelityCriticService(ChatClient.create(chatModel), objectMapper);
+
+        SpecFidelityCriticService.SpecificationReview review = critic.reviewSpecification("Create an intermediate strategy exercise.",
+                "R1: meaningful strategy decision. R2: contradicting strategy decision.", null, () -> false);
+
+        assertThat(review.complete()).isFalse();
+        assertThat(review.accepted()).isFalse();
+        verify(chatModel, times(2)).call(any(Prompt.class));
+    }
+
+    @Test
+    void specificationReview_turnsInsufficientLearningEvidenceIntoOneFocusedRepair() {
+        SpecFidelityCriticService critic = criticReturning(rawResponse(
+                """
+                        {"learningFit":{"briefQuote":"intermediate Java exercise","specQuotes":["Fireball computes basePower * 2 + 10.",
+                         "SpellCaster delegates to the current strategy."],
+                         "remainingStudentReasoning":"after subtracting formula transcription and routine delegation, no intermediate domain decision remains","domainGrounding":"The cited behavior is plausibly motivated by the requested domain, or no qualitative theme is requested.","sufficient":false,"repair":"preserve spellcasting but deepen one domain-grounded strategy interaction"},
+                         "omissions":[],"conflicts":[],"internalConflicts":[],"incorrectExamples":[],"unsupportedConstraints":[]}
+                        """));
+
+        SpecFidelityCriticService.SpecificationReview review = critic.reviewSpecification("Create an intermediate Java exercise.",
+                "Fireball computes basePower * 2 + 10. SpellCaster delegates to the current strategy.", null, () -> false);
+
+        assertThat(review.complete()).isTrue();
+        assertThat(review.accepted()).isFalse();
+        assertThat(review.findings()).singleElement().asString().contains("Learning fit", "no intermediate domain decision remains", "preserve unaffected theme",
+                "If the residual reasoning is too shallow", "if it is excessive or off-objective, simplify or refocus it", "if only the domain grounding is weak",
+                "Choose the behavior yourself");
     }
 
     private static final String UNICODE_BRIEF = "Implement count_graphemes(s) counting user-perceived characters. It MUST be tested on accented Latin (café), a combining-mark "

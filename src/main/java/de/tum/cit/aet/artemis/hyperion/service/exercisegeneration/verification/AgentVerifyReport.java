@@ -86,6 +86,15 @@ public record AgentVerifyReport(int solutionTests, boolean solutionPassed, List<
      * @return the agent-facing observation text
      */
     public String toObservation() {
+        return toObservation(true);
+    }
+
+    /** TESTS-stage rendering: names feed the grading plan now; task binding belongs to the later statement stage. */
+    public String toTestsStageObservation() {
+        return toObservation(false);
+    }
+
+    private String toObservation(boolean includeStatementGuidance) {
         StringBuilder builder = new StringBuilder();
 
         if (solutionPassed) {
@@ -118,13 +127,23 @@ public record AgentVerifyReport(int solutionTests, boolean solutionPassed, List<
         appendFailureEvidence(builder, "Template", templateFailureEvidence);
 
         List<String> bindableNames = ProblemStatementBindingChecker.bindableTestNames(exactTestNames, Set.copyOf(hiddenTestNames));
-        builder.append("Exact test names — bind each [task] to one of these VERBATIM: ").append(renderNames(bindableNames)).append('\n');
+        String exactNamesLabel;
+        if (includeStatementGuidance) {
+            exactNamesLabel = "Exact test names — bind each [task] to one of these VERBATIM: ";
+        }
+        else if (solutionPassed && templateFailed) {
+            exactNamesLabel = "Exact test names — use these VERBATIM in test-plan.json; the later STATEMENT stage will bind the visible names: ";
+        }
+        else {
+            exactNamesLabel = "Exact test names discovered so far — use these verbatim after the differential is green: ";
+        }
+        builder.append(exactNamesLabel).append(renderNames(bindableNames)).append('\n');
         if (!hiddenTestNames.isEmpty()) {
             builder.append("Hidden until the due date (they grade silently; copy these into test-plan.json, NEVER into a [task] line): ").append(renderNames(hiddenTestNames))
                     .append('\n');
         }
 
-        if (!unresolvedTaskBindings.isEmpty()) {
+        if (includeStatementGuidance && !unresolvedTaskBindings.isEmpty()) {
             builder.append("[task] binding problems (these reference no real test — copy a name from the list above): ").append(renderNames(unresolvedTaskBindings)).append('\n');
         }
 

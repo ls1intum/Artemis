@@ -217,8 +217,9 @@ public class StageCheckService {
         }
         List<String> rowsWithoutStatus = designRows.stream().filter(row -> row.status() == null).map(DesignRow::type).toList();
         if (!rowsWithoutStatus.isEmpty()) {
-            return StageCheckResult.failed("These '## Design' rows carry no template-status token: " + rowsWithoutStatus + ". Each row must contain exactly one of "
-                    + TEMPLATE_STATUS_TOKENS + " — the token is what the later template gate enforces, so an ambiguous row cannot be checked.");
+            return StageCheckResult.failed("These '## Design' rows have no valid final Template status cell: " + rowsWithoutStatus
+                    + ". Replace each row's LAST cell with exactly one bare token from " + TEMPLATE_STATUS_TOKENS
+                    + " — no 'absent', parentheses, or explanation. Do not move the token into the Role cell; the later template gate reads the final cell only.");
         }
         List<String> designTypes = designRows.stream().map(DesignRow::type).toList();
         List<String> duplicateDesignTypes = designTypes.stream().filter(type -> java.util.Collections.frequency(designTypes, type) > 1).distinct().toList();
@@ -592,20 +593,19 @@ public class StageCheckService {
     private StageCheckResult checkTests(InteractiveSandbox sandbox, String sessionId, ProgrammingExercise exercise, Map<String, String> seedTestsFiles) {
         AgentVerifyReport report;
         try {
-            report = verifier.selfCheck(sandbox, sessionId, exercise, seedTestsFiles, false);
+            report = verifier.selfCheckTestsStage(sandbox, sessionId, exercise, seedTestsFiles);
         }
         catch (RuntimeException e) {
             return new StageCheckResult(false, "Could not run the differential self-check: " + e.getMessage(), null);
         }
-        String observation = report.toObservation();
-        if (!report.solutionPassed() || !report.templateFailed()) {
+        String observation = report.toTestsStageObservation();
+        if (!report.wouldBeAccepted()) {
             List<String> studentCreatedTypes = enforcedStudentCreatedTypes(sandbox, sessionId);
             String ownershipRepair = studentCreatedTypes.isEmpty() ? ""
                     : "\nThe approved student-created types are " + studentCreatedTypes
                             + ". Do not add their declarations to the template or edit SPEC.md. If direct references make the template test compilation fail, rewrite those tests "
                             + "using the seeded reflection utilities/Class.forName; use a dynamic proxy when the context must receive the omitted interface.";
-            return new StageCheckResult(false, "The tests do not yet satisfy the differential requirement (the solution must pass every test, the template must fail every "
-                    + "task-bound behavioural test):\n" + observation + ownershipRepair, report);
+            return new StageCheckResult(false, "The executable test artifacts do not yet satisfy the TESTS-stage checks:\n" + observation + ownershipRepair, report);
         }
         // Only once the differential is green does the grading plan matter — a missing plan must never drown out failing tests in the feedback.
         String planJson = execRead(sandbox, sessionId, "cat", GenerationWorkspaceService.WORKSPACE + "/test-plan.json");

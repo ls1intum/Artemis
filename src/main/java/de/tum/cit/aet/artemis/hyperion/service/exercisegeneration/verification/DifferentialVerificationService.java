@@ -333,6 +333,24 @@ public class DifferentialVerificationService {
      * @return the agent-readable differential report
      */
     public AgentVerifyReport selfCheck(InteractiveSandbox sandbox, String sessionId, ProgrammingExercise exercise, Map<String, String> seedTestsFiles, boolean adaptation) {
+        return selfCheck(sandbox, sessionId, exercise, seedTestsFiles, adaptation, true);
+    }
+
+    /**
+     * Runs the TESTS-stage check without asking the agent to repair the not-yet-authored statement.
+     *
+     * @param sandbox        the open sandbox session
+     * @param sessionId      the sandbox session id
+     * @param exercise       the exercise whose tests are checked
+     * @param seedTestsFiles the immutable seeded tests snapshot
+     * @return a report limited to test-stage artifacts
+     */
+    public AgentVerifyReport selfCheckTestsStage(InteractiveSandbox sandbox, String sessionId, ProgrammingExercise exercise, Map<String, String> seedTestsFiles) {
+        return selfCheck(sandbox, sessionId, exercise, seedTestsFiles, false, false);
+    }
+
+    private AgentVerifyReport selfCheck(InteractiveSandbox sandbox, String sessionId, ProgrammingExercise exercise, Map<String, String> seedTestsFiles, boolean adaptation,
+            boolean includeStatementChecks) {
         // No authoritative seeded set: the agent cannot bind to structural tests seeded after it submits. The name-shape exemption still applies.
         String problemStatement = readProblemStatement(sandbox, sessionId);
         DifferentialAnalysis analysis = runDifferential(sandbox, sessionId, exercise, Set.of(), problemStatement, () -> {
@@ -343,7 +361,7 @@ public class DifferentialVerificationService {
         boolean solutionPassed = analysis.solutionPassed();
         boolean templateCompiled = !template.timedOut() && template.tests() > 0;
         List<String> templateWronglyPassing = analysis.gradableTestsPassingOnTemplate();
-        List<String> reasons = new ArrayList<>(analysis.actionableReasons());
+        List<String> reasons = new ArrayList<>(includeStatementChecks ? analysis.actionableReasons() : analysis.testArtifactReasons());
         boolean javaAresConventionsHold = true;
         if (exercise.getProgrammingLanguage() == ProgrammingLanguage.JAVA) {
             Map<String, String> testsRepositoryFiles = readTestsRepositoryFiles(sandbox, sessionId);
@@ -361,11 +379,13 @@ public class DifferentialVerificationService {
         boolean approvedSpecificationHolds = approvedSpecificationReasons.isEmpty();
         reasons.addAll(approvedSpecificationReasons);
         String testPlanJson = readWorkspaceRootFile(sandbox, sessionId, "test-plan.json");
-        List<String> approvedTestPlanReasons = contractSpecifications.stream()
-                .flatMap(spec -> ExerciseIntegrityGate.approvedTestPlanReasons(spec, testPlanJson, solution.testNames()).stream()).distinct().toList();
+        List<String> approvedTestPlanReasons = includeStatementChecks
+                ? contractSpecifications.stream().flatMap(spec -> ExerciseIntegrityGate.approvedTestPlanReasons(spec, testPlanJson, solution.testNames()).stream()).distinct()
+                        .toList()
+                : List.of();
         boolean approvedTestPlanHolds = approvedTestPlanReasons.isEmpty();
         reasons.addAll(approvedTestPlanReasons);
-        List<String> statementTraceabilityReasons = ExerciseIntegrityGate.statementTraceabilityReasons(testPlanJson, problemStatement);
+        List<String> statementTraceabilityReasons = includeStatementChecks ? ExerciseIntegrityGate.statementTraceabilityReasons(testPlanJson, problemStatement) : List.of();
         boolean statementTraceabilityHolds = statementTraceabilityReasons.isEmpty();
         reasons.addAll(statementTraceabilityReasons);
         List<String> templateTodoSeamReasons = exercise.getProgrammingLanguage() == ProgrammingLanguage.JAVA
@@ -375,9 +395,10 @@ public class DifferentialVerificationService {
         reasons.addAll(templateTodoSeamReasons);
 
         return new AgentVerifyReport(solution.tests(), solutionPassed, List.copyOf(solution.testFailedNames()), solution.failureEvidence(), template.tests(), templateCompiled,
-                analysis.templateFailed(), template.failureEvidence(), templateWronglyPassing, List.copyOf(solution.testNames()), analysis.unresolvedTaskBindings(),
-                analysis.possiblyDeadFiles(), analysis.actionableGatesPass() && javaAresConventionsHold && approvedSpecificationHolds && approvedTestPlanHolds
-                        && statementTraceabilityHolds && templateTodoSeamsHold,
+                analysis.templateFailed(), template.failureEvidence(), templateWronglyPassing, List.copyOf(solution.testNames()),
+                includeStatementChecks ? analysis.unresolvedTaskBindings() : List.of(), analysis.possiblyDeadFiles(),
+                (includeStatementChecks ? analysis.actionableGatesPass() : analysis.testArtifactGatesPass()) && javaAresConventionsHold && approvedSpecificationHolds
+                        && approvedTestPlanHolds && statementTraceabilityHolds && templateTodoSeamsHold,
                 reasons, List.copyOf(readHiddenTestNames(sandbox, sessionId)));
     }
 
@@ -478,6 +499,7 @@ public class DifferentialVerificationService {
     private DifferentialAnalysis runDifferential(InteractiveSandbox sandbox, String sessionId, ProgrammingExercise exercise, Set<String> seededStructuralTestNames,
             @Nullable String producedProblemStatement, Runnable restoreCandidate) {
         List<String> reasons = new ArrayList<>();
+        List<String> statementReasons = new ArrayList<>();
 
         restoreCandidate.run();
         seedPristineVerifyScript(sandbox, sessionId, exercise);
@@ -501,14 +523,15 @@ public class DifferentialVerificationService {
         String problemStatement = producedProblemStatement != null ? producedProblemStatement : readProblemStatement(sandbox, sessionId);
         boolean problemStatementHasTasks = ProblemStatementBindingChecker.hasTaskBindings(problemStatement);
         if (!problemStatementHasTasks) {
-            reasons.add("The problem statement has no Artemis task bindings. Add at least one line of the form [task][Title](testName) binding the graded tests to tasks so they "
-                    + "appear as a checklist for students.");
+            statementReasons
+                    .add("The problem statement has no Artemis task bindings. Add at least one line of the form [task][Title](testName) binding the graded tests to tasks so they "
+                            + "appear as a checklist for students.");
         }
 
         List<String> malformedTaskKeywords = ProblemStatementBindingChecker.malformedTaskKeywords(problemStatement);
         boolean taskKeywordsWellFormed = malformedTaskKeywords.isEmpty();
         if (!taskKeywordsWellFormed) {
-            reasons.add(
+            statementReasons.add(
                     "These lines look like task bindings but use the wrong keyword " + malformedTaskKeywords + " instead of the exact lowercase singular [task]; they render as "
                             + "plain text and bind NO test (and leak the raw test names). Rewrite each as [task][Title](testName).");
         }
@@ -517,17 +540,17 @@ public class DifferentialVerificationService {
         Set<String> hiddenTestNames = readHiddenTestNames(sandbox, sessionId);
         List<String> unresolvedTaskBindings = ProblemStatementBindingChecker.unresolvedTaskBindings(problemStatement, solution.testNames(), testCount, seededStructuralTestNames);
         List<String> bindableTestNames = ProblemStatementBindingChecker.bindableTestNames(solution.testNames(), hiddenTestNames);
-        boolean taskBindingsResolve = checkTaskBindingsResolve(unresolvedTaskBindings, bindableTestNames, problemStatementHasTasks, reasons);
+        boolean taskBindingsResolve = checkTaskBindingsResolve(unresolvedTaskBindings, bindableTestNames, problemStatementHasTasks, statementReasons);
         List<String> duplicateTaskBindings = ProblemStatementBindingChecker.duplicateTaskBindings(problemStatement);
-        boolean noDuplicateTaskBindings = checkNoDuplicateTaskBindings(duplicateTaskBindings, problemStatementHasTasks, reasons);
+        boolean noDuplicateTaskBindings = checkNoDuplicateTaskBindings(duplicateTaskBindings, problemStatementHasTasks, statementReasons);
         // Visibility is part of the binding contract: hidden tests are DELIBERATELY unbound, so they are exempt here and forbidden below. Both halves must move together —
         // exempting alone would let a bound hidden test through, forbidding alone would make the two gates unsatisfiable at once.
         List<String> unboundGradableTests = ProblemStatementBindingChecker.unboundGradableTestNames(problemStatement, solution.testNames(), testCount, hiddenTestNames);
-        boolean allGradableTestsBound = checkAllGradableTestsBound(unboundGradableTests, problemStatementHasTasks, taskBindingsResolve, reasons);
+        boolean allGradableTestsBound = checkAllGradableTestsBound(unboundGradableTests, problemStatementHasTasks, taskBindingsResolve, statementReasons);
         List<String> hiddenTestMentions = ProblemStatementBindingChecker.hiddenTestMentions(problemStatement, hiddenTestNames);
         boolean noHiddenTestsExposed = hiddenTestMentions.isEmpty();
         if (!noHiddenTestsExposed) {
-            reasons.add(ProblemStatementBindingChecker.hiddenTestMentionsRejection(hiddenTestMentions));
+            statementReasons.add(ProblemStatementBindingChecker.hiddenTestMentionsRejection(hiddenTestMentions));
         }
         boolean solutionScaClean = checkSolutionScaClean(exercise, solution, reasons);
 
@@ -535,7 +558,7 @@ public class DifferentialVerificationService {
         List<String> proseHygieneLeaks = ProblemStatementBindingChecker.proseHygieneLeaks(problemStatement);
         boolean proseHygienic = proseHygieneLeaks.isEmpty();
         if (!proseHygienic) {
-            reasons.add("The problem statement leaks grader internals or stray task markers into student-facing prose: " + proseHygieneLeaks
+            statementReasons.add("The problem statement leaks grader internals or stray task markers into student-facing prose: " + proseHygieneLeaks
                     + ". Rewrite it as a student would read it — describe the required behaviour and edge cases, never how the exercise is built, tested or graded, and bind tasks "
                     + "only via [task][Title](testName) lines.");
         }
@@ -545,29 +568,31 @@ public class DifferentialVerificationService {
         List<String> duplicateTaskTitles = ProblemStatementBindingChecker.duplicateTaskTitles(problemStatement);
         boolean taskTitlesUnique = duplicateTaskTitles.isEmpty();
         if (!taskTitlesUnique) {
-            reasons.add("Multiple [task] lines share the same title: " + duplicateTaskTitles + ". A title identifies ONE student work seam — merge each duplicated group into a "
-                    + "single [task] line binding all of its tests.");
+            statementReasons.add("Multiple [task] lines share the same title: " + duplicateTaskTitles
+                    + ". A title identifies ONE student work seam — merge each duplicated group into a single [task] line binding all of its tests.");
         }
         boolean statementVoiceOk = !ProblemStatementBindingChecker.writesAboutStudentsInThirdPerson(problemStatement);
         if (!statementVoiceOk) {
-            reasons.add("The problem statement writes ABOUT students in the third person ('Students must/will/should ...'). Address the reader directly: frame the goal as "
-                    + "\"we\" and the work as \"you\" with imperative tasks.");
+            statementReasons
+                    .add("The problem statement writes ABOUT students in the third person ('Students must/will/should ...'). Address the reader directly: frame the goal as "
+                            + "\"we\" and the work as \"you\" with imperative tasks.");
         }
         List<String> deadDiagramLinks = ProblemStatementBindingChecker.unresolvedTestsColorNames(problemStatement, solution.testNames(), seededStructuralTestNames);
         boolean diagramLinksResolve = deadDiagramLinks.isEmpty();
         if (!diagramLinksResolve) {
-            reasons.add("These diagram testsColor(...) names match no actual test: " + deadDiagramLinks + ". Use exact behavioural or seeded structural check names, or remove "
-                    + "the link.");
+            statementReasons.add("These diagram testsColor(...) names match no actual test: " + deadDiagramLinks
+                    + ". Use exact behavioural or seeded structural check names, or remove the link.");
         }
         boolean noStrayUmlDirectives = !ProblemStatementBindingChecker.hasStrayPlantUmlDirectives(problemStatement);
         if (!noStrayUmlDirectives) {
-            reasons.add("PlantUML directives ('hide empty fields', 'hide empty methods', 'skinparam ...') sit OUTSIDE the @startuml...@enduml block and render as stray text. "
-                    + "Move them inside the block, directly before @enduml.");
+            statementReasons
+                    .add("PlantUML directives ('hide empty fields', 'hide empty methods', 'skinparam ...') sit OUTSIDE the @startuml...@enduml block and render as stray text. "
+                            + "Move them inside the block, directly before @enduml.");
         }
         List<String> duplicateHeadings = ProblemStatementBindingChecker.duplicateHeadings(problemStatement);
         boolean headingsUnique = duplicateHeadings.isEmpty();
         if (!headingsUnique) {
-            reasons.add("The statement repeats these headings verbatim: " + duplicateHeadings + ". Merge or remove the duplicate sections.");
+            statementReasons.add("The statement repeats these headings verbatim: " + duplicateHeadings + ". Merge or remove the duplicate sections.");
         }
         // The approved specification's diagram decision outranks the live file: a run under statement-gate pressure rewrote '## Diagram' from yes to no and the gate then
         // passed vacuously. A later edit may promise a diagram, never un-promise one.
@@ -575,17 +600,21 @@ public class DifferentialVerificationService {
                 || approvedSpecs.approved(sessionId).filter(ProblemStatementBindingChecker::specPromisesDiagram).isPresent();
         boolean statementHonoursDiagramPromise = !(diagramPromised && !problemStatement.contains("@startuml"));
         if (!statementHonoursDiagramPromise) {
-            reasons.add("SPEC.md's '## Diagram' section says yes, but the statement contains no @startuml diagram. Add the PlantUML class diagram (with testsColor links) after "
-                    + "the tasks it illustrates. The accepted diagram decision cannot be revoked after the specification gate.");
+            statementReasons
+                    .add("SPEC.md's '## Diagram' section says yes, but the statement contains no @startuml diagram. Add the PlantUML class diagram (with testsColor links) after "
+                            + "the tasks it illustrates. The accepted diagram decision cannot be revoked after the specification gate.");
         }
 
-        boolean actionableGatesPass = solutionPassed && noDuplicateTestNames && templateFailed && testCount > 0 && problemStatementHasTasks && taskKeywordsWellFormed
-                && taskBindingsResolve && noDuplicateTaskBindings && allGradableTestsBound && solutionScaClean && proseHygienic && taskTitlesUnique && statementVoiceOk
-                && diagramLinksResolve && noStrayUmlDirectives && headingsUnique && statementHonoursDiagramPromise && noHiddenTestsExposed;
+        boolean testArtifactGatesPass = solutionPassed && noDuplicateTestNames && templateFailed && testCount > 0 && solutionScaClean;
+        boolean actionableGatesPass = testArtifactGatesPass && problemStatementHasTasks && taskKeywordsWellFormed && taskBindingsResolve && noDuplicateTaskBindings
+                && allGradableTestsBound && proseHygienic && taskTitlesUnique && statementVoiceOk && diagramLinksResolve && noStrayUmlDirectives && headingsUnique
+                && statementHonoursDiagramPromise && noHiddenTestsExposed;
 
         List<String> possiblyDeadFiles = possiblyDeadWorkspaceFiles(sandbox, sessionId);
-        return new DifferentialAnalysis(solution, template, solutionPassed, templateFailed, actionableGatesPass, reasons, unresolvedTaskBindings, possiblyDeadFiles,
-                gradableTestsPassingOnTemplate);
+        List<String> actionableReasons = new ArrayList<>(reasons);
+        actionableReasons.addAll(statementReasons);
+        return new DifferentialAnalysis(solution, template, solutionPassed, templateFailed, testArtifactGatesPass, actionableGatesPass, List.copyOf(reasons),
+                List.copyOf(actionableReasons), unresolvedTaskBindings, possiblyDeadFiles, gradableTestsPassingOnTemplate);
     }
 
     /**
@@ -601,8 +630,9 @@ public class DifferentialVerificationService {
      *                                           soundly, or none pass); consumed both by the actionable gate and by {@link #selfCheck}'s agent-facing report so the two never
      *                                           diverge
      */
-    private record DifferentialAnalysis(BuildSummary solution, BuildSummary template, boolean solutionPassed, boolean templateFailed, boolean actionableGatesPass,
-            List<String> actionableReasons, List<String> unresolvedTaskBindings, List<String> possiblyDeadFiles, List<String> gradableTestsPassingOnTemplate) {
+    private record DifferentialAnalysis(BuildSummary solution, BuildSummary template, boolean solutionPassed, boolean templateFailed, boolean testArtifactGatesPass,
+            boolean actionableGatesPass, List<String> testArtifactReasons, List<String> actionableReasons, List<String> unresolvedTaskBindings, List<String> possiblyDeadFiles,
+            List<String> gradableTestsPassingOnTemplate) {
     }
 
     /**

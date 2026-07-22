@@ -246,7 +246,7 @@ class StagedGenerationRunnerTest {
     void runsAllFiveStagesInOrder_withMatchingStageContextAndAggregatedResult() {
         when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(completed(0, "spec done"), completed(10, "solution done"),
                 completed(4, "template done"), completed(12, "tests done"), completed(5, "statement done"));
-        when(verifier.selfCheck(any(), anyString(), eq(exercise), any(), eq(false))).thenReturn(passingReport());
+        when(verifier.selfCheckTestsStage(any(), anyString(), eq(exercise), any())).thenReturn(passingReport());
         AtomicInteger structuralSeedCalls = new AtomicInteger();
 
         AgentLoopResult result = run(NEVER_CANCELLED, () -> {
@@ -271,7 +271,7 @@ class StagedGenerationRunnerTest {
     void testsStageReport_isCarriedIntoTheStatementStagePromptOnly() {
         when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(completed(0, "spec done"), completed(10, "solution"),
                 completed(4, "template"), completed(12, "tests"), completed(5, "statement"));
-        when(verifier.selfCheck(any(), anyString(), eq(exercise), any(), eq(false))).thenReturn(passingReport());
+        when(verifier.selfCheckTestsStage(any(), anyString(), eq(exercise), any())).thenReturn(passingReport());
 
         run(NEVER_CANCELLED, Set::of);
 
@@ -326,7 +326,7 @@ class StagedGenerationRunnerTest {
     void testsGateFailure_stopsBeforeStatementStage_butStructuralSeedingAlreadyRan() {
         when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(completed(0, "spec done"), completed(10, "solution"),
                 completed(4, "template"), completed(12, "tests attempt"));
-        when(verifier.selfCheck(any(), anyString(), eq(exercise), any(), eq(false))).thenReturn(failingReport()); // never fixed
+        when(verifier.selfCheckTestsStage(any(), anyString(), eq(exercise), any())).thenReturn(failingReport()); // never fixed
         AtomicInteger structuralSeedCalls = new AtomicInteger();
 
         AgentLoopResult result = run(NEVER_CANCELLED, () -> {
@@ -334,7 +334,7 @@ class StagedGenerationRunnerTest {
             return Set.of();
         });
 
-        assertThat(result.finalMessage()).contains("do not yet satisfy the differential requirement");
+        assertThat(result.finalMessage()).contains("do not yet satisfy the TESTS-stage checks");
         // The structural-oracle seeding hook runs once when the TEMPLATE gate passes, regardless of how many times TESTS itself is re-entered.
         assertThat(structuralSeedCalls.get()).isEqualTo(1);
         verify(agentLoopRunner, times(5)).run(anyString(), anyString(), any(), anyInt(), any(), any(), any());
@@ -345,7 +345,7 @@ class StagedGenerationRunnerTest {
         sandbox.problemStatement = "  "; // never fixed
         when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(completed(0, "spec done"), completed(10, "solution"),
                 completed(4, "template"), completed(12, "tests"), completed(5, "statement attempt"));
-        when(verifier.selfCheck(any(), anyString(), eq(exercise), any(), eq(false))).thenReturn(passingReport());
+        when(verifier.selfCheckTestsStage(any(), anyString(), eq(exercise), any())).thenReturn(passingReport());
 
         AgentLoopResult result = run(NEVER_CANCELLED, Set::of);
 
@@ -400,7 +400,7 @@ class StagedGenerationRunnerTest {
     void budgetPool_rolloverAndCapArithmeticAcrossAllFiveStages() {
         when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(completed(0, "spec done"), completed(25, "solution"),
                 completed(1, "template"), completed(24, "tests"), completed(7, "statement"));
-        when(verifier.selfCheck(any(), anyString(), eq(exercise), any(), eq(false))).thenReturn(passingReport());
+        when(verifier.selfCheckTestsStage(any(), anyString(), eq(exercise), any())).thenReturn(passingReport());
 
         AgentLoopResult result = run(NEVER_CANCELLED, Set::of);
 
@@ -427,7 +427,7 @@ class StagedGenerationRunnerTest {
     void gateEvaluations_emitAPassOrFailProgressEventInTheExistingLabelVoice() {
         when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(completed(0, "spec done"), completed(10, "solution done"),
                 completed(4, "template done"), completed(12, "tests done"), completed(5, "statement done"));
-        when(verifier.selfCheck(any(), anyString(), eq(exercise), any(), eq(false))).thenReturn(passingReport());
+        when(verifier.selfCheckTestsStage(any(), anyString(), eq(exercise), any())).thenReturn(passingReport());
         List<String> progressEvents = new ArrayList<>();
 
         AgentLoopResult result = runner.run(exercise, baseTools, baseTools, "brief", Map.of(), sandbox, "s", NEVER_CANCELLED, null, progressEvents::add, Set::of).result();
@@ -442,7 +442,7 @@ class StagedGenerationRunnerTest {
         sandbox.problemStatement = "  "; // the STATEMENT gate fails with a single-line report; the retry attempt also fails, leaving the line to inspect
         when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(completed(0, "spec done"), completed(10, "solution"),
                 completed(4, "template"), completed(12, "tests"), completed(5, "statement attempt"));
-        when(verifier.selfCheck(any(), anyString(), eq(exercise), any(), eq(false))).thenReturn(passingReport());
+        when(verifier.selfCheckTestsStage(any(), anyString(), eq(exercise), any())).thenReturn(passingReport());
         List<String> progressEvents = new ArrayList<>();
 
         runner.run(exercise, baseTools, baseTools, "brief", Map.of(), sandbox, "s", NEVER_CANCELLED, null, progressEvents::add, Set::of);
@@ -489,7 +489,7 @@ class StagedGenerationRunnerTest {
     void gateFailure_reEntryThatFixesTheGate_continuesToTheNextStageWithTheFeedbackInThePrompt() {
         sandbox.diffExitCode = 0; // the TEMPLATE starts as a degenerate byte-identical copy of the solution
         when(verifier.singleBuild(any(), anyString(), eq(exercise), eq("template"))).thenReturn(compiled());
-        when(verifier.selfCheck(any(), anyString(), eq(exercise), any(), eq(false))).thenReturn(passingReport());
+        when(verifier.selfCheckTestsStage(any(), anyString(), eq(exercise), any())).thenReturn(passingReport());
         List<String> progressEvents = new ArrayList<>();
         AtomicInteger callCount = new AtomicInteger();
         when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenAnswer(invocation -> switch (callCount.incrementAndGet()) {
@@ -527,7 +527,7 @@ class StagedGenerationRunnerTest {
         AtomicReference<SingleBuildResult> templateBuild = new AtomicReference<>(compileFailure("template compile error")); // TEMPLATE gate fails first
         when(verifier.singleBuild(any(), anyString(), eq(exercise), eq("template"))).thenAnswer(invocation -> templateBuild.get());
         // TESTS gate fails and gets NO re-entry (cap spent)
-        when(verifier.selfCheck(any(), anyString(), eq(exercise), any(), eq(false))).thenReturn(failingReport());
+        when(verifier.selfCheckTestsStage(any(), anyString(), eq(exercise), any())).thenReturn(failingReport());
         AtomicInteger callCount = new AtomicInteger();
         when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenAnswer(invocation -> switch (callCount.incrementAndGet()) {
             case 1 -> completed(0, "spec done");
@@ -548,7 +548,7 @@ class StagedGenerationRunnerTest {
         AgentLoopResult result = runner.run(exercise, baseTools, baseTools, "brief", Map.of(), sandbox, "s", NEVER_CANCELLED, null, null, Set::of).result();
 
         assertThat(result.finalMessage()).as("the TESTS gate failure is reported directly: the run's two-reentry cap was already spent by SOLUTION and TEMPLATE")
-                .contains("do not yet satisfy the differential requirement");
+                .contains("do not yet satisfy the TESTS-stage checks");
         assertThat(result.turns()).isEqualTo(10 + 8 + 4 + 3 + 12);
         verify(agentLoopRunner, times(6)).run(anyString(), anyString(), any(), anyInt(), any(), any(), any());
     }
@@ -567,7 +567,7 @@ class StagedGenerationRunnerTest {
         when(sessionAgentLoopRunner.runSession(anyString(), any(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(session(completed(0, "spec done"), convAfterSpec),
                 session(completed(10, "solution done"), convAfterSolution), session(completed(4, "template done"), convAfterTemplate),
                 session(completed(12, "tests done"), convAfterTests), session(completed(5, "statement done"), convAfterStatement));
-        when(verifier.selfCheck(any(), anyString(), eq(exercise), any(), eq(false))).thenReturn(passingReport());
+        when(verifier.selfCheckTestsStage(any(), anyString(), eq(exercise), any())).thenReturn(passingReport());
 
         AgentLoopResult result = continuousRunner.run(exercise, baseTools, baseTools, "brief", Map.of(), sandbox, "s", NEVER_CANCELLED, null, null, Set::of).result();
 
@@ -590,7 +590,7 @@ class StagedGenerationRunnerTest {
     void freshMode_neverUsesRunSessionOrCarriesAConversation() {
         when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(completed(0, "spec done"), completed(10, "solution done"),
                 completed(4, "template done"), completed(12, "tests done"), completed(5, "statement done"));
-        when(verifier.selfCheck(any(), anyString(), eq(exercise), any(), eq(false))).thenReturn(passingReport());
+        when(verifier.selfCheckTestsStage(any(), anyString(), eq(exercise), any())).thenReturn(passingReport());
 
         AgentLoopResult result = run(NEVER_CANCELLED, Set::of);
 
@@ -602,7 +602,7 @@ class StagedGenerationRunnerTest {
     void continuousMode_reEntry_appendsTheGateReportAsTheNextUserMessageInsteadOfARebuiltPrompt() {
         AgentLoopRunner sessionAgentLoopRunner = mock(AgentLoopRunner.class);
         StagedGenerationRunner continuousRunner = newContinuousRunner(sessionAgentLoopRunner, systemPromptService, stageCheckService);
-        when(verifier.selfCheck(any(), anyString(), eq(exercise), any(), eq(false))).thenReturn(passingReport());
+        when(verifier.selfCheckTestsStage(any(), anyString(), eq(exercise), any())).thenReturn(passingReport());
         AtomicReference<SingleBuildResult> solutionBuild = new AtomicReference<>(compileFailure("compile error: cannot find symbol"));
         when(verifier.singleBuild(any(), anyString(), eq(exercise), eq("solution"))).thenAnswer(invocation -> solutionBuild.get());
         List<Message> convAfterFailedSolution = List.of(assistantText("solution attempt 1"));
@@ -653,7 +653,7 @@ class StagedGenerationRunnerTest {
         StagedGenerationRunner testRunner = new StagedGenerationRunner(agentLoopRunner, systemPromptService, spiedService, new AgentTranscriptWriter(""), approvedSpecs, "FRESH");
         when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(completed(0, "spec done"), completed(10, "solution done"),
                 completed(4, "template done"), completed(12, "tests done"), completed(5, "statement done"));
-        when(verifier.selfCheck(any(), anyString(), eq(exercise), any(), eq(false))).thenReturn(passingReport());
+        when(verifier.selfCheckTestsStage(any(), anyString(), eq(exercise), any())).thenReturn(passingReport());
         List<String> progressEvents = new ArrayList<>();
 
         AgentLoopResult result = testRunner.run(exercise, baseTools, baseTools, "brief", Map.of(), sandbox, "s", NEVER_CANCELLED, null, progressEvents::add, Set::of).result();
@@ -670,7 +670,7 @@ class StagedGenerationRunnerTest {
         StagedGenerationRunner testRunner = new StagedGenerationRunner(agentLoopRunner, systemPromptService, spiedService, new AgentTranscriptWriter(""), approvedSpecs, "FRESH");
         when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(completed(0, "spec done"), completed(10, "solution done"),
                 completed(4, "template done"), completed(12, "tests done"), completed(5, "statement done"));
-        when(verifier.selfCheck(any(), anyString(), eq(exercise), any(), eq(false))).thenReturn(passingReport());
+        when(verifier.selfCheckTestsStage(any(), anyString(), eq(exercise), any())).thenReturn(passingReport());
         List<String> progressEvents = new ArrayList<>();
 
         AgentLoopResult result = testRunner.run(exercise, baseTools, baseTools, "brief", Map.of(), sandbox, "s", NEVER_CANCELLED, null, progressEvents::add, Set::of).result();
@@ -685,7 +685,7 @@ class StagedGenerationRunnerTest {
     void testsGate_recordsItsReportOnTheToolsInstanceForTheStatementStagesBindingCheck() {
         when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(completed(0, "spec done"), completed(10, "solution done"),
                 completed(4, "template done"), completed(12, "tests done"), completed(5, "statement done"));
-        when(verifier.selfCheck(any(), anyString(), eq(exercise), any(), eq(false))).thenReturn(passingReport());
+        when(verifier.selfCheckTestsStage(any(), anyString(), eq(exercise), any())).thenReturn(passingReport());
 
         AgentLoopResult result = run(NEVER_CANCELLED, Set::of);
 
@@ -699,7 +699,7 @@ class StagedGenerationRunnerTest {
         // 4 loop calls only: SOLUTION..STATEMENT. The SPEC stub is absent on purpose — a call for it would consume the solution stub and break the sequence.
         when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(completed(10, "solution done"), completed(4, "template done"),
                 completed(12, "tests done"), completed(5, "statement done"));
-        when(verifier.selfCheck(any(), anyString(), eq(exercise), any(), eq(false))).thenReturn(passingReport());
+        when(verifier.selfCheckTestsStage(any(), anyString(), eq(exercise), any())).thenReturn(passingReport());
         List<String> progressEvents = new ArrayList<>();
 
         AgentLoopResult result = runner.run(exercise, baseTools, baseTools, "brief", Map.of(), sandbox, "s", NEVER_CANCELLED, null, progressEvents::add, Set::of, false, null)
@@ -739,7 +739,7 @@ class StagedGenerationRunnerTest {
             case 8 -> completed(5, "statement");
             default -> throw new IllegalStateException("unexpected call " + callCount.get());
         });
-        when(verifier.selfCheck(any(), anyString(), eq(exercise), any(), eq(false))).thenReturn(passingReport());
+        when(verifier.selfCheckTestsStage(any(), anyString(), eq(exercise), any())).thenReturn(passingReport());
 
         AgentLoopResult result = runner.run(exercise, baseTools, baseTools, "brief", Map.of(), sandbox, "s", NEVER_CANCELLED, null, null, Set::of).result();
 
@@ -768,7 +768,7 @@ class StagedGenerationRunnerTest {
             case 7 -> completed(2, "statement");
             default -> throw new IllegalStateException("unexpected call " + callCount.get());
         });
-        when(verifier.selfCheck(any(), anyString(), eq(exercise), any(), eq(false))).thenReturn(passingReport());
+        when(verifier.selfCheckTestsStage(any(), anyString(), eq(exercise), any())).thenReturn(passingReport());
 
         AgentLoopResult result = runner.run(exercise, baseTools, baseTools, "brief", Map.of(), sandbox, "s", NEVER_CANCELLED, null, null, Set::of).result();
 
@@ -780,7 +780,7 @@ class StagedGenerationRunnerTest {
     void specGatePass_handsTheSnapshotToTheSpecSink() {
         when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(completed(0, "spec done"), completed(10, "solution done"),
                 completed(4, "template done"), completed(12, "tests done"), completed(5, "statement done"));
-        when(verifier.selfCheck(any(), anyString(), eq(exercise), any(), eq(false))).thenReturn(passingReport());
+        when(verifier.selfCheckTestsStage(any(), anyString(), eq(exercise), any())).thenReturn(passingReport());
         AtomicReference<String> snapshot = new AtomicReference<>();
 
         runner.run(exercise, baseTools, baseTools, "brief", Map.of(), sandbox, "s", NEVER_CANCELLED, null, null, Set::of, true, snapshot::set).result();
@@ -798,7 +798,7 @@ class StagedGenerationRunnerTest {
                 reviewer, "FRESH");
         when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(completed(1, "spec"), completed(1, "refined spec"),
                 completed(2, "solution"), completed(2, "template"), completed(2, "tests"), completed(2, "statement"));
-        when(verifier.selfCheck(any(), anyString(), eq(exercise), any(), eq(false))).thenReturn(passingReport());
+        when(verifier.selfCheckTestsStage(any(), anyString(), eq(exercise), any())).thenReturn(passingReport());
         AtomicReference<String> snapshot = new AtomicReference<>();
 
         AgentLoopResult result = semanticRunner.run(exercise, baseTools, baseTools, "authoring context with generated material", "RAW BRIEF", Map.of(), sandbox, "s",
@@ -812,22 +812,123 @@ class StagedGenerationRunnerTest {
     }
 
     @Test
-    void secondGroundedSemanticSpecRejection_stopsWithoutFreezingTheContract() {
+    void secondSemanticReviewCanRequestOneMoreBoundedRefinementBeforeTheContractFreezes() {
         SpecFidelityCriticService reviewer = mock(SpecFidelityCriticService.class);
-        when(reviewer.reviewSpecification(anyString(), anyString(), eq(null), any())).thenReturn(
-                new SpecFidelityCriticService.SpecificationReview(true, List.of("missing ownership")),
-                new SpecFidelityCriticService.SpecificationReview(true, List.of("still missing ownership")));
+        when(reviewer.reviewSpecification(eq("RAW BRIEF"), anyString(), eq(null), any())).thenReturn(
+                new SpecFidelityCriticService.SpecificationReview(true, List.of("the strategy work is too shallow")),
+                new SpecFidelityCriticService.SpecificationReview(true, List.of("the revised rule contradicts its example")),
+                new SpecFidelityCriticService.SpecificationReview(true, List.of()));
         StagedGenerationRunner semanticRunner = new StagedGenerationRunner(agentLoopRunner, systemPromptService, stageCheckService, new AgentTranscriptWriter(""), approvedSpecs,
                 reviewer, "FRESH");
-        when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(completed(1, "spec"), completed(1, "refined spec"));
+        when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(completed(1, "spec"), completed(1, "first refinement"),
+                completed(1, "second refinement"), completed(2, "solution"), completed(2, "template"), completed(2, "tests"), completed(2, "statement"));
+        when(verifier.selfCheckTestsStage(any(), anyString(), eq(exercise), any())).thenReturn(passingReport());
+
+        AgentLoopResult result = semanticRunner
+                .run(exercise, baseTools, baseTools, "authoring context", "RAW BRIEF", Map.of(), sandbox, "s", NEVER_CANCELLED, null, null, Set::of, true, null).result();
+
+        assertThat(result.status()).isEqualTo(AgentLoopResult.Status.COMPLETED);
+        assertThat(approvedSpecs.approved("s")).contains(VALID_SPEC_DOCUMENT);
+        verify(reviewer, times(3)).reviewSpecification(eq("RAW BRIEF"), eq(VALID_SPEC_DOCUMENT), eq(null), any());
+        verify(agentLoopRunner, times(7)).run(anyString(), anyString(), any(), anyInt(), any(), any(), any());
+    }
+
+    @Test
+    void semanticRefinementGetsOneIndependentConsistencyCorrectionAfterBothOrdinarySpecRetriesWereUsed() {
+        SpecFidelityCriticService reviewer = mock(SpecFidelityCriticService.class);
+        String semanticFeedback = "Remove the unrelated exception policy and deepen the central strategy interaction.";
+        when(reviewer.reviewSpecification(eq("RAW BRIEF"), anyString(), eq(null), any()))
+                .thenReturn(new SpecFidelityCriticService.SpecificationReview(true, List.of(semanticFeedback)), new SpecFidelityCriticService.SpecificationReview(true, List.of()));
+        StagedGenerationRunner semanticRunner = new StagedGenerationRunner(agentLoopRunner, systemPromptService, stageCheckService, new AgentTranscriptWriter(""), approvedSpecs,
+                reviewer, "FRESH");
+        sandbox.specMarkdown = null;
+        AtomicInteger callCount = new AtomicInteger();
+        when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenAnswer(invocation -> switch (callCount.incrementAndGet()) {
+            case 1 -> completed(1, "spec returned only as prose");
+            case 2 -> {
+                sandbox.specMarkdown = VALID_SPEC_DOCUMENT.replace("| stubbed |", "| incomplete |");
+                yield completed(1, "spec materialized with an invalid status");
+            }
+            case 3 -> {
+                sandbox.specMarkdown = VALID_SPEC_DOCUMENT;
+                yield completed(1, "spec mechanically corrected");
+            }
+            case 4 -> {
+                sandbox.specMarkdown = VALID_SPEC_DOCUMENT.replace("| S1 | Calculator |", "| S1 | RenamedCalculator |");
+                yield completed(7, "semantic revision stopped after a partial rename");
+            }
+            case 5 -> {
+                sandbox.specMarkdown = VALID_SPEC_DOCUMENT.replace("computes the result", "computes the domain result through the selected strategy");
+                yield completed(2, "semantic revision completed coherently");
+            }
+            case 6 -> completed(2, "solution");
+            case 7 -> completed(2, "template");
+            case 8 -> completed(2, "tests");
+            case 9 -> completed(2, "statement");
+            default -> throw new IllegalStateException("unexpected call " + callCount.get());
+        });
+        when(verifier.selfCheckTestsStage(any(), anyString(), eq(exercise), any())).thenReturn(passingReport());
+        AtomicReference<String> snapshot = new AtomicReference<>();
+
+        AgentLoopResult result = semanticRunner
+                .run(exercise, baseTools, baseTools, "authoring context", "RAW BRIEF", Map.of(), sandbox, "s", NEVER_CANCELLED, null, null, Set::of, true, snapshot::set).result();
+
+        assertThat(result.status()).isEqualTo(AgentLoopResult.Status.COMPLETED);
+        assertThat(snapshot.get()).contains("domain result through the selected strategy");
+        assertThat(approvedSpecs.approved("s")).contains(snapshot.get());
+        verify(reviewer, times(2)).reviewSpecification(eq("RAW BRIEF"), anyString(), eq(null), any());
+        ArgumentCaptor<String> prompts = ArgumentCaptor.forClass(String.class);
+        verify(agentLoopRunner, times(9)).run(anyString(), prompts.capture(), any(), anyInt(), any(), any(), any());
+        assertThat(prompts.getAllValues().get(3)).contains(semanticFeedback, "Resolve only the cited defects", "one coherent contract", "structured", "verify tool");
+        assertThat(prompts.getAllValues().get(4)).contains(semanticFeedback, "RenamedCalculator", "Continue the SAME bounded revision", "do not merely patch",
+                "whole current file");
+    }
+
+    @Test
+    void secondMechanicalFailureAfterSemanticRefinementStopsWithoutApprovingThePartialContract() {
+        SpecFidelityCriticService reviewer = mock(SpecFidelityCriticService.class);
+        when(reviewer.reviewSpecification(anyString(), anyString(), eq(null), any()))
+                .thenReturn(new SpecFidelityCriticService.SpecificationReview(true, List.of("deepen the central interaction")));
+        StagedGenerationRunner semanticRunner = new StagedGenerationRunner(agentLoopRunner, systemPromptService, stageCheckService, new AgentTranscriptWriter(""), approvedSpecs,
+                reviewer, "FRESH");
+        AtomicInteger callCount = new AtomicInteger();
+        when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenAnswer(invocation -> {
+            if (callCount.incrementAndGet() > 1) {
+                sandbox.specMarkdown = VALID_SPEC_DOCUMENT.replace("| S1 | Calculator |", "| S1 | UnknownType |");
+            }
+            return completed(1, "spec attempt");
+        });
 
         AgentLoopResult result = semanticRunner.run(exercise, baseTools, baseTools, "context", "brief", Map.of(), sandbox, "s", NEVER_CANCELLED, null, null, Set::of, true, null)
                 .result();
 
         assertThat(result.status()).isEqualTo(AgentLoopResult.Status.ERROR);
-        assertThat(result.finalMessage()).contains("still missing ownership");
+        assertThat(result.finalMessage()).contains("UnknownType");
         assertThat(approvedSpecs.approved("s")).isEmpty();
-        verify(agentLoopRunner, times(2)).run(anyString(), anyString(), any(), anyInt(), any(), any(), any());
+        verify(agentLoopRunner, times(3)).run(anyString(), anyString(), any(), anyInt(), any(), any(), any());
+        verify(reviewer).reviewSpecification(anyString(), eq(VALID_SPEC_DOCUMENT), eq(null), any());
+    }
+
+    @Test
+    void fourthGroundedSemanticSpecRejection_stopsAfterThreeBoundedRefinementsWithoutFreezingTheContract() {
+        SpecFidelityCriticService reviewer = mock(SpecFidelityCriticService.class);
+        when(reviewer.reviewSpecification(anyString(), anyString(), eq(null), any())).thenReturn(
+                new SpecFidelityCriticService.SpecificationReview(true, List.of("missing ownership")),
+                new SpecFidelityCriticService.SpecificationReview(true, List.of("still missing ownership")),
+                new SpecFidelityCriticService.SpecificationReview(true, List.of("ownership remains missing")),
+                new SpecFidelityCriticService.SpecificationReview(true, List.of("ownership is missing after three refinements")));
+        StagedGenerationRunner semanticRunner = new StagedGenerationRunner(agentLoopRunner, systemPromptService, stageCheckService, new AgentTranscriptWriter(""), approvedSpecs,
+                reviewer, "FRESH");
+        when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(completed(1, "spec"), completed(1, "refined spec"),
+                completed(1, "refined spec again"), completed(1, "third refined spec"));
+
+        AgentLoopResult result = semanticRunner.run(exercise, baseTools, baseTools, "context", "brief", Map.of(), sandbox, "s", NEVER_CANCELLED, null, null, Set::of, true, null)
+                .result();
+
+        assertThat(result.status()).isEqualTo(AgentLoopResult.Status.ERROR);
+        assertThat(result.finalMessage()).contains("ownership is missing after three refinements");
+        assertThat(approvedSpecs.approved("s")).isEmpty();
+        verify(agentLoopRunner, times(4)).run(anyString(), anyString(), any(), anyInt(), any(), any(), any());
     }
 
     @Test

@@ -375,7 +375,8 @@ public final class ExerciseIntegrityGate {
             Set<String> correctlyPlaced = actualFiles.stream().filter(ownerFiles::contains).collect(Collectors.toCollection(LinkedHashSet::new));
             if (correctlyPlaced.isEmpty()) {
                 reasons.add("the stubbed owner " + row.ownerType() + " has no '// TODO " + row.seamId() + ": ...' breadcrumb in its declaring source. Put the marker at the "
-                        + "unfinished student work inside that source.");
+                        + "unfinished student work inside that source. If its student-owned members cannot be declared without an omitted student-created type, keep a compile-safe "
+                        + "empty owner class and put this owner's own seam TODO once in the class body where those members will be added; do not restore the absent type or change SPEC.md.");
             }
             Set<String> misplaced = actualFiles.stream().filter(path -> !ownerFiles.contains(path)).collect(Collectors.toCollection(LinkedHashSet::new));
             if (!misplaced.isEmpty()) {
@@ -518,8 +519,10 @@ public final class ExerciseIntegrityGate {
             }
         }
         if (!missingClassAnnotations.isEmpty()) {
-            reasons.add("Java test classes must use the trusted Ares annotations @Public (de.tum.in.test.api.jupiter.Public), @WhitelistPath(\"target\"), and "
-                    + "@BlacklistPath(\"target/test-classes\"); missing or shadowed in " + sampleNames(new LinkedHashSet<>(missingClassAnnotations)) + ".");
+            reasons.add("Java test classes must use the trusted Ares annotations @Public (de.tum.in.test.api.jupiter.Public), @WhitelistPath(\"target\") "
+                    + "(de.tum.in.test.api.WhitelistPath), and @BlacklistPath(\"target/test-classes\") (de.tum.in.test.api.BlacklistPath); missing or shadowed in "
+                    + sampleNames(new LinkedHashSet<>(missingClassAnnotations))
+                    + ". Copy these exact imports from the seeded reference tests; only @Public lives in the .jupiter package.");
         }
         if (!missingTimeouts.isEmpty()) {
             reasons.add("Every Java @Test method must carry the trusted de.tum.in.test.api.StrictTimeout, set to a bounded number of seconds between " + MIN_STRICT_TIMEOUT_SECONDS

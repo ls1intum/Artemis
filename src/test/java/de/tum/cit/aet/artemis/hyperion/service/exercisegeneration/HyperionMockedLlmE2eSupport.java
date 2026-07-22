@@ -165,7 +165,11 @@ final class HyperionMockedLlmE2eSupport {
     }
 
     static ChatResponse cleanSpecificationReview() {
-        return text("{\"omissions\":[],\"conflicts\":[],\"internalConflicts\":[],\"incorrectExamples\":[],\"unsupportedConstraints\":[]}");
+        return text("{\"learningFit\":{\"briefQuote\":\"Create a bounded counter exercise.\","
+                + "\"specQuotes\":[\"R2: increment advances by one and clamps at the positive maximum.\"],"
+                + "\"remainingStudentReasoning\":\"The boundary decisions remain after routine implementation is subtracted.\","
+                + "\"domainGrounding\":\"The brief requests no qualitative theme; the counter domain directly motivates boundary behavior.\","
+                + "\"sufficient\":true,\"repair\":null},\"omissions\":[],\"conflicts\":[],\"internalConflicts\":[],\"incorrectExamples\":[]," + "\"unsupportedConstraints\":[]}");
     }
 
     static ChatResponse writeFile(String path, String content) {

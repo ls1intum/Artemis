@@ -18,6 +18,9 @@ above the placeholder throw — never between the javadoc and the signature, nev
 the signature. Every unfinished member of a stubbed owner carries its seam ID; the same ID may repeat within that owner when one task spans several members. A TODO marks unfinished student work only:
 never leave one on code that is already complete, and never leave authoring or design notes in any file.
 
+The sole exception is a stubbed owner's own seam whose members cannot be declared without an omitted student-created type. Keep that owner as an empty compile-safe class and put
+exactly one owner-seam TODO in its class body where students add the members. Never restore the missing type, use `Object`, edit the specification, or reuse the absent type's seam.
+
 ## Types students must create
 
 When the design says students define a type themselves, the template must NOT ship that type: omit its file and
@@ -26,7 +29,7 @@ anchors; do not attach that seam ID to unrelated collaborator code merely becaus
 
 When a provided context will eventually refer to an omitted student-created interface, keep the context class
 but omit the student-owned field and methods whose signatures need that interface. Do not ship an empty interface merely to make those signatures compile, and do not
-weaken only the template API to `Object`; tests can inspect the completed API reflectively.
+weaken only the template API to `Object`; use the class-body owner-seam TODO above, and let tests inspect the completed API reflectively.
 
 ## Data-holder plumbing
 

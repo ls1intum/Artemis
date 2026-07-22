@@ -10,6 +10,13 @@ import org.junit.jupiter.api.Test;
 class AgentVerifyReportTest {
 
     @Test
+    void testsStageDefersTaskBindingGuidance() {
+        AgentVerifyReport report = new AgentVerifyReport(1, true, List.of(), 1, true, true, List.of(), List.of("calculatesCost"), List.of(), List.of(), true, List.of());
+
+        assertThat(report.toTestsStageObservation()).contains("test-plan.json", "later STATEMENT stage").doesNotContain("bind each [task]");
+    }
+
+    @Test
     void sanitizesAndBoundsFailureEvidence() {
         List<AgentVerifyReport.TestFailureEvidence> evidence = IntStream.range(0, 10)
                 .mapToObj(index -> new AgentVerifyReport.TestFailureEvidence("test" + index, "\u001B[31mline one\nline two\u0007 " + "x".repeat(500))).toList();

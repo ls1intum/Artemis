@@ -428,7 +428,7 @@ class StageCheckServiceTest {
         @Test
         void passes_andCarriesTheReport_whenSolutionPassesAndTemplateFails_andTheGradingPlanIsValid() {
             AgentVerifyReport report = report(true, true);
-            when(verifier.selfCheck(any(), anyString(), eq(exercise), any(), eq(false))).thenReturn(report);
+            when(verifier.selfCheckTestsStage(any(), anyString(), eq(exercise), any())).thenReturn(report);
             sandbox.testPlanJson = "{\"tests\":[{\"name\":\"testFoo\",\"seam\":\"S1\",\"weight\":3,\"visibility\":\"AFTER_DUE_DATE\"}]}";
 
             StageCheckResult result = check(GenerationStage.TESTS);
@@ -440,7 +440,7 @@ class StageCheckServiceTest {
 
         @Test
         void fails_whenTheDifferentialPassesButTheGradingPlanIsMissing() {
-            when(verifier.selfCheck(any(), anyString(), eq(exercise), any(), eq(false))).thenReturn(report(true, true));
+            when(verifier.selfCheckTestsStage(any(), anyString(), eq(exercise), any())).thenReturn(report(true, true));
 
             StageCheckResult result = check(GenerationStage.TESTS);
 
@@ -450,7 +450,7 @@ class StageCheckServiceTest {
 
         @Test
         void fails_withTheParsersActionableMessage_whenTheGradingPlanIsInvalid() {
-            when(verifier.selfCheck(any(), anyString(), eq(exercise), any(), eq(false))).thenReturn(report(true, true));
+            when(verifier.selfCheckTestsStage(any(), anyString(), eq(exercise), any())).thenReturn(report(true, true));
             sandbox.testPlanJson = "{\"tests\":[{\"name\":\"testFoo\",\"seam\":\"S1\",\"weight\":7,\"visibility\":\"ALWAYS\"}]}";
 
             StageCheckResult result = check(GenerationStage.TESTS);
@@ -461,7 +461,7 @@ class StageCheckServiceTest {
 
         @Test
         void fails_whenTheGradingPlanNamesATestThatDoesNotExist() {
-            when(verifier.selfCheck(any(), anyString(), eq(exercise), any(), eq(false))).thenReturn(report(true, true));
+            when(verifier.selfCheckTestsStage(any(), anyString(), eq(exercise), any())).thenReturn(report(true, true));
             sandbox.testPlanJson = "{\"tests\":[{\"name\":\"testGhost\",\"seam\":\"S1\",\"weight\":2,\"visibility\":\"ALWAYS\"}]}";
 
             StageCheckResult result = check(GenerationStage.TESTS);
@@ -475,7 +475,7 @@ class StageCheckServiceTest {
             // The spec's own Testing Strategy is the plan's contract: silently shipping every test visible throws away the overfit resistance the spec promised.
             sandbox.spec = specWithDesign("| Calculator | computes | stubbed |\n").replace("| S1 | Calculator | typical; zero | 3 | no |",
                     "| S1 | Calculator | typical; zero | 3 | yes |");
-            when(verifier.selfCheck(any(), anyString(), eq(exercise), any(), eq(false))).thenReturn(report(true, true));
+            when(verifier.selfCheckTestsStage(any(), anyString(), eq(exercise), any())).thenReturn(report(true, true));
             sandbox.testPlanJson = "{\"tests\":[{\"name\":\"testFoo\",\"seam\":\"S1\",\"weight\":3,\"visibility\":\"ALWAYS\"}]}";
 
             StageCheckResult result = check(GenerationStage.TESTS);
@@ -491,7 +491,7 @@ class StageCheckServiceTest {
                     | S2 | Calculator | boundary values | 2 | yes |
                     """);
             AgentVerifyReport report = new AgentVerifyReport(2, true, List.of(), 2, true, true, List.of(), List.of("ordinary", "boundary"), List.of(), List.of(), true, List.of());
-            when(verifier.selfCheck(any(), anyString(), eq(exercise), any(), eq(false))).thenReturn(report);
+            when(verifier.selfCheckTestsStage(any(), anyString(), eq(exercise), any())).thenReturn(report);
             sandbox.testPlanJson = "{\"tests\":[{\"name\":\"ordinary\",\"seam\":\"S1\",\"weight\":3,\"visibility\":\"AFTER_DUE_DATE\"},"
                     + "{\"name\":\"boundary\",\"seam\":\"S2\",\"weight\":2,\"visibility\":\"ALWAYS\"}]}";
 
@@ -504,7 +504,7 @@ class StageCheckServiceTest {
         @Test
         void passes_butNamesUnplannedTests_soTheDefaultGradingIsAConsciousChoice() {
             AgentVerifyReport report = new AgentVerifyReport(5, true, List.of(), 5, true, true, List.of(), List.of("testFoo", "testBar"), List.of(), List.of(), true, List.of());
-            when(verifier.selfCheck(any(), anyString(), eq(exercise), any(), eq(false))).thenReturn(report);
+            when(verifier.selfCheckTestsStage(any(), anyString(), eq(exercise), any())).thenReturn(report);
             sandbox.testPlanJson = "{\"tests\":[{\"name\":\"testFoo\",\"seam\":\"S1\",\"weight\":2,\"visibility\":\"ALWAYS\"}]}";
 
             StageCheckResult result = check(GenerationStage.TESTS);
@@ -516,17 +516,29 @@ class StageCheckServiceTest {
         @Test
         void reportsTheDifferentialFailureFirst_neverTheMissingPlan_whenBothAreWrong() {
             // Feedback-priority contract: a failing differential is the real problem; plan noise on top of it would bury the actionable signal.
-            when(verifier.selfCheck(any(), anyString(), eq(exercise), any(), eq(false))).thenReturn(report(false, true));
+            when(verifier.selfCheckTestsStage(any(), anyString(), eq(exercise), any())).thenReturn(report(false, true));
 
             StageCheckResult result = check(GenerationStage.TESTS);
 
             assertThat(result.passed()).isFalse();
-            assertThat(result.observation()).contains("differential requirement").doesNotContain("test-plan.json");
+            assertThat(result.observation()).contains("TESTS-stage checks").doesNotContain("test-plan.json");
+        }
+
+        @Test
+        void rejectsACompleteBuildPairWhenAnotherTestArtifactGateFailsBeforeReadingThePlan() {
+            AgentVerifyReport report = new AgentVerifyReport(5, true, List.of(), 5, true, true, List.of(), List.of("testFoo"), List.of(), List.of(), false,
+                    List.of("The Java tests do not use @WhitelistPath."));
+            when(verifier.selfCheckTestsStage(any(), anyString(), eq(exercise), any())).thenReturn(report);
+
+            StageCheckResult result = check(GenerationStage.TESTS);
+
+            assertThat(result.passed()).isFalse();
+            assertThat(result.observation()).contains("@WhitelistPath").doesNotContain("test-plan.json is missing");
         }
 
         @Test
         void fails_whenAPlanEntryHasNoSeamOrNamesASeamTheSpecNeverDeclared() {
-            when(verifier.selfCheck(any(), anyString(), eq(exercise), any(), eq(false))).thenReturn(report(true, true));
+            when(verifier.selfCheckTestsStage(any(), anyString(), eq(exercise), any())).thenReturn(report(true, true));
             sandbox.testPlanJson = "{\"tests\":[{\"name\":\"testFoo\",\"weight\":2,\"visibility\":\"ALWAYS\"}]}";
 
             assertThat(check(GenerationStage.TESTS).observation()).contains("no seam").contains("S1");
@@ -539,12 +551,12 @@ class StageCheckServiceTest {
         @Test
         void fails_butStillCarriesTheReport_whenTheDifferentialDoesNotHold() {
             AgentVerifyReport report = report(false, true);
-            when(verifier.selfCheck(any(), anyString(), eq(exercise), any(), eq(false))).thenReturn(report);
+            when(verifier.selfCheckTestsStage(any(), anyString(), eq(exercise), any())).thenReturn(report);
 
             StageCheckResult result = check(GenerationStage.TESTS);
 
             assertThat(result.passed()).isFalse();
-            assertThat(result.observation()).contains("do not yet satisfy the differential requirement");
+            assertThat(result.observation()).contains("do not yet satisfy the TESTS-stage checks");
             assertThat(result.report()).isSameAs(report);
         }
 
@@ -553,7 +565,7 @@ class StageCheckServiceTest {
             sandbox.spec = specWithDesign("| FuelStrategy | designed by students | student-creates |\n");
             approvedSpecs.approve("s", sandbox.spec);
             AgentVerifyReport report = report(true, false);
-            when(verifier.selfCheck(any(), anyString(), eq(exercise), any(), eq(false))).thenReturn(report);
+            when(verifier.selfCheckTestsStage(any(), anyString(), eq(exercise), any())).thenReturn(report);
 
             StageCheckResult result = check(GenerationStage.TESTS);
 
@@ -563,7 +575,7 @@ class StageCheckServiceTest {
 
         @Test
         void fails_gracefully_whenTheSelfCheckThrows() {
-            when(verifier.selfCheck(any(), anyString(), eq(exercise), any(), eq(false))).thenThrow(new RuntimeException("build agent lost"));
+            when(verifier.selfCheckTestsStage(any(), anyString(), eq(exercise), any())).thenThrow(new RuntimeException("build agent lost"));
 
             StageCheckResult result = check(GenerationStage.TESTS);
 
@@ -994,7 +1006,7 @@ class StageCheckServiceTest {
             StageCheckResult result = check(GenerationStage.SPEC);
 
             assertThat(result.passed()).isFalse();
-            assertThat(result.observation()).contains("no template-status token").contains("Calculator");
+            assertThat(result.observation()).contains("no valid final Template status cell", "Calculator", "LAST cell", "Do not move the token into the Role cell");
         }
 
         @Test

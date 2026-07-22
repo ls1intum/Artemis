@@ -693,9 +693,11 @@ public class SandboxAgentTools implements SubmitVetoAware {
      * Runs the mechanical precheck for the current session.
      * <p>
      * In a staged session ({@link #currentStage} set), {@code verify} delegates to {@link StageCheckService} for the CURRENT stage at that stage's right depth — a free structure
-     * scan for {@link GenerationStage#SPEC}, one pristine build for {@link GenerationStage#SOLUTION} and {@link GenerationStage#TEMPLATE}, the full solution/template
-     * differential for {@link GenerationStage#TESTS} (identical to the unstaged path below), and a no-build binding check for {@link GenerationStage#STATEMENT} against the TESTS
-     * stage's exact test names. Every call re-runs the check (no cache); a passing call clears {@link #dirtySinceLastPassingCheck} for the orchestrator's exit gate to reuse (see
+     * scan for {@link GenerationStage#SPEC}, one pristine build for {@link GenerationStage#SOLUTION} and {@link GenerationStage#TEMPLATE}, the solution/template differential and
+     * executable-artifact checks for {@link GenerationStage#TESTS}, and a no-build binding check for {@link GenerationStage#STATEMENT} against the TESTS stage's exact test names.
+     * Statement and grading-plan checks remain deferred until their artifacts exist; the unstaged path below checks the complete candidate. Every call re-runs the check (no
+     * cache); a
+     * passing call clears {@link #dirtySinceLastPassingCheck} for the orchestrator's exit gate to reuse (see
      * {@link #reuseCachedPassingCheck}), but never skips itself. An unstaged session ({@code currentStage} {@code null}) keeps the legacy behavior: always the full differential.
      *
      * @return the agent-readable observation carrying a {@code MECHANICAL PRECHECK: PASS/FAIL} verdict line, or an error message if neither path is wired

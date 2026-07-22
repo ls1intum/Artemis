@@ -1476,6 +1476,23 @@ class DifferentialVerificationServiceTest {
     class InLoopSelfCheck {
 
         @Test
+        void testsStageDoesNotRejectOrRequestTheStatementBeforeItsStage() {
+            List<String> names = List.of("calculatesCost");
+            ProgrammingExercise exercise = new ProgrammingExercise();
+            DifferentialVerificationService verifier = newVerifier();
+
+            AgentVerifyReport stageReport = verifier.selfCheckTestsStage(new ScriptedSandbox(resultWithFails(0, names, List.of()), resultWithFails(1, names, names), ""), "s",
+                    exercise, Map.of());
+            AgentVerifyReport fullReport = verifier.selfCheck(new ScriptedSandbox(resultWithFails(0, names, List.of()), resultWithFails(1, names, names), ""), "s", exercise);
+
+            assertThat(stageReport.wouldBeAccepted()).isTrue();
+            assertThat(stageReport.blockingReasons()).noneMatch(reason -> reason.contains("problem statement") || reason.contains("[task]"));
+            assertThat(stageReport.toTestsStageObservation()).contains("later STATEMENT stage").doesNotContain("bind each [task]");
+            assertThat(fullReport.wouldBeAccepted()).isFalse();
+            assertThat(fullReport.blockingReasons()).anyMatch(reason -> reason.contains("no Artemis task bindings"));
+        }
+
+        @Test
         void reportsAcceptedWhenSolutionPassesAndTemplateFailsSameTests() {
             List<String> names = List.of("sortsUnsortedArray", "sortsArrayWithDuplicates");
             AgentVerifyReport report = selfCheck(resultWithFails(0, names, List.of()), resultWithFails(1, names, names), PROBLEM_STATEMENT_WITH_TASK);
