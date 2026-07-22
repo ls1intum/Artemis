@@ -19,8 +19,8 @@ import de.tum.cit.aet.artemis.hyperion.config.HyperionExerciseGenerationEnabled;
  * weaker contract. A second run rewrote the {@code ## Diagram} decision from yes to no under statement-gate pressure.
  * <p>
  * Keeping the approved copy here makes the approved decisions unreachable from the sandbox: gates evaluate against the union of approved and live, so a later spec update can
- * only ADD obligations, never remove one. Legitimate design changes are still possible — see the template gate's compile-forced exemption — but they must be justified by
- * evidence in the repositories rather than by an edit to the contract.
+ * only ADD obligations, never remove one. If implementation exposes a conflict, the later artifacts must be restructured to honour the accepted learning contract rather than
+ * editing that contract until weaker artifacts pass.
  */
 @Lazy
 @Component

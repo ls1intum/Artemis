@@ -126,12 +126,11 @@ public class AgentSystemPromptService {
     private static final String THE_CONTRACT = """
             THE CONTRACT
             1. The solution compiles and passes every behavioural test.
-            2. The template compiles. Every task-bound BEHAVIOURAL test fails at its intended TODO — no exceptions, no "mostly fails is enough". A structural check already
-            satisfied by the template (an existing class/method/attribute/constructor shape) MAY still pass; that is intentional starter credit, never an excuse for a
-            behavioural test to pass. Preserve the solution's public API with readable stubs, preferably a TODO followed by
+            2. The template compiles. Every task-bound BEHAVIOURAL test fails at its intended TODO. Structural checks for starter code MAY pass; behavioural tests may not.
+            Preserve the solution's public API with readable stubs, preferably a TODO followed by
             `throw new UnsupportedOperationException("Not implemented")`; a returned placeholder is valid only if every test rejects it. Never leak solution logic or grader-defeating hints.
-            A stub fails the same way for every caller: template and solution code must never inspect stack traces, test names, or any grading context to change behavior — the
-            verifier rejects that outright. If a member cannot be stubbed without cascading failures (constructors, shared plumbing), provide it implemented in the template and
+            A stub fails the same way for every caller: never inspect stack traces, test names, or grading context. If a member cannot be stubbed without cascading failures
+            (constructors, shared plumbing), provide it implemented in the template and
             do not bind a behavioural test to it (starter credit, rule 5).
             3. Run the same meaningful tests against solution and template. Cover central behaviour, representative boundaries, state transitions, and stated errors. Use
             non-degenerate witnesses that distinguish plausible wrong implementations.
@@ -219,9 +218,15 @@ public class AgentSystemPromptService {
             mutable state and whether it survives object replacement; `## Testing Strategy` — one seam per independently actionable unit of student work, grouping every test
             partition it needs (never one seam per test, never one for the whole exercise unless it is genuinely one seam), with a weight tier (core rules outweigh edge
             cases) and a LAST column reading exactly `yes` or `no` for a hidden after-due-date variant with fresh witnesses (students overfit to visible tests; that cell is
-            read mechanically); `## Diagram` — yes/no + one-line why
-            grounded in the design (yes for multiple collaborating or student-created types). No [task] bindings, no test names, no PlantUML at spec time. Update SPEC.md
-            whenever a later stage proves it wrong — it must always describe the final exercise truthfully.
+            read mechanically). Match the requested learning objective and difficulty in the work students actually perform: if the brief teaches an abstraction or design
+            pattern, students must implement or wire that collaboration rather than only transcribe domain formulas into an already-solved design; keep routine plumbing given.
+            Every Testing Strategy seam described as student work must belong to a `stubbed` or `student-creates` Design row. Keep solution and template public APIs identical:
+            a given/stubbed type cannot mention an omitted `student-creates` type in its signature, so either make the dependent type student-created too or choose a compile-safe
+            design — never substitute `Object` in only the template.
+            `## Diagram` — yes/no + one-line why
+            grounded in the design (yes for multiple collaborating or student-created types). No [task] bindings, no test names, no PlantUML at spec time. The accepted ownership
+            and diagram decisions are the generation contract: later stages may clarify or add obligations, but must never downgrade student work or revoke the diagram to escape
+            a gate. If implementation exposes a conflict, restructure the scaffold/tests to honour the accepted design.
             """;
 
     private static final String STAGE_1_SOLUTION_INSTRUCTIONS = """
@@ -245,16 +250,21 @@ public class AgentSystemPromptService {
             template for its intended reason (a structural check may already pass). For a `student-creates` type, follow the reflection pattern the seeded reference/tests
             demonstrate (its ShippingCalculator test reaches a solution-only class via ReflectionTestUtils so the same test still compiles against the template). Every test
             must be passable by completing the template's TODOs within the scaffolded structure; one that forces restructuring means the design is wrong — fix template and
-            solution first. Assert exception types, never message strings, unless the statement fixes the exact message. Then write `/workspace/test-plan.json` implementing
+            solution first. When a rule says a context delegates to a collaborator, use a small fake or recording implementation where the language permits it and assert the
+            forwarded inputs and returned value; testing only the known concrete implementations lets a context that duplicates their formulas pass without using the taught
+            abstraction. When the collaborator type is absent from the template, create the recording fake with a Java dynamic proxy after loading the interface by name, and
+            invoke every constructor or method whose signature mentions that missing type reflectively. Holding the instance as `Object` does not make a normal typed method call
+            compile. Assert exception types, never message strings, unless the statement fixes the exact message. Then write `/workspace/test-plan.json` implementing
             the Testing Strategy: {"tests":[{"name":"<exact test name>","weight":<1..3>,"visibility":"ALWAYS"|"AFTER_DUE_DATE"}]} — weights grade core rules above edge cases,
             AFTER_DUE_DATE hides an overfit-resistant variant until the deadline; names must be the exact names `verify` reports. If a differential run exposes a solution or
-            template defect, fix it there, re-check that stage's guarantees, and update SPEC.md if the specification proves wrong.
+            template defect, fix it there and re-check that stage's guarantees; never weaken an accepted student-ownership or diagram decision to make a later gate pass.
             """;
 
     private static final String STAGE_4_STATEMENT_INSTRUCTIONS = """
             STAGE 4 — STATEMENT: write the statement last by REWRITING the specification into student-facing form — keep its rules and examples, never add graded behaviour
             beyond it — using the verified test names: one `[task]` line per specification seam, binding the bare method names exactly as `verify` reports them, never prefixed
-            with a class or package name; the public API presented once and compactly; a diagram only if SPEC.md's `## Diagram` said yes, placed after the tasks it illustrates,
+            with a class or package name. Tests marked AFTER_DUE_DATE are hidden overfit probes: leave them unbound and never mention their names anywhere in the statement,
+            including prose, diagrams, or appendices. Present the public API once and compactly; add a diagram only if SPEC.md's `## Diagram` said yes, placed after the tasks it illustrates,
             with testsColor names resolving like task bindings. Re-read every boundary or edge-case sentence: each must be true of the solution AND covered by a test —
             otherwise fix the artifact or delete the sentence. Never repeat a heading. Then independently replay every worked example, run `verify` once more, and submit only
             after `MECHANICAL PRECHECK: PASS`; authoritative post-loop verification determines save eligibility, and quality review may request repairs.
@@ -299,11 +309,11 @@ public class AgentSystemPromptService {
 
     private static final String STAGE_TOOLS_NOTE = """
             TOOLS
-            Your tools are bash, read_file, write_file, edit_file, delete_file, verify, and submit. Use write_file/edit_file to change files — there is no apply_patch tool; never call
-            it directly or through bash. %s Never fabricate build or test results.
+            Your tools are bash, read_file, write_file, edit_file, delete_file, verify, and submit. Use `verify` for builds; it handles the network-isolated CI scaffold. Never run
+            repository Gradle/Maven directly: its dependency cache is deliberately read-only, and an in-place build contaminates the repositories with generated output. Use
+            write_file/edit_file to change files — there is no apply_patch tool; never call it directly or through bash. %s Never fabricate build or test results.
 
-            """
-            .formatted(HARNESS_IMMUTABILITY_RULE);
+            """.formatted(HARNESS_IMMUTABILITY_RULE);
 
     /**
      * How often and how cheaply to call {@code verify}/{@code submit} in the staged workflow: every stage's check is delegated to {@link StageCheckService} at that stage's own
@@ -379,7 +389,7 @@ public class AgentSystemPromptService {
      * only to that stage's output, this stage's style-guide pointer, and the shared stage-close line.
      */
     private static String stageSection(GenerationStage stage) {
-        return switch (stage) {
+        return stageWriteBoundary(stage) + switch (stage) {
             case SPEC -> STAGE_SPEC_INSTRUCTIONS + "\n" + stylePointer(stage) + STAGE_CLOSE_LINE;
             case SOLUTION -> earlierStagesLine(stage) + STAGE_1_SOLUTION_INSTRUCTIONS + "\n" + stylePointer(stage) + STAGE_CLOSE_LINE;
             case TEMPLATE ->
@@ -388,6 +398,18 @@ public class AgentSystemPromptService {
             case STATEMENT ->
                 earlierStagesLine(stage) + STAGE_4_STATEMENT_INSTRUCTIONS + "\n\n" + STUDENT_FACING_STATEMENT + ARTEMIS_TASK_BINDINGS + stylePointer(stage) + STAGE_CLOSE_LINE;
         };
+    }
+
+    private static String stageWriteBoundary(GenerationStage stage) {
+        String writable = switch (stage) {
+            case SPEC -> "SPEC.md";
+            case SOLUTION -> "SPEC.md and solution/";
+            case TEMPLATE -> "SPEC.md, solution/, and template/";
+            case TESTS -> "SPEC.md, solution/, template/, tests/, and test-plan.json";
+            case STATEMENT -> "the completed artifacts, including problem-statement.md";
+        };
+        return "STAGE WRITE BOUNDARY: write only " + writable
+                + ". Do not author future-stage artifacts early, including through bash; each later artifact needs its own instructions and gate.\n";
     }
 
     /** One line naming what earlier stages already produced, so the agent orients itself without re-reading the full STAGE 0-4 workflow. Empty for the first stage. */

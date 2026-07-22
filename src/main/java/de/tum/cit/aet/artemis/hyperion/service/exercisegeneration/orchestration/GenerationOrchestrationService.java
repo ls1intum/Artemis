@@ -190,14 +190,20 @@ public class GenerationOrchestrationService {
      */
     public GenerationOutcome generate(ProgrammingExercise exercise, User user, String userPrompt, String jobId, GenerationMode mode, BooleanSupplier cancelled,
             Consumer<String> progress, @Nullable Consumer<ExerciseGenerationFileChangeDTO> fileChangeSink, @Nullable Consumer<ChatResponse> usageSink) {
+        return generate(exercise, user, userPrompt, jobId, mode, cancelled, progress, fileChangeSink, usageSink, null);
+    }
+
+    GenerationOutcome generate(ProgrammingExercise exercise, User user, String userPrompt, String jobId, GenerationMode mode, BooleanSupplier cancelled, Consumer<String> progress,
+            @Nullable Consumer<ExerciseGenerationFileChangeDTO> fileChangeSink, @Nullable Consumer<ChatResponse> usageSink, @Nullable String originalSourceBrief) {
         // Snapshot the pre-adapt graded test names so the verifier can reject a destructive total wipe (an adapt that retains none of them = a from-scratch regeneration mislabeled
         // as an adapt). Empty for GENERATE, which leaves the total-wipe gate inert.
         Set<String> baselineGradedTestNames = mode == GenerationMode.ADAPT ? captureBaselineGradedTestNames(exercise) : Set.of();
         String baselineProblemStatement = exercise.getProblemStatement();
         // The client seeds every new exercise with the default template readme; only a REAL instructor statement may steer the brief, the workspace seed, or skip the SPEC
         // stage — otherwise the classic sorting readme becomes "requirements to preserve" everywhere at once (observed live: bubble sort generated from a non-sorting brief).
-        boolean statementAuthoritative = mode == GenerationMode.ADAPT || systemPromptService.isAuthoritativeProblemStatement(exercise);
-        String sourceBrief = renderReviewBrief(mode, userPrompt, statementAuthoritative ? baselineProblemStatement : null);
+        boolean generatedFromSourceBrief = mode == GenerationMode.GENERATE && originalSourceBrief != null && !originalSourceBrief.isBlank();
+        boolean statementAuthoritative = mode == GenerationMode.ADAPT || !generatedFromSourceBrief && systemPromptService.isAuthoritativeProblemStatement(exercise);
+        String sourceBrief = generatedFromSourceBrief ? originalSourceBrief.strip() : renderReviewBrief(mode, userPrompt, statementAuthoritative ? baselineProblemStatement : null);
         Long courseId = courseIdOf(exercise);
         Consumer<ChatResponse> effectiveUsageSink = usageSink != null ? usageSink : jobService.tokenUsageSink(courseId, exercise.getId(), user.getId());
         InteractiveSandbox sandbox = requireSandbox();
@@ -241,6 +247,10 @@ public class GenerationOrchestrationService {
             }
             String reviewBrief = sourceBrief;
             String authoringBrief = renderAuthoringBrief(sourceBrief);
+            if (generatedFromSourceBrief && baselineProblemStatement != null && !baselineProblemStatement.isBlank()) {
+                authoringBrief += "\n\nCURRENT AI-GENERATED DRAFT (non-authoritative context; it may help with presentation, but it cannot override or omit the primary source requirements):\n"
+                        + baselineProblemStatement.strip();
+            }
 
             String systemPrompt = systemPromptService.build(exercise, mode);
             // The agent's `verify` tool runs the same differential as the post-loop gate so it sees the verdict in-loop (pass/fail tests, exact [task] names); the post-loop
@@ -391,10 +401,14 @@ public class GenerationOrchestrationService {
                         lastExtractedCandidate = new ExtractedCandidate(loopResult, candidateFiles, producedProblemStatement);
                     }
                 }
+                // Capture the grading plan with the repositories and statement. Final verification and persistence must decide on the same plan, not independently re-read a
+                // mutable workspace after the build.
+                String testPlanSnapshot = readWorkspaceRootFile(sandbox, sessionId, "test-plan.json");
                 VerificationRequest verificationRequest = new VerificationRequest(testsSeedSnapshot, baselineRepositoryFiles.getOrDefault(RepositoryType.TEMPLATE, Map.of()),
                         baselineRepositoryFiles.getOrDefault(RepositoryType.SOLUTION, Map.of()), candidateFiles.getOrDefault(RepositoryType.TESTS, Map.of()),
                         candidateFiles.getOrDefault(RepositoryType.TEMPLATE, Map.of()), candidateFiles.getOrDefault(RepositoryType.SOLUTION, Map.of()),
-                        Set.copyOf(extractionFailed), Set.copyOf(seededStructuralTestNames), baselineGradedTestNames, producedProblemStatement, mode == GenerationMode.ADAPT);
+                        Set.copyOf(extractionFailed), Set.copyOf(seededStructuralTestNames), baselineGradedTestNames, producedProblemStatement, testPlanSnapshot,
+                        mode == GenerationMode.ADAPT);
                 if (cancelled.getAsBoolean()) {
                     if (lastMechanicallyVerifiedCandidate != null) {
                         return preserveCandidate(lastMechanicallyVerifiedCandidate, sandbox, sessionId, workspaceSeed);
@@ -415,7 +429,6 @@ public class GenerationOrchestrationService {
                 String specDocumentSnapshot = readSpecDocument(sandbox, sessionId);
                 // Same reason as the spec: the reset wipes test-plan.json, and a repair attempt would then save the exercise with Artemis' default grading instead of the
                 // weights and hidden tests the TESTS stage decided (observed live: the plan was written and gate-approved, then lost before persistence).
-                String testPlanSnapshot = readWorkspaceRootFile(sandbox, sessionId, "test-plan.json");
                 Runnable restoreCandidate = () -> {
                     activeSandbox.resetSession(activeSessionId);
                     // /workspace is a tmpfs (see GenerationWorkspaceService#materializeRepositoryFiles), so the reset wipes problem-statement.md too; re-seed it alongside the
@@ -430,7 +443,8 @@ public class GenerationOrchestrationService {
                 }
                 if (verification.mechanicallyVerified()) {
                     lastMechanicallyVerifiedCandidate = new CandidateSnapshot(loopResult, verification, copyProducedFiles(producedFilesByType), producedProblemStatement,
-                            SpecFidelityReport.qualityReviewUnavailable("Generation stopped before the mechanically verified candidate received its full-artifact review."));
+                            SpecFidelityReport.qualityReviewUnavailable("Generation stopped before the mechanically verified candidate received its full-artifact review."),
+                            specDocumentSnapshot, testPlanSnapshot);
                 }
                 if (cancelled.getAsBoolean()) {
                     if (lastMechanicallyVerifiedCandidate != null) {
@@ -450,11 +464,9 @@ public class GenerationOrchestrationService {
                     // specFidelityReport still holds the previous attempt's report at this point (SpecFidelityReport.empty() on attempt 1 or after a mechanical rejection);
                     // threading it through gives the critic continuity across repair attempts instead of re-rolling a fresh review each time.
                     specFidelityReport = runSpecFidelityCritic(reviewBrief, producedProblemStatement, exercise.getProgrammingLanguage(), producedFilesByType, adaptationChanges,
-                            effectiveUsageSink, cancelled, progress, specFidelityReport,
-                            // The APPROVED specification is the critic's contract; the live copy is only a fallback for runs that never had a spec gate.
-                            specSnapshot.get() != null ? specSnapshot.get() : specDocumentSnapshot);
+                            effectiveUsageSink, cancelled, progress, specFidelityReport, effectiveSpecReviewContext(specSnapshot.get(), specDocumentSnapshot));
                     lastMechanicallyVerifiedCandidate = new CandidateSnapshot(loopResult, verification, copyProducedFiles(producedFilesByType), producedProblemStatement,
-                            specFidelityReport);
+                            specFidelityReport, specDocumentSnapshot, testPlanSnapshot);
                     if (cancelled.getAsBoolean()) {
                         return preserveCandidate(lastMechanicallyVerifiedCandidate, sandbox, sessionId, workspaceSeed);
                     }
@@ -526,7 +538,7 @@ public class GenerationOrchestrationService {
                         e.getClass().getSimpleName());
                 return new GenerationOutcome(lastMechanicallyVerifiedCandidate.loopResult(), lastMechanicallyVerifiedCandidate.verification(), sessionId, this, sandbox,
                         lastMechanicallyVerifiedCandidate.producedFiles(), lastMechanicallyVerifiedCandidate.problemStatement(), lastMechanicallyVerifiedCandidate.reviewReport(),
-                        workspaceSeed.repositoryHeads(), readSpecDocument(sandbox, sessionId), readWorkspaceRootFile(sandbox, sessionId, "test-plan.json"));
+                        workspaceSeed.repositoryHeads(), lastMechanicallyVerifiedCandidate.specDocument(), lastMechanicallyVerifiedCandidate.testPlanJson());
             }
             if (lastExtractedCandidate != null && workspaceSeed != null) {
                 log.warn("Exercise generation failed while verifying an extracted candidate for exercise {}; preserving the captured work ({})", exercise.getId(),
@@ -554,7 +566,7 @@ public class GenerationOrchestrationService {
     }
 
     private record CandidateSnapshot(AgentLoopResult loopResult, VerificationResult verification, Map<RepositoryType, Map<String, String>> producedFiles, String problemStatement,
-            SpecFidelityReport reviewReport) {
+            SpecFidelityReport reviewReport, String specDocument, String testPlanJson) {
     }
 
     private record ExtractedCandidate(AgentLoopResult loopResult, Map<RepositoryType, Map<String, String>> producedFiles, String problemStatement) {
@@ -576,6 +588,23 @@ public class GenerationOrchestrationService {
                 + specSnapshot.strip();
     }
 
+    /**
+     * Gives the semantic critic the same monotonic contract the mechanical gates enforce: approved decisions remain binding, while a later clarification may add work. Showing
+     * only the live copy let downgrades erase evidence; showing only the approved copy hid legitimate additions discovered during implementation.
+     */
+    private static String effectiveSpecReviewContext(@Nullable String approvedSpec, @Nullable String liveSpec) {
+        String approved = approvedSpec == null ? "" : approvedSpec.strip();
+        String live = liveSpec == null ? "" : liveSpec.strip();
+        if (approved.isEmpty()) {
+            return live;
+        }
+        if (live.isEmpty() || live.equals(approved)) {
+            return approved;
+        }
+        return "APPROVED SNAPSHOT (all decisions remain binding):\n" + approved
+                + "\n\nCURRENT SPECIFICATION (later clarifications may add obligations; any weaker conflicting text does not remove the approved obligation):\n" + live;
+    }
+
     private static String attemptFraming(int attempt) {
         int repairAttempt = attempt;   // the prompt built after attempt N drives attempt N+1
         boolean finalAttempt = repairAttempt + 1 >= MAX_GENERATION_ATTEMPTS;
@@ -585,7 +614,7 @@ public class GenerationOrchestrationService {
 
     private GenerationOutcome preserveCandidate(CandidateSnapshot candidate, InteractiveSandbox sandbox, String sessionId, GenerationWorkspaceService.WorkspaceSeed workspaceSeed) {
         return new GenerationOutcome(candidate.loopResult(), candidate.verification(), sessionId, this, sandbox, candidate.producedFiles(), candidate.problemStatement(),
-                candidate.reviewReport(), workspaceSeed.repositoryHeads(), readSpecDocument(sandbox, sessionId), readWorkspaceRootFile(sandbox, sessionId, "test-plan.json"));
+                candidate.reviewReport(), workspaceSeed.repositoryHeads(), candidate.specDocument(), candidate.testPlanJson());
     }
 
     private static Map<RepositoryType, Map<String, String>> copyProducedFiles(Map<RepositoryType, Map<String, String>> producedFiles) {

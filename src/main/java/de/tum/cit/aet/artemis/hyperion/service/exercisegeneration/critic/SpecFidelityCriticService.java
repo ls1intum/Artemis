@@ -105,7 +105,7 @@ public class SpecFidelityCriticService {
             Respond with ONLY this complete JSON shape; every array is mandatory for this contract review:
             {"exampleChecks": [{"claim":"verbatim outcome claim","computedOutcome":"independently replayed outcome","consistent":true,"reason":"calculation"}],
              "apiChecks": [{"symbol":"exact tested public symbol","discoverable":true,"reason":"statement/template evidence"}],
-             "templateChecks": [{"test":"task-bound test or task group","targetReached":true,"reason":"first starter failure on its call path, or the quoted teaching-scaffold gap"}],
+             "templateChecks": [{"test":"starter scaffold area","targetReached":true,"reason":"quoted teaching-scaffold evidence"}],
              "contradictions": [{"requirement":"...","sourceQuote":"exact quote from PRIMARY SOURCE REQUIREMENTS or PRODUCED PROBLEM STATEMENT","reason":"conflicting artifact evidence"}],
              "hiddenRequirements": [{"requirement":"...","sourceQuote":"exact quote from PRIMARY SOURCE REQUIREMENTS or PRODUCED PROBLEM STATEMENT","reason":"test/API evidence"}],
              "missingExamples": [{"behaviour":"...","reason":"..."}],
@@ -122,7 +122,9 @@ public class SpecFidelityCriticService {
             {"mutantChecks": [{"mutant":"specific plausible wrong implementation","killed":true,"sourceQuote":"exact primary-source quote; mandatory when killed is false","reason":"executable assertion evidence"}],
              "uncovered": [{"requirement":"...","sourceQuote":"exact quote from PRIMARY SOURCE REQUIREMENTS","reason":"file/assertion evidence"}],
              "weakOracle": [{"requirement":"...","sourceQuote":"exact quote from PRIMARY SOURCE REQUIREMENTS","reason":"specific wrong implementation that survives"}]}
-            At most 6 mutantChecks, 4 uncovered items, and 4 weakOracle items. Prioritize contract-breaking gaps and omit redundant lower-risk passing mutants. Every failed reason
+            Across failed mutantChecks, uncovered, and weakOracle, return only the few highest-leverage blockers that have distinct repairs. A behavior with any relevant
+            assertion is weak, not uncovered; never report it in both categories. Group partitions of the same rule when one test change can cover them. Prioritize
+            contract-breaking gaps and omit redundant lower-risk passing mutants. Every failed reason
             must name the executable setup/assertion evidence and the smallest test change that would distinguish the wrong implementation; do not answer with generic advice. A failed
             mutant or finding is valid only when its distinguishing behavior is entailed by sourceQuote, not merely related to it. For example, a requirement to round to two
             decimal places does not entail an unstated tie-breaking mode. The produced statement cannot authorize its own additions: sourceQuote must be copied verbatim from PRIMARY
@@ -147,15 +149,21 @@ public class SpecFidelityCriticService {
             teaches: report it when the solution special-cases or bypasses an abstraction it defines (for example an instanceof check on one concrete implementation instead of delegating \
             through the shared interface, leaving that implementation's own method dead on the tested path) — a student following the starter's structure could not reproduce that behavior.
 
-            Trace each task through the starter. A task reaches its target when the first failure is the intended placeholder in the method or class that task asks the student to implement. \
-            It does not reach its target only when an unrelated prerequisite fails before the target call. Missing implementation is not itself a template gap. Report only missing APIs, \
-            uncompilable scaffolding, or unrelated blockers that prevent incremental work.
+            Do not infer task reachability from the complete starter's first test failure. A correct starter is intentionally incomplete, so one upstream TODO or stub can legitimately \
+            fail tests bound to several later tasks; judging those paths would require partial student solutions that are not present in this evidence. Missing implementation is not itself \
+            a template gap. Report only concrete scaffold defects evidenced directly in the artifacts: missing required APIs, uncompilable provided code, accidental runtime failures outside \
+            student-owned seams, or the teaching-scaffold defects below.
 
             Also fail a templateCheck when the house teaching scaffold is missing: a stubbed member whose doc comment does not restate its student-visible contract, a statement task with \
             no imperative TODO at the place the work happens (inside the member body, not above the signature; including a breadcrumb for a type the student must still create), a solution/template diff that changes documentation \
             or comments beyond the implementation itself, or the statement reproduces a template stub's signature and javadoc verbatim as a fenced code block instead of a compact API surface (a \
             signature list, table, or diagram; the template is the API reference at the point of use). Quote the exact stub signature, doc text, TODO line, diff line, or duplicated block's first \
             line verbatim from the artifacts above as reason evidence; omit the check instead of guessing when no such artifact text exists.
+
+            Also compare the specification contract's Testing Strategy with the student-facing tasks. Fail a templateCheck when one independently actionable seam is split into
+            separate tasks for its input partitions, or when a student-owned solution/template diff or TODO has no task that tells the student to perform that work. Give one
+            grouped finding per seam and name the smallest statement/scaffold repair. When a public stub lacks its contract documentation, require the identical documentation
+            in BOTH solution and template; never recommend a template-only edit that violates diff discipline.
 
             Return every failed check. When a check category has no failures, return only one representative passing check for that category. Any false check is itself a blocker and need not \
             be repeated in a finding array. Do not assess mutation coverage in this pass. Do not treat test names or comments as proof. Missing examples and conservative scope additions are \
@@ -175,6 +183,10 @@ public class SpecFidelityCriticService {
             mutation, rollback, and error paths. A test kills a mutant only when an executable assertion distinguishes it. Report explicit requirements with no meaningful assertion as \
             uncovered and surviving contract-breaking mutants as weak oracles. Do not treat a pedagogical objective as an observable contract rule unless the brief explicitly makes it a \
             graded structural constraint. Do not invent requirements from solution-only behavior.
+
+            When the learning objective is collaboration through an abstraction (for example delegation, a strategy, callback, or policy), prioritize a mutant that returns the
+            known concrete outcomes while bypassing the supplied collaborator. A fake or recording collaborator that proves forwarding and return propagation is behavioral
+            evidence, not a brittle implementation-detail assertion.
 
             Every failed mutant, uncovered finding, or weak-oracle finding must identify the exact student-facing promise it assesses. If the primary source requirements do not require every \
             behavior needed to distinguish the proposed wrong implementation, omit it instead of reporting missing coverage. Never report a finding whose own reason says the specification \
@@ -342,7 +354,7 @@ public class SpecFidelityCriticService {
     }
 
     /**
-     * Full-artifact review that additionally sees the approved specification, so the reviewer can report contradictions between the stated plan (state ownership,
+     * Full-artifact review that additionally sees the monotonic specification contract, so the reviewer can report contradictions between the stated plan (state ownership,
      * type structure) and the implemented artifacts — the axis on which past runs shipped a design document the code silently ignored.
      *
      * @param brief            the instructor's source requirements
@@ -527,7 +539,8 @@ public class SpecFidelityCriticService {
         // The gate-frozen spec joins the brief as AUTHORITY for requirement coverage: written before code, mechanically gated, instructor-visible. The final statement stays
         // out of the authority pool (it must never authorize its own additions).
         String authoritativeSource = specDocument == null || specDocument.isBlank() ? effectiveBrief
-                : effectiveBrief + "\n\nAPPROVED SPECIFICATION (written before any code; frozen at the spec gate):\n" + specDocument.strip();
+                : effectiveBrief + "\n\nSPECIFICATION CONTRACT (approved decisions remain binding; explicitly marked later clarifications may add obligations):\n"
+                        + specDocument.strip();
         String userPrompt = renderUserPrompt(authoritativeSource, problemStatement, testNames, evidence.text(), adaptationChanges, previousReport);
         // The contract pass's free-form contradiction/hidden-requirement/invented-requirement findings may legitimately quote the instructor's brief, the produced problem
         // statement, OR the artifact sources themselves: a requirement invented purely inside a test (e.g. an exact exception-message assertion no statement sentence supports)
@@ -769,10 +782,9 @@ public class SpecFidelityCriticService {
             }
             for (TemplateCheckItem item : parsed.templateChecks()) {
                 if (!item.targetReached() && findings.size() < MAX_REVIEW_FINDINGS) {
-                    // reason may report an unreached starter target, a missing teaching-scaffold element (contract doc, TODO anchor, non-student diff), or a statement/template
-                    // duplication gap; all are rendered generically since the reason text itself names the specific failure.
+                    // The contract reviewer reports only directly evidenced scaffold defects here (contract docs, TODO anchors, provided-code failures, or non-student diffs).
                     findings.add(new SpecFidelityReport.Finding(SpecFidelityReport.Kind.TEMPLATE_QUALITY_GAP, truncate(item.test().strip()),
-                            "This task-specific starter check failed: " + item.reason().strip()));
+                            "This starter scaffold check failed: " + item.reason().strip()));
                 }
             }
             appendGroundedBlockingFindings(findings, parsed.contradictions(), authoritativeSource, SpecFidelityReport.Kind.CONTRACT_CONTRADICTION,
@@ -1081,8 +1093,7 @@ public class SpecFidelityCriticService {
             case WEAK_TEST_ORACLE ->
                 builder.append("\n- Strengthen the tests so this specific wrong implementation fails: \"").append(finding.requirement()).append("\". ").append(finding.detail());
             case TEMPLATE_QUALITY_GAP ->
-                builder.append("\n- Improve the starter so students can work incrementally, understand each stub's contract, and receive task-specific " + "feedback: \"")
-                        .append(finding.requirement()).append("\". ").append(finding.detail());
+                builder.append("\n- Align the student task and starter scaffold for: \"").append(finding.requirement()).append("\". ").append(finding.detail());
             case QUALITY_REVIEW_UNAVAILABLE -> builder.append("\n- The full-artifact quality review was unavailable; do not claim semantic quality without a complete review.");
         }
     }

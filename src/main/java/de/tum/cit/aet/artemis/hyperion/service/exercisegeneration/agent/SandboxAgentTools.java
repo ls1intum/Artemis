@@ -302,6 +302,10 @@ public class SandboxAgentTools implements SubmitVetoAware {
         if (!isWritableGenerationPath(safe)) {
             return "ERROR: write only SPEC.md, test-plan.json, problem-statement.md, or files inside solution/, template/, or tests/. Workspace build infrastructure is managed by Artemis.";
         }
+        String stageRejection = stageWriteRejection(safe);
+        if (stageRejection != null) {
+            return stageRejection;
+        }
         if (isManagedBuildInfrastructurePath(safe)) {
             return immutableHarnessError(safe);
         }
@@ -334,6 +338,10 @@ public class SandboxAgentTools implements SubmitVetoAware {
         }
         if (oldText.isEmpty()) {
             return "ERROR: oldText must not be empty.";
+        }
+        String stageRejection = stageWriteRejection(safe);
+        if (stageRejection != null) {
+            return stageRejection;
         }
         SandboxExecResult read = sandbox.exec(sessionId, FILE_OP_TIMEOUT, "cat", WORKSPACE + "/" + safe);
         if (!read.isSuccess()) {
@@ -465,6 +473,10 @@ public class SandboxAgentTools implements SubmitVetoAware {
         if (!isWritableGenerationPath(safe)) {
             return "ERROR: delete only SPEC.md, test-plan.json, problem-statement.md, or files inside solution/, template/, or tests/. Workspace build infrastructure is managed by Artemis.";
         }
+        String stageRejection = stageWriteRejection(safe);
+        if (stageRejection != null) {
+            return stageRejection;
+        }
         if (isManagedBuildInfrastructurePath(safe)) {
             return immutableHarnessError(safe);
         }
@@ -546,6 +558,30 @@ public class SandboxAgentTools implements SubmitVetoAware {
         this.dirtySinceLastPassingCheck = true;
         this.cachedStage = null;
         this.cachedPassingCheck = null;
+    }
+
+    /**
+     * Stages are monotonic: a stage may correct its own artifact or an earlier dependency, but it must not pre-author a later artifact. Writing ahead lets a solution turn
+     * populate the template and tests before their dedicated instructions/gates exist, which then wastes later turns undoing an artifact that should never have crossed the
+     * stage boundary. Legacy/repair loops remain unrestricted.
+     */
+    private @Nullable String stageWriteRejection(String path) {
+        GenerationStage stage = currentStage;
+        if (stage == null) {
+            return null;
+        }
+        boolean allowed = path.equals("SPEC.md") || switch (stage) {
+            case SPEC -> false;
+            case SOLUTION -> path.startsWith("solution/");
+            case TEMPLATE -> path.startsWith("solution/") || path.startsWith("template/");
+            case TESTS -> path.startsWith("solution/") || path.startsWith("template/") || path.startsWith("tests/") || path.equals("test-plan.json");
+            case STATEMENT -> true;
+        };
+        if (allowed) {
+            return null;
+        }
+        return "ERROR: the current " + stage + " stage cannot write '" + path
+                + "'. Finish only this stage's artifact (or correct an earlier dependency); the dedicated later stage will author this file with its own instructions and gate.";
     }
 
     /**
@@ -769,7 +805,8 @@ public class SandboxAgentTools implements SubmitVetoAware {
         for (String repository : List.of("solution/", "template/", "tests/")) {
             if (safe.startsWith(repository)) {
                 String repositoryPath = safe.substring(repository.length());
-                return repositoryPath.startsWith("buildSrc/") || repositoryPath.startsWith("gradle/") || ExerciseIntegrityGate.isHarnessFile(repositoryPath);
+                return repositoryPath.startsWith("buildSrc/") || repositoryPath.startsWith("gradle/") || repositoryPath.startsWith(".mvn/") || repositoryPath.startsWith(".m2/")
+                        || repositoryPath.startsWith("target/") || repositoryPath.startsWith("build/") || ExerciseIntegrityGate.isHarnessFile(repositoryPath);
             }
         }
         return false;

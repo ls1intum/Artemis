@@ -19,6 +19,12 @@ or the instructor brief ("This exercise uses a whimsical theme" is authoring com
   or two imperative sentences naming the exact members the student implements ("Implement
   `earn(double)` in `LoyaltyAccount`. Credit 1 point per whole dollar."). A bare task line with no
   prose under it is a defect.
+- One task represents one independently actionable implementation seam from the specification. Bind all of
+  that seam's visible partitions to the same task; do not turn three validation cases in one method into
+  three student tasks. Conversely, every student-owned TODO or solution/template implementation diff must
+  be covered by a task, or be provided as routine starter plumbing.
+- A test marked `AFTER_DUE_DATE` is an undisclosed overfit probe. Do not bind it and do not print its name in
+  prose, diagrams, hints, or appendices. Describe the public contract, never the hidden witness.
 - A contract detail (bounds, ordering, tie-breaking, exceptions) belongs with the task that enforces it, or
   in a short contract section -- only where a test observes it.
 - Optional unassessed work goes in a clearly marked final part ("These are not tested").

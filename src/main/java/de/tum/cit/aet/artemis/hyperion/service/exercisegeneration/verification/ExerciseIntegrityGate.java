@@ -15,8 +15,8 @@ import java.util.stream.Collectors;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.workspace.GenerationWorkspaceService;
 
 /**
- * Pure (sandbox-free) correctness gates {@link DifferentialVerificationService} applies on top of the differential build oracle, catching two broken-exercise classes the build
- * oracle alone cannot see (the sandbox build can pass while production is broken or the solution is leaked):
+ * Pure (sandbox-free) correctness gates {@link DifferentialVerificationService} applies on top of the differential build oracle, catching broken-exercise classes the build
+ * oracle alone cannot see (the sandbox build can pass while production is broken, the solution is leaked, or the approved student work has been scaffolded away):
  * <ul>
  * <li><b>Harness tampering.</b> The seeded tests-repo build/harness/manifest files are graded verbatim in production. If the agent rewrites one, the sandbox build can still pass
  * while production fails because CI lays the tree out differently or because dependencies/plugins/scripts changed. We snapshot those files at seed time and reject any
@@ -25,6 +25,8 @@ import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.workspace.Gene
  * the build still passes. The residue strip is the primary defence; this gate is the backstop, rejecting such a copy without flagging shared interfaces/headers or git config that
  * are
  * legitimately identical between template and solution (a graded-path copy that makes the template pass is left to the differential oracle).</li>
+ * <li><b>Specification contract loss.</b> The differential proves that tests distinguish solution and template, but not that students still perform the work the approved spec
+ * assigned to them. The final candidate maps are therefore checked against the immutable approved ownership decisions before persistence.</li>
  * </ul>
  * The gates are static and side-effect-free so they are unit-testable without Docker, and so the residue-strip half can be reused by {@link GenerationWorkspaceService} on
  * read-back.
@@ -49,6 +51,8 @@ public final class ExerciseIntegrityGate {
     private static final List<String> HARNESS_FILE_SUFFIXES = List.of(".cabal", ".csproj", ".fsproj", ".vbproj", ".sln");
 
     private static final Pattern JAVA_PACKAGE_DECLARATION = Pattern.compile("^\\s*package\\s+([A-Za-z_$][\\w$]*(?:\\.[A-Za-z_$][\\w$]*)*)\\s*;");
+
+    private static final Set<String> NON_SOURCE_TYPE_FILE_SUFFIXES = Set.of(".class", ".md", ".orig", ".txt");
 
     private ExerciseIntegrityGate() {
     }
@@ -222,6 +226,87 @@ public final class ExerciseIntegrityGate {
         return List.of("this adapt retained NONE of the exercise's " + baseline.size() + " previously-graded test(s) (e.g. " + sampleNames(baseline)
                 + "), so the graded coverage was wiped and rebuilt from scratch — that is a from-scratch regeneration masquerading as an adapt, not a refinement of the existing "
                 + "exercise. Keep and adjust the existing graded tests (retain at least the ones still relevant) instead of deleting them all and authoring a brand-new suite.");
+    }
+
+    /**
+     * Enforces the student/template ownership decisions from the specification that passed the SPEC gate against the exact repository maps final verification hands to
+     * persistence. A differential build cannot detect this contract violation: tests can pass against a fully stubbed template even when the approved exercise deliberately
+     * required students to create those types themselves.
+     *
+     * @param approvedSpec          the immutable SPEC.md snapshot accepted before implementation began
+     * @param producedTemplateFiles the exact template candidate that would be saved
+     * @param producedSolutionFiles the exact solution candidate that would be saved
+     * @return actionable contract violations, or an empty list when every student-created type exists only in the solution
+     */
+    static List<String> approvedSpecificationReasons(String approvedSpec, Map<String, String> producedTemplateFiles, Map<String, String> producedSolutionFiles) {
+        if (approvedSpec == null || approvedSpec.isBlank()) {
+            return List.of();
+        }
+        List<String> studentCreatedTypes = StageCheckService.specStudentCreatedTypes(approvedSpec);
+        if (studentCreatedTypes.isEmpty()) {
+            return List.of();
+        }
+
+        List<String> reasons = new ArrayList<>();
+        List<String> missingFromSolution = studentCreatedTypes.stream().filter(type -> !repositoryDeclaresType(producedSolutionFiles, type)).toList();
+        if (!missingFromSolution.isEmpty()) {
+            reasons.add("the approved specification requires students to create these types, but the reference solution does not declare them: " + missingFromSolution
+                    + ". Implement every approved student-created type in the solution; changing SPEC.md after approval cannot remove the requirement.");
+        }
+        List<String> leakedIntoTemplate = studentCreatedTypes.stream().filter(type -> repositoryDeclaresType(producedTemplateFiles, type)).toList();
+        if (!leakedIntoTemplate.isEmpty()) {
+            reasons.add("the approved specification requires students to create these types, but the template already declares them: " + leakedIntoTemplate
+                    + ". Delete their template declarations and leave any necessary guidance in the problem statement or collaborating given types; changing SPEC.md after "
+                    + "approval cannot turn the required design work into prebuilt stubs.");
+        }
+        return List.copyOf(reasons);
+    }
+
+    /** Ensures the exact grading plan headed to persistence still implements the approved specification and names only tests the verifier actually ran. */
+    static List<String> approvedTestPlanReasons(String approvedSpec, String testPlanJson, List<String> verifiedTestNames) {
+        if (approvedSpec == null || approvedSpec.isBlank()) {
+            return List.of();
+        }
+        if (testPlanJson == null || testPlanJson.isBlank()) {
+            return List.of("the approved specification has no valid test-plan.json in the final candidate. Write the grading plan with the exact verified test names, weights, "
+                    + "and visibility decisions before submitting.");
+        }
+        GeneratedTestPlan plan;
+        try {
+            plan = GeneratedTestPlan.parse(testPlanJson);
+        }
+        catch (IllegalArgumentException exception) {
+            return List.of("the final test-plan.json is invalid: " + exception.getMessage());
+        }
+        Set<String> knownNames = verifiedTestNames == null ? Set.of() : Set.copyOf(verifiedTestNames);
+        List<String> unknownNames = plan.tests().stream().map(GeneratedTestPlan.Entry::name).filter(name -> !knownNames.contains(name)).toList();
+        if (!unknownNames.isEmpty()) {
+            return List.of("the final test-plan.json names tests the verifier did not run: " + unknownNames + ". Use only exact verified test names: " + knownNames + ".");
+        }
+        if (StageCheckService.specDeclaresHiddenVariants(approvedSpec) && plan.hiddenEntries().isEmpty()) {
+            return List.of("the approved Testing Strategy requires hidden after-due-date variants, but every final test-plan.json entry is visible. Add genuinely fresh witness "
+                    + "tests and mark them AFTER_DUE_DATE; changing SPEC.md after approval cannot discard the overfit-resistance decision.");
+        }
+        return List.of();
+    }
+
+    /** Finds a top-level, nested, or secondary type declaration without trusting filenames alone. */
+    private static boolean repositoryDeclaresType(Map<String, String> files, String type) {
+        if (files == null || files.isEmpty()) {
+            return false;
+        }
+        Pattern declaration = Pattern.compile("(?m)^\\s*(?:(?:public|protected|private|static|abstract|final|sealed|non-sealed)\\s+)*"
+                + "(?:class|interface|enum|record|trait|struct|protocol)\\s+" + Pattern.quote(type) + "\\b");
+        for (Map.Entry<String, String> file : files.entrySet()) {
+            String lowerPath = file.getKey().toLowerCase(Locale.ROOT);
+            if (lowerPath.startsWith("target/") || lowerPath.startsWith("build/") || NON_SOURCE_TYPE_FILE_SUFFIXES.stream().anyMatch(lowerPath::endsWith)) {
+                continue;
+            }
+            if (declaration.matcher(file.getValue()).find()) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /** A short, deterministic sample of names for a rejection message, sorted and capped so a large baseline suite never floods the reason text. */

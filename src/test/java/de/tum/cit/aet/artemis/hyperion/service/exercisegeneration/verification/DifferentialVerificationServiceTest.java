@@ -163,12 +163,19 @@ class DifferentialVerificationServiceTest {
         /** Served for {@code cat .../test-plan.json}; {@code null} means "no plan", which is the pre-plan behaviour every other test in this file relies on. */
         private String testPlanJson;
 
+        private String specDocument;
+
         private ScriptedSandbox(BuildReportSpec solution, BuildReportSpec template, String problemStatement) {
             this(solution, template, problemStatement, "build ran");
         }
 
         private ScriptedSandbox withTestPlan(String plan) {
             this.testPlanJson = plan;
+            return this;
+        }
+
+        private ScriptedSandbox withSpec(String spec) {
+            this.specDocument = spec;
             return this;
         }
 
@@ -185,6 +192,9 @@ class DifferentialVerificationServiceTest {
             if ("cat".equals(command[0])) {
                 if (command.length > 1 && command[1].endsWith("test-plan.json")) {
                     return testPlanJson == null ? new SandboxExecResult(1, "", "no such file", false) : new SandboxExecResult(0, testPlanJson, "", false);
+                }
+                if (command.length > 1 && command[1].endsWith("SPEC.md")) {
+                    return specDocument == null ? new SandboxExecResult(1, "", "no such file", false) : new SandboxExecResult(0, specDocument, "", false);
                 }
                 return new SandboxExecResult(0, problemStatement, "", false);
             }
@@ -305,6 +315,56 @@ class DifferentialVerificationServiceTest {
         assertThatThrownBy(() -> verifyGenerate(newVerifier(), new ScriptedSandbox(BuildReportSpec.timedOutBuild(), result(4, 4, 0, 1), PROBLEM_STATEMENT_WITH_TASK),
                 new ProgrammingExercise())).isInstanceOfSatisfying(DifferentialVerificationService.VerificationInfrastructureException.class,
                         exception -> assertThat(exception.isRetryableInSameSession()).isFalse());
+    }
+
+    @Test
+    void authoritativeVerificationRejectsAContractThatPassedTheSpecGateButWasLaterScaffoldedAway() {
+        ApprovedSpecRegistry approvedSpecs = new ApprovedSpecRegistry();
+        approvedSpecs.approve("s", """
+                ## Design
+                | Type | Role | Template status |
+                |---|---|---|
+                | `PlaybackStrategy` | abstraction students design | student-creates |
+                """);
+        DifferentialVerificationService verifier = new DifferentialVerificationService(sandboxBuildCommandService(), Optional.empty(), approvedSpecs);
+        VerificationRequest request = new VerificationRequest(Map.of(), Map.of(), Map.of(), Map.of(),
+                Map.of("src/PlaybackStrategy.java", "public interface PlaybackStrategy { /* TODO */ }"),
+                Map.of("src/PlaybackStrategy.java", "public interface PlaybackStrategy { int order(); }"), Set.of(), Set.of(), Set.of(), PROBLEM_STATEMENT_WITH_TASK,
+                "{\"tests\":[{\"name\":\"sortsUnsortedArray\",\"weight\":3,\"visibility\":\"ALWAYS\"}]}", false);
+
+        VerificationResult result = verifier.verify(new ScriptedSandbox(result(2, 0, 0, 0), result(2, 2, 0, 1), PROBLEM_STATEMENT_WITH_TASK), "s", new ProgrammingExercise(),
+                request);
+
+        assertThat(result.mechanicallyVerified()).isFalse();
+        assertThat(result.reasons()).anyMatch(reason -> reason.contains("template already declares") && reason.contains("PlaybackStrategy"));
+    }
+
+    @Test
+    void authoritativeVerificationAlsoEnforcesStudentWorkAddedByALaterSpecClarification() {
+        ApprovedSpecRegistry approvedSpecs = new ApprovedSpecRegistry();
+        approvedSpecs.approve("s", "## Design\n| Type | Role | Template status |\n|---|---|---|\n| `Track` | data | given |\n");
+        String clarifiedSpec = """
+                ## Design
+                | Type | Role | Template status |
+                |---|---|---|
+                | `Track` | data | given |
+                | `PlaybackStrategy` | abstraction students design | student-creates |
+                ## Testing Strategy
+                | Seam | Partitions | Weight | Hidden-variant (yes/no) |
+                |---|---|---|---|
+                | strategy | typical values | 3 | no |
+                """;
+        String plan = "{\"tests\":[{\"name\":\"sortsUnsortedArray\",\"weight\":3,\"visibility\":\"ALWAYS\"}]}";
+        DifferentialVerificationService verifier = new DifferentialVerificationService(sandboxBuildCommandService(), Optional.empty(), approvedSpecs);
+        VerificationRequest request = new VerificationRequest(Map.of(), Map.of(), Map.of(), Map.of(),
+                Map.of("src/PlaybackStrategy.java", "public interface PlaybackStrategy { /* TODO */ }"),
+                Map.of("src/PlaybackStrategy.java", "public interface PlaybackStrategy { int order(); }"), Set.of(), Set.of(), Set.of(), PROBLEM_STATEMENT_WITH_TASK, plan, false);
+
+        VerificationResult result = verifier.verify(new ScriptedSandbox(result(2, 0, 0, 0), result(2, 2, 0, 1), PROBLEM_STATEMENT_WITH_TASK).withSpec(clarifiedSpec), "s",
+                new ProgrammingExercise(), request);
+
+        assertThat(result.mechanicallyVerified()).isFalse();
+        assertThat(result.reasons()).anyMatch(reason -> reason.contains("template already declares") && reason.contains("PlaybackStrategy"));
     }
 
     @Test
@@ -902,6 +962,20 @@ class DifferentialVerificationServiceTest {
 
         assertThat(result.mechanicallyVerified()).isFalse();
         assertThat(result.reasons()).anyMatch(reason -> reason.contains("hides until the due date") && reason.contains("sorts_ascending_freshWitness"));
+    }
+
+    @Test
+    void shouldRejectWhenTheStatementAdvertisesAnUnboundHiddenTestInProse() {
+        List<String> all = List.of("sorts_ascending", "sorts_ascending_freshWitness");
+        String ps = "# Sort\n[task][Ascending](sorts_ascending)\nHidden test: `sorts_ascending_freshWitness`.\n";
+        String plan = "{\"tests\":[{\"name\":\"sorts_ascending\",\"weight\":3,\"visibility\":\"ALWAYS\"},"
+                + "{\"name\":\"sorts_ascending_freshWitness\",\"weight\":2,\"visibility\":\"AFTER_DUE_DATE\"}]}";
+        ScriptedSandbox sandbox = new ScriptedSandbox(resultWithFails(0, all, List.of()), resultWithFails(1, all, all), ps).withTestPlan(plan);
+
+        VerificationResult result = verifyGenerate(newVerifier(), sandbox, new ProgrammingExercise());
+
+        assertThat(result.mechanicallyVerified()).isFalse();
+        assertThat(result.reasons()).anyMatch(reason -> reason.contains("prose, or appendices") && reason.contains("sorts_ascending_freshWitness"));
     }
 
     @Test

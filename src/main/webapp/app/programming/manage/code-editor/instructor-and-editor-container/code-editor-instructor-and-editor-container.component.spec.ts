@@ -1420,7 +1420,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Adapt with feedback'
 
     it('auto-starts creation generation only after status loading and repository initialization finish', async () => {
         fixture.destroy();
-        window.history.replaceState({ [AUTO_START_EXERCISE_GENERATION_STATE]: true }, '');
+        window.history.replaceState({ [AUTO_START_EXERCISE_GENERATION_STATE]: true, exerciseGenerationUserPrompt: 'Original strategy exercise brief' }, '');
         fixture = TestBed.createComponent(CodeEditorInstructorAndEditorContainerComponent);
         comp = fixture.componentInstance;
         comp.exercise = createMockExercise({
@@ -1446,7 +1446,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Adapt with feedback'
         repositoryClean = true;
         comp.onRepositoryFilesLoaded();
 
-        expect(generationService.generate).toHaveBeenCalledExactlyOnceWith(42, { mode: 'GENERATE' });
+        expect(generationService.generate).toHaveBeenCalledExactlyOnceWith(42, { mode: 'GENERATE', prompt: 'Original strategy exercise brief' });
         window.history.replaceState({}, '');
     });
 

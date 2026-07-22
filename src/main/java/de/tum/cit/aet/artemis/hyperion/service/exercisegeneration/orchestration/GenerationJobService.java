@@ -202,6 +202,21 @@ public class GenerationJobService {
      * @return the started job id
      */
     public String startJob(User user, ProgrammingExercise exercise, String userPrompt, GenerationMode mode, @Nullable String budgetReservationId) {
+        return startJob(user, exercise, userPrompt, mode, budgetReservationId, null);
+    }
+
+    /**
+     * Starts a job while preserving the original instructor brief separately from the rendered authoring instruction.
+     *
+     * @param user                the requesting instructor
+     * @param exercise            the target exercise
+     * @param userPrompt          the rendered instruction for the generation agent
+     * @param mode                the explicit run intent
+     * @param budgetReservationId the optional token-budget reservation id
+     * @param sourceBrief         the original brief behind an AI-generated draft, or {@code null} for an instructor-authored statement
+     * @return the started job id
+     */
+    public String startJob(User user, ProgrammingExercise exercise, String userPrompt, GenerationMode mode, @Nullable String budgetReservationId, @Nullable String sourceBrief) {
         String jobId = UUID.randomUUID().toString();
         String key = key(exercise.getId());
         Instant startedAt = Instant.now();
@@ -217,8 +232,8 @@ public class GenerationJobService {
             startedReplay = replayStore.initializeStart(exercise.getId(), jobId, user.getLogin(), mode);
             publishExerciseState(exercise.getId(), jobId, true);
             publicStatePublished = true;
-            eventPublisher.publishEvent(
-                    new GenerationStartedEvent(jobId, user, exercise, userPrompt, mode, exercise.getProblemStatement(), exercise.getTitle(), deadlineAt, budgetReservationId));
+            eventPublisher.publishEvent(new GenerationStartedEvent(jobId, user, exercise, userPrompt, mode, exercise.getProblemStatement(), exercise.getTitle(), deadlineAt,
+                    budgetReservationId, sourceBrief));
         }
         catch (RejectedExecutionException e) {
             // The generation executor is saturated (AbortPolicy). The @Async listener never ran, so no terminal event will ever fire — roll back the claimed slot and its retained

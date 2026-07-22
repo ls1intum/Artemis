@@ -8,6 +8,7 @@ import java.util.Set;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 
 import org.slf4j.Logger;
@@ -176,9 +177,12 @@ public class GenerationTaskService {
             emitter.milestone(ExerciseGenerationEventDTO.of(ExerciseGenerationEventDTO.Type.STARTED, "Starting exercise generation"));
             Consumer<ChatResponse> usageSink = budgetedUsageSink(jobService.tokenUsageSink(courseIdOf(exercise), exerciseId, user.getId()), exerciseId, jobId, tokenBudgetExceeded,
                     tokenAccountingFailed);
-            try (GenerationOutcome outcome = orchestrator.generate(exercise, user, userPrompt, jobId, event.mode(),
-                    () -> jobService.isCancelled(jobId) || deadlineExceeded.get() || tokenBudgetExceeded.get() || tokenAccountingFailed.get() || heartbeatLost.get(),
-                    emitter::progress, fileChangeSink, usageSink)) {
+            BooleanSupplier cancelled = () -> jobService.isCancelled(jobId) || deadlineExceeded.get() || tokenBudgetExceeded.get() || tokenAccountingFailed.get()
+                    || heartbeatLost.get();
+            GenerationOutcome generated = event.sourceBrief() == null
+                    ? orchestrator.generate(exercise, user, userPrompt, jobId, event.mode(), cancelled, emitter::progress, fileChangeSink, usageSink)
+                    : orchestrator.generate(exercise, user, userPrompt, jobId, event.mode(), cancelled, emitter::progress, fileChangeSink, usageSink, event.sourceBrief());
+            try (GenerationOutcome outcome = generated) {
                 // Surface the staged workspace's final SPEC.md (later stages may legitimately update it) as an observable intermediate result as soon as the outcome lands,
                 // regardless of the terminal branch below, so specification quality is inspectable through the status/replay API even when the run does not end up saved.
                 if (outcome.specDocument() != null) {

@@ -170,6 +170,19 @@ class GenerationTaskServiceTest {
         taskService.runAsync(new GenerationStartedEvent(JOB_ID, user, exercise, "make it", mode));
     }
 
+    @Test
+    void originalSourceBriefIsForwardedToOrchestration() {
+        GenerationOutcome outcome = GenerationOutcome.error(new AgentLoopResult(AgentLoopResult.Status.ERROR, 1, ""));
+        when(orchestrator.generate(any(), any(), any(), any(), any(), any(), any(), any(), any(), eq("original instructor brief"))).thenReturn(outcome);
+        GenerationStartedEvent event = new GenerationStartedEvent(JOB_ID, user, exercise, "resolved instruction", GenerationMode.GENERATE, exercise.getProblemStatement(),
+                exercise.getTitle(), null, null, "original instructor brief");
+
+        taskService.runAsync(event);
+
+        verify(orchestrator).generate(eq(exercise), eq(user), eq("resolved instruction"), eq(JOB_ID), eq(GenerationMode.GENERATE), any(), any(), any(), any(),
+                eq("original instructor brief"));
+    }
+
     private static ChatResponse responseWithTokens(long promptTokens, long completionTokens) {
         Usage usage = mock(Usage.class);
         when(usage.getPromptTokens()).thenReturn((int) promptTokens);

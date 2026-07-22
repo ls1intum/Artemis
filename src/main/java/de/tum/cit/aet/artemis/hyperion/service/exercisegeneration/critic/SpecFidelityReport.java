@@ -45,10 +45,9 @@ public record SpecFidelityReport(List<Finding> findings) {
         /** Plausible contract-breaking implementations are not distinguished by the generated assertions. */
         WEAK_TEST_ORACLE,
         /**
-         * The starter code prevents meaningful incremental work or task-specific feedback, or ships without the house teaching scaffold: a stubbed member's doc comment does not
-         * restate its student-visible contract, a statement task has no imperative TODO anchor at the place the work happens, the solution/template diff carries non-student
-         * documentation changes, or the produced problem statement reproduces a template stub's signature and javadoc verbatim (a fenced code-block duplicate) instead of a
-         * compact API surface, so the template stops being the single point-of-use reference for the API.
+         * The student task structure and starter scaffold disagree: provided code fails outside a student-owned seam, a required API is missing, one implementation seam is split
+         * into test-shaped tasks, student work has no task/TODO anchor, stub documentation is missing or differs between solution and template, or the statement duplicates the
+         * template API instead of keeping the template as the point-of-use reference.
          */
         TEMPLATE_QUALITY_GAP,
         /** The automated full-artifact quality review could not produce a complete verdict. */

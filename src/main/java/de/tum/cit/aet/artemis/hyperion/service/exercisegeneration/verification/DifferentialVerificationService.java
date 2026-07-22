@@ -132,7 +132,11 @@ public class DifferentialVerificationService {
     }
 
     private String readSpecDocument(InteractiveSandbox sandbox, String sessionId) {
-        SandboxExecResult result = sandbox.exec(sessionId, READ_TIMEOUT, "cat", GenerationWorkspaceService.WORKSPACE + "/SPEC.md");
+        return readWorkspaceRootFile(sandbox, sessionId, "SPEC.md");
+    }
+
+    private static String readWorkspaceRootFile(InteractiveSandbox sandbox, String sessionId, String filename) {
+        SandboxExecResult result = sandbox.exec(sessionId, READ_TIMEOUT, "cat", GenerationWorkspaceService.WORKSPACE + "/" + filename);
         return result.isSuccess() ? result.stdout() : "";
     }
 
@@ -255,6 +259,17 @@ public class DifferentialVerificationService {
         boolean javaSourceLayoutIntact = javaSourceLayoutReasons.isEmpty();
         reasons.addAll(javaSourceLayoutReasons);
 
+        List<String> contractSpecifications = contractSpecifications(sandbox, sessionId);
+        List<String> approvedSpecificationReasons = contractSpecifications.stream()
+                .flatMap(spec -> ExerciseIntegrityGate.approvedSpecificationReasons(spec, request.producedTemplateFiles(), request.producedSolutionFiles()).stream()).distinct()
+                .toList();
+        boolean approvedSpecificationHolds = approvedSpecificationReasons.isEmpty();
+        reasons.addAll(approvedSpecificationReasons);
+        List<String> approvedTestPlanReasons = contractSpecifications.stream()
+                .flatMap(spec -> ExerciseIntegrityGate.approvedTestPlanReasons(spec, request.producedTestPlan(), solution.testNames()).stream()).distinct().toList();
+        boolean approvedTestPlanHolds = approvedTestPlanReasons.isEmpty();
+        reasons.addAll(approvedTestPlanReasons);
+
         boolean extractionSound = checkExtractionSound(request.extractionFailedRepositories(), reasons);
 
         // Adapt total-wipe gate: an adapt that retains none of the pre-adapt graded test names is a from-scratch regeneration mislabeled as an adapt (a destructive rewrite the
@@ -264,13 +279,13 @@ public class DifferentialVerificationService {
         reasons.addAll(adaptWipeReasons);
 
         boolean mechanicallyVerified = analysis.actionableGatesPass() && harnessIntact && noSolutionLeak && noGradingContextSniffing && javaAresConventionsHold
-                && javaSourceLayoutIntact && extractionSound && noAdaptWipe;
+                && javaSourceLayoutIntact && approvedSpecificationHolds && approvedTestPlanHolds && extractionSound && noAdaptWipe;
         if (!mechanicallyVerified) {
             log.info(
                     "Differential verification failed: solution[{}], template[{}], actionableGatesPass={}, harnessIntact={}, noSolutionLeak={}, "
-                            + "javaAresConventionsHold={}, javaSourceLayoutIntact={}, extractionSound={}, noAdaptWipe={}",
-                    solution, template, analysis.actionableGatesPass(), harnessIntact, noSolutionLeak, javaAresConventionsHold, javaSourceLayoutIntact, extractionSound,
-                    noAdaptWipe);
+                            + "javaAresConventionsHold={}, javaSourceLayoutIntact={}, approvedSpecificationHolds={}, approvedTestPlanHolds={}, extractionSound={}, noAdaptWipe={}",
+                    solution, template, analysis.actionableGatesPass(), harnessIntact, noSolutionLeak, javaAresConventionsHold, javaSourceLayoutIntact, approvedSpecificationHolds,
+                    approvedTestPlanHolds, extractionSound, noAdaptWipe);
         }
         return new VerificationResult(mechanicallyVerified, analysis.solutionPassed(), analysis.templateFailed(), solution.tests(), reasons);
     }
@@ -325,10 +340,23 @@ public class DifferentialVerificationService {
             javaAresConventionsHold = javaAresConventionReasons.isEmpty();
             reasons.addAll(javaAresConventionReasons);
         }
+        List<String> contractSpecifications = contractSpecifications(sandbox, sessionId);
+        Map<String, String> templateFiles = readRepositoryFiles(sandbox, sessionId, RepositoryType.TEMPLATE);
+        Map<String, String> solutionFiles = readRepositoryFiles(sandbox, sessionId, RepositoryType.SOLUTION);
+        List<String> approvedSpecificationReasons = contractSpecifications.stream()
+                .flatMap(spec -> ExerciseIntegrityGate.approvedSpecificationReasons(spec, templateFiles, solutionFiles).stream()).distinct().toList();
+        boolean approvedSpecificationHolds = approvedSpecificationReasons.isEmpty();
+        reasons.addAll(approvedSpecificationReasons);
+        String testPlanJson = readWorkspaceRootFile(sandbox, sessionId, "test-plan.json");
+        List<String> approvedTestPlanReasons = contractSpecifications.stream()
+                .flatMap(spec -> ExerciseIntegrityGate.approvedTestPlanReasons(spec, testPlanJson, solution.testNames()).stream()).distinct().toList();
+        boolean approvedTestPlanHolds = approvedTestPlanReasons.isEmpty();
+        reasons.addAll(approvedTestPlanReasons);
 
         return new AgentVerifyReport(solution.tests(), solutionPassed, List.copyOf(solution.testFailedNames()), solution.failureEvidence(), template.tests(), templateCompiled,
                 analysis.templateFailed(), template.failureEvidence(), templateWronglyPassing, List.copyOf(solution.testNames()), analysis.unresolvedTaskBindings(),
-                analysis.possiblyDeadFiles(), analysis.actionableGatesPass() && javaAresConventionsHold, reasons, List.copyOf(readHiddenTestNames(sandbox, sessionId)));
+                analysis.possiblyDeadFiles(), analysis.actionableGatesPass() && javaAresConventionsHold && approvedSpecificationHolds && approvedTestPlanHolds, reasons,
+                List.copyOf(readHiddenTestNames(sandbox, sessionId)));
     }
 
     /**
@@ -394,8 +422,24 @@ public class DifferentialVerificationService {
     }
 
     private static Map<String, String> readTestsRepositoryFiles(InteractiveSandbox sandbox, String sessionId) {
-        try (TarArchiveInputStream tar = sandbox.copyOut(sessionId, GenerationWorkspaceService.WORKSPACE + "/" + GenerationWorkspaceService.directoryFor(RepositoryType.TESTS))) {
-            return tar == null ? Map.of() : WorkspaceArchive.readTar(tar, GenerationWorkspaceService.directoryFor(RepositoryType.TESTS));
+        return readRepositoryFiles(sandbox, sessionId, RepositoryType.TESTS);
+    }
+
+    /** The immutable approved spec plus any later live additions; a later edit can add an obligation but never erase the accepted one. */
+    private List<String> contractSpecifications(InteractiveSandbox sandbox, String sessionId) {
+        Set<String> specifications = new LinkedHashSet<>();
+        approvedSpecs.approved(sessionId).filter(spec -> !spec.isBlank()).ifPresent(specifications::add);
+        String liveSpec = readSpecDocument(sandbox, sessionId);
+        if (liveSpec.contains("## Design") && liveSpec.contains("## Testing Strategy")) {
+            specifications.add(liveSpec);
+        }
+        return List.copyOf(specifications);
+    }
+
+    private static Map<String, String> readRepositoryFiles(InteractiveSandbox sandbox, String sessionId, RepositoryType repositoryType) {
+        String directory = GenerationWorkspaceService.directoryFor(repositoryType);
+        try (TarArchiveInputStream tar = sandbox.copyOut(sessionId, GenerationWorkspaceService.WORKSPACE + "/" + directory)) {
+            return tar == null ? Map.of() : WorkspaceArchive.readTar(tar, directory);
         }
         catch (IOException | RuntimeException e) {
             return Map.of();
@@ -458,10 +502,10 @@ public class DifferentialVerificationService {
         Set<String> hiddenTestNames = readHiddenTestNames(sandbox, sessionId);
         List<String> unboundGradableTests = ProblemStatementBindingChecker.unboundGradableTestNames(problemStatement, solution.testNames(), testCount, hiddenTestNames);
         boolean allGradableTestsBound = checkAllGradableTestsBound(unboundGradableTests, problemStatementHasTasks, taskBindingsResolve, reasons);
-        List<String> hiddenTaskBindings = ProblemStatementBindingChecker.hiddenTaskBindings(problemStatement, hiddenTestNames);
-        boolean noHiddenTestsBound = hiddenTaskBindings.isEmpty();
-        if (!noHiddenTestsBound) {
-            reasons.add(ProblemStatementBindingChecker.hiddenTaskBindingsRejection(hiddenTaskBindings));
+        List<String> hiddenTestMentions = ProblemStatementBindingChecker.hiddenTestMentions(problemStatement, hiddenTestNames);
+        boolean noHiddenTestsExposed = hiddenTestMentions.isEmpty();
+        if (!noHiddenTestsExposed) {
+            reasons.add(ProblemStatementBindingChecker.hiddenTestMentionsRejection(hiddenTestMentions));
         }
         boolean solutionScaClean = checkSolutionScaClean(exercise, solution, reasons);
 
@@ -510,12 +554,12 @@ public class DifferentialVerificationService {
         boolean statementHonoursDiagramPromise = !(diagramPromised && !problemStatement.contains("@startuml"));
         if (!statementHonoursDiagramPromise) {
             reasons.add("SPEC.md's '## Diagram' section says yes, but the statement contains no @startuml diagram. Add the PlantUML class diagram (with testsColor links) after "
-                    + "the tasks it illustrates, or update SPEC.md's Diagram decision if the design genuinely changed.");
+                    + "the tasks it illustrates. The accepted diagram decision cannot be revoked after the specification gate.");
         }
 
         boolean actionableGatesPass = solutionPassed && noDuplicateTestNames && templateFailed && testCount > 0 && problemStatementHasTasks && taskKeywordsWellFormed
                 && taskBindingsResolve && noDuplicateTaskBindings && allGradableTestsBound && solutionScaClean && proseHygienic && taskTitlesUnique && statementVoiceOk
-                && diagramLinksResolve && noStrayUmlDirectives && headingsUnique && statementHonoursDiagramPromise && noHiddenTestsBound;
+                && diagramLinksResolve && noStrayUmlDirectives && headingsUnique && statementHonoursDiagramPromise && noHiddenTestsExposed;
 
         List<String> possiblyDeadFiles = possiblyDeadWorkspaceFiles(sandbox, sessionId);
         return new DifferentialAnalysis(solution, template, solutionPassed, templateFailed, actionableGatesPass, reasons, unresolvedTaskBindings, possiblyDeadFiles,

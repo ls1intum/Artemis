@@ -210,11 +210,12 @@ class SpecFidelityCriticServiceTest {
         ArgumentCaptor<Prompt> prompts = ArgumentCaptor.forClass(Prompt.class);
         verify(chatModel, times(2)).call(prompts.capture());
         assertThat(prompts.getAllValues().get(0).getInstructions().getFirst().getText())
-                .contains("Return every failed check", "one representative passing check", "mandatory and unambiguous", "unrelated prerequisite fails before the target call",
+                .contains("Return every failed check", "one representative passing check", "mandatory and unambiguous", "Do not infer task reachability",
                         "Do not invent requirements from solution-only behavior", "claims alternatives", "one operation or the whole call")
+                .doesNotContain("Trace each task through the starter", "first failure is the intended placeholder")
                 .contains("At most 3 exampleChecks, 8 apiChecks, 6 templateChecks, and 4 items in every other array").doesNotContain("mutantChecks", "weakOracle", "uncovered");
         assertThat(prompts.getAllValues().get(1).getInstructions().getFirst().getText()).contains("at most six highest-risk representative mutants")
-                .contains("At most 6 mutantChecks, 4 uncovered items, and 4 weakOracle items").doesNotContain("For every explicit rule and public operation")
+                .contains("only the few highest-leverage blockers that have distinct repairs").doesNotContain("For every explicit rule and public operation")
                 .doesNotContain("exampleChecks", "apiChecks", "templateChecks", "contradictions");
     }
 

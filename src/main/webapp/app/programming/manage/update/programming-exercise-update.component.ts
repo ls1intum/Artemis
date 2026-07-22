@@ -1074,7 +1074,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         }
         // Carry the instructor's brief to the code editor: the generate-exercise request is fired there after the redirect, and without this the brief typed into the AI
         // prompt field is silently dropped — the server then falls back to a generic instruction and the model free-styles the topic (observed live).
-        const generationBrief = this.exerciseProblemComponent()?.userPrompt()?.trim();
+        const generationBrief = this.exerciseProblemComponent()?.generationBrief()?.trim() || this.exerciseProblemComponent()?.userPrompt()?.trim();
         const navigationExtras = { state: { [AUTO_START_EXERCISE_GENERATION_STATE]: true, [EXERCISE_GENERATION_PROMPT_STATE]: generationBrief || undefined } };
         if (exercise.exerciseGroup?.exam?.id && exercise.exerciseGroup?.id) {
             void this.router.navigate(

@@ -247,24 +247,43 @@ class SandboxAgentToolsTest {
 
         assertThat(tools.writeFile("solution/build.gradle", "plugins { id 'java' }")).contains("build infrastructure is seeded and managed by Artemis");
         assertThat(tools.writeFile("template/buildSrc/src/main/java/FakePlugin.java", "class FakePlugin {}")).contains("build infrastructure is seeded and managed by Artemis");
+        assertThat(tools.writeFile("solution/.mvn/maven.config", "-o")).contains("build infrastructure is seeded and managed by Artemis");
+        assertThat(tools.writeFile("solution/.m2/plugin.jar", "generated")).contains("build infrastructure is seeded and managed by Artemis");
+        assertThat(tools.writeFile("tests/target/test-classes/Test.class", "generated")).contains("build infrastructure is seeded and managed by Artemis");
         assertThat(sandbox.execCount).isZero();
     }
 
     @Test
-    void writeFile_acceptsSpecMdAndTestPlanAtTheWorkspaceRootInEveryStageAndInLegacyMode() {
-        // SPEC.md (the planning artifact) and test-plan.json (the grading plan) are the workspace-root files allowed: never persisted by extraction, updatable from any stage
-        // (or legacy/unstaged sessions, where currentStage stays null).
+    void writeFile_keepsStagedWritesMonotonicWhileLegacyRepairsRemainUnrestricted() {
         RecordingSandbox sandbox = new RecordingSandbox();
         SandboxAgentTools legacy = new SandboxAgentTools(sandbox, "s");
         assertThat(legacy.writeFile("SPEC.md", "## Rules")).startsWith("Wrote ");
         assertThat(legacy.writeFile("test-plan.json", "{\"tests\":[]}")).startsWith("Wrote ");
+        assertThat(legacy.writeFile("problem-statement.md", "# Exercise")).startsWith("Wrote ");
 
         for (GenerationStage stage : GenerationStage.values()) {
             SandboxAgentTools staged = new SandboxAgentTools(new RecordingSandbox(), "s");
             staged.enterStage(stage);
             assertThat(staged.writeFile("SPEC.md", "## Rules")).as("stage %s", stage).startsWith("Wrote ");
-            assertThat(staged.writeFile("test-plan.json", "{\"tests\":[]}")).as("stage %s", stage).startsWith("Wrote ");
+            if (stage == GenerationStage.TESTS || stage == GenerationStage.STATEMENT) {
+                assertThat(staged.writeFile("test-plan.json", "{\"tests\":[]}")).as("stage %s", stage).startsWith("Wrote ");
+            }
+            else {
+                assertThat(staged.writeFile("test-plan.json", "{\"tests\":[]}")).as("stage %s", stage).contains("cannot write");
+            }
+            if (stage == GenerationStage.STATEMENT) {
+                assertThat(staged.writeFile("problem-statement.md", "# Exercise")).startsWith("Wrote ");
+            }
+            else {
+                assertThat(staged.writeFile("problem-statement.md", "# Exercise")).contains("cannot write");
+            }
         }
+
+        SandboxAgentTools solutionStage = new SandboxAgentTools(new RecordingSandbox(), "s");
+        solutionStage.enterStage(GenerationStage.SOLUTION);
+        assertThat(solutionStage.writeFile("solution/src/Answer.java", "class Answer {}")).startsWith("Wrote ");
+        assertThat(solutionStage.writeFile("template/src/Answer.java", "class Answer {}")).contains("cannot write");
+        assertThat(solutionStage.writeFile("tests/test/AnswerTest.java", "class AnswerTest {}")).contains("cannot write");
     }
 
     @Test

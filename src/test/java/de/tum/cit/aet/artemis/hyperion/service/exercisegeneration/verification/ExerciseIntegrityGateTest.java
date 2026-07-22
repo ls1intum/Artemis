@@ -654,6 +654,98 @@ class ExerciseIntegrityGateTest {
         assertThat(ExerciseIntegrityGate.adaptWipedGradedTestsReasons(Set.of("testEvictsLru"), List.of("testEvictsLru()"))).hasSize(1);
     }
 
+    // --- Approved specification contract ---
+
+    @Test
+    void approvedSpecification_rejectsStudentCreatedTypesThatLeakIntoTheTemplate() {
+        String spec = """
+                ## Design
+                | Type | Role | Template status |
+                |---|---|---|
+                | `Track` | data | given |
+                | `PlaybackStrategy` | abstraction students design | student-creates |
+                | `Player` | context students wire | student-creates |
+                """;
+        Map<String, String> solution = map("src/PlaybackStrategy.java", "public interface PlaybackStrategy {}", "src/Player.java", "public class Player {}");
+        Map<String, String> template = map("src/PlaybackStrategy.java", "public interface PlaybackStrategy {}", "src/Player.java", "public class Player { /* TODO */ }");
+
+        assertThat(ExerciseIntegrityGate.approvedSpecificationReasons(spec, template, solution)).singleElement()
+                .satisfies(reason -> assertThat(reason).contains("template already declares them", "PlaybackStrategy", "Player", "changing SPEC.md after approval cannot"));
+    }
+
+    @Test
+    void approvedSpecification_acceptsStudentCreatedTypesOnlyInTheSolutionIncludingSecondaryDeclarations() {
+        String spec = """
+                ## Design
+                | Type | Role | Template status |
+                |---|---|---|
+                | `PlaybackStrategy` | abstraction students design | student-creates |
+                | `Player` | context students wire | student-creates |
+                """;
+        Map<String, String> solution = map("src/ExerciseTypes.java", "interface PlaybackStrategy {}\nclass Player {}");
+
+        assertThat(ExerciseIntegrityGate.approvedSpecificationReasons(spec, Map.of(), solution)).isEmpty();
+    }
+
+    @Test
+    void approvedSpecification_doesNotMistakeATodoBreadcrumbForATypeDeclaration() {
+        String spec = """
+                ## Design
+                | Type | Role | Template status |
+                |---|---|---|
+                | `PlaybackStrategy` | abstraction students design | student-creates |
+                """;
+        Map<String, String> solution = map("src/PlaybackStrategy.java", "public interface PlaybackStrategy {}");
+        Map<String, String> template = map("src/Player.java", "public class Player { // TODO: create interface PlaybackStrategy\n}");
+
+        assertThat(ExerciseIntegrityGate.approvedSpecificationReasons(spec, template, solution)).isEmpty();
+    }
+
+    @Test
+    void approvedSpecification_rejectsAnIncompleteReferenceSolution() {
+        String spec = """
+                ## Design
+                | Type | Role | Template status |
+                |---|---|---|
+                | `PlaybackStrategy` | abstraction students design | student-creates |
+                """;
+
+        assertThat(ExerciseIntegrityGate.approvedSpecificationReasons(spec, Map.of(), Map.of())).singleElement()
+                .satisfies(reason -> assertThat(reason).contains("reference solution does not declare", "PlaybackStrategy"));
+    }
+
+    @Test
+    void approvedTestPlan_rejectsMissingHiddenVariantsInsteadOfSilentlyPublishingEverything() {
+        String spec = """
+                ## Testing Strategy
+                | Seam | Partitions | Weight | Hidden-variant (yes/no) |
+                |---|---|---|---|
+                | delegation | swap collaborator | 3 | yes |
+                """;
+        String visibleOnly = "{\"tests\":[{\"name\":\"delegates\",\"weight\":3,\"visibility\":\"ALWAYS\"}]}";
+
+        assertThat(ExerciseIntegrityGate.approvedTestPlanReasons(spec, visibleOnly, List.of("delegates"))).singleElement()
+                .satisfies(reason -> assertThat(reason).contains("requires hidden", "every final test-plan.json entry is visible"));
+    }
+
+    @Test
+    void approvedTestPlan_acceptsAValidPlanWithFreshHiddenCoverage() {
+        String spec = """
+                ## Testing Strategy
+                | Seam | Partitions | Weight | Hidden-variant (yes/no) |
+                |---|---|---|---|
+                | delegation | swap collaborator | 3 | yes |
+                """;
+        String plan = """
+                {"tests":[
+                  {"name":"delegates","weight":3,"visibility":"ALWAYS"},
+                  {"name":"delegatesWithFreshValues","weight":2,"visibility":"AFTER_DUE_DATE"}
+                ]}
+                """;
+
+        assertThat(ExerciseIntegrityGate.approvedTestPlanReasons(spec, plan, List.of("delegates", "delegatesWithFreshValues"))).isEmpty();
+    }
+
     // --- Solution-leak gate ---
 
     @Test

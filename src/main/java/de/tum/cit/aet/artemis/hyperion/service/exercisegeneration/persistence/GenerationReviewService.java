@@ -104,7 +104,7 @@ public class GenerationReviewService {
                 case CONTRACT_CONTRADICTION -> "Generated artifacts contradict the student-facing contract: \"" + finding.requirement() + "\"";
                 case HIDDEN_GRADED_REQUIREMENT -> "Graded requirement is not discoverable by students: \"" + finding.requirement() + "\"";
                 case WEAK_TEST_ORACLE -> "Generated tests allow a plausible incorrect implementation: \"" + finding.requirement() + "\"";
-                case TEMPLATE_QUALITY_GAP -> "Starter code prevents meaningful incremental work: \"" + finding.requirement() + "\"";
+                case TEMPLATE_QUALITY_GAP -> "Student task and starter scaffold need alignment: \"" + finding.requirement() + "\"";
                 case QUALITY_REVIEW_UNAVAILABLE -> "Generated exercise quality could not be reviewed automatically";
             };
             Severity severity = finding.isBlocking() ? Severity.HIGH : Severity.MEDIUM;

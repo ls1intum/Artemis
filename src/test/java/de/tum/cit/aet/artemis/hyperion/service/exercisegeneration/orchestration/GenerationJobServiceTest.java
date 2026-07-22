@@ -362,6 +362,22 @@ class GenerationJobServiceTest {
     }
 
     @Test
+    void startJob_carriesOriginalSourceBriefToTheWorkerWithoutPersistence() {
+        List<Object> publishedEvents = new CopyOnWriteArrayList<>();
+        GenerationJobService publishingService = new GenerationJobService(hazelcastInstance, publishedEvents::add, mock(LLMTokenUsageService.class));
+        publishingService.init();
+        ProgrammingExercise exercise = exercise(443L);
+
+        publishingService.startJob(user("owner"), exercise, "resolved authoring instruction", GenerationMode.GENERATE, null, "original instructor brief");
+
+        assertThat(publishedEvents).filteredOn(GenerationStartedEvent.class::isInstance).singleElement().satisfies(event -> {
+            GenerationStartedEvent started = (GenerationStartedEvent) event;
+            assertThat(started.userPrompt()).isEqualTo("resolved authoring instruction");
+            assertThat(started.sourceBrief()).isEqualTo("original instructor brief");
+        });
+    }
+
+    @Test
     void startJob_publishesRunningStateBeforeDispatchingTheWorker() {
         List<ExerciseGenerationStateChangedEvent> stateEvents = new CopyOnWriteArrayList<>();
         AtomicReference<GenerationJobService> serviceReference = new AtomicReference<>();

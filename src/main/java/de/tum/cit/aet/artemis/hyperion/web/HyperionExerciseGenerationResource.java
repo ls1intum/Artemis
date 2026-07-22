@@ -133,7 +133,9 @@ public class HyperionExerciseGenerationResource {
         HyperionGenerationBudgetService.BudgetReservation budgetReservation = generationBudgetService.reserveGenerationBudget(user.getId(), courseId);
         String jobId;
         try {
-            jobId = jobService.startJob(user, exercise, prompt, request.mode(), budgetReservation.id());
+            String sourceBrief = request.mode() == GenerationMode.GENERATE && request.prompt() != null && !request.prompt().isBlank() ? request.prompt().strip() : null;
+            jobId = sourceBrief == null ? jobService.startJob(user, exercise, prompt, request.mode(), budgetReservation.id())
+                    : jobService.startJob(user, exercise, prompt, request.mode(), budgetReservation.id(), sourceBrief);
         }
         catch (RuntimeException e) {
             generationBudgetService.releaseReservation(budgetReservation.id());

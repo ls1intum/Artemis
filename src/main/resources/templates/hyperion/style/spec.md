@@ -56,6 +56,19 @@ For every piece of MUTABLE STATE, say below the table which type owns it and whe
 replacement (a swap, reset, or re-registration): tests may only demand what this ownership makes possible.
 Pin the public API here too — signatures only; later stages copy them, they do not renegotiate silently.
 
+The design table also carries the requested difficulty and learning objective. Judge difficulty by the work
+left to the student, not by the number of files or formulas. When the brief teaches a collaboration or design
+pattern, leave students meaningful work in that collaboration (defining an abstraction when appropriate,
+wiring it, or making the context delegate); do not hand them the complete design and call formula transcription
+an intermediate pattern exercise. Conversely, provide routine holders, accessors, and build plumbing unless
+those are explicitly part of the objective.
+
+Reconcile that ownership with compilation before approving the design. Every testing-strategy seam described
+as student work must map to a `stubbed` or `student-creates` row. A given or stubbed type cannot expose an
+omitted `student-creates` type in its Java signature: the template would not compile. Make the dependent type
+student-created as well, or choose a compile-safe boundary. Never make the same API accept the real interface
+in the solution and `Object` in the template; solution and template public signatures must stay identical.
+
 ## Testing strategy
 
 A table under `## Testing Strategy` with one row per SEAM — an independently actionable unit of student work.
@@ -129,9 +142,9 @@ Public API:
 
 | Seam | Partitions | Weight | Hidden variant |
 |------|-----------|--------|----------------|
-| Implement flat-rate rewards | typical amount; sub-dollar rounds to 0; threshold bonus at exactly $50 | 3 | yes — fresh amounts after the due date |
+| Implement flat-rate rewards | typical amount; sub-dollar rounds to 0; threshold bonus at exactly $50 | 3 | yes |
 | Wire strategy into the account | recording delegates; swapping keeps the balance | 2 | no |
-| Redeem safely | happy path; over-redeem throws, balance unchanged | 2 | yes — different starting balance |
+| Redeem safely | happy path; over-redeem throws, balance unchanged | 2 | yes |
 
 ## Diagram
 

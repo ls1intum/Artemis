@@ -146,8 +146,10 @@ describe('ProgrammingExerciseProblemComponent', () => {
         expect(mockHyperionApiService.generateProblemStatement).toHaveBeenCalledWith(courseId, request);
         expect(mockAlertService.success).toHaveBeenCalledWith('artemisApp.programmingExercise.problemStatement.generationSuccess');
         expect(programmingExercise.problemStatement).toBe(generatedText);
+        expect(comp.generationBrief()).toBe(userPrompt);
+        expect(comp.userPrompt()).toBe('');
         expect(exerciseChangeSpy).toHaveBeenCalledWith(
-            expect.objectContaining({ title: 'Binary Search Trees', packageName: 'binarysearchtrees', problemStatement: generatedText }),
+            expect.objectContaining({ title: 'Binary Search Trees', packageName: 'de.tum.cit.aet.binarysearchtrees', problemStatement: generatedText }),
         );
         expect(exerciseChangeSpy.mock.calls[0][0]).not.toBe(programmingExercise);
     });

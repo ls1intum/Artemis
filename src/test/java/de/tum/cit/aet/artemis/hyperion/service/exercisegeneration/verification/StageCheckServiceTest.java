@@ -46,9 +46,6 @@ class StageCheckServiceTest {
 
         private String templateFindOutput = "";
 
-        /** Output of the "which template file mentions this type" probe (grep -rlw), i.e. the compile-forced-downgrade evidence. */
-        private String templateGrepOutput = "";
-
         /** {@code diff -rq} exit code; 1 means the trees differ (the expected, healthy case). */
         private int diffExitCode = 1;
 
@@ -79,9 +76,6 @@ class StageCheckServiceTest {
             }
             if (command.length >= 2 && "grep".equals(command[0])) {
                 boolean solutionRepo = java.util.Arrays.stream(command).anyMatch(argument -> argument.contains("/solution"));
-                if ("-rlw".equals(command[1])) {
-                    return new SandboxExecResult(0, templateGrepOutput, "", false);
-                }
                 return new SandboxExecResult(0, solutionRepo ? solutionFindOutput : templateFindOutput, "", false);
             }
             return new SandboxExecResult(0, "", "", false);
@@ -323,7 +317,7 @@ class StageCheckServiceTest {
             StageCheckResult result = check(GenerationStage.TEMPLATE);
 
             assertThat(result.passed()).isFalse();
-            assertThat(result.observation()).contains("must NOT contain").contains("RewardStrategy.java").contains("change its status in SPEC.md to 'stubbed'");
+            assertThat(result.observation()).contains("must NOT contain").contains("RewardStrategy.java").contains("changing SPEC.md now cannot");
         }
 
         @Test
@@ -517,7 +511,21 @@ class StageCheckServiceTest {
             StageCheckResult result = check(GenerationStage.STATEMENT, lastTestsReport);
 
             assertThat(result.passed()).isFalse();
-            assertThat(result.observation()).contains("hides until the due date").contains("testSortsAscending_hidden").contains("leave hidden tests unbound");
+            assertThat(result.observation()).contains("hides until the due date").contains("testSortsAscending_hidden").contains("must stay unbound");
+        }
+
+        @Test
+        void fails_whenAHiddenTestNameIsAdvertisedInProseEvenThoughItIsUnbound() {
+            sandbox.problemStatement = "# Title\n[task][Sort](testSortsAscending)\nHidden tests: `testSortsAscending_hidden`.\n";
+            sandbox.testPlanJson = "{\"tests\":[{\"name\":\"testSortsAscending\",\"weight\":2,\"visibility\":\"ALWAYS\"},"
+                    + "{\"name\":\"testSortsAscending_hidden\",\"weight\":2,\"visibility\":\"AFTER_DUE_DATE\"}]}";
+            AgentVerifyReport lastTestsReport = new AgentVerifyReport(2, true, List.of(), 2, true, true, List.of(), List.of("testSortsAscending", "testSortsAscending_hidden"),
+                    List.of(), List.of(), true, List.of());
+
+            StageCheckResult result = check(GenerationStage.STATEMENT, lastTestsReport);
+
+            assertThat(result.passed()).isFalse();
+            assertThat(result.observation()).contains("prose, or appendices").contains("testSortsAscending_hidden");
         }
 
         @Test
@@ -641,21 +649,10 @@ class StageCheckServiceTest {
         }
 
         @Test
-        void allowsADowngradeAnotherTemplateFileForces() {
-            // A context class that must ship and references the type is real evidence; the exemption keeps a legitimate design change possible.
-            approvedSpecs.approve("s", APPROVED);
-            sandbox.spec = DOWNGRADED;
-            sandbox.templateGrepOutput = "/workspace/template/src/de/tum/LoyaltyAccount.java";
-
-            assertThat(check(GenerationStage.TEMPLATE).passed()).isTrue();
-        }
-
-        @Test
         void stillEnforcesOmissionAfterTheLiveSpecDropsTheType() {
             // Union semantics: an edit may add an obligation, never delete one.
             approvedSpecs.approve("s", APPROVED);
             sandbox.spec = DOWNGRADED;
-            sandbox.templateGrepOutput = "/workspace/template/src/de/tum/LoyaltyAccount.java";
             sandbox.templateFindOutput = "/workspace/template/src/de/tum/RewardStrategy.java";
 
             StageCheckResult result = check(GenerationStage.TEMPLATE);

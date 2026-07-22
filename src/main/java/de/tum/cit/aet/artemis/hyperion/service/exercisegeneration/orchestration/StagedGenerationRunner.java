@@ -45,9 +45,10 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
  * verification, spec-fidelity review, the outer repair-attempt loop) is unchanged and treats the aggregated {@link AgentLoopResult} this class returns exactly like a
  * single-call result.
  * <p>
- * No write scoping between stages (the tools still expose the whole workspace) and no re-entry into an *earlier* stage — a gate failure that exhausts its stage's own
- * re-entry budget (see below) stops the whole run immediately and hands the aggregated result (with the gate report appended) back to the existing outer attempt loop,
- * which already knows how to turn a rejected candidate into a repair prompt for the next attempt.
+ * Stage file tools enforce monotonic write scope: a stage may correct its own artifact or an earlier dependency, but cannot pre-author a later artifact before that artifact's
+ * instructions and gate. There is no re-entry into an *earlier* stage — a gate failure that exhausts its stage's own re-entry budget (see below) stops the whole run immediately
+ * and hands the aggregated result (with the gate report appended) back to the existing outer attempt loop, which already knows how to turn a rejected candidate into a repair
+ * prompt for the next attempt.
  * <p>
  * Conversation continuity across stages is controlled by {@code artemis.hyperion.agent.staged-context} ({@link StagedContext}, default {@code CONTINUOUS}): CONTINUOUS
  * carries one logical conversation across all five stages via {@link AgentLoopRunner#runSession} (the model keeps everything it learned in earlier stages instead of

@@ -21,16 +21,22 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
  * @param expectedTitle            the title as it was when the job was started; persistence refuses to overwrite later manual edits
  * @param deadlineAt               the absolute admission-time deadline for this job, or {@code null} when disabled
  * @param budgetReservationId      the in-flight budget reservation to release when the async job finishes, or {@code null} when admission budgets are disabled
+ * @param sourceBrief              the original instructor requirements that produced an AI draft, or {@code null} when the existing statement is instructor-authored
  */
 public record GenerationStartedEvent(String jobId, User user, ProgrammingExercise exercise, String userPrompt, GenerationMode mode, String expectedProblemStatement,
-        String expectedTitle, @Nullable Instant deadlineAt, @Nullable String budgetReservationId) {
+        String expectedTitle, @Nullable Instant deadlineAt, @Nullable String budgetReservationId, @Nullable String sourceBrief) {
 
     public GenerationStartedEvent(String jobId, User user, ProgrammingExercise exercise, String userPrompt, GenerationMode mode) {
-        this(jobId, user, exercise, userPrompt, mode, exercise.getProblemStatement(), exercise.getTitle(), null, null);
+        this(jobId, user, exercise, userPrompt, mode, exercise.getProblemStatement(), exercise.getTitle(), null, null, null);
     }
 
     public GenerationStartedEvent(String jobId, User user, ProgrammingExercise exercise, String userPrompt, GenerationMode mode, String expectedProblemStatement,
             String expectedTitle, @Nullable Instant deadlineAt) {
-        this(jobId, user, exercise, userPrompt, mode, expectedProblemStatement, expectedTitle, deadlineAt, null);
+        this(jobId, user, exercise, userPrompt, mode, expectedProblemStatement, expectedTitle, deadlineAt, null, null);
+    }
+
+    public GenerationStartedEvent(String jobId, User user, ProgrammingExercise exercise, String userPrompt, GenerationMode mode, String expectedProblemStatement,
+            String expectedTitle, @Nullable Instant deadlineAt, @Nullable String budgetReservationId) {
+        this(jobId, user, exercise, userPrompt, mode, expectedProblemStatement, expectedTitle, deadlineAt, budgetReservationId, null);
     }
 }

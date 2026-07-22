@@ -16,6 +16,16 @@ Choose inputs that distinguish plausible wrong implementations, not just "any in
 Vary every input dimension a wrong implementation could ignore (if an argument should be irrelevant, prove it
 by varying it; if order matters, pick inputs where the wrong order gives a different answer).
 
+For delegation, callbacks, strategies, and similar collaborations, prefer a tiny fake or recording
+implementation that returns a distinctive value and records its inputs. This proves the context really uses
+the supplied abstraction; exercising only the known concrete implementations also accepts a context that
+copies their logic, which defeats the learning objective while looking behaviorally correct.
+
+If the collaborator interface is `student-creates` and therefore absent from the template, load it by name and
+create the recording fake with `java.lang.reflect.Proxy`. Invoke constructors and methods whose signatures
+mention that missing interface reflectively too. Merely storing an instance in an `Object` variable does not
+make a normal call to a method expecting the missing interface compile against both repositories.
+
 ## Inputs decoupled from worked examples
 
 Never reuse a statement's worked-example numbers as a test's input — a student could read the answer straight

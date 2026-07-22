@@ -269,6 +269,29 @@ class GenerationOrchestrationServiceTest {
     }
 
     @Test
+    void aiDraftSourceBrief_runsSpecStageAndKeepsTheDraftNonAuthoritative() {
+        GenerationOrchestrationService stagedService = newService(true);
+        String draft = "# Draft playlist exercise\n\nThis generated draft is long enough to look authoritative but may have omitted explicit requirements.";
+        String sourceBrief = "Teach Strategy with three playlist strategies. Students must create the interface. Include a UML diagram.";
+        when(exercise.getProblemStatement()).thenReturn(draft);
+        when(stagedGenerationRunner.run(any(), any(), any(), anyString(), any(), any(), anyString(), any(), any(), any(), any(), anyBoolean(), any()))
+                .thenReturn(new StagedGenerationRunner.StagedRunOutcome(completed(), null));
+        when(verifier.verify(any(), anyString(), any(), any(VerificationRequest.class), any(Runnable.class))).thenReturn(accepted());
+        ArgumentCaptor<String> prompt = ArgumentCaptor.forClass(String.class);
+        ArgumentCaptor<Boolean> specStageApplies = ArgumentCaptor.forClass(Boolean.class);
+
+        try (GenerationOutcome outcome = stagedService.generate(exercise, user, "resolved instruction", JOB_ID, GenerationMode.GENERATE, () -> false, null, null, null,
+                sourceBrief)) {
+            assertThat(outcome.isMechanicallyVerified()).isTrue();
+        }
+
+        verify(stagedGenerationRunner).run(any(), any(), any(), prompt.capture(), any(), any(), anyString(), any(), any(), any(), any(), specStageApplies.capture(), any());
+        assertThat(specStageApplies.getValue()).isTrue();
+        assertThat(prompt.getValue()).contains("PRIMARY SOURCE REQUIREMENTS", sourceBrief, "CURRENT AI-GENERATED DRAFT", draft, "cannot override");
+        verify(workspace).seedWorkspace(any(), anyString(), eq(exercise), eq(GenerationMode.GENERATE), eq(false));
+    }
+
+    @Test
     void stagedGenerationDisabled_generateJava_usesTheSingleAgentLoopCallDirectly() {
         // service (built by newService()) has staged generation disabled, matching the default in every other test in this file: flag off must be a no-op, leaving the
         // original single, open-ended agent-loop call as the only path — the seam introduced for staged generation must not change existing behaviour.

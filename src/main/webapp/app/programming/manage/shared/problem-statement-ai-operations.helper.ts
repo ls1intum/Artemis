@@ -42,6 +42,9 @@ export class ProblemStatementAiOperationsHelper {
     /** User's prompt text (generation or refinement instruction). */
     readonly userPrompt = signal('');
 
+    /** Original requirements used to create the current AI draft, retained after the prompt field is cleared. */
+    readonly generationBrief = signal('');
+
     /** Whether a generation or refinement HTTP call is in flight. */
     readonly isGeneratingOrRefining = signal(false);
 
@@ -148,6 +151,7 @@ export class ProblemStatementAiOperationsHelper {
 
                         editableInstructions?.setText(draftContent);
                         exercise.problemStatement = draftContent;
+                        this.generationBrief.set(prompt.trim());
                         const metadataPrefill = deriveDraftMetadataPrefill(exercise, draftContent);
                         const updatedExercise = metadataPrefill ? Object.assign(cloneDeep(exercise), metadataPrefill) : exercise;
                         this.currentProblemStatement.set(draftContent);

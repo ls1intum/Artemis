@@ -26,36 +26,45 @@ import org.jspecify.annotations.Nullable;
  *                                         leaves the gate inert (fail-open)
  * @param producedProblemStatement     problem statement captured with the produced repository files; {@code null} only for tests and legacy internal callers that still read it
  *                                         from the sandbox
+ * @param producedTestPlan             test-plan.json captured with the produced repository files; {@code null} only for tests and callers without an approved specification
  * @param adaptation                   whether untouched legacy test sources may retain their pre-existing conventions; new or modified tests always use current conventions
  */
 public record VerificationRequest(Map<String, String> seedTestsFiles, Map<String, String> seedTemplateFiles, Map<String, String> seedSolutionFiles,
         Map<String, String> producedTestsFiles, Map<String, String> producedTemplateFiles, Map<String, String> producedSolutionFiles, Set<String> extractionFailedRepositories,
-        Set<String> seededStructuralTestNames, Set<String> baselineGradedTestNames, @Nullable String producedProblemStatement, boolean adaptation) {
+        Set<String> seededStructuralTestNames, Set<String> baselineGradedTestNames, @Nullable String producedProblemStatement, @Nullable String producedTestPlan,
+        boolean adaptation) {
+
+    public VerificationRequest(Map<String, String> seedTestsFiles, Map<String, String> seedTemplateFiles, Map<String, String> seedSolutionFiles,
+            Map<String, String> producedTestsFiles, Map<String, String> producedTemplateFiles, Map<String, String> producedSolutionFiles, Set<String> extractionFailedRepositories,
+            Set<String> seededStructuralTestNames, Set<String> baselineGradedTestNames, @Nullable String producedProblemStatement, boolean adaptation) {
+        this(seedTestsFiles, seedTemplateFiles, seedSolutionFiles, producedTestsFiles, producedTemplateFiles, producedSolutionFiles, extractionFailedRepositories,
+                seededStructuralTestNames, baselineGradedTestNames, producedProblemStatement, null, adaptation);
+    }
 
     public VerificationRequest(Map<String, String> seedTestsFiles, Map<String, String> seedTemplateFiles, Map<String, String> seedSolutionFiles,
             Map<String, String> producedTestsFiles, Map<String, String> producedTemplateFiles, Map<String, String> producedSolutionFiles, Set<String> extractionFailedRepositories,
             Set<String> seededStructuralTestNames, Set<String> baselineGradedTestNames, @Nullable String producedProblemStatement) {
         this(seedTestsFiles, seedTemplateFiles, seedSolutionFiles, producedTestsFiles, producedTemplateFiles, producedSolutionFiles, extractionFailedRepositories,
-                seededStructuralTestNames, baselineGradedTestNames, producedProblemStatement, false);
+                seededStructuralTestNames, baselineGradedTestNames, producedProblemStatement, null, false);
     }
 
     public VerificationRequest(Map<String, String> seedTestsFiles, Map<String, String> seedTemplateFiles, Map<String, String> seedSolutionFiles,
             Map<String, String> producedTestsFiles, Map<String, String> producedTemplateFiles, Map<String, String> producedSolutionFiles, Set<String> extractionFailedRepositories,
             Set<String> seededStructuralTestNames, Set<String> baselineGradedTestNames) {
         this(seedTestsFiles, seedTemplateFiles, seedSolutionFiles, producedTestsFiles, producedTemplateFiles, producedSolutionFiles, extractionFailedRepositories,
-                seededStructuralTestNames, baselineGradedTestNames, null, false);
+                seededStructuralTestNames, baselineGradedTestNames, null, null, false);
     }
 
     public VerificationRequest(Map<String, String> seedTestsFiles, Map<String, String> producedTestsFiles, Map<String, String> producedTemplateFiles,
             Map<String, String> producedSolutionFiles, Set<String> extractionFailedRepositories, Set<String> seededStructuralTestNames, Set<String> baselineGradedTestNames) {
         this(seedTestsFiles, Map.of(), Map.of(), producedTestsFiles, producedTemplateFiles, producedSolutionFiles, extractionFailedRepositories, seededStructuralTestNames,
-                baselineGradedTestNames, null, false);
+                baselineGradedTestNames, null, null, false);
     }
 
     public VerificationRequest(Map<String, String> seedTestsFiles, Map<String, String> producedTestsFiles, Map<String, String> producedTemplateFiles,
             Map<String, String> producedSolutionFiles, Set<String> extractionFailedRepositories, Set<String> seededStructuralTestNames, Set<String> baselineGradedTestNames,
             @Nullable String producedProblemStatement) {
         this(seedTestsFiles, Map.of(), Map.of(), producedTestsFiles, producedTemplateFiles, producedSolutionFiles, extractionFailedRepositories, seededStructuralTestNames,
-                baselineGradedTestNames, producedProblemStatement, false);
+                baselineGradedTestNames, producedProblemStatement, null, false);
     }
 }

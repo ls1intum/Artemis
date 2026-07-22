@@ -119,14 +119,14 @@ class HyperionExerciseGenerationResourceTest {
         when(agentSystemPromptService.isGenerationSupported(testExercise)).thenReturn(true);
         when(userRepository.getUserWithGroupsAndAuthorities()).thenReturn(testUser);
         when(agentSystemPromptService.resolvePrompt(request, testExercise)).thenReturn("RESOLVED");
-        when(jobService.startJob(testUser, testExercise, "RESOLVED", GenerationMode.GENERATE, null)).thenReturn("job-123");
+        when(jobService.startJob(testUser, testExercise, "RESOLVED", GenerationMode.GENERATE, null, "Build a bubble sort exercise.")).thenReturn("job-123");
 
         ResponseEntity<ExerciseGenerationJobStartDTO> response = resource.generateExercise(1L, request);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.ACCEPTED);
         assertThat(response.getBody()).isNotNull();
         assertThat(response.getBody().jobId()).isEqualTo("job-123");
-        verify(jobService).startJob(testUser, testExercise, "RESOLVED", GenerationMode.GENERATE, null);
+        verify(jobService).startJob(testUser, testExercise, "RESOLVED", GenerationMode.GENERATE, null, "Build a bubble sort exercise.");
     }
 
     @Test

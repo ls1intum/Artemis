@@ -264,8 +264,7 @@ public class StageCheckService {
         List<String> missingCreatedTypes = createdTypes.stream().filter(type -> findTypeDeclarations(sandbox, sessionId, "solution", type).isBlank()).toList();
         if (!missingCreatedTypes.isEmpty()) {
             return StageCheckResult.failed("SPEC.md's '## Design' table marks these types 'student-creates', but the solution contains no file for them: " + missingCreatedTypes
-                    + ". The reference solution must fully implement every student-created type (it is what the tests grade); add the missing file(s), or correct SPEC.md if "
-                    + "the design genuinely changed.");
+                    + ". The reference solution must fully implement every student-created type because that is the accepted learning contract; add the missing file(s).");
         }
         return StageCheckResult.passed(createdTypes.isEmpty() ? "" : "Solution compiles and contains every student-created type from the specification: " + createdTypes + ".");
     }
@@ -301,16 +300,15 @@ public class StageCheckService {
         if (!leakedFiles.isEmpty()) {
             return StageCheckResult.failed("SPEC.md's '## Design' table marks type(s) 'student-creates', so the template must NOT contain their files — students create them "
                     + "from scratch (they are graded through the seeded structural checks and reflection-based tests). Delete these template files (leave TODO breadcrumbs in "
-                    + "the collaborating classes instead): " + leakedFiles + ". If the type should ship as a stub after all, change its status in SPEC.md to 'stubbed'.");
+                    + "the collaborating classes instead): " + leakedFiles
+                    + ". This ownership decision passed the specification gate; changing SPEC.md now cannot turn the required design work into a stub.");
         }
         List<String> liveCreatedTypes = specStudentCreatedTypes(readSpec(sandbox, sessionId));
-        List<String> unjustifiedDowngrades = createdTypes.stream().filter(type -> !liveCreatedTypes.contains(type))
-                .filter(type -> !templateItselfNeedsType(sandbox, sessionId, type)).toList();
+        List<String> unjustifiedDowngrades = createdTypes.stream().filter(type -> !liveCreatedTypes.contains(type)).toList();
         if (!unjustifiedDowngrades.isEmpty()) {
             return StageCheckResult.failed("The approved specification marked these types 'student-creates' and SPEC.md no longer does: " + unjustifiedDowngrades
-                    + ". No template file other than the type's own mentions them, so nothing about the template forces the change — only the tests reference them directly. "
-                    + "Restore 'student-creates', delete the template file, and reach the type reflectively the way the seeded reference tests do. A 'student-creates' type may "
-                    + "become 'given' or 'stubbed' only when a template file that must ship references it.");
+                    + ". Restore 'student-creates', delete the template declaration, and reach the type reflectively the way the seeded reference tests do. If another template "
+                    + "type currently references it, restructure that scaffold instead of weakening the accepted student work.");
         }
         if (!createdTypes.isEmpty()) {
             observation = (observation.isBlank() ? "" : observation + " ") + "Confirmed absent from the template, as the specification requires students to create them: "
@@ -385,12 +383,6 @@ public class StageCheckService {
         return java.util.stream.Stream.concat(approved.stream(), live.stream()).distinct().toList();
     }
 
-    /** Whether some template file OTHER than the type's own mentions the type — the only evidence that makes downgrading a {@code student-creates} decision legitimate. */
-    private boolean templateItselfNeedsType(InteractiveSandbox sandbox, String sessionId, String type) {
-        String mentions = execRead(sandbox, sessionId, "grep", "-rlw", type, GenerationWorkspaceService.WORKSPACE + "/template", "--exclude-dir=target", "--exclude-dir=build");
-        return mentions.lines().map(String::strip).filter(line -> !line.isBlank()).anyMatch(file -> !file.matches(".*/" + type + "\\.[^/]+$"));
-    }
-
     private String readSpec(InteractiveSandbox sandbox, String sessionId) {
         return execRead(sandbox, sessionId, "cat", GenerationWorkspaceService.WORKSPACE + "/SPEC.md");
     }
@@ -404,8 +396,10 @@ public class StageCheckService {
         String root = GenerationWorkspaceService.WORKSPACE + "/" + repo;
         String byName = execRead(sandbox, sessionId, "find", root, "-type", "f", "-name", type + ".*", "-not", "-path", "*/target/*", "-not", "-path", "*/build/*", "-not", "-name",
                 "*.md", "-not", "-name", "*.txt", "-not", "-name", "*.orig", "-not", "-name", "*.class");
-        String byDeclaration = execRead(sandbox, sessionId, "grep", "-rlE", "(class|interface|enum|record|trait|struct|protocol)[[:space:]]+" + type + "\\b", root,
-                "--exclude-dir=target", "--exclude-dir=build", "--exclude=*.md", "--exclude=*.txt");
+        String declarationPattern = "^[[:space:]]*((public|protected|private|static|abstract|final|sealed|non-sealed)[[:space:]]+)*"
+                + "(class|interface|enum|record|trait|struct|protocol)[[:space:]]+" + type + "\\b";
+        String byDeclaration = execRead(sandbox, sessionId, "grep", "-rlE", declarationPattern, root, "--exclude-dir=target", "--exclude-dir=build", "--exclude=*.md",
+                "--exclude=*.txt");
         return java.util.stream.Stream.of(byName, byDeclaration).flatMap(String::lines).map(String::strip).filter(line -> !line.isBlank()).distinct()
                 .collect(java.util.stream.Collectors.joining("\n"));
     }
@@ -449,7 +443,7 @@ public class StageCheckService {
         if (plan.hiddenEntries().isEmpty() && specDeclaresHiddenVariants(readSpec(sandbox, sessionId))) {
             return new StageCheckResult(false, "SPEC.md's '## Testing Strategy' declares hidden after-due-date variant(s), but every test-plan.json entry is visible. Add the "
                     + "hidden variant test(s) with FRESH witness values (never the visible test's inputs renamed — the point is catching a solution overfitted to the visible "
-                    + "tests), mark them \"visibility\":\"AFTER_DUE_DATE\", and leave them unbound by any [task] line. If the strategy was wrong, correct SPEC.md instead.",
+                    + "tests), mark them \"visibility\":\"AFTER_DUE_DATE\", and leave them unbound by any [task] line. The accepted visibility decision cannot be discarded now.",
                     report);
         }
         String planSummary = "Grading plan accepted: " + plan.tests().size() + " test(s), " + plan.hiddenEntries().size() + " hidden until the due date."
@@ -477,9 +471,9 @@ public class StageCheckService {
                         + ". Use the exact test names from the TESTS stage (behavioural or seeded structural), or remove the link: " + exactTestNames + ".");
             }
         }
-        List<String> hiddenBindings = ProblemStatementBindingChecker.hiddenTaskBindings(statement, hiddenTestNames(sandbox, sessionId));
-        if (!hiddenBindings.isEmpty()) {
-            return StageCheckResult.failed(ProblemStatementBindingChecker.hiddenTaskBindingsRejection(hiddenBindings));
+        List<String> hiddenMentions = ProblemStatementBindingChecker.hiddenTestMentions(statement, hiddenTestNames(sandbox, sessionId));
+        if (!hiddenMentions.isEmpty()) {
+            return StageCheckResult.failed(ProblemStatementBindingChecker.hiddenTestMentionsRejection(hiddenMentions));
         }
         if (ProblemStatementBindingChecker.hasStrayPlantUmlDirectives(statement)) {
             return StageCheckResult.failed("PlantUML directives ('hide empty fields', 'hide empty methods', 'skinparam ...') sit OUTSIDE the @startuml...@enduml block, where "
@@ -499,7 +493,7 @@ public class StageCheckService {
                 || approvedSpecs.approved(sessionId).filter(ProblemStatementBindingChecker::specPromisesDiagram).isPresent();
         if (diagramPromised && !statement.contains("@startuml")) {
             return StageCheckResult.failed("SPEC.md's '## Diagram' section says yes, but the statement contains no @startuml diagram. Add the PlantUML class diagram after "
-                    + "the tasks it illustrates (with testsColor links), or update SPEC.md's Diagram decision if the design genuinely changed.");
+                    + "the tasks it illustrates (with testsColor links). The accepted diagram decision cannot be revoked after the specification gate.");
         }
         // Exact duplicate headings are a mechanical statement defect (observed shipping live: the same '### 1. ...' section twice); catching it here costs nothing.
         List<String> duplicateHeadings = ProblemStatementBindingChecker.duplicateHeadings(statement);

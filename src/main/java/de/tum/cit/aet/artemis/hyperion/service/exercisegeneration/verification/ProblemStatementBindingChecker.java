@@ -231,29 +231,28 @@ final class ProblemStatementBindingChecker {
     }
 
     /**
-     * The {@code [task]}-bound names the grading plan hides until the due date. Binding a hidden test is a student-visible defect: Artemis renders the task as NOT_EXECUTED
-     * until the deadline because a hidden test emits no feedback, and the checklist names the very probe that is supposed to catch an overfitted solution.
+     * Hidden test names that occur anywhere in the student-facing statement. A hidden test is only overfit-resistant when its implementation-shaped name is not advertised in
+     * a task, diagram, prose, or appendix. This also covers the task-binding defect: Artemis would render that task as NOT_EXECUTED until the deadline.
      *
      * @param problemStatement the student-facing statement
      * @param hiddenTestNames  the normalized names the grading plan marks {@code AFTER_DUE_DATE}
-     * @return the offending bound names, in encounter order, without duplicates
-     * @see #hiddenTaskBindingsRejection(List) the shared rejection text, so the stage gate and the acceptance oracle can never word this rule differently
+     * @return the exposed hidden names, in encounter order, without duplicates
+     * @see #hiddenTestMentionsRejection(List) the shared rejection text, so the stage gate and the acceptance oracle can never word this rule differently
      */
-    static String hiddenTaskBindingsRejection(List<String> hiddenBindings) {
-        return "These [task] bindings reference tests the grading plan hides until the due date: " + hiddenBindings
-                + ". A hidden test is the overfit probe: its task could never turn green before the deadline, and the checklist advertises the probe. Remove those names from "
-                + "the [task] lines and leave hidden tests unbound.";
+    static String hiddenTestMentionsRejection(List<String> hiddenMentions) {
+        return "The problem statement exposes tests the grading plan hides until the due date: " + hiddenMentions
+                + ". A hidden test is the overfit probe: its name must not appear in tasks, diagrams, prose, or appendices, and it must stay unbound. Remove every occurrence; "
+                + "describe only the public behaviour students need to implement.";
     }
 
-    static List<String> hiddenTaskBindings(String problemStatement, Set<String> hiddenTestNames) {
+    static List<String> hiddenTestMentions(String problemStatement, Set<String> hiddenTestNames) {
         if (hiddenTestNames.isEmpty()) {
             return List.of();
         }
         List<String> offenders = new ArrayList<>();
-        for (String bound : boundTestNames(problemStatement)) {
-            String normalized = normalizeTestName(bound);
-            if (hiddenTestNames.contains(normalized) && !offenders.contains(normalized)) {
-                offenders.add(normalized);
+        for (String hiddenName : hiddenTestNames) {
+            if (problemStatement.contains(hiddenName) && !offenders.contains(hiddenName)) {
+                offenders.add(hiddenName);
             }
         }
         return offenders;
