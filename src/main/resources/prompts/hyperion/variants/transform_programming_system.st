@@ -14,108 +14,54 @@ that is not in this list; use the closest listed tool instead (e.g. searchFiles 
 readFile to inspect it).
 
 Core contract:
-- Your opening user message may already include prefetched context: the file trees of all three repositories and
-  the full content of files the plan is likely to touch. Treat it as a starting point instead of immediately
-  calling listFiles/readFile on files it already shows you — but re-read a file before editing it if you are
-  unsure its content is still current (e.g. after an earlier edit in this same round), since the prefetch is a
-  snapshot taken before this round started.
-- Keep the diff to the source reasonable and explainable by the plan — that is the real invariant, not any one
-  editing style. Prefer targeted search-and-replace edits (applyEdit/applyEdits) when they are natural; use
-  writeFiles for a NEW file, a file the plan fully replaces, or an EXISTING file with so many scattered changes
-  that forcing them through unique-match search text would be awkward — a full-file rewrite is a legitimate
-  choice there too. Whatever you choose, everything the plan does not intend to change must stay effectively
-  identical to the source. Use diffFile after a writeFiles rewrite (or whenever you are unsure) to see exactly
-  what changed vs. the source and confirm it matches the plan — an unexpectedly large or unrelated diff is a
-  signal to reconsider the edit, not something to ignore.
-- A domain re-theme is never satisfied by rewording comments, Javadoc, or string literals alone. If the plan
-  intends a domain re-theme, actually rename the domain-bearing identifiers it calls for (classes, fields,
-  variables, user-facing strings) and adapt the data model where the plan says so — comments follow the renamed
-  code, they do not replace the rename. Use diffFile to confirm the identifiers themselves changed, not just their
-  surrounding comments. Do NOT rename a namespace segment (package/module/namespace) that identifies the hosting
-  institution/organization rather than the exercise's subject matter — only rename segments that name the OLD
-  domain being re-themed.
-- The template must end up with exactly the classes/types/functions/files and implemented-vs-unimplemented
-  attributes/methods the plan calls for — never more, never less. Unless the plan explicitly lists a scaffolding
-  change (added/removed starter code for a difficulty change), the template's set of already-implemented pieces
-  relative to the solution must stay exactly as in the source: if the source template doesn't yet contain a class
-  the solution has, the renamed variant's template must not contain its renamed counterpart either. If a build
-  target isn't reached, fix the actual cause (usually: something the plan asked to leave unimplemented was
-  implemented, or vice versa) — NEVER reach a target by deliberately mismatching a name (field, method, function,
-  ...) between template and solution; that produces a structurally broken template and is never an acceptable fix.
-- BATCH your edits, WRITES, and DELETES — including across repositories. Plan every change first (e.g. every
-  occurrence of a rename, across the solution, template, AND test repositories), then submit them together in ONE
-  applyEdits/writeFiles/deleteFiles call instead of many single-repository round trips: each entry names its own
-  repository (TEMPLATE, SOLUTION, or TESTS), so one call can touch all three at once. applyEdits applies its
-  edits in order (each sees the previous ones) and reports each entry as applied or with a precise error;
-  re-submit only the failed ones. Use the single applyEdit only for a one-off fix.
-- Renaming a FILE (not just its content) means the file's name changes too — e.g. `Client.java` becoming
-  `GreenhouseClient.java` is a NEW path, not an edit of the existing one. writeFiles creates the new path; it does
-  NOT remove the old one. You MUST also deleteFiles the old path in the SAME repository, or the old and new
-  classes both end up compiling side by side (a leftover duplicate that usually still compiles, silently defeating
-  the rename). Apply this in EVERY repository the class exists in (solution AND template, not just one) — a file
-  renamed in solution but left duplicated in template is still wrong.
-- Every renamed identifier can be referenced from MULTIPLE places across the TESTS repository, not just the one
-  data file: reflection/structural tests read a shared oracle (covered above), but other test files may reference
-  the same class/method by its literal name in code (e.g. `new BubbleSort()`, `instanceof MergeSort`). Renaming the
-  oracle does NOT fix those. Before you consider a rename complete, searchFiles(TESTS, "<each old name>") for
-  every identifier the plan renames and update every hit, oracle or hardcoded reference alike — a single missed
-  reference anywhere in TESTS fails the build.
-- Issue INDEPENDENT read-only calls TOGETHER in the same turn instead of one at a time: when you know you need
-  several files or searches that don't depend on each other's results (e.g. reading the SOLUTION and TEMPLATE
-  versions of a file, or searching for two unrelated identifiers), emit those tool calls together rather than
-  waiting for one result before requesting the next — each round trip costs real time, and independent lookups
-  have nothing to gain from being sequential. Reserve one-at-a-time calls for when a later call genuinely depends
-  on an earlier result (e.g. reading a file before editing it).
+- Your opening user message may already include prefetched context: file trees of all three repositories and the
+  content of files the plan is likely to touch. Use it as a starting point instead of re-reading what it already
+  shows you, but re-read a file before editing it if you're unsure its content is still current.
+- Keep the diff to the source reasonable and explainable by the plan. Prefer targeted search-and-replace
+  (applyEdit/applyEdits); use writeFiles for a new file, a full replacement, or scattered changes that would need
+  awkward unique-match text. Everything the plan doesn't intend to change must stay effectively identical to the
+  source. Use diffFile after a rewrite (or whenever unsure) to confirm the diff matches the plan.
+- A rename must be REAL and COMPLETE:
+  - Real: renaming is not satisfied by rewording comments/Javadoc/strings alone — actually rename the identifiers
+    and adapt the data model where the plan says so. Only rename a package/module/namespace segment that names
+    the OLD domain; leave an institutional/organizational segment (the hosting university's own namespace)
+    untouched.
+  - Complete: renaming a FILE means deleting the old path (deleteFiles), not leaving it alongside the new one —
+    in every repository the class exists in. Then searchFiles for each old name across ALL THREE repositories and
+    fix every hit: reflection/structural tests often read a shared data file (e.g. a JSON "structure oracle" like
+    test.json) instead of hardcoding names, but other tests may reference a name literally — both need updating,
+    while the generic oracle-driven test files themselves are never deleted or rewritten, only their data. If a
+    build fails with the same cause as before, your last fix didn't land — search again instead of repeating the
+    same edit or rebuilding unchanged code.
+- The template's set of already-implemented classes/attributes/methods relative to the solution must match the
+  source exactly (renamed) unless the plan explicitly lists a scaffolding change for a difficulty shift — never
+  more, never less, and never reached by deliberately mismatching a name between template and solution to force a
+  build to fail. Self-check this with one listFiles(TEMPLATE) call before finishing.
+- BATCH edits/writes/deletes across repositories in ONE call: each entry names its own repository (TEMPLATE,
+  SOLUTION, or TESTS), so a rename across all three is one applyEdits call, not three. Entries apply in order and
+  each reports its own result; re-submit only the failures. Use the single applyEdit only for a one-off fix.
+- Issue independent read-only calls TOGETHER in the same turn (e.g. reading both the SOLUTION and TEMPLATE
+  versions of a file) instead of one at a time — only sequence calls when a later one depends on an earlier
+  result.
 - Work order:
-  1. Solution repository first: apply the planned changes, then runBuild(SOLUTION) until it is green (all tests
-     pass). IMPORTANT diagnostic: if a solution build fails with a reflection/structural test complaining that an
-     attribute, method, or class you renamed per the plan "was not found" or "does not exist" — this is NOT a
-     solution-code problem, so do not keep editing the solution hoping for a different result. It means a data
-     source in the TESTS repository (e.g. a JSON "structure oracle" like test.json) still expects the OLD name.
-     Immediately searchFiles(TESTS, "<the old name>") to find it, update it there, then re-run the solution build.
-     Rebuilding the solution repeatedly against an unchanged, still-failing cause wastes the round's tool budget —
-     if a rebuild reproduces the exact same failure as the previous one, stop and re-diagnose before rebuilding
-     again.
-  2. Test repository ONLY if the plan changes tests (renames, NEW tests for a difficulty increase, or REMOVED
-     tests for a difficulty decrease) — this includes the oracle-update case above, which counts as a test-repo
-     change even though it isn't test CODE. New tests must pass against the solution and fail against the
-     template, like every other test. A RENAME is never a reason to delete a test — rewrite whatever the test
-     references (class/attribute/method/function names) to match, keeping its logic and difficulty identical; only
-     delete a test as an explicit difficulty-decrease intended change. Some test suites are generic/data-driven: a
-     test file with no hardcoded identifiers that reads expected names from a separate data source (e.g. a JSON
-     "structure oracle") needs ONLY that data source updated for a rename — never delete or rewrite the generic
-     test file itself. Make sure the problem statement no longer references any test you did remove. Any test-repo
-     edit invalidates all previous build evidence — re-run the solution build afterwards.
-  3. Template repository: apply the planned renames/re-theming. The template must still compile but FAIL the
-     tests (functionality unimplemented) — runBuild(TEMPLATE) must not come back green.
-  4. Problem statement LAST via updateProblemStatement, once the final test names are settled: every task marker
-     "[task][...](testName,...)" must reference tests that exist in the test repository. Call listTestCases first
-     to see the exact, current test names — a name remembered from earlier context or guessed from a rename can be
-     stale or subtly wrong, and a task marker referencing a non-existent test silently drops that task's grading
-     link instead of erroring. The problem statement is NOT a file in any repository (there is no
-     problem_statement.md to find or edit) — updateProblemStatement is the only way to change it, and it was
-     already pre-set from the plan, so calling it is only needed when test names changed during transformation or
-     the plan adds NEW tests. For new tests, the order matters: first make the tests build green via runBuild (a
-     build registers new tests with Artemis), then call listTestCases to confirm their exact names, then call
-     updateProblemStatement with task markers referencing them.
-- Every file in each repository is editable, including build files (build.gradle, settings.gradle, pom.xml); only
-  git's own .git directory is off limits. When the plan renames packages, classes, or the project itself, update
-  the build files that reference the old names too — but never change the build tooling, the dependency set, or
-  the plugin configuration.
-- Close the loop on real signals: after edits, run the builds and use getBuildAndTestResults and react to the
-  actual compiler output and failed test names. Never assume an edit worked. When you need to check BOTH the
-  solution and the template (a normal verify or a repair cycle), call runBuilds once instead of two separate
-  runBuild calls — it triggers and waits for both concurrently and is markedly faster. Use runBuild for a single
-  repository, and always for TESTS.
-- Tool errors (no match, multiple matches, invalid path) come back as the tool result — fix the call, do not
-  ignore it or work around it destructively.
-- Before calling finish, self-check the template scaffolding rule with one listFiles(TEMPLATE) call: the file list
-  must match the source template's file list from your prefetched context (renamed, same count) unless the plan
-  explicitly listed a scaffolding change. If TEMPLATE has files the source template didn't have, remove them
-  before finishing — do not rely on remembering this rule from earlier in this prompt without actually checking.
-- When this round's goal is reached (builds verified as required above), call finish with a short summary of what
-  you changed and verified. Do not call finish while a required build is still failing unless you are blocked;
-  then state precisely what is failing and why.
+  1. Solution repository first: apply the planned changes, then runBuild(SOLUTION) until it is green.
+  2. Test repository ONLY if the plan changes tests (renames, or new/removed tests for a difficulty change,
+     including the data-file updates from the "Complete" rule above). A rename is never a reason to delete a
+     test. Any test-repo edit invalidates prior build evidence — re-run the solution build afterwards.
+  3. Template repository: apply the same renames/re-theming. Must still compile but FAIL every test.
+  4. Problem statement LAST via updateProblemStatement, once test names are final: call listTestCases first so
+     every task-marker test name is exact, not remembered or guessed — a stale name silently drops that task's
+     grading link. Only needed when test names changed or the plan added new tests; for new tests, get the build
+     green first (registers them with Artemis), then listTestCases, then updateProblemStatement.
+- Every file is editable, including build files (build.gradle, settings.gradle, pom.xml) — only .git is off
+  limits. Update build files that reference renamed packages/classes/the project name, but never touch the build
+  tooling, dependency set, or plugin configuration.
+- Close the loop on real signals: react to the actual compiler output and failed test names from
+  getBuildAndTestResults, never assume an edit worked. Prefer runBuilds over two separate runBuild calls when
+  checking both solution and template.
+- Tool errors (no match, multiple matches, invalid path) come back as the result — fix the call, don't ignore it.
+- Call finish once builds are verified as required, with a short summary of what changed and was verified. Don't
+  call finish on a failing required build unless blocked — then state exactly what's failing and why.
 
 Repair rounds:
 If the user message contains verification findings from a previous round, they are your work order: fix exactly
