@@ -122,11 +122,11 @@ class GenerationWorkspaceServiceTest {
         ResourceLoaderService resourceLoaderService = mock(ResourceLoaderService.class);
         Resource resource = mock(Resource.class);
         TrackingInputStream input = new TrackingInputStream("class Example {}".getBytes(StandardCharsets.UTF_8));
-        when(resource.getURI()).thenReturn(java.net.URI.create("file:/templates/hyperion/reference/java/tests/test/Example.java"));
+        when(resource.getURI()).thenReturn(java.net.URI.create("file:/templates/java/test/testFiles/behavior/Example.java"));
         when(resource.getInputStream()).thenReturn(input);
         when(resourceLoaderService.getFileResources(any(Path.class))).thenAnswer(invocation -> {
             Path path = invocation.getArgument(0);
-            return path.endsWith("test") ? new Resource[] { resource } : new Resource[0];
+            return path.endsWith("behavior") ? new Resource[] { resource } : new Resource[0];
         });
         ProgrammingExercise exercise = new ProgrammingExercise();
         exercise.setProgrammingLanguage(ProgrammingLanguage.JAVA);
@@ -138,17 +138,17 @@ class GenerationWorkspaceServiceTest {
     }
 
     @Test
-    void readReferenceSample_buildsACompleteCuratedJavaExercise() throws Exception {
+    void readReferenceSample_buildsACompleteReferenceFromTheCanonicalArtemisTemplate() throws Exception {
         ResourceLoaderService resourceLoaderService = mock(ResourceLoaderService.class);
-        Resource statement = resource("file:/templates/hyperion/reference/java/problem-statement.md", "Problem statement");
-        when(resourceLoaderService.getResource(Path.of("templates/hyperion/reference/java/problem-statement.md"))).thenReturn(statement);
+        Resource statement = resource("file:/templates/java/maven_maven/readme", "Problem statement");
+        when(resourceLoaderService.getResource(Path.of("templates/java/maven_maven/readme"))).thenReturn(statement);
         when(resourceLoaderService.getFileResources(any(Path.class))).thenAnswer(invocation -> switch (invocation.<Path>getArgument(0).toString()) {
-            case "templates/hyperion/reference/java/template" -> resources("file:/templates/hyperion/reference/java/template/src/example/ScoreCalculator.java", "starter algorithm",
-                    "file:/templates/hyperion/reference/java/template/.gitignore", "ignored", "file:/templates/hyperion/reference/java/template/../solution/Evil.java", "escaped");
-            case "templates/hyperion/reference/java/solution" ->
-                resources("file:/templates/hyperion/reference/java/solution/src/example/ScoreCalculator.java", "solution algorithm");
-            case "templates/hyperion/reference/java/tests/test" ->
-                resources("file:/templates/hyperion/reference/java/tests/test/de/tum/cit/aet/reference/ScoreCalculatorTest.java", "behavior tests");
+            case "templates/java/exercise" -> resources("file:/templates/java/exercise/src/example/BubbleSort.java", "starter algorithm",
+                    "file:/templates/java/exercise/.gitignore", "ignored", "file:/templates/java/exercise/../solution/Evil.java", "escaped");
+            case "templates/java/solution" -> resources("file:/templates/java/solution/src/example/BubbleSort.java", "solution algorithm");
+            case "templates/java/test/testFiles/behavior" -> resources("file:/templates/java/test/testFiles/behavior/SortingExampleBehaviorTest.java", "behavior tests");
+            case "templates/java/test/testFiles/structural" -> resources("file:/templates/java/test/testFiles/structural/ClassTest.java", "structural tests",
+                    "file:/templates/java/test/testFiles/structural/test.json", "structure oracle");
             default -> new Resource[0];
         });
         ProgrammingExercise exercise = new ProgrammingExercise();
@@ -159,14 +159,16 @@ class GenerationWorkspaceServiceTest {
         Map<String, String> reference = service.readReferenceSample(exercise);
 
         assertThat(reference).containsEntry("reference/problem-statement.md", "Problem statement")
-                .containsEntry("reference/template/src/example/ScoreCalculator.java", "starter algorithm")
-                .containsEntry("reference/solution/src/example/ScoreCalculator.java", "solution algorithm")
-                .containsEntry("reference/tests/test/de/tum/cit/aet/reference/ScoreCalculatorTest.java", "behavior tests").containsKey("reference/README.md");
-        assertThat(reference).doesNotContainKeys("reference/template/.gitignore", "reference/template/../solution/Evil.java", "reference/tests/structural/test.json");
+                .containsEntry("reference/template/src/example/BubbleSort.java", "starter algorithm")
+                .containsEntry("reference/solution/src/example/BubbleSort.java", "solution algorithm")
+                .containsEntry("reference/tests/behavior/SortingExampleBehaviorTest.java", "behavior tests")
+                .containsEntry("reference/tests/structural/ClassTest.java", "structural tests").containsEntry("reference/tests/structural/test.json", "structure oracle")
+                .containsKey("reference/README.md");
+        assertThat(reference).doesNotContainKeys("reference/template/.gitignore", "reference/template/../solution/Evil.java");
     }
 
     @Test
-    void readReferenceSample_loadsTheDedicatedClasspathExerciseWithoutProjectType() {
+    void readReferenceSample_loadsTheExistingArtemisBubbleSortExercise() {
         ResourceLoaderService resourceLoaderService = new ResourceLoaderService(new DefaultResourceLoader(), mock());
         ReflectionTestUtils.setField(resourceLoaderService, "templateFileSystemPath", Optional.empty());
         ProgrammingExercise exercise = new ProgrammingExercise();
@@ -174,24 +176,20 @@ class GenerationWorkspaceServiceTest {
 
         Map<String, String> reference = new GenerationWorkspaceService(mock(), mock(), mock(), resourceLoaderService, tempFileUtilService()).readReferenceSample(exercise);
 
-        assertThat(reference).containsKeys("reference/problem-statement.md", "reference/template/src/de/tum/cit/aet/reference/StandardFeeStrategy.java",
-                "reference/template/src/de/tum/cit/aet/reference/ExpressFeeStrategy.java", "reference/solution/src/de/tum/cit/aet/reference/StandardFeeStrategy.java",
-                "reference/solution/src/de/tum/cit/aet/reference/ExpressFeeStrategy.java", "reference/solution/src/de/tum/cit/aet/reference/FeeStrategy.java",
-                "reference/solution/src/de/tum/cit/aet/reference/ShippingCalculator.java", "reference/tests/test/de/tum/cit/aet/reference/StandardFeeStrategyTest.java",
-                "reference/tests/test/de/tum/cit/aet/reference/ExpressFeeStrategyTest.java", "reference/tests/test/de/tum/cit/aet/reference/ShippingCalculatorTest.java");
-        // The solution introduces FeeStrategy and ShippingCalculator entirely on its own; the template never sees them (mirrors BubbleSort's Context/Policy/SortStrategy shape),
-        // so a multi-class, multi-task design stays available as a worked example instead of only a single-method utility.
-        assertThat(reference).doesNotContainKeys("reference/template/src/de/tum/cit/aet/reference/FeeStrategy.java",
-                "reference/template/src/de/tum/cit/aet/reference/ShippingCalculator.java", "reference/tests/structural/test.json");
-        assertThat(reference.values()).noneMatch(content -> content.contains("${packageName"));
+        assertThat(reference).containsKeys("reference/problem-statement.md", "reference/template/src/${packageNameFolder}/BubbleSort.java",
+                "reference/template/src/${packageNameFolder}/MergeSort.java", "reference/template/src/${packageNameFolder}/Client.java",
+                "reference/solution/src/${packageNameFolder}/BubbleSort.java", "reference/solution/src/${packageNameFolder}/MergeSort.java",
+                "reference/solution/src/${packageNameFolder}/SortStrategy.java", "reference/solution/src/${packageNameFolder}/Context.java",
+                "reference/solution/src/${packageNameFolder}/Policy.java", "reference/solution/src/${packageNameFolder}/Client.java",
+                "reference/tests/behavior/SortingExampleBehaviorTest.java", "reference/tests/structural/ClassTest.java", "reference/tests/structural/test.json");
+        assertThat(reference.keySet()).noneMatch(path -> path.contains("Shipping") || path.contains("FeeStrategy"));
+        assertThat(reference.values()).noneMatch(content -> content.contains("Shipping Fee") || content.contains("ExpressFeeStrategy"));
         String statement = reference.get("reference/problem-statement.md");
-        assertThat(statement).contains("[task][Implement Standard Fee Strategy](testStandardFeeTypical,testStandardFeeZeroWeight)",
-                "[task][Implement Express Fee Strategy](testExpressFeeTypical,testExpressFeeMinimumSurcharge)",
-                "[task][Select Strategy By Weight](testSelectsExpressForHeavyPackages,testSelectsStandardForLightPackages)",
-                "[task][Compute Total Fee](testComputeFeeDelegatesToChosenStrategy)");
-        String calculatorTest = reference.get("reference/tests/test/de/tum/cit/aet/reference/ShippingCalculatorTest.java");
-        assertThat(calculatorTest).contains("a 12kg package should select the express strategy", "a 4kg package should select the standard strategy",
-                "a 12kg package should be charged the express rate plus surcharge");
+        assertThat(statement).contains("[task][Implement Bubble Sort](testBubbleSort)", "[task][Implement Merge Sort](testMergeSort)",
+                "[task][SortStrategy Interface](testClass[SortStrategy],testMethods[SortStrategy])",
+                "[task][Select BubbleSort](testClass[BubbleSort],testUseBubbleSortForSmallList)");
+        assertThat(reference.get("reference/tests/behavior/SortingExampleBehaviorTest.java")).contains("void testBubbleSort()", "void testMergeSort()",
+                "void testUseBubbleSortForSmallList()");
     }
 
     @Test
@@ -263,10 +261,10 @@ class GenerationWorkspaceServiceTest {
         ResourceLoaderService resourceLoaderService = mock(ResourceLoaderService.class);
         Resource resource = mock(Resource.class);
         CountingInputStream input = new CountingInputStream(new byte[100_000]);
-        when(resource.getURI()).thenReturn(java.net.URI.create("file:/templates/hyperion/reference/java/tests/test/Oversized.java"));
+        when(resource.getURI()).thenReturn(java.net.URI.create("file:/templates/java/test/testFiles/behavior/Oversized.java"));
         when(resource.getInputStream()).thenReturn(input);
         when(resourceLoaderService.getFileResources(any(Path.class)))
-                .thenAnswer(invocation -> invocation.<Path>getArgument(0).endsWith("test") ? new Resource[] { resource } : new Resource[0]);
+                .thenAnswer(invocation -> invocation.<Path>getArgument(0).endsWith("behavior") ? new Resource[] { resource } : new Resource[0]);
         ProgrammingExercise exercise = new ProgrammingExercise();
         exercise.setProgrammingLanguage(ProgrammingLanguage.JAVA);
         exercise.setProjectType(ProjectType.PLAIN_MAVEN);
@@ -280,11 +278,11 @@ class GenerationWorkspaceServiceTest {
     @Test
     void readReferenceSample_omitsAnIncompleteWorkedExercise() throws Exception {
         ResourceLoaderService resourceLoaderService = mock(ResourceLoaderService.class);
-        Resource statement = resource("file:/templates/hyperion/reference/java/problem-statement.md", "Problem statement");
-        when(resourceLoaderService.getResource(Path.of("templates/hyperion/reference/java/problem-statement.md"))).thenReturn(statement);
+        Resource statement = resource("file:/templates/java/maven_maven/readme", "Problem statement");
+        when(resourceLoaderService.getResource(Path.of("templates/java/maven_maven/readme"))).thenReturn(statement);
         when(resourceLoaderService.getFileResources(any(Path.class))).thenAnswer(invocation -> switch (invocation.<Path>getArgument(0).toString()) {
-            case "templates/hyperion/reference/java/template" -> resources("file:/templates/hyperion/reference/java/template/src/example/ScoreCalculator.java", "starter");
-            case "templates/hyperion/reference/java/solution" -> resources("file:/templates/hyperion/reference/java/solution/src/example/ScoreCalculator.java", "solution");
+            case "templates/java/exercise" -> resources("file:/templates/java/exercise/src/example/BubbleSort.java", "starter");
+            case "templates/java/solution" -> resources("file:/templates/java/solution/src/example/BubbleSort.java", "solution");
             default -> new Resource[0];
         });
         ProgrammingExercise exercise = new ProgrammingExercise();

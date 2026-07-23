@@ -83,7 +83,10 @@ public class GenerationWorkspaceService {
     /** Sandbox directory holding the worked-sample reference; never extracted or persisted. */
     static final String REFERENCE_DIR = "reference";
 
-    private static final String REFERENCE_SOURCE_DIR = "hyperion/reference/java";
+    /** The canonical Java exercise already used by Artemis when it creates a programming exercise. Hyperion must not maintain a competing example. */
+    private static final String JAVA_TEMPLATE_SOURCE_DIR = "java";
+
+    private static final String JAVA_REFERENCE_PROJECT_SOURCE_DIR = JAVA_TEMPLATE_SOURCE_DIR + "/maven_maven";
 
     private static final String READINESS_SOURCE_DIR = "hyperion/readiness/java";
 
@@ -264,8 +267,8 @@ public class GenerationWorkspaceService {
     }
 
     /**
-     * Reads one compact, complete Java worked example from the classpath templates. The reference includes its statement, starter, solution, and behavioral tests, but excludes
-     * redundant structural tests, build manifests, and generic harness implementation.
+     * Reads the existing Artemis Bubble Sort Java exercise from the classpath templates. The reference is assembled from the same shared and Maven-specific template resources
+     * used to create programming exercises; Hyperion deliberately owns no separate worked exercise.
      *
      * @param exercise the exercise whose language selects the reference
      * @return the reference files keyed by their archive-relative path under {@code reference/}, or empty if none could be read
@@ -278,11 +281,15 @@ public class GenerationWorkspaceService {
         int[] remainingBytes = { MAX_REFERENCE_TOTAL_BYTES - REFERENCE_GUIDE.getBytes(StandardCharsets.UTF_8).length };
         reference.put(REFERENCE_DIR + "/README.md", REFERENCE_GUIDE);
         addReferenceStatement(reference, remainingBytes);
-        addReferenceArea(reference, REFERENCE_SOURCE_DIR + "/template", "template", path -> path.endsWith(".java"), remainingBytes);
-        addReferenceArea(reference, REFERENCE_SOURCE_DIR + "/solution", "solution", path -> path.endsWith(".java"), remainingBytes);
-        addReferenceArea(reference, REFERENCE_SOURCE_DIR + "/tests/test", "tests/test", path -> path.endsWith(".java"), remainingBytes);
+        addReferenceArea(reference, JAVA_TEMPLATE_SOURCE_DIR + "/exercise", "template", path -> path.endsWith(".java"), remainingBytes);
+        addReferenceArea(reference, JAVA_REFERENCE_PROJECT_SOURCE_DIR + "/exercise", "template", path -> path.endsWith(".java"), remainingBytes);
+        addReferenceArea(reference, JAVA_TEMPLATE_SOURCE_DIR + "/solution", "solution", path -> path.endsWith(".java"), remainingBytes);
+        addReferenceArea(reference, JAVA_REFERENCE_PROJECT_SOURCE_DIR + "/solution", "solution", path -> path.endsWith(".java"), remainingBytes);
+        addReferenceArea(reference, JAVA_TEMPLATE_SOURCE_DIR + "/test/testFiles/behavior", "tests/behavior", path -> path.endsWith(".java"), remainingBytes);
+        addReferenceArea(reference, JAVA_TEMPLATE_SOURCE_DIR + "/test/testFiles/structural", "tests/structural", path -> path.endsWith(".java") || path.endsWith(".json"),
+                remainingBytes);
         boolean complete = reference.containsKey(REFERENCE_DIR + "/problem-statement.md") && hasReferenceArea(reference, "template") && hasReferenceArea(reference, "solution")
-                && hasReferenceArea(reference, "tests/test");
+                && hasReferenceArea(reference, "tests/behavior") && hasReferenceArea(reference, "tests/structural");
         return complete ? reference : Map.of();
     }
 
@@ -348,7 +355,7 @@ public class GenerationWorkspaceService {
     }
 
     private void addReferenceStatement(Map<String, String> reference, int[] remainingBytes) {
-        Resource resource = resourceLoaderService.getResource(Path.of("templates", REFERENCE_SOURCE_DIR, "problem-statement.md"));
+        Resource resource = resourceLoaderService.getResource(Path.of("templates", JAVA_REFERENCE_PROJECT_SOURCE_DIR, "readme"));
         String content = readReferenceResource(resource, remainingBytes);
         if (content != null) {
             reference.put(REFERENCE_DIR + "/problem-statement.md", content);

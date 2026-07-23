@@ -15,18 +15,14 @@ import org.springframework.core.io.ClassPathResource;
 class ProblemStatementBindingCheckerTest {
 
     @Test
-    void javaReferenceProblemStatementUsesResolvableProductionTaskBindings() throws IOException {
-        String statement = new ClassPathResource("templates/hyperion/reference/java/problem-statement.md").getContentAsString(StandardCharsets.UTF_8);
+    void canonicalArtemisBubbleSortStatementUsesResolvableProductionTaskBindings() throws IOException {
+        String statement = new ClassPathResource("templates/java/maven_maven/readme").getContentAsString(StandardCharsets.UTF_8);
+        List<String> testNames = List.of("testBubbleSort", "testMergeSort", "testClass[SortStrategy]", "testMethods[SortStrategy]", "testAttributes[Context]",
+                "testMethods[Context]", "testConstructors[Policy]", "testAttributes[Policy]", "testMethods[Policy]", "testClass[MergeSort]", "testUseMergeSortForBigList",
+                "testClass[BubbleSort]", "testUseBubbleSortForSmallList");
 
-        assertThat(ProblemStatementBindingChecker.boundTestNames(statement)).containsExactly("testStandardFeeTypical", "testStandardFeeZeroWeight", "testExpressFeeTypical",
-                "testExpressFeeMinimumSurcharge", "testSelectsExpressForHeavyPackages", "testSelectsStandardForLightPackages", "testComputeFeeDelegatesToChosenStrategy");
-        assertThat(
-                ProblemStatementBindingChecker
-                        .unresolvedTaskBindings(statement,
-                                List.of("testStandardFeeTypical", "testStandardFeeZeroWeight", "testExpressFeeTypical", "testExpressFeeMinimumSurcharge",
-                                        "testSelectsExpressForHeavyPackages", "testSelectsStandardForLightPackages", "testComputeFeeDelegatesToChosenStrategy"),
-                                7, Set.of()))
-                .isEmpty();
+        assertThat(ProblemStatementBindingChecker.boundTestNames(statement)).containsExactlyElementsOf(testNames);
+        assertThat(ProblemStatementBindingChecker.unresolvedTaskBindings(statement, testNames, testNames.size(), Set.of())).isEmpty();
     }
 
     @Test
