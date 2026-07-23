@@ -80,13 +80,23 @@
                     </div>
                     <div class="row">
                         @if (isOwnerOfParticipation() && result() && participation()) {
-                            <jhi-rating class="mt-2 alert alert-info" [result]="$any(result())" [participation]="$any(participation())" />
+                            <jhi-rating
+                                class="mt-2 alert alert-info"
+                                [result]="$any(result())"
+                                [participation]="$any(participation())"
+                                [isOwnerOfParticipation]="isOwnerOfParticipation()"
+                            />
                         }
                     </div>
                 </div>
             }
             @if (fileUploadExercise() && result() && participation() && isAfterAssessmentDueDate() && !examMode()) {
-                <jhi-complaint-student-view [result]="$any(resultWithComplaint() ?? result())" [participation]="$any(participation())" [exercise]="$any(fileUploadExercise())" />
+                <jhi-complaint-student-view
+                    [result]="$any(resultWithComplaint() ?? result())"
+                    [participation]="$any(participation())"
+                    [exercise]="$any(fileUploadExercise())"
+                    [isCurrentUserSubmissionAuthor]="isOwnerOfParticipation()"
+                />
             }
         </div>
         <!--endregion-->
@@ -95,7 +105,7 @@
         <span id="problem-statement" right-header jhiTranslate="artemisApp.exercise.problemStatement"></span>
         <p right-body class="mb-3 markdown-preview">
             @if (fileUploadExercise()?.problemStatement; as problemStatement) {
-                <span [innerHTML]="problemStatement | htmlForMarkdown"></span>
+                <span [jhiMarkdown]="problemStatement"></span>
             }
         </p>
         <!--endregion-->

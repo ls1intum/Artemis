@@ -55,7 +55,7 @@ public record CourseCreateDTO(
         String color, Boolean enrollmentEnabled, @Size(max = 2000) String enrollmentConfirmationMessage, boolean unenrollmentEnabled,
 
         // Course features
-        boolean learningPathsEnabled, boolean studentCourseAnalyticsDashboardEnabled, @JsonDeserialize(using = StrictIntegerDeserializer.class) Integer presentationScore,
+        boolean learningPathsEnabled, @JsonDeserialize(using = StrictIntegerDeserializer.class) Integer presentationScore,
         @JsonDeserialize(using = StrictIntegerDeserializer.class) Integer maxPoints, @Min(0) @Max(5) Integer accuracyOfScores, boolean restrictedAthenaModulesAccess,
         String timeZone, CourseInformationSharingConfiguration courseInformationSharingConfiguration) {
 
@@ -115,7 +115,6 @@ public record CourseCreateDTO(
 
         // Course features
         course.setLearningPathsEnabled(learningPathsEnabled);
-        course.setStudentCourseAnalyticsDashboardEnabled(studentCourseAnalyticsDashboardEnabled);
         course.setPresentationScore(presentationScore);
         course.setMaxPoints(maxPoints);
         course.setAccuracyOfScores(accuracyOfScores);

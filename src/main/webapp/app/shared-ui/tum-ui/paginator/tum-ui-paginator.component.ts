@@ -2,7 +2,6 @@ import { ChangeDetectionStrategy, Component, computed, input, output } from '@an
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faAngleLeft, faAngleRight, faAnglesLeft, faAnglesRight } from '@fortawesome/free-solid-svg-icons';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { TranslateDirective } from 'app/foundation/language/translate.directive';
 
 // Number of page-number buttons shown at once (PrimeNG's default pageLinkSize).
 const PAGE_LINK_SIZE = 5;
@@ -19,7 +18,7 @@ const NAV_BUTTON_CLASSES =
 @Component({
     selector: 'tum-ui-paginator',
     templateUrl: './tum-ui-paginator.component.html',
-    imports: [FaIconComponent, ArtemisTranslatePipe, TranslateDirective],
+    imports: [FaIconComponent, ArtemisTranslatePipe],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TumUiPaginatorComponent {
