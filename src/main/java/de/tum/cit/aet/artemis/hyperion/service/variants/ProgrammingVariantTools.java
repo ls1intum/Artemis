@@ -15,6 +15,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import org.eclipse.jgit.api.errors.GitAPIException;
@@ -82,6 +84,19 @@ class ProgrammingVariantTools implements VariantToolset {
 
     /** Per-round tool-call budget (see {@link #stopNotice()}); higher than the quiz budget — repo work needs more calls. */
     private static final int TOOL_CALL_BUDGET = 60;
+
+    /**
+     * Total character budget for {@link #prefetchContext}'s file-content section (performance lever A4): bounds
+     * how many extra prompt tokens the prefetch can add, so cutting the agent's blind opening reads never turns
+     * into an unbounded token-cost regression on a large exercise.
+     */
+    private static final int MAX_PREFETCH_CONTENT_CHARS = 30_000;
+
+    /** Upper bound on distinct files prefetched, independent of the char budget — keeps the prefetch focused. */
+    private static final int MAX_PREFETCH_FILES = 12;
+
+    /** Matches backtick-quoted identifiers in a ChangePlan's intendedChanges, e.g. "rename `BankAccount` to `CargoBay`". */
+    private static final Pattern BACKTICKED_IDENTIFIER = Pattern.compile("`([^`]+)`");
 
     private final ProgrammingExercise exercise;
 
@@ -175,6 +190,102 @@ class ProgrammingVariantTools implements VariantToolset {
     @Override
     public Map<RepositoryType, String> lastGreenBuildCommits() {
         return Map.copyOf(lastGreenBuildCommits);
+    }
+
+    // Performance lever A4: the transform agent otherwise starts every round blind and spends its first several
+    // calls on listFiles/readFile just to see what it's working with — a ChatClient call has no memory of a
+    // previous round's reads (each round is a fresh conversation), so this cost repeats on every repair round too.
+    @Override
+    public String prefetchContext(ChangePlan plan) {
+        StringBuilder context = new StringBuilder();
+        for (RepositoryType repositoryType : List.of(RepositoryType.SOLUTION, RepositoryType.TEMPLATE, RepositoryType.TESTS)) {
+            String tree = fileTree(repositoryType);
+            if (tree != null) {
+                context.append("=== ").append(repositoryType).append(" file tree ===\n").append(tree).append('\n');
+            }
+        }
+        appendPlannedFileContents(context, plan);
+        return context.toString();
+    }
+
+    /** @return the sorted, newline-joined file paths of a repository, or {@code null} when it could not be read. */
+    private String fileTree(RepositoryType repositoryType) {
+        try {
+            Repository checkout = checkout(repositoryType);
+            return repositoryService.getFiles(checkout).entrySet().stream().filter(entry -> entry.getValue() == FileType.FILE).map(Map.Entry::getKey).sorted()
+                    .collect(Collectors.joining("\n"));
+        }
+        catch (Exception e) {
+            return null;
+        }
+    }
+
+    /**
+     * Appends the full content of files that plausibly need editing — every file across the three repositories
+     * whose content contains one of the backtick-quoted identifiers in the plan's intendedChanges (the format the
+     * planning prompt is instructed to use, e.g. "rename `BankAccount` to `CargoBay`") — bounded by
+     * {@link #MAX_PREFETCH_FILES} and {@link #MAX_PREFETCH_CONTENT_CHARS}. Falls back to tree-only (no content
+     * section) when the plan names no identifiers this way, or the budget is exhausted before a file is added.
+     */
+    private void appendPlannedFileContents(StringBuilder context, ChangePlan plan) {
+        Set<String> identifiers = extractBacktickedIdentifiers(plan.intendedChanges());
+        if (identifiers.isEmpty()) {
+            return;
+        }
+        Set<String> alreadyAdded = new LinkedHashSet<>();
+        int remainingBudget = MAX_PREFETCH_CONTENT_CHARS;
+        outer: for (RepositoryType repositoryType : List.of(RepositoryType.SOLUTION, RepositoryType.TEMPLATE, RepositoryType.TESTS)) {
+            Repository checkout;
+            try {
+                checkout = checkout(repositoryType);
+            }
+            catch (Exception e) {
+                continue;
+            }
+            List<String> paths = repositoryService.getFiles(checkout).entrySet().stream().filter(entry -> entry.getValue() == FileType.FILE).map(Map.Entry::getKey).sorted()
+                    .toList();
+            for (String path : paths) {
+                String key = repositoryType + ":" + path;
+                if (alreadyAdded.contains(key) || alreadyAdded.size() >= MAX_PREFETCH_FILES) {
+                    continue;
+                }
+                String content;
+                try {
+                    content = new String(repositoryService.getFile(checkout, path), StandardCharsets.UTF_8);
+                }
+                catch (IOException e) {
+                    continue;
+                }
+                if (identifiers.stream().noneMatch(content::contains)) {
+                    continue;
+                }
+                if (content.length() > remainingBudget) {
+                    context.append("\n[prefetch budget exhausted — further planned files omitted; read them with readFile if needed]\n");
+                    break outer;
+                }
+                context.append("\n=== ").append(repositoryType).append(":").append(path).append(" (prefetched — plan references an identifier found here) ===\n").append(content)
+                        .append('\n');
+                alreadyAdded.add(key);
+                remainingBudget -= content.length();
+            }
+        }
+    }
+
+    private static Set<String> extractBacktickedIdentifiers(List<String> intendedChanges) {
+        Set<String> identifiers = new LinkedHashSet<>();
+        for (String change : intendedChanges) {
+            if (change == null) {
+                continue;
+            }
+            Matcher matcher = BACKTICKED_IDENTIFIER.matcher(change);
+            while (matcher.find()) {
+                String identifier = matcher.group(1).trim();
+                if (!identifier.isBlank()) {
+                    identifiers.add(identifier);
+                }
+            }
+        }
+        return identifiers;
     }
 
     @Override

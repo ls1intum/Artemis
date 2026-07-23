@@ -123,6 +123,21 @@ public interface VariantToolset {
     }
 
     /**
+     * Prefetched repository context to seed the round's OPENING user message (performance lever A4): each
+     * ChatClient call is a fresh conversation with no memory of a previous round's reads, so a round otherwise
+     * starts blind and spends its first several tool calls just discovering what it's working with — on every
+     * repair round too. Bounded by an internal budget.
+     *
+     * @param plan the round's binding ChangePlan, so an implementation can target the prefetch at what the plan
+     *                 actually intends to change instead of dumping the whole repository
+     * @return prefetched context to append to the opening user message, or empty when there is nothing to
+     *         prefetch (quiz has no repositories) or the plan gives no reliable signal of which files matter
+     */
+    default String prefetchContext(ChangePlan plan) {
+        return "";
+    }
+
+    /**
      * Persists any work the round left unpersisted, called by the loop runner at the end of every round
      * (after the model's final response, before the round result is reported). For programming this
      * commits and pushes uncommitted working-tree edits: only runBuild commits during the round, so a round

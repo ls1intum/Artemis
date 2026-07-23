@@ -109,7 +109,11 @@ public class VariantAgentLoopRunner {
         // The tool catalog is rendered from the actual ToolCallbacks, so a tool added to a toolset is
         // automatically part of the prompt's "these are the ONLY tools" contract — no manual prompt upkeep.
         String systemPrompt = templateService.render(promptTemplate, Map.of("changePlan", renderPlanContract(plan), "availableTools", renderToolCatalog(tools)));
-        String userMessage = repairFeedback == null ? initialUserMessage(plan) : repairUserMessage(repairFeedback);
+        // A4: seed the opening message with prefetched context (file trees + files the plan is likely to touch)
+        // so the round doesn't have to spend its first several calls just discovering what it's working with —
+        // every round is a fresh conversation, so this applies to repair rounds too.
+        String prefetchedContext = toolset.prefetchContext(plan);
+        String userMessage = repairFeedback == null ? initialUserMessage(plan, prefetchedContext) : repairUserMessage(repairFeedback, prefetchedContext);
 
         log.debug("Starting agent round for job {} with {} tools (repair: {})", job.getJobId(), tools.size(), repairFeedback != null);
         ChatResponse chatResponse = callAgent(job, systemPrompt, userMessage, tools);
@@ -178,17 +182,32 @@ public class VariantAgentLoopRunner {
                 + plan.invariants().stream().map(invariant -> "- " + invariant).collect(Collectors.joining("\n"));
     }
 
-    private String initialUserMessage(ChangePlan plan) {
-        return "Apply the change plan to the exercise copy now using your tools. Work through the intended changes in order, "
+    private String initialUserMessage(ChangePlan plan, String prefetchedContext) {
+        String message = "Apply the change plan to the exercise copy now using your tools. Work through the intended changes in order, "
                 + "verify your work with the available validation/build tools, and call finish with a short summary when done. " + "There are " + plan.intendedChanges().size()
                 + " intended change(s). Be efficient: you have a limited tool-call budget for this round — read the current state once, "
                 + "apply each change once, validate once at the end, and then call finish. Do NOT re-read or re-validate after every single edit.";
+        return appendPrefetchedContext(message, prefetchedContext);
     }
 
-    private String repairUserMessage(VerificationReport report) {
+    private String repairUserMessage(VerificationReport report, String prefetchedContext) {
         String findings = report.toAgentFeedback();
-        return "Verification failed with the following findings. Fix exactly these issues using your tools, keeping all invariants intact, "
+        String message = "Verification failed with the following findings. Fix exactly these issues using your tools, keeping all invariants intact, "
                 + "then call finish with a short summary. Be efficient: you have a limited tool-call budget for this round — "
                 + "fix each finding once, validate once, then call finish.\n\nFindings:\n" + findings;
+        return appendPrefetchedContext(message, prefetchedContext);
+    }
+
+    /**
+     * Appends prefetched context (if any) below the round's instructions, clearly labelled as a starting point
+     * rather than ground truth — the agent must still re-read a file before editing it if anything is unclear,
+     * since the prefetch is a best-effort snapshot taken before this round's edits.
+     */
+    private static String appendPrefetchedContext(String message, String prefetchedContext) {
+        if (prefetchedContext == null || prefetchedContext.isBlank()) {
+            return message;
+        }
+        return message + "\n\nFor reference, here is the current repository state (file trees and files the plan likely touches). "
+                + "Use it as a starting point instead of re-reading these files, but re-read anything you are unsure about:\n\n" + prefetchedContext;
     }
 }

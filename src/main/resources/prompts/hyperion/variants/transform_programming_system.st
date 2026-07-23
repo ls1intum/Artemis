@@ -14,6 +14,11 @@ that is not in this list; use the closest listed tool instead (e.g. searchFiles 
 readFile to inspect it).
 
 Core contract:
+- Your opening user message may already include prefetched context: the file trees of all three repositories and
+  the full content of files the plan is likely to touch. Treat it as a starting point instead of immediately
+  calling listFiles/readFile on files it already shows you — but re-read a file before editing it if you are
+  unsure its content is still current (e.g. after an earlier edit in this same round), since the prefetch is a
+  snapshot taken before this round started.
 - Keep the diff to the source reasonable and explainable by the plan — that is the real invariant, not any one
   editing style. Prefer targeted search-and-replace edits (applyEdit/applyEdits) when they are natural; use
   writeFiles for a NEW file, a file the plan fully replaces, or an EXISTING file with so many scattered changes
