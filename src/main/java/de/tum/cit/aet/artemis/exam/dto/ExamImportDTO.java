@@ -10,7 +10,9 @@ import org.jspecify.annotations.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
+import de.tum.cit.aet.artemis.core.config.StrictIntegerDeserializer;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
@@ -24,9 +26,10 @@ import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 public record ExamImportDTO(@NotNull String title, boolean testExam, boolean examWithAttendanceCheck, @NotNull ZonedDateTime visibleDate, @NotNull ZonedDateTime startDate,
         @NotNull ZonedDateTime endDate, @Nullable ZonedDateTime publishResultsDate, @Nullable ZonedDateTime examStudentReviewStart, @Nullable ZonedDateTime examStudentReviewEnd,
         @Nullable Integer gracePeriod, int workingTime, @Nullable String startText, @Nullable String endText, @Nullable String confirmationStartText,
-        @Nullable String confirmationEndText, @Nullable Integer examMaxPoints, @Nullable Boolean randomizeExerciseOrder, @Nullable Integer numberOfExercisesInExam,
-        @Nullable Integer numberOfCorrectionRoundsInExam, @Nullable String examiner, @Nullable String moduleNumber, @Nullable String courseName,
-        @Nullable ZonedDateTime exampleSolutionPublicationDate, @Nullable String channelName, @NotNull Long courseId, @Nullable List<ExerciseGroupImportDTO> exerciseGroups) {
+        @Nullable String confirmationEndText, @Nullable @JsonDeserialize(using = StrictIntegerDeserializer.class) Integer examMaxPoints, @Nullable Boolean randomizeExerciseOrder,
+        @Nullable Integer numberOfExercisesInExam, @Nullable Integer numberOfCorrectionRoundsInExam, @Nullable String examiner, @Nullable String moduleNumber,
+        @Nullable String courseName, @Nullable ZonedDateTime exampleSolutionPublicationDate, @Nullable String channelName, @NotNull Long courseId,
+        @Nullable List<ExerciseGroupImportDTO> exerciseGroups) {
 
     /**
      * Creates an ExamImportDTO from an existing Exam entity.

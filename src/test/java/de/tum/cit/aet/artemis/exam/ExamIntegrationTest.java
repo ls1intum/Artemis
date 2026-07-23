@@ -48,6 +48,8 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 
+import com.fasterxml.jackson.databind.node.ObjectNode;
+
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.service.user.PasswordService;
 import de.tum.cit.aet.artemis.account.util.UserFactory;
@@ -2050,6 +2052,16 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
         final Exam exam = ExamFactory.generateExam(course1);
         exam.setTitle("a".repeat(256)); // Max allowed is 255 characters
         request.postWithoutLocation("/api/exam/courses/" + course1.getId() + "/exam-import", ExamImportDTO.of(exam, course1.getId()), HttpStatus.BAD_REQUEST, null);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testImportExamWithExercises_failsWithDecimalMaxPoints() throws Exception {
+        // A fractional examMaxPoints must be rejected instead of being silently truncated on the import write path.
+        final Exam exam = ExamFactory.generateExam(course1);
+        final ObjectNode body = request.getObjectMapper().valueToTree(ExamImportDTO.of(exam, course1.getId()));
+        body.put("examMaxPoints", 10.5);
+        request.postWithoutLocation("/api/exam/courses/" + course1.getId() + "/exam-import", body, HttpStatus.BAD_REQUEST, null);
     }
 
     @Test
