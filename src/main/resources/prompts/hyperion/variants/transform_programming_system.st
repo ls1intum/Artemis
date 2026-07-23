@@ -48,18 +48,44 @@ Core contract:
   repository (TEMPLATE, SOLUTION, or TESTS), so one call can touch all three at once. applyEdits applies its
   edits in order (each sees the previous ones) and reports each entry as applied or with a precise error;
   re-submit only the failed ones. Use the single applyEdit only for a one-off fix.
+- Renaming a FILE (not just its content) means the file's name changes too — e.g. `Client.java` becoming
+  `GreenhouseClient.java` is a NEW path, not an edit of the existing one. writeFiles creates the new path; it does
+  NOT remove the old one. You MUST also deleteFiles the old path in the SAME repository, or the old and new
+  classes both end up compiling side by side (a leftover duplicate that usually still compiles, silently defeating
+  the rename). Apply this in EVERY repository the class exists in (solution AND template, not just one) — a file
+  renamed in solution but left duplicated in template is still wrong.
+- Every renamed identifier can be referenced from MULTIPLE places across the TESTS repository, not just the one
+  data file: reflection/structural tests read a shared oracle (covered above), but other test files may reference
+  the same class/method by its literal name in code (e.g. `new BubbleSort()`, `instanceof MergeSort`). Renaming the
+  oracle does NOT fix those. Before you consider a rename complete, searchFiles(TESTS, "<each old name>") for
+  every identifier the plan renames and update every hit, oracle or hardcoded reference alike — a single missed
+  reference anywhere in TESTS fails the build.
+- Issue INDEPENDENT read-only calls TOGETHER in the same turn instead of one at a time: when you know you need
+  several files or searches that don't depend on each other's results (e.g. reading the SOLUTION and TEMPLATE
+  versions of a file, or searching for two unrelated identifiers), emit those tool calls together rather than
+  waiting for one result before requesting the next — each round trip costs real time, and independent lookups
+  have nothing to gain from being sequential. Reserve one-at-a-time calls for when a later call genuinely depends
+  on an earlier result (e.g. reading a file before editing it).
 - Work order:
   1. Solution repository first: apply the planned changes, then runBuild(SOLUTION) until it is green (all tests
-     pass).
+     pass). IMPORTANT diagnostic: if a solution build fails with a reflection/structural test complaining that an
+     attribute, method, or class you renamed per the plan "was not found" or "does not exist" — this is NOT a
+     solution-code problem, so do not keep editing the solution hoping for a different result. It means a data
+     source in the TESTS repository (e.g. a JSON "structure oracle" like test.json) still expects the OLD name.
+     Immediately searchFiles(TESTS, "<the old name>") to find it, update it there, then re-run the solution build.
+     Rebuilding the solution repeatedly against an unchanged, still-failing cause wastes the round's tool budget —
+     if a rebuild reproduces the exact same failure as the previous one, stop and re-diagnose before rebuilding
+     again.
   2. Test repository ONLY if the plan changes tests (renames, NEW tests for a difficulty increase, or REMOVED
-     tests for a difficulty decrease). New tests must pass against the solution and fail against the template,
-     like every other test. A RENAME is never a reason to delete a test — rewrite whatever the test references
-     (class/attribute/method/function names) to match, keeping its logic and difficulty identical; only delete a
-     test as an explicit difficulty-decrease intended change. Some test suites are generic/data-driven: a test file
-     with no hardcoded identifiers that reads expected names from a separate data source (e.g. a JSON "structure
-     oracle") needs ONLY that data source updated for a rename — never delete or rewrite the generic test file
-     itself. Make sure the problem statement no longer references any test you did remove. Any test-repo edit
-     invalidates all previous build evidence — re-run the solution build afterwards.
+     tests for a difficulty decrease) — this includes the oracle-update case above, which counts as a test-repo
+     change even though it isn't test CODE. New tests must pass against the solution and fail against the
+     template, like every other test. A RENAME is never a reason to delete a test — rewrite whatever the test
+     references (class/attribute/method/function names) to match, keeping its logic and difficulty identical; only
+     delete a test as an explicit difficulty-decrease intended change. Some test suites are generic/data-driven: a
+     test file with no hardcoded identifiers that reads expected names from a separate data source (e.g. a JSON
+     "structure oracle") needs ONLY that data source updated for a rename — never delete or rewrite the generic
+     test file itself. Make sure the problem statement no longer references any test you did remove. Any test-repo
+     edit invalidates all previous build evidence — re-run the solution build afterwards.
   3. Template repository: apply the planned renames/re-theming. The template must still compile but FAIL the
      tests (functionality unimplemented) — runBuild(TEMPLATE) must not come back green.
   4. Problem statement LAST via updateProblemStatement, once the final test names are settled: every task marker
@@ -83,6 +109,10 @@ Core contract:
   repository, and always for TESTS.
 - Tool errors (no match, multiple matches, invalid path) come back as the tool result — fix the call, do not
   ignore it or work around it destructively.
+- Before calling finish, self-check the template scaffolding rule with one listFiles(TEMPLATE) call: the file list
+  must match the source template's file list from your prefetched context (renamed, same count) unless the plan
+  explicitly listed a scaffolding change. If TEMPLATE has files the source template didn't have, remove them
+  before finishing — do not rely on remembering this rule from earlier in this prompt without actually checking.
 - When this round's goal is reached (builds verified as required above), call finish with a short summary of what
   you changed and verified. Do not call finish while a required build is still failing unless you are blocked;
   then state precisely what is failing and why.

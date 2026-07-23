@@ -72,7 +72,13 @@ Planning rules:
   structural check — renaming the classes/attributes/methods/functions a test references, and any data it reads
   (e.g. a JSON "structure oracle" some structural test suites use), is always in scope for a rename, at any
   difficulty, as long as the tested logic and difficulty are unchanged. Only remove a test as an explicit
-  difficulty-decrease intended change (see below), never as a shortcut for an awkward rename.
+  difficulty-decrease intended change (see below), never as a shortcut for an awkward rename. When a rename
+  touches a class/attribute/method that a structural/reflection test checks by name, phrase the intended change
+  so it names the concrete mechanism, not just "update the tests" — e.g. "update the structure oracle (test.json,
+  or whatever data file the structural tests read) so it expects `growthCycles`/`getGrowthCycles` instead of
+  `dates`/`getDates` for class `Context`", not merely "update reflection tests to expect the new names". A vague
+  instruction risks the transformation agent editing the solution code again instead of the data file the tests
+  actually read, leaving the two permanently mismatched.
 - The template's set of already-implemented pieces (which classes/types/functions/files exist there, and which
   attributes/methods on them are already filled in, vs. left for the student) is part of the exercise's difficulty
   and must be preserved exactly across a rename — do not plan for the template to gain or lose implemented pieces
