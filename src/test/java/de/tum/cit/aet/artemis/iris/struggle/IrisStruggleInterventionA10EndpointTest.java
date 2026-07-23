@@ -230,6 +230,25 @@ class IrisStruggleInterventionA10EndpointTest extends AbstractIrisIntegrationTes
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void episodeOutcome_interrupted_persists() throws Exception {
+        // A delivered episode ended by an exercise switch: INTERRUPTED must be accepted by the enum column and stored.
+        var student1 = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        var session = irisChatSessionService.getCurrentSessionOrCreateIfNotExists(IrisChatMode.PROGRAMMING_EXERCISE_CHAT, exerciseId(), student1);
+        var msg = new IrisMessage();
+        msg.addContent(new IrisTextMessageContent("hint"));
+        msg.setOrigin(IrisMessageOrigin.PROACTIVE_STRUGGLE);
+        msg.setProactiveEpisodeId("ep-interrupted");
+        irisMessageService.saveMessage(msg, session, IrisMessageSender.LLM);
+
+        var result = request.putWithResponseBody("/api/iris/chat/exercises/" + exerciseId() + "/episodes/ep-interrupted/proactive-outcome", IrisProactiveOutcome.INTERRUPTED,
+                EpisodeOutcomeAppliedDTO.class, HttpStatus.OK);
+
+        assertThat(result.applied()).isTrue();
+        assertThat(irisMessageRepository.findEpisodeOutcomes("ep-interrupted")).containsExactly(IrisProactiveOutcome.INTERRUPTED);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void episodeOutcome_twoRows_smallestIdIsStableTarget_secondCallIsNoop() throws Exception {
         // Real H2 test: two persisted proactive rows for the same episodeId.
         // Verifies: (a) outcome lands on smallest-id row; (b) second row insertion does not change target;

@@ -75,4 +75,18 @@ class PyrisDTOServiceStruggleChatHistoryTest {
         // A reply 30 min later is too late to count as engagement with this hint -> pending, not engaged.
         assertThat(firstText(out.get(0))).isEqualTo("(proactive hint) early hint");
     }
+
+    @Test
+    void interruptedHintGetsDerivedTag_neutralOrIgnored() {
+        // INTERRUPTED has no explicit branch (like RECOVERED/ABANDONED): it falls through to the derived tag.
+        // Alone -> neutral; superseded by a later proactive hint -> ignored.
+        var interrupted = msg(IrisMessageSender.LLM, IrisMessageOrigin.PROACTIVE_STRUGGLE, IrisProactiveOutcome.INTERRUPTED, null, "left mid-hint");
+        var later = msg(IrisMessageSender.LLM, IrisMessageOrigin.PROACTIVE_STRUGGLE, null, null, "new hint");
+
+        var neutral = new PyrisDTOService(null).toPyrisMessageDTOListForStruggle(List.of(interrupted));
+        assertThat(firstText(neutral.get(0))).isEqualTo("(proactive hint) left mid-hint");
+
+        var superseded = new PyrisDTOService(null).toPyrisMessageDTOListForStruggle(List.of(interrupted, later));
+        assertThat(firstText(superseded.get(0))).isEqualTo("(proactive hint, ignored) left mid-hint");
+    }
 }

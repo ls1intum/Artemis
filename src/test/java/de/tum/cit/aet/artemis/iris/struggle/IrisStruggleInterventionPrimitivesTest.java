@@ -312,6 +312,21 @@ class IrisStruggleInterventionPrimitivesTest {
         assertThat(applied).isFalse();
     }
 
+    @Test
+    void writeEpisodeOutcome_interrupted_writesToFirstRow() {
+        // A delivered episode interrupted by an exercise switch persists INTERRUPTED on the smallest-id row.
+        var target = new IrisMessage();
+        target.setId(700L);
+        when(irisMessageRepository.findFirstByProactiveEpisodeIdOrderByIdAsc("ep-int")).thenReturn(Optional.of(target));
+        when(irisMessageRepository.findEpisodeOutcomes("ep-int")).thenReturn(List.of());
+        when(irisMessageRepository.setProactiveOutcomeIfNull(700L, IrisProactiveOutcome.INTERRUPTED)).thenReturn(1);
+
+        boolean applied = service.writeEpisodeOutcome("ep-int", IrisProactiveOutcome.INTERRUPTED);
+
+        assertThat(applied).isTrue();
+        verify(irisMessageRepository).setProactiveOutcomeIfNull(700L, IrisProactiveOutcome.INTERRUPTED);
+    }
+
     // ---- deleteSupersededProactiveMessage ----
     // The guard logic (proactive-origin AND null outcome AND user ownership) lives in ONE atomic SQL statement, so it
     // cannot be meaningfully exercised against a mock; the guards are verified end-to-end in the integration test
