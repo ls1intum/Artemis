@@ -1,10 +1,10 @@
-// Structure matched to PrimeNG's p-inputgroupaddon (Aura): a centered box, 2.5rem min-width, 0.5rem padding.
-// Colors + borders live on the host class (surface tokens); only the geometry is here.
+// A centered addon box. Colors + borders live on the host class (surface tokens); only the geometry is here,
+// sized from the shared spacing token.
 :host {
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 0.5rem;
-    min-width: 2.5rem;
+    padding: calc(var(--spacing) * 2); // 0.5rem
+    min-width: calc(var(--spacing) * 10); // 2.5rem
     white-space: nowrap;
 }

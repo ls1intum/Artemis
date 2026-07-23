@@ -107,6 +107,12 @@ export class AuditsComponent implements OnInit {
                     to: this.toDate(),
                 },
             });
+        } else {
+            // Incomplete date range (e.g. a date was just deselected): drop the previously loaded results so the
+            // table and paginator don't linger with stale, un-clickable pages — the paginator's page change is a
+            // no-op while the range is incomplete, which otherwise stranded the user on a dead multi-page view.
+            this.audits.set([]);
+            this.totalItems.set(0);
         }
     }
 

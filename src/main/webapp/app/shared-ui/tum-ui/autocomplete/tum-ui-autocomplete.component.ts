@@ -21,17 +21,17 @@ import { TemplatePortal } from '@angular/cdk/portal';
 import { TumUiOverlayService } from 'app/shared-ui/tum-ui/overlay/tum-ui-overlay.service';
 import { TumUiChipComponent } from 'app/shared-ui/tum-ui/chip/tum-ui-chip.component';
 
-/** Emitted when the debounced typed query is ready — mirrors PrimeNG's `AutoCompleteCompleteEvent`. */
+/** Emitted when the debounced typed query is ready. */
 export interface TumUiAutoCompleteCompleteEvent {
     originalEvent?: Event;
     query: string;
 }
-/** Emitted when a suggestion is chosen — mirrors PrimeNG's `AutoCompleteSelectEvent`. */
+/** Emitted when a suggestion is chosen. */
 export interface TumUiAutoCompleteSelectEvent {
     originalEvent?: Event;
     value: unknown;
 }
-/** Emitted when a selected value (chip) is removed — mirrors PrimeNG's `AutoCompleteUnselectEvent`. */
+/** Emitted when a selected value (chip) is removed. */
 export interface TumUiAutoCompleteUnselectEvent {
     originalEvent?: Event;
     value: unknown;
@@ -42,21 +42,17 @@ export interface TumUiAutoCompleteUnselectEvent {
 let nextAutoCompleteId = 0;
 
 /**
- * Owned autocomplete / combobox on Angular CDK overlay, part of the tum-aet-ui kit (future @tumaet/ui-angular).
+ * Autocomplete / combobox built on the Angular CDK overlay, part of the tum-aet-ui kit (future @tumaet/ui-angular).
  *
- * Drop-in replacement for PrimeNG's `p-autocomplete`, built for the multi-select-with-chips shape the admin user
- * form uses (organization / group picker): a `role="combobox"` text input inside a bordered field, the selected
- * values rendered as removable {@link TumUiChipComponent}s in front of it, and a CDK-overlay `role="listbox"` of
- * suggestions. Styled from the exact Aura `autocomplete` tokens (multi-container border / radius / focus, overlay
- * shadow / radius, option hover / selected) so it renders like the widget it replaces, dark-mode-correct for free.
- * No PrimeNG / Bootstrap dependency; rides the shared {@link TumUiOverlayService}.
+ * Supports single-select and multi-select-with-chips: a `role="combobox"` text input inside a bordered field, the
+ * selected values rendered as removable {@link TumUiChipComponent}s in front of it, and a CDK-overlay
+ * `role="listbox"` of suggestions. No third-party UI dependency; rides the shared {@link TumUiOverlayService}.
  *
- * The parent drives suggestions asynchronously exactly like `p-autocomplete`: typing (debounced by `delay`, gated
- * by `minLength`) emits {@link completeMethod} with `{ query }`; the parent filters and pushes the result into
- * `[suggestions]`. Choosing a suggestion appends a chip, writes the value through the {@link ControlValueAccessor},
- * and emits {@link onSelect} with `{ value }`; removing a chip (remove button, or Backspace on an empty input)
- * emits {@link onUnselect} with `{ value }`. Event payload shapes match PrimeNG so the admin handlers migrate with
- * only an import swap. Works unchanged with `[(ngModel)]` and reactive `formControlName`.
+ * The parent drives suggestions asynchronously: typing (debounced by `delay`, gated by `minLength`) emits
+ * {@link completeMethod} with `{ query }`; the parent filters and pushes the result into `[suggestions]`. Choosing a
+ * suggestion appends a chip, writes the value through the {@link ControlValueAccessor}, and emits {@link onSelect}
+ * with `{ value }`; removing a chip (remove button, or Backspace on an empty input) emits {@link onUnselect} with
+ * `{ value }`. Works with `[(ngModel)]` and reactive `formControlName`.
  */
 @Component({
     selector: 'tum-ui-autocomplete',

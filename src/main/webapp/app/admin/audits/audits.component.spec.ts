@@ -130,6 +130,26 @@ describe('AuditsComponent', () => {
             expect(comp.fromDate()).toBe('');
             expect(comp.canLoad()).toBe(false);
         });
+
+        it('drops the loaded results when a date is deselected, so the table and paginator do not linger with dead pages', () => {
+            // Load a page of results whose total spans several pages.
+            const headers = new HttpHeaders().append('X-Total-Count', '42');
+            const audit = new Audit({ remoteAddress: '127.0.0.1', sessionId: '123' }, 'user', '20140101', 'AUTHENTICATION_SUCCESS');
+            vi.spyOn(service, 'query').mockReturnValue(of(new HttpResponse({ body: [audit], headers })));
+            comp.ngOnInit();
+            expect(comp.audits()).toHaveLength(1);
+            expect(comp.totalItems()).toBe(42);
+
+            // Deselecting the "from" date makes the range incomplete: transition() can no longer navigate/reload, so
+            // the stale rows + total must be cleared — otherwise the table and a multi-page paginator stay visible
+            // while the paginator's page change is a no-op (reported on the Audits page after deselecting a date).
+            comp.updateFromDate(undefined);
+            comp.transition();
+
+            expect(comp.canLoad()).toBe(false);
+            expect(comp.audits()).toEqual([]);
+            expect(comp.totalItems()).toBe(0);
+        });
     });
 
     describe('By default, on init', () => {
