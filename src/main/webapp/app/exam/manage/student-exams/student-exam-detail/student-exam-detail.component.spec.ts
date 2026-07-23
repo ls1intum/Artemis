@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { StudentExamDetailComponent } from 'app/exam/manage/student-exams/student-exam-detail/student-exam-detail.component';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Course } from 'app/course/shared/entities/course.model';
@@ -27,8 +26,6 @@ import { TranslateService } from '@ngx-translate/core';
 import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
 
 describe('StudentExamDetailComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let studentExamDetailComponentFixture: ComponentFixture<StudentExamDetailComponent>;
     let studentExamDetailComponent: StudentExamDetailComponent;
     let course: Course;

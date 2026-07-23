@@ -5,12 +5,13 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { NgClass, NgStyle } from '@angular/common';
 import { CloseCircleComponent } from 'app/shared-ui/close-circle/close-circle.component';
+import { ButtonModule } from 'primeng/button';
 
 @Component({
     selector: 'jhi-alert-overlay',
     templateUrl: './alert-overlay.component.html',
     styleUrls: ['./alert-overlay.component.scss'],
-    imports: [FaIconComponent, TranslateDirective, NgClass, CloseCircleComponent, NgStyle],
+    imports: [FaIconComponent, TranslateDirective, NgClass, CloseCircleComponent, NgStyle, ButtonModule],
 })
 export class AlertOverlayComponent implements OnDestroy {
     alertService = inject(AlertService);

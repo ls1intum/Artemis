@@ -9,6 +9,29 @@ buildscript {
             force "com.github.jknack:handlebars:4.5.3"
         }
     }
+    // The custom OpenAPI generator (generatorName "angular22", https://github.com/ls1intum/openapi-generator-angular22)
+    // is only needed when regenerating the Angular client locally via `./gradlew openApiGenerate`. The
+    // generated client is committed, so CI never regenerates it and must not try to resolve this
+    // artifact. The generator + Maven Local are therefore added to the buildscript classpath solely for
+    // that task (so the org.openapi.generator plugin discovers it via ServiceLoader during regeneration).
+    //
+    // The generator is published to Maven Central (no authentication needed). To regenerate the client
+    // it is resolved from either:
+    //   1. Maven Central — the released artifact, resolved with no credentials. OR
+    //   2. Maven Local — clone the generator repo and run `./gradlew publishToMavenLocal` there; this
+    //      build-from-source path needs no registry and works before a version reaches Central.
+    if (gradle.startParameter.taskNames.any { it.toLowerCase().contains("openapigenerate") }) {
+        repositories {
+            // Build-from-source fallback — checked first so a locally-built generator is picked up
+            // without network access (and works before a release is on Maven Central).
+            mavenLocal()
+            // Released generator artifact, published to Maven Central and resolved without authentication.
+            mavenCentral()
+        }
+        dependencies {
+            classpath "de.tum.cit.aet:openapi-generator-angular22:1.0.0"
+        }
+    }
     dependencies {
         // Force the entire Jackson 2.x family to 2.22.0 on the build-script / plugin classpath too.
         // The org.openapi.generator and springdoc plugins otherwise drag in older jackson-databind
@@ -57,7 +80,7 @@ envProperties.each { key, value ->
 }
 
 group = "de.tum.cit.aet.artemis"
-version = "9.6"
+version = "9.8"
 description = "Interactive Learning with Individual Feedback"
 
 java {

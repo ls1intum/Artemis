@@ -1,6 +1,5 @@
 import { TestBed } from '@angular/core/testing';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { Router } from '@angular/router';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 import { LocalCIGuard } from 'app/localci/shared/localci-guard.service';
@@ -9,8 +8,6 @@ import { PROFILE_LOCALCI } from 'app/app.constants';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 
 describe('LocalCIGuard', () => {
-    setupTestBed({ zoneless: true });
-
     let guard: LocalCIGuard;
     let router: Router;
     let profileService: ProfileService;

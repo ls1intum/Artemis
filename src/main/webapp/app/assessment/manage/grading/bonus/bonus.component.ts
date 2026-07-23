@@ -25,6 +25,7 @@ import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { toEntity } from 'app/assessment/shared/entities/grading-scale-dto.model';
+import { Course } from 'app/course/shared/entities/course.model';
 
 export enum BonusStrategyOption {
     GRADES,
@@ -100,8 +101,8 @@ export class BonusComponent implements OnInit {
     readonly bonusToGradeStepsDTO = signal<GradeStepsDTO | undefined>(undefined);
 
     readonly isLoading = signal(false);
-    private courseId: number;
-    private examId: number;
+    private courseId!: number; // set in ngOnInit() from route params
+    private examId!: number; // set in ngOnInit() from route params
 
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
@@ -160,7 +161,16 @@ export class BonusComponent implements OnInit {
             ),
             this.gradingService.findWithBonusGradeTypeForInstructor(this.state).pipe(
                 tap((gradingScalesDto) => {
-                    this.sourceGradingScales.set(gradingScalesDto.body?.resultsOnPage.map((dto) => toEntity(dto)) ?? []);
+                    this.sourceGradingScales.set(
+                        gradingScalesDto.body?.resultsOnPage.map((dto) => {
+                            const scale = toEntity(dto);
+                            // The search response carries the owning course/exam only as a flat title/maxPoints pair inside
+                            // gradeSteps; reconstruct a minimal course so the dropdown label and the bonus example calculation
+                            // can read them.
+                            scale.course = Object.assign(new Course(), { title: dto.gradeSteps.title, maxPoints: dto.gradeSteps.maxPoints });
+                            return scale;
+                        }) ?? [],
+                    );
                 }),
             ),
             this.gradingService.findGradeSteps(this.courseId, this.examId).pipe(

@@ -1,4 +1,5 @@
 import { Component, HostListener, OnDestroy, OnInit, inject, signal, viewChildren } from '@angular/core';
+import { CdkScrollable } from '@angular/cdk/scrolling';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -66,6 +67,7 @@ type GenerateParticipationStatus = 'generating' | 'failed' | 'success';
     templateUrl: './exam-participation.component.html',
     styleUrls: ['./exam-participation.scss'],
     imports: [
+        CdkScrollable,
         TestRunRibbonComponent,
         ExamParticipationCoverComponent,
         NgClass,
@@ -151,7 +153,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     readonly attendanceChecked = signal(false);
 
     readonly examSummaryButtonSecondsLeft = signal(10);
-    examSummaryButtonTimer: ReturnType<typeof setInterval>;
+    examSummaryButtonTimer?: ReturnType<typeof setInterval>;
     readonly showExamSummary = signal(false);
 
     readonly exerciseIndex = signal(0);
@@ -181,7 +183,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
 
     // autoTimerInterval in seconds
     readonly autoSaveTimer = signal(0);
-    autoSaveInterval: number;
+    autoSaveInterval?: number;
 
     private synchronizationAlert = new Subject<void>();
 
@@ -401,7 +403,11 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
             // Immediately re-send any answers that were restored from local storage but not yet saved to the server,
             // instead of waiting for the next autosave cycle. Submissions that fail again stay isSynced=false and are
             // retried by the autosave timer. Guarded by studentExam because triggerSave dereferences the current exam.
-            this.triggerSave(false);
+            // Force the save (forceSave=true): the recovery re-send is a plain HTTP request and must NOT be gated on the
+            // WebSocket `connected()` state, which right after a reload has often not re-established yet (especially in a
+            // multi-node cluster). Gating it there would silently defer the recovery to the next autosave cycle, which is
+            // exactly the answer-loss window this recovery path exists to close.
+            this.triggerSave(true);
         }
     }
 
@@ -756,7 +762,18 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
             // Create new object to make change detection work, otherwise the date will not update
             this.studentExam.set({ ...this.studentExam(), workingTime: event.newWorkingTime });
             this.examParticipationService.currentlyLoadedStudentExam.next(this.studentExam());
-            this.individualStudentEndDate.set(dayjs(startDate).add(this.studentExam().workingTime!, 'seconds'));
+            // A real-exam event carries the exam's (possibly changed) start/end date; apply it so the pre-start
+            // countdown and the start-based content visibility (isActive/isVisible) recompute. A test-exam event omits
+            // the schedule (the exam dates are only its availability window, not the student's conduction window), so
+            // the exam dates are left untouched and the end date is derived from the student's own start below.
+            if (event.newStartDate) {
+                this.exam.set({ ...this.exam(), startDate: event.newStartDate, endDate: event.newEndDate ?? this.exam().endDate });
+            }
+            // Derive the end date from the new start when present, otherwise from the start captured when the
+            // subscription was created (the exam start for real exams, the student's startedDate for test exams),
+            // instead of a stale value.
+            const effectiveStartDate = event.newStartDate ?? startDate;
+            this.individualStudentEndDate.set(dayjs(effectiveStartDate).add(this.studentExam().workingTime!, 'seconds'));
             this.individualStudentEndDateWithGracePeriod.set(this.individualStudentEndDate().clone().add(this.exam().gracePeriod!, 'seconds'));
             this.liveEventsService.acknowledgeEvent(event, false);
         });

@@ -248,10 +248,6 @@
                     "hint": "Maximum number of automatic runs per day for this course. Leave empty to use the global default."
                 }
             },
-            "dashboard": {
-                "label": "Student Course Analytics Dashboard Enabled",
-                "tooltip": "Activates the course analytics dashboard for the course for students, tutors and instructors. The dashboard enables users to track their progress and performance in the course."
-            },
             "restrictedAthenaModulesAccess": {
                 "label": "Access to Restricted Athena Modules Enabled",
                 "tooltip": "If this option is selected, the course's exercises can also use restricted Athena modules for feedback generation."

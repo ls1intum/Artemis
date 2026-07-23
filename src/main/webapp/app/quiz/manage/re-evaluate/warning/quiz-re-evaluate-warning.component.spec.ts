@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { of, throwError } from 'rxjs';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
@@ -21,8 +20,6 @@ import { QuizQuestionType, ScoringType } from 'app/quiz/shared/entities/quiz-que
 import { ArtemisNavigationUtilService } from 'app/foundation/util/navigation.utils';
 
 describe('QuizExercise Re-evaluate Warning Component', () => {
-    setupTestBed({ zoneless: true });
-
     let comp: QuizReEvaluateWarningComponent;
     let fixture: ComponentFixture<QuizReEvaluateWarningComponent>;
     let quizService: QuizExerciseService;

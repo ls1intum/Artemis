@@ -1,6 +1,5 @@
 import { expect, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ResultComponent } from 'app/exercise/result/result.component';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
@@ -34,7 +33,6 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
 
 describe('ResultComponent', () => {
-    setupTestBed({ zoneless: true });
     let fixture: ComponentFixture<ResultComponent>;
     let component: ResultComponent;
 
@@ -121,7 +119,7 @@ describe('ResultComponent', () => {
         fixture.detectChanges();
 
         expect(component.result()).toEqual(result1);
-        expect(component.textColorClass()).toBe('text-secondary');
+        expect(component.textColorClass()).toBe('text-muted-color');
         expect(component.resultIconClass()).toEqual(faQuestionCircle);
         expect(component.resultString()).toBe('artemisApp.result.resultString.programmingShort (artemisApp.result.preliminary)');
     });
@@ -139,7 +137,7 @@ describe('ResultComponent', () => {
         fixture.detectChanges();
 
         expect(component.result()).toEqual(result1);
-        expect(component.textColorClass()).toBe('text-danger');
+        expect(component.textColorClass()).toBe('text-state-danger');
         expect(component.resultIconClass()).toEqual(faTimesCircle);
         expect(component.resultString()).toBe('artemisApp.result.resultString.short');
         expect(component.templateStatus()).toBe(ResultTemplateStatus.HAS_RESULT);
@@ -158,7 +156,7 @@ describe('ResultComponent', () => {
         fixture.detectChanges();
 
         expect(component.result()).toEqual(result1);
-        expect(component.textColorClass()).toBe('text-secondary');
+        expect(component.textColorClass()).toBe('text-muted-color');
         expect(component.resultIconClass()).toEqual(faCheckCircle);
         expect(component.resultString()).toBe('artemisApp.result.resultString.short (artemisApp.result.preliminary)');
         expect(component.templateStatus()).toBe(ResultTemplateStatus.HAS_RESULT);
@@ -177,7 +175,7 @@ describe('ResultComponent', () => {
         fixture.detectChanges();
 
         expect(component.result()).toEqual(result1);
-        expect(component.textColorClass()).toBe('text-secondary');
+        expect(component.textColorClass()).toBe('text-muted-color');
         expect(component.resultIconClass()).toEqual(faCheckCircle);
         expect(component.resultString()).toBe('artemisApp.result.resultString.automaticAIFeedbackSuccessful (artemisApp.result.preliminary)');
         expect(component.templateStatus()).toBe(ResultTemplateStatus.HAS_RESULT);
@@ -196,7 +194,7 @@ describe('ResultComponent', () => {
         fixture.detectChanges();
 
         expect(component.result()).toEqual(result1);
-        expect(component.textColorClass()).toBe('text-secondary');
+        expect(component.textColorClass()).toBe('text-muted-color');
         expect(component.resultIconClass()).toEqual(faCheckCircle);
         expect(component.resultString()).toBe('artemisApp.result.resultString.short (artemisApp.result.preliminary)');
     });
@@ -369,7 +367,7 @@ describe('ResultComponent', () => {
             fixture.componentRef.setInput('missingResultInfo', MissingResultInformation.FAILED_PROGRAMMING_SUBMISSION_ONLINE_IDE);
             fixture.detectChanges();
             expect(component.templateStatus()).toBe(ResultTemplateStatus.MISSING);
-            expect(query('.text-danger')).not.toBeNull();
+            expect(query('.text-state-danger')).not.toBeNull();
         });
 
         it('NO_RESULT → renders the no-result text and no score', () => {
@@ -377,7 +375,7 @@ describe('ResultComponent', () => {
             fixture.detectChanges();
             expect(component.templateStatus()).toBe(ResultTemplateStatus.NO_RESULT);
             expect(query('#result-score')).toBeNull();
-            expect(query('.text-body-secondary')).not.toBeNull();
+            expect(query('.text-muted-color')).not.toBeNull();
         });
 
         it('NO_RESULT → still rendered as no-result (no score) when ungraded results are shown', () => {
@@ -386,7 +384,7 @@ describe('ResultComponent', () => {
             fixture.detectChanges();
             expect(component.templateStatus()).toBe(ResultTemplateStatus.NO_RESULT);
             expect(query('#result-score')).toBeNull();
-            expect(query('.text-body-secondary')).not.toBeNull();
+            expect(query('.text-muted-color')).not.toBeNull();
         });
 
         it('HAS_RESULT with a rated result and showBadge → graded badge', () => {

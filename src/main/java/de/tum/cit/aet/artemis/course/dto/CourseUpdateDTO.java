@@ -60,8 +60,8 @@ public record CourseUpdateDTO(
         String courseInformationSharingMessagingCodeOfConduct,
 
         // Course features
-        boolean learningPathsEnabled, boolean studentCourseAnalyticsDashboardEnabled, Integer presentationScore, Integer maxPoints, @Min(0) @Max(5) Integer accuracyOfScores,
-        boolean restrictedAthenaModulesAccess, String timeZone, CourseInformationSharingConfiguration courseInformationSharingConfiguration, boolean onboardingDone,
+        boolean learningPathsEnabled, Integer presentationScore, Integer maxPoints, @Min(0) @Max(5) Integer accuracyOfScores, boolean restrictedAthenaModulesAccess,
+        String timeZone, CourseInformationSharingConfiguration courseInformationSharingConfiguration, boolean onboardingDone,
 
         // Atlas auto-orchestration configuration (per-course): kill switch plus nullable overrides.
         boolean autoOrchestratorEnabled, @Min(1) Integer debounceWindowSecondsOverride, @Min(1) Integer maxDailyOrchestrationOverride) {
@@ -119,7 +119,6 @@ public record CourseUpdateDTO(
 
         // Course features
         course.setLearningPathsEnabled(learningPathsEnabled);
-        course.setStudentCourseAnalyticsDashboardEnabled(studentCourseAnalyticsDashboardEnabled);
         course.setPresentationScore(presentationScore);
         course.setMaxPoints(maxPoints);
         course.setAccuracyOfScores(accuracyOfScores);
@@ -174,8 +173,8 @@ public record CourseUpdateDTO(
                 course.getLanguage(), course.getDefaultProgrammingLanguage(), course.getMaxComplaints(), course.getMaxTeamComplaints(), course.getMaxComplaintTimeDays(),
                 course.getMaxRequestMoreFeedbackTimeDays(), course.getMaxComplaintTextLimit(), course.getMaxComplaintResponseTextLimit(), course.getColor(), course.getCourseIcon(),
                 course.isEnrollmentEnabled(), course.getEnrollmentConfirmationMessage(), course.isUnenrollmentEnabled(), course.getCourseInformationSharingMessagingCodeOfConduct(),
-                course.getLearningPathsEnabled(), course.getStudentCourseAnalyticsDashboardEnabled(), course.getPresentationScore(), course.getMaxPoints(),
-                course.getAccuracyOfScores(), course.getRestrictedAthenaModulesAccess(), course.getTimeZone(), course.getCourseInformationSharingConfiguration(),
-                course.isOnboardingDone(), course.getAutoOrchestratorEnabled(), course.getDebounceWindowSecondsOverride(), course.getMaxDailyOrchestrationOverride());
+                course.getLearningPathsEnabled(), course.getPresentationScore(), course.getMaxPoints(), course.getAccuracyOfScores(), course.getRestrictedAthenaModulesAccess(),
+                course.getTimeZone(), course.getCourseInformationSharingConfiguration(), course.isOnboardingDone(), course.getAutoOrchestratorEnabled(),
+                course.getDebounceWindowSecondsOverride(), course.getMaxDailyOrchestrationOverride());
     }
 }

@@ -325,7 +325,27 @@
             "dev": "Development",
             "test": "Test Server"
         },
-        "item-count": "Showing {{first}} to {{second}} of {{total}} items"
+        "item-count": "Showing {{first}} to {{second}} of {{total}} items",
+        "paginator": {
+            "first": "First page",
+            "previous": "Previous page",
+            "next": "Next page",
+            "last": "Last page",
+            "rowsPerPage": "Rows per page"
+        },
+        "datePicker": {
+            "open": "Open calendar",
+            "clear": "Clear",
+            "done": "Done",
+            "time": "Time",
+            "hour": "Hour",
+            "minute": "Minute",
+            "incrementHour": "Increment hour",
+            "decrementHour": "Decrement hour",
+            "incrementMinute": "Increment minute",
+            "decrementMinute": "Decrement minute",
+            "invalid": "Please enter a valid date and time."
+        }
     },
     "entity": {
         "actions": "Actions",
@@ -369,6 +389,8 @@
             "submitSuccessfulAlert": "Your submission was successful! You can change your submission or wait for your feedback.",
             "submitDueDateMissedAlert": "Your submission was successful! You can change your submission or wait for your feedback. As you missed the due date, your score will not be counted.",
             "retry": "Retry",
+            "next": "Next",
+            "previous": "Previous",
             "reset": "Reset",
             "re-evaluate": "Re-evaluate",
             "close": "Close",
@@ -400,6 +422,7 @@
             "ldap": "Sync from LDAP",
             "notUndoable": "This action cannot be undone!",
             "discardChanges": "Discard changes",
+            "unsavedChanges": "Unsaved changes",
             "goBack": "Go back",
             "search": "Search",
             "select": "Select",
@@ -466,6 +489,7 @@
         },
         "timeZoneWarning": "You are currently in the {{ timeZone }} time zone.",
         "dateMissingOrNotValid": "'{{labelName}}' is missing/invalid",
+        "dateMissingOrNotValidGeneric": "The date is missing or invalid",
         "startDateError": "'Start of working time' should be between 'Visible from' and 'End of working time'",
         "endDateError": "'End of working time' should be later than 'Start of working time'",
         "visibleDateWarningError": "'Visible from' is set too early. We recommend setting it within 4 hours before the 'Start of working time'.",
@@ -489,7 +513,6 @@
         "competencies": "Competencies",
         "learningPath": "Learning Path",
         "tutorialGroups": "Tutorial Groups",
-        "dashboard": "Dashboard",
         "iris": "Iris",
         "exercise": "Exercise details",
         "exercises": "Exercises",

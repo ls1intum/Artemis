@@ -128,6 +128,9 @@ class Lti13LaunchFilterTest {
         doAnswer(getClaimAnswer).when(idToken).getClaim(any());
         doAnswer(getClaimAnswer).when(oidcUser).getClaim(any());
 
+        // normalizeLegacyIrisTargetLink is a pass-through for non-legacy target links; return the argument unchanged
+        doAnswer(invocation -> invocation.getArgument(0)).when(lti13Service).normalizeLegacyIrisTargetLink(any());
+
         // OIDC authentication token setup
         oidcToken = new OidcAuthenticationToken(oidcUser, null, "some-registration", "some-state");
 

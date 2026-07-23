@@ -29,7 +29,7 @@ export class ComplaintsFormComponent implements OnInit {
     readonly isCurrentUserSubmissionAuthor = input(false);
     readonly onSubmit = output<void>();
     maxComplaintsPerCourse = 1;
-    maxComplaintTextLimit: number;
+    maxComplaintTextLimit = 0;
     complaintText?: string;
     course?: Course;
 

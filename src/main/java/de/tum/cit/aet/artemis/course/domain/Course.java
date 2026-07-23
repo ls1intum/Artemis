@@ -201,9 +201,6 @@ public class Course extends DomainObject {
     @Column(name = "learning_paths_enabled", nullable = false)
     private boolean learningPathsEnabled = false;
 
-    @Column(name = "student_course_analytics_dashboard_enabled", nullable = false)
-    private boolean studentCourseAnalyticsDashboardEnabled = false;
-
     /**
      * Per-course Atlas auto-orchestration configuration (kill switch plus debounce / daily-cap
      * overrides), held in its own table so the Atlas-owned configuration does not widen this entity
@@ -754,14 +751,6 @@ public class Course extends DomainObject {
 
     public void setLearningPathsEnabled(boolean learningPathsEnabled) {
         this.learningPathsEnabled = learningPathsEnabled;
-    }
-
-    public boolean getStudentCourseAnalyticsDashboardEnabled() {
-        return studentCourseAnalyticsDashboardEnabled;
-    }
-
-    public void setStudentCourseAnalyticsDashboardEnabled(boolean studentCourseAnalyticsDashboardEnabled) {
-        this.studentCourseAnalyticsDashboardEnabled = studentCourseAnalyticsDashboardEnabled;
     }
 
     @JsonIgnore

@@ -3,7 +3,6 @@ import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { Component } from '@angular/core';
 import { By } from '@angular/platform-browser';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { CustomPatternValidatorDirective } from './custom-pattern-validator.directive';
 
@@ -13,12 +12,10 @@ import { CustomPatternValidatorDirective } from './custom-pattern-validator.dire
     imports: [FormsModule, CustomPatternValidatorDirective],
 })
 class CustomPatternComponent {
-    pattern: string;
+    pattern!: string;
 }
 
 describe('CustomPatternValidatorDirective', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<CustomPatternComponent>;
     let component = new CustomPatternComponent();
 

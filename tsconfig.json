@@ -10,26 +10,23 @@
         "declaration": false,
         "experimentalDecorators": true,
         "removeComments": true,
-        "strict": false,
+        // "strict" enables the full strict family: alwaysStrict, strictNullChecks, strictBindCallApply,
+        // strictFunctionTypes, strictPropertyInitialization, noImplicitAny, noImplicitThis, useUnknownInCatchVariables.
+        "strict": true,
+        // The following are NOT part of "strict" and are enabled additionally:
         "noImplicitReturns": true,
         "noImplicitOverride": true,
-        "strictFunctionTypes": true,
         "noUnusedLocals": true,
         "noFallthroughCasesInSwitch": true,
-        "noImplicitAny": true,
-        "strictNullChecks": true,
-        "strictBindCallApply": true,
-        "noImplicitThis": true,
-        "useUnknownInCatchVariables": true,
         "resolveJsonModule": true,
         "skipLibCheck": true,
         "outDir": "build/resources/main/static/app",
         "forceConsistentCasingInFileNames": true,
         "lib": ["es2024", "dom"],
         "typeRoots": ["node_modules/@types"],
-        "baseUrl": "./",
         "paths": {
-            "app/*": ["src/main/webapp/app/*"]
+            "app/*": ["./src/main/webapp/app/*"],
+            "src/*": ["./src/*"]
         },
         "importHelpers": true
     },
@@ -43,7 +40,15 @@
         "preserveWhitespaces": true,
         "extendedDiagnostics": {
             "checks": {
-                "optionalChainNotNullable": "suppress"
+                // Suppressed: with `noUncheckedIndexedAccess` off, index access (`arr[i]`, `record[key]`) is
+                // typed non-nullable, so the ~380 guarding `?.` on index results are flagged as redundant even
+                // though they are required runtime guards. Enabling this would require a `noUncheckedIndexedAccess`
+                // migration first.
+                "optionalChainNotNullable": "suppress",
+                // Enforced: every `??` whose left side is non-nullable has been removed (genuine dead code) or,
+                // where the guard is needed at runtime (index access / a lazily-initialized signal), moved into a
+                // typed component method so the fallback is expressed in TS rather than the template.
+                "nullishCoalescingNotNullable": "error"
             }
         }
     },

@@ -2,9 +2,9 @@ import { Component, computed, input, output } from '@angular/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faBook, faCalendarAlt, faGraduationCap, faHashtag, faLevelDownAlt, faReply, faTrophy } from '@fortawesome/free-solid-svg-icons';
 import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
-import { GlobalSearchResult } from 'app/openapi/model/globalSearchResult';
+import { GlobalSearchResult } from 'app/openapi/model/global-search-result';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { HtmlForMarkdownPipe } from 'app/foundation/pipes/html-for-markdown.pipe';
+import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
 import dayjs from 'dayjs/esm';
 
 /** Format for displaying dates in search results, e.g. "Apr 19, 14:30" */
@@ -88,7 +88,7 @@ function truncateDescription(description: string, maxLength: number = DESCRIPTIO
 @Component({
     selector: 'jhi-global-search-result-item',
     standalone: true,
-    imports: [FaIconComponent, ArtemisTranslatePipe, HtmlForMarkdownPipe],
+    imports: [FaIconComponent, ArtemisTranslatePipe, MarkdownDirective],
     templateUrl: './search-result-item.component.html',
     styleUrls: ['./search-result-item.component.scss'],
 })

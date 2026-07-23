@@ -40,7 +40,7 @@ import { ComplaintsStudentViewComponent } from 'app/assessment/overview/complain
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { UpperCasePipe } from '@angular/common';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { HtmlForMarkdownPipe } from 'app/foundation/pipes/html-for-markdown.pipe';
+import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
 import { onTextEditorTab } from 'app/foundation/util/text.utils';
 import { TranslateService } from '@ngx-translate/core';
 
@@ -62,7 +62,7 @@ import { TranslateService } from '@ngx-translate/core';
         FaIconComponent,
         UpperCasePipe,
         ArtemisTranslatePipe,
-        HtmlForMarkdownPipe,
+        MarkdownDirective,
     ],
 })
 export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeactivate {
@@ -104,12 +104,12 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
     // answer is the text that is stored in the user interface
     readonly answer = signal<string>('');
     // indicates if the assessment due date is in the past. the assessment will not be loaded and displayed to the student if it is not.
-    isAfterAssessmentDueDate: boolean;
+    isAfterAssessmentDueDate = false;
     readonly examMode = signal(false);
     readonly isGeneratingFeedback = signal(false);
 
     // indicates, that it is an exam exercise and the publishResults date is in the past
-    isAfterPublishDate: boolean;
+    isAfterPublishDate = false;
     readonly isOwnerOfParticipation = signal<boolean>(false);
     readonly isReadOnlyWithShowResult = signal(false);
     // Icon
@@ -121,7 +121,7 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
     // used in the html template
     protected readonly onTextEditorTab = onTextEditorTab;
 
-    participationUpdateListener: Subscription;
+    participationUpdateListener?: Subscription;
     readonly sortedHistoryResults = signal<Result[]>([]);
     hasAthenaResultForLatestSubmission = false;
     submissionId: number | undefined;

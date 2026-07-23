@@ -248,10 +248,6 @@
                     "hint": "Maximale Anzahl automatischer Läufe pro Tag für diesen Kurs. Leer lassen, um den globalen Standardwert zu verwenden."
                 }
             },
-            "dashboard": {
-                "label": "Übersichtsseite zur Kursanalyse für Studierende aktiviert",
-                "tooltip": "Aktiviert die Übersichtsseite zur Kursanalyse für Studierende, Tutor:innen und Lehrende. Die Übersichtsseite ermöglicht es den Nutzern, ihren Fortschritt und ihre Leistung im Kurs zu verfolgen."
-            },
             "restrictedAthenaModulesAccess": {
                 "label": "Zugriff auf geschützte Athena-Module aktiviert",
                 "tooltip": "Wenn diese Option ausgewählt ist, können die Übungen des Kurses auch geschützte Athena-Module für die Feedbackerstellung verwenden."

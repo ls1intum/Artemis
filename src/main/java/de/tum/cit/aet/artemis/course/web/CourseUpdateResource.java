@@ -166,10 +166,6 @@ public class CourseUpdateResource {
                 throw new BadRequestAlertException("You are not allowed to change the access to restricted Athena modules of a course", Course.ENTITY_NAME,
                         "restrictedAthenaModulesAccessCannotChange", true);
             }
-            // instructors are not allowed to change the dashboard settings
-            if (existingCourse.getStudentCourseAnalyticsDashboardEnabled() != courseUpdateDTO.studentCourseAnalyticsDashboardEnabled()) {
-                throw new BadRequestAlertException("You are not allowed to change the dashboard settings of a course", Course.ENTITY_NAME, "dashboardSettingsCannotChange", true);
-            }
             // instructors are not allowed to change the Atlas auto-orchestration settings (admin-only)
             boolean autoOrchestrationChanged = existingCourse.getAutoOrchestratorEnabled() != courseUpdateDTO.autoOrchestratorEnabled()
                     || !Objects.equals(existingCourse.getDebounceWindowSecondsOverride(), courseUpdateDTO.debounceWindowSecondsOverride())
