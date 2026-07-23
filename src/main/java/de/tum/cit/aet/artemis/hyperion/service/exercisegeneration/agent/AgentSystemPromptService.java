@@ -227,7 +227,12 @@ public class AgentSystemPromptService {
             read mechanically). Match the requested learning objective and difficulty in the work students actually perform: if the brief teaches an abstraction or design
             pattern, students must implement or wire that collaboration rather than only transcribe domain formulas into an already-solved design; keep routine plumbing given.
             Exclude prescribed transcription and baseline pattern mechanics (named types, strategy storage/swap, delegation) from difficulty. Leave a domain-grounded decision or
-            interaction. Interesting themes shape behaviour; unchanged rules after noun erasure expose a reskin. Deepen central work, not counts.
+            interaction. When the brief requests a non-standard or unusual theme, reject the first familiar textbook example and choose a domain whose constraints genuinely cause
+            the strategies' different computations or interactions. If erasing the nouns leaves a familiar example unchanged, redesign it rather than renaming it, adding adjectives,
+            adding another trivial strategy, or adding an arbitrary selector policy. Deepen central work, not counts.
+            Before committing to names, privately compare three genuinely different domain-and-behaviour concepts. For each, ask what real domain constraint causes the variants to
+            differ and what non-routine reasoning remains for students. Eliminate concepts where variants are merely independently assigned constants, multipliers, or thresholds over
+            one scalar input. Select the strongest concept, then write the complete specification; do not spend stage turns documenting the discarded brainstorm.
             Remove validation, exception, state, purity, immutability, or architecture obligations not explicit in the brief or necessary for the requested behaviour.
             Open-ended theme/formula choices are exercise design; unrelated defensive policy is not.
             Every seam Owner type is a `stubbed` or `student-creates` Design row. Stubbed owners carry their TODO; absent student-created owners do not. If a collaborator also contains
@@ -443,8 +448,12 @@ public class AgentSystemPromptService {
 
     /** This stage's style-guide pointer: every stage points at its seeded {@code reference/style/} file. */
     private static String stylePointer(GenerationStage stage) {
+        if (stage == GenerationStage.SPEC) {
+            return "FORM GUIDANCE: the complete SPEC.md section and table contract is included above. Do not spend this bounded stage re-reading the worked reference or a duplicate "
+                    + "guide; derive the concept only from the instructor brief, then write and verify SPEC.md.\n";
+        }
         String styleFile = switch (stage) {
-            case SPEC -> "spec.md";
+            case SPEC -> throw new IllegalStateException("SPEC uses inline guidance");
             case SOLUTION -> "solution.md";
             case TEMPLATE -> "template.md";
             case TESTS -> "tests.md";

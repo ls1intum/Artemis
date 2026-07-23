@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration
 
 import java.time.Duration;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -65,8 +66,13 @@ public class StagedGenerationRunner {
 
     private static final Logger log = LoggerFactory.getLogger(StagedGenerationRunner.class);
 
-    /** Qualitative repair can expose one more concrete inconsistency; three evaluator/optimizer passes remain bounded while giving the contract a fair chance to converge. */
-    private static final int MAX_SEMANTIC_SPEC_REFINEMENTS = 3;
+    /**
+     * One conceptual rewrite and one focused follow-up are enough to respond to qualitative review without turning specification authoring into an open-ended patch loop.
+     */
+    private static final int MAX_SEMANTIC_SPEC_REFINEMENTS = 2;
+
+    /** A complete SPEC rewrite plus verification fits in five turns; the two allowed refinements exactly consume the pool's ten-turn headroom. */
+    private static final int SEMANTIC_SPEC_REFINEMENT_BUDGET = 5;
 
     private static final List<GenerationStage> STAGE_ORDER = List.of(GenerationStage.SPEC, GenerationStage.SOLUTION, GenerationStage.TEMPLATE, GenerationStage.TESTS,
             GenerationStage.STATEMENT);
@@ -259,10 +265,12 @@ public class StagedGenerationRunner {
         // CONTINUOUS carries one logical conversation across every stage (and re-entry) via AgentLoopRunner#runSession; FRESH never populates this (stays null forever), so
         // every stage starts a brand-new conversation via the plain run() call, exactly as before this feature existed.
         List<Message> conversation = null;
+        List<Message> archivedConversation = new ArrayList<>();
         int reentriesRemaining = MAX_TOTAL_REENTRIES;
         int semanticSpecRefinementsUsed = 0;
         boolean semanticSpecCorrectionUsed = false;
         String semanticSpecFeedback = null;
+        boolean freshSemanticSpecAttempt = false;
 
         for (int index = 0; index < STAGE_ORDER.size(); index++) {
             GenerationStage stage = STAGE_ORDER.get(index);
@@ -271,7 +279,7 @@ public class StagedGenerationRunner {
                 continue;
             }
             if (cancelled.getAsBoolean()) {
-                return finish(exercise, AgentLoopResult.Status.CANCELLED, totalTurns, lastFinalMessage, conversation);
+                return finish(exercise, AgentLoopResult.Status.CANCELLED, totalTurns, lastFinalMessage, archivedConversation, conversation);
             }
             if (Duration.between(startedAt, clock.get()).compareTo(WALL_CLOCK_BUDGET) > 0) {
                 log.info("Staged generation wall-clock budget exceeded before stage {} for exercise {}; stopping with {} stage(s) completed", stage, exercise.getId(), index);
@@ -293,7 +301,19 @@ public class StagedGenerationRunner {
             boolean stagePassed = false;
             while (!stagePassed) {
                 AgentLoopResult result;
-                if (continuous && gateFeedback != null) {
+                if (freshSemanticSpecAttempt) {
+                    String userPrompt = freshSemanticSpecPrompt(sourceBrief, gateFeedback);
+                    if (continuous) {
+                        AgentLoopRunner.AgentLoopSession session = agentLoopRunner.runSession(systemPrompt, null, userPrompt, tools, allocation, cancelled, usageSink, progress);
+                        result = session.result();
+                        conversation = session.conversation();
+                    }
+                    else {
+                        result = agentLoopRunner.run(systemPrompt, userPrompt, tools, allocation, cancelled, usageSink, progress);
+                    }
+                    freshSemanticSpecAttempt = false;
+                }
+                else if (continuous && gateFeedback != null) {
                     // Re-entry, CONTINUOUS: the carried conversation already has everything up to the failed attempt; just hand back the gate report as the next turn.
                     String retryUserPrompt = "The previous attempt at this stage did not pass its gate. Address this feedback, then continue:\n\n" + gateFeedback;
                     AgentLoopRunner.AgentLoopSession session = agentLoopRunner.runSession(systemPrompt, conversation, retryUserPrompt, tools, allocation, cancelled, usageSink,
@@ -319,10 +339,13 @@ public class StagedGenerationRunner {
                 rollover = Math.max(0, allocation - result.turns());
 
                 if (result.status() == AgentLoopResult.Status.ERROR || result.status() == AgentLoopResult.Status.CANCELLED) {
-                    return finish(exercise, result.status(), totalTurns, lastFinalMessage, conversation);
+                    return finish(exercise, result.status(), totalTurns, lastFinalMessage, archivedConversation, conversation);
                 }
                 lastStatus = result.status();
 
+                if (stage == GenerationStage.SPEC) {
+                    materializeReturnedSpecification(baseTools, sandbox, sessionId, result.finalMessage());
+                }
                 GateEvaluation gateEvaluation = evaluateGate(stage, baseTools, sandbox, sessionId, exercise, seedTestsFiles, lastTestsReport);
                 StageCheckResult gate = gateEvaluation.result();
                 if (stage != GenerationStage.SPEC || !gate.passed()) {
@@ -344,27 +367,40 @@ public class StagedGenerationRunner {
                                 emit(progress, "Reviewing the specification against the instructor brief");
                                 SpecFidelityCriticService.SpecificationReview review = specificationReviewer.reviewSpecification(sourceBrief, specSnapshot, usageSink, cancelled);
                                 if (cancelled.getAsBoolean()) {
-                                    return finish(exercise, AgentLoopResult.Status.CANCELLED, totalTurns, lastFinalMessage, conversation);
+                                    return finish(exercise, AgentLoopResult.Status.CANCELLED, totalTurns, lastFinalMessage, archivedConversation, conversation);
                                 }
                                 if (!review.complete()) {
                                     String reviewFailure = "Specification fidelity review was unavailable, so generation stopped before freezing an unchecked contract. Retry "
                                             + "generation; no downstream artifacts were produced from this specification.";
                                     log.warn("Specification review was unavailable for exercise {}; stopping before contract approval", exercise.getId());
                                     emit(progress, reviewFailure);
-                                    return finish(exercise, AgentLoopResult.Status.ERROR, totalTurns, appendGateReport(lastFinalMessage, reviewFailure), conversation);
+                                    return finish(exercise, AgentLoopResult.Status.ERROR, totalTurns, appendGateReport(lastFinalMessage, reviewFailure), archivedConversation,
+                                            conversation);
                                 }
                                 else if (!review.accepted()) {
                                     String reviewFeedback = review.feedback();
                                     log.info("Specification review rejected the candidate for exercise {}: {}", exercise.getId(), reviewFeedback);
                                     if (semanticSpecRefinementsUsed >= MAX_SEMANTIC_SPEC_REFINEMENTS || remainingPool < MIN_STAGE_BUDGET) {
-                                        return finish(exercise, AgentLoopResult.Status.ERROR, totalTurns, appendGateReport(lastFinalMessage, reviewFeedback), conversation);
+                                        return finish(exercise, AgentLoopResult.Status.ERROR, totalTurns, appendGateReport(lastFinalMessage, reviewFeedback), archivedConversation,
+                                                conversation);
                                     }
                                     semanticSpecRefinementsUsed++;
                                     semanticSpecCorrectionUsed = false;
                                     semanticSpecFeedback = reviewFeedback;
                                     gateFeedback = semanticSpecRefinementPrompt(reviewFeedback);
+                                    if (review.conceptualReworkRequired()) {
+                                        // The rejected plan is not useful context for a conceptual replacement. Remove both anchors: the carried conversation and the rejected
+                                        // workspace artifact. Keep the old conversation only for the audit transcript, never as model context. The next bounded attempt receives
+                                        // the raw brief and property-level diagnosis, but no reviewer-authored design.
+                                        if (conversation != null) {
+                                            archivedConversation.addAll(conversation);
+                                        }
+                                        conversation = null;
+                                        baseTools.writeFile("SPEC.md", "");
+                                        freshSemanticSpecAttempt = true;
+                                    }
                                     emit(progress, "Stage " + (index + 1) + "/" + STAGE_ORDER.size() + ": refining the specification after brief-fidelity review");
-                                    allocation = allocateStageBudget(STAGE_BASE_BUDGETS[index], 0, remainingPool);
+                                    allocation = allocateStageBudget(SEMANTIC_SPEC_REFINEMENT_BUDGET, 0, remainingPool);
                                     continue;
                                 }
                             }
@@ -391,7 +427,7 @@ public class StagedGenerationRunner {
                     semanticSpecCorrectionUsed = true;
                     gateFeedback = semanticSpecCorrectionPrompt(semanticSpecFeedback, gate.observation());
                     emit(progress, "Stage " + (index + 1) + "/" + STAGE_ORDER.size() + ": completing the specification refinement after its consistency check");
-                    allocation = allocateStageBudget(STAGE_BASE_BUDGETS[index], 0, remainingPool);
+                    allocation = allocateStageBudget(SEMANTIC_SPEC_REFINEMENT_BUDGET, 0, remainingPool);
                     continue;
                 }
                 // SPEC gets two private retries that do NOT draw from the shared re-entry budget: one can be consumed merely materializing SPEC.md when the model returned its
@@ -403,11 +439,11 @@ public class StagedGenerationRunner {
                     // The SPEC gate is the contract checkpoint. A generic repair can safely continue after later gates because the authoritative verifier repeats their checks,
                     // but it cannot reconstruct a specification that was never approved. Fail only that case closed; otherwise preserve the existing bounded repair path.
                     AgentLoopResult.Status exitStatus = stage == GenerationStage.SPEC ? AgentLoopResult.Status.ERROR : lastStatus;
-                    return finish(exercise, exitStatus, totalTurns, appendGateReport(lastFinalMessage, gate.observation()), conversation);
+                    return finish(exercise, exitStatus, totalTurns, appendGateReport(lastFinalMessage, gate.observation()), archivedConversation, conversation);
                 }
                 // Cooperative cancellation between the failed attempt and its re-entry (the outer for-loop already checked before this stage's first attempt).
                 if (cancelled.getAsBoolean()) {
-                    return finish(exercise, AgentLoopResult.Status.CANCELLED, totalTurns, lastFinalMessage, conversation);
+                    return finish(exercise, AgentLoopResult.Status.CANCELLED, totalTurns, lastFinalMessage, archivedConversation, conversation);
                 }
                 stageReentriesUsed++;
                 if (stage != GenerationStage.SPEC) {
@@ -427,7 +463,7 @@ public class StagedGenerationRunner {
                 }
             }
         }
-        return finish(exercise, lastStatus, totalTurns, lastFinalMessage, conversation);
+        return finish(exercise, lastStatus, totalTurns, lastFinalMessage, archivedConversation, conversation);
     }
 
     private static String semanticSpecRefinementPrompt(String reviewFeedback) {
@@ -435,12 +471,33 @@ public class StagedGenerationRunner {
                 + """
 
 
-                        Resolve only the cited defects in SPEC.md as one coherent contract, not as a sequence of independent word substitutions. Preserve every domain term, public identifier, and accepted design
-                        choice that the findings do not require changing. A reviewer's example is diagnostic guidance, never text or a theme to copy. If a grounded finding truly requires
-                        changing the domain or public names, rewrite the whole file consistently in one write_file call. Otherwise make the smallest targeted edits. Keep every required
+                        Re-evaluate the cited defects against the instructor brief before editing. Distinguish a LOCAL defect (for example one wrong worked result or an isolated
+                        inconsistency) from a CONCEPTUAL rejection of the chosen domain, learning fit, or central student work.
+
+                        For a conceptual rejection, the current plan is not an asset to preserve. Return to the brief and replace the hollow domain or behaviour, then rewrite all of
+                        SPEC.md coherently in one write_file call. Before writing, privately compare three replacement domain-and-behaviour concepts: identify the real domain constraint
+                        that makes their variants differ and the non-routine reasoning left to students. Reject concepts where variants are merely independently assigned constants,
+                        multipliers, or thresholds over one scalar input. Renaming the same textbook problem, adding themed adjectives, adding another trivial strategy, or inventing
+                        an arbitrary selector/validation rule is not a conceptual repair. Choose one domain-motivated interaction that leaves the requested level of reasoning after
+                        routine Strategy wiring and prescribed transcription are subtracted.
+
+                        For a local defect, preserve unaffected domain terms, public identifiers, ownership, and accepted design choices and make the smallest coherent repair. Reviewer
+                        feedback deliberately supplies no replacement theme, identifier, API, or formula; derive the repair independently from the brief. In either case keep every required
                         section, exact Design status token, bare Testing Strategy Owner type, seam ID, and hidden yes/no decision valid. Resolve every cited defect, then call the structured
                         verify tool before finishing.
                         """;
+    }
+
+    private static String freshSemanticSpecPrompt(String sourceBrief, @Nullable String reviewFeedback) {
+        return """
+                Create a fresh specification from the instructor brief below. The previous concept was rejected at the learning-fit review and has been discarded; do not recover,
+                patch, rename, or reskin it. Independently compare three domain-and-behaviour concepts as directed by the stage instructions, then write one complete new SPEC.md.
+                The reviewer supplies only a diagnosis, never a replacement design. Resolve that diagnosis without adding unrelated complexity, and call the structured verify tool
+                before finishing.
+
+                INSTRUCTOR BRIEF:
+                """ + sourceBrief.strip() + "\n\nREVIEW DIAGNOSIS:\n"
+                + (reviewFeedback == null ? "The previous concept did not satisfy the requested learning fit." : reviewFeedback);
     }
 
     private static String semanticSpecCorrectionPrompt(String reviewFeedback, String mechanicalFeedback) {
@@ -456,8 +513,13 @@ public class StagedGenerationRunner {
     }
 
     /** Builds the outcome on every exit path and writes the session transcript (best-effort, no-op unless a transcript directory is configured). */
-    private StagedRunOutcome finish(ProgrammingExercise exercise, AgentLoopResult.Status status, int totalTurns, String finalMessage, @Nullable List<Message> conversation) {
-        transcriptWriter.write(exercise.getId(), "attempt-1-staged-" + status.name().toLowerCase(Locale.ROOT), conversation);
+    private StagedRunOutcome finish(ProgrammingExercise exercise, AgentLoopResult.Status status, int totalTurns, String finalMessage, List<Message> archivedConversation,
+            @Nullable List<Message> conversation) {
+        List<Message> transcriptConversation = new ArrayList<>(archivedConversation);
+        if (conversation != null) {
+            transcriptConversation.addAll(conversation);
+        }
+        transcriptWriter.write(exercise.getId(), "attempt-1-staged-" + status.name().toLowerCase(Locale.ROOT), transcriptConversation);
         return new StagedRunOutcome(new AgentLoopResult(status, totalTurns, finalMessage), conversation);
     }
 
@@ -568,6 +630,28 @@ public class StagedGenerationRunner {
         catch (RuntimeException e) {
             log.debug("Staged generation read failed ({}): {}", String.join(" ", command), e.getMessage());
             return "";
+        }
+    }
+
+    /**
+     * Models occasionally return the complete requested specification in their final text instead of invoking {@code write_file}. Preserve that authored content verbatim and
+     * still subject it to the normal mechanical and semantic gates rather than spending a full retry merely moving the same bytes into the workspace.
+     */
+    private void materializeReturnedSpecification(SandboxAgentTools baseTools, InteractiveSandbox sandbox, String sessionId, @Nullable String finalMessage) {
+        if (!execRead(sandbox, sessionId, "cat", GenerationWorkspaceService.WORKSPACE + "/SPEC.md").isBlank() || finalMessage == null) {
+            return;
+        }
+        int heading = finalMessage.indexOf("# SPEC.md");
+        if (heading < 0) {
+            return;
+        }
+        String specification = finalMessage.substring(heading).strip();
+        if (specification.endsWith("```")) {
+            specification = specification.substring(0, specification.length() - 3).stripTrailing();
+        }
+        String result = baseTools.writeFile("SPEC.md", specification);
+        if (result != null && !result.startsWith("ERROR")) {
+            log.info("Materialized SPEC.md from the agent's returned artifact before applying the normal specification gates");
         }
     }
 

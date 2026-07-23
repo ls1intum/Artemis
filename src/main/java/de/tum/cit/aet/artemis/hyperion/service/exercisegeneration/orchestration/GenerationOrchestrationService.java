@@ -251,10 +251,6 @@ public class GenerationOrchestrationService {
             }
             String reviewBrief = sourceBrief;
             String authoringBrief = renderAuthoringBrief(sourceBrief);
-            if (generatedFromSourceBrief && baselineProblemStatement != null && !baselineProblemStatement.isBlank()) {
-                authoringBrief += "\n\nCURRENT AI-GENERATED DRAFT (non-authoritative context; it may help with presentation, but it cannot override or omit the primary source requirements):\n"
-                        + baselineProblemStatement.strip();
-            }
 
             String systemPrompt = systemPromptService.build(exercise, mode);
             // The agent's `verify` tool runs the same differential as the post-loop gate so it sees the verdict in-loop (pass/fail tests, exact [task] names); the post-loop

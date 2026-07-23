@@ -269,12 +269,14 @@ class AgentSystemPromptServiceTest {
     }
 
     @Test
-    void buildStage_spec_carriesOnlyItsOwnStageAndPointsAtTheSpecStyleGuide() {
+    void buildStage_spec_carriesCompleteInlineGuidanceWithoutSpendingTurnsOnADuplicateGuide() {
         String prompt = systemPromptService.buildStage(exerciseWith(ProgrammingLanguage.JAVA, ""), GenerationStage.SPEC);
 
         assertOnlyOwnStageHeaderPresent(prompt, GenerationStage.SPEC);
-        assertThat(prompt).contains("write `/workspace/SPEC.md`").contains("reference/style/spec.md").contains("`given`, `stubbed`, `student-creates`")
+        assertThat(prompt).contains("write `/workspace/SPEC.md`").contains("complete SPEC.md section and table contract is included above")
+                .contains("Do not spend this bounded stage re-reading").doesNotContain("reference/style/spec.md").contains("`given`, `stubbed`, `student-creates`")
                 .contains("## Testing Strategy").contains("stable ID (`S1`, `S2`, ...)").contains("student-designed interface and strategies")
+                .contains("privately compare three genuinely different domain-and-behaviour concepts", "independently assigned constants, multipliers, or thresholds")
                 .contains("interface and concrete strategies `student-creates`").contains("context `stubbed`").contains("omit the minimum members whose declarations require")
                 .contains("Given types and all non-student-owned members of stubbed types remain identical").doesNotContain("reference/style/solution.md")
                 .doesNotContain("reference/style/template.md").doesNotContain("reference/style/tests.md").doesNotContain("reference/style/final-statement.md");

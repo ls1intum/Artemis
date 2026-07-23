@@ -173,8 +173,9 @@ public class SpecFidelityCriticService {
             neither field. Do not invent a plausible post-hoc domain rationale that the cited specification passages never state. When no qualitative theme was requested, domainGrounding
             must say so. When the brief explicitly asks for intermediate difficulty, sufficient may be true only if remainingStudentReasoning identifies concrete non-routine reasoning;
             if it says no such reasoning remains beyond prescribed formulas and baseline pattern wiring, sufficient MUST be false. Mark sufficient false when either applicable analysis
-            exposes a shortfall. A false check needs only a property-level repair, never a replacement theme, API, or formula. For a difficulty shortfall, request a natural domain-motivated
-            decision or interaction within the existing strategy work; do not invent validation, exception, sentinel, or arbitrary edge-case requirements merely to add complexity.
+            exposes a shortfall. A false check needs only a property-level diagnosis, never a replacement theme, API, or formula. Prefer repairing a coherent existing theme when its
+            central interaction can genuinely carry the requested learning level. Do not invent validation, exception, sentinel, or arbitrary edge-case requirements merely to add
+            complexity.
 
             Respond with ONLY this complete JSON shape; learningFit and every array are mandatory:
             {"learningFit":{"briefQuote":"verbatim brief expectation","specQuotes":["one to three verbatim specification passages"],"remainingStudentReasoning":"what remains after routine work is removed","domainGrounding":"how behavior is motivated by the domain, or why not applicable","sufficient":true},
@@ -186,7 +187,7 @@ public class SpecFidelityCriticService {
             Return at most four blocking findings TOTAL, including an insufficient learningFit and every item across all arrays. Prioritize: explicit scope/ownership conflicts and wrong examples; hollow or mis-scoped learning work; unrelated
             observable constraints; only then a qualitative theme conflict backed by an explicit brief requirement. Every quote must be copied verbatim from its named source;
             omit uncertain findings rather than guessing.
-            Diagnose properties only; never supply replacement names, domains, formulas, or APIs. The generator owns the repair and must preserve unaffected choices.
+            Diagnose properties only; never supply replacement names, domains, formulas, or APIs. The generator owns the choice and the repair.
             """;
 
     /** Matches a JSON object wrapped in a markdown code block (```json ... ``` or ``` ... ```), so a fenced model response is parsed. */
@@ -329,7 +330,7 @@ public class SpecFidelityCriticService {
     }
 
     private record SpecificationLearningFitItem(@Nullable String briefQuote, @Nullable List<String> specQuotes, @Nullable String remainingStudentReasoning,
-            @Nullable String domainGrounding, @Nullable Boolean sufficient, @Nullable String repair) {
+            @Nullable String domainGrounding, @Nullable Boolean sufficient) {
     }
 
     private record SpecificationReviewItem(@Nullable String briefQuote, @Nullable String specQuote, @Nullable String reason, @Nullable String repair) {
@@ -339,10 +340,14 @@ public class SpecFidelityCriticService {
     }
 
     /** A complete, quote-grounded brief-to-spec verdict. Incomplete means the provider returned no trustworthy verdict, so the runner must not freeze the contract. */
-    public record SpecificationReview(boolean complete, List<String> findings) {
+    public record SpecificationReview(boolean complete, boolean conceptualReworkRequired, List<String> findings) {
 
         public SpecificationReview {
             findings = List.copyOf(findings);
+        }
+
+        public SpecificationReview(boolean complete, List<String> findings) {
+            this(complete, false, findings);
         }
 
         public boolean accepted() {
@@ -517,12 +522,13 @@ public class SpecFidelityCriticService {
         if (!learningFit.sufficient()) {
             findings.add("Learning fit — brief says \"" + truncate(learningFit.briefQuote().strip()) + "\"; SPEC evidence says \""
                     + learningFit.specQuotes().stream().map(String::strip).map(SpecFidelityCriticService::truncate).collect(java.util.stream.Collectors.joining("\"; \"")) + "\": "
-                    + "After routine work is removed: " + truncate(learningFit.remainingStudentReasoning().strip()) + " Domain grounding: "
-                    + truncate(learningFit.domainGrounding().strip())
-                    + " Repair: preserve unaffected theme and type vocabulary, then resolve the cited learning-fit shortfall within the existing student-owned work. If the residual "
-                    + "reasoning is too shallow, deepen one natural domain-motivated decision or interaction; if it is excessive or off-objective, simplify or refocus it; if only the "
-                    + "domain grounding is weak, ground an existing behavior instead of adding complexity. Revise affected rules, examples, and testing seams coherently. Choose the "
-                    + "behavior yourself; do not add unrelated validation, exceptions, sentinels, or arbitrary edge cases merely to create difficulty.");
+                    + "After routine work is removed: " + truncateLearningEvidence(learningFit.remainingStudentReasoning().strip()) + " Domain grounding: "
+                    + truncateLearningEvidence(learningFit.domainGrounding().strip())
+                    + " Repair: first decide whether this is a local shortfall or whether the cited evidence rejects the plan's central domain, learning interaction, or difficulty. "
+                    + "Preserve theme and type vocabulary only when they are genuinely unaffected. If requested novelty is merely themed names over a familiar exercise, replace the "
+                    + "domain and behavior coherently; do not reskin them. If the work is shallow, deepen or replace one natural domain-motivated interaction. Do not answer either "
+                    + "problem by adding more trivial variants, an arbitrary selector policy, unrelated validation, exceptions, sentinels, or edge cases. Revise affected rules, "
+                    + "examples, ownership, and testing seams as one contract; choose the behavior yourself. Do not copy a theme from reviewer feedback: none is supplied.");
         }
         for (SpecificationReviewItem item : parsed.omissions()) {
             if (!validSpecificationReviewItem(item, true, false) || !specificationQuoteIsGrounded(item.briefQuote(), brief)) {
@@ -563,7 +569,7 @@ public class SpecFidelityCriticService {
             findings.add("Unsupported constraint — SPEC says \"" + truncate(item.specQuote().strip()) + "\": " + truncate(item.reason().strip())
                     + " Repair: remove or relax only the cited unsupported obligation while preserving requested behavior.");
         }
-        return new SpecificationReview(true, findings.stream().limit(MAX_REVIEW_FINDINGS).toList());
+        return new SpecificationReview(true, !learningFit.sufficient(), findings.stream().limit(MAX_REVIEW_FINDINGS).toList());
     }
 
     private static boolean preservesSpecificationReviewSemantics(SpecificationReviewResponse original, SpecificationReviewResponse correction) {
@@ -605,7 +611,7 @@ public class SpecFidelityCriticService {
         SpecificationLearningFitItem originalLearningFit = original.learningFit();
         SpecificationLearningFitItem correctedLearningFit = correction.learningFit();
         SpecificationLearningFitItem learningFit = new SpecificationLearningFitItem(correctedLearningFit.briefQuote(), correctedLearningFit.specQuotes(),
-                originalLearningFit.remainingStudentReasoning(), originalLearningFit.domainGrounding(), originalLearningFit.sufficient(), null);
+                originalLearningFit.remainingStudentReasoning(), originalLearningFit.domainGrounding(), originalLearningFit.sufficient());
         return new SpecificationReviewResponse(omissions, conflicts, internalConflicts, incorrectExamples, unsupportedConstraints, learningFit);
     }
 
@@ -1428,6 +1434,12 @@ public class SpecFidelityCriticService {
 
     private static String truncate(String value) {
         return value.length() <= MAX_REQUIREMENT_CHARS ? value : value.substring(0, MAX_REQUIREMENT_CHARS) + "…";
+    }
+
+    /** Learning-fit explanations need enough room to retain the reviewer's causal diagnosis; the generic finding excerpts above remain deliberately shorter. */
+    private static String truncateLearningEvidence(String value) {
+        int limit = MAX_REQUIREMENT_CHARS * 2;
+        return value.length() <= limit ? value : value.substring(0, limit) + "…";
     }
 
     /**

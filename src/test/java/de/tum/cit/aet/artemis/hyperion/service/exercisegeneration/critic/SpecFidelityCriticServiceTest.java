@@ -85,7 +85,7 @@ class SpecFidelityCriticServiceTest {
                 """
                         {"learningFit":{"briefQuote":"Create an intermediate exercise about strategies in an unusual logistics theme.",
                          "specQuotes":["R1: rerouting transfers the undelivered cargo without losing already delivered parcels."],
-                         "remainingStudentReasoning":"The state-preserving reroute remains after routine strategy delegation and makes the logistics domain affect the behavior.","domainGrounding":"The cited behavior is plausibly motivated by the requested domain, or no qualitative theme is requested.","sufficient":true,"repair":null},
+                         "remainingStudentReasoning":"The state-preserving reroute remains after routine strategy delegation and makes the logistics domain affect the behavior.","domainGrounding":"The cited behavior is plausibly motivated by the requested domain, or no qualitative theme is requested.","sufficient":true},
                          "omissions":[],"conflicts":[],"internalConflicts":[],"incorrectExamples":[],"unsupportedConstraints":[]}
                         """));
 
@@ -101,7 +101,7 @@ class SpecFidelityCriticServiceTest {
     void specificationReviewRejectsMoreThanFourCombinedFindings() {
         SpecFidelityCriticService critic = criticReturning(rawResponse(
                 """
-                        {"learningFit":{"briefQuote":"counter","specQuotes":["Counter"],"remainingStudentReasoning":"The counter work is meaningful.","domainGrounding":"The cited behavior is plausibly motivated by the requested domain, or no qualitative theme is requested.","sufficient":true,"repair":null},
+                        {"learningFit":{"briefQuote":"counter","specQuotes":["Counter"],"remainingStudentReasoning":"The counter work is meaningful.","domainGrounding":"The cited behavior is plausibly motivated by the requested domain, or no qualitative theme is requested.","sufficient":true},
                          "omissions":[
                            {"briefQuote":"counter","reason":"one","repair":"repair one"},
                            {"briefQuote":"counter","reason":"two","repair":"repair two"}],
@@ -121,7 +121,7 @@ class SpecFidelityCriticServiceTest {
         when(chatModel.call(any(Prompt.class))).thenReturn(rawResponse(
                 """
                         {"learningFit":{"briefQuote":"strategy interface","specQuotes":["student-creates"],
-                         "remainingStudentReasoning":"the cited ownership preserves the requested design work","domainGrounding":"The cited behavior is plausibly motivated by the requested domain, or no qualitative theme is requested.","sufficient":true,"repair":null},
+                         "remainingStudentReasoning":"the cited ownership preserves the requested design work","domainGrounding":"The cited behavior is plausibly motivated by the requested domain, or no qualitative theme is requested.","sufficient":true},
                          "omissions":[],"conflicts":[],"internalConflicts":[],"incorrectExamples":[],"unsupportedConstraints":[]}
                         """));
         when(chatModel.getOptions()).thenReturn(ChatOptions.builder().build());
@@ -140,7 +140,7 @@ class SpecFidelityCriticServiceTest {
                 .contains("domain is familiar in popular culture", "theme identity from theme integration", "arbitrary formula", "constants under themed names",
                         "itself wiring the collaboration")
                 .contains("Empty defect arrays are not sufficient evidence", "learningFit", "subtractive", "erasing the domain nouns")
-                .contains("remainingStudentReasoning", "domainGrounding", "Do not invent a plausible post-hoc domain rationale", "do not invent validation")
+                .contains("remainingStudentReasoning", "domainGrounding", "Do not invent a plausible post-hoc domain rationale", "Do not invent validation")
                 .contains("at most four blocking findings TOTAL", "Diagnose properties only", "never supply replacement names, domains, formulas, or APIs")
                 .doesNotContain("compression, payment, sorting, and navigation");
     }
@@ -150,7 +150,7 @@ class SpecFidelityCriticServiceTest {
         SpecFidelityCriticService critic = criticReturning(rawResponse(
                 """
                         {"learningFit":{"briefQuote":"strategy interface","specQuotes":["Exercise"],
-                         "remainingStudentReasoning":"the candidate does not preserve the requested interface work","domainGrounding":"The cited behavior is plausibly motivated by the requested domain, or no qualitative theme is requested.","sufficient":false,"repair":"preserve meaningful interface design"},
+                         "remainingStudentReasoning":"the candidate does not preserve the requested interface work","domainGrounding":"The cited behavior is plausibly motivated by the requested domain, or no qualitative theme is requested.","sufficient":false},
                          "omissions":[{"briefQuote":"students create the strategy interface","reason":"the interface is supplied","repair":"mark it student-owned"}],
                          "conflicts":[],"internalConflicts":[],"incorrectExamples":[],
                          "unsupportedConstraints":[{"specQuote":"throw an exact message","reason":"the brief does not request a message","repair":"remove the exact message"}]}
@@ -170,7 +170,7 @@ class SpecFidelityCriticServiceTest {
         SpecFidelityCriticService critic = criticReturning(rawResponse(
                 """
                         {"learningFit":{"briefQuote":"arithmetic exercise","specQuotes":["2 + 2 = 5"],
-                         "remainingStudentReasoning":"the arithmetic rule is the requested learning work","domainGrounding":"The cited behavior is plausibly motivated by the requested domain, or no qualitative theme is requested.","sufficient":true,"repair":null},
+                         "remainingStudentReasoning":"the arithmetic rule is the requested learning work","domainGrounding":"The cited behavior is plausibly motivated by the requested domain, or no qualitative theme is requested.","sufficient":true},
                          "omissions":[],"conflicts":[],"internalConflicts":[],"unsupportedConstraints":[],
                          "incorrectExamples":[{"specQuote":"2 + 2 = 5","reason":"the arithmetic evaluates to four","repair":"replace 5 with 4"}]}
                         """));
@@ -187,7 +187,7 @@ class SpecFidelityCriticServiceTest {
         SpecFidelityCriticService critic = criticReturning(rawResponse(
                 """
                         {"learningFit":{"briefQuote":"strategy pattern","specQuotes":["Switching strategy preserves accumulated energy."],
-                         "remainingStudentReasoning":"the switch policy is the relevant collaboration","domainGrounding":"The cited behavior is plausibly motivated by the requested domain, or no qualitative theme is requested.","sufficient":true,"repair":null},
+                         "remainingStudentReasoning":"the switch policy is the relevant collaboration","domainGrounding":"The cited behavior is plausibly motivated by the requested domain, or no qualitative theme is requested.","sufficient":true},
                          "omissions":[],"conflicts":[],"incorrectExamples":[],"unsupportedConstraints":[],
                          "internalConflicts":[{"firstSpecQuote":"Switching strategy preserves accumulated energy.",
                          "secondSpecQuote":"Switching strategy resets accumulated energy.","reason":"both cannot hold for the same switch",
@@ -208,7 +208,7 @@ class SpecFidelityCriticServiceTest {
         SpecFidelityCriticService critic = criticReturning(rawResponse(
                 """
                         {"learningFit":{"briefQuote":"strategy pattern","specQuotes":["`Healing potency is two per herb.`"],
-                         "remainingStudentReasoning":"the quoted rule is the strategy behaviour","domainGrounding":"The cited behavior is plausibly motivated by the requested domain, or no qualitative theme is requested.","sufficient":true,"repair":null},
+                         "remainingStudentReasoning":"the quoted rule is the strategy behaviour","domainGrounding":"The cited behavior is plausibly motivated by the requested domain, or no qualitative theme is requested.","sufficient":true},
                          "omissions":[],"conflicts":[],"incorrectExamples":[],"unsupportedConstraints":[],
                          "internalConflicts":[{"firstSpecQuote":"`Healing potency is two per herb.`",
                          "secondSpecQuote":"Healing potency is four for six herbs.","reason":"the arithmetic conflicts",
@@ -229,13 +229,13 @@ class SpecFidelityCriticServiceTest {
         ChatResponse malformed = rawResponse("not json");
         ChatResponse ungrounded = rawResponse(
                 """
-                        {"learningFit":{"briefQuote":"counter","specQuotes":["Counter"],"remainingStudentReasoning":"the counter work is meaningful","domainGrounding":"The cited behavior is plausibly motivated by the requested domain, or no qualitative theme is requested.","sufficient":true,"repair":null},
+                        {"learningFit":{"briefQuote":"counter","specQuotes":["Counter"],"remainingStudentReasoning":"the counter work is meaningful","domainGrounding":"The cited behavior is plausibly motivated by the requested domain, or no qualitative theme is requested.","sufficient":true},
                          "omissions":[{"briefQuote":"a requirement that is not in the brief","reason":"missing","repair":"add it"}],
                          "conflicts":[],"internalConflicts":[],"incorrectExamples":[],"unsupportedConstraints":[]}
                         """);
         ChatResponse grounded = rawResponse(
                 """
-                        {"learningFit":{"briefQuote":"Java counter","specQuotes":["Counter"],"remainingStudentReasoning":"the counter work is meaningful","domainGrounding":"The cited behavior is plausibly motivated by the requested domain, or no qualitative theme is requested.","sufficient":true,"repair":null},
+                        {"learningFit":{"briefQuote":"Java counter","specQuotes":["Counter"],"remainingStudentReasoning":"the counter work is meaningful","domainGrounding":"The cited behavior is plausibly motivated by the requested domain, or no qualitative theme is requested.","sufficient":true},
                          "omissions":[{"briefQuote":"Java","reason":"the learning objective is missing","repair":"change it"}],
                          "conflicts":[],"internalConflicts":[],"incorrectExamples":[],"unsupportedConstraints":[]}
                         """);
@@ -254,7 +254,7 @@ class SpecFidelityCriticServiceTest {
     void specificationReviewDoesNotAcceptAGenericReasonWithoutBothRequiredAnalyses() {
         SpecFidelityCriticService critic = criticReturning(rawResponse("""
                 {"learningFit":{"briefQuote":"intermediate strategy exercise","specQuotes":["R1: compute a themed value."],
-                 "reason":"The theme and strategy types satisfy the brief.","sufficient":true,"repair":null},
+                 "reason":"The theme and strategy types satisfy the brief.","sufficient":true},
                  "omissions":[],"conflicts":[],"internalConflicts":[],"incorrectExamples":[],"unsupportedConstraints":[]}
                 """));
 
@@ -269,7 +269,7 @@ class SpecFidelityCriticServiceTest {
                 """), rawResponse(
                 """
                         {"learningFit":{"briefQuote":"intermediate","specQuotes":["an invented rule"],
-                         "remainingStudentReasoning":"the invented rule supplies depth","domainGrounding":"The cited behavior is plausibly motivated by the requested domain, or no qualitative theme is requested.","sufficient":true,"repair":null},
+                         "remainingStudentReasoning":"the invented rule supplies depth","domainGrounding":"The cited behavior is plausibly motivated by the requested domain, or no qualitative theme is requested.","sufficient":true},
                          "omissions":[],"conflicts":[],"internalConflicts":[],"incorrectExamples":[],"unsupportedConstraints":[]}
                         """));
         when(chatModel.getOptions()).thenReturn(ChatOptions.builder().build());
@@ -285,14 +285,14 @@ class SpecFidelityCriticServiceTest {
         when(chatModel.call(any(Prompt.class))).thenReturn(rawResponse("""
                 {"learningFit":{"briefQuote":"Create an intermediate strategy exercise with a potion theme.","specQuotes":["R1: weak ingredients limit potency."],
                  "remainingStudentReasoning":"Students must reason about a limiting ingredient after routine delegation is removed.",
-                 "domainGrounding":"A potion is constrained by its weakest ingredient, which motivates the rule.","sufficient":true,"repair":null},
+                 "domainGrounding":"A potion is constrained by its weakest ingredient, which motivates the rule.","sufficient":true},
                  "omissions":[],"conflicts":[],"incorrectExamples":[],"unsupportedConstraints":[],
                  "internalConflicts":[{"firstSpecQuote":"R1 | weak ingredients limit potency","secondSpecQuote":"R2: every ingredient contributes equally.",
                  "reason":"The claims conflict.","repair":"Choose one potency rule."}]}
                 """), rawResponse("""
                 {"learningFit":{"briefQuote":"Create an intermediate strategy exercise with a potion theme.","specQuotes":["R1: weak ingredients limit potency."],
                  "remainingStudentReasoning":"Students must reason about a limiting ingredient after routine delegation is removed.",
-                 "domainGrounding":"A potion is constrained by its weakest ingredient, which motivates the rule.","sufficient":true,"repair":null},
+                 "domainGrounding":"A potion is constrained by its weakest ingredient, which motivates the rule.","sufficient":true},
                  "omissions":[],"conflicts":[],"incorrectExamples":[],"unsupportedConstraints":[],
                  "internalConflicts":[{"firstSpecQuote":"R1: weak ingredients limit potency.","secondSpecQuote":"R2: every ingredient contributes equally.",
                  "reason":"The claims can coexist after all.","repair":"Ignore the conflict."}]}
@@ -343,7 +343,7 @@ class SpecFidelityCriticServiceTest {
                 """
                         {"learningFit":{"briefQuote":"intermediate Java exercise","specQuotes":["Fireball computes basePower * 2 + 10.",
                          "SpellCaster delegates to the current strategy."],
-                         "remainingStudentReasoning":"after subtracting formula transcription and routine delegation, no intermediate domain decision remains","domainGrounding":"The cited behavior is plausibly motivated by the requested domain, or no qualitative theme is requested.","sufficient":false,"repair":"preserve spellcasting but deepen one domain-grounded strategy interaction"},
+                         "remainingStudentReasoning":"after subtracting formula transcription and routine delegation, no intermediate domain decision remains","domainGrounding":"The cited behavior is plausibly motivated by the requested domain, or no qualitative theme is requested.","sufficient":false},
                          "omissions":[],"conflicts":[],"internalConflicts":[],"incorrectExamples":[],"unsupportedConstraints":[]}
                         """));
 
@@ -352,9 +352,9 @@ class SpecFidelityCriticServiceTest {
 
         assertThat(review.complete()).isTrue();
         assertThat(review.accepted()).isFalse();
-        assertThat(review.findings()).singleElement().asString().contains("Learning fit", "no intermediate domain decision remains", "preserve unaffected theme",
-                "If the residual reasoning is too shallow", "if it is excessive or off-objective, simplify or refocus it", "if only the domain grounding is weak",
-                "Choose the behavior yourself");
+        assertThat(review.findings()).singleElement().asString().contains("Learning fit", "no intermediate domain decision remains", "local shortfall",
+                "central domain, learning interaction, or difficulty", "Preserve theme and type vocabulary only when they are genuinely unaffected", "do not reskin",
+                "more trivial variants", "choose the behavior yourself", "Do not copy a theme from reviewer feedback");
     }
 
     private static final String UNICODE_BRIEF = "Implement count_graphemes(s) counting user-perceived characters. It MUST be tested on accented Latin (café), a combining-mark "

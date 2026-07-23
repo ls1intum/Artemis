@@ -21,7 +21,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
  * @param expectedTitle            the title as it was when the job was started; persistence refuses to overwrite later manual edits
  * @param deadlineAt               the absolute admission-time deadline for this job, or {@code null} when disabled
  * @param budgetReservationId      the in-flight budget reservation to release when the async job finishes, or {@code null} when admission budgets are disabled
- * @param sourceBrief              the original instructor requirements that produced an AI draft, or {@code null} when the existing statement is instructor-authored
+ * @param sourceBrief              the authoritative instructor brief for a from-scratch generation, or {@code null} for a statement-driven run
  */
 public record GenerationStartedEvent(String jobId, User user, ProgrammingExercise exercise, String userPrompt, GenerationMode mode, String expectedProblemStatement,
         String expectedTitle, @Nullable Instant deadlineAt, @Nullable String budgetReservationId, @Nullable String sourceBrief) {

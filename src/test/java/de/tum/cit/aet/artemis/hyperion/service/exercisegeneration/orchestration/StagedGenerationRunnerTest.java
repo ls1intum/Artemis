@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
@@ -208,6 +209,10 @@ class StagedGenerationRunnerTest {
         approvedSpecs = new ApprovedSpecRegistry();
         stageCheckService = new StageCheckService(verifier, approvedSpecs);
         sandbox = new FakeSandbox();
+        when(baseTools.writeFile(eq("SPEC.md"), anyString())).thenAnswer(invocation -> {
+            sandbox.specMarkdown = invocation.getArgument(1);
+            return "Wrote SPEC.md";
+        });
         // Most of these tests pin the pre-existing single-call-per-stage behaviour (mocking agentLoopRunner.run(...)); FRESH reproduces that exactly. The CONTINUOUS-specific
         // tests below construct their own runner with "CONTINUOUS" and mock runSession(...) instead.
         runner = new StagedGenerationRunner(agentLoopRunner, systemPromptService, stageCheckService, new AgentTranscriptWriter(""), approvedSpecs, "FRESH");
@@ -636,6 +641,45 @@ class StagedGenerationRunnerTest {
     }
 
     @Test
+    void continuousMode_conceptualSpecRejectionDiscardsTheAnchorAndStartsFromTheRawBrief() {
+        AgentLoopRunner sessionAgentLoopRunner = mock(AgentLoopRunner.class);
+        SpecFidelityCriticService reviewer = mock(SpecFidelityCriticService.class);
+        StagedGenerationRunner continuousRunner = new StagedGenerationRunner(sessionAgentLoopRunner, systemPromptService, stageCheckService, new AgentTranscriptWriter(""),
+                approvedSpecs, reviewer, "CONTINUOUS");
+        when(reviewer.reviewSpecification(eq("RAW BRIEF"), anyString(), eq(null), any())).thenReturn(
+                new SpecFidelityCriticService.SpecificationReview(true, true, List.of("The central interaction is too shallow.")),
+                new SpecFidelityCriticService.SpecificationReview(true, false, List.of()));
+        List<Message> rejectedConversation = List.of(assistantText("anchored on the rejected combat concept"));
+        List<Message> replacementConversation = List.of(assistantText("independent replacement concept"));
+        AtomicInteger callCount = new AtomicInteger();
+        when(sessionAgentLoopRunner.runSession(anyString(), any(), anyString(), any(), anyInt(), any(), any(), any())).thenAnswer(invocation -> {
+            int call = callCount.incrementAndGet();
+            if (call == 1) {
+                return session(completed(1, "rejected spec"), rejectedConversation);
+            }
+            if (call == 2) {
+                sandbox.specMarkdown = VALID_SPEC_DOCUMENT;
+                return session(completed(1, "replacement spec"), replacementConversation);
+            }
+            return session(completed(1, "downstream stage"), List.of(assistantText("downstream")));
+        });
+        when(verifier.selfCheckTestsStage(any(), anyString(), eq(exercise), any())).thenReturn(passingReport());
+
+        AgentLoopResult result = continuousRunner
+                .run(exercise, baseTools, baseTools, "authoring context", "RAW BRIEF", Map.of(), sandbox, "s", NEVER_CANCELLED, null, null, Set::of, true, null).result();
+
+        assertThat(result.status()).isEqualTo(AgentLoopResult.Status.COMPLETED);
+        @SuppressWarnings("unchecked")
+        ArgumentCaptor<List<Message>> priorConversationCaptor = ArgumentCaptor.forClass(List.class);
+        ArgumentCaptor<String> userPromptCaptor = ArgumentCaptor.forClass(String.class);
+        verify(sessionAgentLoopRunner, times(6)).runSession(anyString(), priorConversationCaptor.capture(), userPromptCaptor.capture(), any(), anyInt(), any(), any(), any());
+        assertThat(priorConversationCaptor.getAllValues().get(1)).as("a rejected concept must not anchor its replacement").isNull();
+        assertThat(userPromptCaptor.getAllValues().get(1)).contains("RAW BRIEF", "The central interaction is too shallow.", "fresh specification")
+                .doesNotContain("anchored on the rejected combat concept", "CURRENT SPEC.md");
+        verify(baseTools).writeFile("SPEC.md", "");
+    }
+
+    @Test
     void constructor_rejectsAnUnknownStagedContextValue() {
         org.assertj.core.api.Assertions.assertThatIllegalArgumentException()
                 .isThrownBy(() -> new StagedGenerationRunner(agentLoopRunner, systemPromptService, stageCheckService, new AgentTranscriptWriter(""), approvedSpecs, "sometimes"))
@@ -751,21 +795,18 @@ class StagedGenerationRunnerTest {
     @Test
     void specStageCanMaterializeTheArtifactThenRefineItFromMechanicalFeedback() {
         sandbox.specMarkdown = null;
+        String malformedSpec = VALID_SPEC_DOCUMENT.replace("| Calculator | computes the result | stubbed |", "| Calculator | computes the result | supplied |");
         AtomicInteger callCount = new AtomicInteger();
         when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenAnswer(invocation -> switch (callCount.incrementAndGet()) {
-            case 1 -> completed(1, "spec returned as prose instead of written");
+            case 1 -> completed(1, "# SPEC.md\n" + malformedSpec.substring(malformedSpec.indexOf('\n') + 1));
             case 2 -> {
-                sandbox.specMarkdown = VALID_SPEC_DOCUMENT.replace("| Calculator | computes the result | stubbed |", "| Calculator | computes the result | supplied |");
-                yield completed(1, "spec materialized with a malformed status");
-            }
-            case 3 -> {
                 sandbox.specMarkdown = VALID_SPEC_DOCUMENT;
                 yield completed(1, "spec mechanically refined");
             }
-            case 4 -> completed(2, "solution");
-            case 5 -> completed(2, "template");
-            case 6 -> completed(2, "tests");
-            case 7 -> completed(2, "statement");
+            case 3 -> completed(2, "solution");
+            case 4 -> completed(2, "template");
+            case 5 -> completed(2, "tests");
+            case 6 -> completed(2, "statement");
             default -> throw new IllegalStateException("unexpected call " + callCount.get());
         });
         when(verifier.selfCheckTestsStage(any(), anyString(), eq(exercise), any())).thenReturn(passingReport());
@@ -773,7 +814,8 @@ class StagedGenerationRunnerTest {
         AgentLoopResult result = runner.run(exercise, baseTools, baseTools, "brief", Map.of(), sandbox, "s", NEVER_CANCELLED, null, null, Set::of).result();
 
         assertThat(result.status()).isEqualTo(AgentLoopResult.Status.COMPLETED);
-        verify(agentLoopRunner, times(7)).run(anyString(), anyString(), any(), anyInt(), any(), any(), any());
+        verify(baseTools).writeFile(eq("SPEC.md"), argThat(specification -> specification.startsWith("# SPEC.md")));
+        verify(agentLoopRunner, times(6)).run(anyString(), anyString(), any(), anyInt(), any(), any(), any());
     }
 
     @Test
@@ -879,7 +921,8 @@ class StagedGenerationRunnerTest {
         verify(reviewer, times(2)).reviewSpecification(eq("RAW BRIEF"), anyString(), eq(null), any());
         ArgumentCaptor<String> prompts = ArgumentCaptor.forClass(String.class);
         verify(agentLoopRunner, times(9)).run(anyString(), prompts.capture(), any(), anyInt(), any(), any(), any());
-        assertThat(prompts.getAllValues().get(3)).contains(semanticFeedback, "Resolve only the cited defects", "one coherent contract", "structured", "verify tool");
+        assertThat(prompts.getAllValues().get(3)).contains(semanticFeedback, "LOCAL defect", "CONCEPTUAL rejection", "current plan is not an asset to preserve",
+                "privately compare three replacement domain-and-behaviour concepts", "independently assigned constants", "arbitrary selector", "structured", "verify tool");
         assertThat(prompts.getAllValues().get(4)).contains(semanticFeedback, "RenamedCalculator", "Continue the SAME bounded revision", "do not merely patch",
                 "whole current file");
     }
@@ -910,25 +953,24 @@ class StagedGenerationRunnerTest {
     }
 
     @Test
-    void fourthGroundedSemanticSpecRejection_stopsAfterThreeBoundedRefinementsWithoutFreezingTheContract() {
+    void thirdGroundedSemanticSpecRejection_stopsAfterTwoBoundedRefinementsWithoutFreezingTheContract() {
         SpecFidelityCriticService reviewer = mock(SpecFidelityCriticService.class);
         when(reviewer.reviewSpecification(anyString(), anyString(), eq(null), any())).thenReturn(
                 new SpecFidelityCriticService.SpecificationReview(true, List.of("missing ownership")),
                 new SpecFidelityCriticService.SpecificationReview(true, List.of("still missing ownership")),
-                new SpecFidelityCriticService.SpecificationReview(true, List.of("ownership remains missing")),
-                new SpecFidelityCriticService.SpecificationReview(true, List.of("ownership is missing after three refinements")));
+                new SpecFidelityCriticService.SpecificationReview(true, List.of("ownership is missing after two refinements")));
         StagedGenerationRunner semanticRunner = new StagedGenerationRunner(agentLoopRunner, systemPromptService, stageCheckService, new AgentTranscriptWriter(""), approvedSpecs,
                 reviewer, "FRESH");
         when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(completed(1, "spec"), completed(1, "refined spec"),
-                completed(1, "refined spec again"), completed(1, "third refined spec"));
+                completed(1, "refined spec again"));
 
         AgentLoopResult result = semanticRunner.run(exercise, baseTools, baseTools, "context", "brief", Map.of(), sandbox, "s", NEVER_CANCELLED, null, null, Set::of, true, null)
                 .result();
 
         assertThat(result.status()).isEqualTo(AgentLoopResult.Status.ERROR);
-        assertThat(result.finalMessage()).contains("ownership is missing after three refinements");
+        assertThat(result.finalMessage()).contains("ownership is missing after two refinements");
         assertThat(approvedSpecs.approved("s")).isEmpty();
-        verify(agentLoopRunner, times(4)).run(anyString(), anyString(), any(), anyInt(), any(), any(), any());
+        verify(agentLoopRunner, times(3)).run(anyString(), anyString(), any(), anyInt(), any(), any(), any());
     }
 
     @Test

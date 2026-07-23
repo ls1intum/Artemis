@@ -270,7 +270,7 @@ class GenerationOrchestrationServiceTest {
     }
 
     @Test
-    void aiDraftSourceBrief_runsSpecStageAndKeepsTheDraftNonAuthoritative() {
+    void sourceBrief_runsSpecStageWithoutLettingAnIntermediateDraftAnchorTheSpecification() {
         GenerationOrchestrationService stagedService = newService(true);
         String draft = "# Draft playlist exercise\n\nThis generated draft is long enough to look authoritative but may have omitted explicit requirements.";
         String sourceBrief = "Teach Strategy with three playlist strategies. Students must create the interface. Include a UML diagram.";
@@ -290,7 +290,7 @@ class GenerationOrchestrationServiceTest {
         verify(stagedGenerationRunner).run(any(), any(), any(), prompt.capture(), rawBrief.capture(), any(), any(), anyString(), any(), any(), any(), any(),
                 specStageApplies.capture(), any());
         assertThat(specStageApplies.getValue()).isTrue();
-        assertThat(prompt.getValue()).contains("PRIMARY SOURCE REQUIREMENTS", sourceBrief, "CURRENT AI-GENERATED DRAFT", draft, "cannot override");
+        assertThat(prompt.getValue()).contains("PRIMARY SOURCE REQUIREMENTS", sourceBrief).doesNotContain("CURRENT AI-GENERATED DRAFT", draft);
         assertThat(rawBrief.getValue()).isEqualTo(sourceBrief);
         verify(workspace).seedWorkspace(any(), anyString(), eq(exercise), eq(GenerationMode.GENERATE), eq(false));
     }

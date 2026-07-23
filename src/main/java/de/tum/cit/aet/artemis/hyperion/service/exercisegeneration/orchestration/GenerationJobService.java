@@ -213,7 +213,7 @@ public class GenerationJobService {
      * @param userPrompt          the rendered instruction for the generation agent
      * @param mode                the explicit run intent
      * @param budgetReservationId the optional token-budget reservation id
-     * @param sourceBrief         the original brief behind an AI-generated draft, or {@code null} for an instructor-authored statement
+     * @param sourceBrief         the authoritative instructor brief for a from-scratch generation, or {@code null} for a statement-driven run
      * @return the started job id
      */
     public String startJob(User user, ProgrammingExercise exercise, String userPrompt, GenerationMode mode, @Nullable String budgetReservationId, @Nullable String sourceBrief) {

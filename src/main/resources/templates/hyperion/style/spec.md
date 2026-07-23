@@ -75,6 +75,14 @@ wiring it, or making the context delegate); do not hand them the complete design
 an intermediate pattern exercise. Conversely, provide routine holders, accessors, and build plumbing unless
 those are explicitly part of the objective.
 
+When the brief requests a non-standard or unusual theme, make that choice before naming the public API. Reject
+the first familiar textbook example and choose a domain whose constraints genuinely cause the variants'
+different computations or interactions. Erase the domain nouns as a check: if the unchanged rules reveal a
+familiar example, redesign the behaviour rather than adding themed vocabulary, another trivial variant, or an
+arbitrary selector policy. For an intermediate exercise, similarly subtract routine pattern wiring and
+prescribed formula transcription; if no meaningful reasoning remains, redesign one central interaction rather
+than increasing the number of types or tasks.
+
 Reconcile that ownership with compilation before approving the design. Every testing-strategy seam described
 as student work must map to a `stubbed` or `student-creates` row. A given or stubbed type cannot expose an
 omitted `student-creates` type in a template signature: the template would not compile. Make the dependent type
