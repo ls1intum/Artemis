@@ -221,7 +221,7 @@ public class IrisMessageResource {
      *
      * @param sessionId of the session
      * @param messageId of the message
-     * @param outcome   Request body: the durable outcome (currently only DISMISSED).
+     * @param outcome   Request body: the durable outcome (DISMISSED, RECOVERED, ABANDONED, or INTERRUPTED).
      * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and the updated message.
      */
     @PutMapping(value = "sessions/{sessionId}/messages/{messageId}/proactive-outcome")
@@ -236,7 +236,7 @@ public class IrisMessageResource {
         irisSessionService.checkIsIrisActivated(session);
         irisSessionService.checkHasAccessToIrisSession(session, null);
         if (outcome == null) {
-            // The body is the durable outcome (currently only DISMISSED); a null must never clear a prior dismissal.
+            // The body is the durable outcome; a null must never clear a prior outcome.
             throw new BadRequestException("A proactive outcome is required");
         }
         if (message.getSender() != IrisMessageSender.LLM || message.getOrigin() != IrisMessageOrigin.PROACTIVE_STRUGGLE) {

@@ -135,7 +135,7 @@ public class IrisStruggleInterventionResource {
 
     /**
      * PUT exercises/{exerciseId}/episodes/{episodeId}/proactive-outcome : episode-keyed first-terminal-wins
-     * outcome write. Accepts {@code DISMISSED}, {@code RECOVERED}, and {@code ABANDONED}.
+     * outcome write. Accepts {@code DISMISSED}, {@code RECOVERED}, {@code ABANDONED}, and {@code INTERRUPTED}.
      *
      * <p>
      * Returns a body-bearing {@code 200} with {@code {"applied": true}} when a canonical row existed (outcome
