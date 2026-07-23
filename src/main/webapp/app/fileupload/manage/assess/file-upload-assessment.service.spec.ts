@@ -12,6 +12,7 @@ import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { Feedback } from 'app/assessment/shared/entities/feedback.model';
 import { ComplaintResponse } from 'app/assessment/shared/entities/complaint-response.model';
 import { Complaint } from 'app/assessment/shared/entities/complaint.model';
+import { FileUploadFeedbackInputDTO, FileUploadResultDTO } from 'app/fileupload/shared/entities/file-upload-assessment-dto.model';
 
 describe('FileUploadAssessmentService', () => {
     let service: FileUploadAssessmentService;
@@ -25,20 +26,20 @@ describe('FileUploadAssessmentService', () => {
         return feedback;
     };
 
-    const createResult = (): Result => {
-        const result = new Result();
-        result.id = 1;
-        result.score = 5;
-        result.hasComplaint = false;
-        result.completionDate = dayjs();
-        result.submission = {
+    const createResultDTO = (): FileUploadResultDTO => ({
+        id: 1,
+        score: 5,
+        rated: false,
+        hasComplaint: false,
+        completionDate: dayjs(),
+        submission: {
             id: 187,
             submissionDate: dayjs(),
             participation: { id: 6, initializationDate: dayjs() },
-        };
-        result.assessmentNote = { id: 58, note: 'Note Text' };
-        return result;
-    };
+        },
+        assessmentNote: { id: 58, note: 'Note Text' },
+        feedbacks: [{ id: 7, detailText: 'Feedback text', credits: 1 }],
+    });
 
     const createComplaintResponse = (): ComplaintResponse => {
         const complaintResponse = new ComplaintResponse();
@@ -49,7 +50,7 @@ describe('FileUploadAssessmentService', () => {
         return complaintResponse;
     };
 
-    const expectedFeedbackInput = (feedback: Feedback) => ({
+    const expectedFeedbackInput = (feedback: Feedback): FileUploadFeedbackInputDTO => ({
         id: feedback.id,
         text: feedback.text,
         detailText: feedback.detailText,
@@ -57,7 +58,7 @@ describe('FileUploadAssessmentService', () => {
         credits: feedback.credits,
         positive: feedback.positive,
         type: feedback.type,
-        visibility: feedback.visibility,
+        visibility: feedback.testCase?.visibility,
         gradingInstruction: undefined,
     });
 
@@ -78,7 +79,7 @@ describe('FileUploadAssessmentService', () => {
             const submissionId = 187;
             const feedbacks = [createFeedback(0, 3), createFeedback(1, 1)];
             const assessmentNoteText = 'Note Text';
-            const expectedResult = createResult();
+            const expectedResult = createResultDTO();
 
             const resultPromise = new Promise<Result>((resolve) => {
                 service.saveAssessment(feedbacks, submissionId, assessmentNoteText, false).subscribe((resp) => {
@@ -100,13 +101,15 @@ describe('FileUploadAssessmentService', () => {
 
             const result = await resultPromise;
             expect(result.id).toBe(expectedResult.id);
+            expect(result).toBeInstanceOf(Result);
+            expect(result.feedbacks?.[0]).toBeInstanceOf(Feedback);
         });
 
         it('should submit assessment with submit flag', async () => {
             const submissionId = 187;
             const feedbacks = [createFeedback(0, 3)];
             const assessmentNoteText = 'Note Text';
-            const expectedResult = createResult();
+            const expectedResult = createResultDTO();
 
             const resultPromise = new Promise<Result>((resolve) => {
                 service.saveAssessment(feedbacks, submissionId, assessmentNoteText, true).subscribe((resp) => {
@@ -128,7 +131,7 @@ describe('FileUploadAssessmentService', () => {
         it('should save assessment without note', async () => {
             const submissionId = 187;
             const feedbacks = [createFeedback(0, 3)];
-            const expectedResult = createResult();
+            const expectedResult = createResultDTO();
 
             const resultPromise = new Promise<Result>((resolve) => {
                 service.saveAssessment(feedbacks, submissionId, undefined, false).subscribe((resp) => {
@@ -156,7 +159,7 @@ describe('FileUploadAssessmentService', () => {
     describe('getAssessment', () => {
         it('should get assessment by submission ID', async () => {
             const submissionId = 187;
-            const expectedResult = createResult();
+            const expectedResult = createResultDTO();
 
             const resultPromise = new Promise<Result>((resolve) => {
                 service.getAssessment(submissionId).subscribe((resp) => {
@@ -181,7 +184,7 @@ describe('FileUploadAssessmentService', () => {
             const submissionId = 1;
             const feedbacks = [createFeedback(0, 3), createFeedback(1, 1)];
             const complaintResponse = createComplaintResponse();
-            const expectedResult = createResult();
+            const expectedResult = createResultDTO();
 
             const resultPromise = new Promise<HttpResponse<Result>>((resolve) => {
                 service.updateAssessmentAfterComplaint(feedbacks, complaintResponse, submissionId).subscribe((resp) => {
@@ -215,7 +218,7 @@ describe('FileUploadAssessmentService', () => {
             const feedbacks = [createFeedback(0, 3)];
             const complaintResponse = createComplaintResponse();
             const assessmentNote = 'Updated note';
-            const expectedResult = createResult();
+            const expectedResult = createResultDTO();
 
             const resultPromise = new Promise<HttpResponse<Result>>((resolve) => {
                 service.updateAssessmentAfterComplaint(feedbacks, complaintResponse, submissionId, assessmentNote).subscribe((resp) => {
@@ -244,19 +247,41 @@ describe('FileUploadAssessmentService', () => {
             expect(response.body).toBeDefined();
         });
 
+        it('should reject a complaint update without a response ID', () => {
+            const complaintResponse = createComplaintResponse();
+            complaintResponse.id = undefined;
+
+            expect(() => service.updateAssessmentAfterComplaint([], complaintResponse, 1)).toThrow(
+                'Cannot update an assessment without a complaint response ID and acceptance decision.',
+            );
+        });
+
+        it('should reject a complaint update without an acceptance decision', () => {
+            const complaintResponse = createComplaintResponse();
+            complaintResponse.complaint = new Complaint();
+
+            expect(() => service.updateAssessmentAfterComplaint([], complaintResponse, 1)).toThrow(
+                'Cannot update an assessment without a complaint response ID and acceptance decision.',
+            );
+        });
+
         it('should convert dates from server response', async () => {
             const submissionId = 1;
             const feedbacks = [createFeedback(0, 3)];
             const complaintResponse = createComplaintResponse();
-            const serverResult = {
+            const completionDate = dayjs('2023-01-01T12:00:00Z');
+            const submissionDate = dayjs('2023-01-01T10:00:00Z');
+            const initializationDate = dayjs('2023-01-01T08:00:00Z');
+            const serverResult: FileUploadResultDTO = {
                 id: 1,
-                completionDate: '2023-01-01T12:00:00Z',
+                rated: false,
+                completionDate,
                 submission: {
                     id: 187,
-                    submissionDate: '2023-01-01T10:00:00Z',
+                    submissionDate,
                     participation: {
                         id: 6,
-                        initializationDate: '2023-01-01T08:00:00Z',
+                        initializationDate,
                     },
                 },
             };
@@ -275,7 +300,9 @@ describe('FileUploadAssessmentService', () => {
             req.flush(serverResult);
 
             const response = await resultPromise;
-            expect(response.body).toBeDefined();
+            expect(response.body?.completionDate?.isSame(completionDate)).toBe(true);
+            expect(response.body?.submission?.submissionDate?.isSame(submissionDate)).toBe(true);
+            expect(response.body?.submission?.participation?.initializationDate?.isSame(initializationDate)).toBe(true);
         });
 
         it('should handle null body in server response', async () => {
@@ -304,9 +331,10 @@ describe('FileUploadAssessmentService', () => {
             const submissionId = 1;
             const feedbacks = [createFeedback(0, 3)];
             const complaintResponse = createComplaintResponse();
-            const serverResult = {
+            const serverResult: FileUploadResultDTO = {
                 id: 1,
-                completionDate: '2023-01-01T12:00:00Z',
+                rated: false,
+                completionDate: dayjs('2023-01-01T12:00:00Z'),
                 // No submission
             };
 
@@ -332,12 +360,13 @@ describe('FileUploadAssessmentService', () => {
             const submissionId = 1;
             const feedbacks = [createFeedback(0, 3)];
             const complaintResponse = createComplaintResponse();
-            const serverResult = {
+            const serverResult: FileUploadResultDTO = {
                 id: 1,
-                completionDate: '2023-01-01T12:00:00Z',
+                rated: false,
+                completionDate: dayjs('2023-01-01T12:00:00Z'),
                 submission: {
                     id: 187,
-                    submissionDate: '2023-01-01T10:00:00Z',
+                    submissionDate: dayjs('2023-01-01T10:00:00Z'),
                     // No participation
                 },
             };

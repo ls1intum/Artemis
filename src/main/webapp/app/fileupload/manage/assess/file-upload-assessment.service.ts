@@ -2,13 +2,14 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { ComplaintResponse } from 'app/assessment/shared/entities/complaint-response.model';
-import { convertFeedbackFromServer, Feedback } from 'app/assessment/shared/entities/feedback.model';
+import { Feedback, convertFeedbackFromServer } from 'app/assessment/shared/entities/feedback.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { map } from 'rxjs/operators';
 import { convertDateFromServer } from 'app/foundation/util/date.utils';
 import {
     FileUploadAssessmentInputDTO,
     FileUploadAssessmentUpdateDTO,
+    FileUploadComplaintResponseInputDTO,
     FileUploadFeedbackInputDTO,
     FileUploadResultDTO,
 } from 'app/fileupload/shared/entities/file-upload-assessment-dto.model';
@@ -40,11 +41,7 @@ export class FileUploadAssessmentService {
         const url = `${this.resourceUrl}/file-upload-submissions/${submissionId}/assessment-after-complaint`;
         const assessmentUpdate: FileUploadAssessmentUpdateDTO = {
             feedbacks: feedbacks.map((feedback) => this.toFeedbackInputDTO(feedback)),
-            complaintResponse: {
-                id: complaintResponse.id!,
-                responseText: complaintResponse.responseText,
-                complaintIsAccepted: complaintResponse.complaint?.accepted!,
-            },
+            complaintResponse: this.toComplaintResponseInputDTO(complaintResponse),
             assessmentNote,
         };
         return this.http
@@ -54,9 +51,7 @@ export class FileUploadAssessmentService {
 
     // TODO refactor all asssessment.service getAssessment calls to make similar REST calls
     getAssessment(submissionId: number): Observable<Result> {
-        return this.http
-            .get<FileUploadResultDTO>(`${this.resourceUrl}/file-upload-submissions/${submissionId}/result`)
-            .pipe(map((result) => this.convertResultFromServer(result)));
+        return this.http.get<FileUploadResultDTO>(`${this.resourceUrl}/file-upload-submissions/${submissionId}/result`).pipe(map((result) => this.convertResultFromServer(result)));
     }
 
     cancelAssessment(submissionId: number): Observable<void> {
@@ -108,7 +103,7 @@ export class FileUploadAssessmentService {
             credits: feedback.credits,
             positive: feedback.positive,
             type: feedback.type,
-            visibility: feedback.visibility,
+            visibility: feedback.testCase?.visibility,
             gradingInstruction: gradingInstruction
                 ? {
                       id: gradingInstruction.id,
@@ -119,6 +114,19 @@ export class FileUploadAssessmentService {
                       usageCount: gradingInstruction.usageCount,
                   }
                 : undefined,
+        };
+    }
+
+    private toComplaintResponseInputDTO(complaintResponse: ComplaintResponse): FileUploadComplaintResponseInputDTO {
+        const id = complaintResponse.id;
+        const complaintIsAccepted = complaintResponse.complaint?.accepted;
+        if (id === undefined || complaintIsAccepted === undefined) {
+            throw new Error('Cannot update an assessment without a complaint response ID and acceptance decision.');
+        }
+        return {
+            id,
+            responseText: complaintResponse.responseText,
+            complaintIsAccepted,
         };
     }
 }
