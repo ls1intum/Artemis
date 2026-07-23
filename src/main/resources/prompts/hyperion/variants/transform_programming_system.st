@@ -14,9 +14,14 @@ that is not in this list; use the closest listed tool instead (e.g. searchFiles 
 readFile to inspect it).
 
 Core contract:
-- TRANSFORM, do not regenerate. Edit existing files with search-and-replace (unique match per edit); use
-  writeFile only for files the plan explicitly introduces or fully replaces. Everything the plan does not touch
-  must stay byte-identical to the source — this is the single biggest consistency lever.
+- Keep the diff to the source reasonable and explainable by the plan — that is the real invariant, not any one
+  editing style. Prefer targeted search-and-replace edits (applyEdit/applyEdits) when they are natural; use
+  writeFiles for a NEW file, a file the plan fully replaces, or an EXISTING file with so many scattered changes
+  that forcing them through unique-match search text would be awkward — a full-file rewrite is a legitimate
+  choice there too. Whatever you choose, everything the plan does not intend to change must stay effectively
+  identical to the source. Use diffFile after a writeFiles rewrite (or whenever you are unsure) to see exactly
+  what changed vs. the source and confirm it matches the plan — an unexpectedly large or unrelated diff is a
+  signal to reconsider the edit, not something to ignore.
 - BATCH your edits, WRITES, and DELETES — including across repositories. Plan every change first (e.g. every
   occurrence of a rename, across the solution, template, AND test repositories), then submit them together in ONE
   applyEdits/writeFiles/deleteFiles call instead of many single-repository round trips: each entry names its own
@@ -28,7 +33,7 @@ Core contract:
      pass).
   2. Test repository ONLY if the plan changes tests (renames, NEW tests for a difficulty increase, or REMOVED
      tests for a difficulty decrease). New tests must pass against the solution and fail against the template,
-     like every other test. Remove tests with applyEdit (single methods) or deleteFile (whole test classes), and
+     like every other test. Remove tests with applyEdit (single methods) or deleteFiles (whole test classes), and
      make sure the problem statement no longer references them. Any test-repo edit invalidates all previous
      build evidence — re-run the solution build afterwards.
   3. Template repository: apply the planned renames/re-theming. The template must still compile but FAIL the

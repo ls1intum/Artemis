@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.hyperion.service.variants;
 
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.InvalidPathException;
@@ -16,6 +17,11 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.eclipse.jgit.api.errors.GitAPIException;
+import org.eclipse.jgit.diff.DiffAlgorithm;
+import org.eclipse.jgit.diff.DiffFormatter;
+import org.eclipse.jgit.diff.EditList;
+import org.eclipse.jgit.diff.RawText;
+import org.eclipse.jgit.diff.RawTextComparator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.tool.ToolCallback;
@@ -102,7 +108,13 @@ class ProgrammingVariantTools implements VariantToolset {
 
     private final String defaultBranch;
 
+    /** The exercise this variant was generated from; used only by {@link #diffFile} to read the ORIGINAL file content. */
+    private final ProgrammingExercise sourceExercise;
+
     private final Map<RepositoryType, Repository> checkouts = new EnumMap<>(RepositoryType.class);
+
+    /** Read-only checkouts of the source exercise's repositories, lazily resolved by {@link #diffFile}. */
+    private final Map<RepositoryType, Repository> sourceCheckouts = new EnumMap<>(RepositoryType.class);
 
     private final Map<RepositoryType, String> lastBuildResults = new EnumMap<>(RepositoryType.class);
 
@@ -122,7 +134,7 @@ class ProgrammingVariantTools implements VariantToolset {
     ProgrammingVariantTools(ProgrammingExercise exercise, User user, String jobId, ExerciseVariantJobService jobService, GitService gitService, RepositoryService repositoryService,
             VariantBuildVerificationService buildVerificationService, VariantBuildTrigger buildTrigger, ProgrammingExerciseParticipationService participationService,
             ProgrammingSubmissionService programmingSubmissionService, ProgrammingExerciseRepository programmingExerciseRepository,
-            ProgrammingExerciseTaskService programmingExerciseTaskService, String defaultBranch) {
+            ProgrammingExerciseTaskService programmingExerciseTaskService, String defaultBranch, ProgrammingExercise sourceExercise) {
         this.exercise = exercise;
         this.user = user;
         this.jobId = jobId;
@@ -134,6 +146,7 @@ class ProgrammingVariantTools implements VariantToolset {
         this.participationService = participationService;
         this.programmingSubmissionService = programmingSubmissionService;
         this.programmingExerciseRepository = programmingExerciseRepository;
+        this.sourceExercise = sourceExercise;
         this.programmingExerciseTaskService = programmingExerciseTaskService;
         this.defaultBranch = defaultBranch;
     }
@@ -687,6 +700,70 @@ class ProgrammingVariantTools implements VariantToolset {
         return lastBuildResults.getOrDefault(repositoryType, "No build has been run for the " + repositoryType + " repository in this round yet. Use runBuild first.");
     }
 
+    @Tool(description = "Show a unified diff between a file's ORIGINAL content in the SOURCE exercise this variant was generated from and its CURRENT content in this variant. "
+            + "Use this to sanity-check your own changes — especially after writeFiles rewrites a whole file — and confirm the diff is limited to what the plan actually requires, "
+            + "not an unexpectedly large or unrelated change.")
+    public String diffFile(@ToolParam(description = "the repository: TEMPLATE, SOLUTION, or TESTS") String repository,
+            @ToolParam(description = "the file path relative to the repository root") String path) {
+        String stop = stopNotice();
+        if (stop != null) {
+            return stop;
+        }
+        RepositoryType repositoryType = parseRepositoryType(repository);
+        if (repositoryType == null) {
+            return invalidRepositoryMessage(repository);
+        }
+        byte[] sourceBytes;
+        try {
+            Repository sourceCheckout = checkoutSource(repositoryType);
+            sourceBytes = repositoryService.getFile(sourceCheckout, path);
+        }
+        catch (IOException e) {
+            sourceBytes = null;
+        }
+        catch (Exception e) {
+            return "Error: could not access the source " + repositoryType + " repository: " + e.getMessage();
+        }
+        byte[] variantBytes;
+        try {
+            Repository checkout = checkout(repositoryType);
+            variantBytes = repositoryService.getFile(checkout, path);
+        }
+        catch (IOException e) {
+            variantBytes = null;
+        }
+        catch (Exception e) {
+            return "Error: could not access the " + repositoryType + " repository: " + e.getMessage();
+        }
+        if (sourceBytes == null && variantBytes == null) {
+            return "Error: file '" + path + "' does not exist in either the source or the variant " + repositoryType + " repository.";
+        }
+        if (sourceBytes == null) {
+            return "'" + path + "' does not exist in the SOURCE " + repositoryType + " repository (new file introduced in this variant) — nothing to diff against.";
+        }
+        if (variantBytes == null) {
+            return "'" + path + "' no longer exists in the variant " + repositoryType + " repository (deleted).";
+        }
+        RawText sourceText = new RawText(sourceBytes);
+        RawText variantText = new RawText(variantBytes);
+        EditList edits = new EditList();
+        edits.addAll(DiffAlgorithm.getAlgorithm(DiffAlgorithm.SupportedAlgorithm.MYERS).diff(RawTextComparator.DEFAULT, sourceText, variantText));
+        if (edits.isEmpty()) {
+            return "No differences — '" + path + "' is unchanged from the source in the " + repositoryType + " repository.";
+        }
+        try {
+            ByteArrayOutputStream out = new ByteArrayOutputStream();
+            try (DiffFormatter formatter = new DiffFormatter(out)) {
+                formatter.setContext(3);
+                formatter.format(edits, sourceText, variantText);
+            }
+            return out.toString(StandardCharsets.UTF_8);
+        }
+        catch (IOException e) {
+            return "Error: could not render the diff for '" + path + "': " + e.getMessage();
+        }
+    }
+
     // returnDirect ends the internal tool loop immediately — no extra LLM round after the model finishes,
     // and the "budget exhausted, call finish" directive has a guaranteed exit.
     @Tool(returnDirect = true, description = "Signal that you are done with this round and provide a short summary of what you changed and verified.")
@@ -732,6 +809,24 @@ class ProgrammingVariantTools implements VariantToolset {
             throw new IllegalStateException("Could not check out the " + repositoryType + " repository");
         }
         checkouts.put(repositoryType, repository);
+        return repository;
+    }
+
+    /** Read-only counterpart of {@link #checkout} resolving the SOURCE exercise's repositories, for {@link #diffFile}. */
+    private Repository checkoutSource(RepositoryType repositoryType) throws GitAPIException {
+        Repository cached = sourceCheckouts.get(repositoryType);
+        if (cached != null) {
+            return cached;
+        }
+        LocalVCRepositoryUri repositoryUri = sourceExercise.getRepositoryURI(repositoryType);
+        if (repositoryUri == null) {
+            throw new IllegalStateException("No " + repositoryType + " repository URI for source exercise " + sourceExercise.getId());
+        }
+        Repository repository = gitService.getOrCheckoutRepository(repositoryUri, true, defaultBranch, false);
+        if (repository == null) {
+            throw new IllegalStateException("Could not check out the source " + repositoryType + " repository");
+        }
+        sourceCheckouts.put(repositoryType, repository);
         return repository;
     }
 
