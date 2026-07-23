@@ -386,7 +386,11 @@ export class ExerciseAPIRequests {
             assessmentDueDate: due.subtract(1, 'minute'),
         });
         const updateDto = toUpdateFileUploadExerciseDTO(updatedExercise);
-        return this.page.request.put(`${UPLOAD_EXERCISE_BASE}/${exercise.id}`, { data: updateDto });
+        const response = await this.page.request.put(`${UPLOAD_EXERCISE_BASE}/${exercise.id}`, { data: updateDto });
+        if (!response.ok()) {
+            throw new Error(`Failed to update file upload exercise assessment due date: ${response.status()} ${await response.text()}`);
+        }
+        return response;
     }
 
     /**
