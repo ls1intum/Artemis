@@ -173,7 +173,7 @@ public class DifferentialVerificationService {
      */
     private static final Set<String> BUILD_MANIFEST_NAMES = Set.of("pom.xml");
 
-    /** Lists the assignment repo's source files (repo-relative) for the dead-file probe, excluding hidden files and build manifests. Empty on any non-success (fail-open). */
+    /** Lists assignment-repository source files for the asymmetric-file advisory, excluding hidden files and build manifests. Empty on any non-success (fail-open). */
     private static Set<String> listSourceFiles(InteractiveSandbox sandbox, String sessionId, String repoDirectory) {
         String repoRoot = GenerationWorkspaceService.WORKSPACE + "/" + repoDirectory;
         SandboxExecResult result = sandbox.exec(sessionId, READ_TIMEOUT, "sh", "-c",
@@ -266,7 +266,10 @@ public class DifferentialVerificationService {
         boolean approvedSpecificationHolds = approvedSpecificationReasons.isEmpty();
         reasons.addAll(approvedSpecificationReasons);
         List<String> approvedTestPlanReasons = contractSpecifications.stream()
-                .flatMap(spec -> ExerciseIntegrityGate.approvedTestPlanReasons(spec, request.producedTestPlan(), solution.testNames()).stream()).distinct().toList();
+                .flatMap(spec -> ExerciseIntegrityGate
+                        .approvedTestPlanReasons(spec, request.producedTestPlan(), solution.testNames(), exercise.getDueDate() != null, request.seededStructuralTestNames())
+                        .stream())
+                .distinct().toList();
         boolean approvedTestPlanHolds = approvedTestPlanReasons.isEmpty();
         reasons.addAll(approvedTestPlanReasons);
         List<String> statementTraceabilityReasons = ExerciseIntegrityGate.statementTraceabilityReasons(request.producedTestPlan(), request.producedProblemStatement());
@@ -337,23 +340,47 @@ public class DifferentialVerificationService {
     }
 
     /**
-     * Runs the TESTS-stage check without asking the agent to repair the not-yet-authored statement.
+     * Runs a full agent-visible check with the server-authored structural names currently materialized in the workspace.
      *
-     * @param sandbox        the open sandbox session
-     * @param sessionId      the sandbox session id
-     * @param exercise       the exercise whose tests are checked
-     * @param seedTestsFiles the immutable seeded tests snapshot
+     * @param sandbox                   the open sandbox session
+     * @param sessionId                 the sandbox session id
+     * @param exercise                  the exercise being checked
+     * @param seedTestsFiles            the tests repository snapshot taken before generation
+     * @param adaptation                whether the current job adapts an existing exercise
+     * @param seededStructuralTestNames server-authored structural test names currently materialized in the workspace
+     * @return the agent-readable differential report
+     */
+    public AgentVerifyReport selfCheck(InteractiveSandbox sandbox, String sessionId, ProgrammingExercise exercise, Map<String, String> seedTestsFiles, boolean adaptation,
+            Set<String> seededStructuralTestNames) {
+        return selfCheck(sandbox, sessionId, exercise, seedTestsFiles, adaptation, true, seededStructuralTestNames);
+    }
+
+    /**
+     * Runs the executable-build check with generated structural checks refreshed from the approved ownership contract. Threading their authoritative names here keeps the grading
+     * plan and
+     * statement contract identical to final verification instead of first revealing those gradable names in the outer repair loop.
+     *
+     * @param sandbox                   the open sandbox session
+     * @param sessionId                 the sandbox session id
+     * @param exercise                  the exercise whose tests are checked
+     * @param seedTestsFiles            the immutable seeded tests snapshot
+     * @param seededStructuralTestNames structural names produced by the server-side seeder for this session
      * @return a report limited to test-stage artifacts
      */
-    public AgentVerifyReport selfCheckTestsStage(InteractiveSandbox sandbox, String sessionId, ProgrammingExercise exercise, Map<String, String> seedTestsFiles) {
-        return selfCheck(sandbox, sessionId, exercise, seedTestsFiles, false, false);
+    public AgentVerifyReport selfCheckTestsStage(InteractiveSandbox sandbox, String sessionId, ProgrammingExercise exercise, Map<String, String> seedTestsFiles,
+            Set<String> seededStructuralTestNames) {
+        return selfCheck(sandbox, sessionId, exercise, seedTestsFiles, false, false, seededStructuralTestNames);
     }
 
     private AgentVerifyReport selfCheck(InteractiveSandbox sandbox, String sessionId, ProgrammingExercise exercise, Map<String, String> seedTestsFiles, boolean adaptation,
             boolean includeStatementChecks) {
-        // No authoritative seeded set: the agent cannot bind to structural tests seeded after it submits. The name-shape exemption still applies.
+        return selfCheck(sandbox, sessionId, exercise, seedTestsFiles, adaptation, includeStatementChecks, Set.of());
+    }
+
+    private AgentVerifyReport selfCheck(InteractiveSandbox sandbox, String sessionId, ProgrammingExercise exercise, Map<String, String> seedTestsFiles, boolean adaptation,
+            boolean includeStatementChecks, Set<String> seededStructuralTestNames) {
         String problemStatement = readProblemStatement(sandbox, sessionId);
-        DifferentialAnalysis analysis = runDifferential(sandbox, sessionId, exercise, Set.of(), problemStatement, () -> {
+        DifferentialAnalysis analysis = runDifferential(sandbox, sessionId, exercise, seededStructuralTestNames, problemStatement, () -> {
         });
         BuildSummary solution = analysis.solution();
         BuildSummary template = analysis.template();
@@ -380,8 +407,10 @@ public class DifferentialVerificationService {
         reasons.addAll(approvedSpecificationReasons);
         String testPlanJson = readWorkspaceRootFile(sandbox, sessionId, "test-plan.json");
         List<String> approvedTestPlanReasons = includeStatementChecks
-                ? contractSpecifications.stream().flatMap(spec -> ExerciseIntegrityGate.approvedTestPlanReasons(spec, testPlanJson, solution.testNames()).stream()).distinct()
-                        .toList()
+                ? contractSpecifications.stream()
+                        .flatMap(spec -> ExerciseIntegrityGate
+                                .approvedTestPlanReasons(spec, testPlanJson, solution.testNames(), exercise.getDueDate() != null, seededStructuralTestNames).stream())
+                        .distinct().toList()
                 : List.of();
         boolean approvedTestPlanHolds = approvedTestPlanReasons.isEmpty();
         reasons.addAll(approvedTestPlanReasons);
@@ -625,7 +654,7 @@ public class DifferentialVerificationService {
      * @param actionableGatesPass            whether every sandbox-dependent gate held (the integrity gates are layered on top by {@link #verify})
      * @param actionableReasons              the reasons any sandbox-dependent gate failed (empty when all hold); the same wording {@link #verify} surfaces
      * @param unresolvedTaskBindings         the {@code [task]} bindings referencing no real test (surfaced to the agent verbatim)
-     * @param possiblyDeadFiles              best-effort workspace files no build phase appears to read (advisory; empty when unavailable)
+     * @param possiblyDeadFiles              best-effort files present in only one assignment repository (advisory; empty when unavailable)
      * @param gradableTestsPassingOnTemplate the exact, non-structural, non-build-gate solution test names that pass on the template (empty when the template did not build
      *                                           soundly, or none pass); consumed both by the actionable gate and by {@link #selfCheck}'s agent-facing report so the two never
      *                                           diverge

@@ -8,6 +8,8 @@ import java.util.Base64;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+import java.util.function.Supplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -124,6 +126,15 @@ public class SandboxAgentTools implements SubmitVetoAware {
      * are not guaranteed to run on the same thread across a stage transition, even though a single stage's tool calls are always serial.
      */
     private volatile GenerationStage currentStage;
+
+    /** Root artifacts the current semantic repair may change; {@code null} outside a finding-scoped repair. */
+    @Nullable
+    private volatile Set<String> repairWritableRoots;
+
+    private volatile Set<String> seededStructuralTestNames = Set.of();
+
+    @Nullable
+    private volatile Supplier<Set<String>> structuralOracleRefresh;
 
     /**
      * Set by {@link #submit} when the current stage's mechanical check rejected the submission, so {@link AgentLoopRunner} keeps the loop going instead of ending the session;
@@ -530,6 +541,8 @@ public class SandboxAgentTools implements SubmitVetoAware {
         int sequence = bashSequence++;
         String logPath = SPILL_DIR + "/bash-" + sequence + ".log";
         String commandPath = SPILL_DIR + "/bash-" + sequence + ".sh";
+        List<String> protectedPaths = protectedWriteBoundaryPaths();
+        String snapshotPath = SPILL_DIR + "/stage-snapshot-" + sequence;
         // The command travels base64-encoded into its own script file, so its quoting can never corrupt the wrapper: a command with unbalanced quotes now fails INSIDE
         // `sh "$CMD"` with an ordinary error and exit code instead of taking the meta line down with it. The wrapper runs it in a subshell so an `exit` inside (e.g. from
         // verify.sh) cannot abort the wrapper before it reports the code and tail; combined output is redirected, not piped (POSIX sh has no PIPESTATUS), so the real exit code
@@ -537,12 +550,14 @@ public class SandboxAgentTools implements SubmitVetoAware {
         // has it) stops a slow command before the session-destroying docker-exec timeout can fire. `wc` is run through `tr -d` because some implementations pad the count with
         // spaces, which would corrupt the meta line and lose the authoritative exit code.
         String encodedCommand = Base64.getEncoder().encodeToString(command.getBytes(StandardCharsets.UTF_8));
-        String script = "LOG=" + logPath + "\n" + "CMD=" + commandPath + "\n" + "mkdir -p " + SPILL_DIR + "\n" + "printf '%s' '" + encodedCommand + "' | base64 -d > \"$CMD\"\n"
-                + "if command -v timeout >/dev/null 2>&1; then\n" + "  ( ulimit -f " + SPILL_ULIMIT_BLOCKS + " 2>/dev/null; cd " + WORKSPACE + " && timeout "
-                + BASH_SOFT_TIMEOUT_SECONDS + " sh \"$CMD\" ) </dev/null > \"$LOG\" 2>&1\n" + "else\n" + "  ( ulimit -f " + SPILL_ULIMIT_BLOCKS + " 2>/dev/null; cd " + WORKSPACE
-                + " && sh \"$CMD\" ) </dev/null > \"$LOG\" 2>&1\n" + "fi\n" + "rc=$?\n" + "bytes=$(wc -c < \"$LOG\" | tr -d ' \\t')\n"
-                + "lines=$(wc -l < \"$LOG\" | tr -d ' \\t')\n" + "printf '__HYP_META__ rc=%s bytes=%s lines=%s\\n' \"$rc\" \"$bytes\" \"$lines\"\n" + "tail -c " + BASH_TAIL_BYTES
-                + " \"$LOG\"\n";
+        String script = "LOG=" + logPath + "\n" + "CMD=" + commandPath + "\n" + "SNAP=" + snapshotPath + "\n" + "mkdir -p " + SPILL_DIR + "\n" + "printf '%s' '" + encodedCommand
+                + "' | base64 -d > \"$CMD\"\n" + stageSnapshotSetup(protectedPaths) + "if [ \"$snapshot_ok\" -eq 1 ] && command -v timeout >/dev/null 2>&1; then\n"
+                + "  ( ulimit -f " + SPILL_ULIMIT_BLOCKS + " 2>/dev/null; cd " + WORKSPACE + " && timeout " + BASH_SOFT_TIMEOUT_SECONDS
+                + " sh \"$CMD\" ) </dev/null > \"$LOG\" 2>&1\n" + "  rc=$?\n" + "elif [ \"$snapshot_ok\" -eq 1 ]; then\n" + "  ( ulimit -f " + SPILL_ULIMIT_BLOCKS
+                + " 2>/dev/null; cd " + WORKSPACE + " && sh \"$CMD\" ) </dev/null > \"$LOG\" 2>&1\n" + "  rc=$?\n" + "else\n"
+                + "  printf 'ERROR: Artemis could not checkpoint the current stage boundary, so the shell command was not run. Use the structured file tools instead.\\n' > \"$LOG\"\n"
+                + "  rc=2\n" + "fi\n" + stageSnapshotRestore(protectedPaths) + "bytes=$(wc -c < \"$LOG\" | tr -d ' \\t')\n" + "lines=$(wc -l < \"$LOG\" | tr -d ' \\t')\n"
+                + "printf '__HYP_META__ rc=%s bytes=%s lines=%s\\n' \"$rc\" \"$bytes\" \"$lines\"\n" + "tail -c " + BASH_TAIL_BYTES + " \"$LOG\"\n";
         SandboxExecResult result = sandbox.exec(sessionId, BASH_TIMEOUT, "sh", "-c", script);
         if (result.timedOut()) {
             sandboxSessionTerminated = true;
@@ -573,10 +588,67 @@ public class SandboxAgentTools implements SubmitVetoAware {
      * @param stage the stage the orchestrator is about to run
      */
     public void enterStage(GenerationStage stage) {
+        this.repairWritableRoots = null;
         this.currentStage = stage;
         this.dirtySinceLastPassingCheck = true;
         this.cachedStage = null;
         this.cachedPassingCheck = null;
+    }
+
+    /**
+     * Limits an unstaged semantic repair to the coherent artifact surface implicated by its review finding. A later mechanical-correction attempt is unrestricted because its
+     * verifier report provides concrete cross-artifact evidence.
+     *
+     * @param writableRoots workspace-root artifacts such as {@code tests}, {@code test-plan.json}, or {@code problem-statement.md}
+     */
+    public void enterRepairScope(Set<String> writableRoots) {
+        this.currentStage = null;
+        this.repairWritableRoots = Set.copyOf(writableRoots);
+    }
+
+    /** Ends a finding-scoped repair before verification or a different repair surface starts. */
+    public void exitRepairScope() {
+        this.repairWritableRoots = null;
+    }
+
+    /**
+     * Records the authoritative structural checks seeded between TEMPLATE and TESTS so staged verification sees the same gradable name set as final verification.
+     *
+     * @param names the structural test names materialized by the server
+     */
+    public void recordSeededStructuralTestNames(Set<String> names) {
+        seededStructuralTestNames = names == null ? Set.of() : Set.copyOf(names);
+    }
+
+    /**
+     * Returns the server-authored structural test names currently used by staged and final verification.
+     *
+     * @return the current structural test names
+     */
+    public Set<String> seededStructuralTestNames() {
+        return seededStructuralTestNames;
+    }
+
+    /**
+     * Installs the server-owned structural-oracle refresh used at every TESTS/full-verification boundary.
+     *
+     * @param refresh the callback that re-materializes the structural oracle
+     */
+    public void configureStructuralOracleRefresh(Supplier<Set<String>> refresh) {
+        structuralOracleRefresh = refresh;
+    }
+
+    /**
+     * Re-materializes the server-owned structural oracle and returns its authoritative test names.
+     *
+     * @return the refreshed structural test names
+     */
+    public Set<String> refreshStructuralOracle() {
+        Supplier<Set<String>> refresh = structuralOracleRefresh;
+        if (refresh != null) {
+            recordSeededStructuralTestNames(refresh.get());
+        }
+        return seededStructuralTestNames;
     }
 
     /**
@@ -588,7 +660,12 @@ public class SandboxAgentTools implements SubmitVetoAware {
     private @Nullable String stageWriteRejection(String path) {
         GenerationStage stage = currentStage;
         if (stage == null) {
-            return null;
+            Set<String> writableRoots = repairWritableRoots;
+            if (writableRoots == null || writableRoots.stream().anyMatch(root -> path.equals(root) || path.startsWith(root + "/"))) {
+                return null;
+            }
+            return "ERROR: the current repair cannot write '" + path
+                    + "'. Fix only the artifact surface implicated by the reviewed finding; verification will identify any concrete cross-artifact correction that is also needed.";
         }
         boolean allowed = switch (stage) {
             case SPEC -> path.equals("SPEC.md");
@@ -604,6 +681,58 @@ public class SandboxAgentTools implements SubmitVetoAware {
                 + "'. Finish only this stage's artifact (or correct an earlier dependency); the dedicated later stage will author this file with its own instructions and gate.";
     }
 
+    /**
+     * Paths outside the current stage's declared write capability. Shell remains available for inspection and builds, but any out-of-band mutation of these paths is detected and
+     * rolled back by the wrapper itself rather than guessed from command text.
+     */
+    private static List<String> protectedStagePaths(@Nullable GenerationStage stage) {
+        if (stage == null) {
+            return List.of();
+        }
+        return switch (stage) {
+            case SPEC -> List.of("solution", "template", "tests", "test-plan.json", "problem-statement.md");
+            case SOLUTION -> List.of("SPEC.md", "template", "tests", "test-plan.json", "problem-statement.md");
+            case TEMPLATE -> List.of("SPEC.md", "tests", "test-plan.json", "problem-statement.md");
+            case TESTS -> List.of("SPEC.md", "problem-statement.md");
+            case STATEMENT -> List.of("SPEC.md", "solution", "template", "tests", "test-plan.json");
+        };
+    }
+
+    private List<String> protectedWriteBoundaryPaths() {
+        if (currentStage != null) {
+            return protectedStagePaths(currentStage);
+        }
+        Set<String> writableRoots = repairWritableRoots;
+        if (writableRoots == null) {
+            return List.of();
+        }
+        return List.of("SPEC.md", "solution", "template", "tests", "test-plan.json", "problem-statement.md").stream().filter(path -> !writableRoots.contains(path)).toList();
+    }
+
+    private static String stageSnapshotSetup(List<String> protectedPaths) {
+        if (protectedPaths.isEmpty()) {
+            return "snapshot_ok=1\n";
+        }
+        String paths = String.join(" ", protectedPaths);
+        return "rm -rf \"$SNAP\"\n" + "mkdir -p \"$SNAP/data\"\n" + ": > \"$SNAP/present\"\n" + "snapshot_ok=1\n" + "for item in " + paths + "; do\n" + "  if [ -e \"" + WORKSPACE
+                + "/$item\" ]; then\n" + "    if cp -a \"" + WORKSPACE + "/$item\" \"$SNAP/data/$item\"; then\n" + "      printf '%s\\n' \"$item\" >> \"$SNAP/present\"\n"
+                + "    else\n" + "      snapshot_ok=0\n" + "    fi\n" + "  fi\n" + "done\n";
+    }
+
+    private static String stageSnapshotRestore(List<String> protectedPaths) {
+        if (protectedPaths.isEmpty()) {
+            return "";
+        }
+        String paths = String.join(" ", protectedPaths);
+        return "if [ \"$snapshot_ok\" -eq 1 ]; then\n" + "  protected_changed=0\n" + "  for item in " + paths + "; do\n" + "    if grep -Fxq \"$item\" \"$SNAP/present\"; then\n"
+                + "      if [ ! -e \"" + WORKSPACE + "/$item\" ] || ! diff -qr \"$SNAP/data/$item\" \"" + WORKSPACE + "/$item\" >/dev/null 2>&1; then protected_changed=1; fi\n"
+                + "    elif [ -e \"" + WORKSPACE + "/$item\" ]; then\n" + "      protected_changed=1\n" + "    fi\n" + "  done\n" + "  if [ \"$protected_changed\" -eq 1 ]; then\n"
+                + "    for item in " + paths + "; do\n" + "      rm -rf \"" + WORKSPACE + "/$item\"\n" + "      if grep -Fxq \"$item\" \"$SNAP/present\"; then\n"
+                + "        cp -a \"$SNAP/data/$item\" \"" + WORKSPACE + "/$item\"\n" + "      fi\n" + "    done\n"
+                + "    printf '\\nERROR: the shell command changed files outside the current stage. Artemis restored those protected artifacts; use the structured file tools only within this stage write boundary.\\n' >> \"$LOG\"\n"
+                + "    rc=2\n" + "  fi\n" + "fi\n" + "rm -rf \"$SNAP\"\n";
+    }
+
     private @Nullable String approvedContractWriteRejection(String path, String content) {
         return stageCheckService == null ? null : stageCheckService.validateArtifactWrite(sessionId, path, content).orElse(null);
     }
@@ -616,6 +745,7 @@ public class SandboxAgentTools implements SubmitVetoAware {
      */
     public void exitStagedGeneration() {
         this.currentStage = null;
+        this.repairWritableRoots = null;
         this.dirtySinceLastPassingCheck = true;
         this.cachedStage = null;
         this.cachedPassingCheck = null;
@@ -711,7 +841,7 @@ public class SandboxAgentTools implements SubmitVetoAware {
         if (verifier == null || exercise == null) {
             return "ERROR: the verify tool is unavailable in this session. Fall back to `sh verify.sh solution` and `sh verify.sh template` via bash.";
         }
-        AgentVerifyReport report = verifier.selfCheck(sandbox, sessionId, exercise, seedTestsFiles, adaptation);
+        AgentVerifyReport report = verifier.selfCheck(sandbox, sessionId, exercise, seedTestsFiles, adaptation, refreshStructuralOracle());
         return screenObservation("tool/verify", report.toObservation());
     }
 
@@ -766,7 +896,10 @@ public class SandboxAgentTools implements SubmitVetoAware {
         if (stageCheckService == null || exercise == null) {
             return StageCheckResult.failed("ERROR: the stage-check service is unavailable in this session.");
         }
-        StageCheckResult result = stageCheckService.check(stage, sandbox, sessionId, exercise, seedTestsFiles, lastTestsReport);
+        if (stage == GenerationStage.TESTS) {
+            refreshStructuralOracle();
+        }
+        StageCheckResult result = stageCheckService.check(stage, sandbox, sessionId, exercise, seedTestsFiles, lastTestsReport, seededStructuralTestNames);
         if (stage == GenerationStage.TESTS && result.report() != null) {
             lastTestsReport = result.report();
         }

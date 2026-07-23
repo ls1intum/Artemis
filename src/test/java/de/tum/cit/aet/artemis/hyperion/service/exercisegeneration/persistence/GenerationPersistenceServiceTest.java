@@ -20,6 +20,7 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.time.Duration;
+import java.time.ZonedDateTime;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -37,6 +38,7 @@ import org.mockito.Mockito;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
+import de.tum.cit.aet.artemis.assessment.domain.Visibility;
 import de.tum.cit.aet.artemis.assessment.test_repository.ResultTestRepository;
 import de.tum.cit.aet.artemis.core.service.TempFileUtilService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseVersionService;
@@ -52,6 +54,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipatio
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
 import de.tum.cit.aet.artemis.programming.domain.Repository;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseCreationScheduleService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseParticipationService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseTaskService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingSubmissionService;
@@ -86,6 +89,8 @@ class GenerationPersistenceServiceTest {
 
     private ProgrammingExerciseTaskService programmingExerciseTaskService;
 
+    private ProgrammingExerciseCreationScheduleService programmingExerciseCreationScheduleService;
+
     private TempFileUtilService tempFileUtilService;
 
     private GenerationPersistenceService service;
@@ -116,6 +121,7 @@ class GenerationPersistenceServiceTest {
         resultRepository = mock(ResultTestRepository.class);
         programmingExerciseRepository = mock(ProgrammingExerciseTestRepository.class);
         programmingExerciseTaskService = mock(ProgrammingExerciseTaskService.class);
+        programmingExerciseCreationScheduleService = mock(ProgrammingExerciseCreationScheduleService.class);
         tempFileUtilService = new TempFileUtilService(Path.of("build/tmp/hyperion-persistence-test"));
         ProgrammingExerciseTestCase behaviourCase = mock(ProgrammingExerciseTestCase.class);
         when(behaviourCase.getTestName()).thenReturn("behaviourTest");
@@ -125,7 +131,7 @@ class GenerationPersistenceServiceTest {
         when(programmingExerciseRepository.updateProblemStatementAndTitleIfUnchanged(anyLong(), any(), any(), any(), any())).thenReturn(1);
         service = new GenerationPersistenceService("main", gitService, repositoryService, participationService, continuousIntegrationTriggerService, programmingSubmissionService,
                 exerciseVersionService, testCaseRepository, resultRepository, programmingExerciseRepository, programmingExerciseTaskService, tempFileUtilService,
-                Duration.ofSeconds(2), Duration.ofMillis(5));
+                programmingExerciseCreationScheduleService, Duration.ofSeconds(2), Duration.ofMillis(5));
 
         exercise = mock(ProgrammingExercise.class);
         exerciseProblemStatement = new AtomicReference<>();
@@ -160,12 +166,17 @@ class GenerationPersistenceServiceTest {
     }
 
     private GenerationOutcome outcomeWith(Map<String, String> template, Map<String, String> solution, Map<String, String> tests, String problemStatement) {
+        return outcomeWithPlan(template, solution, tests, problemStatement, null);
+    }
+
+    private GenerationOutcome outcomeWithPlan(Map<String, String> template, Map<String, String> solution, Map<String, String> tests, String problemStatement, String testPlanJson) {
         GenerationOutcome outcome = mock(GenerationOutcome.class);
         when(outcome.isMechanicallyVerified()).thenReturn(true);
         when(outcome.producedFiles(RepositoryType.TEMPLATE)).thenReturn(template);
         when(outcome.producedFiles(RepositoryType.SOLUTION)).thenReturn(solution);
         when(outcome.producedFiles(RepositoryType.TESTS)).thenReturn(tests);
         when(outcome.producedProblemStatement()).thenReturn(problemStatement);
+        when(outcome.testPlanJson()).thenReturn(testPlanJson);
         when(outcome.seedRepositoryHeads()).thenReturn(Map.of());
         return outcome;
     }
@@ -697,6 +708,85 @@ class GenerationPersistenceServiceTest {
     }
 
     @Test
+    void persist_appliesHiddenPlanAndSchedulesCanonicalDueDateRecalculation() throws Exception {
+        stubSuccessfulCheckoutAndCommits();
+        when(participationService.retrieveSolutionParticipation(exercise)).thenReturn(mock(ProgrammingExerciseParticipation.class));
+        when(exercise.getDueDate()).thenReturn(ZonedDateTime.now().plusDays(1));
+        ProgrammingExerciseTestCase behaviour = new ProgrammingExerciseTestCase().testName("behaviourTest").weight(1.0).visibility(Visibility.ALWAYS);
+        when(testCaseRepository.findByExerciseId(1L)).thenReturn(Set.of(behaviour));
+        String plan = "{\"tests\":[{\"name\":\"behaviourTest\",\"seam\":\"S1\",\"seamWeightTier\":3,\"visibility\":\"AFTER_DUE_DATE\"}]}";
+
+        service.persist(exercise, user, outcomeWithPlan(Map.of("Template.cpp", "t"), Map.of("Solution.cpp", "s"), Map.of("Test.cpp", "x"), "", plan));
+
+        assertThat(behaviour.getWeight()).isEqualTo(3.0);
+        assertThat(behaviour.getVisibility()).isEqualTo(Visibility.AFTER_DUE_DATE);
+        verify(programmingExerciseCreationScheduleService).scheduleOperations(1L);
+    }
+
+    @Test
+    void persistKeepsServerSeededStructuralChecksVisibleAndZeroWeightWithoutAgentPlanEntries() throws Exception {
+        stubSuccessfulCheckoutAndCommits();
+        when(participationService.retrieveSolutionParticipation(exercise)).thenReturn(mock(ProgrammingExerciseParticipation.class));
+        ProgrammingExerciseTestCase behaviour = new ProgrammingExerciseTestCase().testName("behaviourTest").weight(1.0).visibility(Visibility.ALWAYS);
+        ProgrammingExerciseTestCase structural = new ProgrammingExerciseTestCase().testName("testClass[Strategy]").weight(1.0).visibility(Visibility.AFTER_DUE_DATE);
+        when(testCaseRepository.findByExerciseId(1L)).thenReturn(Set.of(behaviour, structural));
+        String plan = "{\"tests\":[{\"name\":\"behaviourTest\",\"seam\":\"S1\",\"seamWeightTier\":3,\"visibility\":\"ALWAYS\"}]}";
+
+        service.persist(exercise, user, outcomeWithPlan(Map.of("Template.cpp", "t"), Map.of("Solution.cpp", "s"), Map.of("Test.cpp", "x"), "", plan));
+
+        assertThat(behaviour.getWeight()).isEqualTo(3.0);
+        assertThat(structural.getWeight()).isZero();
+        assertThat(structural.getVisibility()).isEqualTo(Visibility.ALWAYS);
+    }
+
+    @Test
+    void persist_appliesVerifiedPlanEvenWhenTheTestsRepositoryHasNoNewCommit() throws Exception {
+        stubSuccessfulCheckoutAndCommits();
+        when(gitService.commitStagedChanges(any(), anyString(), any())).thenReturn("hash-template", "hash-solution", null);
+        ProgrammingExerciseTestCase behaviour = new ProgrammingExerciseTestCase().testName("behaviourTest").weight(1.0).visibility(Visibility.ALWAYS);
+        when(testCaseRepository.findByExerciseId(1L)).thenReturn(Set.of(behaviour));
+        String plan = "{\"tests\":[{\"name\":\"behaviourTest\",\"seam\":\"S1\",\"seamWeightTier\":3,\"visibility\":\"ALWAYS\"}]}";
+
+        service.persist(exercise, user, outcomeWithPlan(Map.of("Template.cpp", "t"), Map.of("Solution.cpp", "s"), Map.of("Test.cpp", "x"), "", plan));
+
+        assertThat(behaviour.getWeight()).isEqualTo(3.0);
+        verify(continuousIntegrationTriggerService, never()).triggerRestrictedBuild(any(), anyString(), any());
+        verify(testCaseRepository).saveAll(any());
+    }
+
+    @Test
+    void persist_failsFinalizationRatherThanPublishingAHiddenPlanWithoutADueDate() throws Exception {
+        stubSuccessfulCheckoutAndCommits();
+        when(participationService.retrieveSolutionParticipation(exercise)).thenReturn(mock(ProgrammingExerciseParticipation.class));
+        ProgrammingExerciseTestCase behaviour = new ProgrammingExerciseTestCase().testName("behaviourTest").weight(1.0).visibility(Visibility.ALWAYS);
+        when(testCaseRepository.findByExerciseId(1L)).thenReturn(Set.of(behaviour));
+        String plan = "{\"tests\":[{\"name\":\"behaviourTest\",\"seam\":\"S1\",\"seamWeightTier\":3,\"visibility\":\"AFTER_DUE_DATE\"}]}";
+
+        assertThatThrownBy(() -> service.persist(exercise, user, outcomeWithPlan(Map.of("Template.cpp", "t"), Map.of("Solution.cpp", "s"), Map.of("Test.cpp", "x"), "", plan)))
+                .isInstanceOf(GenerationIncompleteException.class).hasMessageContaining("INCOMPLETE").hasMessageContaining("has no due date");
+
+        assertThat(behaviour.getWeight()).isEqualTo(1.0);
+        assertThat(behaviour.getVisibility()).isEqualTo(Visibility.ALWAYS);
+        verify(programmingExerciseCreationScheduleService, never()).scheduleOperations(anyLong());
+    }
+
+    @Test
+    void persist_failsFinalizationWhenSynchronizedTestsDoNotMatchTheVerifiedPlan() throws Exception {
+        stubSuccessfulCheckoutAndCommits();
+        when(participationService.retrieveSolutionParticipation(exercise)).thenReturn(mock(ProgrammingExerciseParticipation.class));
+        ProgrammingExerciseTestCase renamed = new ProgrammingExerciseTestCase().testName("renamedTest").weight(1.0).visibility(Visibility.ALWAYS);
+        when(testCaseRepository.findByExerciseId(1L)).thenReturn(Set.of(renamed));
+        String plan = "{\"tests\":[{\"name\":\"verifiedTest\",\"seam\":\"S1\",\"seamWeightTier\":3,\"visibility\":\"ALWAYS\"}]}";
+
+        assertThatThrownBy(() -> service.persist(exercise, user, outcomeWithPlan(Map.of("Template.cpp", "t"), Map.of("Solution.cpp", "s"), Map.of("Test.cpp", "x"), "", plan)))
+                .isInstanceOf(GenerationIncompleteException.class).hasMessageContaining("INCOMPLETE").hasMessageContaining("Missing saved tests: [verifiedTest]")
+                .hasMessageContaining("unplanned saved tests: [renamedTest]");
+
+        assertThat(renamed.getWeight()).isEqualTo(1.0);
+        verify(testCaseRepository, never()).saveAll(any());
+    }
+
+    @Test
     void persist_waitsForTheSpecificTriggeredTestsCommitHash_notAnyNewerSolutionResult() throws Exception {
         stubSuccessfulCheckoutAndCommits();
         when(participationService.retrieveSolutionParticipation(exercise)).thenReturn(mock(ProgrammingExerciseParticipation.class));
@@ -726,7 +816,7 @@ class GenerationPersistenceServiceTest {
 
         GenerationPersistenceService promptService = new GenerationPersistenceService("main", gitService, repositoryService, participationService,
                 continuousIntegrationTriggerService, programmingSubmissionService, exerciseVersionService, testCaseRepository, resultRepository, programmingExerciseRepository,
-                programmingExerciseTaskService, tempFileUtilService, Duration.ofSeconds(10), Duration.ofMillis(5));
+                programmingExerciseTaskService, tempFileUtilService, programmingExerciseCreationScheduleService, Duration.ofSeconds(10), Duration.ofMillis(5));
 
         ProgrammingExerciseTestCase buildGate = new ProgrammingExerciseTestCase().testName("GBS-Tester-1.36.CompileSort").weight(1.0);
         ProgrammingExerciseTestCase behaviour = new ProgrammingExerciseTestCase().testName("sort-test.push_then_pop").weight(1.0);
@@ -752,7 +842,7 @@ class GenerationPersistenceServiceTest {
         Duration timeout = Duration.ofMillis(500);
         GenerationPersistenceService boundedService = new GenerationPersistenceService("main", gitService, repositoryService, participationService,
                 continuousIntegrationTriggerService, programmingSubmissionService, exerciseVersionService, testCaseRepository, resultRepository, programmingExerciseRepository,
-                programmingExerciseTaskService, tempFileUtilService, timeout, Duration.ofMillis(5));
+                programmingExerciseTaskService, tempFileUtilService, programmingExerciseCreationScheduleService, timeout, Duration.ofMillis(5));
 
         AtomicInteger matchingResultPolls = new AtomicInteger();
         when(programmingSubmissionService.existsNewerSuccessfulTestResultForParticipationAndCommitHash(anyLong(), eq("hash-tests"), any())).thenAnswer(invocation -> {

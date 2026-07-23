@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anySet;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
@@ -17,6 +18,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.junit.jupiter.api.Test;
@@ -293,6 +295,21 @@ class SandboxAgentToolsTest {
     }
 
     @Test
+    void repairScope_limitsStructuredWritesToTheFindingSurfaceAndCanBeExited() {
+        SandboxAgentTools tools = new SandboxAgentTools(new RecordingSandbox(), "s");
+
+        tools.enterRepairScope(Set.of("tests", "test-plan.json"));
+
+        assertThat(tools.writeFile("tests/test/AnswerTest.java", "class AnswerTest {}")).startsWith("Wrote ");
+        assertThat(tools.writeFile("test-plan.json", "{\"tests\":[]}")).startsWith("Wrote ");
+        assertThat(tools.writeFile("solution/src/Answer.java", "class Answer {}")).contains("current repair").contains("cannot write");
+        assertThat(tools.writeFile("template/src/Answer.java", "class Answer {}")).contains("current repair").contains("cannot write");
+
+        tools.exitRepairScope();
+        assertThat(tools.writeFile("solution/src/Answer.java", "class Answer {}")).startsWith("Wrote ");
+    }
+
+    @Test
     void writeFile_rejectsATemplateDeclarationThatViolatesTheApprovedStudentOwnership() {
         RecordingSandbox sandbox = new RecordingSandbox();
         StageCheckService stageChecks = mock(StageCheckService.class);
@@ -420,10 +437,35 @@ class SandboxAgentToolsTest {
         // /dev/null and combined output to the log, is stopped by coreutils `timeout` before the session-destroying exec timeout when the image has it, and a bounded tail
         // comes back.
         String encoded = java.util.Base64.getEncoder().encodeToString("echo hello".getBytes(java.nio.charset.StandardCharsets.UTF_8));
-        assertThat(sandbox.lastScript).contains("printf '%s' '" + encoded + "' | base64 -d > \"$CMD\"").contains("if command -v timeout >/dev/null 2>&1; then")
+        assertThat(sandbox.lastScript).contains("printf '%s' '" + encoded + "' | base64 -d > \"$CMD\"")
+                .contains("if [ \"$snapshot_ok\" -eq 1 ] && command -v timeout >/dev/null 2>&1; then")
                 .contains("( ulimit -f 65536 2>/dev/null; cd /workspace && timeout 270 sh \"$CMD\" )").contains("( ulimit -f 65536 2>/dev/null; cd /workspace && sh \"$CMD\" )")
                 .contains("</dev/null > \"$LOG\" 2>&1").contains("rc=$?").contains("/tmp/hyperion/bash-0.log").contains("/tmp/hyperion/bash-0.sh").contains("__HYP_META__")
                 .contains("tail -c 10000");
+    }
+
+    @Test
+    void bash_inAStageSnapshotsAndRestoresArtifactsOutsideThatStagesWriteBoundary() {
+        ScriptedSandbox sandbox = new ScriptedSandbox(bashStdout(0, "__HYP_META__ rc=0 bytes=2 lines=1\nok"));
+        SandboxAgentTools tools = new SandboxAgentTools(sandbox, "s");
+        tools.enterStage(GenerationStage.STATEMENT);
+
+        tools.bash("printf changed > test-plan.json");
+
+        assertThat(sandbox.lastScript).contains("for item in SPEC.md solution template tests test-plan.json").contains("diff -qr \"$SNAP/data/$item\" \"/workspace/$item\"")
+                .contains("Artemis restored those protected artifacts").contains("rc=2");
+    }
+
+    @Test
+    void bash_inARepairScopeSnapshotsAndRestoresArtifactsOutsideThatRepairSurface() {
+        ScriptedSandbox sandbox = new ScriptedSandbox(bashStdout(0, "__HYP_META__ rc=0 bytes=2 lines=1\nok"));
+        SandboxAgentTools tools = new SandboxAgentTools(sandbox, "s");
+        tools.enterRepairScope(Set.of("tests", "test-plan.json"));
+
+        tools.bash("printf changed > solution/src/Answer.java");
+
+        assertThat(sandbox.lastScript).contains("for item in SPEC.md solution template problem-statement.md").doesNotContain("for item in tests")
+                .contains("Artemis restored those protected artifacts").contains("rc=2");
     }
 
     @Test
@@ -584,7 +626,7 @@ class SandboxAgentToolsTest {
         ProgrammingExercise exercise = new ProgrammingExercise();
         DifferentialVerificationService verifier = mock(DifferentialVerificationService.class);
         AgentVerifyReport report = new AgentVerifyReport(2, true, List.of(), 2, true, true, List.of(), List.of("t_a", "t_b"), List.of(), List.of(), true, List.of());
-        when(verifier.selfCheck(eq(sandbox), eq("s"), eq(exercise), eq(Map.of()), eq(false))).thenReturn(report);
+        when(verifier.selfCheck(eq(sandbox), eq("s"), eq(exercise), eq(Map.of()), eq(false), anySet())).thenReturn(report);
 
         String out = new SandboxAgentTools(sandbox, "s", verifier, exercise).verify();
         assertThat(out).isEqualTo(report.toObservation());
@@ -597,7 +639,7 @@ class SandboxAgentToolsTest {
         DifferentialVerificationService verifier = mock(DifferentialVerificationService.class);
         AgentVerifyReport report = new AgentVerifyReport(0, false, List.of(), 0, false, false, List.of(), List.of(), List.of(), List.of(), false,
                 List.of("failure " + GITHUB_SENTINEL));
-        when(verifier.selfCheck(eq(sandbox), eq("s"), eq(exercise), eq(Map.of()), eq(false))).thenReturn(report);
+        when(verifier.selfCheck(eq(sandbox), eq("s"), eq(exercise), eq(Map.of()), eq(false), anySet())).thenReturn(report);
 
         String result = new SandboxAgentTools(sandbox, "s", verifier, exercise).verify();
 
@@ -616,8 +658,24 @@ class SandboxAgentToolsTest {
 
     private static SandboxAgentTools toolsWiredToAVerifier(RecordingSandbox sandbox, ProgrammingExercise exercise, DifferentialVerificationService verifier,
             AgentVerifyReport report) {
-        when(verifier.selfCheck(eq(sandbox), eq("s"), eq(exercise), eq(Map.of()), eq(false))).thenReturn(report);
+        when(verifier.selfCheck(eq(sandbox), eq("s"), eq(exercise), eq(Map.of()), eq(false), anySet())).thenReturn(report);
         return new SandboxAgentTools(sandbox, "s", verifier, exercise);
+    }
+
+    @Test
+    void unstagedRepairVerifyRefreshesAndThreadsTheStructuralOracle() {
+        RecordingSandbox sandbox = new RecordingSandbox();
+        ProgrammingExercise exercise = new ProgrammingExercise();
+        DifferentialVerificationService verifier = mock(DifferentialVerificationService.class);
+        Set<String> names = Set.of("testClass[StudentStrategy]");
+        AgentVerifyReport report = new AgentVerifyReport(2, true, List.of(), 2, true, true, List.of(), List.of("testFoo", "testClass[StudentStrategy]"), List.of(), List.of(), true,
+                List.of());
+        when(verifier.selfCheck(eq(sandbox), eq("s"), eq(exercise), eq(Map.of()), eq(false), eq(names))).thenReturn(report);
+        SandboxAgentTools tools = new SandboxAgentTools(sandbox, "s", verifier, exercise);
+        tools.configureStructuralOracleRefresh(() -> names);
+
+        assertThat(tools.verify()).isEqualTo(report.toObservation());
+        verify(verifier).selfCheck(eq(sandbox), eq("s"), eq(exercise), eq(Map.of()), eq(false), eq(names));
     }
 
     private static SandboxAgentTools stagedTools(InteractiveSandbox sandbox, ProgrammingExercise exercise, StageCheckService stageCheckService) {
@@ -632,7 +690,8 @@ class SandboxAgentToolsTest {
         StageCheckService stageCheckService = mock(StageCheckService.class);
 
         for (GenerationStage stage : GenerationStage.values()) {
-            when(stageCheckService.check(eq(stage), eq(sandbox), eq("s"), eq(exercise), eq(Map.of()), any())).thenReturn(StageCheckResult.passed("stage " + stage + " note"));
+            when(stageCheckService.check(eq(stage), eq(sandbox), eq("s"), eq(exercise), eq(Map.of()), any(), anySet()))
+                    .thenReturn(StageCheckResult.passed("stage " + stage + " note"));
             SandboxAgentTools tools = new SandboxAgentTools(sandbox, "s", verifier, exercise, Map.of(), false, stageCheckService);
             tools.enterStage(stage);
 
@@ -648,7 +707,7 @@ class SandboxAgentToolsTest {
         RecordingSandbox sandbox = new RecordingSandbox();
         ProgrammingExercise exercise = new ProgrammingExercise();
         StageCheckService stageCheckService = mock(StageCheckService.class);
-        when(stageCheckService.check(eq(GenerationStage.SPEC), eq(sandbox), eq("s"), eq(exercise), eq(Map.of()), any()))
+        when(stageCheckService.check(eq(GenerationStage.SPEC), eq(sandbox), eq("s"), eq(exercise), eq(Map.of()), any(), anySet()))
                 .thenReturn(StageCheckResult.failed("SPEC.md is missing required section(s)"));
         SandboxAgentTools tools = stagedTools(sandbox, exercise, stageCheckService);
         tools.enterStage(GenerationStage.SPEC);
@@ -665,7 +724,7 @@ class SandboxAgentToolsTest {
         ProgrammingExercise exercise = new ProgrammingExercise();
         AgentVerifyReport report = new AgentVerifyReport(2, true, List.of(), 2, true, true, List.of(), List.of("t_a"), List.of(), List.of(), true, List.of());
         StageCheckService stageCheckService = mock(StageCheckService.class);
-        when(stageCheckService.check(eq(GenerationStage.TESTS), eq(sandbox), eq("s"), eq(exercise), eq(Map.of()), any()))
+        when(stageCheckService.check(eq(GenerationStage.TESTS), eq(sandbox), eq("s"), eq(exercise), eq(Map.of()), any(), anySet()))
                 .thenReturn(new StageCheckResult(true, report.toObservation(), report));
         SandboxAgentTools tools = stagedTools(sandbox, exercise, stageCheckService);
         tools.enterStage(GenerationStage.TESTS);
@@ -683,9 +742,10 @@ class SandboxAgentToolsTest {
         ProgrammingExercise exercise = new ProgrammingExercise();
         AgentVerifyReport testsReport = new AgentVerifyReport(2, true, List.of(), 2, true, true, List.of(), List.of("t_a"), List.of(), List.of(), true, List.of());
         StageCheckService stageCheckService = mock(StageCheckService.class);
-        when(stageCheckService.check(eq(GenerationStage.TESTS), eq(sandbox), eq("s"), eq(exercise), eq(Map.of()), isNull()))
+        when(stageCheckService.check(eq(GenerationStage.TESTS), eq(sandbox), eq("s"), eq(exercise), eq(Map.of()), isNull(), anySet()))
                 .thenReturn(new StageCheckResult(true, testsReport.toObservation(), testsReport));
-        when(stageCheckService.check(eq(GenerationStage.STATEMENT), eq(sandbox), eq("s"), eq(exercise), eq(Map.of()), eq(testsReport))).thenReturn(StageCheckResult.passed(""));
+        when(stageCheckService.check(eq(GenerationStage.STATEMENT), eq(sandbox), eq("s"), eq(exercise), eq(Map.of()), eq(testsReport), anySet()))
+                .thenReturn(StageCheckResult.passed(""));
         SandboxAgentTools tools = stagedTools(sandbox, exercise, stageCheckService);
 
         tools.enterStage(GenerationStage.TESTS);
@@ -694,7 +754,7 @@ class SandboxAgentToolsTest {
         String out = tools.verify();
 
         assertThat(out).contains("MECHANICAL PRECHECK: PASS");
-        verify(stageCheckService).check(eq(GenerationStage.STATEMENT), eq(sandbox), eq("s"), eq(exercise), eq(Map.of()), eq(testsReport));
+        verify(stageCheckService).check(eq(GenerationStage.STATEMENT), eq(sandbox), eq("s"), eq(exercise), eq(Map.of()), eq(testsReport), anySet());
     }
 
     @Test
@@ -730,7 +790,7 @@ class SandboxAgentToolsTest {
         RecordingSandbox sandbox = new RecordingSandbox();
         ProgrammingExercise exercise = new ProgrammingExercise();
         StageCheckService stageCheckService = mock(StageCheckService.class);
-        when(stageCheckService.check(eq(GenerationStage.SOLUTION), eq(sandbox), eq("s"), eq(exercise), eq(Map.of()), any()))
+        when(stageCheckService.check(eq(GenerationStage.SOLUTION), eq(sandbox), eq("s"), eq(exercise), eq(Map.of()), any(), anySet()))
                 .thenReturn(StageCheckResult.failed("the reference solution does not compile"));
         SandboxAgentTools tools = stagedTools(sandbox, exercise, stageCheckService);
         tools.enterStage(GenerationStage.SOLUTION);
@@ -747,7 +807,7 @@ class SandboxAgentToolsTest {
         RecordingSandbox sandbox = new RecordingSandbox();
         ProgrammingExercise exercise = new ProgrammingExercise();
         StageCheckService stageCheckService = mock(StageCheckService.class);
-        when(stageCheckService.check(eq(GenerationStage.SOLUTION), eq(sandbox), eq("s"), eq(exercise), eq(Map.of()), any()))
+        when(stageCheckService.check(eq(GenerationStage.SOLUTION), eq(sandbox), eq("s"), eq(exercise), eq(Map.of()), any(), anySet()))
                 .thenReturn(StageCheckResult.failed("the reference solution does not compile"), StageCheckResult.passed(""));
         SandboxAgentTools tools = stagedTools(sandbox, exercise, stageCheckService);
         tools.enterStage(GenerationStage.SOLUTION);
@@ -787,7 +847,7 @@ class SandboxAgentToolsTest {
         RecordingSandbox sandbox = new RecordingSandbox();
         ProgrammingExercise exercise = new ProgrammingExercise();
         StageCheckService stageCheckService = mock(StageCheckService.class);
-        when(stageCheckService.check(eq(GenerationStage.SOLUTION), eq(sandbox), eq("s"), eq(exercise), eq(Map.of()), any())).thenReturn(StageCheckResult.passed("clean"));
+        when(stageCheckService.check(eq(GenerationStage.SOLUTION), eq(sandbox), eq("s"), eq(exercise), eq(Map.of()), any(), anySet())).thenReturn(StageCheckResult.passed("clean"));
         SandboxAgentTools tools = stagedTools(sandbox, exercise, stageCheckService);
         tools.enterStage(GenerationStage.SOLUTION);
 
@@ -803,7 +863,7 @@ class SandboxAgentToolsTest {
         RecordingSandbox sandbox = new RecordingSandbox();
         ProgrammingExercise exercise = new ProgrammingExercise();
         StageCheckService stageCheckService = mock(StageCheckService.class);
-        when(stageCheckService.check(eq(GenerationStage.SOLUTION), eq(sandbox), eq("s"), eq(exercise), eq(Map.of()), any())).thenReturn(StageCheckResult.passed("clean"));
+        when(stageCheckService.check(eq(GenerationStage.SOLUTION), eq(sandbox), eq("s"), eq(exercise), eq(Map.of()), any(), anySet())).thenReturn(StageCheckResult.passed("clean"));
         SandboxAgentTools tools = stagedTools(sandbox, exercise, stageCheckService);
         tools.enterStage(GenerationStage.SOLUTION);
 
@@ -819,7 +879,8 @@ class SandboxAgentToolsTest {
         ScriptedSandbox sandbox = new ScriptedSandbox(bashStdout(0, "__HYP_META__ rc=0 bytes=1 lines=1\nx"));
         ProgrammingExercise exercise = new ProgrammingExercise();
         StageCheckService stageCheckService = mock(StageCheckService.class);
-        when(stageCheckService.check(eq(GenerationStage.SOLUTION), eq(sandbox), anyString(), eq(exercise), eq(Map.of()), any())).thenReturn(StageCheckResult.passed("clean"));
+        when(stageCheckService.check(eq(GenerationStage.SOLUTION), eq(sandbox), anyString(), eq(exercise), eq(Map.of()), any(), anySet()))
+                .thenReturn(StageCheckResult.passed("clean"));
         SandboxAgentTools tools = stagedTools(sandbox, exercise, stageCheckService);
         tools.enterStage(GenerationStage.SOLUTION);
 
@@ -835,7 +896,7 @@ class SandboxAgentToolsTest {
         RecordingSandbox sandbox = new RecordingSandbox();
         ProgrammingExercise exercise = new ProgrammingExercise();
         StageCheckService stageCheckService = mock(StageCheckService.class);
-        when(stageCheckService.check(eq(GenerationStage.SOLUTION), eq(sandbox), eq("s"), eq(exercise), eq(Map.of()), any())).thenReturn(StageCheckResult.passed("clean"));
+        when(stageCheckService.check(eq(GenerationStage.SOLUTION), eq(sandbox), eq("s"), eq(exercise), eq(Map.of()), any(), anySet())).thenReturn(StageCheckResult.passed("clean"));
         SandboxAgentTools tools = stagedTools(sandbox, exercise, stageCheckService);
         tools.enterStage(GenerationStage.SOLUTION);
         tools.verify();
@@ -851,7 +912,7 @@ class SandboxAgentToolsTest {
         RecordingSandbox sandbox = new RecordingSandbox();
         ProgrammingExercise exercise = new ProgrammingExercise();
         StageCheckService stageCheckService = mock(StageCheckService.class);
-        when(stageCheckService.check(eq(GenerationStage.STATEMENT), eq(sandbox), eq("s"), eq(exercise), eq(Map.of()), any())).thenReturn(StageCheckResult.passed(""));
+        when(stageCheckService.check(eq(GenerationStage.STATEMENT), eq(sandbox), eq("s"), eq(exercise), eq(Map.of()), any(), anySet())).thenReturn(StageCheckResult.passed(""));
         SandboxAgentTools tools = stagedTools(sandbox, exercise, stageCheckService);
         tools.enterStage(GenerationStage.STATEMENT);
         tools.verify();

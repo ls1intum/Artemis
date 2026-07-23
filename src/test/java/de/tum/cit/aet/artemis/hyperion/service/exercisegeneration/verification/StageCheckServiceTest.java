@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anySet;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
@@ -10,8 +11,10 @@ import static org.mockito.Mockito.when;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.junit.jupiter.api.BeforeEach;
@@ -113,8 +116,6 @@ class StageCheckServiceTest {
         return """
                 # Exercise
 
-                Archetype: calculator-with-rules
-
                 ## Rules
                 - R1: computes a result from the input.
 
@@ -129,14 +130,17 @@ class StageCheckServiceTest {
                 |------|------|-----------------|
                 """ + designRows + """
 
+                ## Public API
+                `%s`: `int calculate(int input)`
+
                 ## Testing Strategy
-                | Seam | Owner type | Partitions | Weight | Hidden variant |
+                | Seam | Owner type | Observable responsibility | Weight | Hidden variant |
                 |------|------------|------------|--------|----------------|
                 | S1 | %s | typical; zero | 3 | no |
 
                 ## Diagram
                 no — single-class exercise
-                """.formatted(ownerType);
+                """.formatted(ownerType, ownerType);
     }
 
     private DifferentialVerificationService verifier;
@@ -175,7 +179,7 @@ class StageCheckServiceTest {
     }
 
     private StageCheckResult check(GenerationStage stage, AgentVerifyReport lastTestsReport) {
-        return service.check(stage, sandbox, "s", exercise, Map.of(), lastTestsReport);
+        return service.check(stage, sandbox, "s", exercise, Map.of(), lastTestsReport, Set.of());
     }
 
     @Test
@@ -428,19 +432,19 @@ class StageCheckServiceTest {
         @Test
         void passes_andCarriesTheReport_whenSolutionPassesAndTemplateFails_andTheGradingPlanIsValid() {
             AgentVerifyReport report = report(true, true);
-            when(verifier.selfCheckTestsStage(any(), anyString(), eq(exercise), any())).thenReturn(report);
-            sandbox.testPlanJson = "{\"tests\":[{\"name\":\"testFoo\",\"seam\":\"S1\",\"weight\":3,\"visibility\":\"AFTER_DUE_DATE\"}]}";
+            when(verifier.selfCheckTestsStage(any(), anyString(), eq(exercise), any(), anySet())).thenReturn(report);
+            sandbox.testPlanJson = "{\"tests\":[{\"name\":\"testFoo\",\"seam\":\"S1\",\"seamWeightTier\":3,\"visibility\":\"ALWAYS\"}]}";
 
             StageCheckResult result = check(GenerationStage.TESTS);
 
             assertThat(result.passed()).isTrue();
             assertThat(result.report()).isSameAs(report);
-            assertThat(result.observation()).contains("Grading plan accepted").contains("1 hidden until the due date");
+            assertThat(result.observation()).contains("Grading plan accepted").contains("0 hidden until the due date");
         }
 
         @Test
         void fails_whenTheDifferentialPassesButTheGradingPlanIsMissing() {
-            when(verifier.selfCheckTestsStage(any(), anyString(), eq(exercise), any())).thenReturn(report(true, true));
+            when(verifier.selfCheckTestsStage(any(), anyString(), eq(exercise), any(), anySet())).thenReturn(report(true, true));
 
             StageCheckResult result = check(GenerationStage.TESTS);
 
@@ -450,50 +454,52 @@ class StageCheckServiceTest {
 
         @Test
         void fails_withTheParsersActionableMessage_whenTheGradingPlanIsInvalid() {
-            when(verifier.selfCheckTestsStage(any(), anyString(), eq(exercise), any())).thenReturn(report(true, true));
-            sandbox.testPlanJson = "{\"tests\":[{\"name\":\"testFoo\",\"seam\":\"S1\",\"weight\":7,\"visibility\":\"ALWAYS\"}]}";
+            when(verifier.selfCheckTestsStage(any(), anyString(), eq(exercise), any(), anySet())).thenReturn(report(true, true));
+            sandbox.testPlanJson = "{\"tests\":[{\"name\":\"testFoo\",\"seam\":\"S1\",\"seamWeightTier\":7,\"visibility\":\"ALWAYS\"}]}";
 
             StageCheckResult result = check(GenerationStage.TESTS);
 
             assertThat(result.passed()).isFalse();
-            assertThat(result.observation()).contains("test-plan.json is invalid").contains("weights must be between 1 and 3");
+            assertThat(result.observation()).contains("test-plan.json is invalid").contains("tiers must be between 1 and 3");
         }
 
         @Test
         void fails_whenTheGradingPlanNamesATestThatDoesNotExist() {
-            when(verifier.selfCheckTestsStage(any(), anyString(), eq(exercise), any())).thenReturn(report(true, true));
-            sandbox.testPlanJson = "{\"tests\":[{\"name\":\"testGhost\",\"seam\":\"S1\",\"weight\":2,\"visibility\":\"ALWAYS\"}]}";
+            when(verifier.selfCheckTestsStage(any(), anyString(), eq(exercise), any(), anySet())).thenReturn(report(true, true));
+            sandbox.testPlanJson = "{\"tests\":[{\"name\":\"testGhost\",\"seam\":\"S1\",\"seamWeightTier\":3,\"visibility\":\"ALWAYS\"}]}";
 
             StageCheckResult result = check(GenerationStage.TESTS);
 
             assertThat(result.passed()).isFalse();
-            assertThat(result.observation()).contains("names tests that do not exist").contains("testGhost").contains("testFoo");
+            assertThat(result.observation()).contains("names tests the verifier did not run").contains("testGhost").contains("testFoo");
         }
 
         @Test
         void fails_whenTheSpecDeclaresHiddenVariantsButThePlanHidesNothing() {
             // The spec's own Testing Strategy is the plan's contract: silently shipping every test visible throws away the overfit resistance the spec promised.
+            exercise.setDueDate(ZonedDateTime.now().plusDays(1));
             sandbox.spec = specWithDesign("| Calculator | computes | stubbed |\n").replace("| S1 | Calculator | typical; zero | 3 | no |",
                     "| S1 | Calculator | typical; zero | 3 | yes |");
-            when(verifier.selfCheckTestsStage(any(), anyString(), eq(exercise), any())).thenReturn(report(true, true));
-            sandbox.testPlanJson = "{\"tests\":[{\"name\":\"testFoo\",\"seam\":\"S1\",\"weight\":3,\"visibility\":\"ALWAYS\"}]}";
+            when(verifier.selfCheckTestsStage(any(), anyString(), eq(exercise), any(), anySet())).thenReturn(report(true, true));
+            sandbox.testPlanJson = "{\"tests\":[{\"name\":\"testFoo\",\"seam\":\"S1\",\"seamWeightTier\":3,\"visibility\":\"ALWAYS\"}]}";
 
             StageCheckResult result = check(GenerationStage.TESTS);
 
             assertThat(result.passed()).isFalse();
-            assertThat(result.observation()).contains("requires an AFTER_DUE_DATE variant").contains("S1");
+            assertThat(result.observation()).contains("requires AFTER_DUE_DATE variants").contains("S1");
         }
 
         @Test
         void fails_whenOnlySomeSeamsWithHiddenVariantsHaveHiddenPlanEntries() {
+            exercise.setDueDate(ZonedDateTime.now().plusDays(1));
             sandbox.spec = specWithDesign("| Calculator | computes | stubbed |\n").replace("| S1 | Calculator | typical; zero | 3 | no |", """
                     | S1 | Calculator | ordinary values | 3 | yes |
                     | S2 | Calculator | boundary values | 2 | yes |
                     """);
             AgentVerifyReport report = new AgentVerifyReport(2, true, List.of(), 2, true, true, List.of(), List.of("ordinary", "boundary"), List.of(), List.of(), true, List.of());
-            when(verifier.selfCheckTestsStage(any(), anyString(), eq(exercise), any())).thenReturn(report);
-            sandbox.testPlanJson = "{\"tests\":[{\"name\":\"ordinary\",\"seam\":\"S1\",\"weight\":3,\"visibility\":\"AFTER_DUE_DATE\"},"
-                    + "{\"name\":\"boundary\",\"seam\":\"S2\",\"weight\":2,\"visibility\":\"ALWAYS\"}]}";
+            when(verifier.selfCheckTestsStage(any(), anyString(), eq(exercise), any(), anySet())).thenReturn(report);
+            sandbox.testPlanJson = "{\"tests\":[{\"name\":\"ordinary\",\"seam\":\"S1\",\"seamWeightTier\":3,\"visibility\":\"AFTER_DUE_DATE\"},"
+                    + "{\"name\":\"boundary\",\"seam\":\"S2\",\"seamWeightTier\":2,\"visibility\":\"ALWAYS\"}]}";
 
             StageCheckResult result = check(GenerationStage.TESTS);
 
@@ -502,21 +508,53 @@ class StageCheckServiceTest {
         }
 
         @Test
-        void passes_butNamesUnplannedTests_soTheDefaultGradingIsAConsciousChoice() {
+        void rejectsUnplannedGradableTests_soNoneBypassTheApprovedPlan() {
             AgentVerifyReport report = new AgentVerifyReport(5, true, List.of(), 5, true, true, List.of(), List.of("testFoo", "testBar"), List.of(), List.of(), true, List.of());
-            when(verifier.selfCheckTestsStage(any(), anyString(), eq(exercise), any())).thenReturn(report);
-            sandbox.testPlanJson = "{\"tests\":[{\"name\":\"testFoo\",\"seam\":\"S1\",\"weight\":2,\"visibility\":\"ALWAYS\"}]}";
+            when(verifier.selfCheckTestsStage(any(), anyString(), eq(exercise), any(), anySet())).thenReturn(report);
+            sandbox.testPlanJson = "{\"tests\":[{\"name\":\"testFoo\",\"seam\":\"S1\",\"seamWeightTier\":3,\"visibility\":\"ALWAYS\"}]}";
 
             StageCheckResult result = check(GenerationStage.TESTS);
 
-            assertThat(result.passed()).isTrue();
-            assertThat(result.observation()).contains("Not in the plan").contains("testBar");
+            assertThat(result.passed()).isFalse();
+            assertThat(result.observation()).contains("omits verified gradable test", "testBar");
+        }
+
+        @Test
+        void rejectsWeightDriftAndUnexpectedHiddenTests() {
+            when(verifier.selfCheckTestsStage(any(), anyString(), eq(exercise), any(), anySet())).thenReturn(report(true, true));
+            sandbox.testPlanJson = "{\"tests\":[{\"name\":\"testFoo\",\"seam\":\"S1\",\"seamWeightTier\":2,\"visibility\":\"ALWAYS\"}]}";
+            assertThat(check(GenerationStage.TESTS).observation()).contains("weights do not match", "S1 requires 3");
+
+            exercise.setDueDate(ZonedDateTime.now().plusDays(1));
+            sandbox.testPlanJson = "{\"tests\":[{\"name\":\"testFoo\",\"seam\":\"S1\",\"seamWeightTier\":3,\"visibility\":\"AFTER_DUE_DATE\"}]}";
+            assertThat(check(GenerationStage.TESTS).observation()).contains("says no hidden variant", "S1");
+        }
+
+        @Test
+        void rejectsAHiddenOnlySeamBecauseStudentsNeedVisibleEvidence() {
+            exercise.setDueDate(ZonedDateTime.now().plusDays(1));
+            sandbox.spec = specWithDesign("| Calculator | computes | stubbed |\n").replace("| S1 | Calculator | typical; zero | 3 | no |",
+                    "| S1 | Calculator | typical; zero | 3 | yes |");
+            when(verifier.selfCheckTestsStage(any(), anyString(), eq(exercise), any(), anySet())).thenReturn(report(true, true));
+            sandbox.testPlanJson = "{\"tests\":[{\"name\":\"testFoo\",\"seam\":\"S1\",\"seamWeightTier\":3,\"visibility\":\"AFTER_DUE_DATE\"}]}";
+
+            assertThat(check(GenerationStage.TESTS).observation()).contains("no ALWAYS-visible test", "S1", "formative visible evidence");
+        }
+
+        @Test
+        void rejectsAfterDueDateVisibilityWhenTheExerciseHasNoDueDate() {
+            sandbox.spec = specWithDesign("| Calculator | computes | stubbed |\n").replace("| S1 | Calculator | typical; zero | 3 | no |",
+                    "| S1 | Calculator | typical; zero | 3 | yes |");
+            when(verifier.selfCheckTestsStage(any(), anyString(), eq(exercise), any(), anySet())).thenReturn(report(true, true));
+            sandbox.testPlanJson = "{\"tests\":[{\"name\":\"testFoo\",\"seam\":\"S1\",\"seamWeightTier\":3,\"visibility\":\"AFTER_DUE_DATE\"}]}";
+
+            assertThat(check(GenerationStage.TESTS).observation()).contains("has no due date", "hidden indefinitely");
         }
 
         @Test
         void reportsTheDifferentialFailureFirst_neverTheMissingPlan_whenBothAreWrong() {
             // Feedback-priority contract: a failing differential is the real problem; plan noise on top of it would bury the actionable signal.
-            when(verifier.selfCheckTestsStage(any(), anyString(), eq(exercise), any())).thenReturn(report(false, true));
+            when(verifier.selfCheckTestsStage(any(), anyString(), eq(exercise), any(), anySet())).thenReturn(report(false, true));
 
             StageCheckResult result = check(GenerationStage.TESTS);
 
@@ -528,7 +566,7 @@ class StageCheckServiceTest {
         void rejectsACompleteBuildPairWhenAnotherTestArtifactGateFailsBeforeReadingThePlan() {
             AgentVerifyReport report = new AgentVerifyReport(5, true, List.of(), 5, true, true, List.of(), List.of("testFoo"), List.of(), List.of(), false,
                     List.of("The Java tests do not use @WhitelistPath."));
-            when(verifier.selfCheckTestsStage(any(), anyString(), eq(exercise), any())).thenReturn(report);
+            when(verifier.selfCheckTestsStage(any(), anyString(), eq(exercise), any(), anySet())).thenReturn(report);
 
             StageCheckResult result = check(GenerationStage.TESTS);
 
@@ -538,20 +576,20 @@ class StageCheckServiceTest {
 
         @Test
         void fails_whenAPlanEntryHasNoSeamOrNamesASeamTheSpecNeverDeclared() {
-            when(verifier.selfCheckTestsStage(any(), anyString(), eq(exercise), any())).thenReturn(report(true, true));
-            sandbox.testPlanJson = "{\"tests\":[{\"name\":\"testFoo\",\"weight\":2,\"visibility\":\"ALWAYS\"}]}";
+            when(verifier.selfCheckTestsStage(any(), anyString(), eq(exercise), any(), anySet())).thenReturn(report(true, true));
+            sandbox.testPlanJson = "{\"tests\":[{\"name\":\"testFoo\",\"seamWeightTier\":2,\"visibility\":\"ALWAYS\"}]}";
 
             assertThat(check(GenerationStage.TESTS).observation()).contains("no seam").contains("S1");
 
-            sandbox.testPlanJson = "{\"tests\":[{\"name\":\"testFoo\",\"seam\":\"S2\",\"weight\":2,\"visibility\":\"ALWAYS\"}]}";
+            sandbox.testPlanJson = "{\"tests\":[{\"name\":\"testFoo\",\"seam\":\"S2\",\"seamWeightTier\":2,\"visibility\":\"ALWAYS\"}]}";
 
-            assertThat(check(GenerationStage.TESTS).observation()).contains("undeclared seam").contains("S2").contains("S1");
+            assertThat(check(GenerationStage.TESTS).observation()).contains("uses seam(s) the approved Testing Strategy never declared").contains("S2").contains("S1");
         }
 
         @Test
         void fails_butStillCarriesTheReport_whenTheDifferentialDoesNotHold() {
             AgentVerifyReport report = report(false, true);
-            when(verifier.selfCheckTestsStage(any(), anyString(), eq(exercise), any())).thenReturn(report);
+            when(verifier.selfCheckTestsStage(any(), anyString(), eq(exercise), any(), anySet())).thenReturn(report);
 
             StageCheckResult result = check(GenerationStage.TESTS);
 
@@ -565,7 +603,7 @@ class StageCheckServiceTest {
             sandbox.spec = specWithDesign("| FuelStrategy | designed by students | student-creates |\n");
             approvedSpecs.approve("s", sandbox.spec);
             AgentVerifyReport report = report(true, false);
-            when(verifier.selfCheckTestsStage(any(), anyString(), eq(exercise), any())).thenReturn(report);
+            when(verifier.selfCheckTestsStage(any(), anyString(), eq(exercise), any(), anySet())).thenReturn(report);
 
             StageCheckResult result = check(GenerationStage.TESTS);
 
@@ -575,7 +613,7 @@ class StageCheckServiceTest {
 
         @Test
         void fails_gracefully_whenTheSelfCheckThrows() {
-            when(verifier.selfCheckTestsStage(any(), anyString(), eq(exercise), any())).thenThrow(new RuntimeException("build agent lost"));
+            when(verifier.selfCheckTestsStage(any(), anyString(), eq(exercise), any(), anySet())).thenThrow(new RuntimeException("build agent lost"));
 
             StageCheckResult result = check(GenerationStage.TESTS);
 
@@ -633,8 +671,8 @@ class StageCheckServiceTest {
         void fails_whenATaskBindsATestTheGradingPlanHidesUntilTheDueDate() {
             // Binding a hidden test renders a checkbox that can never turn green before the deadline AND names the overfit probe in the student's checklist.
             sandbox.problemStatement = "# Title\n[task][Sort](testSortsAscending,testSortsAscending_hidden)\n";
-            sandbox.testPlanJson = "{\"tests\":[{\"name\":\"testSortsAscending\",\"seam\":\"S1\",\"weight\":2,\"visibility\":\"ALWAYS\"},"
-                    + "{\"name\":\"testSortsAscending_hidden\",\"seam\":\"S1\",\"weight\":2,\"visibility\":\"AFTER_DUE_DATE\"}]}";
+            sandbox.testPlanJson = "{\"tests\":[{\"name\":\"testSortsAscending\",\"seam\":\"S1\",\"seamWeightTier\":2,\"visibility\":\"ALWAYS\"},"
+                    + "{\"name\":\"testSortsAscending_hidden\",\"seam\":\"S1\",\"seamWeightTier\":2,\"visibility\":\"AFTER_DUE_DATE\"}]}";
             AgentVerifyReport lastTestsReport = new AgentVerifyReport(2, true, List.of(), 2, true, true, List.of(), List.of("testSortsAscending", "testSortsAscending_hidden"),
                     List.of(), List.of(), true, List.of());
 
@@ -647,8 +685,8 @@ class StageCheckServiceTest {
         @Test
         void fails_whenAHiddenTestNameIsAdvertisedInProseEvenThoughItIsUnbound() {
             sandbox.problemStatement = "# Title\n[task][Sort](testSortsAscending)\nHidden tests: `testSortsAscending_hidden`.\n";
-            sandbox.testPlanJson = "{\"tests\":[{\"name\":\"testSortsAscending\",\"seam\":\"S1\",\"weight\":2,\"visibility\":\"ALWAYS\"},"
-                    + "{\"name\":\"testSortsAscending_hidden\",\"seam\":\"S1\",\"weight\":2,\"visibility\":\"AFTER_DUE_DATE\"}]}";
+            sandbox.testPlanJson = "{\"tests\":[{\"name\":\"testSortsAscending\",\"seam\":\"S1\",\"seamWeightTier\":2,\"visibility\":\"ALWAYS\"},"
+                    + "{\"name\":\"testSortsAscending_hidden\",\"seam\":\"S1\",\"seamWeightTier\":2,\"visibility\":\"AFTER_DUE_DATE\"}]}";
             AgentVerifyReport lastTestsReport = new AgentVerifyReport(2, true, List.of(), 2, true, true, List.of(), List.of("testSortsAscending", "testSortsAscending_hidden"),
                     List.of(), List.of(), true, List.of());
 
@@ -661,8 +699,8 @@ class StageCheckServiceTest {
         @Test
         void passes_whenOnlyVisibleTestsAreBound_andTheHiddenOneIsLeftUnbound() {
             sandbox.problemStatement = "# Title\n[task][Sort](testSortsAscending)\nImplement the sorting strategy.\n";
-            sandbox.testPlanJson = "{\"tests\":[{\"name\":\"testSortsAscending\",\"seam\":\"S1\",\"weight\":2,\"visibility\":\"ALWAYS\"},"
-                    + "{\"name\":\"testSortsAscending_hidden\",\"seam\":\"S1\",\"weight\":2,\"visibility\":\"AFTER_DUE_DATE\"}]}";
+            sandbox.testPlanJson = "{\"tests\":[{\"name\":\"testSortsAscending\",\"seam\":\"S1\",\"seamWeightTier\":2,\"visibility\":\"ALWAYS\"},"
+                    + "{\"name\":\"testSortsAscending_hidden\",\"seam\":\"S1\",\"seamWeightTier\":2,\"visibility\":\"AFTER_DUE_DATE\"}]}";
             AgentVerifyReport lastTestsReport = new AgentVerifyReport(2, true, List.of(), 2, true, true, List.of(), List.of("testSortsAscending", "testSortsAscending_hidden"),
                     List.of(), List.of(), true, List.of());
 
@@ -672,8 +710,8 @@ class StageCheckServiceTest {
         @Test
         void fails_whenVisibleTestsFromOneSeamAreSplitAcrossTasks() {
             sandbox.problemStatement = "# Title\n[task][Ascending](testSortsAscending)\n[task][Descending](testSortsDescending)\n";
-            sandbox.testPlanJson = "{\"tests\":[{\"name\":\"testSortsAscending\",\"seam\":\"S1\",\"weight\":2,\"visibility\":\"ALWAYS\"},"
-                    + "{\"name\":\"testSortsDescending\",\"seam\":\"S1\",\"weight\":2,\"visibility\":\"ALWAYS\"}]}";
+            sandbox.testPlanJson = "{\"tests\":[{\"name\":\"testSortsAscending\",\"seam\":\"S1\",\"seamWeightTier\":2,\"visibility\":\"ALWAYS\"},"
+                    + "{\"name\":\"testSortsDescending\",\"seam\":\"S1\",\"seamWeightTier\":2,\"visibility\":\"ALWAYS\"}]}";
             AgentVerifyReport report = new AgentVerifyReport(2, true, List.of(), 2, true, true, List.of(), List.of("testSortsAscending", "testSortsDescending"), List.of(),
                     List.of(), true, List.of());
 
@@ -803,8 +841,8 @@ class StageCheckServiceTest {
         @Test
         void unresolvedBindingFeedback_doesNotOfferAHiddenTestAsAReplacement() {
             sandbox.problemStatement = "# Title\n[task][Sort](testDoesNotExist)\n";
-            sandbox.testPlanJson = "{\"tests\":[{\"name\":\"testSortsAscending\",\"seam\":\"S1\",\"weight\":3,\"visibility\":\"ALWAYS\"},"
-                    + "{\"name\":\"testSortsAscending_hidden\",\"seam\":\"S1\",\"weight\":2,\"visibility\":\"AFTER_DUE_DATE\"}]}";
+            sandbox.testPlanJson = "{\"tests\":[{\"name\":\"testSortsAscending\",\"seam\":\"S1\",\"seamWeightTier\":3,\"visibility\":\"ALWAYS\"},"
+                    + "{\"name\":\"testSortsAscending_hidden\",\"seam\":\"S1\",\"seamWeightTier\":2,\"visibility\":\"AFTER_DUE_DATE\"}]}";
             AgentVerifyReport lastTestsReport = new AgentVerifyReport(2, true, List.of(), 2, true, true, List.of(), List.of("testSortsAscending", "testSortsAscending_hidden"),
                     List.of(), List.of(), true, List.of());
 
@@ -890,7 +928,7 @@ class StageCheckServiceTest {
         void aStructuralYesInAnotherColumnDoesNotCountAsAHiddenDeclaration() {
             // The old regex matched any "| yes" anywhere in the section, so an unrelated column could satisfy the hidden-variant declaration.
             String spec = specWithDesign("| Calculator | computes | stubbed |\n")
-                    .replace("| Seam | Owner type | Partitions | Weight | Hidden variant |", "| Seam | Owner type | Structural | Weight | Hidden variant |")
+                    .replace("| Seam | Owner type | Observable responsibility | Weight | Hidden variant |", "| Seam | Owner type | Structural | Weight | Hidden variant |")
                     .replace("| S1 | Calculator | typical; zero | 3 | no |", "| S1 | Calculator | yes | 3 | no |");
 
             assertThat(StageCheckService.specDeclaresHiddenVariants(spec)).isFalse();
@@ -930,8 +968,6 @@ class StageCheckServiceTest {
         private static final String VALID_SPEC = """
                 # Exercise
 
-                Archetype: calculator-with-rules
-
                 ## Rules
                 - R1: computes a result from the input.
 
@@ -946,8 +982,11 @@ class StageCheckServiceTest {
                 |------|------|-----------------|
                 | Calculator | computes the result | stubbed |
 
+                ## Public API
+                `Calculator`: `int calculate(int input)`
+
                 ## Testing Strategy
-                | Seam | Owner type | Partitions | Weight | Hidden variant |
+                | Seam | Owner type | Observable responsibility | Weight | Hidden variant |
                 |------|------------|------------|--------|----------------|
                 | S1 | Calculator | typical and zero | 3 | yes |
 
@@ -957,6 +996,7 @@ class StageCheckServiceTest {
 
         @Test
         void passes_withRulesAndABranchingWorkedExamplesTable_andEchoesTheParsedTemplatePlan() {
+            exercise.setDueDate(ZonedDateTime.now().plusDays(1));
             sandbox.spec = VALID_SPEC;
 
             StageCheckResult result = check(GenerationStage.SPEC);
@@ -968,6 +1008,7 @@ class StageCheckServiceTest {
 
         @Test
         void normalizesTypographicHyphensInTemplateStatusTokens() {
+            exercise.setDueDate(ZonedDateTime.now().plusDays(1));
             sandbox.spec = VALID_SPEC.replace("stubbed", "student‑creates");
 
             StageCheckResult result = check(GenerationStage.SPEC);
@@ -979,6 +1020,7 @@ class StageCheckServiceTest {
 
         @Test
         void acceptsMarkdownEmphasisAroundAnOtherwiseExactTemplateStatusToken() {
+            exercise.setDueDate(ZonedDateTime.now().plusDays(1));
             sandbox.spec = VALID_SPEC.replace("| Calculator | computes the result | stubbed |", "| Calculator | computes the result | **student‑creates** |");
 
             StageCheckResult result = check(GenerationStage.SPEC);
@@ -999,6 +1041,28 @@ class StageCheckServiceTest {
         }
 
         @Test
+        void rejectsAGivenJavaTypeWhosePublicApiDependsOnATypeAbsentFromTheTemplate() {
+            exercise.setProgrammingLanguage(ProgrammingLanguage.JAVA);
+            exercise.setDueDate(ZonedDateTime.now().plusDays(1));
+            sandbox.spec = VALID_SPEC.replace("| Calculator | computes the result | stubbed |", """
+                    | Calculator | given context | given |
+                    | Policy | interchangeable policy | student-creates |\
+                    """).replace("`Calculator`: `int calculate(int input)`", """
+                    ### `Calculator`
+                    - `public Calculator(Policy policy)`
+                    - `public int calculate(int input)`
+
+                    ### `Policy`
+                    - `int calculate(int input)`\
+                    """).replace("| S1 | Calculator | typical and zero | 3 | yes |", "| S1 | Policy | typical and zero | 3 | yes |");
+
+            StageCheckResult result = check(GenerationStage.SPEC);
+
+            assertThat(result.passed()).isFalse();
+            assertThat(result.observation()).contains("given Java types", "Calculator->Policy", "must ship complete and compile", "coherent ownership graph");
+        }
+
+        @Test
         void fails_whenADesignRowCarriesNoValidTemplateStatusToken() {
             // The old exemplar's verbose tokens ("student-creates-absent-from-template") are exactly what this catches: only the literal tokens are enforceable.
             sandbox.spec = VALID_SPEC.replace("| Calculator | computes the result | stubbed |", "| Calculator | computes the result | student-implements-stubbed |");
@@ -1007,6 +1071,16 @@ class StageCheckServiceTest {
 
             assertThat(result.passed()).isFalse();
             assertThat(result.observation()).contains("no valid final Template status cell", "Calculator", "LAST cell", "Do not move the token into the Role cell");
+        }
+
+        @Test
+        void fails_whenAStatusTokenAppearsBeforeAnInvalidFinalStatusCell() {
+            sandbox.spec = VALID_SPEC.replace("| Calculator | computes the result | stubbed |", "| Calculator | student-creates | absent |");
+
+            StageCheckResult result = check(GenerationStage.SPEC);
+
+            assertThat(result.passed()).isFalse();
+            assertThat(result.observation()).contains("no valid final Template status cell", "Calculator", "LAST cell");
         }
 
         @Test
@@ -1034,6 +1108,7 @@ class StageCheckServiceTest {
 
         @Test
         void preservesJavaIdentifierUnderscoresAndAcceptsAnOptionalTrailingTablePipe() {
+            exercise.setDueDate(ZonedDateTime.now().plusDays(1));
             sandbox.spec = VALID_SPEC.replace("Calculator", "Damage_Strategy").replace("| S1 | Damage_Strategy | typical and zero | 3 | yes |",
                     "| S1 | Damage_Strategy | typical and zero | 3 | yes");
 
@@ -1045,6 +1120,13 @@ class StageCheckServiceTest {
         }
 
         @Test
+        void rejectsHiddenVariantsWhenTheExerciseHasNoDueDate() {
+            sandbox.spec = VALID_SPEC;
+
+            assertThat(check(GenerationStage.SPEC).observation()).contains("has no due date", "hidden indefinitely");
+        }
+
+        @Test
         void rejectsAMisnamedOwnerHeaderAndDuplicateDesignType() {
             sandbox.spec = VALID_SPEC.replace("| Seam | Owner type |", "| Seam | Partitions | ");
             assertThat(check(GenerationStage.SPEC).observation()).contains("second Testing Strategy column", "Owner type");
@@ -1052,6 +1134,18 @@ class StageCheckServiceTest {
             sandbox.spec = VALID_SPEC.replace("| Calculator | computes the result | stubbed |",
                     "| Calculator | computes the result | stubbed |\n| Calculator | contradicts ownership | student-creates |");
             assertThat(check(GenerationStage.SPEC).observation()).contains("same type more than once", "Calculator");
+        }
+
+        @Test
+        void rejectsAMisnamedOrEmptyObservableResponsibility() {
+            sandbox.spec = VALID_SPEC.replace("| Seam | Owner type | Observable responsibility |", "| Seam | Owner type | Partitions |");
+            assertThat(check(GenerationStage.SPEC).observation()).contains("third Testing Strategy column", "Observable responsibility");
+
+            sandbox.spec = VALID_SPEC.replace("| S1 | Calculator | typical and zero | 3 | yes |", "| S1 | Calculator |  | 3 | yes |");
+            assertThat(check(GenerationStage.SPEC).observation()).contains("do not state an Observable responsibility", "S1");
+
+            sandbox.spec = VALID_SPEC.replace("| S1 | Calculator | typical and zero | 3 | yes |", "| S1 | Calculator | typical and zero | core | yes |");
+            assertThat(check(GenerationStage.SPEC).observation()).contains("weight tier", "1, 2, or 3", "S1");
         }
 
         @Test
@@ -1072,7 +1166,7 @@ class StageCheckServiceTest {
 
             assertThat(result.passed()).isFalse();
             assertThat(result.observation()).contains("missing required section(s)").contains("## Rules").contains("## Worked Examples").contains("## Design")
-                    .contains("## Testing Strategy").contains("## Diagram");
+                    .contains("## Public API").contains("## Testing Strategy").contains("## Diagram");
         }
 
         @Test
@@ -1096,13 +1190,52 @@ class StageCheckServiceTest {
         }
 
         @Test
-        void fails_whenEveryExpectedResultIsIdentical_theLiteralGradingSignature() {
-            sandbox.spec = VALID_SPEC.replace("| R1 | 3 | 9 |", "| R1 | 3 | 4 |");
+        void doesNotCountABlankHeaderCellOrTheSeparatorAsAWorkedExample() {
+            sandbox.spec = VALID_SPEC.replace("""
+                    | Rules | Input | Expected |
+                    |-------|-------|----------|
+                    | R1 | 2 | 4 |
+                    | R1 | 3 | 9 |\
+                    """, """
+                    | Rules | Input | |
+                    |-------|-------|---|
+                    | R1 | 2 | 4 |\
+                    """);
 
             StageCheckResult result = check(GenerationStage.SPEC);
 
             assertThat(result.passed()).isFalse();
-            assertThat(result.observation()).contains("SAME expected result").contains("deepen the rules");
+            assertThat(result.observation()).contains("at least two data rows");
+        }
+
+        @Test
+        void rejectsAHeadingThatOnlyStartsWithTheRequiredHeading() {
+            sandbox.spec = VALID_SPEC.replace("## Design", "## Design notes");
+
+            StageCheckResult result = check(GenerationStage.SPEC);
+
+            assertThat(result.passed()).isFalse();
+            assertThat(result.observation()).contains("missing required section", "## Design");
+        }
+
+        @Test
+        void doesNotInferExampleQualityFromTheLastTableCellAlone() {
+            exercise.setDueDate(ZonedDateTime.now().plusDays(1));
+            sandbox.spec = VALID_SPEC.replace("""
+                    | Rules | Input | Expected |
+                    |-------|-------|----------|
+                    | R1 | 2 | 4 |
+                    | R1 | 3 | 9 |\
+                    """, """
+                    | Rules | Input | Expected order | Remaining capacity |
+                    |-------|-------|----------------|--------------------|
+                    | R1 | A, B | A, B | 4 |
+                    | R1 | A, B | B, A | 4 |\
+                    """);
+
+            StageCheckResult result = check(GenerationStage.SPEC);
+
+            assertThat(result.passed()).isTrue();
         }
     }
 

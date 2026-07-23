@@ -206,8 +206,6 @@ class HyperionExerciseGenerationMockedEndToEndTest extends AbstractHyperionMocke
     private static final String SPEC = """
             # Bounded Counter
 
-            Archetype: bounded-state-machine
-
             ## Rules
             - R1: a new counter starts at zero.
             - R2: increment advances by one and clamps at the positive maximum.
@@ -227,8 +225,11 @@ class HyperionExerciseGenerationMockedEndToEndTest extends AbstractHyperionMocke
 
             `BoundedCounter` owns its mutable value for its whole lifetime.
 
+            ## Public API
+            `BoundedCounter`: `BoundedCounter(int maximum)`, `int getValue()`, `void increment()`, `void decrement()`
+
             ## Testing Strategy
-            | Seam | Owner type | Partitions | Weight | Hidden variant |
+            | Seam | Owner type | Observable responsibility | Weight | Hidden variant |
             |------|------------|------------|--------|----------------|
             | S1 | BoundedCounter | initial value | 1 | no |
             | S2 | BoundedCounter | below, at, and beyond maximum | 3 | no |
@@ -241,10 +242,10 @@ class HyperionExerciseGenerationMockedEndToEndTest extends AbstractHyperionMocke
 
     private static final String TEST_PLAN = """
             {"tests":[
-              {"name":"startsAtZeroAndExposesValue","seam":"S1","weight":1,"visibility":"ALWAYS"},
-              {"name":"incrementsUntilMaximum","seam":"S2","weight":3,"visibility":"ALWAYS"},
-              {"name":"decrementNeverDropsBelowZero","seam":"S3","weight":3,"visibility":"ALWAYS"},
-              {"name":"rejectsNonPositiveMaximum","seam":"S4","weight":2,"visibility":"ALWAYS"}
+              {"name":"startsAtZeroAndExposesValue","seam":"S1","seamWeightTier":1,"visibility":"ALWAYS"},
+              {"name":"incrementsUntilMaximum","seam":"S2","seamWeightTier":3,"visibility":"ALWAYS"},
+              {"name":"decrementNeverDropsBelowZero","seam":"S3","seamWeightTier":3,"visibility":"ALWAYS"},
+              {"name":"rejectsNonPositiveMaximum","seam":"S4","seamWeightTier":2,"visibility":"ALWAYS"}
             ]}
             """;
 
@@ -283,8 +284,7 @@ class HyperionExerciseGenerationMockedEndToEndTest extends AbstractHyperionMocke
     void rejectsExerciseWithUnresolvedTaskBinding_deterministic_endToEnd() throws Exception {
         ProgrammingExercise exercise = scaffoldEmptyJavaExercise("HGMBAD");
         script(HyperionMockedLlmE2eSupport.writeFile(SPEC_PATH, SPEC), HyperionMockedLlmE2eSupport.submit("Specification"), HyperionMockedLlmE2eSupport.cleanSpecificationReview(),
-                HyperionMockedLlmE2eSupport.writeFile(SOLUTION_PATH, SOLUTION_BOUNDED_COUNTER), HyperionMockedLlmE2eSupport.submit("Solution"),
-                HyperionMockedLlmE2eSupport.writeFile(TEMPLATE_PATH, TEMPLATE_BOUNDED_COUNTER), HyperionMockedLlmE2eSupport.submit("Template"),
+                HyperionMockedLlmE2eSupport.writeFile(SOLUTION_PATH, SOLUTION_BOUNDED_COUNTER), HyperionMockedLlmE2eSupport.writeFile(TEMPLATE_PATH, TEMPLATE_BOUNDED_COUNTER),
                 HyperionMockedLlmE2eSupport.writeFile(TEST_PATH, BOUNDED_COUNTER_TEST), HyperionMockedLlmE2eSupport.writeFile(TEST_PLAN_PATH, TEST_PLAN),
                 HyperionMockedLlmE2eSupport.submit("Tests"), HyperionMockedLlmE2eSupport.writeFile(PROBLEM_STATEMENT_PATH, PROBLEM_STATEMENT_WITH_BAD_BINDING),
                 HyperionMockedLlmE2eSupport.submit("Statement with one wrong binding"), HyperionMockedLlmE2eSupport.text("The statement stage is complete."),
@@ -306,11 +306,10 @@ class HyperionExerciseGenerationMockedEndToEndTest extends AbstractHyperionMocke
     void rejectsExerciseWhoseSolutionFailsItsOwnTests_deterministic_endToEnd() throws Exception {
         ProgrammingExercise exercise = scaffoldEmptyJavaExercise("HGMFAIL");
         script(HyperionMockedLlmE2eSupport.writeFile(SPEC_PATH, SPEC), HyperionMockedLlmE2eSupport.submit("Specification"), HyperionMockedLlmE2eSupport.cleanSpecificationReview(),
-                HyperionMockedLlmE2eSupport.writeFile(SOLUTION_PATH, BROKEN_SOLUTION_BOUNDED_COUNTER), HyperionMockedLlmE2eSupport.submit("Broken solution"),
-                HyperionMockedLlmE2eSupport.writeFile(TEMPLATE_PATH, TEMPLATE_BOUNDED_COUNTER), HyperionMockedLlmE2eSupport.submit("Template"),
-                HyperionMockedLlmE2eSupport.writeFile(TEST_PATH, BOUNDED_COUNTER_TEST), HyperionMockedLlmE2eSupport.writeFile(TEST_PLAN_PATH, TEST_PLAN),
-                HyperionMockedLlmE2eSupport.submit("Tests expose the broken solution"), HyperionMockedLlmE2eSupport.text("The tests stage is complete."),
-                HyperionMockedLlmE2eSupport.text("No further changes."));
+                HyperionMockedLlmE2eSupport.writeFile(SOLUTION_PATH, BROKEN_SOLUTION_BOUNDED_COUNTER),
+                HyperionMockedLlmE2eSupport.writeFile(TEMPLATE_PATH, TEMPLATE_BOUNDED_COUNTER), HyperionMockedLlmE2eSupport.writeFile(TEST_PATH, BOUNDED_COUNTER_TEST),
+                HyperionMockedLlmE2eSupport.writeFile(TEST_PLAN_PATH, TEST_PLAN), HyperionMockedLlmE2eSupport.submit("Tests expose the broken solution"),
+                HyperionMockedLlmE2eSupport.text("The tests stage is complete."), HyperionMockedLlmE2eSupport.text("No further changes."));
 
         try (GenerationOutcome outcome = orchestrator.generate(exercise, instructor(), "Create a bounded counter exercise.", "mock-generate-failing-solution",
                 GenerationMode.GENERATE, () -> false, line -> log.info("[mock-generate-failing] {}", line), null, null)) {
@@ -328,15 +327,18 @@ class HyperionExerciseGenerationMockedEndToEndTest extends AbstractHyperionMocke
 
     private void scriptValidGeneration(String testPath) {
         script(HyperionMockedLlmE2eSupport.writeFile(SPEC_PATH, SPEC), HyperionMockedLlmE2eSupport.submit("Specification"), HyperionMockedLlmE2eSupport.cleanSpecificationReview(),
-                HyperionMockedLlmE2eSupport.writeFile(SOLUTION_PATH, SOLUTION_BOUNDED_COUNTER), HyperionMockedLlmE2eSupport.submit("Solution"),
-                HyperionMockedLlmE2eSupport.writeFile(TEMPLATE_PATH, TEMPLATE_BOUNDED_COUNTER), HyperionMockedLlmE2eSupport.submit("Template"),
+                HyperionMockedLlmE2eSupport.writeFile(SOLUTION_PATH, SOLUTION_BOUNDED_COUNTER), HyperionMockedLlmE2eSupport.writeFile(TEMPLATE_PATH, TEMPLATE_BOUNDED_COUNTER),
                 HyperionMockedLlmE2eSupport.writeFile(testPath, BOUNDED_COUNTER_TEST), HyperionMockedLlmE2eSupport.writeFile(TEST_PLAN_PATH, TEST_PLAN),
                 HyperionMockedLlmE2eSupport.submit("Tests"), HyperionMockedLlmE2eSupport.writeFile(PROBLEM_STATEMENT_PATH, PROBLEM_STATEMENT),
                 HyperionMockedLlmE2eSupport.submit("Statement"), HyperionMockedLlmE2eSupport.cleanQualityReview(), HyperionMockedLlmE2eSupport.cleanQualityReview());
     }
 
     private void script(ChatResponse... responses) {
-        when(azureOpenAiChatModel.call(any(Prompt.class))).thenReturn(responses[0], Arrays.copyOfRange(responses, 1, responses.length));
+        ChatResponse[] completeScript = new ChatResponse[responses.length + 2];
+        completeScript[0] = HyperionMockedLlmE2eSupport.conceptCandidates();
+        completeScript[1] = HyperionMockedLlmE2eSupport.cleanConceptReview();
+        System.arraycopy(responses, 0, completeScript, 2, responses.length);
+        when(azureOpenAiChatModel.call(any(Prompt.class))).thenReturn(completeScript[0], Arrays.copyOfRange(completeScript, 1, completeScript.length));
     }
 
     private ProgrammingExercise scaffoldEmptyJavaExercise(String shortName, boolean sequentialTestRuns) throws Exception {

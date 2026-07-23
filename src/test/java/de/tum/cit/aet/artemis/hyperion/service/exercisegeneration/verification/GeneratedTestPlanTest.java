@@ -12,11 +12,11 @@ import org.junit.jupiter.api.Test;
 class GeneratedTestPlanTest {
 
     @Test
-    void parsesWeightsAndVisibility() {
+    void parsesSeamWeightTiersAndVisibility() {
         GeneratedTestPlan plan = GeneratedTestPlan.parse("""
                 {"tests":[
-                  {"name":"earn_subDollarPurchaseEarnsZeroPoints","seam":"S1","weight":3,"visibility":"ALWAYS"},
-                  {"name":"redeem_throwsWhenPointsInsufficient","seam":"S2","weight":1.5,"visibility":"AFTER_DUE_DATE"}
+                  {"name":"earn_subDollarPurchaseEarnsZeroPoints","seam":"S1","seamWeightTier":3,"visibility":"ALWAYS"},
+                  {"name":"redeem_throwsWhenPointsInsufficient","seam":"S2","seamWeightTier":1.5,"visibility":"AFTER_DUE_DATE"}
                 ]}
                 """);
 
@@ -27,8 +27,43 @@ class GeneratedTestPlanTest {
     }
 
     @Test
+    void readsTheOldWeightFieldWithoutTeachingNewGeneratorsToWriteIt() {
+        GeneratedTestPlan plan = GeneratedTestPlan.parse("{\"tests\":[{\"name\":\"testFoo\",\"seam\":\"S1\",\"weight\":2,\"visibility\":\"ALWAYS\"}]}");
+
+        assertThat(plan.tests().getFirst().seamWeightTier()).isEqualTo(2);
+    }
+
+    @Test
+    void effectiveWeightsPreserveAggregateSeamImportanceAndKeepStructuralFeedbackFromDominatingBehavior() {
+        GeneratedTestPlan plan = GeneratedTestPlan.parse("""
+                {"tests":[
+                  {"name":"behaviour","seam":"S1","seamWeightTier":3,"visibility":"ALWAYS"},
+                  {"name":"testClass[Strategy]","seam":"S1","seamWeightTier":3,"visibility":"ALWAYS"},
+                  {"name":"testMethods[Strategy]","seam":"S1","seamWeightTier":3,"visibility":"ALWAYS"},
+                  {"name":"edge","seam":"S2","seamWeightTier":1,"visibility":"ALWAYS"}
+                ]}
+                """);
+
+        assertThat(plan.effectiveWeightsByName()).containsEntry("behaviour", 3.0).containsEntry("testClass[Strategy]", 0.0).containsEntry("testMethods[Strategy]", 0.0)
+                .containsEntry("edge", 1.0);
+        assertThat(plan.effectiveWeightsByName().values().stream().mapToDouble(Double::doubleValue).sum()).isEqualTo(4.0);
+    }
+
+    @Test
+    void structuralOnlyLegacySeamRetainsItsAggregateImportance() {
+        GeneratedTestPlan plan = GeneratedTestPlan.parse("""
+                {"tests":[
+                  {"name":"testClass[Strategy]","seam":"S1","seamWeightTier":2,"visibility":"ALWAYS"},
+                  {"name":"testMethods[Strategy]","seam":"S1","seamWeightTier":2,"visibility":"ALWAYS"}
+                ]}
+                """);
+
+        assertThat(plan.effectiveWeightsByName()).containsEntry("testClass[Strategy]", 1.0).containsEntry("testMethods[Strategy]", 1.0);
+    }
+
+    @Test
     void retainsAPlanWithoutSeamsForBackwardCompatiblePersistence() {
-        GeneratedTestPlan plan = GeneratedTestPlan.parse("{\"tests\":[{\"name\":\"testFoo\",\"weight\":1,\"visibility\":\"ALWAYS\"}]}");
+        GeneratedTestPlan plan = GeneratedTestPlan.parse("{\"tests\":[{\"name\":\"testFoo\",\"seamWeightTier\":1,\"visibility\":\"ALWAYS\"}]}");
 
         assertThat(plan.tests().getFirst().seam()).isEmpty();
     }
@@ -36,7 +71,7 @@ class GeneratedTestPlanTest {
     @Test
     void rejectsMalformedSeamIdsInsteadOfCreatingUntraceableTaskGroups() {
         assertThatIllegalArgumentException()
-                .isThrownBy(() -> GeneratedTestPlan.parse("{\"tests\":[{\"name\":\"testFoo\",\"seam\":\"delegation\",\"weight\":1,\"visibility\":\"ALWAYS\"}]}"))
+                .isThrownBy(() -> GeneratedTestPlan.parse("{\"tests\":[{\"name\":\"testFoo\",\"seam\":\"delegation\",\"seamWeightTier\":1,\"visibility\":\"ALWAYS\"}]}"))
                 .withMessageContaining("seam 'delegation'").withMessageContaining("S1");
     }
 
@@ -52,36 +87,35 @@ class GeneratedTestPlanTest {
 
     @Test
     void rejectsAnEntryWithoutAName() {
-        assertThatIllegalArgumentException().isThrownBy(() -> GeneratedTestPlan.parse("{\"tests\":[{\"weight\":1,\"visibility\":\"ALWAYS\"}]}"))
+        assertThatIllegalArgumentException().isThrownBy(() -> GeneratedTestPlan.parse("{\"tests\":[{\"seamWeightTier\":1,\"visibility\":\"ALWAYS\"}]}"))
                 .withMessageContaining("non-empty \"name\"");
     }
 
     @Test
-    void rejectsANonNumericWeight_soAStringWeightIsNeverSilentlyCoercedToZero() {
-        assertThatIllegalArgumentException().isThrownBy(() -> GeneratedTestPlan.parse("{\"tests\":[{\"name\":\"testFoo\",\"weight\":\"high\",\"visibility\":\"ALWAYS\"}]}"))
-                .withMessageContaining("numeric \"weight\"").withMessageContaining("testFoo");
+    void rejectsANonNumericSeamWeightTier_soAStringTierIsNeverSilentlyCoercedToZero() {
+        assertThatIllegalArgumentException().isThrownBy(() -> GeneratedTestPlan.parse("{\"tests\":[{\"name\":\"testFoo\",\"seamWeightTier\":\"high\",\"visibility\":\"ALWAYS\"}]}"))
+                .withMessageContaining("numeric \"seamWeightTier\"").withMessageContaining("testFoo");
     }
 
     @Test
-    void rejectsAWeightOutsideTheGradingRange_namingTheOffendingTest() {
-        // A weight of 0 would silently make a graded test worth nothing, and an unbounded weight would let one test dominate the whole exercise.
-        assertThatIllegalArgumentException().isThrownBy(() -> GeneratedTestPlan.parse("{\"tests\":[{\"name\":\"testFoo\",\"weight\":0,\"visibility\":\"ALWAYS\"}]}"))
+    void rejectsASeamWeightTierOutsideTheGradingRange_namingTheOffendingTest() {
+        // A tier of 0 would silently make a graded seam worth nothing, and an unbounded tier would let one seam dominate the whole exercise.
+        assertThatIllegalArgumentException().isThrownBy(() -> GeneratedTestPlan.parse("{\"tests\":[{\"name\":\"testFoo\",\"seamWeightTier\":0,\"visibility\":\"ALWAYS\"}]}"))
                 .withMessageContaining("testFoo").withMessageContaining("between 1 and 3");
-        assertThatIllegalArgumentException().isThrownBy(() -> GeneratedTestPlan.parse("{\"tests\":[{\"name\":\"testFoo\",\"weight\":9,\"visibility\":\"ALWAYS\"}]}"))
+        assertThatIllegalArgumentException().isThrownBy(() -> GeneratedTestPlan.parse("{\"tests\":[{\"name\":\"testFoo\",\"seamWeightTier\":9,\"visibility\":\"ALWAYS\"}]}"))
                 .withMessageContaining("between 1 and 3");
     }
 
     @Test
     void rejectsAnUnknownVisibility_soATypoNeverSilentlyPublishesAHiddenTest() {
-        assertThatIllegalArgumentException().isThrownBy(() -> GeneratedTestPlan.parse("{\"tests\":[{\"name\":\"testFoo\",\"weight\":1,\"visibility\":\"HIDDEN\"}]}"))
+        assertThatIllegalArgumentException().isThrownBy(() -> GeneratedTestPlan.parse("{\"tests\":[{\"name\":\"testFoo\",\"seamWeightTier\":1,\"visibility\":\"HIDDEN\"}]}"))
                 .withMessageContaining("visibility 'HIDDEN'").withMessageContaining("AFTER_DUE_DATE");
     }
 
     @Test
     void rejectsDuplicateTestNames_becauseTheLastEntryWouldSilentlyWin() {
-        assertThatIllegalArgumentException()
-                .isThrownBy(() -> GeneratedTestPlan
-                        .parse("{\"tests\":[{\"name\":\"testFoo\",\"weight\":1,\"visibility\":\"ALWAYS\"},{\"name\":\"testFoo\",\"weight\":3,\"visibility\":\"AFTER_DUE_DATE\"}]}"))
+        assertThatIllegalArgumentException().isThrownBy(() -> GeneratedTestPlan.parse(
+                "{\"tests\":[{\"name\":\"testFoo\",\"seamWeightTier\":1,\"visibility\":\"ALWAYS\"},{\"name\":\"testFoo\",\"seamWeightTier\":3,\"visibility\":\"AFTER_DUE_DATE\"}]}"))
                 .withMessageContaining("more than once").withMessageContaining("testFoo");
     }
 }

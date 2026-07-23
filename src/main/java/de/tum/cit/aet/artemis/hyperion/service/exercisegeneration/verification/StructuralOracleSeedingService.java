@@ -17,6 +17,7 @@ import java.util.regex.Pattern;
 import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.core.io.ClassPathResource;
@@ -45,8 +46,8 @@ import de.tum.cit.aet.artemis.programming.service.structureoraclegenerator.Oracl
  * {@code generateTestsForAllClasses}, creating duplicate production test cases instead of a useful structural check.
  * <p>
  * Conservative: seeds only for a {@code public} class the student must create (present in the solution, absent from the template), and even then only its public/protected surface,
- * so a correct behaviour-only exercise is never burdened with spurious structural requirements. Any failure is logged and skipped — it must never abort an otherwise valid
- * generation.
+ * so a correct behaviour-only exercise is never burdened with spurious structural requirements. Legacy/no-structure flows remain best-effort; once an approved specification
+ * requires student-created types, failure is explicit because silently omitting their grading contract would publish a different exercise.
  */
 @Lazy
 @Service
@@ -79,9 +80,17 @@ public class StructuralOracleSeedingService {
 
     private final TempFileUtilService tempFileUtilService;
 
-    public StructuralOracleSeedingService(GenerationWorkspaceService workspace, TempFileUtilService tempFileUtilService) {
+    private final ApprovedSpecRegistry approvedSpecs;
+
+    @Autowired
+    public StructuralOracleSeedingService(GenerationWorkspaceService workspace, TempFileUtilService tempFileUtilService, ApprovedSpecRegistry approvedSpecs) {
         this.workspace = workspace;
         this.tempFileUtilService = tempFileUtilService;
+        this.approvedSpecs = approvedSpecs;
+    }
+
+    StructuralOracleSeedingService(GenerationWorkspaceService workspace, TempFileUtilService tempFileUtilService) {
+        this(workspace, tempFileUtilService, new ApprovedSpecRegistry());
     }
 
     /**
@@ -100,8 +109,11 @@ public class StructuralOracleSeedingService {
         if (exercise.getProgrammingLanguage() != ProgrammingLanguage.JAVA) {
             return Set.of();
         }
+        var approvedSpecification = approvedSpecs.approved(sessionId);
+        Set<String> expectedStudentCreatedTypes = approvedSpecification.map(StageCheckService::specStudentCreatedTypes).map(Set::copyOf).orElse(Set.of());
         Path solutionDir = null;
         Path templateDir = null;
+        boolean managedAssetsDetected = false;
         try {
             Map<String, String> solutionFiles = workspace.extractRepositoryFiles(sandbox, sessionId, RepositoryType.SOLUTION);
             Map<String, String> templateFiles = workspace.extractRepositoryFiles(sandbox, sessionId, RepositoryType.TEMPLATE);
@@ -109,31 +121,41 @@ public class StructuralOracleSeedingService {
             if (solutionFiles.isEmpty() || templateFiles.isEmpty()) {
                 return Set.of();
             }
+            String packageName = parsePackage(solutionFiles);
             String testDirectory = locateStructuralAssetDirectory(testFiles);
             if (testDirectory == null) {
                 testDirectory = locateTestSourceDirectory(testFiles);
             }
             if (testDirectory == null) {
-                return Set.of();
+                testDirectory = canonicalJavaTestDirectory(packageName);
             }
             StructuralAssetOwnership ownership = structuralAssetOwnership(testFiles, testDirectory);
+            managedAssetsDetected = ownership == StructuralAssetOwnership.HYPERION_MANAGED;
             if (ownership == StructuralAssetOwnership.UNMANAGED) {
-                log.info("Preserving existing structural test assets for exercise {} because they are not managed by Hyperion", exercise.getId());
-                return Set.of();
+                if (expectedStudentCreatedTypes.isEmpty()) {
+                    log.info("Preserving existing structural test assets for exercise {} because they are not managed by Hyperion", exercise.getId());
+                    return Set.of();
+                }
+                throw new IllegalStateException("The tests repository already contains structural Ares assets not managed by Hyperion. Refusing to overwrite the existing "
+                        + "grading harness while materializing approved student-created types " + expectedStudentCreatedTypes);
             }
 
             solutionDir = materialize(solutionFiles, "hyperion-oracle-solution-");
             templateDir = materialize(templateFiles, "hyperion-oracle-template-");
-            String oracle = filterOracleToCreatedPublicApi(OracleGenerator.generateStructureOracleJSON(solutionDir, templateDir), templateFiles, solutionFiles);
+            String oracle = filterOracleToCreatedPublicApi(OracleGenerator.generateStructureOracleJSON(solutionDir, templateDir), templateFiles, solutionFiles,
+                    expectedStudentCreatedTypes, approvedSpecification.isPresent());
 
             if (isStructurallyEmpty(oracle)) {
-                if (ownership == StructuralAssetOwnership.HYPERION_MANAGED) {
-                    cleanupStructuralFiles(sandbox, sessionId, testDirectory);
+                if (!expectedStudentCreatedTypes.isEmpty()) {
+                    throw new IllegalStateException(
+                            "The approved student-created types could not be materialized as public structural requirements: " + expectedStudentCreatedTypes);
+                }
+                if (managedAssetsDetected && !cleanupStructuralFiles(sandbox, sessionId, testDirectory)) {
+                    throw new IllegalStateException("The previous Hyperion-managed structural assets could not be removed");
                 }
                 return Set.of();
             }
 
-            String packageName = parsePackage(solutionFiles);
             Map<String, String> seededFiles = new LinkedHashMap<>();
             String dirPrefix = GenerationWorkspaceService.directoryFor(RepositoryType.TESTS) + "/" + testDirectory;
             seededFiles.put(dirPrefix + "/" + ORACLE_FILE, oracle);
@@ -141,14 +163,25 @@ public class StructuralOracleSeedingService {
             for (String className : requiredStructuralClasses) {
                 seededFiles.put(dirPrefix + "/" + className, structuralClassContent(className, packageName));
             }
+            if (managedAssetsDetected && !cleanupStructuralFiles(sandbox, sessionId, testDirectory)) {
+                throw new IllegalStateException("The previous Hyperion-managed structural assets could not be removed before refresh");
+            }
             sandbox.copyIn(sessionId, GenerationWorkspaceService.WORKSPACE, WorkspaceArchive.buildWorkspaceTarStream(seededFiles, Map.of()));
             Set<String> seededTestNames = structuralTestNames(oracle);
+            List<String> missingExpectedTypes = expectedStudentCreatedTypes.stream().filter(type -> !seededTestNames.contains("testClass[" + type + "]")).sorted().toList();
+            if (!missingExpectedTypes.isEmpty()) {
+                throw new IllegalStateException("No public structural oracle could be generated for approved student-created type(s) " + missingExpectedTypes);
+            }
             log.info("Seeded {} structural test classes and a structure oracle for exercise {} (package '{}'), structural test names {}", requiredStructuralClasses.size(),
                     exercise.getId(), packageName, seededTestNames);
             return seededTestNames;
         }
         catch (RuntimeException | IOException e) {
             log.warn("Could not seed structural tests for exercise {}: {}", exercise.getId(), e.getMessage());
+            if (!expectedStudentCreatedTypes.isEmpty() || managedAssetsDetected) {
+                throw new IllegalStateException("Could not safely materialize the structural grading contract"
+                        + (expectedStudentCreatedTypes.isEmpty() ? "" : " for approved student-created type(s) " + expectedStudentCreatedTypes) + ": " + e.getMessage(), e);
+            }
             return Set.of();
         }
         finally {
@@ -223,6 +256,14 @@ public class StructuralOracleSeedingService {
 
     private static String locateStructuralAssetDirectory(Map<String, String> testFiles) {
         return testFiles.keySet().stream().filter(StructuralOracleSeedingService::isStructuralAsset).map(StructuralOracleSeedingService::directory).findFirst().orElse(null);
+    }
+
+    /**
+     * Structural tests are seeded before the agent authors behavioral tests, so their location cannot depend on an existing test source. The Java generation workspace has one
+     * canonical test source root ({@code test/}) and mirrors the solution package beneath it.
+     */
+    private static String canonicalJavaTestDirectory(String packageName) {
+        return packageName.isBlank() ? "test" : "test/" + packageName.replace('.', '/');
     }
 
     private static boolean isStructuralAsset(String path) {
@@ -316,6 +357,16 @@ public class StructuralOracleSeedingService {
      * members. Returns {@code []} when nothing qualifies.
      */
     static String filterOracleToCreatedPublicApi(String oracle, Map<String, String> templateFiles, Map<String, String> solutionFiles) throws IOException {
+        return filterOracleToCreatedPublicApi(oracle, templateFiles, solutionFiles, Set.of(), false);
+    }
+
+    static String filterOracleToCreatedPublicApi(String oracle, Map<String, String> templateFiles, Map<String, String> solutionFiles, Set<String> approvedStudentCreatedTypes)
+            throws IOException {
+        return filterOracleToCreatedPublicApi(oracle, templateFiles, solutionFiles, approvedStudentCreatedTypes, true);
+    }
+
+    private static String filterOracleToCreatedPublicApi(String oracle, Map<String, String> templateFiles, Map<String, String> solutionFiles,
+            Set<String> approvedStudentCreatedTypes, boolean approvedContractPresent) throws IOException {
         if (isStructurallyEmpty(oracle)) {
             return "[]";
         }
@@ -324,7 +375,8 @@ public class StructuralOracleSeedingService {
         ArrayNode result = MAPPER.createArrayNode();
         for (JsonNode entry : (ArrayNode) MAPPER.readTree(oracle)) {
             String className = entry.path("class").path("name").asText("");
-            if (className.isEmpty() || templateTypes.contains(className) || !publicSolutionTypes.contains(className)) {
+            boolean approved = !approvedContractPresent || approvedStudentCreatedTypes.contains(className);
+            if (className.isEmpty() || !approved || templateTypes.contains(className) || !publicSolutionTypes.contains(className)) {
                 continue;
             }
             ObjectNode kept = ((ObjectNode) entry).deepCopy();
@@ -383,7 +435,7 @@ public class StructuralOracleSeedingService {
         return trimmed.isEmpty() || trimmed.equals("[]") || trimmed.equals("[ ]");
     }
 
-    private void cleanupStructuralFiles(InteractiveSandbox sandbox, String sessionId, String testDirectory) {
+    private boolean cleanupStructuralFiles(InteractiveSandbox sandbox, String sessionId, String testDirectory) {
         String dir = GenerationWorkspaceService.WORKSPACE + "/" + GenerationWorkspaceService.directoryFor(RepositoryType.TESTS) + "/" + testDirectory;
         StringBuilder command = new StringBuilder("rm -f");
         command.append(" \"").append(dir).append("/").append(ORACLE_FILE).append("\"");
@@ -391,10 +443,12 @@ public class StructuralOracleSeedingService {
             command.append(" \"").append(dir).append("/").append(className).append("\"");
         }
         try {
-            sandbox.exec(sessionId, CLEANUP_TIMEOUT, "sh", "-c", command.toString());
+            var result = sandbox.exec(sessionId, CLEANUP_TIMEOUT, "sh", "-c", command.toString());
+            return result != null && result.isSuccess();
         }
         catch (RuntimeException e) {
-            log.debug("Structural cleanup command failed (harmless): {}", e.getMessage());
+            log.debug("Structural cleanup command failed: {}", e.getMessage());
+            return false;
         }
     }
 

@@ -52,7 +52,7 @@ public class StageCheckService {
 
     private static final Duration DIFF_TIMEOUT = Duration.ofMinutes(5);
 
-    private static final List<String> REQUIRED_SPEC_HEADINGS = List.of("## Rules", "## Worked Examples", "## Design", "## Testing Strategy", "## Diagram");
+    private static final List<String> REQUIRED_SPEC_HEADINGS = List.of("## Rules", "## Worked Examples", "## Design", "## Public API", "## Testing Strategy", "## Diagram");
 
     /** The only template-status tokens a SPEC.md '## Design' data row may carry; 'student-creates' additionally arms the template omit-gate. */
     private static final Set<String> TEMPLATE_STATUS_TOKENS = Set.of("given", "stubbed", "student-creates");
@@ -151,48 +151,46 @@ public class StageCheckService {
     /**
      * Checks one stage's artifact against its mechanical gate.
      *
-     * @param stage           the stage whose artifact is being checked
-     * @param sandbox         the open sandbox session
-     * @param sessionId       the sandbox session id
-     * @param exercise        the exercise being generated (drives the per-language build recipe)
-     * @param seedTestsFiles  the tests-repository snapshot taken before generation, forwarded to the TESTS stage's differential self-check
-     * @param lastTestsReport the TESTS stage's {@link AgentVerifyReport}, consumed by the STATEMENT stage to resolve {@code [task]} bindings against exact test names;
-     *                            {@code null} before TESTS has run (or when TESTS never returned a report)
+     * @param stage                     the stage whose artifact is being checked
+     * @param sandbox                   the open sandbox session
+     * @param sessionId                 the sandbox session id
+     * @param exercise                  the exercise being generated (drives the per-language build recipe)
+     * @param seedTestsFiles            the tests-repository snapshot taken before generation, forwarded to the TESTS stage's differential self-check
+     * @param lastTestsReport           the TESTS stage's {@link AgentVerifyReport}, consumed by the STATEMENT stage to resolve {@code [task]} bindings against exact test names;
+     *                                      {@code null} before TESTS has run (or when TESTS never returned a report)
+     * @param seededStructuralTestNames server-authored structural test names currently materialized in the workspace
      * @return the gate's pass/fail verdict, an actionable observation, and — for TESTS only — the full {@link AgentVerifyReport}
      */
     public StageCheckResult check(GenerationStage stage, InteractiveSandbox sandbox, String sessionId, ProgrammingExercise exercise, Map<String, String> seedTestsFiles,
-            @Nullable AgentVerifyReport lastTestsReport) {
+            @Nullable AgentVerifyReport lastTestsReport, Set<String> seededStructuralTestNames) {
         // SPEC.md is read-only after approval through supported tools. Re-running its cheap mechanical gate is defense in depth against an out-of-band shell mutation; without
         // it, a later stage could append [task] bindings or empty the Diagram decision and silently disarm checks derived from the workspace copy. Skipped when there is no
         // SPEC.md at all: the SPEC stage does not run when the instructor's own problem statement IS the specification.
         if (stage != GenerationStage.SPEC && approvedSpecs.approved(sessionId).isEmpty() && !readSpec(sandbox, sessionId).isBlank()) {
-            StageCheckResult specStillValid = checkSpec(sandbox, sessionId);
+            StageCheckResult specStillValid = checkSpec(sandbox, sessionId, exercise);
             if (!specStillValid.passed()) {
                 return StageCheckResult.failed("SPEC.md is no longer a valid specification: " + specStillValid.observation()
                         + " The approved specification is read-only; do not mutate files through bash. Task bindings and PlantUML belong in problem-statement.md, never in SPEC.md.");
             }
         }
         return switch (stage) {
-            case SPEC -> checkSpec(sandbox, sessionId);
+            case SPEC -> checkSpec(sandbox, sessionId, exercise);
             case SOLUTION -> checkSolution(sandbox, sessionId, exercise);
             case TEMPLATE -> checkTemplate(sandbox, sessionId, exercise);
-            case TESTS -> checkTests(sandbox, sessionId, exercise, seedTestsFiles);
+            case TESTS -> checkTests(sandbox, sessionId, exercise, seedTestsFiles, seededStructuralTestNames);
             case STATEMENT -> checkStatement(sandbox, sessionId, lastTestsReport);
         };
     }
 
-    /**
-     * The SPEC stage's mechanical floor. Depth is enforced by EVIDENCE, not judgment: the worked-examples table must contain at least two rows whose expected results differ,
-     * so the spec proves branching instead of asserting constants — the one mechanically checkable core of the "no seam whose answer is copying a literal" principle. Everything
-     * semantic (archetype fit, rule quality) stays advisory with the critic; a deterministic gate must never hold an opinion.
-     */
-    private StageCheckResult checkSpec(InteractiveSandbox sandbox, String sessionId) {
+    /** The SPEC stage's mechanical floor. Everything semantic (learning fit and example quality) stays with the critic; a deterministic gate must never hold an opinion. */
+    private StageCheckResult checkSpec(InteractiveSandbox sandbox, String sessionId, ProgrammingExercise exercise) {
         String spec = execRead(sandbox, sessionId, "cat", GenerationWorkspaceService.WORKSPACE + "/SPEC.md");
         if (spec.isBlank()) {
-            return StageCheckResult.failed("SPEC.md is missing or empty. Write /workspace/SPEC.md with the archetype, '## Rules' (numbered R1..Rn), a '## Worked Examples' "
-                    + "table, a '## Design' table, a '## Testing Strategy', and a '## Diagram' decision before continuing.");
+            return StageCheckResult.failed("SPEC.md is missing or empty. Write /workspace/SPEC.md with '## Rules' (numbered R1..Rn), a '## Worked Examples' "
+                    + "table, a '## Design' table, a compact '## Public API' contract, a '## Testing Strategy', and a '## Diagram' decision before continuing.");
         }
-        List<String> missingSpecSections = REQUIRED_SPEC_HEADINGS.stream().filter(heading -> !spec.contains(heading)).toList();
+        Set<String> exactSpecLines = spec.lines().map(String::strip).collect(java.util.stream.Collectors.toSet());
+        List<String> missingSpecSections = REQUIRED_SPEC_HEADINGS.stream().filter(heading -> !exactSpecLines.contains(heading)).toList();
         if (!missingSpecSections.isEmpty()) {
             return StageCheckResult.failed("SPEC.md is missing required section(s): " + missingSpecSections + ". Add them before continuing.");
         }
@@ -200,15 +198,9 @@ public class StageCheckService {
             return StageCheckResult.failed("SPEC.md must not contain [task] bindings or PlantUML diagrams — those belong to the final statement, written once tests exist. "
                     + "Remove them; keep the spec to rules and worked examples.");
         }
-        List<String> expectedResults = workedExampleExpectedValues(spec);
-        if (expectedResults.size() < 2) {
-            return StageCheckResult.failed("The '## Worked Examples' table needs at least two data rows (| Rules | Input | Expected |). The table is the spec's evidence of "
-                    + "real computation; the solution stage replays it.");
-        }
-        if (Set.copyOf(expectedResults).size() < 2) {
-            return StageCheckResult.failed("Every row of the '## Worked Examples' table has the SAME expected result ('" + expectedResults.getFirst() + "'). The table must "
-                    + "prove branching: different inputs must lead to different computed results. If the exercise cannot produce two different results, its rules grade a "
-                    + "constant — deepen the rules.");
+        List<String> workedExampleRows = workedExampleDataRows(spec);
+        if (workedExampleRows.size() < 2) {
+            return StageCheckResult.failed("The '## Worked Examples' table needs at least two data rows (| Rules | Input | Expected |) with replayable observable outcomes.");
         }
         List<DesignRow> designRows = designTableRows(spec);
         if (designRows.isEmpty()) {
@@ -234,16 +226,32 @@ public class StageCheckService {
                     + unenforceableCreatedTypes + ". Write one bare type name per row (no generics, package prefix, emphasis, parenthetical, or second type in the same cell) — "
                     + "otherwise nothing can enforce that the template omits it.");
         }
+        if (exercise.getProgrammingLanguage() == ProgrammingLanguage.JAVA) {
+            List<String> impossibleGivenDependencies = givenTypesDependingOnStudentCreatedTypes(spec, designRows);
+            if (!impossibleGivenDependencies.isEmpty()) {
+                return StageCheckResult.failed("These given Java types have Public API signatures that reference a student-created type absent from the template: "
+                        + impossibleGivenDependencies
+                        + ". A given type must ship complete and compile. Choose a coherent ownership graph before approval: make the dependent collaborator stubbed or "
+                        + "student-created with its own work seam, or ship the referenced abstraction as stubbed/given. Do not erase the typed API or replace it with Object/reflection "
+                        + "just to bypass this contradiction.");
+            }
+        }
         List<TestingStrategyRow> testingRows = testingStrategyRows(spec);
         List<String> seamIds = testingRows.stream().map(TestingStrategyRow::seamId).toList();
         if (seamIds.isEmpty()) {
             return StageCheckResult.failed("The '## Testing Strategy' section needs a table with one data row per independently actionable unit of student work. Give each row a "
                     + "stable seam ID in its first cell (S1, S2, ...); tests and statement tasks use these IDs to preserve the plan without creating one task per test.");
         }
-        String ownerHeader = testingStrategyOwnerHeader(spec);
+        List<String> testingHeaders = testingStrategyHeaders(spec);
+        String ownerHeader = testingHeaders.size() > 1 ? testingHeaders.get(1) : "";
         if (!"Owner type".equalsIgnoreCase(ownerHeader)) {
             return StageCheckResult.failed("The second Testing Strategy column must be named 'Owner type'; found '" + ownerHeader
                     + "'. Put one exact bare Design type in that column so ownership is explicit rather than inferred from prose.");
+        }
+        String responsibilityHeader = testingHeaders.size() > 2 ? testingHeaders.get(2) : "";
+        if (!"Observable responsibility".equalsIgnoreCase(responsibilityHeader)) {
+            return StageCheckResult.failed("The third Testing Strategy column must be named 'Observable responsibility'; found '" + responsibilityHeader
+                    + "'. State the behavior, collaboration, or state transition this seam grades so later tests do not infer the contract from a type name.");
         }
         List<String> malformedSeamIds = seamIds.stream().filter(id -> !id.matches("S[1-9][0-9]*")).toList();
         if (!malformedSeamIds.isEmpty()) {
@@ -260,6 +268,16 @@ public class StageCheckService {
             return StageCheckResult.failed("These Testing Strategy rows have no enforceable Owner type: " + malformedOwners
                     + ". Add an Owner type column and put one bare type name from the Design table in every row. This exact link determines whether and where the template "
                     + "may carry that seam's TODO breadcrumb.");
+        }
+        List<String> missingResponsibilities = testingRows.stream().filter(row -> row.observableResponsibility().isBlank()).map(TestingStrategyRow::seamId).toList();
+        if (!missingResponsibilities.isEmpty()) {
+            return StageCheckResult.failed("These Testing Strategy seams do not state an Observable responsibility: " + missingResponsibilities
+                    + ". Describe the student-owned behavior each seam grades; an owner type alone is not a testing strategy.");
+        }
+        List<String> invalidWeights = testingRows.stream().filter(row -> !row.weightTier().matches("[123]")).map(TestingStrategyRow::seamId).toList();
+        if (!invalidWeights.isEmpty()) {
+            return StageCheckResult.failed("These Testing Strategy seams do not use a weight tier of exactly 1, 2, or 3: " + invalidWeights
+                    + ". Put the seam's Artemis test-case weight in the fourth column.");
         }
         Map<String, String> designStatusByType = designRows.stream()
                 .collect(java.util.stream.Collectors.toMap(DesignRow::type, DesignRow::status, (first, ignored) -> first, java.util.LinkedHashMap::new));
@@ -280,6 +298,10 @@ public class StageCheckService {
             return StageCheckResult.failed("Every Testing Strategy row must end with exactly 'yes' or 'no' in the Hidden variant column. This structured decision controls "
                     + "which seams need an AFTER_DUE_DATE overfit-resistance test; prose or a missing cell cannot be enforced.");
         }
+        if (exercise.getDueDate() == null && hiddenCells.stream().anyMatch("yes"::equals)) {
+            return StageCheckResult.failed("The Testing Strategy requests hidden after-due-date coverage, but this exercise has no due date. Mark every Hidden variant cell 'no'; "
+                    + "otherwise AFTER_DUE_DATE tests would remain hidden indefinitely.");
+        }
         // Echo the parsed plan back so the agent SEES what the later gates will hold it to (feedback quality: confirm understanding, not just absence of errors).
         String echo = designRows.stream().map(row -> row.type() + "=" + row.status()).collect(java.util.stream.Collectors.joining(", "));
         String seamEcho = testingRows.stream().map(row -> row.seamId() + "->" + row.ownerType() + "(" + designStatusByType.get(row.ownerType()) + ")")
@@ -292,11 +314,11 @@ public class StageCheckService {
     record DesignRow(String type, @Nullable String status) {
     }
 
-    /** One Testing Strategy row. Owner type is an exact link into the Design table rather than an owner guessed from prose. */
-    record TestingStrategyRow(String seamId, String ownerType, String hiddenDecision) {
+    /** One Testing Strategy row. Owner type links to the Design table; observable responsibility states the student-owned behavior the seam grades. */
+    record TestingStrategyRow(String seamId, String ownerType, String observableResponsibility, String weightTier, String hiddenDecision) {
     }
 
-    /** Parses the '## Design' table's data rows (skipping the header and separator), tolerant of column order — the status is found by token, not position. */
+    /** Parses the '## Design' table's data rows (skipping the header and separator); the first cell is the type and the final cell is the closed-set template status. */
     static List<DesignRow> designTableRows(String spec) {
         int start = spec.indexOf("## Design");
         if (start < 0) {
@@ -318,12 +340,14 @@ public class StageCheckService {
                 }
                 continue;
             }
-            List<String> cells = java.util.Arrays.stream(line.split("\\|")).map(String::strip).filter(cell -> !cell.isBlank()).toList();
+            String row = line.substring(1, line.endsWith("|") ? line.length() - 1 : line.length());
+            List<String> cells = java.util.Arrays.stream(row.split("\\|", -1)).map(String::strip).toList();
             if (cells.isEmpty()) {
                 continue;
             }
             String type = cells.getFirst().replace("`", "").strip();
-            String status = cells.stream().map(StageCheckService::normalizeTemplateStatus).filter(TEMPLATE_STATUS_TOKENS::contains).findFirst().orElse(null);
+            String normalizedStatus = normalizeTemplateStatus(cells.getLast());
+            String status = TEMPLATE_STATUS_TOKENS.contains(normalizedStatus) ? normalizedStatus : null;
             if (!type.isBlank()) {
                 rows.add(new DesignRow(type, status));
             }
@@ -351,6 +375,46 @@ public class StageCheckService {
         return designTableRows(spec).stream().filter(row -> "student-creates".equals(row.status())).map(DesignRow::type).filter(StageCheckService::isEnforceableTypeName).toList();
     }
 
+    private static List<String> givenTypesDependingOnStudentCreatedTypes(String spec, List<DesignRow> designRows) {
+        Set<String> givenTypes = designRows.stream().filter(row -> "given".equals(row.status())).map(DesignRow::type).collect(java.util.stream.Collectors.toSet());
+        Set<String> studentCreatedTypes = designRows.stream().filter(row -> "student-creates".equals(row.status())).map(DesignRow::type)
+                .collect(java.util.stream.Collectors.toSet());
+        List<String> conflicts = new java.util.ArrayList<>();
+        boolean inPublicApi = false;
+        @Nullable
+        String currentOwner = null;
+        for (String line : spec.lines().map(String::strip).toList()) {
+            if (line.equals("## Public API")) {
+                inPublicApi = true;
+                continue;
+            }
+            if (inPublicApi && line.startsWith("## ")) {
+                break;
+            }
+            if (!inPublicApi) {
+                continue;
+            }
+            if (line.startsWith("### ")) {
+                String heading = line.substring(4).replace("`", "").strip();
+                currentOwner = givenTypes.stream().filter(type -> containsTypeName(heading, type)).findFirst().orElse(null);
+                continue;
+            }
+            if (currentOwner == null) {
+                continue;
+            }
+            for (String studentCreatedType : studentCreatedTypes) {
+                if (containsTypeName(line, studentCreatedType)) {
+                    conflicts.add(currentOwner + "->" + studentCreatedType);
+                }
+            }
+        }
+        return conflicts.stream().distinct().toList();
+    }
+
+    private static boolean containsTypeName(String text, String type) {
+        return java.util.regex.Pattern.compile("(?<![A-Za-z0-9_])" + java.util.regex.Pattern.quote(type) + "(?![A-Za-z0-9_])").matcher(text).find();
+    }
+
     /**
      * Whether a '## Design' row's type name is a bare identifier the later gates can actually look for. Anything else ({@code Stack<T>}, a qualified name, {@code **bold**}, two
      * types in one cell) is UNENFORCEABLE — and silently dropping it would make the spec gate's own pass observation ("the later gates will enforce...") a lie.
@@ -363,34 +427,32 @@ public class StageCheckService {
      * The expected-result cells (last column) of every data row in the {@code ## Worked Examples} table: rows starting with '|' after that heading, skipping the header and the
      * separator row.
      */
-    static List<String> workedExampleExpectedValues(String spec) {
-        int start = spec.indexOf("## Worked Examples");
-        if (start < 0) {
-            return List.of();
-        }
-        List<String> values = new java.util.ArrayList<>();
+    static List<String> workedExampleDataRows(String spec) {
+        List<String> rows = new java.util.ArrayList<>();
+        boolean inSection = false;
         boolean pastHeader = false;
-        for (String line : spec.substring(start).lines().map(String::strip).toList()) {
-            if (line.startsWith("## ") && !line.startsWith("## Worked Examples")) {
-                break;
-            }
-            if (!line.startsWith("|")) {
+        for (String line : spec.lines().map(String::strip).toList()) {
+            if (line.equals("## Worked Examples")) {
+                inSection = true;
                 continue;
             }
-            String[] cells = line.split("\\|");
-            String last = cells.length == 0 ? "" : cells[cells.length - 1].strip();
+            if (inSection && line.startsWith("## ")) {
+                break;
+            }
+            if (!inSection || !line.startsWith("|")) {
+                continue;
+            }
             if (!pastHeader) {
-                // The first two pipe rows are the header and the |---| separator.
-                if (last.chars().allMatch(c -> c == '-' || c == ':' || c == ' ')) {
+                if (line.contains("-") && line.matches("[|:\\-\\s]+")) {
                     pastHeader = true;
                 }
                 continue;
             }
-            if (!last.isBlank()) {
-                values.add(last);
+            if (!line.matches("[|:\\-\\s]+")) {
+                rows.add(line);
             }
         }
-        return values;
+        return List.copyOf(rows);
     }
 
     private StageCheckResult checkSolution(InteractiveSandbox sandbox, String sessionId, ProgrammingExercise exercise) {
@@ -490,7 +552,7 @@ public class StageCheckService {
         return testingStrategyRows(spec).stream().map(TestingStrategyRow::seamId).toList();
     }
 
-    /** Parses the stable seam ID, exact Design owner, and final hidden decision from the Testing Strategy table. */
+    /** Parses the stable seam ID, exact Design owner, observable responsibility, and final hidden decision from the Testing Strategy table. */
     static List<TestingStrategyRow> testingStrategyRows(String spec) {
         int start = spec.indexOf("## Testing Strategy");
         if (start < 0) {
@@ -514,10 +576,12 @@ public class StageCheckService {
             String[] columns = line.split("\\|", -1);
             String seam = columns.length > 1 ? normalizeTestingCell(columns[1]) : "";
             String owner = columns.length > 2 ? normalizeTestingCell(columns[2]) : "";
+            String responsibility = columns.length > 3 ? normalizeTestingCell(columns[3]) : "";
+            String weight = columns.length > 4 ? normalizeTestingCell(columns[4]) : "";
             int lastContentColumn = line.endsWith("|") ? columns.length - 2 : columns.length - 1;
             String hidden = columns.length > 2 ? normalizeTestingCell(columns[lastContentColumn]).toLowerCase(java.util.Locale.ROOT) : "";
             if (!seam.isBlank()) {
-                rows.add(new TestingStrategyRow(seam, owner, hidden));
+                rows.add(new TestingStrategyRow(seam, owner, responsibility, weight, hidden));
             }
         }
         return List.copyOf(rows);
@@ -534,13 +598,22 @@ public class StageCheckService {
         return normalized;
     }
 
-    private static String testingStrategyOwnerHeader(String spec) {
+    private static List<String> testingStrategyHeaders(String spec) {
         int start = spec.indexOf("## Testing Strategy");
         if (start < 0) {
-            return "";
+            return List.of();
         }
-        return spec.substring(start).lines().map(String::strip).filter(line -> line.startsWith("|")).findFirst().map(line -> line.split("\\|", -1))
-                .filter(columns -> columns.length > 2).map(columns -> normalizeTestingCell(columns[2])).orElse("");
+        return spec.substring(start).lines().map(String::strip).filter(line -> line.startsWith("|")).findFirst().map(line -> line.split("\\|", -1)).map(columns -> {
+            List<String> headers = new java.util.ArrayList<>();
+            int lastContentColumn = columns.length - 1;
+            if (columns[lastContentColumn].isBlank()) {
+                lastContentColumn--;
+            }
+            for (int index = 1; index <= lastContentColumn; index++) {
+                headers.add(normalizeTestingCell(columns[index]));
+            }
+            return List.copyOf(headers);
+        }).orElseGet(List::of);
     }
 
     /** The last-column cells of the {@code ## Testing Strategy} table's data rows, lower-cased and stripped; empty when the section is not a table. */
@@ -590,10 +663,11 @@ public class StageCheckService {
                 .collect(java.util.stream.Collectors.joining("\n"));
     }
 
-    private StageCheckResult checkTests(InteractiveSandbox sandbox, String sessionId, ProgrammingExercise exercise, Map<String, String> seedTestsFiles) {
+    private StageCheckResult checkTests(InteractiveSandbox sandbox, String sessionId, ProgrammingExercise exercise, Map<String, String> seedTestsFiles,
+            Set<String> seededStructuralTestNames) {
         AgentVerifyReport report;
         try {
-            report = verifier.selfCheckTestsStage(sandbox, sessionId, exercise, seedTestsFiles);
+            report = verifier.selfCheckTestsStage(sandbox, sessionId, exercise, seedTestsFiles, seededStructuralTestNames);
         }
         catch (RuntimeException e) {
             return new StageCheckResult(false, "Could not run the differential self-check: " + e.getMessage(), null);
@@ -610,11 +684,10 @@ public class StageCheckService {
         // Only once the differential is green does the grading plan matter — a missing plan must never drown out failing tests in the feedback.
         String planJson = execRead(sandbox, sessionId, "cat", GenerationWorkspaceService.WORKSPACE + "/test-plan.json");
         if (planJson.isBlank()) {
-            return new StageCheckResult(false,
-                    "The differential passed, but /workspace/test-plan.json is missing. Write it now, implementing the specification's Testing "
-                            + "Strategy: {\"tests\":[{\"name\":\"<exact test name>\",\"weight\":1..3,\"visibility\":\"ALWAYS\"|\"AFTER_DUE_DATE\"}]} — use the exact names verify "
-                            + "reported: " + report.exactTestNames() + ".",
-                    report);
+            return new StageCheckResult(false, "The differential passed, but /workspace/test-plan.json is missing. Write it now, implementing the specification's Testing "
+                    + "Strategy: {\"tests\":[{\"name\":\"<exact test name>\",\"seamWeightTier\":1..3,\"visibility\":\"ALWAYS\"|\"AFTER_DUE_DATE\"}]} — use the exact names verify "
+                    + "reported for your behavioral tests. Do not include server-seeded structural checks; Artemis keeps those visible and zero-weight: "
+                    + seededStructuralTestNames + ".", report);
         }
         GeneratedTestPlan plan;
         try {
@@ -623,33 +696,14 @@ public class StageCheckService {
         catch (IllegalArgumentException e) {
             return new StageCheckResult(false, "The differential passed, but test-plan.json is invalid: " + e.getMessage(), report);
         }
-        List<String> declaredSeams = enforcedTestingSeamIds(sandbox, sessionId);
-        List<String> entriesWithoutSeams = plan.tests().stream().filter(entry -> entry.seam().isBlank()).map(GeneratedTestPlan.Entry::name).toList();
-        if (!entriesWithoutSeams.isEmpty()) {
-            return new StageCheckResult(false, "The differential passed, but these test-plan.json entries have no seam: " + entriesWithoutSeams + ". Set each entry's \"seam\" "
-                    + "to one of the specification's stable Testing Strategy IDs: " + declaredSeams + ".", report);
+        String specification = approvedSpecs.approved(sessionId).orElseGet(() -> readSpec(sandbox, sessionId));
+        List<String> planReasons = ExerciseIntegrityGate.approvedTestPlanReasons(specification, planJson, report.exactTestNames(), exercise.getDueDate() != null,
+                seededStructuralTestNames);
+        if (!planReasons.isEmpty()) {
+            return new StageCheckResult(false, "The differential passed, but the grading plan does not implement the approved Testing Strategy:\n" + String.join("\n", planReasons),
+                    report);
         }
-        List<String> undeclaredSeams = plan.tests().stream().map(GeneratedTestPlan.Entry::seam).filter(seam -> !declaredSeams.contains(seam)).distinct().toList();
-        if (!undeclaredSeams.isEmpty()) {
-            return new StageCheckResult(false, "The differential passed, but test-plan.json uses undeclared seam(s): " + undeclaredSeams
-                    + ". Use the approved Testing Strategy IDs " + declaredSeams + "; do not invent a test-only partition.", report);
-        }
-        Set<String> knownNames = Set.copyOf(report.exactTestNames());
-        List<String> unknownPlanNames = plan.tests().stream().map(GeneratedTestPlan.Entry::name).filter(name -> !knownNames.contains(name)).toList();
-        if (!unknownPlanNames.isEmpty()) {
-            return new StageCheckResult(false, "The differential passed, but test-plan.json names tests that do not exist: " + unknownPlanNames
-                    + ". Copy the exact names verify reported: " + report.exactTestNames() + ".", report);
-        }
-        List<String> unplannedNames = report.exactTestNames().stream().filter(name -> plan.tests().stream().noneMatch(entry -> entry.name().equals(name))).toList();
-        Set<String> hiddenPlanSeams = plan.hiddenEntries().stream().map(GeneratedTestPlan.Entry::seam).collect(java.util.stream.Collectors.toSet());
-        List<String> missingHiddenSeams = enforcedHiddenVariantSeamIds(sandbox, sessionId).stream().filter(seam -> !hiddenPlanSeams.contains(seam)).sorted().toList();
-        if (!missingHiddenSeams.isEmpty()) {
-            return new StageCheckResult(false, "The approved Testing Strategy requires an AFTER_DUE_DATE variant for seam(s) " + missingHiddenSeams
-                    + ", but test-plan.json has no hidden test mapped to them. Add fresh witness tests for each listed seam, keep them unbound by [task] lines, and preserve their "
-                    + "seam IDs; hiding an unrelated test does not satisfy this contract.", report);
-        }
-        String planSummary = "Grading plan accepted: " + plan.tests().size() + " test(s), " + plan.hiddenEntries().size() + " hidden until the due date."
-                + (unplannedNames.isEmpty() ? "" : " Not in the plan (they keep Artemis defaults, weight 1 and visible): " + unplannedNames + ".");
+        String planSummary = "Grading plan accepted: " + plan.tests().size() + " test(s), " + plan.hiddenEntries().size() + " hidden until the due date.";
         return new StageCheckResult(true, observation + "\n" + planSummary, report);
     }
 
@@ -657,6 +711,11 @@ public class StageCheckService {
         String statement = execRead(sandbox, sessionId, "cat", GenerationWorkspaceService.WORKSPACE + "/problem-statement.md");
         if (statement.isBlank()) {
             return StageCheckResult.failed("problem-statement.md is missing or empty. Write the student-facing problem statement before submitting.");
+        }
+        List<String> proseLeaks = ProblemStatementBindingChecker.proseHygieneLeaks(statement);
+        if (!proseLeaks.isEmpty()) {
+            return StageCheckResult.failed("The student-facing statement contains internal authoring or grading vocabulary: " + proseLeaks
+                    + ". Rewrite it self-contained: describe the required behavior directly and never name internal contracts, workspace paths, reference artifacts, or test machinery.");
         }
         Set<String> hiddenNames = hiddenTestNames(sandbox, sessionId);
         if (lastTestsReport != null) {
@@ -727,13 +786,17 @@ public class StageCheckService {
 
     /** Seam IDs from the frozen specification, with the live workspace used only for legacy/unapproved flows. */
     private List<String> enforcedTestingSeamIds(InteractiveSandbox sandbox, String sessionId) {
-        String specification = approvedSpecs.approved(sessionId).orElseGet(() -> readSpec(sandbox, sessionId));
-        return testingStrategySeamIds(specification).stream().filter(id -> id.matches("S[1-9][0-9]*")).distinct().toList();
+        return enforcedTestingStrategyRows(sandbox, sessionId).stream().map(TestingStrategyRow::seamId).filter(id -> id.matches("S[1-9][0-9]*")).distinct().toList();
     }
 
     private Set<String> enforcedHiddenVariantSeamIds(InteractiveSandbox sandbox, String sessionId) {
+        return enforcedTestingStrategyRows(sandbox, sessionId).stream().filter(row -> row.hiddenDecision().equals("yes")).map(TestingStrategyRow::seamId)
+                .collect(java.util.stream.Collectors.toUnmodifiableSet());
+    }
+
+    private List<TestingStrategyRow> enforcedTestingStrategyRows(InteractiveSandbox sandbox, String sessionId) {
         String specification = approvedSpecs.approved(sessionId).orElseGet(() -> readSpec(sandbox, sessionId));
-        return hiddenVariantSeamIds(specification);
+        return testingStrategyRows(specification);
     }
 
     /**

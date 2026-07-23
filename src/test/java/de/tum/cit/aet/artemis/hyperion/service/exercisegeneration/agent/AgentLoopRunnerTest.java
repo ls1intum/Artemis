@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anySet;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
@@ -434,7 +435,7 @@ class AgentLoopRunnerTest {
         // and only that second, passing submit() ends the loop.
         ProgrammingExercise exercise = mock(ProgrammingExercise.class);
         StageCheckService stageCheckService = mock(StageCheckService.class);
-        when(stageCheckService.check(eq(GenerationStage.SOLUTION), any(), anyString(), eq(exercise), eq(Map.of()), any()))
+        when(stageCheckService.check(eq(GenerationStage.SOLUTION), any(), anyString(), eq(exercise), eq(Map.of()), any(), anySet()))
                 .thenReturn(StageCheckResult.failed("the reference solution does not compile"), StageCheckResult.passed(""));
         SandboxAgentTools tools = new SandboxAgentTools(new FakeSandbox(), "fake-session", null, exercise, Map.of(), false, stageCheckService);
         tools.enterStage(GenerationStage.SOLUTION);
@@ -708,6 +709,20 @@ class AgentLoopRunnerTest {
     }
 
     // --- runSession: carrying one logical conversation across several bounded run calls (staged generation continuity) ---
+
+    @Test
+    void runTextSession_completesWithoutRegisteringToolMethods() {
+        ChatModel chatModel = mock(ChatModel.class);
+        when(chatModel.call(any(Prompt.class))).thenReturn(textResponse("THREE CONCEPTS"));
+
+        AgentLoopRunner.AgentLoopSession session = newTestRunner(List.of(chatModel), 128_000).runTextSession("system", null, "explore", 1, () -> false, null, null);
+
+        assertThat(session.result().status()).isEqualTo(AgentLoopResult.Status.COMPLETED);
+        assertThat(session.result().finalMessage()).isEqualTo("THREE CONCEPTS");
+        ArgumentCaptor<Prompt> promptCaptor = ArgumentCaptor.forClass(Prompt.class);
+        verify(chatModel).call(promptCaptor.capture());
+        assertThat(promptCaptor.getValue().getOptions()).isInstanceOfSatisfying(OpenAiChatOptions.class, options -> assertThat(options.getToolCallbacks()).isEmpty());
+    }
 
     @Test
     void runSession_nullPriorConversation_producesTheSameResultAsRun() {

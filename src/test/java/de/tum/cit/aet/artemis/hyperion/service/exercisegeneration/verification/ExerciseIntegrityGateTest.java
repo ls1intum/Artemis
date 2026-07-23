@@ -666,8 +666,10 @@ class ExerciseIntegrityGateTest {
                 | `PlaybackStrategy` | abstraction students design | student-creates |
                 | `Player` | context students wire | student-creates |
                 """;
-        Map<String, String> solution = map("src/PlaybackStrategy.java", "public interface PlaybackStrategy {}", "src/Player.java", "public class Player {}");
-        Map<String, String> template = map("src/PlaybackStrategy.java", "public interface PlaybackStrategy {}", "src/Player.java", "public class Player { /* TODO */ }");
+        Map<String, String> solution = map("src/Track.java", "public record Track(String title) {}", "src/PlaybackStrategy.java", "public interface PlaybackStrategy {}",
+                "src/Player.java", "public class Player {}");
+        Map<String, String> template = map("src/Track.java", "public record Track(String title) {}", "src/PlaybackStrategy.java", "public interface PlaybackStrategy {}",
+                "src/Player.java", "public class Player { /* TODO */ }");
 
         assertThat(ExerciseIntegrityGate.approvedSpecificationReasons(spec, template, solution)).singleElement()
                 .satisfies(reason -> assertThat(reason).contains("template already declares them", "PlaybackStrategy", "Player", "changing SPEC.md after approval cannot"));
@@ -726,6 +728,48 @@ class ExerciseIntegrityGateTest {
     }
 
     @Test
+    void approvedSpecification_acceptsIdenticalGivenTypesInSolutionAndTemplate() {
+        String spec = """
+                ## Design
+                | Type | Role | Template status |
+                |---|---|---|
+                | `Ingredient` | supplied immutable value | given |
+                """;
+        String ingredient = "public record Ingredient(String name, int potency) {}\n";
+
+        assertThat(ExerciseIntegrityGate.approvedSpecificationReasons(spec, map("src/Ingredient.java", ingredient), map("src/Ingredient.java", ingredient))).isEmpty();
+    }
+
+    @Test
+    void approvedSpecification_rejectsDivergentGivenTypes() {
+        String spec = """
+                ## Design
+                | Type | Role | Template status |
+                |---|---|---|
+                | `Ingredient` | supplied immutable value | given |
+                """;
+        Map<String, String> solution = map("src/Ingredient.java", "public record Ingredient(String name, int potency) {}\n");
+        Map<String, String> template = map("src/Ingredient.java", "public class Ingredient { public void setPotency(int potency) {} }\n");
+
+        assertThat(ExerciseIntegrityGate.approvedSpecificationReasons(spec, template, solution)).singleElement()
+                .satisfies(reason -> assertThat(reason).contains("given type", "Ingredient", "byte-for-byte identical", "solution and template"));
+    }
+
+    @Test
+    void approvedSpecification_acceptsAConsistentChangeToBothCopiesOfAGivenType() {
+        String spec = """
+                ## Design
+                | Type | Role | Template status |
+                |---|---|---|
+                | `Ingredient` | supplied immutable value | given |
+                """;
+        String revisedIngredient = "/** A supplied ingredient. */\npublic record Ingredient(String name, int potency) {}\n";
+
+        assertThat(ExerciseIntegrityGate.approvedSpecificationReasons(spec, map("src/Ingredient.java", revisedIngredient), map("src/Ingredient.java", revisedIngredient)))
+                .isEmpty();
+    }
+
+    @Test
     void templateTodoSeams_rejectMissingAndUnknownWorkMarkers() {
         String spec = """
                 ## Design
@@ -734,7 +778,7 @@ class ExerciseIntegrityGateTest {
                 | Player | player | stubbed |
                 | Context | context | stubbed |
                 ## Testing Strategy
-                | Seam | Owner type | Partitions | Weight | Hidden variant |
+                | Seam | Owner type | Observable responsibility | Weight | Hidden variant |
                 |---|---|---|---|---|
                 | S1 | Player | create strategy | 3 | no |
                 | S2 | Context | wire strategy | 2 | no |
@@ -754,7 +798,7 @@ class ExerciseIntegrityGateTest {
                 | Player | player | stubbed |
                 | Context | context | stubbed |
                 ## Testing Strategy
-                | Seam | Owner type | Partitions | Weight | Hidden variant |
+                | Seam | Owner type | Observable responsibility | Weight | Hidden variant |
                 |---|---|---|---|---|
                 | S1 | Player | create strategy | 3 | no |
                 | S2 | Context | wire strategy | 2 | no |
@@ -773,7 +817,7 @@ class ExerciseIntegrityGateTest {
                 |---|---|---|---|
                 | S1 | swap collaborator | 3 | yes |
                 """;
-        String visibleOnly = "{\"tests\":[{\"name\":\"delegates\",\"seam\":\"S1\",\"weight\":3,\"visibility\":\"ALWAYS\"}]}";
+        String visibleOnly = "{\"tests\":[{\"name\":\"delegates\",\"seam\":\"S1\",\"seamWeightTier\":3,\"visibility\":\"ALWAYS\"}]}";
 
         assertThat(ExerciseIntegrityGate.approvedTestPlanReasons(spec, visibleOnly, List.of("delegates"))).singleElement()
                 .satisfies(reason -> assertThat(reason).contains("requires AFTER_DUE_DATE", "S1"));
@@ -789,8 +833,8 @@ class ExerciseIntegrityGateTest {
                 """;
         String plan = """
                 {"tests":[
-                  {"name":"delegates","seam":"S1","weight":3,"visibility":"ALWAYS"},
-                  {"name":"delegatesWithFreshValues","seam":"S1","weight":2,"visibility":"AFTER_DUE_DATE"}
+                  {"name":"delegates","seam":"S1","seamWeightTier":3,"visibility":"ALWAYS"},
+                  {"name":"delegatesWithFreshValues","seam":"S1","seamWeightTier":3,"visibility":"AFTER_DUE_DATE"}
                 ]}
                 """;
 
@@ -808,8 +852,8 @@ class ExerciseIntegrityGateTest {
                 """;
         String plan = """
                 {"tests":[
-                  {"name":"ordinary","seam":"S1","weight":3,"visibility":"AFTER_DUE_DATE"},
-                  {"name":"boundary","seam":"S2","weight":2,"visibility":"ALWAYS"}
+                  {"name":"ordinary","seam":"S1","seamWeightTier":3,"visibility":"AFTER_DUE_DATE"},
+                  {"name":"boundary","seam":"S2","seamWeightTier":2,"visibility":"ALWAYS"}
                 ]}
                 """;
 
@@ -824,7 +868,7 @@ class ExerciseIntegrityGateTest {
                 |---|---|---|
                 | Player | player | stubbed |
                 ## Testing Strategy
-                | Seam | Owner type | Partitions | Weight | Hidden variant |
+                | Seam | Owner type | Observable responsibility | Weight | Hidden variant |
                 |---|---|---|---|---|
                 | S1 | Player | create strategy | 3 | no |
                 """;
@@ -844,7 +888,7 @@ class ExerciseIntegrityGateTest {
                 | IceSpell | strategy | student-creates |
                 | Mage | context | stubbed |
                 ## Testing Strategy
-                | Seam | Owner type | Partitions | Weight | Hidden variant |
+                | Seam | Owner type | Observable responsibility | Weight | Hidden variant |
                 |---|---|---|---|---|
                 | S1 | FireSpell | formula | 2 | yes |
                 | S2 | IceSpell | formula | 2 | yes |
@@ -880,14 +924,63 @@ class ExerciseIntegrityGateTest {
                 |---|---|---|---|
                 | S1 | ordinary and boundary values | 3 | no |
                 """;
-        String noSeam = "{\"tests\":[{\"name\":\"ordinary\",\"weight\":3,\"visibility\":\"ALWAYS\"}]}";
+        String noSeam = "{\"tests\":[{\"name\":\"ordinary\",\"seamWeightTier\":3,\"visibility\":\"ALWAYS\"}]}";
         assertThat(ExerciseIntegrityGate.approvedTestPlanReasons(spec, noSeam, List.of("ordinary"))).singleElement().asString().contains("has no seam", "S1");
 
-        String plan = "{\"tests\":[{\"name\":\"ordinary\",\"seam\":\"S1\",\"weight\":3,\"visibility\":\"ALWAYS\"},"
-                + "{\"name\":\"boundary\",\"seam\":\"S1\",\"weight\":2,\"visibility\":\"ALWAYS\"}]}";
+        String plan = "{\"tests\":[{\"name\":\"ordinary\",\"seam\":\"S1\",\"seamWeightTier\":3,\"visibility\":\"ALWAYS\"},"
+                + "{\"name\":\"boundary\",\"seam\":\"S1\",\"seamWeightTier\":2,\"visibility\":\"ALWAYS\"}]}";
         String splitStatement = "[task][Ordinary](ordinary)\n[task][Boundary](boundary)";
 
         assertThat(ExerciseIntegrityGate.statementTraceabilityReasons(plan, splitStatement)).singleElement().asString().contains("S1", "split");
+    }
+
+    @Test
+    void approvedTestPlan_rejectsWeightVisibilityCoverageAndDueDateDriftAtTheFinalGate() {
+        String spec = """
+                ## Testing Strategy
+                | Seam | Owner type | Observable responsibility | Weight | Hidden variant |
+                |---|---|---|---|---|
+                | S1 | Strategy | transform the input | 3 | no |
+                """;
+
+        String wrongWeight = "{\"tests\":[{\"name\":\"transforms\",\"seam\":\"S1\",\"seamWeightTier\":2,\"visibility\":\"ALWAYS\"}]}";
+        assertThat(ExerciseIntegrityGate.approvedTestPlanReasons(spec, wrongWeight, List.of("transforms"))).singleElement().asString().contains("weights do not match",
+                "requires 3");
+
+        String unexpectedHidden = "{\"tests\":[{\"name\":\"transforms\",\"seam\":\"S1\",\"seamWeightTier\":3,\"visibility\":\"AFTER_DUE_DATE\"}]}";
+        assertThat(ExerciseIntegrityGate.approvedTestPlanReasons(spec, unexpectedHidden, List.of("transforms"))).singleElement().asString().contains("says no hidden variant");
+
+        String completePlan = "{\"tests\":[{\"name\":\"transforms\",\"seam\":\"S1\",\"seamWeightTier\":3,\"visibility\":\"ALWAYS\"}]}";
+        assertThat(ExerciseIntegrityGate.approvedTestPlanReasons(spec, completePlan, List.of("transforms", "edgeCase"))).singleElement().asString()
+                .contains("omits verified gradable test", "edgeCase");
+        assertThat(ExerciseIntegrityGate.approvedTestPlanReasons(spec, completePlan, List.of("transforms", "testClass[Strategy]"), true, Set.of("testClass[Strategy]")))
+                .as("server-authored structural feedback is not part of the agent-authored grading plan").isEmpty();
+
+        String buildGatePlan = "{\"tests\":[{\"name\":\"GBS-Tester-1.36.CompileSort\",\"seam\":\"S1\",\"seamWeightTier\":3,\"visibility\":\"ALWAYS\"}]}";
+        assertThat(ExerciseIntegrityGate.approvedTestPlanReasons(spec, buildGatePlan, List.of("GBS-Tester-1.36.CompileSort"))).singleElement().asString().contains("build-gate",
+                "zero-weight", "cannot satisfy");
+
+        assertThat(ExerciseIntegrityGate.approvedTestPlanReasons(spec, unexpectedHidden, List.of("transforms"), false)).singleElement().asString().contains("has no due date",
+                "hidden indefinitely");
+    }
+
+    @Test
+    void approvedTestPlan_doesNotLetAHiddenStructuralCheckStandInForABehavioralWitness() {
+        String spec = """
+                ## Testing Strategy
+                | Seam | Owner type | Observable responsibility | Weight | Hidden variant |
+                |---|---|---|---|---|
+                | S1 | Strategy | delegate through the selected strategy | 3 | yes |
+                """;
+        String plan = """
+                {"tests":[
+                  {"name":"delegates","seam":"S1","seamWeightTier":3,"visibility":"ALWAYS"},
+                  {"name":"testClass[Strategy]","seam":"S1","seamWeightTier":3,"visibility":"AFTER_DUE_DATE"}
+                ]}
+                """;
+
+        assertThat(ExerciseIntegrityGate.approvedTestPlanReasons(spec, plan, List.of("delegates", "testClass[Strategy]"), true, Set.of("testClass[Strategy]"))).singleElement()
+                .asString().contains("server-seeded structural", "Remove them", "behavioral witness");
     }
 
     // --- Solution-leak gate ---

@@ -206,7 +206,7 @@ class GenerationWorkspaceServiceTest {
                 "reference/style/solution.md", "reference/style/tests.md", "reference/style/spec.md");
         // Each guide states its role up front so the agent can tell them apart at a glance.
         assertThat(guides.get("reference/style/spec.md")).contains("## Worked Examples").contains("## Design").contains("## Testing Strategy").contains("## Diagram")
-                .contains("student-creates");
+                .contains("student-creates", "owner-controlled responsibility", "independently diagnosable");
         assertThat(guides.get("reference/style/draft-statement.md")).contains("BEFORE any tests");
         assertThat(guides.get("reference/style/final-statement.md")).contains("CRITICAL POLICY");
         assertThat(guides.get("reference/style/template.md")).contains("// TODO");
@@ -410,7 +410,7 @@ class GenerationWorkspaceServiceTest {
         ProgrammingExercise exercise = new ProgrammingExercise();
 
         service.materializeRepositoryFiles(sandbox, "session", exercise, GenerationMode.ADAPT, Map.of(), Map.of(), Map.of(), "# Restored\n", "# Spec\n",
-                "{\"tests\":[{\"name\":\"testFoo\",\"weight\":2,\"visibility\":\"AFTER_DUE_DATE\"}]}");
+                "{\"tests\":[{\"name\":\"testFoo\",\"seamWeightTier\":2,\"visibility\":\"AFTER_DUE_DATE\"}]}");
     }
 
     @Test

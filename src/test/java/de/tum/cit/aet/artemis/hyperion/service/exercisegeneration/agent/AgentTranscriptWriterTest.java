@@ -46,6 +46,21 @@ class AgentTranscriptWriterTest {
     }
 
     @Test
+    void writeAudit_writesReviewerEvidenceWithoutPretendingItWasChat(@TempDir Path directory) throws IOException {
+        AgentTranscriptWriter writer = new AgentTranscriptWriter(directory.toString());
+
+        writer.writeAudit(42, "concept-review-1", "Selected candidate: 2\n\nCandidate 1: insufficient\nCandidate 2: accepted");
+
+        try (var files = Files.list(directory.resolve("exercise-42"))) {
+            List<Path> written = files.toList();
+            assertThat(written).hasSize(1);
+            assertThat(written.getFirst().getFileName().toString()).endsWith("-concept-review-1.md");
+            assertThat(Files.readString(written.getFirst())).contains("# Generation audit — concept-review-1", "Selected candidate: 2", "Candidate 1: insufficient")
+                    .doesNotContain("## ASSISTANT", "## USER");
+        }
+    }
+
+    @Test
     void write_disabledOrEmptyConversation_isANoOp(@TempDir Path directory) throws IOException {
         new AgentTranscriptWriter("").write(42, "label", conversation());
         new AgentTranscriptWriter(directory.toString()).write(42, "label", null);

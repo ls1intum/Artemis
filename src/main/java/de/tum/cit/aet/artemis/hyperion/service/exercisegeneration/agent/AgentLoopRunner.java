@@ -263,13 +263,34 @@ public class AgentLoopRunner {
      */
     public AgentLoopSession runSession(String systemPrompt, @Nullable List<Message> priorConversation, String userPrompt, Object tools, int maxTurns, BooleanSupplier cancelled,
             @Nullable Consumer<ChatResponse> usageSink, @Nullable Consumer<String> stepListener) {
+        ToolCallbackProvider provider = MethodToolCallbackProvider.builder().toolObjects(tools).build();
+        return runSessionWithCallbacks(systemPrompt, priorConversation, userPrompt, tools, provider.getToolCallbacks(), maxTurns, cancelled, usageSink, stepListener);
+    }
+
+    /**
+     * Runs a bounded text-only model session. Use this for planning calls that must not have access to the exercise workspace or any other tools.
+     *
+     * @param systemPrompt      the system prompt for this call
+     * @param priorConversation a prior text-only conversation to continue, or {@code null}
+     * @param userPrompt        this call's instruction
+     * @param maxTurns          the hard cap on model turns for this call
+     * @param cancelled         a supplier polled before each turn
+     * @param usageSink         invoked after every successful model call, or {@code null}
+     * @param stepListener      invoked after every step with progress, or {@code null}
+     * @return the loop outcome and resulting conversation
+     */
+    public AgentLoopSession runTextSession(String systemPrompt, @Nullable List<Message> priorConversation, String userPrompt, int maxTurns, BooleanSupplier cancelled,
+            @Nullable Consumer<ChatResponse> usageSink, @Nullable Consumer<String> stepListener) {
+        return runSessionWithCallbacks(systemPrompt, priorConversation, userPrompt, null, new ToolCallback[0], maxTurns, cancelled, usageSink, stepListener);
+    }
+
+    private AgentLoopSession runSessionWithCallbacks(String systemPrompt, @Nullable List<Message> priorConversation, String userPrompt, @Nullable Object tools,
+            ToolCallback[] toolCallbacks, int maxTurns, BooleanSupplier cancelled, @Nullable Consumer<ChatResponse> usageSink, @Nullable Consumer<String> stepListener) {
         if (chatModel == null) {
             throw new IllegalStateException("No ChatModel is configured. Agentic generation is unavailable.");
         }
         requireTextSafe("provider/system-prompt", systemPrompt);
         requireTextSafe("provider/user-prompt", userPrompt);
-        ToolCallbackProvider provider = MethodToolCallbackProvider.builder().toolObjects(tools).build();
-        ToolCallback[] toolCallbacks = provider.getToolCallbacks();
 
         // The ChatModel does not auto-execute tools on call(), so the response carries raw tool calls this loop executes explicitly via toolCallingManager.executeToolCalls(...).
         // Build OpenAiChatOptions (not a generic ToolCallingChatOptions): OpenAiChatModel#buildRequestPrompt casts the runtime options to OpenAiChatOptions, so a

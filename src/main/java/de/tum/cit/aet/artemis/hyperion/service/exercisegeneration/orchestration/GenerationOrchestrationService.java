@@ -91,9 +91,12 @@ public class GenerationOrchestrationService {
     /** Initial candidate plus at most three mechanical repairs. */
     private static final int MAX_MECHANICAL_ATTEMPTS = 4;
 
-    // Once a candidate passes mechanical verification, the full-artifact review must still have room to improve it. The two extra slots are one transactional semantic repair
-    // and, only if that repair breaks the build, one narrow mechanical correction. They are not additional open-ended attempts at the initial mechanical phase.
-    private static final int MAX_GENERATION_ATTEMPTS = MAX_MECHANICAL_ATTEMPTS + 2;
+    // Once a candidate passes mechanical verification, the full-artifact review may need one repair on each coherent surface (contract, oracle, scaffold). These are scoped
+    // repairs, not additional open-ended initial-authoring attempts.
+    private static final int MAX_GENERATION_ATTEMPTS = MAX_MECHANICAL_ATTEMPTS + 3;
+
+    /** At most one bounded repair for each coherent semantic surface. */
+    private static final int MAX_SEMANTIC_REPAIRS = 3;
 
     /**
      * Total wall-clock ceiling for one generation run across ALL attempts. The staged first attempt has its own 22-minute guard (see StagedGenerationRunner), but repair
@@ -129,7 +132,7 @@ public class GenerationOrchestrationService {
     // absent the baseline is empty and the total-wipe gate stays inert (fail-open), consistent with every other doubt-on-read-back gate.
     private final Optional<ProgrammingExerciseTestCaseRepository> testCaseRepository;
 
-    // Runs one attempt as five enforced, gated stages (design/solution/template/tests/statement) instead of one open-ended agent-loop call. Gated by stagedGenerationEnabled
+    // Runs one attempt as three enforced phases (specification/coherent executable build/statement) instead of one open-ended artifact waterfall. Gated by stagedGenerationEnabled
     // so it applies only where its Java-only, single-language contract holds (see the applicability check at the call site).
     private final StagedGenerationRunner stagedGenerationRunner;
 
@@ -143,6 +146,59 @@ public class GenerationOrchestrationService {
     // Wired into SandboxAgentTools so a staged session's verify/submit tools can dispatch to the current stage's mechanical check; unused by an unstaged (legacy) session, which
     // never calls SandboxAgentTools#enterStage.
     private final StageCheckService stageCheckService;
+
+    private enum RepairSurface {
+        CONTRACT, ORACLE, SCAFFOLD
+    }
+
+    private record SemanticRepairBatch(RepairSurface surface, SpecFidelityReport report, Set<String> writableRoots) {
+
+        static Optional<SemanticRepairBatch> next(SpecFidelityReport report) {
+            for (RepairSurface surface : RepairSurface.values()) {
+                List<SpecFidelityReport.Finding> findings = report.findings().stream().filter(SpecFidelityReport.Finding::isBlocking)
+                        .filter(finding -> surfaceFor(finding.kind()) == surface).toList();
+                if (!findings.isEmpty()) {
+                    return Optional.of(new SemanticRepairBatch(surface, new SpecFidelityReport(findings), writableRootsFor(surface)));
+                }
+            }
+            return Optional.empty();
+        }
+
+        private static @Nullable RepairSurface surfaceFor(SpecFidelityReport.Kind kind) {
+            return switch (kind) {
+                case UNCOVERED_REQUIREMENT, WEAK_TEST_ORACLE -> RepairSurface.ORACLE;
+                case TEMPLATE_QUALITY_GAP -> RepairSurface.SCAFFOLD;
+                case MECHANICS_LEAK, INVENTED_REQUIREMENT, UNREQUESTED_ADAPTATION_CHANGE, REQUESTED_ADAPTATION_CHANGE_MISSING, CONTRACT_CONTRADICTION, HIDDEN_GRADED_REQUIREMENT ->
+                    RepairSurface.CONTRACT;
+                case MISSING_WORKED_EXAMPLE, MISSING_FAILURE_MESSAGE, ADAPTATION_SCOPE_REVIEW_UNAVAILABLE, QUALITY_REVIEW_UNAVAILABLE -> null;
+            };
+        }
+
+        private static Set<String> writableRootsFor(RepairSurface surface) {
+            return switch (surface) {
+                case ORACLE -> Set.of("tests", "test-plan.json", "problem-statement.md");
+                case SCAFFOLD -> Set.of("solution", "template", "problem-statement.md");
+                case CONTRACT -> Set.of("solution", "template", "tests", "test-plan.json", "problem-statement.md");
+            };
+        }
+
+        String guidance() {
+            return switch (surface) {
+                case ORACLE ->
+                    "Keep the already verified solution unchanged while strengthening the test unless a sound new assertion proves that solution violates the frozen contract. "
+                            + "For collaboration or delegation, use a test-controlled fake or recording collaborator that returns a unique sentinel and records its input; assert forwarding "
+                            + "and return propagation against that witness. Do not call a production collaborator twice to manufacture an identity comparison. Do not add production caching, "
+                            + "memoization, shared/global state, or repeated-call identity semantics solely to make a new oracle test pass unless the reviewed finding and frozen contract "
+                            + "explicitly require that behavior. ";
+                case SCAFFOLD ->
+                    "Repair only the starter/reference scaffold and its point-of-use student guidance. A type marked given is supplied code, so keep its canonical source identical in "
+                            + "solution and template; never weaken supplied code merely to force the starter to fail a test. ";
+                case CONTRACT ->
+                    "Reconcile only the contradictory or invented contract surface named in the evidence. Preserve the frozen specification and every unaffected behavior, test, API, and "
+                            + "example. ";
+            };
+        }
+    }
 
     public GenerationOrchestrationService(Optional<InteractiveSandbox> interactiveSandbox, GenerationWorkspaceService workspace, AgentLoopRunner agentLoopRunner,
             DifferentialVerificationService verifier, AgentSystemPromptService systemPromptService, StructuralOracleSeedingService structuralOracleSeeder,
@@ -256,6 +312,7 @@ public class GenerationOrchestrationService {
             // The agent's `verify` tool runs the same differential as the post-loop gate so it sees the verdict in-loop (pass/fail tests, exact [task] names); the post-loop
             // verify(...) below stays the mechanical-verification decision.
             SandboxAgentTools baseTools = new SandboxAgentTools(sandbox, sessionId, verifier, exercise, testsSeedSnapshot, mode == GenerationMode.ADAPT, stageCheckService);
+            baseTools.configureStructuralOracleRefresh(() -> structuralOracleSeeder.seedIfStructuralDiff(sandbox, activeSessionId, exercise));
             // Wrap the tools in the file-change decorator when a sink is supplied, so each successful write/edit/delete emits a lightweight notification (path, repository bucket,
             // action, turn) for the instructor's live activity view — not the file content itself. The decorator re-exposes the same @Tool surface (the model sees the same tools)
             // and only adds emission.
@@ -295,11 +352,16 @@ public class GenerationOrchestrationService {
             SpecFidelityReport specFidelityReport = SpecFidelityReport.empty();
             @Nullable
             VerificationRequest lastRejectedVerificationRequest = null;
-            boolean semanticRepairAttempted = false;
+            int semanticRepairsStarted = 0;
+            int semanticRepairLimit = mode == GenerationMode.GENERATE ? MAX_SEMANTIC_REPAIRS : 1;
             int semanticMechanicalCorrectionsRemaining = 1;
             int initialMechanicalAttempts = 0;
             @Nullable
             CandidateSnapshot preSemanticRepairCandidate = null;
+            @Nullable
+            SemanticRepairBatch pendingSemanticRepair = null;
+            @Nullable
+            SemanticRepairBatch lastSemanticRepair = null;
             for (int attempt = 1; attempt <= MAX_GENERATION_ATTEMPTS; attempt++) {
                 if (attempt > 1 && Duration.between(runStartedAt, Instant.now()).compareTo(TOTAL_WALL_CLOCK_BUDGET) > 0) {
                     emit(progress, "The generation time budget is used up; keeping the current candidate instead of starting repair attempt " + attempt + ".");
@@ -320,12 +382,23 @@ public class GenerationOrchestrationService {
                     carriedConversation = stagedOutcome.conversation();
                 }
                 else {
-                    AgentLoopRunner.AgentLoopSession session = agentLoopRunner.runSession(systemPrompt, carriedConversation, currentPrompt, tools, maxTurns, cancelled,
-                            effectiveUsageSink, progress);
-                    loopResult = session.result();
-                    carriedConversation = session.conversation();
-                    transcriptWriter.write(exercise.getId(),
-                            "attempt-" + attempt + (attempt == 1 ? "-single-loop-" : "-repair-") + loopResult.status().name().toLowerCase(Locale.ROOT), carriedConversation);
+                    SemanticRepairBatch repairBatchForAttempt = pendingSemanticRepair;
+                    pendingSemanticRepair = null;
+                    if (repairBatchForAttempt != null) {
+                        lastSemanticRepair = repairBatchForAttempt;
+                        baseTools.enterRepairScope(repairBatchForAttempt.writableRoots());
+                    }
+                    try {
+                        AgentLoopRunner.AgentLoopSession session = agentLoopRunner.runSession(systemPrompt, carriedConversation, currentPrompt, tools, maxTurns, cancelled,
+                                effectiveUsageSink, progress);
+                        loopResult = session.result();
+                        carriedConversation = session.conversation();
+                        transcriptWriter.write(exercise.getId(),
+                                "attempt-" + attempt + (attempt == 1 ? "-single-loop-" : "-repair-") + loopResult.status().name().toLowerCase(Locale.ROOT), carriedConversation);
+                    }
+                    finally {
+                        baseTools.exitRepairScope();
+                    }
                 }
                 totalAgentTurns += loopResult.turns();
                 if (stagedAttempt) {
@@ -447,9 +520,15 @@ public class GenerationOrchestrationService {
                     lastRejectedVerificationRequest = verificationRequest;
                 }
                 if (verification.mechanicallyVerified()) {
-                    lastMechanicallyVerifiedCandidate = new CandidateSnapshot(loopResult, verification, copyProducedFiles(producedFilesByType), producedProblemStatement,
+                    CandidateSnapshot mechanicallyVerifiedCandidate = new CandidateSnapshot(loopResult, verification, copyProducedFiles(producedFilesByType),
+                            producedProblemStatement,
                             SpecFidelityReport.qualityReviewUnavailable("Generation stopped before the mechanically verified candidate received its full-artifact review."),
                             specDocumentSnapshot, testPlanSnapshot);
+                    // The first verified candidate is useful even if review is interrupted. A semantic repair is not promoted until its review completes; cancellation or an
+                    // exception at that boundary must preserve the last mechanically verified AND reviewed checkpoint.
+                    if (preSemanticRepairCandidate == null) {
+                        lastMechanicallyVerifiedCandidate = mechanicallyVerifiedCandidate;
+                    }
                 }
                 if (cancelled.getAsBoolean()) {
                     if (lastMechanicallyVerifiedCandidate != null) {
@@ -467,19 +546,21 @@ public class GenerationOrchestrationService {
                             ? renderAdaptationChanges(baselineProblemStatement, producedProblemStatement, baselineRepositoryFiles, producedFilesByType)
                             : null;
                     String repairDelta = mode == GenerationMode.GENERATE && preSemanticRepairCandidate != null
-                            ? renderAdaptationChanges(preSemanticRepairCandidate.problemStatement(), producedProblemStatement, preSemanticRepairCandidate.producedFiles(),
-                                    producedFilesByType)
+                            ? renderGenerationRepairChanges(preSemanticRepairCandidate.problemStatement(), producedProblemStatement, preSemanticRepairCandidate.producedFiles(),
+                                    producedFilesByType, preSemanticRepairCandidate.testPlanJson(), testPlanSnapshot)
                             : null;
                     SpecFidelityReport previousReview = preSemanticRepairCandidate == null ? specFidelityReport : preSemanticRepairCandidate.reviewReport();
                     // specFidelityReport still holds the previous attempt's report at this point (SpecFidelityReport.empty() on attempt 1 or after a mechanical rejection);
                     // The preserved candidate remains the review authority after a mechanically broken semantic repair, while the mutable report is deliberately cleared so
                     // the narrow mechanical-correction prompt does not reopen semantic scope.
                     specFidelityReport = runSpecFidelityCritic(reviewBrief, producedProblemStatement, exercise.getProgrammingLanguage(), producedFilesByType, adaptationChanges,
-                            repairDelta, effectiveUsageSink, cancelled, progress, previousReview, effectiveSpecReviewContext(specSnapshot.get(), specDocumentSnapshot));
+                            repairDelta, effectiveUsageSink, cancelled, progress, previousReview, effectiveSpecReviewContext(specSnapshot.get(), specDocumentSnapshot),
+                            testPlanSnapshot);
                     lastMechanicallyVerifiedCandidate = new CandidateSnapshot(loopResult, verification, copyProducedFiles(producedFilesByType), producedProblemStatement,
                             specFidelityReport, specDocumentSnapshot, testPlanSnapshot);
                     if (cancelled.getAsBoolean()) {
-                        return preserveCandidate(lastMechanicallyVerifiedCandidate, sandbox, sessionId, workspaceSeed);
+                        CandidateSnapshot safeCheckpoint = preSemanticRepairCandidate == null ? lastMechanicallyVerifiedCandidate : preSemanticRepairCandidate;
+                        return preserveCandidate(safeCheckpoint, sandbox, sessionId, workspaceSeed);
                     }
                 }
                 else {
@@ -492,55 +573,61 @@ public class GenerationOrchestrationService {
                 if (attempt == MAX_GENERATION_ATTEMPTS) {
                     break;
                 }
-                if (!verification.mechanicallyVerified() && !semanticRepairAttempted && ++initialMechanicalAttempts >= MAX_MECHANICAL_ATTEMPTS) {
+                if (!verification.mechanicallyVerified() && semanticRepairsStarted == 0 && ++initialMechanicalAttempts >= MAX_MECHANICAL_ATTEMPTS) {
                     emit(progress, "The bounded mechanical repair phase is exhausted; keeping the current candidate for instructor review.");
                     break;
                 }
                 if (verification.mechanicallyVerified()) {
-                    if (semanticRepairAttempted) {
-                        emit(progress,
-                                "The bounded semantic repair still has review blockers; rolling back the whole repair transaction instead of keeping a partially successful or regressed edit.");
-                        return preserveCandidate(java.util.Objects.requireNonNull(preSemanticRepairCandidate), sandbox, sessionId, workspaceSeed);
+                    if (semanticRepairsStarted >= semanticRepairLimit) {
+                        emit(progress, "The bounded semantic repair phase is exhausted; keeping the latest mechanically verified candidate and its current review findings.");
+                        break;
                     }
                     boolean reviewUnavailable = specFidelityReport.findings().stream()
                             .anyMatch(finding -> finding.kind() == SpecFidelityReport.Kind.ADAPTATION_SCOPE_REVIEW_UNAVAILABLE
                                     || finding.kind() == SpecFidelityReport.Kind.QUALITY_REVIEW_UNAVAILABLE);
-                    boolean hasActionableReviewFinding = specFidelityReport.findings().stream()
-                            .anyMatch(finding -> finding.isBlocking() && finding.kind() != SpecFidelityReport.Kind.ADAPTATION_SCOPE_REVIEW_UNAVAILABLE
-                                    && finding.kind() != SpecFidelityReport.Kind.QUALITY_REVIEW_UNAVAILABLE);
-                    if (reviewUnavailable && !hasActionableReviewFinding) {
+                    Optional<SemanticRepairBatch> repairBatch = SemanticRepairBatch.next(specFidelityReport);
+                    if (reviewUnavailable && repairBatch.isEmpty()) {
+                        break;
+                    }
+                    if (repairBatch.isEmpty()) {
                         break;
                     }
                     preSemanticRepairCandidate = lastMechanicallyVerifiedCandidate;
-                    semanticRepairAttempted = true;
+                    semanticRepairsStarted++;
+                    pendingSemanticRepair = repairBatch.get();
                     emit(progress, "Mechanical verification passed, but the exercise review found requirements or quality issues; asking the AI to correct them.");
                     String scopeGuidance = mode == GenerationMode.ADAPT ? " Preserve all content outside the requested adaptation." : "";
                     currentPrompt = attemptFraming(attempt) + "Your previous attempt passed mechanical verification, but the automated full-artifact review found review blockers."
                             + scopeGuidance
                             + " Preserve the mechanically correct work: do not restart or rewrite unrelated files. Begin with only the artifact(s) explicitly implicated by each finding's evidence. "
+                            + repairBatch.get().guidance()
                             + "After that smallest edit, call the structured `verify` tool; expand the repair surface only if its report identifies a concrete cross-artifact inconsistency caused by the edit. "
                             + "Keep every unaffected requirement, API, test, and example. The template is expected to fail behavioural and structural tests at approved TODOs and absent "
                             + "student-creates types—never make those tests pass merely because a raw template build exits non-zero. `verify`, not a raw build exit code, is the acceptance verdict. "
                             + "Call submit when it reports MECHANICAL PRECHECK: PASS.\n\nThe instructor " + "source requirements are:\n" + authoringBrief
-                            + specContractSection(specSnapshot.get()) + specFidelityCritic.renderForRetryPrompt(specFidelityReport);
+                            + specContractSection(specSnapshot.get()) + specFidelityCritic.renderForRetryPrompt(repairBatch.get().report());
                     continue;
                 }
-                if (semanticRepairAttempted && semanticMechanicalCorrectionsRemaining == 0) {
+                if (semanticRepairsStarted > 0 && semanticMechanicalCorrectionsRemaining == 0) {
                     emit(progress, "The one mechanical correction after semantic repair was not enough; preserving the last mechanically verified candidate instead of starting "
                             + "another open-ended repair cycle.");
                     break;
                 }
-                if (semanticRepairAttempted) {
+                if (semanticRepairsStarted > 0) {
                     semanticMechanicalCorrectionsRemaining--;
                     emit(progress, "The semantic repair broke mechanical verification; allowing one narrow mechanical correction without reopening semantic scope.");
                 }
                 emit(progress, "Verification rejected the exercise; asking the agent to fix the issues and try again.");
+                String semanticCorrectionGuidance = semanticRepairsStarted > 0 && lastSemanticRepair != null ? "\n\nThis rejection followed a "
+                        + lastSemanticRepair.surface().name().toLowerCase(Locale.ROOT)
+                        + " quality repair. Before changing production code, audit the new assertion against the frozen contract. If the assertion invents behavior the contract does not "
+                        + "require, fix or remove the unsupported assertion first. " + lastSemanticRepair.guidance() : "";
                 // The hard rejection (must fix) plus the advisory findings, the latter framed so the rejection is prioritised.
                 currentPrompt = attemptFraming(attempt) + "Your previous attempt was rejected by the differential verifier:\n" + verification.report()
                         + "\n\nThe workspace still contains all your files. Read the relevant files, fix exactly these issues, call the structured `verify` tool, then submit when it reports "
                         + "MECHANICAL PRECHECK: PASS. If a reason names a forbidden, duplicate, or abandoned path, delete it; replacing it with a "
                         + "placeholder does not remove the violation. Make the smallest coherent repair, leave unrelated files unchanged, and preserve the source requirements below.\n\n"
-                        + authoringBrief + specContractSection(specSnapshot.get()) + specFidelityCritic.renderForRetryPrompt(specFidelityReport);
+                        + authoringBrief + specContractSection(specSnapshot.get()) + semanticCorrectionGuidance + specFidelityCritic.renderForRetryPrompt(specFidelityReport);
             }
 
             // A semantic repair can accidentally break a candidate that already built and graded correctly. Never discard that more useful checkpoint in favour of a later
@@ -766,11 +853,12 @@ public class GenerationOrchestrationService {
      */
     private SpecFidelityReport runSpecFidelityCritic(String brief, String problemStatement, @Nullable ProgrammingLanguage language,
             Map<RepositoryType, Map<String, String>> producedArtifacts, @Nullable String adaptationChanges, @Nullable String repairDelta, Consumer<ChatResponse> usageSink,
-            BooleanSupplier cancelled, Consumer<String> progress, @Nullable SpecFidelityReport previousReport, @Nullable String specSnapshot) {
+            BooleanSupplier cancelled, Consumer<String> progress, @Nullable SpecFidelityReport previousReport, @Nullable String specSnapshot, @Nullable String testPlanSnapshot) {
         try {
             List<String> testNames = extractTaskBoundTestNames(problemStatement);
             SpecFidelityReport report = adaptationChanges == null
-                    ? specFidelityCritic.critique(brief, problemStatement, testNames, producedArtifacts, usageSink, cancelled, previousReport, specSnapshot, repairDelta)
+                    ? specFidelityCritic.critique(brief, problemStatement, testNames, producedArtifacts, usageSink, cancelled, previousReport, specSnapshot, repairDelta,
+                            testPlanSnapshot)
                     : specFidelityCritic.critiqueAdaptation(brief, problemStatement, testNames, adaptationChanges, producedArtifacts, usageSink, cancelled, previousReport);
             if (adaptationChanges != null && adaptationChanges.contains(CHANGE_SUMMARY_TRUNCATED)) {
                 List<SpecFidelityReport.Finding> combined = new ArrayList<>(report.findings());
@@ -814,6 +902,13 @@ public class GenerationOrchestrationService {
                 appendChangedFile(changes, type.getName() + "/" + path, before.get(path), after.get(path));
             }
         }
+        return changes.toString();
+    }
+
+    static String renderGenerationRepairChanges(@Nullable String baselineProblemStatement, String producedProblemStatement, Map<RepositoryType, Map<String, String>> baselineFiles,
+            Map<RepositoryType, Map<String, String>> producedFiles, @Nullable String baselineTestPlan, @Nullable String producedTestPlan) {
+        StringBuilder changes = new StringBuilder(renderAdaptationChanges(baselineProblemStatement, producedProblemStatement, baselineFiles, producedFiles));
+        appendChangedFile(changes, "test-plan.json", baselineTestPlan, producedTestPlan);
         return changes.toString();
     }
 

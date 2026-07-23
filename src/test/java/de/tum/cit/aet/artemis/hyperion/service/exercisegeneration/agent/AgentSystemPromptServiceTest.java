@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.time.ZonedDateTime;
 import java.util.Map;
 import java.util.Optional;
 
@@ -95,7 +96,7 @@ class AgentSystemPromptServiceTest {
         assertThat(adaptPrompt).contains("inspect the existing statement, solution, template, tests, and task bindings before editing")
                 .contains("Do not delete or rename existing source files, public APIs, tests, task bindings, or instructor prose").contains("unless the")
                 .contains("feedback requires it").doesNotContain("remove leftover exercise-specific Java sources").doesNotContain("may refine or replace it");
-        assertThat(generatePrompt.replaceAll("\\s+", " ")).contains("exercise source and test roots are clean; preserve", "may refine or replace it")
+        assertThat(generatePrompt.replaceAll("\\s+", " ")).contains("source and test roots are clean; preserve", "may refine or replace it")
                 .doesNotContain("remove leftover exercise-specific Java sources");
     }
 
@@ -143,12 +144,11 @@ class AgentSystemPromptServiceTest {
 
     @Test
     void build_templateScaffoldingRequiresJavadocAndTodoAnchors() {
-        String prompt = systemPromptService.build(exerciseWith(ProgrammingLanguage.JAVA, "")).replaceAll("\\s+", " ");
+        String prompt = systemPromptService.buildStage(exerciseWith(ProgrammingLanguage.JAVA, ""), GenerationStage.TESTS).replaceAll("\\s+", " ");
 
-        assertThat(prompt).contains("TEMPLATE AS TEACHING SCAFFOLD", "work from it alone, using the statement only as reference")
-                .contains("complete Javadoc (or the language's doc idiom) stating its contract").contains("// TODO S<n>: <task wording>")
-                .contains("Normally put it INSIDE the member", "keep an empty owner class", "Do not restore the type")
-                .contains("Omit student-created types", "Tasks and tests anchor them").doesNotContain("seam TODO breadcrumbs to its collaborators");
+        assertThat(prompt).contains("complete Javadoc for its public types and members", "template inherits that documentation verbatim")
+                .contains("in-body seam TODO and throw", "Never restore the declaration", "Omit student-created types entirely")
+                .doesNotContain("seam TODO breadcrumbs to its collaborators");
     }
 
     @Test
@@ -174,7 +174,7 @@ class AgentSystemPromptServiceTest {
 
         assertThat(prompt).contains("Keep the public design proportional to the learning objective", "non-degenerate witnesses",
                 "one line per independently actionable student implementation seam", "never one task for the whole exercise unless it is genuinely one seam",
-                "byte-identical to the solution");
+                "Solution = template + the student's work");
     }
 
     // Task binding granularity: a task groups ALL of one seam's test partitions under a single [task] line — never one task per test, never one task for the
@@ -187,8 +187,9 @@ class AgentSystemPromptServiceTest {
         assertThat(prompt).contains("Group ALL of a seam's test partitions under its one line", "never bind one task per test",
                 "never one task for the whole exercise unless it is genuinely one seam");
         // The seam-granularity source of truth for planning lives in the SPEC stage's prompt (orchestrator-only).
-        assertThat(systemPromptService.buildStage(exerciseWith(ProgrammingLanguage.JAVA, ""), GenerationStage.SPEC).replaceAll("\\s+", " "))
-                .contains("grouping every test partition it needs", "never one seam per test", "never one for the whole exercise unless it is genuinely one seam");
+        assertThat(systemPromptService.buildStage(exerciseWith(ProgrammingLanguage.JAVA, ""), GenerationStage.SPEC).replaceAll("\\s+", " ")).contains(
+                "groups its relevant input partitions", "Never use one seam per test, or one for the whole exercise unless it is genuinely one seam", "Observable responsibility",
+                "states the behavior, collaboration, or state transition that tests must demonstrate");
     }
 
     // Documentation must originate in the solution (STAGE 1), never be authored later in the template (STAGE 2) — the live defect was javadoc replaced by terse
@@ -198,35 +199,33 @@ class AgentSystemPromptServiceTest {
     void build_documentationOriginatesInTheSolutionNeverAuthoredLaterInTheTemplate() {
         String prompt = systemPromptService.build(exerciseWith(ProgrammingLanguage.JAVA, "")).replaceAll("\\s+", " ");
 
-        assertThat(prompt).contains("Write complete Javadoc on every public member now", "the template inherits it verbatim", "never defer docs to that stage",
-                "If a doc is missing from the solution, add it there first and re-derive", "never author docs only in the template");
+        assertThat(prompt).contains("Write complete Javadoc for its public types and members before deriving the template", "template inherits that documentation verbatim",
+                "missing documentation is repaired in the solution first", "Never author documentation only in the template");
     }
 
-    // GENERATE mode's grounded workflow is staged (specification -> solution -> template -> differential tests -> statement) so each artifact is authored from the previous
-    // stage's real output rather than emerging in an arbitrary order.
+    // GENERATE mode's grounded workflow builds solution, derived template, tests, and grading plan in coherent learning increments before the final statement polish.
 
     @Test
-    void build_generateModeStagesSolutionTemplateTestsAndStatement_withoutTheOrchestratorOnlySpecStage() {
+    void build_generateModeUsesCoherentExecutableIncrementsAndFinalStatement_withoutTheOrchestratorOnlySpecStage() {
         String prompt = systemPromptService.build(exerciseWith(ProgrammingLanguage.JAVA, "")).replaceAll("\\s+", " ");
 
         // The SPEC stage exists only under the orchestrator's gate; the legacy single loop runs when a specification already exists, so its prompt must not ask for SPEC.md.
-        assertThat(prompt).contains("STAGE 1", "STAGE 2", "STAGE 3", "STAGE 4").contains("solution from the specification").doesNotContain("STAGE — SPECIFICATION");
+        assertThat(prompt).contains("EXECUTABLE BUILD", "FINAL STATEMENT").contains("coherent learning increments").doesNotContain("STAGE — SPECIFICATION");
     }
 
     @Test
     void build_generateModeReplaysExamplesAgainstTheRealSolutionAndDerivesTheTemplateFromIt() {
         String prompt = systemPromptService.build(exerciseWith(ProgrammingLanguage.JAVA, "")).replaceAll("\\s+", " ");
 
-        assertThat(prompt).contains("Execute every worked example from the requirements against the real solution in the").contains("never patch code to match a wrong number")
-                .contains("derive it FROM the solution");
+        assertThat(prompt).contains("solution is canonical", "replay the worked examples").contains("Derive the template by");
     }
 
     @Test
-    void build_generateModeAuthorsTestsOnePartitionAtATimeWithPerTestDifferentialVerify() {
+    void build_generateModeBuildsRiskChosenSeamsWithMilestoneDifferentialVerification() {
         String prompt = systemPromptService.build(exerciseWith(ProgrammingLanguage.JAVA, "")).replaceAll("\\s+", " ");
 
-        assertThat(prompt).contains("run `verify` first").contains("Author one partition at a time").contains("re-running `verify` after each test or small batch")
-                .contains("fail on the template for its intended reason").contains("Use the seeded reference tests for Artemis/Ares and `ReflectionTestUtils` conventions")
+        assertThat(prompt).contains("greatest pedagogical or architectural risk").contains("tests in seam/partition batches").contains("after the first end-to-end walking slice")
+                .contains("fail on the template for its intended reason").contains("Use the seeded BubbleSort reference only for Artemis/Ares")
                 .contains("follow `reference/style/tests.md`").contains("write `/workspace/test-plan.json`")
                 .doesNotContain("copy the seeded reference test's `Class.forName`/`ReflectionTestUtils` technique");
     }
@@ -235,15 +234,15 @@ class AgentSystemPromptServiceTest {
     void build_generateModeWritesTheStatementLastFromDesignAndVerifiedTestNames() {
         String prompt = systemPromptService.build(exerciseWith(ProgrammingLanguage.JAVA, "")).replaceAll("\\s+", " ");
 
-        assertThat(prompt).contains("write the statement last by REWRITING the specification").contains("MECHANICAL PRECHECK: PASS")
-                .contains("post-loop verification determines save eligibility");
+        assertThat(prompt).contains("REWRITE the specification into student-facing form").contains("MECHANICAL PRECHECK: PASS")
+                .contains("final verification decides save eligibility");
     }
 
     // buildStage(): the orchestrator-enforced staged workflow's per-stage system prompt. Each stage sees only its own STAGE N instructions plus the shared header (security
     // boundary, workspace/reference layout, THE CONTRACT) and the shared stage-close line that keeps `submit` scoped to that stage alone, never the whole exercise.
 
     private static final Map<GenerationStage, String> STAGE_HEADERS = Map.of(GenerationStage.SPEC, "STAGE — SPECIFICATION", GenerationStage.SOLUTION, "STAGE 1 — SOLUTION",
-            GenerationStage.TEMPLATE, "STAGE 2 — TEMPLATE", GenerationStage.TESTS, "STAGE 3 — TESTS", GenerationStage.STATEMENT, "STAGE 4 — STATEMENT");
+            GenerationStage.TEMPLATE, "STAGE 2 — TEMPLATE", GenerationStage.TESTS, "EXECUTABLE BUILD", GenerationStage.STATEMENT, "FINAL STATEMENT");
 
     private static final String STAGE_CLOSE_LINE_MARKER = "calling `submit` means THIS STAGE's goal is met";
 
@@ -270,16 +269,26 @@ class AgentSystemPromptServiceTest {
 
     @Test
     void buildStage_spec_carriesCompleteInlineGuidanceWithoutSpendingTurnsOnADuplicateGuide() {
-        String prompt = systemPromptService.buildStage(exerciseWith(ProgrammingLanguage.JAVA, ""), GenerationStage.SPEC);
+        String prompt = systemPromptService.buildStage(exerciseWith(ProgrammingLanguage.JAVA, ""), GenerationStage.SPEC).replaceAll("\\s+", " ");
 
         assertOnlyOwnStageHeaderPresent(prompt, GenerationStage.SPEC);
-        assertThat(prompt).contains("write `/workspace/SPEC.md`").contains("complete SPEC.md section and table contract is included above")
-                .contains("Do not spend this bounded stage re-reading").doesNotContain("reference/style/spec.md").contains("`given`, `stubbed`, `student-creates`")
-                .contains("## Testing Strategy").contains("stable ID (`S1`, `S2`, ...)").contains("student-designed interface and strategies")
-                .contains("privately compare three genuinely different domain-and-behaviour concepts", "independently assigned constants, multipliers, or thresholds")
-                .contains("interface and concrete strategies `student-creates`").contains("context `stubbed`").contains("omit the minimum members whose declarations require")
-                .contains("Given types and all non-student-owned members of stubbed types remain identical").doesNotContain("reference/style/solution.md")
-                .doesNotContain("reference/style/template.md").doesNotContain("reference/style/tests.md").doesNotContain("reference/style/final-statement.md");
+        assertThat(prompt).contains("write `/workspace/SPEC.md`").contains("Your first response", "must use a tool", "run one bounded `/tmp` check first")
+                .contains("one `write_file` call for the complete document")
+                .contains("one bare, unformatted token", "Never bold the token or append", "an explanation in that cell")
+                .contains("complete SPEC.md section and table contract is included above").contains("Do not spend this bounded stage re-reading")
+                .doesNotContain("reference/style/spec.md").contains("`given`", "`stubbed`", "`student-creates`")
+                .contains("## Public API", "exact contract-visible constructors and methods").contains("## Testing Strategy").contains("stable ID (`S1`, `S2`, ...)")
+                .contains("whole-type creation")
+                .contains("selected generator-authored concept", "do not reopen theme selection", "independently assigned constants, multipliers, or thresholds")
+                .contains("Judge difficulty relative to the requested objective", "not learner-owned reasoning intrinsic", "Do not add an unrelated mathematical")
+                .contains("same responsibility for overlapping valid inputs", "mutually exclusive operations", "causal domain rationale").contains("compile-safe dependency graph")
+                .contains("not open-ended API design").contains("end-to-end path", "selects or holds the", "invokes it", "uses its result", "leaf-only tests")
+                .contains("name the concrete strategy", "replay its decisions", "distinct observable policy", "global impossibility")
+                .contains("learner-owned collaboration seam", "property-based", "deterministic algorithm")
+                .contains("Given types and all non-student-owned members of stubbed types remain identical", "A seam grades student-owned executable behavior",
+                        "ordinary abstract interface method has no student-owned body")
+                .contains("owner controls", "independently diagnosable").doesNotContain("reference/style/solution.md").doesNotContain("reference/style/template.md")
+                .doesNotContain("reference/style/tests.md").doesNotContain("reference/style/final-statement.md");
     }
 
     @Test
@@ -288,7 +297,7 @@ class AgentSystemPromptServiceTest {
 
         assertOnlyOwnStageHeaderPresent(prompt, GenerationStage.SOLUTION);
         assertThat(prompt).contains("Earlier stages already produced: the specification (SPEC.md when present, else the instructor statement).")
-                .contains("Execute every worked example from the requirements against the real solution").contains("SPEC.md is now read-only")
+                .contains("Independently replay every worked example").contains("The approved specification is read-only").contains("SPEC.md is now read-only")
                 .contains("reference/style/solution.md");
     }
 
@@ -303,15 +312,26 @@ class AgentSystemPromptServiceTest {
     }
 
     @Test
-    void buildStage_tests_carriesOnlyItsOwnStageAndNamesSpecSolutionAndTemplateAsAlreadyProduced() {
-        String prompt = systemPromptService.buildStage(exerciseWith(ProgrammingLanguage.JAVA, ""), GenerationStage.TESTS);
+    void buildStage_executableBuildCarriesTheApprovedSpecAndAllCoherentIncrementArtifacts() {
+        String prompt = systemPromptService.buildStage(exerciseWith(ProgrammingLanguage.JAVA, ""), GenerationStage.TESTS).replaceAll("\\s+", " ");
 
         assertOnlyOwnStageHeaderPresent(prompt, GenerationStage.TESTS);
-        assertThat(prompt).contains("Earlier stages already produced: the specification, the reference solution, and the template.").contains("Author one partition at a time")
-                .contains("highest-risk learning seam").contains("\"seam\":\"S1\"").contains("SPEC.md is read-only").contains("reference/style/tests.md")
-                .contains("write `/workspace/test-plan.json`")
+        assertThat(prompt).contains("Earlier stages already produced: the approved specification.").contains("coherent learning increments")
+                .contains("greatest pedagogical or architectural risk").contains("\"seam\":\"S1\"").contains("SPEC.md is read-only")
+                .contains("reference/style/solution.md", "reference/style/template.md", "reference/style/tests.md").contains("write `/workspace/test-plan.json`")
                 // Statement-only sections must not leak into the TESTS stage prompt.
                 .doesNotContain("STUDENT-FACING STATEMENT").doesNotContain("ARTEMIS TASK BINDINGS");
+    }
+
+    @Test
+    void buildStage_alignsHiddenTestDecisionsWithTheExercisesActualDueDateCapability() {
+        ProgrammingExercise withoutDueDate = exerciseWith(ProgrammingLanguage.JAVA, "");
+        assertThat(systemPromptService.buildStage(withoutDueDate, GenerationStage.SPEC)).contains("has no due date", "hidden-variant cell must be `no`");
+        assertThat(systemPromptService.buildStage(withoutDueDate, GenerationStage.TESTS)).contains("every test-plan entry must use `ALWAYS`", "hide a test indefinitely");
+
+        ProgrammingExercise withDueDate = exerciseWith(ProgrammingLanguage.JAVA, "");
+        withDueDate.setDueDate(ZonedDateTime.now().plusDays(1));
+        assertThat(systemPromptService.buildStage(withDueDate, GenerationStage.TESTS)).contains("configured due date", "`AFTER_DUE_DATE` witness");
     }
 
     @Test
@@ -320,30 +340,31 @@ class AgentSystemPromptServiceTest {
 
         assertOnlyOwnStageHeaderPresent(prompt, GenerationStage.STATEMENT);
         assertThat(prompt).contains("Earlier stages already produced: the specification, the reference solution, the template, and the differential tests.")
-                .contains("write the statement last by REWRITING the specification").contains("STUDENT-FACING STATEMENT").contains("ARTEMIS TASK BINDINGS")
+                .contains("REWRITE the specification into student-facing form").contains("STUDENT-FACING STATEMENT").contains("ARTEMIS TASK BINDINGS")
                 .contains("[task][Short human title](exactTestNameA,exactTestNameB)").contains("write only problem-statement.md").contains("do not rewrite them in this stage")
-                .contains("reference/style/final-statement.md");
+                .contains("reference/style/final-statement.md")
+                .contains("`student-creates` types are required but absent", "SPEC.md/reference/internal artifacts", "change a contract boundary or quantifier")
+                .contains("Use inheritance/realization only for actual", "association/dependency", "only its accepted visible")
+                .contains("write_file(\"problem-statement.md\", ...)", "chat Markdown creates no file");
     }
 
     @Test
-    void buildStage_isAlwaysShorterThanTheFullSingleLoopPromptAndWithinBudget() {
+    void buildStage_staysWithinItsExplicitPromptBudget() {
         ProgrammingExercise exercise = exerciseWith(ProgrammingLanguage.JAVA, "");
-        String fullPrompt = systemPromptService.build(exercise);
 
         for (GenerationStage stage : GenerationStage.values()) {
             int stageLength = systemPromptService.buildStage(exercise, stage).length();
-            assertThat(stageLength).as("stage %s prompt length vs full prompt length %d", stage, fullPrompt.length()).isLessThan(fullPrompt.length())
-                    .isLessThanOrEqualTo(MAX_SYSTEM_PROMPT_CHARS);
+            assertThat(stageLength).as("stage %s prompt length", stage).isLessThanOrEqualTo(MAX_SYSTEM_PROMPT_CHARS);
         }
     }
 
     @Test
     void build_doesNotLetTheAgentAuthorizeNewGradedRequirementsThroughItsStatement() {
-        String prompt = systemPromptService.build(exerciseWithStatement("Implement a bounded counter."));
+        String prompt = systemPromptService.build(exerciseWithStatement("Implement a bounded counter.")).replaceAll("\\s+", " ");
 
         assertThat(prompt)
-                .contains("primary source requirements", "MECHANICAL PRECHECK: PASS", "post-loop verification determines save eligibility",
-                        "The produced statement documents the contract; it does not authorize new graded behavior")
+                .contains("approved specification", "sole downstream working contract", "MECHANICAL PRECHECK: PASS", "final verification decides save eligibility",
+                        "does not authorize new graded behavior")
                 .doesNotContain("post-loop review decides acceptance").doesNotContain("derived contract", "authoritative compiled exercise contract", "verdict is ACCEPTED");
     }
 
@@ -437,7 +458,7 @@ class AgentSystemPromptServiceTest {
 
     @Test
     void build_scaDisabled_omitsStaticCodeAnalysisGuidance() {
-        String prompt = systemPromptService.build(exerciseWith(ProgrammingLanguage.JAVA, ""));
+        String prompt = systemPromptService.build(exerciseWith(ProgrammingLanguage.JAVA, "")).replaceAll("\\s+", " ");
         assertThat(prompt).doesNotContain("STATIC CODE ANALYSIS IS ENABLED");
     }
 
@@ -459,10 +480,11 @@ class AgentSystemPromptServiceTest {
 
     @Test
     void build_preservesTheGroundedExerciseQualityContract() {
-        String prompt = systemPromptService.build(exerciseWith(ProgrammingLanguage.JAVA, ""));
+        String prompt = systemPromptService.build(exerciseWith(ProgrammingLanguage.JAVA, "")).replaceAll("\\s+", " ");
 
         assertThat(prompt).contains("THE CONTRACT", "ARTEMIS TASK BINDINGS", "GROUNDED WORKFLOW", "SAFE TOOL USE")
-                .contains("[task][Short human title](exactTestNameA,exactTestNameB)", "throw new UnsupportedOperationException", "tests/pom.xml", "run `verify` first")
+                .contains("[task][Short human title](exactTestNameA,exactTestNameB)", "throw new UnsupportedOperationException", "tests/pom.xml",
+                        "after the first end-to-end walking slice")
                 .contains("Use `verify` for the acceptance verdict", "Never run repository Gradle/Maven directly", "Build manifests, wrappers")
                 .doesNotContain("raw build and debugging commands");
     }

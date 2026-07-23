@@ -171,7 +171,11 @@ public class AgentSystemPromptService {
             tolerance, mutation, and exception semantics only where the implementation enforces them and a test observes them. Avoid unverifiable complexity or allocation claims. Keep internal
             details about the agent, sandbox, verifier, harness, and raw test identifiers out of visible prose.
             Make every API compiled by tests mandatory and exact; remove "suggested", "for example", "or equivalent", and alternatives after choosing a contract. Resolve or omit drafting notes and instructor decisions.
-            The produced statement documents the contract; it does not authorize new graded behavior — ground observable rules in the primary source requirements.
+            The produced statement documents the approved specification; it does not authorize new graded behavior. Treat that approved specification as the sole downstream
+            working contract. The final independent review still compares the complete exercise with the instructor brief; do not make a late private choice between conflicting
+            authorities or silently rewrite either one in the statement.
+            Match Design ownership: `given`/`stubbed` declarations are present; `student-creates` types are required but absent. Never call absent APIs provided, mention
+            SPEC.md/reference/internal artifacts, or change a contract boundary or quantifier.
             Present the public API exactly once and compactly — a short signature list, a table, or the PlantUML diagram — never reproducing template code blocks, stub bodies, or
             javadoc that already live in the template; the template is the API reference at the point of use. The statement explains WHAT and WHY, not a restatement of code the
             student can already read.
@@ -180,7 +184,8 @@ public class AgentSystemPromptService {
             Markdown box diagrams. In the diagram, link elements to their checks with Artemis' testsColor syntax — members as
             `<color:testsColor(exactTestName)>+member()</color>`, relations as `Sub -up-|> Super #testsColor(exactTestName)` — using verbatim behavioural test names from `verify` or
             seeded structural check names (`testClass[X]`, `testMethods[X]`, `testAttributes[X]`, `testConstructors[X]`); never invent names. End with
-            `hide empty fields` and `hide empty methods`.
+            `hide empty fields` and `hide empty methods`. Use inheritance/realization only for actual `extends`/`implements`; stored or delegated strategies use
+            association/dependency.
 
             """;
 
@@ -196,62 +201,86 @@ public class AgentSystemPromptService {
 
             """;
 
-    // The GENERATE-mode staged workflow. Each stage's instructions are their own constant so buildStage() can select exactly one, while the legacy single-loop build() still sees
-    // the STAGE 1-4 block by concatenating them (GENERATE_GROUNDED_WORKFLOW below) — the wording is never duplicated between the two call sites. STAGE_SPEC_INSTRUCTIONS is
+    // The GENERATE-mode staged workflow. Each phase's instructions are their own constant so buildStage() can select exactly one, while the legacy single-loop build() still sees
+    // the executable-build and final-statement block (GENERATE_GROUNDED_WORKFLOW below) — the wording is never duplicated between the two call sites. STAGE_SPEC_INSTRUCTIONS is
     // deliberately NOT part of the legacy composition: the SPEC stage only exists under the orchestrator's gate (the legacy loop runs when a specification already exists —
     // an instructor statement or a repair prompt carrying the frozen spec contract), and including it would push the full prompt past its size budget for nothing.
 
     private static final String STAGED_WORKFLOW_INTRO = """
-            Author the exercise in this dependency order — solution from the specification, then the template derived from it, then differential tests, then the statement
-            last — each stage needs the previous stage's real output: the exercise source and test roots are clean; preserve the supplied harness and build files.
+            Build the executable exercise in coherent learning increments: for each risk-chosen seam, update the canonical solution, derived template, behavioral evidence, and
+            grading-plan mapping together. Polish the statement only after the accumulated executable candidate is clean. The source and test roots are clean; preserve the
+            supplied harness and build files.
 
             """;
 
     private static final String STAGE_SPEC_INSTRUCTIONS = """
-            STAGE — SPECIFICATION: before any code, write `/workspace/SPEC.md` — the ONE planning artifact every later stage implements and is checked against. Sections: the
-            archetype you chose (per the style guide's menu, or "none of these" with a reason — every EXPLICIT brief requirement such as a named design pattern binds the
-            spec; the archetype serves the brief, never replaces it); `## Rules` — every graded behaviour as a numbered rule (R1, R2, ...) carrying REAL computation a
-            plausible wrong implementation would get wrong; `## Worked Examples` — a table (| Rules | Input | Expected |) with at least two rows per central rule whose
-            expected results DIFFER; verify every row's arithmetic in the sandbox (a throwaway /tmp script) BEFORE writing it down; `## Design` — a table
-            (| Type | Role | Template status |) with Template status EXACTLY one of `given`, `stubbed`, `student-creates` (a `student-creates` type is OMITTED from the
-            template and graded through seeded structural checks plus reflection-based tests — the template gate enforces its absence). A named type the brief assigns students to
-            DESIGN or CREATE is `student-creates`; compilation pressure cannot weaken that ownership. For a provided strategy context with a student-designed interface and strategies, mark the
-            interface and concrete strategies `student-creates`, and the context `stubbed`. Keep the context scaffold, but omit the minimum members whose declarations require
-            the absent interface. Tests load those types and invoke the wiring reflectively. Never ship an empty supposedly student-designed interface.
-            This preserves real design work while the starter compiles. Say who owns each piece of
-            mutable state and whether it survives object replacement; `## Testing Strategy` — a table whose first column gives each independently actionable unit of student
-            work a stable ID (`S1`, `S2`, ...), whose second `Owner type` column is one exact bare type from the Design table, grouping every test
-            partition it needs (never one seam per test, never one for the whole exercise unless it is genuinely one seam), with a numeric weight tier (`3` core, `2` supporting,
-            `1` edge polish) and no "optional" rows: every row is graded required work; keep optional enrichment outside this table. Add a LAST
+            STAGE — SPECIFICATION: before any code, write `/workspace/SPEC.md` — the ONE planning artifact every later stage implements and is checked against. Your first response
+            must use a tool, not print a prose-only draft. If an example needs arithmetic or state replay, run one bounded `/tmp` check first; otherwise write the complete
+            SPEC.md immediately. Once ready, use one `write_file` call for the complete document rather than streaming a draft across turns. Start with `## Rules` — every
+            graded behaviour as a numbered rule (R1, R2, ...) with an observable outcome a
+            plausible wrong implementation would get wrong; prefer the collection transformation, state transition, multi-step interaction, conflict resolution, or calculation
+            that naturally fits the brief rather than inventing arithmetic. `## Worked Examples` — a table (| Rules | Input | Expected |) with at least two representative rows
+            and different observable outcomes. Replay every row independently before writing it down: use a throwaway /tmp script when calculation or state makes that useful.
+            When variants exist, name the concrete strategy or policy in each example and replay its decisions step by step; checking only the final invariant can hide an
+            algorithm that cannot produce the expected result.
+            `## Design` — a table
+            (| Type | Role | Template status |) whose final cell is one bare, unformatted token: exactly `given`, `stubbed`, or `student-creates`. Never bold the token or append
+            an explanation in that cell; put explanations in the Role cell or following prose. A `student-creates` type is OMITTED from the
+            template and graded through seeded structural checks plus reflection-based tests — the template gate enforces its absence. A named type the brief assigns students to
+            DESIGN or CREATE is `student-creates`; compilation pressure cannot weaken that ownership. `student-creates` is not a difficulty lever: when the exercise fixes a
+            type and API and asks students only to implement its behavior, prefer a documented `stubbed` scaffold. Reserve omission for whole-type creation that the brief genuinely
+            assigns to students; an exact approved API can grade creation of that type, but it is not open-ended API design. Choose ownership from the brief and compile-safe
+            dependency graph rather than applying one mandatory Strategy layout. If an omitted type is referenced by a provided collaborator, omit only the dependent members
+            necessary for the starter to compile and anchor that work in the statement and reflective tests. Never ship an empty supposedly student-created interface. Say who
+            owns each piece of mutable state and whether it survives object replacement. `## Public API` — list the exact contract-visible constructors and methods that the
+            solution, template, tests, and statement will share, plus only fields deliberately exposed and graded as API. Include signatures only, grouped by owner type; do not
+            expose private strategy state merely for reflection or leave APIs for later stages to invent. `## Testing Strategy` — a table whose first column gives each independently actionable unit of student
+            work a stable ID (`S1`, `S2`, ...), whose second `Owner type` column is one exact bare type from the Design table, and whose third `Observable responsibility` column
+            states the behavior, collaboration, or state transition that tests must demonstrate and groups its relevant input partitions. Never use one seam per test, or one for
+            the whole exercise unless it is genuinely one seam. Each responsibility contains only behavior its owner controls. Make every visible seam test independently
+            diagnosable with given support or a tiny fake/recording collaborator, rather than executing another independently actionable student seam first; group genuinely
+            cumulative work into one task. Add a numeric weight tier (`3` core, `2` supporting, `1` edge polish) and no "optional" rows: every row is graded
+            required work; optional enrichment stays outside. The tier is the seam's total importance; Artemis divides it across the seam's tests, so extra partitions never
+            increase its share. Add a LAST
             column reading exactly `yes` or `no` for a hidden after-due-date variant with fresh witnesses (students overfit to visible tests; that cell is
-            read mechanically). Match the requested learning objective and difficulty in the work students actually perform: if the brief teaches an abstraction or design
-            pattern, students must implement or wire that collaboration rather than only transcribe domain formulas into an already-solved design; keep routine plumbing given.
-            Exclude prescribed transcription and baseline pattern mechanics (named types, strategy storage/swap, delegation) from difficulty. Leave a domain-grounded decision or
-            interaction. When the brief requests a non-standard or unusual theme, reject the first familiar textbook example and choose a domain whose constraints genuinely cause
-            the strategies' different computations or interactions. If erasing the nouns leaves a familiar example unchanged, redesign it rather than renaming it, adding adjectives,
-            adding another trivial strategy, or adding an arbitrary selector policy. Deepen central work, not counts.
-            Before committing to names, privately compare three genuinely different domain-and-behaviour concepts. For each, ask what real domain constraint causes the variants to
-            differ and what non-routine reasoning remains for students. Eliminate concepts where variants are merely independently assigned constants, multipliers, or thresholds over
-            one scalar input. Select the strongest concept, then write the complete specification; do not spend stage turns documenting the discarded brainstorm.
+            read mechanically). Match the requested objective and difficulty in student-owned work; keep incidental plumbing given. Judge difficulty relative to the requested
+            objective: subtract copied declarations, literals, bare pattern declarations, and fixed forwarding, not learner-owned reasoning intrinsic to the concept. A meaningful
+            abstraction, interchangeable policies, context selection or replacement, and delegation can carry intermediate reasoning when tests observe the collaboration. Do not
+            add an unrelated mathematical, collection, or state algorithm merely to make a pattern exercise harder.
+            For Strategy, specify an end-to-end path that selects or holds the abstraction, invokes it, and uses its result; leaf-only tests are insufficient. If the context is
+            `given`, its delegation is not learner work: a `stubbed` or `student-creates` owner must own tested selection, injection, replacement, or delegation. Strategy
+            alternatives must satisfy the same responsibility for overlapping valid inputs and be meaningfully substitutable. A fixed tag dispatching
+            mutually exclusive operations to their only valid handlers is insufficient. Give each alternative a distinct observable policy with deterministic tie and boundary
+            behavior. Choose one coherent oracle model: either property-based outcomes with a separately testable policy for every variant, or a fully deterministic algorithm and
+            exact examples. Never combine "any valid result" with an untestable heuristic, and never require global impossibility detection from an incomplete heuristic. For a
+            brief explicitly teaching a pattern, leave students a learner-owned collaboration seam in addition to concrete policy bodies. Every difficulty contributor must strengthen the requested objective and have a causal
+            domain rationale; complexity unchanged by removing the abstraction is not evidence of fit.
+            For a non-standard theme, choose domain constraints that genuinely cause the variants' behavior. If erasing its nouns leaves a familiar example unchanged, deepen the
+            central interaction instead of adding themed vocabulary, variants, selectors, validation, or task counts.
+            When the user prompt includes a selected generator-authored concept, instantiate it coherently and do not reopen theme selection; it already survived a separate
+            multi-candidate learning-fit review. Preserve its central situation, constraint, and student-owned behavior while choosing the minimal concrete API. Do not accidentally
+            reduce it to independently assigned constants, multipliers, or thresholds over one scalar input when that would contradict the requested learning fit.
             Remove validation, exception, state, purity, immutability, or architecture obligations not explicit in the brief or necessary for the requested behaviour.
             Open-ended theme/formula choices are exercise design; unrelated defensive policy is not.
             Every seam Owner type is a `stubbed` or `student-creates` Design row. Stubbed owners carry their TODO; absent student-created owners do not. If a collaborator also contains
             independently actionable student work, give that work its own seam owned by the collaborator instead of reusing another owner's seam ID. Given types and all non-student-owned members of stubbed types remain identical
             across solution and template. Only types marked `student-creates` and the minimum dependent members assigned to that same seam may
-            be absent.
+            be absent. A seam grades student-owned executable behavior, not the presence or exact signature of a supplied declaration or a placeholder that is meant to keep
+            throwing. An ordinary abstract interface method has no student-owned body: make the interface `given` when students only implement it, or `student-creates` when the
+            brief actually assigns its design; do not call that declaration `stubbed` merely to manufacture a structural seam.
             Never substitute `Object` in only the template.
             `## Diagram` — yes/no + one-line why
             grounded in the design (yes for multiple collaborating or student-created types). No [task] bindings, no test names, no PlantUML at spec time.
-            Before submitting, compare every Design ownership row against every Public API and template sentence: never say the template supplies a declaration, signature, or method
-            for a `student-creates` type. Also confirm that every Testing Strategy row is required work and uses the stated 3/2/1 scale. The accepted specification is then read-only:
-            later stages repair executable artifacts against it, never rewrite it to escape a gate. If implementation exposes a conflict, restructure the scaffold/tests to honour the accepted design.
+            Before submitting, reconcile rules, examples, API, ownership, and testing seams. A `student-creates` declaration is never supplied by the template; every seam belongs
+            to its Design owner, uses the 3/2/1 scale, and traces to a rule. Replay each example. The accepted specification is read-only: later stages repair executable artifacts
+            against it, never rewrite it to escape a gate.
             """;
 
     private static final String STAGE_1_SOLUTION_INSTRUCTIONS = """
             STAGE 1 — SOLUTION: implement the reference solution per the specification. The solution must exemplify the design it teaches: never bypass an
             abstraction it defines (e.g. instanceof on one concrete implementation instead of delegating through the interface) — fix the design instead.
-            Execute every worked example from the requirements against the real solution in the
-            sandbox (throwaway under /tmp) and fix the SOLUTION or the EXAMPLE when they disagree — never patch code to match a wrong number.
+            The approved specification is read-only. Independently replay every worked example, using the sandbox when useful. If the implementation disagrees with a correct
+            example, fix the solution. If the example itself is inconsistent, do not edit the specification or patch code to match it; stop and report the contract defect.
             Write complete Javadoc on every public member now; the template inherits it verbatim — never defer docs to that stage.
             """;
 
@@ -264,9 +293,21 @@ public class AgentSystemPromptService {
             """;
 
     private static final String STAGE_3_TESTS_INSTRUCTIONS = """
-            STAGE 3 — TESTS: run `verify` first — it reports binding problems and seeded structural names. Start with the highest-risk learning seam; for a pattern, prove
-            delegation with a recording fake before concrete formulas. Author one partition at a time, re-running `verify` after each test or small batch: each must pass on the solution and fail on the
-            template for its intended reason (a structural check may already pass). Use the seeded reference tests for Artemis/Ares and `ReflectionTestUtils` conventions.
+            EXECUTABLE BUILD — work in coherent learning increments, not one finished repository at a time. Read the approved specification and choose the seam with the greatest
+            pedagogical or architectural risk. For that seam, update its solution behavior, derive the corresponding student template gap, add its visible behavioral evidence,
+            and map those tests in test-plan.json before moving to the next seam. Keep the accumulated candidate coherent after every increment. A trivial exercise may need one
+            increment; do not manufacture more. For a pattern, prove the collaboration path with a recording fake before spending effort on concrete policy partitions.
+
+            The solution is canonical: implement production-quality behavior and replay the worked examples. Write complete Javadoc for its public types and members before
+            deriving the template; the template inherits that documentation verbatim, and missing documentation is repaired in the solution first. Derive the template by
+            removing exactly `stubbed` and `student-creates` work. Omit student-created types entirely. Stubbed bodies retain shared Javadoc plus their in-body seam TODO and throw; if an absent type makes a
+            collaborator member undeclarable, omit only the dependent member and leave one honest insertion-point TODO owned by that collaborator's separate seam when it has
+            independently actionable work. Shared Javadoc and non-TODO comments remain byte-identical. Never author documentation only in the template.
+
+            Add tests in seam/partition batches. Each behavioral test must pass on the solution and fail on the template for its intended reason (a structural check may already
+            pass). Use the seeded BubbleSort reference only for Artemis/Ares and `ReflectionTestUtils` form; never copy its topic, API, or requirements. Call `verify` after the
+            first end-to-end walking slice and after meaningful accumulated increments. An incomplete candidate may still report the unbuilt seams: use that evidence to finish
+            the owning increment, not to retreat into repository-by-repository work.
             Before referencing a `student-creates` type, follow `reference/style/tests.md`: load an omitted interface by name and create a dynamic proxy. Never restore the declaration to make a test compile; the write
             boundary rejects it. Every test
             must be passable by completing the template's TODOs within the scaffolded structure; one that forces restructuring means the design is wrong — fix template and
@@ -275,25 +316,24 @@ public class AgentSystemPromptService {
             abstraction. When the collaborator type is absent from the template, create the recording fake with a Java dynamic proxy after loading the interface by name, and
             invoke every constructor or method whose signature mentions that missing type reflectively. Holding the instance as `Object` does not make a normal typed method call
             compile. Assert exception types, never message strings, unless the statement fixes the exact message. Then write `/workspace/test-plan.json` implementing
-            the Testing Strategy: {"tests":[{"name":"<exact test name>","seam":"S1","weight":<1..3>,"visibility":"ALWAYS"|"AFTER_DUE_DATE"}]} — carry the spec seam ID;
-            weights grade core rules above edge cases,
-            AFTER_DUE_DATE hides an overfit-resistant variant until the deadline; names must be the exact names `verify` reports. If a differential run exposes a solution or
-            template defect, fix it there and re-check that stage's guarantees; never weaken an accepted student-ownership or diagram decision to make a later gate pass.
+            the Testing Strategy: {"tests":[{"name":"<exact test name>","seam":"S1","seamWeightTier":<1..3>,"visibility":"ALWAYS"|"AFTER_DUE_DATE"}]} — carry the spec seam ID and
+            exact tier. Include every agent-authored behavioral test, not build gates or server-seeded structural checks; Artemis manages seeded structural checks as visible,
+            zero-weight feedback. Each seam needs an ALWAYS behavioral test; hidden `yes` adds a fresh AFTER_DUE_DATE behavioral witness, while `no` forbids one.
+            Repeating the tier assigns seam importance; persistence divides it evenly among that seam's cases. Names must match `verify`. Fix differential defects in the owning
+            artifact inside the same increment; never weaken accepted ownership or diagram decisions. Finish with one clean full differential proving the complete accumulated
+            solution, template, tests, structural checks, and grading plan together.
             """;
 
     private static final String STAGE_4_STATEMENT_INSTRUCTIONS = """
-            STAGE 4 — STATEMENT: write the statement last by REWRITING the specification into student-facing form — keep its rules and examples, never add graded behaviour
-            beyond it — using the verified test names: one `[task]` line per specification seam, binding the bare method names exactly as `verify` reports them, never prefixed
-            with a class or package name. Tests marked AFTER_DUE_DATE are hidden overfit probes: leave them unbound and never mention their names anywhere in the statement,
-            including prose, diagrams, or appendices. Present the public API once and compactly; add a diagram only if SPEC.md's `## Diagram` said yes, placed after the tasks it illustrates,
-            with testsColor names resolving like task bindings. Re-read every boundary or edge-case sentence: each must be true of the solution AND covered by a test —
-            otherwise fix the artifact or delete the sentence. Never repeat a heading. Then independently replay every worked example, run `verify` once more, and submit only
-            after `MECHANICAL PRECHECK: PASS`; authoritative post-loop verification determines save eligibility, and quality review may request repairs.
+            FINAL STATEMENT: REWRITE the specification into student-facing form without adding graded behaviour. Use one `[task]` per seam and only its accepted visible
+            bare test names; never bind or reveal AFTER_DUE_DATE names. Present the API once. Include a testsColor PlantUML diagram only when `## Diagram` says yes, and validate
+            every arrow against actual Java declarations and collaboration. Preserve every boundary, example, and seam responsibility exactly; never repeat headings.
+            Create the artifact with `write_file("problem-statement.md", ...)`—chat Markdown creates no file. Replay the examples, run `verify`, and submit only after
+            `MECHANICAL PRECHECK: PASS`; final verification decides save eligibility.
             """;
 
-    /** The full GENERATE-mode STAGE 0-4 workflow, composed from the same per-stage constants {@link #buildStage} selects from individually — never duplicated as separate prose. */
-    private static final String GENERATE_GROUNDED_WORKFLOW = STAGED_WORKFLOW_INTRO + STAGE_1_SOLUTION_INSTRUCTIONS + STAGE_2_TEMPLATE_INSTRUCTIONS + STAGE_3_TESTS_INSTRUCTIONS
-            + STAGE_4_STATEMENT_INSTRUCTIONS;
+    /** The full GENERATE-mode fallback workflow uses the same coherent executable-build and final-statement instructions as the staged path. */
+    private static final String GENERATE_GROUNDED_WORKFLOW = STAGED_WORKFLOW_INTRO + STAGE_3_TESTS_INSTRUCTIONS + STAGE_4_STATEMENT_INSTRUCTIONS;
 
     private static final String ADAPT_GROUNDED_WORKFLOW = """
             1. Read the primary source requirements, then inspect the existing statement, solution, template, tests, and task bindings before editing. Identify the smallest set
@@ -343,9 +383,9 @@ public class AgentSystemPromptService {
      */
     private static final String STAGE_VERIFICATION_CADENCE = """
             VERIFICATION CADENCE
-            Finish this stage's artifact, call `verify`, fix what it reports, and call `verify` again — repeat until it passes. SOLUTION and TEMPLATE checks cost about one
-            build each, so call `verify` once you believe the artifact is done, not after every small edit. In TESTS, batch tests per specification partition and call
-            `verify` only a few times per stage (at most a handful, never once per test). A passing `verify` with no edits afterwards makes the stage gate instant. `submit`
+            Finish a coherent milestone, call `verify`, fix what it reports in the owning increment, and call `verify` again — repeat until it passes. In the executable-build
+            phase, batch a risk-chosen seam's solution, derived template, tests, and plan mapping before verifying; call `verify` only a few times (never once per file or test).
+            A passing `verify` with no edits afterwards makes the phase gate instant. `submit`
             re-runs this stage's check itself and rejects with the same report if it still fails, so call it once you expect a pass.
 
             """;
@@ -368,7 +408,8 @@ public class AgentSystemPromptService {
      * Builds the system prompt, branching only its top framing on the run intent: {@link GenerationMode#GENERATE} authors the exercise from the plan, while
      * {@link GenerationMode#ADAPT} tells the agent to apply requested feedback to the seeded exercise while preserving unaffected content. The remaining guidance is shared.
      * <p>
-     * This is the single-loop path: the agent sees the entire STAGE 0-4 workflow (for GENERATE) or the adaptation workflow (for ADAPT) up front and self-paces through it. It
+     * This is the single-loop path: the agent sees the executable-build and final-statement workflow (for GENERATE) or the adaptation workflow (for ADAPT) up front and
+     * self-paces through it. It
      * remains the only path for {@link GenerationMode#ADAPT} and the fallback for a non-staged {@link GenerationMode#GENERATE} run; see {@link #buildStage} for the
      * orchestrator-enforced staged alternative.
      *
@@ -380,8 +421,11 @@ public class AgentSystemPromptService {
         String groundedWorkflow = mode == GenerationMode.ADAPT ? ADAPT_GROUNDED_WORKFLOW : GENERATE_GROUNDED_WORKFLOW;
         String testSourceGuidance = mode == GenerationMode.ADAPT ? "Edit only exercise-specific test sources required by the feedback; preserve all others."
                 : "Replace only exercise-specific test source files.";
-        String prompt = INTRO + SECURITY_BOUNDARY + workspaceSection(exercise, mode) + THE_CONTRACT + TEMPLATE_AS_TEACHING_SCAFFOLD + DIFF_DISCIPLINE + STUDENT_FACING_STATEMENT
-                + ARTEMIS_TASK_BINDINGS + layoutAndHarnessSection(exercise, testSourceGuidance) + groundedWorkflowSection(groundedWorkflow) + safeToolUseSection(exercise);
+        // The coherent GENERATE builder already carries the scaffold derivation rules; repeating the older artifact-stage block dilutes the risk-driven workflow. ADAPT still
+        // needs that standalone block because its surgical workflow does not restate how an existing template must be preserved.
+        String scaffoldGuidance = mode == GenerationMode.ADAPT ? TEMPLATE_AS_TEACHING_SCAFFOLD + DIFF_DISCIPLINE : DIFF_DISCIPLINE;
+        String prompt = INTRO + SECURITY_BOUNDARY + workspaceSection(exercise, mode) + THE_CONTRACT + scaffoldGuidance + STUDENT_FACING_STATEMENT + ARTEMIS_TASK_BINDINGS
+                + layoutAndHarnessSection(exercise, testSourceGuidance) + groundedWorkflowSection(groundedWorkflow) + safeToolUseSection(exercise);
         return mode == GenerationMode.ADAPT ? ADAPT_MODE_FRAMING + prompt : prompt;
     }
 
@@ -389,7 +433,7 @@ public class AgentSystemPromptService {
      * Builds a stage-scoped system prompt for the orchestrator-enforced staged generation workflow: one bounded agent loop per {@link GenerationStage}, gated by the orchestrator
      * before the next stage starts. Always framed as GENERATE (staging an ADAPT run is not supported; use {@link #build(ProgrammingExercise, GenerationMode)} for that).
      * <p>
-     * Shares the security boundary, workspace layout, and {@code THE CONTRACT} rules with {@link #build}, but replaces the full STAGE 0-4 block with only the given stage's
+     * Shares the security boundary, workspace layout, and {@code THE CONTRACT} rules with {@link #build}, but includes only the given phase's
      * instructions plus a one-line reminder of what earlier stages already produced, and points at that artifact's style guide instead of inlining every artifact-specific
      * section — so every stage prompt is shorter than the single-loop prompt.
      *
@@ -401,8 +445,16 @@ public class AgentSystemPromptService {
         // The SCA constraint binds the SOLUTION (must be lint-clean) and is re-checked by the TESTS-stage differential; without it here, a staged run only learned about SCA
         // when the differential rejected an already-finished solution — guaranteed late rework.
         String scaGuidance = stage == GenerationStage.SOLUTION || stage == GenerationStage.TESTS ? staticCodeAnalysisGuidance(exercise) : "";
+        String dueDateGuidance = stage == GenerationStage.SPEC || stage == GenerationStage.TESTS ? dueDateGuidance(exercise) : "";
         return STAGE_INTRO + SECURITY_BOUNDARY + workspaceSection(exercise, GenerationMode.GENERATE) + THE_CONTRACT + STAGE_TOOLS_NOTE + STAGE_VERIFICATION_CADENCE
-                + stageSection(stage) + scaGuidance + LanguageGenerationProfile.guidanceFor(exercise);
+                + stageSection(stage) + dueDateGuidance + scaGuidance + LanguageGenerationProfile.guidanceFor(exercise);
+    }
+
+    private static String dueDateGuidance(ProgrammingExercise exercise) {
+        return exercise.getDueDate() == null
+                ? "\nDUE-DATE CAPABILITY: this exercise has no due date. Every Testing Strategy hidden-variant cell must be `no`, and every test-plan entry must use `ALWAYS`; "
+                        + "`AFTER_DUE_DATE` would hide a test indefinitely.\n"
+                : "\nDUE-DATE CAPABILITY: this exercise has a configured due date, so a justified Testing Strategy `yes` may use an additional `AFTER_DUE_DATE` witness.\n";
     }
 
     /**
@@ -415,7 +467,7 @@ public class AgentSystemPromptService {
             case SOLUTION -> earlierStagesLine(stage) + STAGE_1_SOLUTION_INSTRUCTIONS + "\n" + stylePointer(stage) + STAGE_CLOSE_LINE;
             case TEMPLATE ->
                 earlierStagesLine(stage) + STAGE_2_TEMPLATE_INSTRUCTIONS + "\n\n" + TEMPLATE_AS_TEACHING_SCAFFOLD + DIFF_DISCIPLINE + stylePointer(stage) + STAGE_CLOSE_LINE;
-            case TESTS -> earlierStagesLine(stage) + STAGE_3_TESTS_INSTRUCTIONS + "\n" + stylePointer(stage) + STAGE_CLOSE_LINE;
+            case TESTS -> earlierStagesLine(stage) + STAGE_3_TESTS_INSTRUCTIONS + "\n\n" + stylePointer(stage) + STAGE_CLOSE_LINE;
             case STATEMENT ->
                 earlierStagesLine(stage) + STAGE_4_STATEMENT_INSTRUCTIONS + "\n\n" + STUDENT_FACING_STATEMENT + ARTEMIS_TASK_BINDINGS + stylePointer(stage) + STAGE_CLOSE_LINE;
         };
@@ -433,14 +485,14 @@ public class AgentSystemPromptService {
                 + ". Do not author future-stage artifacts early, including through bash; each later artifact needs its own instructions and gate.\n";
     }
 
-    /** One line naming what earlier stages already produced, so the agent orients itself without re-reading the full STAGE 0-4 workflow. Empty for the first stage. */
+    /** One line naming what earlier phases already produced, so the agent can orient itself without replaying obsolete artifact-by-artifact instructions. */
     private static String earlierStagesLine(GenerationStage stage) {
         String produced = switch (stage) {
             case SPEC -> null;
             // SPEC.md may be absent (the stage is skipped when the instructor provided a real statement, which then IS the specification).
             case SOLUTION -> "the specification (SPEC.md when present, else the instructor statement)";
             case TEMPLATE -> "the specification and the reference solution";
-            case TESTS -> "the specification, the reference solution, and the template";
+            case TESTS -> "the approved specification";
             case STATEMENT -> "the specification, the reference solution, the template, and the differential tests";
         };
         return produced == null ? "" : "Earlier stages already produced: " + produced + ".\n";
@@ -456,7 +508,7 @@ public class AgentSystemPromptService {
             case SPEC -> throw new IllegalStateException("SPEC uses inline guidance");
             case SOLUTION -> "solution.md";
             case TEMPLATE -> "template.md";
-            case TESTS -> "tests.md";
+            case TESTS -> "solution.md`, `reference/style/template.md`, and `reference/style/tests.md";
             case STATEMENT -> "final-statement.md";
         };
         return "STYLE GUIDE: before writing, skim `reference/style/" + styleFile + "` for this artifact's FORM conventions; imitate its FORM only, never reference/'s topic, API, "

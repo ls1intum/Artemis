@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
@@ -13,6 +14,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Set;
 
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
@@ -20,6 +22,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.mockito.ArgumentCaptor;
 
+import de.tum.cit.aet.artemis.buildagent.dto.SandboxExecResult;
 import de.tum.cit.aet.artemis.buildagent.service.InteractiveSandbox;
 import de.tum.cit.aet.artemis.core.service.TempFileUtilService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.workspace.GenerationWorkspaceService;
@@ -46,11 +49,16 @@ class StructuralOracleSeedingServiceTest {
     }
 
     private StructuralOracleSeedingService seederWith(InteractiveSandbox sandbox, Map<String, String> solution, Map<String, String> template, Map<String, String> tests) {
+        return seederWith(sandbox, solution, template, tests, new ApprovedSpecRegistry());
+    }
+
+    private StructuralOracleSeedingService seederWith(InteractiveSandbox sandbox, Map<String, String> solution, Map<String, String> template, Map<String, String> tests,
+            ApprovedSpecRegistry approvedSpecs) {
         GenerationWorkspaceService workspace = mock(GenerationWorkspaceService.class);
         when(workspace.extractRepositoryFiles(sandbox, "s", RepositoryType.SOLUTION)).thenReturn(solution);
         when(workspace.extractRepositoryFiles(sandbox, "s", RepositoryType.TEMPLATE)).thenReturn(template);
         when(workspace.extractRepositoryFiles(sandbox, "s", RepositoryType.TESTS)).thenReturn(tests);
-        return new StructuralOracleSeedingService(workspace, new TempFileUtilService(tempDir));
+        return new StructuralOracleSeedingService(workspace, new TempFileUtilService(tempDir), approvedSpecs);
     }
 
     private static Map<String, String> readTar(InputStream in) throws Exception {
@@ -88,6 +96,22 @@ class StructuralOracleSeedingServiceTest {
         // Only providers with something to check are seeded. Empty AttributeTest/ConstructorTest factories are reported by JUnit under their shared factory-method name,
         // generateTestsForAllClasses, which creates duplicate production test cases and fails an otherwise correct solution.
         assertThat(seededNames).containsExactlyInAnyOrder("testClass[MergeSort]", "testMethods[MergeSort]");
+    }
+
+    @Test
+    void seedsStructuralTestsBeforeAnyAgentAuthoredJavaTestExists() throws Exception {
+        InteractiveSandbox sandbox = mock(InteractiveSandbox.class);
+        Map<String, String> solution = Map.of("src/navigation/Strategy.java", "package navigation; public interface Strategy { double apply(double x); }",
+                "src/navigation/Warp.java", "package navigation; public class Warp implements Strategy { public double apply(double x) { return x; } }");
+        Map<String, String> template = Map.of("src/navigation/Strategy.java", "package navigation; public interface Strategy { double apply(double x); }");
+        Map<String, String> harnessOnly = Map.of("pom.xml", "<project/>");
+
+        java.util.Set<String> seededNames = seederWith(sandbox, solution, template, harnessOnly).seedIfStructuralDiff(sandbox, "s", javaExercise());
+
+        ArgumentCaptor<InputStream> tarCaptor = ArgumentCaptor.forClass(InputStream.class);
+        verify(sandbox).copyIn(eq("s"), eq("/workspace"), tarCaptor.capture());
+        assertThat(readTar(tarCaptor.getValue())).containsKeys("tests/test/navigation/ClassTest.java", "tests/test/navigation/MethodTest.java", "tests/test/navigation/test.json");
+        assertThat(seededNames).containsExactlyInAnyOrder("testClass[Warp]", "testMethods[Warp]");
     }
 
     /** A minimal Ares-compliant Maven pom, matching what the harness-convention gate demands, so the composed test isolates the timeout/annotation check under test. */
@@ -176,8 +200,23 @@ class StructuralOracleSeedingServiceTest {
     }
 
     @Test
+    void refusesToOverwriteUnmanagedStructuralAssetsForAnApprovedStudentCreatedType() {
+        InteractiveSandbox sandbox = mock(InteractiveSandbox.class);
+        Map<String, String> solution = Map.of("src/sorting/MergeSort.java", "package sorting;\npublic class MergeSort {}");
+        Map<String, String> template = Map.of("src/sorting/Sorter.java", "package sorting;\npublic interface Sorter {}");
+        Map<String, String> tests = Map.of("test/structural/test.json", "[]", "test/structural/ClassTest.java", "package structural;\nclass ClassTest {}");
+        ApprovedSpecRegistry approvedSpecs = new ApprovedSpecRegistry();
+        approvedSpecs.approve("s", "## Design\n| Type | Role | Template status |\n|---|---|---|\n| MergeSort | strategy | student-creates |");
+
+        assertThatThrownBy(() -> seederWith(sandbox, solution, template, tests, approvedSpecs).seedIfStructuralDiff(sandbox, "s", javaExercise()))
+                .isInstanceOf(IllegalStateException.class).hasMessageContaining("Refusing to overwrite").hasMessageContaining("MergeSort");
+        verify(sandbox, never()).copyIn(any(), any(), any());
+    }
+
+    @Test
     void refreshesACompleteManagedBundleWithOnlyApplicableProviders() {
         InteractiveSandbox sandbox = mock(InteractiveSandbox.class);
+        when(sandbox.exec(eq("s"), any(), eq("sh"), eq("-c"), any())).thenReturn(new SandboxExecResult(0, "", "", false));
         Map<String, String> solution = Map.of("src/sorting/MergeSort.java", "package sorting;\npublic class MergeSort { public void sort() {} }");
         Map<String, String> template = Map.of("src/sorting/Sorter.java", "package sorting;\npublic interface Sorter {}");
         String oracle = "[{\"class\":{\"name\":\"MergeSort\"},\"methods\":[{\"name\":\"sort\"}]}]";
@@ -187,12 +226,16 @@ class StructuralOracleSeedingServiceTest {
         java.util.Set<String> seededNames = seederWith(sandbox, solution, template, tests).seedIfStructuralDiff(sandbox, "s", javaExercise());
 
         verify(sandbox).copyIn(eq("s"), eq("/workspace"), any());
+        ArgumentCaptor<String> cleanupCommand = ArgumentCaptor.forClass(String.class);
+        verify(sandbox).exec(eq("s"), any(), eq("sh"), eq("-c"), cleanupCommand.capture());
+        assertThat(cleanupCommand.getValue()).contains("ClassTest.java", "MethodTest.java", "AttributeTest.java", "ConstructorTest.java", "test.json");
         assertThat(seededNames).containsExactlyInAnyOrder("testClass[MergeSort]", "testMethods[MergeSort]");
     }
 
     @Test
     void removesManagedStructuralFiles_whenStructuresAreIdentical() {
         InteractiveSandbox sandbox = mock(InteractiveSandbox.class);
+        when(sandbox.exec(eq("s"), any(), eq("sh"), eq("-c"), any())).thenReturn(new SandboxExecResult(0, "", "", false));
         String identical = "package sorting;\npublic class BubbleSort {\n    public int[] sort(int[] a){ return a; }\n}";
         Map<String, String> tests = new LinkedHashMap<>();
         tests.put("test/sorting/BubbleSortTest.java", "package sorting;\nclass BubbleSortTest {}");
@@ -240,6 +283,34 @@ class StructuralOracleSeedingServiceTest {
         String filtered = StructuralOracleSeedingService.filterOracleToCreatedPublicApi(oracle, templateFiles, solutionFiles);
 
         assertThat(filtered).contains("MergeSort").contains("sort").doesNotContain("BubbleSort").doesNotContain("merge").doesNotContain("helper");
+    }
+
+    @Test
+    void approvedOwnershipPreventsASolutionOnlyHelperFromBecomingGradedStructure() throws Exception {
+        String oracle = """
+                [ { "class": { "name": "StudentStrategy", "package": "sorting" }, "methods": [] },
+                  { "class": { "name": "SolutionHelper", "package": "sorting" }, "methods": [] } ]
+                """;
+        Map<String, String> solutionFiles = Map.of("src/sorting/StudentStrategy.java", "package sorting; public class StudentStrategy {}", "src/sorting/SolutionHelper.java",
+                "package sorting; public class SolutionHelper {}");
+
+        String filtered = StructuralOracleSeedingService.filterOracleToCreatedPublicApi(oracle, Map.of(), solutionFiles, Set.of("StudentStrategy"));
+
+        assertThat(filtered).contains("StudentStrategy").doesNotContain("SolutionHelper");
+    }
+
+    @Test
+    void approvedSpecificationWithNoStudentCreatedTypesDoesNotGradeSolutionOnlyHelpers() {
+        InteractiveSandbox sandbox = mock(InteractiveSandbox.class);
+        Map<String, String> solution = Map.of("src/sorting/SolutionHelper.java", "package sorting;\npublic class SolutionHelper { public void help() {} }");
+        Map<String, String> template = Map.of("src/sorting/Sorter.java", "package sorting;\npublic interface Sorter {}");
+        ApprovedSpecRegistry approvedSpecs = new ApprovedSpecRegistry();
+        approvedSpecs.approve("s", "## Design\n| Type | Role | Template status |\n|---|---|---|\n| Sorter | provided API | given |");
+
+        Set<String> seededNames = seederWith(sandbox, solution, template, Map.of(), approvedSpecs).seedIfStructuralDiff(sandbox, "s", javaExercise());
+
+        assertThat(seededNames).isEmpty();
+        verify(sandbox, never()).copyIn(any(), any(), any());
     }
 
     @Test

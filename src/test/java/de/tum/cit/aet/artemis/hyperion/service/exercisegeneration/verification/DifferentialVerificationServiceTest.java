@@ -356,7 +356,7 @@ class DifferentialVerificationServiceTest {
         VerificationRequest request = new VerificationRequest(Map.of(), Map.of(), Map.of(), Map.of(),
                 Map.of("src/PlaybackStrategy.java", "public interface PlaybackStrategy { /* TODO */ }"),
                 Map.of("src/PlaybackStrategy.java", "public interface PlaybackStrategy { int order(); }"), Set.of(), Set.of(), Set.of(), PROBLEM_STATEMENT_WITH_TASK,
-                "{\"tests\":[{\"name\":\"sortsUnsortedArray\",\"weight\":3,\"visibility\":\"ALWAYS\"}]}", false);
+                "{\"tests\":[{\"name\":\"sortsUnsortedArray\",\"seamWeightTier\":3,\"visibility\":\"ALWAYS\"}]}", false);
 
         VerificationResult result = verifier.verify(new ScriptedSandbox(result(2, 0, 0, 0), result(2, 2, 0, 1), PROBLEM_STATEMENT_WITH_TASK), "s", new ProgrammingExercise(),
                 request);
@@ -380,7 +380,7 @@ class DifferentialVerificationServiceTest {
                 |---|---|---|---|
                 | strategy | typical values | 3 | no |
                 """;
-        String plan = "{\"tests\":[{\"name\":\"sortsUnsortedArray\",\"weight\":3,\"visibility\":\"ALWAYS\"}]}";
+        String plan = "{\"tests\":[{\"name\":\"sortsUnsortedArray\",\"seamWeightTier\":3,\"visibility\":\"ALWAYS\"}]}";
         DifferentialVerificationService verifier = new DifferentialVerificationService(sandboxBuildCommandService(), Optional.empty(), approvedSpecs);
         VerificationRequest request = new VerificationRequest(Map.of(), Map.of(), Map.of(), Map.of(),
                 Map.of("src/PlaybackStrategy.java", "public interface PlaybackStrategy { /* TODO */ }"),
@@ -965,8 +965,8 @@ class DifferentialVerificationServiceTest {
     void shouldAcceptWhenTheOnlyUnboundTestIsOneTheGradingPlanHidesUntilTheDueDate() {
         List<String> all = List.of("sorts_ascending", "sorts_ascending_freshWitness");
         String ps = "# Sort\n[task][Ascending](sorts_ascending)\n";
-        String plan = "{\"tests\":[{\"name\":\"sorts_ascending\",\"weight\":3,\"visibility\":\"ALWAYS\"},"
-                + "{\"name\":\"sorts_ascending_freshWitness\",\"weight\":2,\"visibility\":\"AFTER_DUE_DATE\"}]}";
+        String plan = "{\"tests\":[{\"name\":\"sorts_ascending\",\"seamWeightTier\":3,\"visibility\":\"ALWAYS\"},"
+                + "{\"name\":\"sorts_ascending_freshWitness\",\"seamWeightTier\":2,\"visibility\":\"AFTER_DUE_DATE\"}]}";
         ScriptedSandbox sandbox = new ScriptedSandbox(resultWithFails(0, all, List.of()), resultWithFails(1, all, all), ps).withTestPlan(plan);
 
         VerificationResult result = verifyGenerate(newVerifier(), sandbox, new ProgrammingExercise());
@@ -979,8 +979,8 @@ class DifferentialVerificationServiceTest {
     void shouldRejectWhenATaskBindsATestTheGradingPlanHidesUntilTheDueDate() {
         List<String> all = List.of("sorts_ascending", "sorts_ascending_freshWitness");
         String ps = "# Sort\n[task][Ascending](sorts_ascending,sorts_ascending_freshWitness)\n";
-        String plan = "{\"tests\":[{\"name\":\"sorts_ascending\",\"weight\":3,\"visibility\":\"ALWAYS\"},"
-                + "{\"name\":\"sorts_ascending_freshWitness\",\"weight\":2,\"visibility\":\"AFTER_DUE_DATE\"}]}";
+        String plan = "{\"tests\":[{\"name\":\"sorts_ascending\",\"seamWeightTier\":3,\"visibility\":\"ALWAYS\"},"
+                + "{\"name\":\"sorts_ascending_freshWitness\",\"seamWeightTier\":2,\"visibility\":\"AFTER_DUE_DATE\"}]}";
         ScriptedSandbox sandbox = new ScriptedSandbox(resultWithFails(0, all, List.of()), resultWithFails(1, all, all), ps).withTestPlan(plan);
 
         VerificationResult result = verifyGenerate(newVerifier(), sandbox, new ProgrammingExercise());
@@ -993,8 +993,8 @@ class DifferentialVerificationServiceTest {
     void shouldRejectWhenTheStatementAdvertisesAnUnboundHiddenTestInProse() {
         List<String> all = List.of("sorts_ascending", "sorts_ascending_freshWitness");
         String ps = "# Sort\n[task][Ascending](sorts_ascending)\nHidden test: `sorts_ascending_freshWitness`.\n";
-        String plan = "{\"tests\":[{\"name\":\"sorts_ascending\",\"weight\":3,\"visibility\":\"ALWAYS\"},"
-                + "{\"name\":\"sorts_ascending_freshWitness\",\"weight\":2,\"visibility\":\"AFTER_DUE_DATE\"}]}";
+        String plan = "{\"tests\":[{\"name\":\"sorts_ascending\",\"seamWeightTier\":3,\"visibility\":\"ALWAYS\"},"
+                + "{\"name\":\"sorts_ascending_freshWitness\",\"seamWeightTier\":2,\"visibility\":\"AFTER_DUE_DATE\"}]}";
         ScriptedSandbox sandbox = new ScriptedSandbox(resultWithFails(0, all, List.of()), resultWithFails(1, all, all), ps).withTestPlan(plan);
 
         VerificationResult result = verifyGenerate(newVerifier(), sandbox, new ProgrammingExercise());
@@ -1007,8 +1007,8 @@ class DifferentialVerificationServiceTest {
     void shouldNotOfferHiddenTestsAsReplacementsForAnUnresolvedBinding() {
         List<String> all = List.of("sorts_ascending", "sorts_ascending_freshWitness");
         String ps = "# Sort\n[task][Ascending](notARealTest)\n";
-        String plan = "{\"tests\":[{\"name\":\"sorts_ascending\",\"weight\":3,\"visibility\":\"ALWAYS\"},"
-                + "{\"name\":\"sorts_ascending_freshWitness\",\"weight\":2,\"visibility\":\"AFTER_DUE_DATE\"}]}";
+        String plan = "{\"tests\":[{\"name\":\"sorts_ascending\",\"seamWeightTier\":3,\"visibility\":\"ALWAYS\"},"
+                + "{\"name\":\"sorts_ascending_freshWitness\",\"seamWeightTier\":2,\"visibility\":\"AFTER_DUE_DATE\"}]}";
         ScriptedSandbox sandbox = new ScriptedSandbox(resultWithFails(0, all, List.of()), resultWithFails(1, all, all), ps).withTestPlan(plan);
 
         VerificationResult result = verifyGenerate(newVerifier(), sandbox, new ProgrammingExercise());
@@ -1482,7 +1482,7 @@ class DifferentialVerificationServiceTest {
             DifferentialVerificationService verifier = newVerifier();
 
             AgentVerifyReport stageReport = verifier.selfCheckTestsStage(new ScriptedSandbox(resultWithFails(0, names, List.of()), resultWithFails(1, names, names), ""), "s",
-                    exercise, Map.of());
+                    exercise, Map.of(), Set.of());
             AgentVerifyReport fullReport = verifier.selfCheck(new ScriptedSandbox(resultWithFails(0, names, List.of()), resultWithFails(1, names, names), ""), "s", exercise);
 
             assertThat(stageReport.wouldBeAccepted()).isTrue();
@@ -1513,14 +1513,14 @@ class DifferentialVerificationServiceTest {
                     | FireSpell | strategy | student-creates |
                     | Mage | provided context | given |
                     ## Testing Strategy
-                    | Seam | Owner type | Partitions | Weight | Hidden variant |
+                    | Seam | Owner type | Observable responsibility | Weight | Hidden variant |
                     |---|---|---|---|---|
                     | S1 | FireSpell | representative values | 3 | no |
                     """;
             String plan = """
                     {"tests":[
-                      {"name":"sortsUnsortedArray","seam":"S1","weight":3,"visibility":"ALWAYS"},
-                      {"name":"sortsArrayWithDuplicates","seam":"S1","weight":3,"visibility":"ALWAYS"}
+                      {"name":"sortsUnsortedArray","seam":"S1","seamWeightTier":3,"visibility":"ALWAYS"},
+                      {"name":"sortsArrayWithDuplicates","seam":"S1","seamWeightTier":3,"visibility":"ALWAYS"}
                     ]}
                     """;
             String mage = "package de.test; public class Mage {}";

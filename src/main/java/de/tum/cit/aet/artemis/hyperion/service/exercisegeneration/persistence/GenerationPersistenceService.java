@@ -53,6 +53,7 @@ import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.exception.ContinuousIntegrationException;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseTestCaseRepository;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseCreationScheduleService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseParticipationService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseTaskService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingSubmissionService;
@@ -97,6 +98,8 @@ public class GenerationPersistenceService {
 
     private final ProgrammingExerciseTaskService programmingExerciseTaskService;
 
+    private final ProgrammingExerciseCreationScheduleService programmingExerciseCreationScheduleService;
+
     private final ProblemStatementMetadataUpdateService problemStatementMetadataUpdateService;
 
     private final TempFileUtilService tempFileUtilService;
@@ -112,10 +115,11 @@ public class GenerationPersistenceService {
             ProgrammingExerciseParticipationService participationService, ContinuousIntegrationTriggerService continuousIntegrationTriggerService,
             ProgrammingSubmissionService programmingSubmissionService, ExerciseVersionService exerciseVersionService, ProgrammingExerciseTestCaseRepository testCaseRepository,
             ResultRepository resultRepository, ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingExerciseTaskService programmingExerciseTaskService,
-            ProblemStatementMetadataUpdateService problemStatementMetadataUpdateService, TempFileUtilService tempFileUtilService) {
+            ProgrammingExerciseCreationScheduleService programmingExerciseCreationScheduleService, ProblemStatementMetadataUpdateService problemStatementMetadataUpdateService,
+            TempFileUtilService tempFileUtilService) {
         this(defaultBranch, gitService, repositoryService, participationService, continuousIntegrationTriggerService, programmingSubmissionService, exerciseVersionService,
-                testCaseRepository, resultRepository, programmingExerciseRepository, programmingExerciseTaskService, problemStatementMetadataUpdateService, tempFileUtilService,
-                testCaseSyncTimeout, testCaseSyncPoll);
+                testCaseRepository, resultRepository, programmingExerciseRepository, programmingExerciseTaskService, programmingExerciseCreationScheduleService,
+                problemStatementMetadataUpdateService, tempFileUtilService, testCaseSyncTimeout, testCaseSyncPoll);
     }
 
     // Package-private so tests can inject a shrunken sync wait and exercise the build-completion wait without sleeping for seconds.
@@ -123,8 +127,8 @@ public class GenerationPersistenceService {
             ContinuousIntegrationTriggerService continuousIntegrationTriggerService, ProgrammingSubmissionService programmingSubmissionService,
             ExerciseVersionService exerciseVersionService, ProgrammingExerciseTestCaseRepository testCaseRepository, ResultRepository resultRepository,
             ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingExerciseTaskService programmingExerciseTaskService,
-            ProblemStatementMetadataUpdateService problemStatementMetadataUpdateService, TempFileUtilService tempFileUtilService, Duration testCaseSyncTimeout,
-            Duration testCaseSyncPoll) {
+            ProgrammingExerciseCreationScheduleService programmingExerciseCreationScheduleService, ProblemStatementMetadataUpdateService problemStatementMetadataUpdateService,
+            TempFileUtilService tempFileUtilService, Duration testCaseSyncTimeout, Duration testCaseSyncPoll) {
         this.defaultBranch = defaultBranch;
         this.gitService = gitService;
         this.repositoryService = repositoryService;
@@ -136,6 +140,7 @@ public class GenerationPersistenceService {
         this.resultRepository = resultRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.programmingExerciseTaskService = programmingExerciseTaskService;
+        this.programmingExerciseCreationScheduleService = programmingExerciseCreationScheduleService;
         this.problemStatementMetadataUpdateService = problemStatementMetadataUpdateService;
         this.tempFileUtilService = tempFileUtilService;
         this.testCaseSyncTimeout = testCaseSyncTimeout;
@@ -147,9 +152,9 @@ public class GenerationPersistenceService {
             ContinuousIntegrationTriggerService continuousIntegrationTriggerService, ProgrammingSubmissionService programmingSubmissionService,
             ExerciseVersionService exerciseVersionService, ProgrammingExerciseTestCaseRepository testCaseRepository, ResultRepository resultRepository,
             ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingExerciseTaskService programmingExerciseTaskService, TempFileUtilService tempFileUtilService,
-            Duration testCaseSyncTimeout, Duration testCaseSyncPoll) {
+            ProgrammingExerciseCreationScheduleService programmingExerciseCreationScheduleService, Duration testCaseSyncTimeout, Duration testCaseSyncPoll) {
         this(defaultBranch, gitService, repositoryService, participationService, continuousIntegrationTriggerService, programmingSubmissionService, exerciseVersionService,
-                testCaseRepository, resultRepository, programmingExerciseRepository, programmingExerciseTaskService,
+                testCaseRepository, resultRepository, programmingExerciseRepository, programmingExerciseTaskService, programmingExerciseCreationScheduleService,
                 new ProblemStatementMetadataUpdateService(programmingExerciseRepository, programmingExerciseTaskService), tempFileUtilService, testCaseSyncTimeout,
                 testCaseSyncPoll);
     }
@@ -472,10 +477,11 @@ public class GenerationPersistenceService {
         if (testsBuildSignal != null) {
             triggerTestsBuild(exercise, testsBuildSignal);
             zeroWeightBuildGateTestCases(exercise.getId(), testsBuildSignal, failOnFinalizationFailure);
-            // Inside the guard, after the sync: the weight/visibility write is a durable mutation and must not happen once this job no longer owns the exercise.
-            finalizationGuard.run();
-            applyGeneratedTestPlan(exercise, testPlanJson);
         }
+        // The plan can be the only TESTS-stage change, so applying it must not depend on a new tests-repository commit. Keep the ownership guard immediately before this durable
+        // mutation; when a tests commit exists, triggerTestsBuild and zeroWeightBuildGateTestCases have already waited for the synchronized test-case set.
+        finalizationGuard.run();
+        applyGeneratedTestPlan(exercise, testPlanJson);
         finalizationGuard.run();
         try {
             return repositoryCommitIds.isEmpty() ? exerciseVersionService.createExerciseVersionOrThrow(exercise, user)
@@ -936,47 +942,54 @@ public class GenerationPersistenceService {
     /**
      * Applies the TESTS stage's grading plan ({@code test-plan.json}) to the freshly synchronized test cases: per-test weights (the specification's core-vs-edge tiers) and
      * {@code AFTER_DUE_DATE} visibility for hidden variants. Runs only on the main save path, AFTER {@link #syncTestCasesAndRecordVersion} has awaited the test-case sync, so the
-     * cases exist. Strictly advisory: the plan was already gate-validated in the sandbox, and a failure here (a stale plan after a repair attempt, malformed JSON) degrades to
-     * Artemis' grading defaults for EVERY case rather than failing a save that is otherwise complete — see the all-or-nothing rule below for why partial application is worse.
+     * cases exist. A non-empty plan is part of the mechanically verified artifact set, so persistence fails if the synchronized cases no longer match it; silently falling back
+     * to Artemis defaults would publish a grading contract different from the one that was reviewed.
      */
     private void applyGeneratedTestPlan(ProgrammingExercise exercise, @Nullable String testPlanJson) {
         if (testPlanJson == null || testPlanJson.isBlank()) {
             return;
         }
-        try {
-            GeneratedTestPlan plan = GeneratedTestPlan.parse(testPlanJson);
-            Map<String, ProgrammingExerciseTestCase> byName = testCaseRepository.findByExerciseId(exercise.getId()).stream()
-                    .collect(java.util.stream.Collectors.toMap(ProgrammingExerciseTestCase::getTestName, testCase -> testCase, (first, second) -> first));
-            // ALL-OR-NOTHING. The plan is written once and survives repair attempts, so a later attempt that renames or drops a test leaves a plan that only PARTLY describes
-            // the saved tests. Applying such a plan is worse than applying none: the weights land, but a renamed hidden variant keeps Artemis' default ALWAYS visibility and the
-            // overfit probe ships published, contradicting the specification the instructor reads. Skip wholesale and let every case keep the documented defaults.
-            List<String> unresolvedNames = plan.tests().stream().map(GeneratedTestPlan.Entry::name).filter(name -> !byName.containsKey(name)).toList();
-            if (!unresolvedNames.isEmpty()) {
-                log.warn(
-                        "Not applying the generated test plan for exercise {}: it names {} test case(s) that the saved tests do not contain ({}), so it describes a different "
-                                + "version of the tests. Grading keeps Artemis' defaults (weight 1, visible) for every case.",
-                        exercise.getId(), unresolvedNames.size(), unresolvedNames);
-                return;
-            }
-            List<ProgrammingExerciseTestCase> changed = new ArrayList<>();
-            for (GeneratedTestPlan.Entry entry : plan.tests()) {
-                ProgrammingExerciseTestCase testCase = byName.get(entry.name());
-                if (BuildGateTestNames.isBuildGate(testCase.getTestName())) {
-                    // Build gates are zero-weighted for oracle parity and must stay that way regardless of what the plan says.
-                    continue;
-                }
-                testCase.setWeight(entry.weight());
-                testCase.setVisibility("AFTER_DUE_DATE".equals(entry.visibility()) ? Visibility.AFTER_DUE_DATE : Visibility.ALWAYS);
+        boolean scheduleDueDateRecalculation = false;
+        GeneratedTestPlan plan = GeneratedTestPlan.parse(testPlanJson);
+        if (!plan.hiddenEntries().isEmpty() && exercise.getDueDate() == null) {
+            throw new IllegalStateException("The verified test plan contains AFTER_DUE_DATE tests, but exercise " + exercise.getId() + " has no due date");
+        }
+        Map<String, ProgrammingExerciseTestCase> byName = testCaseRepository.findByExerciseId(exercise.getId()).stream()
+                .collect(java.util.stream.Collectors.toMap(ProgrammingExerciseTestCase::getTestName, testCase -> testCase, (first, second) -> first));
+        List<String> plannedBuildGates = plan.tests().stream().map(GeneratedTestPlan.Entry::name).filter(BuildGateTestNames::isBuildGate).sorted().toList();
+        if (!plannedBuildGates.isEmpty()) {
+            throw new IllegalStateException("The verified test plan contains zero-weight build gates, which cannot carry grading decisions: " + plannedBuildGates);
+        }
+        List<String> unresolvedNames = plan.tests().stream().map(GeneratedTestPlan.Entry::name).filter(name -> !byName.containsKey(name)).sorted().toList();
+        List<String> unplannedNames = byName.keySet().stream().filter(name -> !BuildGateTestNames.isBuildGate(name)).filter(name -> !GeneratedTestPlan.isStructuralCheck(name))
+                .filter(name -> plan.tests().stream().noneMatch(entry -> entry.name().equals(name))).sorted().toList();
+        if (!unresolvedNames.isEmpty() || !unplannedNames.isEmpty()) {
+            throw new IllegalStateException(
+                    "The synchronized test cases no longer match the verified test plan. Missing saved tests: " + unresolvedNames + "; unplanned saved tests: " + unplannedNames);
+        }
+        List<ProgrammingExerciseTestCase> changed = new ArrayList<>();
+        Map<String, Double> effectiveWeights = plan.effectiveWeightsByName();
+        for (GeneratedTestPlan.Entry entry : plan.tests()) {
+            ProgrammingExerciseTestCase testCase = byName.get(entry.name());
+            testCase.setWeight(effectiveWeights.get(entry.name()));
+            testCase.setVisibility("AFTER_DUE_DATE".equals(entry.visibility()) ? Visibility.AFTER_DUE_DATE : Visibility.ALWAYS);
+            changed.add(testCase);
+        }
+        byName.values().stream().filter(testCase -> GeneratedTestPlan.isStructuralCheck(testCase.getTestName())).forEach(testCase -> {
+            testCase.setWeight(0.0);
+            testCase.setVisibility(Visibility.ALWAYS);
+            if (!changed.contains(testCase)) {
                 changed.add(testCase);
             }
-            if (!changed.isEmpty()) {
-                testCaseRepository.saveAll(changed);
-            }
-            log.info("Applied generated test plan to exercise {}: {} test case(s) weighted, {} hidden until the due date", exercise.getId(), changed.size(),
-                    changed.stream().filter(testCase -> testCase.getVisibility() == Visibility.AFTER_DUE_DATE).count());
+        });
+        if (!changed.isEmpty()) {
+            testCaseRepository.saveAll(changed);
         }
-        catch (RuntimeException e) {
-            log.warn("Could not apply the generated test plan for exercise {} (grading falls back to defaults, weight 1 and visible): {}", exercise.getId(), e.getMessage());
+        scheduleDueDateRecalculation = changed.stream().anyMatch(testCase -> testCase.getVisibility() == Visibility.AFTER_DUE_DATE);
+        log.info("Applied generated test plan to exercise {}: {} test case(s) weighted, {} hidden until the due date", exercise.getId(), changed.size(),
+                changed.stream().filter(testCase -> testCase.getVisibility() == Visibility.AFTER_DUE_DATE).count());
+        if (scheduleDueDateRecalculation) {
+            programmingExerciseCreationScheduleService.scheduleOperations(exercise.getId());
         }
     }
 

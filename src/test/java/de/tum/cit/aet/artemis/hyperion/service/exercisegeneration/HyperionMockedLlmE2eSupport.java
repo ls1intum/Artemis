@@ -165,11 +165,82 @@ final class HyperionMockedLlmE2eSupport {
     }
 
     static ChatResponse cleanSpecificationReview() {
-        return text("{\"learningFit\":{\"briefQuote\":\"Create a bounded counter exercise.\","
-                + "\"specQuotes\":[\"R2: increment advances by one and clamps at the positive maximum.\"],"
+        return text("{\"learningFit\":{\"briefEvidenceIds\":[\"B1\"],\"specEvidenceIds\":[\"E16\"],\"objectiveEvidenceIds\":[\"E16\",\"E23\"],"
+                + "\"studentOwnershipEvidenceIds\":[\"E15\"],\"assessmentEvidenceIds\":[\"E23\"],"
+                + "\"objectiveMechanism\":\"The cited student work exercises the requested objective through an observable collaboration.\","
                 + "\"remainingStudentReasoning\":\"The boundary decisions remain after routine implementation is subtracted.\","
                 + "\"domainGrounding\":\"The brief requests no qualitative theme; the counter domain directly motivates boundary behavior.\","
-                + "\"sufficient\":true,\"repair\":null},\"omissions\":[],\"conflicts\":[],\"internalConflicts\":[],\"incorrectExamples\":[]," + "\"unsupportedConstraints\":[]}");
+                + "\"learnerOwnsObjectiveMechanism\":true,\"objectiveObservable\":true,\"difficultySufficient\":true,\"domainGrounded\":true,"
+                + "\"sufficient\":true,\"direction\":\"SUFFICIENT\"},"
+                + "\"conceptAlignment\":{\"briefEvidenceIds\":[\"B1\"],\"conceptEvidenceIds\":[\"C2\"],\"specEvidenceIds\":[\"E16\"],"
+                + "\"disposition\":\"ALIGNED\",\"reason\":\"The specification preserves bounded increment and decrement state transitions.\"}," + "\"exampleChecks\":["
+                + "{\"exampleEvidenceId\":\"E10\",\"replayedOutcome\":\"value 2\",\"consistent\":true,\"reason\":\"the third increment clamps at two\"},"
+                + "{\"exampleEvidenceId\":\"E11\",\"replayedOutcome\":\"value 0 and an exception\",\"consistent\":true,\"reason\":\"both boundary cases follow the rules\"}],"
+                + "\"omissions\":[],\"conflicts\":[],\"internalConflicts\":[],\"ambiguities\":[],\"unsupportedConstraints\":[]}");
+    }
+
+    static ChatResponse conceptCandidates() {
+        return text("""
+                ## Candidate 1
+                Domain situation: A bounded counter processes a sequence of increment and decrement commands.
+                Real constraint: Every transition must preserve the configured lower and upper bounds.
+                Common caller goal: Apply a command and expose the resulting counter value.
+                Student-owned objective: Students implement the boundary-preserving state transitions.
+                Student-owned reasoning: Students choose and implement qualitative clamp-versus-reject control flow at both boundaries.
+                Alternative policies: One policy clamps at a bound; another rejects a transition beyond it.
+                Observable substitution: The same boundary-crossing command produces a different visible outcome.
+                Likely supplied support: Command input data and build setup.
+
+                ## Candidate 2
+                Domain situation: A delivery queue orders packages.
+                Real constraint: Equal-priority packages preserve arrival order.
+                Common caller goal: Select the next package.
+                Student-owned objective: Students implement interchangeable ordering policies and their selection.
+                Student-owned reasoning: Students compare multiple package attributes while preserving stable ordering for ties.
+                Alternative policies: Urgency-first and route-cohesion policies prefer different package attributes.
+                Observable substitution: Replacing the policy changes which package is selected next.
+                Likely supplied support: Package input data and build setup.
+
+                ## Candidate 3
+                Domain situation: A sensor history identifies anomalous readings.
+                Real constraint: Policies evaluate changes between neighboring readings.
+                Common caller goal: Identify the readings that require inspection.
+                Student-owned objective: Students implement interchangeable anomaly policies and replacement.
+                Student-owned reasoning: Students traverse neighboring readings and distinguish isolated spikes from sustained drift.
+                Alternative policies: Spike-sensitive and sustained-drift policies interpret the same history differently.
+                Observable substitution: Replacing the policy changes the returned anomaly set.
+                Likely supplied support: Reading input data and build setup.
+                """);
+    }
+
+    static ChatResponse cleanConceptReview() {
+        return text(
+                """
+                        {"selectedCandidate":1,
+                         "selectionReason":"Candidate 1 directly matches the bounded-counter brief with the least unrelated scope.",
+                         "evaluations":[
+                          {"candidate":1,"candidateEvidenceIds":["C1.2"],
+                           "briefCoverage":"The concept directly fulfills the bounded counter requested by the instructor.",
+                           "objectiveCounterfactual":"Boundary-preserving state transitions are the central student-owned behavior.",
+                           "difficultyFit":"Command sequences require reasoning about state transitions and both bounds.",
+                                   "smallestStudentImplementation":"Students implement the cited central behavior.","reasoningAfterRoutineWork":"The cited non-routine reasoning remains after plumbing.",
+                           "domainGrounding":"Crossing a configured counter bound naturally requires a policy decision.",
+                           "feasibility":"The behavior is bounded, deterministic, and proportionate for one Java exercise.",
+                           "objectiveEssential":true,"briefCovered":true,"learningFitSufficient":true,"learnerOwnsObjectiveMechanism":true,"objectiveObservable":true,"prematureContractClosure":false,"difficultySufficient":true,"domainGrounded":true,"feasibleAndProportionate":true},
+                          {"candidate":2,"candidateEvidenceIds":["C2.2"],
+                           "briefCoverage":"The concept does not implement the requested bounded counter.",
+                           "objectiveCounterfactual":"Ordering policies form coherent student-owned behavior.","difficultyFit":"Stable ordering requires nontrivial collection reasoning.",
+                                   "smallestStudentImplementation":"Students implement the cited central behavior.","reasoningAfterRoutineWork":"The cited non-routine reasoning remains after plumbing.",
+                           "domainGrounding":"Package attributes naturally influence delivery ordering.","feasibility":"The behavior is deterministic and proportionate.",
+                           "objectiveEssential":true,"briefCovered":false,"learningFitSufficient":true,"learnerOwnsObjectiveMechanism":true,"objectiveObservable":true,"prematureContractClosure":false,"difficultySufficient":true,"domainGrounded":true,"feasibleAndProportionate":true},
+                          {"candidate":3,"candidateEvidenceIds":["C3.2"],
+                           "briefCoverage":"The concept does not implement the requested bounded counter.",
+                           "objectiveCounterfactual":"Anomaly policies form coherent student-owned behavior.","difficultyFit":"History traversal requires multi-step reasoning.",
+                                   "smallestStudentImplementation":"Students implement the cited central behavior.","reasoningAfterRoutineWork":"The cited non-routine reasoning remains after plumbing.",
+                           "domainGrounding":"Neighboring reading changes naturally motivate anomaly detection.","feasibility":"The behavior is deterministic and proportionate.",
+                           "objectiveEssential":true,"briefCovered":false,"learningFitSufficient":true,"learnerOwnsObjectiveMechanism":true,"objectiveObservable":true,"prematureContractClosure":false,"difficultySufficient":true,"domainGrounded":true,"feasibleAndProportionate":true}
+                         ]}
+                        """);
     }
 
     static ChatResponse writeFile(String path, String content) {

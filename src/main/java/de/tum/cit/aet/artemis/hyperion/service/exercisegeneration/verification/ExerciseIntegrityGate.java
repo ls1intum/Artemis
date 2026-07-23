@@ -245,10 +245,6 @@ public final class ExerciseIntegrityGate {
             return List.of();
         }
         List<String> studentCreatedTypes = StageCheckService.specStudentCreatedTypes(approvedSpec);
-        if (studentCreatedTypes.isEmpty()) {
-            return List.of();
-        }
-
         List<String> reasons = new ArrayList<>();
         List<String> missingFromSolution = studentCreatedTypes.stream().filter(type -> !repositoryDeclaresType(producedSolutionFiles, type)).toList();
         if (!missingFromSolution.isEmpty()) {
@@ -261,11 +257,54 @@ public final class ExerciseIntegrityGate {
                     + ". Delete their template declarations and leave any necessary guidance in the problem statement or collaborating given types; changing SPEC.md after "
                     + "approval cannot turn the required design work into prebuilt stubs.");
         }
+        List<String> divergentGivenTypes = StageCheckService.designTableRows(approvedSpec).stream().filter(row -> "given".equals(row.status()))
+                .map(StageCheckService.DesignRow::type).filter(type -> !canonicalGivenFileMatches(type, producedTemplateFiles, producedSolutionFiles)).toList();
+        if (!divergentGivenTypes.isEmpty()) {
+            reasons.add("the approved specification marks these as given types, but their canonical Java source is not byte-for-byte identical in the solution and template: "
+                    + divergentGivenTypes
+                    + ". A given type is supplied rather than student work. Keep exactly the same canonical <Type>.java file in both repositories; repair both copies together "
+                    + "instead of weakening the starter merely to make a test fail.");
+        }
         return List.copyOf(reasons);
+    }
+
+    private static boolean canonicalGivenFileMatches(String type, Map<String, String> templateFiles, Map<String, String> solutionFiles) {
+        if (!type.matches("[A-Za-z_$][A-Za-z0-9_$]*")) {
+            return true;
+        }
+        String suffix = "/" + type + ".java";
+        List<Map.Entry<String, String>> templateMatches = canonicalJavaFiles(templateFiles, type, suffix);
+        List<Map.Entry<String, String>> solutionMatches = canonicalJavaFiles(solutionFiles, type, suffix);
+        return templateMatches.size() == 1 && solutionMatches.size() == 1 && templateMatches.getFirst().getKey().equals(solutionMatches.getFirst().getKey())
+                && templateMatches.getFirst().getValue().equals(solutionMatches.getFirst().getValue());
+    }
+
+    private static List<Map.Entry<String, String>> canonicalJavaFiles(Map<String, String> files, String type, String suffix) {
+        if (files == null) {
+            return List.of();
+        }
+        return files.entrySet().stream().filter(entry -> {
+            String path = entry.getKey().replace('\\', '/');
+            return (path.equals(type + ".java") || path.endsWith(suffix)) && sourceDeclaresType(entry.getValue(), type);
+        }).toList();
     }
 
     /** Ensures the exact grading plan headed to persistence still implements the approved specification and names only tests the verifier actually ran. */
     static List<String> approvedTestPlanReasons(String approvedSpec, String testPlanJson, List<String> verifiedTestNames) {
+        return approvedTestPlanReasons(approvedSpec, testPlanJson, verifiedTestNames, true, Set.of());
+    }
+
+    /** Ensures plan traceability, approved grading emphasis, formative visibility, and due-date-compatible hidden coverage remain intact through final verification. */
+    static List<String> approvedTestPlanReasons(String approvedSpec, String testPlanJson, List<String> verifiedTestNames, boolean hasDueDate) {
+        return approvedTestPlanReasons(approvedSpec, testPlanJson, verifiedTestNames, hasDueDate, Set.of());
+    }
+
+    /**
+     * Ensures plan traceability, approved grading emphasis, formative visibility, and due-date-compatible hidden coverage remain intact through final verification. Structural
+     * tests are identified from the server-seeded authority rather than a forgeable name pattern.
+     */
+    static List<String> approvedTestPlanReasons(String approvedSpec, String testPlanJson, List<String> verifiedTestNames, boolean hasDueDate,
+            Set<String> seededStructuralTestNames) {
         if (approvedSpec == null || approvedSpec.isBlank()) {
             return List.of();
         }
@@ -285,7 +324,27 @@ public final class ExerciseIntegrityGate {
         if (!unknownNames.isEmpty()) {
             return List.of("the final test-plan.json names tests the verifier did not run: " + unknownNames + ". Use only exact verified test names: " + knownNames + ".");
         }
-        List<String> declaredSeams = StageCheckService.testingStrategySeamIds(approvedSpec).stream().filter(id -> id.matches("S[1-9][0-9]*")).distinct().toList();
+        List<String> plannedBuildGates = plan.tests().stream().map(GeneratedTestPlan.Entry::name).filter(BuildGateTestNames::isBuildGate).sorted().toList();
+        if (!plannedBuildGates.isEmpty()) {
+            return List.of("the final test-plan.json includes build-gate test(s) " + plannedBuildGates
+                    + ". Build gates are zero-weight infrastructure checks and cannot satisfy an approved learning seam, visible evidence, or hidden coverage.");
+        }
+        Set<String> structuralNames = seededStructuralTestNames == null ? Set.of() : Set.copyOf(seededStructuralTestNames);
+        List<String> plannedStructuralTests = plan.tests().stream().map(GeneratedTestPlan.Entry::name).filter(structuralNames::contains).sorted().toList();
+        if (!plannedStructuralTests.isEmpty()) {
+            return List.of("the final test-plan.json includes server-seeded structural test(s) " + plannedStructuralTests
+                    + ". Remove them from the agent-authored plan; Artemis keeps structural checks ALWAYS visible and zero-weight, and they cannot stand in for a behavioral "
+                    + "witness.");
+        }
+        List<String> unplannedNames = knownNames.stream().filter(name -> !BuildGateTestNames.isBuildGate(name)).filter(name -> !structuralNames.contains(name))
+                .filter(name -> plan.tests().stream().noneMatch(entry -> entry.name().equals(name))).sorted().toList();
+        if (!unplannedNames.isEmpty()) {
+            return List.of("the final test-plan.json omits verified gradable test(s) " + unplannedNames
+                    + ". Map every agent-authored behavioral test to one approved seam so no test bypasses the approved weight, visibility, or statement traceability. "
+                    + "Server-seeded structural checks are managed separately and must not be added to the plan.");
+        }
+        List<StageCheckService.TestingStrategyRow> declaredRows = StageCheckService.testingStrategyRows(approvedSpec);
+        List<String> declaredSeams = declaredRows.stream().map(StageCheckService.TestingStrategyRow::seamId).filter(id -> id.matches("S[1-9][0-9]*")).distinct().toList();
         // Old saved plans/specifications predate seam metadata. New staged SPECs always declare S1..., so enforce traceability exactly where the new contract exists without
         // making legacy/adaptation candidates invent metadata that cannot be persisted.
         if (!declaredSeams.isEmpty()) {
@@ -298,13 +357,38 @@ public final class ExerciseIntegrityGate {
             if (!undeclaredSeams.isEmpty()) {
                 return List.of("the final test-plan.json uses seam(s) the approved Testing Strategy never declared: " + undeclaredSeams + ". Use only " + declaredSeams + ".");
             }
+            Map<String, Double> weightBySeam = declaredRows.stream().filter(row -> row.weightTier().matches("[123]"))
+                    .collect(Collectors.toMap(StageCheckService.TestingStrategyRow::seamId, row -> Double.parseDouble(row.weightTier()), (first, ignored) -> first));
+            List<String> wrongWeights = plan.tests().stream().filter(entry -> weightBySeam.containsKey(entry.seam()))
+                    .filter(entry -> Double.compare(entry.seamWeightTier(), weightBySeam.get(entry.seam())) != 0)
+                    .map(entry -> entry.name() + "=" + entry.seamWeightTier() + " (seam " + entry.seam() + " requires " + weightBySeam.get(entry.seam()).intValue() + ")").toList();
+            if (!wrongWeights.isEmpty()) {
+                return List.of("the final test-plan.json weights do not match the approved Testing Strategy: " + wrongWeights
+                        + ". Carry each seam's approved 1/2/3 weight into every mapped test.");
+            }
         }
         Set<String> hiddenPlanSeams = plan.hiddenEntries().stream().map(GeneratedTestPlan.Entry::seam).collect(Collectors.toSet());
-        List<String> missingHiddenSeams = StageCheckService.hiddenVariantSeamIds(approvedSpec).stream().filter(seam -> !hiddenPlanSeams.contains(seam)).sorted().toList();
+        Set<String> hiddenVariantSeams = StageCheckService.hiddenVariantSeamIds(approvedSpec);
+        if (!plan.hiddenEntries().isEmpty() && !hasDueDate) {
+            return List.of("the final test-plan.json marks tests AFTER_DUE_DATE, but this exercise has no due date. Such tests would remain hidden indefinitely; use ALWAYS "
+                    + "visibility and declare no hidden variant in the specification.");
+        }
+        List<String> unexpectedHiddenSeams = hiddenPlanSeams.stream().filter(seam -> !hiddenVariantSeams.contains(seam)).sorted().toList();
+        if (!unexpectedHiddenSeams.isEmpty()) {
+            return List.of("the approved Testing Strategy says no hidden variant for seam(s) " + unexpectedHiddenSeams
+                    + ", but the final test-plan.json hides tests mapped to them. Keep those tests ALWAYS visible.");
+        }
+        List<String> missingHiddenSeams = hiddenVariantSeams.stream().filter(seam -> !hiddenPlanSeams.contains(seam)).sorted().toList();
         if (!missingHiddenSeams.isEmpty()) {
             return List.of("the approved Testing Strategy requires AFTER_DUE_DATE variants for seam(s) " + missingHiddenSeams
                     + ", but the final test-plan.json has no hidden test mapped to them. Add a fresh witness for every listed seam; one unrelated hidden test cannot satisfy "
                     + "several seam-specific decisions.");
+        }
+        Set<String> visiblePlanSeams = plan.visibleEntries().stream().map(GeneratedTestPlan.Entry::seam).collect(Collectors.toSet());
+        List<String> seamsWithoutVisibleTests = declaredSeams.stream().filter(seam -> !visiblePlanSeams.contains(seam)).toList();
+        if (!seamsWithoutVisibleTests.isEmpty()) {
+            return List.of("the approved Testing Strategy seam(s) " + seamsWithoutVisibleTests
+                    + " have no ALWAYS-visible test. Every student task needs formative visible evidence; hidden coverage is additional.");
         }
         return List.of();
     }

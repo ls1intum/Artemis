@@ -30,15 +30,17 @@ public class ApprovedSpecRegistry {
     private final Map<String, String> approvedBySession = new ConcurrentHashMap<>();
 
     /**
-     * Records the specification a session's spec gate approved. Called once per session; a later call (a spec-stage re-entry that passes on the second attempt) replaces it,
-     * because that content is what the gate actually approved.
+     * Records the specification a session's spec gate approved. Approval is immutable: repeating the same value is harmless, while a different second value is a lifecycle bug.
      *
      * @param sessionId the sandbox session the specification belongs to
      * @param spec      the approved SPEC.md content
      */
     public void approve(String sessionId, String spec) {
         if (sessionId != null && spec != null && !spec.isBlank()) {
-            approvedBySession.put(sessionId, spec);
+            String existing = approvedBySession.putIfAbsent(sessionId, spec);
+            if (existing != null && !existing.equals(spec)) {
+                throw new IllegalStateException("A different specification is already approved for sandbox session " + sessionId);
+            }
         }
     }
 

@@ -55,7 +55,8 @@ implementation including a broken one. If a test cannot fail for the wrong reaso
 ## The grading plan (test-plan.json)
 
 Once the differential is green, write `/workspace/test-plan.json` implementing the spec's Testing Strategy:
-`{"tests":[{"name":"<exact test name>","seam":"S1","weight":1..3,"visibility":"ALWAYS"|"AFTER_DUE_DATE"}]}`.
+`{"tests":[{"name":"<exact test name>","seam":"S1","seamWeightTier":1..3,"visibility":"ALWAYS"|"AFTER_DUE_DATE"}]}`.
+List every agent-authored behavioral test. Do not list build gates or server-seeded structural checks; Artemis keeps seeded structural checks visible and zero-weight.
 The seam is the stable ID from the specification row this test implements. Start with the highest-risk
 learning-objective seam (for a design pattern, prove delegation with a recording fake before concrete formulas). Weights say
 what the exercise is really about — the core rule outweighs edge polish; equal weights everywhere is a

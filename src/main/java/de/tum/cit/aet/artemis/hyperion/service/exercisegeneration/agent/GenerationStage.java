@@ -6,15 +6,14 @@ package de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent;
  * declared order, gating each stage's output before starting the next one; within a stage, the agent's {@code submit} tool call means only that this stage's artifact is
  * finished, not that the exercise is complete.
  * <p>
- * This mirrors the dependency order already described as STAGE 0-4 in the legacy single-loop
- * {@link AgentSystemPromptService#build(de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise)}
- * workflow text, which remains the fallback path for callers that do not stage the run.
+ * The active generation runner uses {@link #SPEC}, {@link #TESTS} (the coherent executable build), and {@link #STATEMENT}. {@link #SOLUTION} and {@link #TEMPLATE} retain their
+ * stable identifiers for old transcripts and the adaptation fallback, but fresh generation no longer hands those tightly coupled artifacts through separate stages.
  */
 public enum GenerationStage {
 
     /**
-     * Write {@code /workspace/SPEC.md}: the unified specification — archetype, numbered rules with real computation, a worked-examples table whose arithmetic is
-     * machine-checked in the sandbox, the design (classes with template status and state ownership), and the testing strategy (weights, hidden variants, diagram decision).
+     * Write {@code /workspace/SPEC.md}: the unified specification — numbered rules with real computation, a worked-examples table whose arithmetic is machine-checked in the
+     * sandbox, the design (classes with template status and state ownership), and the testing strategy (weights, hidden variants, diagram decision).
      * One planning artifact instead of a spec/design pair, so the two can never drift apart. Skipped when the instructor provided a real statement — that statement is the spec.
      */
     SPEC("spec", "Specification"),
@@ -25,8 +24,11 @@ public enum GenerationStage {
     /** Derive the student-facing template from the finished solution by removing exactly the student work the specification marks stubbed or student-created. */
     TEMPLATE("template", "Template"),
 
-    /** Author the differential tests per the specification's testing strategy, verifying each against both solution and template. */
-    TESTS("tests", "Tests"),
+    /**
+     * Build the solution, derived template, behavioral tests, and grading plan together in risk-chosen vertical increments. The stable {@code tests} id is retained for transcript
+     * compatibility with runs created before these formerly separate artifact stages were combined.
+     */
+    TESTS("tests", "Executable build"),
 
     /** Write the student-facing problem statement last, by rewriting the specification with the verified test names. */
     STATEMENT("statement", "Statement");

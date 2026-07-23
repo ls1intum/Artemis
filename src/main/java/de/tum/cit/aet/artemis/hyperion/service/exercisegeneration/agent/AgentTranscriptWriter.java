@@ -73,6 +73,30 @@ public class AgentTranscriptWriter {
         }
     }
 
+    /**
+     * Writes non-conversational generation evidence, such as a context-separated review decision, beside the agent transcript without presenting it as model dialogue.
+     *
+     * @param exerciseId the exercise whose generation produced the evidence
+     * @param label      a short audit label used in the file name
+     * @param evidence   the evidence to persist; blank evidence is ignored
+     */
+    public void writeAudit(long exerciseId, String label, @Nullable String evidence) {
+        if (!enabled() || evidence == null || evidence.isBlank()) {
+            return;
+        }
+        try {
+            Path directory = Path.of(transcriptDirectory).resolve("exercise-" + exerciseId);
+            Files.createDirectories(directory);
+            String safeLabel = label == null ? "audit" : label.replaceAll("[^a-zA-Z0-9._-]", "-");
+            Path file = directory.resolve(FILE_TIMESTAMP.format(Instant.now()) + "-" + safeLabel + ".md");
+            Files.writeString(file, "# Generation audit — " + safeLabel + "\n\n" + evidence.strip() + "\n", StandardCharsets.UTF_8);
+            log.info("Wrote generation audit for exercise {} to {}", exerciseId, file);
+        }
+        catch (IOException | RuntimeException e) {
+            log.warn("Could not write generation audit for exercise {} ({}): {}", exerciseId, label, e.getMessage());
+        }
+    }
+
     static String render(@Nullable String label, List<Message> conversation) {
         StringBuilder out = new StringBuilder("# Agent transcript");
         if (label != null && !label.isBlank()) {

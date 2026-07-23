@@ -20,7 +20,7 @@ import java.util.regex.Pattern;
  * @param exactTestNames          every parser-form test name (suite-prefixed, verbatim); only its visible, non-build-gate subset is offered for {@code [task]} bindings
  * @param hiddenTestNames         the subset the grading plan hides until the due date: they grade silently and must NEVER be bound to a {@code [task]} line
  * @param unresolvedTaskBindings  {@code [task]} bindings that reference a name matching no real test (the C++/Catch2 bare-name trap)
- * @param possiblyDeadFiles       best-effort, language-agnostic: workspace files no build phase appears to read (advisory only; empty when the probe is unavailable)
+ * @param possiblyDeadFiles       best-effort, language-agnostic: files present in only one assignment repository (advisory only; expected for student-created types)
  * @param wouldBeAccepted         whether the in-loop differential + actionable mechanical gates currently hold; this does not establish semantic quality or instructor approval
  * @param blockingReasons         the human-readable reasons the verdict would currently reject (empty when {@code wouldBeAccepted}); the same wording the post-loop reasons carry
  */
@@ -148,7 +148,8 @@ public record AgentVerifyReport(int solutionTests, boolean solutionPassed, List<
         }
 
         if (!possiblyDeadFiles.isEmpty()) {
-            builder.append("Possibly dead files (no build phase reads them; remove if abandoned): ").append(renderNames(possiblyDeadFiles)).append('\n');
+            builder.append("Assignment-specific files (present in only solution or template; expected for intentional student-created types, otherwise review): ")
+                    .append(renderNames(possiblyDeadFiles)).append('\n');
         }
 
         // Surface the prose-hygiene reason verbatim (it is not reflected by any structured line above) so the agent cleans the student-facing statement before it submits.
