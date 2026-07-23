@@ -56,7 +56,21 @@
             <!-- Competency-graph mode: multi-select -->
             @if (isCompetencyMode()) {
                 <div class="field-group">
-                    <label class="field-label" for="quiz-ai-competencies" jhiTranslate="artemisApp.quizExercise.aiGeneration.configuration.competencies"></label>
+                    <div class="field-label label-with-help">
+                        <label for="quiz-ai-competencies" jhiTranslate="artemisApp.quizExercise.aiGeneration.configuration.competencies"></label>
+                        <span
+                            class="label-with-help-icon"
+                            [pTooltip]="'artemisApp.quizExercise.aiGeneration.configuration.competenciesTooltip' | artemisTranslate"
+                            tooltipPosition="right"
+                            appendTo="body"
+                            tooltipStyleClass="quiz-ai-generation-tooltip"
+                            tabindex="0"
+                        >
+                            <fa-stack class="icon-full-size">
+                                <fa-icon [icon]="faQuestionCircle" stackItemSize="1x" />
+                            </fa-stack>
+                        </span>
+                    </div>
                     <p-multiselect
                         inputId="quiz-ai-competencies"
                         [options]="courseCompetencies()"
@@ -74,9 +88,9 @@
 
             <div class="field-group">
                 <div class="field-label label-with-help">
-                    <label class="mb-0" for="quiz-ai-optional-prompt" jhiTranslate="artemisApp.quizExercise.aiGeneration.configuration.optionalPrompt"></label>
+                    <label for="quiz-ai-optional-prompt" jhiTranslate="artemisApp.quizExercise.aiGeneration.configuration.optionalPrompt"></label>
                     <span
-                        class="text-secondary d-inline-flex align-items-center"
+                        class="label-with-help-icon"
                         [pTooltip]="'artemisApp.quizExercise.aiGeneration.configuration.optionalPromptTooltip' | artemisTranslate"
                         tooltipPosition="right"
                         appendTo="body"
