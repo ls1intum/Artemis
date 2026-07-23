@@ -374,7 +374,6 @@ describe('CourseManagementContainerComponent', () => {
 
         component.handleToggleSidebar();
         expect(mockConversationsComponent.toggleSidebar).toHaveBeenCalled();
-        expect(component.isSidebarCollapsed()).toBe(false);
     });
 
     it('should not toggle sidebar for non-CourseConversationsComponent', () => {

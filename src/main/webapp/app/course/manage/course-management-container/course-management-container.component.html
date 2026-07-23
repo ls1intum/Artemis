@@ -21,9 +21,9 @@
 
             <div class="layout-content">
                 @if (course()) {
-                    <!-- The communication page renders its title inside its own sidebar (mirroring the student view), so the container title bar is hidden there. -->
+                    <!-- The communication page renders its title (and sidebar toggle) inside its own sidebar, mirroring the student view, so the container title bar is hidden there. -->
                     @if (!hasSidebar()) {
-                        <jhi-course-title-bar [hasSidebar]="hasSidebar()" [isSidebarCollapsed]="isSidebarCollapsed()" [pageTitle]="pageTitle()" (toggleSidebar)="toggleSidebar()">
+                        <jhi-course-title-bar [pageTitle]="pageTitle()">
                             <div class="controls">
                                 @if (course()?.isAtLeastInstructor && isSettingsPage()) {
                                     <jhi-course-exam-archive-button [archiveMode]="'Course'" [course]="course()!" class="archive-button" />
