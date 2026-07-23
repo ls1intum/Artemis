@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.fileupload.dto;
 
+import org.jspecify.annotations.Nullable;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
@@ -21,8 +23,8 @@ import de.tum.cit.aet.artemis.assessment.dto.GradingInstructionDTO;
  * @param gradingInstruction the structured grading instruction linked to the feedback
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record FileUploadFeedbackInputDTO(Long id, String text, String detailText, String reference, Double credits, Boolean positive, FeedbackType type, Visibility visibility,
-        GradingInstructionDTO gradingInstruction) {
+public record FileUploadFeedbackInputDTO(@Nullable Long id, @Nullable String text, @Nullable String detailText, @Nullable String reference, @Nullable Double credits,
+        @Nullable Boolean positive, @Nullable FeedbackType type, @Nullable Visibility visibility, @Nullable GradingInstructionDTO gradingInstruction) {
 
     /**
      * Creates detached feedback entity state for the existing assessment service.

@@ -5,6 +5,8 @@ import static de.tum.cit.aet.artemis.core.config.Constants.COMPLAINT_RESPONSE_TE
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
+import org.jspecify.annotations.Nullable;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.assessment.domain.Complaint;
@@ -18,7 +20,8 @@ import de.tum.cit.aet.artemis.assessment.domain.ComplaintResponse;
  * @param complaintIsAccepted whether the complaint is accepted
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record FileUploadComplaintResponseInputDTO(@NotNull Long id, @Size(max = COMPLAINT_RESPONSE_TEXT_LIMIT) String responseText, @NotNull Boolean complaintIsAccepted) {
+public record FileUploadComplaintResponseInputDTO(@NotNull Long id, @Nullable @Size(max = COMPLAINT_RESPONSE_TEXT_LIMIT) String responseText,
+        @NotNull Boolean complaintIsAccepted) {
 
     /**
      * Creates the minimal detached complaint response state required by the existing assessment service.
