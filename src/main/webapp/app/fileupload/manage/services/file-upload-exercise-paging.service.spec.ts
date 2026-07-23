@@ -39,6 +39,8 @@ describe('FileUploadExercisePagingService', () => {
                     type: ExerciseType.FILE_UPLOAD,
                     title: 'Upload',
                     mode: ExerciseMode.TEAM,
+                    teamMode: true,
+                    gradingInstructionFeedbackUsed: false,
                     course: { id: 7, title: 'Course' },
                 },
             ],

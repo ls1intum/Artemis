@@ -161,6 +161,8 @@ describe('Course Management Service', () => {
             {
                 id: exerciseId,
                 type: ExerciseType.FILE_UPLOAD,
+                teamMode: false,
+                gradingInstructionFeedbackUsed: false,
                 releaseDate: releaseDateString,
                 dueDate: dueDateString,
                 assessmentDueDate: assessmentDueDateString,

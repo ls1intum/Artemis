@@ -11,6 +11,8 @@ import { FileUploadExerciseService } from './file-upload-exercise.service';
 import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
 import { Course } from 'app/course/shared/entities/course.model';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
+import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { FileUploadExerciseDto } from 'app/fileupload/shared/entities/file-upload-exercise-dto';
 
 describe('FileUploadExerciseService', () => {
     let service: FileUploadExerciseService;
@@ -31,6 +33,19 @@ describe('FileUploadExerciseService', () => {
         exercise.assessmentDueDate = dayjs('2023-01-20');
         return exercise;
     };
+
+    const createExerciseDTO = (id: number, title = 'Test Exercise'): FileUploadExerciseDto => ({
+        id,
+        type: ExerciseType.FILE_UPLOAD,
+        title,
+        filePattern: 'pdf,png',
+        releaseDate: '2023-01-01T00:00:00.000Z',
+        dueDate: '2023-01-15T00:00:00.000Z',
+        assessmentDueDate: '2023-01-20T00:00:00.000Z',
+        teamMode: false,
+        gradingInstructionFeedbackUsed: false,
+        course: { id: 123 },
+    });
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -60,7 +75,7 @@ describe('FileUploadExerciseService', () => {
     describe('create', () => {
         it('should create a new exercise', async () => {
             const exercise = createExercise();
-            const expectedExercise = Object.assign({}, exercise, { id: 1 });
+            const expectedExercise = createExerciseDTO(1);
 
             const resultPromise = new Promise<HttpResponse<FileUploadExercise>>((resolve) => {
                 service.create(exercise).subscribe((resp) => resolve(resp));
@@ -83,7 +98,7 @@ describe('FileUploadExerciseService', () => {
 
             const req = httpMock.expectOne({ method: 'POST', url: resourceUrl });
             expect(req.request.body.filePattern).toBe('pdf,png');
-            req.flush({});
+            req.flush(createExerciseDTO(1));
         });
 
         it('should convert dates from client', async () => {
@@ -95,20 +110,24 @@ describe('FileUploadExerciseService', () => {
             const req = httpMock.expectOne({ method: 'POST', url: resourceUrl });
             // Dates should be converted
             expect(req.request.body).toBeDefined();
-            req.flush({});
+            req.flush(createExerciseDTO(1));
         });
     });
 
     describe('update', () => {
         it('should update an existing exercise', async () => {
             const exercise = createExercise(456);
-            const expectedExercise = Object.assign({}, exercise, { title: 'Updated' });
+            const expectedExercise = createExerciseDTO(456, 'Updated');
 
             const resultPromise = new Promise<HttpResponse<FileUploadExercise>>((resolve) => {
                 service.update(exercise).subscribe((resp) => resolve(resp));
             });
 
             const req = httpMock.expectOne({ method: 'PUT', url: `${resourceUrl}/456` });
+            expect(req.request.body.id).toBe(456);
+            expect(req.request.body.title).toBe('Test Exercise');
+            expect(req.request.body.courseId).toBe(123);
+            expect(req.request.body.course).toBeUndefined();
             req.flush(expectedExercise);
 
             const response = await resultPromise;
@@ -129,7 +148,7 @@ describe('FileUploadExerciseService', () => {
 
             const req = httpMock.expectOne((r) => r.url === `${resourceUrl}/456`);
             expect(req.request.params.get('notificationText')).toBe('test');
-            req.flush({});
+            req.flush(createExerciseDTO(456));
         });
 
         it('should format file pattern before updating', async () => {
@@ -140,13 +159,13 @@ describe('FileUploadExerciseService', () => {
 
             const req = httpMock.expectOne({ method: 'PUT', url: `${resourceUrl}/456` });
             expect(req.request.body.filePattern).toBe('pdf,png');
-            req.flush({});
+            req.flush(createExerciseDTO(456));
         });
     });
 
     describe('find', () => {
         it('should find exercise by ID', async () => {
-            const exercise = createExercise(456);
+            const exercise = createExerciseDTO(456);
 
             const resultPromise = new Promise<HttpResponse<FileUploadExercise>>((resolve) => {
                 service.find(456).subscribe((resp) => resolve(resp));
@@ -160,7 +179,7 @@ describe('FileUploadExerciseService', () => {
         });
 
         it('should call processExerciseEntityResponse', async () => {
-            const exercise = createExercise(456);
+            const exercise = createExerciseDTO(456);
 
             service.find(456).subscribe();
 
@@ -188,7 +207,7 @@ describe('FileUploadExerciseService', () => {
     describe('reevaluateAndUpdate', () => {
         it('should re-evaluate and update exercise', async () => {
             const exercise = createExercise(456);
-            const expectedExercise = Object.assign({}, exercise, { score: 100 });
+            const expectedExercise = createExerciseDTO(456);
 
             const resultPromise = new Promise<HttpResponse<FileUploadExercise>>((resolve) => {
                 service.reevaluateAndUpdate(exercise).subscribe((resp) => resolve(resp));
@@ -215,14 +234,14 @@ describe('FileUploadExerciseService', () => {
 
             const req = httpMock.expectOne((r) => r.url === `${resourceUrl}/456/re-evaluate`);
             expect(req.request.params.get('deleteFeedback')).toBe('true');
-            req.flush({});
+            req.flush(createExerciseDTO(456));
         });
     });
 
     describe('import', () => {
         it('should import exercise', async () => {
             const exercise = createExercise(123);
-            const importedExercise = Object.assign({}, exercise, { id: 789 });
+            const importedExercise = createExerciseDTO(789);
 
             const resultPromise = new Promise<HttpResponse<FileUploadExercise>>((resolve) => {
                 service.import(exercise).subscribe((resp) => resolve(resp));
@@ -249,7 +268,7 @@ describe('FileUploadExerciseService', () => {
 
             const req = httpMock.expectOne({ method: 'POST', url: `${resourceUrl}/import?sourceId=123` });
             expect(req.request.body).toBeDefined();
-            req.flush({});
+            req.flush(createExerciseDTO(789));
         });
     });
 
@@ -262,7 +281,7 @@ describe('FileUploadExerciseService', () => {
 
             const req = httpMock.expectOne({ method: 'POST' });
             expect(req.request.body.filePattern).toBe('pdf,png,jpg');
-            req.flush({});
+            req.flush(createExerciseDTO(1));
         });
 
         it('should convert file pattern to lowercase', async () => {
@@ -273,7 +292,7 @@ describe('FileUploadExerciseService', () => {
 
             const req = httpMock.expectOne({ method: 'POST' });
             expect(req.request.body.filePattern).toBe('pdf,png,jpg');
-            req.flush({});
+            req.flush(createExerciseDTO(1));
         });
 
         it('should handle empty file pattern', async () => {
@@ -284,7 +303,7 @@ describe('FileUploadExerciseService', () => {
 
             const req = httpMock.expectOne({ method: 'POST' });
             expect(req.request.body.filePattern).toBe('');
-            req.flush({});
+            req.flush(createExerciseDTO(1));
         });
 
         it('should handle undefined file pattern', async () => {
@@ -295,7 +314,7 @@ describe('FileUploadExerciseService', () => {
 
             const req = httpMock.expectOne({ method: 'POST' });
             expect(req.request.body.filePattern).toBeUndefined();
-            req.flush({});
+            req.flush(createExerciseDTO(1));
         });
     });
 });
