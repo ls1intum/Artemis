@@ -119,6 +119,9 @@ class ProgrammingVariantTools implements VariantToolset {
 
     private final Map<RepositoryType, String> lastBuildResults = new EnumMap<>(RepositoryType.class);
 
+    /** See {@link VariantToolset#lastGreenBuildCommits()}. */
+    private final Map<RepositoryType, String> lastGreenBuildCommits = new EnumMap<>(RepositoryType.class);
+
     private boolean touchedTestRepo;
 
     private String finishSummary;
@@ -167,6 +170,11 @@ class ProgrammingVariantTools implements VariantToolset {
     @Override
     public boolean touchedTestRepo() {
         return touchedTestRepo;
+    }
+
+    @Override
+    public Map<RepositoryType, String> lastGreenBuildCommits() {
+        return Map.copyOf(lastGreenBuildCommits);
     }
 
     @Override
@@ -631,6 +639,7 @@ class ProgrammingVariantTools implements VariantToolset {
             // and mislead the agent (build-dependency constraint).
             BuildResultOutcome outcome = buildVerificationService.waitForBuildResult(exercise, commitHash, repositoryType, triggeredAt);
             jobService.recordBuildStat(jobId, repositoryType.name(), Duration.between(triggeredAt, Instant.now()).toMillis());
+            recordGreenBuildCommit(repositoryType, commitHash, outcome);
             String description = describeOutcome(repositoryType, outcome);
             lastBuildResults.put(repositoryType, description);
             return description;
@@ -686,6 +695,7 @@ class ProgrammingVariantTools implements VariantToolset {
                 if (outcome == null) {
                     continue;
                 }
+                recordGreenBuildCommit(repositoryType, pending.get(repositoryType).commitHash(), outcome);
                 String description = describeOutcome(repositoryType, outcome);
                 lastBuildResults.put(repositoryType, description);
                 report.append("=== ").append(repositoryType).append(" build ===\n").append(description).append('\n');
@@ -852,11 +862,33 @@ class ProgrammingVariantTools implements VariantToolset {
         repositoryService.createFile(repository, path, new ByteArrayInputStream(content.getBytes(StandardCharsets.UTF_8)));
     }
 
+    /**
+     * Tracks the commit hash of the last build that reached its target for SOLUTION/TEMPLATE, so the VERIFYING
+     * gate can reuse it instead of re-triggering (see {@link VariantToolset#lastGreenBuildCommits()}). A
+     * non-SUCCESS outcome clears any earlier green record for the same repository — a regression must never be
+     * masked by a stale green entry from an earlier build this round.
+     */
+    private void recordGreenBuildCommit(RepositoryType repositoryType, String commitHash, BuildResultOutcome outcome) {
+        if (repositoryType != RepositoryType.SOLUTION && repositoryType != RepositoryType.TEMPLATE) {
+            return;
+        }
+        if (outcome.state() == VariantBuildVerificationService.BuildResultState.SUCCESS) {
+            lastGreenBuildCommits.put(repositoryType, commitHash);
+        }
+        else {
+            lastGreenBuildCommits.remove(repositoryType);
+        }
+    }
+
     private void markTouched(RepositoryType repositoryType) {
         if (repositoryType == RepositoryType.TESTS) {
-            // A test-repo change invalidates every previously green build result (build-dependency constraint);
-            // the verifier re-runs both builds with a freshness bound, so nothing stale is reused.
+            // A test-repo change invalidates every previously green build result (build-dependency constraint).
+            // The VERIFYING gate always re-triggers with a freshness bound regardless, and dropping the
+            // solution/template entries here means it can never mistake a same-commit match for a still-valid
+            // green build after the tests they were built against have changed.
             touchedTestRepo = true;
+            lastGreenBuildCommits.remove(RepositoryType.SOLUTION);
+            lastGreenBuildCommits.remove(RepositoryType.TEMPLATE);
         }
     }
 

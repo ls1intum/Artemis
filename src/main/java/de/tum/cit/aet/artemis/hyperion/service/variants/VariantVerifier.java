@@ -15,8 +15,11 @@ public interface VariantVerifier {
      * @param plan    the ChangePlan whose invariants the semantic gate checks
      * @param job     the running job — LLM-backed gates (consistency check, quiz critique) attribute their
      *                    token usage to it
+     * @param toolset the SAME toolset instance the just-finished agent round used, so a verifier can reuse the
+     *                    round's own build evidence instead of always re-triggering (see
+     *                    {@link VariantToolset#lastGreenBuildCommits()}); unused by verifiers with nothing to reuse
      * @return structured report; findings feed the agent loop as the repair signal, or the warnings list on
      *         DRAFT_WITH_WARNINGS (never silent success)
      */
-    VerificationReport verify(Exercise variant, ChangePlan plan, VariantJob job);
+    VerificationReport verify(Exercise variant, ChangePlan plan, VariantJob job, VariantToolset toolset);
 }

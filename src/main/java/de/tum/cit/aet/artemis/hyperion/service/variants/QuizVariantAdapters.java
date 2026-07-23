@@ -178,7 +178,9 @@ public class QuizVariantAdapters implements VariantTypeAdapters {
     }
 
     @Override
-    public VerificationReport verify(Exercise variant, ChangePlan plan, VariantJob job) {
+    public VerificationReport verify(Exercise variant, ChangePlan plan, VariantJob job, VariantToolset toolset) {
+        // Quiz verification is fully deterministic/synchronous (no CI builds) — nothing in the just-finished
+        // round's toolset to reuse here; the parameter exists only to satisfy the shared VariantVerifier contract.
         QuizExercise quiz = quizExerciseRepository.findByIdWithQuestionsElseThrow(variant.getId());
         List<VerificationReport.VerificationFinding> findings = new ArrayList<>();
 

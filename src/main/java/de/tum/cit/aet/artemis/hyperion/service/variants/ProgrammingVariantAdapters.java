@@ -193,15 +193,16 @@ public class ProgrammingVariantAdapters implements VariantTypeAdapters {
     }
 
     @Override
-    public VerificationReport verify(Exercise variant, ChangePlan plan, VariantJob job) {
+    public VerificationReport verify(Exercise variant, ChangePlan plan, VariantJob job, VariantToolset toolset) {
         ProgrammingExercise exercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(variant.getId());
         List<VerificationReport.VerificationFinding> findings = new ArrayList<>();
 
         // Gate 1: fresh builds for BOTH repositories — solution must pass 100%, template must fail with tests
-        // present. Builds are always re-triggered with a freshness bound so a test-repo change can never smuggle
-        // a stale green result past the gate (build-dependency constraint). Both are triggered together and
-        // awaited jointly: they run concurrently in CI, so the gate costs about the slower build, not the sum.
-        verifyBuilds(exercise, findings, job.getJobId());
+        // present. A repository whose current commit matches the agent's own last green build for it this round
+        // (toolset.lastGreenBuildCommits(), invalidated on any test-repo change) reuses that result instead of
+        // re-triggering; everything else is triggered together and awaited jointly, since the builds run
+        // concurrently in CI and the gate then costs about the slower build, not the sum.
+        verifyBuilds(exercise, findings, job.getJobId(), toolset.lastGreenBuildCommits());
 
         // Gate 3: semantic consistency between problem statement and artifacts — only worth
         // its LLM cost once the deterministic gates are green.
@@ -333,7 +334,8 @@ public class ProgrammingVariantAdapters implements VariantTypeAdapters {
      * under a single shared timeout. The builds run concurrently in CI, so joint waiting costs about the slower
      * build instead of the sum of the two.
      */
-    private void verifyBuilds(ProgrammingExercise exercise, List<VerificationReport.VerificationFinding> findings, String jobId) {
+    private void verifyBuilds(ProgrammingExercise exercise, List<VerificationReport.VerificationFinding> findings, String jobId,
+            Map<RepositoryType, String> lastGreenBuildCommits) {
         Map<RepositoryType, BuildGate> gates = new EnumMap<>(RepositoryType.class);
         gates.put(RepositoryType.SOLUTION, new BuildGate(VerificationReport.VerificationGate.SOLUTION_BUILD, "The solution repository build must compile and pass 100% of tests."));
         gates.put(RepositoryType.TEMPLATE,
@@ -349,6 +351,14 @@ public class ProgrammingVariantAdapters implements VariantTypeAdapters {
                 continue;
             }
             String commitHash = gitService.getLastCommitHash(repositoryUri);
+            if (commitHash != null && commitHash.equals(lastGreenBuildCommits.get(repositoryType))) {
+                // The agent's own last build this round already reached this repository's target on this EXACT
+                // commit (and no test-repo change invalidated it since) — reproducing that result would just
+                // cost another full CI build for no new information.
+                jobService.recordBuildStat(jobId, "VERIFYING:" + repositoryType + " (reused)", 0);
+                log.debug("Reusing the agent's last green {} build for exercise {} (commit {}) instead of re-verifying", repositoryType, exercise.getId(), commitHash);
+                continue;
+            }
             ProgrammingExerciseParticipation participation = switch (repositoryType) {
                 case TEMPLATE -> programmingExerciseParticipationService.findTemplateParticipationByProgrammingExerciseId(exercise.getId());
                 default -> programmingExerciseParticipationService.retrieveSolutionParticipation(exercise);
@@ -368,7 +378,8 @@ public class ProgrammingVariantAdapters implements VariantTypeAdapters {
         Instant jointTriggeredAt = Instant.now();
         try {
             Map<RepositoryType, BuildResultOutcome> outcomes = buildVerificationService.waitForBuildResults(exercise, pending);
-            jobService.recordBuildStat(jobId, "VERIFYING:SOLUTION+TEMPLATE (joint)", Duration.between(jointTriggeredAt, Instant.now()).toMillis());
+            String triggeredLabel = pending.keySet().stream().map(RepositoryType::name).collect(Collectors.joining("+"));
+            jobService.recordBuildStat(jobId, "VERIFYING:" + triggeredLabel + (pending.size() > 1 ? " (joint)" : ""), Duration.between(jointTriggeredAt, Instant.now()).toMillis());
             for (Map.Entry<RepositoryType, BuildResultOutcome> entry : outcomes.entrySet()) {
                 addBuildFinding(exercise, entry.getKey(), gates.get(entry.getKey()), entry.getValue(), findings);
             }
