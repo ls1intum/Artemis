@@ -157,17 +157,27 @@ describe('TumUiRadioButtonComponent (two-way [(ngModel)] group via CVA)', () => 
         fixture.detectChanges();
 
         const inputs = fixture.debugElement.queryAll(By.css('input[type="radio"]')).map((d) => d.nativeElement as HTMLInputElement);
-        // executeNow === false -> the [value]="false" radio is checked.
+        const boxes = fixture.debugElement.queryAll(By.css('.tum-ui-radio-button-box')).map((d) => d.nativeElement as HTMLElement);
+        // executeNow === false -> the [value]="false" radio is checked and visually filled.
         expect(inputs[0].checked).toBe(true);
         expect(inputs[1].checked).toBe(false);
+        expect(boxes[0].className).toContain('bg-primary');
+        expect(boxes[1].className).not.toContain('bg-primary');
 
         inputs[1].click();
         fixture.detectChanges();
         await fixture.whenStable();
+        // The sibling's writeValue (from the shared model changing) resolves on a microtask, like the initial one.
+        fixture.detectChanges();
 
         expect(host.executeNow).toBe(true);
         expect(inputs[0].checked).toBe(false);
         expect(inputs[1].checked).toBe(true);
+        // Regression: the CLICKED radio must also become visually filled. NgModel never calls writeValue back on
+        // the initiating accessor, so the radio must reflect its own selection — otherwise (as reported on the
+        // data-export dialog) switching left neither radio filled.
+        expect(boxes[1].className).toContain('bg-primary');
+        expect(boxes[0].className).not.toContain('bg-primary');
     });
 });
 

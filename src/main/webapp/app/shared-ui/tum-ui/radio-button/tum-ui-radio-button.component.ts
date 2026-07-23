@@ -87,8 +87,12 @@ export class TumUiRadioButtonComponent implements ControlValueAccessor {
         if (this.isDisabled()) {
             return;
         }
-        // Update the form model (drives [(ngModel)] / formControlName grouping); harmless when unbound or
-        // one-way. Selection then flows back in through writeValue, keeping the rendered state controlled.
+        // Optimistically mark THIS radio selected: NgModel does not call writeValue back on the accessor that
+        // initiated the change (CVA loop-avoidance), so the clicked radio would otherwise never see its own new
+        // value and its visual `isChecked` would stay stale. Sibling radios still update via their writeValue when
+        // the shared model changes. A subsequent writeValue (e.g. the parent rejecting the value) still corrects it.
+        this.cvaValue.set(this.value());
+        // Update the form model (drives [(ngModel)] / formControlName grouping); harmless when unbound or one-way.
         this.onModelChange(this.value());
         this.onModelTouched();
         this.onClick.emit({ originalEvent: event, value: this.value() });
