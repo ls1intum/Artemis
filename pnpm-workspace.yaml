@@ -21,28 +21,15 @@ enablePrePostScripts: true
 
 # pnpm 11 enforces a default `minimumReleaseAge` (24h): a frozen install rejects
 # any lockfile entry published within the last day as a supply-chain safeguard.
-# PrimeNG is intentionally pinned to the latest stable release of its current
-# major (the whole PrimeNG ecosystem moves together), and this branch adopts fresh
-# patches as soon as they publish, so the ecosystem is excluded from the age gate.
-# Remove an entry once its pinned version is older than the cutoff (by then the
-# gate passes on its own).
+# When a freshly-published (<24h) version is pinned deliberately, list it here so the
+# frozen install passes, then remove the entry once the version has aged past the cutoff
+# (by then the gate passes on its own). Entries for versions that have already aged out
+# have been removed — keep this list minimal.
 minimumReleaseAgeExclude:
-    - primeng
-    - '@primeuix/*'
-    - primeicons
-    # AnalogJS 2.6.x reached a stable 2.6.3 (was 2.6.3-beta.1); the Angular-22-compatible
-    # vite-plugin-angular / vitest-angular were published recently. Remove once a
-    # stable AnalogJS 2.6.x is older than the cutoff.
-    - '@analogjs/*'
-    # The Angular 22.0.7 framework + CLI/build/devkit packages (including the transitive
-    # @angular-devkit/@ngtools/@schematics tooling) were published <24h before this latest-dependency
-    # bump (2026-07-15/16), so the frozen supply-chain gate rejects them until they age past the
-    # 24h cutoff. This is the dedicated latest-dependency branch, so the newest patch is adopted
-    # deliberately. Remove these once the versions are older than the cutoff.
-    - '@angular/*'
-    - '@angular-devkit/*'
-    - '@ngtools/*'
-    - '@schematics/*'
+    # katex 0.18.1 was published 2026-07-19 (<24h before this bump), so the frozen
+    # supply-chain gate rejects it until it ages past the 24h cutoff (~2026-07-20T08:40).
+    # Remove this entry once 0.18.1 is older than the cutoff (the gate then passes on its own).
+    - katex
 
 # Tell pnpm that Angular 22 is an acceptable peer for packages whose published
 # peerDependencies range still lists only older majors ("18.x || 19.x || 20.x || 21.x").
@@ -103,7 +90,7 @@ overrides:
     ip-address: '10.2.0'
     js-yaml: '4.2.0'
     jsdom: '29.1.1'
-    katex: '0.17.0'
+    katex: '0.18.1'
     minimatch: '10.2.5'
     piscina: '5.2.0'
     postcss: '8.5.14'
