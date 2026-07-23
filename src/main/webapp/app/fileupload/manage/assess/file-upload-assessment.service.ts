@@ -71,17 +71,19 @@ export class FileUploadAssessmentService {
     private convertResultEntityResponseTypeFromServer(res: FileUploadResultDTOResponseType): EntityResponseType {
         const body = res.body;
         if (!body) {
-            return res.clone({ body });
+            return res.clone<Result>({ body: null });
         }
         return res.clone({ body: this.convertResultFromServer(body) });
     }
 
     private convertResultFromServer(dto: FileUploadResultDTO): Result {
-        const result = Object.assign(new Result(), dto);
+        const result = new Result();
+        Object.assign(result, dto);
         result.completionDate = convertDateFromServer(dto.completionDate);
         result.feedbacks = dto.feedbacks?.map(convertFeedbackFromServer);
         if (dto.submission) {
-            const submission = Object.assign(new FileUploadSubmission(), dto.submission);
+            const submission = new FileUploadSubmission();
+            Object.assign(submission, dto.submission);
             submission.submissionDate = convertDateFromServer(dto.submission.submissionDate);
             submission.filePathUrl = addPublicFilePrefix(dto.submission.filePath);
             if (submission.participation) {
