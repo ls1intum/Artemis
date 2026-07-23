@@ -13,7 +13,6 @@ import { MessageModule } from 'primeng/message';
 
 import { AlertService } from 'app/foundation/service/alert.service';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { onError } from 'app/foundation/util/global.utils';
 import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
@@ -28,17 +27,7 @@ import { TranslateService } from '@ngx-translate/core';
 @Component({
     selector: 'jhi-presentation-assessment-management',
     templateUrl: './presentation-assessment-management.component.html',
-    imports: [
-        FaIconComponent,
-        TranslateDirective,
-        ArtemisTranslatePipe,
-        DeleteButtonDirective,
-        ArtemisDatePipe,
-        CourseTitleBarActionsDirective,
-        ButtonModule,
-        TableModule,
-        MessageModule,
-    ],
+    imports: [FaIconComponent, TranslateDirective, DeleteButtonDirective, ArtemisDatePipe, CourseTitleBarActionsDirective, ButtonModule, TableModule, MessageModule],
 })
 export class PresentationAssessmentManagementComponent implements OnInit {
     private readonly route = inject(ActivatedRoute);

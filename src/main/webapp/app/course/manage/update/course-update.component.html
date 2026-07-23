@@ -371,23 +371,20 @@
                         </div>
                     </div>
                 </jhi-feature-overlay>
-                <div class="form-group">
-                    <div class="form-check">
-                        <input
-                            type="checkbox"
-                            class="form-check-input"
-                            id="field_presentationAssessmentsEnabled"
-                            name="presentationAssessmentsEnabled"
-                            formControlName="presentationAssessmentsEnabled"
-                        />
-                        <label class="form-control-label" jhiTranslate="artemisApp.course.presentationAssessments.label" for="field_presentationAssessmentsEnabled"></label>
-                        <fa-icon
-                            [icon]="faQuestionCircle"
-                            class="text-secondary"
-                            [pTooltip]="'artemisApp.course.presentationAssessments.tooltip' | artemisTranslate"
-                            tooltipPosition="right"
-                        />
-                    </div>
+                <div class="presentation-assessments-setting">
+                    <p-checkbox
+                        inputId="field_presentationAssessmentsEnabled"
+                        name="presentationAssessmentsEnabled"
+                        formControlName="presentationAssessmentsEnabled"
+                        [binary]="true"
+                    />
+                    <label jhiTranslate="artemisApp.course.presentationAssessments.label" for="field_presentationAssessmentsEnabled"></label>
+                    <fa-icon
+                        [icon]="faQuestionCircle"
+                        class="text-muted-color"
+                        [pTooltip]="'artemisApp.course.presentationAssessments.tooltip' | artemisTranslate"
+                        tooltipPosition="right"
+                    />
                 </div>
                 @if (isAdmin() && isAthenaEnabled()) {
                     <div class="form-group form-check">
