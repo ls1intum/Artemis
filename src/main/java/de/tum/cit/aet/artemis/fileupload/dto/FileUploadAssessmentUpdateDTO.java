@@ -20,8 +20,8 @@ import de.tum.cit.aet.artemis.assessment.dto.AssessmentUpdateDTO;
  * @param assessmentNote    the optional private assessment note
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record FileUploadAssessmentUpdateDTO(@Nullable List<@Valid FileUploadFeedbackInputDTO> feedbacks, @NotNull @Valid FileUploadComplaintResponseInputDTO complaintResponse,
-        @Nullable String assessmentNote) {
+public record FileUploadAssessmentUpdateDTO(@Nullable List<@NotNull @Valid FileUploadFeedbackInputDTO> feedbacks,
+        @NotNull @Valid FileUploadComplaintResponseInputDTO complaintResponse, @Nullable String assessmentNote) {
 
     /**
      * Creates detached feedback entity state for the existing assessment service.

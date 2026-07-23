@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.fileupload.dto;
 import java.util.List;
 
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
 
 import org.jspecify.annotations.Nullable;
 
@@ -17,7 +18,7 @@ import de.tum.cit.aet.artemis.assessment.domain.Feedback;
  * @param assessmentNote the optional private assessment note
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record FileUploadAssessmentInputDTO(@Nullable List<@Valid FileUploadFeedbackInputDTO> feedbacks, @Nullable String assessmentNote) {
+public record FileUploadAssessmentInputDTO(@Nullable List<@NotNull @Valid FileUploadFeedbackInputDTO> feedbacks, @Nullable String assessmentNote) {
 
     /**
      * Creates detached feedback entity state for the existing assessment service.
