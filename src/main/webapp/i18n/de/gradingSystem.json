@@ -94,6 +94,7 @@
                 "invalidPresentationsNumber": "Die Anzahl der Präsentationen muss ganzzahlig größer als 0 sein!",
                 "invalidPresentationsWeight": "Das Gesamtgewicht der Präsentationen muss zwischen 0 und 99 liegen!",
                 "maxPointsTooHigh": "Die maximale Punktzahl darf {{ max }} nicht überschreiten.",
+                "maxPointsTooLow": "Die maximale Punktzahl muss mindestens {{ min }} betragen.",
                 "maxPointsWholeNumber": "Die maximale Punktzahl muss eine ganze Zahl sein.",
                 "valueTooHigh": "Der Wert darf {{ max }} nicht überschreiten."
             },

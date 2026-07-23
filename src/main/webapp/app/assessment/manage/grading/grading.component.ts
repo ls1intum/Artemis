@@ -158,13 +158,16 @@ export class GradingComponent implements OnInit {
     maxPoints = signal<number | undefined>(undefined);
 
     /**
-     * Error message shown when the configured max points are not a whole number or exceed {@link MAX_GRADING_POINTS}.
+     * Error message shown when the configured max points are not a whole number, are below 1, or exceed {@link MAX_GRADING_POINTS}.
      * Also used to block saving, both by disabling the save buttons and by guarding the {@link save} handler.
      */
     readonly maxPointsErrorMessage = computed<string | undefined>(() => {
         const maxPoints = this.maxPoints();
         if (maxPoints != undefined && !Number.isInteger(maxPoints)) {
             return this.translateService.instant('artemisApp.gradingSystem.error.maxPointsWholeNumber');
+        }
+        if (maxPoints != undefined && maxPoints < 1) {
+            return this.translateService.instant('artemisApp.gradingSystem.error.maxPointsTooLow', { min: 1 });
         }
         if (maxPoints != undefined && maxPoints > MAX_GRADING_POINTS) {
             return this.translateService.instant('artemisApp.gradingSystem.error.maxPointsTooHigh', { max: MAX_GRADING_POINTS });

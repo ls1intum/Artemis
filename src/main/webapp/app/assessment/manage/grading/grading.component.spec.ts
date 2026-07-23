@@ -602,6 +602,12 @@ describe('GradingComponent', () => {
             expect(comp.maxPointsErrorMessage()).toBeDefined();
         });
 
+        it('should reject a max points value below 1 with the too-low message', () => {
+            comp.course.set(course);
+            comp.maxPoints.set(0);
+            expect(comp.maxPointsErrorMessage()).toBe('artemisApp.gradingSystem.error.maxPointsTooLow');
+        });
+
         it('should reject a decimal basic presentation score', () => {
             const basicCourse = new Course();
             basicCourse.presentationScore = 2.5;
