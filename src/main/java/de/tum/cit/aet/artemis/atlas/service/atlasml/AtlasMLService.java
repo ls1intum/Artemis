@@ -139,12 +139,28 @@ public class AtlasMLService {
     }
 
     /**
-     * Suggests competencies based on the provided request.
+     * Suggests competencies based on the provided request, using the standard AtlasML timeouts.
      *
      * @param request the suggestion request containing id and description
      * @return the suggested competency IDs and their relations
      */
     public SuggestCompetencyResponseDTO suggestCompetencies(SuggestCompetencyRequestDTO request) {
+        return suggestCompetencies(request, atlasmlRestTemplate);
+    }
+
+    /**
+     * Suggests competencies using the short-timeout RestTemplate. Intended for best-effort / advisory callers
+     * (e.g. the orchestrator similarity shortlist) that must not block on a slow or unreachable AtlasML instance:
+     * the standard 30s/60s timeouts could otherwise hold a caller for minutes when AtlasML is degraded.
+     *
+     * @param request the suggestion request containing id and description
+     * @return the suggested competency IDs and their relations
+     */
+    public SuggestCompetencyResponseDTO suggestCompetenciesWithShortTimeout(SuggestCompetencyRequestDTO request) {
+        return suggestCompetencies(request, shortTimeoutAtlasmlRestTemplate);
+    }
+
+    private SuggestCompetencyResponseDTO suggestCompetencies(SuggestCompetencyRequestDTO request, RestTemplate restTemplate) {
         try {
             log.debug("Requesting competency suggestions for id: {}", request.description());
             HttpHeaders headers = buildHeadersWithAuth();
@@ -153,7 +169,7 @@ public class AtlasMLService {
 
             // Get the raw response as String first to handle empty array responses
             // TODO: please directly convert the response: the REST Template can handle empty responses
-            ResponseEntity<String> response = atlasmlRestTemplate.exchange(config.getAtlasmlBaseUrl() + SUGGEST_ENDPOINT, HttpMethod.POST, entity, String.class);
+            ResponseEntity<String> response = restTemplate.exchange(config.getAtlasmlBaseUrl() + SUGGEST_ENDPOINT, HttpMethod.POST, entity, String.class);
 
             String responseBody = response.getBody();
 
