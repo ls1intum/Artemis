@@ -297,6 +297,8 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
         }
         if (this.activatedComponentReference() instanceof CourseConversationsComponent) {
             const childRouteComponent = this.activatedComponentReference() as CourseConversationsComponent;
+            // Show the page title inside the conversations sidebar header, mirroring the student overview.
+            childRouteComponent.setPageTitle(this.pageTitle());
             this.isSidebarCollapsed.set(childRouteComponent?.isCollapsed() ?? false);
         }
         // if we don't scroll to the top, the page will be scrolled to the last position which is not expected by the user
