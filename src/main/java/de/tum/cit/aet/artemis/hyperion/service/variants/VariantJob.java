@@ -5,6 +5,7 @@ import java.io.Serializable;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.EnumMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -92,6 +93,39 @@ public class VariantJob implements Serializable {
      * FAILED-stale on read — see {@link ExerciseVariantJobService}.
      */
     private Instant lastHeartbeatAt;
+
+    /**
+     * Baseline performance telemetry (call count + total wall-clock ms), keyed by tool name, accumulated across
+     * every agent round of this job — a prerequisite for quantifying further performance work against a real
+     * baseline instead of eyeballing logs.
+     */
+    private Map<String, CallStat> toolCallStats = new LinkedHashMap<>();
+
+    /**
+     * Baseline build telemetry (trigger -> result wall-clock ms), keyed by a human-readable label (e.g.
+     * "SOLUTION", "SOLUTION+TEMPLATE (joint)", "VERIFYING:SOLUTION+TEMPLATE (joint)") so agent-triggered builds
+     * and the deterministic VERIFYING re-verification gate can be told apart.
+     */
+    private Map<String, CallStat> buildStats = new LinkedHashMap<>();
+
+    /**
+     * One accumulated telemetry bucket: how many times something ran and how much total wall-clock time it took.
+     *
+     * @param count       number of calls/builds accumulated into this bucket
+     * @param totalMillis their combined wall-clock duration
+     */
+    public record CallStat(int count, long totalMillis) implements Serializable {
+
+        @Serial
+        private static final long serialVersionUID = 1L;
+
+        /**
+         * @return a new stat with one more call/build of the given duration folded in
+         */
+        CallStat plus(long millis) {
+            return new CallStat(count + 1, totalMillis + millis);
+        }
+    }
 
     public String getJobId() {
         return jobId;
@@ -275,5 +309,21 @@ public class VariantJob implements Serializable {
 
     public void setLastHeartbeatAt(Instant lastHeartbeatAt) {
         this.lastHeartbeatAt = lastHeartbeatAt;
+    }
+
+    public Map<String, CallStat> getToolCallStats() {
+        return toolCallStats;
+    }
+
+    public void setToolCallStats(Map<String, CallStat> toolCallStats) {
+        this.toolCallStats = toolCallStats;
+    }
+
+    public Map<String, CallStat> getBuildStats() {
+        return buildStats;
+    }
+
+    public void setBuildStats(Map<String, CallStat> buildStats) {
+        this.buildStats = buildStats;
     }
 }

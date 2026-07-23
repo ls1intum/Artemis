@@ -6,14 +6,15 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
+import java.time.Duration;
 import java.time.Instant;
-import java.util.Arrays;
 import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 import org.eclipse.jgit.api.errors.GitAPIException;
@@ -124,6 +125,8 @@ class ProgrammingVariantTools implements VariantToolset {
 
     private int toolCallsUsed;
 
+    private final ConcurrentHashMap<String, VariantJob.CallStat> toolCallStats = new ConcurrentHashMap<>();
+
     /** Small indirection so tests can stub CI triggering without a full CI setup. */
     @FunctionalInterface
     interface VariantBuildTrigger {
@@ -153,7 +156,12 @@ class ProgrammingVariantTools implements VariantToolset {
 
     @Override
     public List<ToolCallback> toolCallbacks() {
-        return Arrays.asList(MethodToolCallbackProvider.builder().toolObjects(this).build().getToolCallbacks());
+        return VariantToolset.withTiming(MethodToolCallbackProvider.builder().toolObjects(this).build().getToolCallbacks(), toolCallStats);
+    }
+
+    @Override
+    public Map<String, VariantJob.CallStat> toolCallStats() {
+        return Map.copyOf(toolCallStats);
     }
 
     @Override
@@ -622,6 +630,7 @@ class ProgrammingVariantTools implements VariantToolset {
             // solution/template commit after a test-repo edit would instantly return the stale pre-change result
             // and mislead the agent (build-dependency constraint).
             BuildResultOutcome outcome = buildVerificationService.waitForBuildResult(exercise, commitHash, repositoryType, triggeredAt);
+            jobService.recordBuildStat(jobId, repositoryType.name(), Duration.between(triggeredAt, Instant.now()).toMillis());
             String description = describeOutcome(repositoryType, outcome);
             lastBuildResults.put(repositoryType, description);
             return description;
@@ -668,8 +677,10 @@ class ProgrammingVariantTools implements VariantToolset {
         if (pending.isEmpty()) {
             return report.append("No builds were triggered.").toString();
         }
+        Instant jointTriggeredAt = Instant.now();
         try {
             Map<RepositoryType, BuildResultOutcome> outcomes = buildVerificationService.waitForBuildResults(exercise, pending);
+            jobService.recordBuildStat(jobId, "SOLUTION+TEMPLATE (joint)", Duration.between(jointTriggeredAt, Instant.now()).toMillis());
             for (RepositoryType repositoryType : List.of(RepositoryType.SOLUTION, RepositoryType.TEMPLATE)) {
                 BuildResultOutcome outcome = outcomes.get(repositoryType);
                 if (outcome == null) {

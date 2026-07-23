@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.hyperion.service.variants;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.EnumMap;
@@ -200,7 +201,7 @@ public class ProgrammingVariantAdapters implements VariantTypeAdapters {
         // present. Builds are always re-triggered with a freshness bound so a test-repo change can never smuggle
         // a stale green result past the gate (build-dependency constraint). Both are triggered together and
         // awaited jointly: they run concurrently in CI, so the gate costs about the slower build, not the sum.
-        verifyBuilds(exercise, findings);
+        verifyBuilds(exercise, findings, job.getJobId());
 
         // Gate 3: semantic consistency between problem statement and artifacts — only worth
         // its LLM cost once the deterministic gates are green.
@@ -332,7 +333,7 @@ public class ProgrammingVariantAdapters implements VariantTypeAdapters {
      * under a single shared timeout. The builds run concurrently in CI, so joint waiting costs about the slower
      * build instead of the sum of the two.
      */
-    private void verifyBuilds(ProgrammingExercise exercise, List<VerificationReport.VerificationFinding> findings) {
+    private void verifyBuilds(ProgrammingExercise exercise, List<VerificationReport.VerificationFinding> findings, String jobId) {
         Map<RepositoryType, BuildGate> gates = new EnumMap<>(RepositoryType.class);
         gates.put(RepositoryType.SOLUTION, new BuildGate(VerificationReport.VerificationGate.SOLUTION_BUILD, "The solution repository build must compile and pass 100% of tests."));
         gates.put(RepositoryType.TEMPLATE,
@@ -364,8 +365,10 @@ public class ProgrammingVariantAdapters implements VariantTypeAdapters {
         if (pending.isEmpty()) {
             return;
         }
+        Instant jointTriggeredAt = Instant.now();
         try {
             Map<RepositoryType, BuildResultOutcome> outcomes = buildVerificationService.waitForBuildResults(exercise, pending);
+            jobService.recordBuildStat(jobId, "VERIFYING:SOLUTION+TEMPLATE (joint)", Duration.between(jointTriggeredAt, Instant.now()).toMillis());
             for (Map.Entry<RepositoryType, BuildResultOutcome> entry : outcomes.entrySet()) {
                 addBuildFinding(exercise, entry.getKey(), gates.get(entry.getKey()), entry.getValue(), findings);
             }

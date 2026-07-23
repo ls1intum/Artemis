@@ -1,11 +1,12 @@
 package de.tum.cit.aet.artemis.hyperion.service.variants;
 
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -71,6 +72,8 @@ class QuizVariantTools implements VariantToolset {
 
     private int toolCallsUsed;
 
+    private final ConcurrentHashMap<String, VariantJob.CallStat> toolCallStats = new ConcurrentHashMap<>();
+
     QuizVariantTools(long quizExerciseId, String jobId, ExerciseVariantJobService jobService, QuizExerciseRepository quizExerciseRepository,
             QuizExerciseService quizExerciseService, ObjectMapper objectMapper) {
         this.quizExerciseId = quizExerciseId;
@@ -83,7 +86,12 @@ class QuizVariantTools implements VariantToolset {
 
     @Override
     public List<ToolCallback> toolCallbacks() {
-        return Arrays.asList(MethodToolCallbackProvider.builder().toolObjects(this).build().getToolCallbacks());
+        return VariantToolset.withTiming(MethodToolCallbackProvider.builder().toolObjects(this).build().getToolCallbacks(), toolCallStats);
+    }
+
+    @Override
+    public Map<String, VariantJob.CallStat> toolCallStats() {
+        return Map.copyOf(toolCallStats);
     }
 
     @Override

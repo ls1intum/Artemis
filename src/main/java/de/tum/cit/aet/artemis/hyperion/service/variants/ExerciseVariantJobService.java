@@ -4,13 +4,18 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 import jakarta.annotation.PostConstruct;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
@@ -42,6 +47,8 @@ import de.tum.cit.aet.artemis.hyperion.service.websocket.HyperionWebsocketServic
 @Lazy
 @Conditional(HyperionEnabled.class)
 public class ExerciseVariantJobService {
+
+    private static final Logger log = LoggerFactory.getLogger(ExerciseVariantJobService.class);
 
     static final String JOB_MAP_NAME = "hyperion-exercise-variant-jobs";
 
@@ -259,6 +266,42 @@ public class ExerciseVariantJobService {
     }
 
     /**
+     * Merges one agent round's per-tool-call telemetry (name -> call count/total ms, collected by
+     * {@link VariantToolset#toolCallStats()}) into the job's running totals. No event — read from the job record
+     * (and logged as a summary at job end), like token usage.
+     *
+     * @param jobId      the job id
+     * @param roundStats this round's tool-call stats, possibly empty
+     */
+    public void recordToolCallStats(String jobId, Map<String, VariantJob.CallStat> roundStats) {
+        if (roundStats == null || roundStats.isEmpty()) {
+            return;
+        }
+        mutate(jobId, mutableJob -> {
+            Map<String, VariantJob.CallStat> merged = new LinkedHashMap<>(mutableJob.getToolCallStats());
+            roundStats.forEach((toolName, stat) -> merged.merge(toolName, stat,
+                    (existing, added) -> new VariantJob.CallStat(existing.count() + added.count(), existing.totalMillis() + added.totalMillis())));
+            mutableJob.setToolCallStats(merged);
+        });
+    }
+
+    /**
+     * Records one build's trigger-to-result wall-clock time under a human-readable label (e.g. "SOLUTION",
+     * "SOLUTION+TEMPLATE (joint)", "VERIFYING:SOLUTION+TEMPLATE (joint)"), accumulating count/total ms per label.
+     *
+     * @param jobId         the job id
+     * @param label         which build this was
+     * @param elapsedMillis how long the trigger-to-result wait took
+     */
+    public void recordBuildStat(String jobId, String label, long elapsedMillis) {
+        mutate(jobId, mutableJob -> {
+            Map<String, VariantJob.CallStat> merged = new LinkedHashMap<>(mutableJob.getBuildStats());
+            merged.merge(label, new VariantJob.CallStat(1, elapsedMillis), (existing, added) -> existing.plus(added.totalMillis()));
+            mutableJob.setBuildStats(merged);
+        });
+    }
+
+    /**
      * Stores the provisioned variant exercise id on the job (set during PROVISIONING; used by cleanup, the
      * tray deep link, and the DONE event).
      *
@@ -287,6 +330,7 @@ public class ExerciseVariantJobService {
             }
             mutableJob.setFinishedAt(Instant.now());
         });
+        logTelemetrySummary(job);
         publish(job, VariantGenerationEventDTO.done(terminalPhase, variantExerciseId, warnings));
     }
 
@@ -319,6 +363,7 @@ public class ExerciseVariantJobService {
             mutableJob.setVariantExerciseId(null); // clone was deleted by the hard-failure cleanup — no deep link
             mutableJob.setFinishedAt(Instant.now());
         });
+        logTelemetrySummary(job);
         publish(job, VariantGenerationEventDTO.failed(detail));
     }
 
@@ -333,7 +378,27 @@ public class ExerciseVariantJobService {
             mutableJob.setVariantExerciseId(null); // clone was deleted — no deep link
             mutableJob.setFinishedAt(Instant.now());
         });
+        logTelemetrySummary(job);
         publish(job, VariantGenerationEventDTO.cancelled());
+    }
+
+    /**
+     * Logs the job's accumulated per-tool-call and per-build telemetry at its terminal transition — the baseline
+     * every further performance change (batching, joint builds, ...) should be quantified against instead of
+     * eyeballed from raw logs.
+     */
+    private void logTelemetrySummary(VariantJob job) {
+        if (job.getToolCallStats().isEmpty() && job.getBuildStats().isEmpty()) {
+            return;
+        }
+        String toolSummary = formatStatsSummary(job.getToolCallStats());
+        String buildSummary = formatStatsSummary(job.getBuildStats());
+        log.info("Variant job {} telemetry — tool calls: [{}], builds: [{}]", job.getJobId(), toolSummary, buildSummary);
+    }
+
+    private static String formatStatsSummary(Map<String, VariantJob.CallStat> stats) {
+        return stats.entrySet().stream().map(entry -> entry.getKey() + "=" + entry.getValue().count() + "x/" + entry.getValue().totalMillis() + "ms")
+                .collect(Collectors.joining(", "));
     }
 
     /**
@@ -370,6 +435,7 @@ public class ExerciseVariantJobService {
             mutableJob.setPhase(VariantJobPhase.FAILED);
             mutableJob.setFinishedAt(Instant.now());
         });
+        logTelemetrySummary(staleJob);
         publish(staleJob, VariantGenerationEventDTO.failed(staleJob.getFailureDetail()));
         return staleJob;
     }

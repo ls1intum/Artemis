@@ -207,6 +207,7 @@ public class ExerciseVariantGenerationPipeline {
             VariantAgentLoopRunner.AgentResult agentResult = runPhase(agentPhase, () -> agentLoopRunner.runLoop(plan, toolset, budgets, job, repairFeedback, transformTemplate));
             tokensUsed += agentResult.tokensUsed();
             jobService.addTokensUsed(jobId, agentResult.tokensUsed());
+            jobService.recordToolCallStats(jobId, toolset.toolCallStats());
             String roundSummary = "Agent round " + attempt + "/" + MAX_VERIFY_ATTEMPTS + " finished" + (agentResult.touchedTestRepo() ? " (test repository changed)" : "");
             jobService.recordStepOutput(jobId, agentPhase,
                     new StepOutput(roundSummary, agentResult.finishSummary() != null ? truncate(agentResult.finishSummary()) : "(no summary)", Instant.now()));
