@@ -298,14 +298,14 @@ public class CourseMaterialImportService {
     }
 
     private Optional<QuizExercise> importQuizExercise(QuizExercise exercise, Course targetCourse) {
-        var optionalOriginal = quizExerciseRepository.findById(exercise.getId());
+        var optionalOriginal = quizExerciseRepository.findWithEagerQuestionsAndStatisticsAndCompetenciesAndBatchesAndGradingCriteriaById(exercise.getId());
         if (optionalOriginal.isEmpty()) {
             return Optional.empty();
         }
 
         QuizExercise newExercise = new QuizExercise();
         newExercise.setCourse(targetCourse);
-        newExercise.setTitle(optionalOriginal.get().getTitle());
+        copyImportOverrides(optionalOriginal.get(), newExercise);
 
         try {
             return Optional.of(quizExerciseImportService.importQuizExercise(optionalOriginal.get(), newExercise, null));
@@ -327,7 +327,7 @@ public class CourseMaterialImportService {
 
         ModelingExercise newExercise = new ModelingExercise();
         newExercise.setCourse(targetCourse);
-        newExercise.setTitle(optionalOriginal.get().getTitle());
+        copyImportOverrides(optionalOriginal.get(), newExercise);
 
         return modelingExerciseImportApi.get().importModelingExercise(exercise.getId(), newExercise);
     }
@@ -339,7 +339,7 @@ public class CourseMaterialImportService {
 
         TextExercise newExercise = new TextExercise();
         newExercise.setCourse(targetCourse);
-        newExercise.setTitle(exercise.getTitle());
+        copyImportOverrides(exercise, newExercise);
 
         return textExerciseImportApi.get().importTextExercise(exercise.getId(), newExercise);
     }
@@ -351,9 +351,27 @@ public class CourseMaterialImportService {
 
         FileUploadExercise newExercise = new FileUploadExercise();
         newExercise.setCourse(targetCourse);
-        newExercise.setTitle(exercise.getTitle());
+        copyImportOverrides(exercise, newExercise);
 
         return fileUploadImportApi.get().importFileUploadExercise(exercise.getId(), newExercise);
+    }
+
+    /**
+     * Copies the fields that the course-material skeleton must carry itself onto the skeleton. Title and points have
+     * non-null defaults on a fresh entity, so the import service cannot tell a skeleton default apart from an intended
+     * value and would otherwise keep the default; the remaining content is taken from the source by the import service.
+     *
+     * @param source   the source exercise being imported
+     * @param skeleton the fresh target skeleton to enrich in place
+     */
+    private static void copyImportOverrides(Exercise source, Exercise skeleton) {
+        skeleton.setTitle(source.getTitle());
+        skeleton.setMaxPoints(source.getMaxPoints());
+        skeleton.setBonusPoints(source.getBonusPoints());
+        skeleton.setIncludedInOverallScore(source.getIncludedInOverallScore());
+        // Note: mode is intentionally not copied here. A TEAM source would also need its teamAssignmentConfig, which the
+        // course-material fetch does not load; preserving team mode + config for course-material import is left as a
+        // follow-up together with the categories / plagiarism-config fetch-graph expansion.
     }
 
     /**
