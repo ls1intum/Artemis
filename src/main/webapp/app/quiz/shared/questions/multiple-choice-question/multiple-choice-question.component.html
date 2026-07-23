@@ -74,10 +74,10 @@
                     (click)="toggleSelection(answerOption)"
                 >
                     <div class="content">
-                        <div class="text" [innerHTML]="renderedQuestion().renderedSubElements[i]?.text ?? ''"></div>
+                        <div class="text" [innerHTML]="renderedAnswerText(i)"></div>
                         <div class="hint">
                             <ng-template #renderedAnswerOptionsHint>
-                                <div [innerHTML]="renderedQuestion().renderedSubElements[i]?.hint ?? ''"></div>
+                                <div [innerHTML]="renderedAnswerHint(i)"></div>
                             </ng-template>
                             @if (answerOption.hint) {
                                 <span class="label label-info" [ngbPopover]="renderedAnswerOptionsHint" triggers="mouseenter:mouseleave">
