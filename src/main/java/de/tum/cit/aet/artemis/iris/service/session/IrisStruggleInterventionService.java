@@ -271,7 +271,7 @@ public class IrisStruggleInterventionService {
         switch (finalAction) {
             case "active" -> {
                 // Skip if this episode is already terminal (late escalation arriving after the student dismissed).
-                if (episodeId != null && isEpisodeTerminal(episodeId)) {
+                if (episodeId != null && isEpisodeTerminal(episodeId, user.getId())) {
                     irisChatWebsocketService.sendStruggleEvent(user,
                             new StruggleInterventionEventDTO(job.exerciseId(), "decide", "silent", null, null, null, null, null, null, confidence, episodeId, null, null, null));
                     break;
@@ -347,7 +347,7 @@ public class IrisStruggleInterventionService {
      * </ul>
      *
      * <p>
-     * Terminal gate (delivered reasons only): reads {@link #isEpisodeTerminal(String)} BEFORE persisting.
+     * Terminal gate (delivered reasons only): reads {@link #isEpisodeTerminal(String, long)} BEFORE persisting.
      * If already terminal, skips persist and emits a noop event. Otherwise persists FIRST (1), broadcasts
      * live via {@code sendMessage} (1b), THEN writes the outcome (2). Outcome-last ensures a {@code resolved=true}
      * close row is never gated away by its own outcome write.
@@ -375,7 +375,7 @@ public class IrisStruggleInterventionService {
 
         // Terminal gate (delivered reasons only): if the episode already has a terminal outcome (e.g. the
         // student DISMISSED mid-flight), skip persist and emit a noop event.
-        if (episodeId != null && isEpisodeTerminal(episodeId)) {
+        if (episodeId != null && isEpisodeTerminal(episodeId, user.getId())) {
             irisChatWebsocketService.sendStruggleEvent(user,
                     new StruggleInterventionEventDTO(job.exerciseId(), "confirm_close", null, null, null, null, null, null, null, null, episodeId, resolved, null, null));
             return;
@@ -398,7 +398,7 @@ public class IrisStruggleInterventionService {
                 irisChatWebsocketService.sendMessage(persisted.session(), persisted.saved(), statusUpdate.stages());
                 messageId = persisted.saved().getId();
                 // (2) Write outcome LAST: prevents the resolved=true close from gating away its own row.
-                writeEpisodeOutcome(episodeId, IrisProactiveOutcome.RECOVERED);
+                writeEpisodeOutcome(episodeId, IrisProactiveOutcome.RECOVERED, user.getId());
             }
             irisChatWebsocketService.sendStruggleEvent(user, new StruggleInterventionEventDTO(job.exerciseId(), "confirm_close", null, null, null, messageId, null, null, null,
                     null, episodeId, true, closingSentence, episodeLabel));
@@ -478,7 +478,7 @@ public class IrisStruggleInterventionService {
      * <p>
      * Portable AND race-safe without a pessimistic lock or a same-table subquery (which would trip MySQL 1093):
      * <ul>
-     * <li>The target row is the episode's SMALLEST-id row ({@link IrisMessageRepository#findFirstByProactiveEpisodeIdOrderByIdAsc}).
+     * <li>The target row is the episode's SMALLEST-id row ({@link IrisMessageRepository#findEpisodeRowsForUserOrderByIdAsc}).
      * Ids are monotonic, so this target is stable under concurrent inserts (a delivery row that persists late gets a
      * larger id and can never become the target). Two concurrent writers therefore pick the SAME target row.</li>
      * <li>An episode-wide existence pre-check ({@link IrisMessageRepository#findEpisodeOutcomes}) makes first-terminal-wins
@@ -491,25 +491,34 @@ public class IrisStruggleInterventionService {
      * </ul>
      * Readers are episode-wide ({@code findEpisodeOutcomes}), so the physical row holding the outcome is immaterial.
      *
+     * <p>
+     * SCOPED to the requesting user's own episode rows (IDOR guard, mirroring {@code findByProactiveClientMessageIdAndUserId}):
+     * {@code episodeId} is a client-generated UUID, so an unscoped write would let any student write an outcome onto
+     * another student's (or another exercise's) episode by guessing/replaying the id. Both the target-row lookup and
+     * the episode-wide outcome reads are scoped to {@code userId}, so a foreign episode id is indistinguishable from
+     * one that does not exist yet (deferred, never a foreign write).
+     *
      * @param episodeId the client-allocated episode UUID
      * @param outcome   the terminal outcome to write
+     * @param userId    the requesting user; only this user's own episode rows are read or written
      * @return {@code true} if a terminal outcome is established for the episode; {@code false} if none could be
      *         established yet (no row persisted - the caller should back-fill once a row exists)
      */
-    public boolean writeEpisodeOutcome(String episodeId, IrisProactiveOutcome outcome) {
-        var target = irisMessageRepository.findFirstByProactiveEpisodeIdOrderByIdAsc(episodeId);
-        if (target.isEmpty()) {
-            return false;  // DEFERRED: no row persisted yet for this episode; client must back-fill
+    public boolean writeEpisodeOutcome(String episodeId, IrisProactiveOutcome outcome, long userId) {
+        var episodeRows = irisMessageRepository.findEpisodeRowsForUserOrderByIdAsc(episodeId, userId);
+        if (episodeRows.isEmpty()) {
+            return false;  // DEFERRED: no row persisted yet for this episode under this user's scope; client must back-fill
         }
+        var target = episodeRows.get(0);
         // Episode-wide first-terminal-wins: if any row already holds an outcome, this is a no-op (applied = true).
-        if (!irisMessageRepository.findEpisodeOutcomes(episodeId).isEmpty()) {
+        if (!irisMessageRepository.findEpisodeOutcomes(episodeId, userId).isEmpty()) {
             return true;
         }
         // Write to the episode's stable smallest-id row, guarded on that row still being null (row-scoped, MySQL-safe).
-        int updated = irisMessageRepository.setProactiveOutcomeIfNull(target.get().getId(), outcome);
+        int updated = irisMessageRepository.setProactiveOutcomeIfNull(target.getId(), outcome);
         if (updated == 0) {
             // The target was concurrently given an outcome or deleted: only report applied if an outcome now stands.
-            return !irisMessageRepository.findEpisodeOutcomes(episodeId).isEmpty();
+            return !irisMessageRepository.findEpisodeOutcomes(episodeId, userId).isEmpty();
         }
         return true;
     }
@@ -644,10 +653,11 @@ public class IrisStruggleInterventionService {
      * stable under out-of-order persistence.
      *
      * @param episodeId the client-allocated episode UUID
+     * @param userId    the job's owning user; only outcomes on rows in this user's sessions are considered
      * @return true if a terminal outcome exists for this episode
      */
-    boolean isEpisodeTerminal(String episodeId) {
-        return !irisMessageRepository.findEpisodeOutcomes(episodeId).isEmpty();
+    boolean isEpisodeTerminal(String episodeId, long userId) {
+        return !irisMessageRepository.findEpisodeOutcomes(episodeId, userId).isEmpty();
     }
 
     /**

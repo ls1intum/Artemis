@@ -245,7 +245,7 @@ class IrisStruggleInterventionDecisionTest {
         // A9: the episodeId from the job must be set on the saved IrisMessage row.
         var session = exerciseSession(42L);
         when(irisChatSessionService.getCurrentSessionOrCreateIfNotExists(eq(IrisChatMode.PROGRAMMING_EXERCISE_CHAT), eq(42L), any())).thenReturn(session);
-        when(irisMessageRepository.findEpisodeOutcomes("ep-123")).thenReturn(List.of());   // not yet terminal
+        when(irisMessageRepository.findEpisodeOutcomes("ep-123", 3L)).thenReturn(List.of());   // not yet terminal
         when(irisMessageService.saveMessage(any(), eq(session), eq(IrisMessageSender.LLM))).thenAnswer(inv -> {
             IrisMessage m = inv.getArgument(0);
             m.setId(777L);
@@ -263,7 +263,7 @@ class IrisStruggleInterventionDecisionTest {
     @Test
     void active_withTerminalEpisode_emitsSilentEvent_noPersistedMessage() {
         // A9: if the episode is already terminal (DISMISSED), a late escalation is skipped and a silent noop emitted.
-        when(irisMessageRepository.findEpisodeOutcomes("ep-123")).thenReturn(List.of(IrisProactiveOutcome.DISMISSED));
+        when(irisMessageRepository.findEpisodeOutcomes("ep-123", 3L)).thenReturn(List.of(IrisProactiveOutcome.DISMISSED));
         var update = new PyrisStruggleInterventionStatusUpdateDTO("Hint text.", "active", 0.9, "FM", List.of(), List.of(), null, null, null, null, null, null);
         service.handleDecision(jobWithEpisode, update);
         verify(irisMessageService, never()).saveMessage(any(), any(), any());
