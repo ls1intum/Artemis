@@ -112,10 +112,8 @@ class HyperionProblemStatementGenerationServiceTest {
         assertThat(promptText).contains("deliberately avoid the domains that textbooks and tutorials most often use");
         assertThat(promptText).contains("Do not end with a summary or recap section");
         assertThat(promptText).doesNotContain("instructor-decisions section", "Instructor Decisions Before Final Generation");
-        // Style guide: a compact worked exemplar of the target shape (mirrors templates/hyperion/style/draft-statement.md), so the model has something to imitate rather than
-        // only prose rules to follow. The exemplar must stay in a neutral domain, never the seeded reference exercise's shipping-fee domain.
-        assertThat(promptText).contains("## STYLE GUIDE").contains("# Loyalty Points");
-        assertThat(promptText).doesNotContain("shipping", "Shipping");
+        assertThat(promptText).contains("## STYLE GUIDE", "One `#` title", "2-4 requirement sections");
+        assertThat(promptText).doesNotContain("# Loyalty Points", "LoyaltyAccount", "RewardStrategy", "ShippingCalculator", "FeeStrategy");
     }
 
     @Test

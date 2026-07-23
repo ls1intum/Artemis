@@ -100,8 +100,8 @@ public class GenerationWorkspaceService {
             Do not copy names, APIs, literal inputs, or implementation choices. Scale the design to the primary source requirements instead of treating this small example as a required shape.
             Before authoring, inspect the statement, compare template with solution, and then inspect the tests.
             Notice that the solution introduces a class and an interface that do not exist in the template at all, not just method bodies to fill in: when the primary source calls
-            for multiple collaborating types (a strategy, a pattern, a small class hierarchy), give the template only the pieces students implement directly and let the solution
-            introduce the rest, rather than collapsing every exercise into a single class with one method.
+            for student-created types, Artemis can support whole-type differences between template and solution. This is a capability demonstration, not a prescribed design:
+            decide what students create from the primary source and accepted specification.
             """;
 
     /** Per-file and total caps on the seeded reference payload, so a large template cannot bloat the workspace tar. */
@@ -295,7 +295,7 @@ public class GenerationWorkspaceService {
 
     /**
      * Reads the language-agnostic per-artifact style guides (draft statement, final statement, template, solution, tests) from the classpath. Unlike {@link #readReferenceSample},
-     * this is not gated on Java: the guides are prose principles plus a small neutral exemplar, not language-specific source, so every GENERATE run benefits from them.
+     * this is not gated on Java: the guides are topic-neutral prose principles, not language-specific source, so every GENERATE run benefits from them.
      *
      * @return the style guide files keyed by their archive-relative path under {@code reference/style/}, or empty if none could be read
      */

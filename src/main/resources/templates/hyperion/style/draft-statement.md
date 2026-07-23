@@ -27,29 +27,4 @@ only when the brief is design-oriented; otherwise describe behavior, not shapes.
 ## What may vary
 
 Section count and names follow the brief. A design-oriented brief may sketch a public API; a behavior-only
-brief must not. The exemplar below is a shape, not a schema — never copy its topic or numbers.
-
-## Exemplar
-
-Tiny neutral domain: a coffee shop's loyalty program, deliberately distinct from the seeded reference exercise's domain.
-
-```markdown
-# Loyalty Points
-
-A coffee shop credits loyalty points for purchases and lets members redeem them for discounts.
-
-## Earning Points
-
-Every purchase earns 1 point per whole dollar spent. A $12.75 purchase earns 12 points; a $0.40 purchase
-earns 0 points.
-
-## Redeeming Points
-
-Redeeming 50 points reduces the current total by $5.00. A member with 130 points can redeem at most 2 times
-(100 points) per purchase; the remaining 30 points carry over.
-
-## Example
-
-A member with 42 points makes a $30.00 purchase and tries to redeem once (50 points needed): insufficient, so
-the purchase completes at $30.00 and earns 30 more points, leaving 72 points banked.
-```
+brief must not. Use the section contract above rather than copying another exercise's wording or domain.

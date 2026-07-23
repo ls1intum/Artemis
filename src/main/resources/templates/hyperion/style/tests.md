@@ -68,32 +68,3 @@ exact names `verify` reports, copied verbatim.
 
 Test count follows the design's partitions, not a quota. Non-Java languages keep the same rules with their
 own framework's idiom. Shared fixtures/helpers are fine when they keep each test's focus readable.
-
-## Exemplars (FORM only — never copy their topic, API, or design)
-
-A stated-error partition — exception type, not message, with a teaching assertion message:
-
-```java
-@Test
-@StrictTimeout(2)
-void redeem_throwsWhenPointsInsufficientForRequestedCount() {
-    LoyaltyAccount account = new LoyaltyAccount(90);
-
-    assertThatThrownBy(() -> account.redeem(2)).as("redeeming 100 points with only 90 banked must be rejected")
-            .isInstanceOf(IllegalStateException.class);
-}
-```
-
-A boundary partition with a non-degenerate witness (the sub-dollar case a truncation bug would get wrong):
-
-```java
-@Test
-@StrictTimeout(2)
-void earn_subDollarPurchaseEarnsZeroPoints() {
-    LoyaltyAccount account = new LoyaltyAccount(0);
-
-    account.earn(0.99);
-
-    assertThat(account.getPoints()).as("points credit whole dollars only, so $0.99 must earn 0 points").isZero();
-}
-```

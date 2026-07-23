@@ -193,7 +193,7 @@ class GenerationWorkspaceServiceTest {
     }
 
     @Test
-    void readStyleGuides_loadsAllSevenArtifactGuidesRegardlessOfExerciseLanguage() {
+    void readStyleGuides_loadsAllSixArtifactGuidesWithoutACompetingWorkedExercise() {
         // Unlike readReferenceSample, the style guides are language-agnostic prose (not source code), so the method takes no exercise/language parameter at all: it is seeded
         // identically for every GENERATE run.
         ResourceLoaderService resourceLoaderService = new ResourceLoaderService(new DefaultResourceLoader(), mock());
@@ -212,9 +212,10 @@ class GenerationWorkspaceServiceTest {
         assertThat(guides.get("reference/style/template.md")).contains("// TODO");
         assertThat(guides.get("reference/style/solution.md")).contains("Diff discipline");
         assertThat(guides.get("reference/style/tests.md")).contains("Harness conventions (Java/Ares)");
-        // The exemplars must never reuse the seeded worked-example domain's concrete types (shipping fees) or the classic sorting domain; guide prose is allowed to name
-        // "shipping" only as a negative instruction (e.g. "never shipping fees"), so assert on the domain's concrete identifiers instead of the bare word.
-        assertThat(guides.values()).noneMatch(content -> content.contains("ShippingCalculator") || content.contains("FeeStrategy"))
+        // Style guidance must stay topic-neutral. The canonical Artemis Bubble Sort sample is the only complete worked exercise available to the agent.
+        assertThat(guides.values())
+                .noneMatch(content -> content.contains("ShippingCalculator") || content.contains("FeeStrategy") || content.contains("LoyaltyAccount")
+                        || content.contains("RewardStrategy") || content.contains("Cafe Loyalty") || content.contains("Loyalty Points"))
                 .noneMatch(content -> content.toLowerCase(java.util.Locale.ROOT).contains("bubblesort"));
     }
 

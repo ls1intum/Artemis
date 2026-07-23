@@ -261,8 +261,8 @@ public class AgentSystemPromptService {
     private static final String STAGE_3_TESTS_INSTRUCTIONS = """
             STAGE 3 — TESTS: run `verify` first — it reports binding problems and seeded structural names. Start with the highest-risk learning seam; for a pattern, prove
             delegation with a recording fake before concrete formulas. Author one partition at a time, re-running `verify` after each test or small batch: each must pass on the solution and fail on the
-            template for its intended reason (a structural check may already pass). Before referencing a `student-creates` type, copy the seeded reference test's
-            `Class.forName`/`ReflectionTestUtils` technique and use a dynamic proxy for an omitted interface. Never restore the declaration to make a test compile; the write
+            template for its intended reason (a structural check may already pass). Use the seeded reference tests for Artemis/Ares and `ReflectionTestUtils` conventions.
+            Before referencing a `student-creates` type, follow `reference/style/tests.md`: load an omitted interface by name and create a dynamic proxy. Never restore the declaration to make a test compile; the write
             boundary rejects it. Every test
             must be passable by completing the template's TODOs within the scaffolded structure; one that forces restructuring means the design is wrong — fix template and
             solution first. When a rule says a context delegates to a collaborator, use a small fake or recording implementation where the language permits it and assert the

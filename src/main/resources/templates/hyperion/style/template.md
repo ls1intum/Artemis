@@ -47,40 +47,5 @@ change behavior.
 
 The placeholder (`throw new UnsupportedOperationException("Not implemented")` is the Java default) follows
 the language's idiom; a returned placeholder value is acceptable only if every test rejects it. TODO wording
-mirrors YOUR tasks, not these examples. How much is stubbed versus given follows the design's template-status
+mirrors this exercise's tasks. How much is stubbed versus given follows the design's template-status
 column, not a fixed ratio.
-
-## Exemplars (FORM only — never copy their topic, API, or design)
-
-A stubbed member — javadoc complete, TODO in the body, placeholder throw:
-
-```java
-/**
- * Reduces the account's banked points by the redemption cost, one redemption at a time.
- *
- * @param times how many $5.00 redemptions to apply
- * @throws IllegalStateException if the account cannot afford {@code times} redemptions
- */
-public void redeem(int times) {
-    // TODO S3: apply times redemptions of REDEMPTION_COST points each, or throw IllegalStateException
-    // if the account cannot afford all of them.
-    throw new UnsupportedOperationException("Not implemented");
-}
-```
-
-A stubbed collaboration seam in a provided owner (no RewardStrategy file exists in the template; the solution alone ships it):
-
-```java
-public class LoyaltyAccount {
-
-    /**
-     * Records a purchase, crediting points according to the active reward strategy.
-     *
-     * @param purchase the completed purchase
-     */
-    public void record(Purchase purchase) {
-        // TODO S2: connect the student-created strategy and add its points to the balance.
-        throw new UnsupportedOperationException("Not implemented");
-    }
-}
-```

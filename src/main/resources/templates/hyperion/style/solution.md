@@ -28,25 +28,5 @@ contradicted rule), fix the test or the example — never bend the solution to m
 ## What may vary
 
 Internal structure (helper methods, iteration style, data structures) is free as long as the public API
-matches the design and the diff stays task-shaped. These examples are Java; other languages follow their own
-idiom for the same rules.
-
-## Exemplar (FORM only — never copy its topic, API, or design)
-
-Same member as `style/template.md`'s exemplar; javadoc is untouched, only the TODO line is replaced:
-
-```java
-/**
- * Reduces the account's banked points by the redemption cost, one redemption at a time.
- *
- * @param times how many $5.00 redemptions to apply
- * @throws IllegalStateException if the account cannot afford {@code times} redemptions
- */
-public void redeem(int times) {
-    int cost = times * REDEMPTION_COST;
-    if (cost > points) {
-        throw new IllegalStateException("Insufficient points for " + times + " redemptions");
-    }
-    points -= cost;
-}
-```
+matches the design and the diff stays task-shaped. Other languages follow their own idiom for the same
+rules.

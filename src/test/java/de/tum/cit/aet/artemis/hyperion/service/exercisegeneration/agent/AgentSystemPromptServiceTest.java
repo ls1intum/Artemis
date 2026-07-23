@@ -226,8 +226,9 @@ class AgentSystemPromptServiceTest {
         String prompt = systemPromptService.build(exerciseWith(ProgrammingLanguage.JAVA, "")).replaceAll("\\s+", " ");
 
         assertThat(prompt).contains("run `verify` first").contains("Author one partition at a time").contains("re-running `verify` after each test or small batch")
-                .contains("fail on the template for its intended reason").contains("copy the seeded reference test's `Class.forName`/`ReflectionTestUtils` technique")
-                .contains("write `/workspace/test-plan.json`");
+                .contains("fail on the template for its intended reason").contains("Use the seeded reference tests for Artemis/Ares and `ReflectionTestUtils` conventions")
+                .contains("follow `reference/style/tests.md`").contains("write `/workspace/test-plan.json`")
+                .doesNotContain("copy the seeded reference test's `Class.forName`/`ReflectionTestUtils` technique");
     }
 
     @Test
