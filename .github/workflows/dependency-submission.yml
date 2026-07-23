@@ -1,0 +1,54 @@
+name: Submit Gradle Dependency Graph
+
+# Submits the *resolved* Gradle dependency graph to GitHub's Dependency submission API.
+#
+# Why this exists: GitHub's automatic dependency detection for Gradle statically parses the
+# build files and cannot see through Spring's `dependencyManagement` BOM imports or our
+# `resolutionStrategy.eachDependency` version forces. It therefore reports the versions that
+# transitive dependencies *request* (e.g. jackson-databind 2.21.4 requested by Spring Boot, or
+# jackson dragged onto the OpenAPI-generator plugin classpath) instead of the versions the WAR
+# actually ships (2.22.1). That mismatch produced a stream of false-positive Dependabot alerts.
+#
+# Running this action on the default branch replaces that guesswork with the graph Gradle itself
+# resolves. It is scoped to `productionRuntimeClasspath` so alerts track the real production attack
+# surface, not build-script / plugin / test-only classpaths whose versions we override at runtime.
+
+on:
+  push:
+    branches:
+      - develop
+      - main
+      - 'release/*'
+  workflow_dispatch: {}
+
+permissions: {}
+
+# Workflow-level java pin is drift-checked by ci-workflows.yml.
+env:
+  java: 25
+
+jobs:
+  dependency-submission:
+    name: Submit Dependency Graph
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: write # required to submit the dependency graph snapshot to the Dependency graph API
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v6
+
+      - name: Set up JDK
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '${{ env.java }}'
+
+      - name: Submit dependency graph
+        uses: gradle/actions/dependency-submission@3f131e8634966bd73d06cc69884922b02e6faf92 # v6
+        env:
+          # Only report the dependencies that actually ship in the production WAR, so Dependabot
+          # alerts reflect the real attack surface and the build/plugin/test-only false positives
+          # (documented in build.gradle around the jackson-bom and netty overrides) disappear.
+          DEPENDENCY_GRAPH_INCLUDE_CONFIGURATIONS: productionRuntimeClasspath

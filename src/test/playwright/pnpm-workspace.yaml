@@ -10,7 +10,8 @@ autoInstallPeers: true
 overrides:
     nodemailer: '9.0.1'
     lodash: '4.18.1'
-    shell-quote: '1.8.4'
+    # CVE-2026-13311 (GHSA-395f-4hp3-45gv): quadratic-complexity DoS in shell-quote parse().
+    shell-quote: '1.10.0'
 
 allowBuilds:
     esbuild: true

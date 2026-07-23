@@ -75,6 +75,8 @@ overrides:
     '@primeuix/utils': '0.7.2'
     '@sinonjs/fake-timers': '15.4.0'
     ajv: '8.20.0'
+    # CVE-2026-13149 (GHSA-3jxr-9vmj-r5cp): DoS via exponential-time brace expansion.
+    brace-expansion: '5.0.7'
     braces: '3.0.3'
     cookie: '1.1.1'
     debug: '4.4.3'
@@ -82,13 +84,22 @@ overrides:
     dompurify: '3.4.12'
     esbuild: '0.28.1'
     express: '5.2.1'
-    fast-uri: '3.1.2'
+    # CVE-2026-13676 / CVE-2026-16221: host confusion via IDN canonicalization / backslash authority.
+    # Kept on the 3.x line (consumers such as ajv/fast-json-stringify require ^3).
+    fast-uri: '3.1.4'
     globals: '17.6.0'
-    hono: '4.12.25'
-    '@hono/node-server': '1.19.13'
+    # CVE-2026-59895/59896/59897: JSX escaping bypass, cross-request context leak, header de-dup.
+    # Only reached dev-side via @modelcontextprotocol/sdk -> @angular/cli (never run by Artemis).
+    hono: '4.12.31'
+    # GHSA-frvp-7c67-39w9: path traversal in serve-static on Windows via encoded backslash.
+    '@hono/node-server': '2.0.11'
     http-proxy-middleware: '3.0.7'
+    # GHSA-v56q-mh7h-f735 / GHSA-xvcm-6775-5m9r: List trie overflow DoS and hash-collision DoS.
+    immutable: '5.1.9'
     ip-address: '10.2.0'
-    js-yaml: '4.2.0'
+    # CVE-2026-59869 (GHSA-52cp-r559-cp3m): quadratic CPU via YAML merge-key chains.
+    # Kept on the 4.x line (consumers require ^4; 5.x is an API break).
+    js-yaml: '4.3.0'
     jsdom: '29.1.1'
     katex: '0.18.1'
     minimatch: '10.2.5'
@@ -102,6 +113,10 @@ overrides:
     react-dom: '19.2.7'
     semver: '7.8.0'
     serialize-javascript: '7.0.5'
+    # CVE-2026-13311 (GHSA-395f-4hp3-45gv): quadratic-complexity DoS in shell-quote parse().
+    shell-quote: '1.10.0'
+    # CVE-2026-59871 (GHSA-w8wr-v893-vjvp): process crash via PAX numeric path type confusion.
+    tar: '7.5.21'
     tmp: '0.2.5'
     tough-cookie: '6.0.1'
     undici: '7.28.0'
@@ -109,7 +124,9 @@ overrides:
     vite: '7.3.5'
     webpack: '5.106.2'
     webpack-dev-middleware: '7.4.5'
-    webpack-dev-server: '5.2.5'
+    # CVE-2026-14620/14631: CSRF via internal dev endpoints and DoS via malformed Host/Origin header.
+    # Kept on the 5.x line (Angular build tooling requires ^5; 6.x is an API break).
+    webpack-dev-server: '5.2.6'
     word-wrap: '1.2.5'
     ws: '8.21.0'
     yargs-parser: '22.0.0'
