@@ -2,7 +2,6 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { firstValueFrom } from 'rxjs';
 
 import { FileUploadExercisePagingService } from './file-upload-exercise-paging.service';
@@ -11,8 +10,6 @@ import { ExerciseMode, ExerciseType } from 'app/exercise/shared/entities/exercis
 import { SortingOrder } from 'app/foundation/pagination/pageable-table';
 
 describe('FileUploadExercisePagingService', () => {
-    setupTestBed({ zoneless: true });
-
     let service: FileUploadExercisePagingService;
     let httpMock: HttpTestingController;
 

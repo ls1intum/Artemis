@@ -8,6 +8,7 @@ import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-e
 import { fromFileUploadExerciseDTO, toFileUploadExerciseInputDTO } from 'app/fileupload/shared/entities/file-upload-exercise-dto';
 import type { FileUploadExerciseDto } from 'app/fileupload/shared/entities/file-upload-exercise-dto';
 import { toUpdateFileUploadExerciseDTO } from 'app/fileupload/shared/entities/update-file-upload-exercise-dto';
+import { parseJson } from 'app/foundation/util/json.util';
 
 describe('FileUploadExercise DTO adapters', () => {
     it('maps the component model to the scalar create and import contract', () => {
@@ -24,7 +25,7 @@ describe('FileUploadExercise DTO adapters', () => {
         expect(dto.courseId).toBe(12);
         expect('course' in dto).toBe(false);
         expect(dto.releaseDate).toBe('2026-01-02T10:00:00.000Z');
-        expect(dto.categories).toEqual(['{"category":"Files","color":"#123456"}']);
+        expect(dto.categories?.map((category) => parseJson(category))).toEqual([{ category: 'Files', color: '#123456' }]);
         expect(dto.competencyLinks).toEqual([{ competency: { id: 34 }, weight: 0.5 }]);
     });
 

@@ -979,7 +979,9 @@ class FileUploadExerciseIntegrationTest extends AbstractFileUploadIntegrationTes
         assertThat(importedFileUploadExerciseDTO.teamAssignmentConfig().minTeamSize()).isEqualTo(2);
         assertThat(importedFileUploadExerciseDTO.teamAssignmentConfig().maxTeamSize()).isEqualTo(4);
         assertThat(importedFileUploadExerciseDTO).usingRecursiveComparison().ignoringFields("id", "teamAssignmentConfig.id", "shortName", "releaseDate", "dueDate",
-                "assessmentDueDate", "exampleSolutionPublicationDate", "competencyLinks", "assessmentType").isEqualTo(expectedFileUploadExerciseDTO);
+                "assessmentDueDate", "exampleSolutionPublicationDate", "competencyLinks", "assessmentType", "channelName", "gradingCriteria")
+                .isEqualTo(expectedFileUploadExerciseDTO);
+        assertThat(importedFileUploadExerciseDTO.gradingCriteria()).isNullOrEmpty();
         Channel channelFromDB = channelRepository.findChannelByExerciseId(importedFileUploadExercise.getId());
         assertThat(channelFromDB).isNotNull();
         assertThat(channelFromDB.getName()).isEqualTo(uniqueChannelName);

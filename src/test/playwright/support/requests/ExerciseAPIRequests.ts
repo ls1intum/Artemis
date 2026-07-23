@@ -33,6 +33,9 @@ import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
 import { FileUploadSubmission } from 'app/fileupload/shared/entities/file-upload-submission.model';
+import { fromFileUploadExerciseDTO, toFileUploadExerciseInputDTO } from 'app/fileupload/shared/entities/file-upload-exercise-dto';
+import type { FileUploadExerciseDto } from 'app/fileupload/shared/entities/file-upload-exercise-dto';
+import { toUpdateFileUploadExerciseDTO } from 'app/fileupload/shared/entities/update-file-upload-exercise-dto';
 import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
@@ -353,9 +356,14 @@ export class ExerciseAPIRequests {
             title,
             channelName: 'exercise-' + titleLowercase(title),
         };
-        const uploadExercise = Object.assign({}, template, body);
-        const response = await this.page.request.post(UPLOAD_EXERCISE_BASE, { data: uploadExercise });
-        return this.withKnownExerciseGroup(await response.json(), 'exerciseGroup' in body ? body.exerciseGroup : undefined);
+        const course = 'course' in body ? body.course : undefined;
+        const exerciseGroup = 'exerciseGroup' in body ? body.exerciseGroup : undefined;
+        const uploadExercise = Object.assign(new FileUploadExercise(course, exerciseGroup), template);
+        const response = await this.page.request.post(UPLOAD_EXERCISE_BASE, { data: toFileUploadExerciseInputDTO(uploadExercise) });
+        if (!response.ok()) {
+            throw new Error(`Failed to create file upload exercise: ${response.status()} ${await response.text()}`);
+        }
+        return this.withKnownExerciseGroup(fromFileUploadExerciseDTO((await response.json()) as FileUploadExerciseDto), exerciseGroup);
     }
 
     /**
@@ -372,17 +380,13 @@ export class ExerciseAPIRequests {
      * enabling complaints to be filed.
      */
     async updateFileUploadExerciseAssessmentDueDate(exercise: FileUploadExercise, due = dayjs()) {
-        const newAssessmentDueDate = dayjsToString(due.subtract(1, 'minute'));
-        const newDueDate = dayjsToString(due.subtract(2, 'minutes'));
-        const newReleaseDate = dayjsToString(due.subtract(2, 'hours'));
-
-        const updateDto = {
-            ...exercise,
-            releaseDate: newReleaseDate,
-            dueDate: newDueDate,
-            assessmentDueDate: newAssessmentDueDate,
-        };
-        return this.page.request.put(UPLOAD_EXERCISE_BASE, { data: updateDto });
+        const updatedExercise = Object.assign(new FileUploadExercise(exercise.course, exercise.exerciseGroup), exercise, {
+            releaseDate: due.subtract(2, 'hours'),
+            dueDate: due.subtract(2, 'minutes'),
+            assessmentDueDate: due.subtract(1, 'minute'),
+        });
+        const updateDto = toUpdateFileUploadExerciseDTO(updatedExercise);
+        return this.page.request.put(`${UPLOAD_EXERCISE_BASE}/${exercise.id}`, { data: updateDto });
     }
 
     /**
