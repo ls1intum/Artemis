@@ -10,6 +10,7 @@ import { CompetencyLinkDTO, GradingCriterionDTO } from 'app/exercise/shared/exer
 import { TeamAssignmentConfig } from 'app/exercise/shared/entities/team/team-assignment-config.model';
 import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
 import { convertDateFromClient, convertDateStringFromServer } from 'app/foundation/util/date.utils';
+import { parseJson } from 'app/foundation/util/json.util';
 
 export interface FileUploadTeamAssignmentConfigDto {
     id?: number;
@@ -259,7 +260,7 @@ function toExam(dto: ExamContextDto): Exam {
 
 function toExerciseCategory(category: string): ExerciseCategory | undefined {
     try {
-        const parsed = JSON.parse(category) as { category: string; color: string };
+        const parsed = parseJson<{ category: string; color: string }>(category);
         return new ExerciseCategory(parsed.category, parsed.color);
     } catch {
         return undefined;

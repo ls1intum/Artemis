@@ -20,6 +20,7 @@ import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import org.hibernate.Hibernate;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -101,10 +102,10 @@ class FileUploadExerciseIntegrationTest extends AbstractFileUploadIntegrationTes
 
     static FileUploadExerciseInputDTO inputDTO(Exercise exercise) {
         FileUploadExercise fileUploadExercise = (FileUploadExercise) exercise;
-        var teamConfig = exercise.getTeamAssignmentConfig() == null ? null : FileUploadTeamAssignmentConfigDTO.of(exercise.getTeamAssignmentConfig());
-        var plagiarismConfig = exercise.getPlagiarismDetectionConfig() == null ? null : FileUploadPlagiarismDetectionConfigDTO.of(exercise.getPlagiarismDetectionConfig());
-        var criteria = exercise.getGradingCriteria() == null ? null : exercise.getGradingCriteria().stream().map(GradingCriterionDTO::of).collect(Collectors.toSet());
-        var competencyLinks = exercise.getCompetencyLinks() == null ? null : exercise.getCompetencyLinks().stream().map(CompetencyLinkDTO::of).collect(Collectors.toSet());
+        var teamConfig = initialized(exercise.getTeamAssignmentConfig()) ? FileUploadTeamAssignmentConfigDTO.of(exercise.getTeamAssignmentConfig()) : null;
+        var plagiarismConfig = initialized(exercise.getPlagiarismDetectionConfig()) ? FileUploadPlagiarismDetectionConfigDTO.of(exercise.getPlagiarismDetectionConfig()) : null;
+        var criteria = mapGradingCriteria(exercise);
+        var competencyLinks = initialized(exercise.getCompetencyLinks()) ? exercise.getCompetencyLinks().stream().map(CompetencyLinkDTO::of).collect(Collectors.toSet()) : null;
         Long courseId = exercise.isCourseExercise() ? exercise.getCourseViaExerciseGroupOrCourseMember().getId() : null;
         Long exerciseGroupId = exercise.isExamExercise() ? exercise.getExerciseGroup().getId() : null;
         return new FileUploadExerciseInputDTO(exercise.getId(), exercise.getTitle(), exercise.getChannelName(), exercise.getShortName(), exercise.getProblemStatement(),
@@ -113,6 +114,18 @@ class FileUploadExerciseIntegrationTest extends AbstractFileUploadIntegrationTes
                 exercise.getSecondCorrectionEnabled(), exercise.getFeedbackSuggestionModule(), exercise.getGradingInstructions(), exercise.getReleaseDate(),
                 exercise.getStartDate(), exercise.getDueDate(), exercise.getAssessmentDueDate(), exercise.getExampleSolutionPublicationDate(),
                 fileUploadExercise.getExampleSolution(), fileUploadExercise.getFilePattern(), courseId, exerciseGroupId, criteria, competencyLinks, plagiarismConfig);
+    }
+
+    private static boolean initialized(Object association) {
+        return association != null && Hibernate.isInitialized(association);
+    }
+
+    private static Set<GradingCriterionDTO> mapGradingCriteria(Exercise exercise) {
+        Set<GradingCriterion> criteria = exercise.getGradingCriteria();
+        if (!initialized(criteria) || criteria.stream().map(GradingCriterion::getStructuredGradingInstructions).anyMatch(instructions -> !Hibernate.isInitialized(instructions))) {
+            return null;
+        }
+        return criteria.stream().map(GradingCriterionDTO::of).collect(Collectors.toSet());
     }
 
     @BeforeEach
@@ -941,7 +954,7 @@ class FileUploadExerciseIntegrationTest extends AbstractFileUploadIntegrationTes
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void testImportFileUploadExerciseFromCourseToCourseAsEditorSuccess() throws Exception {
         Course course = fileUploadExerciseUtilService.addEnrolledCourseWithFileUploadExercise(TEST_PREFIX);
-        Exercise expectedFileUploadExercise = course.getExercises().stream().findFirst().orElseThrow();
+        FileUploadExercise expectedFileUploadExercise = (FileUploadExercise) course.getExercises().stream().findFirst().orElseThrow();
         Course course2 = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
         courseUtilService.enableMessagingForCourse(course2);
         expectedFileUploadExercise.setCourse(course2);
@@ -958,14 +971,15 @@ class FileUploadExerciseIntegrationTest extends AbstractFileUploadIntegrationTes
         FileUploadExerciseDTO importedFileUploadExerciseDTO = request.postWithResponseBody("/api/fileupload/file-upload-exercises/import?sourceId=" + sourceExerciseId,
                 inputDTO(expectedFileUploadExercise), FileUploadExerciseDTO.class, HttpStatus.CREATED);
         FileUploadExercise importedFileUploadExercise = fileUploadExerciseRepository.findByIdElseThrow(importedFileUploadExerciseDTO.id());
+        FileUploadExerciseDTO expectedFileUploadExerciseDTO = FileUploadExerciseDTO.of(expectedFileUploadExercise);
         // File upload exercises are always assessed manually
         assertThat(importedFileUploadExerciseDTO.assessmentType()).isEqualTo(AssessmentType.MANUAL);
         assertThat(importedFileUploadExerciseDTO.mode()).isEqualTo(ExerciseMode.TEAM);
         assertThat(importedFileUploadExerciseDTO.teamMode()).isTrue();
         assertThat(importedFileUploadExerciseDTO.teamAssignmentConfig().minTeamSize()).isEqualTo(2);
         assertThat(importedFileUploadExerciseDTO.teamAssignmentConfig().maxTeamSize()).isEqualTo(4);
-        assertThat(importedFileUploadExercise).usingRecursiveComparison().ignoringFields("id", "teamAssignmentConfig.id", "course", "shortName", "releaseDate", "dueDate",
-                "assessmentDueDate", "exampleSolutionPublicationDate", "channelNameTransient", "competencyLinks", "assessmentType").isEqualTo(expectedFileUploadExercise);
+        assertThat(importedFileUploadExerciseDTO).usingRecursiveComparison().ignoringFields("id", "teamAssignmentConfig.id", "shortName", "releaseDate", "dueDate",
+                "assessmentDueDate", "exampleSolutionPublicationDate", "competencyLinks", "assessmentType").isEqualTo(expectedFileUploadExerciseDTO);
         Channel channelFromDB = channelRepository.findChannelByExerciseId(importedFileUploadExercise.getId());
         assertThat(channelFromDB).isNotNull();
         assertThat(channelFromDB.getName()).isEqualTo(uniqueChannelName);

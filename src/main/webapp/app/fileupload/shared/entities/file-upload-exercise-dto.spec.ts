@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import dayjs from 'dayjs/esm';
 import { Competency, CompetencyExerciseLink } from 'app/atlas/shared/entities/competency.model';
 import { Course } from 'app/course/shared/entities/course.model';
+import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
 import { ExerciseMode, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
 import { fromFileUploadExerciseDTO, toFileUploadExerciseInputDTO } from 'app/fileupload/shared/entities/file-upload-exercise-dto';
@@ -15,7 +16,7 @@ describe('FileUploadExercise DTO adapters', () => {
         const exercise = new FileUploadExercise(course, undefined);
         exercise.title = 'Upload';
         exercise.releaseDate = dayjs('2026-01-02T10:00:00.000Z');
-        exercise.categories = [{ category: 'Files', color: '#123456' }];
+        exercise.categories = [new ExerciseCategory('Files', '#123456')];
         exercise.competencyLinks = [new CompetencyExerciseLink(competency, exercise, 0.5)];
 
         const dto = toFileUploadExerciseInputDTO(exercise);

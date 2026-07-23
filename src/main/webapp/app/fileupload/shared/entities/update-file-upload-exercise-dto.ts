@@ -46,17 +46,19 @@ export interface UpdateFileUploadExerciseDto {
  * Convert FileUploadExercise → Update DTO.
  */
 export function toUpdateFileUploadExerciseDTO(fileUploadExercise: FileUploadExercise): UpdateFileUploadExerciseDto {
-    if (fileUploadExercise.id === undefined) {
+    const id = fileUploadExercise.id;
+    const title = fileUploadExercise.title;
+    if (id === undefined) {
         throw new Error('Cannot create a file upload exercise update request without an ID');
     }
-    if (fileUploadExercise.title === undefined) {
+    if (title === undefined) {
         throw new Error('Cannot create a file upload exercise update request without a title');
     }
     fileUploadExercise = ExerciseService.setBonusPointsConstrainedByIncludedInOverallScore(fileUploadExercise);
     const categories = ExerciseService.stringifyExerciseDTOCategories(fileUploadExercise);
     return {
-        id: fileUploadExercise.id,
-        title: fileUploadExercise.title,
+        id,
+        title,
         channelName: fileUploadExercise.channelName,
         shortName: fileUploadExercise.shortName,
         problemStatement: fileUploadExercise.problemStatement,
