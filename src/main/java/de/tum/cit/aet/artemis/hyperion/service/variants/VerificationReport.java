@@ -23,6 +23,8 @@ public record VerificationReport(boolean passed, List<VerificationFinding> findi
         SOLUTION_BUILD,
         /** Programming: template repository build must run at least one test and score 0%. */
         TEMPLATE_BUILD,
+        /** Programming: every test referenced in the problem statement's task markers must exist as a real test case. */
+        TEST_REFERENCES,
         /** Quiz: QuizExercise.isValid() (per-question and exercise-level structural validity). */
         QUIZ_VALIDITY,
         /** Quiz: validateQuizExerciseFiles (drag-and-drop file references). */

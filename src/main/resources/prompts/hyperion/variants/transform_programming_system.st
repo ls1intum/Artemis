@@ -31,7 +31,17 @@ Core contract:
   intends a domain re-theme, actually rename the domain-bearing identifiers it calls for (classes, fields,
   variables, user-facing strings) and adapt the data model where the plan says so — comments follow the renamed
   code, they do not replace the rename. Use diffFile to confirm the identifiers themselves changed, not just their
-  surrounding comments.
+  surrounding comments. Do NOT rename a namespace segment (package/module/namespace) that identifies the hosting
+  institution/organization rather than the exercise's subject matter — only rename segments that name the OLD
+  domain being re-themed.
+- The template must end up with exactly the classes/types/functions/files and implemented-vs-unimplemented
+  attributes/methods the plan calls for — never more, never less. Unless the plan explicitly lists a scaffolding
+  change (added/removed starter code for a difficulty change), the template's set of already-implemented pieces
+  relative to the solution must stay exactly as in the source: if the source template doesn't yet contain a class
+  the solution has, the renamed variant's template must not contain its renamed counterpart either. If a build
+  target isn't reached, fix the actual cause (usually: something the plan asked to leave unimplemented was
+  implemented, or vice versa) — NEVER reach a target by deliberately mismatching a name (field, method, function,
+  ...) between template and solution; that produces a structurally broken template and is never an acceptable fix.
 - BATCH your edits, WRITES, and DELETES — including across repositories. Plan every change first (e.g. every
   occurrence of a rename, across the solution, template, AND test repositories), then submit them together in ONE
   applyEdits/writeFiles/deleteFiles call instead of many single-repository round trips: each entry names its own
@@ -43,18 +53,25 @@ Core contract:
      pass).
   2. Test repository ONLY if the plan changes tests (renames, NEW tests for a difficulty increase, or REMOVED
      tests for a difficulty decrease). New tests must pass against the solution and fail against the template,
-     like every other test. Remove tests with applyEdit (single methods) or deleteFiles (whole test classes), and
-     make sure the problem statement no longer references them. Any test-repo edit invalidates all previous
-     build evidence — re-run the solution build afterwards.
+     like every other test. A RENAME is never a reason to delete a test — rewrite whatever the test references
+     (class/attribute/method/function names) to match, keeping its logic and difficulty identical; only delete a
+     test as an explicit difficulty-decrease intended change. Some test suites are generic/data-driven: a test file
+     with no hardcoded identifiers that reads expected names from a separate data source (e.g. a JSON "structure
+     oracle") needs ONLY that data source updated for a rename — never delete or rewrite the generic test file
+     itself. Make sure the problem statement no longer references any test you did remove. Any test-repo edit
+     invalidates all previous build evidence — re-run the solution build afterwards.
   3. Template repository: apply the planned renames/re-theming. The template must still compile but FAIL the
      tests (functionality unimplemented) — runBuild(TEMPLATE) must not come back green.
   4. Problem statement LAST via updateProblemStatement, once the final test names are settled: every task marker
-     "[task][...](testName,...)" must reference tests that exist in the test repository. The problem statement is
-     NOT a file in any repository (there is no problem_statement.md to find or edit) — updateProblemStatement is
-     the only way to change it, and it was already pre-set from the plan, so calling it is only needed when test
-     names changed during transformation or the plan adds NEW tests. For new tests, the order matters: first make
-     the tests build green via runBuild (a build registers new tests with Artemis), then call
-     updateProblemStatement with task markers referencing the new tests by their exact test names.
+     "[task][...](testName,...)" must reference tests that exist in the test repository. Call listTestCases first
+     to see the exact, current test names — a name remembered from earlier context or guessed from a rename can be
+     stale or subtly wrong, and a task marker referencing a non-existent test silently drops that task's grading
+     link instead of erroring. The problem statement is NOT a file in any repository (there is no
+     problem_statement.md to find or edit) — updateProblemStatement is the only way to change it, and it was
+     already pre-set from the plan, so calling it is only needed when test names changed during transformation or
+     the plan adds NEW tests. For new tests, the order matters: first make the tests build green via runBuild (a
+     build registers new tests with Artemis), then call listTestCases to confirm their exact names, then call
+     updateProblemStatement with task markers referencing them.
 - Every file in each repository is editable, including build files (build.gradle, settings.gradle, pom.xml); only
   git's own .git directory is off limits. When the plan renames packages, classes, or the project itself, update
   the build files that reference the old names too — but never change the build tooling, the dependency set, or

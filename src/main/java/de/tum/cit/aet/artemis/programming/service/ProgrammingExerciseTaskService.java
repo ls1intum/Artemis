@@ -218,6 +218,36 @@ public class ProgrammingExerciseTaskService {
         return tasks;
     }
 
+    /**
+     * Finds every test reference in the problem statement's task markers that does NOT resolve to an actual test
+     * case of the exercise (by exact name or {@code <testid>} id) — e.g. a typo, a stale name left over from
+     * before a rename, or a test the transformation removed without updating the marker. Unlike
+     * {@link #extractTasks}, which silently drops unresolved references when building tasks, this reports them so
+     * callers can surface a precise error instead of a silently-broken task-test link.
+     *
+     * @param exercise the exercise whose problem statement is checked
+     * @return the raw, unresolved references exactly as written in the problem statement (e.g. {@code "testFoo()"},
+     *         {@code "testClass[Bar]"}), in the order they appear; empty when every reference resolves
+     */
+    public List<String> findUnresolvedTaskTestReferences(ProgrammingExercise exercise) {
+        var problemStatement = exercise.getProblemStatement();
+        if (problemStatement == null || problemStatement.isEmpty()) {
+            return List.of();
+        }
+        var testCases = programmingExerciseTestCaseRepository.findByExerciseId(exercise.getId());
+        var matcher = TASK_PATTERN.matcher(problemStatement);
+        List<String> unresolved = new ArrayList<>();
+        while (matcher.find()) {
+            var capturedTestCaseNames = matcher.group("tests");
+            for (String testName : extractTestCaseNames(capturedTestCaseNames)) {
+                if (findTestCaseFromProblemStatement(testName, testCases).isEmpty()) {
+                    unresolved.add(testName);
+                }
+            }
+        }
+        return unresolved;
+    }
+
     private Optional<ProgrammingExerciseTestCase> findTestCaseFromProblemStatement(String testName, Set<ProgrammingExerciseTestCase> testCases) {
         if (testName.startsWith(TESTID_START)) {
             Long id = extractTestId(testName);

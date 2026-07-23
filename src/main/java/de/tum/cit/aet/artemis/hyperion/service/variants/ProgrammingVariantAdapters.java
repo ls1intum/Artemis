@@ -40,6 +40,7 @@ import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.exception.ContinuousIntegrationException;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseTaskRepository;
+import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseTestCaseRepository;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseImportService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseParticipationService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseTaskService;
@@ -73,6 +74,8 @@ public class ProgrammingVariantAdapters implements VariantTypeAdapters {
 
     private final ProgrammingExerciseTaskService programmingExerciseTaskService;
 
+    private final ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository;
+
     private final UserRepository userRepository;
 
     private final GitService gitService;
@@ -97,17 +100,19 @@ public class ProgrammingVariantAdapters implements VariantTypeAdapters {
 
     public ProgrammingVariantAdapters(HyperionProgrammingExerciseContextRendererService contextRendererService, ProgrammingExerciseImportService programmingExerciseImportService,
             ProgrammingExerciseValidationService programmingExerciseValidationService, ProgrammingExerciseRepository programmingExerciseRepository,
-            ProgrammingExerciseTaskRepository programmingExerciseTaskRepository, ProgrammingExerciseTaskService programmingExerciseTaskService, UserRepository userRepository,
-            GitService gitService, RepositoryService repositoryService, ContinuousIntegrationTriggerService continuousIntegrationTriggerService,
-            ProgrammingExerciseParticipationService programmingExerciseParticipationService, ProgrammingSubmissionService programmingSubmissionService,
-            VariantBuildVerificationService buildVerificationService, HyperionConsistencyCheckService consistencyCheckService, VariantPlacementService variantPlacementService,
-            ExerciseVariantJobService jobService, @Value("${artemis.version-control.default-branch:main}") String defaultBranch) {
+            ProgrammingExerciseTaskRepository programmingExerciseTaskRepository, ProgrammingExerciseTaskService programmingExerciseTaskService,
+            ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository, UserRepository userRepository, GitService gitService, RepositoryService repositoryService,
+            ContinuousIntegrationTriggerService continuousIntegrationTriggerService, ProgrammingExerciseParticipationService programmingExerciseParticipationService,
+            ProgrammingSubmissionService programmingSubmissionService, VariantBuildVerificationService buildVerificationService,
+            HyperionConsistencyCheckService consistencyCheckService, VariantPlacementService variantPlacementService, ExerciseVariantJobService jobService,
+            @Value("${artemis.version-control.default-branch:main}") String defaultBranch) {
         this.contextRendererService = contextRendererService;
         this.programmingExerciseImportService = programmingExerciseImportService;
         this.programmingExerciseValidationService = programmingExerciseValidationService;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.programmingExerciseTaskRepository = programmingExerciseTaskRepository;
         this.programmingExerciseTaskService = programmingExerciseTaskService;
+        this.programmingExerciseTestCaseRepository = programmingExerciseTestCaseRepository;
         this.userRepository = userRepository;
         this.gitService = gitService;
         this.repositoryService = repositoryService;
@@ -189,7 +194,7 @@ public class ProgrammingVariantAdapters implements VariantTypeAdapters {
         User user = userRepository.getUserWithGroupsAndAuthorities(job.getInitiatorLogin());
         return new ProgrammingVariantTools(exercise, user, job.getJobId(), jobService, gitService, repositoryService, buildVerificationService,
                 continuousIntegrationTriggerService::triggerBuild, programmingExerciseParticipationService, programmingSubmissionService, programmingExerciseRepository,
-                programmingExerciseTaskService, defaultBranch, sourceExercise);
+                programmingExerciseTaskService, defaultBranch, sourceExercise, programmingExerciseTestCaseRepository);
     }
 
     @Override
@@ -203,6 +208,13 @@ public class ProgrammingVariantAdapters implements VariantTypeAdapters {
         // re-triggering; everything else is triggered together and awaited jointly, since the builds run
         // concurrently in CI and the gate then costs about the slower build, not the sum.
         verifyBuilds(exercise, findings, job.getJobId(), toolset.lastGreenBuildCommits());
+
+        // Gate 2: every test referenced in the problem statement's task markers must resolve to a real test case
+        // — test cases are only known after a build, so this runs after Gate 1. Deterministic and cheap, so it
+        // runs before the LLM consistency gate.
+        if (findings.isEmpty()) {
+            checkTestReferences(exercise, findings);
+        }
 
         // Gate 3: semantic consistency between problem statement and artifacts — only worth
         // its LLM cost once the deterministic gates are green.
@@ -405,9 +417,24 @@ public class ProgrammingVariantAdapters implements VariantTypeAdapters {
     }
 
     /**
-     * Gate 3: semantic consistency between the problem statement and the repositories (incl. "test names referenced
-     * in the problem statement exist in the test repo" — the check the ChangePlan invariants call out).
-     * Best-effort: an unavailable checker must not fail an otherwise green variant.
+     * Gate 2: every test referenced in a problem-statement task marker must resolve to a real
+     * {@link de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase} — deterministic and cheap
+     * (reuses {@link ProgrammingExerciseTaskService#findUnresolvedTaskTestReferences}, the same matching
+     * {@link ProgrammingExerciseTaskService#updateTasksFromProblemStatement} uses when linking tasks, except this
+     * reports unresolved references instead of silently dropping them).
+     */
+    private void checkTestReferences(ProgrammingExercise exercise, List<VerificationReport.VerificationFinding> findings) {
+        List<String> unresolved = programmingExerciseTaskService.findUnresolvedTaskTestReferences(exercise);
+        if (!unresolved.isEmpty()) {
+            findings.add(new VerificationReport.VerificationFinding(VerificationReport.VerificationGate.TEST_REFERENCES,
+                    "The problem statement references test(s) that do not exist in the test repository: " + String.join(", ", unresolved)
+                            + ". Update the task marker(s) to use the exact current test name(s) — call listTestCases to see what actually exists."));
+        }
+    }
+
+    /**
+     * Gate 3: semantic consistency between the problem statement and the repositories. Best-effort: an unavailable
+     * checker must not fail an otherwise green variant.
      */
     private void checkConsistency(ProgrammingExercise exercise, List<VerificationReport.VerificationFinding> findings) {
         try {

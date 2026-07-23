@@ -42,10 +42,12 @@ import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.programming.domain.FileType;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
 import de.tum.cit.aet.artemis.programming.domain.Repository;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.exception.ContinuousIntegrationException;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
+import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseTestCaseRepository;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseParticipationService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseTaskService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingSubmissionService;
@@ -122,6 +124,8 @@ class ProgrammingVariantTools implements VariantToolset {
 
     private final ProgrammingExerciseTaskService programmingExerciseTaskService;
 
+    private final ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository;
+
     private final String defaultBranch;
 
     /** The exercise this variant was generated from; used only by {@link #diffFile} to read the ORIGINAL file content. */
@@ -155,7 +159,8 @@ class ProgrammingVariantTools implements VariantToolset {
     ProgrammingVariantTools(ProgrammingExercise exercise, User user, String jobId, ExerciseVariantJobService jobService, GitService gitService, RepositoryService repositoryService,
             VariantBuildVerificationService buildVerificationService, VariantBuildTrigger buildTrigger, ProgrammingExerciseParticipationService participationService,
             ProgrammingSubmissionService programmingSubmissionService, ProgrammingExerciseRepository programmingExerciseRepository,
-            ProgrammingExerciseTaskService programmingExerciseTaskService, String defaultBranch, ProgrammingExercise sourceExercise) {
+            ProgrammingExerciseTaskService programmingExerciseTaskService, String defaultBranch, ProgrammingExercise sourceExercise,
+            ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository) {
         this.exercise = exercise;
         this.user = user;
         this.jobId = jobId;
@@ -169,6 +174,7 @@ class ProgrammingVariantTools implements VariantToolset {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.sourceExercise = sourceExercise;
         this.programmingExerciseTaskService = programmingExerciseTaskService;
+        this.programmingExerciseTestCaseRepository = programmingExerciseTestCaseRepository;
         this.defaultBranch = defaultBranch;
     }
 
@@ -690,6 +696,20 @@ class ProgrammingVariantTools implements VariantToolset {
         touchedRepositoryTypes.forEach(this::markTouched);
         report.append(appliedCount).append(" of ").append(deletes.size()).append(" file(s) deleted. Remember to run runBuild/runBuilds to verify your changes.");
         return report.toString();
+    }
+
+    @Tool(description = "List the exact names of every test case Artemis currently has registered for this exercise (discovered from build results). Call this before writing or "
+            + "updating problem-statement task markers so every test name you reference is exact — a stale or typo'd name silently drops the task-test link instead of erroring.")
+    public String listTestCases() {
+        String stop = stopNotice();
+        if (stop != null) {
+            return stop;
+        }
+        Set<ProgrammingExerciseTestCase> testCases = programmingExerciseTestCaseRepository.findByExerciseId(exercise.getId());
+        if (testCases.isEmpty()) {
+            return "No test cases are registered yet for this exercise. Test cases are discovered from build results — run a build first.";
+        }
+        return testCases.stream().map(ProgrammingExerciseTestCase::getTestName).sorted().collect(Collectors.joining("\n"));
     }
 
     @Tool(description = "Replace the variant exercise's problem statement (Markdown). Call this LAST, after the final test names are settled, "

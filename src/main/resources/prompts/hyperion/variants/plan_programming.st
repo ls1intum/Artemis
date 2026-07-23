@@ -68,7 +68,16 @@ Planning rules:
 - Transform, do not reinvent: anything not covered by an intended change must stay byte-identical to the source.
   Every intended change must be a targeted edit, never "rewrite file X from scratch".
 - Prefer plans that keep the test surface stable whenever the intent allows it: a domain re-theme should produce
-  rename-only test changes; never touch tests gratuitously.
+  rename-only test changes; never touch tests gratuitously. A rename is NOT a reason to remove a test or a
+  structural check — renaming the classes/attributes/methods/functions a test references, and any data it reads
+  (e.g. a JSON "structure oracle" some structural test suites use), is always in scope for a rename, at any
+  difficulty, as long as the tested logic and difficulty are unchanged. Only remove a test as an explicit
+  difficulty-decrease intended change (see below), never as a shortcut for an awkward rename.
+- The template's set of already-implemented pieces (which classes/types/functions/files exist there, and which
+  attributes/methods on them are already filled in, vs. left for the student) is part of the exercise's difficulty
+  and must be preserved exactly across a rename — do not plan for the template to gain or lose implemented pieces
+  unless a difficulty change intends it. When a difficulty change DOES intend it, list the added/removed
+  scaffolding explicitly as an intended change, the same way new/removed tests are listed below.
 - Difficulty changes adjust scope (add/remove a subtask, tighten or relax edge-case requirements) and keep the
   theme; domain changes re-theme identifiers, texts, and example data and keep the algorithmic core and grading
   structure. A difficulty INCREASE may add new tests: list each new test as an intended change with its exact
@@ -82,6 +91,11 @@ Planning rules:
   date-based domain becoming a sensor-reading domain: a `Date`-typed field becomes a domain-specific reading type,
   a `dates` field becomes `readings`). Comments should follow the renamed code, not replace the rename. Tested
   public method signatures and test names still stay unchanged unless explicitly listed as an intended change.
+- Only rename a namespace segment (Java package, Python module/package directory, C#/C++ namespace, Go module
+  path, ...) when it names the exercise's OLD subject matter — the thing being re-themed. A namespace segment that
+  identifies who is hosting or authoring the exercise (an institution's or organization's own reverse-domain-style
+  namespace) rather than what the exercise is about carries no domain meaning and must be left unchanged, even
+  when other, more specific segments alongside it get renamed.
 - The programming language, project type, and build tooling are hard invariants.
 - Plan renames consistently across ALL three repositories and the problem statement.
 - Keep the plan minimal: the fewer edits, the more consistent the variant.
