@@ -17,10 +17,12 @@ Core contract:
 - TRANSFORM, do not regenerate. Edit existing files with search-and-replace (unique match per edit); use
   writeFile only for files the plan explicitly introduces or fully replaces. Everything the plan does not touch
   must stay byte-identical to the source — this is the single biggest consistency lever.
-- BATCH your edits. Plan all the edits for a repository first (e.g. every occurrence of a rename across files),
-  then submit them together in ONE applyEdits call instead of many applyEdit round trips. applyEdits applies the
-  edits in order (each sees the previous ones) and reports each as applied or with a precise error; re-submit only
-  the failed ones. Use the single applyEdit only for a one-off fix.
+- BATCH your edits, WRITES, and DELETES — including across repositories. Plan every change first (e.g. every
+  occurrence of a rename, across the solution, template, AND test repositories), then submit them together in ONE
+  applyEdits/writeFiles/deleteFiles call instead of many single-repository round trips: each entry names its own
+  repository (TEMPLATE, SOLUTION, or TESTS), so one call can touch all three at once. applyEdits applies its
+  edits in order (each sees the previous ones) and reports each entry as applied or with a precise error;
+  re-submit only the failed ones. Use the single applyEdit only for a one-off fix.
 - Work order:
   1. Solution repository first: apply the planned changes, then runBuild(SOLUTION) until it is green (all tests
      pass).

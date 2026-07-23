@@ -26,6 +26,7 @@ import de.tum.cit.aet.artemis.localvc.service.GitService;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.Repository;
+import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.service.RepositoryService;
 
 /**
@@ -82,9 +83,9 @@ class ProgrammingVariantToolsBatchEditTest {
         files.put("A.java", "class Cargo {}");
         files.put("B.java", "new Cargo();");
 
-        String result = tools.applyEdits("SOLUTION", List.of(new BatchEdit("A.java", "Cargo", "Freight"), new BatchEdit("B.java", "Cargo", "Freight")));
+        String result = tools.applyEdits(List.of(new BatchEdit("SOLUTION", "A.java", "Cargo", "Freight"), new BatchEdit("SOLUTION", "B.java", "Cargo", "Freight")));
 
-        assertThat(result).contains("Edit 1 (A.java): applied").contains("Edit 2 (B.java): applied").contains("2 of 2 edit(s) applied");
+        assertThat(result).contains("Edit 1 (SOLUTION:A.java): applied").contains("Edit 2 (SOLUTION:B.java): applied").contains("2 of 2 edit(s) applied");
         assertThat(files.get("A.java")).isEqualTo("class Freight {}");
         assertThat(files.get("B.java")).isEqualTo("new Freight();");
     }
@@ -93,7 +94,7 @@ class ProgrammingVariantToolsBatchEditTest {
     void shouldLetLaterEditsSeeEarlierEditsToTheSameFile() {
         files.put("A.java", "int a = 1;");
 
-        String result = tools.applyEdits("SOLUTION", List.of(new BatchEdit("A.java", "int a = 1;", "int a = 2;"), new BatchEdit("A.java", "int a = 2;", "int a = 3;")));
+        String result = tools.applyEdits(List.of(new BatchEdit("SOLUTION", "A.java", "int a = 1;", "int a = 2;"), new BatchEdit("SOLUTION", "A.java", "int a = 2;", "int a = 3;")));
 
         assertThat(result).contains("2 of 2 edit(s) applied");
         assertThat(files.get("A.java")).isEqualTo("int a = 3;");
@@ -103,11 +104,11 @@ class ProgrammingVariantToolsBatchEditTest {
     void shouldReportPerEditErrorsWithoutBlockingTheOthers() {
         files.put("A.java", "class Cargo {}");
 
-        String result = tools.applyEdits("SOLUTION",
-                List.of(new BatchEdit("A.java", "Cargo", "Freight"), new BatchEdit("A.java", "DoesNotExist", "x"), new BatchEdit("Missing.java", "y", "z")));
+        String result = tools.applyEdits(List.of(new BatchEdit("SOLUTION", "A.java", "Cargo", "Freight"), new BatchEdit("SOLUTION", "A.java", "DoesNotExist", "x"),
+                new BatchEdit("SOLUTION", "Missing.java", "y", "z")));
 
-        assertThat(result).contains("Edit 1 (A.java): applied").contains("Edit 2 (A.java): Error: the search text was not found")
-                .contains("Edit 3 (Missing.java): Error: file 'Missing.java' does not exist").contains("1 of 3 edit(s) applied");
+        assertThat(result).contains("Edit 1 (SOLUTION:A.java): applied").contains("Edit 2 (SOLUTION:A.java): Error: the search text was not found")
+                .contains("Edit 3 (SOLUTION:Missing.java): Error: file 'Missing.java' does not exist").contains("1 of 3 edit(s) applied");
         assertThat(files.get("A.java")).isEqualTo("class Freight {}");
     }
 
@@ -115,7 +116,7 @@ class ProgrammingVariantToolsBatchEditTest {
     void shouldRejectAmbiguousSearchTextPerEdit() {
         files.put("A.java", "x x");
 
-        String result = tools.applyEdits("SOLUTION", List.of(new BatchEdit("A.java", "x", "y")));
+        String result = tools.applyEdits(List.of(new BatchEdit("SOLUTION", "A.java", "x", "y")));
 
         assertThat(result).contains("Error: the search text occurs more than once").contains("0 of 1 edit(s) applied");
         assertThat(files.get("A.java")).isEqualTo("x x");
@@ -123,7 +124,7 @@ class ProgrammingVariantToolsBatchEditTest {
 
     @Test
     void shouldRejectEditsIntoGitMetadata() throws Exception {
-        String result = tools.applyEdits("SOLUTION", List.of(new BatchEdit(".git/config", "a", "b")));
+        String result = tools.applyEdits(List.of(new BatchEdit("SOLUTION", ".git/config", "a", "b")));
 
         assertThat(result).contains("is not an editable path").contains("0 of 1 edit(s) applied");
         verify(repositoryService, never()).createFile(any(), eq(".git/config"), any());
@@ -131,11 +132,62 @@ class ProgrammingVariantToolsBatchEditTest {
 
     @Test
     void shouldRejectAnEmptyEditList() {
-        assertThat(tools.applyEdits("SOLUTION", List.of())).startsWith("Error: no edits were provided");
+        assertThat(tools.applyEdits(List.of())).startsWith("Error: no edits were provided");
     }
 
     @Test
     void shouldRejectAnUnknownRepository() {
-        assertThat(tools.applyEdits("BOGUS", List.of(new BatchEdit("A.java", "a", "b")))).startsWith("Error: unknown repository");
+        assertThat(tools.applyEdits(List.of(new BatchEdit("BOGUS", "A.java", "a", "b")))).contains("Error: unknown repository").contains("0 of 1 edit(s) applied");
+    }
+
+    @Test
+    void shouldApplyEditsAcrossMultipleRepositoriesInOneCall() throws Exception {
+        LocalVCRepositoryUri templateUri = mock(LocalVCRepositoryUri.class);
+        LocalVCRepositoryUri solutionUri = mock(LocalVCRepositoryUri.class);
+        Repository templateRepo = mock(Repository.class);
+        Repository solutionRepo = mock(Repository.class);
+
+        ProgrammingExercise exercise = mock(ProgrammingExercise.class);
+        when(exercise.getId()).thenReturn(42L);
+        when(exercise.getRepositoryURI(RepositoryType.TEMPLATE)).thenReturn(templateUri);
+        when(exercise.getRepositoryURI(RepositoryType.SOLUTION)).thenReturn(solutionUri);
+
+        GitService gitService = mock(GitService.class);
+        when(gitService.getOrCheckoutRepository(eq(templateUri), anyBoolean(), anyString(), anyBoolean())).thenReturn(templateRepo);
+        when(gitService.getOrCheckoutRepository(eq(solutionUri), anyBoolean(), anyString(), anyBoolean())).thenReturn(solutionRepo);
+
+        Map<Repository, Map<String, String>> filesByRepo = new HashMap<>();
+        filesByRepo.put(templateRepo, new HashMap<>(Map.of("A.java", "class Cargo {}")));
+        filesByRepo.put(solutionRepo, new HashMap<>(Map.of("A.java", "class Cargo { void ship() {} }")));
+
+        RepositoryService repositoryServiceLocal = mock(RepositoryService.class);
+        when(repositoryServiceLocal.getFile(any(), anyString())).thenAnswer(invocation -> {
+            Repository repo = invocation.getArgument(0);
+            String path = invocation.getArgument(1);
+            String content = filesByRepo.get(repo).get(path);
+            if (content == null) {
+                throw new IOException("no such file: " + path);
+            }
+            return content.getBytes(UTF_8);
+        });
+        when(gitService.getFileByName(any(), anyString())).thenReturn(Optional.of(mock(de.tum.cit.aet.artemis.programming.domain.File.class)));
+        doAnswer(invocation -> {
+            Repository repo = invocation.getArgument(0);
+            String path = invocation.getArgument(1);
+            filesByRepo.get(repo).put(path, new String(((java.io.InputStream) invocation.getArgument(2)).readAllBytes(), UTF_8));
+            return null;
+        }).when(repositoryServiceLocal).createFile(any(), anyString(), any());
+
+        ExerciseVariantJobService jobService = mock(ExerciseVariantJobService.class);
+        when(jobService.isCancelRequested(JOB_ID)).thenReturn(false);
+
+        ProgrammingVariantTools crossRepoTools = new ProgrammingVariantTools(exercise, null, JOB_ID, jobService, gitService, repositoryServiceLocal, null, null, null, null, null,
+                null, "main");
+
+        String result = crossRepoTools.applyEdits(List.of(new BatchEdit("TEMPLATE", "A.java", "Cargo", "Freight"), new BatchEdit("SOLUTION", "A.java", "Cargo", "Freight")));
+
+        assertThat(result).contains("Edit 1 (TEMPLATE:A.java): applied").contains("Edit 2 (SOLUTION:A.java): applied").contains("2 of 2 edit(s) applied");
+        assertThat(filesByRepo.get(templateRepo).get("A.java")).isEqualTo("class Freight {}");
+        assertThat(filesByRepo.get(solutionRepo).get("A.java")).isEqualTo("class Freight { void ship() {} }");
     }
 }

@@ -10,6 +10,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -58,43 +59,43 @@ class ProgrammingVariantToolsPathTest {
 
     @Test
     void shouldAllowWritingBuildFilesAtTheRepositoryRoot() {
-        String result = tools.writeFile("SOLUTION", "settings.gradle", "rootProject.name = 'cargo-bay'");
+        String result = tools.writeFiles(List.of(new ProgrammingVariantTools.FileWrite("SOLUTION", "settings.gradle", "rootProject.name = 'cargo-bay'")));
 
-        assertThat(result).startsWith("Wrote 'settings.gradle'");
+        assertThat(result).contains("Entry 1 (SOLUTION:settings.gradle): written").contains("1 of 1 file(s) written");
     }
 
     @Test
     void shouldStillAllowWritingSourceFiles() {
-        String result = tools.writeFile("SOLUTION", "src/de/tum/CargoBay.java", "class CargoBay {}");
+        String result = tools.writeFiles(List.of(new ProgrammingVariantTools.FileWrite("SOLUTION", "src/de/tum/CargoBay.java", "class CargoBay {}")));
 
-        assertThat(result).startsWith("Wrote 'src/de/tum/CargoBay.java'");
+        assertThat(result).contains("Entry 1 (SOLUTION:src/de/tum/CargoBay.java): written").contains("1 of 1 file(s) written");
     }
 
     @Test
     void shouldAllowWritingDotfilesOutsideGitMetadata() {
-        String result = tools.writeFile("TESTS", ".gitignore", "build/");
+        String result = tools.writeFiles(List.of(new ProgrammingVariantTools.FileWrite("TESTS", ".gitignore", "build/")));
 
-        assertThat(result).startsWith("Wrote '.gitignore'");
+        assertThat(result).contains("Entry 1 (TESTS:.gitignore): written").contains("1 of 1 file(s) written");
     }
 
     @Test
     void shouldRejectPathsReachingIntoGitMetadata() throws Exception {
-        String result = tools.writeFile("SOLUTION", ".git/config", "[core]");
+        String result = tools.writeFiles(List.of(new ProgrammingVariantTools.FileWrite("SOLUTION", ".git/config", "[core]")));
 
-        assertThat(result).startsWith("Error:").contains("not a writable path");
+        assertThat(result).contains("not a writable path").contains("0 of 1 file(s) written");
         verify(repositoryService, never()).createFile(any(), eq(".git/config"), any());
     }
 
     @Test
     void shouldRejectPathsEscapingTheWorkingCopy() throws Exception {
-        assertThat(tools.writeFile("SOLUTION", "../../etc/passwd", "x")).startsWith("Error:");
-        assertThat(tools.writeFile("SOLUTION", "/etc/passwd", "x")).startsWith("Error:");
+        assertThat(tools.writeFiles(List.of(new ProgrammingVariantTools.FileWrite("SOLUTION", "../../etc/passwd", "x")))).contains("0 of 1 file(s) written");
+        assertThat(tools.writeFiles(List.of(new ProgrammingVariantTools.FileWrite("SOLUTION", "/etc/passwd", "x")))).contains("0 of 1 file(s) written");
         verify(repositoryService, never()).createFile(any(), anyString(), any());
     }
 
     @Test
     void shouldRejectDeletingGitMetadata() {
-        assertThat(tools.deleteFile("SOLUTION", ".git/HEAD")).startsWith("Error:").contains("not a deletable path");
+        assertThat(tools.deleteFiles(List.of(new ProgrammingVariantTools.FileDelete("SOLUTION", ".git/HEAD")))).contains("not a deletable path").contains("0 of 1 file(s) deleted");
     }
 
     @Test

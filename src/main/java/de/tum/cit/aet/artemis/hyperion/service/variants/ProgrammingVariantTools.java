@@ -312,50 +312,46 @@ class ProgrammingVariantTools implements VariantToolset {
 
     /**
      * One search-and-replace edit for the batch {@link #applyEdits} tool. Same shape as a single
-     * {@link #applyEdit} call: a repository-relative {@code path}, the unique {@code search} text, and its
-     * {@code replace}ment.
+     * {@link #applyEdit} call, plus its own {@code repository} so a batch can span all three repositories in one
+     * call instead of one call per repository.
      */
-    public record BatchEdit(@JsonPropertyDescription("the file path relative to the repository root") String path,
+    public record BatchEdit(@JsonPropertyDescription("the repository: TEMPLATE, SOLUTION, or TESTS") String repository,
+            @JsonPropertyDescription("the file path relative to the repository root") String path,
             @JsonPropertyDescription("the exact text to search for; must match exactly one occurrence in the (current) file") String search,
             @JsonPropertyDescription("the replacement text") String replace) {
     }
 
-    @Tool(description = "Apply MULTIPLE search-and-replace edits to files in ONE of the variant's repositories in a SINGLE call. "
-            + "Strongly prefer this over many separate applyEdit round trips: gather every edit for a repository (for example all occurrences of a rename across several files) "
-            + "and submit them as one batch. Edits are applied IN ORDER and each sees the effect of the previous ones. Each edit is reported independently as applied or with a "
-            + "precise error, and a failed edit never blocks the others — only re-submit the failed ones in a follow-up call. Each edit's search text must occur exactly once in "
-            + "its current file. Every file is editable, including build files (build.gradle, settings.gradle, pom.xml); only git's own .git directory is off limits.")
-    public String applyEdits(@ToolParam(description = "the repository: TEMPLATE, SOLUTION, or TESTS") String repository,
-            @ToolParam(description = "the edits to apply in order; each has path, search, and replace") List<BatchEdit> edits) {
+    @Tool(description = "Apply MULTIPLE search-and-replace edits in a SINGLE call, each targeting any of TEMPLATE, SOLUTION, or TESTS. "
+            + "Strongly prefer this over many separate applyEdit round trips: gather every edit needed — including edits that span several repositories, for example a rename that "
+            + "touches the solution, template, AND test repositories — and submit them all as one batch. Edits are applied IN ORDER and each sees the effect of the previous ones "
+            + "in the same file. Each edit is reported independently as applied or with a precise error, and a failed edit never blocks the others — only re-submit the failed ones "
+            + "in a follow-up call. Each edit's search text must occur exactly once in its current file. Every file is editable, including build files (build.gradle, "
+            + "settings.gradle, pom.xml); only git's own .git directory is off limits.")
+    public String applyEdits(@ToolParam(description = "the edits to apply in order; each has repository, path, search, and replace") List<BatchEdit> edits) {
         String stop = stopNotice();
         if (stop != null) {
             return stop;
         }
-        RepositoryType repositoryType = parseRepositoryType(repository);
-        if (repositoryType == null) {
-            return invalidRepositoryMessage(repository);
-        }
         if (edits == null || edits.isEmpty()) {
-            return "Error: no edits were provided. Pass at least one { path, search, replace } edit.";
+            return "Error: no edits were provided. Pass at least one { repository, path, search, replace } edit.";
         }
-        Repository checkout;
-        try {
-            checkout = checkout(repositoryType);
-        }
-        catch (Exception e) {
-            return "Error: could not access the " + repositoryType + " repository: " + e.getMessage();
-        }
-        // In-memory content per touched file so later edits see earlier ones (sequential semantics) and each
-        // file is read once and written once, instead of a read+delete+create per edit.
-        Map<String, String> contents = new HashMap<>();
-        Set<String> changedPaths = new LinkedHashSet<>();
+        // In-memory content per repository and touched file so later edits see earlier ones (sequential
+        // semantics, per file) and each file is read once and written once, instead of a read+delete+create per
+        // edit. Repository checkouts are resolved lazily and cached, same as every other tool in this round.
+        Map<RepositoryType, Map<String, String>> contentsByRepository = new EnumMap<>(RepositoryType.class);
+        Map<RepositoryType, Set<String>> changedPathsByRepository = new EnumMap<>(RepositoryType.class);
         StringBuilder report = new StringBuilder();
         int appliedCount = 0;
         for (int index = 0; index < edits.size(); index++) {
             BatchEdit edit = edits.get(index);
-            report.append("Edit ").append(index + 1).append(" (").append(edit == null ? "?" : edit.path()).append("): ");
+            report.append("Edit ").append(index + 1).append(" (").append(edit == null ? "?" : edit.repository() + ":" + edit.path()).append("): ");
             if (edit == null) {
                 report.append("Error: the edit entry is missing.\n");
+                continue;
+            }
+            RepositoryType repositoryType = parseRepositoryType(edit.repository());
+            if (repositoryType == null) {
+                report.append(invalidRepositoryMessage(edit.repository())).append('\n');
                 continue;
             }
             String normalizedPath = normalizeWritablePath(edit.path());
@@ -363,13 +359,23 @@ class ProgrammingVariantTools implements VariantToolset {
                 report.append("Error: '").append(edit.path()).append("' is not an editable path (must be relative to the repo root, no '..', not in .git).\n");
                 continue;
             }
+            Repository checkout;
+            try {
+                checkout = checkout(repositoryType);
+            }
+            catch (Exception e) {
+                report.append("Error: could not access the ").append(repositoryType).append(" repository: ").append(e.getMessage()).append('\n');
+                continue;
+            }
+            Map<String, String> contents = contentsByRepository.computeIfAbsent(repositoryType, key -> new HashMap<>());
             String content = contents.get(normalizedPath);
             if (content == null) {
                 try {
                     content = new String(repositoryService.getFile(checkout, normalizedPath), StandardCharsets.UTF_8);
                 }
                 catch (IOException e) {
-                    report.append("Error: file '").append(edit.path()).append("' does not exist. Use listFiles to see the existing file paths.\n");
+                    report.append("Error: file '").append(edit.path()).append("' does not exist in the ").append(repositoryType)
+                            .append(" repository. Use listFiles to see the existing file paths.\n");
                     continue;
                 }
                 contents.put(normalizedPath, content);
@@ -380,23 +386,25 @@ class ProgrammingVariantTools implements VariantToolset {
                 continue;
             }
             contents.put(normalizedPath, outcome.updatedContent());
-            changedPaths.add(normalizedPath);
+            changedPathsByRepository.computeIfAbsent(repositoryType, key -> new LinkedHashSet<>()).add(normalizedPath);
             appliedCount++;
             report.append("applied.\n");
         }
-        for (String path : changedPaths) {
-            try {
-                writeFileContent(checkout, path, contents.get(path));
+        for (Map.Entry<RepositoryType, Set<String>> entry : changedPathsByRepository.entrySet()) {
+            RepositoryType repositoryType = entry.getKey();
+            Repository checkout = checkouts.get(repositoryType);
+            Map<String, String> contents = contentsByRepository.get(repositoryType);
+            for (String path : entry.getValue()) {
+                try {
+                    writeFileContent(checkout, path, contents.get(path));
+                }
+                catch (IOException e) {
+                    report.append("Error: could not write '").append(repositoryType).append(':').append(path).append("': ").append(e.getMessage()).append('\n');
+                }
             }
-            catch (IOException e) {
-                report.append("Error: could not write '").append(path).append("': ").append(e.getMessage()).append('\n');
-            }
-        }
-        if (appliedCount > 0) {
             markTouched(repositoryType);
         }
-        report.append(appliedCount).append(" of ").append(edits.size()).append(" edit(s) applied to the ").append(repositoryType)
-                .append(" repository. Remember to run runBuild to verify your changes.");
+        report.append(appliedCount).append(" of ").append(edits.size()).append(" edit(s) applied. Remember to run runBuild/runBuilds to verify your changes.");
         return report.toString();
     }
 
@@ -435,62 +443,113 @@ class ProgrammingVariantTools implements VariantToolset {
         }
     }
 
-    @Tool(description = "Create a new file (or fully overwrite an existing one) in one of the variant's repositories. "
-            + "Only use this for NEW files or complete rewrites; prefer applyEdit for changes to existing files. "
-            + "Every path in the repository is writable except git's own .git directory.")
-    public String writeFile(@ToolParam(description = "the repository: TEMPLATE, SOLUTION, or TESTS") String repository,
-            @ToolParam(description = "the file path relative to the repository root") String path, @ToolParam(description = "the full new file content") String content) {
-        String stop = stopNotice();
-        if (stop != null) {
-            return stop;
-        }
-        RepositoryType repositoryType = parseRepositoryType(repository);
-        if (repositoryType == null) {
-            return invalidRepositoryMessage(repository);
-        }
-        String normalizedPath = normalizeWritablePath(path);
-        if (normalizedPath == null) {
-            return unwritablePathMessage(path, repositoryType, "writable");
-        }
-        try {
-            Repository checkout = checkout(repositoryType);
-            writeFileContent(checkout, normalizedPath, content);
-            markTouched(repositoryType);
-            return "Wrote '" + normalizedPath + "' in the " + repositoryType + " repository. Remember to run runBuild to verify your changes.";
-        }
-        catch (Exception e) {
-            return "Error: could not write '" + normalizedPath + "' in the " + repositoryType + " repository: " + e.getMessage();
-        }
+    /** One create-or-overwrite entry for the batch {@link #writeFiles} tool, targeting its own repository. */
+    public record FileWrite(@JsonPropertyDescription("the repository: TEMPLATE, SOLUTION, or TESTS") String repository,
+            @JsonPropertyDescription("the file path relative to the repository root") String path, @JsonPropertyDescription("the full new file content") String content) {
     }
 
-    @Tool(description = "Delete an existing file in one of the variant's repositories. Only use this for files the plan removes "
-            + "(e.g. a test class dropped when making the exercise easier). Every path in the repository is deletable except git's own .git directory.")
-    public String deleteFile(@ToolParam(description = "the repository: TEMPLATE, SOLUTION, or TESTS") String repository,
-            @ToolParam(description = "the file path relative to the repository root") String path) {
+    @Tool(description = "Create new files (or fully overwrite existing ones) in a SINGLE call, each entry targeting any of TEMPLATE, SOLUTION, or TESTS — for example writing a "
+            + "renamed build file in template and solution at once. Use this for NEW files, for complete rewrites of files the plan replaces wholesale, and for an EXISTING file "
+            + "with many scattered changes where crafting unique applyEdit/applyEdits search text for every change would be awkward — a full-file rewrite is a fine choice there "
+            + "too. Every path in a repository is writable except git's own .git directory. Each entry is reported independently as written or with a precise error.")
+    public String writeFiles(@ToolParam(description = "the files to write; each has repository, path, and the full new content") List<FileWrite> writes) {
         String stop = stopNotice();
         if (stop != null) {
             return stop;
         }
-        RepositoryType repositoryType = parseRepositoryType(repository);
-        if (repositoryType == null) {
-            return invalidRepositoryMessage(repository);
+        if (writes == null || writes.isEmpty()) {
+            return "Error: no files were provided. Pass at least one { repository, path, content } entry.";
         }
-        String normalizedPath = normalizeWritablePath(path);
-        if (normalizedPath == null) {
-            return unwritablePathMessage(path, repositoryType, "deletable");
-        }
-        try {
-            Repository checkout = checkout(repositoryType);
-            if (gitService.getFileByName(checkout, normalizedPath).isEmpty()) {
-                return "Error: file '" + path + "' does not exist in the " + repositoryType + " repository. Use listFiles to see the existing file paths.";
+        StringBuilder report = new StringBuilder();
+        Set<RepositoryType> touchedRepositoryTypes = new LinkedHashSet<>();
+        int appliedCount = 0;
+        for (int index = 0; index < writes.size(); index++) {
+            FileWrite write = writes.get(index);
+            report.append("Entry ").append(index + 1).append(" (").append(write == null ? "?" : write.repository() + ":" + write.path()).append("): ");
+            if (write == null) {
+                report.append("Error: the entry is missing.\n");
+                continue;
             }
-            repositoryService.deleteFile(checkout, normalizedPath);
-            markTouched(repositoryType);
-            return "Deleted '" + normalizedPath + "' in the " + repositoryType + " repository. Remember to run runBuild to verify your changes.";
+            RepositoryType repositoryType = parseRepositoryType(write.repository());
+            if (repositoryType == null) {
+                report.append(invalidRepositoryMessage(write.repository())).append('\n');
+                continue;
+            }
+            String normalizedPath = normalizeWritablePath(write.path());
+            if (normalizedPath == null) {
+                report.append(unwritablePathMessage(write.path(), repositoryType, "writable")).append('\n');
+                continue;
+            }
+            try {
+                Repository checkout = checkout(repositoryType);
+                writeFileContent(checkout, normalizedPath, write.content());
+                touchedRepositoryTypes.add(repositoryType);
+                appliedCount++;
+                report.append("written.\n");
+            }
+            catch (Exception e) {
+                report.append("Error: could not write to the ").append(repositoryType).append(" repository: ").append(e.getMessage()).append('\n');
+            }
         }
-        catch (Exception e) {
-            return "Error: could not delete '" + normalizedPath + "' in the " + repositoryType + " repository: " + e.getMessage();
+        touchedRepositoryTypes.forEach(this::markTouched);
+        report.append(appliedCount).append(" of ").append(writes.size()).append(" file(s) written. Remember to run runBuild/runBuilds to verify your changes.");
+        return report.toString();
+    }
+
+    /** One delete entry for the batch {@link #deleteFiles} tool, targeting its own repository. */
+    public record FileDelete(@JsonPropertyDescription("the repository: TEMPLATE, SOLUTION, or TESTS") String repository,
+            @JsonPropertyDescription("the file path relative to the repository root") String path) {
+    }
+
+    @Tool(description = "Delete existing files in a SINGLE call, each entry targeting any of TEMPLATE, SOLUTION, or TESTS. Only use this for files the plan removes "
+            + "(e.g. a test class dropped when making the exercise easier). Every path is deletable except git's own .git directory. Each entry is reported independently.")
+    public String deleteFiles(@ToolParam(description = "the files to delete; each has repository and path") List<FileDelete> deletes) {
+        String stop = stopNotice();
+        if (stop != null) {
+            return stop;
         }
+        if (deletes == null || deletes.isEmpty()) {
+            return "Error: no files were provided. Pass at least one { repository, path } entry.";
+        }
+        StringBuilder report = new StringBuilder();
+        Set<RepositoryType> touchedRepositoryTypes = new LinkedHashSet<>();
+        int appliedCount = 0;
+        for (int index = 0; index < deletes.size(); index++) {
+            FileDelete delete = deletes.get(index);
+            report.append("Entry ").append(index + 1).append(" (").append(delete == null ? "?" : delete.repository() + ":" + delete.path()).append("): ");
+            if (delete == null) {
+                report.append("Error: the entry is missing.\n");
+                continue;
+            }
+            RepositoryType repositoryType = parseRepositoryType(delete.repository());
+            if (repositoryType == null) {
+                report.append(invalidRepositoryMessage(delete.repository())).append('\n');
+                continue;
+            }
+            String normalizedPath = normalizeWritablePath(delete.path());
+            if (normalizedPath == null) {
+                report.append(unwritablePathMessage(delete.path(), repositoryType, "deletable")).append('\n');
+                continue;
+            }
+            try {
+                Repository checkout = checkout(repositoryType);
+                if (gitService.getFileByName(checkout, normalizedPath).isEmpty()) {
+                    report.append("Error: file '").append(delete.path()).append("' does not exist in the ").append(repositoryType)
+                            .append(" repository. Use listFiles to see the existing file paths.\n");
+                    continue;
+                }
+                repositoryService.deleteFile(checkout, normalizedPath);
+                touchedRepositoryTypes.add(repositoryType);
+                appliedCount++;
+                report.append("deleted.\n");
+            }
+            catch (Exception e) {
+                report.append("Error: could not delete from the ").append(repositoryType).append(" repository: ").append(e.getMessage()).append('\n');
+            }
+        }
+        touchedRepositoryTypes.forEach(this::markTouched);
+        report.append(appliedCount).append(" of ").append(deletes.size()).append(" file(s) deleted. Remember to run runBuild/runBuilds to verify your changes.");
+        return report.toString();
     }
 
     @Tool(description = "Replace the variant exercise's problem statement (Markdown). Call this LAST, after the final test names are settled, "
