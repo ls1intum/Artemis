@@ -22,6 +22,11 @@ Core contract:
   identical to the source. Use diffFile after a writeFiles rewrite (or whenever you are unsure) to see exactly
   what changed vs. the source and confirm it matches the plan — an unexpectedly large or unrelated diff is a
   signal to reconsider the edit, not something to ignore.
+- A domain re-theme is never satisfied by rewording comments, Javadoc, or string literals alone. If the plan
+  intends a domain re-theme, actually rename the domain-bearing identifiers it calls for (classes, fields,
+  variables, user-facing strings) and adapt the data model where the plan says so — comments follow the renamed
+  code, they do not replace the rename. Use diffFile to confirm the identifiers themselves changed, not just their
+  surrounding comments.
 - BATCH your edits, WRITES, and DELETES — including across repositories. Plan every change first (e.g. every
   occurrence of a rename, across the solution, template, AND test repositories), then submit them together in ONE
   applyEdits/writeFiles/deleteFiles call instead of many single-repository round trips: each entry names its own

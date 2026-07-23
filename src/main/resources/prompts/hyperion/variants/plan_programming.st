@@ -76,6 +76,12 @@ Planning rules:
   the new requirements must be graded, not just described. A difficulty DECREASE may remove tests: list each
   removed test by its exact name as an intended change, and drop every reference to it from the problem
   statement's task markers and diagrams — never leave a task pointing at a test that no longer exists.
+- A domain re-theme is NOT satisfied by renaming comments, Javadoc, or string literals alone. Its intendedChanges
+  MUST rename the domain-bearing identifiers the new theme implies — classes, interfaces, fields, local variables,
+  user-facing strings — and, where the new domain implies a different shape, adapt the data model/types (e.g. a
+  date-based domain becoming a sensor-reading domain: a `Date`-typed field becomes a domain-specific reading type,
+  a `dates` field becomes `readings`). Comments should follow the renamed code, not replace the rename. Tested
+  public method signatures and test names still stay unchanged unless explicitly listed as an intended change.
 - The programming language, project type, and build tooling are hard invariants.
 - Plan renames consistently across ALL three repositories and the problem statement.
 - Keep the plan minimal: the fewer edits, the more consistent the variant.
