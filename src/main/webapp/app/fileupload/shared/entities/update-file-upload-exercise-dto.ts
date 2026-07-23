@@ -4,11 +4,12 @@ import { GradingCriterion } from 'app/exercise/structured-grading-criterion/grad
 import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { convertDateFromClient } from 'app/foundation/util/date.utils';
+import { toCompetencyLinkDTO } from 'app/fileupload/shared/entities/file-upload-exercise-dto';
 
 export interface UpdateFileUploadExerciseDto {
     id: number;
 
-    title?: string;
+    title: string;
     channelName?: string;
     shortName?: string;
     problemStatement?: string;
@@ -45,10 +46,16 @@ export interface UpdateFileUploadExerciseDto {
  * Convert FileUploadExercise → Update DTO.
  */
 export function toUpdateFileUploadExerciseDTO(fileUploadExercise: FileUploadExercise): UpdateFileUploadExerciseDto {
+    if (fileUploadExercise.id === undefined) {
+        throw new Error('Cannot create a file upload exercise update request without an ID');
+    }
+    if (fileUploadExercise.title === undefined) {
+        throw new Error('Cannot create a file upload exercise update request without a title');
+    }
     fileUploadExercise = ExerciseService.setBonusPointsConstrainedByIncludedInOverallScore(fileUploadExercise);
     const categories = ExerciseService.stringifyExerciseDTOCategories(fileUploadExercise);
     return {
-        id: fileUploadExercise.id!,
+        id: fileUploadExercise.id,
         title: fileUploadExercise.title,
         channelName: fileUploadExercise.channelName,
         shortName: fileUploadExercise.shortName,
@@ -74,9 +81,6 @@ export function toUpdateFileUploadExerciseDTO(fileUploadExercise: FileUploadExer
         gradingCriteria: fileUploadExercise.gradingCriteria ?? [],
         gradingInstructions: fileUploadExercise.gradingInstructions,
         feedbackSuggestionModule: fileUploadExercise.feedbackSuggestionModule,
-        competencyLinks: (fileUploadExercise.competencyLinks ?? []).map((link) => ({
-            competency: { id: link.competency!.id! },
-            weight: link.weight ?? 1,
-        })),
+        competencyLinks: (fileUploadExercise.competencyLinks ?? []).map((link) => toCompetencyLinkDTO(link, 1)),
     };
 }

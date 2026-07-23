@@ -1,4 +1,3 @@
-import dayjs from 'dayjs/esm';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { Competency, CompetencyExerciseLink } from 'app/atlas/shared/entities/competency.model';
 import { Course, CourseInformationSharingConfiguration } from 'app/course/shared/entities/course.model';
@@ -10,7 +9,7 @@ import { DifficultyLevel, ExerciseMode, ExerciseType, IncludedInOverallScore, Pl
 import { CompetencyLinkDTO, GradingCriterionDTO } from 'app/exercise/shared/exercise-update-shared-dto.model';
 import { TeamAssignmentConfig } from 'app/exercise/shared/entities/team/team-assignment-config.model';
 import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
-import { convertDateFromClient, convertDateFromServer } from 'app/foundation/util/date.utils';
+import { convertDateFromClient, convertDateStringFromServer } from 'app/foundation/util/date.utils';
 
 export interface FileUploadTeamAssignmentConfigDto {
     id?: number;
@@ -63,7 +62,7 @@ export interface FileUploadExerciseDto {
     includedInOverallScore?: IncludedInOverallScore;
     assessmentType?: AssessmentType;
     mode?: ExerciseMode;
-    teamMode?: boolean;
+    teamMode: boolean;
     teamAssignmentConfig?: FileUploadTeamAssignmentConfigDto;
     allowComplaintsForAutomaticAssessments?: boolean;
     allowFeedbackRequests?: boolean;
@@ -78,7 +77,7 @@ export interface FileUploadExerciseDto {
     exampleSolutionPublicationDate?: string;
     exampleSolution?: string;
     filePattern?: string;
-    gradingInstructionFeedbackUsed?: boolean;
+    gradingInstructionFeedbackUsed: boolean;
     course?: CourseContextDto;
     exerciseGroup?: ExerciseGroupContextDto;
     gradingCriteria?: GradingCriterionDTO[];
@@ -150,10 +149,7 @@ export function toFileUploadExerciseInputDTO(fileUploadExercise: FileUploadExerc
         courseId: fileUploadExercise.course?.id,
         exerciseGroupId: fileUploadExercise.exerciseGroup?.id,
         gradingCriteria: fileUploadExercise.gradingCriteria,
-        competencyLinks: (fileUploadExercise.competencyLinks ?? []).map((link) => ({
-            competency: { id: link.competency!.id! },
-            weight: link.weight,
-        })),
+        competencyLinks: (fileUploadExercise.competencyLinks ?? []).map((link) => toCompetencyLinkDTO(link)),
         plagiarismDetectionConfig: toPlagiarismDetectionConfigDTO(fileUploadExercise.plagiarismDetectionConfig),
     };
 }
@@ -177,7 +173,7 @@ export function fromFileUploadExerciseDTO(dto: FileUploadExerciseDto): FileUploa
     exercise.includedInOverallScore = dto.includedInOverallScore;
     exercise.assessmentType = dto.assessmentType;
     exercise.mode = dto.mode;
-    exercise.teamMode = dto.teamMode ?? dto.mode === ExerciseMode.TEAM;
+    exercise.teamMode = dto.teamMode;
     exercise.teamAssignmentConfig = dto.teamAssignmentConfig ? Object.assign(new TeamAssignmentConfig(), dto.teamAssignmentConfig) : undefined;
     exercise.allowComplaintsForAutomaticAssessments = dto.allowComplaintsForAutomaticAssessments;
     exercise.allowFeedbackRequests = dto.allowFeedbackRequests;
@@ -185,11 +181,11 @@ export function fromFileUploadExerciseDTO(dto: FileUploadExerciseDto): FileUploa
     exercise.secondCorrectionEnabled = dto.secondCorrectionEnabled ?? false;
     exercise.feedbackSuggestionModule = dto.feedbackSuggestionModule;
     exercise.gradingInstructions = dto.gradingInstructions;
-    exercise.releaseDate = toClientDate(dto.releaseDate);
-    exercise.startDate = toClientDate(dto.startDate);
-    exercise.dueDate = toClientDate(dto.dueDate);
-    exercise.assessmentDueDate = toClientDate(dto.assessmentDueDate);
-    exercise.exampleSolutionPublicationDate = toClientDate(dto.exampleSolutionPublicationDate);
+    exercise.releaseDate = convertDateStringFromServer(dto.releaseDate);
+    exercise.startDate = convertDateStringFromServer(dto.startDate);
+    exercise.dueDate = convertDateStringFromServer(dto.dueDate);
+    exercise.assessmentDueDate = convertDateStringFromServer(dto.assessmentDueDate);
+    exercise.exampleSolutionPublicationDate = convertDateStringFromServer(dto.exampleSolutionPublicationDate);
     exercise.exampleSolution = dto.exampleSolution;
     exercise.filePattern = dto.filePattern;
     exercise.gradingInstructionFeedbackUsed = dto.gradingInstructionFeedbackUsed;
@@ -254,15 +250,11 @@ function toExam(dto: ExamContextDto): Exam {
     exam.id = dto.id;
     exam.title = dto.title;
     exam.course = dto.course ? toCourse(dto.course) : undefined;
-    exam.startDate = toClientDate(dto.startDate);
-    exam.endDate = toClientDate(dto.endDate);
-    exam.exampleSolutionPublicationDate = toClientDate(dto.exampleSolutionPublicationDate);
+    exam.startDate = convertDateStringFromServer(dto.startDate);
+    exam.endDate = convertDateStringFromServer(dto.endDate);
+    exam.exampleSolutionPublicationDate = convertDateStringFromServer(dto.exampleSolutionPublicationDate);
     exam.numberOfCorrectionRoundsInExam = dto.numberOfCorrectionRoundsInExam;
     return exam;
-}
-
-function toClientDate(date?: string): dayjs.Dayjs | undefined {
-    return convertDateFromServer(date as unknown as dayjs.Dayjs);
 }
 
 function toExerciseCategory(category: string): ExerciseCategory | undefined {
@@ -272,4 +264,19 @@ function toExerciseCategory(category: string): ExerciseCategory | undefined {
     } catch {
         return undefined;
     }
+}
+
+export function toCompetencyLinkDTO(link: CompetencyExerciseLink, fallbackWeight?: number): CompetencyLinkDTO {
+    const competencyId = link.competency?.id;
+    if (competencyId === undefined) {
+        throw new Error('Cannot create a file upload exercise request with a competency link that has no competency ID');
+    }
+    const weight = link.weight ?? fallbackWeight;
+    if (weight === undefined) {
+        throw new Error('Cannot create a file upload exercise request with a competency link that has no weight');
+    }
+    return {
+        competency: { id: competencyId },
+        weight,
+    };
 }
