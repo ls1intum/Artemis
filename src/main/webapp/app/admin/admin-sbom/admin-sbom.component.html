@@ -3,10 +3,10 @@
 <div *adminTitleBarActions class="flex gap-2">
     @if (vulnerabilities()) {
         <button
-            pButton
+            tumUiButton
             severity="secondary"
             size="small"
-            [outlined]="true"
+            variant="outlined"
             (click)="refreshVulnerabilities()"
             [disabled]="loadingVulnerabilities()"
             data-testid="refresh-vulnerabilities-button"
@@ -15,10 +15,10 @@
             <span jhiTranslate="artemisApp.dependencies.refreshVulnerabilities"></span>
         </button>
         <button
-            pButton
+            tumUiButton
             severity="secondary"
             size="small"
-            [outlined]="true"
+            variant="outlined"
             (click)="sendVulnerabilityEmail()"
             [disabled]="sendingEmail()"
             data-testid="send-vulnerability-email-button"
@@ -28,13 +28,13 @@
         </button>
     }
     @if (combinedSbom()?.server) {
-        <button pButton severity="secondary" size="small" [outlined]="true" (click)="downloadSbom('server')" data-testid="download-server-sbom-button">
+        <button tumUiButton severity="secondary" size="small" variant="outlined" (click)="downloadSbom('server')" data-testid="download-server-sbom-button">
             <fa-icon [icon]="faDownload" />
             <span jhiTranslate="artemisApp.dependencies.downloadServer"></span>
         </button>
     }
     @if (combinedSbom()?.client) {
-        <button pButton severity="secondary" size="small" [outlined]="true" (click)="downloadSbom('client')" data-testid="download-client-sbom-button">
+        <button tumUiButton severity="secondary" size="small" variant="outlined" (click)="downloadSbom('client')" data-testid="download-client-sbom-button">
             <fa-icon [icon]="faDownload" />
             <span jhiTranslate="artemisApp.dependencies.downloadClient"></span>
         </button>
@@ -48,7 +48,7 @@
 } @else if (combinedSbom()) {
     <!-- Upgrade Recommendation Banner -->
     @if (versionInfo()?.updateAvailable) {
-        <p-message class="mb-4 block" [severity]="upgradeUrgency() === 'critical' ? 'error' : upgradeUrgency() === 'high' ? 'warn' : 'info'" data-testid="upgrade-banner">
+        <tum-ui-message class="mb-4 block" [severity]="upgradeUrgency() === 'critical' ? 'error' : upgradeUrgency() === 'high' ? 'warn' : 'info'" data-testid="upgrade-banner">
             <div class="flex items-center gap-3">
                 <fa-icon [icon]="faArrowUp" size="lg" />
                 <div class="grow">
@@ -71,7 +71,7 @@
                         [href]="versionInfo()?.releaseUrl"
                         target="_blank"
                         rel="noopener noreferrer"
-                        pButton
+                        tumUiButton
                         size="small"
                         [severity]="upgradeUrgency() === 'critical' ? 'danger' : upgradeUrgency() === 'high' ? 'warn' : 'info'"
                         data-testid="view-release-button"
@@ -80,7 +80,7 @@
                     </a>
                 }
             </div>
-        </p-message>
+        </tum-ui-message>
     }
 
     <!-- Explanation Section -->
@@ -149,16 +149,16 @@
                 @if (vulnerabilities()?.totalVulnerabilities) {
                     <div class="flex justify-center gap-2 flex-wrap">
                         @if (vulnerabilities()?.criticalCount) {
-                            <p-tag severity="danger" [value]="vulnerabilities()?.criticalCount + ' Critical'" />
+                            <tum-ui-tag severity="danger" [value]="vulnerabilities()?.criticalCount + ' Critical'" />
                         }
                         @if (vulnerabilities()?.highCount) {
-                            <p-tag severity="warn" [value]="vulnerabilities()?.highCount + ' High'" />
+                            <tum-ui-tag severity="warn" [value]="vulnerabilities()?.highCount + ' High'" />
                         }
                         @if (vulnerabilities()?.mediumCount) {
-                            <p-tag severity="warn" [value]="vulnerabilities()?.mediumCount + ' Medium'" />
+                            <tum-ui-tag severity="warn" [value]="vulnerabilities()?.mediumCount + ' Medium'" />
                         }
                         @if (vulnerabilities()?.lowCount) {
-                            <p-tag severity="info" [value]="vulnerabilities()?.lowCount + ' Low'" />
+                            <tum-ui-tag severity="info" [value]="vulnerabilities()?.lowCount + ' Low'" />
                         }
                     </div>
                 }
@@ -172,12 +172,9 @@
     <!-- Filters -->
     <div class="flex flex-wrap gap-3 mb-3 items-center" data-testid="filters-section">
         <div class="grow min-w-64">
-            <p-iconfield>
-                <p-inputicon>
-                    <fa-icon [icon]="faSearch" />
-                </p-inputicon>
+            <tum-ui-icon-field [icon]="faSearch">
                 <input
-                    pInputText
+                    tumUiInput
                     type="text"
                     class="w-full"
                     [placeholder]="'artemisApp.dependencies.filterPlaceholder' | artemisTranslate"
@@ -185,31 +182,31 @@
                     (ngModelChange)="updateFilter($event)"
                     data-testid="filter-input"
                 />
-            </p-iconfield>
+            </tum-ui-icon-field>
         </div>
-        <p-buttongroup>
-            <p-button size="small" [severity]="selectedSource() === 'all' ? null : 'secondary'" (onClick)="updateSource('all')" data-testid="source-filter-all">
+        <tum-ui-button-group>
+            <tum-ui-button size="small" [severity]="selectedSource() === 'all' ? 'primary' : 'secondary'" (clicked)="updateSource('all')" data-testid="source-filter-all">
                 <span jhiTranslate="artemisApp.dependencies.sourceAll"></span>
-                <p-tag class="ms-1" severity="secondary" [value]="'' + totalComponentCount()" />
-            </p-button>
-            <p-button size="small" [severity]="selectedSource() === 'server' ? null : 'secondary'" (onClick)="updateSource('server')" data-testid="source-filter-server">
+                <tum-ui-tag class="ms-1" severity="secondary" [value]="'' + totalComponentCount()" />
+            </tum-ui-button>
+            <tum-ui-button size="small" [severity]="selectedSource() === 'server' ? 'primary' : 'secondary'" (clicked)="updateSource('server')" data-testid="source-filter-server">
                 <fa-icon [icon]="faServer" class="me-1" />
                 <span jhiTranslate="artemisApp.dependencies.sourceServer"></span>
-                <p-tag class="ms-1" severity="secondary" [value]="'' + serverComponentCount()" />
-            </p-button>
-            <p-button size="small" [severity]="selectedSource() === 'client' ? null : 'secondary'" (onClick)="updateSource('client')" data-testid="source-filter-client">
+                <tum-ui-tag class="ms-1" severity="secondary" [value]="'' + serverComponentCount()" />
+            </tum-ui-button>
+            <tum-ui-button size="small" [severity]="selectedSource() === 'client' ? 'primary' : 'secondary'" (clicked)="updateSource('client')" data-testid="source-filter-client">
                 <fa-icon [icon]="faDesktop" class="me-1" />
                 <span jhiTranslate="artemisApp.dependencies.sourceClient"></span>
-                <p-tag class="ms-1" severity="secondary" [value]="'' + clientComponentCount()" />
-            </p-button>
-        </p-buttongroup>
+                <tum-ui-tag class="ms-1" severity="secondary" [value]="'' + clientComponentCount()" />
+            </tum-ui-button>
+        </tum-ui-button-group>
         @if (vulnerabilities()?.totalVulnerabilities) {
             <button
-                pButton
+                tumUiButton
                 type="button"
                 size="small"
                 [severity]="showOnlyVulnerable() ? 'danger' : 'secondary'"
-                [outlined]="!showOnlyVulnerable()"
+                [variant]="showOnlyVulnerable() ? 'solid' : 'outlined'"
                 (click)="toggleVulnerableOnly()"
                 data-testid="show-vulnerable-only-button"
             >
@@ -225,29 +222,25 @@
     </div>
 
     <!-- Components Table -->
-    <p-table
-        [value]="filteredComponents()"
-        [tableStyle]="{ 'min-width': '100%' }"
-        [customSort]="true"
+    <table
+        tumUiTable
+        style="min-width: 100%"
         [sortField]="sortField()"
         [sortOrder]="sortAscending() ? 1 : -1"
-        (onSort)="onTableSort($event)"
+        (sortChange)="onTableSort($event)"
         aria-describedby="sbom-page-heading"
         data-testid="components-table"
     >
-        <ng-template #header>
+        <thead>
             <tr>
-                <th scope="col" pSortableColumn="name">
+                <th scope="col" [tumUiSortableColumn]="'name'">
                     <span jhiTranslate="artemisApp.dependencies.componentName"></span>
-                    <p-sortIcon field="name" />
                 </th>
-                <th scope="col" pSortableColumn="group">
+                <th scope="col" [tumUiSortableColumn]="'group'">
                     <span jhiTranslate="artemisApp.dependencies.componentGroup"></span>
-                    <p-sortIcon field="group" />
                 </th>
-                <th scope="col" pSortableColumn="version">
+                <th scope="col" [tumUiSortableColumn]="'version'">
                     <span jhiTranslate="artemisApp.dependencies.componentVersion"></span>
-                    <p-sortIcon field="version" />
                 </th>
                 <th scope="col">
                     <span jhiTranslate="artemisApp.dependencies.componentSecurity"></span>
@@ -259,86 +252,90 @@
                     <span jhiTranslate="artemisApp.dependencies.componentSource"></span>
                 </th>
             </tr>
-        </ng-template>
-        <ng-template #body let-component>
-            <tr>
-                <td>
-                    <strong>{{ component.name }}</strong>
-                    @if (component.description) {
-                        <br />
-                        <small class="text-muted-color">{{ component.description }}</small>
-                    }
-                </td>
-                <td>{{ component.group ?? '-' }}</td>
-                <td>
-                    <p-tag severity="info" [value]="component.version" />
-                </td>
-                <td>
-                    @if (loadingVulnerabilities()) {
-                        <fa-icon [icon]="faSpinner" animation="spin" class="text-muted-color" />
-                    } @else if (component.componentVulnerabilities && component.componentVulnerabilities.length > 0) {
-                        <p-tag [severity]="getSeverityLevel(getHighestSeverity(component.componentVulnerabilities))" [title]="component.componentVulnerabilities[0]?.summary ?? ''">
-                            <fa-icon [icon]="faExclamationTriangle" class="me-1" />
-                            {{ component.componentVulnerabilities!.length }}
-                            @if (component.componentVulnerabilities!.length === 1) {
-                                <span jhiTranslate="artemisApp.dependencies.vulnerability"></span>
-                            } @else {
-                                <span jhiTranslate="artemisApp.dependencies.vulnerabilitiesCount"></span>
-                            }
-                        </p-tag>
-                        <div class="mt-1 flex flex-wrap gap-1">
-                            @for (vuln of component.componentVulnerabilities!.slice(0, 3); track vuln.id) {
-                                <a [href]="'https://osv.dev/vulnerability/' + vuln.id" target="_blank" rel="noopener noreferrer" class="no-underline">
-                                    <p-tag severity="secondary" [value]="vuln.id" />
-                                </a>
-                            }
-                            @if (component.componentVulnerabilities!.length > 3) {
-                                <p-tag severity="secondary" [value]="'+' + (component.componentVulnerabilities!.length - 3)" />
-                            }
-                        </div>
-                    } @else {
-                        <p-tag severity="success">
-                            <fa-icon [icon]="faShieldAlt" class="me-1" />
-                            <span jhiTranslate="artemisApp.dependencies.secure"></span>
-                        </p-tag>
-                    }
-                </td>
-                <td>
-                    @if (component.licenses?.length) {
-                        <div class="flex flex-wrap gap-1">
-                            @for (license of component.licenses; track license) {
-                                <p-tag severity="success" [value]="license" />
-                            }
-                        </div>
-                    } @else {
-                        <span class="text-muted-color">-</span>
-                    }
-                </td>
-                <td>
-                    @if (component.source === 'server') {
-                        <p-tag severity="info">
-                            <fa-icon [icon]="faServer" class="me-1" />
-                            Server
-                        </p-tag>
-                    } @else {
-                        <p-tag severity="danger">
-                            <fa-icon [icon]="faDesktop" class="me-1" />
-                            Client
-                        </p-tag>
-                    }
-                </td>
-            </tr>
-        </ng-template>
-        <ng-template #emptymessage>
-            <tr>
-                <td colspan="6" class="text-center py-4">
-                    <span class="text-muted-color" jhiTranslate="artemisApp.dependencies.noComponents"></span>
-                </td>
-            </tr>
-        </ng-template>
-    </p-table>
+        </thead>
+        <tbody>
+            @for (component of filteredComponents(); track component) {
+                <tr>
+                    <td>
+                        <strong>{{ component.name }}</strong>
+                        @if (component.description) {
+                            <br />
+                            <small class="text-muted-color">{{ component.description }}</small>
+                        }
+                    </td>
+                    <td>{{ component.group ?? '-' }}</td>
+                    <td>
+                        <tum-ui-tag severity="info" [value]="component.version" />
+                    </td>
+                    <td>
+                        @if (loadingVulnerabilities()) {
+                            <fa-icon [icon]="faSpinner" animation="spin" class="text-muted-color" />
+                        } @else if (component.componentVulnerabilities && component.componentVulnerabilities.length > 0) {
+                            <tum-ui-tag
+                                [severity]="getSeverityLevel(getHighestSeverity(component.componentVulnerabilities))"
+                                [title]="component.componentVulnerabilities[0]?.summary ?? ''"
+                            >
+                                <fa-icon [icon]="faExclamationTriangle" class="me-1" />
+                                {{ component.componentVulnerabilities!.length }}
+                                @if (component.componentVulnerabilities!.length === 1) {
+                                    <span jhiTranslate="artemisApp.dependencies.vulnerability"></span>
+                                } @else {
+                                    <span jhiTranslate="artemisApp.dependencies.vulnerabilitiesCount"></span>
+                                }
+                            </tum-ui-tag>
+                            <div class="mt-1 flex flex-wrap gap-1">
+                                @for (vuln of component.componentVulnerabilities!.slice(0, 3); track vuln.id) {
+                                    <a [href]="'https://osv.dev/vulnerability/' + vuln.id" target="_blank" rel="noopener noreferrer" class="no-underline">
+                                        <tum-ui-tag severity="secondary" [value]="vuln.id" />
+                                    </a>
+                                }
+                                @if (component.componentVulnerabilities!.length > 3) {
+                                    <tum-ui-tag severity="secondary" [value]="'+' + (component.componentVulnerabilities!.length - 3)" />
+                                }
+                            </div>
+                        } @else {
+                            <tum-ui-tag severity="success">
+                                <fa-icon [icon]="faShieldAlt" class="me-1" />
+                                <span jhiTranslate="artemisApp.dependencies.secure"></span>
+                            </tum-ui-tag>
+                        }
+                    </td>
+                    <td>
+                        @if (component.licenses?.length) {
+                            <div class="flex flex-wrap gap-1">
+                                @for (license of component.licenses; track license) {
+                                    <tum-ui-tag severity="success" [value]="license" />
+                                }
+                            </div>
+                        } @else {
+                            <span class="text-muted-color">-</span>
+                        }
+                    </td>
+                    <td>
+                        @if (component.source === 'server') {
+                            <tum-ui-tag severity="info">
+                                <fa-icon [icon]="faServer" class="me-1" />
+                                Server
+                            </tum-ui-tag>
+                        } @else {
+                            <tum-ui-tag severity="danger">
+                                <fa-icon [icon]="faDesktop" class="me-1" />
+                                Client
+                            </tum-ui-tag>
+                        }
+                    </td>
+                </tr>
+            } @empty {
+                <tr>
+                    <td colspan="6" class="text-center py-4">
+                        <span class="text-muted-color" jhiTranslate="artemisApp.dependencies.noComponents"></span>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
 } @else if (sbomUnavailable()) {
-    <p-message severity="info" class="block" data-testid="sbom-unavailable-message">
+    <tum-ui-message severity="info" class="block" data-testid="sbom-unavailable-message">
         <div class="flex items-start gap-3">
             <fa-icon [icon]="faInfoCircle" size="lg" />
             <div>
@@ -347,9 +344,9 @@
                 <p class="mb-0 mt-2 text-sm text-muted-color" jhiTranslate="artemisApp.dependencies.notAvailableLocalBuildHint"></p>
             </div>
         </div>
-    </p-message>
+    </tum-ui-message>
 } @else {
-    <p-message severity="error" class="block" data-testid="sbom-load-error-message">
+    <tum-ui-message severity="error" class="block" data-testid="sbom-load-error-message">
         <span jhiTranslate="artemisApp.dependencies.loadError"></span>
-    </p-message>
+    </tum-ui-message>
 }

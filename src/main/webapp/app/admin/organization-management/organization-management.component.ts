@@ -5,7 +5,7 @@ import { Organization } from 'app/admin/organization-management/organization.mod
 import { OrganizationManagementService } from 'app/admin/organization-management/organization-management.service';
 import { Subject } from 'rxjs';
 import { faPencil, faPlus, faTrash } from '@fortawesome/free-solid-svg-icons';
-import { ButtonModule } from 'primeng/button';
+import { TumUiButtonDirective } from 'app/shared-ui/tum-ui/button/tum-ui-button.directive';
 import { TumUiTableComponent } from 'app/shared-ui/tum-ui/table/tum-ui-table.component';
 import { CellTemplateRef, ColumnDef, TumUiTableQueryEvent } from 'app/shared-ui/tum-ui/table/tum-ui-table.types';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -33,7 +33,7 @@ import { onError } from 'app/foundation/util/global.utils';
         AdminTitleBarTitleDirective,
         AdminTitleBarActionsDirective,
         TumUiTableComponent,
-        ButtonModule,
+        TumUiButtonDirective,
     ],
 })
 export class OrganizationManagementComponent {

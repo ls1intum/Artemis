@@ -109,4 +109,29 @@ describe('TumUiButtonComponent', () => {
     it('leaves aria-label unset when no accessible name is provided', () => {
         expect(nativeButton().hasAttribute('aria-label')).toBe(false);
     });
+
+    it('applies the fully-rounded marker class when rounded', () => {
+        expect(nativeButton().className).not.toContain('tum-ui-btn-rounded');
+        fixture.componentRef.setInput('rounded', true);
+        fixture.detectChanges();
+        expect(nativeButton().className).toContain('tum-ui-btn-rounded');
+    });
+
+    it('shows a spinner, disables, and blocks clicks while loading', () => {
+        const emitSpy = vi.spyOn(component.clicked, 'emit');
+        fixture.componentRef.setInput('loading', true);
+        fixture.detectChanges();
+        const button = nativeButton();
+        expect(button.disabled).toBe(true);
+        expect(button.getAttribute('aria-busy')).toBe('true');
+        expect(fixture.debugElement.query(By.css('fa-icon.animate-spin'))).toBeTruthy();
+        button.click();
+        expect(emitSpy).not.toHaveBeenCalled();
+    });
+
+    it('forwards styleClass onto the inner native button', () => {
+        fixture.componentRef.setInput('styleClass', 'w-full');
+        fixture.detectChanges();
+        expect(nativeButton().className).toContain('w-full');
+    });
 });

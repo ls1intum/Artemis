@@ -1,12 +1,12 @@
 <div>
     <h5 *adminTitleBarTitle id="user-management-page-heading" class="mb-0" jhiTranslate="artemisApp.userManagement.home.title"></h5>
     <div *adminTitleBarActions class="flex items-center gap-2">
-        <p-button size="small" severity="secondary" [outlined]="true" (onClick)="importDialog.open()" data-testid="import-users-button">
+        <tum-ui-button size="small" severity="secondary" variant="outlined" (clicked)="importDialog.open()" data-testid="import-users-button">
             <fa-icon [icon]="faFileImport" />
             <span class="hidden md:inline" jhiTranslate="artemisApp.importUsers.buttonLabel"></span>
-        </p-button>
+        </tum-ui-button>
         <jhi-users-import-dialog #importDialog [adminUserMode]="true" />
-        <a pButton size="small" [routerLink]="['./new']" data-testid="create-user-button">
+        <a tumUiButton size="small" [routerLink]="['./new']" data-testid="create-user-button">
             <fa-icon [icon]="faPlus" />
             <span jhiTranslate="artemisApp.userManagement.home.createLabel"></span>
         </a>
@@ -16,12 +16,12 @@
             <div class="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
                 <div class="flex flex-wrap items-center gap-3">
                     <label for="field_searchTerm" class="mb-0" jhiTranslate="artemisApp.userManagement.searchForUser"></label>
-                    <input pInputText type="text" name="searchTerm" id="field_searchTerm" formControlName="searchControl" (blur)="loadAll()" (keydown)="onKeydown($event)" />
-                    <p-button size="small" (onClick)="loadAll()" data-testid="search-button" [label]="'artemisApp.userManagement.search' | artemisTranslate" />
+                    <input tumUiInput type="text" name="searchTerm" id="field_searchTerm" formControlName="searchControl" (blur)="loadAll()" (keydown)="onKeydown($event)" />
+                    <tum-ui-button size="small" (clicked)="loadAll()" data-testid="search-button">{{ 'artemisApp.userManagement.search' | artemisTranslate }}</tum-ui-button>
                     @if (searchInvalid()) {
-                        <p-message severity="error" data-testid="search-error">
+                        <tum-ui-message severity="error" data-testid="search-error">
                             <span jhiTranslate="artemisApp.userManagement.searchError"></span>
-                        </p-message>
+                        </tum-ui-message>
                     }
                     @if (loadingSearchResult()) {
                         <span jhiTranslate="artemisApp.userManagement.loading"></span>
@@ -30,7 +30,7 @@
                 <div class="flex items-center justify-center gap-2 md:justify-end">
                     <jhi-delete-users-button (deletionCompleted)="deleteNotEnrolledUsersComplete()" />
                     <button
-                        pButton
+                        tumUiButton
                         severity="danger"
                         size="small"
                         [renderButtonStyle]="false"
@@ -45,192 +45,197 @@
                     >
                         <fa-icon [icon]="faTrash" />
                     </button>
-                    <p-button size="small" [severity]="filters().numberOfAppliedFilters ? 'success' : 'secondary'" (onClick)="openFilterModal()" data-testid="open-filter-button">
+                    <tum-ui-button
+                        size="small"
+                        [severity]="filters().numberOfAppliedFilters ? 'success' : 'secondary'"
+                        (clicked)="openFilterModal()"
+                        data-testid="open-filter-button"
+                    >
                         <fa-icon [icon]="faFilter" />
                         <span
                             class="hidden md:inline"
                             jhiTranslate="artemisApp.userManagement.filter.modal.open"
                             [translateValues]="{ num: filters().numberOfAppliedFilters }"
                         ></span>
-                    </p-button>
+                    </tum-ui-button>
                 </div>
             </div>
         </form>
-        <p-table
-            [value]="userList"
-            [customSort]="true"
-            [sortField]="predicate()"
-            [sortOrder]="ascending() ? 1 : -1"
-            (onSort)="onTableSort($event)"
-            size="small"
-            styleClass="mt-3 overflow-x-auto"
-            aria-describedby="user-management-page-heading"
-            data-testid="user-management-table"
-        >
-            <ng-template #header>
-                <tr class="whitespace-nowrap">
-                    <th class="min-w-[70px]">
-                        <span class="pe-1" jhiTranslate="artemisApp.userManagement.batch.all"></span>
-                        <p-checkbox
-                            [binary]="true"
-                            [ngModel]="selectedUsers().length === usersWithoutCurrentUser.length"
-                            (onChange)="toggleAllUserSelection()"
-                            data-testid="select-all-checkbox"
-                        />
-                    </th>
-                    <th pSortableColumn="id">
-                        <span jhiTranslate="global.field.id"></span>
-                        <p-sortIcon field="id" />
-                    </th>
-                    <th>
-                        <span jhiTranslate="artemisApp.userManagement.profilePicture"></span>
-                    </th>
-                    <th pSortableColumn="login">
-                        <span jhiTranslate="artemisApp.userManagement.login"></span>
-                        <p-sortIcon field="login" />
-                    </th>
-                    <th pSortableColumn="email">
-                        <span jhiTranslate="artemisApp.userManagement.email"></span>
-                        <p-sortIcon field="email" />
-                    </th>
-                    <th pSortableColumn="registrationNumber">
-                        <span jhiTranslate="artemisApp.userManagement.registrationNumber"></span>
-                        <p-sortIcon field="registrationNumber" />
-                    </th>
-                    <th pSortableColumn="lastName">
-                        <span jhiTranslate="artemisApp.userManagement.name"></span>
-                        <p-sortIcon field="lastName" />
-                    </th>
-                    <th></th>
-                    <th pSortableColumn="langKey">
-                        <span jhiTranslate="artemisApp.userManagement.langKey"></span>
-                        <p-sortIcon field="langKey" />
-                    </th>
-                    <th pSortableColumn="internal">
-                        <span jhiTranslate="artemisApp.userManagement.internal"></span>
-                        <p-sortIcon field="internal" />
-                    </th>
-                    <th pSortableColumn="createdDate">
-                        <span jhiTranslate="artemisApp.userManagement.createdDate"></span>
-                        <p-sortIcon field="createdDate" />
-                    </th>
-                    <th pSortableColumn="lastModifiedBy">
-                        <span jhiTranslate="artemisApp.userManagement.lastModifiedBy"></span>
-                        <p-sortIcon field="lastModifiedBy" />
-                    </th>
-                    <th pSortableColumn="lastModifiedDate">
-                        <span jhiTranslate="artemisApp.userManagement.lastModifiedDate"></span>
-                        <p-sortIcon field="lastModifiedDate" />
-                    </th>
-                    <th></th>
-                </tr>
-            </ng-template>
-            <ng-template #body let-user>
-                <tr data-testid="user-row">
-                    <td>
-                        <p-checkbox
-                            [binary]="true"
-                            [disabled]="!currentAccount() || currentAccount()?.login === user.login"
-                            [ngModel]="selectedUsers().includes(user)"
-                            (onChange)="toggleUser(user)"
-                        />
-                    </td>
-                    <td>
-                        <a [routerLink]="['./', user.login]">{{ user.id }}</a>
-                    </td>
-                    <td>
-                        <jhi-profile-picture
-                            imageSizeInRem="1.5"
-                            fontSizeInRem="0.6"
-                            imageId="user-profile-picture"
-                            defaultPictureId="user-default-profile-picture"
-                            [authorId]="user.id"
-                            [authorName]="user.name"
-                            [imageUrl]="addPublicFilePrefix(user.imageUrl)"
-                        />
-                    </td>
-                    <td>
-                        <jhi-search-highlight [result]="user.login" [term]="searchTerm()" />
-                    </td>
-                    <td>
-                        <jhi-search-highlight [result]="user.email" [term]="searchTerm()" />
-                    </td>
-                    <td>
-                        <jhi-search-highlight [result]="user.visibleRegistrationNumber" [term]="searchTerm()" />
-                    </td>
-                    <td>
-                        <jhi-search-highlight [result]="user.name" [term]="searchTerm()" />
-                    </td>
-                    <td>
-                        @if (user.activated) {
-                            <p-button
-                                size="small"
-                                severity="success"
-                                (onClick)="setActive(user, false)"
-                                [disabled]="!currentAccount() || currentAccount()?.login === user.login"
-                                [label]="'artemisApp.userManagement.activated' | artemisTranslate"
+        <div class="mt-3 overflow-x-auto">
+            <table
+                tumUiTable
+                size="small"
+                [sortField]="predicate()"
+                [sortOrder]="ascending() ? 1 : -1"
+                (sortChange)="onTableSort($event)"
+                aria-describedby="user-management-page-heading"
+                data-testid="user-management-table"
+            >
+                <thead>
+                    <tr class="whitespace-nowrap">
+                        <th class="min-w-[70px]">
+                            <span class="pe-1" jhiTranslate="artemisApp.userManagement.batch.all"></span>
+                            <tum-ui-checkbox
+                                [ngModel]="selectedUsers().length === usersWithoutCurrentUser.length"
+                                (onChange)="toggleAllUserSelection()"
+                                data-testid="select-all-checkbox"
                             />
-                        } @else {
-                            <p-button size="small" severity="danger" (onClick)="setActive(user, true)" [label]="'artemisApp.userManagement.deactivated' | artemisTranslate" />
-                        }
-                    </td>
-                    <td>{{ user.langKey }}</td>
-                    <td>{{ (user.internal ? 'global.generic.yes' : 'global.generic.no') | artemisTranslate }}</td>
-                    <td>{{ user.createdDate | artemisDate }}</td>
-                    <td>{{ user.lastModifiedBy }}</td>
-                    <td>{{ user.lastModifiedDate | artemisDate }}</td>
-                    <td class="text-end">
-                        <div class="flex items-center justify-end gap-1">
-                            <a [routerLink]="['./', user.login]" pButton size="small" severity="info" [outlined]="true" [pTooltip]="'entity.action.view' | artemisTranslate">
-                                <fa-icon [icon]="faEye" />
-                            </a>
-                            <a
-                                [routerLink]="['./', user.login, 'edit']"
-                                queryParamsHandling="merge"
-                                pButton
-                                size="small"
-                                severity="warn"
-                                [outlined]="true"
-                                [pTooltip]="'entity.action.edit' | artemisTranslate"
-                            >
-                                <fa-icon [icon]="faPencil" />
-                            </a>
-                            @if (isLdapEnabled() && !user.internal) {
-                                <button
-                                    pButton
-                                    size="small"
-                                    severity="success"
-                                    type="button"
-                                    [outlined]="true"
-                                    (click)="ldapSync(user.id!)"
-                                    data-testid="ldap-sync-button"
-                                    [pTooltip]="'entity.action.ldap' | artemisTranslate"
-                                >
-                                    <fa-icon [icon]="faSync" />
-                                </button>
-                            }
-                            <button
-                                pButton
-                                severity="danger"
-                                size="small"
-                                [outlined]="true"
-                                [renderButtonStyle]="false"
-                                [renderButtonText]="false"
-                                jhiDeleteButton
-                                [entityTitle]="user.login!"
-                                deleteQuestion="artemisApp.userManagement.delete.question"
-                                (delete)="deleteUser(user.login!)"
-                                [dialogError]="dialogError"
-                                [disabled]="!currentAccount() || currentAccount()?.login === user.login"
-                                [pTooltip]="'entity.action.delete' | artemisTranslate"
-                            >
-                                <fa-icon [icon]="faTrash" />
-                            </button>
-                        </div>
-                    </td>
-                </tr>
-            </ng-template>
-        </p-table>
+                        </th>
+                        <th [tumUiSortableColumn]="'id'">
+                            <span jhiTranslate="global.field.id"></span>
+                        </th>
+                        <th>
+                            <span jhiTranslate="artemisApp.userManagement.profilePicture"></span>
+                        </th>
+                        <th [tumUiSortableColumn]="'login'">
+                            <span jhiTranslate="artemisApp.userManagement.login"></span>
+                        </th>
+                        <th [tumUiSortableColumn]="'email'">
+                            <span jhiTranslate="artemisApp.userManagement.email"></span>
+                        </th>
+                        <th [tumUiSortableColumn]="'registrationNumber'">
+                            <span jhiTranslate="artemisApp.userManagement.registrationNumber"></span>
+                        </th>
+                        <th [tumUiSortableColumn]="'lastName'">
+                            <span jhiTranslate="artemisApp.userManagement.name"></span>
+                        </th>
+                        <th></th>
+                        <th [tumUiSortableColumn]="'langKey'">
+                            <span jhiTranslate="artemisApp.userManagement.langKey"></span>
+                        </th>
+                        <th [tumUiSortableColumn]="'internal'">
+                            <span jhiTranslate="artemisApp.userManagement.internal"></span>
+                        </th>
+                        <th [tumUiSortableColumn]="'createdDate'">
+                            <span jhiTranslate="artemisApp.userManagement.createdDate"></span>
+                        </th>
+                        <th [tumUiSortableColumn]="'lastModifiedBy'">
+                            <span jhiTranslate="artemisApp.userManagement.lastModifiedBy"></span>
+                        </th>
+                        <th [tumUiSortableColumn]="'lastModifiedDate'">
+                            <span jhiTranslate="artemisApp.userManagement.lastModifiedDate"></span>
+                        </th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @for (user of userList; track trackIdentity($index, user)) {
+                        <tr data-testid="user-row">
+                            <td>
+                                <tum-ui-checkbox
+                                    [disabled]="!currentAccount() || currentAccount()?.login === user.login"
+                                    [ngModel]="selectedUsers().includes(user)"
+                                    (onChange)="toggleUser(user)"
+                                />
+                            </td>
+                            <td>
+                                <a [routerLink]="['./', user.login]">{{ user.id }}</a>
+                            </td>
+                            <td>
+                                <jhi-profile-picture
+                                    imageSizeInRem="1.5"
+                                    fontSizeInRem="0.6"
+                                    imageId="user-profile-picture"
+                                    defaultPictureId="user-default-profile-picture"
+                                    [authorId]="user.id"
+                                    [authorName]="user.name"
+                                    [imageUrl]="addPublicFilePrefix(user.imageUrl)"
+                                />
+                            </td>
+                            <td>
+                                <jhi-search-highlight [result]="user.login" [term]="searchTerm()" />
+                            </td>
+                            <td>
+                                <jhi-search-highlight [result]="user.email" [term]="searchTerm()" />
+                            </td>
+                            <td>
+                                <jhi-search-highlight [result]="user.visibleRegistrationNumber" [term]="searchTerm()" />
+                            </td>
+                            <td>
+                                <jhi-search-highlight [result]="user.name" [term]="searchTerm()" />
+                            </td>
+                            <td>
+                                @if (user.activated) {
+                                    <tum-ui-button
+                                        size="small"
+                                        severity="success"
+                                        (clicked)="setActive(user, false)"
+                                        [disabled]="!currentAccount() || currentAccount()?.login === user.login"
+                                    >
+                                        {{ 'artemisApp.userManagement.activated' | artemisTranslate }}
+                                    </tum-ui-button>
+                                } @else {
+                                    <tum-ui-button size="small" severity="danger" (clicked)="setActive(user, true)">
+                                        {{ 'artemisApp.userManagement.deactivated' | artemisTranslate }}
+                                    </tum-ui-button>
+                                }
+                            </td>
+                            <td>{{ user.langKey }}</td>
+                            <td>{{ (user.internal ? 'global.generic.yes' : 'global.generic.no') | artemisTranslate }}</td>
+                            <td>{{ user.createdDate | artemisDate }}</td>
+                            <td>{{ user.lastModifiedBy }}</td>
+                            <td>{{ user.lastModifiedDate | artemisDate }}</td>
+                            <td class="text-end">
+                                <div class="flex items-center justify-end gap-1">
+                                    <a
+                                        [routerLink]="['./', user.login]"
+                                        tumUiButton
+                                        size="small"
+                                        severity="info"
+                                        variant="outlined"
+                                        [tumUiTooltip]="'entity.action.view' | artemisTranslate"
+                                    >
+                                        <fa-icon [icon]="faEye" />
+                                    </a>
+                                    <a
+                                        [routerLink]="['./', user.login, 'edit']"
+                                        queryParamsHandling="merge"
+                                        tumUiButton
+                                        size="small"
+                                        severity="warn"
+                                        variant="outlined"
+                                        [tumUiTooltip]="'entity.action.edit' | artemisTranslate"
+                                    >
+                                        <fa-icon [icon]="faPencil" />
+                                    </a>
+                                    @if (isLdapEnabled() && !user.internal) {
+                                        <button
+                                            tumUiButton
+                                            size="small"
+                                            severity="success"
+                                            type="button"
+                                            variant="outlined"
+                                            (click)="ldapSync(user.id!)"
+                                            data-testid="ldap-sync-button"
+                                            [tumUiTooltip]="'entity.action.ldap' | artemisTranslate"
+                                        >
+                                            <fa-icon [icon]="faSync" />
+                                        </button>
+                                    }
+                                    <button
+                                        tumUiButton
+                                        severity="danger"
+                                        size="small"
+                                        variant="outlined"
+                                        [renderButtonStyle]="false"
+                                        [renderButtonText]="false"
+                                        jhiDeleteButton
+                                        [entityTitle]="user.login!"
+                                        deleteQuestion="artemisApp.userManagement.delete.question"
+                                        (delete)="deleteUser(user.login!)"
+                                        [dialogError]="dialogError"
+                                        [disabled]="!currentAccount() || currentAccount()?.login === user.login"
+                                        [tumUiTooltip]="'entity.action.delete' | artemisTranslate"
+                                    >
+                                        <fa-icon [icon]="faTrash" />
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
     }
     @if (users().length) {
         <div class="mt-3">
@@ -238,17 +243,23 @@
                 <jhi-item-count [params]="{ page: page(), totalItems: totalItems(), itemsPerPage: itemsPerPage }" />
             </div>
             <div class="flex justify-center">
-                <p-paginator [first]="(page() - 1) * itemsPerPage" [rows]="itemsPerPage" [totalRecords]="totalItems()" (onPageChange)="onPageChange($event)" />
+                <tum-ui-paginator
+                    [page]="page() - 1"
+                    [pageSize]="itemsPerPage"
+                    [totalRecords]="totalItems()"
+                    [showCurrentPageReport]="false"
+                    [showRowsPerPage]="false"
+                    (pageChange)="onPageChange($event)"
+                />
             </div>
         </div>
     }
 </div>
 <!-- Filter Modal -->
-<p-dialog
+<tum-ui-dialog
     [(visible)]="filterModalVisible"
     [modal]="true"
     [draggable]="false"
-    [appendTo]="'body'"
     [style]="{ width: '50dvw' }"
     header="{{ 'artemisApp.userManagement.filter.modal.title' | artemisTranslate }}"
 >
@@ -260,7 +271,7 @@
         <div class="border-b bg-[var(--user-management-background-color)] pt-2">
             <div class="mb-2 flex w-4/5 items-center justify-around">
                 <div class="flex items-center gap-1">
-                    <p-radiobutton
+                    <tum-ui-radio-button
                         inputId="authorityFilter"
                         name="authorityFilterGroup"
                         [value]="'all'"
@@ -270,7 +281,7 @@
                     <label for="authorityFilter" jhiTranslate="artemisApp.userManagement.filter.all"></label>
                 </div>
                 <div class="flex items-center gap-1">
-                    <p-radiobutton
+                    <tum-ui-radio-button
                         inputId="emptyRoles"
                         name="authorityFilterGroup"
                         [value]="'empty'"
@@ -281,7 +292,7 @@
                     <jhi-help-icon class="ps-1" text="artemisApp.userManagement.filter.authority.withoutTooltip" />
                 </div>
                 <div class="flex items-center gap-1">
-                    <p-radiobutton
+                    <tum-ui-radio-button
                         inputId="deselectAll"
                         name="authorityFilterGroup"
                         [value]="'none'"
@@ -297,11 +308,7 @@
                 @for (authority of authorityFilters; track authority) {
                     <li>
                         <label class="flex items-center gap-2">
-                            <p-checkbox
-                                [binary]="true"
-                                [ngModel]="filters().authorityFilter.has(authority)"
-                                (onChange)="toggleAuthorityFilter(filters().authorityFilter, authority)"
-                            />
+                            <tum-ui-checkbox [ngModel]="filters().authorityFilter.has(authority)" (onChange)="toggleAuthorityFilter(filters().authorityFilter, authority)" />
                             <span>{{ 'artemisApp.userManagement.filter.authority.' + authority.toString().toLowerCase() | artemisTranslate }}</span>
                         </label>
                     </li>
@@ -317,7 +324,7 @@
                 @for (origin of originFilters; track origin) {
                     <li>
                         <label class="flex items-center gap-1">
-                            <p-radiobutton
+                            <tum-ui-radio-button
                                 name="originFilterGroup"
                                 [value]="origin"
                                 [ngModel]="filters().originFilter.has(origin) ? origin : undefined"
@@ -328,7 +335,7 @@
                     </li>
                 }
                 <li class="flex items-center gap-1">
-                    <p-radiobutton
+                    <tum-ui-radio-button
                         inputId="toggleOriginFilter"
                         name="originFilterGroup"
                         [value]="'none'"
@@ -348,7 +355,7 @@
                 @for (registrationNumber of registrationNumberFilters; track registrationNumber) {
                     <li>
                         <label class="flex items-center gap-1">
-                            <p-radiobutton
+                            <tum-ui-radio-button
                                 name="registrationFilterGroup"
                                 [value]="registrationNumber"
                                 [ngModel]="filters().registrationNumberFilter.has(registrationNumber) ? registrationNumber : undefined"
@@ -359,7 +366,7 @@
                     </li>
                 }
                 <li class="flex items-center gap-1">
-                    <p-radiobutton
+                    <tum-ui-radio-button
                         inputId="toggleRegistrationNumberFilter"
                         name="registrationFilterGroup"
                         [value]="'none'"
@@ -379,7 +386,7 @@
                 @for (status of statusFilters; track status) {
                     <li>
                         <label class="flex items-center gap-1">
-                            <p-radiobutton
+                            <tum-ui-radio-button
                                 name="statusFilterGroup"
                                 [value]="status"
                                 [ngModel]="filters().statusFilter.has(status) ? status : undefined"
@@ -390,7 +397,7 @@
                     </li>
                 }
                 <li class="flex items-center gap-1">
-                    <p-radiobutton
+                    <tum-ui-radio-button
                         inputId="toggleStatusFilter"
                         name="statusFilterGroup"
                         [value]="'none'"
@@ -403,7 +410,9 @@
         </div>
     </div>
     <ng-template #footer>
-        <p-button size="small" severity="secondary" (onClick)="filterModalVisible.set(false)" [label]="'artemisApp.userManagement.filter.modal.close' | artemisTranslate" />
-        <p-button size="small" (onClick)="applyFilter()" [label]="'artemisApp.userManagement.filter.apply' | artemisTranslate" data-testid="apply-filter-button" />
+        <tum-ui-button size="small" severity="secondary" (clicked)="filterModalVisible.set(false)">{{
+            'artemisApp.userManagement.filter.modal.close' | artemisTranslate
+        }}</tum-ui-button>
+        <tum-ui-button size="small" (clicked)="applyFilter()" data-testid="apply-filter-button">{{ 'artemisApp.userManagement.filter.apply' | artemisTranslate }}</tum-ui-button>
     </ng-template>
-</p-dialog>
+</tum-ui-dialog>
