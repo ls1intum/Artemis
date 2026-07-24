@@ -49,6 +49,12 @@ describe('TumUiConfirmDialogComponent', () => {
         expect(overlayText()).toContain('Really delete this?');
         expect(button('Delete')).toBeTruthy();
         expect(button('Cancel')).toBeTruthy();
+        // alertdialog role + aria-describedby pointing at the message (screen-reader announces the question).
+        const dialog = document.querySelector('.tum-ui-dialog')!;
+        expect(dialog.getAttribute('role')).toBe('alertdialog');
+        const describedBy = dialog.getAttribute('aria-describedby');
+        expect(describedBy).toBeTruthy();
+        expect(document.getElementById(describedBy!)?.textContent).toContain('Really delete this?');
     });
 
     it('runs accept and closes when the confirm button is clicked', () => {
@@ -102,5 +108,38 @@ describe('TumUiConfirmDialogComponent', () => {
         service.confirm({ header: 'h', message: 'matching-key', acceptLabel: 'Yes', rejectLabel: 'No', accept: () => {}, key: 'group-a' });
         fixture.detectChanges();
         expect(overlayText()).toContain('matching-key');
+    });
+});
+
+@Component({
+    template: `<tum-ui-confirm-dialog key="a" /><tum-ui-confirm-dialog key="b" />`,
+    imports: [TumUiConfirmDialogComponent],
+    providers: [TumUiConfirmationService],
+})
+class MultiKeyHostComponent {}
+
+describe('TumUiConfirmDialogComponent (independent keyed dialogs)', () => {
+    let fixture: ComponentFixture<MultiKeyHostComponent>;
+    let service: TumUiConfirmationService;
+
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({ imports: [MultiKeyHostComponent, FontAwesomeTestingModule] }).compileComponents();
+        fixture = TestBed.createComponent(MultiKeyHostComponent);
+        service = fixture.debugElement.injector.get(TumUiConfirmationService);
+        fixture.detectChanges();
+    });
+
+    afterEach(() => fixture.destroy());
+
+    it('keeps keyed requests independent — opening one does not dismiss (or reject) another', () => {
+        const rejectA = vi.fn();
+        service.confirm({ header: 'A', message: 'request-a', acceptLabel: 'Y', rejectLabel: 'N', accept: () => {}, reject: rejectA, key: 'a' });
+        fixture.detectChanges();
+        service.confirm({ header: 'B', message: 'request-b', acceptLabel: 'Y', rejectLabel: 'N', accept: () => {}, key: 'b' });
+        fixture.detectChanges();
+        const open = Array.from(document.querySelectorAll('.tum-ui-dialog')).map((d) => d.textContent ?? '');
+        expect(open.some((t) => t.includes('request-a'))).toBe(true);
+        expect(open.some((t) => t.includes('request-b'))).toBe(true);
+        expect(rejectA).not.toHaveBeenCalled();
     });
 });

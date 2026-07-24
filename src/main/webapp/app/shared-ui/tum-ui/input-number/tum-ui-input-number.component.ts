@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, ElementRef, LOCALE_ID, computed, effect, forwardRef, inject, input, output, signal, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, ElementRef, computed, effect, forwardRef, input, output, signal, viewChild } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faChevronDown, faChevronUp } from '@fortawesome/free-solid-svg-icons';
@@ -47,8 +47,13 @@ export class TumUiInputNumberComponent implements ControlValueAccessor {
     readonly invalid = input(false);
     /** Full-width field (parity with `[fluid]`). */
     readonly fluid = input(false);
-    /** Locale digit grouping (parity with `[useGrouping]`); `true` shows e.g. `5,000`. */
+    /** Locale digit grouping (parity with `[useGrouping]`); `true` shows e.g. `5,000` (en) / `5.000` (de). */
     readonly useGrouping = input(true);
+    /**
+     * Locale for number formatting. Omit (default) to follow the browser's locale like `p-inputnumber` — so a
+     * German user sees `5.000`, an English user `5,000`. Pass a fixed locale (e.g. `'de'`) only to pin it.
+     */
+    readonly locale = input<string>();
     /** `id` of the inner `<input>`, so an external `<label for>` associates. Defaults to a unique per-instance id. */
     readonly inputId = input<string>(`tum-ui-input-number-${nextInputNumberId++}`);
     /** `name` forwarded onto the inner `<input>` for template-driven-form parity. */
@@ -66,7 +71,6 @@ export class TumUiInputNumberComponent implements ControlValueAccessor {
     readonly onFocus = output<FocusEvent>();
 
     private readonly inputRef = viewChild<ElementRef<HTMLInputElement>>('inputEl');
-    private readonly locale = inject(LOCALE_ID);
 
     // The model value delivered through the CVA (ngModel / formControl). `undefined` = empty.
     private readonly cvaValue = signal<number | undefined>(undefined);
@@ -110,6 +114,7 @@ export class TumUiInputNumberComponent implements ControlValueAccessor {
             this.prefix();
             this.suffix();
             this.useGrouping();
+            this.locale();
             const el = this.inputRef()?.nativeElement;
             if (el && !this.focused()) {
                 el.value = this.format(value);
@@ -121,7 +126,7 @@ export class TumUiInputNumberComponent implements ControlValueAccessor {
         if (value === undefined || value === null || Number.isNaN(value)) {
             return '';
         }
-        const formatted = new Intl.NumberFormat(this.locale, { useGrouping: this.useGrouping(), maximumFractionDigits: 0 }).format(value);
+        const formatted = new Intl.NumberFormat(this.locale(), { useGrouping: this.useGrouping(), maximumFractionDigits: 0 }).format(value);
         return `${this.prefix() ?? ''}${formatted}${this.suffix() ?? ''}`;
     }
 

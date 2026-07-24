@@ -80,6 +80,10 @@ export class TumUiDialogComponent implements OnDestroy {
     readonly ariaLabel = input<string>();
     /** Accessible label for the `×` close button. */
     readonly closeButtonAriaLabel = input('Close');
+    /** ARIA role of the panel. Defaults to `'dialog'`; set `'alertdialog'` for a confirmation/alert that needs a response. */
+    readonly role = input<string>('dialog');
+    /** Forwarded to the panel's `aria-describedby`, e.g. to point at a message element that describes the dialog. */
+    readonly ariaDescribedBy = input<string>();
 
     /** Emitted when the dialog becomes visible (parity with p-dialog `onShow`). */
     readonly onShow = output<void>();

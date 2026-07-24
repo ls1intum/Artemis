@@ -570,23 +570,24 @@ A numeric input — the drop-in for `p-inputnumber` (integer values). A token-st
 
 <Shots light={TumuiInputNumberLight} dark={TumuiInputNumberDark} alt="tum-ui-input-number: plain, with stepper, with a leading addon, and with prefix/suffix" />
 
-| Input / Output       | Type         | Default             | Notes                                                                                    |
-| -------------------- | ------------ | ------------------- | ---------------------------------------------------------------------------------------- |
-| `min` / `max`        | `number`     | –                   | Bounds; the value is clamped to them on blur and on every step.                          |
-| `step`               | `number`     | `1`                 | Increment applied by the stepper buttons and Arrow Up / Down.                            |
-| `showButtons`        | `boolean`    | `false`             | Render the stacked increment / decrement stepper on the trailing edge.                   |
-| `prefix` / `suffix`  | `string`     | –                   | Text shown before / after the number, inside the field (e.g. `"every "` / `" week(s)"`). |
-| `useGrouping`        | `boolean`    | `true`              | Locale digit grouping (`true` shows e.g. `5,000`).                                       |
-| `placeholder`        | `string`     | –                   | Shown when the field is empty.                                                           |
-| `disabled`           | `boolean`    | `false`             | Merged with the reactive-forms disabled state.                                           |
-| `invalid`            | `boolean`    | `false`             | Danger border for an external error state.                                               |
-| `fluid`              | `boolean`    | `false`             | Full-width field.                                                                        |
-| `inputId`            | `string`     | unique per instance | `id` of the inner `<input>`, for an external `<label for>`.                              |
-| `name`               | `string`     | –                   | `name` forwarded onto the inner `<input>`.                                               |
-| `ariaLabel`          | `string`     | –                   | Accessible name when there is no visible label.                                          |
-| `styleClass`         | `string`     | `''`                | Classes forwarded onto the host.                                                         |
-| `inputStyleClass`    | `string`     | `''`                | Classes forwarded onto the inner `<input>`.                                              |
-| `onBlur` / `onFocus` | `FocusEvent` | –                   | Emitted on the inner input's blur (after clamping) / focus.                              |
+| Input / Output       | Type         | Default             | Notes                                                                                                               |
+| -------------------- | ------------ | ------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| `min` / `max`        | `number`     | –                   | Bounds; the value is clamped to them on blur and on every step.                                                     |
+| `step`               | `number`     | `1`                 | Increment applied by the stepper buttons and Arrow Up / Down.                                                       |
+| `showButtons`        | `boolean`    | `false`             | Render the stacked increment / decrement stepper on the trailing edge.                                              |
+| `prefix` / `suffix`  | `string`     | –                   | Text shown before / after the number, inside the field (e.g. `"every "` / `" week(s)"`).                            |
+| `useGrouping`        | `boolean`    | `true`              | Locale digit grouping (`true` shows e.g. `5,000` in en, `5.000` in de).                                             |
+| `locale`             | `string`     | – (browser locale)  | Locale for number formatting. Omit to follow the browser's locale like `p-inputnumber`; pass e.g. `'de'` to pin it. |
+| `placeholder`        | `string`     | –                   | Shown when the field is empty.                                                                                      |
+| `disabled`           | `boolean`    | `false`             | Merged with the reactive-forms disabled state.                                                                      |
+| `invalid`            | `boolean`    | `false`             | Danger border for an external error state.                                                                          |
+| `fluid`              | `boolean`    | `false`             | Full-width field.                                                                                                   |
+| `inputId`            | `string`     | unique per instance | `id` of the inner `<input>`, for an external `<label for>`.                                                         |
+| `name`               | `string`     | –                   | `name` forwarded onto the inner `<input>`.                                                                          |
+| `ariaLabel`          | `string`     | –                   | Accessible name when there is no visible label.                                                                     |
+| `styleClass`         | `string`     | `''`                | Classes forwarded onto the host.                                                                                    |
+| `inputStyleClass`    | `string`     | `''`                | Classes forwarded onto the inner `<input>`.                                                                         |
+| `onBlur` / `onFocus` | `FocusEvent` | –                   | Emitted on the inner input's blur (after clamping) / focus.                                                         |
 
 Public methods `focus()`, `blur()`, and `select()` operate on the inner native input (e.g. for a page-navigation field that selects its text on focus).
 
@@ -867,7 +868,7 @@ A modal dialog on the CDK overlay — the declarative drop-in for `p-dialog` and
 
 ### Confirm dialog — `tum-ui-confirm-dialog` + `TumUiConfirmationService`
 
-The drop-in for `p-confirmdialog` + `ConfirmationService`. Two pieces: inject `TumUiConfirmationService` and call `confirm({ … })`; place one `<tum-ui-confirm-dialog>` in the template and it renders the pending request as a modal (built on the `tum-ui-dialog`) — an optional icon, the message, and cancel / confirm buttons. Confirming runs the request's `accept`; dismissing (cancel button, Escape, ×) runs its optional `reject`. Provide the service **once per owning component** (like PrimeNG); that single service holds one request stream, and each `<tum-ui-confirm-dialog>` renders the pending request whose `[key]` matches it (so one component can host several keyed dialogs off the same service). `[key]` must be **static** — changing it while a request is open would drop the request without a callback.
+The drop-in for `p-confirmdialog` + `ConfirmationService`. Two pieces: inject `TumUiConfirmationService` and call `confirm({ … })`; place one `<tum-ui-confirm-dialog>` in the template and it renders the pending request as a modal (built on the `tum-ui-dialog`) — an optional icon, the message, and cancel / confirm buttons. Confirming runs the request's `accept`; dismissing (cancel button, Escape, ×) runs its optional `reject`. Provide the service **once per owning component** (like PrimeNG); that single service holds one request stream, and each `<tum-ui-confirm-dialog>` renders the pending request whose `[key]` matches it (so one component can host several keyed dialogs off the same service). `[key]` must be **static** — changing it while a request is open would drop the request without a callback. The dialog is exposed as an `alertdialog` with `aria-describedby` pointing at the message, so a screen reader announces the question (not just the header).
 
 <Shots light={TumuiConfirmDialogLight} dark={TumuiConfirmDialogDark} alt="tum-ui-confirm-dialog" />
 

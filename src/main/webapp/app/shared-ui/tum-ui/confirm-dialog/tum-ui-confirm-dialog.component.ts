@@ -4,6 +4,9 @@ import { TumUiButtonComponent } from 'app/shared-ui/tum-ui/button/tum-ui-button.
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TumUiConfirmationService } from 'app/shared-ui/tum-ui/confirm-dialog/tum-ui-confirmation.service';
 
+// Per-instance counter for a unique message id, so `aria-describedby` never collides across dialogs on a page.
+let nextConfirmDialogId = 0;
+
 /**
  * Owned confirmation dialog, part of the tum-aet-ui kit (future @tumaet/ui-angular).
  *
@@ -23,32 +26,29 @@ import { TumUiConfirmationService } from 'app/shared-ui/tum-ui/confirm-dialog/tu
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TumUiConfirmDialogComponent {
-    /** Only render requests whose `key` matches this (both unset by default). */
+    /** Only render requests whose `key` matches this (both unset by default). Expected to be static. */
     readonly key = input<string>();
 
     private readonly confirmationService = inject(TumUiConfirmationService);
 
-    /** The active request for this dialog (matching `key`), or `undefined`. */
-    protected readonly request = computed(() => {
-        const active = this.confirmationService.activeRequest();
-        if (!active) {
-            return undefined;
-        }
-        return (active.key ?? undefined) === (this.key() ?? undefined) ? active : undefined;
-    });
+    /** Stable id for the message element, so the dialog can point `aria-describedby` at it. */
+    protected readonly messageId = `tum-ui-confirm-dialog-message-${nextConfirmDialogId++}`;
+
+    /** The active request for this dialog's key, or `undefined`. */
+    protected readonly request = computed(() => this.confirmationService.request(this.key()));
 
     protected readonly visible = computed(() => this.request() !== undefined);
 
     protected accept(): void {
         const request = this.request();
         // Clear before running the callback's side effects so the dialog is already closing.
-        this.confirmationService.close();
+        this.confirmationService.close(this.key());
         request?.accept();
     }
 
     protected reject(): void {
         const request = this.request();
-        this.confirmationService.close();
+        this.confirmationService.close(this.key());
         request?.reject?.();
     }
 
@@ -59,7 +59,7 @@ export class TumUiConfirmDialogComponent {
     protected onDialogHide(): void {
         const request = this.request();
         if (request) {
-            this.confirmationService.close();
+            this.confirmationService.close(this.key());
             request.reject?.();
         }
     }

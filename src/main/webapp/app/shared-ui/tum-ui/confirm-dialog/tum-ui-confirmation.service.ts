@@ -40,17 +40,27 @@ export interface TumUiConfirmationRequest {
  */
 @Injectable()
 export class TumUiConfirmationService {
-    private readonly request = signal<TumUiConfirmationRequest | undefined>(undefined);
-    /** The pending confirmation request, or `undefined` when none is open. Read by the confirm-dialog component. */
-    readonly activeRequest = this.request.asReadonly();
+    // One pending request per key (unkeyed dialogs use the `undefined` key), so several keyed
+    // `<tum-ui-confirm-dialog>`s sharing this service stay independent — opening one never silently
+    // discards another's request (which would skip its `reject`).
+    private readonly requests = signal<ReadonlyMap<string | undefined, TumUiConfirmationRequest>>(new Map());
 
-    /** Open a confirmation dialog for the given request. */
-    confirm(request: TumUiConfirmationRequest): void {
-        this.request.set(request);
+    /** The pending request for the given key, or `undefined`. Reactive — read it from a `computed`. */
+    request(key: string | undefined): TumUiConfirmationRequest | undefined {
+        return this.requests().get(key);
     }
 
-    /** Clear the pending request (called by the dialog once a decision is made). */
-    close(): void {
-        this.request.set(undefined);
+    /** Open a confirmation dialog for the given request (routed by its `key`). */
+    confirm(request: TumUiConfirmationRequest): void {
+        const next = new Map(this.requests());
+        next.set(request.key, request);
+        this.requests.set(next);
+    }
+
+    /** Clear the pending request for the given key (called by the dialog once a decision is made). */
+    close(key: string | undefined): void {
+        const next = new Map(this.requests());
+        next.delete(key);
+        this.requests.set(next);
     }
 }

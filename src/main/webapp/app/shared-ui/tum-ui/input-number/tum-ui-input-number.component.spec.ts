@@ -59,6 +59,7 @@ describe('TumUiInputNumberComponent', () => {
         [prefix]="prefix()"
         [suffix]="suffix()"
         [useGrouping]="grouping()"
+        [locale]="locale()"
     />`,
     imports: [TumUiInputNumberComponent, FormsModule, FontAwesomeTestingModule],
 })
@@ -70,6 +71,7 @@ class HostComponent {
     readonly prefix = signal<string | undefined>(undefined);
     readonly suffix = signal<string | undefined>(undefined);
     readonly grouping = signal(true);
+    readonly locale = signal<string | undefined>(undefined);
 }
 
 describe('TumUiInputNumberComponent (ngModel + formatting)', () => {
@@ -154,6 +156,15 @@ describe('TumUiInputNumberComponent (ngModel + formatting)', () => {
         input().dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown' }));
         fixture.detectChanges();
         expect(host.value).toBe(1);
+    });
+
+    it('formats with the given locale (German grouping uses a period)', async () => {
+        host.locale.set('de');
+        host.value = 5000;
+        fixture.detectChanges();
+        await fixture.whenStable();
+        fixture.detectChanges();
+        expect(input().value).toBe('5.000');
     });
 
     it('omits grouping when useGrouping is false', async () => {
