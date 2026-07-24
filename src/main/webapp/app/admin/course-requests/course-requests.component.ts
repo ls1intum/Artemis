@@ -1,11 +1,11 @@
 import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
-import { PaginatorModule, PaginatorState } from 'primeng/paginator';
-import { DialogModule } from 'primeng/dialog';
-import { ButtonModule } from 'primeng/button';
-import { TableModule } from 'primeng/table';
-import { TagModule } from 'primeng/tag';
-import { TextareaModule } from 'primeng/textarea';
-import { TooltipModule } from 'primeng/tooltip';
+import { TumUiPaginatorComponent } from 'app/shared-ui/tum-ui/paginator/tum-ui-paginator.component';
+import { TumUiDialogComponent } from 'app/shared-ui/tum-ui/dialog/tum-ui-dialog.component';
+import { TumUiButtonComponent } from 'app/shared-ui/tum-ui/button/tum-ui-button.component';
+import { TumUiTableDirective } from 'app/shared-ui/tum-ui/table-directive/tum-ui-table.directive';
+import { TumUiTagComponent } from 'app/shared-ui/tum-ui/tag/tum-ui-tag.component';
+import { TumUiInputDirective } from 'app/shared-ui/tum-ui/input/tum-ui-input.directive';
+import { TumUiTooltipDirective } from 'app/shared-ui/tum-ui/tooltip/tum-ui-tooltip.directive';
 import { faCheck, faExternalLinkAlt, faPencil, faSync, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { RouterLink } from '@angular/router';
@@ -45,14 +45,14 @@ import { AdminTitleBarActionsDirective } from 'app/admin/shared/admin-title-bar-
         FaIconComponent,
         AdminTitleBarTitleDirective,
         AdminTitleBarActionsDirective,
-        PaginatorModule,
+        TumUiPaginatorComponent,
         CourseRequestFormComponent,
-        DialogModule,
-        ButtonModule,
-        TableModule,
-        TagModule,
-        TextareaModule,
-        TooltipModule,
+        TumUiDialogComponent,
+        TumUiButtonComponent,
+        TumUiTableDirective,
+        TumUiTagComponent,
+        TumUiInputDirective,
+        TumUiTooltipDirective,
     ],
 })
 export class CourseRequestsComponent implements OnInit {
@@ -75,7 +75,7 @@ export class CourseRequestsComponent implements OnInit {
     readonly decidedRequests = signal<CourseRequest[]>([]);
     /** Total count of decided requests for pagination */
     readonly totalDecidedCount = signal(0);
-    /** Current page for decided requests (1-indexed; the PrimeNG paginator emits 0-indexed pages) */
+    /** Current page for decided requests (1-indexed; the paginator emits 0-indexed pages) */
     readonly decidedPage = signal(1);
     /** Page size for decided requests */
     readonly decidedPageSize = 20;
@@ -133,9 +133,9 @@ export class CourseRequestsComponent implements OnInit {
         this.load();
     }
 
-    /** Handles a PrimeNG paginator page change for the decided requests by converting the 0-indexed event page to the 1-indexed page and reloading. */
-    onDecidedPaginatorChange(event: PaginatorState): void {
-        this.decidedPage.set((event.page ?? 0) + 1);
+    /** Handles a paginator page change for the decided requests by converting the 0-indexed emitted page to the 1-indexed page and reloading. */
+    onDecidedPaginatorChange(page: number): void {
+        this.decidedPage.set(page + 1);
         this.onDecidedPageChange();
     }
 

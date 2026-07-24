@@ -161,8 +161,10 @@ test.describe('Quiz Exercise Lifecycle', { tag: '@fast' }, () => {
             const titleField = page.locator('#field_title');
             await expect(titleField).toHaveValue(quizExercise.title!, { timeout: 30000 });
             const mcQuestionTitle = page.locator('#mc-question-title');
-            await expect(mcQuestionTitle).toBeVisible({ timeout: 10000 });
-            await expect(mcQuestionTitle).toHaveValue(multipleChoiceTemplate.title);
+            // The MC question component mounts lazily after the quiz fetch; match the 30s
+            // used for the title field above to avoid spurious timeouts under CI load.
+            await expect(mcQuestionTitle).toBeVisible({ timeout: 30000 });
+            await expect(mcQuestionTitle).toHaveValue(multipleChoiceTemplate.title, { timeout: 10000 });
 
             // Preview: verify BOTH questions render (proves exercise_id FK is set)
             await page.goto(`/course-management/${course.id}/quiz-exercises/${quizExercise.id}/preview`);
@@ -204,8 +206,8 @@ test.describe('Quiz Exercise Lifecycle', { tag: '@fast' }, () => {
             await expect(titleField).toHaveValue(quizExercise.title!, { timeout: 30000 });
 
             const mcQuestionTitle = page.locator('#mc-question-title');
-            await expect(mcQuestionTitle).toBeVisible({ timeout: 10000 });
-            await expect(mcQuestionTitle).toHaveValue(multipleChoiceTemplate.title);
+            await expect(mcQuestionTitle).toBeVisible({ timeout: 30000 });
+            await expect(mcQuestionTitle).toHaveValue(multipleChoiceTemplate.title, { timeout: 10000 });
             const scoreField = page.locator('#score').first();
             await expect(scoreField).toHaveValue(multipleChoiceTemplate.points.toString());
 

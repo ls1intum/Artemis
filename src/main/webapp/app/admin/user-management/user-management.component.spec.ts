@@ -8,7 +8,6 @@ import { Subscription, of } from 'rxjs';
 import { HttpHeaders, HttpParams, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ActivatedRoute, Router } from '@angular/router';
-import { PaginatorState } from 'primeng/paginator';
 import { TranslateService } from '@ngx-translate/core';
 import { MockProvider } from 'ng-mocks';
 
@@ -100,9 +99,9 @@ describe('UserManagementComponent', () => {
         httpMock.verify();
     });
 
-    describe('onPageChange (PrimeNG paginator)', () => {
-        it('converts the 0-indexed paginator event to the 1-indexed page', () => {
-            component.onPageChange({ page: 2 } as PaginatorState);
+    describe('onPageChange (tum-ui paginator)', () => {
+        it('converts the 0-indexed paginator page to the 1-indexed page', () => {
+            component.onPageChange(2);
             expect(component.page()).toBe(3);
         });
     });
