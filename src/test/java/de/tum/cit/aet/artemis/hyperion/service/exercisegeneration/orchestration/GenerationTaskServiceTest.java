@@ -749,18 +749,16 @@ class GenerationTaskServiceTest {
     }
 
     @Test
-    void deadlineExceeded_stopsCooperativelyAndEmitsSpecificTerminalMessage() {
+    void deadlineExceeded_stopsCooperativelyAndDiscardsOnlyWhenNoVerifiedCandidateExists() {
         ArgumentCaptor<Runnable> deadline = ArgumentCaptor.forClass(Runnable.class);
-        when(jobService.requestSystemCancellation(eq(EXERCISE_ID), eq(JOB_ID), anyString())).thenReturn(true);
         when(orchestrator.generate(any(), any(), any(), any(), any(), any(), any(), any(), any())).thenAnswer((Answer<GenerationOutcome>) invocation -> {
             BooleanSupplier shouldCancel = invocation.getArgument(5);
             verify(taskScheduler).schedule(deadline.capture(), any(java.time.Instant.class));
             assertThat(shouldCancel.getAsBoolean()).isFalse();
             deadline.getValue().run();
-            boolean cancellationRequested = shouldCancel.getAsBoolean();
-            assertThat(cancellationRequested).isTrue();
-            return cancellationRequested ? GenerationOutcome.cancelled(new AgentLoopResult(AgentLoopResult.Status.CANCELLED, 1, ""))
-                    : outcomeWith(AgentLoopResult.Status.COMPLETED, new VerificationResult(true, true, true, 1, List.of()));
+            // The deadline stops the run cooperatively via the cancelled supplier, but must NOT force-cancel the job — that would discard a verified checkpoint.
+            assertThat(shouldCancel.getAsBoolean()).isTrue();
+            return GenerationOutcome.cancelled(new AgentLoopResult(AgentLoopResult.Status.CANCELLED, 1, ""));
         });
 
         taskService.runAsync(new GenerationStartedEvent(JOB_ID, user, exercise, "make it", GenerationMode.GENERATE));
@@ -768,7 +766,32 @@ class GenerationTaskServiceTest {
         ExerciseGenerationEventDTO terminal = sentEvents().getLast();
         assertThat(terminal.type()).isEqualTo(ExerciseGenerationEventDTO.Type.CANCELLED);
         assertThat(terminal.message()).contains("time limit");
-        verify(jobService).requestSystemCancellation(eq(EXERCISE_ID), eq(JOB_ID), argThat(message -> message.contains("time limit")));
+        // The safety deadline no longer force-cancels the job; with no verified candidate the run simply ends without persisting.
+        verify(jobService, never()).requestSystemCancellation(eq(EXERCISE_ID), eq(JOB_ID), anyString());
+        verify(persistenceService, never()).persist(any(), any(), any(), any(), any(), anyString(), any(), any(), any());
+    }
+
+    @Test
+    void deadlineExceeded_mechanicallyVerifiedCandidate_isSavedInsteadOfDiscarded() {
+        // The wall-clock deadline is a SAFETY control, not a user stop. It stops further model work, but a candidate that already passed mechanical verification is a
+        // checkpointed, paid-for save obligation — persisting it re-runs and re-bills nothing. The old behavior force-cancelled the job and discarded the run for nothing;
+        // this is the exact failure observed in the live GPU run (three verified candidates, saved none).
+        ArgumentCaptor<Runnable> deadline = ArgumentCaptor.forClass(Runnable.class);
+        when(orchestrator.generate(any(), any(), any(), any(), any(), any(), any(), any(), any())).thenAnswer((Answer<GenerationOutcome>) invocation -> {
+            BooleanSupplier shouldCancel = invocation.getArgument(5);
+            verify(taskScheduler).schedule(deadline.capture(), any(java.time.Instant.class));
+            assertThat(shouldCancel.getAsBoolean()).isFalse();
+            deadline.getValue().run();
+            assertThat(shouldCancel.getAsBoolean()).isTrue();
+            return outcomeWith(AgentLoopResult.Status.COMPLETED, new VerificationResult(true, true, true, 1, List.of()));
+        });
+
+        taskService.runAsync(new GenerationStartedEvent(JOB_ID, user, exercise, "make it", GenerationMode.GENERATE));
+
+        verify(jobService, never()).requestSystemCancellation(eq(EXERCISE_ID), eq(JOB_ID), anyString());
+        verify(persistenceService).persist(any(), any(), any(), any(), any(), anyString(), any(), any(), any());
+        assertThat(sentEvents()).anyMatch(event -> event.message() != null && event.message().contains("time budget was reached; keeping and saving"));
+        assertThat(sentEvents().getLast().type()).isNotEqualTo(ExerciseGenerationEventDTO.Type.CANCELLED);
     }
 
     @Test

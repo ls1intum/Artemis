@@ -203,6 +203,17 @@ public class GenerationTaskService {
                     }
                     emitter.progress("The token budget was reached; keeping and saving the already-verified exercise instead of discarding it.");
                 }
+                if (deadlineExceeded.get()) {
+                    // The wall-clock deadline is a SAFETY control, not a user stop: the same save-obligation doctrine as the token budget applies. It stopped further model work,
+                    // but a candidate that already passed mechanical verification is checkpointed work that persisting neither re-runs nor re-bills — save it (as NEEDS_REVIEW when
+                    // the quality review still had findings) rather than discarding a run that produced a usable exercise. Only a deadline hit with no verified checkpoint
+                    // discards.
+                    if (!outcome.isMechanicallyVerified()) {
+                        emitter.milestone(ExerciseGenerationEventDTO.of(ExerciseGenerationEventDTO.Type.CANCELLED, cancellationMessage(true, false, false)));
+                        return;
+                    }
+                    emitter.progress("The time budget was reached; keeping and saving the already-verified exercise for review instead of discarding it.");
+                }
                 switch (outcome.loopResult().status()) {
                     case CANCELLED -> emitter.milestone(ExerciseGenerationEventDTO.of(ExerciseGenerationEventDTO.Type.CANCELLED,
                             cancellationMessage(deadlineExceeded.get(), tokenBudgetExceeded.get(), heartbeatLost.get())));
@@ -372,8 +383,11 @@ public class GenerationTaskService {
             return null;
         }
         return taskScheduler.schedule(() -> {
+            // The deadline is a wall-clock SAFETY control, not a user stop. It must halt further model work — the cancelled supplier includes deadlineExceeded, so setting this
+            // flag stops the run at the next poll — but it must NOT force-cancel the job. Marking the job cancelled here would make enterNonCancellablePhase fail and discard a
+            // mechanically verified candidate that is already a save obligation (same doctrine as the token budget). The terminal branch below decides save-vs-discard from
+            // whether a verified checkpoint survived. Job/budget cleanup still runs unconditionally in the finally block.
             deadlineExceeded.set(true);
-            jobService.requestSystemCancellation(exerciseId, jobId, cancellationMessage(true, false, false));
         }, effectiveDeadlineAt);
     }
 
