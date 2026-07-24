@@ -2133,7 +2133,10 @@ public class SpecFidelityCriticService {
             case UNCOVERED_REQUIREMENT -> builder.append("\n- No test covers this student-owned requirement from the approved grading seams: \"").append(finding.requirement())
                     .append("\". Confirm its Design owner is stubbed or student-creates before adding a test. A given support type is already provided: inspect and repair both supplied copies "
                             + "directly if they violate the contract, but never add a gradable task or damage the starter merely to make a given-code test fail. Otherwise add the smallest "
-                            + "discriminating assertion and reconcile its existing student-work seam. ")
+                            + "discriminating assertion and reconcile its existing student-work seam. The new assertion must FAIL on the template and PASS on the solution — that is what makes it "
+                            + "gradable. If the template stub happens to satisfy it (for example a stub that already returns the expected value such as 0, an empty collection, or null), the "
+                            + "differential will reject the whole candidate; change that stub to a clearly-unimplemented placeholder (e.g. throw the not-implemented sentinel) so the new test is "
+                            + "genuinely discriminating instead of removing the test. ")
                     .append(finding.detail());
             case UNREQUESTED_ADAPTATION_CHANGE -> builder.append("\n- Unrequested adaptation change: \"").append(finding.requirement()).append("\". ").append(finding.detail());
             case REQUESTED_ADAPTATION_CHANGE_MISSING ->
