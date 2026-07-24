@@ -1,5 +1,5 @@
 import { HttpClient, HttpErrorResponse, HttpParams, HttpResponse } from '@angular/common/http';
-import { Injectable, inject } from '@angular/core';
+import { Injectable, inject, signal } from '@angular/core';
 import { faLightbulb } from '@fortawesome/free-solid-svg-icons';
 import { captureException } from '@sentry/angular';
 import { Exam } from 'app/exam/shared/entities/exam.model';
@@ -38,6 +38,18 @@ export class ExamParticipationService {
     endViewDisplayed$ = this.examEndViewSubject.asObservable();
     private shouldUpdateTestExams = new BehaviorSubject<boolean>(false);
     shouldUpdateTestExamsObservable = this.shouldUpdateTestExams.asObservable();
+
+    // Version counter bumped whenever a submission's `isSynced` flag is mutated in place (on an answer/model/text
+    // change, or when a save succeeds/fails). Submissions are plain mutable objects, so under zoneless change
+    // detection those in-place mutations are invisible to signal-based bindings. UI that reflects the sync state
+    // (e.g. the in-exercise save button's `disabled`/icon) reads this version to re-evaluate reactively.
+    private readonly submissionSyncVersionSignal = signal(0);
+    readonly submissionSyncVersion = this.submissionSyncVersionSignal.asReadonly();
+
+    /** Notify sync-state-dependent UI that a submission's `isSynced` flag changed (see {@link submissionSyncVersion}). */
+    notifySubmissionSyncStateChanged(): void {
+        this.submissionSyncVersionSignal.update((version) => version + 1);
+    }
 
     public getResourceURL(courseId: number, examId: number): string {
         return `api/exam/courses/${courseId}/exams/${examId}`;
