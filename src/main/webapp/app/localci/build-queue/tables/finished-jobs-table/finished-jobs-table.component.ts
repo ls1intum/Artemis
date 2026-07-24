@@ -9,18 +9,31 @@ import { ResultComponent } from 'app/exercise/result/result.component';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { BuildAgentInformation } from 'app/localci/shared/entities/build-agent-information.model';
 import { createAddressToAgentInfoMap, getAgentInfoByAddress } from 'app/localci/shared/build-agent-address.utils';
-import { TableModule } from 'primeng/table';
-import { TagModule } from 'primeng/tag';
-import { ButtonModule } from 'primeng/button';
-import { TooltipModule } from 'primeng/tooltip';
-import { SortEvent } from 'primeng/api';
+import { TumUiTableDirective, TumUiTableSortEvent } from 'app/shared-ui/tum-ui/table-directive/tum-ui-table.directive';
+import { TumUiTableSortableColumnComponent } from 'app/shared-ui/tum-ui/table-directive/tum-ui-table-sortable-column.component';
+import { TumUiTagComponent } from 'app/shared-ui/tum-ui/tag/tum-ui-tag.component';
+import { TumUiButtonComponent } from 'app/shared-ui/tum-ui/button/tum-ui-button.component';
+import { TumUiTooltipDirective } from 'app/shared-ui/tum-ui/tooltip/tum-ui-tooltip.directive';
 
 @Component({
     selector: 'jhi-finished-jobs-table',
     templateUrl: './finished-jobs-table.component.html',
     styleUrl: './finished-jobs-table.component.scss',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [TranslateDirective, FaIconComponent, NgClass, RouterLink, ResultComponent, ArtemisDatePipe, SlicePipe, TableModule, TagModule, ButtonModule, TooltipModule],
+    imports: [
+        TranslateDirective,
+        FaIconComponent,
+        NgClass,
+        RouterLink,
+        ResultComponent,
+        ArtemisDatePipe,
+        SlicePipe,
+        TumUiTableDirective,
+        TumUiTableSortableColumnComponent,
+        TumUiTagComponent,
+        TumUiButtonComponent,
+        TumUiTooltipDirective,
+    ],
 })
 export class FinishedJobsTableComponent {
     // Inputs
@@ -75,13 +88,12 @@ export class FinishedJobsTableComponent {
     }
 
     /**
-     * Handles the PrimeNG p-table sort event.
+     * Handles the table sort event emitted by the tum-ui sortable column.
      * Maps the event onto the two-way `predicate`/`ascending` models and triggers a (server-side)
-     * reload via `onSortChange`. Guarded to ignore no-op events that PrimeNG emits on initialization
-     * or value changes when `sortField`/`sortOrder` are bound, which would otherwise cause redundant reloads.
-     * @param event The PrimeNG sort event
+     * reload via `onSortChange`. Guarded to ignore no-op events, which would otherwise cause redundant reloads.
+     * @param event The tum-ui table sort event ({ field, order }, order 1 = ascending, -1 = descending)
      */
-    onTableSort(event: SortEvent): void {
+    onTableSort(event: TumUiTableSortEvent): void {
         const field = event.field ?? this.predicate();
         const ascending = (event.order ?? 1) === 1;
         if (field === this.predicate() && ascending === this.ascending()) {
