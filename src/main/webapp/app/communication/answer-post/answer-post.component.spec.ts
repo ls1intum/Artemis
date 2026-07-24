@@ -30,6 +30,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
+import { provideRouter } from '@angular/router';
 import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
 import { MockMetisConversationService } from 'test/helpers/mocks/service/mock-metis-conversation.service';
 import { AccountService } from 'app/core/auth/account.service';
@@ -65,6 +66,7 @@ describe('AnswerPostComponent', () => {
             providers: [
                 provideHttpClient(),
                 provideHttpClientTesting(),
+                provideRouter([]),
                 { provide: DOCUMENT, useValue: document },
                 { provide: MetisService, useClass: MockMetisService },
                 { provide: TranslateService, useClass: MockTranslateService },
@@ -334,6 +336,36 @@ describe('AnswerPostComponent', () => {
         const spy = vi.spyOn(metisService, 'metisUserIsAtLeastTutorInCourse').mockReturnValue(false);
         expect(component.mayVerify).toBe(false);
         expect(spy).toHaveBeenCalled();
+    });
+
+    it('should render the PrimeNG verify actions for an unverified Iris reply a tutor may verify', () => {
+        vi.spyOn(metisService, 'metisUserIsAtLeastTutorInCourse').mockReturnValue(true);
+        const botPost = Object.assign(new AnswerPost(), { ...metisResolvingAnswerPostUser1, author: { id: 99, bot: true }, verified: false });
+        component.posting.set(botPost);
+        fixture.changeDetectorRef.detectChanges();
+
+        const approve = debugElement.query(By.css('p-button[data-testid="iris-approve-button"]'));
+        const edit = debugElement.query(By.css('p-button[data-testid="iris-edit-button"]'));
+        const reject = debugElement.query(By.css('p-button[data-testid="iris-reject-button"]'));
+        expect(approve).not.toBeNull();
+        expect(edit).not.toBeNull();
+        expect(reject).not.toBeNull();
+
+        const approveSpy = vi.spyOn(component, 'approveAnswer').mockImplementation(() => {});
+        approve.query(By.css('button')).nativeElement.click();
+        expect(approveSpy).toHaveBeenCalled();
+    });
+
+    it('should render the PrimeNG textarea and save/cancel buttons in Iris edit mode', () => {
+        vi.spyOn(metisService, 'metisUserIsAtLeastTutorInCourse').mockReturnValue(true);
+        const botPost = Object.assign(new AnswerPost(), { ...metisResolvingAnswerPostUser1, author: { id: 99, bot: true }, verified: false });
+        component.posting.set(botPost);
+        component.isEditingIrisReply.set(true);
+        fixture.changeDetectorRef.detectChanges();
+
+        expect(debugElement.query(By.css('textarea[pTextarea]'))).not.toBeNull();
+        expect(debugElement.query(By.css('p-button[data-testid="iris-save-approve-button"]'))).not.toBeNull();
+        expect(debugElement.query(By.css('p-button[data-testid="iris-cancel-button"]'))).not.toBeNull();
     });
 
     it('should set mayDelete when onMayDelete is called', () => {
