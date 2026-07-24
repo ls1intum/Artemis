@@ -261,3 +261,61 @@ button.global-refinement-fab-close-button.p-button {
 
     background: rgba(0, 0, 0, 0.4);
 }
+
+.label--truncate {
+    display: block;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.quiz-toggle-group {
+    display: flex;
+    border: 1px solid var(--bs-border-color);
+    border-radius: 0.375rem;
+    overflow: hidden;
+    width: 100%;
+}
+
+.quiz-toggle-btn {
+    flex: 1;
+    padding: var(--p-form-field-padding-y, 0.5rem) 0.25rem;
+    border: none;
+    border-right: 1px solid var(--bs-border-color);
+    background: var(--bs-body-bg);
+    color: var(--bs-secondary-color);
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+
+    &:last-child {
+        border-right: none;
+    }
+
+    &--active {
+        background: var(--blue);
+        color: var(--bs-white);
+        font-weight: 600;
+    }
+
+    &:hover:not(.quiz-toggle-btn--active) {
+        background: color-mix(in srgb, var(--bs-body-color) 8%, transparent);
+        color: var(--bs-body-color);
+    }
+
+    &--easy.quiz-toggle-btn--active {
+        background: var(--bs-success);
+    }
+
+    &--medium.quiz-toggle-btn--active {
+        background: var(--bs-warning);
+        color: var(--bs-dark);
+    }
+
+    &--hard.quiz-toggle-btn--active {
+        background: var(--bs-danger);
+    }
+}
