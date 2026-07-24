@@ -83,6 +83,14 @@ const scenarios: Scenario[] = [
             'Create an intermediate Java exercise that teaches the strategy design pattern. Use a non-standard theme for the strategies to keep it interesting. Clearly describe which strategies should exist and how they work. Students should design and create the strategy interface and the concrete strategy classes themselves, and wire them into a provided context class.',
     },
     {
+        id: 'strategy-authentic-exact-brief',
+        complexity: 'intermediate',
+        runWholeExercise: true,
+        noDraft: true,
+        requirements:
+            'Create an intermediate Java exercise that teaches the strategy design pattern. Use a non-standard theme for the strategies to keep it interesting. Clearly describe which strategies should exist and how they work.',
+    },
+    {
         id: 'strategy-nonstandard-v2',
         complexity: 'intermediate',
         runWholeExercise: true,
@@ -637,7 +645,7 @@ async function waitForTerminalStatus(page: Page, exerciseId: number, jobId: stri
                       }
                     : undefined;
             },
-            { timeout: 1_500_000, intervals: [5_000, 10_000, 15_000] },
+            { timeout: 2_400_000, intervals: [5_000, 10_000, 15_000] },
         )
         .toBeDefined();
     const status = await getGenerationStatus(page, exerciseId);
