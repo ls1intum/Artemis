@@ -7,8 +7,8 @@
             <span class="tum-ui-confirm-dialog-message">{{ req.message }}</span>
         </div>
         <ng-template #footer>
-            <tum-ui-button [severity]="req.rejectSeverity ?? 'secondary'" (clicked)="reject()">{{ req.rejectLabel ?? 'No' }}</tum-ui-button>
-            <tum-ui-button [severity]="req.acceptSeverity ?? 'primary'" (clicked)="accept()">{{ req.acceptLabel ?? 'Yes' }}</tum-ui-button>
+            <tum-ui-button [severity]="req.rejectSeverity ?? 'secondary'" (clicked)="reject()">{{ req.rejectLabel }}</tum-ui-button>
+            <tum-ui-button [severity]="req.acceptSeverity ?? 'primary'" (clicked)="accept()">{{ req.acceptLabel }}</tum-ui-button>
         </ng-template>
     </tum-ui-dialog>
 }

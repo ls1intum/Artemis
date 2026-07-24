@@ -50,13 +50,23 @@ describe('TumUiInputNumberComponent', () => {
 });
 
 @Component({
-    template: `<tum-ui-input-number [(ngModel)]="value" [min]="min" [max]="max" [showButtons]="true" [prefix]="prefix()" [suffix]="suffix()" [useGrouping]="grouping()" />`,
+    template: `<tum-ui-input-number
+        [(ngModel)]="value"
+        [min]="min()"
+        [max]="max"
+        [showButtons]="true"
+        [disabled]="disabled()"
+        [prefix]="prefix()"
+        [suffix]="suffix()"
+        [useGrouping]="grouping()"
+    />`,
     imports: [TumUiInputNumberComponent, FormsModule, FontAwesomeTestingModule],
 })
 class HostComponent {
     value?: number;
-    min = 1;
+    readonly min = signal(1);
     max = 5000;
+    readonly disabled = signal(false);
     readonly prefix = signal<string | undefined>(undefined);
     readonly suffix = signal<string | undefined>(undefined);
     readonly grouping = signal(true);
@@ -153,5 +163,41 @@ describe('TumUiInputNumberComponent (ngModel + formatting)', () => {
         await fixture.whenStable();
         fixture.detectChanges();
         expect(input().value).toBe('5000');
+    });
+
+    it('exposes WAI-ARIA spinbutton semantics on the input', () => {
+        type('5');
+        expect(input().getAttribute('role')).toBe('spinbutton');
+        expect(input().getAttribute('aria-valuemin')).toBe('1');
+        expect(input().getAttribute('aria-valuemax')).toBe('5000');
+        expect(input().getAttribute('aria-valuenow')).toBe('5');
+    });
+
+    it('steps from an empty field to min, not min + step (p-inputnumber parity)', () => {
+        expect(host.value).toBeUndefined();
+        buttons()[0].click(); // increment from empty; min = 1
+        fixture.detectChanges();
+        expect(host.value).toBe(1);
+    });
+
+    it('does not step or accept input while disabled', () => {
+        host.disabled.set(true);
+        fixture.detectChanges();
+        expect(input().disabled).toBe(true);
+        buttons()[0].click();
+        fixture.detectChanges();
+        expect(host.value).toBeUndefined();
+    });
+
+    it('lets a negative number be typed digit by digit without erasing the leading minus', () => {
+        host.min.set(-100);
+        fixture.detectChanges();
+        // Typing just "-" must not be wiped on the keystroke that produced it.
+        type('-');
+        expect(input().value).toBe('-');
+        expect(host.value).toBeUndefined();
+        // Once digits follow, it parses to the negative value.
+        type('-5');
+        expect(host.value).toBe(-5);
     });
 });

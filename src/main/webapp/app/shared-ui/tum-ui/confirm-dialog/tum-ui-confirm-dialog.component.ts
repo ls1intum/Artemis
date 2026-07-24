@@ -10,9 +10,11 @@ import { TumUiConfirmationService } from 'app/shared-ui/tum-ui/confirm-dialog/tu
  * Drop-in replacement for PrimeNG's `p-confirmdialog`: the display half of the confirm pattern. Place one in a
  * template and it renders whatever the paired {@link TumUiConfirmationService} has open — a modal
  * {@link TumUiDialogComponent} with an optional icon, the message, and cancel / confirm buttons. Confirming runs
- * the request's `accept`; dismissing (cancel button, Escape, mask, ×) runs its optional `reject`.
+ * the request's `accept`; dismissing (cancel button, Escape, ×) runs its optional `reject`. (Backdrop / mask click
+ * does not dismiss — matching `p-confirmdialog`'s default.)
  *
  * Use `[key]` to scope a dialog to matching `confirm({ key })` calls when several confirm dialogs live on one page.
+ * `[key]` is expected to be static; changing it while a request is open would drop the request without a callback.
  */
 @Component({
     selector: 'tum-ui-confirm-dialog',
@@ -51,8 +53,8 @@ export class TumUiConfirmDialogComponent {
     }
 
     /**
-     * Fired when the dialog is dismissed via Escape / mask / ×. `accept()` and `reject()` clear the request before
-     * this runs, so a still-present request here means an implicit dismissal — treat it as a reject.
+     * Fired when the dialog is dismissed via Escape / ×. `accept()` and `reject()` clear the request before this
+     * runs, so a still-present request here means an implicit dismissal — treat it as a reject.
      */
     protected onDialogHide(): void {
         const request = this.request();

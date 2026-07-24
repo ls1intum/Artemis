@@ -91,6 +91,13 @@ export class TumUiInputNumberComponent implements ControlValueAccessor {
         return style ? `${parts.join(' ')} ${style}` : parts.join(' ');
     });
 
+    // WAI-ARIA spinbutton semantics: the input announces its numeric value + range and is adjusted with the arrow
+    // keys (see onKeydown), so screen-reader / keyboard users get the stepper affordance without the mouse-only
+    // increment / decrement buttons (which stay `aria-hidden`). `aria-valuetext` carries the human-readable
+    // display (incl. any prefix / suffix), `aria-valuenow` the raw number.
+    protected readonly ariaValueNow = computed(() => this.cvaValue());
+    protected readonly ariaValueText = computed(() => this.format(this.cvaValue()) || null);
+
     private onModelChange: (value: number | undefined) => void = () => {};
     private onModelTouched: () => void = () => {};
 
@@ -120,7 +127,17 @@ export class TumUiInputNumberComponent implements ControlValueAccessor {
 
     /** Extract the integer from the field text, ignoring the prefix / suffix / grouping separators. */
     private parse(text: string): number | undefined {
-        const digits = text.replace(/[^\d-]/g, '');
+        // Strip the configured affixes first so a digit inside `prefix`/`suffix` is never read as part of the value.
+        let body = text;
+        const prefix = this.prefix();
+        const suffix = this.suffix();
+        if (prefix && body.startsWith(prefix)) {
+            body = body.slice(prefix.length);
+        }
+        if (suffix && body.endsWith(suffix)) {
+            body = body.slice(0, body.length - suffix.length);
+        }
+        const digits = body.replace(/[^\d-]/g, '');
         const normalized = digits.startsWith('-') ? '-' + digits.slice(1).replace(/-/g, '') : digits.replace(/-/g, '');
         if (normalized === '' || normalized === '-') {
             return undefined;
@@ -166,6 +183,11 @@ export class TumUiInputNumberComponent implements ControlValueAccessor {
         const parsed = this.parse(el.value);
         this.cvaValue.set(parsed);
         this.onModelChange(parsed);
+        // Mid-typing a negative number ("-" before any digit): leave the raw text so the minus is not erased on
+        // this keystroke; the model stays `undefined` until a digit arrives, then formatting resumes normally.
+        if (parsed === undefined && el.value.includes('-') && !/\d/.test(el.value)) {
+            return;
+        }
         // Reformat live (grouping + prefix / suffix) and restore the caret after the same number of digits.
         const formatted = this.format(parsed);
         el.value = formatted;
@@ -177,7 +199,9 @@ export class TumUiInputNumberComponent implements ControlValueAccessor {
         if (this.isDisabled()) {
             return;
         }
-        const base = this.cvaValue() ?? this.min() ?? 0;
+        // Step from `0` (not `min`) when empty, then clamp — so a first increment from an empty field lands on
+        // `min` rather than `min + step`, matching p-inputnumber (which spins from `value || 0`).
+        const base = this.cvaValue() ?? 0;
         const next = this.clamp(base + delta);
         this.cvaValue.set(next);
         this.onModelChange(next);

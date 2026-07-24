@@ -15,12 +15,12 @@ export interface TumUiConfirmationRequest {
     message: string;
     /** Invoked when the user confirms. */
     accept: () => void;
-    /** Invoked when the user cancels / dismisses (Escape, mask click, cancel button). Optional, like PrimeNG. */
+    /** Invoked when the user cancels / dismisses (Escape, cancel button, ×). Optional, like PrimeNG. */
     reject?: () => void;
-    /** Confirm button label (default `'Yes'`). */
-    acceptLabel?: string;
-    /** Cancel button label (default `'No'`). */
-    rejectLabel?: string;
+    /** Confirm button label. Required so the caller always supplies a localized string (the kit has no i18n layer). */
+    acceptLabel: string;
+    /** Cancel button label. Required so the caller always supplies a localized string. */
+    rejectLabel: string;
     /** Confirm button severity (default `'primary'`). */
     acceptSeverity?: TumUiButtonSeverity;
     /** Cancel button severity (default `'secondary'`). */

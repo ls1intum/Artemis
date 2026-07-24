@@ -75,10 +75,23 @@ describe('TumUiConfirmDialogComponent', () => {
         expect(document.querySelector('.tum-ui-dialog')).toBeNull();
     });
 
+    it('runs reject exactly once and closes when dismissed via the × button', () => {
+        const accept = vi.fn();
+        const reject = vi.fn();
+        service.confirm({ header: 'h', message: 'm', acceptLabel: 'Yes', rejectLabel: 'No', accept, reject });
+        fixture.detectChanges();
+        // The × triggers the dialog's own close → (onHide) → the confirm-dialog's onDialogHide → reject.
+        (document.querySelector('.tum-ui-dialog [data-testid="tum-ui-dialog-close"]') as HTMLButtonElement).click();
+        fixture.detectChanges();
+        expect(reject).toHaveBeenCalledOnce();
+        expect(accept).not.toHaveBeenCalled();
+        expect(document.querySelector('.tum-ui-dialog')).toBeNull();
+    });
+
     it('ignores a request whose key does not match the dialog key', () => {
         fixture.componentInstance.key.set('group-a');
         fixture.detectChanges();
-        service.confirm({ header: 'h', message: 'other-key', accept: () => {}, key: 'group-b' });
+        service.confirm({ header: 'h', message: 'other-key', acceptLabel: 'Yes', rejectLabel: 'No', accept: () => {}, key: 'group-b' });
         fixture.detectChanges();
         expect(document.querySelector('.tum-ui-dialog')).toBeNull();
     });
@@ -86,7 +99,7 @@ describe('TumUiConfirmDialogComponent', () => {
     it('renders a request whose key matches the dialog key', () => {
         fixture.componentInstance.key.set('group-a');
         fixture.detectChanges();
-        service.confirm({ header: 'h', message: 'matching-key', accept: () => {}, key: 'group-a' });
+        service.confirm({ header: 'h', message: 'matching-key', acceptLabel: 'Yes', rejectLabel: 'No', accept: () => {}, key: 'group-a' });
         fixture.detectChanges();
         expect(overlayText()).toContain('matching-key');
     });
